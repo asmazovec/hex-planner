@@ -24,7 +24,7 @@ const planetsHeldBy = (game: Game, opponentId: string): string[] =>
 
 /** What an opponent has on the map: units across all systems and enemy planets. */
 export function opponentHoldings(game: Game, opponentId: string): { units: number; planets: number } {
-  const units = Object.values(game.enemyUnits)
+  const units = [...Object.values(game.enemyUnits), ...Object.values(game.enemyGround)]
     .flatMap(byOwner => Object.values(byOwner[opponentId] ?? {}))
     .reduce<number>((sum, n) => sum + (n ?? 0), 0);
   return { units, planets: planetsHeldBy(game, opponentId).length };
@@ -33,13 +33,14 @@ export function opponentHoldings(game: Game, opponentId: string): { units: numbe
 /** Takes an opponent off the map: their units and structures go, and their planets become free. */
 function withoutHoldings(game: Game, opponentId: string): Game {
   const planets = planetsHeldBy(game, opponentId);
-  const enemyUnits = Object.fromEntries(Object.entries(game.enemyUnits).flatMap(([slot, byOwner]) => {
+  const without = (record: Game['enemyUnits']): Game['enemyUnits'] => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => {
     const rest = Object.fromEntries(Object.entries(byOwner).filter(([owner]) => owner !== opponentId));
-    return Object.keys(rest).length > 0 ? [[slot, rest]] : [];
+    return Object.keys(rest).length > 0 ? [[place, rest]] : [];
   }));
   return {
     ...game,
-    enemyUnits,
+    enemyUnits: without(game.enemyUnits),
+    enemyGround: without(game.enemyGround),
     planetControl: Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !planets.includes(id))),
     planetOwner: Object.fromEntries(Object.entries(game.planetOwner).filter(([id, owner]) => owner !== opponentId && !planets.includes(id))),
     docks: game.docks.filter(id => !planets.includes(id)),

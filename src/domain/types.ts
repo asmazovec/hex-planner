@@ -191,6 +191,7 @@ export interface CardPlay {
 export type EntryBody =
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
+      /** Where the ground units of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** Warfare's primary: no tactic token is spent, the system's command token still goes down. */ free?: boolean;
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
   | ({ type: 'strategic' } & CardPlay)
@@ -237,8 +238,10 @@ export interface Game {
   opponents: Opponent[];
   /** Set by hand. `me` is the baseline, such as starting technology; entries of a plan add to it. Opponents have no plan. */
   upgrades: { me: UnitId[]; opponents: Record<string, UnitId[]> };
-  /** Slot key to opponent id to that opponent's units. */
+  /** Slot key to opponent id to that opponent's units in space; ground units only in a system without planets. */
   enemyUnits: Record<string, Record<string, UnitCounts>>;
+  /** Planet id to opponent id to that opponent's ground units there. */
+  enemyGround: Record<string, Record<string, UnitCounts>>;
   planetControl: Record<string, 'me' | 'enemy'>;
   /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
   planetOwner: Record<string, string>;

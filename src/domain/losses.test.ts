@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import { changeMerged, mergedCounts, mergedEntry } from './losses';
-import type { AdjustmentKind, Entry, Round, UnitId } from './types';
+import { loadPack } from '../data/loadPack';
+import { changeMerged, changeOnBoard, mergedCounts, mergedEntry } from './losses';
+import { createGame } from './newGame';
+import { project } from './project';
+import type { AdjustmentKind, Entry, EntryBody, Game, Phase, Round, UnitId } from './types';
 
 const SLOT = '1,0';
 const emptyRound = (): Round => ({ number: 1, strategyCard: null, backupCard: null, entries: [] });
@@ -110,5 +113,89 @@ describe('setup is signed', () => {
 
   test('a system with no entry has no counts', () => {
     expect(mergedCounts(emptyRound(), 'setup', SLOT)).toEqual([]);
+  });
+});
+
+
+describe('a removal must count at the place of its entry', () => {
+  const pack = loadPack(['pok']);
+  const FROM = '0,1';
+  const noPay = { planets: [], tradeGoods: 0 };
+  const entry = (body: EntryBody, phase: Phase, id: string): Entry => ({ ...body, id, phase, status: 'planned' }) as Entry;
+  const start = (entries: Entry[]): { game: Game; round: Round } => {
+    const game = createGame({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, pack);
+    game.map[SLOT] = '25';
+    game.map[FROM] = '26';
+    const round = { ...game.plans[0].rounds[0], entries };
+    game.plans[0].rounds[0] = round;
+    return { game, round };
+  };
+  const forecast = (game: Game, round: Round) => {
+    const plan = { ...game.plans[0], rounds: [round] };
+    return project({ ...game, plans: [plan] }, plan, 'forecast', pack).state;
+  };
+  const remove = (game: Game, round: Round, unit: UnitId, planetId: string | null = null, kind: AdjustmentKind = 'losses') =>
+    changeOnBoard(game, round, { kind, systemId: SLOT, unit, planetId, amount: -1 }, pack, newId);
+  const startFleet = entry({ type: 'adjustment', label: '', delta: { units: { systemId: FROM, units: { carrier: 1 } } } }, 'strategy', 'fleet');
+  const tacticalIn = entry({
+    type: 'tactical', systemId: SLOT, moves: [{ from: FROM, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay,
+  }, 'action', 'move');
+  const earlier = entry({ type: 'adjustment', label: '', kind: 'losses', delta: { units: { systemId: SLOT, units: { fighter: -1 } } } }, 'action', 'merged');
+  const fighters = entry({ type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { fighter: 2 } } } }, 'strategy', 'fighters');
+
+  test('a unit that arrives by a later tactical entry: the entry moves behind it and the unit goes', () => {
+    const { game, round } = start([startFleet, fighters, earlier, tacticalIn]);
+    const next = remove(game, round, 'carrier');
+    expect(next.entries.map(e => e.id)).toEqual(['fleet', 'fighters', 'move', 'merged']);
+    expect(forecast(game, next).systems[SLOT]).toEqual({ fighter: 1 });
+    expect(mergedEntry(next, 'losses', SLOT)?.delta.units?.units).toEqual({ fighter: -1, carrier: -1 });
+  });
+
+  test('a unit added by an adjustment of a later phase: the entry follows it there', () => {
+    const later = entry({ type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { carrier: 1 } } } }, 'status', 'later');
+    const { game, round } = start([fighters, earlier, later]);
+    const next = remove(game, round, 'carrier');
+    expect(mergedEntry(next, 'losses', SLOT)?.phase).toBe('status');
+    expect(next.entries.map(e => e.id)).toEqual(['fighters', 'later', 'merged']);
+    expect(forecast(game, next).systems[SLOT]).toEqual({ fighter: 1 });
+  });
+
+  test('a new entry too: it stands where the removal counts', () => {
+    const later = entry({ type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { carrier: 1 } } } }, 'status', 'later');
+    const { game, round } = start([later]);
+    const next = remove(game, round, 'carrier');
+    expect(mergedEntry(next, 'losses', SLOT)?.phase).toBe('status');
+    expect(forecast(game, next).systems[SLOT]).toEqual({});
+  });
+
+  test('a ground unit landed later: its removal counts as well', () => {
+    const planet = pack.tiles['25'].planetIds[0];
+    const fleet = entry({ type: 'adjustment', label: '', delta: { units: { systemId: FROM, units: { carrier: 1, infantry: 1 } } } }, 'strategy', 'fleet');
+    const land = entry({
+      type: 'tactical', systemId: SLOT, moves: [{ from: FROM, units: { carrier: 1, infantry: 1 } }],
+      landings: [{ planetId: planet, units: { infantry: 1 } }], production: {}, payment: noPay,
+    }, 'action', 'move');
+    const { game, round } = start([fleet, fighters, earlier, land]);
+    const next = remove(game, round, 'infantry', planet);
+    expect(next.entries.map(e => e.id)).toEqual(['fleet', 'fighters', 'move', 'merged']);
+    expect(forecast(game, next).ground[planet]).toEqual({});
+  });
+
+  test('a removal that already counts leaves the entry where it is', () => {
+    const { game, round } = start([startFleet, fighters, earlier, tacticalIn]);
+    const next = remove(game, round, 'fighter');
+    expect(next.entries.map(e => e.id)).toEqual(['fleet', 'fighters', 'merged', 'move']);
+    expect(forecast(game, next).systems[SLOT]).toEqual({ carrier: 1 });
+  });
+
+  test('a removal of what nobody has writes no ghost', () => {
+    const { game, round } = start([fighters]);
+    expect(remove(game, round, 'dreadnought')).toBe(round);
+  });
+
+  test('taking a purchase back that nets to nothing removes the entry', () => {
+    const { game, round } = start([]);
+    const bought = changeOnBoard(game, round, { kind: 'build', systemId: SLOT, unit: 'carrier', planetId: null, amount: 1 }, pack, newId);
+    expect(remove(game, bought, 'carrier', null, 'build').entries).toEqual([]);
   });
 });

@@ -1,3 +1,4 @@
+import { loadPack } from '../data/loadPack';
 import { describe, expect, test } from 'vitest';
 import { CURRENT_SCHEMA, exportGame, importGame, migrate } from './transfer';
 import { gameOfSchema1, sampleGame } from './fixture';
@@ -210,5 +211,52 @@ describe('PDS in saved games', () => {
     const bad = structuredClone(game) as unknown as { plans: { rounds: { entries: Record<string, unknown>[] }[] }[] };
     bad.plans[0].rounds[0].entries.find(e => e.type === 'adjustment')!.kind = 'magic';
     expect(importGame(JSON.stringify(bad)).ok).toBe(false);
+  });
+});
+
+
+describe('enemy ground units by planet', () => {
+  const tile = '26';
+  const planetOf = (id: string) => loadPack(['pok']).tiles[id].planetIds[0];
+  const version = (schemaVersion: number) => {
+    const { pds, enemyGround, ...rest } = sampleGame();
+    void enemyGround;
+    const opponent = rest.opponents[0].id;
+    return {
+      ...rest, schemaVersion, opponent,
+      ...(schemaVersion === 4 ? { pds } : {}),
+      map: { ...rest.map, '1,0': tile, '0,1': '39' },
+      enemyUnits: { '1,0': { [opponent]: { cruiser: 1, infantry: 2, mech: 1 } }, '0,1': { [opponent]: { infantry: 3 } } },
+    };
+  };
+
+  test.each([3, 4])('a version %i file moves them to the first planet of the system, or leaves them in space without one', v => {
+    const doc = version(v);
+    const result = importGame(JSON.stringify(doc));
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.game.schemaVersion).toBe(CURRENT_SCHEMA);
+    expect(result.game.enemyGround).toEqual({ [planetOf(tile)]: { [doc.opponent]: { infantry: 2, mech: 1 } } });
+    expect(result.game.enemyUnits).toEqual({ '1,0': { [doc.opponent]: { cruiser: 1 } }, '0,1': { [doc.opponent]: { infantry: 3 } } });
+  });
+
+  test('a version 1 file goes all the way', () => {
+    const doc = { ...gameOfSchema1(), map: { '1,0': tile }, enemyUnits: { '1,0': { infantry: 2 } } };
+    const result = importGame(JSON.stringify(doc));
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.game.enemyGround).toEqual({ [planetOf(tile)]: { [result.game.opponents[0].id]: { infantry: 2 } } });
+    expect(result.game.enemyUnits).toEqual({});
+  });
+
+  test('a current file with them is left alone, and a bad count refused', () => {
+    const game = { ...sampleGame(), enemyGround: { arc: { o: { infantry: 2 } } } };
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+    expect(importGame(JSON.stringify({ ...game, enemyGround: { arc: { o: { infantry: -1 } } } })).ok).toBe(false);
+  });
+
+  test('production on a planet stays through export', () => {
+    const game = sampleGame();
+    const first = game.plans[0].rounds[0].entries[0];
+    if (first.type === 'tactical') first.productionGround = { a: { infantry: 1 } };
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
   });
 });

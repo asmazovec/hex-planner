@@ -163,10 +163,15 @@ export function TileView({
   const ground: GroundStack[] = [];
   for (const { unit, count } of unitsOf(state.systems[slotKey])) space.push({ kind: unit, owner: 'me', count });
   for (const { id: owner } of seated) {
-    for (const { unit, count } of unitsOf(game.enemyUnits[slotKey]?.[owner])) {
-      // Enemy ground units have no planet of their own in the game data: they stand on the first one.
-      if (unit === 'infantry' || unit === 'mech') ground.push({ kind: unit, owner, count, planet: 0 });
-      else space.push({ kind: unit, owner, count });
+    const left = game.enemyUnits[slotKey]?.[owner] ?? {};
+    for (const { unit, count } of unitsOf(left)) if (unit !== 'infantry' && unit !== 'mech') space.push({ kind: unit, owner, count });
+    for (const unit of ['infantry', 'mech'] as const) {
+      // Ground units still listed with the system stand on its first planet, or on the comb without planets.
+      if (planets.length === 0 && left[unit]) ground.push({ kind: unit, owner, count: left[unit], planet: 0 });
+      planets.forEach((planet, i) => {
+        const count = (game.enemyGround[planet.id]?.[owner]?.[unit] ?? 0) + (i === 0 ? left[unit] ?? 0 : 0);
+        if (count > 0) ground.push({ kind: unit, owner, count, planet: i });
+      });
     }
   }
   planets.forEach((planet, i) => {

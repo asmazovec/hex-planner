@@ -4,9 +4,9 @@ import type { PlacedStack, TokenKind } from '../../domain/hexLayout';
 import { mergedCounts } from '../../domain/losses';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat, planetHolder } from '../../domain/players';
-import { productionCost, productionPlanet, project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { productionCost, productionPlaces, project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
 import { unitStats } from '../../domain/unitStats';
-import type { DataPack, Entry, StructureKind, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { withCount, type TacticalEntry } from '../plan/tactical';
 import { tokenColours } from '../units/sprites';
@@ -42,6 +42,10 @@ export interface HexStageProps {
   onPurchase?: PurchaseTarget;
   /** Tactical entries whose payment was chosen by hand: a purchase leaves it alone. */
   manualPayments?: string[];
+  /** The tactical entry that takes my purchases, when one is being edited; otherwise the round's last one on this system. */
+  tacticalId?: string;
+  /** What the map shows: control and readiness of a planet follow it, while the hex always shows the forecast. */
+  shownState?: GameState;
   onClose: () => void;
 }
 
@@ -67,10 +71,11 @@ function bumped(record: Record<string, number>, key: string, amount: number): Re
  * losses, build buys. Tile details live in the setup panel. Enemy units and structures have no entry to hold what was
  * lost or bought, so those strips last as long as this view.
  */
-export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], onClose }: HexStageProps) {
+export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, shownState, onClose }: HexStageProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game);
   const setEnemyUnits = useGame(s => s.setEnemyUnits);
+  const setEnemyGround = useGame(s => s.setEnemyGround);
   const setPlanetControl = useGame(s => s.setPlanetControl);
   const setDock = useGame(s => s.setDock);
   const setPds = useGame(s => s.setPds);
@@ -103,7 +108,13 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const holderOf = (planetId: string): string => (state.control[planetId] === 'enemy' ? planetHolder(game, planetId) ?? 'me' : 'me');
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
-  const changeEnemy = (owner: string, unit: UnitId, amount: number) => {
+  /** Ground units go by planet; one still listed with the system comes off there. */
+  const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => {
+    const onPlanet = planetId === null ? {} : game.enemyGround[planetId]?.[owner] ?? {};
+    if (planetId !== null && (amount > 0 || (onPlanet[unit] ?? 0) > 0)) {
+      setEnemyGround(planetId, owner, withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount));
+      return;
+    }
     const units = game.enemyUnits[slot]?.[owner] ?? {};
     setEnemyUnits(slot, owner, withCount(units, unit, (units[unit] ?? 0) + amount));
   };
@@ -114,24 +125,29 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     else setPds(planetId, (game.pds[planetId] ?? 0) + amount);
   };
 
-  const tactical = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical' && e.systemId === slot && e.status !== 'cancelled').at(-1);
-  /** Production has no planet of its own: the projection places what it builds. */
-  const producedAt = (unit: UnitId): string | null => (pack.units[unit]?.ground ? productionPlanet(game, state, slot, pack) : null);
-  const changeProduction = (entry: TacticalEntry, unit: UnitId, amount: 1 | -1) => {
-    const before = stateBeforeEntry(game, plan, entry.id, pack);
+  const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical' && e.systemId === slot && e.status !== 'cancelled');
+  const tactical = onPurchase ? undefined : tacticals.find(e => e.id === tacticalId) ?? tacticals.at(-1);
+  /** The state the tactical entry pays and places with: the end of the round may differ. */
+  const beforeTactical = tactical && stateBeforeEntry(game, plan, tactical.id, pack);
+  const produced = tactical && beforeTactical ? productionPlaces(game, tactical, beforeTactical, pack) : [];
+  const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) => {
     const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
     const cost = productionCost(production, game.faction, before.upgrades, pack);
     const seed = !manualPayments.includes(entry.id) && cost !== productionCost(entry.production, game.faction, before.upgrades, pack);
-    updateEntry(entry.id, seed ? { production, payment: autoPay(before, cost, 'resources', pack) } : { production });
+    const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
+    const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
+    const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;
+    updateEntry(entry.id, {
+      production,
+      ...(planetId === null || !pack.units[unit]?.ground ? {} : { productionGround: Object.keys(productionGround).length > 0 ? productionGround : undefined }),
+      ...(seed ? { payment: autoPay(before, cost, 'resources', pack) } : {}),
+    });
   };
   const purchases: PurchaseTarget = onPurchase ?? {
-    bought: [
-      ...(UNIT_ORDER.filter(u => (tactical?.production[u] ?? 0) > 0).map(unit => ({ unit, planetId: producedAt(unit), count: tactical?.production[unit] ?? 0 }))),
-      ...mergedCounts(round, 'build', slot),
-    ],
+    bought: [...produced, ...mergedCounts(round, 'build', slot)],
     change: (unit, planetId, amount) => {
-      const held = (tactical?.production[unit] ?? 0) > 0 && producedAt(unit) === planetId;
-      if (tactical && (amount > 0 || held)) changeProduction(tactical, unit, amount);
+      const held = produced.some(p => p.unit === unit && p.planetId === planetId);
+      if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, beforeTactical, unit, planetId, amount);
       else changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount });
     },
   };
@@ -160,8 +176,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     }
     const planetId = pack.units[kind]?.ground ? targetPlanet?.id ?? null : null;
     if (side !== 'me') {
-      changeEnemy(side, kind, 1);
-      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, pack.units[kind]?.ground ? 0 : undefined), 1));
+      changeEnemy(side, kind, planetId, 1);
+      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, pack.units[kind]?.ground ? target : undefined), 1));
     } else if (mode === 'build') purchases.change(kind, planetId, 1);
     else change('setup', kind, planetId, 1);
   };
@@ -179,20 +195,20 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
         return;
       }
       if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
-      else changeEnemy(owner, kind, -1);
+      else changeEnemy(owner, kind, planetId, -1);
       setNews(bumped(news, key, -1));
       return;
     }
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
     else if (owner === 'me') change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
-    else changeEnemy(owner, kind, -1);
+    else changeEnemy(owner, kind, planetId, -1);
     if (mode === 'battle' && (owner !== 'me' || isStructure(kind))) setLost(bumped(lost, key, 1));
   };
 
   const giveBack = (key: string) => {
     const { owner, kind, planet } = parseKey(key);
     if (isStructure(kind)) changeStructure(kind, planetIdOf(planet) ?? '', 1);
-    else changeEnemy(owner, kind, 1);
+    else changeEnemy(owner, kind, planetIdOf(planet), 1);
     setLost(bumped(lost, key, -1));
   };
 
@@ -201,28 +217,38 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const session = Object.keys(lost).filter(key => parseKey(key).owner === owner);
     const pictures = [
       ...(owner === 'me' ? myLosses.map(c => ({
-        key: `${c.unit}|${c.planetId}`, kind: c.unit as TokenKind, count: -c.count, back: () => change('losses', c.unit, c.planetId, 1),
+        key: `${c.unit}|${c.planetId}`, kind: c.unit as TokenKind, planetId: c.planetId, count: -c.count, back: () => change('losses', c.unit, c.planetId, 1),
       })) : []),
-      ...session.map(key => ({ key, kind: parseKey(key).kind, count: lost[key], back: () => giveBack(key) })),
+      ...session.map(key => ({ key, kind: parseKey(key).kind, planetId: planetIdOf(parseKey(key).planet), count: lost[key], back: () => giveBack(key) })),
     ];
+    /** The planet is named only where a type was lost on two of them. */
+    const planetNameOf = (kind: TokenKind, planetId: string | null): string | undefined =>
+      (new Set(pictures.filter(p => p.kind === kind).map(p => p.planetId)).size > 1 ? planets.find(p => p.id === planetId)?.name : undefined);
     return (
       <div key={owner} role="group" aria-label={heading}>
         <h3>{heading}</h3>
         {pictures.length === 0 && <p className="muted">{t('stage.noLosses')}</p>}
         <div className="stage-losses">
-          {pictures.map(({ key, kind, count, back }) => (
-            <button key={key} type="button" className="stage-loss" aria-label={t('stage.giveBack', { unit: kindName(kind) })} onClick={back}>
-              <TokenPicture kind={kind} colour={colours[owner]} size={52} />
-              {count > 1 && <i>{count}</i>}
-            </button>
-          ))}
+          {pictures.map(({ key, kind, planetId, count, back }) => {
+            const planet = planetNameOf(kind, planetId);
+            return (
+              <button
+                key={key} type="button" className="stage-loss" onClick={back}
+                aria-label={planet ? t('stage.giveBackOn', { unit: kindName(kind), planet }) : t('stage.giveBack', { unit: kindName(kind) })}
+              >
+                <TokenPicture kind={kind} colour={colours[owner]} size={52} />
+                {count > 1 && <i>{count}</i>}
+                {planet && <small>{planet}</small>}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
   };
 
   const sideFaction = side === 'me' ? game.faction : seated.find(o => o.id === side)?.faction ?? '';
-  const sideUpgrades = side === 'me' ? state.upgrades : game.upgrades.opponents[side] ?? [];
+  const sideUpgrades = side === 'me' ? beforeTactical?.upgrades ?? state.upgrades : game.upgrades.opponents[side] ?? [];
   const inBuild = mode === 'build';
   const units = UNIT_ORDER.filter(u => pack.units[u]);
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
@@ -248,7 +274,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const rotation = mapValue?.split('@')[1];
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).map(name => t(`map.anomaly.${name}`)).join(', ');
   const title = t('map.sheet.title', { number: tile?.number ?? tileId });
-  const control = targetPlanet ? state.control[targetPlanet.id] : undefined;
+  const shown = shownState ?? state;
+  const control = targetPlanet ? shown.control[targetPlanet.id] : undefined;
   const planetOwner = control === 'enemy' && targetPlanet ? planetHolder(game, targetPlanet.id) ?? null : control ?? null;
   const owners: { value: string | null; label: string; color?: number }[] = [
     { value: 'me', label: t('map.sheet.mine'), color: game.color },
@@ -326,7 +353,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
               {targetPlanet && (
                 <div role="group" aria-label={targetPlanet.name} className="stage-planet">
                   <strong>{targetPlanet.name}</strong>
-                  <PlanetDetails planet={targetPlanet} relic={tile?.kind === 'fracture'} exhausted={state.exhausted.includes(targetPlanet.id)} />
+                  <PlanetDetails planet={targetPlanet} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(targetPlanet.id)} />
                   <div className="segment stage-owners" role="group" aria-label={t('map.sheet.controlLabel', { planet: targetPlanet.name })}>
                     {owners.map(o => (
                       <button key={String(o.value)} type="button" aria-pressed={planetOwner === o.value} onClick={() => setPlanetControl(targetPlanet.id, o.value)}>

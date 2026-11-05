@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { productionCost, project, readyInfluence, readyResources, stateBeforeEntry, suggestUnits, tacticalMeters } from './project';
+import { productionCost, productionPlaces, project, readyInfluence, readyResources, stateBeforeEntry, suggestUnits, tacticalMeters } from './project';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
@@ -36,6 +36,7 @@ const pack: DataPack = {
   structures: [],
 };
 
+type TacticalBody = Extract<Entry, { type: 'tactical' }>;
 const noPay: Payment = { planets: [], tradeGoods: 0 };
 let n = 0;
 const entry = (body: EntryBody, phase: Phase = 'action', status: Entry['status'] = 'planned'): Entry =>
@@ -737,5 +738,57 @@ describe('adjustment with ground units by planet', () => {
 describe('createGame structures', () => {
   test('a new game has no PDS', () => {
     expect(createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack).pds).toEqual({});
+  });
+});
+
+
+describe('production on a chosen planet', () => {
+  const build = (productionGround?: Record<string, UnitCounts>, production: UnitCounts = { infantry: 2 }) => withId('b', entry({
+    type: 'tactical', systemId: 'H', moves: [], landings: [], production, payment: noPay, productionGround,
+  }));
+  const homeGame = (e: Entry) => gameWith([e], { map: { H: 'home' } });
+
+  test('ground units go to the planet they were bought on', () => {
+    const s = run(homeGame(build({ arc: { infantry: 2 } }))).state;
+    expect(s.ground.arc).toEqual({ infantry: 2 });
+    expect(s.ground.jord ?? {}).toEqual({});
+  });
+
+  test('what has no planet goes to the first planet I control, as before', () => {
+    const s = run(homeGame(build({ arc: { infantry: 1 } }))).state;
+    expect(s.ground.arc).toEqual({ infantry: 1 });
+    expect(s.ground.jord).toEqual({ infantry: 1 });
+    expect(run(homeGame(build())).state.ground.jord).toEqual({ infantry: 2 });
+  });
+
+  test('a planet list beyond the production places only what was produced', () => {
+    expect(run(homeGame(build({ arc: { infantry: 5 } }))).state.ground.arc).toEqual({ infantry: 2 });
+  });
+
+  test('the places are read at the entry, after its own landing, not from the end of the round', () => {
+    const land = withId('b', entry({
+      type: 'tactical', systemId: 'T', moves: [{ from: 'H', units: { carrier: 1, infantry: 1 } }],
+      landings: [{ planetId: 'lazar', units: { infantry: 1 } }], production: { cruiser: 1, infantry: 1 }, payment: noPay,
+    }));
+    const lost = entry({ type: 'adjustment', label: '', delta: {} });
+    const g = gameWith([setup('H', { carrier: 1, infantry: 1 }), land, lost], { map: { H: 'home', T: 't2' }, planetControl: {} });
+    const before = stateBeforeEntry(g, g.plans[0], 'b', pack);
+    expect(productionPlaces(g, land as TacticalBody, before, pack)).toEqual([
+      { unit: 'cruiser', planetId: null, count: 1 },
+      { unit: 'infantry', planetId: 'lazar', count: 1 },
+    ]);
+    // A later change of control does not move what the entry already placed.
+    expect(productionPlaces(g, build({ arc: { infantry: 1 } }) as TacticalBody, before, pack)).toEqual([
+      { unit: 'infantry', planetId: 'arc', count: 1 },
+      { unit: 'infantry', planetId: 'jord', count: 1 },
+    ]);
+  });
+
+  test('without a planet of mine the rest stays in space', () => {
+    const e = withId('b', entry({ type: 'tactical', systemId: 'T', moves: [], landings: [], production: { infantry: 1 }, payment: noPay }));
+    const g = gameWith([e], { map: { T: 't2' } });
+    const before = stateBeforeEntry(g, g.plans[0], 'b', pack);
+    expect(productionPlaces(g, e as TacticalBody, before, pack)).toEqual([{ unit: 'infantry', planetId: null, count: 1 }]);
+    expect(run(g).state.systems.T).toEqual({ infantry: 1 });
   });
 });

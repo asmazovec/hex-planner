@@ -7,6 +7,7 @@ vi.mock('../storage/db', () => ({
 
 import { loadPack } from '../data/loadPack';
 import { seatSlots } from '../domain/mapBuilder';
+import { opponentHoldings } from '../domain/players';
 import { project } from '../domain/project';
 import type { Game } from '../domain/types';
 import { loadGame, saveGame } from '../storage/db';
@@ -455,9 +456,12 @@ describe('merged adjustments and structures', () => {
     act().changeAdjustment(1, { kind: 'losses', systemId: '1,0', unit, planetId, amount });
 
   test('each tap is one undo step, and undo brings the entry back', () => {
+    act().changeAdjustment(1, { kind: 'setup', systemId: '1,0', unit: 'carrier', planetId: null, amount: 1 });
     lose('carrier', -1);
     lose('carrier', 1);
-    expect(round().entries).toEqual([]);
+    expect(round().entries).toHaveLength(1);
+    act().undo();
+    expect(round().entries).toHaveLength(2);
     act().undo();
     expect(round().entries).toHaveLength(1);
     act().undo();
@@ -481,10 +485,10 @@ describe('merged adjustments and structures', () => {
 
   test('a PDS on Mecatol Rex follows the planet to Thunder\'s Edge, and so does a loss recorded there', () => {
     act().setPds('mr', 1);
-    lose('infantry', -1, 'mr');
+    act().changeAdjustment(1, { kind: 'setup', systemId: '0,0', unit: 'infantry', planetId: 'mr', amount: 1 });
     act().addExpansion('te');
     expect(game().pds).toEqual({ mrte: 1 });
-    expect(round().entries[0]).toMatchObject({ delta: { ground: { mrte: { infantry: -1 } } } });
+    expect(round().entries[0]).toMatchObject({ delta: { ground: { mrte: { infantry: 1 } } } });
   });
 
   test('an opponent who leaves takes the PDS of their planets along', () => {
@@ -494,5 +498,41 @@ describe('merged adjustments and structures', () => {
     act().setPds('q', 1);
     act().removeOpponent(0);
     expect(game().pds).toEqual({ q: 1 });
+  });
+});
+
+
+describe('enemy ground units by planet', () => {
+  test('they are set with undo, and nothing left leaves no record', () => {
+    const [{ id }] = game().opponents;
+    act().setEnemyGround('p', id, { infantry: 2 });
+    expect(game().enemyGround).toEqual({ p: { [id]: { infantry: 2 } } });
+    act().setEnemyGround('p', id, {});
+    expect(game().enemyGround).toEqual({});
+    act().undo();
+    expect(game().enemyGround).toEqual({ p: { [id]: { infantry: 2 } } });
+  });
+
+  test('the same counts leave no undo step', () => {
+    act().setEnemyGround('p', game().opponents[0].id, {});
+    expect(act().canUndo).toBe(false);
+  });
+
+  test('on Mecatol Rex they follow the planet, and so does production on it', () => {
+    const [{ id }] = game().opponents;
+    act().setEnemyGround('mr', id, { mech: 1 });
+    act().addEntry(1, { type: 'tactical', systemId: '0,0', moves: [], landings: [], production: { infantry: 1 }, payment: { planets: [], tradeGoods: 0 }, productionGround: { mr: { infantry: 1 } } }, 'action');
+    act().addExpansion('te');
+    expect(game().enemyGround).toEqual({ mrte: { [id]: { mech: 1 } } });
+    expect(round().entries[0]).toMatchObject({ productionGround: { mrte: { infantry: 1 } } });
+  });
+
+  test('an opponent who leaves takes them along, and they count as holdings', () => {
+    const [{ id }, other] = game().opponents;
+    act().setEnemyGround('p', id, { infantry: 2 });
+    act().setEnemyGround('p', other.id, { mech: 1 });
+    expect(opponentHoldings(game(), id).units).toBe(2);
+    act().removeOpponent(0);
+    expect(game().enemyGround).toEqual({ p: { [other.id]: { mech: 1 } } });
   });
 });

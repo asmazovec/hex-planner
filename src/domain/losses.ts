@@ -1,4 +1,5 @@
-import type { AdjustmentDelta, AdjustmentKind, Entry, Round, UnitCounts, UnitId } from './types';
+import { project } from './project';
+import type { AdjustmentDelta, AdjustmentKind, DataPack, Entry, Game, Phase, Round, UnitCounts, UnitId } from './types';
 
 /**
  * What the big hex records: one adjustment per system, kind and round, which every tap edits. `delta.units` is always
@@ -62,6 +63,32 @@ export function changeMerged(round: Round, change: MergedChange, newId: () => st
     id: newId(), phase: 'action', status: kind === 'setup' ? 'done' : 'planned', type: 'adjustment', label: '', kind, delta,
   };
   return { ...round, entries: [...round.entries, entry] };
+}
+
+const LATER_PHASES: Phase[] = ['action', 'status', 'agenda'];
+
+/**
+ * A tap on the board. The replay stops a stack at nothing, so a removal written before the unit arrives would do nothing
+ * and leave a negative count behind, while the hex shows the end of the round. Such a removal moves the entry to the end
+ * of the first phase where it counts; one that counts nowhere leaves the round as it was.
+ */
+export function changeOnBoard(game: Game, round: Round, change: MergedChange, pack: DataPack, newId: () => string): Round {
+  const edited = changeMerged(round, change, newId);
+  if (change.amount >= 0) return edited;
+  const { kind, systemId, unit, planetId } = change;
+  const plan = game.plans.find(p => p.id === game.activePlanId);
+  if (!plan) return edited;
+  const shown = (candidate: Round): number => {
+    const { state } = project(game, { ...plan, rounds: [...plan.rounds.filter(r => r.number < round.number), candidate] }, 'forecast', pack);
+    return (planetId === null ? state.systems[systemId] : state.ground[planetId])?.[unit] ?? 0;
+  };
+  const entry = mergedEntry(edited, kind, systemId);
+  const rest = edited.entries.filter(e => e !== entry);
+  const moved: Round[] = entry
+    ? LATER_PHASES.slice(Math.max(0, LATER_PHASES.indexOf(entry.phase))).map(phase => ({ ...edited, entries: [...rest, { ...entry, phase }] }))
+    : [];
+  const wanted = shown(round) + change.amount;
+  return [edited, ...moved].find(candidate => shown(candidate) === wanted) ?? round;
 }
 
 /** The signed counts of a merged entry: space first, then by planet. */

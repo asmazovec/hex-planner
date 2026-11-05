@@ -39,6 +39,7 @@ const onClose = vi.fn();
 const open = (props: Partial<HexStageProps> = {}, usePack = pack) =>
   render(<HexStage slot={SLOT} roundNo={1} pack={usePack} onClose={onClose} {...props} />);
 const tap = (name: string | RegExp) => userEvent.click(screen.getByRole('button', { name }));
+const mode = (name: 'Setup' | 'Battle' | 'Build') => tap(name);
 const side = (name: string | RegExp) => userEvent.click(within(screen.getByRole('group', { name: 'Whose units' })).getByRole('button', { name }));
 const addMine = (units: UnitCounts, ground?: Record<string, UnitCounts>) =>
   store().addEntry(1, { type: 'adjustment', label: 'start', delta: { units: { systemId: SLOT, units }, ground } }, 'strategy');
@@ -128,9 +129,9 @@ describe('setup', () => {
     expect(game().enemyUnits[SLOT]).toEqual({ [opponent(1)]: { cruiser: 1 } });
     await side('Player 2');
     await tap('Infantry');
-    expect(game().enemyUnits[SLOT]).toEqual({ [opponent(1)]: { cruiser: 1 }, [opponent(0)]: { infantry: 1 } });
+    expect(game().enemyGround).toEqual({ [quann()]: { [opponent(0)]: { infantry: 1 } } });
     await tap('Cruiser ×1 (Player 3)');
-    expect(game().enemyUnits[SLOT]).toEqual({ [opponent(0)]: { infantry: 1 } });
+    expect(game().enemyUnits[SLOT]).toBeUndefined();
     store().undo();
     expect(game().enemyUnits[SLOT][opponent(1)]).toEqual({ cruiser: 1 });
     expect(entries()).toEqual([]);
@@ -459,5 +460,163 @@ describe('build', () => {
     await tap('Carrier ×1');
     expect(change).toHaveBeenCalledWith('carrier', null, -1);
     expect(entries().filter(e => e.type === 'adjustment' && e.kind)).toEqual([]);
+  });
+});
+
+
+describe('fix round 1', () => {
+  const tactical = () => entries().find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical')!;
+  const addTactical = (slot = SLOT) => store().addEntry(1, {
+    type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
+  }, 'action');
+  const total = () => document.querySelector('.stage-total b')!.textContent;
+  const hasRing = (key: string) => document.querySelector(`[data-stack="${key}"] .token-ring`) !== null;
+  const [first, second] = pack.tiles[TWO].planetIds;
+  const nameOf = (id: string) => pack.planets[id].name;
+
+  test('a token that arrives by a later tactical entry really goes when tapped', async () => {
+    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: '0,1', units: { carrier: 1 } } } }, 'strategy');
+    store().changeAdjustment(1, { kind: 'setup', systemId: SLOT, unit: 'cruiser', planetId: null, amount: 1 });
+    store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: '0,1', units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    open();
+    await tap('Carrier ×1');
+    expect(forecast().systems[SLOT]).toEqual({ cruiser: 1 });
+    expect(screen.queryByRole('button', { name: 'Carrier ×1' })).toBeNull();
+  });
+
+  test('a ground purchase on a tactical entry goes to the target planet, and the ring and take-back follow it', async () => {
+    store().setTile(SLOT, TWO);
+    store().setPlanetControl(first, 'me');
+    store().setPlanetControl(second, 'me');
+    addTactical();
+    open({ initialMode: 'build' });
+    await tap(new RegExp(`^${nameOf(second)}:`));
+    await tap('Infantry');
+    expect(tactical().production).toEqual({ infantry: 1 });
+    expect(tactical().productionGround).toEqual({ [second]: { infantry: 1 } });
+    expect(forecast().ground[second]).toEqual({ infantry: 1 });
+    expect(hasRing('me|infantry|1')).toBe(true);
+    await tap('Infantry ×1');
+    expect(tactical().production).toEqual({});
+    expect(tactical().productionGround).toBeUndefined();
+  });
+
+  test('the ring reads the place at the entry, not the control at the end of the round', () => {
+    store().setTile(SLOT, TWO);
+    store().setPlanetControl(second, 'me');
+    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { infantry: 1 } } } }, 'strategy');
+    const noPay = { planets: [], tradeGoods: 0 };
+    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: { infantry: 1 }, payment: noPay }, 'action');
+    store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: first, units: { infantry: 1 } }], production: {}, payment: noPay }, 'action');
+    open({ initialMode: 'build', tacticalId: id });
+    expect(hasRing('me|infantry|1')).toBe(true);
+    expect(hasRing('me|infantry|0')).toBe(false);
+  });
+
+  test('enemy ground units go to the target planet; both ways of removing them find them there', async () => {
+    store().setTile(SLOT, TWO);
+    open();
+    await side('Player 2');
+    await tap(new RegExp(`^${nameOf(second)}:`));
+    await tap('Infantry');
+    await tap('Infantry');
+    expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 2 } } });
+    expect(game().enemyUnits[SLOT]).toBeUndefined();
+    await tap('Infantry ×2 (Player 2)');
+    expect(game().enemyGround[second][opponent(0)]).toEqual({ infantry: 1 });
+    await mode('Battle');
+    await tap('Infantry ×1 (Player 2)');
+    expect(game().enemyGround).toEqual({});
+    await userEvent.click(within(screen.getByRole('group', { name: 'Losses, Player 2' })).getByRole('button', { name: /Give back Infantry/ }));
+    expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 1 } } });
+  });
+
+  test('an enemy ground purchase is on the planet too, and its take-back', async () => {
+    store().setTile(SLOT, TWO);
+    open({ initialMode: 'build' });
+    await side('Player 2');
+    await tap(new RegExp(`^${nameOf(second)}:`));
+    await tap('Infantry');
+    expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 1 } } });
+    expect(hasRing(`${opponent(0)}|infantry|1`)).toBe(true);
+    await tap('Infantry ×1 (Player 2)');
+    expect(game().enemyGround).toEqual({});
+  });
+
+  test('enemy ground units left in the system are still removed from there', async () => {
+    store().setEnemyUnits(SLOT, opponent(0), { infantry: 1 });
+    open();
+    await tap('Infantry ×1 (Player 2)');
+    expect(game().enemyUnits[SLOT]).toBeUndefined();
+  });
+
+  test('the price follows the level at that entry', async () => {
+    store().setFaction('muaat');
+    const id = addTactical();
+    store().addEntry(1, { type: 'secondary', upgrades: ['warsun'] }, 'action');
+    open({ initialMode: 'build', tacticalId: id });
+    const warsun = within(screen.getByRole('button', { name: 'War Sun' }));
+    expect(warsun.getByText('12')).toBeVisible();
+    await tap('War Sun');
+    expect(total()).toBe('12');
+    cleanup();
+    store().toggleUpgrade('me', 'warsun');
+    open({ initialMode: 'build', tacticalId: id });
+    expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();
+    expect(total()).toBe('10');
+  });
+
+  test('without a tactical entry the price is that of the forecast', () => {
+    store().setFaction('muaat');
+    store().addEntry(1, { type: 'secondary', upgrades: ['warsun'] }, 'action');
+    open({ initialMode: 'build' });
+    expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();
+  });
+
+  test('the entry being edited takes the purchase, not the last one on the system', async () => {
+    const edited = addTactical();
+    const last = addTactical();
+    open({ initialMode: 'build', tacticalId: edited });
+    await tap('Cruiser');
+    const of = (id: string) => entries().find(e => e.id === id) as Extract<Entry, { type: 'tactical' }>;
+    expect(of(edited).production).toEqual({ cruiser: 1 });
+    expect(of(last).production).toEqual({});
+  });
+
+  test('control and readiness follow the state shown, the units the forecast', () => {
+    const shown = { ...forecast(), control: { [quann()]: 'enemy' as const }, exhausted: [quann()] };
+    open({ shownState: shown });
+    const control = within(screen.getByRole('group', { name: `Control of ${nameOf(quann())}` }));
+    expect(control.getByRole('button', { name: 'Player 2' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(screen.getByRole('group', { name: nameOf(quann()) })).getByText(/Exhausted/)).toBeVisible();
+  });
+
+  test('a leaving token has no hit circle', async () => {
+    addMine({ carrier: 1 });
+    const { container } = open();
+    await tap('Carrier ×1');
+    expect(container.querySelector('[data-stack="me|carrier|-"] .token-hit')).toBeNull();
+  });
+
+  test('the ring has a dark outer stroke', async () => {
+    const { container } = open({ initialMode: 'build' });
+    await tap('Carrier');
+    expect(container.querySelector('[data-stack="me|carrier|-"] .token-ring-shade')).not.toBeNull();
+  });
+
+  test('the loss strip names the planet when two planets lost one type', async () => {
+    store().setTile(SLOT, TWO);
+    addMine({}, { [first]: { infantry: 1, mech: 1 }, [second]: { infantry: 1 } });
+    open({ initialMode: 'battle' });
+    const strip = within(screen.getByRole('group', { name: 'Losses, mine' }));
+    await userEvent.click(document.querySelector('[data-stack="me|infantry|0"] .token-hit')!);
+    expect(strip.getByRole('button', { name: 'Give back Infantry' })).toBeVisible();
+    await userEvent.click(document.querySelector('[data-stack="me|mech|0"] .token-hit')!);
+    expect(strip.getByRole('button', { name: 'Give back Mech' })).toBeVisible();
+    await userEvent.click(document.querySelector('[data-stack="me|infantry|1"] .token-hit')!);
+    const named = strip.getByRole('button', { name: `Give back Infantry, ${nameOf(second)}` });
+    expect(named).toHaveTextContent(nameOf(second));
+    expect(strip.getByRole('button', { name: `Give back Infantry, ${nameOf(first)}` })).toBeVisible();
+    expect(strip.getByRole('button', { name: 'Give back Mech' })).toBeVisible();
   });
 });

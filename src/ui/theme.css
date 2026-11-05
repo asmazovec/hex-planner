@@ -231,7 +231,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .stage-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: var(--font-s); }
 .stage-total b { font-size: var(--font-xl); color: var(--gold); }
 .stage-losses { display: flex; flex-wrap: wrap; gap: 5px; }
-.stage-loss { position: relative; width: 62px; height: 62px; padding: 0; background: var(--surface-2); }
+.stage-loss { position: relative; display: flex; flex-direction: column; align-items: center; width: 62px; min-height: 62px; padding: 0 0 2px; background: var(--surface-2); }
+.stage-loss small { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 400; color: var(--text-muted); }
 .stage-loss i { position: absolute; right: 3px; bottom: 1px; font-style: normal; font-weight: 700; font-size: 12px; color: var(--text); }
 .stage-facts { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border); }
 .stage-planet { display: flex; flex-direction: column; gap: 4px; }
@@ -243,6 +244,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-stage .token-hit { fill: transparent; cursor: pointer; }
 .tile-stage [data-unit] { pointer-events: none; }
 .token-ring { fill: none; stroke: var(--gold); stroke-width: 5; pointer-events: none; }
+.token-ring-shade { fill: none; stroke: var(--bg); stroke-width: 10; pointer-events: none; }
 .planet-target { fill: none; stroke: #eef1f6; stroke-width: 1.6; }
 @media (max-width: 860px) {
   .stage-dialog { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }

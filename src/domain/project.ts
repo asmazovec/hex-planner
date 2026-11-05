@@ -188,10 +188,8 @@ export function tacticalMeters(
 export const productionPlanet = (game: Game, state: GameState, systemId: string, pack: DataPack): string | null =>
   planetsOf(game, systemId, pack).find(p => state.control[p] === 'me') ?? null;
 
-/** What happens in the target after the moves: ground units land, then what was built is placed. */
-function landAndBuild(
-  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
-): void {
+/** Ground units land in the target after the moves. */
+function landUnits(state: GameState, target: string, entry: TacticalEntry, warnings: Warning[]): void {
   const wanted: UnitCounts = {};
   for (const landing of entry.landings) {
     for (const id of unitIds(landing.units)) wanted[id] = (wanted[id] ?? 0) + (landing.units[id] ?? 0);
@@ -212,20 +210,53 @@ function landAndBuild(
     }
     state.control[landing.planetId] = 'me';
   }
-  placeProduction(game, state, target, entry.production, pack);
 }
 
-/** Ships go to the space area; ground forces to one of my planets there, or to space if I have none. */
-function placeProduction(game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack): void {
-  const shipsPart: UnitCounts = {};
-  const groundPart: UnitCounts = {};
-  for (const id of unitIds(units)) (pack.units[id]?.ground ? groundPart : shipsPart)[id] = units[id];
-  add(state.systems, target, shipsPart);
-  if (unitIds(groundPart).length > 0) {
-    const planet = productionPlanet(game, state, target, pack);
-    if (planet) add(state.ground, planet, groundPart);
-    else add(state.systems, target, groundPart);
+export interface ProductionPlace { unit: UnitId; /** Null for the space area. */ planetId: string | null; count: number }
+
+/** Ships go to the space area; ground forces to the planets they were bought on, the rest to one of my planets there, or to space if I have none. */
+function placesOf(
+  game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {},
+): ProductionPlace[] {
+  const places: ProductionPlace[] = [];
+  for (const unit of unitIds(units)) {
+    let left = units[unit] ?? 0;
+    if (pack.units[unit]?.ground) {
+      for (const [planetId, counts] of Object.entries(onPlanets)) {
+        const count = Math.min(left, counts[unit] ?? 0);
+        if (count > 0) places.push({ unit, planetId, count });
+        left -= count;
+      }
+    }
+    if (left > 0) places.push({ unit, planetId: pack.units[unit]?.ground ? productionPlanet(game, state, target, pack) : null, count: left });
   }
+  return places;
+}
+
+function placeProduction(
+  game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets?: Record<string, UnitCounts>,
+): void {
+  for (const { unit, planetId, count } of placesOf(game, state, target, units, pack, onPlanets)) {
+    add(planetId === null ? state.systems : state.ground, planetId ?? target, { [unit]: count });
+  }
+}
+
+/** What happens in the target after the moves: ground units land, then what was built is placed. */
+function landAndBuild(
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
+): void {
+  landUnits(state, target, entry, warnings);
+  placeProduction(game, state, target, entry.production, pack, entry.productionGround);
+}
+
+/** Where a tactical entry's production stands, as the replay places it: after the entry's own moves and landings. */
+export function productionPlaces(game: Game, entry: TacticalEntry, before: GameState, pack: DataPack): ProductionPlace[] {
+  const target = entry.systemId;
+  if (target === null) return [];
+  const state = structuredClone(before);
+  applyMoves(game, state, target, entry, pack, []);
+  landUnits(state, target, entry, []);
+  return placesOf(game, state, target, entry.production, pack, entry.productionGround);
 }
 
 /** The capacity and the fleet pool of a system after units arrived or were built there. */

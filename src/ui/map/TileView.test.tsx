@@ -593,3 +593,16 @@ test('control stays on the rim and an exhausted planet keeps its look with the t
   expect(group).toHaveClass('planet-exhausted');
   expect(group.querySelector('.planet-trait-hazardous')).not.toBeNull();
 });
+
+
+test('enemy ground units stand on the arc of their own planet, merged with any left in the system', () => {
+  const [first, second] = pack.tiles['71'].planetIds;
+  setup('71', g => {
+    const [{ id }] = g.opponents;
+    g.enemyGround = { [second]: { [id]: { infantry: 3 } }, [first]: { [id]: { infantry: 1 } } };
+    g.enemyUnits['1,0'] = { [id]: { infantry: 1 } };
+  });
+  expect(stackOf('Infantry ×2 (Player 2)')).toHaveAttribute('data-planet', '0');
+  expect(document.querySelectorAll('[data-stack$="|infantry|1"]')).toHaveLength(1);
+  expect(document.querySelectorAll('[data-stack$="|infantry|0"]')).toHaveLength(1);
+});

@@ -179,6 +179,7 @@ test('production without a dock warns and still works', async () => {
 });
 
 test('a merged entry names its system and opens the big hex in its own mode', async () => {
+  useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { carrier: 1 } } } }, 'strategy');
   useGame.getState().changeAdjustment(1, { kind: 'losses', systemId: TARGET, unit: 'carrier', planetId: null, amount: -1 });
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Losses · 25' }));

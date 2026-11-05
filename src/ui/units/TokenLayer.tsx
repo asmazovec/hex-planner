@@ -69,8 +69,13 @@ export function TokenLayer({ items, colourOf, labelOf, onTap, ringed }: TokenLay
         style={{ transform: `translate(${item.x.toFixed(2)}px,${item.y.toFixed(2)}px) scale(${(item.size / 100).toFixed(4)})` }}
       >
         <g className={motion} {...button}>
-          {onTap && <circle r={HIT_RADIUS} className="token-hit" />}
-          {!gone && ringed?.(item) && <circle r={RING_RADIUS} className="token-ring" />}
+          {onTap && !gone && <circle r={HIT_RADIUS} className="token-hit" />}
+          {!gone && ringed?.(item) && (
+            <>
+              <circle r={RING_RADIUS} className="token-ring-shade" />
+              <circle r={RING_RADIUS} className="token-ring" />
+            </>
+          )}
           <UnitToken kind={item.kind} colour={colourOf(item)} count={item.count} size={item.size} label={gone || onTap ? undefined : labelOf(item)} />
         </g>
       </g>

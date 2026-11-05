@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { loadPack } from '../data/loadPack';
 import type { Game } from '../domain/types';
 
 export const CURRENT_SCHEMA = 4;
@@ -35,7 +36,7 @@ const entrySchema = z.discriminatedUnion('type', [
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
     moves: z.array(z.object({ from: z.string(), units: unitCounts })),
     landings: z.array(z.object({ planetId: z.string(), units: unitCounts })),
-    production: unitCounts, payment, free: z.boolean().optional(), fromCard: z.string().optional(),
+    production: unitCounts, productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(),
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic') }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
@@ -74,6 +75,7 @@ export const gameSchema = z.object({
   opponents: z.array(z.object({ id: z.string(), faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
   upgrades: z.object({ me: z.array(unitId), opponents: z.record(z.string(), z.array(unitId)) }),
   enemyUnits: z.record(z.string(), z.record(z.string(), unitCounts)),
+  enemyGround: z.record(z.string(), z.record(z.string(), unitCounts)),
   planetControl: z.record(z.string(), control),
   planetOwner: z.record(z.string(), z.string()),
   docks: z.array(z.string()),
@@ -127,6 +129,27 @@ function withOwners(doc: Record<string, unknown>): Record<string, unknown> {
   return { ...doc, schemaVersion: 2, opponents, enemyUnits: movedUnits, planetOwner };
 }
 
+/** Enemy infantry and mechs get a planet: the first of their system. Without a planet they stay in space. */
+function withEnemyGround(doc: Record<string, unknown>): Record<string, unknown> {
+  const { enemyUnits, map, expansions } = doc;
+  if (!isRecord(enemyUnits) || !isRecord(map)) return { ...doc, enemyGround: {} };
+  const pack = loadPack((Array.isArray(expansions) ? expansions : []).filter(e => e === 'pok' || e === 'te'));
+  const enemyGround: Record<string, Record<string, Record<string, unknown>>> = {};
+  const space = Object.fromEntries(Object.entries(enemyUnits).flatMap(([slot, byOwner]) => {
+    const planet = pack.tiles[String(map[slot]).split('@')[0]]?.planetIds[0];
+    if (!planet || !isRecord(byOwner)) return [[slot, byOwner]];
+    const owners = Object.entries(byOwner).flatMap(([owner, units]) => {
+      if (!isRecord(units)) return [[owner, units]];
+      const { infantry, mech, ...ships } = units;
+      const ground = { ...(infantry === undefined ? {} : { infantry }), ...(mech === undefined ? {} : { mech }) };
+      if (Object.keys(ground).length > 0) (enemyGround[planet] ??= {})[owner] = ground;
+      return Object.keys(ships).length > 0 ? [[owner, ships]] : [];
+    });
+    return owners.length > 0 ? [[slot, Object.fromEntries(owners)]] : [];
+  }));
+  return { ...doc, enemyUnits: space, enemyGround };
+}
+
 /** Brings a parsed file of an older schema up to CURRENT_SCHEMA, one version at a time. */
 export function migrate(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
@@ -137,5 +160,7 @@ export function migrate(raw: unknown): unknown {
   doc = withSeats(doc);
   if (doc.schemaVersion === 1) doc = withOwners(doc);
   if (doc.schemaVersion === 2) doc = { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } };
-  return doc.schemaVersion === 3 ? { ...doc, schemaVersion: 4, pds: {} } : doc;
+  if (doc.schemaVersion === 3) doc = { ...doc, schemaVersion: 4, pds: {} };
+  // Version 4 was saved for a while without this field.
+  return doc.schemaVersion === 4 && doc.enemyGround === undefined ? withEnemyGround(doc) : doc;
 }

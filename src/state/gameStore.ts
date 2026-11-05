@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
-import { changeMerged, type MergedChange } from '../domain/losses';
+import { changeOnBoard, type MergedChange } from '../domain/losses';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { withTeMecatol } from '../domain/mecatol';
@@ -155,6 +155,7 @@ export interface GameStore {
   /** Marks a ship upgrade by hand: `me` edits my baseline, an opponent id that opponent's list. */
   toggleUpgrade(player: string, unit: UnitId): void;
   setEnemyUnits(systemId: string, opponentId: string, units: UnitCounts): void;
+  setEnemyGround(planetId: string, opponentId: string, units: UnitCounts): void;
   /** `owner` is `me`, an opponent id, or null for a free planet. */
   setPlanetControl(planetId: string, owner: string | null): void;
   /** Marks whether a planet has a space dock. */
@@ -321,6 +322,13 @@ export const useGame = create<GameStore>((set, get) => {
         const next = setOrDelete(inSystem, opponentId, hasUnits(units) ? units : null);
         return withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, Object.keys(next).length > 0 ? next : null));
       }),
+    setEnemyGround: (planetId, opponentId, units) =>
+      commit(g => {
+        const onPlanet = g.enemyGround[planetId] ?? {};
+        if (sameUnits(onPlanet[opponentId] ?? {}, units)) return g;
+        const next = setOrDelete(onPlanet, opponentId, hasUnits(units) ? units : null);
+        return withField(g, 'enemyGround', setOrDelete(g.enemyGround, planetId, Object.keys(next).length > 0 ? next : null));
+      }),
     setPlanetControl: (planetId, owner) =>
       commit(g => {
         const control = owner === null ? null : owner === 'me' ? 'me' : 'enemy';
@@ -333,7 +341,7 @@ export const useGame = create<GameStore>((set, get) => {
         ? g
         : { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(p => p !== planetId) })),
     setPds: (planetId, count) => commit(g => withField(g, 'pds', setOrDelete(g.pds, planetId, count > 0 ? count : null))),
-    changeAdjustment: (roundNo, change) => commit(g => editRound(g, roundNo, r => changeMerged(r, change, newId))),
+    changeAdjustment: (roundNo, change) => commit(g => editRound(g, roundNo, r => changeOnBoard(g, r, change, loadPack(g.expansions), newId))),
     setSlice: (id, owner) =>
       commit(g => {
         const slices = setOrDelete(g.expedition.slices, id, owner);

@@ -80,7 +80,7 @@ export function PlanScreen() {
   const [roundNo, setRoundNo] = useState<number | null>(null);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
   const [sheet, setSheet] = useState<string | null>(null);
-  const [stage, setStage] = useState<{ slot: string; mode: StageMode; only?: 'build' | 'units'; forCard?: boolean } | null>(null);
+  const [stage, setStage] = useState<{ slot: string; mode: StageMode; only?: 'build' | 'units'; forCard?: boolean; tacticalId?: string } | null>(null);
   const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -400,7 +400,7 @@ export function PlanScreen() {
                 }}
                 onOpenPicker={source => setEditing({ ...session, pickerFrom: source })}
                 onManualPayment={open => setManualPayments(ids => (open ? [...ids, entry.id] : ids.filter(id => id !== entry.id)))}
-                onOpenShop={() => { if (entry.systemId !== null) setStage({ slot: entry.systemId, mode: 'build' }); }}
+                onOpenShop={() => { if (entry.systemId !== null) setStage({ slot: entry.systemId, mode: 'build', tacticalId: entry.id }); }}
                 onDone={() => setEditing(null)}
               />
             )}
@@ -441,7 +441,7 @@ export function PlanScreen() {
               cardEntry, { effects }, stateBeforeEntry(game, plan, cardEntry.id, pack), game.faction, pack, manualPayments.includes(cardEntry.id),
             )))
             : undefined}
-          manualPayments={manualPayments} onClose={closeStage}
+          manualPayments={manualPayments} tacticalId={stage.tacticalId} shownState={shownState} onClose={closeStage}
         />
       )}
       <div className="plan-switch" role="group" aria-label={t('plan.views')}>
