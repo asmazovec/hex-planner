@@ -2,11 +2,13 @@ import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../domain/cards';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
+import { tacticalNumbers } from '../../domain/route';
 import { playersOf } from '../../domain/players';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { factionShortName } from '../players/factionName';
 import { UNIT_ORDER } from '../units/unitOrder';
+import { EntrySteps } from './EntrySteps';
 import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
 import { Stepper } from './Stepper';
@@ -30,7 +32,16 @@ export interface EntryListProps {
   state: GameState;
   /** The entry whose fields are shown. */
   openId: string | null;
+  /** The pencil: opens the entry's editor. */
   onOpen: (entry: Entry) => void;
+  /** The entry being read: its steps stand under its row. */
+  shownId?: string | null;
+  /** A tap on the row shows the entry, a second tap closes it. */
+  onShow?: (entry: Entry) => void;
+  /** The entry was just marked as done. */
+  onDone?: (entry: Entry) => void;
+  /** The status entry was added; it opens for its tokens and points. */
+  onStatusAdded?: (id: string) => void;
   /** Stands in the strategy section in place of its title and line. */
   strategy?: ReactNode;
   /** The add button of the action section, kept in view while its list is long. */
@@ -149,8 +160,22 @@ function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =
   }
 }
 
+/** The number of a tactical action, in the same hexagon as on its arrows. */
+function OrderHex({ number, label }: { number: number; label: string }) {
+  return (
+    <span className="order-hex" role="img" aria-label={label}>
+      <svg viewBox="-13 -11.5 26 23" width="26" height="23" aria-hidden="true">
+        <polygon points="12,0 6,10.4 -6,10.4 -12,0 -6,-10.4 6,-10.4" />
+      </svg>
+      <b aria-hidden="true">{number}</b>
+    </span>
+  );
+}
+
 /** A round's four phases, always shown. Entries move by the handle or the arrows within a phase, get marked done or deleted. */
-export function EntryList({ game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, strategy, addAction }: EntryListProps) {
+export function EntryList({
+  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
+}: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
   const moveEntry = useGame(s => s.moveEntry);
@@ -159,6 +184,7 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
   const addStatusEntry = useGame(s => s.addStatusEntry);
   const listRef = useRef<HTMLDivElement>(null);
   const [drag, setDrag] = useState<{ id: string; pointerId: number; index: number } | null>(null);
+  const numbers = tacticalNumbers(round.entries);
 
   const dropIndex = (entry: Entry, clientY: number): number => {
     const others = round.entries.filter(e => e.phase === entry.phase && e.id !== entry.id);
@@ -201,18 +227,24 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
                 const list = warnings[entry.id] ?? [];
                 const before = dragging && others[drag.index]?.id === entry.id;
                 const after = dragging && drag.index === others.length && others.at(-1)?.id === entry.id;
-                const cls = ['entry', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag?.id === entry.id && 'entry-dragging',
+                const shown = entry.id === shownId;
+                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag?.id === entry.id && 'entry-dragging',
                   before && 'entry-drop-before', after && 'entry-drop-after'].filter(Boolean).join(' ');
                 return (
                   <li key={entry.id} className={cls} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...handlers(entry, index)}>⠿</button>}
-                      <button type="button" className="entry-label" onClick={() => onOpen(entry)}>{label}</button>
+                      {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
+                      <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>{label}</button>
+                      {entry.type !== 'pass' && <button type="button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}>✎</button>}
                       <label className="check entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
                         <input
                           type="checkbox" checked={entry.status === 'done'}
-                          onChange={e => setEntryStatus(entry.id, e.target.checked ? 'done' : 'planned')}
+                          onChange={e => {
+                            setEntryStatus(entry.id, e.target.checked ? 'done' : 'planned');
+                            if (e.target.checked) onDone?.(entry);
+                          }}
                         />
                       </label>
                       {movable && (
@@ -238,7 +270,8 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
                         {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
                       </ul>
                     )}
-                    {entry.type === 'statusTokens' && (
+                    {shown && <EntrySteps entry={entry} game={game} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
+                    {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
                         <StatusFields entry={entry} game={game} pack={pack} state={state} />
                       </div>
@@ -269,7 +302,7 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
             </ul>
             {phase === 'action' && addAction && <div className="phase-add">{addAction}</div>}
             {phase === 'status' && !entries.some(e => e.type === 'statusTokens') && (
-              <button type="button" onClick={() => addStatusEntry(round.number)}>{t('plan.entries.statusTokens')}</button>
+              <button type="button" onClick={() => onStatusAdded?.(addStatusEntry(round.number))}>{t('plan.entries.statusTokens')}</button>
             )}
           </section>
         );

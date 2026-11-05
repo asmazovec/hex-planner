@@ -12,7 +12,7 @@ import { UNIT_ORDER } from '../units/unitOrder';
 import { hexPoints, slotToPixel } from './geometry';
 import { opponentName } from './opponentName';
 
-export type Highlight = 'valid' | 'dim' | 'active';
+export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
 
 export interface TileViewProps {
   slotKey: string;

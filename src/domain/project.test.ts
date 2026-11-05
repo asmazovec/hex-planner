@@ -792,3 +792,66 @@ describe('production on a chosen planet', () => {
     expect(run(g).state.systems.T).toEqual({ infantry: 1 });
   });
 });
+
+describe('pickups on the way', () => {
+  const route = (over: Partial<TacticalBody>, id = 'r') => withId(id, entry(tactical({ systemId: 'T', ...over })));
+  const game = (entries: Entry[]) => {
+    const g = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, pack);
+    g.map = { A: 't1', M: 't2', T: 't1' };
+    g.plans[0].rounds[0].entries = [setup('A', { carrier: 1 }), setup('M', { fighter: 2 }), ...entries];
+    return g;
+  };
+
+  test('units leave the transit system and arrive with the group', () => {
+    const g = game([route({ moves: [
+      { from: 'A', units: { carrier: 1 }, via: ['M'] },
+      { from: 'M', units: { fighter: 2 }, pickupOf: 'A' },
+    ] })]);
+    const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
+    expect(state.systems.M).toEqual({});
+    expect(state.systems.T).toEqual({ carrier: 1, fighter: 2 });
+    expect(warningsByEntry.r).toEqual([]);
+  });
+
+  test('a pickup counts against the capacity of the group it joins, not as a group of its own', () => {
+    const g = game([route({ moves: [
+      { from: 'M', units: { fighter: 2 }, pickupOf: 'A' },
+      { from: 'A', units: { cruiser: 1 }, via: ['M'] },
+    ] })]);
+    g.plans[0].rounds[0].entries[0] = setup('A', { cruiser: 1 });
+    const warnings = project(g, g.plans[0], 'forecast', pack).warningsByEntry.r.filter(w => w.code === 'capacityGroup');
+    expect(warnings).toEqual([{ code: 'capacityGroup', params: { from: 'A', load: 2, capacity: 0 } }]);
+  });
+
+  test('ground units are picked up from a planet on the way, and the meters count them', () => {
+    const body = tactical({ systemId: 'T', moves: [
+      { from: 'A', units: { carrier: 1 }, via: ['M'] },
+      { from: 'lazar', units: { infantry: 3 }, pickupOf: 'A' },
+    ] });
+    const e = withId('r', entry(body));
+    const g = game([withId('g', entry({ type: 'adjustment', label: '', delta: { ground: { lazar: { infantry: 3 } } } }, 'strategy', 'done')), e]);
+    const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
+    expect(state.ground.lazar).toEqual({});
+    expect(state.systems.T).toEqual({ carrier: 1, infantry: 3 });
+    expect(warningsByEntry.r).toEqual([]);
+    const before = stateBeforeEntry(g, g.plans[0], 'r', pack);
+    expect(tacticalMeters(g, e as TacticalBody, 'A', before, pack).group).toEqual({ load: 3, capacity: 4 });
+  });
+
+  test('a source with nothing chosen yet moves nothing and warns of nothing', () => {
+    const g = game([route({ moves: [{ from: 'A', units: {} }] })]);
+    const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
+    expect(state.systems.A).toEqual({ carrier: 1 });
+    expect(warningsByEntry.r).toEqual([]);
+  });
+
+  test('choosing more than exists on the way warns and blocks nothing', () => {
+    const g = game([route({ moves: [
+      { from: 'A', units: { carrier: 1 }, via: ['M'] },
+      { from: 'M', units: { fighter: 3 }, pickupOf: 'A' },
+    ] })]);
+    const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
+    expect(state.systems.T).toEqual({ carrier: 1, fighter: 2 });
+    expect(warningsByEntry.r).toContainEqual({ code: 'unitsMissing', params: { where: 'M', unit: 'fighter', missing: 1 } });
+  });
+});

@@ -96,7 +96,8 @@
     },
     "hyperlane": "Hyperlane",
     "wormhole": "Wormhole",
-    "emptySystem": "Empty"
+    "emptySystem": "Empty",
+    "home": "Whole map"
   },
   "builder": {
     "title": "Set the tile",
@@ -190,19 +191,19 @@
       },
       "strategic": "Strategy",
       "secondary": "Secondary",
-      "forToken": "primary for a token"
+      "forToken": "primary for a token",
+      "edit": "Edit: {{name}}",
+      "number": "Action {{n}}"
     },
     "tactical": {
       "title": "Tactical action",
       "done": "Done editing",
       "cancel": "Cancel",
-      "system": "System {{name}}",
+      "system": "Active system: {{name}}",
       "token": "Tactic tokens: {{from}} → {{to}}",
       "pickHint": "Tap the system to activate: it spends a tactic token.",
-      "sourceHint": "Tap the system the ships come from.",
-      "moves": "Movement",
-      "moveHint": "Drag from a tile with ships to the active system, or back.",
-      "addSource": "Add source",
+      "moves": "Sources",
+      "moveHint": "Drag from a system to the active one through the hexes you need, or tap the system and then the hexes in turn.",
       "landing": "Landing (optional)",
       "landingOn": "Landing on {{planet}}",
       "landingCount": "{{unit}}: {{available}}, assigned {{assigned}}",
@@ -211,15 +212,34 @@
       "warnings": "Warnings",
       "openShop": "Open the shop",
       "freeToken": "Warfare: no tactic token is spent and no command token goes down.",
-      "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent."
+      "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent.",
+      "noSources": "Drag the first arrow.",
+      "wrongSystem": "Wrong system? Tap it again.",
+      "tapHint": "Tap the hexes in order and finish on the active system. A tap on the last hex removes it.",
+      "via": "{{name}} via {{list}}",
+      "noShips": "no ships",
+      "cargoShort": ", cargo {{n}}",
+      "removeSource": "Remove source {{name}}"
     },
     "picker": {
-      "title": "From {{from}} to {{to}}",
+      "title": "Flight {{from}} → {{to}}",
       "close": "Close picker",
-      "empty": "None of your units are here.",
-      "capacity": "Capacity: {{load}} of {{capacity}}",
       "fleet": "Fleet pool: {{ships}} of {{fleet}}",
-      "removeSource": "Remove arrow"
+      "removeSource": "Remove route",
+      "inSystem": "In system {{name}}",
+      "flying": "Flying",
+      "nobody": "Nobody yet",
+      "allFlying": "All the ships are flying already.",
+      "emptySource": "No ships here. You can choose ahead: the app will warn.",
+      "cargo": "Cargo on board: {{load}} of {{capacity}}",
+      "noRoom": "No room for cargo: the ships have nothing to carry it in.",
+      "start": "start",
+      "transit": "on the way",
+      "target": "target",
+      "nothing": "Nothing to take",
+      "take": "Take one {{unit}}",
+      "put": "Return one {{unit}}",
+      "fly": "Fly"
     },
     "stepper": {
       "plus": "Add one {{name}}",
@@ -327,6 +347,42 @@
       "rearrange": "Rearrange tokens",
       "reset": "Reset",
       "noExhausted": "No planets of yours are exhausted at this point."
+    },
+    "steps": {
+      "activate": "Activate {{name}}",
+      "token": "A tactic token goes into the system.",
+      "free": "No token: Warfare.",
+      "fly": "Fly {{path}}",
+      "nobody": "Nobody chosen",
+      "board": "Take on board in {{name}}",
+      "pickup": "Pick up on the way in {{name}}",
+      "cargo": "Cargo {{load}} of {{capacity}}",
+      "overCapacity": "More than there is room for",
+      "landing": "Land on {{planet}}",
+      "build": "Build",
+      "buildIn": "Build in {{name}}",
+      "paid": "Paid with: {{list}}",
+      "tradeGoods": "trade goods {{n}}",
+      "noCard": "No card chosen.",
+      "strategyToken": "Costs 1 strategy token.",
+      "cost": {
+        "resources": "Cost: {{n}} resources",
+        "influence": "Cost: {{n}} influence"
+      },
+      "bought": "Buy {{n}} tokens",
+      "tokens": "Tokens: tactic {{tactic}}, fleet {{fleet}}, strategy {{strategy}}",
+      "system": "System {{name}}",
+      "readied": "Ready: {{list}}",
+      "speaker": "Speaker: {{name}}",
+      "freeSecondary": "Free secondary: {{list}}",
+      "mecatol": "Mecatol Rex under control: +1 point",
+      "structure": "{{what}} on {{planet}}",
+      "upgrades": "Upgrade",
+      "noNote": "No note.",
+      "noSlice": "No part chosen.",
+      "noChanges": "No changes.",
+      "points": "My points: +{{n}}",
+      "opponentPoints": "{{name}}: +{{n}}"
     }
   },
   "expedition": {

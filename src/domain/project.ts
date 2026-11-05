@@ -60,7 +60,7 @@ function take(
 }
 
 /** Whether my fighters move by themselves at this point of the replay: their current stat has a move value. */
-const fightersFly = (game: Game, upgrades: UnitId[], pack: DataPack): boolean =>
+export const fightersFly = (game: Game, upgrades: UnitId[], pack: DataPack): boolean =>
   (unitStats(game.faction, 'fighter', upgrades.includes('fighter'), pack)?.move ?? null) !== null;
 
 /** Cargo against the capacity of my ships at my current levels: only ground units and fighters that do not fly count as load. */
@@ -163,7 +163,7 @@ function applyMoves(
   for (const move of entry.moves) {
     const taken = take(move.from in pack.planets ? state.ground : state.systems, move.from, move.units, warnings);
     add(state.systems, target, taken);
-    const slot = sourceSlot(game, pack, move.from);
+    const slot = move.pickupOf ?? sourceSlot(game, pack, move.from);
     if (slot !== null && slot !== target) add(groups, slot, taken);
   }
   return groups;

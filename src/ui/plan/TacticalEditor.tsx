@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../domain/payment';
-import { productionCost, sourceSlot, systemPlanets } from '../../domain/project';
+import { productionCost, systemPlanets } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { PaymentBlock } from './PaymentBlock';
 import { Stepper } from './Stepper';
-import { addUnits, hasUnits, systemName, withCount, type TacticalEntry } from './tactical';
+import { addUnits, fliesNow, groupOf, hasUnits, sourcesOf, systemName, viaOf, withCount, withoutSource, type TacticalEntry } from './tactical';
 import { UnitPicker } from './UnitPicker';
 import { WarningText } from './WarningText';
 
@@ -16,13 +16,13 @@ export interface TacticalEditorProps {
   /** The state just before the entry. */
   before: GameState;
   warnings: Warning[];
-  addingSource: boolean;
   pickerFrom: string | null;
   manualPayment: boolean;
   onUpdate: (patch: Partial<TacticalEntry>) => void;
-  onAddSource: () => void;
   onOpenPicker: (source: string | null) => void;
   onManualPayment: (open: boolean) => void;
+  /** The ships of the action leave for the active system. */
+  onFly: () => void;
   /** Opens the shop of the big hex on the active system. */
   onOpenShop: () => void;
   onDone: () => void;
@@ -30,8 +30,8 @@ export interface TacticalEditorProps {
 
 /** The whole tactical action on one screen: system, arrows and units, optional landing and build, payment, warnings. */
 export function TacticalEditor({
-  game, pack, entry, before, warnings, addingSource, pickerFrom, manualPayment,
-  onUpdate, onAddSource, onOpenPicker, onManualPayment, onOpenShop, onDone,
+  game, pack, entry, before, warnings, pickerFrom, manualPayment,
+  onUpdate, onOpenPicker, onManualPayment, onFly, onOpenShop, onDone,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
@@ -44,8 +44,14 @@ export function TacticalEditor({
   const unitText = (units: UnitCounts): string =>
     UNIT_ORDER.filter(u => (units[u] ?? 0) > 0).map(u => `${t(`unit.${u}`)} ${units[u]}`).join(', ');
 
-  const sources = [...new Set(entry.moves.map(m => sourceSlot(game, pack, m.from)))]
-    .filter((s): s is string => s !== null);
+  const sources = sourcesOf(game, pack, entry);
+  /** A source in the list: its ships, then how much rides as cargo. */
+  const sourceLine = (source: string): string => {
+    const units = unitsIn(groupOf(game, pack, entry.moves, source));
+    const flying = Object.fromEntries((Object.keys(units) as UnitId[]).filter(u => fliesNow(game, pack, before.upgrades, u)).map(u => [u, units[u]])) as UnitCounts;
+    const cargo = (Object.keys(units) as UnitId[]).reduce((sum, u) => (u in flying ? sum : sum + (units[u] ?? 0)), 0);
+    return `${unitText(flying) || t('plan.tactical.noShips')}${cargo > 0 ? t('plan.tactical.cargoShort', { n: cargo }) : ''}`;
+  };
 
   const groundUnits = (['infantry', 'mech'] as UnitId[]).filter(u => pack.units[u]);
   const here = addUnits(before.systems[target ?? ''] ?? {}, unitsIn(entry.moves));
@@ -78,23 +84,32 @@ export function TacticalEditor({
           <div className="editor-section">
             <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>
             <span className="muted">{entry.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
+            {sources.length === 0 && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
           </div>
 
           <div className="editor-section">
             <strong>{t('plan.tactical.moves')}</strong>
             <span className="muted">{t('plan.tactical.moveHint')}</span>
-            <button type="button" aria-pressed={addingSource} onClick={onAddSource}>{t('plan.tactical.addSource')}</button>
-            {sources.filter(s => s !== pickerFrom).map(source => (
-              <button key={source} type="button" className="source-button" onClick={() => onOpenPicker(source)}>
-                {systemName(game, pack, source)}: {unitText(unitsIn(entry.moves.filter(m => sourceSlot(game, pack, m.from) === source)))}
-              </button>
-            ))}
+            {sources.length === 0 && <span className="muted">{t('plan.tactical.noSources')}</span>}
+            {sources.filter(s => s !== pickerFrom).map(source => {
+              const via = viaOf(entry, source);
+              const name = systemName(game, pack, source);
+              return (
+                <div key={source} className="source-row">
+                  <button type="button" className="source-button" onClick={() => onOpenPicker(source)}>
+                    {via.length > 0 ? t('plan.tactical.via', { name, list: via.map(v => systemName(game, pack, v)).join(', ') }) : name}
+                    <small>{sourceLine(source)}</small>
+                  </button>
+                  <button type="button" aria-label={t('plan.tactical.removeSource', { name })} onClick={() => onUpdate({ moves: withoutSource(game, pack, entry.moves, source) })}>✕</button>
+                </div>
+              );
+            })}
           </div>
 
           {pickerFrom !== null && (
             <UnitPicker
               game={game} pack={pack} before={before} entry={entry} source={pickerFrom}
-              onChange={moves => onUpdate({ moves })} onClose={() => onOpenPicker(null)}
+              onChange={moves => onUpdate({ moves })} onClose={() => onOpenPicker(null)} onFly={onFly}
             />
           )}
 

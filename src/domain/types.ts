@@ -187,10 +187,12 @@ export interface CardPlay {
 
 /**
  * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
- * (a slot key, or a planet id to pick ground units up) into `systemId`.
+ * (a slot key, or a planet id to pick ground units up) into `systemId`. The route of a source is held by the move
+ * whose `from` is that source: `via` lists the slots on the way, in flight order. A move with `pickupOf` takes units
+ * on board on the way: it joins the group of that source slot.
  */
 export type EntryBody =
-  | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts }[];
+  | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
       /** Where the ground units of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;

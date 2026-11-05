@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -25,6 +25,7 @@ beforeEach(() => {
   useGame.getState().setTile('0,-3', null);
   useGame.getState().setTile(HOME, '5');
   useGame.getState().setTile(TARGET, '25');
+  useGame.getState().setTile('1,1', '39');
 });
 
 const game = () => useGame.getState().game!;
@@ -71,15 +72,116 @@ test('cancelling the system choice leaves no entry', async () => {
   expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
 });
 
-test('a source can be added by taps, and opens the picker with a suggestion', async () => {
+const WAY = '1,1';
+const hoverPath = (slot: string) => { document.elementFromPoint = () => tile(slot); };
+
+async function addRouteByTaps(...slots: string[]) {
+  for (const slot of slots) await userEvent.click(tile(slot));
+}
+
+test('a route by taps: source, hexes in order, the active system; nothing is chosen at first', async () => {
   await chooseSystem();
   await userEvent.click(tile(HOME));
   expect(tactical().moves).toEqual([]);
-  await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
+  expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
+  await addRouteByTaps(WAY, TARGET);
+  expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY] }]);
+  expect(screen.getByText('Flight 5 → 25')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Fly' })).toBeDisabled();
+  expect(document.querySelector('.route')).toBeInTheDocument();
+  expect(tile(WAY)).toHaveClass('tile-path');
+  expect(tile(HOME)).toHaveClass('tile-source');
+});
+
+test('a tap on the last hex removes it, and on the source alone gives up', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, WAY, WAY, TARGET);
+  expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+  useGame.getState().updateEntry(tactical().id, { moves: [] });
+  await addRouteByTaps(HOME, HOME);
+  expect(screen.queryByRole('status')).toBeNull();
+  await addRouteByTaps(HOME);
+  expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
+});
+
+test('a straight arrow needs only the source and the active system, and keeps no way', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+});
+
+test('every arrow adds a source and keeps the earlier ones, also a source with no ships', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  await addRouteByTaps(WAY, TARGET);
+  expect(tactical().moves.map(m => m.from)).toEqual([HOME, WAY]);
+  expect(document.querySelectorAll('.route-line')).toHaveLength(2);
+  // The picker of an empty source offers everything: choosing ahead warns and blocks nothing.
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Dreadnought' }));
+  expect(tactical().moves[1]).toEqual({ from: WAY, units: { dreadnought: 1 } });
+  expect(within(screen.getByRole('list', { name: 'Warnings' })).getAllByRole('listitem').length).toBeGreaterThan(0);
+  expect(screen.getByRole('button', { name: 'Fly' })).toBeEnabled();
+});
+
+test('each source is listed with its units and can be removed', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+  const source = screen.getByRole('button', { name: /^5/ });
+  expect(source).toHaveTextContent('Carrier 1');
+  await userEvent.click(screen.getByRole('button', { name: 'Remove source 5' }));
+  expect(tactical().moves).toEqual([]);
+  expect(document.querySelector('.route-line')).toBeNull();
+});
+
+test('a source with nothing chosen goes when the editor closes', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  await addRouteByTaps(WAY, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+  await userEvent.click(screen.getByRole('button', { name: /^5/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
+  expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
+});
+
+test('a tap on the active system with no routes takes the action back: token returned, choosing again, one undo step', async () => {
+  await chooseSystem();
+  expect(screen.getByText('Active system: 25')).toBeVisible();
+  expect(screen.getByText('Wrong system? Tap it again.')).toBeVisible();
+  await userEvent.click(tile(TARGET));
+  expect(entries()).toHaveLength(0);
+  expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
+  expect(screen.getByRole('status')).toHaveTextContent('Tap the system');
   await userEvent.click(tile(HOME));
-  expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1, cruiser: 1, fighter: 2, infantry: 2 } }]);
-  expect(screen.getByText('Capacity: 4 of 4')).toBeVisible();
-  expect(document.querySelector('line.arrow')).toBeInTheDocument();
+  expect(tactical().systemId).toBe(HOME);
+  await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(entries()).toHaveLength(0);
+});
+
+test('with a route a tap on the active system cancels nothing', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(tile(TARGET));
+  expect(entries()).toHaveLength(1);
+  expect(screen.queryByText('Wrong system? Tap it again.')).toBeNull();
+});
+
+test('a drag through hexes records the way, and pulling it back removes the step', async () => {
+  await chooseSystem();
+  fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+  hoverPath(WAY);
+  fireEvent.pointerMove(window, { pointerId: 1, clientX: 2, clientY: 2 });
+  expect(tile(WAY)).toHaveClass('tile-path');
+  hoverPath('2,0');
+  fireEvent.pointerMove(window, { pointerId: 1, clientX: 3, clientY: 3 });
+  hoverPath(WAY);
+  fireEvent.pointerMove(window, { pointerId: 1, clientX: 2, clientY: 2 });
+  hoverPath(TARGET);
+  fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
+  expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY] }]);
 });
 
 test('an arrow drag opens the same picker, in both directions', async () => {
@@ -88,7 +190,7 @@ test('an arrow drag opens the same picker, in both directions', async () => {
   fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
-  expect(screen.getByText('Capacity: 4 of 4')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Close picker' })).toBeVisible();
 
   useGame.getState().updateEntry(tactical().id, { moves: [] });
   document.elementFromPoint = () => tile(HOME);
@@ -112,8 +214,8 @@ test('outside the editor a tile tap opens the big hex and drags do nothing', asy
 
 test('landing puts ground units on a planet and changes its control', async () => {
   await chooseSystem();
-  await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
-  await userEvent.click(tile(HOME));
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
   const planet = screen.getByRole('group', { name: 'Landing on Quann' });
   await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
@@ -130,14 +232,14 @@ test('landing is hidden in a system without planets', async () => {
 
 test('landing is hidden while no ground units are in the system', async () => {
   await chooseSystem();
-  expect(screen.getByRole('button', { name: 'Add source' })).toBeVisible();
   expect(screen.queryByText('Landing (optional)')).toBeNull();
 });
 
 test('landing shows counts of what arrived and what is assigned; no stepper for a unit that is absent', async () => {
   await chooseSystem();
-  await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
-  await userEvent.click(tile(HOME));
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
   expect(screen.getByText('Landing (optional)')).toBeVisible();
   expect(screen.getByText('Infantry: 2, assigned 0')).toBeVisible();
@@ -182,7 +284,7 @@ test('a merged entry names its system and opens the big hex in its own mode', as
   useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { carrier: 1 } } } }, 'strategy');
   useGame.getState().changeAdjustment(1, { kind: 'losses', systemId: TARGET, unit: 'carrier', planetId: null, amount: -1 });
   render(<PlanScreen />);
-  await userEvent.click(screen.getByRole('button', { name: 'Losses · 25' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Edit: Losses · 25' }));
   expect(screen.getByRole('button', { name: 'Battle' })).toHaveAttribute('aria-pressed', 'true');
   expect(screen.getByRole('button', { name: 'Give back Carrier' })).toBeVisible();
 });
@@ -226,20 +328,169 @@ test('production picks the payment by itself and warns about the shortfall; manu
 test('warnings come only from the projection', async () => {
   await chooseSystem();
   expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
-  await userEvent.click(tile(HOME));
-  const [infantry] = screen.getAllByRole('group', { name: 'Infantry' });
-  await userEvent.click(within(infantry).getByRole('button', { name: 'Add one Infantry' }));
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
   expect(within(screen.getByRole('list', { name: 'Warnings' })).getAllByRole('listitem').length).toBeGreaterThan(0);
-  expect(document.querySelector('line.arrow-warn')).toBeInTheDocument();
+  expect(document.querySelector('.route.arrow-warn')).toBeInTheDocument();
 });
 
-test('Done returns to the plan, and tapping the entry reopens the editor', async () => {
+test('Done returns to the plan, and the pencil reopens the editor', async () => {
   await chooseSystem();
   await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
   expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: /Tactical action · 25/ }));
+  await userEvent.click(screen.getByRole('button', { name: /^Edit: Tactical action · 25/ }));
   expect(screen.getByRole('button', { name: 'Done editing' })).toBeVisible();
+});
+
+describe('reading the plan', () => {
+  const plannedRoute = () => useGame.getState().addEntry(1, {
+    type: 'tactical', systemId: TARGET, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
+    moves: [{ from: HOME, units: { carrier: 1, infantry: 1 }, via: [WAY] }, { from: WAY, units: { fighter: 1 }, pickupOf: HOME }],
+  }, 'action');
+  const rowOf = (name: RegExp | string) => within(screen.getByRole('listitem', { name }));
+  const label = /^Tactical action · 25/;
+
+  test('a tap shows numbered steps with no editor, a second tap closes them', async () => {
+    plannedRoute();
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: label }));
+    expect(screen.queryByRole('button', { name: 'Done editing' })).toBeNull();
+    const row = rowOf(label);
+    expect(row.getByText('Activate 25')).toBeVisible();
+    expect(row.getByText('Fly 5 → 39 → 25', { exact: false })).toBeVisible();
+    expect(row.getByText(/Pick up on the way in/)).toBeVisible();
+    expect(row.getByText('Cargo 1 of 4', { exact: false })).toBeVisible();
+    expect(tile(TARGET)).toHaveClass('tile-active');
+    expect(tile(HOME)).toHaveClass('tile-source');
+    expect(document.querySelector('.route.route-active')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: label }));
+    expect(screen.queryByText('Activate 25')).toBeNull();
+    expect(tile(TARGET)).not.toHaveClass('tile-active');
+    expect(document.querySelector('.route.route-active')).toBeNull();
+  });
+
+  test('Whole map closes it, and an entry with no system has no such button', async () => {
+    plannedRoute();
+    useGame.getState().addEntry(1, { type: 'component', note: 'Plague' }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: label }));
+    await userEvent.click(screen.getByRole('button', { name: 'Whole map' }));
+    expect(screen.queryByText('Activate 25')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /^Component action/ }));
+    expect(screen.getByText('Plague')).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
+  });
+
+  test('starting another action closes it', async () => {
+    plannedRoute();
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: label }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
+    expect(tile(TARGET)).not.toHaveClass('tile-active');
+  });
+
+  test('every entry type has a pencil and read-only steps; pass only its label', async () => {
+    const add = useGame.getState().addEntry;
+    add(1, { type: 'component', note: 'Plague' }, 'action');
+    add(1, { type: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 0 } }, 'action');
+    add(1, { type: 'adjustment', label: 'Card', delta: { tradeGoods: 2 } }, 'action');
+    add(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
+    add(1, { type: 'secondary', card: 7, upgrades: ['carrier'] }, 'action');
+    add(1, { type: 'pass' }, 'action');
+    add(1, { type: 'statusTokens', tactic: 1, fleet: 1, strategy: 0, vp: 2 }, 'status');
+    render(<PlanScreen />);
+    const read = async (row: RegExp, text: RegExp) => {
+      await userEvent.click(rowOf(row).getByRole('button', { name: row }));
+      expect(rowOf(row).getByText(text)).toBeVisible();
+      expect(rowOf(row).getByRole('button', { name: /^Edit: / })).toBeVisible();
+      expect(rowOf(row).queryByRole('textbox')).toBeNull();
+    };
+    await read(/^Component action/, /^Plague$/);
+    await read(/^Expedition/, /5 resources/);
+    await read(/^Manual adjustment/, /Trade goods \+2/);
+    await read(/^Strategy: Imperial/, /Mecatol Rex under control/);
+    await read(/^Secondary: Technology/, /Costs 1 strategy token/);
+    await read(/^Tokens and points/, /tactic 1, fleet 1, strategy 0/);
+    await userEvent.click(rowOf('Pass').getByRole('button', { name: 'Pass' }));
+    expect(rowOf('Pass').queryByRole('button', { name: /^Edit/ })).toBeNull();
+    expect(screen.getByRole('listitem', { name: 'Pass' })).not.toHaveClass('entry-shown');
+  });
+
+  test('the pencil opens the editor and closes the reading', async () => {
+    plannedRoute();
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: label }));
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Tactical action/ }));
+    expect(screen.getByRole('button', { name: 'Done editing' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
+  });
+
+  test('the flight repeats while shown and stops on closing; under reduced motion there is none', async () => {
+    plannedRoute();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<PlanScreen />);
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    act(() => { vi.advanceTimersByTime(400); });
+    expect(document.querySelector('.flight-layer')).toBeInTheDocument();
+    // What flies has left its tile while the flight runs; the cargo on the way stays until the leader passes.
+    expect(within(tile(HOME) as HTMLElement).queryByRole('img', { name: /Carrier/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    vi.useRealTimers();
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    await act(async () => { await new Promise(r => setTimeout(r, 450)); });
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('flying', () => {
+  test('Fly plays the action and a press on the map finishes it, without acting as a tap', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Fly' }));
+    expect(document.querySelector('.flight-layer')).toBeInTheDocument();
+    expect(document.querySelector('[data-flight-stack="carrier"]')).toBeInTheDocument();
+    await userEvent.click(tile(WAY));
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    // That tap started no route.
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: 'Carrier ×1' })).toBeInTheDocument();
+  });
+
+  test('marking an action with moves as done plays it; undo plays nothing', async () => {
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Done' }));
+    expect(document.querySelector('.flight-layer')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(document.querySelector('.flight-layer')).toBeNull();
+  });
+
+  test('the number of an action stands on its arrow and in the list, renumbered at once', async () => {
+    const body = (from: string) => ({ type: 'tactical' as const, systemId: TARGET, moves: [{ from, units: { cruiser: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } });
+    const first = useGame.getState().addEntry(1, body(HOME), 'action');
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    useGame.getState().addEntry(1, body(WAY), 'action');
+    render(<PlanScreen />);
+    const badges = () => [...document.querySelectorAll('.route-badge-number')].map(el => el.textContent);
+    const froms = () => [...document.querySelectorAll('.route[role="img"]')].map(el => el.getAttribute('aria-label'));
+    expect(badges()).toEqual(['1', '2']);
+    expect(froms()[0]).toContain(HOME);
+    expect(screen.getByRole('img', { name: 'Action 1' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Action 2' })).toBeVisible();
+    act(() => useGame.getState().moveEntry(first, 'action', 2));
+    expect(badges()).toEqual(['1', '2']);
+    expect(froms()[0]).toContain(WAY);
+    act(() => useGame.getState().setEntryStatus(first, 'cancelled'));
+    expect(badges()).toEqual(['1']);
+    expect(screen.queryByRole('img', { name: 'Action 2' })).toBeNull();
+  });
 });
 
 test('the Forecast / Now switch changes what the map shows', async () => {
@@ -337,7 +588,7 @@ test('the status phase entry distributes tokens', async () => {
   expect(entries()[0]).toMatchObject({ tactic: 1, fleet: 1, strategy: 0 });
   expect(cell('Tactic')).toHaveTextContent('3 → 4');
   expect(row.getByText('Distribute tokens: 0 left')).toBeVisible();
-  // The label is the only way into the entry now: no second status button stands beside it.
+  // No second status button stands beside the label.
   expect(screen.getAllByRole('button', { name: 'Tokens and points' })).toHaveLength(1);
   expect(row.getByRole('button', { name: 'Tokens and points' })).toBeVisible();
 });

@@ -112,7 +112,7 @@ test('a part taken by another player cannot be chosen in the expedition entry', 
   useGame.getState().setSlice('inf5', 'other');
   render(<PlanScreen />);
   const id = useGame.getState().addEntry(1, { type: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } }, 'action');
-  await userEvent.click(await screen.findByRole('button', { name: 'Expedition contribution, end of turn' }));
+  await userEvent.click(await screen.findByRole('button', { name: 'Edit: Expedition contribution, end of turn' }));
   const editor = screen.getByRole('group', { name: 'Expedition part' });
   expect(within(editor).getByRole('button', { name: '5 influence' })).toBeDisabled();
   await userEvent.click(within(editor).getByRole('button', { name: '5 resources' }));

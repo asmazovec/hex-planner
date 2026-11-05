@@ -201,7 +201,7 @@ describe('upgrades in an entry', () => {
   const entryOf = (id: string) => document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!;
   const entries = (): Entry[] => round().entries;
   const openCard = async (id: string) => {
-    await userEvent.click(within(entryOf(id)).getByRole('button', { name: /Вторичка|Стратегия/ }));
+    await userEvent.click(within(entryOf(id)).getByRole('button', { name: /^Изменить: / }));
     return within(screen.getByRole('group', { name: 'Улучшение' }));
   };
 
@@ -211,7 +211,7 @@ describe('upgrades in an entry', () => {
     const trade = addEntry({ type: 'strategic', card: 5 });
     render(<PlanScreen />);
     expect(screen.queryByRole('group', { name: 'Улучшение' })).toBeNull();
-    await userEvent.click(within(entryOf(trade)).getByRole('button', { name: /Стратегия/ }));
+    await userEvent.click(within(entryOf(trade)).getByRole('button', { name: /^Изменить: / }));
     expect(screen.queryByRole('group', { name: 'Улучшение' })).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Готово' }));
     expect(await openCard(technology)).toBeTruthy();

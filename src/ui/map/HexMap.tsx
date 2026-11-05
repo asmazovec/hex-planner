@@ -1,21 +1,25 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
+import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
+import { curveThrough, type Point, type RouteShape } from '../../domain/route';
 import { fractureSlots } from '../../domain/thundersEdge';
 import { slotKeyOf } from '../../domain/newGame';
 import { playersOf } from '../../domain/players';
 import type { DataPack, Game, GameState } from '../../domain/types';
+import type { RouteArrow } from '../plan/tactical';
 import { prepareSprites, tokenColours } from '../units/sprites';
 import { UnitLegend } from '../units/UnitLegend';
-import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
+import { HEX_SIZE, hexToPixel, mapBounds, slotToPixel, type Rect } from './geometry';
 import { TilePopover } from './TilePopover';
 import { TileView, type Highlight } from './TileView';
 import { capFit } from './viewLimits';
-import type { ArrowPreview } from './useArrowDrag';
 import { usePanZoom } from './usePanZoom';
 
-/** `from` and `to` are slot keys. */
-export interface Arrow { from: string; to: string; warn?: boolean }
+/** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
+export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape }
+
+/** The route under way, in the order it was drawn. The screen point is given while a finger pulls it. */
+export interface RouteDraftView { path: string[]; reverse?: boolean; clientX?: number; clientY?: number }
 
 export interface HexMapProps {
   game: Game;
@@ -23,8 +27,11 @@ export interface HexMapProps {
   pack: DataPack;
   highlights?: Record<string, Highlight>;
   arrows?: Arrow[];
-  /** The arrow being drawn by a drag, in screen coordinates. */
-  arrowPreview?: ArrowPreview | null;
+  arrowPreview?: RouteDraftView | null;
+  /** The area the camera shows; back to the earlier view when it turns null. */
+  focusRect?: Rect | null;
+  /** Drawn over the arrows, in the coordinates of the map. */
+  overlay?: ReactNode;
   selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
@@ -60,33 +67,120 @@ export function fractureFrame(
 const LABEL_HALF_WIDTH = 45;
 const LABEL_HEIGHT = 20;
 
+const NO_ARROWS: Arrow[] = [];
+
 const parseKey = (key: string): { q: number; r: number } => {
   const [q, r] = key.split(',').map(Number);
   return { q, r };
 };
 
-/** A line from a tile to the pointer; the screen point is mapped through the current pan and zoom. */
-function PreviewLine({ start, preview }: { start: { x: number; y: number }; preview: ArrowPreview }) {
+/** A line from the last hex to the pointer. It follows the pointer by itself, so a move renders nothing. */
+function PreviewLine({ start, clientX, clientY, reverse }: { start: Point; clientX: number; clientY: number; reverse?: boolean }) {
   const ref = useRef<SVGLineElement>(null);
-  const { clientX, clientY } = preview;
   useLayoutEffect(() => {
-    const line = ref.current;
-    const matrix = line?.getScreenCTM?.();
-    if (!line || !matrix) return;
-    const end = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
-    line.setAttribute('x2', String(end.x));
-    line.setAttribute('y2', String(end.y));
+    const place = (x: number, y: number) => {
+      const line = ref.current;
+      const matrix = line?.getScreenCTM?.();
+      if (!line || !matrix) return;
+      const end = new DOMPoint(x, y).matrixTransform(matrix.inverse());
+      line.setAttribute('x2', String(end.x));
+      line.setAttribute('y2', String(end.y));
+    };
+    place(clientX, clientY);
+    const onMove = (e: globalThis.PointerEvent) => place(e.clientX, e.clientY);
+    window.addEventListener('pointermove', onMove);
+    return () => window.removeEventListener('pointermove', onMove);
   }, [clientX, clientY]);
+  return <line ref={ref} x1={start.x} y1={start.y} x2={start.x} y2={start.y} className="route-pull" markerEnd={reverse ? undefined : 'url(#arrow-head)'} />;
+}
+
+const svgPath = (points: Point[]): string => `M${points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`;
+
+const BADGE_HEX = '10.5,0 5.25,9.1 -5.25,9.1 -10.5,0 -5.25,-9.1 5.25,-9.1';
+/** The gap in the arrows around a badge: the same hexagon, 1.4 times its size. */
+const BADGE_CUT = '15,0 7.5,13 -7.5,13 -15,0 -7.5,-13 7.5,-13';
+const CUT_MARGIN = 300;
+const HEAD_FORWARD = 5.6;
+const HEAD_BACK = 14.4;
+const HEAD_HALF = 10;
+const TAG_OFFSET = 30;
+const TAG_STEP = 20;
+
+function arrowHead(curve: Point[]): string {
+  const end = curve[curve.length - 1];
+  const before = curve[curve.length - 2];
+  const length = Math.hypot(end.x - before.x, end.y - before.y) || 1;
+  const dir = { x: (end.x - before.x) / length, y: (end.y - before.y) / length };
+  const at = (forward: number, side: number) => `${(end.x + dir.x * forward - dir.y * side).toFixed(1)},${(end.y + dir.y * forward + dir.x * side).toFixed(1)}`;
+  return `${at(HEAD_FORWARD, 0)} ${at(-HEAD_BACK, HEAD_HALF)} ${at(-HEAD_BACK, -HEAD_HALF)}`;
+}
+
+/** Every arrow stays the same nodes across renders, so their colours can change smoothly. They take no taps. */
+const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrows: Arrow[]; bounds: Rect }) {
+  const { t } = useTranslation();
+  const tagged = new Map<string, number>();
   return (
-    <line
-      ref={ref} x1={start.x} y1={start.y} x2={start.x} y2={start.y} className="arrow arrow-preview"
-      {...(preview.reverse ? { markerStart: 'url(#arrow-head)' } : { markerEnd: 'url(#arrow-head)' })}
-    />
+    <g className="routes">
+      {arrows.length > 0 && (
+        <mask
+          id="route-gaps" maskUnits="userSpaceOnUse" x={bounds.x - CUT_MARGIN} y={bounds.y - CUT_MARGIN}
+          width={bounds.width + 2 * CUT_MARGIN} height={bounds.height + 2 * CUT_MARGIN}
+        >
+          <rect x={bounds.x - CUT_MARGIN} y={bounds.y - CUT_MARGIN} width={bounds.width + 2 * CUT_MARGIN} height={bounds.height + 2 * CUT_MARGIN} fill="#fff" />
+          {arrows.map(a => <polygon key={a.key} points={BADGE_CUT} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`} fill="#000" />)}
+        </mask>
+      )}
+      <g mask="url(#route-gaps)">
+        {arrows.map(a => (
+          <g key={a.key} className={`route route-${a.tone}${a.warn ? ' arrow-warn' : ''}`} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
+            {a.shape.segments.map((segment, i) => (
+              <Fragment key={i}>
+                <path d={svgPath(segment.points)} className={`route-casing${segment.gap ? ' route-gap' : ''}`} />
+                <path d={svgPath(segment.points)} className={`route-line${segment.gap ? ' route-gap' : ''}`} />
+              </Fragment>
+            ))}
+            {a.shape.segments.slice(1).map((segment, i) => <circle key={i} cx={segment.points[0].x.toFixed(1)} cy={segment.points[0].y.toFixed(1)} r={4} className="route-dot" />)}
+            <polygon points={arrowHead(a.shape.curve)} className="route-head" />
+          </g>
+        ))}
+      </g>
+      {arrows.map(a => (
+        <g key={a.key} className={`route route-badge route-${a.tone}${a.warn ? ' arrow-warn' : ''}`} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
+          <polygon points={BADGE_HEX} className="route-badge-hex" />
+          <text y={4} className="route-badge-number">{a.number}</text>
+        </g>
+      ))}
+      {arrows.flatMap(a => a.pickups.map(({ slot, count }) => {
+        const at = slotToPixel(slot);
+        const row = tagged.get(slot) ?? 0;
+        tagged.set(slot, row + 1);
+        return (
+          <g key={`${a.key}:${slot}`} className={`route route-tag route-${a.tone}`} transform={`translate(${at.x + TAG_OFFSET} ${at.y - TAG_OFFSET + row * TAG_STEP})`}>
+            <rect x={-14} y={-9} width={28} height={18} rx={9} />
+            <text y={4}>+{count}</text>
+          </g>
+        );
+      }))}
+    </g>
+  );
+});
+
+function RouteDraftLine({ draft }: { draft: RouteDraftView }) {
+  const points = draft.path.map(slotToPixel);
+  const curve = curveThrough(points);
+  return (
+    <g className="routes route route-active route-draft">
+      {points.length > 1 && <path d={svgPath(curve)} className="route-line" />}
+      {points.slice(0, -1).map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} className="route-dot" />)}
+      {draft.clientX !== undefined && draft.clientY !== undefined && (
+        <PreviewLine start={points[points.length - 1]} clientX={draft.clientX} clientY={draft.clientY} reverse={draft.reverse} />
+      )}
+    </g>
   );
 }
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown, startsArrow, tools, popover, onPopoverClose,
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, overlay, selectedId, onTileTap, onTilePointerDown, startsArrow, tools, popover, onPopoverClose,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -118,11 +212,9 @@ export function HexMap({
     return slots.length === 0 ? null : fractureFrame(slotKeys.map(parseKey), slots);
   }, [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout, slotKeys]);
   const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
-  const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect, startsArrow);
-  const center = (key: string) => {
-    const { q, r } = parseKey(key);
-    return hexToPixel(q, r);
-  };
+  const { view, handlers, reset, focus } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect, startsArrow);
+  const focusKey = focusRect ? JSON.stringify(focusRect) : null;
+  useEffect(() => { focus(focusKey === null ? null : JSON.parse(focusKey) as Rect); }, [focusKey, focus]);
   // The view scales around the middle of the map.
   const midX = bounds.x + bounds.width / 2;
   const midY = bounds.y + bounds.height / 2;
@@ -154,9 +246,6 @@ export function HexMap({
         <marker id="arrow-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 Z" className="arrow-head" />
         </marker>
-        <marker id="arrow-head-warn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M0,0 L10,5 L0,10 Z" className="arrow-head arrow-warn" />
-        </marker>
       </defs>
       <g transform={`translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`}>
         {content}
@@ -171,19 +260,9 @@ export function HexMap({
             ))}
           </g>
         )}
-        {(arrows ?? []).map(({ from, to, warn }) => {
-          const a = center(from);
-          const b = center(to);
-          return (
-            <line
-              key={`${from}>${to}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              className={`arrow${warn ? ' arrow-warn' : ''}`}
-              markerEnd={`url(#arrow-head${warn ? '-warn' : ''})`}
-              aria-label={t('map.arrow', { from, to })}
-            />
-          );
-        })}
-        {arrowPreview && <PreviewLine start={center(arrowPreview.from)} preview={arrowPreview} />}
+        <RouteArrows arrows={arrows ?? NO_ARROWS} bounds={bounds} />
+        {arrowPreview && <RouteDraftLine draft={arrowPreview} />}
+        {overlay}
       </g>
     </svg>
     {selectedId && popover && onPopoverClose && (

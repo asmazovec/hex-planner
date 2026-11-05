@@ -1,15 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { project, sourceSlot, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { focusRect, routeShapes, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { CARD, cardChange, plannedCard, primaryPlayed, withSystem, type CardEntry } from '../../domain/strategy';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
-import type { AdjustmentKind, Entry, EntryBody, Plan } from '../../domain/types';
+import type { AdjustmentKind, Entry, EntryBody, Game, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { FlightLayer } from '../map/FlightLayer';
 import { HexMap, type Arrow } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/HexStage';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
@@ -18,6 +20,7 @@ import { ThundersEdgePanel } from '../map/ThundersEdgePanel';
 import { UpgradesPanel } from '../map/UpgradesPanel';
 import type { Highlight } from '../map/TileView';
 import { useArrowDrag } from '../map/useArrowDrag';
+import { reducedMotion } from '../map/usePanZoom';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
 import { EntryList } from '../plan/EntryList';
@@ -27,11 +30,19 @@ import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { cardPurchases, StrategyEditor, type MapPick } from '../plan/StrategyEditor';
 import { SummaryBar } from '../plan/SummaryBar';
-import { arrowsOf, hasUnits, sourcePools, suggestMoves, systemName, type TacticalEntry } from '../plan/tactical';
+import { arrowsOf, entrySystems, flightRoutes, hasUnits, sourcePools, sourcesOf, stateInFlight, systemName, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../plan/tactical';
+import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry; `fromCard` makes that one Warfare's free action. */
-interface Editing { entryId: string | null; addingSource: boolean; pickerFrom: string | null; fromCard?: string }
+interface Editing { entryId: string | null; pickerFrom: string | null; fromCard?: string }
+
+/** A flight under way: it ends when the game it started from changes. `passed` holds the moves already taken on board on the way. */
+interface Flight { entryId: string; run: number; game: Game; passed: number[] }
+
+/** The pause before a shown action first flies, and between its flights. */
+const LOOP_START_MS = 380;
+const LOOP_PAUSE_MS = 750;
 
 const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };
 
@@ -85,6 +96,12 @@ export function PlanScreen() {
   const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
   const [editing, setEditing] = useState<Editing | null>(null);
+  /** The route under way by taps. */
+  const [tapPath, setTapPath] = useState<string[] | null>(null);
+  /** The entry being read, and how many of its flights have started. */
+  const [shown, setShown] = useState<{ id: string; plays: number } | null>(null);
+  const [flight, setFlight] = useState<Flight | null>(null);
+  const flightRuns = useRef(0);
   const [openId, setOpenId] = useState<string | null>(null);
   const [cardId, setCardId] = useState<string | null>(null);
   const [mapPick, setMapPick] = useState<MapPick | null>(null);
@@ -109,18 +126,37 @@ export function PlanScreen() {
   const cardEntry = round?.entries.find((e): e is CardEntry => e.id === cardId && (e.type === 'strategic' || e.type === 'secondary'));
   const cardPick = cardEntry && !session ? mapPick : null;
 
-  const openSource = (source: string) => {
-    if (!game || !plan || !entry || !session || !game.map[source]) return;
-    const known = entry.moves.some(m => sourceSlot(game, pack, m.from) === source);
-    if (!known) {
-      const added = suggestMoves(game, pack, stateBeforeEntry(game, plan, entry.id, pack), source);
-      if (added.length > 0) updateEntry(entry.id, { moves: [...entry.moves, ...added] });
-    }
-    setEditing({ ...session, addingSource: false, pickerFrom: source });
+  /** A finished route keeps the earlier ones: it adds its source, or gives a known source a new way. */
+  const openRoute = ({ from, via }: RouteDraft) => {
+    if (!game || !entry || !session || !game.map[from]) return;
+    const known = sourcesOf(game, pack, entry).includes(from);
+    if (!known || viaOf(entry, from).join() !== via.join()) updateEntry(entry.id, { moves: withRoute(game, pack, entry.moves, from, via) });
+    setEditing({ ...session, pickerFrom: from });
     setView('plan');
   };
 
-  const arrow = useArrowDrag({ activeSystem, onComplete: openSource, onCancel: () => undefined });
+  const arrow = useArrowDrag({ activeSystem, onComplete: openRoute, onCancel: () => undefined, isSystem: slot => game?.map[slot] !== undefined });
+
+  const shownEntry = round?.entries.find(e => e.id === shown?.id);
+  const flying = flight?.game === game ? flight : null;
+  const loops = shownEntry?.type === 'tactical' && shownEntry.moves.some(m => hasUnits(m.units)) && !reducedMotion();
+
+  const startFlight = useCallback((entryId: string) => {
+    const current = useGame.getState().game;
+    if (reducedMotion() || !current) return;
+    flightRuns.current += 1;
+    setFlight({ entryId, run: flightRuns.current, game: current, passed: [] });
+  }, []);
+
+  useEffect(() => {
+    if (!shown || !loops || flying) return undefined;
+    const timer = setTimeout(() => {
+      setShown(s => s && { ...s, plays: s.plays + 1 });
+      startFlight(shown.id);
+    }, shown.plays === 0 ? LOOP_START_MS : LOOP_PAUSE_MS);
+    return () => clearTimeout(timer);
+  }, [shown, loops, flying, startFlight]);
+
   const closeSheet = useCallback(() => setSheet(null), []);
   const closeStage = useCallback(() => setStage(null), []);
 
@@ -133,10 +169,26 @@ export function PlanScreen() {
   const now = project(game, upToRound, 'now', pack);
   const forecast = project(game, upToRound, 'forecast', pack);
 
+  const closeShown = () => {
+    setShown(null);
+    setFlight(null);
+  };
+
+  /** A source with nothing chosen goes when the editor closes. */
+  const leaveEditor = () => {
+    if (entry) {
+      const kept = withoutEmptySources(game, pack, entry.moves);
+      if (kept.length !== entry.moves.length) updateEntry(entry.id, { moves: kept });
+    }
+    setEditing(null);
+    setTapPath(null);
+  };
+
   const closePanels = () => {
     setPlacing(false);
     setMarking(false);
-    setEditing(null);
+    closeShown();
+    leaveEditor();
     setSheet(null);
     setOpenId(null);
     setCardId(null);
@@ -146,11 +198,12 @@ export function PlanScreen() {
   const onPick = (type: ActionType) => {
     setPlacing(false);
     setMarking(false);
+    closeShown();
     if (type === 'tactical') {
       setShowTe(false);
       setSheet(null);
       setBuilding(false);
-      setEditing({ entryId: null, addingSource: false, pickerFrom: null });
+      setEditing({ entryId: null, pickerFrom: null });
       setView('map');
       return;
     }
@@ -199,12 +252,23 @@ export function PlanScreen() {
         type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: EMPTY_PAYMENT,
         ...(session?.fromCard ? { free: true, fromCard: session.fromCard } : {}),
       }, 'action');
-      setEditing({ entryId: id, addingSource: false, pickerFrom: null });
+      setEditing({ entryId: id, pickerFrom: null });
       setView('plan');
       return;
     }
     if (session && entry) {
-      if (session.addingSource && slot !== entry.systemId) openSource(slot);
+      if (!game.map[slot]) return;
+      const step = tapStep(tapPath, slot, entry.systemId ?? '');
+      if (step.onActive) {
+        // The wrong system: while the action has no routes a tap takes it back and returns to choosing.
+        if (sourcesOf(game, pack, entry).length === 0) {
+          removeEntry(entry.id);
+          setEditing({ entryId: null, pickerFrom: null, ...(entry.fromCard ? { fromCard: entry.fromCard } : {}) });
+        }
+        return;
+      }
+      setTapPath(step.path);
+      if (step.route) openRoute(step.route);
       return;
     }
     if (building) setSheet(slot);
@@ -218,7 +282,14 @@ export function PlanScreen() {
     setBuilding(!building);
   };
 
+  const onShowEntry = (tapped: Entry) => {
+    if (tapped.type === 'pass') return;
+    setFlight(null);
+    setShown(shown?.id === tapped.id ? null : { id: tapped.id, plays: 0 });
+  };
+
   const onOpenEntry = (opened: Entry) => {
+    closeShown();
     setPlacing(false);
     setMarking(false);
     setSheet(null);
@@ -226,7 +297,7 @@ export function PlanScreen() {
       setStage({ slot: opened.delta.units.systemId, mode: STAGE_MODE[opened.kind] });
     } else if (opened.type === 'tactical') {
       setShowTe(false);
-      setEditing({ entryId: opened.id, addingSource: false, pickerFrom: null });
+      setEditing({ entryId: opened.id, pickerFrom: null });
     } else if (opened.type === 'strategic' || opened.type === 'secondary') {
       setShowTe(false);
       setCardId(opened.id);
@@ -242,17 +313,32 @@ export function PlanScreen() {
   const lockedUpgrades = entryUpgradeRounds(upToRound, shownFilter);
   const upgradeCount = SHIP_KINDS.filter(kind => shownState.upgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
-  const arrows = new Map<string, Arrow>();
-  for (const item of tacticals) {
-    if (item.id !== entry?.id && (item.status !== 'planned' || (!session && mapMode === 'now'))) continue;
-    for (const a of arrowsOf(game, pack, item, forecast.warningsByEntry[item.id] ?? [])) arrows.set(`${a.from}>${a.to}`, a);
+  /** The action the map speaks of: the one being edited, read or played. */
+  const focusId = entry?.id ?? shownEntry?.id ?? flying?.entryId;
+  const numbers = tacticalNumbers(round.entries);
+  const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || session || mapMode !== 'now'))
+    .flatMap(item => arrowsOf(game, pack, item, forecast.warningsByEntry[item.id] ?? []).map(a => ({
+      ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
+    })));
+  const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]));
+  const arrows: Arrow[] = drawn.map((a, i) => ({ ...a, shape: shapes[i] }));
+
+  const draft = session && entry ? arrow.preview ?? (tapPath && { path: tapPath }) : null;
+  const highlights: Record<string, Highlight> = {};
+  for (const slot of draft?.path ?? []) highlights[slot] = 'path';
+  const focused = tacticals.find(item => item.id === focusId);
+  if (focused?.systemId) {
+    for (const source of sourcesOf(game, pack, focused)) {
+      for (const slot of viaOf(focused, source)) highlights[slot] = 'path';
+    }
+    for (const source of sourcesOf(game, pack, focused)) highlights[source] = 'source';
+    highlights[focused.systemId] = 'active';
   }
 
-  const highlights: Record<string, Highlight> = {};
-  if (activeSystem !== null) {
-    for (const slot of Object.keys(game.map)) if (hasUnits(forecast.state.systems[slot])) highlights[slot] = 'valid';
-    highlights[activeSystem] = 'active';
-  }
+  const flyingEntry = flying ? tacticals.find(item => item.id === flying.entryId) : undefined;
+  const beforeFlight = flyingEntry ? stateBeforeEntry(game, plan, flyingEntry.id, pack) : null;
+  const mapState = flying && flyingEntry && beforeFlight ? stateInFlight(pack, flyingEntry, beforeFlight, flying.passed) : shownState;
+  const shownArea = shownEntry ? focusRect(entrySystems(game, pack, shownEntry)) : null;
 
   if (placing) {
     for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
@@ -274,7 +360,7 @@ export function PlanScreen() {
 
   /** In the tactical editor a drag from the active system or a system with my units draws an arrow; any other drag moves the map. */
   const startsArrow = (slot: string): boolean => {
-    if (activeSystem === null || !entry) return false;
+    if (activeSystem === null || !entry || tapPath !== null) return false;
     if (slot === activeSystem) return true;
     return sourcePools(game, pack, stateBeforeEntry(game, plan, entry.id, pack), slot).some(pool => hasUnits(pool.available));
   };
@@ -282,7 +368,7 @@ export function PlanScreen() {
   const duplicates = building ? duplicateTiles(game.map, pack) : [];
   const hint = cardPick ? t('plan.strategy.mapHint') : marking ? t('fracture.markHint') : placing ? t('expedition.placeHint')
     : picking ? t(session?.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')
-    : session?.addingSource ? t('plan.tactical.sourceHint')
+    : session && tapPath ? t('plan.tactical.tapHint')
       : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;
   const manualPayment = entry !== undefined && manualPayments.includes(entry.id);
   const totalSlices = EXPEDITION_SLICES.length;
@@ -330,8 +416,16 @@ export function PlanScreen() {
         )}
         <div className="plan-map">
           <HexMap
-            game={game} state={shownState} pack={pack} highlights={highlights} arrows={[...arrows.values()]}
-            arrowPreview={arrow.preview} selectedId={sheet} onTileTap={onTileTap}
+            game={game} state={mapState} pack={pack} highlights={highlights} arrows={arrows}
+            arrowPreview={draft} focusRect={shownArea} selectedId={sheet} onTileTap={onTileTap}
+            overlay={flying && flyingEntry && beforeFlight && (
+              <FlightLayer
+                key={flying.run} colour={playerColour(game.color)} passed={flying.passed}
+                routes={flightRoutes(game, pack, flyingEntry, beforeFlight, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
+                onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
+                onDone={() => setFlight(null)}
+              />
+            )}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e); }} startsArrow={startsArrow}
             onPopoverClose={closeSheet}
             tools={(
@@ -373,6 +467,7 @@ export function PlanScreen() {
               />
             )}
           />
+          {shownArea && <button type="button" className="map-home" onClick={closeShown}>{t('map.home')}</button>}
           {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
           {hint && (
             <p className="map-hint" role="status">
@@ -401,17 +496,18 @@ export function PlanScreen() {
             {session && entry && (
               <TacticalEditor
                 game={game} pack={pack} entry={entry} before={stateBeforeEntry(game, plan, entry.id, pack)}
-                warnings={forecast.warningsByEntry[entry.id] ?? []} addingSource={session.addingSource}
+                warnings={forecast.warningsByEntry[entry.id] ?? []}
                 pickerFrom={session.pickerFrom} manualPayment={manualPayment}
                 onUpdate={patch => updateEntry(entry.id, patch)}
-                onAddSource={() => {
-                  setEditing({ ...session, addingSource: !session.addingSource });
-                  if (!session.addingSource) setView('map');
-                }}
                 onOpenPicker={source => setEditing({ ...session, pickerFrom: source })}
                 onManualPayment={open => setManualPayments(ids => (open ? [...ids, entry.id] : ids.filter(id => id !== entry.id)))}
                 onOpenShop={() => { if (entry.systemId !== null) setStage({ slot: entry.systemId, mode: 'build', tacticalId: entry.id }); }}
-                onDone={() => setEditing(null)}
+                onFly={() => {
+                  setEditing({ ...session, pickerFrom: null });
+                  startFlight(entry.id);
+                  setView('map');
+                }}
+                onDone={leaveEditor}
               />
             )}
             {!session && cardEntry && (
@@ -422,8 +518,8 @@ export function PlanScreen() {
                 onManualPayment={open => setManualPayments(ids => (open ? [...ids, cardEntry.id] : ids.filter(id => id !== cardEntry.id)))}
                 onPick={pick => { setMapPick(pick); if (pick) setView('map'); }}
                 onOpenShop={(slot, only) => setStage({ slot, mode: 'build', only, forCard: true })}
-                onStartTactical={() => { setEditing({ entryId: null, addingSource: false, pickerFrom: null, fromCard: cardEntry.id }); setMapPick(null); setBuilding(false); setView('map'); }}
-                onOpenTactical={id => setEditing({ entryId: id, addingSource: false, pickerFrom: null })}
+                onStartTactical={() => { setEditing({ entryId: null, pickerFrom: null, fromCard: cardEntry.id }); setMapPick(null); setBuilding(false); setView('map'); }}
+                onOpenTactical={id => setEditing({ entryId: id, pickerFrom: null })}
                 onCancel={() => { removeEntry(cardEntry.id); setCardId(null); setMapPick(null); }}
                 onDone={() => { setCardId(null); setMapPick(null); }}
               />
@@ -434,7 +530,8 @@ export function PlanScreen() {
                 <EntryList
                   game={game} pack={pack} round={round} plan={plan}
                   stateBefore={id => stateBeforeEntry(game, plan, id, pack)} warnings={forecast.warningsByEntry} state={forecast.state}
-                  openId={openId} onOpen={onOpenEntry}
+                  openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry} onStatusAdded={setOpenId}
+                  onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) startFlight(done.id); }}
                   strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
                   addAction={<ActionMenu onPick={onPick} primaryPlayed={primaryPlayed(round, game.playerCount)} />}
                 />

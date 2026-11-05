@@ -14,9 +14,11 @@ const STRETCH = 0.35;
 /** The time constant of the approach to the target, in milliseconds. */
 const SMOOTHING_MS = 70;
 const FIRST_FRAME_MS = 16;
+/** The camera moves to an area of the map more slowly than a reset or the wheel. */
+const FOCUS_SMOOTHING_MS = 130;
 
 const clampScale = (v: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, v));
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+export const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 /** The tile under a press. A Fracture tile takes no taps or arrows, so it counts as empty space. */
 const tileAt = (target: EventTarget | null): Element | null =>
   (target instanceof Element ? target.closest('[data-slot]:not([data-fracture-tile])') : null);
@@ -38,6 +40,9 @@ export function usePanZoom(
   /** The target of the animation, or the view of a gesture before it stretches at the limit. */
   const goal = useRef<View>(IDENTITY);
   const frame = useRef<number | null>(null);
+  const smoothing = useRef(SMOOTHING_MS);
+  /** The view to go back to when the camera leaves a focused area. */
+  const beforeFocus = useRef<View | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pan = useRef<{ id: number; startX: number; startY: number; moved: boolean; onTile: boolean } | null>(null);
   /** A gesture has moved the view since the last settle; a press alone leaves a running animation alone. */
@@ -90,8 +95,9 @@ export function usePanZoom(
     };
   }, [mapping]);
 
-  const animateTo = useCallback((target: View) => {
+  const animateTo = useCallback((target: View, smoothingMs: number = SMOOTHING_MS) => {
     goal.current = target;
+    smoothing.current = smoothingMs;
     if (reducedMotion()) {
       stopAnimation();
       show(target);
@@ -102,7 +108,7 @@ export function usePanZoom(
     const tick = (now: number) => {
       const elapsed = last === null ? FIRST_FRAME_MS : now - last;
       last = now;
-      const share = 1 - Math.exp(-elapsed / SMOOTHING_MS);
+      const share = 1 - Math.exp(-elapsed / smoothing.current);
       const from = shown.current;
       const to = goal.current;
       const next = {
@@ -242,9 +248,28 @@ export function usePanZoom(
 
   useEffect(() => stopAnimation, [stopAnimation]);
 
+  /** Moves the camera so that `rect` fills the view, within the limits; null goes back to the view before the first focus. */
+  const focus = useCallback((rect: Rect | null) => {
+    if (rect === null) {
+      if (beforeFocus.current) animateTo(beforeFocus.current, FOCUS_SMOOTHING_MS);
+      beforeFocus.current = null;
+      return;
+    }
+    beforeFocus.current ??= goal.current;
+    const { viewport, map } = mapping();
+    const scale = clampScale(Math.min(viewport.width / rect.width, viewport.height / rect.height));
+    const x = -(rect.x + rect.width / 2 - (viewBox.x + viewBox.width / 2)) * scale;
+    const y = -(rect.y + rect.height / 2 - (viewBox.y + viewBox.height / 2)) * scale;
+    animateTo(clampView({ x, y, scale }, viewport, map), FOCUS_SMOOTHING_MS);
+  }, [mapping, animateTo, viewBox.x, viewBox.y, viewBox.width, viewBox.height]);
+
   return {
     view,
-    reset: () => animateTo(IDENTITY),
+    focus,
+    reset: () => {
+      beforeFocus.current = null;
+      animateTo(IDENTITY);
+    },
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture },
   };
 }

@@ -1,6 +1,7 @@
-import { sourceSlot, suggestUnits, systemPlanets, tileIdOf } from '../../domain/project';
+import { hexLayout } from '../../domain/hexLayout';
+import { fightersFly, sourceSlot, systemPlanets, tileIdOf } from '../../domain/project';
+import { flightDuration, joinShare, type CurveSegment, type RouteShape } from '../../domain/route';
 import type { DataPack, Entry, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
-import type { Arrow } from '../map/HexMap';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -28,7 +29,7 @@ export function addUnits(target: UnitCounts, units: UnitCounts): UnitCounts {
   return sum;
 }
 
-/** Where a source's units can come from: its space area, then its planets that hold ground units. */
+/** Where a system's units can come from: its space area, then its planets that hold ground units. */
 export function sourcePools(
   game: Game, pack: DataPack, before: GameState, source: string,
 ): { from: string; name: string | null; available: UnitCounts }[] {
@@ -39,34 +40,160 @@ export function sourcePools(
   ];
 }
 
-/** The suggested moves from a source: cargo comes from its space area first, then from its planets. */
-export function suggestMoves(game: Game, pack: DataPack, before: GameState, source: string): Move[] {
-  const pools = sourcePools(game, pack, before, source);
-  const remaining = suggestUnits(game, before.upgrades, pools.reduce((sum, p) => addUnits(sum, p.available), {} as UnitCounts), pack);
-  const moves: Move[] = [];
-  for (const pool of pools) {
-    let units: UnitCounts = {};
-    for (const id of Object.keys(remaining) as UnitId[]) {
-      const count = Math.min(remaining[id] ?? 0, pool.available[id] ?? 0);
-      units = withCount(units, id, count);
-      remaining[id] = (remaining[id] ?? 0) - count;
-    }
-    if (hasUnits(units)) moves.push({ from: pool.from, units });
-  }
-  return moves;
+/** Whether a unit flies by itself at this point of the replay; everything else rides as cargo. */
+export function fliesNow(game: Game, pack: DataPack, upgrades: UnitId[], unit: UnitId): boolean {
+  const def = pack.units[unit];
+  if (!def || def.ground) return false;
+  return !def.fighter || fightersFly(game, upgrades, pack);
 }
 
+/** The source systems of an action, in the order of their moves. */
+export function sourcesOf(game: Game, pack: DataPack, entry: TacticalEntry): string[] {
+  const slots = entry.moves.filter(m => m.pickupOf === undefined).map(m => sourceSlot(game, pack, m.from));
+  return [...new Set(slots)].filter((s): s is string => s !== null);
+}
+
+/** The moves of one source: its space area, its planets, and what it picks up on the way. */
+export function groupOf(game: Game, pack: DataPack, moves: Move[], source: string): Move[] {
+  return moves.filter(m => (m.pickupOf === undefined ? sourceSlot(game, pack, m.from) === source : m.pickupOf === source));
+}
+
+const mainMove = (moves: Move[], source: string): Move | undefined =>
+  moves.find(m => m.from === source && m.pickupOf === undefined);
+
+export const viaOf = (entry: Pick<TacticalEntry, 'moves'>, source: string): string[] => mainMove(entry.moves, source)?.via ?? [];
+
+/** Sets the way of a source, adding the source if it is new. What it picked up in systems no longer on the way goes. */
+export function withRoute(game: Game, pack: DataPack, moves: Move[], source: string, via: string[]): Move[] {
+  const kept = moves.filter(m => m.pickupOf !== source || via.includes(sourceSlot(game, pack, m.from) ?? ''));
+  const main: Move = { from: source, units: mainMove(moves, source)?.units ?? {}, ...(via.length > 0 ? { via } : {}) };
+  return mainMove(moves, source) ? kept.map(m => (m.from === source && m.pickupOf === undefined ? main : m)) : [...kept, main];
+}
+
+export function withoutSource(game: Game, pack: DataPack, moves: Move[], source: string): Move[] {
+  const group = groupOf(game, pack, moves, source);
+  return moves.filter(m => !group.includes(m));
+}
+
+/** Sets a count in a source's group. `from` is the source, one of its planets, or a system or planet on its way. */
+export function withUnitCount(game: Game, pack: DataPack, moves: Move[], source: string, from: string, unit: UnitId, count: number): Move[] {
+  const pickup = sourceSlot(game, pack, from) !== source;
+  const same = (m: Move) => m.from === from && (pickup ? m.pickupOf === source : m.pickupOf === undefined);
+  const known = moves.find(same);
+  const units = withCount(known?.units ?? {}, unit, count);
+  const item: Move = known ? { ...known, units } : { from, units, ...(pickup ? { pickupOf: source } : {}) };
+  const next = known ? moves.map(m => (m === known ? item : m)) : [...moves, item];
+  // The source's own move stays even when empty: it holds the arrow and the way.
+  return next.filter(m => m !== item || hasUnits(m.units) || (m.from === source && m.pickupOf === undefined));
+}
+
+/** When the editor closes: a source with nothing chosen goes, and with it the empty moves. */
+export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): Move[] {
+  return moves.filter(m => {
+    if (hasUnits(m.units)) return true;
+    return m.pickupOf === undefined && groupOf(game, pack, moves, m.from).some(other => hasUnits(other.units));
+  });
+}
+
+export interface RouteArrow { from: string; via: string[]; to: string; warn?: boolean; pickups: { slot: string; count: number }[] }
+
+const countOf = (units: UnitCounts): number => Object.values(units).reduce<number>((sum, n) => sum + (n ?? 0), 0);
+
 /** One arrow per source system, flagged when the projection warned about one of its moves. */
-export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry, warnings: Warning[]): Arrow[] {
-  if (entry.systemId === null) return [];
+export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry, warnings: Warning[]): RouteArrow[] {
   const to = entry.systemId;
-  const flagged = (move: Move, from: string) => warnings.some(w =>
-    (w.code === 'capacityGroup' && w.params.from === from) || (w.code === 'unitsMissing' && w.params.where === move.from));
-  const arrows = new Map<string, Arrow>();
-  for (const move of entry.moves) {
-    const from = sourceSlot(game, pack, move.from);
-    if (from === null) continue;
-    arrows.set(from, { from, to, warn: flagged(move, from) || arrows.get(from)?.warn });
+  if (to === null) return [];
+  return sourcesOf(game, pack, entry).filter(from => from !== to).map(from => {
+    const group = groupOf(game, pack, entry.moves, from);
+    const flagged = warnings.some(w => (w.code === 'capacityGroup' && w.params.from === from)
+      || (w.code === 'unitsMissing' && group.some(m => m.from === w.params.where)));
+    const taken = new Map<string, number>();
+    for (const move of group) {
+      const slot = move.pickupOf === undefined ? null : sourceSlot(game, pack, move.from);
+      if (slot !== null) taken.set(slot, (taken.get(slot) ?? 0) + countOf(move.units));
+    }
+    return {
+      from, to, via: viaOf(entry, from), warn: flagged,
+      pickups: [...taken].filter(([, count]) => count > 0).map(([slot, count]) => ({ slot, count })),
+    };
+  });
+}
+
+/** The systems an entry touches, for the camera. */
+export function entrySystems(game: Game, pack: DataPack, entry: Entry): string[] {
+  const slots: (string | null | undefined)[] = [];
+  if (entry.type === 'tactical') {
+    slots.push(entry.systemId, ...sourcesOf(game, pack, entry));
+    for (const move of entry.moves) slots.push(...(move.via ?? []), sourceSlot(game, pack, move.from));
+  } else if (entry.type === 'strategic' || entry.type === 'secondary') {
+    const { effects } = entry;
+    slots.push(effects?.systemId, effects?.production?.systemId, ...(effects?.structures ?? []).map(s => sourceSlot(game, pack, s.planetId)));
+    slots.push(...(effects?.readied ?? []).map(id => sourceSlot(game, pack, id)));
+  } else if (entry.type === 'adjustment') {
+    slots.push(entry.delta.units?.systemId, ...Object.keys(entry.delta.ground ?? {}).map(id => sourceSlot(game, pack, id)));
   }
-  return [...arrows.values()];
+  return [...new Set(slots)].filter((s): s is string => Boolean(s) && game.map[s as string] !== undefined);
+}
+
+/** A cell of a route's formation. `joins` say when its units come on board, as a share of the route's length; 0 is the start. */
+export interface FlightStack {
+  kind: UnitId;
+  x: number;
+  y: number;
+  size: number;
+  joins: { at: number; count: number; move: number }[];
+}
+export interface FlightRoute { segments: CurveSegment[]; durationMs: number; delayMs: number; stacks: FlightStack[] }
+
+const STAGGER_MS = 60;
+
+/** What flies when an action is played: only what really exists, as a rigid formation per route, laid out as on a tile with no planets. */
+export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, before: GameState, shapeOf: (from: string) => RouteShape | undefined): FlightRoute[] {
+  const left = structuredClone({ systems: before.systems, ground: before.ground });
+  const routes: FlightRoute[] = [];
+  for (const from of sourcesOf(game, pack, entry)) {
+    const shape = shapeOf(from);
+    if (!shape || entry.systemId === null) continue;
+    const slots = [from, ...viaOf(entry, from), entry.systemId];
+    const { segments } = shape;
+    const joins = new Map<UnitId, FlightStack['joins']>();
+    entry.moves.forEach((move, index) => {
+      if (!groupOf(game, pack, [move], from).length) return;
+      const pool = (move.from in pack.planets ? left.ground : left.systems)[move.from] ?? {};
+      const stop = move.pickupOf === undefined ? 0 : slots.indexOf(sourceSlot(game, pack, move.from) ?? '');
+      for (const unit of Object.keys(move.units) as UnitId[]) {
+        const count = Math.min(move.units[unit] ?? 0, pool[unit] ?? 0);
+        if (count <= 0) continue;
+        pool[unit] = (pool[unit] ?? 0) - count;
+        joins.set(unit, [...(joins.get(unit) ?? []), { at: stop > 0 ? joinShare(segments, stop) : 0, count, move: index }]);
+      }
+    });
+    if (joins.size === 0) continue;
+    const space = [...joins].map(([kind, list]) => ({ kind, owner: 'me', count: list.reduce((sum, j) => sum + j.count, 0) }));
+    const { items } = hexLayout({ planets: 0, ground: [], space });
+    routes.push({
+      segments,
+      durationMs: flightDuration(slots),
+      delayMs: routes.length * STAGGER_MS,
+      stacks: items.map(item => ({ kind: item.kind as UnitId, x: item.x, y: item.y, size: item.size, joins: joins.get(item.kind as UnitId) ?? [] })),
+    });
+  }
+  return routes;
+}
+
+/** The map during a flight: what flies has left its tile, what is picked up on the way leaves when the leader passes. It lands with the end of the flight. */
+export function stateInFlight(pack: DataPack, entry: TacticalEntry, before: GameState, passed: number[]): GameState {
+  const state = structuredClone(before);
+  entry.moves.forEach((move, index) => {
+    if (move.pickupOf !== undefined && !passed.includes(index)) return;
+    const pool = (move.from in pack.planets ? state.ground : state.systems)[move.from];
+    if (!pool) return;
+    for (const unit of Object.keys(move.units) as UnitId[]) {
+      const count = (pool[unit] ?? 0) - (move.units[unit] ?? 0);
+      if (count > 0) pool[unit] = count;
+      else delete pool[unit];
+    }
+  });
+  if (!entry.free && entry.systemId !== null && !state.tokensOnMap.includes(entry.systemId)) state.tokensOnMap.push(entry.systemId);
+  return state;
 }

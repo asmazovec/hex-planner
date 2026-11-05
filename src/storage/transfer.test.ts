@@ -260,3 +260,25 @@ describe('enemy ground units by planet', () => {
     expect(importGame(exportGame(game))).toEqual({ ok: true, game });
   });
 });
+
+describe('routes in a saved game', () => {
+  const withMoves = (moves: unknown[]) => {
+    const doc = structuredClone(game) as unknown as { plans: { rounds: { entries: unknown[] }[] }[] };
+    doc.plans[0].rounds[0].entries = [{ id: 'r', phase: 'action', status: 'planned', type: 'tactical', systemId: '0,1', moves, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }];
+    return JSON.stringify(doc);
+  };
+  const movesOf = (result: ReturnType<typeof importGame>) => {
+    if (!result.ok) throw new Error('not imported');
+    return (result.game.plans[0].rounds[0].entries[0] as { moves: unknown[] }).moves;
+  };
+
+  test('a save from before routes loads as it is', () => {
+    const moves = [{ from: '1,0', units: { carrier: 1 } }];
+    expect(movesOf(importGame(withMoves(moves)))).toEqual(moves);
+  });
+
+  test('the way and the pickups of a route survive saving', () => {
+    const moves = [{ from: '1,0', units: { carrier: 1 }, via: ['1,1'] }, { from: '1,1', units: { fighter: 1 }, pickupOf: '1,0' }];
+    expect(movesOf(importGame(withMoves(moves)))).toEqual(moves);
+  });
+});

@@ -13,6 +13,15 @@ export interface UnitTokenProps {
   label?: string;
 }
 
+/** A token as a picture of its own, for lists and buttons outside the map. */
+export function TokenPicture({ kind, colour, px }: { kind: TokenKind; colour: string; px: number }) {
+  return (
+    <svg className="token-picture" viewBox="-68 -68 136 136" width={px} height={px} aria-hidden="true">
+      <UnitToken kind={kind} colour={colour} size={100} />
+    </svg>
+  );
+}
+
 /** The token as a ready bitmap once sprites are baked, and as vector art before that. Drawn 100 across at the origin. */
 export function UnitToken({ kind, colour, count = 1, size, label }: UnitTokenProps) {
   const sprite = useSyncExternalStore(subscribeSprites, () => getSprite(kind, colour));

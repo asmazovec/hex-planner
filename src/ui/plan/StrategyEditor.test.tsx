@@ -74,7 +74,7 @@ describe('opening', () => {
   test('an entry opens the editor again from the list', async () => {
     const id = store().addEntry(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
     render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Strategy: Imperial' }));
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Strategy: Imperial' }));
     expect(button(/Mecatol Rex/)).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -483,7 +483,7 @@ describe('Warfare', () => {
     const id = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
     store().addEntry(1, { type: 'secondary', card: 7, upgrades: ['warsun'] }, 'action');
     render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Secondary: Warfare' }));
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary: Warfare' }));
     await click('Production in the home system');
     const warsun = within(screen.getByRole('dialog')).getByRole('button', { name: 'War Sun' });
     expect(warsun).toHaveTextContent(String(cost(false)));
@@ -496,7 +496,7 @@ describe('Warfare', () => {
     const [first, second] = hacan.tiles[hacan.factions.hacan.homeTile].planetIds;
     const later = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
     render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${later}"]`)!).getByRole('button', { name: 'Secondary: Warfare' }));
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${later}"]`)!).getByRole('button', { name: 'Edit: Secondary: Warfare' }));
     await click('Production in the home system');
     const shop = within(screen.getByRole('dialog'));
     await userEvent.click(document.querySelector(`.stage-hex [role="button"][aria-label*="${hacan.planets[second].name}"]`)!);
@@ -562,7 +562,7 @@ describe('entries saved before cards', () => {
   test('their upgrades stay visible on any card and can be taken off', async () => {
     const id = store().addEntry(1, { type: 'secondary', upgrades: ['carrier'] }, 'action');
     render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Secondary' }));
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary' }));
     const row = () => within(screen.getByRole('group', { name: 'Upgrade' }));
     expect(row().getByRole('button', { name: 'Carrier' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
@@ -572,7 +572,7 @@ describe('entries saved before cards', () => {
   test('picking Technology on an old secondary seeds the payment for its upgrades', async () => {
     const id = store().addEntry(1, { type: 'secondary', upgrades: ['carrier'] }, 'action');
     render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Secondary' }));
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary' }));
     await userEvent.click(cards().getByRole('button', { name: /Technology/ }));
     expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
   });
