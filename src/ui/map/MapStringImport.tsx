@@ -22,7 +22,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
   const nothing = Object.keys(parsed.map).length === 0;
 
   const apply = () => {
-    setMap(parsed.map);
+    setMap(parsed.map, parsed.layout);
     setResult(parsed);
     setConfirming(false);
     setText('');
@@ -53,6 +53,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
       {result && (
         <div className="muted" role="status">
           <p>{t('mapImport.placed', { n: result.found })}</p>
+          <p>{t('mapImport.layout', { name: t(`layout.${result.layout}`) })}</p>
           {result.unknown.length > 0 && <p>{t('mapImport.unknown', { list: result.unknown.join(', ') })}</p>}
           {result.dropped > 0 && <p>{t('mapImport.dropped', { n: result.dropped })}</p>}
           {result.tokens !== MILTY_TOKENS && <p>{t('mapImport.tokens', { n: result.tokens })}</p>}

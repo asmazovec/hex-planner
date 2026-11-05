@@ -1096,6 +1096,12 @@
   "templates": [
     {
       "playerCount": 3,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,0",
+        "-3,3"
+      ],
       "slots": [
         {
           "q": 0,
@@ -1214,6 +1220,13 @@
     },
     {
       "playerCount": 4,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "0,3",
+        "-3,3"
+      ],
       "slots": [
         {
           "q": 0,
@@ -1368,6 +1381,14 @@
     },
     {
       "playerCount": 5,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "3,0",
+        "-3,3",
+        "-3,0"
+      ],
       "slots": [
         {
           "q": 0,
@@ -1522,6 +1543,15 @@
     },
     {
       "playerCount": 6,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "3,0",
+        "0,3",
+        "-3,3",
+        "-3,0"
+      ],
       "slots": [
         {
           "q": 0,

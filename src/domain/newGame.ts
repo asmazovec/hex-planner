@@ -1,4 +1,5 @@
-import type { DataPack, ExpansionId, Game } from './types';
+import { defaultLayout, templateOf } from './layouts';
+import type { DataPack, ExpansionId, Game, MapLayout } from './types';
 
 let counter = 0;
 /** No browser or node API: an id only has to be unique within one user's local games. */
@@ -11,11 +12,12 @@ function makeId(prefix: string): string {
 export const slotKeyOf = (q: number, r: number): string => `${q},${r}`;
 
 export function createGame(
-  input: { expansions: ExpansionId[]; playerCount: number; faction: string },
+  input: { expansions: ExpansionId[]; playerCount: number; faction: string; layout?: MapLayout },
   pack: DataPack,
 ): Game {
   const faction = pack.factions[input.faction];
-  const template = pack.templates.find(t => t.playerCount === input.playerCount);
+  const layout = input.layout ?? defaultLayout(input.playerCount, pack);
+  const template = templateOf(input.playerCount, pack, layout);
   const map: Record<string, string> = {};
   for (const slot of template?.slots ?? []) if (slot.fixed) map[slotKeyOf(slot.q, slot.r)] = slot.fixed;
   const planetControl: Game['planetControl'] = {};
@@ -27,6 +29,7 @@ export function createGame(
     dataVersion: pack.version,
     expansions: [...input.expansions],
     playerCount: input.playerCount,
+    layout: template?.layout ?? layout,
     faction: input.faction,
     map,
     opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, () => ({ faction: '', vp: 0 })),

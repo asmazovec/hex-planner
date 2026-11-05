@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { seatSlots } from '../../domain/mapBuilder';
+import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
 import type { DataPack, Game, GameState } from '../../domain/types';
 import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
@@ -100,11 +100,10 @@ export function HexMap({
   const areaRef = useRef<HTMLDivElement>(null);
 
   const slotKeys = useMemo(() => {
-    const template = pack.templates.find(tpl => tpl.playerCount === game.playerCount);
-    const keys = new Set((template?.slots ?? []).map(s => slotKeyOf(s.q, s.r)));
+    const keys = new Set(slotsFor(game.playerCount, pack, game.layout).map(s => slotKeyOf(s.q, s.r)));
     for (const key of Object.keys(game.map)) keys.add(key);
     return [...keys];
-  }, [pack, game.playerCount, game.map]);
+  }, [pack, game.playerCount, game.layout, game.map]);
 
   const mapRect = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
   const fractureIds = useMemo(
@@ -113,7 +112,7 @@ export function HexMap({
       : []),
     [pack, game.fracture.active],
   );
-  const seatKey = game.fracture.seat === null ? undefined : seatSlots(game.playerCount, pack)[game.fracture.seat - 1];
+  const seatKey = game.fracture.seat === null ? undefined : seatSlots(game.playerCount, pack, game.layout)[game.fracture.seat - 1];
   const fracture = useMemo(() => {
     if (fractureIds.length === 0) return null;
     return fractureLayout(fractureIds, mapRect, seatKey === undefined ? null : hexToPixel(parseKey(seatKey).q, parseKey(seatKey).r));

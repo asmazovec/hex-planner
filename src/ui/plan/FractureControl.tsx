@@ -17,7 +17,7 @@ export function FractureControl({ game, pack, marking, onMarking }: FractureCont
   const setFractureActive = useGame(s => s.setFractureActive);
   const setFractureSeat = useGame(s => s.setFractureSeat);
   const { active, ingress, seat } = game.fracture;
-  const seats = seatSlots(game.playerCount, pack);
+  const seats = seatSlots(game.playerCount, pack, game.layout);
   return (
     <div className="editor-section" role="group" aria-label={t('fracture.title')}>
       <div className="panel-head">

@@ -18,6 +18,8 @@ export interface TileDef {
   /** Only tile 117 (The Watchtower) has two anomalies. */
   secondAnomaly?: Anomaly;
   wormholes: string[];
+  /** Hyperlanes only: pairs of tile edges the lanes join, edge 0 at the top and numbered clockwise, before any rotation. */
+  lanes?: [number, number][];
 }
 
 export interface UnitDef {
@@ -40,8 +42,14 @@ export interface FactionDef {
   startUnits: UnitCounts;
 }
 
+/** `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five players). */
+export type MapLayout = 'standard' | 'hyperlanes';
+
 export interface MapTemplate {
   playerCount: number;
+  layout: MapLayout;
+  /** Slot keys of the home systems in seat order: seat 1 at the top, then clockwise. */
+  homes?: string[];
   /**
    * Axial coordinates of a flat-top hex grid: north is r - 1, north-east is q + 1, r - 1.
    * `fixed` uses the Game.map format, `<tileId>` or `<tileId>@<rotation 0-5>`; one rotation step is 60 degrees clockwise.
@@ -100,6 +108,8 @@ export interface Game {
   dataVersion: string;
   expansions: ExpansionId[];
   playerCount: number;
+  /** Which map template of the player count is in use. */
+  layout: MapLayout;
   faction: string;
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;

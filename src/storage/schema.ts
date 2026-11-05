@@ -42,6 +42,7 @@ export const gameSchema = z.object({
   dataVersion: z.string(),
   expansions: z.array(z.enum(['pok', 'te'])),
   playerCount: z.number().int(),
+  layout: z.enum(['standard', 'hyperlanes']).default('standard'),
   faction: z.string(),
   map: z.record(z.string(), z.string()),
   opponents: z.array(z.object({ faction: z.string(), vp: z.number() })),

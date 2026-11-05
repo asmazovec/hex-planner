@@ -250,3 +250,28 @@ test('a home system in the string is reported as placed', async () => {
   expect(screen.getByText(/Home systems placed: 1/)).toBeTruthy();
   expect(screen.queryByText(/Home systems stay empty/)).toBeNull();
 });
+
+test('a string with hyperlanes switches a four-player game to the hyperlane layout', async () => {
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
+  const field = await openImport();
+  await userEvent.click(field);
+  // One hyperlane anywhere makes the string a hyperlane layout.
+  const tokens: string[] = Array.from({ length: 60 }, (_, i) => (i === 0 ? '25' : '0'));
+  tokens[6 + 8] = '83A0';
+  await userEvent.paste(tokens.join(' '));
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(useGame.getState().game!.layout).toBe('hyperlanes');
+  expect(screen.getByText(/Map layout: With hyperlanes/)).toBeTruthy();
+  useGame.getState().undo();
+  expect(useGame.getState().game!.layout).toBe('standard');
+});
+
+test('a string without hyperlanes keeps a standard layout', async () => {
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25 26');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(useGame.getState().game!.layout).toBe('standard');
+  expect(screen.getByText(/Map layout: Standard/)).toBeTruthy();
+});

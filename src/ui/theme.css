@@ -98,7 +98,7 @@ button, select, .button {
 button:active:not(:disabled) { transform: scale(0.97); }
 button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent-solid); color: var(--accent-text); border-color: var(--accent-solid); font-weight: 600; }
-button[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
+button[aria-pressed='true'], button[role='radio'][aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
 .button { display: inline-flex; align-items: center; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type='text'], input:not([type]) {
@@ -117,7 +117,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 @media (hover: hover) {
   button:hover:not(:disabled), select:hover { background: var(--surface-3); border-color: #55617a; color: #fff; }
   button.primary:hover:not(:disabled) { background: #3a7ade; border-color: #3a7ade; }
-  button[aria-pressed='true']:hover:not(:disabled) { background: #2a3e63; border-color: var(--accent); }
+  button[aria-pressed='true']:hover:not(:disabled), button[role='radio'][aria-checked='true']:hover:not(:disabled) { background: #2a3e63; border-color: var(--accent); }
   .app > nav button:hover:not([aria-current='page']) { background: var(--surface-2); border-color: transparent; }
   .app > nav button[aria-current='page']:hover { background: var(--accent-soft); border-color: transparent; }
   .tile:hover .hex { stroke: #66748c; }
@@ -149,7 +149,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .segment > button, .map-mode > button, .plan-rounds > button { border-radius: 0; margin-left: -1px; flex: 1 1 auto; }
 .segment > button:first-child, .map-mode > button:first-child, .plan-rounds > button:first-child { border-radius: var(--radius-s) 0 0 var(--radius-s); margin-left: 0; }
 .segment > button:last-child, .map-mode > button:last-child, .plan-rounds > button:last-child { border-radius: 0 var(--radius-s) var(--radius-s) 0; }
-.segment > button[aria-pressed='true'], .map-mode > button[aria-pressed='true'], .plan-rounds > button[aria-pressed='true'] { position: relative; z-index: 1; }
+.segment > button[aria-pressed='true'], .segment > button[aria-checked='true'], .map-mode > button[aria-pressed='true'], .plan-rounds > button[aria-pressed='true'] { position: relative; z-index: 1; }
 .segment > button:active:not(:disabled), .map-mode > button:active:not(:disabled), .plan-rounds > button:active:not(:disabled) { transform: none; }
 
 .banner { display: flex; justify-content: space-between; align-items: center; gap: var(--gap); padding: 8px 14px; border-left: 3px solid var(--accent); background: var(--surface-2); font-size: var(--font-s); }
@@ -218,6 +218,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile text { text-anchor: middle; fill: var(--text); font-family: inherit; pointer-events: none; }
 .tile .tile-number { font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 2.5px; stroke-linejoin: round; }
 .tile .tile-worm { fill: var(--accent); }
+.tile .tile-lane { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; opacity: 0.85; pointer-events: none; }
 .tile .tile-caption { font-size: 9.5px; fill: var(--text-muted); }
 .tile-warning { font-size: 30px; font-weight: 700; fill: var(--warning) !important; }
 .planet-disc { fill: var(--token-fill); stroke: var(--token-stroke); stroke-width: 1.2; transition: fill var(--motion), stroke var(--motion); }

@@ -257,3 +257,52 @@ test('the sheet and the map name units in the interface language', () => {
   render(<svg><TileView slotKey="1,0" pack={pack} game={game} state={state} /></svg>);
   expect(screen.getByRole('img', { name: 'Солнце войны ×1' })).toBeInTheDocument();
 });
+
+const lanesOf = () => [...document.querySelectorAll('[data-lane]')].map(el => el.getAttribute('data-lane')).sort();
+
+test('a hyperlane draws its lanes joining the edge pairs of the tile', () => {
+  setup('83A');
+  expect(lanesOf()).toEqual(['1-4']);
+  expect(screen.getByLabelText('Tile 83')).toBeInTheDocument();
+});
+
+test('a hyperlane rotation moves every edge one step clockwise per turn', () => {
+  cleanup();
+  setup('83A@1');
+  expect(lanesOf()).toEqual(['2-5']);
+  cleanup();
+  setup('83B@2');
+  // 83B joins 0-2, 0-3 and 3-5; two turns give 2-4, 2-5 and 5-1.
+  expect(lanesOf()).toEqual(['1-5', '2-4', '2-5']);
+});
+
+test('lane edges wrap around after the last edge', () => {
+  setup('83A@5');
+  // 1-4 turned five steps: 6 -> 0 and 9 -> 3.
+  expect(lanesOf()).toEqual(['0-3']);
+});
+
+test('a lane of the tile is drawn through the hex, from the middle of one edge to the middle of another', () => {
+  setup('83A');
+  const path = document.querySelector('[data-lane="1-4"]')!;
+  const d = path.getAttribute('d')!;
+  const nums = d.match(/-?\d+(\.\d+)?/g)!.map(Number);
+  // Edge 1 is north-east, edge 4 south-west, so the line crosses the centre.
+  expect(nums[0]).toBeGreaterThan(0);
+  expect(nums[1]).toBeLessThan(0);
+  expect(nums.at(-2)).toBeLessThan(0);
+  expect(nums.at(-1)).toBeGreaterThan(0);
+});
+
+test('a hyperlane without edge data shows its id and rotation as text', () => {
+  const teGame = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, loadPack(['pok', 'te']));
+  teGame.map['1,0'] = '119A@2';
+  render(<svg><TileView slotKey="1,0" pack={loadPack(['pok', 'te'])} game={teGame} state={emptyState()} /></svg>);
+  expect(lanesOf()).toEqual([]);
+  expect(screen.getByText('119A · 2')).toBeInTheDocument();
+});
+
+test('an ordinary system draws no lanes', () => {
+  setup('25');
+  expect(lanesOf()).toEqual([]);
+});

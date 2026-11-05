@@ -44,3 +44,17 @@ test('миграция применяется к старой схеме', () =>
   expect(migrate(old)).toMatchObject({ schemaVersion: CURRENT_SCHEMA });
   expect(importGame(JSON.stringify(old))).toEqual({ ok: true, game });
 });
+
+describe('раскладка карты', () => {
+  test('файл без раскладки читается как обычная, а неизвестная раскладка отклоняется', () => {
+    const withoutLayout = JSON.parse(exportGame(game)) as Record<string, unknown>;
+    delete withoutLayout.layout;
+    expect(importGame(JSON.stringify(withoutLayout))).toMatchObject({ ok: true, game: { layout: 'standard' } });
+    expect(importGame(JSON.stringify({ ...withoutLayout, layout: 'lanes' })).ok).toBe(false);
+  });
+
+  test('раскладка с гиперпутями сохраняется при экспорте', () => {
+    const lanes = { ...game, layout: 'hyperlanes' as const };
+    expect(importGame(exportGame(lanes))).toEqual({ ok: true, game: lanes });
+  });
+});

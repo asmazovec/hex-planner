@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { checkCounts, normalizeTileId, parseStartingFleet, positionToAxial } from './build-data';
+import { checkCounts, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, rotateLanes } from './build-data';
 
 test('сборщик падает при неверном количестве', () => {
   expect(() => checkCounts({ base: 50 }, { base: 51 })).toThrow(/base/);
@@ -38,4 +38,31 @@ test('id тайлов нормализуются', () => {
   expect(normalizeTileId('83a')).toBe('83A');
   expect(normalizeTileId('96b')).toBe('96B');
   expect(normalizeTileId('fracture4')).toBe('fracture4');
+});
+
+test('связи гиперпутей читаются из матрицы граней: пары один раз, повороты источника пропущены', () => {
+  const text = [
+    '83a=0,0,0,0,0,0;0,0,0,0,1,0;0,0,0,0,0,0;0,0,0,0,0,0;0,1,0,0,0,0;0,0,0,0,0,0',
+    '83a60=0,0,0,0,0,0;0,0,0,0,0,0;0,0,0,0,0,1;0,0,0,0,0,0;0,0,0,0,0,0;0,0,1,0,0,0',
+    '87a=0,0,1,0,0,0;0,0,0,0,0,0;1,0,0,0,1,1;0,0,0,0,0,0;0,0,1,0,0,0;0,0,1,0,0,0',
+    '# comment',
+  ].join('\n');
+  expect(parseHyperlanes(text)).toEqual({ '83A': [[1, 4]], '87A': [[0, 2], [2, 4], [2, 5]] });
+});
+
+test('поворот гиперпута сдвигает номера граней по часовой, источник это подтверждает', () => {
+  expect(rotateLanes([[1, 4]], 1)).toEqual([[2, 5]]);
+  expect(rotateLanes([[1, 4]], 5)).toEqual([[0, 3]]);
+  expect(rotateLanes([[0, 2], [0, 3], [3, 5]], 2)).toEqual([[1, 5], [2, 4], [2, 5]]);
+  const lines = [
+    '83a=0,0,0,0,0,0;0,0,0,0,1,0;0,0,0,0,0,0;0,0,0,0,0,0;0,1,0,0,0,0;0,0,0,0,0,0',
+    '83a60=0,0,0,0,0,0;0,0,0,0,0,0;0,0,0,0,0,1;0,0,0,0,0,0;0,0,0,0,0,0;0,0,1,0,0,0',
+    '83a120=0,0,0,1,0,0;0,0,0,0,0,0;0,0,0,0,0,0;1,0,0,0,0,0;0,0,0,0,0,0;0,0,0,0,0,0',
+    '83a180=0,0,0,0,0,0;0,0,0,0,1,0;0,0,0,0,0,0;0,0,0,0,0,0;0,1,0,0,0,0;0,0,0,0,0,0',
+    '83a240=0,0,0,0,0,0;0,0,0,0,0,0;0,0,0,0,0,1;0,0,0,0,0,0;0,0,0,0,0,0;0,0,1,0,0,0',
+    '83a300=0,0,0,1,0,0;0,0,0,0,0,0;0,0,0,0,0,0;1,0,0,0,0,0;0,0,0,0,0,0;0,0,0,0,0,0',
+  ];
+  expect(() => checkLaneRotations(lines.join('\n'))).not.toThrow();
+  const wrong = [...lines.slice(0, 2), lines[2].replace('0,0,0,1,0,0;', '0,0,0,0,1,0;'), ...lines.slice(3)];
+  expect(() => checkLaneRotations(wrong.join('\n'))).toThrow(/83a/);
 });

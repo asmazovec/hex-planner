@@ -7,11 +7,11 @@ const PACKS: Record<ExpansionId, unknown> = { pok, te };
 const MECATOL_BASE = '18';
 const MECATOL_TE = '112';
 
-/** A later pack's template for a player count replaces an earlier one. */
+/** A later pack's template for a player count and layout replaces an earlier one; the standard layout comes first. */
 function mergeTemplates(packs: DataPack[]): MapTemplate[] {
-  const byCount = new Map<number, MapTemplate>();
-  for (const pack of packs) for (const template of pack.templates) byCount.set(template.playerCount, template);
-  return [...byCount.values()].sort((a, b) => a.playerCount - b.playerCount);
+  const byKey = new Map<string, MapTemplate>();
+  for (const pack of packs) for (const template of pack.templates) byKey.set(`${template.playerCount}-${template.layout}`, template);
+  return [...byKey.values()].sort((a, b) => a.playerCount - b.playerCount || Number(a.layout !== 'standard') - Number(b.layout !== 'standard'));
 }
 
 /** Thunder's Edge replaces the base Mecatol Rex tile with its own. */

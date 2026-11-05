@@ -43,6 +43,22 @@ const NAME_INWARD = 8;
 const MECATOL_PLANETS = ['mr', 'mrte'];
 const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε' };
 
+/** Distance from the hex centre to the middle of an edge. Edge 0 is at the top and numbers go clockwise. */
+const EDGE_MIDDLE = HEX_INNER * Math.sqrt(3) / 2;
+
+/** Edge pairs of a hyperlane turned `rotation` steps of 60 degrees clockwise, each pair with the smaller edge first. */
+export const turnedLanes = (lanes: [number, number][], rotation: number): [number, number][] =>
+  lanes.map(([a, b]) => [(a + rotation) % 6, (b + rotation) % 6].sort((x, y) => x - y) as [number, number]);
+
+/** A lane from the middle of one edge to the middle of another, bent toward the centre; opposite edges give a straight line. */
+function lanePath([a, b]: [number, number]): string {
+  const point = (edge: number) => ({ x: EDGE_MIDDLE * Math.sin((edge * Math.PI) / 3), y: -EDGE_MIDDLE * Math.cos((edge * Math.PI) / 3) });
+  const from = point(a);
+  const to = point(b);
+  const bend = 0.15;
+  return `M${from.x.toFixed(2)},${from.y.toFixed(2)} Q${((from.x + to.x) * bend).toFixed(2)},${((from.y + to.y) * bend).toFixed(2)} ${to.x.toFixed(2)},${to.y.toFixed(2)}`;
+}
+
 const shortName = (name: string): string => (name.length > NAME_LENGTH ? `${name.slice(0, NAME_LENGTH - 1)}…` : name);
 
 const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
@@ -118,9 +134,14 @@ export function TileView({
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(a => a !== undefined);
   const hexKind = !tile ? 'hex-free' : tile.planetIds.some(id => MECATOL_PLANETS.includes(id)) ? 'hex-mecatol' : tile.kind !== 'system' ? `hex-${tile.kind}`
     : anomalies.length > 0 ? 'hex-anomaly' : tile.wormholes.length > 0 ? 'hex-wormhole' : 'hex-system';
+  const rotation = Number(mapValue?.split('@')[1] ?? 0) % 6 || 0;
+  const lanes = tile?.kind === 'hyperlane' && tile.lanes ? turnedLanes(tile.lanes, rotation) : [];
+  // A hyperlane whose edges the data lacks cannot be drawn: it shows its id and rotation instead.
+  const laneNote = tile?.kind === 'hyperlane' && !tile.lanes ? `${tileId} · ${rotation}` : null;
+
   const caption = !tile || planets.length > 0 ? null
     : anomalies.length > 0 ? anomalies.map(a => t(`map.anomaly.${a}`)).join(' + ')
-      : tile.kind === 'hyperlane' ? t('map.hyperlane')
+      : tile.kind === 'hyperlane' ? (lanes.length > 0 ? null : t('map.hyperlane'))
         : tile.wormholes.length > 0 ? t('map.wormhole') : tile.kind === 'system' ? t('map.emptySystem') : null;
 
   const unitLabel = (unit: UnitId, count: number, owner: 'me' | 'enemy'): string =>
@@ -154,6 +175,9 @@ export function TileView({
       onPointerDown={e => onPointerDown?.(slotKey, e)}
     >
       <polygon points={hexPoints(HEX_INNER)} className={`hex ${hexKind}`} />
+      {lanes.map(lane => (
+        <path key={lane.join('-')} d={lanePath(lane)} data-lane={lane.join('-')} className="tile-lane" />
+      ))}
       {tile && (
         <text x={0} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">
           {fracture ? `F${fracture.index + 1}` : tile.number}
@@ -162,6 +186,7 @@ export function TileView({
       )}
       {unknown && <text x={0} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">{tileId}</text>}
       {unknown && <text x={0} y={4} className="tile-warning">!</text>}
+      {laneNote && <text x={0} y={14} className="tile-caption">{laneNote}</text>}
       {caption && <text x={0} y={-14} className="tile-caption">{caption}</text>}
 
       {state.tokensOnMap.includes(slotKey) && (

@@ -108,8 +108,8 @@ describe('фракции', () => {
 });
 
 describe('шаблоны карты', () => {
-  const template = (expansions: ExpansionId[], playerCount: number) =>
-    loadPack(expansions).templates.find(t => t.playerCount === playerCount);
+  const template = (expansions: ExpansionId[], playerCount: number, layout: 'standard' | 'hyperlanes' = 'standard') =>
+    loadPack(expansions).templates.find(t => t.playerCount === playerCount && t.layout === layout);
 
   test('на 6 игроков 37 слотов с Mecatol Rex в центре', () => {
     const slots = template([], 6)!.slots;
@@ -121,7 +121,7 @@ describe('шаблоны карты', () => {
     expect(template(['te'], 7)).toBeUndefined();
   });
   test('шаблон на 5 игроков с Prophecy of Kings ставит гиперпути со стороной и поворотом', () => {
-    const fixed = template(['pok'], 5)!.slots.flatMap(s => s.fixed ?? []);
+    const fixed = template(['pok'], 5, 'hyperlanes')!.slots.flatMap(s => s.fixed ?? []);
     expect(fixed).toContain('86A@0');
     expect(fixed).toHaveLength(7);
     expect(template(['pok'], 3)!.slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
@@ -146,7 +146,27 @@ describe('шаблоны карты', () => {
       expect(slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
       expect(new Set(slots.map(s => `${s.q},${s.r}`)).size).toBe(61);
     }
-    expect(loadPack(['pok']).templates.map(t => t.playerCount)).toEqual([3, 4, 5, 6, 7, 8]);
+    expect(loadPack(['pok']).templates.map(t => `${t.playerCount}${t.layout === 'hyperlanes' ? 'h' : ''}`))
+      .toEqual(['3', '3h', '4', '4h', '5', '5h', '6', '7', '8']);
+  });
+  test('без Prophecy of Kings гиперпутевых шаблонов нет, с ней они на 3, 4 и 5 игроков', () => {
+    expect(loadPack([]).templates.every(t => t.layout === 'standard')).toBe(true);
+    expect(loadPack(['te']).templates.some(t => t.layout === 'hyperlanes')).toBe(false);
+    expect(loadPack(['pok']).templates.filter(t => t.layout === 'hyperlanes').map(t => t.playerCount)).toEqual([3, 4, 5]);
+  });
+  test('у каждого шаблона есть дома по числу игроков, места по часовой от верха', () => {
+    for (const t of loadPack(['pok']).templates) expect(t.homes).toHaveLength(t.playerCount);
+    expect(template([], 6)!.homes).toEqual(['0,-3', '3,-3', '3,0', '0,3', '-3,3', '-3,0']);
+  });
+  test('линии гиперпутей: у тайлов из источника есть пары граней, у 119A-124A нет', () => {
+    const tiles = loadPack(['pok', 'te']).tiles;
+    expect(tiles['83A'].lanes).toEqual([[1, 4]]);
+    expect(tiles['83B'].lanes).toEqual([[0, 2], [0, 3], [3, 5]]);
+    expect(tiles['87A'].lanes).toEqual([[0, 2], [2, 4], [2, 5]]);
+    const lanes = Object.values(tiles).filter(t => t.kind === 'hyperlane' && t.lanes);
+    expect(lanes.map(t => t.id)).toHaveLength(18);
+    expect(tiles['119A'].lanes).toBeUndefined();
+    expect(tiles['25'].lanes).toBeUndefined();
   });
   test("Thunder's Edge заменяет Mecatol Rex на тайл 112 во всех шаблонах", () => {
     for (const set of [['te'], ['pok', 'te']] as ExpansionId[][]) {

@@ -7,6 +7,7 @@ import { flushSaves, useGame } from '../../state/gameStore';
 import { listGames, saveGame, type GameSummary } from '../../storage/db';
 import { importGame } from '../../storage/transfer';
 import { Banner } from '../common/Banner';
+import { LayoutPicker } from '../map/LayoutPicker';
 import { downloadGame } from '../common/download';
 
 const EXPANSIONS: { id: ExpansionId; label: string }[] = [
@@ -35,9 +36,10 @@ export function GameScreen() {
   const [importError, setImportError] = useState<string | null>(null);
 
   const pack = useMemo(() => loadPack(expansions), [expansions]);
-  const openFactions = useMemo(() => Object.values(loadPack(game?.expansions ?? []).factions), [game?.expansions]);
+  const gamePack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
+  const openFactions = useMemo(() => Object.values(gamePack.factions), [gamePack]);
   const factions = useMemo(() => Object.values(pack.factions), [pack]);
-  const counts = pack.templates.map(template => template.playerCount);
+  const counts = [...new Set(pack.templates.map(template => template.playerCount))];
   const chosenFaction = pack.factions[faction] ? faction : (factions[0]?.id ?? '');
   const chosenCount = counts.includes(playerCount) ? playerCount : (counts.at(-1) ?? playerCount);
 
@@ -103,6 +105,8 @@ export function GameScreen() {
         </label>
         <button type="button" className="primary" onClick={start}>{t('game.start')}</button>
       </div>
+
+      {game && <LayoutPicker game={game} pack={gamePack} />}
 
       {game && (
         <div className="panel">

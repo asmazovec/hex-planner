@@ -83,6 +83,10 @@ const LANES_3 = {
   '2,-1': '87A4', '-3,0': '85A2', '-1,0': '85A2', '-3,1': '83A2', '-2,1': '87A4', '0,1': '85A0', '1,1': '87A2',
   '-1,2': '87A0', '1,2': '83A0', '-1,3': '83A1', '0,3': '85A0',
 };
+const LANES_4 = {
+  '-2,-1': '83A0', '-1,-1': '87A2', '2,-1': '87A1', '3,-1': '83A2', '-3,0': '85A2', '-1,0': '85A2',
+  '1,0': '85A5', '3,0': '85A5', '-3,1': '83A2', '-2,1': '87A4', '1,1': '87A5', '2,1': '83A0',
+};
 const LANES_5 = { '0,1': '85A0', '1,1': '87A2', '-1,2': '87A0', '1,2': '83A0', '-1,3': '83A1', '0,3': '85A0' };
 const LANES_7 = { '1,-3': '83B0', '0,-1': '83B0', '-3,1': '83B2', '-1,1': '89B0', '0,1': '84B0', '1,2': '84B0' };
 const LANES_8 = { '0,-1': '87A1', '1,-1': '89B3', '3,-1': '83B2', '-3,1': '83B2', '-1,1': '89B0', '0,1': '87A4' };
@@ -119,11 +123,52 @@ test('Milty MAP_7 and MAP_8 hyperlanes fit the 61-slot templates', () => {
 });
 
 test('tiles outside the template are counted as dropped', () => {
-  const result = parseMapString(milty(LANES_3), 3, pok);
-  // Milty's three-player map has nine hyperlane slots the 28-slot template does not have.
-  expect(result.dropped).toBe(9);
-  expect(Object.keys(result.map)).toHaveLength(9);
-  expect(result.map['1,-2']).toBe('87A@0');
+  // The 28-slot three-player template has no slot at 3,-3.
+  const result = parseMapString(milty({ '1,-2': '30', '3,-3': '31' }), 3, pok);
+  expect(result.layout).toBe('standard');
+  expect(result.dropped).toBe(1);
+  expect(result.map).toEqual({ '1,-2': '30' });
+});
+
+test.each([
+  [3, LANES_3, 33],
+  [4, LANES_4, 32],
+])('a Milty string of %i players with hyperlanes selects the hyperlane layout and drops nothing', (players, lanes, expected) => {
+  const result = parseMapString(milty(lanes), players, pok);
+  expect(result.layout).toBe('hyperlanes');
+  expect(result.dropped).toBe(0);
+  expect(result.unknown).toEqual([]);
+  expect(result.found).toBe(Object.keys(lanes).length);
+  expect(result.expected).toBe(expected);
+  expect(Object.keys(result.map).sort()).toEqual(Object.keys(lanes).sort());
+});
+
+test('a five-player string with hyperlanes selects the hyperlane layout, one without selects the standard one', () => {
+  expect(parseMapString(milty(LANES_5), 5, pok)).toMatchObject({ layout: 'hyperlanes', expected: 31 });
+  const plain = parseMapString(milty({ '0,-1': '25' }), 5, pok);
+  expect(plain.layout).toBe('standard');
+  expect(plain.expected).toBe(31);
+});
+
+test('a string with hyperlanes falls back to the standard template when the pack has no hyperlane layout', () => {
+  const result = parseMapString(milty(LANES_4), 4, loadPack([]));
+  expect(result.layout).toBe('standard');
+});
+
+test('the hyperlane layouts of 3 and 4 players hold exactly the Milty positions as fixed tiles', () => {
+  for (const [players, lanes] of [[3, LANES_3], [4, LANES_4]] as const) {
+    const fixed = Object.fromEntries(
+      pok.templates.find(t => t.playerCount === players && t.layout === 'hyperlanes')!.slots
+        .filter(slot => slot.fixed && slot.fixed !== '18').map(slot => [`${slot.q},${slot.r}`, slot.fixed]),
+    );
+    expect(fixed).toEqual(Object.fromEntries(Object.entries(lanes).map(([key, token]) => [key, token.replace(/(\d)$/, '@$1')])));
+  }
+});
+
+test('expected counts only the homes the template has, even when a home list names a slot it lacks', () => {
+  const template = pok.templates.find(t => t.playerCount === 6)!;
+  const odd = { ...pok, templates: [{ ...template, homes: [...template.homes!.slice(0, 5), '9,9'] }] };
+  expect(parseMapString('', 6, odd).expected).toBe(37 - 1 - 5);
 });
 
 test('unknown tokens are not counted as dropped', () => {

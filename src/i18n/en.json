@@ -274,7 +274,17 @@
     "mismatch": "Expected {{expected}} tiles outside the home systems, found {{found}}.",
     "homesEmpty": "Home systems stay empty: place them by seat.",
     "homesPlaced": "Home systems placed: {{n}}.",
-    "dropped": "Skipped {{n}} tiles that have no slot in this player count.",
-    "tokens": "String has {{n}} tokens, Milty writes 60. A leading 18 or a missing token shifts every tile."
+    "dropped": "Skipped {{n}} tiles that have no slot in this layout.",
+    "tokens": "String has {{n}} tokens, Milty writes 60. A leading 18 or a missing token shifts every tile.",
+    "layout": "Map layout: {{name}}."
+  },
+  "layout": {
+    "label": "Map layout",
+    "standard": "Standard",
+    "hyperlanes": "With hyperlanes",
+    "needsPok": "Hyperlane tiles come with Prophecy of Kings.",
+    "confirm": "The map has tiles. Tiles in slots that both layouts have are kept; the rest are removed.",
+    "switch": "Switch layout",
+    "cancel": "Cancel"
   }
 }

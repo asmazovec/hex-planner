@@ -313,126 +313,326 @@
       "number": "83",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          4
+        ]
+      ]
     },
     "83B": {
       "id": "83B",
       "number": "83",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ]
     },
     "84A": {
       "id": "84A",
       "number": "84",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          2,
+          5
+        ]
+      ]
     },
     "84B": {
       "id": "84B",
       "number": "84",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ]
+      ]
     },
     "85A": {
       "id": "85A",
       "number": "85",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          5
+        ]
+      ]
     },
     "85B": {
       "id": "85B",
       "number": "85",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ]
     },
     "86A": {
       "id": "86A",
       "number": "86",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          5
+        ]
+      ]
     },
     "86B": {
       "id": "86B",
       "number": "86",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ]
+      ]
     },
     "87A": {
       "id": "87A",
       "number": "87",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ]
+      ]
     },
     "87B": {
       "id": "87B",
       "number": "87",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ]
     },
     "88A": {
       "id": "88A",
       "number": "88",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          4
+        ]
+      ]
     },
     "88B": {
       "id": "88B",
       "number": "88",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ]
     },
     "89A": {
       "id": "89A",
       "number": "89",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          2,
+          4
+        ]
+      ]
     },
     "89B": {
       "id": "89B",
       "number": "89",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ]
+      ]
     },
     "90A": {
       "id": "90A",
       "number": "90",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          4
+        ]
+      ]
     },
     "90B": {
       "id": "90B",
       "number": "90",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ]
+      ]
     },
     "91A": {
       "id": "91A",
       "number": "91",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ]
+      ]
     },
     "91B": {
       "id": "91B",
       "number": "91",
       "planetIds": [],
       "kind": "hyperlane",
-      "wormholes": []
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ]
     }
   },
   "planets": {
@@ -818,7 +1018,366 @@
   },
   "templates": [
     {
+      "playerCount": 3,
+      "layout": "hyperlanes",
+      "homes": [
+        "0,-3",
+        "3,0",
+        "-3,3"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1,
+          "fixed": "85A@4"
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1,
+          "fixed": "85A@0"
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2,
+          "fixed": "87A@0"
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1,
+          "fixed": "87A@4"
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1,
+          "fixed": "87A@2"
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2,
+          "fixed": "87A@0"
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1,
+          "fixed": "87A@4"
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1,
+          "fixed": "87A@2"
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3,
+          "fixed": "83A@1"
+        },
+        {
+          "q": 3,
+          "r": -3,
+          "fixed": "85A@4"
+        },
+        {
+          "q": 3,
+          "r": -2,
+          "fixed": "83A@2"
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2,
+          "fixed": "83A@0"
+        },
+        {
+          "q": 0,
+          "r": 3,
+          "fixed": "85A@0"
+        },
+        {
+          "q": -1,
+          "r": 3,
+          "fixed": "83A@1"
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1,
+          "fixed": "83A@2"
+        },
+        {
+          "q": -3,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": -2,
+          "r": -1,
+          "fixed": "83A@0"
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 4,
+      "layout": "hyperlanes",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "0,3",
+        "-3,3"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0,
+          "fixed": "85A@5"
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1,
+          "fixed": "87A@1"
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1,
+          "fixed": "87A@5"
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1,
+          "fixed": "87A@4"
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1,
+          "fixed": "87A@2"
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1,
+          "fixed": "83A@2"
+        },
+        {
+          "q": 3,
+          "r": 0,
+          "fixed": "85A@5"
+        },
+        {
+          "q": 2,
+          "r": 1,
+          "fixed": "83A@0"
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1,
+          "fixed": "83A@2"
+        },
+        {
+          "q": -3,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": -2,
+          "r": -1,
+          "fixed": "83A@0"
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
       "playerCount": 5,
+      "layout": "hyperlanes",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "3,0",
+        "-3,3",
+        "-3,0"
+      ],
       "slots": [
         {
           "q": 0,
@@ -979,6 +1538,16 @@
     },
     {
       "playerCount": 7,
+      "layout": "standard",
+      "homes": [
+        "0,-4",
+        "3,-3",
+        "3,0",
+        "0,4",
+        "-3,4",
+        "-4,2",
+        "-3,-1"
+      ],
       "slots": [
         {
           "q": 0,
@@ -1229,6 +1798,17 @@
     },
     {
       "playerCount": 8,
+      "layout": "standard",
+      "homes": [
+        "0,-4",
+        "3,-4",
+        "4,-2",
+        "3,1",
+        "0,4",
+        "-3,4",
+        "-4,2",
+        "-3,-1"
+      ],
       "slots": [
         {
           "q": 0,

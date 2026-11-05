@@ -1,6 +1,7 @@
-import { seatSlots, slotsFor } from './mapBuilder';
+import { templateFor, templateOf } from './layouts';
+import { seatSlots } from './mapBuilder';
 import { slotKeyOf } from './newGame';
-import type { DataPack } from './types';
+import type { DataPack, MapLayout } from './types';
 
 /** Axial steps of the ring walk: east, south-east, south-west, west, north-west, north-east. */
 const STEPS: [number, number][] = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
@@ -33,6 +34,8 @@ export interface MapStringResult {
   map: Record<string, string>;
   /** Tokens that name no tile of the data pack. */
   unknown: string[];
+  /** The layout whose template the string was read against: with hyperlanes if the string has any, else standard. */
+  layout: MapLayout;
   /** Slots the template fills with something other than a home system or the centre. */
   expected: number;
   /** Tiles placed, home systems not counted. */
@@ -49,13 +52,18 @@ export interface MapStringResult {
  * Reads a Milty Draft map string: tiles of rings 1 to 4 in order, from the top of each ring clockwise, separated by
  * spaces. `0` is an empty slot or a home placeholder, a hyperlane is its id with a rotation digit (`83A3`), and the
  * centre is absent (a braced `{18}` is skipped). Home system ids are placed like any tile. Slots outside the template
- * of the player count are not filled and are counted in `dropped`.
+ * of the player count are not filled and are counted in `dropped`. A string with hyperlanes is read against the
+ * hyperlane layout of the player count, one without against the standard layout; the other layout is used when the
+ * pack lacks the one wanted.
  */
 export function parseMapString(text: string, playerCount: number, pack: DataPack): MapStringResult {
-  const template = new Set(slotsFor(playerCount, pack).map(s => slotKeyOf(s.q, s.r)));
-  const seats = seatSlots(playerCount, pack).length;
-  const slots = Array.from({ length: RINGS }, (_, i) => ringSlots(i + 1)).flat();
   const tokens = text.split(/[\s,]+/).filter(token => token !== '' && !/^\{.*\}$/.test(token));
+  const wanted: MapLayout = tokens.some(token => HYPERLANE.test(token.toUpperCase())) ? 'hyperlanes' : 'standard';
+  const chosen = templateFor(playerCount, wanted, pack) ?? templateOf(playerCount, pack);
+  const layout = chosen?.layout ?? 'standard';
+  const template = new Set((chosen?.slots ?? []).map(s => slotKeyOf(s.q, s.r)));
+  const seats = seatSlots(playerCount, pack, layout).filter(key => template.has(key)).length;
+  const slots = Array.from({ length: RINGS }, (_, i) => ringSlots(i + 1)).flat();
 
   const map: Record<string, string> = {};
   const unknown: string[] = [];
@@ -77,5 +85,5 @@ export function parseMapString(text: string, playerCount: number, pack: DataPack
     }
   });
   const expected = template.size === 0 ? 0 : template.size - 1 - seats;
-  return { map, unknown, expected, found: Object.keys(map).length - homes, homes, dropped, tokens: tokens.length };
+  return { map, unknown, layout, expected, found: Object.keys(map).length - homes, homes, dropped, tokens: tokens.length };
 }

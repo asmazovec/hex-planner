@@ -117,3 +117,25 @@ test('the interface language is chosen here and remembered', async () => {
   expect(screen.getByRole('heading', { name: 'Новая партия' })).toBeVisible();
   expect(localStorage.getItem('ti4.lang')).toBe('ru');
 });
+
+test('the map layout picker shows for 3 to 5 players only', () => {
+  for (const [count, shown] of [[3, true], [4, true], [5, true], [6, false], [8, false]] as const) {
+    useGame.getState().newGame({ expansions: ['pok'], playerCount: count, faction: 'arborec' }, loadPack(['pok']));
+    render(<GameScreen />);
+    expect(screen.queryByRole('radio', { name: 'With hyperlanes' }) !== null).toBe(shown);
+    cleanup();
+  }
+});
+
+test('choosing the hyperlane layout changes the open game', async () => {
+  startGame();
+  render(<GameScreen />);
+  await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
+  expect(useGame.getState().game!.layout).toBe('hyperlanes');
+});
+
+test('the player count list names each count once, though 3 to 5 have two layouts', () => {
+  render(<GameScreen />);
+  const options = within(screen.getByLabelText('Players')).getAllByRole('option').map(o => o.textContent);
+  expect(options).toEqual(['3', '4', '5', '6']);
+});

@@ -209,7 +209,7 @@ export function PlanScreen() {
     for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
   }
 
-  const duplicates = building ? duplicateTiles(game.map) : [];
+  const duplicates = building ? duplicateTiles(game.map, pack) : [];
   const hint = marking ? t('fracture.markHint') : placing ? t('expedition.placeHint') : picking ? t('plan.tactical.pickHint')
     : session?.addingSource ? t('plan.tactical.sourceHint')
       : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;

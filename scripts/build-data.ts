@@ -5,14 +5,14 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import type { Anomaly, DataPack, FactionDef, MapTemplate, PlanetDef, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
 const COMMIT_DATE = '2026-11-05';
 const RESOURCES = 'src/main/resources/';
 const DATA_VERSION = `${COMMIT_DATE}-${COMMIT.slice(0, 7)}`;
-const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$/;
+const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
 
 type PackId = 'base' | 'pok' | 'te';
 const PACK_OF_SOURCE: Record<string, PackId> = { base: 'base', pok: 'pok', thunders_edge: 'te' };
@@ -111,6 +111,55 @@ export function normalizeTileId(id: string): string {
   return printed ? printed[1] + printed[2].toUpperCase() : id;
 }
 
+/** Every line of `data/hyperlanes.properties`, rotated ones included, as edge pairs with the smaller edge first. */
+function readLaneLines(text: string): Record<string, [number, number][]> {
+  const lines: Record<string, [number, number][]> = {};
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.trim().match(/^(\d+[ab]\d*)=(.+)$/i);
+    if (!match) continue;
+    const rows = match[2].split(';').map(row => row.split(',').map(Number));
+    if (rows.length !== 6 || rows.some(row => row.length !== 6)) throw new Error(`Cannot read hyperlane edges of ${match[1]}`);
+    const pairs: [number, number][] = [];
+    for (let i = 0; i < 6; i++) for (let j = i + 1; j < 6; j++) if (rows[i][j] === 1 || rows[j][i] === 1) pairs.push([i, j]);
+    lines[match[1].toLowerCase()] = pairs;
+  }
+  return lines;
+}
+
+/**
+ * Reads `data/hyperlanes.properties`: each line is a tile id and six rows of six numbers, a 1 in row i, column j meaning a
+ * lane between edges i and j. Edge 0 is at the top and numbers go clockwise. Only the unrotated sides (`83a`) are
+ * returned; `83a60` and the rest are the same tile turned, see `checkLaneRotations`.
+ */
+export function parseHyperlanes(text: string): Record<string, [number, number][]> {
+  const lanes: Record<string, [number, number][]> = {};
+  for (const [id, pairs] of Object.entries(readLaneLines(text))) {
+    if (/^\d+[ab]$/.test(id)) lanes[normalizeTileId(id)] = pairs;
+  }
+  return lanes;
+}
+
+/** Edge pairs of a tile turned `steps` times by 60 degrees clockwise: every edge number moves up by `steps`. */
+export function rotateLanes(lanes: [number, number][], steps: number): [number, number][] {
+  return lanes
+    .map(([a, b]) => [(a + steps) % 6, (b + steps) % 6].sort((x, y) => x - y) as [number, number])
+    .sort((x, y) => x[0] - y[0] || x[1] - y[1]);
+}
+
+/** Fails unless every rotated line of the source (`83a60` to `83a300`) is its base line turned that many 60-degree steps clockwise. */
+export function checkLaneRotations(text: string): void {
+  const lines = readLaneLines(text);
+  for (const [id, base] of Object.entries(lines)) {
+    if (!/^\d+[ab]$/.test(id)) continue;
+    for (let steps = 1; steps < 6; steps++) {
+      const turned = lines[`${id}${steps * 60}`];
+      if (!turned) throw new Error(`Hyperlane ${id} has no line for ${steps * 60} degrees`);
+      const expected = JSON.stringify(rotateLanes(base, steps));
+      if (JSON.stringify(turned) !== expected) throw new Error(`Hyperlane ${id} turned ${steps * 60} degrees is not its base turned clockwise`);
+    }
+  }
+}
+
 const tileNumber = (id: string) => id.replace(/[AB]$/, '');
 
 // Source shapes: only the fields read here, checked against the files at COMMIT.
@@ -177,12 +226,16 @@ function buildTile(system: SourceSystem, pack: PackId): TileDef {
   return tile;
 }
 
-function buildTiles(systems: SourceSystem[]): Record<PackId, Record<string, TileDef>> {
+function buildTiles(systems: SourceSystem[], lanes: Record<string, [number, number][]>): Record<PackId, Record<string, TileDef>> {
   const tiles: Record<PackId, Record<string, TileDef>> = { base: {}, pok: {}, te: {} };
   for (const system of systems) {
     const pack = packOfSource(system.source);
     if (!pack || system.id in EXCLUDED_SYSTEMS || ROTATED_HYPERLANE.test(system.id)) continue;
     const tile = buildTile(system, pack);
+    if (tile.kind === 'hyperlane') {
+      if (!lanes[tile.id]) throw new Error(`Hyperlane ${tile.id} has no edge data in the source`);
+      tile.lanes = lanes[tile.id];
+    }
     tiles[pack][tile.id] = tile;
   }
   for (const id of TE_RULEBOOK_HYPERLANES) {
@@ -250,8 +303,38 @@ function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string
   return factions;
 }
 
+/**
+ * Home slots by player count, seat 1 at the top and then clockwise. Positions of the home systems in the map templates
+ * of Milty Draft (MAP_3 to MAP_8 in js/generate-map.js, public repository shenanigans-be/miltydraft), used as facts only:
+ * the user drafts there, so the seats must land where its string puts the homes.
+ */
+const MILTY_HOMES: Record<number, string[]> = {
+  3: ['0,-3', '3,0', '-3,3'],
+  4: ['0,-3', '3,-3', '0,3', '-3,3'],
+  5: ['0,-3', '3,-3', '3,0', '-3,3', '-3,0'],
+  6: ['0,-3', '3,-3', '3,0', '0,3', '-3,3', '-3,0'],
+  7: ['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1'],
+  8: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'],
+};
+
+/**
+ * Hyperlane slots of the three- and four-player maps of Milty Draft (MAP_3, MAP_4), as fixed tiles. Milty writes a lane
+ * as a shape (S, C, T) and turns; the shapes are the sides 83A, 85A and 87A, so the same side repeats in several slots.
+ */
+const MILTY_LANES: Record<number, Record<string, string>> = {
+  3: {
+    '2,-3': '83A@1', '3,-3': '85A@4', '1,-2': '87A@0', '3,-2': '83A@2', '-2,-1': '83A@0', '-1,-1': '87A@2',
+    '1,-1': '85A@4', '2,-1': '87A@4', '-3,0': '85A@2', '-1,0': '85A@2', '-3,1': '83A@2', '-2,1': '87A@4',
+    '0,1': '85A@0', '1,1': '87A@2', '-1,2': '87A@0', '1,2': '83A@0', '-1,3': '83A@1', '0,3': '85A@0',
+  },
+  4: {
+    '-2,-1': '83A@0', '-1,-1': '87A@2', '2,-1': '87A@1', '3,-1': '83A@2', '-3,0': '85A@2', '-1,0': '85A@2',
+    '1,0': '85A@5', '3,0': '85A@5', '-3,1': '83A@2', '-2,1': '87A@4', '1,1': '87A@5', '2,1': '83A@0',
+  },
+};
+
 /** Keeps Mecatol Rex always, and the source's hyperlanes only when asked; other fixed tiles are its own choices. */
-function buildTemplate(source: SourceTemplate, playerCount: number, keepHyperlanes: boolean): MapTemplate {
+function buildTemplate(source: SourceTemplate, playerCount: number, keepHyperlanes: boolean, layout: MapLayout): MapTemplate {
   const slots = source.templateTiles.map(({ pos, staticTileId }) => {
     const { q, r } = positionToAxial(pos);
     if (staticTileId === MECATOL_REX) return { q, r, fixed: MECATOL_REX };
@@ -260,18 +343,20 @@ function buildTemplate(source: SourceTemplate, playerCount: number, keepHyperlan
     if (!match) throw new Error(`Cannot read hyperlane "${staticTileId}"`);
     return { q, r, fixed: `${normalizeTileId(match[1].toLowerCase())}@${match[2]}` };
   });
-  return { playerCount, slots };
+  return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
 }
 
-/** The full hexagon of the given radius, Mecatol Rex in the center. */
-function ringTemplate(playerCount: number, rings: number): MapTemplate {
+/** The full hexagon of the given radius, Mecatol Rex in the center; `lanes` are fixed tiles by slot key. */
+function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lanes: Record<string, string> = {}): MapTemplate {
   const slots: MapTemplate['slots'] = [{ q: 0, r: 0, fixed: MECATOL_REX }];
   for (let ring = 1; ring <= rings; ring++) {
     for (let index = 1; index <= ring * 6; index++) {
-      slots.push(positionToAxial(`${ring}${String(index).padStart(2, '0')}`));
+      const { q, r } = positionToAxial(`${ring}${String(index).padStart(2, '0')}`);
+      const fixed = lanes[`${q},${r}`];
+      slots.push(fixed ? { q, r, fixed } : { q, r });
     }
   }
-  return { playerCount, slots };
+  return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
 }
 
 function buildTemplates(root: string): Record<PackId, MapTemplate[]> {
@@ -284,17 +369,20 @@ function buildTemplates(root: string): Record<PackId, MapTemplate[]> {
   return {
     base: [
       // 6 blue + 2 red per player, 3 homes and Mecatol Rex: 28 slots. The source's in-person layout has this shape.
-      buildTemplate(read('3p', '3pInPersonHyperlanes'), 3, false),
-      buildTemplate(threeRings, 4, false),
+      buildTemplate(read('3p', '3pInPersonHyperlanes'), 3, false, 'standard'),
+      buildTemplate(threeRings, 4, false, 'standard'),
       // The 5-player deal gives 36 tiles; the speaker adds a red tile next to Mecatol Rex, filling all 37.
-      buildTemplate(threeRings, 5, false),
-      buildTemplate(threeRings, 6, false),
+      buildTemplate(threeRings, 5, false, 'standard'),
+      buildTemplate(threeRings, 6, false, 'standard'),
     ],
     pok: [
-      buildTemplate(read('standardMiltyLayouts', '5pHyperlanes'), 5, true),
+      // Three and four players with hyperlanes: Milty's maps, on the 37 slots of three rings.
+      ringTemplate(3, 3, 'hyperlanes', MILTY_LANES[3]),
+      ringTemplate(4, 3, 'hyperlanes', MILTY_LANES[4]),
+      buildTemplate(read('standardMiltyLayouts', '5pHyperlanes'), 5, true, 'hyperlanes'),
       // Standard PoK setups fill four rings. Hyperlane places are only on a rulebook diagram, so they stay manual.
-      ringTemplate(7, 4),
-      ringTemplate(8, 4),
+      ringTemplate(7, 4, 'standard'),
+      ringTemplate(8, 4, 'standard'),
     ],
     te: [],
   };
@@ -334,7 +422,20 @@ function assertSchema(pack: DataPack, name: string): void {
     if (!faction.name || !Object.values(faction.startUnits).every(isCount)) throw new Error(`${name}: bad faction ${faction.id}`);
   }
   for (const template of pack.templates) {
-    if (!template.slots.some(slot => slot.q === 0 && slot.r === 0)) throw new Error(`${name}: template without a center`);
+    const where = `${name}: template of ${template.playerCount} players (${template.layout})`;
+    const keys = new Set(template.slots.map(slot => `${slot.q},${slot.r}`));
+    if (!keys.has('0,0')) throw new Error(`${where} has no center`);
+    if (keys.size !== template.slots.length) throw new Error(`${where} repeats a slot`);
+    const homes = template.homes ?? [];
+    if (homes.length !== template.playerCount || new Set(homes).size !== homes.length || !homes.every(home => keys.has(home))) {
+      throw new Error(`${where} has homes that are not its slots`);
+    }
+    for (const slot of template.slots) {
+      const key = `${slot.q},${slot.r}`;
+      if (slot.fixed && homes.includes(key)) throw new Error(`${where} fixes a tile on a home slot`);
+      const id = slot.fixed?.split('@')[0];
+      if (id && id !== MECATOL_REX && !pack.tiles[id]) throw new Error(`${where} fixes unknown tile ${id}`);
+    }
   }
   const text = JSON.stringify(pack);
   if (/https?:|\.(png|jpe?g|webp)\b/i.test(text)) throw new Error(`${name}: pack contains an image or a link`);
@@ -344,7 +445,9 @@ async function main(): Promise<void> {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const root = await download();
   const systems = readDir<SourceSystem>(root, 'systems');
-  const tiles = buildTiles(systems);
+  const laneText = readFileSync(join(root, 'data/hyperlanes.properties'), 'utf8');
+  checkLaneRotations(laneText);
+  const tiles = buildTiles(systems, parseHyperlanes(laneText));
   const planets = buildPlanets(readDir<SourcePlanet>(root, 'planets'), tiles);
   const units = buildUnits(root);
   const factions = buildFactions(readdirSync(join(root, 'data/factions'))

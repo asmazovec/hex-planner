@@ -30,7 +30,7 @@ const pack: DataPack = {
     infantry: unit('infantry', { cost: 0.5, ground: true }),
   },
   factions: { sol: { id: 'sol', name: 'Sol', homeTile: 'home', startUnits: { carrier: 1, infantry: 2 } } },
-  templates: [{ playerCount: 3, slots: [{ q: 0, r: 0, fixed: '18' }, { q: 1, r: 0 }] }],
+  templates: [{ playerCount: 3, layout: 'standard', slots: [{ q: 0, r: 0, fixed: '18' }, { q: 1, r: 0 }] }],
 };
 
 const noPay: Payment = { planets: [], tradeGoods: 0 };

@@ -9,7 +9,7 @@ import { loadPack } from '../data/loadPack';
 import { project } from '../domain/project';
 import type { Game } from '../domain/types';
 import { loadGame, saveGame } from '../storage/db';
-import { useGame } from './gameStore';
+import { flushSaves, useGame } from './gameStore';
 
 const pack = loadPack(['pok']);
 const act = () => useGame.getState();
@@ -202,5 +202,45 @@ describe('setMap', () => {
     act().setMap({ '1,0': '25' });
     act().undo();
     expect(game().map['1,0']).toBeUndefined();
+  });
+});
+
+describe('layout', () => {
+  test('a new game of four players starts with the standard layout', () => {
+    expect(game().layout).toBe('standard');
+  });
+
+  test('setLayout switches the template in one undo step, keeping the tiles of shared slots', async () => {
+    act().setTile('1,0', '25');
+    const before = game();
+    act().setLayout('hyperlanes');
+    expect(game().layout).toBe('hyperlanes');
+    expect(game().map['1,0']).toBe('25');
+    expect(game().map['-2,-1']).toBe('83A@0');
+    await flushSaves();
+    expect(saveGame).toHaveBeenLastCalledWith(game());
+    act().undo();
+    expect(game()).toEqual(before);
+  });
+
+  test('setLayout to the same layout leaves no undo step', () => {
+    act().setLayout('standard');
+    expect(act().canUndo).toBe(false);
+  });
+
+  test('a layout the expansions lack changes nothing', () => {
+    act().newGame({ expansions: [], playerCount: 4, faction: Object.keys(loadPack([]).factions)[0] }, loadPack([]));
+    act().setLayout('hyperlanes');
+    expect(game().layout).toBe('standard');
+    expect(act().canUndo).toBe(false);
+  });
+
+  test('setMap with a layout replaces the map and the layout in one undo step', () => {
+    act().setMap({ '1,0': '25', '-2,-1': '83A@0' }, 'hyperlanes');
+    expect(game().layout).toBe('hyperlanes');
+    expect(game().map['-2,-1']).toBe('83A@0');
+    act().undo();
+    expect(game().layout).toBe('standard');
+    expect(game().map['-2,-1']).toBeUndefined();
   });
 });
