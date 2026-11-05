@@ -10,20 +10,43 @@ const HISTORY_LIMIT = 50;
 const newId = (): string => globalThis.crypto.randomUUID();
 const defaultPlanName = (position: number): string => `Plan ${position}`;
 
+/** Maps a list but keeps the original array when no item changed, so no-op edits stay detectable by reference. */
+function mapSame<T>(items: T[], edit: (item: T) => T): T[] {
+  const next = items.map(edit);
+  return next.every((item, i) => item === items[i]) ? items : next;
+}
+
 function editPlan(game: Game, edit: (plan: Plan) => Plan): Game {
-  return { ...game, plans: game.plans.map(p => (p.id === game.activePlanId ? edit(p) : p)) };
+  const plans = mapSame(game.plans, p => (p.id === game.activePlanId ? edit(p) : p));
+  return plans === game.plans ? game : { ...game, plans };
+}
+
+function editRounds(plan: Plan, pick: (round: Round) => boolean, edit: (round: Round) => Round): Plan {
+  const rounds = mapSame(plan.rounds, r => (pick(r) ? edit(r) : r));
+  return rounds === plan.rounds ? plan : { ...plan, rounds };
 }
 
 /** Rewrites one round of the active plan. */
 function editRound(game: Game, roundNo: number, edit: (round: Round) => Round): Game {
-  return editPlan(game, plan => ({ ...plan, rounds: plan.rounds.map(r => (r.number === roundNo ? edit(r) : r)) }));
+  return editPlan(game, plan => editRounds(plan, r => r.number === roundNo, edit));
 }
 
 /** Rewrites the round of the active plan that holds the entry; other rounds stay as they were. */
 function editEntryRound(game: Game, entryId: string, edit: (round: Round) => Round): Game {
-  return editPlan(game, plan => ({
-    ...plan, rounds: plan.rounds.map(r => (r.entries.some(e => e.id === entryId) ? edit(r) : r)),
-  }));
+  return editPlan(game, plan => editRounds(plan, r => r.entries.some(e => e.id === entryId), edit));
+}
+
+/** Rewrites a round's entries, keeping the round itself when none changed. */
+function editEntries(round: Round, edit: (entries: Entry[]) => Entry[]): Round {
+  const entries = edit(round.entries);
+  return entries === round.entries ? round : { ...round, entries };
+}
+
+const mapEntry = (entries: Entry[], id: string, edit: (entry: Entry) => Entry): Entry[] =>
+  mapSame(entries, e => (e.id === id ? edit(e) : e));
+
+function withField<K extends keyof Game>(game: Game, key: K, value: Game[K]): Game {
+  return game[key] === value ? game : { ...game, [key]: value };
 }
 
 /** Entries of one phase keep their relative order; `toIndex` counts within that phase. */
@@ -35,7 +58,8 @@ function placeEntry(entries: Entry[], id: string, phase: Phase, toIndex: number)
   const index = Math.max(0, Math.min(toIndex, samePhase.length));
   const before = samePhase[index];
   const insertAt = before ? rest.indexOf(before) : rest.length;
-  return [...rest.slice(0, insertAt), { ...moving, phase }, ...rest.slice(insertAt)];
+  const next = [...rest.slice(0, insertAt), moving.phase === phase ? moving : { ...moving, phase }, ...rest.slice(insertAt)];
+  return next.every((e, i) => e === entries[i]) ? entries : next;
 }
 
 function cycleCard(round: Round, initiative: number): Round {
@@ -45,6 +69,8 @@ function cycleCard(round: Round, initiative: number): Round {
 }
 
 function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
+  if (value === null && !(key in record)) return record;
+  if (value !== null && record[key] === value) return record;
   const rest = { ...record };
   delete rest[key];
   return value === null ? rest : { ...rest, [key]: value };
@@ -147,17 +173,16 @@ export const useGame = create<GameStore>((set, get) => {
       return id;
     },
     updateEntry: (id, patch) =>
-      commit(g => editEntryRound(g, id, r => ({
-        ...r, entries: r.entries.map(e => (e.id === id ? ({ ...e, ...patch } as Entry) : e)),
-      }))),
+      commit(g => editEntryRound(g, id, r => editEntries(r, es =>
+        mapEntry(es, id, e => (Object.entries(patch).every(([k, v]) => (e as Record<string, unknown>)[k] === v)
+          ? e : ({ ...e, ...patch } as Entry)))))),
     moveEntry: (id, toPhase, toIndex) =>
-      commit(g => editEntryRound(g, id, r => ({ ...r, entries: placeEntry(r.entries, id, toPhase, toIndex) }))),
+      commit(g => editEntryRound(g, id, r => editEntries(r, es => placeEntry(es, id, toPhase, toIndex)))),
     removeEntry: id =>
-      commit(g => editEntryRound(g, id, r => ({ ...r, entries: r.entries.filter(e => e.id !== id) }))),
+      commit(g => editEntryRound(g, id, r => editEntries(r, es => es.filter(e => e.id !== id)))),
     setEntryStatus: (id, status) =>
-      commit(g => editEntryRound(g, id, r => ({
-        ...r, entries: r.entries.map(e => (e.id === id ? { ...e, status } : e)),
-      }))),
+      commit(g => editEntryRound(g, id, r => editEntries(r, es =>
+        mapEntry(es, id, e => (e.status === status ? e : { ...e, status }))))),
     setStrategyCard: (roundNo, initiative) => commit(g => editRound(g, roundNo, r => cycleCard(r, initiative))),
     addRound: () =>
       commit(g => editPlan(g, plan => ({
@@ -169,9 +194,10 @@ export const useGame = create<GameStore>((set, get) => {
 
     copyPlan: () => commit(copyOf),
     renamePlan: name =>
-      commit(g => editPlan(g, plan => ({
-        ...plan, name: name.trim() || defaultPlanName(g.plans.findIndex(p => p.id === plan.id) + 1),
-      }))),
+      commit(g => editPlan(g, plan => {
+        const next = name.trim() || defaultPlanName(g.plans.findIndex(p => p.id === plan.id) + 1);
+        return next === plan.name ? plan : { ...plan, name: next };
+      })),
     deletePlan: id =>
       commit(g => {
         if (g.plans.length <= 1 || !g.plans.some(p => p.id === id)) return g;
@@ -181,19 +207,25 @@ export const useGame = create<GameStore>((set, get) => {
     setActivePlan: id =>
       commit(g => (g.activePlanId === id || !g.plans.some(p => p.id === id) ? g : { ...g, activePlanId: id })),
 
-    setTile: (slotKey, tileId) => commit(g => ({ ...g, map: setOrDelete(g.map, slotKey, tileId) })),
+    setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
     setOpponent: (index, patch) =>
       commit(g => (index in g.opponents
         ? { ...g, opponents: g.opponents.map((o, i) => (i === index ? { ...o, ...patch } : o)) }
         : g)),
     setEnemyUnits: (systemId, units) =>
-      commit(g => ({ ...g, enemyUnits: setOrDelete(g.enemyUnits, systemId, hasUnits(units) ? units : null) })),
+      commit(g => withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, hasUnits(units) ? units : null))),
     setPlanetControl: (planetId, owner) =>
-      commit(g => ({ ...g, planetControl: setOrDelete(g.planetControl, planetId, owner) })),
+      commit(g => withField(g, 'planetControl', setOrDelete(g.planetControl, planetId, owner))),
     setSlice: (id, owner) =>
-      commit(g => ({ ...g, expedition: { ...g.expedition, slices: setOrDelete(g.expedition.slices, id, owner) } })),
-    setThundersEdge: systemId => commit(g => ({ ...g, expedition: { ...g.expedition, thundersEdgeSystem: systemId } })),
-    setFractureActive: active => commit(g => ({ ...g, fracture: { ...g.fracture, active } })),
+      commit(g => {
+        const slices = setOrDelete(g.expedition.slices, id, owner);
+        return slices === g.expedition.slices ? g : { ...g, expedition: { ...g.expedition, slices } };
+      }),
+    setThundersEdge: systemId =>
+      commit(g => (g.expedition.thundersEdgeSystem === systemId
+        ? g : { ...g, expedition: { ...g.expedition, thundersEdgeSystem: systemId } })),
+    setFractureActive: active =>
+      commit(g => (g.fracture.active === active ? g : { ...g, fracture: { ...g.fracture, active } })),
     toggleIngress: systemId =>
       commit(g => ({
         ...g,

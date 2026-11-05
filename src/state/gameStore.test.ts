@@ -140,3 +140,41 @@ describe('gameStore', () => {
     expect(act().canUndo).toBe(false);
   });
 });
+
+describe('действия без изменений', () => {
+  test('неизвестный id и то же значение не создают шаг отмены и не сохраняют', async () => {
+    const id = act().addEntry(1, { type: 'pass' }, 'action');
+    act().setEntryStatus(id, 'done');
+    const before = game();
+    await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(before));
+    vi.mocked(saveGame).mockClear();
+    const noops = [
+      () => act().removeEntry('nope'),
+      () => act().updateEntry('nope', { type: 'pass' }),
+      () => act().moveEntry('nope', 'status', 0),
+      () => act().setEntryStatus('nope', 'done'),
+      () => act().setEntryStatus(id, 'done'),
+      () => act().moveEntry(id, 'action', 0),
+      () => act().setStrategyCard(99, 3),
+      () => act().renamePlan(plan().name),
+      () => act().setFractureActive(false),
+      () => act().setTile('9,9', null),
+      () => act().setEnemyUnits('9,9', {}),
+      () => act().setPlanetControl('nope', null),
+      () => act().setSlice('res5', null),
+      () => act().setThundersEdge(null),
+      () => act().setOpponent(99, { vp: 1 }),
+      () => act().setActivePlan(game().activePlanId),
+    ];
+    for (const run of noops) {
+      run();
+      expect(game()).toBe(before);
+    }
+    await Promise.resolve();
+    expect(saveGame).not.toHaveBeenCalled();
+    // History holds only the two real edits.
+    act().undo(); act().undo();
+    expect(act().canUndo).toBe(false);
+    expect(round().entries).toHaveLength(0);
+  });
+});
