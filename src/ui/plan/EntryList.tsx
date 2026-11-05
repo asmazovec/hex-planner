@@ -2,7 +2,7 @@ import { useRef, useState, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { UNIT_ORDER } from '../map/UnitGlyph';
+import { UNIT_ORDER } from '../units/unitOrder';
 import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
 import { Stepper } from './Stepper';

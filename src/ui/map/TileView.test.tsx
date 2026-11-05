@@ -5,10 +5,11 @@ import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../domain/newGame';
 import type { Game, GameState } from '../../domain/types';
 import { setLanguage } from '../../i18n';
+import { seatSlots } from '../../domain/mapBuilder';
 import { useGame } from '../../state/gameStore';
 import { HexMap } from './HexMap';
 import { TileSheet } from './TileSheet';
-import { layoutUnits, TileView } from './TileView';
+import { TileView } from './TileView';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -73,12 +74,127 @@ test('own and enemy units show counts; a single unit shows no number', () => {
   expect(screen.getByLabelText('Dreadnought ×3 (enemy)')).toHaveTextContent('3');
 });
 
-test('ground units sit with their planet', () => {
+/** Numbers from a CSS transform such as translate(1px,2px) scale(3). */
+const placed = (node: Element) => {
+  const [x = 0, y = 0, scale = 1] = ((node as SVGElement).style.transform.match(/-?[\d.]+/g) ?? []).map(Number);
+  return { x, y, scale };
+};
+const stackOf = (label: string) => screen.getByLabelText(label).closest('[data-stack]')!;
+const PLANET_BASE = 10;
+
+test.each(['25', '26', '16'])('ground units on tile %s stand on the arc of their planet', id => {
+  const ids = pack.tiles[id].planetIds;
+  setup(id, (_g, s) => { for (const planet of ids) s.ground[planet] = { infantry: 4, mech: 2 }; });
+  const discs = [...document.querySelectorAll('.planet')].map(placed);
+  const stacks = [...document.querySelectorAll('[data-stack]')];
+  expect(stacks).toHaveLength(ids.length * 2);
+  for (const stack of stacks) {
+    const disc = discs[Number(stack.getAttribute('data-planet'))];
+    const token = placed(stack);
+    const size = token.scale * 100;
+    expect(Math.hypot(token.x - disc.x, token.y - disc.y)).toBeCloseTo(disc.scale * PLANET_BASE + size * 0.54 + 58.5 / 53, 0);
+  }
+});
+
+test('a space dock is a token on the arc of its planet, in my colour', () => {
   const id = pack.tiles['25'].planetIds[0];
-  setup('25', (_g, s) => { s.ground[id] = { infantry: 4, mech: 1 }; });
-  const group = screen.getByLabelText(new RegExp(`^${pack.planets[id].name}:`));
-  expect(within(group).getByLabelText('Infantry ×4')).toBeInTheDocument();
-  expect(within(group).getByLabelText('Mech ×1')).toBeInTheDocument();
+  setup('25', (g, s) => { g.color = 4; g.docks.push(id); s.ground[id] = { infantry: 1 }; });
+  const dock = stackOf('Space dock');
+  expect(dock).toHaveAttribute('data-planet', '0');
+  expect(dock.querySelector('rect')).toHaveAttribute('stroke', '#74d09a');
+});
+
+test('enemy units take the colour of the first opponent', () => {
+  setup('25', (g, s) => {
+    g.color = 1;
+    g.opponents[0].color = 3;
+    s.systems['1,0'] = { carrier: 1 };
+    g.enemyUnits['1,0'] = { cruiser: 1 };
+  });
+  expect(stackOf('Carrier ×1').querySelector('circle')).toHaveAttribute('stroke', '#7fb2ff');
+  expect(stackOf('Cruiser ×1 (enemy)').querySelector('circle')).toHaveAttribute('stroke', '#ea7f76');
+});
+
+test('enemy ground units stand on the arc of the first planet, or on the comb without planets', () => {
+  setup('26', (g) => { g.enemyUnits['1,0'] = { infantry: 2 }; });
+  expect(stackOf('Infantry ×2 (enemy)')).toHaveAttribute('data-planet', '0');
+  cleanup();
+  setup('39', (g) => { g.enemyUnits['1,0'] = { mech: 1 }; });
+  expect(stackOf('Mech ×1 (enemy)')).not.toHaveAttribute('data-planet');
+});
+
+test('a planet name goes when a token covers it, and stays otherwise', () => {
+  const id = pack.tiles['25'].planetIds[0];
+  const name = pack.planets[id].name;
+  setup('25', (_g, s) => { s.systems['1,0'] = { carrier: 1 }; });
+  expect(screen.getByText(name)).toBeInTheDocument();
+  cleanup();
+  // The arc starts right under the planet.
+  setup('25', (_g, s) => { s.ground[id] = { infantry: 1 }; });
+  expect(screen.queryByText(name)).toBeNull();
+});
+
+test('a caption goes when a token covers it', () => {
+  setup('42');
+  expect(screen.getByText('Nebula')).toBeInTheDocument();
+  cleanup();
+  setup('42', (_g, s) => { s.systems['1,0'] = { carrier: 1, cruiser: 1, destroyer: 1, fighter: 1, flagship: 1, dreadnought: 1, warsun: 1 }; });
+  expect(screen.queryByText('Nebula')).toBeNull();
+});
+
+test('stacks stay the same nodes when they move, new ones grow in and removed ones collapse', () => {
+  vi.useFakeTimers();
+  try {
+    const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+    game.map['1,0'] = '25';
+    const view = (systems: GameState['systems']) => <svg><TileView slotKey="1,0" pack={pack} game={game} state={{ ...emptyState(), systems }} /></svg>;
+    const { rerender } = render(view({ '1,0': { carrier: 1 } }));
+    const carrier = stackOf('Carrier ×1');
+    expect(carrier).toHaveClass('tk');
+    expect(carrier.firstElementChild).not.toHaveClass('tk-in');
+    const before = (carrier as SVGElement).style.transform;
+
+    rerender(view({ '1,0': { carrier: 1, fighter: 2 } }));
+    expect(stackOf('Carrier ×1')).toBe(carrier);
+    expect((carrier as SVGElement).style.transform).not.toBe(before);
+    expect(stackOf('Fighter ×2').firstElementChild).toHaveClass('tk-in');
+
+    rerender(view({ '1,0': { carrier: 1 } }));
+    const leaving = document.querySelector('[data-stack="me|fighter|-"]')!;
+    expect(leaving.firstElementChild).toHaveClass('tk-out');
+    expect(screen.queryByLabelText('Fighter ×2')).toBeNull();
+    act(() => { vi.advanceTimersByTime(500); });
+    expect(document.querySelector('[data-stack="me|fighter|-"]')).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test('a home system shows the seat number of its player in the colour of that player', () => {
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  game.opponents[0].color = 7;
+  const [seat1, seat2] = seatSlots(6, pack, game.layout);
+  game.map[seat1] = '1';
+  game.map[seat2] = '2';
+  game.map['1,0'] = '25';
+  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  expect(within(document.querySelector(`[data-slot="${seat1}"]`)!).getByLabelText('Seat 1').querySelector('circle')!.style.fill).toBe('var(--player-1)');
+  expect(within(document.querySelector(`[data-slot="${seat2}"]`)!).getByLabelText('Seat 2').querySelector('circle')!.style.fill).toBe('var(--player-7)');
+  expect(within(document.querySelector('[data-slot="1,0"]')!).queryByLabelText(/^Seat/)).toBeNull();
+});
+
+test('the legend opens from the map and explains the shapes and the badge', async () => {
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'What the tokens mean' }));
+  const legend = screen.getByRole('dialog', { name: 'Unit tokens' });
+  expect(legend).toHaveTextContent('fleet pool');
+  expect(legend).toHaveTextContent('triangles');
+  expect(legend).toHaveTextContent('squares');
+  expect(legend.querySelectorAll('[data-unit]')).toHaveLength(6);
+  await userEvent.click(document.querySelector('.hexmap')!);
+  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 test('shows a command token and a space dock marker', () => {
@@ -136,72 +252,26 @@ test('the sheet edits dock, control and enemy units', async () => {
   expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ cruiser: 1 });
 });
 
-test('unit stacks stay inside the hex for any number of stacks and planets', () => {
-  const inside = (x: number, y: number) => Math.abs(y) <= (58.5 * Math.sqrt(3)) / 2 && Math.abs(x) <= 58.5 - Math.abs(y) / Math.sqrt(3);
-  for (const planets of [0, 1, 2, 3]) {
-    for (let n = 1; n <= 18; n += 1) {
-      const { scale, cells } = layoutUnits(n, planets);
-      expect(cells).toHaveLength(n);
-      for (const c of cells) {
-        for (const [dx, dy] of [[-15, -8], [15, -8], [-15, 8], [15, 8]]) {
-          expect(inside(c.x + dx * scale, c.y + dy * scale), `n=${n} planets=${planets}`).toBe(true);
-        }
-      }
-    }
-  }
-});
-
-/** Numbers from a transform such as translate(1 2) scale(3). */
-const moved = (g: Element) => {
-  const [x = 0, y = 0, scale = 1] = (g.getAttribute('transform') ?? '').match(/-?[\d.]+/g)?.map(Number) ?? [];
-  return { x, y, scale };
-};
-
-test.each(['25', '26', '27', '28', '16'])('ground units on tile %s stay in the hex, clear of the space stacks', id => {
-  const inside = (x: number, y: number) => Math.abs(y) <= (58.5 * Math.sqrt(3)) / 2 && Math.abs(x) <= 58.5 - Math.abs(y) / Math.sqrt(3);
-  setup(id, (_g, s) => {
-    for (const planet of pack.tiles[id].planetIds) s.ground[planet] = { infantry: 4, mech: 2 };
-    s.systems['1,0'] = { carrier: 2, cruiser: 2 };
-  });
-  const ground = [...document.querySelectorAll('.planet [data-unit]')].map(glyph => {
-    const planet = moved(glyph.closest('.planet')!);
-    const own = moved(glyph.parentElement!);
-    const s = own.scale;
-    // The silhouette and its count badge, with the badge at the lower right.
-    return { left: planet.x + own.x - 10.5 * s, right: planet.x + own.x + 17.1 * s, top: planet.y + own.y - 7 * s, bottom: planet.y + own.y + 12 * s };
-  });
-  expect(ground.length).toBe(pack.tiles[id].planetIds.length * 2);
-  for (const box of ground) {
-    for (const [x, y] of [[box.left, box.top], [box.right, box.top], [box.left, box.bottom], [box.right, box.bottom]]) {
-      expect(inside(x, y), `tile ${id}: ground corner ${x},${y}`).toBe(true);
-    }
-  }
-  const stacks = [...document.querySelectorAll('.tile > g > g > [data-unit]')].filter(glyph => !glyph.closest('.planet')).map(glyph => {
-    const cell = moved(glyph.parentElement!.parentElement!);
-    return { left: cell.x - 15 * cell.scale, right: cell.x + 15 * cell.scale, top: cell.y - 8 * cell.scale, bottom: cell.y + 12 * cell.scale };
-  });
-  expect(stacks.length).toBe(2);
-  for (const a of ground) for (const b of stacks) {
-    const apart = a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
-    expect(apart, `tile ${id}: ground ${JSON.stringify(a)} against stack ${JSON.stringify(b)}`).toBe(true);
-  }
-});
-
-test('the tile number stays inside the hex and clear of planets and markers', () => {
+test('the tile number stands small in the top-left corner, clear of planets and markers', () => {
   const half = (58.5 * Math.sqrt(3)) / 2;
   for (const id of ['46', '25', '26', '16']) {
     setup(id, (_g, st) => { st.tokensOnMap.push('1,0'); }, { ingress: true });
-    const baseline = Number(document.querySelector('.tile-number')!.getAttribute('y'));
+    const number = document.querySelector('.tile-number')!;
+    expect(Number(number.getAttribute('font-size'))).toBe(7.5);
+    const left = Number(number.getAttribute('x'));
+    const baseline = Number(number.getAttribute('y'));
+    expect(left).toBeLessThan(0);
     // A box wide enough for four digits, from the cap height to just under the baseline.
-    const box = { left: -16, right: 16, top: baseline - 11, bottom: baseline + 1 };
+    const box = { left, right: left + 18, top: baseline - 6, bottom: baseline + 1 };
     expect(box.top, `tile ${id} inside the hex`).toBeGreaterThan(-half);
-    const centre = (g: Element) => g.getAttribute('transform')!.match(/-?[\d.]+/g)!.map(Number);
+    expect(box.left, `tile ${id} inside the hex`).toBeGreaterThan(-(58.5 + box.top / Math.sqrt(3)));
     const discs = [...document.querySelectorAll('.planet')].map(g => {
-      const [x, y] = centre(g);
-      return { x, y, r: Number(g.querySelector('circle')!.getAttribute('r')) };
+      const { x, y, scale } = placed(g);
+      return { x, y, r: PLANET_BASE * scale };
     });
     const markers = [screen.getByLabelText('Command token'), screen.getByLabelText('Ingress token')].map(g => {
-      const [x, y] = centre(g);
+      const [x, y] = g.getAttribute('transform')!.match(/-?[\d.]+/g)!.map(Number);
+      expect(x, 'in the right half').toBeGreaterThan(0);
       return { x, y, r: 8 };
     });
     for (const disc of [...discs, ...markers]) {

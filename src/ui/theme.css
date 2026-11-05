@@ -57,8 +57,6 @@
   --token-fill: #26303f;
   --token-spent: #12161e;
   --token-stroke: #566078;
-  --unit-me: var(--accent);
-  --unit-enemy: var(--danger);
   --control-me: var(--accent);
   --control-enemy: var(--danger);
   --arrow: #ffd166;
@@ -231,30 +229,32 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-active .hex { stroke: var(--arrow); stroke-width: 4.5; }
 .tile-dim { opacity: 0.42; }
 .tile text { text-anchor: middle; fill: var(--text); font-family: inherit; pointer-events: none; }
-.tile .tile-number { font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 2.5px; stroke-linejoin: round; }
+.tile .tile-number { text-anchor: start; font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 1.25px; stroke-linejoin: round; }
+.tile-seat circle { stroke: var(--bg); stroke-width: 0.8; }
+.tile .tile-seat text { font-size: 6.5px; font-weight: 700; fill: var(--bg); }
 .tile .tile-worm { fill: var(--accent); }
 .tile .tile-lane { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; opacity: 0.85; pointer-events: none; }
 .tile .tile-caption { font-size: 9.5px; fill: var(--text-muted); }
 .tile-warning { font-size: 30px; font-weight: 700; fill: var(--warning) !important; }
-.planet-disc { fill: var(--token-fill); stroke: var(--token-stroke); stroke-width: 1.2; transition: fill var(--motion), stroke var(--motion); }
-.planet-me { stroke: var(--control-me); stroke-width: 2.8; }
-.planet-enemy { stroke: var(--control-enemy); stroke-width: 2.8; }
-.tile .planet-values { font-size: 13px; font-weight: 700; }
+.tk { transition: transform 0.44s cubic-bezier(0.3, 1.22, 0.5, 1); }
+.tk-in { animation: tk-in 0.44s cubic-bezier(0.3, 1.22, 0.5, 1); }
+.tk-out { animation: tk-out 0.44s ease forwards; pointer-events: none; }
+@keyframes tk-in { from { transform: scale(0); } }
+@keyframes tk-out { to { transform: scale(0); } }
+@media (prefers-reduced-motion: reduce) { .tk-out { display: none; } }
+.planet-disc { fill: var(--token-fill); stroke: var(--token-stroke); stroke-width: 0.85; transition: fill var(--motion), stroke var(--motion); }
+.planet-me { stroke: var(--control-me); stroke-width: 1.9; }
+.planet-enemy { stroke: var(--control-enemy); stroke-width: 1.9; }
+.tile .planet-values { font-size: 8.6px; font-weight: 700; }
 .tile .value-slash { fill: var(--text-dim); font-weight: 400; }
 .tile .planet-name { font-size: 9px; fill: #c7cddb; }
 .planet-exhausted .planet-disc { fill: var(--token-spent); }
 .planet-exhausted .planet-values { opacity: 0.5; }
-.planet-strike { stroke: var(--text-muted); stroke-width: 1.6; stroke-linecap: round; }
-.dock { fill: var(--accent); stroke: var(--bg); stroke-width: 1; }
+.planet-strike { stroke: var(--text-muted); stroke-width: 1.1; stroke-linecap: round; }
 .token { fill: var(--accent-solid); stroke: #fff; stroke-width: 1.2; }
 .token-mark { fill: #fff; }
-.unit { stroke: var(--bg); stroke-width: 0.8; stroke-linejoin: round; }
-.unit-me { fill: var(--unit-me); }
-.unit-enemy { fill: var(--unit-enemy); }
-.unit-badge { fill: var(--bg); stroke-width: 1; }
-.unit-badge-me { stroke: var(--unit-me); }
-.unit-badge-enemy { stroke: var(--unit-enemy); }
-.tile .unit-count { font-size: 9px; font-weight: 700; fill: #fff; }
+.unit-counter { fill: #0d1016; stroke: #6a7589; }
+.tile .unit-count { font-weight: 700; fill: #eef1f6; }
 .arrow { stroke: var(--arrow); stroke-width: 4.5; pointer-events: none; }
 .arrow-head { fill: var(--arrow); stroke: none; }
 .arrow-warn { stroke: var(--warning); stroke-dasharray: 8 5; }
@@ -263,6 +263,13 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .hexmap-wrap { position: relative; flex: 1; width: 100%; min-height: 0; overflow: hidden; }
 .map-strip { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
 .map-strip button { font-size: var(--font-s); padding: 4px 12px; }
+.map-strip-start { display: flex; align-items: center; gap: 6px; }
+.map-legend { position: relative; }
+.map-strip .map-legend-button { min-width: 44px; padding: 4px; font-weight: 700; }
+.map-legend-box { position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; width: 330px; display: grid; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: 0 8px 24px rgb(0 0 0 / 0.45); font-size: 13px; line-height: 1.35; color: var(--text-muted); }
+.map-legend-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; }
+.map-legend-tokens { display: flex; gap: 2px; }
+.map-legend-tokens svg { width: 35px; height: 35px; display: block; }
 .map-tools { display: flex; gap: 6px; }
 
 /* Plan and map: one row of tabs, rounds and totals, the map, the plan. */
@@ -452,8 +459,7 @@ button.chip::after, .icon-button::after, .side-actions button::after, .side-acti
 .ship-list { display: grid; gap: 5px; }
 .ship { display: grid; grid-template-columns: 26px 1fr auto; gap: 7px; align-items: center; font-size: 13px; color: var(--text-muted); }
 .ship b { color: var(--text); }
-.unit-icon { width: 24px; height: 18px; display: block; }
-.unit-icon .unit { fill: var(--player, var(--accent)); stroke: none; }
+.unit-icon { width: 22px; height: 22px; display: block; color: var(--player, var(--accent)); }
 .home-hex { display: block; }
 .home-hex text { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; text-anchor: middle; }
 .home-hex-tile { fill: var(--hex-home); stroke: var(--player, var(--border-strong)); stroke-width: 2; }

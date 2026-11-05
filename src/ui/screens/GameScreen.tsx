@@ -142,6 +142,7 @@ export function GameScreen() {
             </label>
           </div>
         </div>
+        <p className="side-note">{t('game.iconCredit')}</p>
       </aside>
     </div>
   );

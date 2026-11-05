@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../domain/payment';
 import { productionCost, sourceSlot, systemPlanets } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
-import { UNIT_ORDER } from '../map/UnitGlyph';
+import { UNIT_ORDER } from '../units/unitOrder';
 import { PaymentBlock } from './PaymentBlock';
 import { Stepper } from './Stepper';
 import { addUnits, hasUnits, systemName, withCount, type TacticalEntry } from './tactical';

@@ -323,3 +323,8 @@ test('a failing save during import shows an error instead of throwing', async ()
   expect(await screen.findByRole('alert')).toHaveTextContent('quota exceeded');
   spy.mockRestore();
 });
+
+test('the screen credits the authors of the game-icons', () => {
+  render(<GameScreen />);
+  expect(screen.getByText(/Lorc.*Delapouite.*game-icons\.net.*CC BY 3\.0/)).toBeInTheDocument();
+});

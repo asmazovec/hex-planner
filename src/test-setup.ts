@@ -16,3 +16,6 @@ if (typeof localStorage?.getItem !== 'function') {
   };
   Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true });
 }
+
+// Sprites are baked through a canvas, which jsdom lacks; without this function they stay on the vector art.
+Object.assign(URL, { createObjectURL: undefined });

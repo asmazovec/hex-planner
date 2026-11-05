@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { UNIT_ORDER } from './UnitGlyph';
+import { UNIT_ORDER } from '../units/unitOrder';
 
 export interface TileSheetProps {
   slotKey: string;

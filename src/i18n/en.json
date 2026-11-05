@@ -4,6 +4,7 @@
     "plan": "Plan & map"
   },
   "game": {
+    "iconCredit": "Icons of the war sun, infantry, mech, PDS and space dock: Lorc and Delapouite, game-icons.net, CC BY 3.0.",
     "expansions": "Expansions",
     "saved": "Saved games",
     "none": "No saved games",
@@ -35,6 +36,15 @@
     "exhausted": "exhausted",
     "commandToken": "Command token",
     "spaceDock": "Space dock",
+    "seat": "Seat {{n}}",
+    "legend": {
+      "open": "What the tokens mean",
+      "title": "Unit tokens",
+      "ship": "A ship sticks out of its circle. The badge at the top left means it takes a fleet pool slot.",
+      "fighter": "A fighter has no badge: it takes no fleet pool slot.",
+      "ground": "Infantry and mechs stand in triangles.",
+      "structure": "PDS and space docks stand in squares."
+    },
     "enemy": "enemy",
     "arrow": "Move from {{from}} to {{to}}",
     "sheet": {

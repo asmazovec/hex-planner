@@ -1,8 +1,11 @@
-import { useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
+import { playersOf } from '../../domain/players';
 import type { DataPack, Game, GameState } from '../../domain/types';
+import { prepareSprites, tokenColours } from '../units/sprites';
+import { UnitLegend } from '../units/UnitLegend';
 import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
 import { TilePopover } from './TilePopover';
 import { TileView, type Highlight } from './TileView';
@@ -105,6 +108,18 @@ export function HexMap({
     return [...keys];
   }, [pack, game.playerCount, game.layout, game.map]);
 
+  const colours = tokenColours(game);
+  useEffect(() => { void prepareSprites([colours.me, colours.enemy]); }, [colours.me, colours.enemy]);
+
+  /** Home slots by slot key, with the player sitting there. */
+  const seats = useMemo(() => {
+    const players = playersOf(game);
+    return new Map(seatSlots(game.playerCount, pack, game.layout).flatMap((key, i) => {
+      const player = players.find(p => p.seat === i + 1);
+      return player ? [[key, { number: i + 1, color: player.color }] as const] : [];
+    }));
+  }, [game, pack]);
+
   const mapRect = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
   const fractureIds = useMemo(
     () => (game.fracture.active
@@ -130,15 +145,18 @@ export function HexMap({
   const content = useMemo(() => slotKeys.map(key => (
     <TileView
       key={key} slotKey={key} pack={pack} game={game} state={state}
-      highlight={highlights?.[key]} selected={selectedId === key} ingress={game.fracture.ingress.includes(key)}
+      highlight={highlights?.[key]} selected={selectedId === key} ingress={game.fracture.ingress.includes(key)} seat={seats.get(key)}
       onTap={onTileTap} onPointerDown={onTilePointerDown}
     />
-  )), [slotKeys, pack, game, state, highlights, selectedId, onTileTap, onTilePointerDown]);
+  )), [slotKeys, pack, game, state, seats, highlights, selectedId, onTileTap, onTilePointerDown]);
 
   return (
     <div className="hexmap-frame">
     <div className="map-strip">
-      <button type="button" onClick={reset}>{t('map.resetView')}</button>
+      <div className="map-strip-start">
+        <button type="button" onClick={reset}>{t('map.resetView')}</button>
+        <UnitLegend colour={colours.me} />
+      </div>
       {tools}
     </div>
     <div className="hexmap-wrap" ref={areaRef}>

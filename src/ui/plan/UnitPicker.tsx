@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { sourceSlot, tacticalMeters } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitCounts, UnitId } from '../../domain/types';
-import { UNIT_ORDER } from '../map/UnitGlyph';
+import { UNIT_ORDER } from '../units/unitOrder';
 import { Stepper } from './Stepper';
 import { hasUnits, sourcePools, systemName, withCount, type Move, type TacticalEntry } from './tactical';
 

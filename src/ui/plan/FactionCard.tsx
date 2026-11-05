@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { techSummary } from '../../data/techSummaries';
 import type { DataPack, FactionDef, UnitId } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
-import { UNIT_ORDER } from '../map/UnitGlyph';
+import { UNIT_ORDER } from '../units/unitOrder';
 import { UnitIcon } from '../players/UnitIcon';
 
 const HEX_POINTS = Array.from({ length: 6 }, (_, i) => {
