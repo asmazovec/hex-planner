@@ -110,6 +110,23 @@ test('a space dock is a token on the arc of its planet, in my colour', () => {
   expect(dock.querySelector('rect')).toHaveAttribute('stroke', '#74d09a');
 });
 
+test('a space dock takes the colour of the planet owner, and is mine on a free planet', () => {
+  const id = pack.tiles['25'].planetIds[0];
+  const dockOn = (control: 'me' | 'enemy' | undefined) => {
+    cleanup();
+    setup('25', (g, s) => {
+      g.color = 1; g.opponents[0].color = 3; g.docks.push(id);
+      if (control) s.control[id] = control;
+    });
+  };
+  dockOn('enemy');
+  expect(stackOf('Space dock (enemy)').querySelector('rect')).toHaveAttribute('stroke', '#ea7f76');
+  dockOn('me');
+  expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
+  dockOn(undefined);
+  expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
+});
+
 test('enemy units take the colour of the first opponent', () => {
   setup('25', (g, s) => {
     g.color = 1;

@@ -116,7 +116,7 @@ export function TileView({
         : tile.wormholes.length > 0 ? t('map.wormhole') : tile.kind === 'system' ? t('map.emptySystem') : null;
 
   const stackLabel = ({ kind, count, owner }: PlacedStack): string => {
-    if (kind === 'spacedock') return t('map.spaceDock');
+    if (kind === 'spacedock') return owner === 'enemy' ? `${t('map.spaceDock')} (${t('map.enemy')})` : t('map.spaceDock');
     return `${t(`unit.${kind}`)} ×${count}${owner === 'enemy' ? ` (${t('map.enemy')})` : ''}`;
   };
   const colours = tokenColours(game);
@@ -131,7 +131,7 @@ export function TileView({
   }
   planets.forEach((planet, i) => {
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
-    if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: 'me', count: 1, planet: i });
+    if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: state.control[planet.id] === 'enemy' ? 'enemy' : 'me', count: 1, planet: i });
   });
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
