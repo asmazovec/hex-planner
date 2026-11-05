@@ -69,7 +69,9 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
 .game-screen > .banner { grid-column: 1 / -1; }
 
 .map-screen { display: grid; grid-template-columns: 1fr minmax(280px, 340px); gap: var(--gap); height: 100%; }
-.map-screen:not(:has(.tile-sheet)) { grid-template-columns: 1fr; }
+.map-screen:not(:has(.map-side)) { grid-template-columns: 1fr; }
+.map-main { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.map-side { display: flex; flex-direction: column; gap: var(--gap); overflow: auto; max-height: 100%; }
 .map-screen .hexmap { width: 100%; height: 100%; min-height: 0; }
 .tile-sheet { overflow: auto; max-height: 100%; }
 .tile-sheet h3 { margin: 0; font-size: 1rem; }

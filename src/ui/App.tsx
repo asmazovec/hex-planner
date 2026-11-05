@@ -5,7 +5,7 @@ import { setLanguage, type Language } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { Banner } from './common/Banner';
 import { downloadGame } from './common/download';
-import { MapScreen } from './screens/MapScreen';
+import { MapBuilderScreen } from './screens/MapBuilderScreen';
 import { GameScreen } from './screens/GameScreen';
 import { OpponentsScreen } from './screens/OpponentsScreen';
 
@@ -51,7 +51,7 @@ export function App() {
       )}
       <main data-screen={screen}>
         {screen === 'game' && <GameScreen />}
-        {screen === 'map' && <MapScreen />}
+        {screen === 'map' && <MapBuilderScreen />}
         {screen === 'rivals' && <OpponentsScreen />}
       </main>
       <nav>

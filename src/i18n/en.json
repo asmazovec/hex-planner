@@ -77,5 +77,16 @@
       "close": "Close"
     },
     "resetView": "Reset view"
+  },
+  "builder": {
+    "title": "Set the tile",
+    "number": "Tile number",
+    "set": "Place",
+    "clear": "Clear slot",
+    "suggestions": "Suggestions",
+    "rotate": "Rotate 60°",
+    "unknown": "No tile \"{{query}}\" in the game data.",
+    "ambiguous": "\"{{query}}\" has two sides: pick one, for example {{query}}A.",
+    "duplicates": "Tile placed more than once: {{list}}. This is allowed."
   }
 }
