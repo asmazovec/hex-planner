@@ -1,11 +1,10 @@
+import { MECATOL_TILE, MECATOL_TILE_TE } from '../domain/mecatol';
 import type { DataPack, ExpansionId, MapTemplate } from '../domain/types';
 import base from './packs/base.json';
 import pok from './packs/pok.json';
 import te from './packs/te.json';
 
 const PACKS: Record<ExpansionId, unknown> = { pok, te };
-const MECATOL_BASE = '18';
-const MECATOL_TE = '112';
 
 /** A later pack's template for a player count and layout replaces an earlier one; the standard layout comes first. */
 function mergeTemplates(packs: DataPack[]): MapTemplate[] {
@@ -18,7 +17,7 @@ function mergeTemplates(packs: DataPack[]): MapTemplate[] {
 function withTeMecatol(template: MapTemplate): MapTemplate {
   return {
     ...template,
-    slots: template.slots.map(slot => (slot.fixed === MECATOL_BASE ? { ...slot, fixed: MECATOL_TE } : slot)),
+    slots: template.slots.map(slot => (slot.fixed === MECATOL_TILE ? { ...slot, fixed: MECATOL_TILE_TE } : slot)),
   };
 }
 
