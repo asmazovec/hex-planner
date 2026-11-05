@@ -5,13 +5,35 @@ import { legendarySummary } from '../src/data/legendarySummaries';
 import { shipSummary } from '../src/data/shipSummaries';
 import { SOURCE_CACHE } from './build-data';
 
-// The source text is read from the build's cached copy and never stored in the repo.
-const SOURCE = join(SOURCE_CACHE, 'planets');
-if (!existsSync(SOURCE)) console.warn(`legendary wording test SKIPPED: no source copy in ${SOURCE}. Run: npx tsx scripts/build-data.ts (it downloads the copy).`);
+// Own retellings must not repeat the source. The source text is read from the build's cached copy and never stored in the repo.
+const PLANETS = join(SOURCE_CACHE, 'planets');
+const UNITS = join(SOURCE_CACHE, 'data/units');
+if (!existsSync(PLANETS) || !existsSync(UNITS)) console.warn(`source wording test SKIPPED: no source copy in ${SOURCE_CACHE}. Run: npx tsx scripts/build-data.ts (it downloads the copy).`);
+
+const RUN = 6;
 const words = (text: string): string[] => text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
 
-test.skipIf(!existsSync(SOURCE))('no retelling shares a run of 6 words with the source text', () => {
-  const sources = readdirSync(SOURCE).map(file => JSON.parse(readFileSync(join(SOURCE, file), 'utf8')) as { legendaryAbilityName?: string; legendaryAbilityText?: string });
+/** Every run of `RUN` words the retelling shares with the source text. */
+function sharedRuns(retelling: string, source: string): string[] {
+  const original = words(source);
+  const own = words(retelling);
+  const runs = new Set<string>();
+  for (let i = 0; i + RUN <= original.length; i += 1) runs.add(original.slice(i, i + RUN).join(' '));
+  const shared: string[] = [];
+  for (let i = 0; i + RUN <= own.length; i += 1) {
+    const run = own.slice(i, i + RUN).join(' ');
+    if (runs.has(run)) shared.push(run);
+  }
+  return shared;
+}
+
+test('the helper finds a shared run of 6 words and ignores a shorter one, case and punctuation', () => {
+  expect(sharedRuns('Now: one two three, four five SIX later', 'x one two three four five six y')).toEqual(['one two three four five six']);
+  expect(sharedRuns('one two three four five', 'one two three four five six')).toEqual([]);
+});
+
+test.skipIf(!existsSync(PLANETS))('no legendary planet retelling shares a run of 6 words with the source', () => {
+  const sources = readdirSync(PLANETS).map(file => JSON.parse(readFileSync(join(PLANETS, file), 'utf8')) as { legendaryAbilityName?: string; legendaryAbilityText?: string });
   let checked = 0;
   const shared: string[] = [];
   for (const planet of sources) {
@@ -19,19 +41,12 @@ test.skipIf(!existsSync(SOURCE))('no retelling shares a run of 6 words with the 
     const retelling = legendarySummary(planet.legendaryAbilityName, 'en');
     if (!retelling) continue;
     checked += 1;
-    const original = words(planet.legendaryAbilityText);
-    const own = words(retelling);
-    const runs = new Set<string>();
-    for (let i = 0; i + 6 <= original.length; i += 1) runs.add(original.slice(i, i + 6).join(' '));
-    for (let i = 0; i + 6 <= own.length; i += 1) {
-      if (runs.has(own.slice(i, i + 6).join(' '))) shared.push(`${planet.legendaryAbilityName}: ${own.slice(i, i + 6).join(' ')}`);
-    }
+    shared.push(...sharedRuns(retelling, planet.legendaryAbilityText).map(run => `${planet.legendaryAbilityName}: ${run}`));
   }
   expect(shared).toEqual([]);
   expect(checked).toBeGreaterThanOrEqual(15);
 });
 
-const UNITS = join(SOURCE_CACHE, 'data/units');
 const SHIP_TYPES = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
 const THIRD_LEVEL = ['mentak_cruiser3'];
 
@@ -46,13 +61,7 @@ test.skipIf(!existsSync(UNITS))('every ship with an ability has its own retellin
     expect(shipSummary(ship.id, 'ru'), ship.id).toMatch(/[а-яё]{3}/i);
     const retelling = shipSummary(ship.id, 'en');
     expect(retelling, ship.id).toMatch(/[a-z]{3}/i);
-    const original = words(ship.ability ?? '');
-    const own = words(retelling ?? '');
-    const runs = new Set<string>();
-    for (let i = 0; i + 6 <= original.length; i += 1) runs.add(original.slice(i, i + 6).join(' '));
-    for (let i = 0; i + 6 <= own.length; i += 1) {
-      if (runs.has(own.slice(i, i + 6).join(' '))) shared.push(`${ship.id}: ${own.slice(i, i + 6).join(' ')}`);
-    }
+    shared.push(...sharedRuns(retelling ?? '', ship.ability ?? '').map(run => `${ship.id}: ${run}`));
   }
   expect(shared).toEqual([]);
   expect(ships.length).toBeGreaterThanOrEqual(40);

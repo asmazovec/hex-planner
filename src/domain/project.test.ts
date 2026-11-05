@@ -99,8 +99,8 @@ describe('project', () => {
   });
 
   test('постройка: стоимость считается за пару и округляется вверх', () => {
-    expect(productionCost({ fighter: 3 }, pack)).toBe(2);
-    expect(productionCost({ cruiser: 2, infantry: 1 }, pack)).toBe(5);
+    expect(productionCost({ fighter: 3 }, 'sol', [], pack)).toBe(2);
+    expect(productionCost({ cruiser: 2, infantry: 1 }, 'sol', [], pack)).toBe(5);
   });
 
   test('оплата постройки: нехватка ресурсов, истощение планет, товары', () => {
@@ -586,6 +586,31 @@ describe('ship upgrades in the replay', () => {
     expect(go(g).state.upgrades).toEqual(['carrier']);
   });
 
+  describe('production cost', () => {
+    const warSun = (id: string, status: Entry['status'] = 'planned') =>
+      withId(id, entry(tactical({ systemId: 'A', production: { warsun: 1 } }), 'action', status));
+    const needed = (warnings: Warning[]) => warnings.find(w => w.code === 'shortResources')?.params.needed;
+
+    test('follows my faction and level: a Muaat War Sun costs 12, then 10 from the upgrade entry onward', () => {
+      const g = start('muaat', [warSun('before'), research(['warsun']), warSun('after')]);
+      const { warningsByEntry } = go(g);
+      expect(needed(warningsByEntry.before)).toBe(12);
+      expect(needed(warningsByEntry.after)).toBe(10);
+    });
+
+    test('a planned upgrade lowers it in the forecast only', () => {
+      const g = start('muaat', [research(['warsun']), warSun('built', 'done')]);
+      expect(needed(go(g, 'now').warningsByEntry.built)).toBe(12);
+      expect(needed(go(g, 'forecast').warningsByEntry.built)).toBe(10);
+    });
+
+    test('another faction pays the base price for the same mark; a fighter stays half a resource, rounded up per type', () => {
+      expect(productionCost({ warsun: 1 }, 'arborec', ['warsun'], real)).toBe(12);
+      expect(productionCost({ warsun: 1 }, 'muaat', ['warsun'], real)).toBe(10);
+      expect(productionCost({ fighter: 3 }, 'muaat', ['fighter'], real)).toBe(2);
+    });
+  });
+
   describe('fighters', () => {
     const fighters = (n: number, other: UnitCounts = {}) => ({ carrier: 1, fighter: n, ...other });
     const fly = (faction: string, units: UnitCounts, baseline: UnitId[] = []) =>
@@ -626,11 +651,6 @@ describe('ship upgrades in the replay', () => {
       expect(codes(project(g, g.plans[0], 'forecast', own).warningsByEntry.m)).toEqual([]);
     });
 
-    test('the pack-level capacityUsed stays', () => {
-      fly('arborec', fighters(5), ['fighter']);
-      expect(real.units.fighter?.capacityUsed).toBe(1);
-    });
-
     test('the meters of the picker agree with the warnings', () => {
       const units = fighters(7, { infantry: 2 });
       const plain = start('arborec', [setup('A', units), flight('m', units)]);
@@ -641,6 +661,35 @@ describe('ship upgrades in the replay', () => {
       expect(tacticalMeters(plain, flightEntry, 'A', up, real)).toMatchObject({ group: { load: 2, capacity: 4 }, ships: 6 });
       const withCarrier = { ...before, upgrades: ['carrier'] as UnitId[] };
       expect(tacticalMeters(plain, flightEntry, 'A', withCarrier, real).group).toEqual({ load: 9, capacity: 6 });
+    });
+
+    test('with landings the meter and the warning agree: landed infantry free the capacity for the fighters', () => {
+      const units = { carrier: 1, fighter: 4, infantry: 4 };
+      const planetId = real.tiles['20'].planetIds[0];
+      const landed = withId('m', entry(tactical({ systemId: 'B', moves: [{ from: 'A', units }], landings: [{ planetId, units: { infantry: 4 } }] })));
+      const g = start('arborec', [setup('A', units), landed], ['fighter']);
+      const before = stateBeforeEntry(g, g.plans[0], 'm', real);
+      const flightEntry = landed as Extract<Entry, { type: 'tactical' }>;
+      expect(codes(go(g).warningsByEntry.m)).toEqual([]);
+      expect(tacticalMeters(g, flightEntry, 'A', before, real).ships).toBe(1);
+      const staying = withId('n', entry(tactical({ systemId: 'B', moves: [{ from: 'A', units }] })));
+      const kept = start('arborec', [setup('A', units), staying], ['fighter']);
+      const warned = go(kept).warningsByEntry.n.find(w => w.code === 'fleetPool');
+      const meter = tacticalMeters(kept, staying as Extract<Entry, { type: 'tactical' }>, 'A', stateBeforeEntry(kept, kept.plans[0], 'n', real), real);
+      expect(warned?.params.ships).toBe(5);
+      expect(meter.ships).toBe(5);
+    });
+
+    test('with production the meter and the warning agree: built ships count, ground units built on my planet do not', () => {
+      const planetId = real.tiles['20'].planetIds[0];
+      const units = { carrier: 1, fighter: 5 };
+      const built = withId('m', entry(tactical({ systemId: 'B', moves: [{ from: 'A', units }], production: { cruiser: 1, infantry: 3 } })));
+      const g = start('arborec', [setup('A', units), built], ['fighter']);
+      g.planetControl = { ...g.planetControl, [planetId]: 'me' };
+      const meter = tacticalMeters(g, built as Extract<Entry, { type: 'tactical' }>, 'A', stateBeforeEntry(g, g.plans[0], 'm', real), real);
+      // Carrier, cruiser and the fifth fighter: the infantry stand on the planet and take no capacity.
+      expect(meter.ships).toBe(3);
+      expect(codes(go(g).warningsByEntry.m)).not.toContain('fleetPool');
     });
 
     test('the suggestion takes every flying fighter and leaves the room to ground units', () => {

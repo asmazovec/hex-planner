@@ -6,7 +6,7 @@ import { EXPEDITION_SLICES } from '../../domain/payment';
 import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
-import type { Entry, EntryBody, Plan, UnitId } from '../../domain/types';
+import type { Entry, EntryBody, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { HexMap, type Arrow } from '../map/HexMap';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
@@ -201,10 +201,8 @@ export function PlanScreen() {
 
   const shownFilter = session || mapMode === 'forecast' ? 'forecast' : 'now';
   const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
-  // A type an entry upgraded and the baseline does not hold cannot be toggled by hand.
-  const lockedUpgrades: Partial<Record<UnitId, number>> = Object.fromEntries(
-    Object.entries(entryUpgradeRounds(upToRound, shownFilter)).filter(([kind]) => !game.upgrades.me.includes(kind as UnitId)),
-  );
+  // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
+  const lockedUpgrades = entryUpgradeRounds(upToRound, shownFilter);
   const upgradeCount = SHIP_KINDS.filter(kind => shownState.upgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   const arrows = new Map<string, Arrow>();

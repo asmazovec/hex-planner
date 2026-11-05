@@ -8,11 +8,14 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { stateBeforeEntry } from '../../domain/project';
 import type { Entry, EntryBody } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 import { FactionCard } from './FactionCard';
+import { TacticalEditor } from './TacticalEditor';
+import type { TacticalEntry } from './tactical';
 import { ShipStats } from './ShipStats';
 
 const pack = loadPack(['pok', 'te']);
@@ -179,6 +182,16 @@ describe('the upgrades panel', () => {
     expect(game().plans[0].rounds[0].entries[0]).toMatchObject({ upgrades: ['carrier'] });
   });
 
+  test('a type in the baseline that an entry also upgrades shows the entry and takes no tap; the baseline stays', async () => {
+    startPlan();
+    act(() => useGame.getState().toggleUpgrade('me', 'carrier'));
+    addEntry({ type: 'strategic', upgrades: ['carrier'] });
+    const panel = await open();
+    expect(card(panel, 'carrier')).toBeDisabled();
+    expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
+    expect(game().upgrades.me).toEqual(['carrier']);
+  });
+
   test('closes', async () => {
     startPlan();
     const panel = await open();
@@ -227,5 +240,36 @@ describe('upgrades in an entry', () => {
     expect(owned).toBeDisabled();
     expect(owned).toHaveClass('entry-upgrade-owned');
     expect(within(entryOf(later)).getByRole('button', { name: 'Крейсер' })).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+describe('the build prices of the tactical editor', () => {
+  const editor = (faction: string) => {
+    startPlan(faction);
+    const id = addEntry({ type: 'tactical', systemId: '0,-3', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } });
+    return { id };
+  };
+  const show = (id: string) => {
+    const g = game();
+    const entry = g.plans[0].rounds[0].entries.find(e => e.id === id) as Entry & TacticalEntry;
+    const { container } = render(
+      <TacticalEditor
+        game={{ ...g, map: { ...g.map, '1,0': pack.factions.muaat.homeTile }, docks: pack.tiles[pack.factions.muaat.homeTile].planetIds }}
+        pack={small} entry={{ ...entry, systemId: '1,0' }} before={stateBeforeEntry(g, g.plans[0], id, small)} warnings={[]} addingSource={false}
+        pickerFrom={null} manualPayment={false} onUpdate={() => undefined} onAddSource={() => undefined} onOpenPicker={() => undefined}
+        onManualPayment={() => undefined} onDone={() => undefined}
+      />,
+    );
+    return container;
+  };
+
+  test('the price follows the level at that entry', () => {
+    const { id } = editor('muaat');
+    expect(show(id).textContent).toContain('цена 12');
+    cleanup();
+    act(() => useGame.getState().toggleUpgrade('me', 'warsun'));
+    const text = show(id).textContent;
+    expect(text).toContain('цена 10');
+    expect(text).not.toContain('цена 12');
   });
 });

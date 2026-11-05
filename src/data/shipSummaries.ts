@@ -11,7 +11,7 @@ const NO_DIRECT_HIT: Summary = {
 };
 const NEAR_MECHS: Summary = {
   ru: 'Можно считать его соседним с системами, где есть хотя бы 1 ваш мех.',
-  en: 'Counts as adjacent to any system holding at least 1 of your mechs.',
+  en: 'May count as adjacent to any system holding at least 1 of your mechs.',
 };
 
 // Own short retellings for the player's memory, not card text. Shown only: nothing here is ever calculated.
@@ -35,8 +35,8 @@ export const SHIP_SUMMARIES: Record<string, Summary> = {
     en: 'No space cannon from other players may target your ships here.',
   },
   cabal_flagship: {
-    ru: 'Захватывает все уничтоженные в этой системе юниты, кроме сооружений, в том числе ваши.',
-    en: 'Captures every destroyed non-structure unit in this system, yours too.',
+    ru: 'Захватывает все другие уничтоженные в этой системе юниты, кроме сооружений, в том числе ваши.',
+    en: 'Captures every other destroyed non-structure unit in this system, yours too.',
   },
   empyrean_flagship: {
     ru: 'Когда юнит любого игрока здесь или в соседней системе применит устойчивость, можете потратить 2 влияния и починить его.',
@@ -109,7 +109,7 @@ export const SHIP_SUMMARIES: Record<string, Summary> = {
   },
   titans_flagship: {
     ru: 'Развёртывание: после активации системы с вашей PDS можете заменить 1 такую PDS этим кораблём.',
-    en: 'Deploy: after activating a system with your PDS, swap 1 of them for this unit.',
+    en: 'Deploy: after activating a system with your PDS, you may swap 1 of them for this unit.',
   },
   winnu_flagship: {
     ru: 'В броске боя кидает столько кубиков (попадание на 7), сколько в этой системе у соперника кораблей, кроме истребителей.',
@@ -137,7 +137,7 @@ export const SHIP_SUMMARIES: Record<string, Summary> = {
   },
   crimson_flagship: {
     ru: 'Пока он в системе с активной брешью, юниты других игроков в системах с активными брешами теряют все способности юнитов.',
-    en: 'While it sits beside an active breach, rival units in active-breach systems lose all unit abilities.',
+    en: 'While it sits in a system containing an active breach, rival units in active-breach systems lose all unit abilities.',
   },
   crimson_destroyer: {
     ru: 'В конце боя любого игрока здесь или в соседней системе можете поставить туда 1 неактивную брешь.',

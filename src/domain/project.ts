@@ -11,9 +11,9 @@ const unitIds = (units: UnitCounts): UnitId[] =>
   (Object.keys(units) as UnitId[]).filter(id => (units[id] ?? 0) > 0);
 
 /** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
-export function productionCost(units: UnitCounts, pack: DataPack): number {
+export function productionCost(units: UnitCounts, factionId: string, upgrades: UnitId[], pack: DataPack): number {
   let total = 0;
-  for (const id of unitIds(units)) total += Math.ceil((units[id] ?? 0) * (pack.units[id]?.cost ?? 0));
+  for (const id of unitIds(units)) total += Math.ceil((units[id] ?? 0) * (unitStats(factionId, id, upgrades.includes(id), pack)?.cost ?? 0));
   return total;
 }
 
@@ -177,30 +177,20 @@ export function tacticalMeters(
   game: Game, entry: TacticalEntry, source: string, before: GameState, pack: DataPack,
 ): { group: { load: number; capacity: number }; ships: number; fleet: number } {
   const state = structuredClone(before);
-  const groups = entry.systemId === null ? {} : applyMoves(game, state, entry.systemId, entry, pack, []);
-  const arriving: Record<string, UnitCounts> = { here: { ...state.systems[entry.systemId ?? ''] } };
-  for (const id of unitIds(entry.production)) if (!pack.units[id]?.ground) add(arriving, 'here', { [id]: entry.production[id] });
+  const target = entry.systemId;
+  const groups = target === null ? {} : applyMoves(game, state, target, entry, pack, []);
+  if (target !== null) landAndBuild(game, state, target, entry, pack, []);
   return {
     group: capacity(game, groups[source] ?? {}, before.upgrades, pack),
-    ships: fleetCount(game, arriving.here, before.upgrades, pack),
+    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.upgrades, pack),
     fleet: before.fleet,
   };
 }
 
-function applyTactical(
-  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
+/** What happens in the target after the moves: ground units land, then what was built is placed. */
+function landAndBuild(
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
 ): void {
-  const target = entry.systemId;
-  if (target === null) return;
-  state.tactic -= 1;
-  if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
-  const groups = applyMoves(game, state, target, entry, pack, warnings);
-  for (const [from, units] of Object.entries(groups)) {
-    const group = capacity(game, units, state.upgrades, pack);
-    if (group.load > group.capacity) {
-      warnings.push({ code: 'capacityGroup', params: { from, load: group.load, capacity: group.capacity } });
-    }
-  }
   const wanted: UnitCounts = {};
   for (const landing of entry.landings) {
     for (const id of unitIds(landing.units)) wanted[id] = (wanted[id] ?? 0) + (landing.units[id] ?? 0);
@@ -221,10 +211,9 @@ function applyTactical(
     }
     state.control[landing.planetId] = 'me';
   }
-  const produced = unitIds(entry.production);
   const shipsPart: UnitCounts = {};
   const groundPart: UnitCounts = {};
-  for (const id of produced) (pack.units[id]?.ground ? groundPart : shipsPart)[id] = entry.production[id];
+  for (const id of unitIds(entry.production)) (pack.units[id]?.ground ? groundPart : shipsPart)[id] = entry.production[id];
   add(state.systems, target, shipsPart);
   if (unitIds(groundPart).length > 0) {
     // Produced ground forces start on one of the player's planets in the system, else they stay in space.
@@ -232,10 +221,27 @@ function applyTactical(
     if (planet) add(state.ground, planet, groundPart);
     else add(state.systems, target, groundPart);
   }
-  const cost = productionCost(entry.production, pack);
+}
+
+function applyTactical(
+  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
+): void {
+  const target = entry.systemId;
+  if (target === null) return;
+  state.tactic -= 1;
+  if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
+  const groups = applyMoves(game, state, target, entry, pack, warnings);
+  for (const [from, units] of Object.entries(groups)) {
+    const group = capacity(game, units, state.upgrades, pack);
+    if (group.load > group.capacity) {
+      warnings.push({ code: 'capacityGroup', params: { from, load: group.load, capacity: group.capacity } });
+    }
+  }
+  landAndBuild(game, state, target, entry, pack, warnings);
+  const cost = productionCost(entry.production, game.faction, state.upgrades, pack);
   const paid = pay(state, entry.payment, 'resources', pack, warnings);
   if (cost > paid) warnings.push({ code: 'shortResources', params: { needed: cost, paid } });
-  if (entry.moves.length > 0 || produced.length > 0) {
+  if (entry.moves.length > 0 || unitIds(entry.production).length > 0) {
     const here = state.systems[target] ?? {};
     const load = capacity(game, here, state.upgrades, pack);
     if (load.load > load.capacity) {

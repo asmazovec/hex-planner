@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../domain/payment';
 import { productionCost, sourceSlot, systemPlanets } from '../../domain/project';
+import { unitStats } from '../../domain/unitStats';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { PaymentBlock } from './PaymentBlock';
@@ -35,7 +36,8 @@ export function TacticalEditor({
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
   const hasDock = planets.some(p => game.docks.includes(p.id));
-  const cost = productionCost(entry.production, pack);
+  const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.upgrades, pack);
+  const cost = priceOf(entry.production);
   const unitsIn = (list: { units: UnitCounts }[]): UnitCounts =>
     list.reduce((sum, item) => addUnits(sum, item.units), {} as UnitCounts);
   const unitText = (units: UnitCounts): string =>
@@ -60,7 +62,7 @@ export function TacticalEditor({
 
   /** The payment follows the cost in the same edit, so one undo reverts both. */
   const setProduction = (production: UnitCounts) => {
-    const nextCost = productionCost(production, pack);
+    const nextCost = priceOf(production);
     const seed = !manualPayment && nextCost !== cost;
     onUpdate(seed ? { production, payment: autoPay(before, nextCost, 'resources', pack) } : { production });
   };
@@ -133,7 +135,7 @@ export function TacticalEditor({
                 {UNIT_ORDER.filter(u => pack.units[u]).map(unit => (
                   <Stepper
                     key={unit} name={t(`unit.${unit}`)} value={entry.production[unit] ?? 0} min={0}
-                    note={t('plan.tactical.price', { cost: pack.units[unit]?.cost ?? 0 })}
+                    note={t('plan.tactical.price', { cost: unitStats(game.faction, unit, before.upgrades.includes(unit), pack)?.cost ?? 0 })}
                     onChange={count => setProduction(withCount(entry.production, unit, count))}
                   />
                 ))}
