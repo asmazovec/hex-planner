@@ -68,10 +68,14 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
 .banner-error { border-color: var(--danger); }
 .game-screen > .banner { grid-column: 1 / -1; }
 
-.map-screen { display: grid; grid-template-columns: 1fr minmax(280px, 340px); gap: var(--gap); height: 100%; }
-.map-screen:not(:has(.map-side)) { grid-template-columns: 1fr; }
-.map-main { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
-.map-side { display: flex; flex-direction: column; gap: var(--gap); overflow: auto; max-height: 100%; }
+.map-screen { position: relative; height: 100%; }
+.map-main { display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 0; }
+.map-main .hexmap-wrap { flex: 1; }
+.map-side {
+  position: absolute; top: 0; right: 0; bottom: 0; width: min(340px, 45%); z-index: 2;
+  display: flex; flex-direction: column; gap: var(--gap); overflow: auto; background: var(--bg);
+}
+.map-side.map-side-left { right: auto; left: 0; }
 .map-screen .hexmap { width: 100%; height: 100%; min-height: 0; }
 .tile-sheet { overflow: auto; max-height: 100%; }
 .tile-sheet h3 { margin: 0; font-size: 1rem; }

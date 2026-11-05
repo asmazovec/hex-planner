@@ -33,12 +33,15 @@ export function MapBuilderScreen() {
         <HexMap game={game} state={state} pack={pack} selectedId={selected} onTileTap={setSelected} />
       </div>
       {selected !== null && (
-        <div className="map-side">
+        <div className={`map-side${Number(selected.split(',')[0]) > 0 ? ' map-side-left' : ''}`}>
           <TileNumberInput
             key={selected} pack={pack} value={game.map[selected]}
             onChange={value => setTile(selected, value)}
+            onClose={game.map[selected] ? undefined : () => setSelected(null)}
           />
-          <TileSheet slotKey={selected} pack={pack} game={game} state={state} onClose={() => setSelected(null)} />
+          {game.map[selected] && (
+            <TileSheet slotKey={selected} pack={pack} game={game} state={state} onClose={() => setSelected(null)} />
+          )}
         </div>
       )}
     </section>

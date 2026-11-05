@@ -27,3 +27,13 @@ test('a game with a different data version shows a warning on every screen', asy
   await userEvent.click(screen.getByRole('button', { name: 'Rivals' }));
   expect(screen.getByText(/different data version/)).toBeVisible();
 });
+
+test('the language can be changed in Settings', async () => {
+  setLanguage('ru');
+  render(<App />);
+  await userEvent.click(screen.getByRole('button', { name: 'Настройки' }));
+  await userEvent.selectOptions(screen.getByLabelText('Язык интерфейса'), 'en');
+  expect(screen.getByRole('button', { name: 'Game' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Settings' })).toBeVisible();
+  expect(localStorage.getItem('ti4.lang')).toBe('en');
+});

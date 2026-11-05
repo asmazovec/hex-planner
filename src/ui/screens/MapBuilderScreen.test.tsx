@@ -97,7 +97,12 @@ test('a fixed template slot can be replaced and cleared, and Game.map overrides 
   expect(hex()).toHaveAccessibleName('Empty slot');
 });
 
-test('the side panel has one Close button', async () => {
+test('the side panel has one Close button, and tile details appear only once the slot has a tile', async () => {
   await tapEmptySlot();
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
+  expect(screen.queryByText('Enemy units')).toBeNull();
+  await userEvent.type(screen.getByLabelText('Tile number'), '25');
+  await userEvent.click(screen.getByRole('button', { name: 'Place' }));
+  expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
+  expect(screen.getByText('Enemy units')).toBeVisible();
 });

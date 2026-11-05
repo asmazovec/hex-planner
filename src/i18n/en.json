@@ -3,7 +3,8 @@
     "game": "Game",
     "map": "Map",
     "plan": "Plan",
-    "rivals": "Rivals"
+    "rivals": "Rivals",
+    "settings": "Settings"
   },
   "language": {
     "label": "Language"
@@ -88,5 +89,8 @@
     "unknown": "No tile \"{{query}}\" in the game data.",
     "ambiguous": "\"{{query}}\" has two sides: pick one, for example {{query}}A.",
     "duplicates": "Tile placed more than once: {{list}}. This is allowed."
+  },
+  "settings": {
+    "language": "Interface language"
   }
 }

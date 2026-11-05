@@ -8,8 +8,9 @@ import { downloadGame } from './common/download';
 import { MapBuilderScreen } from './screens/MapBuilderScreen';
 import { GameScreen } from './screens/GameScreen';
 import { OpponentsScreen } from './screens/OpponentsScreen';
+import { SettingsScreen } from './screens/SettingsScreen';
 
-const SCREENS = ['game', 'map', 'plan', 'rivals'] as const;
+const SCREENS = ['game', 'map', 'plan', 'rivals', 'settings'] as const;
 type Screen = (typeof SCREENS)[number];
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -53,6 +54,7 @@ export function App() {
         {screen === 'game' && <GameScreen />}
         {screen === 'map' && <MapBuilderScreen />}
         {screen === 'rivals' && <OpponentsScreen />}
+        {screen === 'settings' && <SettingsScreen />}
       </main>
       <nav>
         {SCREENS.map((id) => (
