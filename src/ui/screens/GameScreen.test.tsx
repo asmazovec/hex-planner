@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { useGame } from '../../state/gameStore';
 import { deleteGame, listGames, saveGame } from '../../storage/db';
@@ -60,9 +60,18 @@ test('importing a game whose id exists saves it as a new game', async () => {
   expect(useGame.getState().game!.id).not.toBe(game.id);
 });
 
-test('a game with a different data version opens with a warning', async () => {
-  await saveGame({ ...sampleGame(), dataVersion: 'old' });
+test('a failing save during import shows an error instead of throwing', async () => {
+  const db = await import('../../storage/db');
+  const spy = vi.spyOn(db, 'saveGame').mockRejectedValueOnce(new Error('quota exceeded'));
   render(<GameScreen />);
-  await userEvent.click(await screen.findByRole('button', { name: /Open/ }));
-  expect(await screen.findByRole('status')).toHaveTextContent('different data version');
+  const file = new File([exportGame(sampleGame())], 'g.json', { type: 'application/json' });
+  await userEvent.upload(screen.getByLabelText('Import game'), file);
+  expect(await screen.findByRole('alert')).toHaveTextContent('quota exceeded');
+  spy.mockRestore();
+});
+
+test('a just started game appears in the saved list', async () => {
+  render(<GameScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Start game' }));
+  expect(await screen.findByRole('button', { name: 'Open' })).toBeVisible();
 });

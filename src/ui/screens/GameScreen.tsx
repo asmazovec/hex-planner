@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import type { ExpansionId } from '../../domain/types';
-import { useGame } from '../../state/gameStore';
+import { flushSaves, useGame } from '../../state/gameStore';
 import { listGames, saveGame, type GameSummary } from '../../storage/db';
 import { importGame } from '../../storage/transfer';
 import { Banner } from '../common/Banner';
@@ -33,10 +33,10 @@ export function GameScreen() {
   const chosenFaction = pack.factions[faction] ? faction : (factions[0]?.id ?? '');
   const chosenCount = counts.includes(playerCount) ? playerCount : (counts.at(-1) ?? playerCount);
 
-  /** The list reloads whenever the open game changes, which covers new, opened and imported games. */
+  /** The list reloads after pending saves finish whenever the open game changes (new, opened, imported). */
   useEffect(() => {
     let live = true;
-    listGames().then(list => live && setSaved(list), () => live && setSaved([]));
+    flushSaves().then(listGames).then(list => live && setSaved(list), () => live && setSaved([]));
     return () => { live = false; };
   }, [game?.id]);
 
@@ -50,23 +50,24 @@ export function GameScreen() {
 
   const importFile = async (file: File | undefined) => {
     if (!file) return;
-    const result = importGame(await file.text());
-    if (!result.ok) {
-      setImportError(t(`import.${result.reason}`));
-      return;
+    try {
+      const result = importGame(await file.text());
+      if (!result.ok) {
+        setImportError(t(`import.${result.reason}`));
+        return;
+      }
+      const taken = (await listGames()).some(g => g.id === result.game.id);
+      const imported = taken ? { ...result.game, id: `${result.game.id}-${Date.now().toString(36)}` } : result.game;
+      await saveGame(imported);
+      await openGame(imported.id);
+      setImportError(null);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : String(error));
     }
-    setImportError(null);
-    const taken = (await listGames()).some(g => g.id === result.game.id);
-    const imported = taken ? { ...result.game, id: `${result.game.id}-${Date.now().toString(36)}` } : result.game;
-    await saveGame(imported);
-    await openGame(imported.id);
   };
-
-  const dataMismatch = game !== null && game.dataVersion !== loadPack(game.expansions).version;
 
   return (
     <section className="screen game-screen">
-      {dataMismatch && <Banner kind="warning" message={t('game.dataVersionWarning')} />}
       {importError && <Banner kind="error" message={t('import.failed', { reason: importError })} />}
 
       <div className="panel">

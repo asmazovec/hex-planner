@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { loadPack } from '../data/loadPack';
 import { setLanguage, type Language } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { Banner } from './common/Banner';
@@ -21,6 +22,8 @@ export function App() {
   const game = useGame(s => s.game);
   const saveError = useGame(s => s.saveError);
 
+  const dataMismatch = game !== null && game.dataVersion !== loadPack(game.expansions).version;
+
   return (
     <div className="app">
       <header>
@@ -37,6 +40,7 @@ export function App() {
           ))}
         </div>
       </header>
+      {dataMismatch && <Banner kind="warning" message={t('game.dataVersionWarning')} />}
       {saveError && (
         <Banner
           kind="error"

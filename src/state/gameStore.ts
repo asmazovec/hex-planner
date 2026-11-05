@@ -129,6 +129,9 @@ let history: Game[] = [];
 /** Writes run one after another so an older state can never overwrite a newer one. */
 let pendingSave: Promise<void> = Promise.resolve();
 
+/** Resolves once every save queued so far has finished. */
+export const flushSaves = (): Promise<void> => pendingSave;
+
 export const useGame = create<GameStore>((set, get) => {
   const autosave = (game: Game): void => {
     pendingSave = pendingSave.then(async () => {
