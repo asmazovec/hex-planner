@@ -89,7 +89,7 @@ function pay(state: GameState, payment: Payment, pack: DataPack, warnings: Warni
       continue;
     }
     state.exhausted.push(planetId);
-    value += pack.planets[planetId]?.resources ?? 0;
+    if (state.control[planetId] === 'me') value += pack.planets[planetId]?.resources ?? 0;
   }
   if (payment.tradeGoods > state.tradeGoods) {
     warnings.push({ code: 'shortTradeGoods', params: { needed: payment.tradeGoods, have: state.tradeGoods } });
@@ -118,9 +118,9 @@ function initialState(game: Game, pack: DataPack): GameState {
 function applyTactical(
   game: Game, state: GameState, entry: Extract<Entry, { type: 'tactical' }>, pack: DataPack, warnings: Warning[],
 ): void {
-  state.tactic -= 1;
   const target = entry.systemId;
   if (target === null) return;
+  state.tactic -= 1;
   if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
   for (const move of entry.moves) {
     const fromPlanet = move.from in pack.planets;

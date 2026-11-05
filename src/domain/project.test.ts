@@ -224,6 +224,22 @@ describe('project', () => {
     expect(readyResources(run(g).state, pack)).toBe(10);
   });
 
+  test('тактическая запись без выбранной системы ничего не тратит', () => {
+    const e = entry(tactical({ systemId: null, production: { cruiser: 1 }, payment: { planets: ['jord'], tradeGoods: 0 } }));
+    const s = run(gameWith([e])).state;
+    expect(s.tactic).toBe(3);
+    expect(s.tokensOnMap).toEqual([]);
+    expect(s.exhausted).toEqual([]);
+  });
+
+  test('оплата чужой или ничейной планетой не даёт ресурсов', () => {
+    const build = (planets: string[]) =>
+      withId('p', entry(tactical({ systemId: 'H', production: { cruiser: 1 }, payment: { planets, tradeGoods: 0 } })));
+    const enemy = run(gameWith([build(['arc', 'lazar'])], { planetControl: { arc: 'enemy' } }));
+    expect(enemy.warningsByEntry.p).toContainEqual({ code: 'shortResources', params: { needed: 2, paid: 0 } });
+    expect(enemy.state.exhausted).toEqual(['arc', 'lazar']);
+  });
+
   test('экспедиция: заглушка оплаты расходует планеты', () => {
     const g = gameWith([entry({ type: 'expedition', sliceId: null, payment: { planets: ['jord'], tradeGoods: 0 } })]);
     expect(run(g).state.exhausted).toEqual(['jord']);
