@@ -5,5 +5,38 @@
     "plan": "Plan",
     "rivals": "Rivals"
   },
-  "language": { "label": "Language" }
+  "language": { "label": "Language" },
+  "game": {
+    "new": "New game",
+    "expansions": "Expansions",
+    "players": "Players",
+    "faction": "Your faction",
+    "start": "Start game",
+    "saved": "Saved games",
+    "none": "No saved games",
+    "playersShort": "{{count}} players",
+    "open": "Open",
+    "export": "Export to file",
+    "import": "Import game",
+    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original."
+  },
+  "import": {
+    "failed": "Could not import the file: {{reason}}",
+    "invalidJson": "the file is not valid JSON",
+    "invalidSchema": "the file is not a game or is damaged",
+    "newerVersion": "the file was made by a newer version of the app"
+  },
+  "rivals": {
+    "noGame": "Start or open a game first.",
+    "opponent": "Opponent {{n}}",
+    "faction": "Faction",
+    "unknown": "Not chosen",
+    "plus": "Add a point",
+    "minus": "Remove a point",
+    "points": "Points"
+  },
+  "banner": {
+    "saveError": "Could not save the game: {{error}}",
+    "export": "Export"
+  }
 }

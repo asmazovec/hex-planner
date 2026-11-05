@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setLanguage, type Language } from '../i18n';
+import { useGame } from '../state/gameStore';
+import { Banner } from './common/Banner';
+import { downloadGame } from './common/download';
+import { GameScreen } from './screens/GameScreen';
+import { OpponentsScreen } from './screens/OpponentsScreen';
 
 const SCREENS = ['game', 'map', 'plan', 'rivals'] as const;
 type Screen = (typeof SCREENS)[number];
@@ -13,6 +18,8 @@ const LANGUAGES: { code: Language; label: string }[] = [
 export function App() {
   const { t, i18n } = useTranslation();
   const [screen, setScreen] = useState<Screen>('game');
+  const game = useGame(s => s.game);
+  const saveError = useGame(s => s.saveError);
 
   return (
     <div className="app">
@@ -30,7 +37,17 @@ export function App() {
           ))}
         </div>
       </header>
-      <main data-screen={screen} />
+      {saveError && (
+        <Banner
+          kind="error"
+          message={t('banner.saveError', { error: saveError })}
+          action={game ? { label: t('banner.export'), onClick: () => downloadGame(game) } : undefined}
+        />
+      )}
+      <main data-screen={screen}>
+        {screen === 'game' && <GameScreen />}
+        {screen === 'rivals' && <OpponentsScreen />}
+      </main>
       <nav>
         {SCREENS.map((id) => (
           <button
