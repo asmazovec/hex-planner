@@ -323,3 +323,38 @@ describe('addExpansion', () => {
     expect(game().expansions).toEqual(['pok', 'te']);
   });
 });
+
+describe("Thunder's Edge turned on in a game in progress", () => {
+  test('Mecatol records move from mr to mrte in one undo step', () => {
+    const entry = {
+      type: 'tactical' as const, systemId: '0,0', moves: [{ from: 'mr', units: {} }],
+      landings: [{ planetId: 'mr', units: { infantry: 1 } }], production: {}, payment: { planets: ['mr'], tradeGoods: 0 },
+    };
+    act().setPlanetControl('mr', 'me');
+    act().setDock('mr', true);
+    const id = act().addEntry(1, entry, 'action');
+    act().setEntryStatus(id, 'done');
+    const before = project(game(), plan(), 'forecast', pack).state;
+    expect(before.exhausted).toContain('mr');
+    const old = game();
+
+    act().addExpansion('te');
+    const next = game();
+    const after = project(next, next.plans.find(p => p.id === next.activePlanId)!, 'forecast', loadPack(['pok', 'te'])).state;
+    expect(after.control.mrte).toBe(before.control.mr);
+    expect(after.exhausted).toContain('mrte');
+    expect(after.ground.mrte).toEqual(before.ground.mr);
+    expect(after.control.mr).toBeUndefined();
+    expect(next.docks).toContain('mrte');
+    expect(next.docks).not.toContain('mr');
+    expect(Object.keys(next.planetControl)).toContain('mrte');
+    expect(Object.keys(next.planetControl)).not.toContain('mr');
+    const body = next.plans[0].rounds[0].entries[0] as typeof entry;
+    expect(body.moves[0].from).toBe('mrte');
+    expect(body.landings[0].planetId).toBe('mrte');
+    expect(body.payment.planets).toEqual(['mrte']);
+
+    act().undo();
+    expect(game()).toEqual(old);
+  });
+});

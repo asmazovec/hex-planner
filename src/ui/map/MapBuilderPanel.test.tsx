@@ -321,3 +321,19 @@ test('a complete six-player string of 36 tokens raises no note about the count',
   expect(screen.queryByText(/String has/)).toBeNull();
   expect(screen.queryByText(/Expected/)).toBeNull();
 });
+
+test('tiles of an expansion that is off stay listed after Apply', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25 102');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(screen.getByRole('status')).toHaveTextContent(/102 belong to Thunder's Edge/);
+});
+
+test('a set that would place nothing cannot be placed', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('901 902 903 904 905 906 907 908 909 910');
+  expect(screen.getByText(/no positions/)).toBeVisible();
+  expect((screen.getByRole('button', { name: 'Place the set' }) as HTMLButtonElement).disabled).toBe(true);
+});

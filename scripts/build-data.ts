@@ -256,7 +256,7 @@ export function readPlanetMarks(planet: Pick<SourcePlanet, 'id' | 'techSpecialti
   const tech: TechType[] = [];
   let skip: PlanetDef['skip'];
   for (const value of planet.techSpecialties ?? []) {
-    if (value in TECH_TYPES) tech.push(TECH_TYPES[value]);
+    if (value in TECH_TYPES) { if (!tech.includes(TECH_TYPES[value])) tech.push(TECH_TYPES[value]); }
     else if (value in SKIPS) skip = SKIPS[value];
     else throw new Error(`Planet ${planet.id} has unknown tech specialty ${value}`);
   }

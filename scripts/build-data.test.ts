@@ -91,3 +91,7 @@ test('отметки планеты: технологии и пропуски и
   expect(readPlanetMarks({ id: 'a' })).toEqual({});
   expect(() => readPlanetMarks({ id: 'a', techSpecialties: ['PLASMA'] })).toThrow(/PLASMA/);
 });
+
+test('отметки планеты: повтор технологии в источнике даёт одну отметку', () => {
+  expect(readPlanetMarks({ id: 'a', techSpecialties: ['CYBERNETIC', 'CYBERNETIC'] })).toEqual({ tech: ['cybernetic'] });
+});

@@ -1,6 +1,7 @@
 import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
+import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { rotateLanes } from '../../domain/lanes';
 import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
@@ -49,10 +50,13 @@ const CAPTION_Y = -14;
 const NAME_FONT = 9;
 const NAME_GAP = 9;
 const NAME_CHAR = 4.7;
-/** Mecatol Rex, and its Thunder's Edge version. */
-const MECATOL_PLANETS = ['mr', 'mrte'];
-/** Technology marks sit at the upper right of the disc, in the planet's own units: a second one goes below the first. */
-const TECH_MARK = { x: 8, y: -8, step: 7 };
+/** Technology marks sit at the upper right of the disc, in the planet's own units. */
+const TECH_RADIUS = 12.4;
+/** Marks stand along the upper edge of the disc, clear of the values: the first at 45 degrees from the top, the next ones towards the left. */
+const techMarkAt = (n: number): { x: number; y: number } => {
+  const angle = ((45 - 35 * n) * Math.PI) / 180;
+  return { x: TECH_RADIUS * Math.sin(angle), y: -TECH_RADIUS * Math.cos(angle) };
+};
 /** One simple shape per type, so the colour is not the only sign. */
 const TECH_SHAPES: Record<TechType, string> = {
   propulsion: 'M0,-3.9 L3.6,2.6 L-3.6,2.6 Z',
@@ -201,7 +205,7 @@ export function TileView({
             {(planet.tech ?? []).map((tech, n) => (
               <path
                 key={tech} d={TECH_SHAPES[tech]} className={`planet-tech planet-tech-${tech}`}
-                transform={`translate(${TECH_MARK.x} ${TECH_MARK.y + n * TECH_MARK.step})`}
+                transform={`translate(${techMarkAt(n).x.toFixed(2)} ${techMarkAt(n).y.toFixed(2)})`}
               />
             ))}
             {exhausted && <line x1={-PLANET_BASE * 0.7} y1={PLANET_BASE * 0.7} x2={PLANET_BASE * 0.7} y2={-PLANET_BASE * 0.7} className="planet-strike" />}

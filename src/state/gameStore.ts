@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
+import { withTeMecatol } from '../domain/mecatol';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, setPlayerVp, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts,
@@ -275,9 +276,8 @@ export const useGame = create<GameStore>((set, get) => {
       commit(g => {
         if (g.expansions.includes(id)) return g;
         const expansions = DRAFT_EXPANSIONS.filter(e => e === id || g.expansions.includes(e));
-        // Thunder's Edge swaps the centre tile; a map that holds the base one would no longer look empty.
-        const map = id === 'te' && g.map['0,0'] === '18' ? { ...g.map, '0,0': '112' } : g.map;
-        return { ...g, expansions, map };
+        const next = { ...g, expansions };
+        return id === 'te' ? withTeMecatol(next) : next;
       }),
     setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
     setMap: (map, layout) => commit(g => {

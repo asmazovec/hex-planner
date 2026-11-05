@@ -477,3 +477,22 @@ test('planets without a specialty have no mark', () => {
   setup(tile.id);
   expect(document.querySelector('[class*="planet-tech-"]')).toBeNull();
 });
+
+test('two marks on one planet stay off the values and off each other', () => {
+  const full = loadPack(['pok', 'te']);
+  const planet = Object.values(full.planets).find(p => (p.tech?.length ?? 0) === 2)!;
+  const tile = Object.values(full.tiles).find(t => t.planetIds.includes(planet.id))!;
+  const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, full);
+  game.map['1,0'] = tile.id;
+  render(<svg><TileView slotKey="1,0" pack={full} game={game} state={emptyState()} /></svg>);
+  const group = screen.getByLabelText(new RegExp(`^${planet.name}:`));
+  const marks = [...group.querySelectorAll('.planet-tech')].map(node => {
+    const [x, y] = (node.getAttribute('transform')!.match(/-?[\d.]+/g) ?? []).map(Number);
+    return { x, y };
+  });
+  expect(marks).toHaveLength(2);
+  // The values text: about 15 wide for a digit pair, from just above the cap height to the baseline.
+  const clearance = ({ x, y }: { x: number; y: number }) => Math.hypot(Math.max(Math.abs(x) - 7.5, 0), Math.max(-3.5 - y, 0));
+  for (const mark of marks) expect(clearance(mark)).toBeGreaterThanOrEqual(4);
+  expect(Math.hypot(marks[0].x - marks[1].x, marks[0].y - marks[1].y)).toBeGreaterThanOrEqual(6.5);
+});

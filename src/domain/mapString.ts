@@ -1,5 +1,6 @@
 import { templateFor, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
+import { MECATOL_PLANETS } from './mecatol';
 import { slotKeyOf } from './newGame';
 import type { DataPack, ExpansionId, MapLayout, TileDef } from './types';
 
@@ -31,8 +32,6 @@ export const MILTY_TOKENS = 60;
 
 /** Fewest tiles that make a sorted list a set of tiles rather than a map. */
 const SET_MIN = 10;
-/** Mecatol Rex and its Thunder's Edge version. */
-const MECATOL_PLANETS = ['mr', 'mrte'];
 
 /** Packs of single expansions, to tell a tile of an expansion that is off from a tile nobody knows. */
 export type OtherPacks = Partial<Record<ExpansionId, DataPack>>;

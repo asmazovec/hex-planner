@@ -28,7 +28,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
   const off = (Object.keys(parsed.offExpansion) as ExpansionId[]).filter(id => parsed.offExpansion[id]);
   const isSet = parsed.kind === 'set';
   const arranged = isSet ? arrangeSet(parsed.set, game.playerCount, pack) : parsed;
-  const nothing = Object.keys(parsed.map).length === 0;
+  const nothing = Object.keys(arranged.map).filter(slot => slot !== '0,0').length === 0;
 
   const apply = () => {
     setMap(arranged.map, arranged.layout);
@@ -64,7 +64,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
       ) : (
         <div className="row">
           {isSet
-            ? <button type="button" className="primary" onClick={onApply}>{t('mapImport.arrange')}</button>
+            ? <button type="button" className="primary" disabled={nothing} onClick={onApply}>{t('mapImport.arrange')}</button>
             : <button type="button" className="primary" disabled={nothing} onClick={onApply}>{t('mapImport.apply')}</button>}
         </div>
       )}
@@ -72,6 +72,9 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
         <div className="muted" role="status">
           <p>{t('mapImport.placed', { n: result.found })}</p>
           <p>{t('mapImport.layout', { name: t(`layout.${result.layout}`) })}</p>
+          {(Object.keys(result.offExpansion) as ExpansionId[]).map(id => (
+            <p key={id}>{t('mapImport.offExpansion', { list: result.offExpansion[id]!.join(', '), name: EXPANSION_NAMES[id] })}</p>
+          ))}
           {result.unknown.length > 0 && <p>{t('mapImport.unknown', { list: result.unknown.join(', ') })}</p>}
           {result.dropped > 0 && <p>{t('mapImport.dropped', { n: result.dropped })}</p>}
           {!result.tokensComplete && <p>{t('mapImport.tokens', { n: result.tokens })}</p>}
