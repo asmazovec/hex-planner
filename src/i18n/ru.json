@@ -5,7 +5,9 @@
     "plan": "План",
     "rivals": "Соперники"
   },
-  "language": { "label": "Язык" },
+  "language": {
+    "label": "Язык"
+  },
   "game": {
     "new": "Новая партия",
     "expansions": "Дополнения",
@@ -38,5 +40,41 @@
   "banner": {
     "saveError": "Не удалось сохранить партию: {{error}}",
     "export": "Экспортировать"
+  },
+  "map": {
+    "noGame": "Сначала начните или откройте партию.",
+    "label": "Карта",
+    "tile": "Тайл {{number}}",
+    "emptySlot": "Пустая клетка",
+    "unknownTile": "Неизвестный тайл {{id}}",
+    "control": {
+      "me": "ваша",
+      "enemy": "чужая"
+    },
+    "exhausted": "истощена",
+    "commandToken": "Жетон командования",
+    "spaceDock": "Космодок",
+    "enemy": "чужие",
+    "arrow": "Перемещение из {{from}} в {{to}}",
+    "sheet": {
+      "title": "Тайл {{number}}",
+      "unknown": "Этого номера тайла нет в данных игры.",
+      "empty": "В этой клетке нет тайла.",
+      "rotation": "Поворот: {{deg}}°",
+      "anomaly": "Аномалия: {{name}}",
+      "wormholes": "Червоточины: {{list}}",
+      "noPlanets": "Планет нет",
+      "controlLabel": "Контроль: {{planet}}",
+      "mine": "Мой",
+      "enemy": "Чужой",
+      "none": "Нет",
+      "dock": "Космодок",
+      "exhausted": "Истощена",
+      "ready": "Готова",
+      "enemyUnits": "Чужие юниты",
+      "plus": "Добавить: {{unit}}",
+      "minus": "Убрать: {{unit}}",
+      "close": "Закрыть"
+    }
   }
 }

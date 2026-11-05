@@ -106,6 +106,8 @@ describe('gameStore', () => {
     act().setEnemyUnits('1,0', {}); expect(game().enemyUnits['1,0']).toBeUndefined();
     act().setPlanetControl('p', 'enemy'); expect(game().planetControl.p).toBe('enemy');
     act().setPlanetControl('p', null); expect(game().planetControl.p).toBeUndefined();
+    act().setDock('p', true); expect(game().docks).toContain('p');
+    act().setDock('p', false); expect(game().docks).not.toContain('p');
     act().setOpponent(0, { vp: 3 }); expect(game().opponents[0].vp).toBe(3);
     act().setSlice('res5', 'other'); expect(game().expedition.slices.res5).toBe('other');
     act().setThundersEdge('1,0'); expect(game().expedition.thundersEdgeSystem).toBe('1,0');
@@ -164,6 +166,8 @@ describe('действия без изменений', () => {
       () => act().setEnemyUnits('9,9', {}),
       () => act().setPlanetControl('nope', null),
       () => act().setSlice('res5', null),
+      () => act().setDock('nope', false),
+      () => act().setDock(game().docks[0], true),
       () => act().setThundersEdge(null),
       () => act().setOpponent(99, { vp: 1 }),
       () => act().setOpponent(0, { vp: 2 }),

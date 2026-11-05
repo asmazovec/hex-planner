@@ -12,6 +12,13 @@
   --radius: 10px;
   --gap: 16px;
   --touch: 44px;
+  --hex-fill: #222833;
+  --hex-home: #2a3140;
+  --hex-stroke: #4a5363;
+  --unit-me: #8ee0a8;
+  --unit-enemy: #f0a45d;
+  --control-me: var(--accent);
+  --control-enemy: var(--danger);
   color-scheme: dark;
 }
 
@@ -60,3 +67,44 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
 .banner-warning { border-color: var(--warning); }
 .banner-error { border-color: var(--danger); }
 .game-screen > .banner { grid-column: 1 / -1; }
+
+.map-screen { display: grid; grid-template-columns: 1fr minmax(280px, 340px); gap: var(--gap); height: 100%; }
+.map-screen:not(:has(.tile-sheet)) { grid-template-columns: 1fr; }
+.map-screen .hexmap { width: 100%; height: 100%; min-height: 0; }
+.tile-sheet { overflow: auto; max-height: 100%; }
+.tile-sheet h3 { margin: 0; font-size: 1rem; }
+.sheet-planet { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.sheet-units .row { justify-content: space-between; flex-wrap: nowrap; }
+.sheet-units .unit-name { flex: 1; }
+.sheet-units output { min-width: 2ch; text-align: center; }
+
+.hexmap { touch-action: none; user-select: none; display: block; }
+.tile { cursor: pointer; }
+.tile:focus, .tile:focus-visible { outline: none; }
+.tile:focus-visible .hex { stroke: var(--accent); stroke-width: 3; }
+.hex { fill: var(--hex-fill); stroke: var(--hex-stroke); stroke-width: 1.5; }
+.hex-home { fill: var(--hex-home); }
+.tile-selected .hex { stroke: var(--accent); stroke-width: 3; }
+.tile-valid .hex { stroke: var(--accent); stroke-width: 3; stroke-dasharray: 6 3; }
+.tile-active .hex { fill: color-mix(in srgb, var(--accent) 25%, var(--hex-fill)); stroke: var(--accent); stroke-width: 4; }
+.tile-dim { opacity: 0.4; }
+.tile text { text-anchor: middle; fill: var(--text); font-family: inherit; pointer-events: none; }
+.tile-number { font-size: 13px; fill: var(--text-muted); }
+.tile-warning { font-size: 30px; font-weight: 700; fill: var(--warning); }
+.planet-disc { fill: var(--surface); stroke: var(--text-muted); stroke-width: 2; }
+.planet-me { stroke: var(--control-me); stroke-width: 3; }
+.planet-enemy { stroke: var(--control-enemy); stroke-width: 3; }
+.planet-values { font-size: 14px; font-weight: 700; }
+.planet-name { font-size: 12px; fill: var(--text-muted); }
+.planet-exhausted { opacity: 0.3; }
+.planet-exhausted .planet-disc { stroke-dasharray: 3 3; }
+.dock { fill: var(--warning); stroke: var(--bg); stroke-width: 1; }
+.token { fill: var(--accent); stroke: var(--bg); stroke-width: 1; }
+.token-mark { fill: var(--accent-text); }
+.unit { stroke: var(--bg); stroke-width: 1; }
+.unit-me { fill: var(--unit-me); }
+.unit-enemy { fill: var(--unit-enemy); }
+.tile .unit-count { font-size: 13px; font-weight: 700; text-anchor: start; }
+.arrow { stroke: var(--accent); stroke-width: 4; pointer-events: none; }
+.arrow-head { fill: var(--accent); }
+.arrow-warn { stroke: var(--warning); fill: var(--warning); }

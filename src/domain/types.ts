@@ -106,6 +106,8 @@ export interface Game {
   opponents: { faction: string; vp: number }[];
   enemyUnits: Record<string, UnitCounts>;
   planetControl: Record<string, 'me' | 'enemy'>;
+  /** Ids of planets that have a space dock. */
+  docks: string[];
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
   fracture: { active: boolean; ingress: string[] };
   plans: Plan[];

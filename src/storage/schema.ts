@@ -47,6 +47,7 @@ export const gameSchema = z.object({
   opponents: z.array(z.object({ faction: z.string(), vp: z.number() })),
   enemyUnits: z.record(z.string(), unitCounts),
   planetControl: z.record(z.string(), control),
+  docks: z.array(z.string()),
   expedition: z.object({
     slices: z.record(z.string(), z.enum(['me', 'other']).nullable()),
     thundersEdgeSystem: z.string().nullable(),

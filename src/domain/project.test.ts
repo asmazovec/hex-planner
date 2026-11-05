@@ -370,6 +370,7 @@ describe('createGame', () => {
   test('стартовые значения и планеты домашней системы', () => {
     const g = createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
     expect(g.planetControl).toEqual({ jord: 'me', arc: 'me' });
+    expect(g.docks).toEqual(['jord']);
     expect(g.map).toEqual({ '0,0': '18' });
     expect(g.dataVersion).toBe('test');
     expect(g.opponents).toHaveLength(2);

@@ -1,0 +1,144 @@
+import type { KeyboardEvent, PointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { DataPack, Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domain/types';
+import { HEX_SIZE, hexPoints, hexToPixel } from './geometry';
+import { UNIT_ORDER, UnitGlyph } from './UnitGlyph';
+
+export type Highlight = 'valid' | 'dim' | 'active';
+
+export interface TileViewProps {
+  slotKey: string;
+  /** The `Game.map` value of the slot: `<tileId>` or `<tileId>@<rotation>`; absent for an empty slot. */
+  mapValue: string | undefined;
+  pack: DataPack;
+  game: Game;
+  state: GameState;
+  highlight?: Highlight;
+  selected?: boolean;
+  onTap?: (slotKey: string) => void;
+  onPointerDown?: (slotKey: string, event: PointerEvent) => void;
+}
+
+const THUNDERS_EDGE_PLANET = 'thundersedge';
+const PLANET_RADIUS = 15;
+const SHIPS_PER_ROW = 3;
+const SHIP_CELL = 30;
+const GROUND_CELL = 24;
+
+
+const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
+  UNIT_ORDER.filter(u => (counts?.[u] ?? 0) > 0).map(unit => ({ unit, count: counts?.[unit] ?? 0 }));
+
+const isGround = (unit: UnitId): boolean => unit === 'infantry' || unit === 'mech';
+
+function planetSpots(count: number): { x: number; y: number }[] {
+  if (count <= 1) return [{ x: 0, y: -12 }];
+  if (count === 2) return [{ x: -28, y: -12 }, { x: 28, y: -12 }];
+  return [{ x: 0, y: -26 }, { x: -30, y: 0 }, { x: 30, y: 0 }].concat(count > 3 ? [{ x: 0, y: 14 }] : []).slice(0, count);
+}
+
+export function TileView({
+  slotKey, mapValue, pack, game, state, highlight, selected, onTap, onPointerDown,
+}: TileViewProps) {
+  const { t } = useTranslation();
+  const { x, y } = hexToPixel(...(slotKey.split(',').map(Number) as [number, number]));
+  const [tileId] = (mapValue ?? '').split('@');
+  const tile = mapValue ? pack.tiles[tileId] : undefined;
+  const unknown = mapValue !== undefined && !tile;
+
+  const planets: PlanetDef[] = [
+    ...(tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined),
+    ...(game.expedition.thundersEdgeSystem === slotKey && pack.planets[THUNDERS_EDGE_PLANET]
+      ? [pack.planets[THUNDERS_EDGE_PLANET]] : []),
+  ];
+  const spots = planetSpots(planets.length);
+
+  const unitName = (unit: UnitId): string => pack.units[unit]?.name ?? unit.charAt(0).toUpperCase() + unit.slice(1);
+  const unitLabel = (unit: UnitId, count: number, owner: 'me' | 'enemy'): string =>
+    `${unitName(unit)} ×${count}${owner === 'enemy' ? ` (${t('map.enemy')})` : ''}`;
+
+  const spaceUnits = [
+    ...unitsOf(state.systems[slotKey]).map(u => ({ ...u, owner: 'me' as const })),
+    ...unitsOf(game.enemyUnits[slotKey]).map(u => ({ ...u, owner: 'enemy' as const })),
+  ];
+  const rows: (typeof spaceUnits)[] = [];
+  for (let i = 0; i < spaceUnits.length; i += SHIPS_PER_ROW) rows.push(spaceUnits.slice(i, i + SHIPS_PER_ROW));
+  const shipTop = planets.length >= 3 ? 38 : 30;
+
+  const label = unknown
+    ? t('map.unknownTile', { id: tileId })
+    : tile ? t('map.tile', { number: tile.number }) : t('map.emptySlot');
+
+  const activate = () => onTap?.(slotKey);
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+  };
+
+  return (
+    <g
+      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
+      role="button" tabIndex={0} aria-label={label}
+      className={`tile${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
+      data-slot={slotKey}
+      onClick={activate}
+      onKeyDown={onKeyDown}
+      onPointerDown={e => onPointerDown?.(slotKey, e)}
+    >
+      <polygon points={hexPoints(HEX_SIZE - 1.5)} className={`hex${tile ? ` hex-${tile.kind}` : ''}`} />
+      {tile && <text x={0} y={-45} className="tile-number">{tile.number}</text>}
+      {unknown && <text x={0} y={-45} className="tile-number">{tileId}</text>}
+      {unknown && <text x={0} y={4} className="tile-warning">!</text>}
+
+      {state.tokensOnMap.includes(slotKey) && (
+        <g role="img" aria-label={t('map.commandToken')} transform="translate(-36 -28)">
+          <circle r={7} className="token" />
+          <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />
+        </g>
+      )}
+
+      {planets.map((planet, i) => {
+        const spot = spots[i];
+        const control = state.control[planet.id];
+        const exhausted = state.exhausted.includes(planet.id);
+        const ground = unitsOf(state.ground[planet.id]);
+        const parts = [`${planet.name}: ${planet.resources}/${planet.influence}`];
+        if (control) parts.push(t(`map.control.${control}`));
+        if (exhausted) parts.push(t('map.exhausted'));
+        return (
+          <g
+            key={planet.id} role="group" aria-label={parts.join(', ')} transform={`translate(${spot.x} ${spot.y})`}
+            data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}
+            className={`planet${exhausted ? ' planet-exhausted' : ''}`}
+          >
+            <circle r={PLANET_RADIUS} className={`planet-disc planet-${control ?? 'free'}`} />
+            <text y={4} className="planet-values">{planet.resources}/{planet.influence}</text>
+            {game.docks.includes(planet.id) && (
+              <rect x={PLANET_RADIUS - 6} y={-PLANET_RADIUS - 2} width={9} height={9} className="dock"
+                role="img" aria-label={t('map.spaceDock')} />
+            )}
+            {selected && <text y={-PLANET_RADIUS - 4} className="planet-name">{planet.name}</text>}
+            {ground.map(({ unit, count }, j) => (
+              <g key={unit} transform={`translate(${(j - (ground.length - 1) / 2) * GROUND_CELL - (count > 1 ? 4 : 0)} ${PLANET_RADIUS + 9})`}>
+                <UnitGlyph unit={unit} owner="me" count={count} label={unitLabel(unit, count, 'me')} scale={0.55} />
+              </g>
+            ))}
+          </g>
+        );
+      })}
+
+      {rows.map((row, i) => (
+        <g key={i} transform={`translate(0 ${shipTop + i * 16})`}>
+          {row.map((cell, j) => (
+            <g key={`${cell.owner}-${cell.unit}`}
+              transform={`translate(${(j - (row.length - 1) / 2) * SHIP_CELL - (cell.count > 1 ? 4 : 0)} 0)`}>
+              <UnitGlyph
+                unit={cell.unit} owner={cell.owner} count={cell.count}
+                label={unitLabel(cell.unit, cell.count, cell.owner)} scale={isGround(cell.unit) ? 0.6 : 0.75}
+              />
+            </g>
+          ))}
+        </g>
+      ))}
+    </g>
+  );
+}

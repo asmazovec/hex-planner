@@ -5,7 +5,9 @@
     "plan": "Plan",
     "rivals": "Rivals"
   },
-  "language": { "label": "Language" },
+  "language": {
+    "label": "Language"
+  },
   "game": {
     "new": "New game",
     "expansions": "Expansions",
@@ -38,5 +40,41 @@
   "banner": {
     "saveError": "Could not save the game: {{error}}",
     "export": "Export"
+  },
+  "map": {
+    "noGame": "Start or open a game first.",
+    "label": "Map",
+    "tile": "Tile {{number}}",
+    "emptySlot": "Empty slot",
+    "unknownTile": "Unknown tile {{id}}",
+    "control": {
+      "me": "yours",
+      "enemy": "enemy"
+    },
+    "exhausted": "exhausted",
+    "commandToken": "Command token",
+    "spaceDock": "Space dock",
+    "enemy": "enemy",
+    "arrow": "Move from {{from}} to {{to}}",
+    "sheet": {
+      "title": "Tile {{number}}",
+      "unknown": "This tile number is not in the game data.",
+      "empty": "No tile in this slot.",
+      "rotation": "Rotation: {{deg}}°",
+      "anomaly": "Anomaly: {{name}}",
+      "wormholes": "Wormholes: {{list}}",
+      "noPlanets": "No planets",
+      "controlLabel": "Control of {{planet}}",
+      "mine": "Mine",
+      "enemy": "Enemy",
+      "none": "None",
+      "dock": "Space dock",
+      "exhausted": "Exhausted",
+      "ready": "Ready",
+      "enemyUnits": "Enemy units",
+      "plus": "Add one {{unit}}",
+      "minus": "Remove one {{unit}}",
+      "close": "Close"
+    }
   }
 }

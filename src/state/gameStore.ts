@@ -118,6 +118,8 @@ export interface GameStore {
   setOpponent(index: number, patch: Partial<Game['opponents'][number]>): void;
   setEnemyUnits(systemId: string, units: UnitCounts): void;
   setPlanetControl(planetId: string, owner: 'me' | 'enemy' | null): void;
+  /** Marks whether a planet has a space dock. */
+  setDock(planetId: string, present: boolean): void;
   setSlice(id: string, owner: 'me' | 'other' | null): void;
   setThundersEdge(systemId: string | null): void;
   setFractureActive(active: boolean): void;
@@ -228,6 +230,10 @@ export const useGame = create<GameStore>((set, get) => {
         : withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, hasUnits(units) ? units : null)))),
     setPlanetControl: (planetId, owner) =>
       commit(g => withField(g, 'planetControl', setOrDelete(g.planetControl, planetId, owner))),
+    setDock: (planetId, present) =>
+      commit(g => (g.docks.includes(planetId) === present
+        ? g
+        : { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(p => p !== planetId) })),
     setSlice: (id, owner) =>
       commit(g => {
         const slices = setOrDelete(g.expedition.slices, id, owner);

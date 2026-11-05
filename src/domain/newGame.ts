@@ -32,6 +32,7 @@ export function createGame(
     opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, () => ({ faction: '', vp: 0 })),
     enemyUnits: {},
     planetControl,
+    docks: pack.tiles[faction?.homeTile ?? '']?.planetIds.slice(0, 1) ?? [],
     expedition: { slices: {}, thundersEdgeSystem: null },
     fracture: { active: false, ingress: [] },
     plans: [{ id: planId, name: 'Plan 1', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }],
