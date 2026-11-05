@@ -200,27 +200,33 @@ describe('the upgrades panel', () => {
 describe('upgrades in an entry', () => {
   const entryOf = (id: string) => document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!;
   const entries = (): Entry[] => round().entries;
+  const openCard = async (id: string) => {
+    await userEvent.click(within(entryOf(id)).getByRole('button', { name: /Вторичка|Стратегия/ }));
+    return within(screen.getByRole('group', { name: 'Улучшение' }));
+  };
 
-  test('a line stands for nothing marked, and only strategic and secondary entries have it', () => {
+  test('the row stands in the Technology editor only, not in the list', async () => {
     startPlan();
-    const strategic = addEntry({ type: 'strategic' });
-    const pass = addEntry({ type: 'pass' });
+    const technology = addEntry({ type: 'strategic', card: 7 });
+    const trade = addEntry({ type: 'strategic', card: 5 });
     render(<PlanScreen />);
-    expect(within(entryOf(strategic)).getByRole('button', { name: 'Улучшение' })).toBeInTheDocument();
-    expect(within(entryOf(strategic)).queryByRole('button', { name: 'Транспортник' })).toBeNull();
-    expect(within(entryOf(pass)).queryByRole('button', { name: 'Улучшение' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Улучшение' })).toBeNull();
+    await userEvent.click(within(entryOf(trade)).getByRole('button', { name: /Стратегия/ }));
+    expect(screen.queryByRole('group', { name: 'Улучшение' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Готово' }));
+    expect(await openCard(technology)).toBeTruthy();
   });
 
   test('ships with a level II can be marked and unmarked, one undo step each', async () => {
     startPlan();
-    const id = addEntry({ type: 'secondary' });
+    const id = addEntry({ type: 'secondary', card: 7 });
     render(<PlanScreen />);
-    await userEvent.click(within(entryOf(id)).getByRole('button', { name: 'Улучшение' }));
-    expect(within(entryOf(id)).queryByRole('button', { name: 'Солнце войны' })).toBeNull();
-    await userEvent.click(within(entryOf(id)).getByRole('button', { name: 'Транспортник' }));
+    const row = await openCard(id);
+    expect(row.queryByRole('button', { name: 'Солнце войны' })).toBeNull();
+    await userEvent.click(row.getByRole('button', { name: 'Транспортник' }));
     expect(entries()[0]).toMatchObject({ upgrades: ['carrier'] });
-    expect(within(entryOf(id)).getByRole('button', { name: 'Транспортник' })).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(within(entryOf(id)).getByRole('button', { name: 'Транспортник' }));
+    expect(row.getByRole('button', { name: 'Транспортник' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(row.getByRole('button', { name: 'Транспортник' }));
     expect((entries()[0] as { upgrades?: unknown }).upgrades).toBeUndefined();
     act(() => useGame.getState().undo());
     expect(entries()[0]).toMatchObject({ upgrades: ['carrier'] });
@@ -228,14 +234,15 @@ describe('upgrades in an entry', () => {
     expect((entries()[0] as { upgrades?: unknown }).upgrades).toBeUndefined();
   });
 
-  test('a marked entry shows its row at once; a ship upgraded earlier in the replay is owned and takes no tap', async () => {
+  test('a ship upgraded earlier in the replay is owned and takes no tap', async () => {
     startPlan();
-    addEntry({ type: 'strategic', upgrades: ['carrier'] });
-    const later = addEntry({ type: 'secondary', upgrades: ['cruiser'] });
+    addEntry({ type: 'strategic', card: 7, upgrades: ['carrier'] });
+    const later = addEntry({ type: 'secondary', card: 7, upgrades: ['cruiser'] });
     render(<PlanScreen />);
-    const owned = within(entryOf(later)).getByRole('button', { name: 'Транспортник' });
+    const row = await openCard(later);
+    const owned = row.getByRole('button', { name: 'Транспортник' });
     expect(owned).toBeDisabled();
     expect(owned).toHaveClass('entry-upgrade-owned');
-    expect(within(entryOf(later)).getByRole('button', { name: 'Крейсер' })).toHaveAttribute('aria-pressed', 'true');
+    expect(row.getByRole('button', { name: 'Крейсер' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

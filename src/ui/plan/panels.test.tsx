@@ -51,64 +51,76 @@ test('the summary shows now and forecast for every value', () => {
   expect(cell('VP')).toHaveTextContent('0 → 1');
 });
 
-test('cards show their summaries and the Thunder\'s Edge change; taps cycle primary, backup, none', async () => {
+const grid = () => within(screen.getByRole('group', { name: 'Strategy' })).getAllByRole('button');
+
+test('all eight cards stay in the grid, a tap opens its details and cycles backup, main, none', async () => {
   render(<StrategyCardsLive />);
-  const cards = strategyCards(game().expansions);
-  expect(screen.getAllByRole('listitem')).toHaveLength(cards.length);
-  const warfare = screen.getByRole('button', { name: /Warfare/ });
-  expect(within(warfare).getByText('Changed in TE')).toBeVisible();
-  expect(warfare).toHaveTextContent('tactical action without a token');
-  expect(within(screen.getByRole('button', { name: /Trade/ })).queryByText('Changed in TE')).toBeNull();
-  expect(screen.getByRole('button', { name: /Trade/ })).toHaveTextContent('Primary:');
-  expect(screen.getByRole('button', { name: /Trade/ })).toHaveTextContent('Secondary:');
+  expect(grid()).toHaveLength(strategyCards(game().expansions).length);
+  expect(screen.getByText(/^Tap once for backup, again for main, again to clear\./)).toBeVisible();
+  expect(screen.queryByText('Changed in TE')).toBeNull();
 
-  expect(screen.getByText('Tap once for backup, again for main, again to clear.')).toBeVisible();
-
-  await userEvent.click(warfare);
+  await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: 6 });
   expect(screen.getByRole('button', { name: /Warfare/ })).toHaveTextContent('Backup');
-  expect(screen.getAllByRole('listitem')).toHaveLength(cards.length);
+  const details = within(screen.getByRole('group', { name: 'Warfare' }));
+  expect(details.getByText('Changed in TE')).toBeVisible();
+  expect(details.getByText(/tactical action without a token/)).toBeVisible();
+  expect(details.getByText('Primary:')).toBeVisible();
+  expect(details.getByText('Secondary:')).toBeVisible();
+
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: 6, backupCard: null });
   expect(screen.getByRole('button', { name: /Warfare/ })).toHaveTextContent('Main');
+  expect(screen.getByText('Main: 6 Warfare')).toBeVisible();
+  expect(grid()).toHaveLength(8);
+
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
+  expect(screen.queryByRole('group', { name: 'Warfare' })).toBeNull();
 });
 
-test('choosing a main card collapses the list; clearing it opens the list again', async () => {
+test('another card shows its own details; a card without a change has no mark', async () => {
   render(<StrategyCardsLive />);
   await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
-  expect(screen.getAllByRole('listitem')).toHaveLength(8);
-  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
-  expect(screen.getAllByRole('listitem')).toHaveLength(1);
-  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
-  expect(screen.getAllByRole('listitem')).toHaveLength(8);
+  expect(within(screen.getByRole('group', { name: 'Trade' })).queryByText('Changed in TE')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  expect(screen.queryByRole('group', { name: 'Trade' })).toBeNull();
+  expect(screen.getByRole('group', { name: 'Imperial' })).toBeVisible();
 });
 
-test('the card list collapses to the chosen cards', async () => {
+test('the choice of the round is in view without opening anything', () => {
   useGame.getState().setStrategyCard(1, 5);
   useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 2);
   render(<StrategyCardsLive />);
-  expect(screen.getAllByRole('listitem')).toHaveLength(1);
-  await userEvent.click(screen.getByRole('button', { name: 'All cards' }));
-  expect(screen.getAllByRole('listitem')).toHaveLength(8);
-  await userEvent.click(screen.getByRole('button', { name: 'Collapse' }));
-  expect(screen.getByRole('button', { name: /Trade/ })).toBeVisible();
-  expect(screen.queryByRole('button', { name: /Warfare/ })).toBeNull();
+  expect(screen.getByText('Main: 5 Trade · Backup: 2 Diplomacy')).toBeVisible();
+  expect(grid()).toHaveLength(8);
 });
 
-function StrategyCardsLive() {
+test('with 3 or 4 players the backup is the second card', async () => {
+  render(<StrategyCardsLive playerCount={4} />);
+  expect(screen.getByText(/^With 3 or 4 players two cards are held/)).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: 8 });
+  expect(screen.getByRole('button', { name: /Imperial/ })).toHaveTextContent('Second');
+  expect(screen.getByText('Main: 5 Trade · Second: 8 Imperial')).toBeVisible();
+});
+
+function StrategyCardsLive({ playerCount = 6 }: { playerCount?: number }) {
   const live = useGame(s => s.game)!;
   const round = live.plans[0].rounds[0];
-  return <StrategyCards expansions={live.expansions} round={round} />;
+  return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round} />;
 }
 
 test('the menu holds all seven items', async () => {
   const onPick = vi.fn();
   render(<ActionMenu onPick={onPick} />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  const names = ['Tactical action', 'Strategic action', 'Secondary ability', 'Component action', 'Expedition contribution, end of turn', 'Pass', 'Manual adjustment'];
-  for (const name of names) expect(screen.getByRole('button', { name })).toBeVisible();
+  const names = ['Tactical action', 'Strategic action', 'Secondary ability, any number of times', 'Component action', 'Pass', 'Expedition contribution, end of turn', 'Manual adjustment'];
+  const menu = screen.getAllByRole('button').slice(1);
+  expect(menu.map(b => b.textContent)).toEqual(names);
   expect(ACTION_TYPES).toHaveLength(7);
   await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
   expect(onPick).toHaveBeenCalledWith('pass');
@@ -160,6 +172,8 @@ const CASES: Record<WarningCode, Warning['params']> = {
   fleetPool: { systemId: '1,0', ships: 4, fleet: 3 },
   unitsMissing: { where: '1,0', unit: 'carrier', missing: 1 },
   landingOverLimit: { unit: 'infantry', wanted: 3, available: 2 },
+  shortStrategy: { have: 0 },
+  primaryRepeated: { held: 1 },
   sliceTaken: { sliceId: 'res5' },
 };
 
@@ -236,7 +250,7 @@ const order = () => plan().rounds[0].entries.map(e => e.type);
 test('up and down buttons move an entry, and stop at the ends', async () => {
   threeEntries();
   render(<EntryListLive />);
-  const row = () => screen.getByRole('listitem', { name: 'Strategic action' });
+  const row = () => screen.getByRole('listitem', { name: 'Strategy' });
   await userEvent.click(within(row()).getByRole('button', { name: 'Move up' }));
   expect(order()).toEqual(['strategic', 'pass', 'secondary']);
   expect(within(row()).getByRole('button', { name: 'Move up' })).toBeDisabled();

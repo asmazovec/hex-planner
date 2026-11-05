@@ -6,7 +6,7 @@ import { autoPay } from '../../domain/payment';
 import { opponentsBySeat, planetHolder } from '../../domain/players';
 import { productionCost, productionPlanet, project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
 import { unitStats } from '../../domain/unitStats';
-import type { DataPack, Entry, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Entry, StructureKind, UnitCounts, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { withCount, type TacticalEntry } from '../plan/tactical';
 import { tokenColours } from '../units/sprites';
@@ -25,6 +25,9 @@ export interface BoughtUnit { unit: UnitId; /** Null for the system's space area
 export interface PurchaseTarget {
   bought: BoughtUnit[];
   change: (unit: UnitId, planetId: string | null, amount: 1 | -1) => void;
+  /** Structures this target holds: with `changeStructure` they stay in the entry and off the game. */
+  structures?: { kind: StructureKind; planetId: string }[];
+  changeStructure?: (kind: StructureKind, planetId: string, amount: 1 | -1) => void;
 }
 
 export interface HexStageProps {
@@ -43,10 +46,9 @@ export interface HexStageProps {
 }
 
 const MODES: StageMode[] = ['setup', 'battle', 'build'];
-const STRUCTURES = ['pds', 'spacedock'] as const;
-type Structure = typeof STRUCTURES[number];
+const STRUCTURES: StructureKind[] = ['pds', 'spacedock'];
 
-const isStructure = (kind: TokenKind): kind is Structure => kind === 'pds' || kind === 'spacedock';
+const isStructure = (kind: TokenKind): kind is StructureKind => kind === 'pds' || kind === 'spacedock';
 
 /** The key of a stack on the hex: its owner, kind and the planet's index, or `-` in space. */
 const stackKey = (owner: string, kind: TokenKind, planet?: number): string => `${owner}|${kind}|${planet ?? '-'}`;
@@ -107,7 +109,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) =>
     changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
-  const changeStructure = (kind: Structure, planetId: string, amount: 1 | -1) => {
+  const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => {
     if (kind === 'spacedock') setDock(planetId, amount > 0);
     else setPds(planetId, (game.pds[planetId] ?? 0) + amount);
   };
@@ -140,9 +142,18 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const bought: Record<string, number> = { ...news };
   for (const item of purchases.bought) bought[keyOfBought(item)] = (bought[keyOfBought(item)] ?? 0) + item.count;
 
+  for (const { kind, planetId } of purchases.structures ?? []) {
+    const index = planets.findIndex(p => p.id === planetId);
+    if (index >= 0) bought[stackKey(holderOf(planetId), kind, index)] = (bought[stackKey(holderOf(planetId), kind, index)] ?? 0) + 1;
+  }
+
   const buy = (kind: TokenKind) => {
     if (isStructure(kind)) {
-      if (!targetPlanet || (kind === 'spacedock' && game.docks.includes(targetPlanet.id))) return;
+      if (!targetPlanet || (kind === 'spacedock' && state.docks.includes(targetPlanet.id))) return;
+      if (purchases.changeStructure) {
+        purchases.changeStructure(kind, targetPlanet.id, 1);
+        return;
+      }
       changeStructure(kind, targetPlanet.id, 1);
       if (mode === 'build') setNews(bumped(news, stackKey(holderOf(targetPlanet.id), kind, target), 1));
       return;
@@ -159,6 +170,10 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const planetId = planetIdOf(planet);
     if (mode === 'build') {
       if ((bought[key] ?? 0) === 0) return;
+      if (isStructure(kind) && purchases.changeStructure) {
+        purchases.changeStructure(kind, planetId ?? '', -1);
+        return;
+      }
       if (owner === 'me' && !isStructure(kind)) {
         purchases.change(kind, planetId, -1);
         return;
@@ -261,9 +276,11 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
             <strong>{title}</strong>
             <button type="button" aria-label={t('map.sheet.close')} onClick={onClose}>✕</button>
           </div>
-          <div className="segment" role="group" aria-label={t('stage.modes')}>
-            {MODES.map(m => <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>{t(`stage.mode.${m}`)}</button>)}
-          </div>
+          {!onPurchase?.changeStructure && (
+            <div className="segment" role="group" aria-label={t('stage.modes')}>
+              {MODES.map(m => <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>{t(`stage.mode.${m}`)}</button>)}
+            </div>
+          )}
 
           {mode === 'battle' && (
             <>
@@ -293,7 +310,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                   <b>{productionCost(sideUnits, sideFaction, sideUpgrades, pack)}</b>
                 </div>
               )}
-              {inBuild && only !== 'build' && !planets.some(p => game.docks.includes(p.id)) && <p className="warning-text">{t('plan.tactical.noDock')}</p>}
+              {inBuild && only !== 'build' && !planets.some(p => state.docks.includes(p.id)) && <p className="warning-text">{t('plan.tactical.noDock')}</p>}
               <p className="muted">{t(inBuild ? 'stage.buildNote' : 'stage.setupNote')}</p>
               {planets.length > 1 && <p className="muted">{t('stage.planetNote')}</p>}
             </>

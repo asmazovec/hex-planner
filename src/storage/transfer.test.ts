@@ -145,6 +145,21 @@ describe('upgrades in saved games', () => {
   });
 });
 
+test('a card entry with its effects and a free tactical survive export and import', () => {
+  const game = sampleGame();
+  game.plans[0].rounds[0].entries.push({
+    id: 'card', phase: 'action', status: 'planned', type: 'strategic', card: 6, forToken: true,
+    effects: {
+      tokens: { tactic: -1, fleet: 1 }, boughtTokens: 1, systemId: '1,0', readied: ['jord'], speaker: 'a', freeSecondary: ['a'], mecatol: true,
+      production: { systemId: '1,0', units: { cruiser: 1 } }, structures: [{ kind: 'pds', planetId: 'jord' }], payment: { planets: ['jord'], tradeGoods: 1 },
+    },
+  }, {
+    id: 'free', phase: 'action', status: 'planned', type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {},
+    payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: 'card',
+  });
+  expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+});
+
 test('the points of a status entry survive export and import', () => {
   const game = sampleGame();
   const opponent = game.opponents[0].id;

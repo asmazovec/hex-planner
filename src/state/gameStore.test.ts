@@ -102,6 +102,25 @@ describe('gameStore', () => {
     expect(steps).toBe(50);
   });
 
+  test('бесплатная тактика уходит вместе со своей картой за один шаг отмены и следует за ней в копию плана', () => {
+    const card = act().addEntry(1, { type: 'strategic', card: 6 }, 'action');
+    const free = act().addEntry(1, { type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
+    const other = act().addEntry(1, { type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    act().copyPlan();
+    const [copiedCard, copiedFree] = round().entries;
+    expect(copiedCard.id).not.toBe(card);
+    expect(copiedFree).toMatchObject({ fromCard: copiedCard.id });
+    act().undo();
+
+    act().removeEntry(card);
+    expect(round().entries.map(e => e.id)).toEqual([other]);
+    act().undo();
+    expect(round().entries.map(e => e.id)).toEqual([card, free, other]);
+
+    act().removeEntry(free);
+    expect(round().entries.map(e => e.id)).toEqual([card, other]);
+  });
+
   test('moveEntry переносит запись в другую фазу на позицию', () => {
     const a = act().addEntry(1, { type: 'pass' }, 'action');
     const b = act().addEntry(1, { type: 'secondary' }, 'action');

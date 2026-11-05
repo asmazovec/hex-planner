@@ -13,15 +13,32 @@ const status = z.enum(['planned', 'done', 'cancelled']);
 const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 
 const base = { id: z.string(), phase, status };
+const cardPlay = {
+  upgrades: z.array(unitId).optional(),
+  card: z.number().int().optional(),
+  forToken: z.boolean().optional(),
+  effects: z.object({
+    tokens: z.object({ tactic: z.number().int().optional(), fleet: z.number().int().optional(), strategy: z.number().int().optional() }).optional(),
+    boughtTokens: count.optional(),
+    systemId: z.string().optional(),
+    readied: z.array(z.string()).optional(),
+    speaker: z.string().optional(),
+    freeSecondary: z.array(z.string()).optional(),
+    mecatol: z.boolean().optional(),
+    production: z.object({ systemId: z.string(), units: unitCounts }).optional(),
+    structures: z.array(z.object({ kind: z.enum(['pds', 'spacedock']), planetId: z.string() })).optional(),
+    payment: payment.optional(),
+  }).optional(),
+};
 const entrySchema = z.discriminatedUnion('type', [
   z.object({
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
     moves: z.array(z.object({ from: z.string(), units: unitCounts })),
     landings: z.array(z.object({ planetId: z.string(), units: unitCounts })),
-    production: unitCounts, payment,
+    production: unitCounts, payment, free: z.boolean().optional(), fromCard: z.string().optional(),
   }),
-  z.object({ ...base, type: z.literal('strategic'), upgrades: z.array(unitId).optional() }),
-  z.object({ ...base, type: z.literal('secondary'), upgrades: z.array(unitId).optional() }),
+  z.object({ ...base, ...cardPlay, type: z.literal('strategic') }),
+  z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
   z.object({ ...base, type: z.literal('component'), note: z.string() }),
   z.object({ ...base, type: z.literal('pass') }),
   z.object({ ...base, type: z.literal('expedition'), sliceId: z.string().nullable(), payment }),

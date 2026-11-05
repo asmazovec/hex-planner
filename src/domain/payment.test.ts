@@ -14,7 +14,7 @@ function build(values: number[], tradeGoods: number, extra: Partial<GameState> =
   const pack: DataPack = { version: 't', tiles: {}, planets, units: {}, factions: {}, templates: [], technologies: {}, structures: [] };
   const state: GameState = {
     systems: {}, ground: {}, exhausted: [], control, tokensOnMap: [],
-    tradeGoods, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], ...extra,
+    tradeGoods, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {}, ...extra,
   };
   return { state, pack };
 }

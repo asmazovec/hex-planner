@@ -90,13 +90,22 @@ function sameUnits(a: UnitCounts, b: UnitCounts): boolean {
 
 const hasUnits =(units: UnitCounts): boolean => Object.values(units).some(n => (n ?? 0) > 0);
 
+/** New ids, with a free tactical still pointing at the copy of the card that started it. */
+function copiedEntries(entries: Entry[]): Entry[] {
+  const ids = new Map(entries.map(e => [e.id, newId()]));
+  return entries.map(e => ({
+    ...e, id: ids.get(e.id)!,
+    ...(e.type === 'tactical' && e.fromCard ? { fromCard: ids.get(e.fromCard) } : {}),
+  }));
+}
+
 function copyOf(game: Game): Game {
   const source = game.plans.find(p => p.id === game.activePlanId);
   if (!source) return game;
   const copy: Plan = {
     id: newId(),
     name: defaultPlanName(game.plans.length + 1),
-    rounds: structuredClone(source.rounds).map(r => ({ ...r, entries: r.entries.map(e => ({ ...e, id: newId() })) })),
+    rounds: structuredClone(source.rounds).map(r => ({ ...r, entries: copiedEntries(r.entries) })),
   };
   return { ...game, plans: [...game.plans, copy], activePlanId: copy.id };
 }
@@ -258,7 +267,7 @@ export const useGame = create<GameStore>((set, get) => {
     moveEntry: (id, toPhase, toIndex) =>
       commit(g => editEntryRound(g, id, r => editEntries(r, es => placeEntry(es, id, toPhase, toIndex)))),
     removeEntry: id =>
-      commit(g => editEntryRound(g, id, r => editEntries(r, es => es.filter(e => e.id !== id)))),
+      commit(g => editEntryRound(g, id, r => editEntries(r, es => es.filter(e => e.id !== id && !(e.type === 'tactical' && e.fromCard === id))))),
     setEntryStatus: (id, status) =>
       commit(g => editEntryRound(g, id, r => editEntries(r, es =>
         mapEntry(es, id, e => (e.status === status ? e : { ...e, status }))))),

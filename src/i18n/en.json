@@ -149,24 +149,25 @@
       "vp": "VP"
     },
     "cards": {
-      "collapse": "Collapse",
-      "all": "All cards",
       "main": "Main",
       "backup": "Backup",
       "changed": "Changed in TE",
       "primary": "Primary:",
       "secondary": "Secondary:",
-      "hint": "Tap once for backup, again for main, again to clear."
+      "hint": "Tap once for backup, again for main, again to clear. The card is played in the action phase.",
+      "second": "Second",
+      "hintTwo": "With 3 or 4 players two cards are held. Tap once for the second card, again for main, again to clear. Cards are played in the action phase."
     },
     "menu": {
       "add": "Add action",
       "tactical": "Tactical action",
       "strategic": "Strategic action",
-      "secondary": "Secondary ability",
+      "secondary": "Secondary ability, any number of times",
       "component": "Component action",
       "expedition": "Expedition contribution, end of turn",
       "pass": "Pass",
-      "adjustment": "Manual adjustment"
+      "adjustment": "Manual adjustment",
+      "strategicPlayed": "Strategic action · primary already played"
     },
     "entries": {
       "statusTokens": "Tokens and points",
@@ -187,7 +188,10 @@
         "losses": "Losses",
         "build": "Purchases",
         "setup": "Setup"
-      }
+      },
+      "strategic": "Strategy",
+      "secondary": "Secondary",
+      "forToken": "primary for a token"
     },
     "tactical": {
       "title": "Tactical action",
@@ -206,7 +210,9 @@
       "production": "Build (optional)",
       "noDock": "No space dock in this system.",
       "warnings": "Warnings",
-      "openShop": "Open the shop"
+      "openShop": "Open the shop",
+      "freeToken": "Warfare: no tactic token is spent, the command token still goes in the system.",
+      "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent."
     },
     "picker": {
       "title": "From {{from}} to {{to}}",
@@ -249,7 +255,9 @@
       "fleetPool": "System {{system}} is over the fleet pool: {{ships}} ships, {{fleet}} tokens.",
       "unitsMissing": "{{where}} is missing {{missing}} × {{unit}}.",
       "landingOverLimit": "Landing needs {{wanted}} × {{unit}}, but only {{available}} arrived.",
-      "sliceTaken": "Expedition part \"{{slice}}\" is already taken."
+      "sliceTaken": "Expedition part \"{{slice}}\" is already taken.",
+      "shortStrategy": "Not enough strategy tokens: {{have}} left.",
+      "primaryRepeated": "The primary has already been played this round: cards held {{held}}."
     },
     "phases": {
       "strategy": "Strategy",
@@ -260,6 +268,59 @@
       "statusEmpty": "New tokens and every player's points for the round.",
       "agenda": "Agenda",
       "agendaEmpty": "A vote, if Mecatol Rex is held. No entries here yet."
+    },
+    "strategy": {
+      "title": {
+        "primary": "Strategic action",
+        "secondary": "Secondary action",
+        "forToken": "Primary for a token"
+      },
+      "mode": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "forToken": "Primary for a token"
+      },
+      "modes": "Card mode",
+      "cards": "Card",
+      "locked": "A choice has been made. To change the card or the mode, cancel the action.",
+      "chooseCard": "Choose a card.",
+      "tokenCost": "A secondary costs 1 strategy token.",
+      "forTokenNote": "Costs 1 strategy token. For faction abilities, such as Jol-Nar's Brilliant on Technology.",
+      "cancel": "Cancel action",
+      "done": "Done",
+      "tile": "tile {{name}}",
+      "mapHint": "Tap a tile on the map.",
+      "tokens": "Token distribution",
+      "distribute": "Distribute tokens: {{n}} left",
+      "buy": "Buy with influence",
+      "bought": "Bought {{n}}, influence {{cost}}.",
+      "systemPrimary": "Choose a system with your planet",
+      "systemSecondary": "System with exhausted planets",
+      "ready": "Ready planets",
+      "readyTwo": "Ready planets, up to 2",
+      "exhausted": "exhausted",
+      "speaker": "The speaker passes to",
+      "politicsPrimary": "+2 action cards, 2 agendas to the top or bottom of the deck.",
+      "politicsSecondary": "+2 action cards.",
+      "buildPrimary": "Build a structure",
+      "buildSecondary": "Place a structure",
+      "built": "Built: {{list}}",
+      "dock": "Production in a space dock, the Thunder's Edge primary",
+      "tradePrimary": "+3 trade goods, commodities replenish.",
+      "tradeSecondary": "Commodities replenish.",
+      "free": "Who uses the secondary for free",
+      "freeTactical": "Start a tactical action without a token",
+      "freeTacticalOpen": "Tactical action without a token",
+      "freeTacticalNote": "Opens the usual flight. Tokens can be rearranged before and after.",
+      "homeProduction": "Production in the home system",
+      "shopNote": "Opens the shop on the big hex.",
+      "noHome": "The home system is not on the map.",
+      "upgrades": "Ship upgrades",
+      "techPrimary": "The first is free, the second costs 6 resources. Cost now: {{n}}. The app does not track other technologies.",
+      "techSecondary": "Costs 4 resources per technology. Now: {{n}}. The app does not track other technologies.",
+      "mecatol": "I control Mecatol Rex: +1 point",
+      "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",
+      "imperialSecondary": "Draw a secret objective."
     }
   },
   "expedition": {

@@ -36,7 +36,7 @@ export function TacticalEditor({
   const { t } = useTranslation();
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
-  const hasDock = planets.some(p => game.docks.includes(p.id));
+  const hasDock = planets.some(p => before.docks.includes(p.id));
   const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.upgrades, pack);
   const cost = priceOf(entry.production);
   const unitsIn = (list: { units: UnitCounts }[]): UnitCounts =>
@@ -77,7 +77,7 @@ export function TacticalEditor({
         <>
           <div className="editor-section">
             <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>
-            <span className="muted">{t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
+            <span className="muted">{entry.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
           </div>
 
           <div className="editor-section">

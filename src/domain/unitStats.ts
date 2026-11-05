@@ -1,4 +1,13 @@
-import type { DataPack, Game, Plan, ShipLevels, ShipStats, UnitId } from './types';
+import type { DataPack, Game, Plan, ShipLevels, ShipStats, UnitCounts, UnitId } from './types';
+
+/** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
+export function productionCost(units: UnitCounts, factionId: string, upgrades: UnitId[], pack: DataPack): number {
+  let total = 0;
+  for (const id of Object.keys(units) as UnitId[]) {
+    if ((units[id] ?? 0) > 0) total += Math.ceil((units[id] ?? 0) * (unitStats(factionId, id, upgrades.includes(id), pack)?.cost ?? 0));
+  }
+  return total;
+}
 
 /** The types that have stats and upgrades, in display order. */
 export const SHIP_KINDS: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];

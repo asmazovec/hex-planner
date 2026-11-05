@@ -1,21 +1,17 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
-import { unitStats } from './unitStats';
+import { CARD, cardCost, cardsHeld, type CardEntry } from './strategy';
+import { productionCost, unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
 } from './types';
+
+export { productionCost };
 
 const PHASE_ORDER: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 const THUNDERS_EDGE_PLANET = 'thundersedge';
 
 const unitIds = (units: UnitCounts): UnitId[] =>
   (Object.keys(units) as UnitId[]).filter(id => (units[id] ?? 0) > 0);
-
-/** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
-export function productionCost(units: UnitCounts, factionId: string, upgrades: UnitId[], pack: DataPack): number {
-  let total = 0;
-  for (const id of unitIds(units)) total += Math.ceil((units[id] ?? 0) * (unitStats(factionId, id, upgrades.includes(id), pack)?.cost ?? 0));
-  return total;
-}
 
 const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind): number =>
   readyPlanetIds(state).reduce((total, id) => total + (pack.planets[id]?.[field] ?? 0), 0);
@@ -144,6 +140,7 @@ function initialState(game: Game, pack: DataPack): GameState {
   return {
     systems, ground: {}, exhausted: [], control, tokensOnMap: [],
     tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), upgrades: [...game.upgrades.me],
+    docks: [...game.docks], pds: { ...game.pds },
   };
 }
 
@@ -215,9 +212,14 @@ function landAndBuild(
     }
     state.control[landing.planetId] = 'me';
   }
+  placeProduction(game, state, target, entry.production, pack);
+}
+
+/** Ships go to the space area; ground forces to one of my planets there, or to space if I have none. */
+function placeProduction(game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack): void {
   const shipsPart: UnitCounts = {};
   const groundPart: UnitCounts = {};
-  for (const id of unitIds(entry.production)) (pack.units[id]?.ground ? groundPart : shipsPart)[id] = entry.production[id];
+  for (const id of unitIds(units)) (pack.units[id]?.ground ? groundPart : shipsPart)[id] = units[id];
   add(state.systems, target, shipsPart);
   if (unitIds(groundPart).length > 0) {
     const planet = productionPlanet(game, state, target, pack);
@@ -226,12 +228,23 @@ function landAndBuild(
   }
 }
 
+/** The capacity and the fleet pool of a system after units arrived or were built there. */
+function checkSystem(game: Game, state: GameState, target: string, pack: DataPack, warnings: Warning[]): void {
+  const here = state.systems[target] ?? {};
+  const load = capacity(game, here, state.upgrades, pack);
+  if (load.load > load.capacity) {
+    warnings.push({ code: 'capacitySystem', params: { systemId: target, load: load.load, capacity: load.capacity } });
+  }
+  const ships = fleetCount(game, here, state.upgrades, pack);
+  if (ships > state.fleet) warnings.push({ code: 'fleetPool', params: { systemId: target, ships, fleet: state.fleet } });
+}
+
 function applyTactical(
   game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
 ): void {
   const target = entry.systemId;
   if (target === null) return;
-  state.tactic -= 1;
+  if (!entry.free) state.tactic -= 1;
   if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
   const groups = applyMoves(game, state, target, entry, pack, warnings);
   for (const [from, units] of Object.entries(groups)) {
@@ -244,14 +257,44 @@ function applyTactical(
   const cost = productionCost(entry.production, game.faction, state.upgrades, pack);
   const paid = pay(state, entry.payment, 'resources', pack, warnings);
   if (cost > paid) warnings.push({ code: 'shortResources', params: { needed: cost, paid } });
-  if (entry.moves.length > 0 || unitIds(entry.production).length > 0) {
-    const here = state.systems[target] ?? {};
-    const load = capacity(game, here, state.upgrades, pack);
-    if (load.load > load.capacity) {
-      warnings.push({ code: 'capacitySystem', params: { systemId: target, load: load.load, capacity: load.capacity } });
-    }
-    const ships = fleetCount(game, here, state.upgrades, pack);
-    if (ships > state.fleet) warnings.push({ code: 'fleetPool', params: { systemId: target, ships, fleet: state.fleet } });
+  if (entry.moves.length > 0 || unitIds(entry.production).length > 0) checkSystem(game, state, target, pack, warnings);
+}
+
+/** Applies what a strategy card can track; everything else about it is shown only. `primaries` counts this round's so far. */
+function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPack, primaries: { count: number }, warnings: Warning[]): void {
+  const primary = entry.type === 'strategic';
+  if (!primary || entry.forToken) {
+    if (state.strategy < 1) warnings.push({ code: 'shortStrategy', params: { have: state.strategy } });
+    state.strategy -= 1;
+  } else {
+    primaries.count += 1;
+    const held = cardsHeld(game.playerCount);
+    if (primaries.count > held) warnings.push({ code: 'primaryRepeated', params: { held } });
+  }
+  const effects = entry.effects ?? {};
+  const cost = cardCost(entry, game.faction, state.upgrades, pack);
+  const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings);
+  if (cost.amount > paid) {
+    warnings.push({ code: cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', params: { needed: cost.amount, paid } });
+  }
+  state.tactic += effects.tokens?.tactic ?? 0;
+  state.fleet += effects.tokens?.fleet ?? 0;
+  state.strategy += effects.tokens?.strategy ?? 0;
+  state.exhausted = state.exhausted.filter(id => !effects.readied?.includes(id));
+  addUpgrades(state, entry.upgrades);
+  if (primary && entry.card === CARD.trade) state.tradeGoods += 3;
+  if (primary && entry.card === CARD.imperial && effects.mecatol) state.vp += 1;
+  // The card itself says so: before Thunder's Edge this secondary leaves its token in the chosen system.
+  if (!primary && entry.card === CARD.construction && effects.systemId && !game.expansions.includes('te') && !state.tokensOnMap.includes(effects.systemId)) {
+    state.tokensOnMap.push(effects.systemId);
+  }
+  for (const { kind, planetId } of effects.structures ?? []) {
+    if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + 1;
+    else if (!state.docks.includes(planetId)) state.docks.push(planetId);
+  }
+  if (effects.production) {
+    placeProduction(game, state, effects.production.systemId, effects.production.units, pack);
+    checkSystem(game, state, effects.production.systemId, pack, warnings);
   }
 }
 
@@ -296,15 +339,15 @@ function addUpgrades(state: GameState, upgrades: UnitId[] = []): void {
   for (const id of upgrades) if (!state.upgrades.includes(id)) state.upgrades.push(id);
 }
 
-function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>): Warning[] {
+function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>, primaries: { count: number }): Warning[] {
   const warnings: Warning[] = [];
   switch (entry.type) {
     case 'tactical':
       applyTactical(game, state, entry, pack, warnings);
       break;
+    case 'strategic':
     case 'secondary':
-      state.strategy -= 1;
-      addUpgrades(state, entry.upgrades);
+      applyCard(game, state, entry, pack, primaries, warnings);
       break;
     case 'expedition':
       applyExpedition(game, state, entry, pack, taken, warnings);
@@ -329,9 +372,6 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       for (const [planetId, units] of Object.entries(d.ground ?? {})) shiftUnits(state.ground, planetId, units);
       break;
     }
-    case 'strategic':
-      addUpgrades(state, entry.upgrades);
-      break;
     case 'component':
     case 'pass':
       break;
@@ -347,12 +387,13 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
   for (const round of rounds) {
     state.exhausted = [];
     state.tokensOnMap = [];
+    const primaries = { count: 0 };
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {
         if (entry.phase !== phase) continue;
         if (entry.id === stopBefore) return { state, warningsByEntry };
         if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
-        warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices);
+        warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, primaries);
       }
     }
   }

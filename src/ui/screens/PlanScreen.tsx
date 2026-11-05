@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
+import { project, sourceSlot, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { cardChange, plannedCard, primaryPlayed, type CardEntry } from '../../domain/strategy';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
 import type { AdjustmentKind, Entry, EntryBody, Plan } from '../../domain/types';
@@ -23,20 +24,19 @@ import { sliceOwners } from '../plan/ExpeditionWidget';
 import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
+import { cardPurchases, StrategyEditor, type MapPick } from '../plan/StrategyEditor';
 import { SummaryBar } from '../plan/SummaryBar';
 import { arrowsOf, hasUnits, sourcePools, suggestMoves, systemName, type TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
-/** `entryId` is null while a new action waits for its system: the next tile tap creates the entry. */
-interface Editing { entryId: string | null; addingSource: boolean; pickerFrom: string | null }
+/** `entryId` is null while a new action waits for its system: the next tile tap creates the entry; `fromCard` makes that one Warfare's free action. */
+interface Editing { entryId: string | null; addingSource: boolean; pickerFrom: string | null; fromCard?: string }
 
 const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };
 
 const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
-const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical'>, EntryBody> = {
-  strategic: { type: 'strategic' },
-  secondary: { type: 'secondary' },
+const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical' | 'strategic' | 'secondary'>, EntryBody> = {
   component: { type: 'component', note: '' },
   expedition: { type: 'expedition', sliceId: null, payment: EMPTY_PAYMENT },
   pass: { type: 'pass' },
@@ -74,16 +74,19 @@ export function PlanScreen() {
   const toggleIngress = useGame(s => s.toggleIngress);
   const setThundersEdge = useGame(s => s.setThundersEdge);
   const addRound = useGame(s => s.addRound);
+  const removeEntry = useGame(s => s.removeEntry);
   const pack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
 
   const [roundNo, setRoundNo] = useState<number | null>(null);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
   const [sheet, setSheet] = useState<string | null>(null);
-  const [stage, setStage] = useState<{ slot: string; mode: StageMode } | null>(null);
+  const [stage, setStage] = useState<{ slot: string; mode: StageMode; only?: 'build' | 'units'; forCard?: boolean } | null>(null);
   const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
   const [editing, setEditing] = useState<Editing | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [cardId, setCardId] = useState<string | null>(null);
+  const [mapPick, setMapPick] = useState<MapPick | null>(null);
   const [manualPayments, setManualPayments] = useState<string[]>([]);
   const [view, setView] = useState<'map' | 'plan'>('map');
   const [placing, setPlacing] = useState(false);
@@ -101,6 +104,9 @@ export function PlanScreen() {
   const session = editing && (entry || editing.entryId === null) ? editing : null;
   const picking = session?.entryId === null;
   const activeSystem = session ? entry?.systemId ?? null : null;
+  // Undo can remove the card being played too, which ends its editor.
+  const cardEntry = round?.entries.find((e): e is CardEntry => e.id === cardId && (e.type === 'strategic' || e.type === 'secondary'));
+  const cardPick = cardEntry && !session ? mapPick : null;
 
   const openSource = (source: string) => {
     if (!game || !plan || !entry || !session || !game.map[source]) return;
@@ -132,6 +138,8 @@ export function PlanScreen() {
     setEditing(null);
     setSheet(null);
     setOpenId(null);
+    setCardId(null);
+    setMapPick(null);
   };
 
   const onPick = (type: ActionType) => {
@@ -143,6 +151,14 @@ export function PlanScreen() {
       setBuilding(false);
       setEditing({ entryId: null, addingSource: false, pickerFrom: null });
       setView('map');
+      return;
+    }
+    if (type === 'strategic' || type === 'secondary') {
+      const card = type === 'strategic' ? plannedCard(round, game.playerCount) : undefined;
+      setCardId(addEntry(round.number, card === undefined ? { type } : { type, card }, 'action'));
+      setMapPick(null);
+      setShowTe(false);
+      setView('plan');
       return;
     }
     const id = addEntry(round.number, SIMPLE_BODIES[type], 'action');
@@ -157,6 +173,14 @@ export function PlanScreen() {
   };
 
   const onTileTap = (slot: string) => {
+    if (cardPick && cardEntry) {
+      if (!game.map[slot]) return;
+      if (cardPick !== 'dock') updateEntry(cardEntry.id, { effects: { ...cardEntry.effects, systemId: slot } });
+      if (cardPick !== 'system') setStage({ slot, mode: 'build', only: cardPick === 'build' ? 'build' : 'units', forCard: true });
+      setMapPick(null);
+      setView('plan');
+      return;
+    }
     if (marking) {
       toggleIngress(slot);
       return;
@@ -172,6 +196,7 @@ export function PlanScreen() {
       if (!game.map[slot]) return;
       const id = addEntry(round.number, {
         type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: EMPTY_PAYMENT,
+        ...(session?.fromCard ? { free: true, fromCard: session.fromCard } : {}),
       }, 'action');
       setEditing({ entryId: id, addingSource: false, pickerFrom: null });
       setView('plan');
@@ -201,12 +226,16 @@ export function PlanScreen() {
     } else if (opened.type === 'tactical') {
       setShowTe(false);
       setEditing({ entryId: opened.id, addingSource: false, pickerFrom: null });
+    } else if (opened.type === 'strategic' || opened.type === 'secondary') {
+      setShowTe(false);
+      setCardId(opened.id);
+      setMapPick(null);
     } else {
       setOpenId(openId === opened.id ? null : opened.id);
     }
   };
 
-  const shownFilter = session || mapMode === 'forecast' ? 'forecast' : 'now';
+  const shownFilter = session || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
   const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
   const lockedUpgrades = entryUpgradeRounds(upToRound, shownFilter);
@@ -228,6 +257,11 @@ export function PlanScreen() {
     for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
   }
 
+  if (cardPick) {
+    const fits = (planetId: string) => (cardPick === 'dock' ? forecast.state.docks.includes(planetId) : forecast.state.control[planetId] === 'me');
+    for (const slot of Object.keys(game.map)) if (systemPlanets(game, slot, pack).some(p => fits(p.id))) highlights[slot] = 'valid';
+  }
+
   /** In the tactical editor a drag from the active system or a system with my units draws an arrow; any other drag moves the map. */
   const startsArrow = (slot: string): boolean => {
     if (activeSystem === null || !entry) return false;
@@ -236,7 +270,8 @@ export function PlanScreen() {
   };
 
   const duplicates = building ? duplicateTiles(game.map, pack) : [];
-  const hint = marking ? t('fracture.markHint') : placing ? t('expedition.placeHint') : picking ? t('plan.tactical.pickHint')
+  const hint = cardPick ? t('plan.strategy.mapHint') : marking ? t('fracture.markHint') : placing ? t('expedition.placeHint')
+    : picking ? t(session?.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')
     : session?.addingSource ? t('plan.tactical.sourceHint')
       : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;
   const manualPayment = entry !== undefined && manualPayments.includes(entry.id);
@@ -314,7 +349,7 @@ export function PlanScreen() {
                 )}
                 <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
                   {(['forecast', 'now'] as const).map(mode => (
-                    <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null} onClick={() => setMapMode(mode)}>
+                    <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null || cardEntry !== undefined} onClick={() => setMapMode(mode)}>
                       {t(`plan.${mode}`)}
                     </button>
                   ))}
@@ -369,15 +404,29 @@ export function PlanScreen() {
                 onDone={() => setEditing(null)}
               />
             )}
-            {!session && (
+            {!session && cardEntry && (
+              <StrategyEditor
+                game={game} pack={pack} round={round} entry={cardEntry} before={stateBeforeEntry(game, plan, cardEntry.id, pack)}
+                warnings={forecast.warningsByEntry[cardEntry.id] ?? []} manualPayment={manualPayments.includes(cardEntry.id)} picking={cardPick}
+                onUpdate={patch => updateEntry(cardEntry.id, patch)}
+                onManualPayment={open => setManualPayments(ids => (open ? [...ids, cardEntry.id] : ids.filter(id => id !== cardEntry.id)))}
+                onPick={pick => { setMapPick(pick); if (pick) setView('map'); }}
+                onOpenShop={(slot, only) => setStage({ slot, mode: 'build', only, forCard: true })}
+                onStartTactical={() => { setEditing({ entryId: null, addingSource: false, pickerFrom: null, fromCard: cardEntry.id }); setMapPick(null); setBuilding(false); setView('map'); }}
+                onOpenTactical={id => setEditing({ entryId: id, addingSource: false, pickerFrom: null })}
+                onCancel={() => { removeEntry(cardEntry.id); setCardId(null); setMapPick(null); }}
+                onDone={() => { setCardId(null); setMapPick(null); }}
+              />
+            )}
+            {!session && !cardEntry && (
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
                   game={game} pack={pack} round={round} plan={plan}
                   stateBefore={id => stateBeforeEntry(game, plan, id, pack)} warnings={forecast.warningsByEntry} state={forecast.state}
                   openId={openId} onOpen={onOpenEntry}
-                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} round={round} />}
-                  addAction={<ActionMenu onPick={onPick} />}
+                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
+                  addAction={<ActionMenu onPick={onPick} primaryPlayed={primaryPlayed(round, game.playerCount)} />}
                 />
               </>
             )}
@@ -386,7 +435,12 @@ export function PlanScreen() {
       </div>
       {stage && (
         <HexStage
-          key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode}
+          key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}
+          onPurchase={stage.forCard && cardEntry
+            ? cardPurchases(game, pack, cardEntry, stage.slot, forecast.state, effects => updateEntry(cardEntry.id, cardChange(
+              cardEntry, { effects }, stateBeforeEntry(game, plan, cardEntry.id, pack), game.faction, pack, manualPayments.includes(cardEntry.id),
+            )))
+            : undefined}
           manualPayments={manualPayments} onClose={closeStage}
         />
       )}

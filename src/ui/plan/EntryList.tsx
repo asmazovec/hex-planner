@@ -1,11 +1,12 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { strategyCards } from '../../domain/cards';
+import { CARD } from '../../domain/strategy';
 import { playersOf } from '../../domain/players';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { factionShortName } from '../players/factionName';
 import { UNIT_ORDER } from '../units/unitOrder';
-import { EntryUpgrades } from './EntryUpgrades';
 import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
 import { Stepper } from './Stepper';
@@ -128,10 +129,18 @@ function StatusFields({ entry, game, pack, state }: {
   );
 }
 
+const cardName = (game: Game, card: number | undefined): string | undefined =>
+  strategyCards(game.expansions).find(c => c.initiative === card)?.name;
+
 function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
   switch (entry.type) {
     case 'tactical':
-      return `${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
+      return `${entry.free ? `${cardName(game, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
+    case 'strategic':
+    case 'secondary': {
+      const name = cardName(game, entry.card);
+      return `${t(`plan.entries.${entry.type}`)}${name ? `: ${name}` : ''}${entry.forToken ? ` · ${t('plan.entries.forToken')}` : ''}`;
+    }
     case 'adjustment':
       if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemName(game, pack, entry.delta.units?.systemId ?? '')}`;
       return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
@@ -232,12 +241,6 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
                       <ul className="warning-list">
                         {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
                       </ul>
-                    )}
-                    {(entry.type === 'strategic' || entry.type === 'secondary') && (
-                      <EntryUpgrades
-                        entryId={entry.id} upgrades={entry.upgrades ?? []} game={game} pack={pack}
-                        before={(stateBefore ? stateBefore(entry.id) : state).upgrades}
-                      />
                     )}
                     {entry.type === 'statusTokens' && (
                       <div className="entry-details">

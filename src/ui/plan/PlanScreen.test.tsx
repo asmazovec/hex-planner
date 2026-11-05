@@ -402,15 +402,6 @@ test('Add action stands in the Actions section, in the block that sticks to the 
   expect(phase('Actions').getByRole('button', { name: 'Add action' }).closest('.phase-add')).not.toBeNull();
 });
 
-test('the card list stays collapsed after the editor closes when a main card exists', async () => {
-  useGame.getState().setStrategyCard(1, 5);
-  useGame.getState().setStrategyCard(1, 5);
-  await chooseSystem();
-  await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
-  expect(screen.queryByRole('button', { name: /Warfare/ })).toBeNull();
-  expect(screen.getByRole('button', { name: /Trade/ })).toBeVisible();
-});
-
 test('the shop opens on the active system and shows the price of each unit', async () => {
   await chooseSystem(HOME);
   await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));

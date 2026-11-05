@@ -135,6 +135,8 @@ export type Phase = 'strategy' | 'action' | 'status' | 'agenda';
 /** `planets` is ordered by descending value, then id. */
 export interface Payment { planets: string[]; tradeGoods: number; }
 
+export type StructureKind = 'pds' | 'spacedock';
+
 export interface AdjustmentDelta {
   tradeGoods?: number;
   tactic?: number;
@@ -150,15 +152,49 @@ export interface AdjustmentDelta {
 /** What made an adjustment: the big hex merges its taps into one entry per system. Absent for one made by hand. */
 export type AdjustmentKind = 'losses' | 'build' | 'setup';
 
+/** What a strategy card did. Only tokens, payment, readied planets, Mecatol, production and structures reach the projection; the rest is shown. */
+export interface CardEffects {
+  /** Token distribution: signed, because Warfare rearranges. Bought tokens count only once distributed. */
+  tokens?: { tactic?: number; fleet?: number; strategy?: number };
+  /** Bought with influence on Leadership. */
+  boughtTokens?: number;
+  /** The chosen system. */
+  systemId?: string;
+  /** Planet ids. */
+  readied?: string[];
+  /** Opponent id. */
+  speaker?: string;
+  /** Opponent ids. */
+  freeSecondary?: string[];
+  mecatol?: boolean;
+  production?: { systemId: string; units: UnitCounts };
+  /** One item per structure. */
+  structures?: { kind: StructureKind; planetId: string }[];
+  payment?: Payment;
+}
+
+/** A strategy card played: all optional, so entries saved before need no migration. */
+export interface CardPlay {
+  /** Ships upgraded by this entry, as with research. */
+  upgrades?: UnitId[];
+  /** Initiative number. */
+  card?: number;
+  /** A primary played for a strategy token, as some faction abilities allow. */
+  forToken?: boolean;
+  effects?: CardEffects;
+}
+
 /**
  * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
  * (a slot key, or a planet id to pick ground units up) into `systemId`.
  */
 export type EntryBody =
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts }[];
-      landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment }
-  | { type: 'strategic'; /** Ships upgraded by this entry, as with research. */ upgrades?: UnitId[] }
-  | { type: 'secondary'; upgrades?: UnitId[] }
+      landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
+      /** Warfare's primary: no tactic token is spent, the system's command token still goes down. */ free?: boolean;
+      /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
+  | ({ type: 'strategic' } & CardPlay)
+  | ({ type: 'secondary' } & CardPlay)
   | { type: 'component'; note: string }
   | { type: 'pass' }
   | { type: 'expedition'; sliceId: string | null; payment: Payment }
@@ -233,10 +269,14 @@ export interface GameState {
   opponentVp: Record<string, number>;
   /** The baseline plus the upgrades of the entries replayed so far. */
   upgrades: UnitId[];
+  /** The game's space docks plus those built by the entries replayed so far. */
+  docks: string[];
+  /** Planet id to PDS count, the same way. */
+  pds: Record<string, number>;
 }
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
   | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
-  | 'sliceTaken';
+  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated';
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

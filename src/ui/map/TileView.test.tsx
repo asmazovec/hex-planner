@@ -27,7 +27,7 @@ beforeEach(() => setLanguage('en'));
 
 const emptyState = (): GameState => ({
   systems: {}, ground: {}, exhausted: [], control: {}, tokensOnMap: [],
-  tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [],
+  tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {},
 });
 
 function setup(
@@ -113,7 +113,7 @@ test.each(['25', '26', '16'])('ground units on tile %s stand on the arc of their
 
 test('a space dock is a token on the arc of its planet, in my colour', () => {
   const id = pack.tiles['25'].planetIds[0];
-  setup('25', (g, s) => { g.color = 4; g.docks.push(id); s.ground[id] = { infantry: 1 }; });
+  setup('25', (g, s) => { g.color = 4; s.docks.push(id); s.ground[id] = { infantry: 1 }; });
   const dock = stackOf('Space dock');
   expect(dock).toHaveAttribute('data-planet', '0');
   expect(dock.querySelector('rect')).toHaveAttribute('stroke', '#74d09a');
@@ -124,7 +124,7 @@ test('a space dock takes the colour of the planet owner, and is mine on a free p
   const dockOn = (control: 'me' | 'enemy' | undefined) => {
     cleanup();
     setup('25', (g, s) => {
-      g.color = 1; g.opponents[0].color = 3; g.docks.push(id);
+      g.color = 1; g.opponents[0].color = 3; s.docks.push(id);
       if (control) s.control[id] = control;
     });
   };
@@ -139,7 +139,7 @@ test('a space dock takes the colour of the planet owner, and is mine on a free p
 test('a space dock on an enemy planet takes the colour of the planet\'s owner and names the faction', () => {
   const id = pack.tiles['25'].planetIds[0];
   setup('25', (g, s) => {
-    g.opponents[2].faction = 'hacan'; g.opponents[2].color = 6; g.docks.push(id);
+    g.opponents[2].faction = 'hacan'; g.opponents[2].color = 6; s.docks.push(id);
     s.control[id] = 'enemy'; g.planetOwner[id] = g.opponents[2].id;
   });
   expect(stackOf(`Space dock (${pack.factions.hacan.name})`).querySelector('rect')).toHaveAttribute('stroke', '#f0a463');
@@ -148,7 +148,7 @@ test('a space dock on an enemy planet takes the colour of the planet\'s owner an
 test('an owner left on a planet that is mine in the plan does not colour its dock', () => {
   const id = pack.tiles['25'].planetIds[0];
   setup('25', (g, s) => {
-    g.opponents[2].color = 6; g.docks.push(id);
+    g.opponents[2].color = 6; s.docks.push(id);
     s.control[id] = 'me'; g.planetOwner[id] = g.opponents[2].id;
   });
   expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
@@ -327,7 +327,7 @@ test('the legend opens from the map and explains the shapes and the badge', asyn
 
 test('shows a command token and a space dock marker', () => {
   const id = pack.tiles['25'].planetIds[0];
-  setup('25', (g, s) => { s.tokensOnMap.push('1,0'); g.docks.push(id); });
+  setup('25', (_, s) => { s.tokensOnMap.push('1,0'); s.docks.push(id); });
   expect(screen.getByLabelText('Command token')).toBeInTheDocument();
   expect(screen.getByLabelText('Space dock')).toBeInTheDocument();
 });
@@ -358,7 +358,7 @@ test('the map draws every slot of a six-player template, even with no tiles plac
 
 test('a PDS stands on its planet with its count, in the colour of the planet\'s holder', () => {
   const id = pack.tiles['25'].planetIds[0];
-  setup('25', (g, s) => { g.pds[id] = 2; g.planetOwner[id] = g.opponents[1].id; s.control[id] = 'enemy'; });
+  setup('25', (g, s) => { s.pds[id] = 2; g.planetOwner[id] = g.opponents[1].id; s.control[id] = 'enemy'; });
   expect(screen.getByRole('img', { name: 'PDS ×2 (Player 3)' })).toBeInTheDocument();
 });
 

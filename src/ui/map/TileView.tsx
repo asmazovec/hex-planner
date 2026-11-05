@@ -171,9 +171,9 @@ export function TileView({
   }
   planets.forEach((planet, i) => {
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
-    const pds = game.pds[planet.id] ?? 0;
+    const pds = state.pds[planet.id] ?? 0;
     if (pds > 0) ground.push({ kind: 'pds', owner: holderOf(planet.id) ?? 'me', count: pds, planet: i });
-    if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
+    if (state.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
   });
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
