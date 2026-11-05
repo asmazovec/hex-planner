@@ -74,22 +74,29 @@ test('a part taken by another player cannot be chosen in the expedition entry', 
   expect(entry).toMatchObject({ type: 'expedition', sliceId: 'res5' });
 });
 
-test('after the sixth part the map marks suitable systems and Thunder\'s Edge can be placed', async () => {
+test('suitable systems light up only while choosing, and Thunder\'s Edge can be placed', async () => {
   const { ok, bad } = slots();
   for (const id of SLICES.slice(0, 5)) useGame.getState().setSlice(id, 'other');
   render(<PlanScreen />);
   expect(document.querySelector('.tile-valid')).toBeNull();
   await userEvent.click(part('Technology'));
   expect(within(widget()).getByText('6 of 6')).toBeVisible();
-  expect(tile(ok).classList.contains('tile-valid')).toBe(true);
-  expect(tile(bad).classList.contains('tile-valid')).toBe(false);
+  expect(document.querySelector('.tile-valid')).toBeNull();
 
   await userEvent.click(part('Choose system'));
+  expect(tile(ok).classList.contains('tile-valid')).toBe(true);
+  expect(tile(bad).classList.contains('tile-valid')).toBe(false);
   await userEvent.click(tile(bad));
   expect(game().expedition.thundersEdgeSystem).toBeNull();
   await userEvent.click(tile(ok));
   expect(game().expedition.thundersEdgeSystem).toBe(ok);
   expect(within(tile(ok) as HTMLElement).getByRole('group', { name: /Thunder's Edge/ })).toBeTruthy();
+  expect(document.querySelector('.tile-valid')).toBeNull();
+
+  await userEvent.click(part('Choose system'));
+  expect(tile(ok).classList.contains('tile-valid')).toBe(true);
+  await userEvent.click(part('Choose system'));
+  expect(document.querySelector('.tile-valid')).toBeNull();
 });
 
 test('the Fracture button adds its systems beside the map', async () => {

@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
-import { EXPEDITION_SLICES } from '../../domain/payment';
 import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import type { Entry, EntryBody, Plan } from '../../domain/types';
@@ -142,7 +141,6 @@ export function PlanScreen() {
 
   const hasTe = game.expansions.includes('te');
   const owners = sliceOwners(game, plan);
-  const expeditionDone = hasTe && Object.keys(owners).length === EXPEDITION_SLICES.length;
   const suitable = (slot: string): boolean => {
     const tile = game.map[slot] ? pack.tiles[tileIdOf(game, slot)] : undefined;
     return tile !== undefined && validThundersEdgeSystem(tile);
@@ -207,7 +205,7 @@ export function PlanScreen() {
     highlights[activeSystem] = 'active';
   }
 
-  if (activeSystem === null && expeditionDone) {
+  if (placing) {
     for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
   }
 
