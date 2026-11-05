@@ -4,7 +4,8 @@ import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
 import { project, sourceSlot, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
-import { cardChange, plannedCard, primaryPlayed, type CardEntry } from '../../domain/strategy';
+import { MECATOL_PLANETS } from '../../domain/mecatol';
+import { CARD, cardChange, plannedCard, primaryPlayed, withSystem, type CardEntry } from '../../domain/strategy';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
 import type { AdjustmentKind, Entry, EntryBody, Plan } from '../../domain/types';
@@ -175,7 +176,7 @@ export function PlanScreen() {
   const onTileTap = (slot: string) => {
     if (cardPick && cardEntry) {
       if (!game.map[slot]) return;
-      if (cardPick !== 'dock') updateEntry(cardEntry.id, { effects: { ...cardEntry.effects, systemId: slot } });
+      if (cardPick !== 'dock') updateEntry(cardEntry.id, { effects: withSystem(cardEntry, slot, game.expansions) });
       if (cardPick !== 'system') setStage({ slot, mode: 'build', only: cardPick === 'build' ? 'build' : 'units', forCard: true });
       setMapPick(null);
       setView('plan');
@@ -257,9 +258,18 @@ export function PlanScreen() {
     for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
   }
 
-  if (cardPick) {
-    const fits = (planetId: string) => (cardPick === 'dock' ? forecast.state.docks.includes(planetId) : forecast.state.control[planetId] === 'me');
-    for (const slot of Object.keys(game.map)) if (systemPlanets(game, slot, pack).some(p => fits(p.id))) highlights[slot] = 'valid';
+  if (cardPick && cardEntry) {
+    const primaryCard = (card: number) => cardEntry.type === 'strategic' && cardEntry.card === card;
+    if (primaryCard(CARD.warfare)) {
+      for (const slot of stateBeforeEntry(game, plan, cardEntry.id, pack).tokensOnMap) if (game.map[slot]) highlights[slot] = 'valid';
+    } else {
+      const fits = (planetId: string) => (cardPick === 'dock' ? forecast.state.docks.includes(planetId) : forecast.state.control[planetId] === 'me');
+      const excluded = primaryCard(CARD.diplomacy) ? MECATOL_PLANETS : [];
+      for (const slot of Object.keys(game.map)) {
+        const planets = systemPlanets(game, slot, pack);
+        if (planets.some(p => fits(p.id)) && !planets.some(p => excluded.includes(p.id))) highlights[slot] = 'valid';
+      }
+    }
   }
 
   /** In the tactical editor a drag from the active system or a system with my units draws an arrow; any other drag moves the map. */
@@ -437,7 +447,7 @@ export function PlanScreen() {
         <HexStage
           key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}
           onPurchase={stage.forCard && cardEntry
-            ? cardPurchases(game, pack, cardEntry, stage.slot, forecast.state, effects => updateEntry(cardEntry.id, cardChange(
+            ? cardPurchases(game, pack, cardEntry, stage.slot, stateBeforeEntry(game, plan, cardEntry.id, pack), effects => updateEntry(cardEntry.id, cardChange(
               cardEntry, { effects }, stateBeforeEntry(game, plan, cardEntry.id, pack), game.faction, pack, manualPayments.includes(cardEntry.id),
             )))
             : undefined}

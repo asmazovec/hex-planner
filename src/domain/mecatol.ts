@@ -19,6 +19,19 @@ function migrateEntry(entry: Entry): Entry {
       ...(entry.productionGround ? { productionGround: Object.fromEntries(Object.entries(entry.productionGround).map(([id, units]) => [toTe(id), units])) } : {}),
     };
   }
+  if ((entry.type === 'strategic' || entry.type === 'secondary') && entry.effects) {
+    const { payment, readied, structures, production } = entry.effects;
+    return {
+      ...entry,
+      effects: {
+        ...entry.effects,
+        ...(payment ? { payment: { ...payment, planets: payment.planets.map(toTe) } } : {}),
+        ...(readied ? { readied: readied.map(toTe) } : {}),
+        ...(structures ? { structures: structures.map(s => ({ ...s, planetId: toTe(s.planetId) })) } : {}),
+        ...(production?.ground ? { production: { ...production, ground: Object.fromEntries(Object.entries(production.ground).map(([id, units]) => [toTe(id), units])) } } : {}),
+      },
+    };
+  }
   if (entry.type === 'expedition') return { ...entry, payment: { ...entry.payment, planets: entry.payment.planets.map(toTe) } };
   if (entry.type === 'adjustment' && entry.delta.ground) {
     return { ...entry, delta: { ...entry.delta, ground: Object.fromEntries(Object.entries(entry.delta.ground).map(([id, units]) => [toTe(id), units])) } };

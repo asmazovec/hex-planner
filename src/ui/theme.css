@@ -412,11 +412,12 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .phase-auto { margin: 0; padding: 6px 9px; background: var(--surface-2); border-left: 4px solid var(--border-strong); border-radius: var(--radius-s); font-size: var(--font-s); }
 .phase-add { position: sticky; bottom: 0; z-index: 1; padding-top: 3px; background: var(--surface); }
 .phase > button { width: 100%; }
-.status-tokens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
-.status-tokens .stepper { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 4px; text-align: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
-.status-tokens .stepper-name, .status-tokens output { grid-column: 1 / -1; }
-.status-tokens output { order: -1; font-size: var(--font-l); font-weight: 700; }
-.status-tokens .stepper-name { order: -1; }
+.token-pick { display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); }
+.token-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+.token-tile { min-height: 62px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: var(--font-s); font-weight: 500; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+.token-tile b { font-size: 20px; font-weight: 700; color: var(--text); }
+.token-tile-on { border-color: var(--gold); }
+.token-note { margin: 0; font-size: var(--font-xs); }
 .status-points { margin: 6px 0 2px; font-size: var(--font-s); font-weight: 600; color: var(--text-muted); }
 .status-player .stepper-name::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--player); }
 .status-reminder { margin: 4px 0 0; font-size: var(--font-s); }

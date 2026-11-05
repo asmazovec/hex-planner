@@ -331,10 +331,12 @@ test('the status phase entry distributes tokens', async () => {
   const entry = entries()[0];
   expect(entry).toMatchObject({ type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 });
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
-  await userEvent.click(row.getByRole('button', { name: 'Add one Tactic' }));
-  await userEvent.click(row.getByRole('button', { name: 'Add one Fleet' }));
+  expect(row.getByText('Distribute tokens: 2 left')).toBeVisible();
+  await userEvent.click(row.getByRole('button', { name: 'Tactic: 0' }));
+  await userEvent.click(row.getByRole('button', { name: 'Fleet: 0' }));
   expect(entries()[0]).toMatchObject({ tactic: 1, fleet: 1, strategy: 0 });
   expect(cell('Tactic')).toHaveTextContent('3 → 4');
+  expect(row.getByText('Distribute tokens: 0 left')).toBeVisible();
   // The label is the only way into the entry now: no second status button stands beside it.
   expect(screen.getAllByRole('button', { name: 'Tokens and points' })).toHaveLength(1);
   expect(row.getByRole('button', { name: 'Tokens and points' })).toBeVisible();
@@ -412,11 +414,15 @@ test('the shop opens on the active system and shows the price of each unit', asy
   expect(shop.getByRole('button', { name: 'Fighter' })).toHaveTextContent('½');
 });
 
-test('status tokens do not go below zero', async () => {
+test('a status tile with no free tokens left resets', async () => {
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
-  expect(row.getByRole('button', { name: 'Remove one Tactic' })).toBeDisabled();
+  await userEvent.click(row.getByRole('button', { name: 'Tactic: 0' }));
+  await userEvent.click(row.getByRole('button', { name: 'Tactic: 1' }));
+  await userEvent.click(row.getByRole('button', { name: 'Tactic: 2' }));
+  expect(entries()[0]).toMatchObject({ tactic: 0 });
+  expect(row.getByRole('button', { name: 'Tactic: 0' })).toBeVisible();
 });
 
 test.each(['Plan 1', 'Rush'])('an empty name falls back to the default, starting from %s', async start => {

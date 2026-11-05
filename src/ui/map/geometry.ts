@@ -8,6 +8,12 @@ export function hexToPixel(q: number, r: number, size: number = HEX_SIZE): Point
   return { x: size * 1.5 * q, y: size * Math.sqrt(3) * (q / 2 + r) };
 }
 
+/** The centre of a slot; a slot key that is no `q,r`, like an off-map tile's id, stands at the origin. */
+export function slotToPixel(slot: string): Point {
+  const [q, r] = slot.split(',').map(Number);
+  return r === undefined || Number.isNaN(q) || Number.isNaN(r) ? { x: 0, y: 0 } : hexToPixel(q, r);
+}
+
 /** Corners of a hex centred on the origin, starting at the east corner and going clockwise on screen. */
 export function hexCorners(size: number = HEX_SIZE): Point[] {
   return Array.from({ length: 6 }, (_, i) => {

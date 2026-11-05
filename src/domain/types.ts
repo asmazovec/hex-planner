@@ -154,7 +154,7 @@ export type AdjustmentKind = 'losses' | 'build' | 'setup';
 
 /** What a strategy card did. Only tokens, payment, readied planets, Mecatol, production and structures reach the projection; the rest is shown. */
 export interface CardEffects {
-  /** Token distribution: signed, because Warfare rearranges. Bought tokens count only once distributed. */
+  /** Token distribution. Bought tokens count only once distributed. */
   tokens?: { tactic?: number; fleet?: number; strategy?: number };
   /** Bought with influence on Leadership. */
   boughtTokens?: number;
@@ -167,7 +167,8 @@ export interface CardEffects {
   /** Opponent ids. */
   freeSecondary?: string[];
   mecatol?: boolean;
-  production?: { systemId: string; units: UnitCounts };
+  /** `ground` holds where ground units of `units` were bought, by planet id; what is not listed goes to the first planet I control. */
+  production?: { systemId: string; units: UnitCounts; ground?: Record<string, UnitCounts> };
   /** One item per structure. */
   structures?: { kind: StructureKind; planetId: string }[];
   payment?: Payment;
@@ -192,7 +193,7 @@ export type EntryBody =
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
       /** Where the ground units of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
-      /** Warfare's primary: no tactic token is spent, the system's command token still goes down. */ free?: boolean;
+      /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
   | ({ type: 'strategic' } & CardPlay)
   | ({ type: 'secondary' } & CardPlay)

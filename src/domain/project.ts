@@ -1,5 +1,5 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
-import { CARD, cardCost, cardsHeld, type CardEntry } from './strategy';
+import { CARD, cardCost, cardsHeld, costsStrategyToken, type CardEntry } from './strategy';
 import { productionCost, unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
@@ -215,7 +215,7 @@ function landUnits(state: GameState, target: string, entry: TacticalEntry, warni
 export interface ProductionPlace { unit: UnitId; /** Null for the space area. */ planetId: string | null; count: number }
 
 /** Ships go to the space area; ground forces to the planets they were bought on, the rest to one of my planets there, or to space if I have none. */
-function placesOf(
+export function placesOf(
   game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {},
 ): ProductionPlace[] {
   const places: ProductionPlace[] = [];
@@ -275,8 +275,10 @@ function applyTactical(
 ): void {
   const target = entry.systemId;
   if (target === null) return;
-  if (!entry.free) state.tactic -= 1;
-  if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
+  if (!entry.free) {
+    state.tactic -= 1;
+    if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
+  }
   const groups = applyMoves(game, state, target, entry, pack, warnings);
   for (const [from, units] of Object.entries(groups)) {
     const group = capacity(game, units, state.upgrades, pack);
@@ -291,16 +293,18 @@ function applyTactical(
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) checkSystem(game, state, target, pack, warnings);
 }
 
-/** Applies what a strategy card can track; everything else about it is shown only. `primaries` counts this round's so far. */
-function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPack, primaries: { count: number }, warnings: Warning[]): void {
+/** Applies what a strategy card can track; everything else about it is shown only. `primaries` holds the cards of this round's so far. */
+function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPack, primaries: (number | undefined)[], warnings: Warning[]): void {
   const primary = entry.type === 'strategic';
-  if (!primary || entry.forToken) {
+  if (costsStrategyToken(entry)) {
     if (state.strategy < 1) warnings.push({ code: 'shortStrategy', params: { have: state.strategy } });
     state.strategy -= 1;
-  } else {
-    primaries.count += 1;
+  }
+  if (primary && !entry.forToken) {
     const held = cardsHeld(game.playerCount);
-    if (primaries.count > held) warnings.push({ code: 'primaryRepeated', params: { held } });
+    const sameCard = entry.card !== undefined && primaries.includes(entry.card);
+    primaries.push(entry.card);
+    if (primaries.length > held || sameCard) warnings.push({ code: 'primaryRepeated', params: { held } });
   }
   const effects = entry.effects ?? {};
   const cost = cardCost(entry, game.faction, state.upgrades, pack);
@@ -319,12 +323,16 @@ function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPac
   if (!primary && entry.card === CARD.construction && effects.systemId && !game.expansions.includes('te') && !state.tokensOnMap.includes(effects.systemId)) {
     state.tokensOnMap.push(effects.systemId);
   }
+  // Before Thunder's Edge this primary lifts a token off the board; the one gained is distributed like any other.
+  if (primary && entry.card === CARD.warfare && effects.systemId && !game.expansions.includes('te')) {
+    state.tokensOnMap = state.tokensOnMap.filter(id => id !== effects.systemId);
+  }
   for (const { kind, planetId } of effects.structures ?? []) {
     if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + 1;
     else if (!state.docks.includes(planetId)) state.docks.push(planetId);
   }
   if (effects.production) {
-    placeProduction(game, state, effects.production.systemId, effects.production.units, pack);
+    placeProduction(game, state, effects.production.systemId, effects.production.units, pack, effects.production.ground);
     checkSystem(game, state, effects.production.systemId, pack, warnings);
   }
 }
@@ -370,7 +378,7 @@ function addUpgrades(state: GameState, upgrades: UnitId[] = []): void {
   for (const id of upgrades) if (!state.upgrades.includes(id)) state.upgrades.push(id);
 }
 
-function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>, primaries: { count: number }): Warning[] {
+function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>, primaries: (number | undefined)[]): Warning[] {
   const warnings: Warning[] = [];
   switch (entry.type) {
     case 'tactical':
@@ -418,7 +426,7 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
   for (const round of rounds) {
     state.exhausted = [];
     state.tokensOnMap = [];
-    const primaries = { count: 0 };
+    const primaries: (number | undefined)[] = [];
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {
         if (entry.phase !== phase) continue;

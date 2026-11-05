@@ -3,8 +3,8 @@ import { cardSummary } from '../../data/cardSummaries';
 import { strategyCardSet, strategyCards } from '../../domain/cards';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat } from '../../domain/players';
-import { productionPlanet, systemPlanets } from '../../domain/project';
-import { CARD, cardChange, cardCost, hasChoices, homeSlot, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
+import { placesOf, systemPlanets } from '../../domain/project';
+import { CARD, cardChange, cardCost, costsStrategyToken, hasChoices, homeSlot, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, UnitId, Warning } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import type { PurchaseTarget } from '../map/HexStage';
@@ -14,25 +14,24 @@ import { EntryUpgrades } from './EntryUpgrades';
 import { PaymentBlock } from './PaymentBlock';
 import { Stepper } from './Stepper';
 import { systemName, type TacticalEntry } from './tactical';
+import { TokenTiles } from './TokenTiles';
 import { WarningText } from './WarningText';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
 
-const TOKEN_FIELDS = ['tactic', 'fleet', 'strategy'] as const;
 const READY_LIMIT = 2;
 
 /** Routes what the big hex buys into the entry's effects. */
 export function cardPurchases(
-  game: Game, pack: DataPack, entry: CardEntry, slot: string, forecast: GameState, apply: (effects: CardEffects) => void,
+  game: Game, pack: DataPack, entry: CardEntry, slot: string, before: GameState, apply: (effects: CardEffects) => void,
 ): PurchaseTarget {
   const effects = entry.effects ?? {};
-  const units = effects.production?.systemId === slot ? effects.production.units : {};
+  const production = effects.production?.systemId === slot ? effects.production : undefined;
   return {
-    bought: UNIT_ORDER.filter(unit => (units[unit] ?? 0) > 0).map(unit => ({
-      unit, planetId: pack.units[unit]?.ground ? productionPlanet(game, forecast, slot, pack) : null, count: units[unit] ?? 0,
-    })),
-    change: (unit: UnitId, _planetId, amount) => apply(withProduction(effects, slot, unit, amount)),
+    bought: placesOf(game, before, slot, production?.units ?? {}, pack, production?.ground),
+    upgrades: before.upgrades,
+    change: (unit: UnitId, planetId, amount) => apply(withProduction(effects, slot, unit, planetId, amount)),
     structures: effects.structures,
     changeStructure: (kind, planetId, amount) => apply(withStructure(effects, kind, planetId, amount)),
   };
@@ -84,25 +83,22 @@ export function StrategyEditor({
   const toggled = (list: string[] | undefined, id: string) =>
     (list?.includes(id) ? list.filter(other => other !== id) : [...(list ?? []), id]);
 
-  const setMode = (next: typeof mode) => onUpdate({
+  const setMode = (next: typeof mode) => change({
     type: next === 'secondary' ? 'secondary' : 'strategic', forToken: next === 'forToken' ? true : undefined,
   });
 
-  const tokenPick = (free: number, min: number | undefined) => {
-    const tokens = effects.tokens ?? {};
-    const used = TOKEN_FIELDS.reduce((sum, field) => sum + (tokens[field] ?? 0), 0);
-    return (
-      <div className="editor-section" role="group" aria-label={t('plan.strategy.tokens')}>
-        <strong>{t('plan.strategy.distribute', { n: free - used })}</strong>
-        {TOKEN_FIELDS.map(field => (
-          <Stepper
-            key={field} name={t(`plan.summary.${field}`)} value={tokens[field] ?? 0} min={min}
-            onChange={value => setEffects({ tokens: { ...tokens, [field]: value } })}
-          />
-        ))}
-      </div>
-    );
-  };
+  const tokenPick = (free: number) => (
+    <div className="editor-section">
+      <TokenTiles free={free} values={effects.tokens ?? {}} onChange={tokens => setEffects({ tokens })} />
+    </div>
+  );
+
+  const upgradeRow = (
+    <EntryUpgrades
+      upgrades={entry.upgrades ?? []} before={before.upgrades} game={game} pack={pack}
+      onChange={upgrades => change({ upgrades: upgrades.length > 0 ? upgrades : undefined })}
+    />
+  );
 
   const pickButton = (pick: MapPick, label: string, slot?: string) => (
     <button type="button" className="option" aria-pressed={picking === pick} onClick={() => onPick(picking === pick ? null : pick)}>
@@ -125,7 +121,7 @@ export function StrategyEditor({
               <Stepper name={t('plan.strategy.buy')} value={bought} min={0} onChange={value => setEffects({ boughtTokens: value })} />
               <span className="muted">{t('plan.strategy.bought', { n: bought, cost: cost.amount })}</span>
             </div>
-            {tokenPick((primary ? 3 : 0) + bought, 0)}
+            {tokenPick((primary ? 3 : 0) + bought)}
           </>
         );
       }
@@ -133,15 +129,14 @@ export function StrategyEditor({
         const unlimited = primary && strategyCardSet(game.expansions) === 'base_game';
         const readied = effects.readied ?? [];
         const here = effects.systemId ? systemPlanets(game, effects.systemId, pack).filter(p => before.control[p.id] === 'me') : [];
-        const shown = [...here, ...readied.filter(id => !here.some(p => p.id === id)).flatMap(id => pack.planets[id] ?? [])];
         return (
           <>
             {pickButton('system', t(primary ? 'plan.strategy.systemPrimary' : 'plan.strategy.systemSecondary'), effects.systemId)}
-            {shown.length > 0 && (
+            {here.length > 0 && (
               <div className="editor-section" role="group" aria-label={t('plan.strategy.ready')}>
                 <strong>{t(unlimited ? 'plan.strategy.ready' : 'plan.strategy.readyTwo')}</strong>
                 <div className="pay-planets">
-                  {shown.map(planet => {
+                  {here.map(planet => {
                     const on = readied.includes(planet.id);
                     return (
                       <button
@@ -216,6 +211,14 @@ export function StrategyEditor({
         );
       case CARD.warfare: {
         if (primary) {
+          if (!te) {
+            return (
+              <>
+                {pickButton('system', t('plan.strategy.liftToken'), effects.systemId)}
+                {tokenPick(1)}
+              </>
+            );
+          }
           const tactical = round.entries.find((e): e is typeof e & TacticalEntry => e.type === 'tactical' && e.fromCard === entry.id);
           return (
             <>
@@ -227,7 +230,7 @@ export function StrategyEditor({
                 )
                 : <button type="button" className="option" onClick={onStartTactical}>{t('plan.strategy.freeTactical')}</button>}
               <p className="muted">{t('plan.strategy.freeTacticalNote')}</p>
-              {tokenPick(te ? 0 : 1, undefined)}
+              {tokenPick(0)}
             </>
           );
         }
@@ -250,10 +253,7 @@ export function StrategyEditor({
         return (
           <div className="editor-section">
             <strong>{t('plan.strategy.upgrades')}</strong>
-            <EntryUpgrades
-              upgrades={entry.upgrades ?? []} before={before.upgrades} game={game} pack={pack}
-              onChange={upgrades => change({ upgrades: upgrades.length > 0 ? upgrades : undefined })}
-            />
+            {upgradeRow}
             <span className="muted">{t(primary ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}</span>
           </div>
         );
@@ -292,7 +292,7 @@ export function StrategyEditor({
         {cards.map(c => (
           <button
             key={c.initiative} type="button" className="card-cell" aria-pressed={c.initiative === entry.card}
-            disabled={locked && c.initiative !== entry.card} onClick={() => onUpdate({ card: c.initiative })}
+            disabled={locked && c.initiative !== entry.card} onClick={() => change({ card: c.initiative })}
           >
             <b>{c.initiative}</b>{c.name}
           </button>
@@ -306,7 +306,7 @@ export function StrategyEditor({
             {primary ? summary.primary : summary.secondary}
             {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
           </p>
-          {mode === 'secondary' && <p className="muted">{t('plan.strategy.tokenCost')}</p>}
+          {mode === 'secondary' && costsStrategyToken(entry) && <p className="muted">{t('plan.strategy.tokenCost')}</p>}
           {mode === 'forToken' && <p className="muted">{t('plan.strategy.forTokenNote')}</p>}
           {sections()}
           {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
@@ -316,6 +316,12 @@ export function StrategyEditor({
             />
           )}
         </>
+      )}
+      {entry.card !== CARD.technology && (entry.upgrades?.length ?? 0) > 0 && (
+        <div className="editor-section">
+          <strong>{t('plan.strategy.upgrades')}</strong>
+          {upgradeRow}
+        </div>
       )}
       {warnings.length > 0 && (
         <ul className="warning-list" aria-label={t('plan.tactical.warnings')}>

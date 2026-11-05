@@ -8,7 +8,10 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { autoPay } from '../../domain/payment';
+import { stateBeforeEntry } from '../../domain/project';
 import type { CardEntry } from '../../domain/strategy';
+import { unitStats } from '../../domain/unitStats';
 import type { Entry, ExpansionId } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -26,6 +29,7 @@ const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const click = (name: string | RegExp) => userEvent.click(button(name));
 const cell = (name: string) => within(screen.getByRole('group', { name: 'Totals, now and forecast' })).getByRole('group', { name });
 const cards = () => within(screen.getByRole('group', { name: 'Card' }));
+const tileOf = (name: string) => new RegExp(`^${name}: \\d+$`);
 const warningsShown = () => within(screen.getByRole('list', { name: 'Warnings' }));
 
 function start({ expansions = ['pok', 'te'] as ExpansionId[], playerCount = 6, faction = 'arborec' } = {}) {
@@ -166,9 +170,16 @@ describe('Leadership', () => {
   test('primary: three tokens to distribute, bought tokens add to them and cost influence with an automatic payment', async () => {
     await primary('Leadership');
     expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
-    await click('Add one Tactic');
+    await click(tileOf('Tactic'));
     expect(screen.getByText('Distribute tokens: 2 left')).toBeVisible();
+    expect(button(tileOf('Tactic'))).toHaveTextContent('1');
     expect(cell('Tactic')).toHaveTextContent('3 → 4');
+    await click(tileOf('Tactic'));
+    await click(tileOf('Fleet'));
+    expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
+    await click(tileOf('Tactic'));
+    expect(cardEntry().effects?.tokens).toMatchObject({ tactic: 0, fleet: 1 });
+    expect(screen.getByText('Distribute tokens: 2 left')).toBeVisible();
     await click('Add one Buy with influence');
     expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
     expect(screen.getByText('Bought 1, influence 3.')).toBeVisible();
@@ -185,11 +196,17 @@ describe('Leadership', () => {
     expect(cardEntry().effects?.payment).toEqual(before);
     await click('Pick automatically');
     expect(cardEntry().effects).toMatchObject({ boughtTokens: 2 });
+    expect(cardEntry().effects?.payment).toEqual(autoPay(stateBeforeEntry(game(), game().plans[0], cardEntry().id, loadPack(['pok', 'te'])), 6, 'influence', loadPack(['pok', 'te'])));
   });
 
-  test('secondary: nothing free to distribute', async () => {
+  test('secondary: nothing free to distribute, a tile without free tokens stays at zero and no token is charged', async () => {
     await secondary('Leadership');
     expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
+    await click(tileOf('Fleet'));
+    expect(cardEntry().effects?.tokens).toBeUndefined();
+    expect(game().plans[0].rounds[0].entries).toHaveLength(1);
+    expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
+    expect(screen.queryByText('A secondary costs 1 strategy token.')).toBeNull();
   });
 });
 
@@ -209,7 +226,7 @@ describe('Diplomacy', () => {
     expect(cardEntry().effects?.readied).toEqual([planets[0]]);
   });
 
-  test('never more than two, and those of another system stay in view', async () => {
+  test('never more than two, and a new system clears them', async () => {
     start({ faction: 'hacan' });
     await secondary('Diplomacy');
     await click('System with exhausted planets');
@@ -221,8 +238,19 @@ describe('Diplomacy', () => {
     await click(/^System with exhausted planets/);
     await userEvent.click(tile(OTHER));
     expect(cardEntry().effects?.systemId).toBe(OTHER);
-    expect(cardEntry().effects?.readied).toHaveLength(2);
-    expect(screen.getByRole('group', { name: 'Ready planets' })).toHaveTextContent(first.textContent!);
+    expect(cardEntry().effects?.readied).toBeUndefined();
+  });
+
+  test('the primary does not offer Mecatol Rex as valid, but it can still be tapped', async () => {
+    const CENTRE = '0,0';
+    store().setTile(CENTRE, '112');
+    store().setPlanetControl('mrte', 'me');
+    await primary('Diplomacy');
+    await click('Choose a system with your planet');
+    expect(tile(CENTRE).getAttribute('class')).not.toContain('valid');
+    expect(tile(HOME).getAttribute('class')).toContain('valid');
+    await userEvent.click(tile(CENTRE));
+    expect(cardEntry().effects?.systemId).toBe(CENTRE);
   });
 
   test('the base game primary has no limit of two', async () => {
@@ -327,8 +355,8 @@ describe('Warfare', () => {
     await userEvent.click(tile(OTHER));
     expect(tacticalOf()).toMatchObject({ systemId: OTHER, free: true, fromCard: cardEntry().id });
     expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
-    expect(screen.getByText(/no tactic token is spent/)).toBeVisible();
-    expect(within(tile(OTHER) as HTMLElement).getByRole('img', { name: 'Command token' })).toBeInTheDocument();
+    expect(screen.getByText(/no command token goes down/)).toBeVisible();
+    expect(within(tile(OTHER) as HTMLElement).queryByRole('img', { name: 'Command token' })).toBeNull();
     await click('Done editing');
     expect(button(/^Tactical action without a token/)).toBeVisible();
     expect(button('Secondary')).toBeDisabled();
@@ -355,12 +383,73 @@ describe('Warfare', () => {
     expect(entries()).toHaveLength(1);
   });
 
-  test('tokens can be rearranged, below zero too', async () => {
+  test('with Thunder\'s Edge no token is free to distribute and no system is picked', async () => {
     await primary('Warfare');
-    await click('Remove one Tactic');
-    await click('Add one Fleet');
-    expect(cell('Tactic')).toHaveTextContent('3 → 2');
+    expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
+    await click(tileOf('Fleet'));
+    expect(cell('Fleet')).toHaveTextContent(/^Fleet3$/);
+    expect(screen.queryByRole('button', { name: /^Take a command token off/ })).toBeNull();
+  });
+
+  test('before Thunder\'s Edge there is no free tactical: a token comes off a chosen system and one is gained', async () => {
+    start({ expansions: ['pok'] });
+    const token = store().addEntry(1, { type: 'tactical', systemId: OTHER, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    await primary('Warfare');
+    expect(screen.queryByRole('button', { name: /tactical action without a token/ })).toBeNull();
+    expect(screen.queryByText(/Opens the usual flight/)).toBeNull();
+    expect(within(tile(OTHER) as HTMLElement).getByRole('img', { name: 'Command token' })).toBeInTheDocument();
+    await click('Take a command token off a system');
+    expect(tile(OTHER).getAttribute('class')).toContain('valid');
+    expect(tile(HOME).getAttribute('class')).not.toContain('valid');
+    await userEvent.click(tile(OTHER));
+    expect(cardEntry().effects?.systemId).toBe(OTHER);
+    expect(within(tile(OTHER) as HTMLElement).queryByRole('img', { name: 'Command token' })).toBeNull();
+    expect(entries().some(e => e.id === token)).toBe(true);
+    expect(screen.getByText('Distribute tokens: 1 left')).toBeVisible();
+    await click(tileOf('Fleet'));
     expect(cell('Fleet')).toHaveTextContent('3 → 4');
+  });
+
+  test('the shop is priced at the upgrades before the entry, not those of the round\'s end', async () => {
+    start({ faction: 'muaat' });
+    const all = loadPack(['pok', 'te']);
+    const cost = (upgraded: boolean) => unitStats('muaat', 'warsun', upgraded, all)?.cost;
+    expect(cost(true)).not.toBe(cost(false));
+    const id = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
+    store().addEntry(1, { type: 'secondary', card: 7, upgrades: ['warsun'] }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Secondary: Warfare' }));
+    await click('Production in the home system');
+    const warsun = within(screen.getByRole('dialog')).getByRole('button', { name: 'War Sun' });
+    expect(warsun).toHaveTextContent(String(cost(false)));
+    expect(warsun).not.toHaveTextContent(String(cost(true)));
+  });
+
+  test('ground units go to the planet chosen on the hex', async () => {
+    start({ faction: 'hacan' });
+    const hacan = loadPack(['pok', 'te']);
+    const [first, second] = hacan.tiles[hacan.factions.hacan.homeTile].planetIds;
+    const later = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${later}"]`)!).getByRole('button', { name: 'Secondary: Warfare' }));
+    await click('Production in the home system');
+    const shop = within(screen.getByRole('dialog'));
+    await userEvent.click(document.querySelector(`.stage-hex [role="button"][aria-label*="${hacan.planets[second].name}"]`)!);
+    await userEvent.click(shop.getByRole('button', { name: 'Infantry' }));
+    const entry = entries().find(e => e.id === later) as CardEntry;
+    expect(entry.effects?.production?.ground).toEqual({ [second]: { infantry: 1 } });
+    expect(entry.effects?.production?.ground?.[first]).toBeUndefined();
+  });
+
+  test('home production for Creuss opens the off-map home tile, not the gate', async () => {
+    const all = loadPack(['pok', 'te']);
+    start({ faction: 'ghost' });
+    store().setTile(HOME, all.factions.ghost.gateTile!);
+    await secondary('Warfare');
+    await click('Production in the home system');
+    expect(screen.getByRole('dialog', { name: `Tile ${all.tiles[all.factions.ghost.homeTile].number}` })).toBeVisible();
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Infantry' }));
+    expect(cardEntry().effects?.production?.systemId).toBe(all.factions.ghost.homeTile);
   });
 
   test('the secondary opens the shop for home, limited to units, and pays', async () => {
@@ -401,6 +490,26 @@ describe('Technology', () => {
     await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
     expect(screen.getByText(/Now: 4/)).toBeVisible();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
+  });
+});
+
+describe('entries saved before cards', () => {
+  test('their upgrades stay visible on any card and can be taken off', async () => {
+    const id = store().addEntry(1, { type: 'secondary', upgrades: ['carrier'] }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Secondary' }));
+    const row = () => within(screen.getByRole('group', { name: 'Upgrade' }));
+    expect(row().getByRole('button', { name: 'Carrier' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
+    expect(row().getByRole('button', { name: 'Carrier' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('picking Technology on an old secondary seeds the payment for its upgrades', async () => {
+    const id = store().addEntry(1, { type: 'secondary', upgrades: ['carrier'] }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Secondary' }));
+    await userEvent.click(cards().getByRole('button', { name: /Technology/ }));
+    expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
   });
 });
 

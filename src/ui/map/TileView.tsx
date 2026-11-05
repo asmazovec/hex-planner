@@ -9,7 +9,7 @@ import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { UNIT_ORDER } from '../units/unitOrder';
-import { hexPoints, hexToPixel } from './geometry';
+import { hexPoints, slotToPixel } from './geometry';
 import { opponentName } from './opponentName';
 
 export type Highlight = 'valid' | 'dim' | 'active';
@@ -126,10 +126,11 @@ export function TileView({
   slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, stage,
 }: TileViewProps) {
   const { t } = useTranslation();
-  const { x, y } = fracture ?? hexToPixel(...(slotKey.split(',').map(Number) as [number, number]));
+  const { x, y } = fracture ?? slotToPixel(slotKey);
   const mapValue = game.map[slotKey];
-  const tileId = fracture ? fracture.tileId : mapValue ? tileIdOf(game, slotKey) : '';
-  const tile = fracture || mapValue ? pack.tiles[tileId] : undefined;
+  // An off-map home is opened by its tile's own id.
+  const tileId = fracture ? fracture.tileId : mapValue ? tileIdOf(game, slotKey) : pack.tiles[slotKey] ? slotKey : '';
+  const tile = pack.tiles[tileId];
   const unknown = !fracture && mapValue !== undefined && !tile;
 
   const planets = fracture

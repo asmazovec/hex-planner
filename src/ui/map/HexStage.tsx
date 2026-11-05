@@ -11,7 +11,7 @@ import { useGame } from '../../state/gameStore';
 import { withCount, type TacticalEntry } from '../plan/tactical';
 import { tokenColours } from '../units/sprites';
 import { UNIT_ORDER } from '../units/unitOrder';
-import { hexToPixel } from './geometry';
+import { slotToPixel } from './geometry';
 import { opponentName } from './opponentName';
 import { PlanetDetails } from './PlanetDetails';
 import { TileView } from './TileView';
@@ -28,6 +28,8 @@ export interface PurchaseTarget {
   /** Structures this target holds: with `changeStructure` they stay in the entry and off the game. */
   structures?: { kind: StructureKind; planetId: string }[];
   changeStructure?: (kind: StructureKind, planetId: string, amount: 1 | -1) => void;
+  /** The upgrades my prices follow; defaults to the round's end. */
+  upgrades?: UnitId[];
 }
 
 export interface HexStageProps {
@@ -182,6 +184,10 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     else change('setup', kind, planetId, 1);
   };
 
+  const hasPlanned = (kind: StructureKind, planetId: string): boolean => (kind === 'pds'
+    ? (state.pds[planetId] ?? 0) > (game.pds[planetId] ?? 0)
+    : state.docks.includes(planetId) && !game.docks.includes(planetId));
+
   const onToken = ({ kind, owner, planet, key }: PlacedStack) => {
     const planetId = planetIdOf(planet);
     if (mode === 'build') {
@@ -199,6 +205,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       setNews(bumped(news, key, -1));
       return;
     }
+    // A stack holding a planned structure takes no tap: only its entry can take that one back, and the baseline stays.
+    if (isStructure(kind) && hasPlanned(kind, planetId ?? '')) return;
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
     else if (owner === 'me') change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
     else changeEnemy(owner, kind, planetId, -1);
@@ -248,7 +256,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
 
   const sideFaction = side === 'me' ? game.faction : seated.find(o => o.id === side)?.faction ?? '';
-  const sideUpgrades = side === 'me' ? beforeTactical?.upgrades ?? state.upgrades : game.upgrades.opponents[side] ?? [];
+  const sideUpgrades = side === 'me' ? onPurchase?.upgrades ?? beforeTactical?.upgrades ?? state.upgrades : game.upgrades.opponents[side] ?? [];
   const inBuild = mode === 'build';
   const units = UNIT_ORDER.filter(u => pack.units[u]);
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
@@ -269,7 +277,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
 
   const mapValue = game.map[slot];
-  const tileId = mapValue ? tileIdOf(game, slot) : '';
+  const tileId = mapValue ? tileIdOf(game, slot) : pack.tiles[slot] ? slot : '';
   const tile = pack.tiles[tileId];
   const rotation = mapValue?.split('@')[1];
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).map(name => t(`map.anomaly.${name}`)).join(', ');
@@ -282,7 +290,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     ...seated.map(o => ({ value: o.id, label: o.name, color: o.color })),
     { value: null, label: t('map.sheet.none') },
   ];
-  const { x, y } = hexToPixel(...(slot.split(',').map(Number) as [number, number]));
+  const { x, y } = slotToPixel(slot);
   const closeOutside = (e: MouseEvent) => { if (e.target === e.currentTarget) onClose(); };
 
   return (

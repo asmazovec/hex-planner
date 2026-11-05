@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
 import { project, stateBeforeEntry } from './project';
-import { cardChange, cardCost, cardsHeld, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, type CardEntry } from './strategy';
+import { withTeMecatol } from './mecatol';
+import { cardChange, cardCost, cardsHeld, costsStrategyToken, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -44,6 +45,24 @@ describe('the three modes', () => {
     expect(stateOf(game).warningsByEntry[third.id]).toEqual([{ code: 'shortStrategy', params: { have: 0 } }]);
   });
 
+  test('Leadership\'s secondary spends no strategy token and never warns about one; for a token its primary does', () => {
+    const none = secondary(1);
+    const spent = start([{ id: 'zero', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: { strategy: -2 } }, none]);
+    expect(stateOf(spent).state.strategy).toBe(0);
+    expect(warningsOf(spent, none)).toEqual([]);
+    expect(stateOf(start([forToken(1)])).state.strategy).toBe(1);
+    expect(costsStrategyToken(none)).toBe(false);
+  });
+
+  test('a bare secondary is charged and its upgrades apply at no resource cost', () => {
+    const bare = play({ type: 'secondary', upgrades: ['carrier'] });
+    const { state, warningsByEntry } = stateOf(start([bare]));
+    expect(state.strategy).toBe(1);
+    expect(state.upgrades).toEqual(['carrier']);
+    expect(warningsByEntry[bare.id]).toEqual([]);
+    expect(costsStrategyToken(bare)).toBe(true);
+  });
+
   test('a primary for a token behaves as a primary', () => {
     expect(stateOf(start([forToken(5)])).state.tradeGoods).toBe(3);
     expect(stateOf(start([secondary(5)])).state.tradeGoods).toBe(0);
@@ -77,6 +96,11 @@ describe('the second primary', () => {
     const game = start([first, second, third], { players: 3 });
     expect(warningsOf(game, second)).toEqual([]);
     expect(warningsOf(game, third)).toEqual(['primaryRepeated']);
+  });
+
+  test('at 3 players the same card played twice warns, though two cards are held', () => {
+    const again = primary(5);
+    expect(warningsOf(start([primary(5), again], { players: 3 }), again)).toEqual(['primaryRepeated']);
   });
 
   test('a primary for a token is not a repeat, and the count starts anew each round', () => {
@@ -152,6 +176,13 @@ describe('Diplomacy', () => {
     expect(state.tokensOnMap).toEqual([]);
   });
 
+  test('a planet readied can pay again later in the round without a warning', () => {
+    const later = secondary(6, { production: { systemId: HOME, units: { carrier: 1 } }, payment: pay([JOL]) });
+    const game = start([spendAll(), primary(2, { systemId: HOME, readied: [JOL] }), later]);
+    expect(codes(stateOf(game).warningsByEntry[later.id])).not.toContain('planetExhausted');
+    expect(stateOf(game).state.exhausted).toEqual([NAR, JOL]);
+  });
+
   test('a secondary costs its token and readies too', () => {
     const { state } = stateOf(start([spendAll(), secondary(2, { readied: [JOL, NAR] })]));
     expect(state.exhausted).toEqual([]);
@@ -216,16 +247,22 @@ describe('Warfare', () => {
     moves: [], landings: [], production: {}, payment: pay([]), ...(free ? { free: true } : {}),
   });
 
-  test('a free tactical spends no tactic token and still places the command token', () => {
+  test('a free tactical spends no tactic token and places no command token', () => {
     const { state } = stateOf(start([primary(6), tactical(true)]));
     expect(state.tactic).toBe(3);
-    expect(state.tokensOnMap).toEqual([OTHER]);
-    expect(stateOf(start([tactical(false)])).state.tactic).toBe(2);
+    expect(state.tokensOnMap).toEqual([]);
+    const paid = stateOf(start([tactical(false)])).state;
+    expect(paid.tactic).toBe(2);
+    expect(paid.tokensOnMap).toEqual([OTHER]);
   });
 
-  test('tokens can be rearranged, signed', () => {
-    const { state } = stateOf(start([primary(6, { tokens: { tactic: -1, fleet: 1 } })]));
-    expect([state.tactic, state.fleet]).toEqual([2, 4]);
+  test('before Thunder\'s Edge the primary lifts the token off the chosen system; the gained one is distributed', () => {
+    const lift = primary(6, { systemId: OTHER, tokens: { fleet: 1 } });
+    const { state } = stateOf(start([tactical(false), lift], { expansions: ['pok'] }));
+    expect(state.tokensOnMap).toEqual([]);
+    expect(state.fleet).toBe(4);
+    expect(stateOf(start([tactical(false), lift])).state.tokensOnMap).toEqual([OTHER]);
+    expect(stateOf(start([tactical(false), secondary(6, { systemId: OTHER })], { expansions: ['pok'] })).state.tokensOnMap).toEqual([OTHER]);
   });
 
   test('the secondary produces at home for a token and resources, and places no token', () => {
@@ -237,10 +274,26 @@ describe('Warfare', () => {
     expect(cardCost(entry, 'jolnar', [], pack)).toEqual({ kind: 'resources', amount: pack.units.carrier!.cost });
   });
 
-  test('the home slot is found by the home tile, or by the gate that stands for it', () => {
+  test('production at an off-map home lands on its planets, not at the gate', () => {
+    const home = pack.factions.ghost.homeTile;
+    const planet = pack.tiles[home].planetIds[0];
+    const entry = secondary(6, { production: { systemId: home, units: { infantry: 2 } } });
+    const { state } = stateOf(start([entry], { extra: { faction: 'ghost', map: { '2,2': pack.factions.ghost.gateTile! } } }));
+    expect(state.ground[planet]?.infantry).toBe(2);
+    expect(state.ground['2,2']).toBeUndefined();
+  });
+
+  test('ground units go to the planet they were bought on, and the rest to the first I control', () => {
+    const entry = secondary(6, { production: { systemId: HOME, units: { infantry: 3 }, ground: { [NAR]: { infantry: 2 } } } });
+    const { state } = stateOf(start([entry]));
+    expect(state.ground[NAR]?.infantry).toBe(2);
+    expect(state.ground[JOL]?.infantry).toBe(1);
+  });
+
+  test('the home slot is the home tile: found on the map, or by its own id when only the gate stands there', () => {
     expect(homeSlot(start([]), pack)).toBe(HOME);
     const creuss = start([], { extra: { faction: 'ghost', map: { '2,2': pack.factions.ghost.gateTile! } } });
-    expect(homeSlot(creuss, pack)).toBe('2,2');
+    expect(homeSlot(creuss, pack)).toBe(pack.factions.ghost.homeTile);
     expect(homeSlot(start([], { extra: { map: {} } }), pack)).toBeNull();
   });
 });
@@ -319,9 +372,39 @@ describe('choices and changes', () => {
   });
 
   test('withProduction adds and takes back, on the one system', () => {
-    const one = withProduction({}, HOME, 'carrier', 1);
+    const one = withProduction({}, HOME, 'carrier', null, 1);
     expect(one).toEqual({ production: { systemId: HOME, units: { carrier: 1 } } });
-    expect(withProduction(one, HOME, 'carrier', -1).production).toBeUndefined();
+    expect(withProduction(one, HOME, 'carrier', null, -1).production).toBeUndefined();
+  });
+
+  test('withProduction keeps ground units by planet and takes them back from there', () => {
+    const two = withProduction(withProduction({}, HOME, 'infantry', NAR, 1), HOME, 'infantry', JOL, 1);
+    expect(two.production).toEqual({ systemId: HOME, units: { infantry: 2 }, ground: { [NAR]: { infantry: 1 }, [JOL]: { infantry: 1 } } });
+    expect(withProduction(two, HOME, 'infantry', NAR, -1).production).toEqual({ systemId: HOME, units: { infantry: 1 }, ground: { [JOL]: { infantry: 1 } } });
+  });
+
+  test('a new system clears Diplomacy\'s readied planets and the structures of Construction\'s secondary before Thunder\'s Edge', () => {
+    const diplomacy = primary(2, { systemId: HOME, readied: [JOL] });
+    expect(withSystem(diplomacy, OTHER, ['pok', 'te'])).toEqual({ systemId: OTHER });
+    expect(withSystem(diplomacy, HOME, ['pok', 'te'])).toEqual({ systemId: HOME, readied: [JOL] });
+    const built = { systemId: HOME, structures: [{ kind: 'pds' as const, planetId: JOL }] };
+    expect(withSystem(secondary(4, built), OTHER, ['pok'])).toEqual({ systemId: OTHER });
+    expect(withSystem(secondary(4, built), OTHER, ['pok', 'te'])).toEqual({ ...built, systemId: OTHER });
+    expect(withSystem(primary(4, built), OTHER, ['pok'])).toEqual({ ...built, systemId: OTHER });
+  });
+
+  test('Thunder\'s Edge moves what a card names on Mecatol Rex to the new planet', () => {
+    const card = primary(4, {
+      readied: ['mr'], payment: pay(['mr', JOL]), structures: [{ kind: 'pds', planetId: 'mr' }],
+      production: { systemId: '0,0', units: { infantry: 1 }, ground: { mr: { infantry: 1 } } },
+    });
+    const moved = withTeMecatol(start([card])).plans[0].rounds[0].entries[0] as CardEntry;
+    expect(moved.effects).toMatchObject({
+      readied: ['mrte'], payment: pay(['mrte', JOL]), structures: [{ kind: 'pds', planetId: 'mrte' }],
+      production: { ground: { mrte: { infantry: 1 } } },
+    });
+    const bare = play({ type: 'secondary' });
+    expect(withTeMecatol(start([bare])).plans[0].rounds[0].entries[0]).toEqual(bare);
   });
 
   test('withStructure adds and takes back one', () => {

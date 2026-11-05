@@ -210,7 +210,7 @@
       "noDock": "No space dock in this system.",
       "warnings": "Warnings",
       "openShop": "Open the shop",
-      "freeToken": "Warfare: no tactic token is spent, the command token still goes in the system.",
+      "freeToken": "Warfare: no tactic token is spent and no command token goes down.",
       "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent."
     },
     "picker": {
@@ -319,7 +319,9 @@
       "techSecondary": "Costs 4 resources per technology. Now: {{n}}. The app does not track other technologies.",
       "mecatol": "I control Mecatol Rex: +1 point",
       "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",
-      "imperialSecondary": "Draw a secret objective."
+      "imperialSecondary": "Draw a secret objective.",
+      "tokenNote": "A tap adds a token. With none free, the tile resets.",
+      "liftToken": "Take a command token off a system"
     }
   },
   "expedition": {

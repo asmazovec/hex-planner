@@ -11,11 +11,13 @@ import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
 import { Stepper } from './Stepper';
 import { systemName } from './tactical';
+import { TokenTiles } from './TokenTiles';
 import { WarningText } from './WarningText';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
-const TOKEN_FIELDS = ['tactic', 'fleet', 'strategy'] as const;
+/** The tokens a player takes in the status phase; abilities that give more go through a manual adjustment. */
+const STATUS_TOKENS = 2;
 
 export interface EntryListProps {
   game: Game;
@@ -101,14 +103,10 @@ function StatusFields({ entry, game, pack, state }: {
   const gains = entry.opponentVp ?? {};
   return (
     <>
-      <div className="status-tokens">
-        {TOKEN_FIELDS.map(field => (
-          <Stepper
-            key={field} name={t(`plan.summary.${field}`)} value={entry[field]} min={0}
-            onChange={value => updateEntry(entry.id, { [field]: value })}
-          />
-        ))}
-      </div>
+      <TokenTiles
+        free={STATUS_TOKENS} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
+        onChange={values => updateEntry(entry.id, values)}
+      />
       <h5 className="status-points">{t('plan.entries.roundPoints')}</h5>
       {playersOf(game).map((player, index) => {
         const faction = pack.factions[player.faction];

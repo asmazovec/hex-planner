@@ -449,6 +449,24 @@ describe('build', () => {
     expect(game().docks).not.toContain(quann());
   });
 
+  test('in setup a planned structure takes no tap, and the baseline PDS stays', async () => {
+    useGame.getState().setPds(quann(), 1);
+    useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'pds', planetId: quann() }] } }, 'action');
+    open({});
+    await userEvent.click(document.querySelector('[data-stack="me|pds|0"] .token-hit')!);
+    expect(game().pds[quann()]).toBe(1);
+    const planned = entries().find(e => e.type === 'strategic') as Extract<Entry, { type: 'strategic' }>;
+    expect(planned.effects?.structures).toHaveLength(1);
+  });
+
+  test('in setup a planned dock takes no tap; a baseline one still comes off', async () => {
+    useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'spacedock', planetId: quann() }] } }, 'action');
+    const before = [...game().docks];
+    open({});
+    await userEvent.click(document.querySelector('[data-stack="me|spacedock|0"] .token-hit')!);
+    expect(game().docks).toEqual(before);
+  });
+
   test('a later caller can route purchases into its own entry', async () => {
     const change = vi.fn();
     const { container } = open({ initialMode: 'build', onPurchase: { bought: [{ unit: 'carrier', planetId: null, count: 1 }], change } });

@@ -26,7 +26,7 @@ const cardPlay = {
     speaker: z.string().optional(),
     freeSecondary: z.array(z.string()).optional(),
     mecatol: z.boolean().optional(),
-    production: z.object({ systemId: z.string(), units: unitCounts }).optional(),
+    production: z.object({ systemId: z.string(), units: unitCounts, ground: z.record(z.string(), unitCounts).optional() }).optional(),
     structures: z.array(z.object({ kind: z.enum(['pds', 'spacedock']), planetId: z.string() })).optional(),
     payment: payment.optional(),
   }).optional(),
