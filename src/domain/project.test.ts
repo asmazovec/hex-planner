@@ -171,6 +171,47 @@ describe('project', () => {
     });
   });
 
+  describe('landing is counted against what arrived', () => {
+    const landing = (planetId: string, n: number, kind: UnitId = 'infantry') => ({ planetId, units: { [kind]: n } });
+    const landWarnings = (w: Warning[] | undefined) => (w ?? []).filter(x => x.code === 'landingOverLimit' || x.code === 'unitsMissing');
+
+    test('within the limit gives no warning, units already in space count', () => {
+      const g = gameWith([setup('B', { infantry: 2 }), withId('l', entry(tactical({ landings: [landing('lazar', 2)] })))]);
+      expect(landWarnings(run(g).warningsByEntry.l)).toEqual([]);
+    });
+
+    test('over the limit across two planets: one warning with totals, only what exists lands, in order', () => {
+      const g = gameWith([ // Sol starts with two infantry at home
+        withId('l', entry(tactical({ systemId: 'H', landings: [landing('jord', 2), landing('arc', 1)] })))]);
+      const r = run(g);
+      expect(landWarnings(r.warningsByEntry.l)).toEqual([{ code: 'landingOverLimit', params: { unit: 'infantry', wanted: 3, available: 2 } }]);
+      expect(r.state.ground.jord.infantry).toBe(2);
+      expect(r.state.ground.arc?.infantry).toBeUndefined();
+    });
+
+    test('moves and pickups from planets count as arrived', () => {
+      const g = gameWith([setup('A', { infantry: 1 }),
+        withId('p', entry(tactical({ systemId: 'H', landings: [landing('jord', 1)] }), 'strategy')),
+        withId('l', entry(tactical({
+          moves: [{ from: 'A', units: { infantry: 1 } }, { from: 'jord', units: { infantry: 1 } }],
+          landings: [landing('lazar', 2)],
+        })))]);
+      expect(landWarnings(run(g).warningsByEntry.l)).toEqual([]);
+    });
+
+    test('units produced in the same entry are not available', () => {
+      const g = gameWith([withId('l', entry(tactical({
+        production: { infantry: 1 }, landings: [landing('lazar', 1)],
+      })))]);
+      expect(landWarnings(run(g).warningsByEntry.l)).toEqual([{ code: 'landingOverLimit', params: { unit: 'infantry', wanted: 1, available: 0 } }]);
+    });
+
+    test('moves still report unitsMissing', () => {
+      const g = gameWith([move('e1', 'A', { infantry: 1 })]);
+      expect(codes(run(g).warningsByEntry.e1)).toContain('unitsMissing');
+    });
+  });
+
   test('высадка меняет контроль и переносит юниты на планету', () => {
     const g = gameWith([setup('B', { infantry: 2 }),
       entry(tactical({ landings: [{ planetId: 'lazar', units: { infantry: 2 } }] }))]);

@@ -182,6 +182,7 @@ export interface GameState {
 }
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
-  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'sliceTaken';
+  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
+  | 'sliceTaken';
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

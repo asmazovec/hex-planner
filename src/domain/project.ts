@@ -183,8 +183,18 @@ function applyTactical(
       warnings.push({ code: 'capacityGroup', params: { from, load: group.load, capacity: group.capacity } });
     }
   }
+  const wanted: UnitCounts = {};
   for (const landing of entry.landings) {
-    const landed = take(state.systems, target, landing.units, warnings);
+    for (const id of unitIds(landing.units)) wanted[id] = (wanted[id] ?? 0) + (landing.units[id] ?? 0);
+  }
+  for (const id of unitIds(wanted)) {
+    const available = state.systems[target]?.[id] ?? 0;
+    const total = wanted[id] ?? 0;
+    if (total > available) warnings.push({ code: 'landingOverLimit', params: { unit: id, wanted: total, available } });
+  }
+  for (const landing of entry.landings) {
+    // The shortfall is already reported as landingOverLimit, so the generic warning is dropped here.
+    const landed = take(state.systems, target, landing.units, []);
     if (unitIds(landed).length === 0) continue;
     add(state.ground, landing.planetId, landed);
     // A planet newly taken enters exhausted, so it cannot pay within this entry.

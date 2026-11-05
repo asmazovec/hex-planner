@@ -191,12 +191,10 @@
       "addSource": "Add source",
       "landing": "Landing (optional)",
       "landingOn": "Landing on {{planet}}",
-      "toLand": "In the system: {{list}}",
-      "nothingToLand": "no ground units",
+      "landingCount": "{{unit}}: {{available}}, assigned {{assigned}}",
       "production": "Build (optional)",
       "build": "Build",
       "noDock": "No space dock in this system.",
-      "noPlanets": "No planets in this system.",
       "warnings": "Warnings",
       "price": "cost {{cost}}"
     },
@@ -240,6 +238,7 @@
       "capacitySystem": "System {{system}} is over capacity: {{load}} of {{capacity}}.",
       "fleetPool": "System {{system}} is over the fleet pool: {{ships}} ships, {{fleet}} tokens.",
       "unitsMissing": "{{where}} is missing {{missing}} × {{unit}}.",
+      "landingOverLimit": "Landing needs {{wanted}} × {{unit}}, but only {{available}} arrived.",
       "sliceTaken": "Expedition part \"{{slice}}\" is already taken."
     }
   },

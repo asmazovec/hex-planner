@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -118,6 +118,43 @@ test('landing puts ground units on a planet and changes its control', async () =
   await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
   expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 1 } }]);
   expect(within(tile(TARGET) as HTMLElement).getByRole('group', { name: /Quann: .*yours/ })).toBeInTheDocument();
+});
+
+test('landing is hidden in a system without planets', async () => {
+  useGame.getState().setTile(TARGET, '39');
+  await chooseSystem();
+  expect(screen.queryByText('Landing (optional)')).toBeNull();
+  expect(screen.queryByText(/No planets/)).toBeNull();
+});
+
+test('landing is hidden while no ground units are in the system', async () => {
+  await chooseSystem();
+  expect(screen.getByRole('button', { name: 'Add source' })).toBeVisible();
+  expect(screen.queryByText('Landing (optional)')).toBeNull();
+});
+
+test('landing shows counts of what arrived and what is assigned; no stepper for a unit that is absent', async () => {
+  await chooseSystem();
+  await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
+  await userEvent.click(tile(HOME));
+  await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+  expect(screen.getByText('Landing (optional)')).toBeVisible();
+  expect(screen.getByText('Infantry: 2, assigned 0')).toBeVisible();
+  const planet = screen.getByRole('group', { name: 'Landing on Quann' });
+  expect(within(planet).queryByRole('group', { name: 'Mech' })).toBeNull();
+  await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
+  expect(screen.getByText('Infantry: 2, assigned 1')).toBeVisible();
+});
+
+test('a landing whose units are gone stays visible, can go over the limit, and warns', async () => {
+  await chooseSystem();
+  act(() => useGame.getState().updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
+  expect(screen.getByText('Landing (optional)')).toBeVisible();
+  expect(screen.getByText('Infantry: 0, assigned 1')).toBeVisible();
+  const planet = screen.getByRole('group', { name: 'Landing on Quann' });
+  await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
+  expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
+  expect(screen.getByText('Landing needs 2 × Infantry, but only 0 arrived.')).toBeVisible();
 });
 
 test('production is unavailable without a dock', async () => {

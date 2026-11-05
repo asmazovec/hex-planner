@@ -46,12 +46,10 @@ export function TacticalEditor({
 
   const groundUnits = (['infantry', 'mech'] as UnitId[]).filter(u => pack.units[u]);
   const here = addUnits(before.systems[target ?? ''] ?? {}, unitsIn(entry.moves));
-  const toLand: UnitCounts = {};
   const landed = unitsIn(entry.landings);
-  for (const unit of groundUnits) {
-    const left = (here[unit] ?? 0) - (landed[unit] ?? 0);
-    if (left !== 0) toLand[unit] = left;
-  }
+  /** Ground unit types that arrived or are already assigned; only these get a count and steppers. */
+  const landable = groundUnits.filter(u => (here[u] ?? 0) > 0 || (landed[u] ?? 0) > 0);
+  const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0);
 
   const setLanding = (planetId: string, unit: UnitId, count: number) => {
     const current = entry.landings.find(l => l.planetId === planetId)?.units ?? {};
@@ -104,27 +102,28 @@ export function TacticalEditor({
             />
           )}
 
-          <details className="editor-section" open={entry.landings.length > 0 || hasUnits(toLand) || undefined}>
-            <summary>{t('plan.tactical.landing')}</summary>
-            {planets.length === 0 && <p className="muted">{t('plan.tactical.noPlanets')}</p>}
-            {planets.length > 0 && (
-              <span className="muted">
-                {t('plan.tactical.toLand', { list: unitText(toLand) || t('plan.tactical.nothingToLand') })}
-              </span>
-            )}
-            {planets.map(planet => (
-              <div key={planet.id} role="group" aria-label={t('plan.tactical.landingOn', { planet: planet.name })}>
-                <strong>{planet.name}</strong>
-                {groundUnits.map(unit => (
-                  <Stepper
-                    key={unit} name={t(`unit.${unit}`)} min={0}
-                    value={entry.landings.find(l => l.planetId === planet.id)?.units[unit] ?? 0}
-                    onChange={count => setLanding(planet.id, unit, count)}
-                  />
-                ))}
-              </div>
-            ))}
-          </details>
+          {showLanding && (
+            <details className="editor-section" open>
+              <summary>{t('plan.tactical.landing')}</summary>
+              {landable.map(unit => (
+                <span key={unit} className="muted">
+                  {t('plan.tactical.landingCount', { unit: t(`unit.${unit}`), available: here[unit] ?? 0, assigned: landed[unit] ?? 0 })}
+                </span>
+              ))}
+              {planets.map(planet => (
+                <div key={planet.id} role="group" aria-label={t('plan.tactical.landingOn', { planet: planet.name })}>
+                  <strong>{planet.name}</strong>
+                  {landable.map(unit => (
+                    <Stepper
+                      key={unit} name={t(`unit.${unit}`)} min={0}
+                      value={entry.landings.find(l => l.planetId === planet.id)?.units[unit] ?? 0}
+                      onChange={count => setLanding(planet.id, unit, count)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </details>
+          )}
 
           {!hasDock && <p className="editor-section muted">{t('plan.tactical.noDock')}</p>}
           {hasDock && (

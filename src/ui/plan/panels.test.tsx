@@ -159,6 +159,7 @@ const CASES: Record<WarningCode, Warning['params']> = {
   capacitySystem: { systemId: '1,0', load: 5, capacity: 4 },
   fleetPool: { systemId: '1,0', ships: 4, fleet: 3 },
   unitsMissing: { where: '1,0', unit: 'carrier', missing: 1 },
+  landingOverLimit: { unit: 'infantry', wanted: 3, available: 2 },
   sliceTaken: { sliceId: 'res5' },
 };
 
@@ -173,6 +174,7 @@ test.each(['en', 'ru'] as const)('every warning code has %s text, with names and
     if (code === 'planetExhausted') expect(container.textContent).toContain('Nestphar');
     if (code === 'capacityGroup') expect(container.textContent).toContain('5');
     if (code === 'unitsMissing') expect(container.textContent).toContain(lang === 'en' ? 'Carrier' : 'Транспортник');
+    if (code === 'landingOverLimit') expect(container.textContent).toMatch(lang === 'en' ? /Infantry.*3.*2|3.*Infantry.*2/ : /Пехота.*3.*2/);
     unmount();
   }
 });

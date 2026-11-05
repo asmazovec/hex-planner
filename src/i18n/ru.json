@@ -191,12 +191,10 @@
       "addSource": "Добавить источник",
       "landing": "Высадка (по желанию)",
       "landingOn": "Высадка на {{planet}}",
-      "toLand": "В системе: {{list}}",
-      "nothingToLand": "наземных юнитов нет",
+      "landingCount": "{{unit}}: {{available}}, распределено {{assigned}}",
       "production": "Постройка (по желанию)",
       "build": "Постройка",
       "noDock": "В этой системе нет космодока.",
-      "noPlanets": "В этой системе нет планет.",
       "warnings": "Предупреждения",
       "price": "цена {{cost}}"
     },
@@ -240,6 +238,7 @@
       "capacitySystem": "Система {{system}} превышает вместимость: {{load}} из {{capacity}}.",
       "fleetPool": "Система {{system}} превышает резерв флота: кораблей {{ships}}, жетонов {{fleet}}.",
       "unitsMissing": "{{where}}: не хватает {{unit}} × {{missing}}.",
+      "landingOverLimit": "{{unit}}: не хватает для высадки, нужно {{wanted}}, прибыло {{available}}.",
       "sliceTaken": "Часть экспедиции «{{slice}}» уже занята."
     }
   },
