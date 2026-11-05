@@ -74,7 +74,17 @@
     "fractureTile": "Система Излома {{n}}",
     "ingress": "Жетон входа",
     "fractureGroup": "Системы Излома",
-    "fractureLabel": "Излом"
+    "fractureLabel": "Излом",
+    "anomaly": {
+      "rift": "Грав. разлом",
+      "nebula": "Туманность",
+      "supernova": "Сверхновая",
+      "asteroid": "Астероиды",
+      "scar": "Энтроп. шрам"
+    },
+    "hyperlane": "Гиперлиния",
+    "wormhole": "Червоточина",
+    "emptySystem": "Пусто"
   },
   "builder": {
     "title": "Задать тайл",

@@ -1,9 +1,10 @@
-import { useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react';
+import { useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
 import type { DataPack, Game, GameState } from '../../domain/types';
 import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
+import { TilePopover } from './TilePopover';
 import { TileView, type Highlight } from './TileView';
 import type { ArrowPreview } from './useArrowDrag';
 import { usePanZoom } from './usePanZoom';
@@ -22,6 +23,9 @@ export interface HexMapProps {
   selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
+  /** Shown in a window beside the selected tile. */
+  popover?: ReactNode;
+  onPopoverClose?: () => void;
 }
 
 /**
@@ -83,10 +87,11 @@ function PreviewLine({ start, preview }: { start: { x: number; y: number }; prev
 }
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown,
+  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown, popover, onPopoverClose,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
+  const areaRef = useRef<HTMLDivElement>(null);
 
   const slotKeys = useMemo(() => {
     const template = pack.templates.find(tpl => tpl.playerCount === game.playerCount);
@@ -108,14 +113,25 @@ export function HexMap({
     return fractureLayout(fractureIds, mapRect, seatKey === undefined ? null : hexToPixel(parseKey(seatKey).q, parseKey(seatKey).r));
   }, [fractureIds, mapRect, seatKey]);
   const bounds = fracture?.bounds ?? mapRect;
-  const { view, handlers, reset } = usePanZoom(bounds, svgRef);
+  const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose);
   const center = (key: string) => {
     const { q, r } = parseKey(key);
     return hexToPixel(q, r);
   };
+  // The view scales around the middle of the map.
+  const midX = bounds.x + bounds.width / 2;
+  const midY = bounds.y + bounds.height / 2;
+  // The tiles stay as they are on every frame of a movement; only the transform around them changes.
+  const content = useMemo(() => slotKeys.map(key => (
+    <TileView
+      key={key} slotKey={key} pack={pack} game={game} state={state}
+      highlight={highlights?.[key]} selected={selectedId === key} ingress={game.fracture.ingress.includes(key)}
+      onTap={onTileTap} onPointerDown={onTilePointerDown}
+    />
+  )), [slotKeys, pack, game, state, highlights, selectedId, onTileTap, onTilePointerDown]);
 
   return (
-    <div className="hexmap-wrap">
+    <div className="hexmap-wrap" ref={areaRef}>
     <svg
       ref={svgRef} className="hexmap" role="group" aria-label={t('map.label')}
       viewBox={`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`}
@@ -129,14 +145,8 @@ export function HexMap({
           <path d="M0,0 L10,5 L0,10 Z" className="arrow-head arrow-warn" />
         </marker>
       </defs>
-      <g transform={`translate(${view.x} ${view.y}) scale(${view.scale})`}>
-        {slotKeys.map(key => (
-          <TileView
-            key={key} slotKey={key} pack={pack} game={game} state={state}
-            highlight={highlights?.[key]} selected={selectedId === key} ingress={game.fracture.ingress.includes(key)}
-            onTap={onTileTap} onPointerDown={onTilePointerDown}
-          />
-        ))}
+      <g transform={`translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`}>
+        {content}
         {fracture && (
           <g role="group" aria-label={t('map.fractureGroup')} className="fracture-group">
             <text x={fracture.labelX} y={fracture.labelY} className="fracture-label">{t('map.fractureLabel')}</text>
@@ -164,6 +174,9 @@ export function HexMap({
       </g>
     </svg>
     <button type="button" className="map-reset" onClick={reset}>{t('map.resetView')}</button>
+    {selectedId && popover && onPopoverClose && (
+      <TilePopover slot={selectedId} view={view} areaRef={areaRef} onClose={onPopoverClose}>{popover}</TilePopover>
+    )}
     </div>
   );
 }

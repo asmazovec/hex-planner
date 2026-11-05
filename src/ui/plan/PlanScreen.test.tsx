@@ -48,7 +48,7 @@ test('without a game it asks for one', () => {
 
 test('choosing a system creates the entry, spends a token and marks the tile', async () => {
   render(<PlanScreen />);
-  expect(cell('Tactic')).toHaveTextContent('3 → 3');
+  expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
   await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
   expect(entries()).toHaveLength(0);

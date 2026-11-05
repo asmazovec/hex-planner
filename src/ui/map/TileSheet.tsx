@@ -9,13 +9,12 @@ export interface TileSheetProps {
   pack: DataPack;
   game: Game;
   state: GameState;
-  onClose: () => void;
 }
 
 type Owner = 'me' | 'enemy' | null;
 
 /** Details of one tile, with manual edits of enemy units, planet control and space docks. */
-export function TileSheet({ slotKey, pack, game, state, onClose }: TileSheetProps) {
+export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
   const { t } = useTranslation();
   const setEnemyUnits = useGame(s => s.setEnemyUnits);
   const setPlanetControl = useGame(s => s.setPlanetControl);
@@ -27,7 +26,7 @@ export function TileSheet({ slotKey, pack, game, state, onClose }: TileSheetProp
   const tile = mapValue ? pack.tiles[tileId] : undefined;
   const title = mapValue ? t('map.sheet.title', { number: tile?.number ?? tileId }) : t('map.emptySlot');
   const planets = systemPlanets(game, slotKey, pack);
-  const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).join(', ');
+  const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).map(name => t(`map.anomaly.${name}`)).join(', ');
   const enemy = game.enemyUnits[slotKey] ?? {};
   const unitIds = UNIT_ORDER.filter(u => pack.units[u]);
   const unitName = (u: UnitId): string => t(`unit.${u}`);
@@ -39,10 +38,7 @@ export function TileSheet({ slotKey, pack, game, state, onClose }: TileSheetProp
 
   return (
     <aside className="panel tile-sheet" aria-label={title}>
-      <div className="row">
-        <h2>{title}</h2>
-        <button type="button" onClick={onClose}>{t('map.sheet.close')}</button>
-      </div>
+      <h2>{title}</h2>
       {!mapValue && <p className="muted">{t('map.sheet.empty')}</p>}
       {mapValue && !tile && <p className="muted">{t('map.sheet.unknown')}</p>}
       {rotation && <p className="muted">{t('map.sheet.rotation', { deg: Number(rotation) * 60 })}</p>}
@@ -58,11 +54,11 @@ export function TileSheet({ slotKey, pack, game, state, onClose }: TileSheetProp
           <div key={planet.id} role="group" aria-label={planet.name} className="sheet-planet">
             <strong>{planet.name}</strong>
             <span className="muted">
-              {planet.resources}/{planet.influence}
+              <span className="value-resources">{planet.resources}</span>/<span className="value-influence">{planet.influence}</span>
               {' · '}
               {state.exhausted.includes(planet.id) ? t('map.sheet.exhausted') : t('map.sheet.ready')}
             </span>
-            <div className="row" role="group" aria-label={t('map.sheet.controlLabel', { planet: planet.name })}>
+            <div className="segment" role="group" aria-label={t('map.sheet.controlLabel', { planet: planet.name })}>
               {owners.map(o => (
                 <button
                   key={String(o.value)} type="button" aria-pressed={owner === o.value}

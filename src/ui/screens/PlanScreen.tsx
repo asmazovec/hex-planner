@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
@@ -103,6 +103,7 @@ export function PlanScreen() {
   };
 
   const arrow = useArrowDrag({ activeSystem, onComplete: openSource, onCancel: () => undefined });
+  const closeSheet = useCallback(() => setSheet(null), []);
 
   if (!game || !plan || !round) {
     return <section className="screen"><p className="muted">{t('plan.noGame')}</p></section>;
@@ -169,7 +170,6 @@ export function PlanScreen() {
       return;
     }
     setSheet(slot);
-    setView('plan');
   };
 
   const toggleBuilding = () => {
@@ -215,21 +215,27 @@ export function PlanScreen() {
 
   return (
     <section className="plan-screen" data-view={view}>
-      <PlanTabs
-        game={game} roundNo={round.number} onSelectPlan={closePanels}
-        onSelectRound={number => { closePanels(); setRoundNo(number); }}
-        onAddRound={() => {
-          closePanels();
-          addRound();
-          setRoundNo(Math.max(...plan.rounds.map(r => r.number)) + 1);
-        }}
-      />
-      <SummaryBar now={now.state} forecast={forecast.state} pack={pack} />
+      <header className="plan-header">
+        <PlanTabs
+          game={game} roundNo={round.number} onSelectPlan={closePanels}
+          onSelectRound={number => { closePanels(); setRoundNo(number); }}
+          onAddRound={() => {
+            closePanels();
+            addRound();
+            setRoundNo(Math.max(...plan.rounds.map(r => r.number)) + 1);
+          }}
+        />
+        <SummaryBar now={now.state} forecast={forecast.state} pack={pack} />
+      </header>
       <div className="plan-body">
         <div className="plan-map">
           <HexMap
             game={game} state={shownState} pack={pack} highlights={highlights} arrows={[...arrows.values()]}
             arrowPreview={arrow.preview} selectedId={sheet} onTileTap={onTileTap} onTilePointerDown={arrow.onTilePointerDown}
+            onPopoverClose={closeSheet}
+            popover={sheet !== null && (building
+              ? <MapBuilderPanel slot={sheet} game={game} pack={pack} state={shownState} />
+              : <TileSheet slotKey={sheet} pack={pack} game={game} state={shownState} />)}
           />
           <div className="map-tools">
             <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
@@ -245,19 +251,13 @@ export function PlanScreen() {
         </div>
         <div className="plan-panel">
           <div className="plan-scroll">
-            {sheet !== null && building && (
-              <MapBuilderPanel slot={sheet} game={game} pack={pack} state={shownState} onClose={() => setSheet(null)} />
-            )}
-            {sheet !== null && !building && (
-              <TileSheet slotKey={sheet} pack={pack} game={game} state={shownState} onClose={() => setSheet(null)} />
-            )}
-            {sheet === null && picking && (
+            {picking && (
               <div className="panel-head">
                 <h2>{t('plan.tactical.title')}</h2>
                 <button type="button" onClick={() => setEditing(null)}>{t('plan.tactical.cancel')}</button>
               </div>
             )}
-            {sheet === null && session && entry && (
+            {session && entry && (
               <TacticalEditor
                 game={game} pack={pack} entry={entry} before={stateBeforeEntry(game, plan, entry.id, pack)}
                 warnings={forecast.warningsByEntry[entry.id] ?? []} addingSource={session.addingSource}
@@ -272,7 +272,7 @@ export function PlanScreen() {
                 onDone={() => setEditing(null)}
               />
             )}
-            {sheet === null && !session && (
+            {!session && (
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} round={round} />
@@ -295,7 +295,7 @@ export function PlanScreen() {
               </>
             )}
           </div>
-          {sheet === null && !session && <div className="plan-footer"><ActionMenu onPick={onPick} /></div>}
+          {!session && <div className="plan-footer"><ActionMenu onPick={onPick} /></div>}
         </div>
       </div>
       <div className="plan-switch" role="group" aria-label={t('plan.views')}>

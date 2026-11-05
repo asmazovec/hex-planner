@@ -74,7 +74,17 @@
     "fractureTile": "Fracture system {{n}}",
     "ingress": "Ingress token",
     "fractureGroup": "Fracture systems",
-    "fractureLabel": "Fracture"
+    "fractureLabel": "Fracture",
+    "anomaly": {
+      "rift": "Gravity rift",
+      "nebula": "Nebula",
+      "supernova": "Supernova",
+      "asteroid": "Asteroids",
+      "scar": "Entropic scar"
+    },
+    "hyperlane": "Hyperlane",
+    "wormhole": "Wormhole",
+    "emptySystem": "Empty"
   },
   "builder": {
     "title": "Set the tile",

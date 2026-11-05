@@ -105,7 +105,7 @@ test('a fixed template slot can be replaced and cleared, and Game.map overrides 
   expect(hex()).toHaveAccessibleName('Empty slot');
 });
 
-test('the side panel has one Close button, and tile details appear only once the slot has a tile', async () => {
+test('the popover has one Close button, and tile details appear only once the slot has a tile', async () => {
   await tapEmptySlot();
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
   expect(screen.queryByText('Enemy units')).toBeNull();
@@ -127,13 +127,47 @@ test('a new game with an empty map opens in build mode; a map with tiles does no
   expect(screen.queryByLabelText('Tile number')).toBeNull();
 });
 
-test('the plan stays beside the map while building, until a slot is tapped', async () => {
+test('the plan stays beside the map while the tile popover is open, and Close closes it', async () => {
   renderBuilding();
-  expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
   await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
-  expect(screen.queryByRole('button', { name: 'Add action' })).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(screen.getByLabelText('Tile number')).toBeVisible();
   expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(screen.queryByLabelText('Tile number')).toBeNull();
+});
+
+test('a tap beside the popover closes it: empty map space and outside the map, not a pan or a press inside', async () => {
+  renderBuilding();
+  const input = () => screen.queryByLabelText('Tile number');
+  const svg = screen.getByRole('group', { name: 'Map' });
+  const open = () => userEvent.click(document.querySelector('[data-slot="1,0"]')!);
+
+  await open();
+  fireEvent.pointerDown(input()!, { pointerId: 1, button: 0 });
+  expect(input()).not.toBeNull();
+
+  fireEvent.pointerDown(svg, { pointerId: 1, button: 0, clientX: 5, clientY: 5 });
+  fireEvent.pointerMove(svg, { pointerId: 1, clientX: 60, clientY: 40 });
+  fireEvent.pointerUp(svg, { pointerId: 1, clientX: 60, clientY: 40 });
+  expect(input()).not.toBeNull();
+
+  fireEvent.pointerDown(svg, { pointerId: 1, button: 0, clientX: 5, clientY: 5 });
+  fireEvent.pointerUp(svg, { pointerId: 1, clientX: 5, clientY: 5 });
+  expect(input()).toBeNull();
+
+  await open();
+  expect(input()).not.toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  expect(input()).toBeNull();
+});
+
+test('a tap on another tile moves the popover there', async () => {
+  useGame.getState().setTile('2,0', '25');
+  renderBuilding();
+  await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
+  expect(screen.queryByRole('complementary', { name: 'Tile 25' })).toBeNull();
+  await userEvent.click(document.querySelector('[data-slot="2,0"]')!);
+  expect(screen.getByRole('complementary', { name: 'Tile 25' })).toBeVisible();
 });
 
 test('starting a tactical action leaves build mode', async () => {

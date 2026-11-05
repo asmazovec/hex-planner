@@ -45,7 +45,7 @@ test('the summary shows now and forecast for every value', () => {
   expect(cell('Resources')).toHaveTextContent('3 → 0');
   expect(cell('Influence')).toHaveTextContent('2 → 0');
   expect(cell('Trade goods')).toHaveTextContent('0 → 2');
-  expect(cell('Tactic')).toHaveTextContent('3 → 3');
+  expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
   expect(cell('Fleet')).toHaveTextContent('3 → 2');
   expect(cell('Strategy')).toHaveTextContent('2 → 4');
   expect(cell('VP')).toHaveTextContent('0 → 1');

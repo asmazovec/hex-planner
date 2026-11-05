@@ -23,11 +23,24 @@ export interface TileViewProps {
 }
 
 const PLANET_RADIUS = 15;
+const PLANET_RADIUS_TIGHT = 13;
 const SHIP_CELL = 30;
-const SHIP_ROW = 16;
+const SHIP_ROW = 20;
 const HEX_INNER = HEX_SIZE - 1.5;
 const GROUND_CELL = 24;
+/** The number sits under the top edge of the hex; planets and markers keep clear of it. */
+const NUMBER_BASELINE = -35;
+/** In the top corners, beside the number. */
+const CORNER_X = 29;
+const CORNER_Y = -35;
+const NAME_LENGTH = 11;
+/** The lower names of three planets lean inward, where the hex is wider. */
+const NAME_INWARD = 8;
+/** Mecatol Rex, and its Thunder's Edge version. */
+const MECATOL_PLANETS = ['mr', 'mrte'];
+const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε' };
 
+const shortName = (name: string): string => (name.length > NAME_LENGTH ? `${name.slice(0, NAME_LENGTH - 1)}…` : name);
 
 const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
   UNIT_ORDER.filter(u => (counts?.[u] ?? 0) > 0).map(unit => ({ unit, count: counts?.[unit] ?? 0 }));
@@ -36,8 +49,14 @@ const isGround = (unit: UnitId): boolean => unit === 'infantry' || unit === 'mec
 
 function planetSpots(count: number): { x: number; y: number }[] {
   if (count <= 1) return [{ x: 0, y: -12 }];
-  if (count === 2) return [{ x: -28, y: -12 }, { x: 28, y: -12 }];
-  return [{ x: 0, y: -26 }, { x: -30, y: 0 }, { x: 30, y: 0 }].concat(count > 3 ? [{ x: 0, y: 14 }] : []).slice(0, count);
+  if (count === 2) return [{ x: -27, y: -10 }, { x: 27, y: -10 }];
+  return [{ x: 0, y: -19 }, { x: -31, y: 8 }, { x: 31, y: 8 }].concat(count > 3 ? [{ x: 0, y: 28 }] : []).slice(0, count);
+}
+
+/** Where the ground units of a planet stand: beside a lone planet, under the name otherwise. */
+function groundSpot(index: number, total: number, planetCount: number, radius: number): { x: number; y: number } {
+  if (planetCount === 1) return { x: (index === 0 ? -1 : 1) * (radius + 14), y: 0 };
+  return { x: (index - (total - 1) / 2) * GROUND_CELL, y: radius + 20 };
 }
 
 /**
@@ -46,7 +65,7 @@ function planetSpots(count: number): { x: number; y: number }[] {
  */
 export function layoutUnits(count: number, planetCount: number): { scale: number; cells: { x: number; y: number }[] } {
   if (count === 0) return { scale: 1, cells: [] };
-  const top = planetCount >= 3 ? 32 : 24;
+  const top = planetCount === 0 ? -2 : planetCount >= 3 ? 34 : 22;
   const cols = Math.min(count, 4);
   const rows = Math.ceil(count / cols);
   let scale = 1;
@@ -80,6 +99,15 @@ export function TileView({
     ? (tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined)
     : systemPlanets(game, slotKey, pack);
   const spots = planetSpots(planets.length);
+  const radius = planets.length >= 3 ? PLANET_RADIUS_TIGHT : PLANET_RADIUS;
+  const worm = (tile?.wormholes ?? []).map(w => WORMHOLE_SIGNS[w] ?? w).join(' ');
+  const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(a => a !== undefined);
+  const hexKind = !tile ? 'hex-free' : tile.planetIds.some(id => MECATOL_PLANETS.includes(id)) ? 'hex-mecatol' : tile.kind !== 'system' ? `hex-${tile.kind}`
+    : anomalies.length > 0 ? 'hex-anomaly' : tile.wormholes.length > 0 ? 'hex-wormhole' : 'hex-system';
+  const caption = !tile || planets.length > 0 ? null
+    : anomalies.length > 0 ? anomalies.map(a => t(`map.anomaly.${a}`)).join(' + ')
+      : tile.kind === 'hyperlane' ? t('map.hyperlane')
+        : tile.wormholes.length > 0 ? t('map.wormhole') : tile.kind === 'system' ? t('map.emptySystem') : null;
 
   const unitLabel = (unit: UnitId, count: number, owner: 'me' | 'enemy'): string =>
     `${t(`unit.${unit}`)} ×${count}${owner === 'enemy' ? ` (${t('map.enemy')})` : ''}`;
@@ -110,20 +138,26 @@ export function TileView({
       onKeyDown={onKeyDown}
       onPointerDown={e => onPointerDown?.(slotKey, e)}
     >
-      <polygon points={hexPoints(HEX_INNER)} className={`hex${tile ? ` hex-${tile.kind}` : ''}`} />
-      {tile && <text x={0} y={-45} className="tile-number">{fracture ? `F${fracture.index + 1}` : tile.number}</text>}
-      {unknown && <text x={0} y={-45} className="tile-number">{tileId}</text>}
+      <polygon points={hexPoints(HEX_INNER)} className={`hex ${hexKind}`} />
+      {tile && (
+        <text x={0} y={NUMBER_BASELINE} className="tile-number">
+          {fracture ? `F${fracture.index + 1}` : tile.number}
+          {worm && <tspan className="tile-worm"> {worm}</tspan>}
+        </text>
+      )}
+      {unknown && <text x={0} y={NUMBER_BASELINE} className="tile-number">{tileId}</text>}
       {unknown && <text x={0} y={4} className="tile-warning">!</text>}
+      {caption && <text x={0} y={-14} className="tile-caption">{caption}</text>}
 
       {state.tokensOnMap.includes(slotKey) && (
-        <g role="img" aria-label={t('map.commandToken')} transform="translate(-36 -28)">
+        <g role="img" aria-label={t('map.commandToken')} transform={`translate(${-CORNER_X} ${CORNER_Y})`}>
           <circle r={7} className="token" />
           <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />
         </g>
       )}
 
       {ingress && (
-        <g role="img" aria-label={t('map.ingress')} transform="translate(36 -28)">
+        <g role="img" aria-label={t('map.ingress')} transform={`translate(${CORNER_X} ${CORNER_Y})`}>
           <path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" />
         </g>
       )}
@@ -142,28 +176,36 @@ export function TileView({
             data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}
             className={`planet${exhausted ? ' planet-exhausted' : ''}`}
           >
-            <circle r={PLANET_RADIUS} className={`planet-disc planet-${control ?? 'free'}`} />
-            <text y={4} className="planet-values">{planet.resources}/{planet.influence}</text>
+            <circle r={radius} className={`planet-disc planet-${control ?? 'free'}`} />
+            <text y={4.5} className="planet-values">
+              <tspan className="value-resources">{planet.resources}</tspan>
+              <tspan className="value-slash">/</tspan>
+              <tspan className="value-influence">{planet.influence}</tspan>
+            </text>
+            {exhausted && <line x1={-radius * 0.7} y1={radius * 0.7} x2={radius * 0.7} y2={-radius * 0.7} className="planet-strike" />}
             {game.docks.includes(planet.id) && (
-              <rect x={PLANET_RADIUS - 6} y={-PLANET_RADIUS - 2} width={9} height={9} className="dock"
+              <rect x={radius - 7} y={-radius - 1} width={8} height={8} rx={1.5} className="dock"
                 role="img" aria-label={t('map.spaceDock')} />
             )}
-            {selected && <text y={-PLANET_RADIUS - 4} className="planet-name">{planet.name}</text>}
-            {ground.map(({ unit, count }, j) => (
-              <g key={unit} transform={`translate(${(j - (ground.length - 1) / 2) * GROUND_CELL - (count > 1 ? 4 : 0)} ${PLANET_RADIUS + 9})`}>
-                <UnitGlyph unit={unit} owner="me" count={count} label={unitLabel(unit, count, 'me')} scale={0.55} />
-              </g>
-            ))}
+            <text x={spot.x === 0 || planets.length < 3 ? 0 : -Math.sign(spot.x) * NAME_INWARD} y={radius + 10} className="planet-name">{shortName(planet.name)}</text>
+            {ground.map(({ unit, count }, j) => {
+              const place = groundSpot(j, ground.length, planets.length, radius);
+              return (
+                <g key={unit} transform={`translate(${place.x - (count > 1 ? 3 : 0)} ${place.y})`}>
+                  <UnitGlyph unit={unit} owner="me" count={count} label={unitLabel(unit, count, 'me')} scale={0.72} />
+                </g>
+              );
+            })}
           </g>
         );
       })}
 
       {spaceUnits.map((cell, i) => (
         <g key={`${cell.owner}-${cell.unit}`} transform={`translate(${layout.cells[i].x} ${layout.cells[i].y}) scale(${layout.scale})`}>
-          <g transform={`translate(${cell.count > 1 ? -4 : 0} 0)`}>
+          <g transform={`translate(${cell.count > 1 ? -5 : 0} 0)`}>
             <UnitGlyph
               unit={cell.unit} owner={cell.owner} count={cell.count}
-              label={unitLabel(cell.unit, cell.count, cell.owner)} scale={isGround(cell.unit) ? 0.6 : 0.75}
+              label={unitLabel(cell.unit, cell.count, cell.owner)} scale={isGround(cell.unit) ? 0.72 : 0.85}
             />
           </g>
         </g>

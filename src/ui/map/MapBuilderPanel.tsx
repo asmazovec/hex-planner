@@ -8,20 +8,18 @@ export interface MapBuilderPanelProps {
   game: Game;
   pack: DataPack;
   state: GameState;
-  onClose: () => void;
 }
 
 /** Sets the tile of one slot; once the slot holds a tile, its details follow. */
-export function MapBuilderPanel({ slot, game, pack, state, onClose }: MapBuilderPanelProps) {
+export function MapBuilderPanel({ slot, game, pack, state }: MapBuilderPanelProps) {
   const setTile = useGame(s => s.setTile);
   return (
     <>
       <TileNumberInput
         key={slot} pack={pack} value={game.map[slot]}
         onChange={value => setTile(slot, value)}
-        onClose={game.map[slot] ? undefined : onClose}
       />
-      {game.map[slot] && <TileSheet slotKey={slot} pack={pack} game={game} state={state} onClose={onClose} />}
+      {game.map[slot] && <TileSheet slotKey={slot} pack={pack} game={game} state={state} />}
     </>
   );
 }

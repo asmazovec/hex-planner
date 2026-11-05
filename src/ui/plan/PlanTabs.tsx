@@ -42,7 +42,7 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
             </button>
           );
         })}
-        <button type="button" onClick={() => { copyPlan(); onSelectPlan(); }}>{t('plan.copy')}</button>
+        <button type="button" className="plan-copy" onClick={() => { copyPlan(); onSelectPlan(); }}>{t('plan.copy')}</button>
       </div>
       <div className="plan-rounds" role="group" aria-label={t('plan.rounds')}>
         {active?.rounds.map(round => (
@@ -55,7 +55,7 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
         ))}
         <button type="button" aria-label={t('plan.addRound')} onClick={onAddRound}>+</button>
       </div>
-      <button type="button" disabled={!canUndo} onClick={undo}>{t('plan.undo')}</button>
+      <button type="button" className="plan-undo" disabled={!canUndo} onClick={undo}>{t('plan.undo')}</button>
     </div>
   );
 }

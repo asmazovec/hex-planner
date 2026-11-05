@@ -150,7 +150,7 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
                 const list = warnings[entry.id] ?? [];
                 const before = dragging && others[drag.index]?.id === entry.id;
                 const after = dragging && drag.index === others.length && others.at(-1)?.id === entry.id;
-                const cls = ['entry', entry.status === 'done' && 'entry-done', drag?.id === entry.id && 'entry-dragging',
+                const cls = ['entry', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag?.id === entry.id && 'entry-dragging',
                   before && 'entry-drop-before', after && 'entry-drop-after'].filter(Boolean).join(' ');
                 return (
                   <li key={entry.id} className={cls} data-entry-id={entry.id} aria-label={label}>

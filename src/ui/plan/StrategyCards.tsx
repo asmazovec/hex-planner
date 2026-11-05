@@ -50,8 +50,8 @@ export function StrategyCards({ expansions, round }: StrategyCardsProps) {
                   {backup && <span className="pill">{t('plan.cards.backup')}</span>}
                   {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
                 </span>
-                <span className="card-text">{t('plan.cards.primary')} {summary.primary}</span>
-                <span className="card-text">{t('plan.cards.secondary')} {summary.secondary}</span>
+                <span className="card-text"><b>{t('plan.cards.primary')}</b> {summary.primary}</span>
+                <span className="card-text"><b>{t('plan.cards.secondary')}</b> {summary.secondary}</span>
                 {summary.change && <span className="card-note">{summary.change}</span>}
               </button>
             </li>

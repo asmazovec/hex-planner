@@ -9,14 +9,12 @@ export interface TileNumberInputProps {
   value: string | undefined;
   /** A new map value, or null to clear the slot. */
   onChange: (value: string | null) => void;
-  /** Shows a Close button; omitted when another panel on screen already has one. */
-  onClose?: () => void;
 }
 
 const MAX_SUGGESTIONS = 8;
 
 /** Enter a tile number for one slot; suggestions are tappable, hyperlanes get a rotate button. */
-export function TileNumberInput({ pack, value, onChange, onClose }: TileNumberInputProps) {
+export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -46,10 +44,7 @@ export function TileNumberInput({ pack, value, onChange, onClose }: TileNumberIn
 
   return (
     <div className="panel tile-input" role="group" aria-label={t('builder.title')}>
-      <div className="row">
-        <h2>{t('builder.title')}</h2>
-        {onClose && <button type="button" onClick={onClose}>{t('map.sheet.close')}</button>}
-      </div>
+      <h2>{t('builder.title')}</h2>
       <form className="row" onSubmit={submit}>
         <label className="field">
           {t('builder.number')}

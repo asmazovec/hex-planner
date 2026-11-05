@@ -22,12 +22,18 @@ export function SummaryBar({ now, forecast, pack }: SummaryBarProps) {
   const { t } = useTranslation();
   return (
     <div className="summary-bar" role="group" aria-label={t('plan.summary.label')}>
-      {VALUES.map(({ key, read }) => (
-        <div key={key} className="summary-cell" role="group" aria-label={t(`plan.summary.${key}`)}>
-          <span>{t(`plan.summary.${key}`)}</span>
-          <b>{read(now, pack)} → {read(forecast, pack)}</b>
-        </div>
-      ))}
+      {VALUES.map(({ key, read }) => {
+        const before = read(now, pack);
+        const after = read(forecast, pack);
+        return (
+          <div key={key} className="summary-cell" role="group" aria-label={t(`plan.summary.${key}`)}>
+            <span>{t(`plan.summary.${key}`)}</span>
+            <b>
+              {before === after ? before : <>{before} → <span className={after < 0 ? 'summary-negative' : undefined}>{after}</span></>}
+            </b>
+          </div>
+        );
+      })}
     </div>
   );
 }
