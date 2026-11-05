@@ -1,13 +1,7 @@
 {
   "menu": {
     "game": "Game",
-    "map": "Map",
-    "plan": "Plan",
-    "rivals": "Rivals",
-    "settings": "Settings"
-  },
-  "language": {
-    "label": "Language"
+    "plan": "Plan & map"
   },
   "game": {
     "new": "New game",
@@ -21,7 +15,8 @@
     "open": "Open",
     "export": "Export to file",
     "import": "Import game",
-    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original."
+    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original.",
+    "language": "Interface language"
   },
   "import": {
     "failed": "Could not import the file: {{reason}}",
@@ -30,20 +25,18 @@
     "newerVersion": "the file was made by a newer version of the app"
   },
   "rivals": {
-    "noGame": "Start or open a game first.",
     "opponent": "Opponent {{n}}",
-    "faction": "Faction",
     "unknown": "Not chosen",
     "plus": "Add a point",
     "minus": "Remove a point",
-    "points": "Points"
+    "points": "Points",
+    "title": "Opponents"
   },
   "banner": {
     "saveError": "Could not save the game: {{error}}",
     "export": "Export"
   },
   "map": {
-    "noGame": "Start or open a game first.",
     "label": "Map",
     "tile": "Tile {{number}}",
     "emptySlot": "Empty slot",
@@ -90,7 +83,143 @@
     "ambiguous": "\"{{query}}\" has two sides: pick one, for example {{query}}A.",
     "duplicates": "Tile placed more than once: {{list}}. This is allowed."
   },
-  "settings": {
-    "language": "Interface language"
+  "unit": {
+    "flagship": "Flagship",
+    "warsun": "War Sun",
+    "dreadnought": "Dreadnought",
+    "carrier": "Carrier",
+    "cruiser": "Cruiser",
+    "destroyer": "Destroyer",
+    "fighter": "Fighter",
+    "infantry": "Infantry",
+    "mech": "Mech"
+  },
+  "plan": {
+    "noGame": "Start or open a game first.",
+    "defaultName": "Plan {{n}}",
+    "name": "Plan name",
+    "tabs": "Plans",
+    "copy": "Copy",
+    "undo": "Undo",
+    "round": "Round {{n}}",
+    "addRound": "Add round",
+    "rounds": "Rounds",
+    "forecast": "Forecast",
+    "now": "Now",
+    "mapShows": "The map shows",
+    "buildMap": "Build map",
+    "mobileMap": "Map",
+    "mobilePlan": "Plan",
+    "views": "Map or plan",
+    "summary": {
+      "label": "Totals, now and forecast",
+      "resources": "Resources",
+      "influence": "Influence",
+      "tradeGoods": "Trade goods",
+      "tactic": "Tactic",
+      "fleet": "Fleet",
+      "strategy": "Strategy",
+      "vp": "VP"
+    },
+    "cards": {
+      "title": "Strategy card",
+      "collapse": "Collapse",
+      "all": "All cards",
+      "main": "Main",
+      "backup": "Backup",
+      "changed": "Changed in TE",
+      "primary": "Primary:",
+      "secondary": "Secondary:"
+    },
+    "menu": {
+      "add": "Add action",
+      "tactical": "Tactical action",
+      "strategic": "Strategic action",
+      "secondary": "Secondary ability",
+      "component": "Component action",
+      "expedition": "Expedition contribution",
+      "pass": "Pass",
+      "adjustment": "Manual adjustment"
+    },
+    "entries": {
+      "title": "Round actions",
+      "empty": "No actions yet.",
+      "status": "Status phase",
+      "statusTokens": "Status phase tokens",
+      "drag": "Drag to move",
+      "up": "Move up",
+      "down": "Move down",
+      "done": "Done",
+      "delete": "Delete",
+      "noSystem": "no system",
+      "label": "Label",
+      "note": "Note",
+      "system": "System",
+      "noneSystem": "None"
+    },
+    "tactical": {
+      "title": "Tactical action",
+      "done": "Done editing",
+      "cancel": "Cancel",
+      "system": "System {{name}}",
+      "token": "Tactic tokens: {{from}} → {{to}}",
+      "changeSystem": "Change",
+      "pickHint": "Tap the system to activate: it spends a tactic token.",
+      "sourceHint": "Tap the system the ships come from.",
+      "moves": "Movement",
+      "moveHint": "Drag from a tile with ships to the active system, or back.",
+      "addSource": "Add source",
+      "landing": "Landing (optional)",
+      "landingOn": "Landing on {{planet}}",
+      "toLand": "In the system: {{list}}",
+      "nothingToLand": "no ground units",
+      "production": "Build (optional)",
+      "build": "Build",
+      "noDock": "No space dock in this system.",
+      "noPlanets": "No planets in this system.",
+      "warnings": "Warnings"
+    },
+    "picker": {
+      "title": "From {{from}} to {{to}}",
+      "close": "Close picker",
+      "empty": "None of your units are here.",
+      "capacity": "Capacity: {{load}} of {{capacity}}",
+      "fleet": "Fleet pool: {{ships}} of {{fleet}}",
+      "removeSource": "Remove arrow"
+    },
+    "stepper": {
+      "plus": "Add one {{name}}",
+      "minus": "Remove one {{name}}"
+    },
+    "payment": {
+      "title": "Payment",
+      "summary": "Cost {{need}}, paid {{paid}}",
+      "surplus": "Surplus {{n}} is lost",
+      "tradeGoods": "Trade goods {{n}}",
+      "manual": "Choose manually",
+      "auto": "Pick automatically",
+      "planets": "Planets to pay with",
+      "tradeGood": "trade good",
+      "nothing": "Nothing selected"
+    },
+    "slice": {
+      "res5": "5 resources",
+      "inf5": "5 influence",
+      "tg3": "3 trade goods",
+      "secret": "Secret objective",
+      "cards": "Action cards",
+      "tech": "Technology"
+    },
+    "warning": {
+      "shortResources": "Not enough resources: need {{needed}}, paid {{paid}}, short by {{short}}.",
+      "shortInfluence": "Not enough influence: need {{needed}}, paid {{paid}}, short by {{short}}.",
+      "shortTradeGoods": "Not enough trade goods: need {{needed}}, have {{have}}.",
+      "planetExhausted": "{{planet}} is already exhausted.",
+      "capacityGroup": "Group from {{from}} is over capacity: {{load}} of {{capacity}}.",
+      "capacitySystem": "System {{system}} is over capacity: {{load}} of {{capacity}}.",
+      "fleetPool": "System {{system}} is over the fleet pool: {{ships}} ships, {{fleet}} tokens.",
+      "unitsMissing": "{{where}} is missing {{missing}} × {{unit}}.",
+      "sliceTaken": "Expedition part \"{{slice}}\" is already taken."
+    }
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
+import { currentLanguage, setLanguage, type Language } from '../../i18n';
 import type { ExpansionId } from '../../domain/types';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { listGames, saveGame, type GameSummary } from '../../storage/db';
@@ -13,6 +14,11 @@ const EXPANSIONS: { id: ExpansionId; label: string }[] = [
   { id: 'te', label: "Thunder's Edge" },
 ];
 
+const LANGUAGES: { code: Language; label: string }[] = [
+  { code: 'ru', label: 'Русский' },
+  { code: 'en', label: 'English' },
+];
+
 const allFactions = loadPack(['pok', 'te']).factions;
 
 export function GameScreen() {
@@ -20,6 +26,7 @@ export function GameScreen() {
   const game = useGame(s => s.game);
   const newGame = useGame(s => s.newGame);
   const openGame = useGame(s => s.openGame);
+  const setOpponent = useGame(s => s.setOpponent);
 
   const [expansions, setExpansions] = useState<ExpansionId[]>([]);
   const [playerCount, setPlayerCount] = useState(6);
@@ -28,6 +35,7 @@ export function GameScreen() {
   const [importError, setImportError] = useState<string | null>(null);
 
   const pack = useMemo(() => loadPack(expansions), [expansions]);
+  const openFactions = useMemo(() => Object.values(loadPack(game?.expansions ?? []).factions), [game?.expansions]);
   const factions = useMemo(() => Object.values(pack.factions), [pack]);
   const counts = pack.templates.map(template => template.playerCount);
   const chosenFaction = pack.factions[faction] ? faction : (factions[0]?.id ?? '');
@@ -96,6 +104,30 @@ export function GameScreen() {
         <button type="button" className="primary" onClick={start}>{t('game.start')}</button>
       </div>
 
+      {game && (
+        <div className="panel">
+          <h2>{t('rivals.title')}</h2>
+          {game.opponents.map((opponent, index) => (
+            <div key={index} role="group" aria-label={t('rivals.opponent', { n: index + 1 })} className="opponent">
+              <label className="field">
+                {t('rivals.opponent', { n: index + 1 })}
+                <select value={opponent.faction} onChange={e => setOpponent(index, { faction: e.target.value })}>
+                  <option value="">{t('rivals.unknown')}</option>
+                  {openFactions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </select>
+              </label>
+              <div className="row vp">
+                <button type="button" aria-label={t('rivals.minus')}
+                  onClick={() => setOpponent(index, { vp: Math.max(0, opponent.vp - 1) })}>−</button>
+                <output aria-label={t('rivals.points')}>{opponent.vp}</output>
+                <button type="button" aria-label={t('rivals.plus')}
+                  onClick={() => setOpponent(index, { vp: opponent.vp + 1 })}>+</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="panel">
         <h2>{t('game.saved')}</h2>
         {saved.length === 0 && <p className="muted">{t('game.none')}</p>}
@@ -121,6 +153,12 @@ export function GameScreen() {
             />
           </label>
         </div>
+        <label className="field">
+          {t('game.language')}
+          <select value={currentLanguage()} onChange={e => setLanguage(e.target.value as Language)}>
+            {LANGUAGES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
+          </select>
+        </label>
       </div>
     </section>
   );

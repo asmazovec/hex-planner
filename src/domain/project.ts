@@ -62,7 +62,8 @@ function take(
   return taken;
 }
 
-function capacity(units: UnitCounts, pack: DataPack): { load: number; capacity: number } {
+/** Cargo against ship capacity: only fighters and ground units count as load. */
+export function capacity(units: UnitCounts, pack: DataPack): { load: number; capacity: number } {
   let load = 0;
   let cap = 0;
   for (const id of unitIds(units)) {
@@ -75,11 +76,28 @@ function capacity(units: UnitCounts, pack: DataPack): { load: number; capacity: 
   return { load, capacity: cap };
 }
 
-const shipCount = (units: UnitCounts, pack: DataPack): number =>
+export const shipCount = (units: UnitCounts, pack: DataPack): number =>
   unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
   }, 0);
+
+/** All ships, then as much cargo as they carry: fighters first, then mechs, then infantry. */
+export function suggestUnits(available: UnitCounts, pack: DataPack): UnitCounts {
+  const suggestion: UnitCounts = {};
+  for (const id of unitIds(available)) {
+    const def = pack.units[id];
+    if (def && !def.fighter && !def.ground) suggestion[id] = available[id];
+  }
+  let room = capacity(suggestion, pack).capacity;
+  for (const id of ['fighter', 'mech', 'infantry'] as const) {
+    const size = pack.units[id]?.capacityUsed ?? 1;
+    const count = Math.min(available[id] ?? 0, Math.floor(room / size));
+    if (count > 0) suggestion[id] = count;
+    room -= count * size;
+  }
+  return suggestion;
+}
 
 /** Exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
 function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[]): number {
@@ -239,7 +257,7 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
   return warnings;
 }
 
-export function project(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack): Projection {
+function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack, stopBefore?: string): Projection {
   const state = initialState(game, pack);
   const warningsByEntry: Record<string, Warning[]> = {};
   const takenSlices = new Set<string>();
@@ -250,6 +268,7 @@ export function project(game: Game, plan: Plan, filter: 'now' | 'forecast', pack
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {
         if (entry.phase !== phase) continue;
+        if (entry.id === stopBefore) return { state, warningsByEntry };
         if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
         warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices);
       }
@@ -257,3 +276,10 @@ export function project(game: Game, plan: Plan, filter: 'now' | 'forecast', pack
   }
   return { state, warningsByEntry };
 }
+
+export const project = (game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack): Projection =>
+  replay(game, plan, filter, pack);
+
+/** The forecast state just before an entry applies: what that entry can move and pay with. */
+export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack): GameState =>
+  replay(game, plan, 'forecast', pack, entryId).state;

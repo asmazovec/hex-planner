@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -10,7 +10,7 @@ vi.mock('../../storage/db', () => ({
 import { loadPack } from '../../data/loadPack';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
-import { MapBuilderScreen } from './MapBuilderScreen';
+import { PlanScreen } from '../screens/PlanScreen';
 
 const pack = loadPack(['pok']);
 const map = () => useGame.getState().game!.map;
@@ -19,13 +19,21 @@ afterEach(cleanup);
 
 beforeEach(() => {
   setLanguage('en');
+  document.elementFromPoint = () => null;
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
   useGame.getState().setTile('1,0', null);
 });
 
+/** The build mode is on by itself on an empty map, and is turned on otherwise. */
+function renderBuilding() {
+  render(<PlanScreen />);
+  const toggle = screen.getByRole('button', { name: 'Build map' });
+  if (toggle.getAttribute('aria-pressed') !== 'true') fireEvent.click(toggle);
+}
+
 async function tapEmptySlot(): Promise<string> {
   const slot = '1,0';
-  render(<MapBuilderScreen />);
+  renderBuilding();
   await userEvent.click(document.querySelector(`[data-slot="${slot}"]`)!);
   return slot;
 }
@@ -83,7 +91,7 @@ test('a prefix that is not a number says unknown, not two sides', async () => {
 });
 
 test('a fixed template slot can be replaced and cleared, and Game.map overrides the template', async () => {
-  render(<MapBuilderScreen />);
+  renderBuilding();
   expect(map()['0,0']).toBe('18');
   const hex = () => document.querySelector('[data-slot="0,0"]')!;
   expect(hex()).toHaveAccessibleName('Tile 18');
@@ -105,4 +113,32 @@ test('the side panel has one Close button, and tile details appear only once the
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
   expect(screen.getByText('Enemy units')).toBeVisible();
+});
+
+test('a new game with an empty map opens in build mode; a map with tiles does not', async () => {
+  render(<PlanScreen />);
+  expect(screen.getByRole('button', { name: 'Build map' })).toHaveAttribute('aria-pressed', 'true');
+  cleanup();
+  useGame.getState().setTile('2,0', '25');
+  render(<PlanScreen />);
+  const toggle = screen.getByRole('button', { name: 'Build map' });
+  expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
+  expect(screen.queryByLabelText('Tile number')).toBeNull();
+});
+
+test('the plan stays beside the map while building, until a slot is tapped', async () => {
+  renderBuilding();
+  expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
+  await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
+  expect(screen.queryByRole('button', { name: 'Add action' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
+});
+
+test('starting a tactical action leaves build mode', async () => {
+  renderBuilding();
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+  expect(screen.getByRole('button', { name: 'Build map' })).toHaveAttribute('aria-pressed', 'false');
 });

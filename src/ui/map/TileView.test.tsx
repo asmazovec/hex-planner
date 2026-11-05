@@ -163,3 +163,15 @@ test('the wheel zooms without scrolling the page, and the reset button restores 
   await userEvent.click(screen.getByRole('button', { name: 'Reset view' }));
   expect(svg.querySelector(':scope > g')!.getAttribute('transform')).toBe('translate(0 0) scale(1)');
 });
+
+test('the sheet and the map name units in the interface language', () => {
+  setLanguage('ru');
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
+  game.map['1,0'] = '25';
+  const state = { ...emptyState(), systems: { '1,0': { warsun: 1 } } };
+  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={state} onClose={() => undefined} />);
+  expect(screen.getByText('Солнце войны')).toBeVisible();
+  expect(screen.queryByText('War Sun')).toBeNull();
+  render(<svg><TileView slotKey="1,0" pack={pack} game={game} state={state} /></svg>);
+  expect(screen.getByRole('img', { name: 'Солнце войны ×1' })).toBeInTheDocument();
+});

@@ -75,9 +75,8 @@ export function TileView({
   const planets = systemPlanets(game, slotKey, pack);
   const spots = planetSpots(planets.length);
 
-  const unitName = (unit: UnitId): string => pack.units[unit]?.name ?? unit.charAt(0).toUpperCase() + unit.slice(1);
   const unitLabel = (unit: UnitId, count: number, owner: 'me' | 'enemy'): string =>
-    `${unitName(unit)} ×${count}${owner === 'enemy' ? ` (${t('map.enemy')})` : ''}`;
+    `${t(`unit.${unit}`)} ×${count}${owner === 'enemy' ? ` (${t('map.enemy')})` : ''}`;
 
   const spaceUnits = [
     ...unitsOf(state.systems[slotKey]).map(u => ({ ...u, owner: 'me' as const })),

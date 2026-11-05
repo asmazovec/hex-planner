@@ -75,3 +75,45 @@ test('a just started game appears in the saved list', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Start game' }));
   expect(await screen.findByRole('button', { name: 'Open' })).toBeVisible();
 });
+
+const startGame = () =>
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, loadPack(['pok']));
+
+test('opponents appear once a game is open, one row per opponent, after the new game panel', () => {
+  render(<GameScreen />);
+  expect(screen.queryByRole('heading', { name: 'Opponents' })).toBeNull();
+  cleanup();
+  startGame();
+  render(<GameScreen />);
+  expect(screen.getAllByRole('group', { name: /Opponent \d/ })).toHaveLength(3);
+  const headings = screen.getAllByRole('heading').map(h => h.textContent);
+  expect(headings).toEqual(['New game', 'Opponents', 'Saved games']);
+});
+
+test('plus and minus change points and stop at zero', async () => {
+  startGame();
+  render(<GameScreen />);
+  const [plus] = screen.getAllByRole('button', { name: 'Add a point' });
+  const [minus] = screen.getAllByRole('button', { name: 'Remove a point' });
+  await userEvent.click(minus);
+  expect(useGame.getState().game!.opponents[0].vp).toBe(0);
+  await userEvent.click(plus);
+  await userEvent.click(plus);
+  expect(useGame.getState().game!.opponents[0].vp).toBe(2);
+  await userEvent.click(minus);
+  expect(useGame.getState().game!.opponents[0].vp).toBe(1);
+});
+
+test('an opponent faction choice is stored', async () => {
+  startGame();
+  render(<GameScreen />);
+  await userEvent.selectOptions(within(screen.getByRole('group', { name: 'Opponent 2' })).getByRole('combobox'), 'hacan');
+  expect(useGame.getState().game!.opponents[1].faction).toBe('hacan');
+});
+
+test('the interface language is chosen here and remembered', async () => {
+  render(<GameScreen />);
+  await userEvent.selectOptions(screen.getByLabelText('Interface language'), 'ru');
+  expect(screen.getByRole('heading', { name: 'Новая партия' })).toBeVisible();
+  expect(localStorage.getItem('ti4.lang')).toBe('ru');
+});

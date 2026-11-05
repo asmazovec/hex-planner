@@ -1,25 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../data/loadPack';
-import { setLanguage, type Language } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { Banner } from './common/Banner';
 import { downloadGame } from './common/download';
-import { MapBuilderScreen } from './screens/MapBuilderScreen';
 import { GameScreen } from './screens/GameScreen';
-import { OpponentsScreen } from './screens/OpponentsScreen';
-import { SettingsScreen } from './screens/SettingsScreen';
+import { PlanScreen } from './screens/PlanScreen';
 
-const SCREENS = ['game', 'map', 'plan', 'rivals', 'settings'] as const;
+const SCREENS = ['game', 'plan'] as const;
 type Screen = (typeof SCREENS)[number];
 
-const LANGUAGES: { code: Language; label: string }[] = [
-  { code: 'ru', label: 'RU' },
-  { code: 'en', label: 'EN' },
-];
-
 export function App() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [screen, setScreen] = useState<Screen>('game');
   const game = useGame(s => s.game);
   const saveError = useGame(s => s.saveError);
@@ -28,20 +20,6 @@ export function App() {
 
   return (
     <div className="app">
-      <header>
-        <div role="group" aria-label={t('language.label')}>
-          {LANGUAGES.map(({ code, label }) => (
-            <button
-              key={code}
-              type="button"
-              aria-pressed={i18n.language === code}
-              onClick={() => setLanguage(code)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </header>
       {dataMismatch && <Banner kind="warning" message={t('game.dataVersionWarning')} />}
       {saveError && (
         <Banner
@@ -52,9 +30,7 @@ export function App() {
       )}
       <main data-screen={screen}>
         {screen === 'game' && <GameScreen />}
-        {screen === 'map' && <MapBuilderScreen />}
-        {screen === 'rivals' && <OpponentsScreen />}
-        {screen === 'settings' && <SettingsScreen />}
+        {screen === 'plan' && <PlanScreen />}
       </main>
       <nav>
         {SCREENS.map((id) => (

@@ -1,0 +1,209 @@
+import { useRef, useState, type PointerEvent } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Round, UnitId, Warning } from '../../domain/types';
+import { useGame } from '../../state/gameStore';
+import { UNIT_ORDER } from '../map/UnitGlyph';
+import { Stepper } from './Stepper';
+import { systemName } from './tactical';
+import { WarningText } from './WarningText';
+
+const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
+const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
+const TOKEN_FIELDS = ['tactic', 'fleet', 'strategy'] as const;
+
+export interface EntryListProps {
+  game: Game;
+  pack: DataPack;
+  round: Round;
+  warnings: Record<string, Warning[]>;
+  /** The forecast, for the systems a manual adjustment can change. */
+  state: GameState;
+  /** The entry whose fields are shown. */
+  openId: string | null;
+  onOpen: (entry: Entry) => void;
+}
+
+/** A text field that writes to the plan when it is left, so typing leaves one undo step. */
+function NoteField({ label, value, onCommit }: { label: string; value: string; onCommit: (value: string) => void }) {
+  const [text, setText] = useState(value);
+  return (
+    <label className="field">
+      {label}
+      <input
+        type="text" value={text} onChange={e => setText(e.target.value)} onBlur={() => onCommit(text)}
+        onKeyDown={e => { if (e.key === 'Enter') onCommit(text); }}
+      />
+    </label>
+  );
+}
+
+function AdjustmentFields({ entry, game, pack, state }: {
+  entry: Extract<Entry, { type: 'adjustment' }>; game: Game; pack: DataPack; state: GameState;
+}) {
+  const { t } = useTranslation();
+  const updateEntry = useGame(s => s.updateEntry);
+  const { delta } = entry;
+  const setDelta = (patch: Partial<AdjustmentDelta>) => updateEntry(entry.id, { delta: { ...delta, ...patch } });
+  const systemId = delta.units?.systemId ?? '';
+  const changes = delta.units?.units ?? {};
+  const held = state.systems[systemId] ?? {};
+  const unitIds: UnitId[] = UNIT_ORDER.filter(u => pack.units[u]);
+  const systems = Object.keys(game.map).filter(slot => pack.tiles[game.map[slot].split('@')[0]]);
+  return (
+    <>
+      <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => updateEntry(entry.id, { label })} />
+      {DELTA_FIELDS.map(field => (
+        <Stepper
+          key={field} name={t(`plan.summary.${field}`)} value={delta[field] ?? 0}
+          onChange={value => setDelta({ [field]: value })}
+        />
+      ))}
+      <label className="field">
+        {t('plan.entries.system')}
+        <select
+          value={systemId}
+          onChange={e => setDelta({ units: e.target.value ? { systemId: e.target.value, units: changes } : undefined })}
+        >
+          <option value="">{t('plan.entries.noneSystem')}</option>
+          {systems.map(slot => <option key={slot} value={slot}>{systemName(game, pack, slot)}</option>)}
+        </select>
+      </label>
+      {systemId && unitIds.map(unit => (
+        <Stepper
+          key={unit} name={t(`unit.${unit}`)} value={changes[unit] ?? 0} of={held[unit] ?? 0}
+          onChange={value => setDelta({ units: { systemId, units: { ...changes, [unit]: value } } })}
+        />
+      ))}
+    </>
+  );
+}
+
+function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
+  switch (entry.type) {
+    case 'tactical':
+      return `${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
+    case 'adjustment':
+      return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
+    case 'component':
+      return entry.note ? `${t('plan.menu.component')}: ${entry.note}` : t('plan.menu.component');
+    case 'statusTokens':
+      return t('plan.entries.statusTokens');
+    default:
+      return t(`plan.menu.${entry.type}`);
+  }
+}
+
+/** Entries of a round by phase: move them by the handle or the arrows, mark them done, delete them. */
+export function EntryList({ game, pack, round, warnings, state, openId, onOpen }: EntryListProps) {
+  const { t } = useTranslation();
+  const updateEntry = useGame(s => s.updateEntry);
+  const moveEntry = useGame(s => s.moveEntry);
+  const removeEntry = useGame(s => s.removeEntry);
+  const setEntryStatus = useGame(s => s.setEntryStatus);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [drag, setDrag] = useState<{ id: string; pointerId: number; index: number } | null>(null);
+
+  const dropIndex = (entry: Entry, clientY: number): number => {
+    const others = round.entries.filter(e => e.phase === entry.phase && e.id !== entry.id);
+    const rows = others.map(e => listRef.current?.querySelector(`[data-entry-id="${e.id}"]`)?.getBoundingClientRect());
+    return rows.filter(rect => rect && rect.top + rect.height / 2 < clientY).length;
+  };
+
+  const handlers = (entry: Entry, index: number) => ({
+    onPointerDown: (e: PointerEvent<HTMLElement>) => {
+      if (drag) return;
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+      setDrag({ id: entry.id, pointerId: e.pointerId, index });
+    },
+    onPointerMove: (e: PointerEvent) => {
+      if (drag?.id === entry.id && drag.pointerId === e.pointerId) setDrag({ ...drag, index: dropIndex(entry, e.clientY) });
+    },
+    onPointerUp: (e: PointerEvent) => {
+      if (drag?.id !== entry.id || drag.pointerId !== e.pointerId) return;
+      setDrag(null);
+      moveEntry(entry.id, entry.phase, dropIndex(entry, e.clientY));
+    },
+    onPointerCancel: () => setDrag(null),
+  });
+
+  return (
+    <div className="plan-entries" ref={listRef}>
+      <h3>{t('plan.entries.title')}</h3>
+      {round.entries.length === 0 && <p className="muted">{t('plan.entries.empty')}</p>}
+      {PHASES.map(phase => {
+        const entries = round.entries.filter(e => e.phase === phase);
+        if (entries.length === 0) return null;
+        const others = entries.filter(e => e.id !== drag?.id);
+        const dragging = drag !== null && entries.some(e => e.id === drag.id);
+        return (
+          <div key={phase}>
+            {phase === 'status' && <h4 className="phase-title">{t('plan.entries.status')}</h4>}
+            <ul className="entry-list">
+              {entries.map((entry, index) => {
+                const label = entryLabel(entry, game, pack, t);
+                const list = warnings[entry.id] ?? [];
+                const before = dragging && others[drag.index]?.id === entry.id;
+                const after = dragging && drag.index === others.length && others.at(-1)?.id === entry.id;
+                const cls = ['entry', entry.status === 'done' && 'entry-done', drag?.id === entry.id && 'entry-dragging',
+                  before && 'entry-drop-before', after && 'entry-drop-after'].filter(Boolean).join(' ');
+                return (
+                  <li key={entry.id} className={cls} data-entry-id={entry.id} aria-label={label}>
+                    <div className="entry-main">
+                      <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...handlers(entry, index)}>⠿</button>
+                      <button type="button" className="entry-label" onClick={() => onOpen(entry)}>{label}</button>
+                      <label className="check entry-check">
+                        <span className="visually-hidden">{t('plan.entries.done')}</span>
+                        <input
+                          type="checkbox" checked={entry.status === 'done'}
+                          onChange={e => setEntryStatus(entry.id, e.target.checked ? 'done' : 'planned')}
+                        />
+                      </label>
+                      <button
+                        type="button" aria-label={t('plan.entries.up')} disabled={index === 0}
+                        onClick={() => moveEntry(entry.id, phase, index - 1)}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button" aria-label={t('plan.entries.down')} disabled={index === entries.length - 1}
+                        onClick={() => moveEntry(entry.id, phase, index + 1)}
+                      >
+                        ↓
+                      </button>
+                      <button type="button" aria-label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)}>✕</button>
+                    </div>
+                    {list.length > 0 && (
+                      <ul className="warning-list">
+                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+                      </ul>
+                    )}
+                    {entry.type === 'statusTokens' && (
+                      <div className="entry-details">
+                        {TOKEN_FIELDS.map(field => (
+                          <Stepper
+                            key={field} name={t(`plan.summary.${field}`)} value={entry[field]}
+                            onChange={value => updateEntry(entry.id, { [field]: value })}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {entry.id === openId && entry.type === 'component' && (
+                      <div className="entry-details">
+                        <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={note => updateEntry(entry.id, { note })} />
+                      </div>
+                    )}
+                    {entry.id === openId && entry.type === 'adjustment' && (
+                      <div className="entry-details">
+                        <AdjustmentFields entry={entry} game={game} pack={pack} state={state} />
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  );
+}

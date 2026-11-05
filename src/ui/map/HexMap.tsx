@@ -1,9 +1,10 @@
-import { useMemo, useRef, type PointerEvent } from 'react';
+import { useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { slotKeyOf } from '../../domain/newGame';
 import type { DataPack, Game, GameState } from '../../domain/types';
 import { hexToPixel, mapBounds } from './geometry';
 import { TileView, type Highlight } from './TileView';
+import type { ArrowPreview } from './useArrowDrag';
 import { usePanZoom } from './usePanZoom';
 
 /** `from` and `to` are slot keys. */
@@ -15,6 +16,8 @@ export interface HexMapProps {
   pack: DataPack;
   highlights?: Record<string, Highlight>;
   arrows?: Arrow[];
+  /** The arrow being drawn by a drag, in screen coordinates. */
+  arrowPreview?: ArrowPreview | null;
   selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
@@ -25,8 +28,28 @@ const parseKey = (key: string): { q: number; r: number } => {
   return { q, r };
 };
 
+/** A line from a tile to the pointer; the screen point is mapped through the current pan and zoom. */
+function PreviewLine({ start, preview }: { start: { x: number; y: number }; preview: ArrowPreview }) {
+  const ref = useRef<SVGLineElement>(null);
+  const { clientX, clientY } = preview;
+  useLayoutEffect(() => {
+    const line = ref.current;
+    const matrix = line?.getScreenCTM?.();
+    if (!line || !matrix) return;
+    const end = new DOMPoint(clientX, clientY).matrixTransform(matrix.inverse());
+    line.setAttribute('x2', String(end.x));
+    line.setAttribute('y2', String(end.y));
+  }, [clientX, clientY]);
+  return (
+    <line
+      ref={ref} x1={start.x} y1={start.y} x2={start.x} y2={start.y} className="arrow arrow-preview"
+      {...(preview.reverse ? { markerStart: 'url(#arrow-head)' } : { markerEnd: 'url(#arrow-head)' })}
+    />
+  );
+}
+
 export function HexMap({
-  game, state, pack, highlights, arrows, selectedId, onTileTap, onTilePointerDown,
+  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -80,6 +103,7 @@ export function HexMap({
             />
           );
         })}
+        {arrowPreview && <PreviewLine start={center(arrowPreview.from)} preview={arrowPreview} />}
       </g>
     </svg>
     <button type="button" className="map-reset" onClick={reset}>{t('map.resetView')}</button>

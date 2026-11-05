@@ -41,3 +41,9 @@ export function duplicateTiles(map: Game['map']): string[] {
   }
   return [...dupes];
 }
+
+/** True while the map holds nothing beyond the tiles its template places by itself. */
+export function mapIsEmpty(game: Game, pack: DataPack): boolean {
+  const fixed = new Set(slotsFor(game.playerCount, pack).filter(s => s.fixed).map(s => `${s.q},${s.r}`));
+  return Object.keys(game.map).every(slot => fixed.has(slot));
+}

@@ -30,7 +30,7 @@ export function TileSheet({ slotKey, pack, game, state, onClose }: TileSheetProp
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).join(', ');
   const enemy = game.enemyUnits[slotKey] ?? {};
   const unitIds = UNIT_ORDER.filter(u => pack.units[u]);
-  const unitName = (u: UnitId): string => pack.units[u]?.name ?? u;
+  const unitName = (u: UnitId): string => t(`unit.${u}`);
   const owners: { value: Owner; label: string }[] = [
     { value: 'me', label: t('map.sheet.mine') },
     { value: 'enemy', label: t('map.sheet.enemy') },

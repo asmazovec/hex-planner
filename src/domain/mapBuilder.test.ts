@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { duplicateTiles, resolveTile, slotsFor, tileSuggestions } from './mapBuilder';
+import { duplicateTiles, mapIsEmpty, resolveTile, slotsFor, tileSuggestions } from './mapBuilder';
+import { createGame } from './newGame';
 
 const base = loadPack([]);
 const pok = loadPack(['pok']);
@@ -27,4 +28,11 @@ test('resolveTile accepts ids and unambiguous numbers only', () => {
   expect(resolveTile('83a', pok)?.id).toBe('83A');
   expect(resolveTile('83', pok)).toBeNull();
   expect(resolveTile('999', pok)).toBeNull();
+});
+
+test('mapIsEmpty ignores the tiles the template places by itself', () => {
+  const pack = loadPack(['pok']);
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
+  expect(mapIsEmpty(game, pack)).toBe(true);
+  expect(mapIsEmpty({ ...game, map: { ...game.map, '1,0': '25' } }, pack)).toBe(false);
 });

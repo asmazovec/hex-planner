@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, test, expect } from 'vitest';
 import { App } from './App';
@@ -10,9 +10,10 @@ import { sampleGame } from '../storage/fixture';
 afterEach(cleanup);
 
 test('меню переключается на английский и запоминает выбор', async () => {
+  setLanguage('ru');
   render(<App />);
   expect(screen.getByRole('button', { name: 'Партия' })).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: 'EN' }));
+  await userEvent.selectOptions(screen.getByLabelText('Язык интерфейса'), 'en');
   expect(screen.getByRole('button', { name: 'Game' })).toBeVisible();
   expect(currentLanguage()).toBe('en');
   expect(localStorage.getItem('ti4.lang')).toBe('en');
@@ -23,17 +24,16 @@ test('a game with a different data version shows a warning on every screen', asy
   await saveGame({ ...sampleGame(), dataVersion: 'old' });
   render(<App />);
   await userEvent.click(await screen.findByRole('button', { name: 'Open' }));
-  expect(await screen.findByRole('status')).toHaveTextContent('different data version');
-  await userEvent.click(screen.getByRole('button', { name: 'Rivals' }));
+  expect(await screen.findByText(/different data version/)).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
   expect(screen.getByText(/different data version/)).toBeVisible();
 });
 
-test('the language can be changed in Settings', async () => {
-  setLanguage('ru');
+test('the menu holds the game and the plan with its map, without a language switch in the header', () => {
+  setLanguage('en');
   render(<App />);
-  await userEvent.click(screen.getByRole('button', { name: 'Настройки' }));
-  await userEvent.selectOptions(screen.getByLabelText('Язык интерфейса'), 'en');
-  expect(screen.getByRole('button', { name: 'Game' })).toBeVisible();
-  expect(screen.getByRole('button', { name: 'Settings' })).toBeVisible();
-  expect(localStorage.getItem('ti4.lang')).toBe('en');
+  const names = within(screen.getByRole('navigation')).getAllByRole('button').map(b => b.textContent);
+  expect(names).toEqual(['Game', 'Plan & map']);
+  expect(screen.queryByRole('button', { name: 'EN' })).toBeNull();
+  setLanguage('ru');
 });
