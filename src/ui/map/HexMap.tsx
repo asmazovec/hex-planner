@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
+import { fractureSlots } from '../../domain/thundersEdge';
 import { slotKeyOf } from '../../domain/newGame';
 import { playersOf } from '../../domain/players';
 import type { DataPack, Game, GameState } from '../../domain/types';
@@ -35,40 +36,27 @@ export interface HexMapProps {
 }
 
 /**
- * The Fracture systems stand in two touching lines across the outward direction: rows at a top or bottom seat,
- * columns at a side seat or without a seat. Next to the chosen seat's slot they sit at the map edge, outward
- * from the map centre; without a seat they stand to the right of the map. Their real position is only on a
- * diagram (see data-verification), so the seat is the player's choice.
+ * Where the Fracture group is drawn: its systems at the given slots, one label outside the apex, and the rectangle
+ * holding map and group. The label stands beyond the middle system, away from the map centre.
  */
-export function fractureLayout(
-  tileIds: string[], base: Rect, anchor: { x: number; y: number } | null,
+export function fractureFrame(
+  mapSlots: { q: number; r: number }[], slots: { tileId: string; q: number; r: number }[],
 ): { spots: { tileId: string; x: number; y: number }[]; bounds: Rect; labelX: number; labelY: number } {
-  const step = HEX_SIZE * Math.sqrt(3);
-  const perColumn = Math.ceil(tileIds.length / 2);
-  const length = anchor ? Math.hypot(anchor.x, anchor.y) : 0;
-  const dir = anchor && length > 0 ? { x: anchor.x / length, y: anchor.y / length } : { x: 1, y: 0 };
-  const inRows = Math.abs(dir.y) > Math.abs(dir.x);
-  const rel = tileIds.map((tileId, i) => {
-    if (inRows) return { tileId, x: (i - (tileIds.length - 1) / 2) * 1.5 * HEX_SIZE, y: ((i % 2 === 0 ? -1 : 1) * step) / 4 };
-    const second = i >= perColumn;
-    return { tileId, x: (second ? 0.75 : -0.75) * HEX_SIZE, y: ((second ? i - perColumn + 0.5 : i) - (perColumn - 1) / 2) * step };
-  });
-  const halfW = Math.max(...rel.map(s => s.x)) + HEX_SIZE;
-  const halfH = Math.max(...rel.map(s => s.y)) + step / 2;
-  const reach = HEX_SIZE + 8 + Math.abs(dir.x) * halfW + Math.abs(dir.y) * halfH;
-  const centre = anchor
-    ? { x: anchor.x + dir.x * reach, y: anchor.y + dir.y * reach }
-    : { x: base.x + base.width + HEX_SIZE + 6 + halfW, y: base.y + base.height / 2 };
-  const spots = rel.map(s => ({ tileId: s.tileId, x: centre.x + s.x, y: centre.y + s.y }));
-  const left = Math.min(base.x, centre.x - halfW - 6);
-  const top = Math.min(base.y, centre.y - halfH - 26);
-  const right = Math.max(base.x + base.width, centre.x + halfW + 6);
-  const bottom = Math.max(base.y + base.height, centre.y + halfH + 6);
-  return {
-    spots, labelX: centre.x - halfW, labelY: centre.y - halfH - 8,
-    bounds: { x: left, y: top, width: right - left, height: bottom - top },
-  };
+  const spots = slots.map(s => ({ tileId: s.tileId, ...hexToPixel(s.q, s.r) }));
+  const apex = spots[Math.floor(spots.length / 2)];
+  const length = Math.hypot(apex.x, apex.y) || 1;
+  const labelX = apex.x + (apex.x / length) * (HEX_SIZE + 14);
+  const labelY = apex.y + (apex.y / length) * (HEX_SIZE + 14);
+  const tiles = mapBounds([...mapSlots, ...slots]);
+  const left = Math.min(tiles.x, labelX - LABEL_HALF_WIDTH);
+  const top = Math.min(tiles.y, labelY - LABEL_HEIGHT);
+  const right = Math.max(tiles.x + tiles.width, labelX + LABEL_HALF_WIDTH);
+  const bottom = Math.max(tiles.y + tiles.height, labelY + 4);
+  return { spots, labelX, labelY, bounds: { x: left, y: top, width: right - left, height: bottom - top } };
 }
+
+const LABEL_HALF_WIDTH = 45;
+const LABEL_HEIGHT = 20;
 
 const parseKey = (key: string): { q: number; r: number } => {
   const [q, r] = key.split(',').map(Number);
@@ -121,17 +109,11 @@ export function HexMap({
   }, [game, pack]);
 
   const mapRect = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
-  const fractureIds = useMemo(
-    () => (game.fracture.active
-      ? Object.values(pack.tiles).filter(tile => tile.kind === 'fracture').map(tile => tile.id).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
-      : []),
-    [pack, game.fracture.active],
-  );
-  const seatKey = game.fracture.seat === null ? undefined : seatSlots(game.playerCount, pack, game.layout)[game.fracture.seat - 1];
   const fracture = useMemo(() => {
-    if (fractureIds.length === 0) return null;
-    return fractureLayout(fractureIds, mapRect, seatKey === undefined ? null : hexToPixel(parseKey(seatKey).q, parseKey(seatKey).r));
-  }, [fractureIds, mapRect, seatKey]);
+    if (!game.fracture.active) return null;
+    const slots = fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout);
+    return slots.length === 0 ? null : fractureFrame(slotKeys.map(parseKey), slots);
+  }, [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout, slotKeys]);
   const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
   const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect);
   const center = (key: string) => {

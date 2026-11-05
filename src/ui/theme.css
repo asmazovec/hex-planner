@@ -376,7 +376,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .slice[data-owner='other'] { background: color-mix(in srgb, var(--danger) 18%, var(--surface)); border-color: var(--danger); }
 .slice[data-owner='me'] { background: var(--accent-soft); }
 .slice small { color: var(--text-muted); font-size: var(--font-xs); }
-.tile .fracture-label, .fracture-label { font-size: 18px; font-weight: 600; fill: var(--violet); text-anchor: start; }
+.tile .fracture-label, .fracture-label { font-size: 18px; font-weight: 600; fill: var(--violet); text-anchor: middle; }
 .tile-fracture { cursor: default; }
 .tile-fracture .hex { fill: var(--hex-fracture); stroke: var(--violet); stroke-dasharray: 6 4; stroke-width: 1.8; }
 .ingress { fill: var(--violet); stroke: var(--bg); stroke-width: 1.5; }

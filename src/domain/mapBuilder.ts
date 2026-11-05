@@ -72,10 +72,10 @@ export function mapIsEmpty(game: Game, pack: DataPack): boolean {
   return Object.entries(game.map).every(([slot, tile]) => fixed.get(slot) === tile || own.has(slot));
 }
 
-const hexDistance = (q: number, r: number): number => Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
+export const hexDistance = (q: number, r: number): number => Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
 
 /** Clockwise angle from north (the top of the map), 0 up to 2π; flat-top axial grid. */
-const clockwiseAngle = (q: number, r: number): number => {
+export const clockwiseAngle = (q: number, r: number): number => {
   const x = 1.5 * q;
   const y = Math.sqrt(3) * (q / 2 + r);
   return (Math.atan2(x, -y) + 2 * Math.PI) % (2 * Math.PI);
