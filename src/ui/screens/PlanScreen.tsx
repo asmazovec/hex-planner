@@ -6,13 +6,13 @@ import { EXPEDITION_SLICES } from '../../domain/payment';
 import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
-import type { Entry, EntryBody, Plan } from '../../domain/types';
+import type { AdjustmentKind, Entry, EntryBody, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { HexMap, type Arrow } from '../map/HexMap';
+import { HexStage, type StageMode } from '../map/HexStage';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
 import { MapStringImport } from '../map/MapStringImport';
 import { ThundersEdgePanel } from '../map/ThundersEdgePanel';
-import { TileSheet } from '../map/TileSheet';
 import { UpgradesPanel } from '../map/UpgradesPanel';
 import type { Highlight } from '../map/TileView';
 import { useArrowDrag } from '../map/useArrowDrag';
@@ -31,6 +31,8 @@ import { TacticalEditor } from '../plan/TacticalEditor';
 interface Editing { entryId: string | null; addingSource: boolean; pickerFrom: string | null }
 
 const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };
+
+const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
 const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical'>, EntryBody> = {
   strategic: { type: 'strategic' },
@@ -77,6 +79,7 @@ export function PlanScreen() {
   const [roundNo, setRoundNo] = useState<number | null>(null);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
   const [sheet, setSheet] = useState<string | null>(null);
+  const [stage, setStage] = useState<{ slot: string; mode: StageMode } | null>(null);
   const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
   const [editing, setEditing] = useState<Editing | null>(null);
@@ -112,6 +115,7 @@ export function PlanScreen() {
 
   const arrow = useArrowDrag({ activeSystem, onComplete: openSource, onCancel: () => undefined });
   const closeSheet = useCallback(() => setSheet(null), []);
+  const closeStage = useCallback(() => setStage(null), []);
 
   if (!game || !plan || !round) {
     return <section className="screen"><p className="muted">{t('plan.noGame')}</p></section>;
@@ -177,7 +181,8 @@ export function PlanScreen() {
       if (session.addingSource && slot !== entry.systemId) openSource(slot);
       return;
     }
-    setSheet(slot);
+    if (building) setSheet(slot);
+    else if (game.map[slot]) setStage({ slot, mode: 'setup' });
   };
 
   const toggleBuilding = () => {
@@ -191,7 +196,9 @@ export function PlanScreen() {
     setPlacing(false);
     setMarking(false);
     setSheet(null);
-    if (opened.type === 'tactical') {
+    if (opened.type === 'adjustment' && opened.kind && opened.delta.units) {
+      setStage({ slot: opened.delta.units.systemId, mode: STAGE_MODE[opened.kind] });
+    } else if (opened.type === 'tactical') {
       setShowTe(false);
       setEditing({ entryId: opened.id, addingSource: false, pickerFrom: null });
     } else {
@@ -314,9 +321,12 @@ export function PlanScreen() {
                 </div>
               </div>
             )}
-            popover={sheet !== null && (building
-              ? <MapBuilderPanel slot={sheet} game={game} pack={pack} state={shownState} />
-              : <TileSheet slotKey={sheet} pack={pack} game={game} state={shownState} />)}
+            popover={sheet !== null && (
+              <MapBuilderPanel
+                slot={sheet} game={game} pack={pack}
+                onOpenStage={() => { setSheet(null); setStage({ slot: sheet, mode: 'setup' }); }}
+              />
+            )}
           />
           {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
           {hint && (
@@ -355,6 +365,7 @@ export function PlanScreen() {
                 }}
                 onOpenPicker={source => setEditing({ ...session, pickerFrom: source })}
                 onManualPayment={open => setManualPayments(ids => (open ? [...ids, entry.id] : ids.filter(id => id !== entry.id)))}
+                onOpenShop={() => { if (entry.systemId !== null) setStage({ slot: entry.systemId, mode: 'build' }); }}
                 onDone={() => setEditing(null)}
               />
             )}
@@ -373,6 +384,12 @@ export function PlanScreen() {
           </div>
         </div>
       </div>
+      {stage && (
+        <HexStage
+          key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode}
+          manualPayments={manualPayments} onClose={closeStage}
+        />
+      )}
       <div className="plan-switch" role="group" aria-label={t('plan.views')}>
         <button type="button" aria-pressed={view === 'map'} onClick={() => setView('map')}>{t('plan.mobileMap')}</button>
         <button type="button" aria-pressed={view === 'plan'} onClick={() => setView('plan')}>{t('plan.mobilePlan')}</button>

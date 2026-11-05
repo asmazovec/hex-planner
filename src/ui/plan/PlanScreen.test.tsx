@@ -68,7 +68,7 @@ test('cancelling the system choice leaves no entry', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(entries()).toHaveLength(0);
   await userEvent.click(tile(TARGET));
-  expect(screen.getByRole('complementary', { name: 'Tile 25' })).toBeVisible();
+  expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
 });
 
 test('a source can be added by taps, and opens the picker with a suggestion', async () => {
@@ -97,16 +97,17 @@ test('an arrow drag opens the same picker, in both directions', async () => {
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
 });
 
-test('outside the editor a tile tap opens its sheet and drags do nothing', async () => {
+test('outside the editor a tile tap opens the big hex and drags do nothing', async () => {
   render(<PlanScreen />);
   document.elementFromPoint = () => tile(TARGET);
   fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(entries()).toHaveLength(0);
   await userEvent.click(tile(TARGET));
-  expect(screen.getByRole('complementary', { name: 'Tile 25' })).toBeVisible();
+  expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Setup' })).toHaveAttribute('aria-pressed', 'true');
   await userEvent.click(screen.getByRole('button', { name: 'Close' }));
-  expect(screen.queryByRole('complementary', { name: 'Tile 25' })).toBeNull();
+  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 test('landing puts ground units on a planet and changes its control', async () => {
@@ -157,27 +158,65 @@ test('a landing whose units are gone stays visible, can go over the limit, and w
   expect(screen.getByText('Landing needs 2 × Infantry, but only 0 arrived.')).toBeVisible();
 });
 
-test('production is unavailable without a dock', async () => {
+test('a tap on an empty slot opens nothing', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(tile('0,-3'));
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('during a tactical action a tile tap opens no big hex', async () => {
+  await chooseSystem();
+  await userEvent.click(tile(HOME));
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('production without a dock warns and still works', async () => {
   await chooseSystem();
   expect(screen.getByText('No space dock in this system.')).toBeVisible();
-  expect(screen.queryByRole('group', { name: 'Build Carrier' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));
+  await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
+  expect(tactical().production).toEqual({ cruiser: 1 });
+});
+
+test('a merged entry names its system and opens the big hex in its own mode', async () => {
+  useGame.getState().changeAdjustment(1, { kind: 'losses', systemId: TARGET, unit: 'carrier', planetId: null, amount: -1 });
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Losses · 25' }));
+  expect(screen.getByRole('button', { name: 'Battle' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Give back Carrier' })).toBeVisible();
+});
+
+test('units placed on the big hex reach the map, also when it shows the present', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Now' }));
+  await userEvent.click(tile(TARGET));
+  await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: 'Cruiser ×1' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(within(tile(TARGET) as HTMLElement).queryByRole('img', { name: 'Cruiser ×1' })).toBeNull();
 });
 
 test('production picks the payment by itself and warns about the shortfall; manual choice stops the auto pick', async () => {
   await chooseSystem(HOME);
-  const row = within(screen.getByRole('group', { name: 'Build' }));
-  await userEvent.click(row.getByRole('button', { name: 'Add one Cruiser' }));
+  const shop = async (name: string | RegExp) => {
+    await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  };
+  await shop('Cruiser');
   expect(tactical().production).toEqual({ cruiser: 1 });
   expect(tactical().payment).toEqual({ planets: ['nestphar'], tradeGoods: 0 });
   expect(screen.getByText(/Cost 2/)).toBeVisible();
   expect(screen.queryByText(/short by/)).toBeNull();
-  await userEvent.click(row.getByRole('button', { name: 'Add one Cruiser' }));
+  await shop('Cruiser');
   expect(screen.getByText(/short by 1/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('button', { name: 'Choose manually' }));
   await userEvent.click(screen.getByRole('button', { name: /Nestphar/ }));
   expect(tactical().payment.planets).toEqual([]);
-  await userEvent.click(row.getByRole('button', { name: 'Remove one Cruiser' }));
+  await shop(/^Cruiser ×/);
+  expect(tactical().production).toEqual({ cruiser: 1 });
   expect(tactical().payment.planets).toEqual([]);
   await userEvent.click(screen.getByRole('button', { name: 'Pick automatically' }));
   expect(tactical().payment.planets).toEqual(['nestphar']);
@@ -372,11 +411,13 @@ test('the card list stays collapsed after the editor closes when a main card exi
   expect(screen.getByRole('button', { name: /Trade/ })).toBeVisible();
 });
 
-test('the build list shows the price of each unit', async () => {
+test('the shop opens on the active system and shows the price of each unit', async () => {
   await chooseSystem(HOME);
-  const build = within(screen.getByRole('group', { name: 'Build' }));
-  expect(build.getByRole('group', { name: 'Cruiser' })).toHaveTextContent('cost 2');
-  expect(build.getByRole('group', { name: 'Fighter' })).toHaveTextContent('cost 0.5');
+  await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));
+  const shop = within(screen.getByRole('dialog'));
+  expect(shop.getByRole('button', { name: 'Build' })).toHaveAttribute('aria-pressed', 'true');
+  expect(shop.getByRole('button', { name: 'Cruiser' })).toHaveTextContent('2');
+  expect(shop.getByRole('button', { name: 'Fighter' })).toHaveTextContent('½');
 });
 
 test('status tokens do not go below zero', async () => {

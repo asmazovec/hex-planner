@@ -30,7 +30,7 @@ export function opponentHoldings(game: Game, opponentId: string): { units: numbe
   return { units, planets: planetsHeldBy(game, opponentId).length };
 }
 
-/** Takes an opponent off the map: their units and docks go, and their planets become free. */
+/** Takes an opponent off the map: their units and structures go, and their planets become free. */
 function withoutHoldings(game: Game, opponentId: string): Game {
   const planets = planetsHeldBy(game, opponentId);
   const enemyUnits = Object.fromEntries(Object.entries(game.enemyUnits).flatMap(([slot, byOwner]) => {
@@ -43,6 +43,7 @@ function withoutHoldings(game: Game, opponentId: string): Game {
     planetControl: Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !planets.includes(id))),
     planetOwner: Object.fromEntries(Object.entries(game.planetOwner).filter(([id, owner]) => owner !== opponentId && !planets.includes(id))),
     docks: game.docks.filter(id => !planets.includes(id)),
+    pds: Object.fromEntries(Object.entries(game.pds).filter(([id]) => !planets.includes(id))),
   };
 }
 
@@ -144,7 +145,8 @@ export function setPlayerFaction(game: Game, index: number, faction: string, pac
   const planetControl = Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !old.includes(id)));
   for (const id of fresh) planetControl[id] = 'me';
   const planetOwner = Object.fromEntries(Object.entries(game.planetOwner).filter(([id]) => !old.includes(id) && !fresh.includes(id)));
-  return { ...next, planetControl, planetOwner, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)] };
+  const pds = Object.fromEntries(Object.entries(game.pds).filter(([id]) => !old.includes(id)));
+  return { ...next, planetControl, planetOwner, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)], pds };
 }
 
 

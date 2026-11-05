@@ -430,3 +430,50 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     expect(plans()[0].rounds[0].entries.find(e => e.id === id)).toMatchObject({ upgrades: ['carrier'] });
   });
 });
+
+describe('merged adjustments and structures', () => {
+  const lose = (unit: 'carrier' | 'infantry', amount: number, planetId: string | null = null) =>
+    act().changeAdjustment(1, { kind: 'losses', systemId: '1,0', unit, planetId, amount });
+
+  test('each tap is one undo step, and undo brings the entry back', () => {
+    lose('carrier', -1);
+    lose('carrier', 1);
+    expect(round().entries).toEqual([]);
+    act().undo();
+    expect(round().entries).toHaveLength(1);
+    act().undo();
+    expect(round().entries).toEqual([]);
+    expect(act().canUndo).toBe(false);
+  });
+
+  test('a PDS count goes up and down with undo, and zero leaves the record', () => {
+    act().setPds('p', 2);
+    expect(game().pds).toEqual({ p: 2 });
+    act().setPds('p', 0);
+    expect(game().pds).toEqual({});
+    act().undo();
+    expect(game().pds).toEqual({ p: 2 });
+  });
+
+  test('setting the same PDS count leaves no undo step', () => {
+    act().setPds('p', 0);
+    expect(act().canUndo).toBe(false);
+  });
+
+  test('a PDS on Mecatol Rex follows the planet to Thunder\'s Edge, and so does a loss recorded there', () => {
+    act().setPds('mr', 1);
+    lose('infantry', -1, 'mr');
+    act().addExpansion('te');
+    expect(game().pds).toEqual({ mrte: 1 });
+    expect(round().entries[0]).toMatchObject({ delta: { ground: { mrte: { infantry: -1 } } } });
+  });
+
+  test('an opponent who leaves takes the PDS of their planets along', () => {
+    const [first] = game().opponents;
+    act().setPlanetControl('p', first.id);
+    act().setPds('p', 1);
+    act().setPds('q', 1);
+    act().removeOpponent(0);
+    expect(game().pds).toEqual({ q: 1 });
+  });
+});

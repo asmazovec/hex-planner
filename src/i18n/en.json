@@ -53,6 +53,7 @@
     "exhausted": "exhausted",
     "commandToken": "Command token",
     "spaceDock": "Space dock",
+    "pds": "PDS",
     "seat": "Seat {{n}}",
     "legend": {
       "open": "What the tokens mean",
@@ -74,16 +75,12 @@
       "controlLabel": "Control of {{planet}}",
       "mine": "Mine",
       "none": "None",
-      "dock": "Space dock",
       "exhausted": "Exhausted",
       "ready": "Ready",
       "relic": "Relic icon",
       "legendaryAbility": "Legendary ability",
       "traits": "Traits",
       "specialties": "Specialties",
-      "unitsOf": "Units of {{name}}",
-      "plus": "Add one {{unit}}",
-      "minus": "Remove one {{unit}}",
       "close": "Close"
     },
     "resetView": "Reset view",
@@ -185,7 +182,12 @@
       "noneSystem": "None",
       "roundPoints": "Points this round",
       "pointsTotal": "total {{n}}",
-      "planetsRefresh": "Planets refresh at the start of the next round."
+      "planetsRefresh": "Planets refresh at the start of the next round.",
+      "kind": {
+        "losses": "Losses",
+        "build": "Purchases",
+        "setup": "Setup"
+      }
     },
     "tactical": {
       "title": "Tactical action",
@@ -202,10 +204,9 @@
       "landingOn": "Landing on {{planet}}",
       "landingCount": "{{unit}}: {{available}}, assigned {{assigned}}",
       "production": "Build (optional)",
-      "build": "Build",
       "noDock": "No space dock in this system.",
       "warnings": "Warnings",
-      "price": "cost {{cost}}"
+      "openShop": "Open the shop"
     },
     "picker": {
       "title": "From {{from}} to {{to}}",
@@ -373,5 +374,29 @@
     "close": "Close",
     "base": "Base game",
     "language": "Language"
+  },
+  "stage": {
+    "hex": "Big hex",
+    "open": "Open the big hex",
+    "modes": "Mode",
+    "mode": {
+      "setup": "Setup",
+      "battle": "Battle",
+      "build": "Build"
+    },
+    "owner": "Whose units",
+    "mine": "Mine",
+    "place": "Place on the hex",
+    "shop": "Shop",
+    "structures": "Structures",
+    "bought": "Bought: {{n}}",
+    "lossesMine": "Losses, mine",
+    "lossesOf": "Losses, {{name}}",
+    "noLosses": "No losses",
+    "giveBack": "Give back {{unit}}",
+    "battleNote": "Tap a token to record a loss. Tap a picture here to give the unit back.",
+    "buildNote": "Tap a token with a gold ring to take a purchase back.",
+    "setupNote": "Tap a token on the hex to remove one.",
+    "planetNote": "Tap a planet: ground units and structures go there."
   }
 }

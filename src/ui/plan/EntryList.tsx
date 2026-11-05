@@ -133,6 +133,7 @@ function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =
     case 'tactical':
       return `${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
     case 'adjustment':
+      if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemName(game, pack, entry.delta.units?.systemId ?? '')}`;
       return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
     case 'component':
       return entry.note ? `${t('plan.menu.component')}: ${entry.note}` : t('plan.menu.component');
@@ -258,7 +259,7 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
                         />
                       </div>
                     )}
-                    {entry.id === openId && entry.type === 'adjustment' && (
+                    {entry.id === openId && entry.type === 'adjustment' && !entry.kind && (
                       <div className="entry-details">
                         <AdjustmentFields entry={entry} game={game} pack={pack} state={state} />
                       </div>

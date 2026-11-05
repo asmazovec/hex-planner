@@ -700,3 +700,42 @@ describe('ship upgrades in the replay', () => {
     });
   });
 });
+
+describe('adjustment with ground units by planet', () => {
+  const game = (entries: Entry[], extra: Partial<Game> = {}) => ({ ...gameWith(entries), ...extra });
+
+  test('ground losses come off their planet only', () => {
+    const add = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: 3 }, arc: { infantry: 1 } } } }, 'strategy');
+    const lost = entry({ type: 'adjustment', label: '', kind: 'losses', delta: { ground: { jord: { infantry: -1 } } } });
+    const s = run(game([add, lost])).state;
+    expect(s.ground.jord).toEqual({ infantry: 2 });
+    expect(s.ground.arc).toEqual({ infantry: 1 });
+  });
+
+  test('a stack cannot go below nothing, and an empty stack leaves the planet', () => {
+    const add = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: 1 } } } }, 'strategy');
+    const lost = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: -5, mech: -1 } } } });
+    expect(run(game([add, lost])).state.ground.jord).toEqual({});
+  });
+
+  test('space and ground of one delta both apply', () => {
+    const lost = entry({ type: 'adjustment', label: '', kind: 'setup', delta: { units: { systemId: '0,1', units: { cruiser: 2 } }, ground: { lazar: { infantry: 1 } } } });
+    const s = run(game([lost])).state;
+    expect(s.systems['0,1']).toEqual({ cruiser: 2 });
+    expect(s.ground.lazar).toEqual({ infantry: 1 });
+  });
+
+  test('a planned loss counts in the forecast, not now', () => {
+    const add = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: 2 } } } }, 'strategy', 'done');
+    const lost = entry({ type: 'adjustment', label: '', kind: 'losses', delta: { ground: { jord: { infantry: -1 } } } });
+    const g = game([add, lost]);
+    expect(project(g, g.plans[0], 'now', pack).state.ground.jord).toEqual({ infantry: 2 });
+    expect(project(g, g.plans[0], 'forecast', pack).state.ground.jord).toEqual({ infantry: 1 });
+  });
+});
+
+describe('createGame structures', () => {
+  test('a new game has no PDS', () => {
+    expect(createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack).pds).toEqual({});
+  });
+});

@@ -1,11 +1,13 @@
 import { z } from 'zod';
 import type { Game } from '../domain/types';
 
-export const CURRENT_SCHEMA = 3;
+export const CURRENT_SCHEMA = 4;
 
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
 const unitCounts = z.partialRecord(unitId, count);
+/** An adjustment's change of units. */
+const signedCounts = z.partialRecord(unitId, z.number().int());
 const payment = z.object({ planets: z.array(z.string()), tradeGoods: count });
 const status = z.enum(['planned', 'done', 'cancelled']);
 const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
@@ -24,11 +26,12 @@ const entrySchema = z.discriminatedUnion('type', [
   z.object({ ...base, type: z.literal('pass') }),
   z.object({ ...base, type: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
   z.object({
-    ...base, type: z.literal('adjustment'), label: z.string(),
+    ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),
     delta: z.object({
       tradeGoods: z.number().optional(), tactic: z.number().optional(), fleet: z.number().optional(),
       strategy: z.number().optional(), vp: z.number().optional(),
-      units: z.object({ systemId: z.string(), units: unitCounts }).optional(),
+      units: z.object({ systemId: z.string(), units: signedCounts }).optional(),
+      ground: z.record(z.string(), signedCounts).optional(),
     }),
   }),
   z.object({
@@ -57,6 +60,7 @@ export const gameSchema = z.object({
   planetControl: z.record(z.string(), control),
   planetOwner: z.record(z.string(), z.string()),
   docks: z.array(z.string()),
+  pds: z.record(z.string(), count),
   expedition: z.object({
     slices: z.record(z.string(), z.enum(['me', 'other']).nullable()),
     thundersEdgeSystem: z.string().nullable(),
@@ -115,5 +119,6 @@ export function migrate(raw: unknown): unknown {
   if (!Array.isArray(doc.opponents)) return doc;
   doc = withSeats(doc);
   if (doc.schemaVersion === 1) doc = withOwners(doc);
-  return doc.schemaVersion === 2 ? { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } } : doc;
+  if (doc.schemaVersion === 2) doc = { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } };
+  return doc.schemaVersion === 3 ? { ...doc, schemaVersion: 4, pds: {} } : doc;
 }

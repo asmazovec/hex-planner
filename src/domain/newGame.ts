@@ -27,7 +27,7 @@ export function createGame(
   const planId = makeId('plan');
   return {
     id: makeId('game'),
-    schemaVersion: 3,
+    schemaVersion: 4,
     dataVersion: pack.version,
     expansions: [...input.expansions],
     playerCount: input.playerCount,
@@ -43,6 +43,7 @@ export function createGame(
     planetControl,
     planetOwner: {},
     docks: pack.tiles[faction?.homeTile ?? '']?.planetIds.slice(0, 1) ?? [],
+    pds: {},
     expedition: { slices: {}, thundersEdgeSystem: null },
     fracture: { active: false, ingress: [], seat: null },
     plans: [{ id: planId, name: 'Plan 1', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }],

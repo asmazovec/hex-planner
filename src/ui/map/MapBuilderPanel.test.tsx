@@ -105,14 +105,16 @@ test('a fixed template slot can be replaced and cleared, and Game.map overrides 
   expect(hex()).toHaveAccessibleName('Empty slot');
 });
 
-test('the popover has one Close button, and tile details appear only once the slot has a tile', async () => {
+test('the popover has one Close button, and the big hex opens from it only once the slot has a tile', async () => {
   await tapEmptySlot();
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
-  expect(screen.queryByText('Units of Player 2')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Open the big hex' })).toBeNull();
   await userEvent.type(screen.getByLabelText('Tile number'), '25');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
-  expect(screen.getByText('Units of Player 2')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Open the big hex' }));
+  expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
+  expect(screen.queryByLabelText('Tile number')).toBeNull();
 });
 
 test('a new game with an empty map opens in build mode; a map with tiles does not', async () => {
@@ -176,9 +178,9 @@ test('a tap on another tile moves the popover there', async () => {
   useGame.getState().setTile('2,0', '25');
   renderBuilding();
   await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
-  expect(screen.queryByRole('complementary', { name: 'Tile 25' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Open the big hex' })).toBeNull();
   await userEvent.click(document.querySelector('[data-slot="2,0"]')!);
-  expect(screen.getByRole('complementary', { name: 'Tile 25' })).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Open the big hex' })).toBeVisible();
 });
 
 test('starting a tactical action leaves build mode', async () => {

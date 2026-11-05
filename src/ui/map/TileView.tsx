@@ -29,6 +29,14 @@ export interface TileViewProps {
   seat?: { number: number; color: number };
   onTap?: (slotKey: string) => void;
   onPointerDown?: (slotKey: string, event: PointerEvent) => void;
+  /** Drawn as the big hex: tokens and planets take the taps, the tile itself none. */
+  stage?: {
+    /** The index of the planet that ground units and structures go to. */
+    target: number;
+    onPlanet: (index: number) => void;
+    onToken: (item: PlacedStack) => void;
+    ringed: (item: PlacedStack) => boolean;
+  };
 }
 
 /** The planet is drawn at this radius and scaled to its place. */
@@ -115,7 +123,7 @@ function useHexLayout(input: HexLayoutInput) {
 }
 
 export function TileView({
-  slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown,
+  slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, stage,
 }: TileViewProps) {
   const { t } = useTranslation();
   const { x, y } = fracture ?? hexToPixel(...(slotKey.split(',').map(Number) as [number, number]));
@@ -143,7 +151,8 @@ export function TileView({
 
   const stackLabel = ({ kind, count, owner }: PlacedStack): string => {
     const whose = owner === 'me' ? '' : ` (${opponentName(game, pack, owner, t)})`;
-    return kind === 'spacedock' ? `${t('map.spaceDock')}${whose}` : `${t(`unit.${kind}`)} ×${count}${whose}`;
+    if (kind === 'spacedock') return `${t('map.spaceDock')}${whose}`;
+    return `${kind === 'pds' ? t('map.pds') : t(`unit.${kind}`)} ×${count}${whose}`;
   };
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game);
@@ -162,6 +171,8 @@ export function TileView({
   }
   planets.forEach((planet, i) => {
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
+    const pds = game.pds[planet.id] ?? 0;
+    if (pds > 0) ground.push({ kind: 'pds', owner: holderOf(planet.id) ?? 'me', count: pds, planet: i });
     if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
   });
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
@@ -184,10 +195,10 @@ export function TileView({
   return (
     <g
       transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
-      role={fracture ? 'group' : 'button'} tabIndex={fracture ? undefined : 0} aria-label={label}
+      role={fracture || stage ? 'group' : 'button'} tabIndex={fracture || stage ? undefined : 0} aria-label={label}
       data-fracture-tile={fracture ? tileId : undefined}
-      className={`tile${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
-      data-slot={slotKey}
+      className={`tile${stage ? ' tile-stage' : ''}${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
+      data-slot={stage ? undefined : slotKey}
       onClick={activate}
       onKeyDown={onKeyDown}
       onPointerDown={e => onPointerDown?.(slotKey, e)}
@@ -213,10 +224,15 @@ export function TileView({
         if (exhausted) parts.push(t('map.exhausted'));
         return (
           <g
-            key={planet.id} role="group" aria-label={parts.join(', ')} style={placeOn(spot, spot.r / PLANET_BASE)}
+            key={planet.id} aria-label={parts.join(', ')} style={placeOn(spot, spot.r / PLANET_BASE)}
             data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}
             className={`tk planet${exhausted ? ' planet-exhausted' : ''}`}
+            {...(stage ? {
+              role: 'button', tabIndex: 0, 'aria-pressed': stage.target === i, onClick: () => stage.onPlanet(i),
+              onKeyDown: (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); stage.onPlanet(i); } },
+            } : { role: 'group' })}
           >
+            {stage && planets.length > 1 && stage.target === i && <circle r={PLANET_BASE + 1.4} className="planet-target" />}
             <circle
               r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`}
               style={holderColor ? { stroke: `var(--player-${holderColor})` } : undefined}
@@ -263,7 +279,7 @@ export function TileView({
         );
       })}
 
-      <TokenLayer items={layout.items} colourOf={item => colours[item.owner]} labelOf={stackLabel} />
+      <TokenLayer items={layout.items} colourOf={item => colours[item.owner]} labelOf={stackLabel} onTap={stage?.onToken} ringed={stage?.ringed} />
 
       {tile && (
         <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">

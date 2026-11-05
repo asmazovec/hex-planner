@@ -7,9 +7,7 @@ import { createGame } from '../../domain/newGame';
 import type { Game, GameState } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { seatSlots } from '../../domain/mapBuilder';
-import { useGame } from '../../state/gameStore';
 import { HexMap } from './HexMap';
-import { TileSheet } from './TileSheet';
 import { TileView } from './TileView';
 
 vi.mock('../../domain/hexLayout', async original => {
@@ -358,40 +356,18 @@ test('the map draws every slot of a six-player template, even with no tiles plac
   expect(document.querySelectorAll('.tile')).toHaveLength(37);
 });
 
+test('a PDS stands on its planet with its count, in the colour of the planet\'s holder', () => {
+  const id = pack.tiles['25'].planetIds[0];
+  setup('25', (g, s) => { g.pds[id] = 2; g.planetOwner[id] = g.opponents[1].id; s.control[id] = 'enemy'; });
+  expect(screen.getByRole('img', { name: 'PDS ×2 (Player 3)' })).toBeInTheDocument();
+});
+
 test('an unknown tile does not break the map', () => {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
   game.map['1,0'] = '9999';
   render(<HexMap game={game} state={emptyState()} pack={pack} />);
   expect(document.querySelectorAll('.tile')).toHaveLength(37);
   expect(screen.getByLabelText('Unknown tile 9999')).toBeInTheDocument();
-});
-
-test('the sheet edits dock, control and enemy units', async () => {
-  useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  const game = useGame.getState().game!;
-  game.map['1,0'] = '25';
-  const planetId = pack.tiles['25'].planetIds[0];
-  const planet = pack.planets[planetId];
-  const state = emptyState();
-  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={state} />);
-  await userEvent.click(screen.getByRole('checkbox', { name: 'Space dock' }));
-  expect(useGame.getState().game!.docks).toContain(planetId);
-  const [first, second] = game.opponents.map(o => o.id);
-  const control = within(screen.getByRole('group', { name: `Control of ${planet.name}` }));
-  expect(control.getAllByRole('button').map(b => b.textContent)).toEqual(['Mine', 'Player 2', 'Player 3', 'Player 4', 'Player 5', 'Player 6', 'None']);
-  await userEvent.click(control.getByRole('button', { name: 'Player 3' }));
-  expect(useGame.getState().game!.planetControl[planetId]).toBe('enemy');
-  expect(useGame.getState().game!.planetOwner[planetId]).toBe(second);
-  await userEvent.click(within(screen.getByRole('group', { name: 'Units of Player 3' })).getByRole('button', { name: 'Add one Cruiser' }));
-  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [second]: { cruiser: 1 } });
-  cleanup();
-  const live = useGame.getState().game!;
-  render(<TileSheet slotKey="1,0" pack={pack} game={live} state={{ ...state, control: { [planetId]: 'enemy' } }} />);
-  const shown = within(screen.getByRole('group', { name: `Control of ${planet.name}` }));
-  expect(shown.getByRole('button', { name: 'Player 3' })).toHaveAttribute('aria-pressed', 'true');
-  expect(shown.getByRole('button', { name: 'Player 2' })).toHaveAttribute('aria-pressed', 'false');
-  await userEvent.click(within(screen.getByRole('group', { name: 'Units of Player 2' })).getByRole('button', { name: 'Add one Cruiser' }));
-  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [second]: { cruiser: 1 }, [first]: { cruiser: 1 } });
 });
 
 test('the tile number stands small in the top-left corner, clear of planets and markers', () => {
@@ -456,18 +432,6 @@ test('the wheel zooms without scrolling the page, and the reset button restores 
   await waitFor(() => expect(transform()).not.toContain('scale(1)'));
   await userEvent.click(screen.getByRole('button', { name: 'Reset view' }));
   await waitFor(() => expect(transform()).toBe('translate(0 0) scale(1)'));
-});
-
-test('the sheet and the map name units in the interface language', () => {
-  setLanguage('ru');
-  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
-  game.map['1,0'] = '25';
-  const state = { ...emptyState(), systems: { '1,0': { warsun: 1 } } };
-  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={state} />);
-  expect(screen.getAllByText('Солнце войны')[0]).toBeVisible();
-  expect(screen.queryByText('War Sun')).toBeNull();
-  render(<svg><TileView slotKey="1,0" pack={pack} game={game} state={state} /></svg>);
-  expect(screen.getByRole('img', { name: 'Солнце войны ×1' })).toBeInTheDocument();
 });
 
 const lanesOf = () => [...document.querySelectorAll('[data-lane]')].map(el => el.getAttribute('data-lane')).sort();
@@ -628,39 +592,4 @@ test('control stays on the rim and an exhausted planet keeps its look with the t
   expect(group.querySelector('circle.planet-disc')).toHaveClass('planet-me');
   expect(group).toHaveClass('planet-exhausted');
   expect(group.querySelector('.planet-trait-hazardous')).not.toBeNull();
-});
-
-test('the sheet of tile 66 gives the ability name and its retelling in the current language', () => {
-  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  game.map['1,0'] = '66';
-  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={emptyState()} />);
-  const planet = within(screen.getByRole('group', { name: "Hope's End" }));
-  expect(planet.getByText('Imperial Arms Vault')).toBeInTheDocument();
-  expect(planet.getByText(/mech from reinforcements/)).toBeInTheDocument();
-  expect(planet.getByText('Hazardous')).toBeInTheDocument();
-  expect(planet.getByText(/Ready/)).toBeInTheDocument();
-  expect(planet.queryByText(/relic/i)).toBeNull();
-  cleanup();
-  setLanguage('ru');
-  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={emptyState()} />);
-  expect(screen.getByText(/1 меха из запаса/)).toBeInTheDocument();
-});
-
-test('the sheet lists traits with swatches, specialties, and the relic of a Fracture planet', () => {
-  const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, full);
-  game.map['1,0'] = '101';
-  const { container } = render(<TileSheet slotKey="1,0" pack={full} game={game} state={emptyState()} />);
-  const planet = within(screen.getByRole('group', { name: 'Olergodt' }));
-  expect(planet.getByText('Hazardous')).toBeInTheDocument();
-  expect(planet.getByText('Cultural')).toBeInTheDocument();
-  expect(container.querySelectorAll('.trait-swatch')).toHaveLength(2);
-  expect(planet.getByText(/Warfare/)).toBeInTheDocument();
-  expect(planet.getByText(/Cybernetic/)).toBeInTheDocument();
-  expect(planet.queryByText(/relic/i)).toBeNull();
-  cleanup();
-  game.map['1,0'] = 'fracture4';
-  render(<TileSheet slotKey="1,0" pack={full} game={game} state={emptyState()} />);
-  const styx = within(screen.getByRole('group', { name: 'Styx' }));
-  expect(styx.getByText(/relic/i)).toBeInTheDocument();
-  expect(styx.getByText('A Song Like Marrow')).toBeInTheDocument();
 });

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
+import { changeMerged, type MergedChange } from '../domain/losses';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { withTeMecatol } from '../domain/mecatol';
@@ -149,6 +150,9 @@ export interface GameStore {
   setPlanetControl(planetId: string, owner: string | null): void;
   /** Marks whether a planet has a space dock. */
   setDock(planetId: string, present: boolean): void;
+  setPds(planetId: string, count: number): void;
+  /** One tap on the big hex: edits the merged adjustment of that system and kind in the round. */
+  changeAdjustment(roundNo: number, change: MergedChange): void;
   setSlice(id: string, owner: 'me' | 'other' | null): void;
   setThundersEdge(systemId: string | null): void;
   setFractureActive(active: boolean): void;
@@ -319,6 +323,8 @@ export const useGame = create<GameStore>((set, get) => {
       commit(g => (g.docks.includes(planetId) === present
         ? g
         : { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(p => p !== planetId) })),
+    setPds: (planetId, count) => commit(g => withField(g, 'pds', setOrDelete(g.pds, planetId, count > 0 ? count : null))),
+    changeAdjustment: (roundNo, change) => commit(g => editRound(g, roundNo, r => changeMerged(r, change, newId))),
     setSlice: (id, owner) =>
       commit(g => {
         const slices = setOrDelete(g.expedition.slices, id, owner);

@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../domain/payment';
 import { productionCost, sourceSlot, systemPlanets } from '../../domain/project';
-import { unitStats } from '../../domain/unitStats';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { PaymentBlock } from './PaymentBlock';
@@ -24,13 +23,15 @@ export interface TacticalEditorProps {
   onAddSource: () => void;
   onOpenPicker: (source: string | null) => void;
   onManualPayment: (open: boolean) => void;
+  /** Opens the shop of the big hex on the active system. */
+  onOpenShop: () => void;
   onDone: () => void;
 }
 
 /** The whole tactical action on one screen: system, arrows and units, optional landing and build, payment, warnings. */
 export function TacticalEditor({
   game, pack, entry, before, warnings, addingSource, pickerFrom, manualPayment,
-  onUpdate, onAddSource, onOpenPicker, onManualPayment, onDone,
+  onUpdate, onAddSource, onOpenPicker, onManualPayment, onOpenShop, onDone,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
@@ -58,13 +59,6 @@ export function TacticalEditor({
     const rest = entry.landings.filter(l => l.planetId !== planetId);
     const units = withCount(current, unit, count);
     onUpdate({ landings: hasUnits(units) ? [...rest, { planetId, units }] : rest });
-  };
-
-  /** The payment follows the cost in the same edit, so one undo reverts both. */
-  const setProduction = (production: UnitCounts) => {
-    const nextCost = priceOf(production);
-    const seed = !manualPayment && nextCost !== cost;
-    onUpdate(seed ? { production, payment: autoPay(before, nextCost, 'resources', pack) } : { production });
   };
 
   const toggleManual = (open: boolean) => {
@@ -127,21 +121,12 @@ export function TacticalEditor({
             </details>
           )}
 
-          {!hasDock && <p className="editor-section muted">{t('plan.tactical.noDock')}</p>}
-          {hasDock && (
-            <details className="editor-section" open={cost > 0 || undefined}>
-              <summary>{t('plan.tactical.production')}</summary>
-              <div role="group" aria-label={t('plan.tactical.build')}>
-                {UNIT_ORDER.filter(u => pack.units[u]).map(unit => (
-                  <Stepper
-                    key={unit} name={t(`unit.${unit}`)} value={entry.production[unit] ?? 0} min={0}
-                    note={t('plan.tactical.price', { cost: unitStats(game.faction, unit, before.upgrades.includes(unit), pack)?.cost ?? 0 })}
-                    onChange={count => setProduction(withCount(entry.production, unit, count))}
-                  />
-                ))}
-              </div>
-            </details>
-          )}
+          <div className="editor-section">
+            <strong>{t('plan.tactical.production')}</strong>
+            {hasUnits(entry.production) && <span className="muted">{unitText(entry.production)}</span>}
+            {!hasDock && <span className="warning-text">{t('plan.tactical.noDock')}</span>}
+            <button type="button" onClick={onOpenShop}>{t('plan.tactical.openShop')}</button>
+          </div>
 
           {(cost > 0 || entry.payment.planets.length > 0 || entry.payment.tradeGoods > 0) && (
             <PaymentBlock

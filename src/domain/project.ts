@@ -187,6 +187,10 @@ export function tacticalMeters(
   };
 }
 
+/** Where a system's production puts ground forces: one of the player's planets there, or null for its space area. */
+export const productionPlanet = (game: Game, state: GameState, systemId: string, pack: DataPack): string | null =>
+  planetsOf(game, systemId, pack).find(p => state.control[p] === 'me') ?? null;
+
 /** What happens in the target after the moves: ground units land, then what was built is placed. */
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
@@ -216,8 +220,7 @@ function landAndBuild(
   for (const id of unitIds(entry.production)) (pack.units[id]?.ground ? groundPart : shipsPart)[id] = entry.production[id];
   add(state.systems, target, shipsPart);
   if (unitIds(groundPart).length > 0) {
-    // Produced ground forces start on one of the player's planets in the system, else they stay in space.
-    const planet = planetsOf(game, target, pack).find(p => state.control[p] === 'me');
+    const planet = productionPlanet(game, state, target, pack);
     if (planet) add(state.ground, planet, groundPart);
     else add(state.systems, target, groundPart);
   }
@@ -279,6 +282,16 @@ function applyExpedition(
   }
 }
 
+/** A signed change of counts; a stack stops at nothing and an empty one leaves the record. */
+function shiftUnits(target: Record<string, UnitCounts>, key: string, units: UnitCounts): void {
+  const bucket = (target[key] ??= {});
+  for (const id of Object.keys(units) as UnitId[]) {
+    const next = Math.max(0, (bucket[id] ?? 0) + (units[id] ?? 0));
+    if (next > 0) bucket[id] = next;
+    else delete bucket[id];
+  }
+}
+
 function addUpgrades(state: GameState, upgrades: UnitId[] = []): void {
   for (const id of upgrades) if (!state.upgrades.includes(id)) state.upgrades.push(id);
 }
@@ -312,15 +325,8 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       state.fleet += d.fleet ?? 0;
       state.strategy += d.strategy ?? 0;
       state.vp += d.vp ?? 0;
-      if (d.units) {
-        const { systemId, units } = d.units;
-        const bucket = (state.systems[systemId] ??= {});
-        for (const id of Object.keys(units) as UnitId[]) {
-          const next = Math.max(0, (bucket[id] ?? 0) + (units[id] ?? 0));
-          if (next > 0) bucket[id] = next;
-          else delete bucket[id];
-        }
-      }
+      if (d.units) shiftUnits(state.systems, d.units.systemId, d.units.units);
+      for (const [planetId, units] of Object.entries(d.ground ?? {})) shiftUnits(state.ground, planetId, units);
       break;
     }
     case 'strategic':

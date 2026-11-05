@@ -154,3 +154,46 @@ test('the points of a status entry survive export and import', () => {
   const result = importGame(exportGame(game));
   expect(result.ok && result.game.plans[0].rounds[0].entries[0]).toMatchObject({ vp: 2, opponentVp: { [opponent]: 1 } });
 });
+
+describe('PDS in saved games', () => {
+  const version3 = () => {
+    const { pds: dropped, ...rest } = sampleGame();
+    void dropped;
+    return { ...rest, schemaVersion: 3 };
+  };
+
+  test('a version 3 file gets no PDS and comes up to the current schema', () => {
+    expect(CURRENT_SCHEMA).toBe(4);
+    expect(importGame(JSON.stringify(version3()))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, pds: {} } });
+  });
+
+  test('a version 1 file goes all the way', () => {
+    expect(importGame(JSON.stringify(gameOfSchema1()))).toMatchObject({ ok: true, game: { pds: {} } });
+  });
+
+  test('a file with PDS keeps them', () => {
+    const game = { ...sampleGame(), pds: { jord: 2 } };
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+  });
+
+  test('a bad PDS count is refused', () => {
+    expect(importGame(JSON.stringify({ ...sampleGame(), pds: { jord: -1 } })).ok).toBe(false);
+  });
+
+  test('an adjustment may hold negative units and ground by planet, and its kind stays', () => {
+    const game = sampleGame();
+    game.plans[0].rounds[0].entries.push({
+      id: 'e9', phase: 'action', status: 'planned', type: 'adjustment', label: '', kind: 'losses',
+      delta: { units: { systemId: '1,0', units: { carrier: -1 } }, ground: { jord: { infantry: -2 } } },
+    });
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+  });
+
+  test('an old adjustment without a kind stays valid, and an unknown kind is refused', () => {
+    const game = sampleGame();
+    expect(importGame(exportGame(game)).ok).toBe(true);
+    const bad = structuredClone(game) as unknown as { plans: { rounds: { entries: Record<string, unknown>[] }[] }[] };
+    bad.plans[0].rounds[0].entries.find(e => e.type === 'adjustment')!.kind = 'magic';
+    expect(importGame(JSON.stringify(bad)).ok).toBe(false);
+  });
+});

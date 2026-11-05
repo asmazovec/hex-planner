@@ -141,8 +141,14 @@ export interface AdjustmentDelta {
   fleet?: number;
   strategy?: number;
   vp?: number;
+  /** Signed. */
   units?: { systemId: string; units: UnitCounts };
+  /** Ground units by planet id; signed. */
+  ground?: Record<string, UnitCounts>;
 }
+
+/** What made an adjustment: the big hex merges its taps into one entry per system. Absent for one made by hand. */
+export type AdjustmentKind = 'losses' | 'build' | 'setup';
 
 /**
  * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
@@ -156,7 +162,7 @@ export type EntryBody =
   | { type: 'component'; note: string }
   | { type: 'pass' }
   | { type: 'expedition'; sliceId: string | null; payment: Payment }
-  | { type: 'adjustment'; label: string; delta: AdjustmentDelta }
+  | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
       /** My points gained this round. */ vp?: number;
       /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number> };
@@ -202,6 +208,8 @@ export interface Game {
   planetOwner: Record<string, string>;
   /** Ids of planets that have a space dock. */
   docks: string[];
+  /** Planet id to the number of PDS on it. */
+  pds: Record<string, number>;
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
   fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null };
   plans: Plan[];
