@@ -34,7 +34,7 @@ export function createGame(
     planetControl,
     docks: pack.tiles[faction?.homeTile ?? '']?.planetIds.slice(0, 1) ?? [],
     expedition: { slices: {}, thundersEdgeSystem: null },
-    fracture: { active: false, ingress: [] },
+    fracture: { active: false, ingress: [], seat: null },
     plans: [{ id: planId, name: 'Plan 1', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }],
     activePlanId: planId,
   };

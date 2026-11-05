@@ -1,4 +1,5 @@
 import type { DataPack, Game, MapTemplate, TileDef } from './types';
+import { slotKeyOf } from './newGame';
 
 /** Slots of the map template for a player count; empty when there is none. */
 export const slotsFor = (playerCount: number, pack: DataPack): MapTemplate['slots'] =>
@@ -46,4 +47,31 @@ export function duplicateTiles(map: Game['map']): string[] {
 export function mapIsEmpty(game: Game, pack: DataPack): boolean {
   const fixed = new Set(slotsFor(game.playerCount, pack).filter(s => s.fixed).map(s => `${s.q},${s.r}`));
   return Object.keys(game.map).every(slot => fixed.has(slot));
+}
+
+const hexDistance = (q: number, r: number): number => Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
+
+/** Clockwise angle from north (the top of the map), 0 up to 2π; flat-top axial grid. */
+const clockwiseAngle = (q: number, r: number): number => {
+  const x = 1.5 * q;
+  const y = Math.sqrt(3) * (q / 2 + r);
+  return (Math.atan2(x, -y) + 2 * Math.PI) % (2 * Math.PI);
+};
+
+/**
+ * Slot keys of the home positions in seat order: seat 1 at the top, then clockwise.
+ * Uses the template's home slots if it has them; otherwise equally spaced slots of the outer ring for the
+ * standard 3, 4 and 6 player maps. Any other case gives an empty list.
+ */
+export function seatSlots(playerCount: number, pack: DataPack): string[] {
+  const slots = slotsFor(playerCount, pack);
+  const byAngle = (list: { q: number; r: number }[]) =>
+    [...list].sort((a, b) => clockwiseAngle(a.q, a.r) - clockwiseAngle(b.q, b.r));
+  const homes = slots.filter(s => s.fixed !== undefined && pack.tiles[s.fixed.split('@')[0]]?.kind === 'home');
+  if (homes.length === playerCount) return byAngle(homes).map(s => slotKeyOf(s.q, s.r));
+  if (![3, 4, 6].includes(playerCount) || slots.length === 0) return [];
+  const outer = Math.max(...slots.map(s => hexDistance(s.q, s.r)));
+  const ring = byAngle(slots.filter(s => hexDistance(s.q, s.r) === outer));
+  return Array.from({ length: playerCount }, (_, i) => ring[Math.round((i * ring.length) / playerCount) % ring.length])
+    .map(s => slotKeyOf(s.q, s.r));
 }

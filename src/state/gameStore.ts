@@ -123,6 +123,8 @@ export interface GameStore {
   setSlice(id: string, owner: 'me' | 'other' | null): void;
   setThundersEdge(systemId: string | null): void;
   setFractureActive(active: boolean): void;
+  /** Seat the Fracture group sits next to; null is the default edge. */
+  setFractureSeat(seat: number | null): void;
   toggleIngress(systemId: string): void;
   undo(): void;
 }
@@ -244,6 +246,8 @@ export const useGame = create<GameStore>((set, get) => {
         ? g : { ...g, expedition: { ...g.expedition, thundersEdgeSystem: systemId } })),
     setFractureActive: active =>
       commit(g => (g.fracture.active === active ? g : { ...g, fracture: { ...g.fracture, active } })),
+    setFractureSeat: seat =>
+      commit(g => (g.fracture.seat === seat ? g : { ...g, fracture: { ...g.fracture, seat } })),
     toggleIngress: systemId =>
       commit(g => ({
         ...g,

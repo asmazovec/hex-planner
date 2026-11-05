@@ -115,3 +115,23 @@ test('ingress markers are toggled by tapping in the marking mode and do not chan
   fireEvent.click(tile(ok));
   expect(game().fracture.ingress).toEqual([]);
 });
+
+test('choosing a seat stores it and moves the Fracture group', async () => {
+  render(<PlanScreen />);
+  const control = screen.getByRole('group', { name: 'Fracture' });
+  await userEvent.click(within(control).getByRole('button', { name: 'Open the Fracture' }));
+  const where = () => {
+    const rect = document.querySelector('[data-fracture-tile]')!.getAttribute('transform');
+    return rect;
+  };
+  const before = where();
+  const seats = within(within(control).getByRole('group', { name: 'Seat' })).getAllByRole('button');
+  expect(seats).toHaveLength(6);
+  await userEvent.click(seats[3]);
+  expect(game().fracture.seat).toBe(4);
+  expect(where()).not.toBe(before);
+  const atFour = where();
+  await userEvent.click(seats[0]);
+  expect(game().fracture.seat).toBe(1);
+  expect(where()).not.toBe(atFour);
+});

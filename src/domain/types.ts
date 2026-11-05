@@ -109,7 +109,7 @@ export interface Game {
   /** Ids of planets that have a space dock. */
   docks: string[];
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
-  fracture: { active: boolean; ingress: string[] };
+  fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null };
   plans: Plan[];
   activePlanId: string;
 }

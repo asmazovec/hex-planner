@@ -248,6 +248,7 @@
     "close": "Close the Fracture",
     "mark": "Mark ingress",
     "markHint": "Tap systems to add or remove ingress tokens.",
-    "ingressCount": "Ingress tokens: {{n}}"
+    "ingressCount": "Ingress tokens: {{n}}",
+    "seat": "Seat"
   }
 }

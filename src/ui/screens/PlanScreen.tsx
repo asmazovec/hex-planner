@@ -273,7 +273,7 @@ export function PlanScreen() {
                 {hasTe && (
                   <>
                     <ExpeditionWidget game={game} pack={pack} owners={owners} placing={placing} onPlacing={setPlacing} />
-                    <FractureControl game={game} marking={marking} onMarking={setMarking} />
+                    <FractureControl game={game} pack={pack} marking={marking} onMarking={setMarking} />
                   </>
                 )}
                 <EntryList

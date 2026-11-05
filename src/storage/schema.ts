@@ -52,7 +52,7 @@ export const gameSchema = z.object({
     slices: z.record(z.string(), z.enum(['me', 'other']).nullable()),
     thundersEdgeSystem: z.string().nullable(),
   }),
-  fracture: z.object({ active: z.boolean(), ingress: z.array(z.string()) }),
+  fracture: z.object({ active: z.boolean(), ingress: z.array(z.string()), seat: z.number().nullable().default(null) }),
   plans: z.array(z.object({
     id: z.string(), name: z.string(),
     rounds: z.array(z.object({

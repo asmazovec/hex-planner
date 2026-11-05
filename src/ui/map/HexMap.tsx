@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { seatSlots } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
 import type { DataPack, Game, GameState } from '../../domain/types';
 import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
@@ -24,26 +25,35 @@ export interface HexMapProps {
 }
 
 /**
- * The Fracture systems stand in two touching columns to the right of the map. Their real position is
- * only on a diagram (see data-verification), so this is the app's own placement.
+ * The Fracture systems stand in two touching columns. Next to the chosen seat's slot they sit at the map
+ * edge, outward from the map centre; without a seat they stand to the right of the map. Their real position
+ * is only on a diagram (see data-verification), so the seat is the player's choice.
  */
-export function fractureLayout(tileIds: string[], base: Rect): { spots: { tileId: string; x: number; y: number }[]; bounds: Rect; labelX: number; labelY: number } {
+export function fractureLayout(
+  tileIds: string[], base: Rect, anchor: { x: number; y: number } | null,
+): { spots: { tileId: string; x: number; y: number }[]; bounds: Rect; labelX: number; labelY: number } {
   const step = HEX_SIZE * Math.sqrt(3);
   const perColumn = Math.ceil(tileIds.length / 2);
-  const left = base.x + base.width + HEX_SIZE + 6;
-  const cy = base.y + base.height / 2;
-  const spots = tileIds.map((tileId, i) => {
+  const rel = tileIds.map((tileId, i) => {
     const second = i >= perColumn;
-    const row = (second ? i - perColumn + 0.5 : i) - (perColumn - 1) / 2;
-    return { tileId, x: left + (second ? HEX_SIZE * 1.5 : 0), y: cy + row * step };
+    return { tileId, x: (second ? 0.75 : -0.75) * HEX_SIZE, y: ((second ? i - perColumn + 0.5 : i) - (perColumn - 1) / 2) * step };
   });
-  const top = Math.min(...spots.map(s => s.y)) - step / 2;
-  const bottom = Math.max(...spots.map(s => s.y)) + step / 2;
-  const right = Math.max(...spots.map(s => s.x)) + HEX_SIZE + 6;
-  const y = Math.min(base.y, top - 26);
+  const halfW = 1.75 * HEX_SIZE;
+  const halfH = Math.max(...rel.map(s => s.y)) + step / 2;
+  const length = anchor ? Math.hypot(anchor.x, anchor.y) : 0;
+  const dir = anchor && length > 0 ? { x: anchor.x / length, y: anchor.y / length } : { x: 1, y: 0 };
+  const reach = HEX_SIZE + 8 + Math.abs(dir.x) * halfW + Math.abs(dir.y) * halfH;
+  const centre = anchor
+    ? { x: anchor.x + dir.x * reach, y: anchor.y + dir.y * reach }
+    : { x: base.x + base.width + HEX_SIZE + 6 + halfW, y: base.y + base.height / 2 };
+  const spots = rel.map(s => ({ tileId: s.tileId, x: centre.x + s.x, y: centre.y + s.y }));
+  const left = Math.min(base.x, centre.x - halfW - 6);
+  const top = Math.min(base.y, centre.y - halfH - 26);
+  const right = Math.max(base.x + base.width, centre.x + halfW + 6);
+  const bottom = Math.max(base.y + base.height, centre.y + halfH + 6);
   return {
-    spots, labelX: left - HEX_SIZE, labelY: top - 8,
-    bounds: { x: base.x, y, width: right - base.x, height: Math.max(base.y + base.height, bottom + 6) - y },
+    spots, labelX: centre.x - halfW, labelY: centre.y - halfH - 8,
+    bounds: { x: left, y: top, width: right - left, height: bottom - top },
   };
 }
 
@@ -92,7 +102,11 @@ export function HexMap({
       : []),
     [pack, game.fracture.active],
   );
-  const fracture = useMemo(() => (fractureIds.length > 0 ? fractureLayout(fractureIds, mapRect) : null), [fractureIds, mapRect]);
+  const seatKey = game.fracture.seat === null ? undefined : seatSlots(game.playerCount, pack)[game.fracture.seat - 1];
+  const fracture = useMemo(() => {
+    if (fractureIds.length === 0) return null;
+    return fractureLayout(fractureIds, mapRect, seatKey === undefined ? null : hexToPixel(parseKey(seatKey).q, parseKey(seatKey).r));
+  }, [fractureIds, mapRect, seatKey]);
   const bounds = fracture?.bounds ?? mapRect;
   const { view, handlers, reset } = usePanZoom(bounds, svgRef);
   const center = (key: string) => {
