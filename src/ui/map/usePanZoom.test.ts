@@ -110,6 +110,92 @@ test('dragging past the limit gives way softly, then the view returns over sever
   expect(frames).toHaveLength(0);
 });
 
+const stretchAndRelease = (result: ReturnType<typeof setup>) => {
+  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 500, 0)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 500, 0)));
+  runFrames();
+};
+const LIMIT = 100 - 100 / 3;
+
+test('a tap on empty space during the return does not freeze the view past the limit', () => {
+  const result = setup();
+  stretchAndRelease(result);
+  act(() => result.current.handlers.onPointerDown(ev(2, 10, 10)));
+  act(() => result.current.handlers.onPointerUp(ev(2, 10, 10)));
+  runFrames(200);
+  expect(result.current.view.x).toBeCloseTo(LIMIT);
+});
+
+test('a press on a tile during the return does not freeze it either, even if held', () => {
+  const result = setup();
+  stretchAndRelease(result);
+  act(() => result.current.handlers.onPointerDown(ev(2, 10, 10, inner)));
+  runFrames(200);
+  expect(result.current.view.x).toBeCloseTo(LIMIT);
+  act(() => result.current.handlers.onPointerUp(ev(2, 10, 10, inner)));
+});
+
+test('presses without movement do not stop or change a reset', () => {
+  const result = setup();
+  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 40, 0)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 40, 0)));
+  act(() => result.current.reset());
+  runFrames();
+  act(() => result.current.handlers.onPointerDown(ev(1, 10, 10)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 10, 10)));
+  act(() => result.current.handlers.onPointerDown(ev(1, 10, 10, inner)));
+  act(() => result.current.handlers.onPointerDown(ev(2, 30, 10, inner)));
+  act(() => result.current.handlers.onPointerUp(ev(2, 30, 10, inner)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 10, 10, inner)));
+  runFrames(200);
+  expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
+});
+
+test('a finger takes over from a running return, and a reset during a pan does not fight it', () => {
+  const result = setup();
+  stretchAndRelease(result);
+  const before = result.current.view.x;
+  act(() => result.current.handlers.onPointerDown(ev(2, 0, 0)));
+  act(() => result.current.handlers.onPointerMove(ev(2, -10, 0)));
+  expect(frames).toHaveLength(0);
+  expect(result.current.view.x).toBeLessThan(before);
+  act(() => result.current.reset());
+  act(() => result.current.handlers.onPointerMove(ev(2, -20, 0)));
+  expect(frames).toHaveLength(0);
+  act(() => result.current.handlers.onPointerUp(ev(2, -20, 0)));
+  runFrames(200);
+  expect(result.current.view.x).toBeLessThanOrEqual(LIMIT + 1e-6);
+});
+
+test('the limit is measured on the given rectangle, not on the whole drawing', () => {
+  // The drawing is 100 wide; the map is its left half.
+  const result = renderHook(() => usePanZoom(bounds, { current: null }, undefined, { x: 0, y: 0, width: 50, height: 100 })).result;
+  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0)));
+  act(() => result.current.handlers.onPointerMove(ev(1, -900, 0)));
+  act(() => result.current.handlers.onPointerUp(ev(1, -900, 0)));
+  runFrames(200);
+  // The right edge of the map is the middle of the drawing; it ends a third of the viewport from the left side.
+  expect(result.current.view.x).toBeCloseTo(-50 + 100 / 3);
+});
+
+test('a Fracture tile counts as empty space: it pans, and a tap on it is reported', () => {
+  const fracture = document.createElementNS(SVG, 'g');
+  fracture.setAttribute('data-slot', 'f1');
+  fracture.setAttribute('data-fracture-tile', 'f1');
+  const hex = document.createElementNS(SVG, 'polygon');
+  fracture.append(hex);
+  const onEmptyTap = vi.fn();
+  const result = setup(onEmptyTap);
+  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0, hex)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 0, 0, hex)));
+  expect(onEmptyTap).toHaveBeenCalledTimes(1);
+  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0, hex)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 20, 0, hex)));
+  expect(result.current.view.x).toBe(20);
+});
+
 test('reset travels to the start through in-between frames', () => {
   const result = setup();
   act(() => result.current.handlers.onPointerDown(ev(1, 0, 0)));

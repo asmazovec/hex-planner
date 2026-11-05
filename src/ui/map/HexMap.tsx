@@ -6,6 +6,7 @@ import type { DataPack, Game, GameState } from '../../domain/types';
 import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
 import { TilePopover } from './TilePopover';
 import { TileView, type Highlight } from './TileView';
+import { capFit } from './viewLimits';
 import type { ArrowPreview } from './useArrowDrag';
 import { usePanZoom } from './usePanZoom';
 
@@ -23,29 +24,34 @@ export interface HexMapProps {
   selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
+  /** More controls in the strip above the map. */
+  tools?: ReactNode;
   /** Shown in a window beside the selected tile. */
   popover?: ReactNode;
   onPopoverClose?: () => void;
 }
 
 /**
- * The Fracture systems stand in two touching columns. Next to the chosen seat's slot they sit at the map
- * edge, outward from the map centre; without a seat they stand to the right of the map. Their real position
- * is only on a diagram (see data-verification), so the seat is the player's choice.
+ * The Fracture systems stand in two touching lines across the outward direction: rows at a top or bottom seat,
+ * columns at a side seat or without a seat. Next to the chosen seat's slot they sit at the map edge, outward
+ * from the map centre; without a seat they stand to the right of the map. Their real position is only on a
+ * diagram (see data-verification), so the seat is the player's choice.
  */
 export function fractureLayout(
   tileIds: string[], base: Rect, anchor: { x: number; y: number } | null,
 ): { spots: { tileId: string; x: number; y: number }[]; bounds: Rect; labelX: number; labelY: number } {
   const step = HEX_SIZE * Math.sqrt(3);
   const perColumn = Math.ceil(tileIds.length / 2);
+  const length = anchor ? Math.hypot(anchor.x, anchor.y) : 0;
+  const dir = anchor && length > 0 ? { x: anchor.x / length, y: anchor.y / length } : { x: 1, y: 0 };
+  const inRows = Math.abs(dir.y) > Math.abs(dir.x);
   const rel = tileIds.map((tileId, i) => {
+    if (inRows) return { tileId, x: (i - (tileIds.length - 1) / 2) * 1.5 * HEX_SIZE, y: ((i % 2 === 0 ? -1 : 1) * step) / 4 };
     const second = i >= perColumn;
     return { tileId, x: (second ? 0.75 : -0.75) * HEX_SIZE, y: ((second ? i - perColumn + 0.5 : i) - (perColumn - 1) / 2) * step };
   });
-  const halfW = 1.75 * HEX_SIZE;
+  const halfW = Math.max(...rel.map(s => s.x)) + HEX_SIZE;
   const halfH = Math.max(...rel.map(s => s.y)) + step / 2;
-  const length = anchor ? Math.hypot(anchor.x, anchor.y) : 0;
-  const dir = anchor && length > 0 ? { x: anchor.x / length, y: anchor.y / length } : { x: 1, y: 0 };
   const reach = HEX_SIZE + 8 + Math.abs(dir.x) * halfW + Math.abs(dir.y) * halfH;
   const centre = anchor
     ? { x: anchor.x + dir.x * reach, y: anchor.y + dir.y * reach }
@@ -87,7 +93,7 @@ function PreviewLine({ start, preview }: { start: { x: number; y: number }; prev
 }
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown, popover, onPopoverClose,
+  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown, tools, popover, onPopoverClose,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -112,8 +118,8 @@ export function HexMap({
     if (fractureIds.length === 0) return null;
     return fractureLayout(fractureIds, mapRect, seatKey === undefined ? null : hexToPixel(parseKey(seatKey).q, parseKey(seatKey).r));
   }, [fractureIds, mapRect, seatKey]);
-  const bounds = fracture?.bounds ?? mapRect;
-  const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose);
+  const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
+  const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect);
   const center = (key: string) => {
     const { q, r } = parseKey(key);
     return hexToPixel(q, r);
@@ -131,6 +137,11 @@ export function HexMap({
   )), [slotKeys, pack, game, state, highlights, selectedId, onTileTap, onTilePointerDown]);
 
   return (
+    <div className="hexmap-frame">
+    <div className="map-strip">
+      <button type="button" onClick={reset}>{t('map.resetView')}</button>
+      {tools}
+    </div>
     <div className="hexmap-wrap" ref={areaRef}>
     <svg
       ref={svgRef} className="hexmap" role="group" aria-label={t('map.label')}
@@ -173,10 +184,10 @@ export function HexMap({
         {arrowPreview && <PreviewLine start={center(arrowPreview.from)} preview={arrowPreview} />}
       </g>
     </svg>
-    <button type="button" className="map-reset" onClick={reset}>{t('map.resetView')}</button>
     {selectedId && popover && onPopoverClose && (
       <TilePopover slot={selectedId} view={view} areaRef={areaRef} onClose={onPopoverClose}>{popover}</TilePopover>
     )}
+    </div>
     </div>
   );
 }

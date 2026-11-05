@@ -161,6 +161,17 @@ test('a tap beside the popover closes it: empty map space and outside the map, n
   expect(input()).toBeNull();
 });
 
+test('the map controls stand above the map, not on it', () => {
+  renderBuilding();
+  const strip = document.querySelector('.map-strip')!;
+  const area = document.querySelector('.hexmap-wrap')!;
+  for (const name of ['Build map', 'Reset view', 'Forecast', 'Now']) {
+    const button = screen.getByRole('button', { name });
+    expect(strip.contains(button), name).toBe(true);
+    expect(area.contains(button), name).toBe(false);
+  }
+});
+
 test('a tap on another tile moves the popover there', async () => {
   useGame.getState().setTile('2,0', '25');
   renderBuilding();

@@ -151,6 +151,42 @@ test('unit stacks stay inside the hex for any number of stacks and planets', () 
   }
 });
 
+/** Numbers from a transform such as translate(1 2) scale(3). */
+const moved = (g: Element) => {
+  const [x = 0, y = 0, scale = 1] = (g.getAttribute('transform') ?? '').match(/-?[\d.]+/g)?.map(Number) ?? [];
+  return { x, y, scale };
+};
+
+test.each(['25', '26', '27', '28', '16'])('ground units on tile %s stay in the hex, clear of the space stacks', id => {
+  const inside = (x: number, y: number) => Math.abs(y) <= (58.5 * Math.sqrt(3)) / 2 && Math.abs(x) <= 58.5 - Math.abs(y) / Math.sqrt(3);
+  setup(id, (_g, s) => {
+    for (const planet of pack.tiles[id].planetIds) s.ground[planet] = { infantry: 4, mech: 2 };
+    s.systems['1,0'] = { carrier: 2, cruiser: 2 };
+  });
+  const ground = [...document.querySelectorAll('.planet [data-unit]')].map(glyph => {
+    const planet = moved(glyph.closest('.planet')!);
+    const own = moved(glyph.parentElement!);
+    const s = own.scale;
+    // The silhouette and its count badge, with the badge at the lower right.
+    return { left: planet.x + own.x - 10.5 * s, right: planet.x + own.x + 17.1 * s, top: planet.y + own.y - 7 * s, bottom: planet.y + own.y + 12 * s };
+  });
+  expect(ground.length).toBe(pack.tiles[id].planetIds.length * 2);
+  for (const box of ground) {
+    for (const [x, y] of [[box.left, box.top], [box.right, box.top], [box.left, box.bottom], [box.right, box.bottom]]) {
+      expect(inside(x, y), `tile ${id}: ground corner ${x},${y}`).toBe(true);
+    }
+  }
+  const stacks = [...document.querySelectorAll('.tile > g > g > [data-unit]')].filter(glyph => !glyph.closest('.planet')).map(glyph => {
+    const cell = moved(glyph.parentElement!.parentElement!);
+    return { left: cell.x - 15 * cell.scale, right: cell.x + 15 * cell.scale, top: cell.y - 8 * cell.scale, bottom: cell.y + 12 * cell.scale };
+  });
+  expect(stacks.length).toBe(2);
+  for (const a of ground) for (const b of stacks) {
+    const apart = a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+    expect(apart, `tile ${id}: ground ${JSON.stringify(a)} against stack ${JSON.stringify(b)}`).toBe(true);
+  }
+});
+
 test('the tile number stays inside the hex and clear of planets and markers', () => {
   const half = (58.5 * Math.sqrt(3)) / 2;
   for (const id of ['46', '25', '26', '16']) {

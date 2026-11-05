@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { clampView, popoverPosition, popoverSide, type Size, type View } from './viewLimits';
+import { capFit, clampView, popoverPosition, popoverSide, type Size, type View } from './viewLimits';
 
 /** How much of the viewport the map covers on each axis; both are centred on the origin of the view. */
 function overlap(view: View, viewport: Size, map: Size) {
@@ -40,6 +40,49 @@ describe('clampView', () => {
     expect(zoomed.scale).toBe(2);
     const small = clampView({ x: 99999, y: 0, scale: 0.5 }, screen, map);
     expect(overlap(small, screen, map).x).toBeCloseTo(100);
+  });
+});
+
+describe('clampView with a limit rectangle away from the view origin', () => {
+  // The base map beside the Fracture group: its centre is 200 left of the middle of the whole drawing.
+  const base = { width: 600, height: 600, centerX: -200, centerY: 0 };
+
+  test('the rectangle itself keeps a third of the viewport covered', () => {
+    const atLeft = clampView({ x: -99999, y: 0, scale: 1 }, screen, base);
+    const right = atLeft.x + (base.centerX + base.width / 2);
+    expect(right - -screen.width / 2).toBeCloseTo(300);
+    const atRight = clampView({ x: 99999, y: 0, scale: 1 }, screen, base);
+    const left = atRight.x + (base.centerX - base.width / 2);
+    expect(screen.width / 2 - left).toBeCloseTo(300);
+  });
+
+  test('the offset follows the scale', () => {
+    const atRight = clampView({ x: 99999, y: 0, scale: 2 }, screen, base);
+    const left = atRight.x + (base.centerX - base.width / 2) * 2;
+    expect(screen.width / 2 - left).toBeCloseTo(300);
+  });
+
+  test('a view inside stays the same object', () => {
+    const view = { x: 150, y: 0, scale: 1 };
+    expect(clampView(view, screen, base)).toBe(view);
+  });
+});
+
+describe('capFit', () => {
+  const base = { x: -300, y: -400, width: 600, height: 800 };
+
+  test('a group that adds little is shown whole', () => {
+    const full = { x: -300, y: -500, width: 600, height: 900 };
+    expect(capFit(base, full)).toEqual(full);
+  });
+
+  test('the window grows at most a quarter on each axis, holds the map and leans to the group', () => {
+    const above = capFit(base, { x: -300, y: -1000, width: 600, height: 1400 });
+    expect(above.height).toBeCloseTo(1000);
+    expect(above.y).toBeCloseTo(-600);
+    const right = capFit(base, { x: -300, y: -400, width: 1200, height: 800 });
+    expect(right.width).toBeCloseTo(750);
+    expect(right.x).toBeCloseTo(-300);
   });
 });
 

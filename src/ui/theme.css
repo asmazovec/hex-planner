@@ -4,7 +4,6 @@
   --surface: #151a23;
   --surface-2: #1b212c;
   --surface-3: #232b38;
-  --overlay: rgb(21 26 35 / 0.92);
   --border: #2b3442;
   --border-strong: #3b4658;
 
@@ -217,7 +216,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-active .hex { stroke: var(--arrow); stroke-width: 4.5; }
 .tile-dim { opacity: 0.42; }
 .tile text { text-anchor: middle; fill: var(--text); font-family: inherit; pointer-events: none; }
-.tile .tile-number { font-size: 14px; font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 2.5px; stroke-linejoin: round; }
+.tile .tile-number { font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 2.5px; stroke-linejoin: round; }
 .tile .tile-worm { fill: var(--accent); }
 .tile .tile-caption { font-size: 9.5px; fill: var(--text-muted); }
 .tile-warning { font-size: 30px; font-weight: 700; fill: var(--warning) !important; }
@@ -244,14 +243,11 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .arrow-head { fill: var(--arrow); stroke: none; }
 .arrow-warn { stroke: var(--warning); stroke-dasharray: 8 5; }
 .arrow-head.arrow-warn { fill: var(--warning); stroke: none; stroke-dasharray: none; }
-.hexmap-wrap { position: relative; width: 100%; height: 100%; min-height: 0; overflow: hidden; }
-.map-reset, .map-tools button {
-  background: var(--overlay);
-  font-size: var(--font-s);
-  padding: 4px 12px;
-}
-.map-tools button[aria-pressed='true'] { background: var(--accent-soft); }
-.map-reset { position: absolute; top: 8px; left: 8px; }
+.hexmap-frame { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+.hexmap-wrap { position: relative; flex: 1; width: 100%; min-height: 0; overflow: hidden; }
+.map-strip { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.map-strip button { font-size: var(--font-s); padding: 4px 12px; }
+.map-tools { display: flex; gap: 6px; }
 
 /* Plan and map: one row of tabs, rounds and totals, the map, the plan. */
 .app > main[data-screen='plan'] { padding: 0; overflow: hidden; }
@@ -274,8 +270,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .summary-negative { color: var(--danger); }
 .plan-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--panel-width); grid-template-rows: minmax(0, 1fr); }
 .plan-map { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
-.plan-map .hexmap { width: 100%; height: 100%; }
-.map-tools { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 2; }
+.hexmap { position: absolute; inset: 0; width: 100%; height: 100%; }
 .map-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; padding: 7px 14px; background: var(--accent-solid); color: #fff; font-size: var(--font-s); border-radius: var(--radius-s); pointer-events: none; max-width: 90%; box-shadow: var(--shadow); animation: fade-in var(--motion) var(--ease); }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .plan-panel { min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface); border-left: 1px solid var(--border); }

@@ -17,15 +17,18 @@ const FIRST_FRAME_MS = 16;
 
 const clampScale = (v: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, v));
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-const onEmptySpace = (target: EventTarget | null) => target instanceof Element && target.closest('[data-slot]') === null;
+/** A Fracture tile takes no taps or arrows, so it counts as empty space. */
+const onEmptySpace = (target: EventTarget | null) =>
+  target instanceof Element && target.closest('[data-slot]:not([data-fracture-tile])') === null;
 
 /**
  * One pointer on empty space, two pointers anywhere and the mouse wheel move and scale the map; a single
  * pointer on a tile is left alone so taps and arrow drags keep working. The view follows a finger at once, may
  * stretch past the limit, and returns after release; reset and wheel approach their target over several frames.
- * `x` and `y` of the view are measured between the centre of `viewBox` and the map centre, in viewBox units.
+ * `x` and `y` of the view are measured from the centre of `viewBox`, in viewBox units. The limits apply to
+ * `limitRect`, by default the whole `viewBox`.
  */
-export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null>, onEmptyTap?: () => void) {
+export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null>, onEmptyTap?: () => void, limitRect: Rect = viewBox) {
   const [view, setView] = useState<View>(IDENTITY);
   const shown = useRef<View>(IDENTITY);
   /** The target of the animation, or the view of a gesture before it stretches at the limit. */
@@ -33,7 +36,8 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
   const frame = useRef<number | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pan = useRef<{ id: number; startX: number; startY: number; moved: boolean } | null>(null);
-  const pinching = useRef(false);
+  /** A gesture has moved the view since the last settle; a press alone leaves a running animation alone. */
+  const moved = useRef(false);
 
   const show = useCallback((next: View) => {
     shown.current = next;
@@ -49,16 +53,23 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
   const mapping = useCallback(() => {
     const rect = svgRef.current?.getBoundingClientRect();
     const sized = rect !== undefined && rect.width > 0 && rect.height > 0;
+    const midX = viewBox.x + viewBox.width / 2;
+    const midY = viewBox.y + viewBox.height / 2;
     const k = sized ? Math.max(viewBox.width / rect.width, viewBox.height / rect.height) : 1;
     return {
       k,
       viewport: sized ? { width: rect.width * k, height: rect.height * k } : { width: viewBox.width, height: viewBox.height },
-      map: { width: viewBox.width, height: viewBox.height },
+      map: {
+        width: limitRect.width,
+        height: limitRect.height,
+        centerX: limitRect.x + limitRect.width / 2 - midX,
+        centerY: limitRect.y + limitRect.height / 2 - midY,
+      },
       fromCentre: (x: number, y: number) => (sized
         ? { x: (x - rect.left - rect.width / 2) * k, y: (y - rect.top - rect.height / 2) * k }
         : { x, y }),
     };
-  }, [svgRef, viewBox.width, viewBox.height]);
+  }, [svgRef, viewBox.x, viewBox.y, viewBox.width, viewBox.height, limitRect.x, limitRect.y, limitRect.width, limitRect.height]);
 
   /** Scales by `factor` and shifts by `move` screen pixels, keeping the screen point `at` fixed. */
   const stepped = useCallback((from: View, factor: number, at: { x: number; y: number }, move: { x: number; y: number }): View => {
@@ -106,6 +117,10 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
 
   /** Applies a gesture step at once; past the limit the view gives way only partly. */
   const follow = useCallback((factor: number, at: { x: number; y: number }, move: { x: number; y: number }) => {
+    // The finger takes over from any animation, and from a reset or wheel during the gesture.
+    if (frame.current !== null || !moved.current) goal.current = shown.current;
+    stopAnimation();
+    moved.current = true;
     const { viewport, map } = mapping();
     const next = stepped(goal.current, factor, at, move);
     goal.current = next;
@@ -115,25 +130,23 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
       x: inside.x + (next.x - inside.x) * STRETCH,
       y: inside.y + (next.y - inside.y) * STRETCH,
     });
-  }, [mapping, stepped, show]);
+  }, [mapping, stepped, show, stopAnimation]);
 
   /** The gesture is over: its stretch is what is left on screen, and that returns to the limit. */
   const settle = useCallback(() => {
     const { viewport, map } = mapping();
+    moved.current = false;
     goal.current = shown.current;
     animateTo(clampView(shown.current, viewport, map));
   }, [mapping, animateTo]);
 
   const onPointerDown = (e: PointerEvent) => {
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    stopAnimation();
-    goal.current = shown.current;
     if (pointers.current.size === 1 && e.button === 0 && onEmptySpace(e.target)) {
       pan.current = { id: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false };
       svgRef.current?.setPointerCapture?.(e.pointerId);
     } else if (pointers.current.size === 2) {
       pan.current = null;
-      pinching.current = true;
     }
   };
 
@@ -166,12 +179,9 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
     const panning = pan.current;
     if (panning?.id === pointerId) {
       pan.current = null;
-      if (panning.moved) settle();
-      else if (!cancelled) onEmptyTap?.();
-    } else if (pinching.current && pointers.current.size < 2) {
-      pinching.current = false;
-      settle();
+      if (!panning.moved && !cancelled) onEmptyTap?.();
     }
+    if (moved.current && pan.current === null && pointers.current.size < 2) settle();
   }, [settle, onEmptyTap]);
 
   const onPointerUp = (e: PointerEvent) => endPointer(e.pointerId, false);
@@ -205,6 +215,7 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
 
   /** The map can change size, when the Fracture opens for example. */
   useEffect(() => {
+    if (moved.current) return;
     const { viewport, map } = mapping();
     const inside = clampView(goal.current, viewport, map);
     if (inside !== goal.current) animateTo(inside);

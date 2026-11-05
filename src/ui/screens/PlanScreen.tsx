@@ -233,20 +233,22 @@ export function PlanScreen() {
             game={game} state={shownState} pack={pack} highlights={highlights} arrows={[...arrows.values()]}
             arrowPreview={arrow.preview} selectedId={sheet} onTileTap={onTileTap} onTilePointerDown={arrow.onTilePointerDown}
             onPopoverClose={closeSheet}
+            tools={(
+              <div className="map-tools">
+                <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
+                <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
+                  {(['forecast', 'now'] as const).map(mode => (
+                    <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null} onClick={() => setMapMode(mode)}>
+                      {t(`plan.${mode}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             popover={sheet !== null && (building
               ? <MapBuilderPanel slot={sheet} game={game} pack={pack} state={shownState} />
               : <TileSheet slotKey={sheet} pack={pack} game={game} state={shownState} />)}
           />
-          <div className="map-tools">
-            <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
-            <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
-              {(['forecast', 'now'] as const).map(mode => (
-                <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null} onClick={() => setMapMode(mode)}>
-                  {t(`plan.${mode}`)}
-                </button>
-              ))}
-            </div>
-          </div>
           {hint && <p className="map-hint" role="status">{hint}</p>}
         </div>
         <div className="plan-panel">

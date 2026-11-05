@@ -27,9 +27,12 @@ const PLANET_RADIUS_TIGHT = 13;
 const SHIP_CELL = 30;
 const SHIP_ROW = 20;
 const HEX_INNER = HEX_SIZE - 1.5;
-const GROUND_CELL = 24;
 /** The number sits under the top edge of the hex; planets and markers keep clear of it. */
 const NUMBER_BASELINE = -35;
+export const NUMBER_FONT = 15;
+const GROUND_SCALE_TIGHT = 0.8;
+/** Where space stacks start when a row of ground units stands under two planets. */
+const STACKS_BELOW_GROUND = 30;
 /** In the top corners, beside the number. */
 const CORNER_X = 29;
 const CORNER_Y = -35;
@@ -53,19 +56,30 @@ function planetSpots(count: number): { x: number; y: number }[] {
   return [{ x: 0, y: -19 }, { x: -31, y: 8 }, { x: 31, y: 8 }].concat(count > 3 ? [{ x: 0, y: 28 }] : []).slice(0, count);
 }
 
-/** Where the ground units of a planet stand: beside a lone planet, under the name otherwise. */
-function groundSpot(index: number, total: number, planetCount: number, radius: number): { x: number; y: number } {
-  if (planetCount === 1) return { x: (index === 0 ? -1 : 1) * (radius + 14), y: 0 };
-  return { x: (index - (total - 1) / 2) * GROUND_CELL, y: radius + 20 };
+/**
+ * Where a stack of ground units stands, relative to the hex centre, and at what scale: beside a lone planet, in a
+ * row under two planets leaning inward where the hex is wider, and among three planets above the lower ones and
+ * under the top one. All of it stays above the space stacks.
+ */
+function groundSpot(index: number, total: number, planetCount: number, spot: { x: number }): { x: number; y: number; scale: number } {
+  if (planetCount === 1) return { x: index === 0 ? -29 : 29, y: -12, scale: 1 };
+  const side = Math.sign(spot.x);
+  if (planetCount === 2) {
+    const xs = total === 1 ? [20 * side] : side < 0 ? [-28, -10] : [8, 26];
+    return { x: xs[index], y: 20, scale: GROUND_SCALE_TIGHT };
+  }
+  if (side === 0) return { x: total === 1 ? 0 : [-9, 7][index], y: 14, scale: GROUND_SCALE_TIGHT };
+  const xs = total === 1 ? [32 * side] : side < 0 ? [-36, -18] : [18, 36];
+  return { x: xs[index], y: -12, scale: GROUND_SCALE_TIGHT };
 }
 
 /**
  * Places the stacks of the space area in rows below the planets and shrinks the whole group until every
  * cell lies inside the hex. Positions are the cell centres, relative to the hex centre.
  */
-export function layoutUnits(count: number, planetCount: number): { scale: number; cells: { x: number; y: number }[] } {
+export function layoutUnits(count: number, planetCount: number, groundRow = false): { scale: number; cells: { x: number; y: number }[] } {
   if (count === 0) return { scale: 1, cells: [] };
-  const top = planetCount === 0 ? -2 : planetCount >= 3 ? 34 : 22;
+  const top = planetCount === 0 ? -2 : planetCount >= 3 ? 34 : groundRow ? STACKS_BELOW_GROUND : 22;
   const cols = Math.min(count, 4);
   const rows = Math.ceil(count / cols);
   let scale = 1;
@@ -116,7 +130,8 @@ export function TileView({
     ...unitsOf(state.systems[slotKey]).map(u => ({ ...u, owner: 'me' as const })),
     ...unitsOf(game.enemyUnits[slotKey]).map(u => ({ ...u, owner: 'enemy' as const })),
   ];
-  const layout = layoutUnits(spaceUnits.length, planets.length);
+  const groundRow = planets.length === 2 && planets.some(planet => unitsOf(state.ground[planet.id]).length > 0);
+  const layout = layoutUnits(spaceUnits.length, planets.length, groundRow);
 
   const label = fracture ? t('map.fractureTile', { n: fracture.index + 1 }) : unknown
     ? t('map.unknownTile', { id: tileId })
@@ -140,12 +155,12 @@ export function TileView({
     >
       <polygon points={hexPoints(HEX_INNER)} className={`hex ${hexKind}`} />
       {tile && (
-        <text x={0} y={NUMBER_BASELINE} className="tile-number">
+        <text x={0} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">
           {fracture ? `F${fracture.index + 1}` : tile.number}
           {worm && <tspan className="tile-worm"> {worm}</tspan>}
         </text>
       )}
-      {unknown && <text x={0} y={NUMBER_BASELINE} className="tile-number">{tileId}</text>}
+      {unknown && <text x={0} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">{tileId}</text>}
       {unknown && <text x={0} y={4} className="tile-warning">!</text>}
       {caption && <text x={0} y={-14} className="tile-caption">{caption}</text>}
 
@@ -189,9 +204,9 @@ export function TileView({
             )}
             <text x={spot.x === 0 || planets.length < 3 ? 0 : -Math.sign(spot.x) * NAME_INWARD} y={radius + 10} className="planet-name">{shortName(planet.name)}</text>
             {ground.map(({ unit, count }, j) => {
-              const place = groundSpot(j, ground.length, planets.length, radius);
+              const place = groundSpot(j, ground.length, planets.length, spot);
               return (
-                <g key={unit} transform={`translate(${place.x - (count > 1 ? 3 : 0)} ${place.y})`}>
+                <g key={unit} transform={`translate(${place.x - spot.x - (count > 1 ? 3 * place.scale : 0)} ${place.y - spot.y}) scale(${place.scale})`}>
                   <UnitGlyph unit={unit} owner="me" count={count} label={unitLabel(unit, count, 'me')} scale={0.72} />
                 </g>
               );

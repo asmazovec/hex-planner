@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { View } from './usePanZoom';
 import { popoverPosition } from './viewLimits';
@@ -18,30 +18,32 @@ export function TilePopover({ slot, view, areaRef, onClose, children }: TilePopo
   const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
-    const place = () => {
-      const pop = ref.current;
-      const area = areaRef.current;
-      const hex = area?.querySelector(`[data-slot="${slot}"] polygon`);
-      if (!pop || !area || !hex) return;
-      const box = area.getBoundingClientRect();
-      const rect = hex.getBoundingClientRect();
-      const { side, left, top } = popoverPosition(
-        { left: rect.left - box.left, right: rect.right - box.left, top: rect.top - box.top, bottom: rect.bottom - box.top },
-        { width: pop.offsetWidth, height: pop.offsetHeight },
-        { width: box.width, height: box.height },
-      );
-      pop.style.left = `${left}px`;
-      pop.style.top = `${top}px`;
-      pop.dataset.side = side;
-    };
-    place();
+  const place = useCallback(() => {
+    const pop = ref.current;
+    const area = areaRef.current;
+    const hex = area?.querySelector(`[data-slot="${slot}"] polygon`);
+    if (!pop || !area || !hex) return;
+    const box = area.getBoundingClientRect();
+    const rect = hex.getBoundingClientRect();
+    const { side, left, top } = popoverPosition(
+      { left: rect.left - box.left, right: rect.right - box.left, top: rect.top - box.top, bottom: rect.bottom - box.top },
+      { width: pop.offsetWidth, height: pop.offsetHeight },
+      { width: box.width, height: box.height },
+    );
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+    pop.dataset.side = side;
+  }, [slot, areaRef]);
+
+  useLayoutEffect(place, [place, view]);
+
+  useEffect(() => {
     if (typeof ResizeObserver === 'undefined') return undefined;
     const observer = new ResizeObserver(place);
     if (ref.current) observer.observe(ref.current);
     if (areaRef.current) observer.observe(areaRef.current);
     return () => observer.disconnect();
-  }, [slot, view, areaRef]);
+  }, [place, areaRef]);
 
   useEffect(() => {
     const onDown = (e: PointerEvent) => {
