@@ -25,6 +25,9 @@ export function ringSlots(ring: number): string[] {
 
 const HYPERLANE = /^(\d+[AB])([0-5])$/;
 
+/** Tokens Milty writes: rings 1 to 4. */
+export const MILTY_TOKENS = 60;
+
 export interface MapStringResult {
   /** Slot key to tile (`<id>` or `<id>@<rotation>`); the centre and empty slots are absent. */
   map: Record<string, string>;
@@ -32,34 +35,47 @@ export interface MapStringResult {
   unknown: string[];
   /** Slots the template fills with something other than a home system or the centre. */
   expected: number;
-  /** Tiles placed. */
+  /** Tiles placed, home systems not counted. */
   found: number;
+  /** Home system tiles placed. */
+  homes: number;
+  /** Known tiles whose slot the template of this player count does not have. */
+  dropped: number;
+  /** Tokens read, braced centre excluded; Milty writes 60. */
+  tokens: number;
 }
 
 /**
  * Reads a Milty Draft map string: tiles of rings 1 to 4 in order, from the top of each ring clockwise, separated by
  * spaces. `0` is an empty slot or a home placeholder, a hyperlane is its id with a rotation digit (`83A3`), and the
- * centre is absent (a braced `{18}` is skipped). Slots outside the template of the player count are not filled.
+ * centre is absent (a braced `{18}` is skipped). Home system ids are placed like any tile. Slots outside the template
+ * of the player count are not filled and are counted in `dropped`.
  */
 export function parseMapString(text: string, playerCount: number, pack: DataPack): MapStringResult {
   const template = new Set(slotsFor(playerCount, pack).map(s => slotKeyOf(s.q, s.r)));
-  const homes = new Set(seatSlots(playerCount, pack));
+  const seats = seatSlots(playerCount, pack).length;
   const slots = Array.from({ length: RINGS }, (_, i) => ringSlots(i + 1)).flat();
   const tokens = text.split(/[\s,]+/).filter(token => token !== '' && !/^\{.*\}$/.test(token));
 
   const map: Record<string, string> = {};
   const unknown: string[] = [];
+  let dropped = 0;
+  let homes = 0;
   tokens.slice(0, slots.length).forEach((raw, index) => {
     const token = raw.toUpperCase();
     if (token === '0' || token === '-1') return;
     const lane = HYPERLANE.exec(token);
     const tile = lane ? `${lane[1]}@${lane[2]}` : token;
-    if (!pack.tiles[tile.split('@')[0]]) {
+    const def = pack.tiles[tile.split('@')[0]];
+    if (!def) {
       unknown.push(raw);
-      return;
+    } else if (!template.has(slots[index])) {
+      dropped += 1;
+    } else {
+      map[slots[index]] = tile;
+      if (def.kind === 'home') homes += 1;
     }
-    if (template.has(slots[index])) map[slots[index]] = tile;
   });
-  const expected = [...template].filter(key => key !== slotKeyOf(0, 0) && !homes.has(key)).length;
-  return { map, unknown, expected, found: Object.keys(map).length };
+  const expected = template.size === 0 ? 0 : template.size - 1 - seats;
+  return { map, unknown, expected, found: Object.keys(map).length - homes, homes, dropped, tokens: tokens.length };
 }

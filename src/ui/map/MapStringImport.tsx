@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mapIsEmpty } from '../../domain/mapBuilder';
-import { parseMapString, type MapStringResult } from '../../domain/mapString';
+import { MILTY_TOKENS, parseMapString, type MapStringResult } from '../../domain/mapString';
 import type { DataPack, Game } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 
@@ -19,7 +19,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<MapStringResult | null>(null);
   const parsed = parseMapString(text, game.playerCount, pack);
-  const empty = parsed.found === 0 && parsed.unknown.length === 0;
+  const nothing = Object.keys(parsed.map).length === 0;
 
   const apply = () => {
     setMap(parsed.map);
@@ -47,15 +47,18 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
         </div>
       ) : (
         <div className="row">
-          <button type="button" className="primary" disabled={empty} onClick={onApply}>{t('mapImport.apply')}</button>
+          <button type="button" className="primary" disabled={nothing} onClick={onApply}>{t('mapImport.apply')}</button>
         </div>
       )}
       {result && (
         <div className="muted" role="status">
           <p>{t('mapImport.placed', { n: result.found })}</p>
           {result.unknown.length > 0 && <p>{t('mapImport.unknown', { list: result.unknown.join(', ') })}</p>}
+          {result.dropped > 0 && <p>{t('mapImport.dropped', { n: result.dropped })}</p>}
+          {result.tokens !== MILTY_TOKENS && <p>{t('mapImport.tokens', { n: result.tokens })}</p>}
           {result.found !== result.expected && <p>{t('mapImport.mismatch', { found: result.found, expected: result.expected })}</p>}
-          <p>{t('mapImport.homes')}</p>
+          {result.homes > 0 && <p>{t('mapImport.homesPlaced', { n: result.homes })}</p>}
+          {result.homes === 0 && <p>{t('mapImport.homesEmpty')}</p>}
         </div>
       )}
     </div>

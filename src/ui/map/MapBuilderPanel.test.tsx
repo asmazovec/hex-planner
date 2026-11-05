@@ -223,3 +223,30 @@ test('replacing a map that has tiles asks first', async () => {
   useGame.getState().undo();
   expect(map()['2,0']).toBe('27');
 });
+
+test('a string with nothing placeable cannot be applied', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('999 998 0');
+  expect((screen.getByRole('button', { name: 'Apply' }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+test('the result warns about a wrong token count, dropped tiles and homes', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('18 25');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(screen.getByText(/String has 2 tokens, Milty writes 60/)).toBeTruthy();
+  expect(screen.getByText(/Home systems stay empty/)).toBeTruthy();
+});
+
+test('a home system in the string is reported as placed', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  const tokens = Array.from({ length: 60 }, (_, i) => (i === 18 ? '1' : i === 0 ? '25' : '0'));
+  await userEvent.paste(tokens.join(' '));
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(map()['0,-3']).toBe('1');
+  expect(screen.getByText(/Home systems placed: 1/)).toBeTruthy();
+  expect(screen.queryByText(/Home systems stay empty/)).toBeNull();
+});

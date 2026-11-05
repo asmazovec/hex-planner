@@ -272,6 +272,9 @@
     "placed": "{{n}} tiles placed.",
     "unknown": "Unknown numbers: {{list}}.",
     "mismatch": "Expected {{expected}} tiles outside the home systems, found {{found}}.",
-    "homes": "Home systems stay empty: place them by seat."
+    "homesEmpty": "Home systems stay empty: place them by seat.",
+    "homesPlaced": "Home systems placed: {{n}}.",
+    "dropped": "Skipped {{n}} tiles that have no slot in this player count.",
+    "tokens": "String has {{n}} tokens, Milty writes 60. A leading 18 or a missing token shifts every tile."
   }
 }
