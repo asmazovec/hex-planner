@@ -9,6 +9,7 @@ import type { Entry, EntryBody, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { HexMap, type Arrow } from '../map/HexMap';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
+import { MapStringImport } from '../map/MapStringImport';
 import { TileSheet } from '../map/TileSheet';
 import type { Highlight } from '../map/TileView';
 import { useArrowDrag } from '../map/useArrowDrag';
@@ -73,6 +74,7 @@ export function PlanScreen() {
   const [roundNo, setRoundNo] = useState<number | null>(null);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
   const [sheet, setSheet] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
   const [editing, setEditing] = useState<Editing | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -174,6 +176,7 @@ export function PlanScreen() {
 
   const toggleBuilding = () => {
     closePanels();
+    setImporting(false);
     setBuilding(!building);
   };
 
@@ -236,6 +239,9 @@ export function PlanScreen() {
             tools={(
               <div className="map-tools">
                 <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
+                {building && (
+                  <button type="button" aria-pressed={importing} onClick={() => setImporting(!importing)}>{t('mapImport.title')}</button>
+                )}
                 <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
                   {(['forecast', 'now'] as const).map(mode => (
                     <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null} onClick={() => setMapMode(mode)}>
@@ -249,6 +255,7 @@ export function PlanScreen() {
               ? <MapBuilderPanel slot={sheet} game={game} pack={pack} state={shownState} />
               : <TileSheet slotKey={sheet} pack={pack} game={game} state={shownState} />)}
           />
+          {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
           {hint && <p className="map-hint" role="status">{hint}</p>}
         </div>
         <div className="plan-panel">

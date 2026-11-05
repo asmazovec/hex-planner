@@ -260,5 +260,18 @@
     "markHint": "Tap systems to add or remove ingress tokens.",
     "ingressCount": "Ingress tokens: {{n}}",
     "seat": "Seat"
+  },
+  "mapImport": {
+    "title": "Paste map",
+    "field": "Milty Draft map string",
+    "placeholder": "Paste the map string from Milty Draft",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "replace": "Replace map",
+    "confirm": "The map already has tiles. Replace them?",
+    "placed": "{{n}} tiles placed.",
+    "unknown": "Unknown numbers: {{list}}.",
+    "mismatch": "Expected {{expected}} tiles outside the home systems, found {{found}}.",
+    "homes": "Home systems stay empty: place them by seat."
   }
 }

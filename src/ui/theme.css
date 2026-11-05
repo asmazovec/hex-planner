@@ -375,3 +375,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* Pasting a Milty Draft map string: a card over the top right of the map. */
+.map-import { position: absolute; top: 52px; right: 8px; z-index: 6; width: min(360px, calc(100% - 16px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow); animation: pop-in var(--motion) var(--ease); }
+.map-import textarea { width: 100%; resize: vertical; font-size: var(--font-s); }
+.map-import p { margin: 0; font-size: var(--font-s); }

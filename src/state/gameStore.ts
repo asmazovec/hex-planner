@@ -115,6 +115,8 @@ export interface GameStore {
   deletePlan(id: string): void;
   setActivePlan(id: string): void;
   setTile(slotKey: string, tileId: string | null): void;
+  /** Replaces the whole map in one undo step; the centre tile stays. */
+  setMap(map: Record<string, string>): void;
   setOpponent(index: number, patch: Partial<Game['opponents'][number]>): void;
   setEnemyUnits(systemId: string, units: UnitCounts): void;
   setPlanetControl(planetId: string, owner: 'me' | 'enemy' | null): void;
@@ -221,6 +223,13 @@ export const useGame = create<GameStore>((set, get) => {
       commit(g => (g.activePlanId === id || !g.plans.some(p => p.id === id) ? g : { ...g, activePlanId: id })),
 
     setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
+    setMap: map => commit(g => {
+      const next = { ...map };
+      delete next['0,0'];
+      if (g.map['0,0']) next['0,0'] = g.map['0,0'];
+      const same = Object.keys(next).length === Object.keys(g.map).length && Object.entries(next).every(([k, v]) => g.map[k] === v);
+      return same ? g : { ...g, map: next };
+    }),
     setOpponent: (index, patch) =>
       commit(g => (index in g.opponents
         && !Object.entries(patch).every(([k, v]) => g.opponents[index][k as keyof Game['opponents'][number]] === v)

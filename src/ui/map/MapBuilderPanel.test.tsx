@@ -187,3 +187,39 @@ test('starting a tactical action leaves build mode', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
   expect(screen.getByRole('button', { name: 'Build map' })).toHaveAttribute('aria-pressed', 'false');
 });
+
+async function openImport() {
+  renderBuilding();
+  await userEvent.click(screen.getByRole('button', { name: 'Paste map' }));
+  return screen.getByLabelText('Milty Draft map string');
+}
+
+test('a pasted map string fills the map and reports the count', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25 999 26');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(map()['0,-1']).toBe('25');
+  expect(map()['1,0']).toBe('26');
+  expect(screen.getByText(/2 tiles placed/)).toBeTruthy();
+  expect(screen.getByText(/Unknown numbers: 999/)).toBeTruthy();
+});
+
+test('an empty field cannot be applied', async () => {
+  await openImport();
+  expect((screen.getByRole('button', { name: 'Apply' }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+test('replacing a map that has tiles asks first', async () => {
+  useGame.getState().setTile('2,0', '27');
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(map()['2,0']).toBe('27');
+  await userEvent.click(screen.getByRole('button', { name: 'Replace map' }));
+  expect(map()['2,0']).toBeUndefined();
+  expect(map()['0,-1']).toBe('25');
+  useGame.getState().undo();
+  expect(map()['2,0']).toBe('27');
+});

@@ -1,0 +1,65 @@
+import { seatSlots, slotsFor } from './mapBuilder';
+import { slotKeyOf } from './newGame';
+import type { DataPack } from './types';
+
+/** Axial steps of the ring walk: east, south-east, south-west, west, north-west, north-east. */
+const STEPS: [number, number][] = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
+
+/** Rings Milty Draft writes: its string always covers rings 1 to 4. */
+const RINGS = 4;
+
+/** Slot keys of one ring, starting at the top and going clockwise. */
+export function ringSlots(ring: number): string[] {
+  const keys: string[] = [];
+  let q = 0;
+  let r = -ring;
+  for (const [dq, dr] of STEPS) {
+    for (let i = 0; i < ring; i += 1) {
+      keys.push(slotKeyOf(q, r));
+      q += dq;
+      r += dr;
+    }
+  }
+  return keys;
+}
+
+const HYPERLANE = /^(\d+[AB])([0-5])$/;
+
+export interface MapStringResult {
+  /** Slot key to tile (`<id>` or `<id>@<rotation>`); the centre and empty slots are absent. */
+  map: Record<string, string>;
+  /** Tokens that name no tile of the data pack. */
+  unknown: string[];
+  /** Slots the template fills with something other than a home system or the centre. */
+  expected: number;
+  /** Tiles placed. */
+  found: number;
+}
+
+/**
+ * Reads a Milty Draft map string: tiles of rings 1 to 4 in order, from the top of each ring clockwise, separated by
+ * spaces. `0` is an empty slot or a home placeholder, a hyperlane is its id with a rotation digit (`83A3`), and the
+ * centre is absent (a braced `{18}` is skipped). Slots outside the template of the player count are not filled.
+ */
+export function parseMapString(text: string, playerCount: number, pack: DataPack): MapStringResult {
+  const template = new Set(slotsFor(playerCount, pack).map(s => slotKeyOf(s.q, s.r)));
+  const homes = new Set(seatSlots(playerCount, pack));
+  const slots = Array.from({ length: RINGS }, (_, i) => ringSlots(i + 1)).flat();
+  const tokens = text.split(/[\s,]+/).filter(token => token !== '' && !/^\{.*\}$/.test(token));
+
+  const map: Record<string, string> = {};
+  const unknown: string[] = [];
+  tokens.slice(0, slots.length).forEach((raw, index) => {
+    const token = raw.toUpperCase();
+    if (token === '0' || token === '-1') return;
+    const lane = HYPERLANE.exec(token);
+    const tile = lane ? `${lane[1]}@${lane[2]}` : token;
+    if (!pack.tiles[tile.split('@')[0]]) {
+      unknown.push(raw);
+      return;
+    }
+    if (template.has(slots[index])) map[slots[index]] = tile;
+  });
+  const expected = [...template].filter(key => key !== slotKeyOf(0, 0) && !homes.has(key)).length;
+  return { map, unknown, expected, found: Object.keys(map).length };
+}

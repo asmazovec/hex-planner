@@ -187,3 +187,20 @@ describe('действия без изменений', () => {
     expect(round().entries).toHaveLength(0);
   });
 });
+
+describe('setMap', () => {
+  test('replaces the map in one undo step and keeps the centre', () => {
+    const before = game().map;
+    act().setMap({ '1,0': '25', '0,0': '99' });
+    expect(game().map).toEqual({ '0,0': before['0,0'], '1,0': '25' });
+    act().undo();
+    expect(game().map).toEqual(before);
+  });
+
+  test('an identical map leaves no undo step', () => {
+    act().setMap({ '1,0': '25' });
+    act().setMap({ '1,0': '25' });
+    act().undo();
+    expect(game().map['1,0']).toBeUndefined();
+  });
+});
