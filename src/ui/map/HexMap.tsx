@@ -28,6 +28,8 @@ export interface HexMapProps {
   selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
+  /** A drag from this tile draws an arrow; from any other tile it moves the map. */
+  startsArrow?: (systemId: string) => boolean;
   /** More controls in the strip above the map. */
   tools?: ReactNode;
   /** Shown in a window beside the selected tile. */
@@ -84,7 +86,7 @@ function PreviewLine({ start, preview }: { start: { x: number; y: number }; prev
 }
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown, tools, popover, onPopoverClose,
+  game, state, pack, highlights, arrows, arrowPreview, selectedId, onTileTap, onTilePointerDown, startsArrow, tools, popover, onPopoverClose,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -115,7 +117,7 @@ export function HexMap({
     return slots.length === 0 ? null : fractureFrame(slotKeys.map(parseKey), slots);
   }, [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout, slotKeys]);
   const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
-  const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect);
+  const { view, handlers, reset } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect, startsArrow);
   const center = (key: string) => {
     const { q, r } = parseKey(key);
     return hexToPixel(q, r);

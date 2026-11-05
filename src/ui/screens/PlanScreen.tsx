@@ -21,7 +21,7 @@ import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { SummaryBar } from '../plan/SummaryBar';
-import { arrowsOf, hasUnits, suggestMoves, type TacticalEntry } from '../plan/tactical';
+import { arrowsOf, hasUnits, sourcePools, suggestMoves, type TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry. */
@@ -209,6 +209,13 @@ export function PlanScreen() {
     for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
   }
 
+  /** In the tactical editor a drag from the active system or a system with my units draws an arrow; any other drag moves the map. */
+  const startsArrow = (slot: string): boolean => {
+    if (activeSystem === null || !entry) return false;
+    if (slot === activeSystem) return true;
+    return sourcePools(game, pack, stateBeforeEntry(game, plan, entry.id, pack), slot).some(pool => hasUnits(pool.available));
+  };
+
   const duplicates = building ? duplicateTiles(game.map, pack) : [];
   const hint = marking ? t('fracture.markHint') : placing ? t('expedition.placeHint') : picking ? t('plan.tactical.pickHint')
     : session?.addingSource ? t('plan.tactical.sourceHint')
@@ -239,7 +246,8 @@ export function PlanScreen() {
         <div className="plan-map">
           <HexMap
             game={game} state={shownState} pack={pack} highlights={highlights} arrows={[...arrows.values()]}
-            arrowPreview={arrow.preview} selectedId={sheet} onTileTap={onTileTap} onTilePointerDown={arrow.onTilePointerDown}
+            arrowPreview={arrow.preview} selectedId={sheet} onTileTap={onTileTap}
+            onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e); }} startsArrow={startsArrow}
             onPopoverClose={closeSheet}
             tools={(
               <div className="map-tools">

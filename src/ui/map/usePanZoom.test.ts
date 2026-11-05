@@ -40,16 +40,61 @@ afterEach(() => {
 
 const setup = (onEmptyTap?: () => void) => renderHook(() => usePanZoom(bounds, { current: null }, onEmptyTap)).result;
 
-test('one pointer on empty space moves the map, on a tile it does not', () => {
+test('one pointer moves the map from empty space and from a tile', () => {
   const result = setup();
   act(() => result.current.handlers.onPointerDown(ev(1, 10, 10, inner)));
   act(() => result.current.handlers.onPointerMove(ev(1, 30, 25, inner)));
+  expect(result.current.view).toEqual({ x: 20, y: 15, scale: 1 });
   act(() => result.current.handlers.onPointerUp(ev(1, 30, 25, inner)));
-  expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
 
   act(() => result.current.handlers.onPointerDown(ev(2, 10, 10)));
   act(() => result.current.handlers.onPointerMove(ev(2, 30, 25)));
-  expect(result.current.view).toEqual({ x: 20, y: 15, scale: 1 });
+  expect(result.current.view).toEqual({ x: 40, y: 30, scale: 1 });
+});
+
+test('a tile that starts an arrow does not move the map', () => {
+  const starts = vi.fn((slot: string) => slot === '1,0');
+  const { result } = renderHook(() => usePanZoom(bounds, { current: null }, undefined, bounds, starts));
+  act(() => result.current.handlers.onPointerDown(ev(1, 10, 10, inner)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 30, 25, inner)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 30, 25, inner)));
+  expect(starts).toHaveBeenCalledWith('1,0');
+  expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
+});
+
+test('a tap on a tile stays a tap: it is not reported as empty, keeps its click and takes no capture', () => {
+  const onEmptyTap = vi.fn();
+  const setPointerCapture = vi.fn();
+  const svg = { setPointerCapture, addEventListener: vi.fn(), removeEventListener: vi.fn(), getBoundingClientRect: () => ({ left: 0, top: 0, width: 0, height: 0 }) } as unknown as SVGSVGElement;
+  const { result } = renderHook(() => usePanZoom(bounds, { current: svg }, onEmptyTap));
+  act(() => result.current.handlers.onPointerDown(ev(1, 10, 10, inner)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 12, 11, inner)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 12, 11, inner)));
+  expect(onEmptyTap).not.toHaveBeenCalled();
+  expect(setPointerCapture).not.toHaveBeenCalled();
+  const click = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
+  act(() => result.current.handlers.onClickCapture(click as never));
+  expect(click.stopPropagation).not.toHaveBeenCalled();
+});
+
+test('a pan that starts on a tile captures the pointer and swallows the click that ends it, once', () => {
+  const setPointerCapture = vi.fn();
+  const svg = { setPointerCapture, addEventListener: vi.fn(), removeEventListener: vi.fn(), getBoundingClientRect: () => ({ left: 0, top: 0, width: 0, height: 0 }) } as unknown as SVGSVGElement;
+  const { result } = renderHook(() => usePanZoom(bounds, { current: svg }));
+  act(() => result.current.handlers.onPointerDown(ev(1, 10, 10, inner)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 30, 25, inner)));
+  expect(setPointerCapture).toHaveBeenCalledWith(1);
+  act(() => result.current.handlers.onPointerUp(ev(1, 30, 25, inner)));
+  const click = { stopPropagation: vi.fn(), preventDefault: vi.fn() };
+  act(() => result.current.handlers.onClickCapture(click as never));
+  expect(click.stopPropagation).toHaveBeenCalledTimes(1);
+  act(() => result.current.handlers.onClickCapture(click as never));
+  expect(click.stopPropagation).toHaveBeenCalledTimes(1);
+
+  act(() => result.current.handlers.onPointerDown(ev(2, 10, 10, inner)));
+  act(() => result.current.handlers.onPointerUp(ev(2, 10, 10, inner)));
+  act(() => result.current.handlers.onClickCapture(click as never));
+  expect(click.stopPropagation).toHaveBeenCalledTimes(1);
 });
 
 test('a tap on empty space is reported, a pan is not', () => {

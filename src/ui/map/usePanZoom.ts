@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react';
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from 'react';
 import type { Rect } from './geometry';
 import { clampView, type View } from './viewLimits';
 
@@ -17,27 +17,33 @@ const FIRST_FRAME_MS = 16;
 
 const clampScale = (v: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, v));
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-/** A Fracture tile takes no taps or arrows, so it counts as empty space. */
-const onEmptySpace = (target: EventTarget | null) =>
-  target instanceof Element && target.closest('[data-slot]:not([data-fracture-tile])') === null;
+/** The tile under a press. A Fracture tile takes no taps or arrows, so it counts as empty space. */
+const tileAt = (target: EventTarget | null): Element | null =>
+  (target instanceof Element ? target.closest('[data-slot]:not([data-fracture-tile])') : null);
 
 /**
- * One pointer on empty space, two pointers anywhere and the mouse wheel move and scale the map; a single
- * pointer on a tile is left alone so taps and arrow drags keep working. The view follows a finger at once, may
+ * One pointer anywhere, two pointers anywhere and the mouse wheel move and scale the map, so a zoomed-in map with
+ * no free space can still be moved. A press on a tile for which `startsArrow` is true is left alone for the arrow
+ * drag. A press on any other tile stays a tap until it moves past the slop. The view follows a finger at once, may
  * stretch past the limit, and returns after release; reset and wheel approach their target over several frames.
  * `x` and `y` of the view are measured from the centre of `viewBox`, in viewBox units. The limits apply to
  * `limitRect`, by default the whole `viewBox`.
  */
-export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null>, onEmptyTap?: () => void, limitRect: Rect = viewBox) {
+export function usePanZoom(
+  viewBox: Rect, svgRef: RefObject<SVGSVGElement | null>, onEmptyTap?: () => void, limitRect: Rect = viewBox,
+  startsArrow?: (slot: string) => boolean,
+) {
   const [view, setView] = useState<View>(IDENTITY);
   const shown = useRef<View>(IDENTITY);
   /** The target of the animation, or the view of a gesture before it stretches at the limit. */
   const goal = useRef<View>(IDENTITY);
   const frame = useRef<number | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
-  const pan = useRef<{ id: number; startX: number; startY: number; moved: boolean } | null>(null);
+  const pan = useRef<{ id: number; startX: number; startY: number; moved: boolean; onTile: boolean } | null>(null);
   /** A gesture has moved the view since the last settle; a press alone leaves a running animation alone. */
   const moved = useRef(false);
+  /** The click the browser sends at the end of a pan must not act as a tap on the tile under it. */
+  const swallowClick = useRef(false);
 
   const show = useCallback((next: View) => {
     shown.current = next;
@@ -142,9 +148,14 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
 
   const onPointerDown = (e: PointerEvent) => {
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.current.size === 1 && e.button === 0 && onEmptySpace(e.target)) {
-      pan.current = { id: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false };
-      svgRef.current?.setPointerCapture?.(e.pointerId);
+    swallowClick.current = false;
+    if (pointers.current.size === 1 && e.button === 0) {
+      const tile = tileAt(e.target);
+      const slot = tile?.getAttribute('data-slot') ?? null;
+      if (slot !== null && startsArrow?.(slot)) return;
+      pan.current = { id: e.pointerId, startX: e.clientX, startY: e.clientY, moved: false, onTile: tile !== null };
+      // Capturing now would send a tap's click to the map instead of the tile, so a tile waits for real movement.
+      if (tile === null) svgRef.current?.setPointerCapture?.(e.pointerId);
     } else if (pointers.current.size === 2) {
       pan.current = null;
     }
@@ -156,7 +167,9 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
     const panning = pan.current;
     if (panning && panning.id === e.pointerId) {
       if (!panning.moved && Math.hypot(e.clientX - panning.startX, e.clientY - panning.startY) < TAP_SLOP) return;
+      if (!panning.moved && panning.onTile) svgRef.current?.setPointerCapture?.(e.pointerId);
       panning.moved = true;
+      swallowClick.current = panning.onTile;
       pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
       follow(1, { x: e.clientX, y: e.clientY }, { x: e.clientX - known.x, y: e.clientY - known.y });
       return;
@@ -179,13 +192,19 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
     const panning = pan.current;
     if (panning?.id === pointerId) {
       pan.current = null;
-      if (!panning.moved && !cancelled) onEmptyTap?.();
+      if (!panning.moved && !panning.onTile && !cancelled) onEmptyTap?.();
     }
     if (moved.current && pan.current === null && pointers.current.size < 2) settle();
   }, [settle, onEmptyTap]);
 
   const onPointerUp = (e: PointerEvent) => endPointer(e.pointerId, false);
   const onPointerCancel = (e: PointerEvent) => endPointer(e.pointerId, true);
+  const onClickCapture = (e: MouseEvent) => {
+    if (!swallowClick.current) return;
+    swallowClick.current = false;
+    e.stopPropagation();
+    e.preventDefault();
+  };
 
   /** A pointer released outside the map still ends its gesture. */
   useEffect(() => {
@@ -226,6 +245,6 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
   return {
     view,
     reset: () => animateTo(IDENTITY),
-    handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel },
+    handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture },
   };
 }
