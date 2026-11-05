@@ -54,30 +54,68 @@ test('an empty map switches at once', async () => {
   expect(useGame.getState().game!.map['-2,-1']).toBe('83A@0');
 });
 
-test('a map with tiles asks first, and cancelling changes nothing', async () => {
+test('a map whose tiles all survive switches at once', async () => {
   open(4);
-  useGame.getState().setTile('1,0', '25');
+  useGame.getState().setTile('0,-1', '25');
+  const game = useGame.getState().game!;
+  cleanup();
+  render(<LayoutPicker game={game} pack={pok} />);
+  await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
+  expect(useGame.getState().game!.layout).toBe('hyperlanes');
+  expect(useGame.getState().game!.map['0,-1']).toBe('25');
+});
+
+test('a tile under a lane asks first, naming how many tiles go, and cancelling changes nothing', async () => {
+  open(4);
+  useGame.getState().setTile('-2,-1', '25');
   const game = useGame.getState().game!;
   cleanup();
   render(<LayoutPicker game={game} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   expect(screen.getByRole('button', { name: 'Switch layout' })).toBeInTheDocument();
+  expect(screen.getByText(/1 tile that this layout removes/)).toBeInTheDocument();
   expect(useGame.getState().game!.layout).toBe('standard');
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(screen.queryByRole('button', { name: 'Switch layout' })).toBeNull();
   expect(useGame.getState().game!.layout).toBe('standard');
 });
 
-test('confirming switches the layout and keeps the tiles of shared slots', async () => {
+test('confirming switches the layout, keeps shared tiles and puts the lane under the displaced tile', async () => {
   open(4);
-  useGame.getState().setTile('1,0', '25');
+  useGame.getState().setTile('0,-1', '25');
+  useGame.getState().setTile('-2,-1', '26');
   const game = useGame.getState().game!;
   cleanup();
   render(<LayoutPicker game={game} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   await userEvent.click(screen.getByRole('button', { name: 'Switch layout' }));
   expect(useGame.getState().game!.layout).toBe('hyperlanes');
-  expect(useGame.getState().game!.map['1,0']).toBe('25');
+  expect(useGame.getState().game!.map['0,-1']).toBe('25');
+  expect(useGame.getState().game!.map['-2,-1']).toBe('83A@0');
+});
+
+test('a question left open does not carry over to another game', async () => {
+  open(4);
+  useGame.getState().setTile('-2,-1', '25');
+  const first = useGame.getState().game!;
+  cleanup();
+  const view = render(<LayoutPicker game={first} pack={pok} />);
+  await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
+  expect(screen.getByRole('button', { name: 'Switch layout' })).toBeInTheDocument();
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pok);
+  view.rerender(<LayoutPicker game={useGame.getState().game!} pack={pok} />);
+  expect(screen.queryByRole('button', { name: 'Switch layout' })).toBeNull();
+});
+
+test('the 3 and 4 player hyperlane layouts say they are as in Milty Draft, with the lane count', () => {
+  open(3);
+  expect(screen.getByText(/as in Milty Draft: 18 hyperlane slots, more than the 9/)).toBeInTheDocument();
+  cleanup();
+  open(4);
+  expect(screen.getByText(/12 hyperlane slots/)).toBeInTheDocument();
+  cleanup();
+  open(5);
+  expect(screen.queryByText(/Milty Draft/)).toBeNull();
 });
 
 test('the Russian labels are used in Russian', () => {

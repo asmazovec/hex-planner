@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { changeLayout, defaultLayout, duplicateTiles, mapIsEmpty, resolveTile, seatSlots, slotsFor, templateFor, tileSuggestions } from './mapBuilder';
+import { changeLayout, defaultLayout, duplicateTiles, mapIsEmpty, resolveTile, seatSlots, slotsFor, templateFor, tileSuggestions, tilesLostByLayout } from './mapBuilder';
 import { createGame } from './newGame';
 
 const base = loadPack([]);
@@ -114,11 +114,33 @@ test('the lanes of the old layout leave with it, and tiles in slots the new layo
   expect(back.map).toEqual({ '0,0': '18', '1,0': '25' });
 });
 
-test('a fixed lane slot taken by a tile of the player keeps that tile', () => {
+test('a tile of the player on a lane slot is displaced by the lane', () => {
   const game = gameOf(3);
   const next = changeLayout({ ...game, map: { ...game.map, '1,-2': '30' } }, 'hyperlanes', pok);
-  expect(next.map['1,-2']).toBe('30');
+  expect(next.map['1,-2']).toBe('87A@0');
   expect(next.map['2,-3']).toBe('83A@1');
+});
+
+test('tilesLostByLayout counts tiles in slots the layout lacks and tiles under its lanes, nothing else', () => {
+  const game = gameOf(3);
+  expect(tilesLostByLayout(game, 'hyperlanes', pok)).toBe(0);
+  const filled = { ...game, map: { ...game.map, '1,0': '25', '1,-2': '30' } };
+  expect(tilesLostByLayout(filled, 'hyperlanes', pok)).toBe(1);
+  expect(tilesLostByLayout(filled, 'standard', pok)).toBe(0);
+  const lanes = gameOf(3, 'hyperlanes');
+  expect(tilesLostByLayout(lanes, 'standard', pok)).toBe(0);
+  expect(tilesLostByLayout({ ...lanes, map: { ...lanes.map, '3,-3': '30', '1,0': '25' } }, 'standard', pok)).toBe(1);
+});
+
+test('mapIsEmpty is false once a lane is replaced by another tile', () => {
+  const game = gameOf(3, 'hyperlanes');
+  expect(mapIsEmpty({ ...game, map: { ...game.map, '2,-3': '25' } }, pok)).toBe(false);
+  expect(mapIsEmpty({ ...game, map: { ...game.map, '2,-3': '83A@2' } }, pok)).toBe(false);
+});
+
+test('only the sides Milty repeats are exempt from the duplicate warning', () => {
+  const map = { '1,0': '84B@0', '2,0': '84B@1', '3,0': '85A@0', '4,0': '85A@1' };
+  expect(duplicateTiles(map, pok)).toEqual(['84B']);
 });
 
 test('changing to the same or an unavailable layout returns the same game', () => {
@@ -134,7 +156,7 @@ test('mapIsEmpty counts the fixed tiles of the layout of the game as empty', () 
   expect(mapIsEmpty(gameOf(5), pok)).toBe(true);
 });
 
-test('repeated hyperlanes are not duplicates, repeated systems still are', () => {
+test('repeated Milty hyperlane sides are not duplicates, repeated systems still are', () => {
   const map = { '1,0': '25', '2,0': '25', '3,0': '83A@1', '4,0': '83A@2' };
   expect(duplicateTiles(map, pok)).toEqual(['25']);
   expect(duplicateTiles(map)).toEqual(['25', '83A']);

@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
-import { checkCounts, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, rotateLanes } from './build-data';
+import { checkCounts, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial } from './build-data';
+import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
   expect(() => checkCounts({ base: 50 }, { base: 51 })).toThrow(/base/);

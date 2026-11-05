@@ -34,16 +34,20 @@ export function resolveTile(input: string, pack: DataPack): TileDef | null {
   return sameNumber.length === 1 ? sameNumber[0] : null;
 }
 
+/** The hyperlane sides that Milty Draft's 3 and 4 player maps use in several slots. */
+const MILTY_REPEATED_LANES = ['83A', '85A', '87A'];
+
 /**
- * Tile ids placed in more than one slot, in order of first repeat. Rotation is ignored. With a pack, hyperlanes are left
- * out: the layouts of Milty Draft repeat the same side in several slots.
+ * Tile ids placed in more than one slot, in order of first repeat. Rotation is ignored. With a pack, the three sides the
+ * Milty Draft layouts repeat (83A, 85A, 87A) are left out.
  */
 export function duplicateTiles(map: Game['map'], pack?: DataPack): string[] {
+  const repeatable = pack ? new Set(MILTY_REPEATED_LANES) : new Set<string>();
   const seen = new Set<string>();
   const dupes = new Set<string>();
   for (const value of Object.values(map)) {
     const id = value.split('@')[0];
-    if (pack?.tiles[id]?.kind === 'hyperlane') continue;
+    if (repeatable.has(id)) continue;
     if (seen.has(id)) dupes.add(id);
     seen.add(id);
   }
@@ -52,8 +56,8 @@ export function duplicateTiles(map: Game['map'], pack?: DataPack): string[] {
 
 /** True while the map holds nothing beyond the tiles its template places by itself. */
 export function mapIsEmpty(game: Game, pack: DataPack): boolean {
-  const fixed = new Set(slotsFor(game.playerCount, pack, game.layout).filter(s => s.fixed).map(s => slotKeyOf(s.q, s.r)));
-  return Object.keys(game.map).every(slot => fixed.has(slot));
+  const fixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+  return Object.entries(game.map).every(([slot, tile]) => fixed.get(slot) === tile);
 }
 
 const hexDistance = (q: number, r: number): number => Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
@@ -85,10 +89,14 @@ export function seatSlots(playerCount: number, pack: DataPack, layout?: MapLayou
   });
 }
 
+const isLane = (fixed: string | undefined, pack: DataPack): fixed is string =>
+  fixed !== undefined && pack.tiles[fixed.split('@')[0]]?.kind === 'hyperlane';
+
 /**
- * The game with another layout of its player count: tiles stay in the slots both layouts have, except fixed tiles the
- * player never changed, which belong to the old layout and leave with it. Then the new layout's fixed tiles (the centre
- * and its hyperlanes) fill the slots that are empty. A layout the pack lacks, or the one in use, returns the same game.
+ * The game with another layout of its player count. Hyperlanes of the new layout always go in, displacing whatever
+ * stands on their slots. Other tiles stay in the slots both layouts have, except fixed tiles the player never changed,
+ * which belong to the old layout and leave with it; the new layout's other fixed tile (the centre) fills an empty
+ * slot. A layout the pack lacks, or the one in use, returns the same game.
  */
 export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Game {
   const next = templateFor(game.playerCount, layout, pack);
@@ -101,7 +109,16 @@ export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Gam
   }
   for (const slot of next.slots) {
     const key = slotKeyOf(slot.q, slot.r);
-    if (slot.fixed && !(key in map)) map[key] = slot.fixed;
+    if (slot.fixed && (isLane(slot.fixed, pack) || !(key in map))) map[key] = slot.fixed;
   }
   return { ...game, layout, map };
+}
+
+/** How many tiles of the player a switch to `layout` removes: those in slots it lacks and those under its hyperlanes. */
+export function tilesLostByLayout(game: Game, layout: MapLayout, pack: DataPack): number {
+  const next = templateFor(game.playerCount, layout, pack);
+  if (!next || game.layout === layout) return 0;
+  const kept = changeLayout(game, layout, pack).map;
+  const oldFixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+  return Object.entries(game.map).filter(([slot, tile]) => oldFixed.get(slot) !== tile && kept[slot] !== tile).length;
 }

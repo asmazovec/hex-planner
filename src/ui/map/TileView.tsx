@@ -1,5 +1,6 @@
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { rotateLanes } from '../../domain/lanes';
 import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domain/types';
 import { HEX_SIZE, hexPoints, hexToPixel } from './geometry';
@@ -45,10 +46,6 @@ const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma:
 
 /** Distance from the hex centre to the middle of an edge. Edge 0 is at the top and numbers go clockwise. */
 const EDGE_MIDDLE = HEX_INNER * Math.sqrt(3) / 2;
-
-/** Edge pairs of a hyperlane turned `rotation` steps of 60 degrees clockwise, each pair with the smaller edge first. */
-export const turnedLanes = (lanes: [number, number][], rotation: number): [number, number][] =>
-  lanes.map(([a, b]) => [(a + rotation) % 6, (b + rotation) % 6].sort((x, y) => x - y) as [number, number]);
 
 /** A lane from the middle of one edge to the middle of another, bent toward the centre; opposite edges give a straight line. */
 function lanePath([a, b]: [number, number]): string {
@@ -135,7 +132,7 @@ export function TileView({
   const hexKind = !tile ? 'hex-free' : tile.planetIds.some(id => MECATOL_PLANETS.includes(id)) ? 'hex-mecatol' : tile.kind !== 'system' ? `hex-${tile.kind}`
     : anomalies.length > 0 ? 'hex-anomaly' : tile.wormholes.length > 0 ? 'hex-wormhole' : 'hex-system';
   const rotation = Number(mapValue?.split('@')[1] ?? 0) % 6 || 0;
-  const lanes = tile?.kind === 'hyperlane' && tile.lanes ? turnedLanes(tile.lanes, rotation) : [];
+  const lanes = tile?.kind === 'hyperlane' && tile.lanes ? rotateLanes(tile.lanes, rotation) : [];
   // A hyperlane whose edges the data lacks cannot be drawn: it shows its id and rotation instead.
   const laneNote = tile?.kind === 'hyperlane' && !tile.lanes ? `${tileId} · ${rotation}` : null;
 

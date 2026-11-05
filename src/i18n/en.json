@@ -283,8 +283,10 @@
     "standard": "Standard",
     "hyperlanes": "With hyperlanes",
     "needsPok": "Hyperlane tiles come with Prophecy of Kings.",
-    "confirm": "The map has tiles. Tiles in slots that both layouts have are kept; the rest are removed.",
     "switch": "Switch layout",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "confirm_one": "The map has {{count}} tile that this layout removes (in slots it lacks or under hyperlanes). Switch?",
+    "confirm_other": "The map has {{count}} tiles that this layout removes (in slots it lacks or under hyperlanes). Switch?",
+    "milty": "Hyperlane layout as in Milty Draft: {{n}} hyperlane slots, more than the 9 hyperlane tiles in the box."
   }
 }

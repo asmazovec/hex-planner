@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { rotateLanes } from '../src/domain/lanes';
 import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
@@ -137,13 +138,6 @@ export function parseHyperlanes(text: string): Record<string, [number, number][]
     if (/^\d+[ab]$/.test(id)) lanes[normalizeTileId(id)] = pairs;
   }
   return lanes;
-}
-
-/** Edge pairs of a tile turned `steps` times by 60 degrees clockwise: every edge number moves up by `steps`. */
-export function rotateLanes(lanes: [number, number][], steps: number): [number, number][] {
-  return lanes
-    .map(([a, b]) => [(a + steps) % 6, (b + steps) % 6].sort((x, y) => x - y) as [number, number])
-    .sort((x, y) => x[0] - y[0] || x[1] - y[1]);
 }
 
 /** Fails unless every rotated line of the source (`83a60` to `83a300`) is its base line turned that many 60-degree steps clockwise. */

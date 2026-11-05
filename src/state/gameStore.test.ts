@@ -211,11 +211,11 @@ describe('layout', () => {
   });
 
   test('setLayout switches the template in one undo step, keeping the tiles of shared slots', async () => {
-    act().setTile('1,0', '25');
+    act().setTile('0,-1', '25');
     const before = game();
     act().setLayout('hyperlanes');
     expect(game().layout).toBe('hyperlanes');
-    expect(game().map['1,0']).toBe('25');
+    expect(game().map['0,-1']).toBe('25');
     expect(game().map['-2,-1']).toBe('83A@0');
     await flushSaves();
     expect(saveGame).toHaveBeenLastCalledWith(game());
