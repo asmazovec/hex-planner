@@ -237,6 +237,37 @@ describe('project', () => {
     expect([s.tactic, s.fleet, s.strategy]).toEqual([4, 4, 2]);
   });
 
+  test('очки фазы статуса: мои и соперников, «сейчас» только выполненные', () => {
+    const base = gameWith([]);
+    const [a, b] = base.opponents.map(o => o.id);
+    const game = gameWith(
+      [entry({ type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, vp: 1, opponentVp: { [a]: 2 } }, 'status', 'done')],
+      { vp: 3, opponents: base.opponents.map(o => (o.id === b ? { ...o, vp: 4 } : o)) },
+      [entry({ type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, vp: 2, opponentVp: { [a]: 1, [b]: 1 } }, 'status')],
+    );
+    const now = run(game, 'now').state;
+    expect(now.vp).toBe(4);
+    expect(now.opponentVp).toEqual({ [a]: 2, [b]: 4 });
+    const forecast = run(game).state;
+    expect(forecast.vp).toBe(6);
+    expect(forecast.opponentVp).toEqual({ [a]: 3, [b]: 5 });
+  });
+
+  test('очки в запись статуса и ручная правка складываются; у старой записи очков нет', () => {
+    const game = gameWith([
+      entry({ type: 'adjustment', label: 'x', delta: { vp: 2 } }),
+      entry({ type: 'statusTokens', tactic: 1, fleet: 0, strategy: 0 }, 'status'),
+      entry({ type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, vp: 1 }, 'status'),
+    ]);
+    expect(run(game).state.vp).toBe(3);
+    expect(run(game).state.opponentVp).toEqual(Object.fromEntries(game.opponents.map(o => [o.id, 0])));
+  });
+
+  test('очки неизвестного соперника не попадают в состояние', () => {
+    const game = gameWith([entry({ type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, opponentVp: { gone: 3 } }, 'status')]);
+    expect(run(game).state.opponentVp).not.toHaveProperty('gone');
+  });
+
   test('adjustment меняет величины и участвует в расчёте', () => {
     const delta: AdjustmentDelta = { tradeGoods: 2, vp: 1, strategy: -1 };
     const s = run(gameWith([entry({ type: 'adjustment', label: 'card', delta }, 'action')])).state;

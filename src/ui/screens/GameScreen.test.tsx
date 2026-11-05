@@ -87,16 +87,10 @@ test('a faction taken by one player is disabled for the others', async () => {
   expect(within(factionOf(2)).getByRole('option', { name: 'The Federation of Sol' })).toBeDisabled();
 });
 
-test('points change with the stepper and stop at zero, for me and for opponents', async () => {
+test('only starting information: no points on the cards', () => {
   render(<GameScreen />);
-  const [minus, plus] = [within(card(2)).getByRole('button', { name: 'Fewer points' }), within(card(2)).getByRole('button', { name: 'More points' })];
-  await userEvent.click(minus);
-  expect(within(card(2)).getByLabelText('Points')).toHaveTextContent('0');
-  await userEvent.click(plus);
-  await userEvent.click(plus);
-  expect(within(card(2)).getByLabelText('Points')).toHaveTextContent('2');
-  await userEvent.click(within(card(1)).getByRole('button', { name: 'More points' }));
-  expect(useGame.getState().draft.vp).toBe(1);
+  expect(screen.queryByText('Points')).toBeNull();
+  expect(screen.queryByRole('button', { name: /points/i })).toBeNull();
 });
 
 test('the start button waits for my faction, then starts with the list as set', async () => {

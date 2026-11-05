@@ -32,6 +32,17 @@ describe('gameStore', () => {
     act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: null });
   });
 
+  test('запись статуса одна на раунд: повторный вызов возвращает её же', () => {
+    act().addRound();
+    const id = act().addStatusEntry(1);
+    expect(round().entries).toEqual([expect.objectContaining({ id, type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 })]);
+    const before = game();
+    expect(act().addStatusEntry(1)).toBe(id);
+    expect(game()).toBe(before);
+    expect(act().addStatusEntry(2)).not.toBe(id);
+    expect(plan().rounds[1].entries).toHaveLength(1);
+  });
+
   test('копия плана независима', () => {
     const originalId = plan().id;
     act().addEntry(1, { type: 'pass' }, 'action');
@@ -115,7 +126,7 @@ describe('gameStore', () => {
     expect(game().planetControl.p).toBeUndefined(); expect(game().planetOwner.p).toBeUndefined();
     act().setDock('p', true); expect(game().docks).toContain('p');
     act().setDock('p', false); expect(game().docks).not.toContain('p');
-    act().setOpponent(0, { vp: 3 }); expect(game().opponents[0].vp).toBe(3);
+    act().setOpponent(0, { faction: 'hacan' }); expect(game().opponents[0].faction).toBe('hacan');
     act().setSlice('res5', 'other'); expect(game().expedition.slices.res5).toBe('other');
     act().setThundersEdge('1,0'); expect(game().expedition.thundersEdgeSystem).toBe('1,0');
     act().setFractureActive(true); expect(game().fracture.active).toBe(true);
@@ -154,7 +165,7 @@ describe('действия без изменений', () => {
   test('неизвестный id и то же значение не создают шаг отмены и не сохраняют', async () => {
     const id = act().addEntry(1, { type: 'pass' }, 'action');
     act().setEntryStatus(id, 'done');
-    act().setOpponent(0, { vp: 2 });
+    act().setOpponent(0, { faction: 'hacan' });
     const opponent = game().opponents[0].id;
     act().setEnemyUnits('1,0', opponent, { cruiser: 2 });
     act().setPlanetControl('p', opponent);
@@ -179,8 +190,8 @@ describe('действия без изменений', () => {
       () => act().setDock('nope', false),
       () => act().setDock(game().docks[0], true),
       () => act().setThundersEdge(null),
-      () => act().setOpponent(99, { vp: 1 }),
-      () => act().setOpponent(0, { vp: 2 }),
+      () => act().setOpponent(99, { faction: 'sol' }),
+      () => act().setOpponent(0, { faction: 'hacan' }),
       () => act().setEnemyUnits('1,0', opponent, { cruiser: 2 }),
       () => act().setEnemyUnits('1,0', opponent, { cruiser: 2, fighter: 0 }),
       () => act().setActivePlan(game().activePlanId),
@@ -273,23 +284,21 @@ describe('players', () => {
   test('starting turns the draft into the game and leaves a fresh draft', () => {
     useGame.getState().closeGame();
     useGame.getState().setFaction('sol');
-    useGame.getState().setVp(2);
     const { draft } = useGame.getState();
     useGame.getState().startGame();
     expect(useGame.getState().game!.id).toBe(draft.id);
-    expect(useGame.getState().game!.vp).toBe(2);
+    expect(useGame.getState().game!.faction).toBe('sol');
     expect(useGame.getState().draft.faction).toBe('');
     expect(useGame.getState().draft.id).not.toBe(draft.id);
   });
 
-  test('in an open game the player actions can be undone and my points count in the projection', () => {
+  test('in an open game the player actions can be undone and the starting points count in the projection', () => {
     open();
     useGame.getState().addOpponent();
     expect(useGame.getState().game!.playerCount).toBe(5);
     useGame.getState().undo();
     expect(useGame.getState().game!.playerCount).toBe(4);
-    useGame.getState().setVp(3);
-    const game = useGame.getState().game!;
+    const game = { ...useGame.getState().game!, vp: 3 };
     expect(project(game, game.plans[0], 'now', pok).state.vp).toBe(3);
   });
 

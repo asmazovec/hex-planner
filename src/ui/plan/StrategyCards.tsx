@@ -28,10 +28,11 @@ export function StrategyCards({ expansions, round }: StrategyCardsProps) {
   return (
     <div className="plan-cards">
       <div className="panel-head">
-        <h3>{t('plan.cards.title')}</h3>
+        <h4 className="phase-title">{t('plan.phases.strategy')}</h4>
         <button type="button" onClick={() => setOpen(!open)}>{open ? t('plan.cards.collapse') : t('plan.cards.all')}</button>
       </div>
       {open && <p className="muted card-hint">{t('plan.cards.hint')}</p>}
+      {cards.length === 0 && <p className="muted phase-auto">{t('plan.phases.strategyEmpty')}</p>}
       <ul className="card-list">
         {cards.map(card => {
           const summary = cardSummary(card.summaryKey, lang);

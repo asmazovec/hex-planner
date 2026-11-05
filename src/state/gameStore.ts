@@ -4,7 +4,7 @@ import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { withTeMecatol } from '../domain/mecatol';
 import { toggleUpgrade } from '../domain/unitStats';
-import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, setPlayerVp, swapSeats } from '../domain/players';
+import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
 } from '../domain/types';
@@ -116,12 +116,13 @@ export interface GameStore {
   /** Index among the opponents. */
   removeOpponent(index: number): void;
   setFaction(faction: string): void;
-  setVp(vp: number): void;
   /** Positions in the list of players, my faction being 0. */
   swapSeats(a: number, b: number): void;
   /** Loads a saved game by id; an unknown id leaves the current game alone. */
   openGame(id: string): Promise<void>;
   addEntry(roundNo: number, body: EntryBody, phase: Phase): string;
+  /** The round's one status entry: created on first use, its id afterwards. */
+  addStatusEntry(roundNo: number): string;
   updateEntry(id: string, patch: Partial<EntryBody>): void;
   moveEntry(id: string, toPhase: Phase, toIndex: number): void;
   removeEntry(id: string): void;
@@ -140,7 +141,7 @@ export interface GameStore {
   setMap(map: Record<string, string>, layout?: MapLayout): void;
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
-  setOpponent(index: number, patch: { faction?: string; vp?: number }): void;
+  setOpponent(index: number, patch: { faction: string }): void;
   /** Marks a ship upgrade by hand: `me` edits my baseline, an opponent id that opponent's list. */
   toggleUpgrade(player: string, unit: UnitId): void;
   setEnemyUnits(systemId: string, opponentId: string, units: UnitCounts): void;
@@ -226,7 +227,6 @@ export const useGame = create<GameStore>((set, get) => {
     addOpponent: () => commitPlayers(addPlayer),
     removeOpponent: index => commitPlayers((g, pack) => removePlayer(g, index + 1, pack)),
     setFaction: faction => commitPlayers((g, pack) => setPlayerFaction(g, 0, faction, pack)),
-    setVp: vp => commitPlayers(g => setPlayerVp(g, 0, vp)),
     swapSeats: (a, b) => commitPlayers((g, pack) => swapSeats(g, a, b, pack)),
     openGame: async id => {
       const loaded = await loadGame(id);
@@ -240,6 +240,12 @@ export const useGame = create<GameStore>((set, get) => {
       const entry = { ...body, id, phase, status: 'planned' } as Entry;
       commit(g => editRound(g, roundNo, r => ({ ...r, entries: [...r.entries, entry] })));
       return id;
+    },
+    addStatusEntry: roundNo => {
+      const { game } = get();
+      const round = game?.plans.find(p => p.id === game.activePlanId)?.rounds.find(r => r.number === roundNo);
+      return round?.entries.find(e => e.type === 'statusTokens')?.id
+        ?? get().addEntry(roundNo, { type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0 }, 'status');
     },
     updateEntry: (id, patch) =>
       commit(g => editEntryRound(g, id, r => editEntries(r, es =>
@@ -293,11 +299,7 @@ export const useGame = create<GameStore>((set, get) => {
       return same && nextLayout === g.layout ? g : { ...g, map: next, layout: nextLayout };
     }),
     setLayout: layout => commitPlayers((g, pack) => changeLayout(g, layout, pack)),
-    setOpponent: (index, { faction, vp }) =>
-      commitPlayers((g, pack) => {
-        const named = faction === undefined ? g : setPlayerFaction(g, index + 1, faction, pack);
-        return vp === undefined ? named : setPlayerVp(named, index + 1, vp);
-      }),
+    setOpponent: (index, { faction }) => commitPlayers((g, pack) => setPlayerFaction(g, index + 1, faction, pack)),
     toggleUpgrade: (player, unit) => commit(g => toggleUpgrade(g, player, unit)),
     setEnemyUnits: (systemId, opponentId, units) =>
       commit(g => {

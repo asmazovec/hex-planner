@@ -31,7 +31,10 @@ const entrySchema = z.discriminatedUnion('type', [
       units: z.object({ systemId: z.string(), units: unitCounts }).optional(),
     }),
   }),
-  z.object({ ...base, type: z.literal('statusTokens'), tactic: z.number(), fleet: z.number(), strategy: z.number() }),
+  z.object({
+    ...base, type: z.literal('statusTokens'), tactic: z.number(), fleet: z.number(), strategy: z.number(),
+    vp: z.number().optional(), opponentVp: z.record(z.string(), z.number()).optional(),
+  }),
 ]);
 
 const control = z.enum(['me', 'enemy']);

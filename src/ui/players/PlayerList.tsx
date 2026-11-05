@@ -14,8 +14,8 @@ export interface PlayerListProps {
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
   /** Stands at the end of the heading. */
   action?: ReactNode;
-  /** On the plan screen: my ships in the state the map shows; opponents come from the game. Rows toggle upgrades. */
-  live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>> };
+  /** On the plan screen: my ships in the state the map shows; opponents come from the game. Rows toggle upgrades. Points are totals by player id, read only. */
+  live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
@@ -23,7 +23,6 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game ?? s.draft);
   const setFaction = useGame(s => s.setFaction);
-  const setVp = useGame(s => s.setVp);
   const setOpponent = useGame(s => s.setOpponent);
   const addOpponent = useGame(s => s.addOpponent);
   const removeOpponent = useGame(s => s.removeOpponent);
@@ -97,7 +96,6 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
         if (drag?.picked === index) badge.push('picked');
         if (drag?.bumped.includes(player.color)) badge.push('bump');
         const opponent = index - 1;
-        const changeVp = (vp: number) => (index === 0 ? setVp(vp) : setOpponent(opponent, { vp }));
         return (
           <article
             key={player.color} role="group" aria-label={t('players.player', { n: index + 1 })} className={classes.join(' ')}
@@ -115,12 +113,7 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
                   {factions.map(f => <option key={f.id} value={f.id} disabled={taken.has(f.id)}>{f.name}</option>)}
                 </select>
               </div>
-              <div className="player-vp">
-                {t('players.points')}
-                <button type="button" className="icon-button" aria-label={t('players.minus')} onClick={() => changeVp(player.vp - 1)}>−</button>
-                <b aria-label={t('players.points')} role="status">{player.vp}</b>
-                <button type="button" className="icon-button" aria-label={t('players.plus')} onClick={() => changeVp(player.vp + 1)}>+</button>
-              </div>
+              {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
               {index === 0 ? <span /> : (
                 <button
                   type="button" className="icon-button" aria-label={t('players.remove')} title={t('players.remove')}

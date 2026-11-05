@@ -157,7 +157,9 @@ export type EntryBody =
   | { type: 'pass' }
   | { type: 'expedition'; sliceId: string | null; payment: Payment }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta }
-  | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number };
+  | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
+      /** My points gained this round. */ vp?: number;
+      /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number> };
 
 export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus };
 
@@ -186,7 +188,7 @@ export interface Game {
   seat: number;
   /** Number of your player colour, 1 to 8: `--player-<n>` in the theme. */
   color: number;
-  /** Victory points set by hand; adjustments in the plan add to it. */
+  /** Starting victory points; the status entries and adjustments of a plan add to it. */
   vp: number;
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;
@@ -219,6 +221,8 @@ export interface GameState {
   fleet: number;
   strategy: number;
   vp: number;
+  /** Each opponent's starting points plus their gains in the status entries replayed so far, by opponent id. */
+  opponentVp: Record<string, number>;
   /** The baseline plus the upgrades of the entries replayed so far. */
   upgrades: UnitId[];
 }

@@ -144,3 +144,13 @@ describe('upgrades in saved games', () => {
     expect(importGame(JSON.stringify({ ...game, upgrades: { me: ['spaceship'], opponents: {} } })).ok).toBe(false);
   });
 });
+
+test('the points of a status entry survive export and import', () => {
+  const game = sampleGame();
+  const opponent = game.opponents[0].id;
+  game.plans[0].rounds[0].entries = [{
+    id: 's', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 1, fleet: 0, strategy: 0, vp: 2, opponentVp: { [opponent]: 1 },
+  }];
+  const result = importGame(exportGame(game));
+  expect(result.ok && result.game.plans[0].rounds[0].entries[0]).toMatchObject({ vp: 2, opponentVp: { [opponent]: 1 } });
+});

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
+import { EXPEDITION_SLICES } from '../../domain/payment';
 import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
@@ -10,6 +11,7 @@ import { useGame } from '../../state/gameStore';
 import { HexMap, type Arrow } from '../map/HexMap';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
 import { MapStringImport } from '../map/MapStringImport';
+import { ThundersEdgePanel } from '../map/ThundersEdgePanel';
 import { TileSheet } from '../map/TileSheet';
 import { UpgradesPanel } from '../map/UpgradesPanel';
 import type { Highlight } from '../map/TileView';
@@ -17,13 +19,12 @@ import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
 import { EntryList } from '../plan/EntryList';
-import { ExpeditionWidget, sliceOwners } from '../plan/ExpeditionWidget';
-import { FractureControl } from '../plan/FractureControl';
+import { sliceOwners } from '../plan/ExpeditionWidget';
 import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { SummaryBar } from '../plan/SummaryBar';
-import { arrowsOf, hasUnits, sourcePools, suggestMoves, type TacticalEntry } from '../plan/tactical';
+import { arrowsOf, hasUnits, sourcePools, suggestMoves, systemName, type TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry. */
@@ -86,6 +87,7 @@ export function PlanScreen() {
   const [marking, setMarking] = useState(false);
   const [showPlayers, setShowPlayers] = useState(false);
   const [showUpgrades, setShowUpgrades] = useState(false);
+  const [showTe, setShowTe] = useState(false);
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo) ?? plan?.rounds.at(-1);
@@ -132,6 +134,7 @@ export function PlanScreen() {
     setPlacing(false);
     setMarking(false);
     if (type === 'tactical') {
+      setShowTe(false);
       setSheet(null);
       setBuilding(false);
       setEditing({ entryId: null, addingSource: false, pickerFrom: null });
@@ -179,6 +182,7 @@ export function PlanScreen() {
 
   const toggleBuilding = () => {
     closePanels();
+    setShowTe(false);
     setImporting(false);
     setBuilding(!building);
   };
@@ -188,6 +192,7 @@ export function PlanScreen() {
     setMarking(false);
     setSheet(null);
     if (opened.type === 'tactical') {
+      setShowTe(false);
       setEditing({ entryId: opened.id, addingSource: false, pickerFrom: null });
     } else {
       setOpenId(openId === opened.id ? null : opened.id);
@@ -230,7 +235,25 @@ export function PlanScreen() {
     : session?.addingSource ? t('plan.tactical.sourceHint')
       : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;
   const manualPayment = entry !== undefined && manualPayments.includes(entry.id);
-  const hasStatusEntry = round.entries.some(e => e.type === 'statusTokens');
+  const totalSlices = EXPEDITION_SLICES.length;
+  const takenSlices = Object.keys(owners).length;
+  const placedTe = game.expedition.thundersEdgeSystem;
+  const toggleUpgrades = () => {
+    setPlacing(false);
+    setMarking(false);
+    setShowTe(false);
+    setShowUpgrades(!showUpgrades);
+  };
+  const toggleTe = () => {
+    setShowUpgrades(false);
+    // While the panel stands aside for the map, the button brings it back.
+    if (placing || marking) {
+      setPlacing(false);
+      setMarking(false);
+    } else {
+      setShowTe(!showTe);
+    }
+  };
 
   return (
     <section className="plan-screen" data-view={view}>
@@ -251,7 +274,7 @@ export function PlanScreen() {
           <div className="players-panel">
             <PlayerList
               action={<button type="button" onClick={() => setShowPlayers(false)}>{t('players.close')}</button>}
-              live={{ upgraded: shownState.upgrades, locked: lockedUpgrades }}
+              live={{ upgraded: shownState.upgrades, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
             />
           </div>
         )}
@@ -264,9 +287,22 @@ export function PlanScreen() {
             tools={(
               <div className="map-tools">
                 <button type="button" aria-pressed={showPlayers} onClick={() => setShowPlayers(!showPlayers)}>{t('players.open')}</button>
-                <button type="button" aria-pressed={showUpgrades} onClick={() => setShowUpgrades(!showUpgrades)}>
-                  {upgradeCount > 0 ? `${t('ships.upgrades')} · ${upgradeCount}` : t('ships.upgrades')}
+                <button
+                  type="button" aria-pressed={showUpgrades} onClick={toggleUpgrades}
+                  aria-label={upgradeCount > 0 ? `${t('ships.upgrades')} · ${upgradeCount}` : t('ships.upgrades')}
+                >
+                  {upgradeCount > 0 ? `${t('ships.upgradesShort')} · ${upgradeCount}` : t('ships.upgradesShort')}
                 </button>
+                {hasTe && (
+                  <button
+                    type="button" aria-pressed={showTe} onClick={toggleTe}
+                    className={takenSlices === totalSlices && placedTe === null ? 'te-ready' : undefined}
+                  >
+                    {placedTe === null
+                      ? t('thundersEdge.taken', { n: takenSlices, total: totalSlices })
+                      : t('thundersEdge.placed', { system: systemName(game, pack, placedTe) })}
+                  </button>
+                )}
                 <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
                 {building && (
                   <button type="button" aria-pressed={importing} onClick={() => setImporting(!importing)}>{t('mapImport.title')}</button>
@@ -285,9 +321,20 @@ export function PlanScreen() {
               : <TileSheet slotKey={sheet} pack={pack} game={game} state={shownState} />)}
           />
           {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
-          {hint && <p className="map-hint" role="status">{hint}</p>}
+          {hint && (
+            <p className="map-hint" role="status">
+              {hint}
+              {(placing || marking) && <button type="button" onClick={toggleTe}>{t('thundersEdge.back')}</button>}
+            </p>
+          )}
           {showUpgrades && (
             <UpgradesPanel game={game} pack={pack} upgraded={shownState.upgrades} locked={lockedUpgrades} onClose={() => setShowUpgrades(false)} />
+          )}
+          {hasTe && showTe && !placing && !marking && (
+            <ThundersEdgePanel
+              game={game} pack={pack} owners={owners} onClose={() => setShowTe(false)}
+              onPlace={() => setPlacing(true)} onMark={() => setMarking(true)}
+            />
           )}
         </div>
         <div className="plan-panel">
@@ -316,27 +363,16 @@ export function PlanScreen() {
             {!session && (
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
-                <StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} round={round} />
-                {hasTe && (
-                  <>
-                    <ExpeditionWidget game={game} pack={pack} owners={owners} placing={placing} onPlacing={on => { setPlacing(on); if (on) setMarking(false); }} />
-                    <FractureControl game={game} pack={pack} marking={marking} onMarking={on => { setMarking(on); if (on) setPlacing(false); }} />
-                  </>
-                )}
                 <EntryList
                   game={game} pack={pack} round={round} plan={plan}
                   stateBefore={id => stateBeforeEntry(game, plan, id, pack)} warnings={forecast.warningsByEntry} state={forecast.state}
                   openId={openId} onOpen={onOpenEntry}
+                  strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} round={round} />}
+                  addAction={<ActionMenu onPick={onPick} />}
                 />
-                {!hasStatusEntry && (
-                  <button type="button" onClick={() => addEntry(round.number, { type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0 }, 'status')}>
-                    {t('plan.entries.statusTokens')}
-                  </button>
-                )}
               </>
             )}
           </div>
-          {!session && <div className="plan-footer"><ActionMenu onPick={onPick} /></div>}
         </div>
       </div>
       <div className="plan-switch" role="group" aria-label={t('plan.views')}>

@@ -107,7 +107,7 @@ test('the menu holds all seven items', async () => {
   const onPick = vi.fn();
   render(<ActionMenu onPick={onPick} />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  const names = ['Tactical action', 'Strategic action', 'Secondary ability', 'Component action', 'Expedition contribution', 'Pass', 'Manual adjustment'];
+  const names = ['Tactical action', 'Strategic action', 'Secondary ability', 'Component action', 'Expedition contribution, end of turn', 'Pass', 'Manual adjustment'];
   for (const name of names) expect(screen.getByRole('button', { name })).toBeVisible();
   expect(ACTION_TYPES).toHaveLength(7);
   await userEvent.click(screen.getByRole('button', { name: 'Pass' }));

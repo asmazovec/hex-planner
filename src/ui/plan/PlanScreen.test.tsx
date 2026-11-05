@@ -226,17 +226,78 @@ test('rounds switch and a new round can be added; the map shows that round', asy
   expect(screen.getByRole('listitem', { name: 'Pass' })).toBeVisible();
 });
 
+const phase = (name: string) => within(screen.getByRole('region', { name }));
+
+test('an empty round shows the four phases in order, each with a line of what it holds', () => {
+  render(<PlanScreen />);
+  expect(screen.getAllByRole('heading', { level: 4 }).map(h => h.textContent)).toEqual(['Strategy', 'Actions', 'Status', 'Agenda']);
+  expect(phase('Strategy').getByRole('button', { name: /Leadership/ })).toBeVisible();
+  expect(phase('Actions').getByText(/Tactical actions/)).toBeVisible();
+  expect(phase('Status').getByText(/New tokens/)).toBeVisible();
+  expect(phase('Agenda').getByText(/No entries/)).toBeVisible();
+  expect(phase('Agenda').queryByRole('button')).toBeNull();
+});
+
+test('an action goes under Actions; a filled section drops its line', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
+  expect(phase('Actions').getByRole('listitem', { name: 'Pass' })).toBeVisible();
+  expect(phase('Actions').queryByText(/Tactical actions/)).toBeNull();
+});
+
+test('the status section makes one entry of tokens and points, and the menu has no such action', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  expect(phase('Actions').queryByRole('button', { name: /status|Tokens and points/i })).toBeNull();
+  await userEvent.click(phase('Status').getByRole('button', { name: 'Tokens and points' }));
+  expect(entries().filter(e => e.type === 'statusTokens')).toHaveLength(1);
+  // The add control is gone; only the entry's own label is left. A status entry has no moving controls.
+  const row = within(phase('Status').getByRole('listitem', { name: 'Tokens and points' }));
+  expect(phase('Status').getAllByRole('button', { name: 'Tokens and points' })).toEqual([row.getByRole('button', { name: 'Tokens and points' })]);
+  expect(row.queryByRole('button', { name: 'Move up' })).toBeNull();
+  expect(row.queryByRole('button', { name: 'Drag' })).toBeNull();
+  expect(phase('Status').getByText(/Planets refresh at the start of the next round/)).toBeVisible();
+});
+
+test('status points: every player in a stepper with a running total, in the summary and the players panel', async () => {
+  useGame.getState().setOpponent(0, { faction: 'sol' });
+  render(<PlanScreen />);
+  await userEvent.click(phase('Status').getByRole('button', { name: 'Tokens and points' }));
+  const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
+  // My faction, a named opponent and the unnamed ones.
+  expect(row.getByRole('group', { name: 'Arborec' })).toBeVisible();
+  expect(row.getByRole('group', { name: 'Sol' })).toBeVisible();
+  expect(row.getByRole('group', { name: 'Player 6' })).toBeVisible();
+  expect(row.getByRole('button', { name: 'Remove one Sol' })).toBeDisabled();
+
+  await userEvent.click(row.getByRole('button', { name: 'Add one Arborec' }));
+  await userEvent.click(row.getByRole('button', { name: 'Add one Sol' }));
+  await userEvent.click(row.getByRole('button', { name: 'Add one Sol' }));
+  const opponent = game().opponents[0].id;
+  expect(entries()[0]).toMatchObject({ vp: 1, opponentVp: { [opponent]: 2 } });
+  expect(row.getByRole('group', { name: 'Sol' })).toHaveTextContent('total 2');
+  expect(cell('VP')).toHaveTextContent('0 → 1');
+
+  await userEvent.click(screen.getByRole('button', { name: 'Players' }));
+  const totals = [...document.querySelectorAll('.player-card .player-vp')].map(el => el.textContent);
+  expect(totals.slice(0, 3)).toEqual(['Points 1', 'Points 2', 'Points 0']);
+  expect(document.querySelector('.player-card button[aria-label*="points" i]')).toBeNull();
+});
+
 test('the status phase entry distributes tokens', async () => {
   render(<PlanScreen />);
-  await userEvent.click(screen.getByRole('button', { name: 'Status phase tokens' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
   const entry = entries()[0];
   expect(entry).toMatchObject({ type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 });
-  const row = within(screen.getByRole('listitem', { name: 'Status phase tokens' }));
+  const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
   await userEvent.click(row.getByRole('button', { name: 'Add one Tactic' }));
   await userEvent.click(row.getByRole('button', { name: 'Add one Fleet' }));
   expect(entries()[0]).toMatchObject({ tactic: 1, fleet: 1, strategy: 0 });
   expect(cell('Tactic')).toHaveTextContent('3 → 4');
-  expect(screen.getAllByRole('button', { name: 'Status phase tokens' })).toHaveLength(1);
+  // The label is the only way into the entry now: no second status button stands beside it.
+  expect(screen.getAllByRole('button', { name: 'Tokens and points' })).toHaveLength(1);
+  expect(row.getByRole('button', { name: 'Tokens and points' })).toBeVisible();
 });
 
 test('a manual adjustment has a label and changes values, including units', async () => {
@@ -297,12 +358,9 @@ test('an arrow to or from an empty slot does nothing', async () => {
   expect(screen.queryByRole('button', { name: 'Close picker' })).toBeNull();
 });
 
-test('Add action stays pinned below the scrolling part of the panel', () => {
+test('Add action stands in the Actions section, in the block that sticks to the bottom of the panel', () => {
   render(<PlanScreen />);
-  const add = screen.getByRole('button', { name: 'Add action' });
-  expect(add.closest('.plan-footer')).not.toBeNull();
-  expect(add.closest('.plan-scroll')).toBeNull();
-  expect(screen.getByRole('textbox', { name: 'Plan name' }).closest('.plan-scroll')).not.toBeNull();
+  expect(phase('Actions').getByRole('button', { name: 'Add action' }).closest('.phase-add')).not.toBeNull();
 });
 
 test('the card list stays collapsed after the editor closes when a main card exists', async () => {
@@ -323,8 +381,8 @@ test('the build list shows the price of each unit', async () => {
 
 test('status tokens do not go below zero', async () => {
   render(<PlanScreen />);
-  await userEvent.click(screen.getByRole('button', { name: 'Status phase tokens' }));
-  const row = within(screen.getByRole('listitem', { name: 'Status phase tokens' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
+  const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
   expect(row.getByRole('button', { name: 'Remove one Tactic' })).toBeDisabled();
 });
 

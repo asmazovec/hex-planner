@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { seatSlots } from './mapBuilder';
 import { createGame } from './newGame';
 import {
-  addPlayer, countChangeEffect, draftWithExpansions, maxPlayers, opponentHoldings, opponentsBySeat, planetHolder, playersOf, removePlayer, setPlayerFaction, setPlayerVp, swapSeats,
+  addPlayer, countChangeEffect, draftWithExpansions, maxPlayers, opponentHoldings, opponentsBySeat, planetHolder, playersOf, removePlayer, setPlayerFaction, swapSeats,
 } from './players';
 import type { Game } from './types';
 
@@ -165,11 +165,16 @@ describe('what a count change costs', () => {
 });
 
 describe('points', () => {
-  test('points of each player, never below zero', () => {
-    const game = setPlayerVp(setPlayerVp(start(), 0, 3), 2, 5);
-    expect(game.vp).toBe(3);
-    expect(game.opponents[1].vp).toBe(5);
-    expect(setPlayerVp(game, 0, -1).vp).toBe(0);
+  test('removing an opponent drops their points from every status entry; the others keep theirs', () => {
+    const game = start(4);
+    const [leaving, staying] = game.opponents.map(o => o.id);
+    game.plans[0].rounds[0].entries = [{
+      id: 's', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, vp: 1,
+      opponentVp: { [leaving]: 2, [staying]: 1 },
+    }];
+    const next = removePlayer(game, 1, pack);
+    expect(next.plans[0].rounds[0].entries[0]).toMatchObject({ vp: 1, opponentVp: { [staying]: 1 } });
+    expect(next.plans[0].rounds[0].entries[0]).not.toHaveProperty(['opponentVp', leaving]);
   });
 });
 

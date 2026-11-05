@@ -6,13 +6,12 @@ import { useGame } from '../../state/gameStore';
 export interface FractureControlProps {
   game: Game;
   pack: DataPack;
-  /** Ingress marking mode: a tap on a map system toggles its marker. */
-  marking: boolean;
-  onMarking: (marking: boolean) => void;
+  /** Starts ingress marking: a tap on a map system toggles its marker. */
+  onMark: () => void;
 }
 
 /** The Fracture is opened by hand; nothing about it is automated. Ingress tokens are only marks on the map. */
-export function FractureControl({ game, pack, marking, onMarking }: FractureControlProps) {
+export function FractureControl({ game, pack, onMark }: FractureControlProps) {
   const { t } = useTranslation();
   const setFractureActive = useGame(s => s.setFractureActive);
   const setFractureSeat = useGame(s => s.setFractureSeat);
@@ -26,6 +25,7 @@ export function FractureControl({ game, pack, marking, onMarking }: FractureCont
           {active ? t('fracture.close') : t('fracture.open')}
         </button>
       </div>
+      <span className="muted">{t('fracture.note')}</span>
       {seats.length > 0 && (
         <div className="row" role="group" aria-label={t('fracture.seat')}>
           <span>{t('fracture.seat')}</span>
@@ -37,10 +37,9 @@ export function FractureControl({ game, pack, marking, onMarking }: FractureCont
         </div>
       )}
       <div className="row">
-        <button type="button" aria-pressed={marking} onClick={() => onMarking(!marking)}>{t('fracture.mark')}</button>
+        <button type="button" onClick={onMark}>{t('fracture.mark')}</button>
         <span className="muted">{t('fracture.ingressCount', { n: ingress.length })}</span>
       </div>
-      {marking && <span className="muted">{t('fracture.markHint')}</span>}
     </div>
   );
 }

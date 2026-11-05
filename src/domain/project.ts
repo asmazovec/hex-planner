@@ -143,7 +143,7 @@ function initialState(game: Game, pack: DataPack): GameState {
   Object.assign(control, game.planetControl);
   return {
     systems, ground: {}, exhausted: [], control, tokensOnMap: [],
-    tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp, upgrades: [...game.upgrades.me],
+    tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), upgrades: [...game.upgrades.me],
   };
 }
 
@@ -294,6 +294,10 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       state.tactic += entry.tactic;
       state.fleet += entry.fleet;
       state.strategy += entry.strategy;
+      state.vp += entry.vp ?? 0;
+      for (const [id, points] of Object.entries(entry.opponentVp ?? {})) {
+        if (id in state.opponentVp) state.opponentVp[id] += points;
+      }
       break;
     case 'adjustment': {
       const d = entry.delta;

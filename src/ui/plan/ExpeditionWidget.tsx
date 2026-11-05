@@ -22,13 +22,12 @@ export interface ExpeditionWidgetProps {
   game: Game;
   pack: DataPack;
   owners: SliceOwners;
-  /** Thunder's Edge is being placed: the next tap on a suitable system puts it there. */
-  placing: boolean;
-  onPlacing: (placing: boolean) => void;
+  /** Starts placing Thunder's Edge: the next tap on a suitable system puts it there. */
+  onPlace: () => void;
 }
 
 /** Counter of taken expedition parts; a part is taken by another player with a tap, mine come from the plan. */
-export function ExpeditionWidget({ game, pack, owners, placing, onPlacing }: ExpeditionWidgetProps) {
+export function ExpeditionWidget({ game, pack, owners, onPlace }: ExpeditionWidgetProps) {
   const { t } = useTranslation();
   const setSlice = useGame(s => s.setSlice);
   const setThundersEdge = useGame(s => s.setThundersEdge);
@@ -61,9 +60,9 @@ export function ExpeditionWidget({ game, pack, owners, placing, onPlacing }: Exp
       {(taken === EXPEDITION_SLICES.length || placed !== null) && (
         <div className="row">
           {placed !== null && <span>{t('expedition.placedAt', { system: systemName(game, pack, placed) })}</span>}
-          <button type="button" aria-pressed={placing} onClick={() => onPlacing(!placing)}>{t('expedition.choose')}</button>
+          <button type="button" onClick={onPlace}>{t('expedition.choose')}</button>
           {placed !== null && (
-            <button type="button" onClick={() => { setThundersEdge(null); onPlacing(false); }}>{t('expedition.remove')}</button>
+            <button type="button" onClick={() => setThundersEdge(null)}>{t('expedition.remove')}</button>
           )}
         </div>
       )}

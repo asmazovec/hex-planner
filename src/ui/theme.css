@@ -287,7 +287,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .hexmap-frame { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
 .hexmap-wrap { position: relative; flex: 1; width: 100%; min-height: 0; overflow: hidden; }
 .map-strip { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 3px 8px; background: var(--surface); border-bottom: 1px solid var(--border); }
-.map-strip button { font-size: var(--font-s); padding: 4px 12px; }
+.map-strip button { font-size: var(--font-s); padding: 4px 12px; white-space: nowrap; }
 .map-strip-start { display: flex; align-items: center; gap: 6px; }
 .map-legend { position: relative; }
 .map-strip .map-legend-button { min-width: 44px; padding: 4px; font-weight: 700; }
@@ -295,7 +295,9 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .map-legend-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; align-items: center; }
 .map-legend-tokens { display: flex; gap: 2px; }
 .map-legend-tokens svg { width: 35px; height: 35px; display: block; }
-.map-tools { display: flex; gap: 6px; }
+.map-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.map-tools button { padding: 4px 10px; }
+.map-tools .te-ready { border-color: var(--gold); color: var(--gold); }
 
 /* Plan and map: one row of tabs, rounds and totals, the map, the plan. */
 .app > main[data-screen='plan'] { padding: 0; overflow: hidden; }
@@ -320,10 +322,10 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .plan-map { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
 .hexmap { position: absolute; inset: 0; width: 100%; height: 100%; }
 .map-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); margin: 0; padding: 7px 14px; background: var(--accent-solid); color: #fff; font-size: var(--font-s); border-radius: var(--radius-s); pointer-events: none; max-width: 90%; box-shadow: var(--shadow); animation: fade-in var(--motion) var(--ease); }
+.map-hint button { margin-left: 10px; padding: 2px 10px; pointer-events: auto; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .plan-panel { min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface); border-left: 1px solid var(--border); }
 .plan-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 2px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
-.plan-footer { flex: none; }
 .plan-panel h2, .plan-panel h3 { margin: 0; font-size: var(--font-m); font-weight: 650; }
 .plan-panel input[type='text'] { width: 100%; font-weight: 600; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -362,7 +364,20 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .entry-main .entry-label { flex: 1; min-width: 0; text-align: left; padding: 4px 6px; color: var(--text); font-weight: 600; font-size: var(--font-s); line-height: 1.3; }
 .entry-check { min-width: var(--touch); justify-content: center; }
 .entry-details { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px 8px; border-top: 1px solid var(--border); }
-.phase-title { margin: 4px 0 4px; font-size: var(--font-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+.plan-entries { display: flex; flex-direction: column; gap: 12px; }
+.phase { display: flex; flex-direction: column; gap: 5px; }
+.phase-title { margin: 0; font-size: 13px; font-weight: 650; color: var(--text); }
+.phase-auto { margin: 0; padding: 6px 9px; background: var(--surface-2); border-left: 4px solid var(--border-strong); border-radius: var(--radius-s); font-size: var(--font-s); }
+.phase-add { position: sticky; bottom: 0; z-index: 1; padding-top: 3px; background: var(--surface); }
+.phase > button { width: 100%; }
+.status-tokens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.status-tokens .stepper { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 4px; text-align: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+.status-tokens .stepper-name, .status-tokens output { grid-column: 1 / -1; }
+.status-tokens output { order: -1; font-size: var(--font-l); font-weight: 700; }
+.status-tokens .stepper-name { order: -1; }
+.status-points { margin: 6px 0 2px; font-size: var(--font-s); font-weight: 600; color: var(--text-muted); }
+.status-player .stepper-name::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--player); }
+.status-reminder { margin: 4px 0 0; font-size: var(--font-s); }
 .warning-list { padding: 0 10px 8px; }
 .warning-text { color: var(--warning); font-size: var(--font-s); }
 
@@ -460,7 +475,7 @@ button.chip::after, .icon-button::after, .side-actions button::after, .side-acti
 .player-card.fresh { animation: card-in 0.25s ease; }
 .player-card.lifted { opacity: 0.35; transform: scale(0.985); }
 @keyframes card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-.player-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center; padding: 12px 14px; }
+.player-row { display: grid; grid-auto-flow: column; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; align-items: center; padding: 12px 14px; }
 .player-badge { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; color: var(--bg); background: var(--player); user-select: none; transition: transform 0.15s, box-shadow 0.15s; }
 .player-badge.picked { transform: scale(1.12); box-shadow: 0 0 0 3px var(--text); }
 .player-badge.bump { animation: badge-bump 0.32s ease; }
@@ -567,10 +582,13 @@ small.ship-row-round { color: var(--gold); }
 .ship-notes small { flex-basis: 100%; font-size: var(--font-xs); color: var(--text-dim); line-height: 1.3; }
 
 /* My ship upgrades: a panel sliding in over the right of the map. */
-.upgrades-panel { position: absolute; inset: 0 0 0 auto; z-index: 6; width: min(388px, 100%); overflow-y: auto; padding: 12px; background: var(--surface); border-left: 1px solid var(--border-strong); box-shadow: var(--shadow); animation: slide-in-right 0.22s var(--ease); scrollbar-width: thin; }
+.upgrades-panel, .te-panel { position: absolute; inset: 0 0 0 auto; z-index: 6; width: min(388px, 100%); overflow-y: auto; padding: 12px; background: var(--surface); border-left: 1px solid var(--border-strong); box-shadow: var(--shadow); animation: slide-in-right 0.22s var(--ease); scrollbar-width: thin; }
 @keyframes slide-in-right { from { transform: translateX(105%); } to { transform: none; } }
-.upgrades-panel .panel-head { margin-bottom: 8px; }
-.upgrades-panel h2 { margin: 0; font-size: 15px; }
+.upgrades-panel .panel-head, .te-panel .panel-head { margin-bottom: 8px; }
+.upgrades-panel h2, .te-panel h2 { margin: 0; font-size: 15px; }
+.te-panel .editor-section { margin-bottom: 8px; }
+.te-panel .row[role='group'] { gap: 4px; }
+.te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
 .upgrade-card:disabled { cursor: default; opacity: 1; color: var(--text-muted); }
 .upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--gold); background: #2a2618; }

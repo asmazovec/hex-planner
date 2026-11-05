@@ -1,6 +1,6 @@
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
 import { createGame, makeId, slotKeyOf } from './newGame';
-import type { DataPack, ExpansionId, Game, MapLayout, Opponent } from './types';
+import type { DataPack, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
 /** An opponent, or me under the id `me`. */
 export type Player = Opponent;
@@ -104,6 +104,20 @@ export function addPlayer(game: Game, pack: DataPack): Game {
   return withPlayers(game, [...players, { id: makeId('opponent'), faction: '', vp: 0, seat: players.length + 1, color }], pack);
 }
 
+/** Status entries forget the points of an opponent who left. */
+const withoutPoints = (plans: Plan[], opponentId: string): Plan[] => plans.map(plan => ({
+  ...plan,
+  rounds: plan.rounds.map(round => ({
+    ...round,
+    entries: round.entries.map(entry => {
+      if (entry.type !== 'statusTokens' || !entry.opponentVp) return entry;
+      const { [opponentId]: gone, ...opponentVp } = entry.opponentVp;
+      void gone;
+      return { ...entry, opponentVp };
+    }),
+  })),
+}));
+
 /** Removes a player and what they hold on the map by list position; later seats shift down. My faction (position 0) stays, and so do the last three players. */
 export function removePlayer(game: Game, index: number, pack: DataPack): Game {
   const players = playersOf(game);
@@ -112,7 +126,8 @@ export function removePlayer(game: Game, index: number, pack: DataPack): Game {
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
   const { [leaving.id]: gone, ...opponents } = game.upgrades.opponents;
   void gone;
-  return withPlayers({ ...withoutHoldings(game, leaving.id), upgrades: { ...game.upgrades, opponents } }, rest, pack);
+  const plans = withoutPoints(game.plans, leaving.id);
+  return withPlayers({ ...withoutHoldings(game, leaving.id), plans, upgrades: { ...game.upgrades, opponents } }, rest, pack);
 }
 
 const homePlanets = (faction: string, pack: DataPack): string[] =>
@@ -132,13 +147,6 @@ export function setPlayerFaction(game: Game, index: number, faction: string, pac
   return { ...next, planetControl, planetOwner, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)] };
 }
 
-export function setPlayerVp(game: Game, index: number, vp: number): Game {
-  const points = Math.max(0, vp);
-  const player = playersOf(game)[index];
-  if (!player || player.vp === points) return game;
-  if (index === 0) return { ...game, vp: points };
-  return { ...game, opponents: game.opponents.map((o, i) => (i === index - 1 ? { ...o, vp: points } : o)) };
-}
 
 /** Two players trade seats; their own home tiles trade with them. */
 export function swapSeats(game: Game, a: number, b: number, pack: DataPack): Game {

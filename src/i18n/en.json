@@ -34,10 +34,22 @@
       "me": "yours",
       "enemy": "enemy"
     },
-    "tech": { "propulsion": "Propulsion", "biotic": "Biotic", "cybernetic": "Cybernetic", "warfare": "Warfare" },
+    "tech": {
+      "propulsion": "Propulsion",
+      "biotic": "Biotic",
+      "cybernetic": "Cybernetic",
+      "warfare": "Warfare"
+    },
     "legendary": "legendary",
-    "trait": { "cultural": "Cultural", "hazardous": "Hazardous", "industrial": "Industrial" },
-    "skip": { "unit": "Unit upgrade skip", "nonUnit": "Technology skip" },
+    "trait": {
+      "cultural": "Cultural",
+      "hazardous": "Hazardous",
+      "industrial": "Industrial"
+    },
+    "skip": {
+      "unit": "Unit upgrade skip",
+      "nonUnit": "Technology skip"
+    },
     "exhausted": "exhausted",
     "commandToken": "Command token",
     "spaceDock": "Space dock",
@@ -140,7 +152,6 @@
       "vp": "VP"
     },
     "cards": {
-      "title": "Strategy card",
       "collapse": "Collapse",
       "all": "All cards",
       "main": "Main",
@@ -156,15 +167,12 @@
       "strategic": "Strategic action",
       "secondary": "Secondary ability",
       "component": "Component action",
-      "expedition": "Expedition contribution",
+      "expedition": "Expedition contribution, end of turn",
       "pass": "Pass",
       "adjustment": "Manual adjustment"
     },
     "entries": {
-      "title": "Round actions",
-      "empty": "No actions yet.",
-      "status": "Status phase",
-      "statusTokens": "Status phase tokens",
+      "statusTokens": "Tokens and points",
       "drag": "Drag to move",
       "up": "Move up",
       "down": "Move down",
@@ -174,7 +182,10 @@
       "label": "Label",
       "note": "Note",
       "system": "System",
-      "noneSystem": "None"
+      "noneSystem": "None",
+      "roundPoints": "Points this round",
+      "pointsTotal": "total {{n}}",
+      "planetsRefresh": "Planets refresh at the start of the next round."
     },
     "tactical": {
       "title": "Tactical action",
@@ -238,12 +249,22 @@
       "unitsMissing": "{{where}} is missing {{missing}} × {{unit}}.",
       "landingOverLimit": "Landing needs {{wanted}} × {{unit}}, but only {{available}} arrived.",
       "sliceTaken": "Expedition part \"{{slice}}\" is already taken."
+    },
+    "phases": {
+      "strategy": "Strategy",
+      "strategyEmpty": "The round's strategy card.",
+      "action": "Actions",
+      "actionEmpty": "Tactical actions, abilities, passing and manual adjustments.",
+      "status": "Status",
+      "statusEmpty": "New tokens and every player's points for the round.",
+      "agenda": "Agenda",
+      "agendaEmpty": "A vote, if Mecatol Rex is held. No entries here yet."
     }
   },
   "expedition": {
     "title": "Expedition",
     "counter": "{{n}} of {{total}}",
-    "hint": "Tap a part to mark it as taken by another player. Your own parts come from your plan.",
+    "hint": "A tap marks a part as taken by another player. You play your own part as a plan entry, at the end of your turn.",
     "owner": {
       "me": "you",
       "other": "other"
@@ -255,6 +276,12 @@
     "placeHint": "Tap a highlighted system to place Thunder's Edge.",
     "part": "Expedition part"
   },
+  "thundersEdge": {
+    "title": "Thunder's Edge",
+    "taken": "Thunder's Edge · {{n}}/{{total}}",
+    "placed": "Thunder's Edge · #{{system}}",
+    "back": "Back to the panel"
+  },
   "fracture": {
     "title": "Fracture",
     "open": "Open the Fracture",
@@ -262,7 +289,8 @@
     "mark": "Mark ingress",
     "markHint": "Tap systems to add or remove ingress tokens.",
     "ingressCount": "Ingress tokens: {{n}}",
-    "seat": "Seat"
+    "seat": "Seat",
+    "note": "Not an action: the Fracture comes in with a die roll on gaining a breakthrough, or from an effect."
   },
   "mapImport": {
     "title": "Paste map",
@@ -309,7 +337,8 @@
     "sustain": "Sustain Damage",
     "barrage": "Anti-Fighter Barrage {{value}}",
     "bombard": "Bombardment {{value}}",
-    "cannon": "Space Cannon {{value}}"
+    "cannon": "Space Cannon {{value}}",
+    "upgradesShort": "Upgrades"
   },
   "players": {
     "title": "Players",
@@ -319,8 +348,6 @@
     "player": "Player {{n}}",
     "choose": "Choose a faction",
     "points": "Points",
-    "plus": "More points",
-    "minus": "Fewer points",
     "remove": "Remove opponent",
     "add": "＋ Add opponent",
     "home": "Home system",
