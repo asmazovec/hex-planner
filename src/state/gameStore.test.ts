@@ -145,6 +145,8 @@ describe('действия без изменений', () => {
   test('неизвестный id и то же значение не создают шаг отмены и не сохраняют', async () => {
     const id = act().addEntry(1, { type: 'pass' }, 'action');
     act().setEntryStatus(id, 'done');
+    act().setOpponent(0, { vp: 2 });
+    act().setEnemyUnits('1,0', { cruiser: 2 });
     const before = game();
     await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(before));
     vi.mocked(saveGame).mockClear();
@@ -164,6 +166,9 @@ describe('действия без изменений', () => {
       () => act().setSlice('res5', null),
       () => act().setThundersEdge(null),
       () => act().setOpponent(99, { vp: 1 }),
+      () => act().setOpponent(0, { vp: 2 }),
+      () => act().setEnemyUnits('1,0', { cruiser: 2 }),
+      () => act().setEnemyUnits('1,0', { cruiser: 2, fighter: 0 }),
       () => act().setActivePlan(game().activePlanId),
     ];
     for (const run of noops) {
@@ -172,8 +177,8 @@ describe('действия без изменений', () => {
     }
     await Promise.resolve();
     expect(saveGame).not.toHaveBeenCalled();
-    // History holds only the two real edits.
-    act().undo(); act().undo();
+    // History holds only the four real edits.
+    act().undo(); act().undo(); act().undo(); act().undo();
     expect(act().canUndo).toBe(false);
     expect(round().entries).toHaveLength(0);
   });

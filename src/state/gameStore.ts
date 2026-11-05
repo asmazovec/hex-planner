@@ -76,7 +76,13 @@ function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null)
   return value === null ? rest : { ...rest, [key]: value };
 }
 
-const hasUnits = (units: UnitCounts): boolean => Object.values(units).some(n => (n ?? 0) > 0);
+/** Counts compare equal when every unit has the same positive count, ignoring zeros. */
+function sameUnits(a: UnitCounts, b: UnitCounts): boolean {
+  const ids = new Set([...Object.keys(a), ...Object.keys(b)]) as Set<keyof UnitCounts>;
+  return [...ids].every(id => (a[id] ?? 0) === (b[id] ?? 0));
+}
+
+const hasUnits =(units: UnitCounts): boolean => Object.values(units).some(n => (n ?? 0) > 0);
 
 function copyOf(game: Game): Game {
   const source = game.plans.find(p => p.id === game.activePlanId);
@@ -210,10 +216,13 @@ export const useGame = create<GameStore>((set, get) => {
     setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
     setOpponent: (index, patch) =>
       commit(g => (index in g.opponents
+        && !Object.entries(patch).every(([k, v]) => g.opponents[index][k as keyof Game['opponents'][number]] === v)
         ? { ...g, opponents: g.opponents.map((o, i) => (i === index ? { ...o, ...patch } : o)) }
         : g)),
     setEnemyUnits: (systemId, units) =>
-      commit(g => withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, hasUnits(units) ? units : null))),
+      commit(g => (sameUnits(g.enemyUnits[systemId] ?? {}, units)
+        ? g
+        : withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, hasUnits(units) ? units : null)))),
     setPlanetControl: (planetId, owner) =>
       commit(g => withField(g, 'planetControl', setOrDelete(g.planetControl, planetId, owner))),
     setSlice: (id, owner) =>
