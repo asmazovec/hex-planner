@@ -114,12 +114,16 @@ export function PlanScreen() {
   const forecast = project(game, upToRound, 'forecast', pack);
 
   const closePanels = () => {
+    setPlacing(false);
+    setMarking(false);
     setEditing(null);
     setSheet(null);
     setOpenId(null);
   };
 
   const onPick = (type: ActionType) => {
+    setPlacing(false);
+    setMarking(false);
     if (type === 'tactical') {
       setSheet(null);
       setBuilding(false);
@@ -174,6 +178,8 @@ export function PlanScreen() {
   };
 
   const onOpenEntry = (opened: Entry) => {
+    setPlacing(false);
+    setMarking(false);
     setSheet(null);
     if (opened.type === 'tactical') {
       setEditing({ entryId: opened.id, addingSource: false, pickerFrom: null });
@@ -272,8 +278,8 @@ export function PlanScreen() {
                 <StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} round={round} />
                 {hasTe && (
                   <>
-                    <ExpeditionWidget game={game} pack={pack} owners={owners} placing={placing} onPlacing={setPlacing} />
-                    <FractureControl game={game} pack={pack} marking={marking} onMarking={setMarking} />
+                    <ExpeditionWidget game={game} pack={pack} owners={owners} placing={placing} onPlacing={on => { setPlacing(on); if (on) setMarking(false); }} />
+                    <FractureControl game={game} pack={pack} marking={marking} onMarking={on => { setMarking(on); if (on) setPlacing(false); }} />
                   </>
                 )}
                 <EntryList

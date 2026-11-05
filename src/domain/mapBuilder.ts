@@ -60,18 +60,22 @@ const clockwiseAngle = (q: number, r: number): number => {
 
 /**
  * Slot keys of the home positions in seat order: seat 1 at the top, then clockwise.
- * Uses the template's home slots if it has them; otherwise equally spaced slots of the outer ring for the
- * standard 3, 4 and 6 player maps. Any other case gives an empty list.
+ * Uses the template's home slots if it has them; otherwise each seat takes the outer-ring slot nearest to
+ * the angle seat * 360 / playerCount, clockwise from the top.
  */
 export function seatSlots(playerCount: number, pack: DataPack): string[] {
   const slots = slotsFor(playerCount, pack);
+  if (slots.length === 0 || playerCount < 1) return [];
   const byAngle = (list: { q: number; r: number }[]) =>
     [...list].sort((a, b) => clockwiseAngle(a.q, a.r) - clockwiseAngle(b.q, b.r));
   const homes = slots.filter(s => s.fixed !== undefined && pack.tiles[s.fixed.split('@')[0]]?.kind === 'home');
   if (homes.length === playerCount) return byAngle(homes).map(s => slotKeyOf(s.q, s.r));
-  if (![3, 4, 6].includes(playerCount) || slots.length === 0) return [];
   const outer = Math.max(...slots.map(s => hexDistance(s.q, s.r)));
-  const ring = byAngle(slots.filter(s => hexDistance(s.q, s.r) === outer));
-  return Array.from({ length: playerCount }, (_, i) => ring[Math.round((i * ring.length) / playerCount) % ring.length])
-    .map(s => slotKeyOf(s.q, s.r));
+  const ring = slots.filter(s => hexDistance(s.q, s.r) === outer);
+  const gap = (a: number, b: number): number => Math.min(Math.abs(a - b), 2 * Math.PI - Math.abs(a - b));
+  return Array.from({ length: playerCount }, (_, i) => {
+    const target = (i * 2 * Math.PI) / playerCount;
+    const best = ring.reduce((x, y) => (gap(clockwiseAngle(y.q, y.r), target) < gap(clockwiseAngle(x.q, x.r), target) - 1e-9 ? y : x));
+    return slotKeyOf(best.q, best.r);
+  });
 }

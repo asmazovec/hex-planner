@@ -135,3 +135,22 @@ test('choosing a seat stores it and moves the Fracture group', async () => {
   expect(game().fracture.seat).toBe(1);
   expect(where()).not.toBe(atFour);
 });
+
+test('marking mode ends when a tactical action is chosen, so the next tap does not toggle a token', async () => {
+  const { ok } = slots();
+  render(<PlanScreen />);
+  await userEvent.click(within(screen.getByRole('group', { name: 'Fracture' })).getByRole('button', { name: 'Mark ingress' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+  await userEvent.click(tile(ok));
+  expect(game().fracture.ingress).toEqual([]);
+});
+
+test('marking and placing exclude each other', async () => {
+  for (const id of SLICES) useGame.getState().setSlice(id, 'other');
+  render(<PlanScreen />);
+  await userEvent.click(within(screen.getByRole('group', { name: 'Fracture' })).getByRole('button', { name: 'Mark ingress' }));
+  await userEvent.click(part('Choose system'));
+  expect(part('Choose system')).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Mark ingress' })).toHaveAttribute('aria-pressed', 'false');
+});
