@@ -71,12 +71,12 @@ const SUMMARIES: Record<string, Record<Lang, CardSummary>> = {
     ru: {
       primary: 'Либо поставьте сооружение на свою планету, либо используйте PRODUCTION одного своего Space Dock. Затем поставьте сооружение на свою планету.',
       secondary: 'Жетон из стратегического пула: поставьте сооружение на свою планету.',
-      change: "В Thunder's Edge основное действие может заменить первую постройку производством в Space Dock, а дополнительное больше не кладёт жетон в систему.",
+      change: "В Thunder's Edge первую постройку можно заменить производством в Space Dock, а вторым шагом ставится любое сооружение, не только PDS. Дополнительное действие больше не кладёт жетон в систему, и планета может быть в любой системе.",
     },
     en: {
       primary: 'Either put a structure on a planet you control or use PRODUCTION of one of your Space Docks. Then put a structure on a planet you control.',
       secondary: 'Spend a strategy token to put a structure on a planet you control.',
-      change: "In Thunder's Edge the primary can swap the first build for Space Dock production, and the secondary no longer puts a token in a system.",
+      change: "In Thunder's Edge the first build can become Space Dock production, and the second step allows any structure, not just a PDS. The secondary no longer puts a token in a system, so the planet can be anywhere.",
     },
   },
   pok5trade: {
@@ -103,12 +103,12 @@ const SUMMARIES: Record<string, Record<Lang, CardSummary>> = {
     ru: {
       primary: 'Проведите тактическое действие в любой системе, не кладя жетон, даже если ваш жетон там уже есть. До и после него можно перераспределить жетоны.',
       secondary: 'Жетон из стратегического пула, который не кладётся на карту: используйте PRODUCTION своих юнитов в домашней системе.',
-      change: "В Thunder's Edge основное действие даёт тактическое действие без жетона вместо снятия жетона с карты, а дополнительное работает для всех юнитов домашней системы, а не одного Space Dock.",
+      change: "В Thunder's Edge основное действие даёт тактическое действие без жетона вместо снятия жетона с карты, причём система всё равно считается активированной. Дополнительное работает для всех юнитов домашней системы, а не одного Space Dock.",
     },
     en: {
       primary: 'Take a tactical action in any system without placing a token, even where you already have one. You may rearrange your tokens before and after.',
       secondary: 'Spend a strategy token, not placed on the board, to use PRODUCTION of your units in your home system.',
-      change: "In Thunder's Edge the primary gives a tactical action without a token instead of lifting a token off the board, and the secondary covers all home system units rather than one Space Dock.",
+      change: "In Thunder's Edge the primary gives a tactical action without a token instead of lifting a token off the board, and the system still counts as activated. The secondary covers all home system units rather than one Space Dock.",
     },
   },
   pok7technology: {

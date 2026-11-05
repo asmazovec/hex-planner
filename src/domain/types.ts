@@ -10,7 +10,7 @@ export type Anomaly = 'asteroid' | 'nebula' | 'supernova' | 'rift' | 'scar';
 
 export interface TileDef {
   id: string;
-  /** Printed number; a double-sided tile shares it between its ids (83A, 83B). */
+  /** Printed number; a double-sided tile shares it between its ids (83A, 83B). Fracture tiles hold source ids: their printed numbers are unconfirmed. */
   number: string;
   planetIds: string[];
   kind: 'system' | 'home' | 'hyperlane' | 'fracture';
@@ -26,6 +26,7 @@ export interface UnitDef {
   /** Cost per unit: a fighter or infantry costs 0.5, because 1 resource produces 2. */
   cost: number;
   capacity: number;
+  /** From the source, where ships also have 1: capacity checks must count only `fighter` and `ground` units. */
   capacityUsed: number;
   ground: boolean;
   fighter: boolean;
@@ -43,7 +44,7 @@ export interface MapTemplate {
   playerCount: number;
   /**
    * Axial coordinates of a flat-top hex grid: north is r - 1, north-east is q + 1, r - 1.
-   * `fixed` uses the Game.map format, `<tileId>` or `<tileId>@<rotation 0-5>`.
+   * `fixed` uses the Game.map format, `<tileId>` or `<tileId>@<rotation 0-5>`; one rotation step is 60 degrees clockwise.
    */
   slots: { q: number; r: number; fixed?: string }[];
 }
@@ -52,8 +53,8 @@ export interface DataPack {
   version: string;
   tiles: Record<string, TileDef>;
   planets: Record<string, PlanetDef>;
-  /** `mech` is absent unless Prophecy of Kings is on: its mechs do not exist without it. */
-  units: Record<UnitId, UnitDef>;
+  /** `mech` is absent unless Prophecy of Kings is on. */
+  units: Partial<Record<UnitId, UnitDef>>;
   factions: Record<string, FactionDef>;
   templates: MapTemplate[];
 }

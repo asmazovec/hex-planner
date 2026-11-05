@@ -47,24 +47,6 @@
       "keleresm": "2",
       "keleresx": "14",
       "keleresa": "58"
-    },
-    "layouts": {
-      "7pHyperlanes": [
-        "83b",
-        "84b",
-        "85b",
-        "86b",
-        "88b",
-        "90b"
-      ],
-      "8pHyperlanes": [
-        "83b",
-        "85b",
-        "87a",
-        "88a",
-        "89b",
-        "90b"
-      ]
     }
   },
   "verification": "docs/data-verification.md"

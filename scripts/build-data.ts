@@ -12,13 +12,15 @@ const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
 const COMMIT_DATE = '2026-11-05';
 const RESOURCES = 'src/main/resources/';
 const DATA_VERSION = `${COMMIT_DATE}-${COMMIT.slice(0, 7)}`;
-const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
+const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$/;
 
 type PackId = 'base' | 'pok' | 'te';
 const PACK_OF_SOURCE: Record<string, PackId> = { base: 'base', pok: 'pok', thunders_edge: 'te' };
 /** Codex content has no pack of its own. Codex 3 (Keleres) needs Prophecy of Kings tiles. */
 const packOfSource = (source: string): PackId | null =>
   PACK_OF_SOURCE[source] ?? (/^codex\d*$/.test(source) ? 'pok' : null);
+
+const MECATOL_REX = '18';
 
 const TILE_IDS: Record<PackId, RegExp> = {
   base: /^(0[1-9]|[1-4]\d|5[01])$/,
@@ -54,11 +56,6 @@ const TE_RULEBOOK_HYPERLANES = ['119A', '120A', '121A', '122A', '123A', '124A'];
 /** Gate tiles stand on the map, but the home planets and starting units are on another tile. */
 const HOME_PLANET_TILE: Record<string, string> = { ghost: '51', crimson: '118' };
 const KELERES_HOME_TILE: Record<string, string> = { keleresm: '2', keleresx: '14', keleresa: '58' };
-/** PoK rulebook, alternative 7- and 8-player layouts. The source repeats equivalent tiles instead. */
-const LAYOUT_TILES: Record<string, string[]> = {
-  '7pHyperlanes': ['83b', '84b', '85b', '86b', '88b', '90b'],
-  '8pHyperlanes': ['83b', '85b', '87a', '88a', '89b', '90b'],
-};
 const UNIT_NAMES: Record<UnitId, string> = {
   carrier: 'Carrier', cruiser: 'Cruiser', destroyer: 'Destroyer', dreadnought: 'Dreadnought', warsun: 'War Sun',
   flagship: 'Flagship', fighter: 'Fighter', infantry: 'Infantry', mech: 'Mech',
@@ -253,57 +250,51 @@ function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string
   return factions;
 }
 
-/** Swaps a tile the source repeats for an unused tile of the rulebook layout with the same lanes. */
-function assignLayoutTile(fixed: string, remaining: string[], lanes: Record<string, string>): string {
-  const match = fixed.match(/^(\d+[ab])(\d)$/i);
-  if (!match) throw new Error(`Cannot read hyperlane "${fixed}"`);
-  const laneKey = (tile: string, rotation: number) => tile + (rotation ? rotation * 60 : '');
-  const wanted = lanes[laneKey(match[1].toLowerCase(), Number(match[2]))];
-  if (!wanted) throw new Error(`Hyperlane ${fixed} has no lanes in the source`);
-  const candidates = [match[1].toLowerCase(), ...remaining].filter(tile => remaining.includes(tile));
-  for (const tile of candidates) {
-    for (let rotation = 0; rotation < 6; rotation++) {
-      if (lanes[laneKey(tile, rotation)] === wanted) {
-        remaining.splice(remaining.indexOf(tile), 1);
-        return `${normalizeTileId(tile)}@${rotation}`;
-      }
-    }
-  }
-  throw new Error(`No tile of the rulebook layout has the lanes of ${fixed}`);
-}
-
-function buildTemplate(source: SourceTemplate, playerCount: number, lanes: Record<string, string>, keepHyperlanes: boolean): MapTemplate {
-  const remaining = [...(LAYOUT_TILES[source.alias] ?? [])];
+/** Keeps Mecatol Rex always, and the source's hyperlanes only when asked; other fixed tiles are its own choices. */
+function buildTemplate(source: SourceTemplate, playerCount: number, keepHyperlanes: boolean): MapTemplate {
   const slots = source.templateTiles.map(({ pos, staticTileId }) => {
     const { q, r } = positionToAxial(pos);
-    if (!staticTileId) return { q, r };
-    if (/^\d+$/.test(staticTileId)) return { q, r, fixed: normalizeTileId(staticTileId) };
-    if (!keepHyperlanes) return { q, r };
-    if (LAYOUT_TILES[source.alias]) return { q, r, fixed: assignLayoutTile(staticTileId, remaining, lanes) };
+    if (staticTileId === MECATOL_REX) return { q, r, fixed: MECATOL_REX };
+    if (!staticTileId || !keepHyperlanes) return { q, r };
     const match = staticTileId.match(/^(\d+[ab])(\d)$/i);
     if (!match) throw new Error(`Cannot read hyperlane "${staticTileId}"`);
     return { q, r, fixed: `${normalizeTileId(match[1].toLowerCase())}@${match[2]}` };
   });
-  if (remaining.length) throw new Error(`Layout ${source.alias} left tiles unused: ${remaining.join(', ')}`);
+  return { playerCount, slots };
+}
+
+/** The full hexagon of the given radius, Mecatol Rex in the center. */
+function ringTemplate(playerCount: number, rings: number): MapTemplate {
+  const slots: MapTemplate['slots'] = [{ q: 0, r: 0, fixed: MECATOL_REX }];
+  for (let ring = 1; ring <= rings; ring++) {
+    for (let index = 1; index <= ring * 6; index++) {
+      slots.push(positionToAxial(`${ring}${String(index).padStart(2, '0')}`));
+    }
+  }
   return { playerCount, slots };
 }
 
 function buildTemplates(root: string): Record<PackId, MapTemplate[]> {
-  const layouts = readJson<SourceTemplate[]>(root, 'data/map_templates/standardMiltyLayouts.json');
-  const lanes = Object.fromEntries(readFileSync(join(root, 'data/hyperlanes.properties'), 'utf8')
-    .split(/\r?\n/).filter(line => line.includes('=')).map(line => line.split('=') as [string, string]));
-  const layout = (alias: string) => {
-    const found = layouts.find(candidate => candidate.alias === alias);
+  const read = (file: string, alias: string) => {
+    const found = readJson<SourceTemplate[]>(root, `data/map_templates/${file}.json`).find(candidate => candidate.alias === alias);
     if (!found) throw new Error(`Layout ${alias} is missing from the source`);
     return found;
   };
+  const threeRings = read('standardMiltyLayouts', '6pStandard');
   return {
-    // Without hyperlanes every count from 3 to 6 plays on the same three rings.
-    base: [3, 4, 5, 6].map(count => buildTemplate(layout('6pStandard'), count, lanes, false)),
+    base: [
+      // 6 blue + 2 red per player, 3 homes and Mecatol Rex: 28 slots. The source's in-person layout has this shape.
+      buildTemplate(read('3p', '3pInPersonHyperlanes'), 3, false),
+      buildTemplate(threeRings, 4, false),
+      // The 5-player deal gives 36 tiles; the speaker adds a red tile next to Mecatol Rex, filling all 37.
+      buildTemplate(threeRings, 5, false),
+      buildTemplate(threeRings, 6, false),
+    ],
     pok: [
-      buildTemplate(layout('5pHyperlanes'), 5, lanes, true),
-      buildTemplate(layout('7pHyperlanes'), 7, lanes, true),
-      buildTemplate(layout('8pHyperlanes'), 8, lanes, true),
+      buildTemplate(read('standardMiltyLayouts', '5pHyperlanes'), 5, true),
+      // Standard PoK setups fill four rings. Hyperlane places are only on a rulebook diagram, so they stay manual.
+      ringTemplate(7, 4),
+      ringTemplate(8, 4),
     ],
     te: [],
   };
@@ -328,7 +319,7 @@ function buildCards(root: string) {
   return { base_game: cardsOf('base_game'), pok: cardsOf('pok'), te: cardsOf('te') };
 }
 
-function assertSchema(pack: Omit<DataPack, 'units'> & { units: Partial<Record<UnitId, UnitDef>> }, name: string): void {
+function assertSchema(pack: DataPack, name: string): void {
   const isCount = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
   for (const planet of Object.values(pack.planets)) {
     if (!planet.name || !isCount(planet.resources) || !isCount(planet.influence)) throw new Error(`${name}: bad planet ${planet.id}`);
@@ -394,10 +385,7 @@ async function main(): Promise<void> {
     excludedSystems: EXCLUDED_SYSTEMS,
     excludedPlanets: EXCLUDED_PLANETS,
     notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, reason: "Thunder's Edge rulebook; absent from the source at this commit" },
-    corrections: {
-      homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE },
-      layouts: LAYOUT_TILES,
-    },
+    corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
     verification: 'docs/data-verification.md',
   }, null, 2)}\n`);
   console.log(`Built data ${DATA_VERSION}`);

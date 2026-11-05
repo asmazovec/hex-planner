@@ -126,13 +126,27 @@ describe('шаблоны карты', () => {
     expect(fixed).toHaveLength(7);
     expect(template(['pok'], 3)!.slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
   });
-  test('шаблоны на 7 и 8 игроков используют только физические тайлы из правил, без повторов', () => {
-    const tilesOf = (n: number) => template(['pok'], n)!.slots
-      .flatMap(s => s.fixed ?? []).map(v => v.split('@')[0]).filter(v => v !== '18').sort();
-    expect(tilesOf(7)).toEqual(['83B', '84B', '85B', '86B', '88B', '90B']);
-    expect(tilesOf(8)).toEqual(['83B', '85B', '87A', '88A', '89B', '90B']);
-    expect(template(['pok'], 7)!.slots).toHaveLength(49);
-    expect(template(['pok'], 8)!.slots).toHaveLength(55);
+  test('на 3 игрока 28 слотов: по 8 тайлов на игрока, дома и Mecatol Rex', () => {
+    const slots = template([], 3)!.slots;
+    expect(slots).toHaveLength(3 * 8 + 3 + 1);
+    expect(slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
+    expect(template(['pok'], 3)!.slots).toHaveLength(28);
+    // Домашние углы третьего кольца идут через один: 301 есть, 304 нет
+    expect(slots.some(s => s.q === 0 && s.r === -3)).toBe(true);
+    expect(slots.some(s => s.q === 3 && s.r === -3)).toBe(false);
+  });
+  test('на 4 и 5 игроков без гиперпутей три кольца', () => {
+    expect(template([], 4)!.slots).toHaveLength(37);
+    expect(template([], 5)!.slots).toHaveLength(37);
+  });
+  test('на 7 и 8 игроков четыре кольца, по одному шаблону, гиперпути вводятся вручную', () => {
+    for (const n of [7, 8]) {
+      const slots = template(['pok'], n)!.slots;
+      expect(slots).toHaveLength(61);
+      expect(slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
+      expect(new Set(slots.map(s => `${s.q},${s.r}`)).size).toBe(61);
+    }
+    expect(loadPack(['pok']).templates.map(t => t.playerCount)).toEqual([3, 4, 5, 6, 7, 8]);
   });
   test("Thunder's Edge заменяет Mecatol Rex на тайл 112 во всех шаблонах", () => {
     for (const set of [['te'], ['pok', 'te']] as ExpansionId[][]) {
