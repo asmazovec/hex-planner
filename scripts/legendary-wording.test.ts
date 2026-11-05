@@ -1,11 +1,12 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { legendarySummary } from '../src/data/legendarySummaries';
+import { SOURCE_CACHE } from './build-data';
 
 // The source text is read from the build's cached copy and never stored in the repo.
-const SOURCE = join(tmpdir(), 'ti4-source-9eee64a3b13fc698b3ee174590dde40e005c0dfe', 'planets');
+const SOURCE = join(SOURCE_CACHE, 'planets');
+if (!existsSync(SOURCE)) console.warn(`legendary wording test SKIPPED: no source copy in ${SOURCE}. Run: npx tsx scripts/build-data.ts (it downloads the copy).`);
 const words = (text: string): string[] => text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
 
 test.skipIf(!existsSync(SOURCE))('no retelling shares a run of 6 words with the source text', () => {

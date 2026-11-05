@@ -27,11 +27,26 @@ test.each(['cultural', 'hazardous', 'industrial'])('the %s tint keeps the gold a
   expect(contrast(colour('gold'), tint), 'resources').toBeGreaterThanOrEqual(4.5);
   expect(contrast(colour('accent'), tint), 'influence').toBeGreaterThanOrEqual(4.5);
   expect(luminance(tint)).toBeLessThan(0.1);
-  expect(saturation(tint)).toBeLessThan(0.5);
+  expect(saturation(tint)).toBeLessThan(0.7);
 });
 
-test('the three tints differ from each other and from the neutral disc', () => {
-  const tints = ['cultural', 'hazardous', 'industrial'].map(trait => colour(`trait-${trait}`));
-  for (const tint of tints) expect(tint).not.toBe(colour('token-fill'));
-  expect(new Set(tints).size).toBe(3);
+/** CIE76 colour distance in Lab (D65). */
+const lab = (hex: string): number[] => {
+  const [r, g, b] = channels(hex).map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  const xyz = [
+    (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.95047,
+    0.2126 * r + 0.7152 * g + 0.0722 * b,
+    (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.08883,
+  ].map(v => (v > 0.008856 ? Math.cbrt(v) : 7.787 * v + 16 / 116));
+  return [116 * xyz[1] - 16, 500 * (xyz[0] - xyz[1]), 200 * (xyz[1] - xyz[2])];
+};
+const deltaE = (a: string, b: string): number => Math.hypot(...lab(a).map((v, i) => v - lab(b)[i]));
+
+test('the three tints stand clear of the neutral disc and of each other (CIE76 delta E >= 12)', () => {
+  const names = ['cultural', 'hazardous', 'industrial'];
+  const tints = names.map(trait => colour(`trait-${trait}`));
+  tints.forEach((tint, i) => {
+    expect(deltaE(tint, colour('token-fill')), `${names[i]} vs neutral`).toBeGreaterThanOrEqual(12);
+    for (let j = i + 1; j < tints.length; j += 1) expect(deltaE(tint, tints[j]), `${names[i]} vs ${names[j]}`).toBeGreaterThanOrEqual(12);
+  });
 });

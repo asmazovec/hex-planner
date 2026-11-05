@@ -10,6 +10,8 @@ import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, 
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
+/** Where the build keeps its copy of the source; `npx tsx scripts/build-data.ts` fills it. */
+export const SOURCE_CACHE = join(tmpdir(), `ti4-source-${COMMIT}`);
 const COMMIT_DATE = '2026-11-05';
 const RESOURCES = 'src/main/resources/';
 const DATA_VERSION = `${COMMIT_DATE}-${COMMIT.slice(0, 7)}`;
@@ -185,7 +187,7 @@ interface SourceCard { id: string; initiative: number; name: string; source: str
 interface SourceCardSet { alias: string; scIDs: string[]; }
 
 async function download(): Promise<string> {
-  const root = join(tmpdir(), `ti4-source-${COMMIT}`);
+  const root = SOURCE_CACHE;
   const listPath = join(root, 'files-v2.json');
   if (!existsSync(listPath)) {
     const response = await fetch(`https://api.github.com/repos/${REPO}/git/trees/${COMMIT}?recursive=1`);

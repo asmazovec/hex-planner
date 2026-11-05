@@ -68,10 +68,11 @@ const TECH_SHAPES: Record<TechType, string> = {
 const LEGENDARY_SHAPE = 'M0,-4.2 L1.2,-1.2 L4.2,0 L1.2,1.2 L0,4.2 L-1.2,1.2 L-4.2,0 L-1.2,-1.2 Z';
 const legendaryMarkAt = (): { x: number; y: number } => ({ x: -techMarkAt(0).x, y: techMarkAt(0).y });
 /** The trait tint sits just inside the rim, which keeps showing the control. One trait fills the disc, two take a half each. */
-const TINT_RADIUS = PLANET_BASE - 0.5;
+const TINT_RADIUS = PLANET_BASE - 1;
 const TINT_PATHS = {
   whole: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 1 1 0,${TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 1 1 0,${-TINT_RADIUS} Z`,
-  left: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 0 0,${TINT_RADIUS} Z`,
+  // The right half reaches 0.3 past the middle so no hairline seam shows between the halves.
+  left: `M0.3,${-TINT_RADIUS} L0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 0 0,${TINT_RADIUS} L0.3,${TINT_RADIUS} Z`,
   right: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 1 0,${TINT_RADIUS} Z`,
 };
 const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε' };
