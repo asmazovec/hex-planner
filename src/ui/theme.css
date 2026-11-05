@@ -250,6 +250,11 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile .planet-name { font-size: 9px; fill: #c7cddb; }
 .planet-exhausted .planet-disc { fill: var(--token-spent); }
 .planet-exhausted .planet-values { opacity: 0.5; }
+.planet-tech { stroke: var(--token-fill); stroke-width: 1.1; stroke-linejoin: round; paint-order: stroke; }
+.planet-tech-propulsion { fill: var(--tech-propulsion); }
+.planet-tech-biotic { fill: var(--tech-biotic); }
+.planet-tech-cybernetic { fill: var(--tech-cybernetic); }
+.planet-tech-warfare { fill: var(--tech-warfare); }
 .planet-strike { stroke: var(--text-muted); stroke-width: 1.1; stroke-linecap: round; }
 .token { fill: var(--accent-solid); stroke: #fff; stroke-width: 1.2; }
 .token-mark { fill: #fff; }

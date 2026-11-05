@@ -1,10 +1,14 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { hexToPixel } from '../ui/map/geometry';
-import { parseMapString, ringSlots } from './mapString';
+import { arrangeSet, parseMapString, ringSlots } from './mapString';
+import { seatSlots } from './mapBuilder';
 
 const pok = loadPack(['pok']);
 const full = loadPack(['pok', 'te']);
+const base = loadPack([]);
+/** What a caller passes to tell a tile of a switched-off expansion from a truly unknown one. */
+const OTHERS = { pok: loadPack(['pok']), te: loadPack(['te']) };
 
 /**
  * Output of the Milty Draft algorithm (js/generate-map.js, `#tts-string`) for the finished six-player draft fixture
@@ -175,8 +179,89 @@ test('unknown tokens are not counted as dropped', () => {
   expect(parseMapString(milty({ '4,-4': '999' }), 6, pok)).toMatchObject({ dropped: 0, unknown: ['999'] });
 });
 
-test('the token count is reported, so an unbraced leading 18 can be noticed', () => {
+test('the token count is reported; a plain 18 is not counted, so it cannot shift the ring', () => {
   expect(parseMapString(MILTY_6P, 6, full).tokens).toBe(60);
-  expect(parseMapString(`18 ${MILTY_6P}`, 6, full).tokens).toBe(61);
+  expect(parseMapString(`18 ${MILTY_6P}`, 6, full).tokens).toBe(60);
+  expect(parseMapString(`18 ${MILTY_6P}`, 6, full).map).toEqual(parseMapString(MILTY_6P, 6, full).map);
   expect(parseMapString('{18} 25', 6, pok).tokens).toBe(1);
+});
+
+/** The sorted set of the 37 tiles of a six-player game that the user pasted: no positions. */
+const SET_6P = '4, 12, 14, 16, 18, 19, 22, 24, 28, 30, 33, 34, 37, 41, 44, 46, 48, 49, 55, 58, 61, 63, 66, 68, 71, 72, 74, 76, 78, 79, 80, 102, 106, 110, 113, 115, 117';
+const TE_TILES = ['102', '106', '110', '113', '115', '117'];
+const POK_TILES = ['55', '58', '61', '63', '66', '68', '71', '72', '74', '76', '78', '79', '80'];
+
+/** The user's picture of their Milty map: rings 1 to 3 from the top clockwise, 36 tokens. */
+const MILTY_36 = '66 22 61 19 72 24 110 79 48 106 117 33 41 71 28 44 46 30 58 63 115 55 76 49 16 74 78 14 37 68 12 102 80 4 34 113';
+
+test('a tile of an expansion that is off is reported apart from an unknown one', () => {
+  const none = parseMapString(`${SET_6P}, 999`, 6, base, OTHERS);
+  expect(none.offExpansion).toEqual({ pok: POK_TILES, te: TE_TILES });
+  expect(none.unknown).toEqual(['999']);
+  const withPok = parseMapString(SET_6P, 6, pok, OTHERS);
+  expect(withPok.offExpansion).toEqual({ te: TE_TILES });
+  expect(withPok.unknown).toEqual([]);
+  const all = parseMapString(SET_6P, 6, full, OTHERS);
+  expect(all.offExpansion).toEqual({});
+  expect(all.unknown).toEqual([]);
+});
+
+test('a plain 18 is skipped like a braced one and is not counted; so is a Mecatol 112', () => {
+  expect(parseMapString('18 25 26', 6, pok, OTHERS)).toMatchObject({ map: { '0,-1': '25', '1,-1': '26' }, tokens: 2 });
+  expect(parseMapString('25 18 26', 6, pok, OTHERS)).toMatchObject({ map: { '0,-1': '25', '1,-1': '26' }, tokens: 2 });
+  const withTe = parseMapString('112 25', 6, full, OTHERS);
+  expect(withTe).toMatchObject({ map: { '0,-1': '25' }, tokens: 1, offExpansion: {} });
+  expect(parseMapString('112 25', 6, pok, OTHERS)).toMatchObject({ map: { '0,-1': '25' }, tokens: 1, offExpansion: {} });
+});
+
+test('ascending tiles without positions are a set, a real draft string is not', () => {
+  expect(parseMapString(SET_6P, 6, full, OTHERS).kind).toBe('set');
+  expect(parseMapString(SET_6P.replace(/, /g, ' 0 '), 6, full, OTHERS).kind).toBe('set');
+  expect(parseMapString(MILTY_6P, 6, full, OTHERS).kind).toBe('map');
+  expect(parseMapString(MILTY_36, 6, full, OTHERS).kind).toBe('map');
+  expect(parseMapString('25 26 27 28 29 30 31 32 33', 6, full, OTHERS).kind).toBe('map'); // fewer than 10
+  expect(parseMapString('25 26 27 28 29 30 31 32 33 33', 6, full, OTHERS).kind).toBe('map'); // not strictly ascending
+});
+
+test('no ring-ordered string of a real draft is ascending across 10 tokens', () => {
+  // Milty deals tiles from shuffled stacks; every pinned string of this file is far from sorted.
+  for (const text of [MILTY_6P, MILTY_36]) {
+    const numbers = text.split(' ').map(Number).filter(n => n > 0);
+    expect(numbers.every((n, i) => i === 0 || n > numbers[i - 1])).toBe(false);
+  }
+});
+
+test('a set with every expansion on is arranged: homes by seat, the rest in ring order, Mecatol in the centre', () => {
+  const set = parseMapString(SET_6P, 6, full, OTHERS);
+  expect(set.map).toEqual({});
+  const placed = arrangeSet(set.set, 6, full);
+  expect(placed).toMatchObject({ kind: 'map', found: 30, homes: 6, dropped: 0, unknown: [], expected: 30 });
+  expect(placed.map['0,0']).toBe('112');
+  const seats = seatSlots(6, full, placed.layout);
+  expect(seats.map(key => placed.map[key])).toEqual(['4', '12', '14', '16', '55', '58']);
+  const rest = Object.entries(placed.map).filter(([key]) => key !== '0,0' && !seats.includes(key));
+  expect(rest).toHaveLength(30);
+  const order = [1, 2, 3, 4].flatMap(ringSlots);
+  const placedOrder = order.filter(key => key in placed.map && !seats.includes(key));
+  expect(placedOrder.map(key => placed.map[key]).slice(0, 4)).toEqual(['19', '22', '24', '28']);
+  expect(new Set(Object.values(placed.map)).size).toBe(37);
+});
+
+test('a set with the base game only places what the pack knows and keeps the rest out', () => {
+  const set = parseMapString(SET_6P, 6, base, OTHERS);
+  const placed = arrangeSet(set.set, 6, base);
+  expect(placed.map['0,0']).toBe('18');
+  expect(placed.homes).toBe(4);
+  expect(placed.found).toBe(13);
+});
+
+test('a six-player string of rings 1 to 3 is complete at 36 tokens and so is the 60-token form', () => {
+  const result = parseMapString(MILTY_36, 6, full, OTHERS);
+  expect(result).toMatchObject({ tokens: 36, tokensComplete: true, found: 30, homes: 6, expected: 30, dropped: 0, unknown: [] });
+  const seats = seatSlots(6, full, result.layout);
+  expect(seats.map(key => result.map[key])).toEqual(['58', '55', '16', '14', '12', '4']);
+  expect(parseMapString(MILTY_6P, 6, full, OTHERS).tokensComplete).toBe(true);
+  expect(parseMapString(`18 ${MILTY_36}`, 6, full, OTHERS)).toMatchObject({ tokens: 36, tokensComplete: true });
+  expect(parseMapString('25 26 27', 6, full, OTHERS).tokensComplete).toBe(false);
+  expect(parseMapString(`${MILTY_36} 25`, 6, full, OTHERS).tokensComplete).toBe(false);
 });

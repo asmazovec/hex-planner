@@ -460,3 +460,20 @@ test('an ordinary system draws no lanes', () => {
   setup('25');
   expect(lanesOf()).toEqual([]);
 });
+
+test('a planet with a technology specialty shows a mark in that colour, and names it in its label', () => {
+  const tile = Object.values(pack.tiles).find(t => t.planetIds.some(id => pack.planets[id].tech?.length === 1))!;
+  const planet = pack.planets[tile.planetIds.find(id => pack.planets[id].tech?.length === 1)!];
+  const tech = planet.tech![0];
+  setup(tile.id);
+  const group = screen.getByLabelText(new RegExp(`^${planet.name}:`));
+  expect(group.getAttribute('aria-label')).toContain({ propulsion: 'Propulsion', biotic: 'Biotic', cybernetic: 'Cybernetic', warfare: 'Warfare' }[tech]);
+  const mark = group.querySelector(`.planet-tech-${tech}`)!;
+  expect(mark).not.toBeNull();
+});
+
+test('planets without a specialty have no mark', () => {
+  const tile = Object.values(pack.tiles).find(t => t.planetIds.length > 0 && t.planetIds.every(id => !pack.planets[id].tech))!;
+  setup(tile.id);
+  expect(document.querySelector('[class*="planet-tech-"]')).toBeNull();
+});

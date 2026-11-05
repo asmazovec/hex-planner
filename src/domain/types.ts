@@ -4,7 +4,18 @@ export type UnitId = 'carrier' | 'cruiser' | 'destroyer' | 'dreadnought' | 'wars
   | 'flagship' | 'fighter' | 'infantry' | 'mech';
 export type UnitCounts = Partial<Record<UnitId, number>>;
 
-export interface PlanetDef { id: string; name: string; resources: number; influence: number; }
+export type TechType = 'propulsion' | 'biotic' | 'cybernetic' | 'warfare';
+
+export interface PlanetDef {
+  id: string;
+  name: string;
+  resources: number;
+  influence: number;
+  /** Technology specialties; absent means none. */
+  tech?: TechType[];
+  /** Technology skip: of a unit upgrade or of another technology; absent means none. */
+  skip?: 'unit' | 'nonUnit';
+}
 
 export type Anomaly = 'asteroid' | 'nebula' | 'supernova' | 'rift' | 'scar';
 
@@ -40,7 +51,6 @@ export interface UnitDef {
   limit: number | null;
 }
 
-export type TechType = 'propulsion' | 'biotic' | 'cybernetic' | 'warfare';
 export interface TechDef { id: string; name: string; type: TechType; }
 
 export interface FactionDef {

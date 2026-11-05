@@ -700,7 +700,10 @@
       "id": "archonvail",
       "name": "Archon Vail",
       "resources": 1,
-      "influence": 3
+      "influence": 3,
+      "tech": [
+        "propulsion"
+      ]
     },
     "perimeter": {
       "id": "perimeter",
@@ -712,19 +715,28 @@
       "id": "ang",
       "name": "Ang",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "tech": [
+        "warfare"
+      ]
     },
     "semlore": {
       "id": "semlore",
       "name": "Sem-Lore",
       "resources": 3,
-      "influence": 2
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ]
     },
     "vorhal": {
       "id": "vorhal",
       "name": "Vorhal",
       "resources": 0,
-      "influence": 2
+      "influence": 2,
+      "tech": [
+        "biotic"
+      ]
     },
     "atlas": {
       "id": "atlas",
@@ -802,13 +814,19 @@
       "id": "velnor",
       "name": "Velnor",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "warfare"
+      ]
     },
     "cealdri": {
       "id": "cealdri",
       "name": "Cealdri",
       "resources": 0,
-      "influence": 2
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ]
     },
     "xanhact": {
       "id": "xanhact",
@@ -826,7 +844,10 @@
       "id": "vegaminor",
       "name": "Vega Minor",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "tech": [
+        "propulsion"
+      ]
     },
     "loki": {
       "id": "loki",
@@ -850,7 +871,10 @@
       "id": "rigeliii",
       "name": "Rigel III",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ]
     },
     "rigelii": {
       "id": "rigelii",

@@ -34,6 +34,7 @@
       "me": "yours",
       "enemy": "enemy"
     },
+    "tech": { "propulsion": "Propulsion", "biotic": "Biotic", "cybernetic": "Cybernetic", "warfare": "Warfare" },
     "exhausted": "exhausted",
     "commandToken": "Command token",
     "spaceDock": "Space dock",
@@ -274,7 +275,11 @@
     "homesPlaced": "Home systems placed: {{n}}.",
     "dropped": "Skipped {{n}} tiles that have no slot in this layout.",
     "tokens": "String has {{n}} tokens, Milty writes 60. A leading 18 or a missing token shifts every tile.",
-    "layout": "Map layout: {{name}}."
+    "layout": "Map layout: {{name}}.",
+    "offExpansion": "Tiles {{list}} belong to {{name}}, which is off in this game.",
+    "turnOn": "Turn on {{name}}",
+    "set": "This list holds {{n}} tiles and no positions. Home systems go to the seats in seat order, other tiles fill the free slots in ring order, Mecatol Rex stays in the centre.",
+    "arrange": "Place the set"
   },
   "layout": {
     "label": "Map layout",

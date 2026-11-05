@@ -408,7 +408,10 @@
       "id": "faunus",
       "name": "Faunus",
       "resources": 1,
-      "influence": 3
+      "influence": 3,
+      "tech": [
+        "biotic"
+      ]
     },
     "garbozia": {
       "id": "garbozia",
@@ -426,19 +429,29 @@
       "id": "tempesta",
       "name": "Tempesta",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ]
     },
     "olergodt": {
       "id": "olergodt",
       "name": "Olergodt",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "warfare",
+        "cybernetic"
+      ]
     },
     "andeara": {
       "id": "andeara",
       "name": "Andeara",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ]
     },
     "virapicsiii": {
       "id": "virapicsiii",
@@ -456,13 +469,19 @@
       "id": "neutera",
       "name": "New Terra",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ]
     },
     "tinnes": {
       "id": "tinnes",
       "name": "Tinnes",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ]
     },
     "cresius": {
       "id": "cresius",
@@ -480,7 +499,11 @@
       "id": "tiamat",
       "name": "Tiamat",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "tech": [
+        "cybernetic",
+        "cybernetic"
+      ]
     },
     "hercalor": {
       "id": "hercalor",
@@ -552,7 +575,10 @@
       "id": "industrex",
       "name": "Industrex",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "tech": [
+        "warfare"
+      ]
     },
     "lemox": {
       "id": "lemox",

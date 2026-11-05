@@ -234,7 +234,7 @@ test('a string with nothing placeable cannot be applied', async () => {
 test('the result warns about a wrong token count, dropped tiles and homes', async () => {
   const field = await openImport();
   await userEvent.click(field);
-  await userEvent.paste('18 25');
+  await userEvent.paste('25 26');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(screen.getByText(/String has 2 tokens, Milty writes 60/)).toBeTruthy();
   expect(screen.getByText(/Home systems stay empty/)).toBeTruthy();
@@ -274,4 +274,50 @@ test('a string without hyperlanes keeps a standard layout', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(useGame.getState().game!.layout).toBe('standard');
   expect(screen.getByText(/Map layout: Standard/)).toBeTruthy();
+});
+
+const SET_6P = '4, 12, 14, 16, 18, 19, 22, 24, 28, 30, 33, 34, 37, 41, 44, 46, 48, 49, 55, 58, 61, 63, 66, 68, 71, 72, 74, 76, 78, 79, 80, 102, 106, 110, 113, 115, 117';
+const MILTY_36 = '66 22 61 19 72 24 110 79 48 106 117 33 41 71 28 44 46 30 58 63 115 55 76 49 16 74 78 14 37 68 12 102 80 4 34 113';
+
+test('tiles of an expansion that is off are named while typing, and one button turns it on with undo', async () => {
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25 102 106');
+  expect(screen.getByText(/102, 106 .*Thunder's Edge/)).toBeVisible();
+  expect(screen.queryByText(/Unknown numbers/)).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: "Turn on Thunder's Edge" }));
+  expect(useGame.getState().game!.expansions).toEqual(['pok', 'te']);
+  expect(screen.queryByRole('button', { name: "Turn on Thunder's Edge" })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(map()['1,-1']).toBe('102');
+  useGame.getState().undo();
+  useGame.getState().undo();
+  expect(useGame.getState().game!.expansions).toEqual(['pok']);
+});
+
+test('a sorted list of tiles is a set: the panel says so and places it by seats and ring order', async () => {
+  useGame.getState().addExpansion('te');
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste(SET_6P);
+  expect(screen.getByText(/no positions/)).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Place the set' }));
+  expect(Object.keys(map())).toHaveLength(37);
+  expect(map()['0,-3']).toBe('4');
+  expect(screen.getByText(/30 tiles placed/)).toBeVisible();
+  expect(screen.getByText(/Home systems placed: 6/)).toBeVisible();
+  expect(screen.queryByText(/String has/)).toBeNull();
+  expect(screen.queryByText(/Expected/)).toBeNull();
+});
+
+test('a complete six-player string of 36 tokens raises no note about the count', async () => {
+  useGame.getState().addExpansion('te');
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste(MILTY_36);
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(screen.getByText(/30 tiles placed/)).toBeVisible();
+  expect(screen.queryByText(/String has/)).toBeNull();
+  expect(screen.queryByText(/Expected/)).toBeNull();
 });

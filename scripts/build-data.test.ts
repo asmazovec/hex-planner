@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { checkCounts, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech } from './build-data';
+import { checkCounts, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -80,4 +80,14 @@ test('технология берётся без текста, неизвест�
   const tech = { alias: 'amd', name: 'Antimass Deflectors', types: ['PROPULSION'], source: 'base', text: 'card text' };
   expect(readTech(tech)).toEqual({ id: 'amd', name: 'Antimass Deflectors', type: 'propulsion' });
   expect(() => readTech({ ...tech, types: ['NONE'] })).toThrow(/amd/);
+});
+
+test('отметки планеты: технологии и пропуски из techSpecialties', () => {
+  expect(readPlanetMarks({ id: 'a', techSpecialties: ['BIOTIC'] })).toEqual({ tech: ['biotic'] });
+  expect(readPlanetMarks({ id: 'a', techSpecialties: ['UNITSKIP'] })).toEqual({ skip: 'unit' });
+  expect(readPlanetMarks({ id: 'a', techSpecialties: ['NONUNITSKIP'] })).toEqual({ skip: 'nonUnit' });
+  expect(readPlanetMarks({ id: 'a', techSpecialties: ['WARFARE', 'PROPULSION'] })).toEqual({ tech: ['warfare', 'propulsion'] });
+  expect(readPlanetMarks({ id: 'a', techSpecialties: null })).toEqual({});
+  expect(readPlanetMarks({ id: 'a' })).toEqual({});
+  expect(() => readPlanetMarks({ id: 'a', techSpecialties: ['PLASMA'] })).toThrow(/PLASMA/);
 });

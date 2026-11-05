@@ -294,3 +294,32 @@ describe('players', () => {
     expect(useGame.getState().game!.map[slots[1]]).toBeUndefined();
   });
 });
+
+describe('addExpansion', () => {
+  test('adds an expansion to the open game in one undo step', () => {
+    act().addExpansion('te');
+    expect(game().expansions).toEqual(['pok', 'te']);
+    act().undo();
+    expect(game().expansions).toEqual(['pok']);
+  });
+
+  test("Thunder's Edge puts its Mecatol Rex in the centre, undo brings the old one back", () => {
+    expect(game().map['0,0']).toBe('18');
+    act().addExpansion('te');
+    expect(game().map['0,0']).toBe('112');
+    act().undo();
+    expect(game().map['0,0']).toBe('18');
+  });
+
+  test('an expansion already on leaves no undo step', () => {
+    act().addExpansion('pok');
+    expect(game().expansions).toEqual(['pok']);
+    expect(act().canUndo).toBe(false);
+  });
+
+  test('keeps the order of the expansions', () => {
+    act().newGame({ expansions: ['te'], playerCount: 4, faction: Object.keys(loadPack(['te']).factions)[0] }, loadPack(['te']));
+    act().addExpansion('pok');
+    expect(game().expansions).toEqual(['pok', 'te']);
+  });
+});

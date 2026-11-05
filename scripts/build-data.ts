@@ -61,6 +61,7 @@ const KELERES_HOME_TILE: Record<string, string> = { keleresm: '2', keleresx: '14
 const UNCONFIRMED_LIMIT = null;
 const STRUCTURES: DataPack['structures'] = [{ id: 'pds', limit: UNCONFIRMED_LIMIT }, { id: 'spacedock', limit: UNCONFIRMED_LIMIT }];
 const TECH_TYPES: Record<string, TechType> = { PROPULSION: 'propulsion', BIOTIC: 'biotic', CYBERNETIC: 'cybernetic', WARFARE: 'warfare' };
+const SKIPS: Record<string, NonNullable<PlanetDef['skip']>> = { UNITSKIP: 'unit', NONUNITSKIP: 'nonUnit' };
 const UNIT_NAMES: Record<UnitId, string> = {
   carrier: 'Carrier', cruiser: 'Cruiser', destroyer: 'Destroyer', dreadnought: 'Dreadnought', warsun: 'War Sun',
   flagship: 'Flagship', fighter: 'Fighter', infantry: 'Infantry', mech: 'Mech',
@@ -165,7 +166,9 @@ interface SourceSystem {
   id: string; source: string; planets?: string[]; wormholes?: string[]; tileBack?: string;
   isHyperlane?: boolean; isFracture?: boolean; [flag: string]: unknown;
 }
-interface SourcePlanet { id: string; name: string; resources: number; influence: number; source: string; }
+interface SourcePlanet {
+  id: string; name: string; resources: number; influence: number; source: string; techSpecialties?: string[] | null;
+}
 interface SourceUnit {
   id: string; source: string; cost?: number; capacityValue?: number; capacityUsed?: number; isGroundForce?: boolean;
   combatHitsOn?: number; moveValue?: number;
@@ -248,6 +251,18 @@ function buildTiles(systems: SourceSystem[], lanes: Record<string, [number, numb
   return tiles;
 }
 
+/** Technology specialties and skips of a planet; an absent or null field means none, an unknown value fails the build. */
+export function readPlanetMarks(planet: Pick<SourcePlanet, 'id' | 'techSpecialties'>): Pick<PlanetDef, 'tech' | 'skip'> {
+  const tech: TechType[] = [];
+  let skip: PlanetDef['skip'];
+  for (const value of planet.techSpecialties ?? []) {
+    if (value in TECH_TYPES) tech.push(TECH_TYPES[value]);
+    else if (value in SKIPS) skip = SKIPS[value];
+    else throw new Error(`Planet ${planet.id} has unknown tech specialty ${value}`);
+  }
+  return { ...(tech.length > 0 ? { tech } : {}), ...(skip ? { skip } : {}) };
+}
+
 function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, TileDef>>): Record<PackId, Record<string, PlanetDef>> {
   const planets: Record<PackId, Record<string, PlanetDef>> = { base: {}, pok: {}, te: {} };
   const byId = new Map(all.map(planet => [planet.id, planet]));
@@ -256,7 +271,7 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
     if (!planet) throw new Error(`Unknown planet ${id}`);
     if (packOfSource(planet.source) !== pack) throw new Error(`Planet ${id} of source ${planet.source} is not in pack ${pack}`);
     if (id in EXCLUDED_PLANETS) throw new Error(`Excluded planet ${id} is in use`);
-    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence };
+    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet) };
   };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
     for (const tile of Object.values(tiles[pack])) for (const id of tile.planetIds) place(pack, id);

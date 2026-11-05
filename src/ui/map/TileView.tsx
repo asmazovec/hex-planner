@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
 import { rotateLanes } from '../../domain/lanes';
 import { systemPlanets, tileIdOf } from '../../domain/project';
-import type { DataPack, Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { UNIT_ORDER } from '../units/unitOrder';
@@ -51,6 +51,15 @@ const NAME_GAP = 9;
 const NAME_CHAR = 4.7;
 /** Mecatol Rex, and its Thunder's Edge version. */
 const MECATOL_PLANETS = ['mr', 'mrte'];
+/** Technology marks sit at the upper right of the disc, in the planet's own units: a second one goes below the first. */
+const TECH_MARK = { x: 8, y: -8, step: 7 };
+/** One simple shape per type, so the colour is not the only sign. */
+const TECH_SHAPES: Record<TechType, string> = {
+  propulsion: 'M0,-3.9 L3.6,2.6 L-3.6,2.6 Z',
+  biotic: 'M0,-3.6 A3.6,3.6 0 1 1 0,3.6 A3.6,3.6 0 1 1 0,-3.6 Z',
+  cybernetic: 'M0,-4 L4,0 L0,4 L-4,0 Z',
+  warfare: 'M-3.2,-3.2 L3.2,-3.2 L3.2,3.2 L-3.2,3.2 Z',
+};
 const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε' };
 
 /** Distance from the hex centre to the middle of an edge. Edge 0 is at the top and numbers go clockwise. */
@@ -174,6 +183,7 @@ export function TileView({
         const control = state.control[planet.id];
         const exhausted = state.exhausted.includes(planet.id);
         const parts = [`${planet.name}: ${planet.resources}/${planet.influence}`];
+        for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (control) parts.push(t(`map.control.${control}`));
         if (exhausted) parts.push(t('map.exhausted'));
         return (
@@ -188,6 +198,12 @@ export function TileView({
               <tspan className="value-slash">/</tspan>
               <tspan className="value-influence">{planet.influence}</tspan>
             </text>
+            {(planet.tech ?? []).map((tech, n) => (
+              <path
+                key={tech} d={TECH_SHAPES[tech]} className={`planet-tech planet-tech-${tech}`}
+                transform={`translate(${TECH_MARK.x} ${TECH_MARK.y + n * TECH_MARK.step})`}
+              />
+            ))}
             {exhausted && <line x1={-PLANET_BASE * 0.7} y1={PLANET_BASE * 0.7} x2={PLANET_BASE * 0.7} y2={-PLANET_BASE * 0.7} className="planet-strike" />}
           </g>
         );

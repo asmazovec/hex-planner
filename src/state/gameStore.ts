@@ -131,6 +131,8 @@ export interface GameStore {
   renamePlan(name: string): void;
   deletePlan(id: string): void;
   setActivePlan(id: string): void;
+  /** Turns an expansion on for the open game in one undo step; the draft has its own toggle. */
+  addExpansion(id: ExpansionId): void;
   setTile(slotKey: string, tileId: string | null): void;
   /** Replaces the whole map in one undo step, and the layout too if one is given; the centre tile stays. */
   setMap(map: Record<string, string>, layout?: MapLayout): void;
@@ -269,6 +271,14 @@ export const useGame = create<GameStore>((set, get) => {
     setActivePlan: id =>
       commit(g => (g.activePlanId === id || !g.plans.some(p => p.id === id) ? g : { ...g, activePlanId: id })),
 
+    addExpansion: id =>
+      commit(g => {
+        if (g.expansions.includes(id)) return g;
+        const expansions = DRAFT_EXPANSIONS.filter(e => e === id || g.expansions.includes(e));
+        // Thunder's Edge swaps the centre tile; a map that holds the base one would no longer look empty.
+        const map = id === 'te' && g.map['0,0'] === '18' ? { ...g.map, '0,0': '112' } : g.map;
+        return { ...g, expansions, map };
+      }),
     setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
     setMap: (map, layout) => commit(g => {
       const next = { ...map };

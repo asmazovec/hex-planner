@@ -634,7 +634,10 @@
       "id": "wellon",
       "name": "Wellon",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ]
     },
     "vefutii": {
       "id": "vefutii",
@@ -646,13 +649,19 @@
       "id": "thibah",
       "name": "Thibah",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ]
     },
     "tarmann": {
       "id": "tarmann",
       "name": "Tar'mann",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ]
     },
     "saudor": {
       "id": "saudor",
@@ -664,7 +673,10 @@
       "id": "meharxull",
       "name": "Mehar Xull",
       "resources": 1,
-      "influence": 3
+      "influence": 3,
+      "tech": [
+        "warfare"
+      ]
     },
     "quann": {
       "id": "quann",
@@ -682,7 +694,10 @@
       "id": "newalbion",
       "name": "New Albion",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ]
     },
     "starpoint": {
       "id": "starpoint",
@@ -730,7 +745,10 @@
       "id": "lazar",
       "name": "Lazar",
       "resources": 1,
-      "influence": 0
+      "influence": 0,
+      "tech": [
+        "cybernetic"
+      ]
     },
     "sakulag": {
       "id": "sakulag",
@@ -772,7 +790,10 @@
       "id": "gral",
       "name": "Gral",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ]
     },
     "bereg": {
       "id": "bereg",
@@ -808,7 +829,10 @@
       "id": "meer",
       "name": "Meer",
       "resources": 0,
-      "influence": 4
+      "influence": 4,
+      "tech": [
+        "warfare"
+      ]
     },
     "abyz": {
       "id": "abyz",
