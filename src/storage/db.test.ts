@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, expect, test } from 'vitest';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { deleteGame, listGames, loadGame, requestPersistence, saveGame } from './db';
 import { exportGame, importGame } from './transfer';
 import { sampleGame } from './fixture';
@@ -46,4 +46,20 @@ test('неудачный импорт не меняет сохранённые �
 
 test('requestPersistence без поддержки возвращает false', async () => {
   expect(await requestPersistence()).toBe(false);
+});
+
+test('сбой открытия базы не ломает следующие сохранения', async () => {
+  vi.resetModules();
+  const real = await vi.importActual<typeof import('idb')>('idb');
+  let calls = 0;
+  vi.doMock('idb', () => ({
+    openDB: (...args: Parameters<typeof real.openDB>) =>
+      ++calls === 1 ? Promise.reject(new Error('open failed')) : real.openDB(...args),
+  }));
+  const fresh = await import('./db');
+  const game = sampleGame();
+  await expect(fresh.saveGame(game)).rejects.toThrow('open failed');
+  await fresh.saveGame(game);
+  expect(await fresh.loadGame(game.id)).toEqual(game);
+  vi.doUnmock('idb');
 });

@@ -7,9 +7,18 @@ interface StoredGame extends GameSummary { game: Game; }
 interface Ti4DB extends DBSchema { games: { key: string; value: StoredGame }; }
 
 let dbPromise: Promise<IDBPDatabase<Ti4DB>> | null = null;
-const db = () => (dbPromise ??= openDB<Ti4DB>('ti4-planner', 1, {
-  upgrade: d => void d.createObjectStore('games', { keyPath: 'id' }),
-}));
+/** A failed or terminated connection is dropped so the next call reopens the database. */
+function db(): Promise<IDBPDatabase<Ti4DB>> {
+  if (!dbPromise) {
+    const opening = openDB<Ti4DB>('ti4-planner', 1, {
+      upgrade: d => void d.createObjectStore('games', { keyPath: 'id' }),
+      terminated: () => { if (dbPromise === opening) dbPromise = null; },
+    });
+    dbPromise = opening;
+    opening.catch(() => { if (dbPromise === opening) dbPromise = null; });
+  }
+  return dbPromise;
+}
 
 export async function saveGame(game: Game): Promise<void> {
   const { id, faction, playerCount } = game;

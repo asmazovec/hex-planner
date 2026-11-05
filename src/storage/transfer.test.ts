@@ -19,6 +19,10 @@ describe('схема', () => {
     expect(importGame(text)).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 
+  test.each([-3, 0.5])('недопустимая версия схемы %s отклоняется', v => {
+    expect(importGame(JSON.stringify({ ...game, schemaVersion: v }))).toEqual({ ok: false, reason: 'invalidSchema' });
+  });
+
   test('запись неизвестного вида отклоняется', () => {
     const bad = structuredClone(game);
     (bad.plans[0].rounds[0].entries[0] as { type: string }).type = 'bogus';

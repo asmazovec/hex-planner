@@ -38,7 +38,7 @@ const control = z.enum(['me', 'enemy']);
 
 export const gameSchema = z.object({
   id: z.string(),
-  schemaVersion: z.number().int(),
+  schemaVersion: z.number().int().min(1).max(CURRENT_SCHEMA),
   dataVersion: z.string(),
   expansions: z.array(z.enum(['pok', 'te'])),
   playerCount: z.number().int(),
