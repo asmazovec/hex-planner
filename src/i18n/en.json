@@ -1,0 +1,9 @@
+{
+  "menu": {
+    "game": "Game",
+    "map": "Map",
+    "plan": "Plan",
+    "rivals": "Rivals"
+  },
+  "language": { "label": "Language" }
+}

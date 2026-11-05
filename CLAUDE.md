@@ -2,9 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Состояние репозитория
+## Команды
 
-Кода ещё нет, каталог не является git-репозиторием, а тулчейн не настроен, поэтому раздела с командами пока нет. Не придумывай команды. Когда тулчейн появится, добавь сюда команды сборки, линта, запуска тестов и запуска одного теста.
+- Разработка: `npm run dev`
+- Сборка (проверка типов и Vite): `npm run build`
+- Линт: `npm run lint`
+- Все тесты: `npm test` (то же, что `npx vitest run`)
+- Один тест: `npx vitest run src/ui/App.test.tsx` (или `npx vitest run -t "часть названия"`)
+
+В `src/test-setup.ts` подменяется `localStorage`: глобальный `localStorage` в Node 25 затеняет jsdom и без флага не работает.
 
 Полный дизайн: [docs/superpowers/specs/2026-11-05-ti4-planner-design.md](docs/superpowers/specs/2026-11-05-ti4-planner-design.md). Спецификация пока на проверке у пользователя.
 
