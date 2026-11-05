@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { checkCounts, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech } from './build-data';
+import { checkCounts, readPlanetKind, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -94,4 +94,16 @@ test('отметки планеты: технологии и пропуски и
 
 test('отметки планеты: повтор технологии в источнике даёт одну отметку', () => {
   expect(readPlanetMarks({ id: 'a', techSpecialties: ['CYBERNETIC', 'CYBERNETIC'] })).toEqual({ tech: ['cybernetic'] });
+});
+
+test('вид планеты: черты из planetType и planetTypes без повторов, легендарная способность', () => {
+  expect(readPlanetKind({ id: 'a', planetType: 'HAZARDOUS' })).toEqual({ traits: ['hazardous'] });
+  expect(readPlanetKind({ id: 'a', planetTypes: ['INDUSTRIAL', 'HAZARDOUS'] })).toEqual({ traits: ['industrial', 'hazardous'] });
+  expect(readPlanetKind({ id: 'a', planetType: 'CULTURAL', planetTypes: ['CULTURAL'] })).toEqual({ traits: ['cultural'] });
+  for (const none of ['FACTION', 'NONE', 'MR', 'SPACESTATION', 'LIGHTNING', 'FAKE']) expect(readPlanetKind({ id: 'a', planetType: none })).toEqual({});
+  expect(readPlanetKind({ id: 'a', planetTypes: ['FACTION', 'CULTURAL'] })).toEqual({ traits: ['cultural'] });
+  expect(readPlanetKind({ id: 'a' })).toEqual({});
+  expect(readPlanetKind({ id: 'a', legendaryAbilityName: 'Imperial Arms Vault' })).toEqual({ legendary: 'Imperial Arms Vault' });
+  expect(readPlanetKind({ id: 'a', legendaryAbilityName: null })).toEqual({});
+  expect(() => readPlanetKind({ id: 'a', planetType: 'PLASMA' })).toThrow(/PLASMA/);
 });

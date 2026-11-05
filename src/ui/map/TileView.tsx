@@ -64,6 +64,16 @@ const TECH_SHAPES: Record<TechType, string> = {
   cybernetic: 'M0,-4 L4,0 L0,4 L-4,0 Z',
   warfare: 'M-3.2,-3.2 L3.2,-3.2 L3.2,3.2 L-3.2,3.2 Z',
 };
+/** The legendary mark mirrors the first technology mark, on the upper left; a four-point star of its own. */
+const LEGENDARY_SHAPE = 'M0,-4.2 L1.2,-1.2 L4.2,0 L1.2,1.2 L0,4.2 L-1.2,1.2 L-4.2,0 L-1.2,-1.2 Z';
+const legendaryMarkAt = (): { x: number; y: number } => ({ x: -techMarkAt(0).x, y: techMarkAt(0).y });
+/** The trait tint sits just inside the rim, which keeps showing the control. One trait fills the disc, two take a half each. */
+const TINT_RADIUS = PLANET_BASE - 0.5;
+const TINT_PATHS = {
+  whole: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 1 1 0,${TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 1 1 0,${-TINT_RADIUS} Z`,
+  left: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 0 0,${TINT_RADIUS} Z`,
+  right: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 1 0,${TINT_RADIUS} Z`,
+};
 const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε' };
 
 /** Distance from the hex centre to the middle of an edge. Edge 0 is at the top and numbers go clockwise. */
@@ -188,6 +198,7 @@ export function TileView({
         const exhausted = state.exhausted.includes(planet.id);
         const parts = [`${planet.name}: ${planet.resources}/${planet.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
+        if (planet.legendary) parts.push(t('map.legendary'));
         if (control) parts.push(t(`map.control.${control}`));
         if (exhausted) parts.push(t('map.exhausted'));
         return (
@@ -197,6 +208,12 @@ export function TileView({
             className={`tk planet${exhausted ? ' planet-exhausted' : ''}`}
           >
             <circle r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`} />
+            {(planet.traits ?? []).slice(0, 2).map((trait, n, shown) => (
+              <path
+                key={trait} d={shown.length === 1 ? TINT_PATHS.whole : n === 0 ? TINT_PATHS.left : TINT_PATHS.right}
+                className={`planet-trait planet-trait-${trait}`}
+              />
+            ))}
             <text y={3.2} className="planet-values">
               <tspan className="value-resources">{planet.resources}</tspan>
               <tspan className="value-slash">/</tspan>
@@ -208,6 +225,12 @@ export function TileView({
                 transform={`translate(${techMarkAt(n).x.toFixed(2)} ${techMarkAt(n).y.toFixed(2)})`}
               />
             ))}
+            {planet.legendary && (
+              <path
+                d={LEGENDARY_SHAPE} className="planet-legendary"
+                transform={`translate(${legendaryMarkAt().x.toFixed(2)} ${legendaryMarkAt().y.toFixed(2)})`}
+              />
+            )}
             {exhausted && <line x1={-PLANET_BASE * 0.7} y1={PLANET_BASE * 0.7} x2={PLANET_BASE * 0.7} y2={-PLANET_BASE * 0.7} className="planet-strike" />}
           </g>
         );

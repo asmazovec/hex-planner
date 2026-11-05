@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, PlanetTrait, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
@@ -168,6 +168,7 @@ interface SourceSystem {
 }
 interface SourcePlanet {
   id: string; name: string; resources: number; influence: number; source: string; techSpecialties?: string[] | null;
+  planetType?: string | null; planetTypes?: string[] | null; legendaryAbilityName?: string | null;
 }
 interface SourceUnit {
   id: string; source: string; cost?: number; capacityValue?: number; capacityUsed?: number; isGroundForce?: boolean;
@@ -263,6 +264,21 @@ export function readPlanetMarks(planet: Pick<SourcePlanet, 'id' | 'techSpecialti
   return { ...(tech.length > 0 ? { tech } : {}), ...(skip ? { skip } : {}) };
 }
 
+const TRAITS: Record<string, PlanetTrait> = { CULTURAL: 'cultural', HAZARDOUS: 'hazardous', INDUSTRIAL: 'industrial' };
+/** Source planet types that give no trait; FAKE marks a stand-in (The Triad has only it) and is read like the rest. */
+const NO_TRAIT = ['FACTION', 'NONE', 'MR', 'SPACESTATION', 'LIGHTNING', 'FAKE'];
+
+/** Traits and the legendary ability name of a planet. Both `planetType` and `planetTypes` are read; an unknown value fails the build. */
+export function readPlanetKind(planet: Pick<SourcePlanet, 'id' | 'planetType' | 'planetTypes' | 'legendaryAbilityName'>): Pick<PlanetDef, 'traits' | 'legendary'> {
+  const traits: PlanetTrait[] = [];
+  for (const value of [planet.planetType, ...(planet.planetTypes ?? [])]) {
+    if (value === undefined || value === null) continue;
+    if (value in TRAITS) { if (!traits.includes(TRAITS[value])) traits.push(TRAITS[value]); }
+    else if (!NO_TRAIT.includes(value)) throw new Error(`Planet ${planet.id} has unknown planet type ${value}`);
+  }
+  return { ...(traits.length > 0 ? { traits } : {}), ...(planet.legendaryAbilityName ? { legendary: planet.legendaryAbilityName } : {}) };
+}
+
 function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, TileDef>>): Record<PackId, Record<string, PlanetDef>> {
   const planets: Record<PackId, Record<string, PlanetDef>> = { base: {}, pok: {}, te: {} };
   const byId = new Map(all.map(planet => [planet.id, planet]));
@@ -271,7 +287,7 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
     if (!planet) throw new Error(`Unknown planet ${id}`);
     if (packOfSource(planet.source) !== pack) throw new Error(`Planet ${id} of source ${planet.source} is not in pack ${pack}`);
     if (id in EXCLUDED_PLANETS) throw new Error(`Excluded planet ${id} is in use`);
-    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet) };
+    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet) };
   };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
     for (const tile of Object.values(tiles[pack])) for (const id of tile.planetIds) place(pack, id);

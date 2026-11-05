@@ -496,3 +496,113 @@ test('two marks on one planet stay off the values and off each other', () => {
   for (const mark of marks) expect(clearance(mark)).toBeGreaterThanOrEqual(4);
   expect(Math.hypot(marks[0].x - marks[1].x, marks[0].y - marks[1].y)).toBeGreaterThanOrEqual(6.5);
 });
+
+const full = loadPack(['pok', 'te']);
+
+function renderFull(tileId: string, edit: (state: GameState) => void = () => undefined) {
+  const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, full);
+  game.map['1,0'] = tileId;
+  const state = emptyState();
+  edit(state);
+  return render(<svg><TileView slotKey="1,0" pack={full} game={game} state={state} /></svg>);
+}
+
+const markCentre = (node: Element): { x: number; y: number } => {
+  const [x, y] = (node.getAttribute('transform')!.match(/-?[\d.]+/g) ?? []).map(Number);
+  return { x, y };
+};
+
+test('a legendary planet carries a gold mark on its upper left and says so in its label', () => {
+  renderFull('66');
+  const group = screen.getByLabelText(/^Hope's End:/);
+  expect(group.getAttribute('aria-label')).toContain('legendary');
+  const mark = group.querySelector('.planet-legendary')!;
+  expect(mark).not.toBeNull();
+  const { x, y } = markCentre(mark);
+  expect(x).toBeLessThan(0);
+  expect(y).toBeLessThan(0);
+});
+
+test('the legendary label is told in Russian too', () => {
+  setLanguage('ru');
+  renderFull('66');
+  expect(screen.getByLabelText(/^Hope's End:/).getAttribute('aria-label')).toContain('легендарная');
+});
+
+test('an ordinary planet has no legendary mark', () => {
+  setup('25');
+  expect(document.querySelector('.planet-legendary')).toBeNull();
+});
+
+test('on Industrex the legendary mark, the technology mark and the values stay apart', () => {
+  renderFull('115');
+  const group = screen.getByLabelText(/^Industrex:/);
+  const legendary = markCentre(group.querySelector('.planet-legendary')!);
+  const tech = markCentre(group.querySelector('.planet-tech')!);
+  expect(legendary.x).toBeLessThan(0);
+  expect(tech.x).toBeGreaterThan(0);
+  const clearance = ({ x, y }: { x: number; y: number }) => Math.hypot(Math.max(Math.abs(x) - 7.5, 0), Math.max(-3.5 - y, 0));
+  expect(clearance(legendary)).toBeGreaterThanOrEqual(4);
+  expect(clearance(tech)).toBeGreaterThanOrEqual(4);
+  expect(Math.hypot(legendary.x - tech.x, legendary.y - tech.y)).toBeGreaterThanOrEqual(10);
+});
+
+test('a planet disc is tinted by its trait, a two-trait planet is split down the middle, and one without a trait stays neutral', () => {
+  renderFull('66');
+  expect(screen.getByLabelText(/^Hope's End:/).querySelectorAll('.planet-trait')).toHaveLength(1);
+  expect(screen.getByLabelText(/^Hope's End:/).querySelector('.planet-trait-hazardous')).not.toBeNull();
+  cleanup();
+  renderFull('111');
+  const two = screen.getByLabelText(/^Tarana:/);
+  expect(two.querySelector('.planet-trait-cultural')).not.toBeNull();
+  expect(two.querySelector('.planet-trait-industrial')).not.toBeNull();
+  const [left, right] = [...two.querySelectorAll('.planet-trait')].map(node => node.getAttribute('d')!);
+  expect(left).toContain('A');
+  expect(left).not.toEqual(right);
+  cleanup();
+  renderFull('92');
+  expect(screen.getByLabelText(/^Ordinian:/).querySelector('.planet-trait')).toBeNull();
+});
+
+test('control stays on the rim and an exhausted planet keeps its look with the tint on it', () => {
+  renderFull('66', s => { s.control.hopesend = 'me'; s.exhausted.push('hopesend'); });
+  const group = screen.getByLabelText(/^Hope's End:/);
+  expect(group.querySelector('circle.planet-disc')).toHaveClass('planet-me');
+  expect(group).toHaveClass('planet-exhausted');
+  expect(group.querySelector('.planet-trait-hazardous')).not.toBeNull();
+});
+
+test('the sheet of tile 66 gives the ability name and its retelling in the current language', () => {
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  game.map['1,0'] = '66';
+  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={emptyState()} />);
+  const planet = within(screen.getByRole('group', { name: "Hope's End" }));
+  expect(planet.getByText('Imperial Arms Vault')).toBeInTheDocument();
+  expect(planet.getByText(/mech from reinforcements/)).toBeInTheDocument();
+  expect(planet.getByText('Hazardous')).toBeInTheDocument();
+  expect(planet.getByText(/Ready/)).toBeInTheDocument();
+  expect(planet.queryByText(/relic/i)).toBeNull();
+  cleanup();
+  setLanguage('ru');
+  render(<TileSheet slotKey="1,0" pack={pack} game={game} state={emptyState()} />);
+  expect(screen.getByText(/1 меха из запаса/)).toBeInTheDocument();
+});
+
+test('the sheet lists traits with swatches, specialties, and the relic of a Fracture planet', () => {
+  const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, full);
+  game.map['1,0'] = '101';
+  const { container } = render(<TileSheet slotKey="1,0" pack={full} game={game} state={emptyState()} />);
+  const planet = within(screen.getByRole('group', { name: 'Olergodt' }));
+  expect(planet.getByText('Hazardous')).toBeInTheDocument();
+  expect(planet.getByText('Cultural')).toBeInTheDocument();
+  expect(container.querySelectorAll('.trait-swatch')).toHaveLength(2);
+  expect(planet.getByText(/Warfare/)).toBeInTheDocument();
+  expect(planet.getByText(/Cybernetic/)).toBeInTheDocument();
+  expect(planet.queryByText(/relic/i)).toBeNull();
+  cleanup();
+  game.map['1,0'] = 'fracture4';
+  render(<TileSheet slotKey="1,0" pack={full} game={game} state={emptyState()} />);
+  const styx = within(screen.getByRole('group', { name: 'Styx' }));
+  expect(styx.getByText(/relic/i)).toBeInTheDocument();
+  expect(styx.getByText('A Song Like Marrow')).toBeInTheDocument();
+});

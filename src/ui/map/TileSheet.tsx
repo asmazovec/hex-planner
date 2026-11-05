@@ -3,6 +3,7 @@ import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UNIT_ORDER } from '../units/unitOrder';
+import { PlanetDetails } from './PlanetDetails';
 
 export interface TileSheetProps {
   slotKey: string;
@@ -53,11 +54,7 @@ export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
         return (
           <div key={planet.id} role="group" aria-label={planet.name} className="sheet-planet">
             <strong>{planet.name}</strong>
-            <span className="muted">
-              <span className="value-resources">{planet.resources}</span>/<span className="value-influence">{planet.influence}</span>
-              {' · '}
-              {state.exhausted.includes(planet.id) ? t('map.sheet.exhausted') : t('map.sheet.ready')}
-            </span>
+            <PlanetDetails planet={planet} relic={tile?.kind === 'fracture'} exhausted={state.exhausted.includes(planet.id)} />
             <div className="segment" role="group" aria-label={t('map.sheet.controlLabel', { planet: planet.name })}>
               {owners.map(o => (
                 <button

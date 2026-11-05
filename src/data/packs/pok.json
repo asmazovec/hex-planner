@@ -703,13 +703,19 @@
       "influence": 3,
       "tech": [
         "propulsion"
+      ],
+      "traits": [
+        "hazardous"
       ]
     },
     "perimeter": {
       "id": "perimeter",
       "name": "Perimeter",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "industrial"
+      ]
     },
     "ang": {
       "id": "ang",
@@ -718,6 +724,9 @@
       "influence": 0,
       "tech": [
         "warfare"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "semlore": {
@@ -727,6 +736,9 @@
       "influence": 2,
       "tech": [
         "cybernetic"
+      ],
+      "traits": [
+        "cultural"
       ]
     },
     "vorhal": {
@@ -736,79 +748,120 @@
       "influence": 2,
       "tech": [
         "biotic"
+      ],
+      "traits": [
+        "cultural"
       ]
     },
     "atlas": {
       "id": "atlas",
       "name": "Atlas",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "primor": {
       "id": "primor",
       "name": "Primor",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "The Atrament"
     },
     "hopesend": {
       "id": "hopesend",
       "name": "Hope's End",
       "resources": 3,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "Imperial Arms Vault"
     },
     "cormund": {
       "id": "cormund",
       "name": "Cormund",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "everra": {
       "id": "everra",
       "name": "Everra",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "accoen": {
       "id": "accoen",
       "name": "Accoen",
       "resources": 2,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "industrial"
+      ]
     },
     "jeolir": {
       "id": "jeolir",
       "name": "Jeol Ir",
       "resources": 2,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "industrial"
+      ]
     },
     "kraag": {
       "id": "kraag",
       "name": "Kraag",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "siig": {
       "id": "siig",
       "name": "Siig",
       "resources": 0,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "hazardous"
+      ]
     },
     "bakal": {
       "id": "bakal",
       "name": "Bakal",
       "resources": 3,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "alioprima": {
       "id": "alioprima",
       "name": "Alio Prima",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "lisis": {
       "id": "lisis",
       "name": "Lisis",
       "resources": 2,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "velnor": {
       "id": "velnor",
@@ -817,6 +870,9 @@
       "influence": 1,
       "tech": [
         "warfare"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "cealdri": {
@@ -826,19 +882,28 @@
       "influence": 2,
       "tech": [
         "cybernetic"
+      ],
+      "traits": [
+        "cultural"
       ]
     },
     "xanhact": {
       "id": "xanhact",
       "name": "Xanhact",
       "resources": 0,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "vegamajor": {
       "id": "vegamajor",
       "name": "Vega Major",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "vegaminor": {
       "id": "vegaminor",
@@ -847,25 +912,37 @@
       "influence": 2,
       "tech": [
         "propulsion"
+      ],
+      "traits": [
+        "cultural"
       ]
     },
     "loki": {
       "id": "loki",
       "name": "Loki",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
     },
     "abaddon": {
       "id": "abaddon",
       "name": "Abaddon",
       "resources": 1,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "cultural"
+      ]
     },
     "ashtroth": {
       "id": "ashtroth",
       "name": "Ashtroth",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "rigeliii": {
       "id": "rigeliii",
@@ -874,43 +951,65 @@
       "influence": 1,
       "tech": [
         "biotic"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "rigelii": {
       "id": "rigelii",
       "name": "Rigel II",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "rigeli": {
       "id": "rigeli",
       "name": "Rigel I",
       "resources": 0,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "lockedmallice": {
       "id": "lockedmallice",
       "name": "Locked Mallice",
       "resources": 0,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "Exterrix Headquarters"
     },
     "mallice": {
       "id": "mallice",
       "name": "Mallice",
       "resources": 0,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "Exterrix Headquarters"
     },
     "mirage": {
       "id": "mirage",
       "name": "Mirage",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "Mirage Flight Academy"
     },
     "custodiavigilia": {
       "id": "custodiavigilia",
       "name": "Custodia Vigilia",
       "resources": 2,
-      "influence": 3
+      "influence": 3,
+      "legendary": "Custodian's Favour"
     }
   },
   "units": {

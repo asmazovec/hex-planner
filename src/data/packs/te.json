@@ -378,7 +378,8 @@
       "id": "ordinian",
       "name": "Ordinian",
       "resources": 0,
-      "influence": 0
+      "influence": 0,
+      "legendary": "4X41D \"Hyperion\" VI"
     },
     "revelation": {
       "id": "revelation",
@@ -411,19 +412,31 @@
       "influence": 3,
       "tech": [
         "biotic"
-      ]
+      ],
+      "traits": [
+        "industrial"
+      ],
+      "legendary": "Maxis Central Control"
     },
     "garbozia": {
       "id": "garbozia",
       "name": "Garbozia",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "Dok 'N Pic's Salvage Yard"
     },
     "emelpar": {
       "id": "emelpar",
       "name": "Emelpar",
       "resources": 0,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "The Acropolis"
     },
     "tempesta": {
       "id": "tempesta",
@@ -432,7 +445,11 @@
       "influence": 1,
       "tech": [
         "propulsion"
-      ]
+      ],
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "Ionian Fuel Refinery"
     },
     "olergodt": {
       "id": "olergodt",
@@ -442,6 +459,10 @@
       "tech": [
         "warfare",
         "cybernetic"
+      ],
+      "traits": [
+        "hazardous",
+        "cultural"
       ]
     },
     "andeara": {
@@ -451,19 +472,30 @@
       "influence": 1,
       "tech": [
         "propulsion"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "virapicsiii": {
       "id": "virapicsiii",
       "name": "Vira Pics III",
       "resources": 2,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "cultural",
+        "hazardous"
+      ]
     },
     "lesab": {
       "id": "lesab",
       "name": "Lesab",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "industrial",
+        "hazardous"
+      ]
     },
     "neutera": {
       "id": "neutera",
@@ -472,6 +504,9 @@
       "influence": 1,
       "tech": [
         "biotic"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "tinnes": {
@@ -481,19 +516,30 @@
       "influence": 1,
       "tech": [
         "biotic"
+      ],
+      "traits": [
+        "industrial",
+        "hazardous"
       ]
     },
     "cresius": {
       "id": "cresius",
       "name": "Cresius",
       "resources": 0,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "lazulrex": {
       "id": "lazulrex",
       "name": "Lazul Rex",
       "resources": 2,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial",
+        "cultural"
+      ]
     },
     "tiamat": {
       "id": "tiamat",
@@ -502,31 +548,46 @@
       "influence": 2,
       "tech": [
         "cybernetic"
+      ],
+      "traits": [
+        "cultural"
       ]
     },
     "hercalor": {
       "id": "hercalor",
       "name": "Hercalor",
       "resources": 1,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "industrial"
+      ]
     },
     "kostboth": {
       "id": "kostboth",
       "name": "Kostboth",
       "resources": 0,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "capha": {
       "id": "capha",
       "name": "Capha",
       "resources": 3,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "bellatrix": {
       "id": "bellatrix",
       "name": "Bellatrix",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
     },
     "tsionstation": {
       "id": "tsionstation",
@@ -538,25 +599,38 @@
       "id": "horizon",
       "name": "Horizon",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
     },
     "elnath": {
       "id": "elnath",
       "name": "El'Nath",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "luthieniv": {
       "id": "luthieniv",
       "name": "Luthien VI",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "tarana": {
       "id": "tarana",
       "name": "Tarana",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural",
+        "industrial"
+      ]
     },
     "oluzstation": {
       "id": "oluzstation",
@@ -568,7 +642,8 @@
       "id": "mrte",
       "name": "Mecatol Rex",
       "resources": 1,
-      "influence": 6
+      "influence": 6,
+      "legendary": "The Galactic Council"
     },
     "industrex": {
       "id": "industrex",
@@ -577,13 +652,20 @@
       "influence": 0,
       "tech": [
         "warfare"
-      ]
+      ],
+      "traits": [
+        "industrial"
+      ],
+      "legendary": "Aeurex Mechanica"
     },
     "lemox": {
       "id": "lemox",
       "name": "Lemox",
       "resources": 0,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "industrial"
+      ]
     },
     "thewatchtower": {
       "id": "thewatchtower",
@@ -631,7 +713,8 @@
       "id": "styx",
       "name": "Styx",
       "resources": 4,
-      "influence": 0
+      "influence": 0,
+      "legendary": "A Song Like Marrow"
     },
     "lethe": {
       "id": "lethe",
@@ -649,13 +732,18 @@
       "id": "thundersedge",
       "name": "Thunder's Edge",
       "resources": 5,
-      "influence": 1
+      "influence": 1,
+      "legendary": "Jupiter Brain"
     },
     "avernus": {
       "id": "avernus",
       "name": "Avernus",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "The Nucleus"
     },
     "triad": {
       "id": "triad",

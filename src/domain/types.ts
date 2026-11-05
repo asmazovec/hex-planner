@@ -6,6 +6,8 @@ export type UnitCounts = Partial<Record<UnitId, number>>;
 
 export type TechType = 'propulsion' | 'biotic' | 'cybernetic' | 'warfare';
 
+export type PlanetTrait = 'cultural' | 'hazardous' | 'industrial';
+
 export interface PlanetDef {
   id: string;
   name: string;
@@ -15,6 +17,10 @@ export interface PlanetDef {
   tech?: TechType[];
   /** Technology skip: of a unit upgrade or of another technology; absent means none. */
   skip?: 'unit' | 'nonUnit';
+  /** Planet traits; absent for a home planet, Mecatol or a station. */
+  traits?: PlanetTrait[];
+  /** English name of the legendary planet ability; absent for an ordinary planet. */
+  legendary?: string;
 }
 
 export type Anomaly = 'asteroid' | 'nebula' | 'supernova' | 'rift' | 'scar';

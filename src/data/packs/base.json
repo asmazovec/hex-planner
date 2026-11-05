@@ -637,13 +637,19 @@
       "influence": 2,
       "tech": [
         "cybernetic"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "vefutii": {
       "id": "vefutii",
       "name": "Vefut II",
       "resources": 2,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "hazardous"
+      ]
     },
     "thibah": {
       "id": "thibah",
@@ -652,6 +658,9 @@
       "influence": 1,
       "tech": [
         "propulsion"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "tarmann": {
@@ -661,13 +670,19 @@
       "influence": 1,
       "tech": [
         "biotic"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "saudor": {
       "id": "saudor",
       "name": "Saudor",
       "resources": 2,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "meharxull": {
       "id": "meharxull",
@@ -676,19 +691,28 @@
       "influence": 3,
       "tech": [
         "warfare"
+      ],
+      "traits": [
+        "hazardous"
       ]
     },
     "quann": {
       "id": "quann",
       "name": "Quann",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "lodor": {
       "id": "lodor",
       "name": "Lodor",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "newalbion": {
       "id": "newalbion",
@@ -697,49 +721,73 @@
       "influence": 1,
       "tech": [
         "biotic"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "starpoint": {
       "id": "starpoint",
       "name": "Starpoint",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "tequran": {
       "id": "tequran",
       "name": "Tequ'ran",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "torkan": {
       "id": "torkan",
       "name": "Torkan",
       "resources": 0,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ]
     },
     "qucenn": {
       "id": "qucenn",
       "name": "Qucen'n",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "rarron": {
       "id": "rarron",
       "name": "Rarron",
       "resources": 0,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ]
     },
     "mellon": {
       "id": "mellon",
       "name": "Mellon",
       "resources": 0,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
     },
     "zohbat": {
       "id": "zohbat",
       "name": "Zohbat",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "lazar": {
       "id": "lazar",
@@ -748,43 +796,64 @@
       "influence": 0,
       "tech": [
         "cybernetic"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "sakulag": {
       "id": "sakulag",
       "name": "Sakulag",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "dalbootha": {
       "id": "dalbootha",
       "name": "Dal Bootha",
       "resources": 0,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
     },
     "xxehan": {
       "id": "xxehan",
       "name": "Xxehan",
       "resources": 1,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
     },
     "corneeq": {
       "id": "corneeq",
       "name": "Corneeq",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
     },
     "resculon": {
       "id": "resculon",
       "name": "Resculon",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "cultural"
+      ]
     },
     "centauri": {
       "id": "centauri",
       "name": "Centauri",
       "resources": 1,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ]
     },
     "gral": {
       "id": "gral",
@@ -793,37 +862,55 @@
       "influence": 1,
       "tech": [
         "propulsion"
+      ],
+      "traits": [
+        "industrial"
       ]
     },
     "bereg": {
       "id": "bereg",
       "name": "Bereg",
       "resources": 3,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
     },
     "lirtaiv": {
       "id": "lirtaiv",
       "name": "Lirta IV",
       "resources": 2,
-      "influence": 3
+      "influence": 3,
+      "traits": [
+        "hazardous"
+      ]
     },
     "arnor": {
       "id": "arnor",
       "name": "Arnor",
       "resources": 2,
-      "influence": 1
+      "influence": 1,
+      "traits": [
+        "industrial"
+      ]
     },
     "lor": {
       "id": "lor",
       "name": "Lor",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "arinam": {
       "id": "arinam",
       "name": "Arinam",
       "resources": 1,
-      "influence": 2
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
     },
     "meer": {
       "id": "meer",
@@ -832,19 +919,28 @@
       "influence": 4,
       "tech": [
         "warfare"
+      ],
+      "traits": [
+        "hazardous"
       ]
     },
     "abyz": {
       "id": "abyz",
       "name": "Abyz",
       "resources": 3,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "fria": {
       "id": "fria",
       "name": "Fria",
       "resources": 2,
-      "influence": 0
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
     },
     "creuss": {
       "id": "creuss",

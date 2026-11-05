@@ -77,6 +77,11 @@
   --tech-cybernetic: #e4bd55;
   --tech-warfare: #ea6f64;
 
+  /* Planet traits: dim, low-saturation tints that keep the gold and blue values readable. */
+  --trait-cultural: #334055;
+  --trait-hazardous: #5a3033;
+  --trait-industrial: #2a4a33;
+
   color-scheme: dark;
 }
 
@@ -202,6 +207,9 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-sheet { overflow: visible; }
 .tile-sheet h3 { margin: 0 0 2px; font-size: var(--font-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
 .sheet-planet { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border-strong); }
+.planet-details { display: flex; flex-direction: column; gap: 2px; }
+.planet-legend { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); }
+.planet-legend strong { color: var(--gold); }
 .sheet-planet .muted { font-size: var(--font-s); }
 .sheet-planet .check { font-size: var(--font-s); color: var(--text-muted); }
 .sheet-units .row { justify-content: space-between; flex-wrap: nowrap; gap: 4px; }
@@ -255,6 +263,16 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .planet-tech-biotic { fill: var(--tech-biotic); }
 .planet-tech-cybernetic { fill: var(--tech-cybernetic); }
 .planet-tech-warfare { fill: var(--tech-warfare); }
+.planet-trait { stroke: none; }
+.planet-trait-cultural { fill: var(--trait-cultural); }
+.planet-trait-hazardous { fill: var(--trait-hazardous); }
+.planet-trait-industrial { fill: var(--trait-industrial); }
+.planet-exhausted .planet-trait { opacity: 0.4; }
+.planet-legendary { fill: var(--gold); stroke: var(--token-fill); stroke-width: 1.1; stroke-linejoin: round; paint-order: stroke; }
+.trait-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid var(--token-stroke); vertical-align: -1px; margin-right: 4px; }
+.trait-swatch.trait-cultural { background: var(--trait-cultural); }
+.trait-swatch.trait-hazardous { background: var(--trait-hazardous); }
+.trait-swatch.trait-industrial { background: var(--trait-industrial); }
 .planet-strike { stroke: var(--text-muted); stroke-width: 1.1; stroke-linecap: round; }
 .token { fill: var(--accent-solid); stroke: #fff; stroke-width: 1.2; }
 .token-mark { fill: #fff; }
