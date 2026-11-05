@@ -390,4 +390,34 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     act().undo();
     expect(game()).toEqual(old);
   });
+
+  test('a tap on a ship upgrade is one undo step', () => {
+    act().toggleUpgrade('me', 'carrier');
+    expect(game().upgrades.me).toEqual(['carrier']);
+    const id = game().opponents[0].id;
+    act().toggleUpgrade(id, 'fighter');
+    expect(game().upgrades.opponents[id]).toEqual(['fighter']);
+    act().undo();
+    expect(game().upgrades.opponents[id]).toBeUndefined();
+    act().undo();
+    expect(game().upgrades.me).toEqual([]);
+  });
+
+  test('removing an opponent through the store removes their upgrades, and undo brings them back', () => {
+    const id = game().opponents[0].id;
+    act().toggleUpgrade(id, 'fighter');
+    act().removeOpponent(0);
+    expect(game().upgrades.opponents).toEqual({});
+    act().undo();
+    expect(game().upgrades.opponents[id]).toEqual(['fighter']);
+  });
+
+  test('a copied plan has entry upgrades of its own', () => {
+    const id = act().addEntry(1, { type: 'strategic', upgrades: ['carrier'] }, 'action');
+    act().copyPlan();
+    const copy = round().entries[0];
+    expect(copy).toMatchObject({ upgrades: ['carrier'] });
+    act().updateEntry(copy.id, { upgrades: [] });
+    expect(plans()[0].rounds[0].entries.find(e => e.id === id)).toMatchObject({ upgrades: ['carrier'] });
+  });
 });

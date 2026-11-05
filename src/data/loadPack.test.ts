@@ -229,3 +229,32 @@ describe('faction reference data', () => {
     expect(full.structures.every(s => s.limit === null)).toBe(true);
   });
 });
+
+describe('ship data in the packs', () => {
+  const full = loadPack(['pok', 'te']);
+
+  test('Argent destroyer carries 1, L1Z1X dreadnought 2, flagships differ by faction', () => {
+    expect(full.factions.argent.ships?.destroyer).toMatchObject({ one: { name: 'Strike Wing Alpha I', capacity: 1 }, two: { name: 'Strike Wing Alpha II', capacity: 1 } });
+    expect(full.factions.l1z1x.ships?.dreadnought).toMatchObject({ one: { capacity: 2 }, two: { capacity: 2 } });
+    expect(full.factions.sol.ships?.flagship?.one).toMatchObject({ name: 'Genesis', capacity: 12 });
+    expect(full.factions.yssaril.ships?.flagship?.one).toMatchObject({ name: "Y'sia Y'ssrila", move: 2 });
+    expect(full.factions.keleresa.ships?.flagship?.one.name).toBe('Artemiris');
+  });
+
+  test('every faction has its own flagship; only Memoria has a level II', () => {
+    const levels = Object.values(full.factions).map(f => f.ships?.flagship);
+    expect(levels.every(Boolean)).toBe(true);
+    expect(Object.values(full.factions).filter(f => f.ships?.flagship?.two).map(f => f.id)).toEqual(['nomad']);
+  });
+
+  test('the base table has level II for the ships that have one', () => {
+    expect(full.units.carrier?.levels?.two).toMatchObject({ name: 'Carrier II', capacity: 6, move: 2, cost: 3 });
+    expect(full.units.fighter?.levels?.two).toMatchObject({ combat: 8, move: 2 });
+    expect(full.units.warsun?.levels?.two).toBeUndefined();
+    expect(full.units.warsun?.levels?.one.dice).toBe(3);
+  });
+
+  test('the Corsair, a third level, is not read as a Mentak level', () => {
+    expect(full.factions.mentak.ships?.cruiser).toBeUndefined();
+  });
+});

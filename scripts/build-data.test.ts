@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest';
-import { checkCounts, readPlanetKind, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech } from './build-data';
+import { describe, expect, test } from 'vitest';
+import { checkCounts, readPlanetKind, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, selectShips } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -106,4 +106,88 @@ test('вид планеты: черты из planetType и planetTypes без п
   expect(readPlanetKind({ id: 'a', legendaryAbilityName: 'Imperial Arms Vault' })).toEqual({ legendary: 'Imperial Arms Vault' });
   expect(readPlanetKind({ id: 'a', legendaryAbilityName: null })).toEqual({});
   expect(() => readPlanetKind({ id: 'a', planetType: 'PLASMA' })).toThrow(/PLASMA/);
+});
+
+describe('selectShips', () => {
+  const ship = (id: string, baseType: string, o: Record<string, unknown> = {}) =>
+    ({ id, baseType, name: id, source: 'base', cost: 1, capacityValue: 1, combatHitsOn: 7, combatDieCount: 1, moveValue: 2, ...o });
+  const ids = ['alpha', 'keleresa', 'keleresm', 'keleresx'];
+  const flagship = ship('alpha_flagship', 'flagship', { faction: 'alpha' });
+  const keleres = ship('keleres_flagship', 'flagship', { faction: 'keleresm', source: 'codex3' });
+  const run = (units: ReturnType<typeof ship>[]) => selectShips([flagship, keleres, ...units], ids);
+
+  test('generic ships get levels I and II from upgradesFromUnitId', () => {
+    const { generic } = run([ship('carrier', 'carrier'), ship('carrier2', 'carrier', { upgradesFromUnitId: 'carrier', capacityValue: 6 })]);
+    expect(generic.carrier?.one.capacity).toBe(1);
+    expect(generic.carrier?.two?.capacity).toBe(6);
+    expect(generic.carrier?.two?.name).toBe('carrier2');
+  });
+
+  test('absent values read as no capacity and no move; the name is trimmed', () => {
+    const { generic } = run([ship('fighter', 'fighter', { name: 'Fighter ', capacityValue: undefined, moveValue: undefined, cost: 0.5 })]);
+    expect(generic.fighter?.one).toEqual({ id: 'fighter', name: 'Fighter', cost: 0.5, capacity: 0, combat: 7, dice: 1, move: null });
+  });
+
+  test('properties are read as numbers; a ship without them has none', () => {
+    const { generic } = run([
+      ship('dreadnought', 'dreadnought', { sustainDamage: true, bombardHitsOn: 5, bombardDieCount: 1 }),
+      ship('destroyer', 'destroyer', { afbHitsOn: 9, afbDieCount: 2 }),
+      ship('cruiser', 'cruiser', { spaceCannonHitsOn: 6, spaceCannonDieCount: 1 }),
+      ship('carrier', 'carrier'),
+    ]);
+    expect(generic.dreadnought?.one).toMatchObject({ sustain: true, bombard: { hit: 5, dice: 1 } });
+    expect(generic.destroyer?.one.barrage).toEqual({ hit: 9, dice: 2 });
+    expect(generic.cruiser?.one.cannon).toEqual({ hit: 6, dice: 1 });
+    expect(Object.keys(generic.carrier?.one ?? {}).sort()).toEqual(['capacity', 'combat', 'cost', 'dice', 'id', 'move', 'name']);
+  });
+
+  test('a faction entry goes to that faction only', () => {
+    const { generic, factions } = run([
+      ship('alpha_carrier', 'carrier', { faction: 'alpha', capacityValue: 3 }),
+      ship('alpha_carrier2', 'carrier', { faction: 'alpha', upgradesFromUnitId: 'alpha_carrier', capacityValue: 5 }),
+    ]);
+    expect(factions.alpha.carrier?.one.capacity).toBe(3);
+    expect(factions.alpha.carrier?.two?.capacity).toBe(5);
+    expect(generic.carrier).toBeUndefined();
+  });
+
+  test('homebrew, nowarsun, cavalry, other sources and non-ships are left out and counted', () => {
+    const { generic, factions, excluded } = run([
+      ship('nowarsun', 'warsun'), ship('cavalry1', 'flagship', { source: 'pok' }),
+      ship('home_carrier', 'carrier', { faction: 'alpha', homebrewReplacesID: 'x' }),
+      ship('absol_x', 'destroyer', { faction: 'stranger', source: 'absol' }),
+      ship('alpha_mech', 'mech', { faction: 'alpha' }),
+    ]);
+    expect(generic.warsun).toBeUndefined();
+    expect(generic.flagship).toBeUndefined();
+    expect(factions.alpha.carrier).toBeUndefined();
+    expect(factions.alpha.destroyer).toBeUndefined();
+    expect(excluded).toEqual({ homebrew: 1, nowarsun: 1, cavalry: 1, otherSource: 1, thirdLevel: 0 });
+  });
+
+  test('a faction name that is no pack faction fails the build, upper case included', () => {
+    expect(() => run([ship('x', 'carrier', { faction: 'stranger' })])).toThrow(/stranger/);
+    expect(() => run([ship('x', 'carrier', { faction: 'Alpha' })])).toThrow(/Alpha/);
+  });
+
+  test('the one Keleres flagship belongs to all three Keleres factions', () => {
+    const { factions } = run([]);
+    for (const id of ['keleresa', 'keleresm', 'keleresx']) expect(factions[id].flagship?.one.name).toBe('keleres_flagship');
+  });
+
+  test('a faction with no flagship fails the build', () => {
+    expect(() => selectShips([keleres], ids)).toThrow(/alpha/);
+  });
+
+  test('a third level named in the exclusions stays out; an unknown one fails the build', () => {
+    const corsair = ship('mentak_cruiser3', 'cruiser', { faction: 'alpha', source: 'thunders_edge', upgradesFromUnitId: 'cruiser2' });
+    const { factions, excluded } = run([corsair]);
+    expect(factions.alpha.cruiser).toBeUndefined();
+    expect(excluded.thirdLevel).toBe(1);
+    expect(() => run([{ ...corsair, id: 'other_cruiser3' }])).toThrow(/other_cruiser3/);
+  });
+
+  test('a level II without its level I fails the build', () => {
+    expect(() => run([ship('c2', 'carrier', { upgradesFromUnitId: 'carrier' })])).toThrow(/c2/);
+  });
 });

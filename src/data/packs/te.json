@@ -810,7 +810,21 @@
         "Liberate",
         "Galvanize",
         "Phoenix Standard"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "bastion_flagship",
+            "name": "The Egeiro",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 9,
+            "dice": 1,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "deepwrought": {
       "id": "deepwrought",
@@ -831,7 +845,21 @@
       "abilities": [
         "Research Team",
         "Oceanbound"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "deepwrought_flagship",
+            "name": "D.W.S. Luminous",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "firmament": {
       "id": "firmament",
@@ -858,7 +886,21 @@
       "abilities": [
         "Plots Within Plots",
         "Puppets of the Blade"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "firmament_flagship",
+            "name": "Heaven's Eye",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "obsidian": {
       "id": "obsidian",
@@ -877,7 +919,21 @@
         "Nocturne",
         "The Blade's Orchestra",
         "Marionettes"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "obsidian_flagship",
+            "name": "Heaven's Hollow",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 3,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "crimson": {
       "id": "crimson",
@@ -905,7 +961,49 @@
         "Incursion",
         "Sorrow"
       ],
-      "gateTile": "94"
+      "gateTile": "94",
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "crimson_flagship",
+            "name": "Quietus",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        },
+        "destroyer": {
+          "one": {
+            "id": "crimson_destroyer",
+            "name": "Exile I",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 9,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "crimson_destroyer2",
+            "name": "Exile II",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 6,
+              "dice": 3
+            }
+          }
+        }
+      }
     },
     "ralnel": {
       "id": "ralnel",
@@ -932,7 +1030,49 @@
       "abilities": [
         "Survival Instinct",
         "Miniaturization"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "ralnel_flagship",
+            "name": "Last Dispatch",
+            "cost": 8,
+            "capacity": 4,
+            "combat": 8,
+            "dice": 2,
+            "move": 2,
+            "sustain": true
+          }
+        },
+        "destroyer": {
+          "one": {
+            "id": "ralnel_destroyer",
+            "name": "Linkship I",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 9,
+            "dice": 1,
+            "move": 3,
+            "barrage": {
+              "hit": 9,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "ralnel_destroyer2",
+            "name": "Linkship II",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": 4,
+            "barrage": {
+              "hit": 6,
+              "dice": 3
+            }
+          }
+        }
+      }
     }
   },
   "templates": [],

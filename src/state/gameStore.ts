@@ -3,9 +3,10 @@ import { loadPack } from '../data/loadPack';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { withTeMecatol } from '../domain/mecatol';
+import { toggleUpgrade } from '../domain/unitStats';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, setPlayerVp, swapSeats } from '../domain/players';
 import type {
-  DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts,
+  DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
 } from '../domain/types';
 import { loadGame, saveGame } from '../storage/db';
 
@@ -140,6 +141,8 @@ export interface GameStore {
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
   setOpponent(index: number, patch: { faction?: string; vp?: number }): void;
+  /** Marks a ship upgrade by hand: `me` edits my baseline, an opponent id that opponent's list. */
+  toggleUpgrade(player: string, unit: UnitId): void;
   setEnemyUnits(systemId: string, opponentId: string, units: UnitCounts): void;
   /** `owner` is `me`, an opponent id, or null for a free planet. */
   setPlanetControl(planetId: string, owner: string | null): void;
@@ -295,6 +298,7 @@ export const useGame = create<GameStore>((set, get) => {
         const named = faction === undefined ? g : setPlayerFaction(g, index + 1, faction, pack);
         return vp === undefined ? named : setPlayerVp(named, index + 1, vp);
       }),
+    toggleUpgrade: (player, unit) => commit(g => toggleUpgrade(g, player, unit)),
     setEnemyUnits: (systemId, opponentId, units) =>
       commit(g => {
         const inSystem = g.enemyUnits[systemId] ?? {};

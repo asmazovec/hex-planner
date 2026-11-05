@@ -30,8 +30,9 @@ export function sampleGame(): Game {
 
 /** The same game as schema version 1 saved it: opponents without ids, enemy units and enemy planets without an owner. */
 export function gameOfSchema1(): Record<string, unknown> {
-  const { planetOwner, opponents, ...rest } = sampleGame();
+  const { planetOwner, opponents, upgrades, ...rest } = sampleGame();
   void planetOwner;
+  void upgrades;
   return {
     ...rest,
     schemaVersion: 1,

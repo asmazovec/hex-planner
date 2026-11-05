@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Game } from '../domain/types';
 
-export const CURRENT_SCHEMA = 2;
+export const CURRENT_SCHEMA = 3;
 
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
@@ -18,8 +18,8 @@ const entrySchema = z.discriminatedUnion('type', [
     landings: z.array(z.object({ planetId: z.string(), units: unitCounts })),
     production: unitCounts, payment,
   }),
-  z.object({ ...base, type: z.literal('strategic') }),
-  z.object({ ...base, type: z.literal('secondary') }),
+  z.object({ ...base, type: z.literal('strategic'), upgrades: z.array(unitId).optional() }),
+  z.object({ ...base, type: z.literal('secondary'), upgrades: z.array(unitId).optional() }),
   z.object({ ...base, type: z.literal('component'), note: z.string() }),
   z.object({ ...base, type: z.literal('pass') }),
   z.object({ ...base, type: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
@@ -49,6 +49,7 @@ export const gameSchema = z.object({
   vp: count,
   map: z.record(z.string(), z.string()),
   opponents: z.array(z.object({ id: z.string(), faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
+  upgrades: z.object({ me: z.array(unitId), opponents: z.record(z.string(), z.array(unitId)) }),
   enemyUnits: z.record(z.string(), z.record(z.string(), unitCounts)),
   planetControl: z.record(z.string(), control),
   planetOwner: z.record(z.string(), z.string()),
@@ -110,5 +111,6 @@ export function migrate(raw: unknown): unknown {
   if (doc.schemaVersion === 0) doc = { ...doc, schemaVersion: 1 };
   if (!Array.isArray(doc.opponents)) return doc;
   doc = withSeats(doc);
-  return doc.schemaVersion === 1 ? withOwners(doc) : doc;
+  if (doc.schemaVersion === 1) doc = withOwners(doc);
+  return doc.schemaVersion === 2 ? { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } } : doc;
 }

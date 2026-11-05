@@ -4,6 +4,7 @@ import type { DataPack, FactionDef, UnitId } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { UnitIcon } from '../players/UnitIcon';
+import { ShipStats, type ShipStatsProps } from './ShipStats';
 
 const HEX_POINTS = Array.from({ length: 6 }, (_, i) => {
   const angle = (Math.PI / 3) * i;
@@ -72,10 +73,12 @@ function Tech({ id, pack }: { id: string; pack: DataPack }) {
 export interface FactionCardProps {
   faction: FactionDef;
   pack: DataPack;
+  /** Current values and taps on the plan screen; without it the table shows base values, read only. */
+  live?: Pick<ShipStatsProps, 'upgraded' | 'onToggle' | 'locked'>;
 }
 
 /** What a faction starts with, all visible at once. Colours come from `--player` of the surrounding card. */
-export function FactionCard({ faction, pack }: FactionCardProps) {
+export function FactionCard({ faction, pack, live }: FactionCardProps) {
   const { t } = useTranslation();
   const ships = UNIT_ORDER.filter((unit: UnitId) => (faction.startUnits[unit] ?? 0) > 0);
   const choice = faction.startingTechChoice;
@@ -110,6 +113,10 @@ export function FactionCard({ faction, pack }: FactionCardProps) {
         )}
         {choice?.options.map(id => <Tech key={id} id={id} pack={pack} />)}
         {faction.startingTech.length === 0 && !choice && <p className="tech-choice">{t('players.techNone')}</p>}
+      </div>
+      <div className="player-ships">
+        <div className="player-sec">{t('ships.title')}</div>
+        <ShipStats factionId={faction.id} pack={pack} {...live} />
       </div>
     </div>
   );

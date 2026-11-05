@@ -14,13 +14,15 @@ const pack = loadPack(['pok']);
 afterEach(cleanup);
 beforeEach(() => setLanguage('en'));
 
+const suggestGame = (): Game => createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
+
 test('suggestUnits предлагает корабли и груз в пределах вместимости', () => {
-  expect(suggestUnits({ carrier: 1, fighter: 3, infantry: 3 }, pack)).toEqual({ carrier: 1, fighter: 3, infantry: 1 });
+  expect(suggestUnits(suggestGame(), [], { carrier: 1, fighter: 3, infantry: 3 }, pack)).toEqual({ carrier: 1, fighter: 3, infantry: 1 });
 });
 
 test('suggestUnits takes no cargo without capacity, and does not count cargo as ships', () => {
-  expect(suggestUnits({ destroyer: 2, fighter: 3, infantry: 1 }, pack)).toEqual({ destroyer: 2 });
-  expect(suggestUnits({}, pack)).toEqual({});
+  expect(suggestUnits(suggestGame(), [], { destroyer: 2, fighter: 3, infantry: 1 }, pack)).toEqual({ destroyer: 2 });
+  expect(suggestUnits(suggestGame(), [], {}, pack)).toEqual({});
 });
 
 function setup(moves: { from: string; units: UnitCounts }[], before: Partial<GameState> = {}, production: UnitCounts = {}) {

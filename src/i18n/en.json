@@ -296,6 +296,21 @@
     "confirm_other": "The map has {{count}} tiles that this layout removes (in slots it lacks or under hyperlanes). Switch?",
     "milty": "Hyperlane layout as in Milty Draft: {{n}} hyperlane slots, more than the 9 hyperlane tiles in the box."
   },
+  "ships": {
+    "title": "Ships",
+    "upgrades": "Ship upgrades",
+    "entryUpgrade": "Upgrade",
+    "owned": "Upgraded earlier",
+    "fromRound": "round {{n}}",
+    "cost": "Cost",
+    "capacity": "Capacity",
+    "combat": "Combat",
+    "move": "Move",
+    "sustain": "Sustain Damage",
+    "barrage": "Anti-Fighter Barrage {{value}}",
+    "bombard": "Bombardment {{value}}",
+    "cannon": "Space Cannon {{value}}"
+  },
   "players": {
     "title": "Players",
     "count": "{{n}} of {{max}}",

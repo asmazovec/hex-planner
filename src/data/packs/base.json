@@ -960,7 +960,27 @@
       "fighter": false,
       "combat": 9,
       "move": 1,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "carrier",
+          "name": "Carrier I",
+          "cost": 3,
+          "capacity": 4,
+          "combat": 9,
+          "dice": 1,
+          "move": 1
+        },
+        "two": {
+          "id": "carrier2",
+          "name": "Carrier II",
+          "cost": 3,
+          "capacity": 6,
+          "combat": 9,
+          "dice": 1,
+          "move": 2
+        }
+      }
     },
     "cruiser": {
       "id": "cruiser",
@@ -972,7 +992,27 @@
       "fighter": false,
       "combat": 7,
       "move": 2,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "cruiser",
+          "name": "Cruiser I",
+          "cost": 2,
+          "capacity": 0,
+          "combat": 7,
+          "dice": 1,
+          "move": 2
+        },
+        "two": {
+          "id": "cruiser2",
+          "name": "Cruiser II",
+          "cost": 2,
+          "capacity": 1,
+          "combat": 6,
+          "dice": 1,
+          "move": 3
+        }
+      }
     },
     "destroyer": {
       "id": "destroyer",
@@ -984,7 +1024,35 @@
       "fighter": false,
       "combat": 9,
       "move": 2,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "destroyer",
+          "name": "Destroyer I",
+          "cost": 1,
+          "capacity": 0,
+          "combat": 9,
+          "dice": 1,
+          "move": 2,
+          "barrage": {
+            "hit": 9,
+            "dice": 2
+          }
+        },
+        "two": {
+          "id": "destroyer2",
+          "name": "Destroyer II",
+          "cost": 1,
+          "capacity": 0,
+          "combat": 8,
+          "dice": 1,
+          "move": 2,
+          "barrage": {
+            "hit": 6,
+            "dice": 3
+          }
+        }
+      }
     },
     "dreadnought": {
       "id": "dreadnought",
@@ -996,7 +1064,37 @@
       "fighter": false,
       "combat": 5,
       "move": 1,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "dreadnought",
+          "name": "Dreadnought I",
+          "cost": 4,
+          "capacity": 1,
+          "combat": 5,
+          "dice": 1,
+          "move": 1,
+          "sustain": true,
+          "bombard": {
+            "hit": 5,
+            "dice": 1
+          }
+        },
+        "two": {
+          "id": "dreadnought2",
+          "name": "Dreadnought II",
+          "cost": 4,
+          "capacity": 1,
+          "combat": 5,
+          "dice": 1,
+          "move": 2,
+          "sustain": true,
+          "bombard": {
+            "hit": 5,
+            "dice": 1
+          }
+        }
+      }
     },
     "warsun": {
       "id": "warsun",
@@ -1008,7 +1106,23 @@
       "fighter": false,
       "combat": 3,
       "move": 2,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "warsun",
+          "name": "War Sun",
+          "cost": 12,
+          "capacity": 6,
+          "combat": 3,
+          "dice": 3,
+          "move": 2,
+          "sustain": true,
+          "bombard": {
+            "hit": 3,
+            "dice": 3
+          }
+        }
+      }
     },
     "flagship": {
       "id": "flagship",
@@ -1020,7 +1134,19 @@
       "fighter": false,
       "combat": 7,
       "move": 1,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "flagship",
+          "name": "Factionless Flagship",
+          "cost": 8,
+          "capacity": 3,
+          "combat": 7,
+          "dice": 2,
+          "move": 1,
+          "sustain": true
+        }
+      }
     },
     "fighter": {
       "id": "fighter",
@@ -1032,7 +1158,27 @@
       "fighter": true,
       "combat": 9,
       "move": null,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "fighter",
+          "name": "Fighter I",
+          "cost": 0.5,
+          "capacity": 0,
+          "combat": 9,
+          "dice": 1,
+          "move": null
+        },
+        "two": {
+          "id": "fighter2",
+          "name": "Fighter II",
+          "cost": 0.5,
+          "capacity": 0,
+          "combat": 8,
+          "dice": 1,
+          "move": 2
+        }
+      }
     },
     "infantry": {
       "id": "infantry",
@@ -1064,7 +1210,21 @@
       "commodities": 3,
       "abilities": [
         "Mitosis"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "arborec_flagship",
+            "name": "Duha Menaimon",
+            "cost": 8,
+            "capacity": 5,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "ghost": {
       "id": "ghost",
@@ -1085,7 +1245,21 @@
         "Slipstream",
         "Creuss Gate"
       ],
-      "gateTile": "17"
+      "gateTile": "17",
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "ghost_flagship",
+            "name": "Hil Colish",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 1,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "hacan": {
       "id": "hacan",
@@ -1106,7 +1280,21 @@
         "Masters of Trade",
         "Guild Ships",
         "Arbiters"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "hacan_flagship",
+            "name": "Wrath of Kenara",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "jolnar": {
       "id": "jolnar",
@@ -1129,7 +1317,21 @@
         "Fragile",
         "Brilliant",
         "Analytical"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "jolnar_flagship",
+            "name": "J.N.S. Hylarim",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 6,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "l1z1x": {
       "id": "l1z1x",
@@ -1149,7 +1351,51 @@
       "abilities": [
         "Assimilate",
         "Harrow"
-      ]
+      ],
+      "ships": {
+        "dreadnought": {
+          "one": {
+            "id": "l1z1x_dreadnought",
+            "name": "Super Dreadnought I",
+            "cost": 4,
+            "capacity": 2,
+            "combat": 5,
+            "dice": 1,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 5,
+              "dice": 1
+            }
+          },
+          "two": {
+            "id": "l1z1x_dreadnought2",
+            "name": "Super Dreadnought II",
+            "cost": 4,
+            "capacity": 2,
+            "combat": 4,
+            "dice": 1,
+            "move": 2,
+            "sustain": true,
+            "bombard": {
+              "hit": 4,
+              "dice": 1
+            }
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "l1z1x_flagship",
+            "name": "[0.0.1]",
+            "cost": 8,
+            "capacity": 5,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "letnev": {
       "id": "letnev",
@@ -1170,7 +1416,25 @@
       "abilities": [
         "Munitions Reserves",
         "Armada"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "letnev_flagship",
+            "name": "Arc Secundus",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 5,
+              "dice": 3
+            }
+          }
+        }
+      }
     },
     "mentak": {
       "id": "mentak",
@@ -1190,7 +1454,21 @@
       "abilities": [
         "Ambush",
         "Pillage"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "mentak_flagship",
+            "name": "Fourth Moon",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "muaat": {
       "id": "muaat",
@@ -1208,7 +1486,51 @@
       "abilities": [
         "Star Forge",
         "Gashlai Physiology"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "muaat_flagship",
+            "name": "The Inferno",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        },
+        "warsun": {
+          "one": {
+            "id": "muaat_warsun",
+            "name": "Prototype War Sun I",
+            "cost": 12,
+            "capacity": 6,
+            "combat": 3,
+            "dice": 3,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 3,
+              "dice": 3
+            }
+          },
+          "two": {
+            "id": "muaat_warsun2",
+            "name": "Prototype War Sun II",
+            "cost": 10,
+            "capacity": 6,
+            "combat": 3,
+            "dice": 3,
+            "move": 3,
+            "sustain": true,
+            "bombard": {
+              "hit": 3,
+              "dice": 3
+            }
+          }
+        }
+      }
     },
     "naalu": {
       "id": "naalu",
@@ -1229,7 +1551,41 @@
       "abilities": [
         "Telepathic",
         "Foresight"
-      ]
+      ],
+      "ships": {
+        "fighter": {
+          "one": {
+            "id": "naalu_fighter",
+            "name": "Hybrid Crystal Fighter I",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": null
+          },
+          "two": {
+            "id": "naalu_fighter2",
+            "name": "Hybrid Crystal Fighter II",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": 2
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "naalu_flagship",
+            "name": "Matriarch",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "nekro": {
       "id": "nekro",
@@ -1250,7 +1606,21 @@
         "Galactic Threat",
         "Technological Singularity",
         "Propagation"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "nekro_flagship",
+            "name": "The Alastor",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "saar": {
       "id": "saar",
@@ -1269,7 +1639,25 @@
       "abilities": [
         "Scavenge",
         "Nomadic"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "saar_flagship",
+            "name": "Son of Ragh",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "barrage": {
+              "hit": 6,
+              "dice": 4
+            }
+          }
+        }
+      }
     },
     "sardakk": {
       "id": "sardakk",
@@ -1284,7 +1672,51 @@
       "commodities": 3,
       "abilities": [
         "Unrelenting"
-      ]
+      ],
+      "ships": {
+        "dreadnought": {
+          "one": {
+            "id": "sardakk_dreadnought",
+            "name": "Exotrireme I",
+            "cost": 4,
+            "capacity": 1,
+            "combat": 5,
+            "dice": 1,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 4,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "sardakk_dreadnought2",
+            "name": "Exotrireme II",
+            "cost": 4,
+            "capacity": 1,
+            "combat": 5,
+            "dice": 1,
+            "move": 2,
+            "sustain": true,
+            "bombard": {
+              "hit": 4,
+              "dice": 2
+            }
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "sardakk_flagship",
+            "name": "C'morran N'orr",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 6,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "sol": {
       "id": "sol",
@@ -1304,7 +1736,42 @@
       "abilities": [
         "Orbital Drop",
         "Versatile"
-      ]
+      ],
+      "ships": {
+        "carrier": {
+          "one": {
+            "id": "sol_carrier",
+            "name": "Advanced Carrier I",
+            "cost": 3,
+            "capacity": 6,
+            "combat": 9,
+            "dice": 1,
+            "move": 1
+          },
+          "two": {
+            "id": "sol_carrier2",
+            "name": "Advanced Carrier II",
+            "cost": 3,
+            "capacity": 8,
+            "combat": 9,
+            "dice": 1,
+            "move": 2,
+            "sustain": true
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "sol_flagship",
+            "name": "Genesis",
+            "cost": 8,
+            "capacity": 12,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "winnu": {
       "id": "winnu",
@@ -1334,7 +1801,21 @@
       "abilities": [
         "Blood Ties",
         "Reclamation"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "winnu_flagship",
+            "name": "Salai Sai Corian",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 0,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "xxcha": {
       "id": "xxcha",
@@ -1353,7 +1834,25 @@
       "abilities": [
         "Peace Accords",
         "Quash"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "xxcha_flagship",
+            "name": "Loncara Ssodu",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "cannon": {
+              "hit": 5,
+              "dice": 3
+            }
+          }
+        }
+      }
     },
     "yin": {
       "id": "yin",
@@ -1372,7 +1871,21 @@
       "abilities": [
         "Indoctrination",
         "Devotion"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "yin_flagship",
+            "name": "Van Hauge",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "yssaril": {
       "id": "yssaril",
@@ -1392,7 +1905,21 @@
         "Stall Tactics",
         "Scheming",
         "Crafty"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "yssaril_flagship",
+            "name": "Y'sia Y'ssrila",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 2,
+            "sustain": true
+          }
+        }
+      }
     }
   },
   "templates": [

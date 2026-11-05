@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { productionCost, project, readyInfluence, readyResources, stateBeforeEntry, tacticalMeters } from './project';
+import { productionCost, project, readyInfluence, readyResources, stateBeforeEntry, suggestUnits, tacticalMeters } from './project';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
@@ -461,5 +462,161 @@ describe('createGame', () => {
     expect(g.opponents).toHaveLength(2);
     expect(g.activePlanId).toBe(g.plans[0].id);
     expect(g.plans[0].rounds).toHaveLength(1);
+  });
+});
+
+describe('ship upgrades in the replay', () => {
+  const real = loadPack(['pok']);
+  const start = (faction: string, entries: Entry[], baseline: UnitId[] = []): Game => {
+    const g = createGame({ expansions: ['pok'], playerCount: 3, faction }, real);
+    g.map = { A: '19', B: '20' };
+    g.upgrades.me = baseline;
+    g.plans[0].rounds = [{ number: 1, strategyCard: null, backupCard: null, entries }];
+    return g;
+  };
+  const go = (g: Game, filter: 'now' | 'forecast' = 'forecast', plan = g.plans[0]) => project(g, plan, filter, real);
+  const flight = (id: string, units: UnitCounts, from = 'A', to = 'B', status: Entry['status'] = 'planned') =>
+    withId(id, entry(tactical({ systemId: to, moves: [{ from, units }] }), 'action', status));
+  const research = (upgrades: UnitId[], status: Entry['status'] = 'planned', type: 'strategic' | 'secondary' = 'strategic') =>
+    entry({ type, upgrades }, 'action', status);
+  const overTwoCarriers = { carrier: 2, infantry: 10 };
+
+  test('two carriers carry 8, and 12 with the baseline upgrade', () => {
+    const units = setup('A', overTwoCarriers);
+    const before = go(start('arborec', [units, flight('m', overTwoCarriers)]));
+    expect(before.warningsByEntry.m.find(w => w.code === 'capacityGroup')?.params).toMatchObject({ load: 10, capacity: 8 });
+    expect(before.warningsByEntry.m.find(w => w.code === 'capacitySystem')?.params).toMatchObject({ load: 10, capacity: 8 });
+    const after = go(start('arborec', [units, flight('m', overTwoCarriers)], ['carrier']));
+    expect(codes(after.warningsByEntry.m)).toEqual([]);
+  });
+
+  test('capacity uses my faction: Sol carriers carry 6, then 8', () => {
+    const units = { carrier: 2, infantry: 14 };
+    const entries = [setup('A', units), flight('m', units)];
+    expect(go(start('sol', entries)).warningsByEntry.m.find(w => w.code === 'capacityGroup')?.params.capacity).toBe(12);
+    expect(go(start('sol', entries, ['carrier'])).warningsByEntry.m.find(w => w.code === 'capacityGroup')).toBeUndefined();
+  });
+
+  test('an entry upgrade counts from that entry on: over capacity before it, fine after it', () => {
+    const g = start('arborec', [
+      setup('A', overTwoCarriers), flight('first', overTwoCarriers), research(['carrier']), flight('second', overTwoCarriers, 'B', 'A'),
+    ]);
+    const { warningsByEntry } = go(g);
+    expect(codes(warningsByEntry.first)).toEqual(['capacityGroup', 'capacitySystem']);
+    expect(codes(warningsByEntry.second)).toEqual([]);
+  });
+
+  test('moving the upgrade before the flight removes the warning', () => {
+    const g = start('arborec', [setup('A', overTwoCarriers), research(['carrier']), flight('first', overTwoCarriers)]);
+    expect(codes(go(g).warningsByEntry.first)).toEqual([]);
+  });
+
+  test('state.upgrades is the baseline plus the entries so far, without repeats; a secondary counts and still costs its token', () => {
+    const second = research(['carrier', 'cruiser'], 'planned', 'secondary');
+    const g = start('arborec', [research(['carrier']), withId('stop', entry({ type: 'pass' })), second], ['fighter']);
+    const { state } = go(g);
+    expect(state.upgrades).toEqual(['fighter', 'carrier', 'cruiser']);
+    expect(state.strategy).toBe(1);
+    expect(stateBeforeEntry(g, g.plans[0], 'stop', real).upgrades).toEqual(['fighter', 'carrier']);
+    expect(g.upgrades.me).toEqual(['fighter']);
+  });
+
+  test('now counts done entries, the forecast also planned ones, a cancelled entry nothing', () => {
+    const g = start('arborec', [
+      setup('A', overTwoCarriers), research(['carrier']), research(['cruiser'], 'done'), research(['fighter'], 'cancelled'),
+      flight('m', overTwoCarriers, 'A', 'B', 'done'),
+    ]);
+    expect(go(g, 'now').state.upgrades).toEqual(['cruiser']);
+    expect(go(g, 'forecast').state.upgrades).toEqual(['carrier', 'cruiser']);
+    expect(codes(go(g, 'now').warningsByEntry.m)).toContain('capacityGroup');
+    expect(codes(go(g, 'forecast').warningsByEntry.m)).toEqual([]);
+  });
+
+  test('a cancelled upgrade changes no capacity', () => {
+    const g = start('arborec', [setup('A', overTwoCarriers), research(['carrier'], 'cancelled'), flight('m', overTwoCarriers)]);
+    expect(codes(go(g).warningsByEntry.m)).toContain('capacityGroup');
+  });
+
+  test('each plan has its own upgrades', () => {
+    const g = start('arborec', [setup('A', overTwoCarriers), research(['carrier']), flight('m', overTwoCarriers)]);
+    g.plans.push({
+      id: 'other', name: 'other',
+      rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [setup('A', overTwoCarriers), flight('m', overTwoCarriers)] }],
+    });
+    expect(codes(go(g).warningsByEntry.m)).toEqual([]);
+    expect(codes(go(g, 'forecast', g.plans[1]).warningsByEntry.m)).toContain('capacityGroup');
+    expect(go(g, 'forecast', g.plans[1]).state.upgrades).toEqual([]);
+  });
+
+  test('upgrades of a later round do not reach back', () => {
+    const g = start('arborec', [setup('A', overTwoCarriers), flight('m', overTwoCarriers)]);
+    g.plans[0].rounds.push({ number: 2, strategyCard: null, backupCard: null, entries: [research(['carrier'])] });
+    expect(codes(go(g).warningsByEntry.m)).toContain('capacityGroup');
+    expect(go(g).state.upgrades).toEqual(['carrier']);
+  });
+
+  describe('fighters', () => {
+    const fighters = (n: number, other: UnitCounts = {}) => ({ carrier: 1, fighter: n, ...other });
+    const fly = (faction: string, units: UnitCounts, baseline: UnitId[] = []) =>
+      go(start(faction, [setup('A', units), flight('m', units)], baseline)).warningsByEntry.m;
+
+    test('Fighter I is cargo: over capacity it warns', () => {
+      expect(codes(fly('arborec', fighters(5)))).toEqual(['capacityGroup', 'capacitySystem']);
+    });
+
+    test('with the upgrade no capacity warning', () => {
+      expect(codes(fly('arborec', fighters(5), ['fighter']))).toEqual([]);
+    });
+
+    test('only fighters past the spare capacity count for the fleet pool', () => {
+      // One carrier and a fleet pool of 3: four fighters ride free, two more fill the pool, the seventh is over it.
+      expect(codes(fly('arborec', fighters(6), ['fighter']))).toEqual([]);
+      const warnings = fly('arborec', fighters(7), ['fighter']);
+      expect(codes(warnings)).toEqual(['fleetPool']);
+      expect(warnings[0].params).toMatchObject({ ships: 4, fleet: 3 });
+    });
+
+    test('ground units take the capacity first, so fewer fighters fit', () => {
+      const warnings = fly('arborec', fighters(5, { infantry: 2 }), ['fighter']);
+      expect(codes(warnings)).toEqual(['fleetPool']);
+      expect(warnings[0].params).toMatchObject({ ships: 4 });
+    });
+
+    test("Naalu's Fighter II follows the same rule, without the upgrade the old one", () => {
+      expect(codes(fly('naalu', fighters(5), ['fighter']))).toEqual([]);
+      expect(codes(fly('naalu', fighters(7), ['fighter']))).toEqual(['fleetPool']);
+      expect(codes(fly('naalu', fighters(5)))).toEqual(['capacityGroup', 'capacitySystem']);
+    });
+
+    test('the rule follows the move value, never the id or the upgrade mark', () => {
+      const own = structuredClone(real);
+      own.factions.arborec.ships = { fighter: { one: { id: 'odd', name: 'Odd', cost: 1, capacity: 0, combat: 9, dice: 1, move: 2 } } };
+      const g = start('arborec', [setup('A', fighters(5)), flight('m', fighters(5))]);
+      expect(codes(project(g, g.plans[0], 'forecast', own).warningsByEntry.m)).toEqual([]);
+    });
+
+    test('the pack-level capacityUsed stays', () => {
+      fly('arborec', fighters(5), ['fighter']);
+      expect(real.units.fighter?.capacityUsed).toBe(1);
+    });
+
+    test('the meters of the picker agree with the warnings', () => {
+      const units = fighters(7, { infantry: 2 });
+      const plain = start('arborec', [setup('A', units), flight('m', units)]);
+      const flightEntry = plain.plans[0].rounds[0].entries[1] as Extract<Entry, { type: 'tactical' }>;
+      const before = stateBeforeEntry(plain, plain.plans[0], 'm', real);
+      expect(tacticalMeters(plain, flightEntry, 'A', before, real)).toMatchObject({ group: { load: 9, capacity: 4 }, ships: 1 });
+      const up = { ...before, upgrades: ['fighter'] as UnitId[] };
+      expect(tacticalMeters(plain, flightEntry, 'A', up, real)).toMatchObject({ group: { load: 2, capacity: 4 }, ships: 6 });
+      const withCarrier = { ...before, upgrades: ['carrier'] as UnitId[] };
+      expect(tacticalMeters(plain, flightEntry, 'A', withCarrier, real).group).toEqual({ load: 9, capacity: 6 });
+    });
+
+    test('the suggestion takes every flying fighter and leaves the room to ground units', () => {
+      const available = { carrier: 1, fighter: 6, infantry: 5 };
+      const g = start('arborec', []);
+      expect(suggestUnits(g, [], available, real)).toEqual({ carrier: 1, fighter: 4 });
+      expect(suggestUnits(g, ['fighter'], available, real)).toEqual({ carrier: 1, fighter: 6, infantry: 4 });
+    });
   });
 });

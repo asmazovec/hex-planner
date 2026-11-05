@@ -42,7 +42,7 @@ export function sourcePools(
 /** The suggested moves from a source: cargo comes from its space area first, then from its planets. */
 export function suggestMoves(game: Game, pack: DataPack, before: GameState, source: string): Move[] {
   const pools = sourcePools(game, pack, before, source);
-  const remaining = suggestUnits(pools.reduce((sum, p) => addUnits(sum, p.available), {} as UnitCounts), pack);
+  const remaining = suggestUnits(game, before.upgrades, pools.reduce((sum, p) => addUnits(sum, p.available), {} as UnitCounts), pack);
   const moves: Move[] = [];
   for (const pool of pools) {
     let units: UnitCounts = {};

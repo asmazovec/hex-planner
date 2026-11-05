@@ -120,3 +120,27 @@ describe('owners of enemy units and planets', () => {
     expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: 5 })).ok).toBe(false);
   });
 });
+
+describe('upgrades in saved games', () => {
+  test('a version 2 file gets empty upgrades', () => {
+    const { upgrades: dropped, ...rest } = sampleGame();
+    void dropped;
+    const result = importGame(JSON.stringify({ ...rest, schemaVersion: 2 }));
+    expect(result).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, upgrades: { me: [], opponents: {} } } });
+  });
+
+  test('a version 1 file goes all the way', () => {
+    const { upgrades: dropped, ...rest } = gameOfSchema1();
+    void dropped;
+    expect(importGame(JSON.stringify(rest))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, upgrades: { me: [], opponents: {} } } });
+  });
+
+  test('upgrades survive a round trip, entries included, and a bad unit is refused', () => {
+    const game = sampleGame();
+    const opponent = game.opponents[0].id;
+    const marked = { ...game, upgrades: { me: ['carrier' as const], opponents: { [opponent]: ['fighter' as const] } } };
+    marked.plans[0].rounds[0].entries[1] = { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic', upgrades: ['cruiser'] };
+    expect(importGame(exportGame(marked))).toEqual({ ok: true, game: marked });
+    expect(importGame(JSON.stringify({ ...game, upgrades: { me: ['spaceship'], opponents: {} } })).ok).toBe(false);
+  });
+});

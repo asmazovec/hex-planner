@@ -45,7 +45,7 @@ test('descriptions follow the language', () => {
   setLanguage('en');
   show('sol');
   expect(screen.getByText('Antimass Deflectors').closest('.tech')!.textContent).toMatch(/asteroid/);
-  expect(screen.getByText('Carrier')).toBeInTheDocument();
+  expect(within(screen.getAllByTestId('ship')[0]).getByText('Carrier')).toBeInTheDocument();
 });
 
 test('a faction that chooses says so and lists the options with descriptions', () => {

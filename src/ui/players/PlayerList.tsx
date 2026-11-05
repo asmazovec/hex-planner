@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
+import type { UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { FactionCard } from '../plan/FactionCard';
 import type { SeatDrag } from './useSeatDrag';
@@ -13,10 +14,12 @@ export interface PlayerListProps {
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
   /** Stands at the end of the heading. */
   action?: ReactNode;
+  /** On the plan screen: my ships in the state the map shows; opponents come from the game. Rows toggle upgrades. */
+  live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
-export function PlayerList({ drag, action }: PlayerListProps) {
+export function PlayerList({ drag, action, live }: PlayerListProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game ?? s.draft);
   const setFaction = useGame(s => s.setFaction);
@@ -24,6 +27,7 @@ export function PlayerList({ drag, action }: PlayerListProps) {
   const setOpponent = useGame(s => s.setOpponent);
   const addOpponent = useGame(s => s.addOpponent);
   const removeOpponent = useGame(s => s.removeOpponent);
+  const toggleUpgrade = useGame(s => s.toggleUpgrade);
   const started = useGame(s => s.game !== null);
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
   const factions = useMemo(
@@ -125,7 +129,16 @@ export function PlayerList({ drag, action }: PlayerListProps) {
               )}
             </div>
             {asked?.kind === 'remove' && asked.opponent === opponent && confirmBar(asked)}
-            {faction && <FactionCard faction={faction} pack={pack} />}
+            {faction && (
+              <FactionCard
+                faction={faction} pack={pack}
+                live={live && {
+                  upgraded: index === 0 ? live.upgraded : game.upgrades.opponents[player.id],
+                  locked: index === 0 ? live.locked : undefined,
+                  onToggle: unit => toggleUpgrade(player.id, unit),
+                }}
+              />
+            )}
           </article>
         );
       })}

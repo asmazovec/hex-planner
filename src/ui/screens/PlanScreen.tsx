@@ -4,12 +4,14 @@ import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
-import type { Entry, EntryBody, Plan } from '../../domain/types';
+import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
+import type { Entry, EntryBody, Plan, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { HexMap, type Arrow } from '../map/HexMap';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
 import { MapStringImport } from '../map/MapStringImport';
 import { TileSheet } from '../map/TileSheet';
+import { UpgradesPanel } from '../map/UpgradesPanel';
 import type { Highlight } from '../map/TileView';
 import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
@@ -83,6 +85,7 @@ export function PlanScreen() {
   const [placing, setPlacing] = useState(false);
   const [marking, setMarking] = useState(false);
   const [showPlayers, setShowPlayers] = useState(false);
+  const [showUpgrades, setShowUpgrades] = useState(false);
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo) ?? plan?.rounds.at(-1);
@@ -191,7 +194,13 @@ export function PlanScreen() {
     }
   };
 
-  const shownState = session || mapMode === 'forecast' ? forecast.state : now.state;
+  const shownFilter = session || mapMode === 'forecast' ? 'forecast' : 'now';
+  const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
+  // A type an entry upgraded and the baseline does not hold cannot be toggled by hand.
+  const lockedUpgrades: Partial<Record<UnitId, number>> = Object.fromEntries(
+    Object.entries(entryUpgradeRounds(upToRound, shownFilter)).filter(([kind]) => !game.upgrades.me.includes(kind as UnitId)),
+  );
+  const upgradeCount = SHIP_KINDS.filter(kind => shownState.upgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   const arrows = new Map<string, Arrow>();
   for (const item of tacticals) {
@@ -240,7 +249,10 @@ export function PlanScreen() {
       <div className="plan-body">
         {showPlayers && (
           <div className="players-panel">
-            <PlayerList action={<button type="button" onClick={() => setShowPlayers(false)}>{t('players.close')}</button>} />
+            <PlayerList
+              action={<button type="button" onClick={() => setShowPlayers(false)}>{t('players.close')}</button>}
+              live={{ upgraded: shownState.upgrades, locked: lockedUpgrades }}
+            />
           </div>
         )}
         <div className="plan-map">
@@ -252,6 +264,9 @@ export function PlanScreen() {
             tools={(
               <div className="map-tools">
                 <button type="button" aria-pressed={showPlayers} onClick={() => setShowPlayers(!showPlayers)}>{t('players.open')}</button>
+                <button type="button" aria-pressed={showUpgrades} onClick={() => setShowUpgrades(!showUpgrades)}>
+                  {upgradeCount > 0 ? `${t('ships.upgrades')} · ${upgradeCount}` : t('ships.upgrades')}
+                </button>
                 <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
                 {building && (
                   <button type="button" aria-pressed={importing} onClick={() => setImporting(!importing)}>{t('mapImport.title')}</button>
@@ -271,6 +286,9 @@ export function PlanScreen() {
           />
           {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
           {hint && <p className="map-hint" role="status">{hint}</p>}
+          {showUpgrades && (
+            <UpgradesPanel game={game} pack={pack} upgraded={shownState.upgrades} locked={lockedUpgrades} onClose={() => setShowUpgrades(false)} />
+          )}
         </div>
         <div className="plan-panel">
           <div className="plan-scroll">

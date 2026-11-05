@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, PlanetTrait, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
@@ -174,7 +174,9 @@ interface SourcePlanet {
 }
 interface SourceUnit {
   id: string; source: string; cost?: number; capacityValue?: number; capacityUsed?: number; isGroundForce?: boolean;
-  combatHitsOn?: number; moveValue?: number;
+  combatHitsOn?: number; moveValue?: number; baseType?: string; name?: string; faction?: string; upgradesFromUnitId?: string;
+  homebrewReplacesID?: string; combatDieCount?: number; sustainDamage?: boolean; afbHitsOn?: number; afbDieCount?: number;
+  bombardHitsOn?: number; bombardDieCount?: number; spaceCannonHitsOn?: number; spaceCannonDieCount?: number;
 }
 interface SourceFaction {
   alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
@@ -304,7 +306,85 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
   return planets;
 }
 
-function buildUnits(root: string): Record<PackId, Partial<Record<UnitId, UnitDef>>> {
+const SHIP_TYPES: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
+/** The official units; the other files of `data/units` are homebrew, and `ds.json` marks its Ghemina carriers as `base`. */
+const SHIP_FILES = ['baseUnits', 'pok', 'te_units', 'keleres'];
+/** Beyond levels I and II, which is all the app has; anything else unexpected fails the build. */
+const EXCLUDED_UNITS: Record<string, string> = {
+  mentak_cruiser3: 'Corsair upgrades from the common Cruiser II: a third level, and Mentak has no cruiser of its own',
+};
+/** The source files the one Keleres flagship under `keleresm`; the three Keleres factions differ only by home tile. */
+const FACTIONS_OF_SOURCE: Record<string, string[]> = { keleresm: ['keleresa', 'keleresm', 'keleresx'] };
+
+function readRoll(hit: number | undefined, dice: number | undefined): ShipStats['barrage'] {
+  return hit === undefined ? undefined : { hit, dice: dice ?? 1 };
+}
+
+function readShip(unit: SourceUnit): ShipStats {
+  if (unit.cost === undefined || unit.name === undefined) throw new Error(`Ship ${unit.id} lacks a cost or a name`);
+  const barrage = readRoll(unit.afbHitsOn, unit.afbDieCount);
+  const bombard = readRoll(unit.bombardHitsOn, unit.bombardDieCount);
+  const cannon = readRoll(unit.spaceCannonHitsOn, unit.spaceCannonDieCount);
+  return {
+    id: unit.id, name: unit.name.trim(), cost: unit.cost, capacity: unit.capacityValue ?? 0, combat: unit.combatHitsOn ?? null,
+    dice: unit.combatDieCount ?? 1, move: unit.moveValue ?? null,
+    ...(unit.sustainDamage ? { sustain: true as const } : {}),
+    ...(barrage ? { barrage } : {}), ...(bombard ? { bombard } : {}), ...(cannon ? { cannon } : {}),
+  };
+}
+
+type ShipTable = Partial<Record<UnitId, ShipLevels>>;
+export interface ShipSelection {
+  generic: ShipTable;
+  factions: Record<string, ShipTable>;
+  excluded: { homebrew: number; nowarsun: number; cavalry: number; otherSource: number; thirdLevel: number };
+}
+
+/** Levels of one owner's ship type. Null when only an excluded third level is there. */
+function readLevels(units: SourceUnit[]): ShipLevels | null {
+  const one = units.filter(unit => !unit.upgradesFromUnitId);
+  if (one.length > 1) throw new Error(`Two level I ships: ${one.map(unit => unit.id).join(', ')}`);
+  const twos = units.filter(unit => {
+    if (!unit.upgradesFromUnitId) return false;
+    if (unit.upgradesFromUnitId !== one[0]?.id) throw new Error(`Ship ${unit.id} upgrades from ${unit.upgradesFromUnitId}, no level I of its owner`);
+    return true;
+  });
+  if (twos.length > 1) throw new Error(`Two level II ships: ${twos.map(unit => unit.id).join(', ')}`);
+  if (one.length === 0) return null;
+  return { one: readShip(one[0]), ...(twos[0] ? { two: readShip(twos[0]) } : {}) };
+}
+
+/** Each ship type with its levels, in the base table and per faction. A faction name that is no pack faction fails the build. */
+export function selectShips(units: SourceUnit[], factionIds: string[]): ShipSelection {
+  const excluded: ShipSelection['excluded'] = { homebrew: 0, nowarsun: 0, cavalry: 0, otherSource: 0, thirdLevel: 0 };
+  const groups = new Map<string, SourceUnit[]>();
+  for (const unit of units) {
+    if (!SHIP_TYPES.includes(unit.baseType as UnitId)) continue;
+    if (!packOfSource(unit.source)) excluded.otherSource += 1;
+    else if (unit.homebrewReplacesID) excluded.homebrew += 1;
+    else if (unit.id === 'nowarsun') excluded.nowarsun += 1;
+    else if (/cavalry/.test(unit.id)) excluded.cavalry += 1;
+    else if (unit.id in EXCLUDED_UNITS) excluded.thirdLevel += 1;
+    else {
+      for (const owner of unit.faction ? FACTIONS_OF_SOURCE[unit.faction] ?? [unit.faction] : ['']) {
+        if (owner && !factionIds.includes(owner)) throw new Error(`Ship ${unit.id} names unknown faction ${unit.faction}`);
+        const key = `${owner}|${unit.baseType}`;
+        groups.set(key, [...(groups.get(key) ?? []), unit]);
+      }
+    }
+  }
+  const generic: ShipTable = {};
+  const factions: Record<string, ShipTable> = Object.fromEntries(factionIds.map(id => [id, {}]));
+  for (const [key, group] of groups) {
+    const [owner, type] = key.split('|');
+    const levels = readLevels(group);
+    if (levels) (owner ? factions[owner] : generic)[type as UnitId] = levels;
+  }
+  for (const id of factionIds) if (!factions[id].flagship) throw new Error(`Faction ${id} has no flagship in the source`);
+  return { generic, factions, excluded };
+}
+
+function buildUnits(root: string, ships: ShipTable): Record<PackId, Partial<Record<UnitId, UnitDef>>> {
   const units = [...readJson<SourceUnit[]>(root, 'data/units/baseUnits.json'), ...readJson<SourceUnit[]>(root, 'data/units/pok.json')];
   const find = (id: string) => {
     const unit = units.find(candidate => candidate.id === id);
@@ -316,10 +396,12 @@ function buildUnits(root: string): Record<PackId, Partial<Record<UnitId, UnitDef
     // The generic War Sun has no capacityUsed in the source; its only faction variant says 1.
     const capacityUsed = unit.capacityUsed ?? (id === 'warsun' ? find('muaat_warsun').capacityUsed : undefined);
     if (unit.cost === undefined || capacityUsed === undefined) throw new Error(`Unit ${id} lacks cost or capacityUsed`);
+    if (SHIP_TYPES.includes(id) && !ships[id]) throw new Error(`Ship type ${id} has no base entry`);
     return {
       id, name: UNIT_NAMES[id], cost: unit.cost, capacity: unit.capacityValue ?? 0, capacityUsed,
       ground: unit.isGroundForce === true, fighter: id === 'fighter',
       combat: unit.combatHitsOn ?? null, move: unit.moveValue ?? null, limit: UNCONFIRMED_LIMIT,
+      ...(ships[id] ? { levels: ships[id] } : {}),
     };
   };
   const base = ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry'] as UnitId[];
@@ -536,10 +618,14 @@ async function main(): Promise<void> {
   checkLaneRotations(laneText);
   const tiles = buildTiles(systems, parseHyperlanes(laneText));
   const planets = buildPlanets(readDir<SourcePlanet>(root, 'planets'), tiles);
-  const units = buildUnits(root);
   const abilityNames = new Map(readDir<SourceAbility[]>(root, 'data/abilities').flat().map(ability => [ability.id, ability.name]));
   const factions = buildFactions(readdirSync(join(root, 'data/factions'))
     .flatMap(name => readJson<SourceFaction[]>(root, `data/factions/${name}`)), tiles, abilityNames);
+  const factionIds = Object.values(factions).flatMap(pack => Object.keys(pack));
+  const ships = selectShips(SHIP_FILES.flatMap(file => readJson<SourceUnit[]>(root, `data/units/${file}.json`)), factionIds);
+  for (const pack of Object.values(factions)) for (const faction of Object.values(pack)) faction.ships = ships.factions[faction.id];
+  const units = buildUnits(root, ships.generic);
+  console.log('Ships excluded:', ships.excluded);
   const technologies = buildTechnologies(readDir<SourceTech[]>(root, 'data/technologies').flat(), factions);
   const templates = buildTemplates(root);
   const cards = buildCards(root);

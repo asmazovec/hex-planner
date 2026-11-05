@@ -39,6 +39,28 @@ export interface TileDef {
   lanes?: [number, number][];
 }
 
+/** A roll of a unit ability: hits on `hit`, with `dice` dice. */
+export interface UnitRoll { hit: number; dice: number; }
+
+/** A ship's numbers at one level, from the source. The properties are shown only and never calculated. */
+export interface ShipStats {
+  /** Source id: the key of the retelling in `shipSummaries`. */
+  id: string;
+  name: string;
+  cost: number;
+  capacity: number;
+  combat: number | null;
+  /** Combat dice. 0 where the source counts them in play (Winnu flagship). */
+  dice: number;
+  move: number | null;
+  sustain?: true;
+  barrage?: UnitRoll;
+  bombard?: UnitRoll;
+  cannon?: UnitRoll;
+}
+
+export interface ShipLevels { one: ShipStats; two?: ShipStats; }
+
 export interface UnitDef {
   id: UnitId;
   name: string;
@@ -55,6 +77,8 @@ export interface UnitDef {
   move: number | null;
   /** Reinforcement limit; null means not confirmed or without a limit. */
   limit: number | null;
+  /** Ships only: the base table's levels; a faction's `ships` entry replaces them. */
+  levels?: ShipLevels;
 }
 
 export interface TechDef { id: string; name: string; type: TechType; }
@@ -74,6 +98,8 @@ export interface FactionDef {
   abilities: string[];
   /** The tile that stands on the map when the home planets lie on an off-map tile. */
   gateTile?: string;
+  /** The faction's own ships: each replaces the base entry of its type. */
+  ships?: Partial<Record<UnitId, ShipLevels>>;
 }
 
 /** `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five players). */
@@ -125,8 +151,8 @@ export interface AdjustmentDelta {
 export type EntryBody =
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment }
-  | { type: 'strategic' }
-  | { type: 'secondary' }
+  | { type: 'strategic'; /** Ships upgraded by this entry, as with research. */ upgrades?: UnitId[] }
+  | { type: 'secondary'; upgrades?: UnitId[] }
   | { type: 'component'; note: string }
   | { type: 'pass' }
   | { type: 'expedition'; sliceId: string | null; payment: Payment }
@@ -165,6 +191,8 @@ export interface Game {
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;
   opponents: Opponent[];
+  /** Set by hand. `me` is the baseline, such as starting technology; entries of a plan add to it. Opponents have no plan. */
+  upgrades: { me: UnitId[]; opponents: Record<string, UnitId[]> };
   /** Slot key to opponent id to that opponent's units. */
   enemyUnits: Record<string, Record<string, UnitCounts>>;
   planetControl: Record<string, 'me' | 'enemy'>;
@@ -191,6 +219,8 @@ export interface GameState {
   fleet: number;
   strategy: number;
   vp: number;
+  /** The baseline plus the upgrades of the entries replayed so far. */
+  upgrades: UnitId[];
 }
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'

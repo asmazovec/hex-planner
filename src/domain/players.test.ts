@@ -299,3 +299,20 @@ test('when my faction changes, its old and new home planets leave the owners', (
   }, 0, 'hacan', pack);
   expect(next.planetOwner).toEqual({ arc: a });
 });
+
+describe('upgrades of players', () => {
+  test('removing an opponent removes their upgrades only', () => {
+    const game = start(4);
+    const [first, second] = game.opponents;
+    const marked = { ...game, upgrades: { me: ['carrier' as const], opponents: { [first.id]: ['cruiser' as const], [second.id]: ['fighter' as const] } } };
+    expect(removePlayer(marked, 1, pack).upgrades).toEqual({ me: ['carrier'], opponents: { [second.id]: ['fighter'] } });
+  });
+
+  test('changing a faction keeps the list', () => {
+    const game = start(4);
+    const opponent = game.opponents[0];
+    const marked = { ...game, upgrades: { me: ['warsun' as const], opponents: { [opponent.id]: ['cruiser' as const] } } };
+    expect(setPlayerFaction(marked, 0, 'arborec', pack).upgrades).toEqual(marked.upgrades);
+    expect(setPlayerFaction(marked, 1, 'muaat', pack).upgrades).toEqual(marked.upgrades);
+  });
+});

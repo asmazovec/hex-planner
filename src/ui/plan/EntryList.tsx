@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UNIT_ORDER } from '../units/unitOrder';
+import { EntryUpgrades } from './EntryUpgrades';
 import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
 import { Stepper } from './Stepper';
@@ -182,6 +183,12 @@ export function EntryList({ game, pack, round, plan, stateBefore, warnings, stat
                       <ul className="warning-list">
                         {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
                       </ul>
+                    )}
+                    {(entry.type === 'strategic' || entry.type === 'secondary') && (
+                      <EntryUpgrades
+                        entryId={entry.id} upgrades={entry.upgrades ?? []} game={game} pack={pack}
+                        before={(stateBefore ? stateBefore(entry.id) : state).upgrades}
+                      />
                     )}
                     {entry.type === 'statusTokens' && (
                       <div className="entry-details">

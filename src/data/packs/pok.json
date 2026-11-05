@@ -1043,7 +1043,21 @@
         "The Tribuni",
         "Council Patronage",
         "Law's Order"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "keleres_flagship",
+            "name": "Artemiris",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "keleresx": {
       "id": "keleresx",
@@ -1061,7 +1075,21 @@
         "The Tribuni",
         "Council Patronage",
         "Law's Order"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "keleres_flagship",
+            "name": "Artemiris",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "keleresa": {
       "id": "keleresa",
@@ -1079,7 +1107,21 @@
         "The Tribuni",
         "Council Patronage",
         "Law's Order"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "keleres_flagship",
+            "name": "Artemiris",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "argent": {
       "id": "argent",
@@ -1104,7 +1146,49 @@
       "abilities": [
         "Zeal",
         "Raid Formation"
-      ]
+      ],
+      "ships": {
+        "destroyer": {
+          "one": {
+            "id": "argent_destroyer",
+            "name": "Strike Wing Alpha I",
+            "cost": 1,
+            "capacity": 1,
+            "combat": 8,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 9,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "argent_destroyer2",
+            "name": "Strike Wing Alpha II",
+            "cost": 1,
+            "capacity": 1,
+            "combat": 7,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 6,
+              "dice": 3
+            }
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "argent_flagship",
+            "name": "Quetzecoatl",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "cabal": {
       "id": "cabal",
@@ -1125,7 +1209,25 @@
         "Devour",
         "Amalgamation",
         "Riftmeld"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "cabal_flagship",
+            "name": "The Terror Between",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 5,
+              "dice": 1
+            }
+          }
+        }
+      }
     },
     "empyrean": {
       "id": "empyrean",
@@ -1145,7 +1247,21 @@
         "Voidborn",
         "Aetherpassage",
         "Dark Whispers"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "empyrean_flagship",
+            "name": "Dynamo",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "mahact": {
       "id": "mahact",
@@ -1167,7 +1283,21 @@
         "Edict",
         "Imperia",
         "Hubris"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "mahact_flagship",
+            "name": "Arvicon Rex",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "nomad": {
       "id": "nomad",
@@ -1187,7 +1317,39 @@
       "abilities": [
         "The Company",
         "Future Sight"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "nomad_flagship",
+            "name": "Memoria I",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "barrage": {
+              "hit": 8,
+              "dice": 3
+            }
+          },
+          "two": {
+            "id": "nomad_flagship2",
+            "name": "Memoria II",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 5,
+            "dice": 2,
+            "move": 2,
+            "sustain": true,
+            "barrage": {
+              "hit": 5,
+              "dice": 3
+            }
+          }
+        }
+      }
     },
     "naaz": {
       "id": "naaz",
@@ -1208,7 +1370,21 @@
       "abilities": [
         "Distant Suns",
         "Fabrication"
-      ]
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "naaz_flagship",
+            "name": "Visz El Vir",
+            "cost": 8,
+            "capacity": 4,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     },
     "titans": {
       "id": "titans",
@@ -1229,7 +1405,42 @@
         "Terragenesis",
         "Awaken",
         "Coalescence"
-      ]
+      ],
+      "ships": {
+        "cruiser": {
+          "one": {
+            "id": "titans_cruiser",
+            "name": "Saturn Engine I",
+            "cost": 2,
+            "capacity": 1,
+            "combat": 7,
+            "dice": 1,
+            "move": 2
+          },
+          "two": {
+            "id": "titans_cruiser2",
+            "name": "Saturn Engine II",
+            "cost": 2,
+            "capacity": 2,
+            "combat": 6,
+            "dice": 1,
+            "move": 3,
+            "sustain": true
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "titans_flagship",
+            "name": "Ouranos",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
     }
   },
   "templates": [

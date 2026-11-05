@@ -1,4 +1,5 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
+import { unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
 } from './types';
@@ -62,35 +63,47 @@ function take(
   return taken;
 }
 
-/** Cargo against ship capacity: only fighters and ground units count as load. */
-function capacity(units: UnitCounts, pack: DataPack): { load: number; capacity: number } {
+/** Whether my fighters move by themselves at this point of the replay: their current stat has a move value. */
+const fightersFly = (game: Game, upgrades: UnitId[], pack: DataPack): boolean =>
+  (unitStats(game.faction, 'fighter', upgrades.includes('fighter'), pack)?.move ?? null) !== null;
+
+/** Cargo against the capacity of my ships at my current levels: only ground units and fighters that do not fly count as load. */
+function capacity(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack): { load: number; capacity: number } {
+  const flying = fightersFly(game, upgrades, pack);
   let load = 0;
   let cap = 0;
   for (const id of unitIds(units)) {
     const def = pack.units[id];
     if (!def) continue;
     const n = units[id] ?? 0;
-    if (def.fighter || def.ground) load += n * def.capacityUsed;
-    else cap += n * def.capacity;
+    if (def.ground || (def.fighter && !flying)) load += n * def.capacityUsed;
+    else if (!def.fighter) cap += n * (unitStats(game.faction, id, upgrades.includes(id), pack)?.capacity ?? 0);
   }
   return { load, capacity: cap };
 }
 
-const shipCount = (units: UnitCounts, pack: DataPack): number =>
-  unitIds(units).reduce((sum, id) => {
+/** Ships for the fleet pool: flying fighters beyond the capacity left after the ground units count as ships. */
+function fleetCount(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack): number {
+  const ships = unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
   }, 0);
+  if (!fightersFly(game, upgrades, pack)) return ships;
+  const { load, capacity: cap } = capacity(game, units, upgrades, pack);
+  return ships + Math.max(0, (units.fighter ?? 0) - Math.max(0, cap - load));
+}
 
-/** All ships, then as much cargo as they carry: fighters first, then mechs, then infantry. */
-export function suggestUnits(available: UnitCounts, pack: DataPack): UnitCounts {
+/** All ships and flying fighters, then as much cargo as they carry: other fighters first, then mechs, then infantry. */
+export function suggestUnits(game: Game, upgrades: UnitId[], available: UnitCounts, pack: DataPack): UnitCounts {
+  const flying = fightersFly(game, upgrades, pack);
   const suggestion: UnitCounts = {};
   for (const id of unitIds(available)) {
     const def = pack.units[id];
-    if (def && !def.fighter && !def.ground) suggestion[id] = available[id];
+    if (def && !def.ground && (!def.fighter || flying)) suggestion[id] = available[id];
   }
-  let room = capacity(suggestion, pack).capacity;
+  let room = capacity(game, suggestion, upgrades, pack).capacity;
   for (const id of ['fighter', 'mech', 'infantry'] as const) {
+    if (id === 'fighter' && flying) continue;
     const size = pack.units[id]?.capacityUsed ?? 1;
     const count = Math.min(available[id] ?? 0, Math.floor(room / size));
     if (count > 0) suggestion[id] = count;
@@ -130,7 +143,7 @@ function initialState(game: Game, pack: DataPack): GameState {
   Object.assign(control, game.planetControl);
   return {
     systems, ground: {}, exhausted: [], control, tokensOnMap: [],
-    tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp,
+    tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp, upgrades: [...game.upgrades.me],
   };
 }
 
@@ -165,8 +178,13 @@ export function tacticalMeters(
 ): { group: { load: number; capacity: number }; ships: number; fleet: number } {
   const state = structuredClone(before);
   const groups = entry.systemId === null ? {} : applyMoves(game, state, entry.systemId, entry, pack, []);
-  const ships = shipCount(state.systems[entry.systemId ?? ''] ?? {}, pack) + shipCount(entry.production, pack);
-  return { group: capacity(groups[source] ?? {}, pack), ships, fleet: before.fleet };
+  const arriving: Record<string, UnitCounts> = { here: { ...state.systems[entry.systemId ?? ''] } };
+  for (const id of unitIds(entry.production)) if (!pack.units[id]?.ground) add(arriving, 'here', { [id]: entry.production[id] });
+  return {
+    group: capacity(game, groups[source] ?? {}, before.upgrades, pack),
+    ships: fleetCount(game, arriving.here, before.upgrades, pack),
+    fleet: before.fleet,
+  };
 }
 
 function applyTactical(
@@ -178,7 +196,7 @@ function applyTactical(
   if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
   const groups = applyMoves(game, state, target, entry, pack, warnings);
   for (const [from, units] of Object.entries(groups)) {
-    const group = capacity(units, pack);
+    const group = capacity(game, units, state.upgrades, pack);
     if (group.load > group.capacity) {
       warnings.push({ code: 'capacityGroup', params: { from, load: group.load, capacity: group.capacity } });
     }
@@ -219,11 +237,11 @@ function applyTactical(
   if (cost > paid) warnings.push({ code: 'shortResources', params: { needed: cost, paid } });
   if (entry.moves.length > 0 || produced.length > 0) {
     const here = state.systems[target] ?? {};
-    const load = capacity(here, pack);
+    const load = capacity(game, here, state.upgrades, pack);
     if (load.load > load.capacity) {
       warnings.push({ code: 'capacitySystem', params: { systemId: target, load: load.load, capacity: load.capacity } });
     }
-    const ships = shipCount(here, pack);
+    const ships = fleetCount(game, here, state.upgrades, pack);
     if (ships > state.fleet) warnings.push({ code: 'fleetPool', params: { systemId: target, ships, fleet: state.fleet } });
   }
 }
@@ -255,6 +273,10 @@ function applyExpedition(
   }
 }
 
+function addUpgrades(state: GameState, upgrades: UnitId[] = []): void {
+  for (const id of upgrades) if (!state.upgrades.includes(id)) state.upgrades.push(id);
+}
+
 function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>): Warning[] {
   const warnings: Warning[] = [];
   switch (entry.type) {
@@ -263,6 +285,7 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       break;
     case 'secondary':
       state.strategy -= 1;
+      addUpgrades(state, entry.upgrades);
       break;
     case 'expedition':
       applyExpedition(game, state, entry, pack, taken, warnings);
@@ -291,6 +314,8 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       break;
     }
     case 'strategic':
+      addUpgrades(state, entry.upgrades);
+      break;
     case 'component':
     case 'pass':
       break;

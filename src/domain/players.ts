@@ -110,7 +110,9 @@ export function removePlayer(game: Game, index: number, pack: DataPack): Game {
   const leaving = players[index];
   if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return game;
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
-  return withPlayers(withoutHoldings(game, leaving.id), rest, pack);
+  const { [leaving.id]: gone, ...opponents } = game.upgrades.opponents;
+  void gone;
+  return withPlayers({ ...withoutHoldings(game, leaving.id), upgrades: { ...game.upgrades, opponents } }, rest, pack);
 }
 
 const homePlanets = (faction: string, pack: DataPack): string[] =>

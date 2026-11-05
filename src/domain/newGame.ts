@@ -27,7 +27,7 @@ export function createGame(
   const planId = makeId('plan');
   return {
     id: makeId('game'),
-    schemaVersion: 2,
+    schemaVersion: 3,
     dataVersion: pack.version,
     expansions: [...input.expansions],
     playerCount: input.playerCount,
@@ -38,6 +38,7 @@ export function createGame(
     vp: 0,
     map,
     opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent'), faction: '', vp: 0, seat: i + 2, color: i + 2 })),
+    upgrades: { me: [], opponents: {} },
     enemyUnits: {},
     planetControl,
     planetOwner: {},

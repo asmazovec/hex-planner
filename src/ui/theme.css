@@ -546,3 +546,49 @@ body.seat-dragging, body.seat-dragging * { cursor: grabbing !important; user-sel
   .players-aside { border-left: 0; border-top: 1px solid var(--border); max-height: 45%; }
   .player-body { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Ship stats on the player cards: one row per ship type. */
+.player-ships { grid-column: 1 / -1; }
+.ship-table { display: grid; gap: 2px; font-size: 13px; }
+.ship-table-head, .ship-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) repeat(4, 74px); column-gap: 7px; align-items: center; }
+.ship-table-head { font-size: var(--font-xs); color: var(--text-dim); text-align: center; }
+.ship-table-head > span:first-child { grid-column: 1 / span 2; }
+.ship-row { width: 100%; padding: 3px 6px; color: var(--text-muted); text-align: left; font: inherit; border: 1px solid transparent; border-radius: var(--radius-s); background: transparent; }
+.ship-row-live { min-height: var(--touch); cursor: pointer; border-color: var(--border); background: var(--surface-2); }
+.ship-row-live:disabled { cursor: default; opacity: 1; background: transparent; }
+.ship-row-live[aria-pressed='true'], .ship-row-live[aria-pressed='true']:disabled { color: var(--text-muted); border-color: var(--gold); background: #2a2618; }
+.ship-row-name b { display: block; color: var(--text); font-weight: 600; }
+.ship-row-name small, .upgrade-body > small { display: block; color: var(--text-dim); font-size: var(--font-xs); }
+small.ship-row-round { color: var(--gold); }
+.ship-row-value { text-align: center; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ship-row-value em, .ship-stat-line em { font-style: normal; font-weight: 700; color: var(--gold); }
+.ship-notes { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 1px; font-size: var(--font-xs); }
+.ship-prop { color: var(--accent); font-weight: 600; }
+.ship-notes small { flex-basis: 100%; font-size: var(--font-xs); color: var(--text-dim); line-height: 1.3; }
+
+/* My ship upgrades: a panel sliding in over the right of the map. */
+.upgrades-panel { position: absolute; inset: 0 0 0 auto; z-index: 6; width: min(388px, 100%); overflow-y: auto; padding: 12px; background: var(--surface); border-left: 1px solid var(--border-strong); box-shadow: var(--shadow); animation: slide-in-right 0.22s var(--ease); scrollbar-width: thin; }
+@keyframes slide-in-right { from { transform: translateX(105%); } to { transform: none; } }
+.upgrades-panel .panel-head { margin-bottom: 8px; }
+.upgrades-panel h2 { margin: 0; font-size: 15px; }
+.upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+.upgrade-card:disabled { cursor: default; opacity: 1; color: var(--text-muted); }
+.upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--gold); background: #2a2618; }
+.upgrade-card .unit-icon { width: 42px; height: 42px; }
+.upgrade-body b { display: block; color: var(--text); font-size: 13.5px; }
+.ship-stat-line { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
+.ship-stat-line > span { min-width: 48px; }
+.ship-stat-line b { display: block; color: var(--text); font-weight: 600; }
+.upgrade-body .ship-notes { display: flex; margin-top: 3px; }
+.upgrade-level { font-weight: 800; font-size: 15px; text-align: center; color: var(--text-dim); }
+.upgrade-card.on .upgrade-level { color: var(--gold); }
+
+/* Ships an entry upgrades. */
+.entry-upgrade-line { align-self: flex-start; min-height: 32px; padding: 2px 10px; margin: 0 0 4px 6px; font-size: var(--font-xs); color: var(--text-dim); background: transparent; border-color: transparent; }
+.entry-upgrades { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 6px 6px; }
+.entry-upgrades button { width: var(--touch); height: var(--touch); padding: 0; display: grid; place-items: center; background: transparent; border-color: var(--border); }
+.entry-upgrades button .unit-icon { width: 28px; height: 28px; }
+.entry-upgrades button[aria-pressed='true'] { background: #2a2618; border-color: var(--gold); }
+.entry-upgrades button[aria-pressed='true'] .unit-icon { color: var(--gold); }
+.entry-upgrades .entry-upgrade-owned:disabled { opacity: 1; border-style: dashed; border-color: var(--gold); }
+.entry-upgrades .entry-upgrade-owned .unit-icon { color: var(--text-dim); }
