@@ -7,10 +7,10 @@ export const PLAYER_COLOURS = ['#7fb2ff', '#e8c56a', '#ea7f76', '#74d09a', '#b89
 
 export const playerColour = (color: number): string => PLAYER_COLOURS[(color - 1 + PLAYER_COLOURS.length) % PLAYER_COLOURS.length];
 
-/** My colour and the colour enemy units are drawn in: the first opponent's. */
-export const tokenColours = (game: Pick<Game, 'color' | 'opponents'>): { me: string; enemy: string } => ({
+/** The colour of every stack owner: `me` and each opponent id. */
+export const tokenColours = (game: Pick<Game, 'color' | 'opponents'>): Record<string, string> => ({
   me: playerColour(game.color),
-  enemy: playerColour(game.opponents[0]?.color ?? game.color + 1),
+  ...Object.fromEntries(game.opponents.map(o => [o.id, playerColour(o.color)])),
 });
 
 const DISC_SHADE = 0.2;

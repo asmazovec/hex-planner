@@ -252,6 +252,30 @@ test('removing an opponent on a filled map asks first, and cancel changes nothin
   expect(useGame.getState().game!.map['1,0']).toBe('30');
 });
 
+test('removing an opponent who has units or planets says so, and only then asks', async () => {
+  startOpen(6);
+  const [first, second] = useGame.getState().game!.opponents.map(o => o.id);
+  useGame.getState().setEnemyUnits('1,0', first, { cruiser: 2 });
+  useGame.getState().setEnemyUnits('0,1', first, { fighter: 1 });
+  useGame.getState().setPlanetControl('arc', first);
+  render(<GameScreen />);
+  await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
+  expect(useGame.getState().game!.playerCount).toBe(6);
+  expect(screen.getByText(/Units on the map: 3, planets: 1/)).toBeInTheDocument();
+  expect(screen.queryByText(/Tiles on the map/)).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [first]: { cruiser: 2 } });
+  await userEvent.click(within(card(3)).getByRole('button', { name: 'Remove opponent' }));
+  expect(useGame.getState().game!.opponents.map(o => o.id)).not.toContain(second);
+  expect(screen.queryByText(/Units on the map/)).toBeNull();
+  await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+  const game = useGame.getState().game!;
+  expect(game.opponents.map(o => o.id)).not.toContain(first);
+  expect(game.enemyUnits).toEqual({});
+  expect(game.planetControl.arc).toBeUndefined();
+});
+
 test('adding on a filled map asks first too; a map with only home tiles does not', async () => {
   startOpen(4);
   render(<GameScreen />);

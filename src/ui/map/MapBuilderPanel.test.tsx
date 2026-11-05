@@ -108,11 +108,11 @@ test('a fixed template slot can be replaced and cleared, and Game.map overrides 
 test('the popover has one Close button, and tile details appear only once the slot has a tile', async () => {
   await tapEmptySlot();
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
-  expect(screen.queryByText('Enemy units')).toBeNull();
+  expect(screen.queryByText('Units of Player 2')).toBeNull();
   await userEvent.type(screen.getByLabelText('Tile number'), '25');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
-  expect(screen.getByText('Enemy units')).toBeVisible();
+  expect(screen.getByText('Units of Player 2')).toBeVisible();
 });
 
 test('a new game with an empty map opens in build mode; a map with tiles does not', async () => {

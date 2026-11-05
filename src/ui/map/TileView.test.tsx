@@ -70,14 +70,25 @@ test('an enemy planet and a free planet are told apart', () => {
   expect(group).toHaveAttribute('data-exhausted', 'false');
 });
 
+test('an enemy planet is ringed in its owner\'s colour and names the owner', () => {
+  const id = pack.tiles['25'].planetIds[0];
+  setup('25', (g, s) => {
+    g.opponents[1].faction = 'hacan'; g.opponents[1].color = 5;
+    s.control[id] = 'enemy'; g.planetOwner[id] = g.opponents[1].id;
+  });
+  const group = screen.getByLabelText(new RegExp(`^${pack.planets[id].name}:`));
+  expect((group.querySelector('.planet-disc') as SVGElement).style.stroke).toBe('var(--player-5)');
+  expect(group.getAttribute('aria-label')).toContain(`enemy (${pack.factions.hacan.name})`);
+});
+
 test('own and enemy units show counts; a single unit shows no number', () => {
   setup('25', (g, s) => {
     s.systems['1,0'] = { carrier: 2, destroyer: 1 };
-    g.enemyUnits['1,0'] = { dreadnought: 3 };
+    g.enemyUnits['1,0'] = { [g.opponents[0].id]: { dreadnought: 3 } };
   });
   expect(screen.getByLabelText('Carrier ×2')).toHaveTextContent('2');
   expect(screen.getByLabelText('Destroyer ×1')).not.toHaveTextContent(/\d/);
-  expect(screen.getByLabelText('Dreadnought ×3 (enemy)')).toHaveTextContent('3');
+  expect(screen.getByLabelText('Dreadnought ×3 (Player 2)')).toHaveTextContent('3');
 });
 
 /** Numbers from a CSS transform such as translate(1px,2px) scale(3). */
@@ -120,30 +131,65 @@ test('a space dock takes the colour of the planet owner, and is mine on a free p
     });
   };
   dockOn('enemy');
-  expect(stackOf('Space dock (enemy)').querySelector('rect')).toHaveAttribute('stroke', '#ea7f76');
+  expect(stackOf('Space dock (Player 2)').querySelector('rect')).toHaveAttribute('stroke', '#ea7f76');
   dockOn('me');
   expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
   dockOn(undefined);
   expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
 });
 
-test('enemy units take the colour of the first opponent', () => {
+test('a space dock on an enemy planet takes the colour of the planet\'s owner and names the faction', () => {
+  const id = pack.tiles['25'].planetIds[0];
+  setup('25', (g, s) => {
+    g.opponents[2].faction = 'hacan'; g.opponents[2].color = 6; g.docks.push(id);
+    s.control[id] = 'enemy'; g.planetOwner[id] = g.opponents[2].id;
+  });
+  expect(stackOf(`Space dock (${pack.factions.hacan.name})`).querySelector('rect')).toHaveAttribute('stroke', '#f0a463');
+});
+
+test('an owner left on a planet that is mine in the plan does not colour its dock', () => {
+  const id = pack.tiles['25'].planetIds[0];
+  setup('25', (g, s) => {
+    g.opponents[2].color = 6; g.docks.push(id);
+    s.control[id] = 'me'; g.planetOwner[id] = g.opponents[2].id;
+  });
+  expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
+});
+
+test('every token takes the colour of its owner, and two opponents of the same type stay separate tokens', () => {
   setup('25', (g, s) => {
     g.color = 1;
-    g.opponents[0].color = 3;
+    g.opponents[0].color = 3; g.opponents[1].color = 5;
+    g.opponents[1].faction = 'hacan';
     s.systems['1,0'] = { carrier: 1 };
-    g.enemyUnits['1,0'] = { cruiser: 1 };
+    g.enemyUnits['1,0'] = { [g.opponents[0].id]: { cruiser: 2 }, [g.opponents[1].id]: { cruiser: 1 } };
   });
   expect(stackOf('Carrier ×1').querySelector('circle')).toHaveAttribute('stroke', '#7fb2ff');
-  expect(stackOf('Cruiser ×1 (enemy)').querySelector('circle')).toHaveAttribute('stroke', '#ea7f76');
+  expect(stackOf('Cruiser ×2 (Player 2)').querySelector('circle')).toHaveAttribute('stroke', '#ea7f76');
+  expect(stackOf(`Cruiser ×1 (${pack.factions.hacan.name})`).querySelector('circle')).toHaveAttribute('stroke', '#b89bf5');
+  expect(document.querySelectorAll('[data-stack]')).toHaveLength(3);
+});
+
+test('opponents stand in seat order, not list order', () => {
+  const xOf = (label: string) => placed(stackOf(label)).x;
+  setup('39', (g) => {
+    g.opponents[0].seat = 3; g.opponents[1].seat = 2;
+    g.enemyUnits['1,0'] = { [g.opponents[0].id]: { cruiser: 1 }, [g.opponents[1].id]: { carrier: 1 } };
+  });
+  expect(xOf('Carrier ×1 (Player 3)')).toBeLessThan(xOf('Cruiser ×1 (Player 2)'));
+});
+
+test('units under an id nobody has are not drawn', () => {
+  setup('25', (g) => { g.enemyUnits['1,0'] = { gone: { cruiser: 1 } }; });
+  expect(document.querySelectorAll('[data-stack]')).toHaveLength(0);
 });
 
 test('enemy ground units stand on the arc of the first planet, or on the comb without planets', () => {
-  setup('26', (g) => { g.enemyUnits['1,0'] = { infantry: 2 }; });
-  expect(stackOf('Infantry ×2 (enemy)')).toHaveAttribute('data-planet', '0');
+  setup('26', (g) => { g.enemyUnits['1,0'] = { [g.opponents[0].id]: { infantry: 2 } }; });
+  expect(stackOf('Infantry ×2 (Player 2)')).toHaveAttribute('data-planet', '0');
   cleanup();
-  setup('39', (g) => { g.enemyUnits['1,0'] = { mech: 1 }; });
-  expect(stackOf('Mech ×1 (enemy)')).not.toHaveAttribute('data-planet');
+  setup('39', (g) => { g.enemyUnits['1,0'] = { [g.opponents[0].id]: { mech: 1 } }; });
+  expect(stackOf('Mech ×1 (Player 2)')).not.toHaveAttribute('data-planet');
 });
 
 test('Thunder\'s Edge beside three planets draws all four instead of breaking the map', () => {
@@ -160,7 +206,7 @@ test('Thunder\'s Edge beside three planets draws all four instead of breaking th
 
 test('with a command token, an ingress and a seat badge no token stands on them', () => {
   const stacks = { flagship: 1, warsun: 1, dreadnought: 1, carrier: 1, cruiser: 1, destroyer: 1, fighter: 1 };
-  setup('25', (g, s) => { s.tokensOnMap.push('1,0'); s.systems['1,0'] = stacks; g.enemyUnits['1,0'] = stacks; }, { ingress: true, seat: { number: 2, color: 2 } });
+  setup('25', (g, s) => { s.tokensOnMap.push('1,0'); s.systems['1,0'] = stacks; g.enemyUnits['1,0'] = { [g.opponents[0].id]: stacks }; }, { ingress: true, seat: { number: 2, color: 2 } });
   const centres = ['Command token', 'Ingress token', 'Seat 2'].map(name => {
     const [x, y] = screen.getByLabelText(name).getAttribute('transform')!.match(/-?[\d.]+/g)!.map(Number);
     return { name, x, y };
@@ -176,10 +222,10 @@ test('a command token only takes room while it is drawn', () => {
   const units = { carrier: 1, cruiser: 1, destroyer: 1, fighter: 1, flagship: 1, dreadnought: 1, warsun: 1 };
   const enemy = { carrier: 1 };
   const positions = () => [...document.querySelectorAll('[data-stack]')].map(n => (n as SVGElement).style.transform);
-  setup('25', (g, s) => { s.systems['1,0'] = units; g.enemyUnits['1,0'] = enemy; });
+  setup('25', (g, s) => { s.systems['1,0'] = units; g.enemyUnits['1,0'] = { [g.opponents[0].id]: enemy }; });
   const without = positions();
   cleanup();
-  setup('25', (g, s) => { s.systems['1,0'] = units; g.enemyUnits['1,0'] = enemy; s.tokensOnMap.push('1,0'); });
+  setup('25', (g, s) => { s.systems['1,0'] = units; g.enemyUnits['1,0'] = { [g.opponents[0].id]: enemy }; s.tokensOnMap.push('1,0'); });
   expect(positions()).not.toEqual(without);
 });
 
@@ -330,10 +376,22 @@ test('the sheet edits dock, control and enemy units', async () => {
   render(<TileSheet slotKey="1,0" pack={pack} game={game} state={state} />);
   await userEvent.click(screen.getByRole('checkbox', { name: 'Space dock' }));
   expect(useGame.getState().game!.docks).toContain(planetId);
-  await userEvent.click(within(screen.getByRole('group', { name: `Control of ${planet.name}` })).getByRole('button', { name: 'Enemy' }));
+  const [first, second] = game.opponents.map(o => o.id);
+  const control = within(screen.getByRole('group', { name: `Control of ${planet.name}` }));
+  expect(control.getAllByRole('button').map(b => b.textContent)).toEqual(['Mine', 'Player 2', 'Player 3', 'Player 4', 'Player 5', 'Player 6', 'None']);
+  await userEvent.click(control.getByRole('button', { name: 'Player 3' }));
   expect(useGame.getState().game!.planetControl[planetId]).toBe('enemy');
-  await userEvent.click(screen.getByRole('button', { name: 'Add one Cruiser' }));
-  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ cruiser: 1 });
+  expect(useGame.getState().game!.planetOwner[planetId]).toBe(second);
+  await userEvent.click(within(screen.getByRole('group', { name: 'Units of Player 3' })).getByRole('button', { name: 'Add one Cruiser' }));
+  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [second]: { cruiser: 1 } });
+  cleanup();
+  const live = useGame.getState().game!;
+  render(<TileSheet slotKey="1,0" pack={pack} game={live} state={{ ...state, control: { [planetId]: 'enemy' } }} />);
+  const shown = within(screen.getByRole('group', { name: `Control of ${planet.name}` }));
+  expect(shown.getByRole('button', { name: 'Player 3' })).toHaveAttribute('aria-pressed', 'true');
+  expect(shown.getByRole('button', { name: 'Player 2' })).toHaveAttribute('aria-pressed', 'false');
+  await userEvent.click(within(screen.getByRole('group', { name: 'Units of Player 2' })).getByRole('button', { name: 'Add one Cruiser' }));
+  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [second]: { cruiser: 1 }, [first]: { cruiser: 1 } });
 });
 
 test('the tile number stands small in the top-left corner, clear of planets and markers', () => {
@@ -406,7 +464,7 @@ test('the sheet and the map name units in the interface language', () => {
   game.map['1,0'] = '25';
   const state = { ...emptyState(), systems: { '1,0': { warsun: 1 } } };
   render(<TileSheet slotKey="1,0" pack={pack} game={game} state={state} />);
-  expect(screen.getByText('Солнце войны')).toBeVisible();
+  expect(screen.getAllByText('Солнце войны')[0]).toBeVisible();
   expect(screen.queryByText('War Sun')).toBeNull();
   render(<svg><TileView slotKey="1,0" pack={pack} game={game} state={state} /></svg>);
   expect(screen.getByRole('img', { name: 'Солнце войны ×1' })).toBeInTheDocument();

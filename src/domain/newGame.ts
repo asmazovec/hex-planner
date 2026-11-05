@@ -4,7 +4,7 @@ import type { DataPack, ExpansionId, Game, MapLayout } from './types';
 
 let counter = 0;
 /** No browser or node API: an id only has to be unique within one user's local games. */
-function makeId(prefix: string): string {
+export function makeId(prefix: string): string {
   counter += 1;
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}${counter}`;
 }
@@ -27,7 +27,7 @@ export function createGame(
   const planId = makeId('plan');
   return {
     id: makeId('game'),
-    schemaVersion: 1,
+    schemaVersion: 2,
     dataVersion: pack.version,
     expansions: [...input.expansions],
     playerCount: input.playerCount,
@@ -37,9 +37,10 @@ export function createGame(
     color: 1,
     vp: 0,
     map,
-    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ faction: '', vp: 0, seat: i + 2, color: i + 2 })),
+    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent'), faction: '', vp: 0, seat: i + 2, color: i + 2 })),
     enemyUnits: {},
     planetControl,
+    planetOwner: {},
     docks: pack.tiles[faction?.homeTile ?? '']?.planetIds.slice(0, 1) ?? [],
     expedition: { slices: {}, thundersEdgeSystem: null },
     fracture: { active: false, ingress: [], seat: null },

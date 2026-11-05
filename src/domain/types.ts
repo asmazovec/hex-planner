@@ -138,6 +138,15 @@ export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus 
 export interface Round { number: number; strategyCard: number | null; backupCard: number | null; entries: Entry[]; }
 export interface Plan { id: string; name: string; rounds: Round[]; }
 
+export interface Opponent {
+  /** Stable: survives seat swaps, faction changes and the removal of other opponents. */
+  id: string;
+  faction: string;
+  vp: number;
+  seat: number;
+  color: number;
+}
+
 export interface Game {
   id: string;
   schemaVersion: number;
@@ -155,9 +164,12 @@ export interface Game {
   vp: number;
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;
-  opponents: { faction: string; vp: number; seat: number; color: number }[];
-  enemyUnits: Record<string, UnitCounts>;
+  opponents: Opponent[];
+  /** Slot key to opponent id to that opponent's units. */
+  enemyUnits: Record<string, Record<string, UnitCounts>>;
   planetControl: Record<string, 'me' | 'enemy'>;
+  /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
+  planetOwner: Record<string, string>;
   /** Ids of planets that have a space dock. */
   docks: string[];
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };

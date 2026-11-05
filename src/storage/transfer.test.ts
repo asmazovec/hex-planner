@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { CURRENT_SCHEMA, exportGame, importGame, migrate } from './transfer';
-import { sampleGame } from './fixture';
+import { gameOfSchema1, sampleGame } from './fixture';
 
 const game = sampleGame();
 
@@ -31,18 +31,18 @@ describe('схема', () => {
 
   test('неизвестный юнит и отрицательное число отклоняются', () => {
     const bad = structuredClone(game);
-    bad.enemyUnits = { '1,0': { spaceship: 1 } as never };
+    bad.enemyUnits = { '1,0': { o: { spaceship: 1 } as never } };
     expect(importGame(JSON.stringify(bad)).ok).toBe(false);
     const neg = structuredClone(game);
-    neg.enemyUnits = { '1,0': { fighter: -1 } };
+    neg.enemyUnits = { '1,0': { o: { fighter: -1 } } };
     expect(importGame(JSON.stringify(neg)).ok).toBe(false);
   });
 });
 
 test('миграция применяется к старой схеме', () => {
-  const old = { ...JSON.parse(exportGame(game)), schemaVersion: 0 };
+  const old = { ...gameOfSchema1(), schemaVersion: 0 };
   expect(migrate(old)).toMatchObject({ schemaVersion: CURRENT_SCHEMA });
-  expect(importGame(JSON.stringify(old))).toEqual({ ok: true, game });
+  expect(importGame(JSON.stringify(old))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA } });
 });
 
 describe('раскладка карты', () => {
@@ -69,10 +69,54 @@ test('seats, colours and points survive export and import', () => {
 });
 
 test('a file from before seats gets them in list order', () => {
-  const { seat, color, vp, opponents, ...rest } = sampleGame();
+  const { seat, color, vp, opponents, ...rest } = gameOfSchema1();
   void seat; void color; void vp;
-  const old = { ...rest, opponents: opponents.map(({ faction, vp: points }) => ({ faction, vp: points })) };
+  const old = { ...rest, opponents: (opponents as { faction: string; vp: number }[]).map(({ faction, vp: points }) => ({ faction, vp: points })) };
   const result = importGame(JSON.stringify(old));
   expect(result.ok && [result.game.seat, result.game.color, result.game.vp]).toEqual([1, 1, 0]);
   expect(result.ok && result.game.opponents.map(o => [o.seat, o.color])).toEqual([[2, 2], [3, 3], [4, 4]]);
+});
+
+describe('owners of enemy units and planets', () => {
+  const imported = (file: unknown) => {
+    const result = importGame(JSON.stringify(file));
+    if (!result.ok) throw new Error(result.reason);
+    return result.game;
+  };
+
+  test('a new game is written at the current schema', () => {
+    expect(sampleGame().schemaVersion).toBe(CURRENT_SCHEMA);
+  });
+
+  test('a version 1 file: opponents get ids, old units and enemy planets go to the first opponent', () => {
+    const { opponents, enemyUnits, planetControl, planetOwner, schemaVersion } = imported(gameOfSchema1());
+    expect(schemaVersion).toBe(CURRENT_SCHEMA);
+    const ids = opponents.map(o => o.id);
+    expect(new Set(ids).size).toBe(3);
+    expect(ids.every(id => id.length > 0)).toBe(true);
+    expect(enemyUnits).toEqual({ '1,0': { [ids[0]]: { dreadnought: 2 } }, '0,1': { [ids[0]]: { fighter: 3 } } });
+    expect(planetControl).toEqual({ jord: 'me', arc: 'enemy', lazar: 'enemy' });
+    expect(planetOwner).toEqual({ arc: ids[0], lazar: ids[0] });
+  });
+
+  test('the ids come out the same every time, because a migrated game is only saved after its next edit', () => {
+    expect(imported(gameOfSchema1()).opponents).toEqual(imported(gameOfSchema1()).opponents);
+  });
+
+  test('a version 1 game without opponents drops its enemy units', () => {
+    const game = imported({ ...gameOfSchema1(), opponents: [] });
+    expect(game.enemyUnits).toEqual({});
+    expect(game.planetOwner).toEqual({});
+  });
+
+  test('a current file is left alone by the migration', () => {
+    const owned = { ...game, planetOwner: { arc: game.opponents[1].id }, planetControl: { arc: 'enemy' as const } };
+    expect(importGame(exportGame(owned))).toEqual({ ok: true, game: owned });
+  });
+
+  test('a version 1 file with a bad unit is still refused after the move', () => {
+    expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: { '1,0': { spaceship: 1 } } })).ok).toBe(false);
+    expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: { '1,0': { fighter: -1 } } })).ok).toBe(false);
+    expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: 5 })).ok).toBe(false);
+  });
 });

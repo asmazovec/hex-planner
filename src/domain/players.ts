@@ -1,16 +1,50 @@
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
-import { createGame, slotKeyOf } from './newGame';
-import type { DataPack, ExpansionId, Game, MapLayout } from './types';
+import { createGame, makeId, slotKeyOf } from './newGame';
+import type { DataPack, ExpansionId, Game, MapLayout, Opponent } from './types';
 
-export interface Player { faction: string; vp: number; seat: number; color: number; }
+/** An opponent, or me under the id `me`. */
+export type Player = Opponent;
 
 export const MIN_PLAYERS = 3;
 const COLORS = 8;
 
 /** Everyone in list order: my faction first. A player's number is the position in this list plus one. */
 export const playersOf = (game: Game): Player[] => [
-  { faction: game.faction, vp: game.vp, seat: game.seat, color: game.color }, ...game.opponents,
+  { id: 'me', faction: game.faction, vp: game.vp, seat: game.seat, color: game.color }, ...game.opponents,
 ];
+
+export const opponentsBySeat = (game: Pick<Game, 'opponents'>): Opponent[] => [...game.opponents].sort((a, b) => a.seat - b.seat);
+
+/** The opponent an enemy planet belongs to: its owner, or the first opponent when it has none. */
+export const planetHolder = (game: Pick<Game, 'opponents' | 'planetOwner'>, planetId: string): string | undefined =>
+  game.opponents.find(o => o.id === game.planetOwner[planetId])?.id ?? game.opponents[0]?.id;
+
+const planetsHeldBy = (game: Game, opponentId: string): string[] =>
+  Object.keys(game.planetControl).filter(id => game.planetControl[id] === 'enemy' && planetHolder(game, id) === opponentId);
+
+/** What an opponent has on the map: units across all systems and enemy planets. */
+export function opponentHoldings(game: Game, opponentId: string): { units: number; planets: number } {
+  const units = Object.values(game.enemyUnits)
+    .flatMap(byOwner => Object.values(byOwner[opponentId] ?? {}))
+    .reduce<number>((sum, n) => sum + (n ?? 0), 0);
+  return { units, planets: planetsHeldBy(game, opponentId).length };
+}
+
+/** Takes an opponent off the map: their units and docks go, and their planets become free. */
+function withoutHoldings(game: Game, opponentId: string): Game {
+  const planets = planetsHeldBy(game, opponentId);
+  const enemyUnits = Object.fromEntries(Object.entries(game.enemyUnits).flatMap(([slot, byOwner]) => {
+    const rest = Object.fromEntries(Object.entries(byOwner).filter(([owner]) => owner !== opponentId));
+    return Object.keys(rest).length > 0 ? [[slot, rest]] : [];
+  }));
+  return {
+    ...game,
+    enemyUnits,
+    planetControl: Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !planets.includes(id))),
+    planetOwner: Object.fromEntries(Object.entries(game.planetOwner).filter(([id, owner]) => owner !== opponentId && !planets.includes(id))),
+    docks: game.docks.filter(id => !planets.includes(id)),
+  };
+}
 
 /** The most players the map templates of the pack allow. */
 export const maxPlayers = (pack: DataPack): number => Math.max(MIN_PLAYERS, ...pack.templates.map(t => t.playerCount));
@@ -67,16 +101,16 @@ export function addPlayer(game: Game, pack: DataPack): Game {
   if (players.length >= maxPlayers(pack)) return game;
   const used = players.map(p => p.color);
   const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
-  return withPlayers(game, [...players, { faction: '', vp: 0, seat: players.length + 1, color }], pack);
+  return withPlayers(game, [...players, { id: makeId('opponent'), faction: '', vp: 0, seat: players.length + 1, color }], pack);
 }
 
-/** Removes a player by list position; later seats shift down. My faction (position 0) stays, and so do the last three players. */
+/** Removes a player and what they hold on the map by list position; later seats shift down. My faction (position 0) stays, and so do the last three players. */
 export function removePlayer(game: Game, index: number, pack: DataPack): Game {
   const players = playersOf(game);
   const leaving = players[index];
   if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return game;
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
-  return withPlayers(game, rest, pack);
+  return withPlayers(withoutHoldings(game, leaving.id), rest, pack);
 }
 
 const homePlanets = (faction: string, pack: DataPack): string[] =>
@@ -92,7 +126,8 @@ export function setPlayerFaction(game: Game, index: number, faction: string, pac
   const fresh = homePlanets(faction, pack);
   const planetControl = Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !old.includes(id)));
   for (const id of fresh) planetControl[id] = 'me';
-  return { ...next, planetControl, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)] };
+  const planetOwner = Object.fromEntries(Object.entries(game.planetOwner).filter(([id]) => !old.includes(id) && !fresh.includes(id)));
+  return { ...next, planetControl, planetOwner, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)] };
 }
 
 export function setPlayerVp(game: Game, index: number, vp: number): Game {

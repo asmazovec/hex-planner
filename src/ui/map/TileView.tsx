@@ -2,6 +2,7 @@ import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
+import { opponentsBySeat, planetHolder } from '../../domain/players';
 import { rotateLanes } from '../../domain/lanes';
 import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
@@ -9,6 +10,7 @@ import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { hexPoints, hexToPixel } from './geometry';
+import { opponentName } from './opponentName';
 
 export type Highlight = 'valid' | 'dim' | 'active';
 
@@ -140,22 +142,27 @@ export function TileView({
         : tile.wormholes.length > 0 ? t('map.wormhole') : tile.kind === 'system' ? t('map.emptySystem') : null;
 
   const stackLabel = ({ kind, count, owner }: PlacedStack): string => {
-    if (kind === 'spacedock') return owner === 'enemy' ? `${t('map.spaceDock')} (${t('map.enemy')})` : t('map.spaceDock');
-    return `${t(`unit.${kind}`)} ×${count}${owner === 'enemy' ? ` (${t('map.enemy')})` : ''}`;
+    const whose = owner === 'me' ? '' : ` (${opponentName(game, pack, owner, t)})`;
+    return kind === 'spacedock' ? `${t('map.spaceDock')}${whose}` : `${t(`unit.${kind}`)} ×${count}${whose}`;
   };
   const colours = tokenColours(game);
+  const seated = opponentsBySeat(game);
+  /** The opponent a planet belongs to in the state shown; undefined when it is mine or free. */
+  const holderOf = (planetId: string) => (state.control[planetId] === 'enemy' ? planetHolder(game, planetId) : undefined);
 
   const space: SpaceStack[] = [];
   const ground: GroundStack[] = [];
   for (const { unit, count } of unitsOf(state.systems[slotKey])) space.push({ kind: unit, owner: 'me', count });
-  for (const { unit, count } of unitsOf(game.enemyUnits[slotKey])) {
-    // Enemy ground units have no planet of their own in the game data: they stand on the first one.
-    if (unit === 'infantry' || unit === 'mech') ground.push({ kind: unit, owner: 'enemy', count, planet: 0 });
-    else space.push({ kind: unit, owner: 'enemy', count });
+  for (const { id: owner } of seated) {
+    for (const { unit, count } of unitsOf(game.enemyUnits[slotKey]?.[owner])) {
+      // Enemy ground units have no planet of their own in the game data: they stand on the first one.
+      if (unit === 'infantry' || unit === 'mech') ground.push({ kind: unit, owner, count, planet: 0 });
+      else space.push({ kind: unit, owner, count });
+    }
   }
   planets.forEach((planet, i) => {
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
-    if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: state.control[planet.id] === 'enemy' ? 'enemy' : 'me', count: 1, planet: i });
+    if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
   });
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
@@ -163,7 +170,7 @@ export function TileView({
   if (hasCommandToken) obstacles.push(COMMAND_SPOT);
   if (ingress) obstacles.push({ x: INGRESS_SPOT.x, y: INGRESS_SPOT.y, r: INGRESS_RADIUS });
   if (tile && seat) obstacles.push({ x: seatX, y: SEAT_Y, r: SEAT_RADIUS });
-  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles });
+  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles, opponents: seated.map(o => o.id) });
 
   const label = fracture ? t('map.fractureTile', { n: fracture.index + 1 }) : unknown
     ? t('map.unknownTile', { id: tileId })
@@ -196,11 +203,13 @@ export function TileView({
       {planets.map((planet, i) => {
         const spot = layout.planets[i];
         const control = state.control[planet.id];
+        const holder = holderOf(planet.id);
+        const holderColor = game.opponents.find(o => o.id === holder)?.color;
         const exhausted = state.exhausted.includes(planet.id);
         const parts = [`${planet.name}: ${planet.resources}/${planet.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (planet.legendary) parts.push(t('map.legendary'));
-        if (control) parts.push(t(`map.control.${control}`));
+        if (control) parts.push(`${t(`map.control.${control}`)}${holder ? ` (${opponentName(game, pack, holder, t)})` : ''}`);
         if (exhausted) parts.push(t('map.exhausted'));
         return (
           <g
@@ -208,7 +217,10 @@ export function TileView({
             data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}
             className={`tk planet${exhausted ? ' planet-exhausted' : ''}`}
           >
-            <circle r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`} />
+            <circle
+              r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`}
+              style={holderColor ? { stroke: `var(--player-${holderColor})` } : undefined}
+            />
             {(planet.traits ?? []).slice(0, 2).map((trait, n, shown) => (
               <path
                 key={trait} d={shown.length === 1 ? TINT_PATHS.whole : n === 0 ? TINT_PATHS.left : TINT_PATHS.right}
@@ -251,7 +263,7 @@ export function TileView({
         );
       })}
 
-      <TokenLayer items={layout.items} colourOf={item => (item.owner === 'me' ? colours.me : colours.enemy)} labelOf={stackLabel} />
+      <TokenLayer items={layout.items} colourOf={item => colours[item.owner]} labelOf={stackLabel} />
 
       {tile && (
         <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">

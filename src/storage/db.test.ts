@@ -1,8 +1,9 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { deleteGame, listGames, loadGame, requestPersistence, saveGame } from './db';
-import { exportGame, importGame } from './transfer';
-import { sampleGame } from './fixture';
+import type { Game } from '../domain/types';
+import { CURRENT_SCHEMA, exportGame, importGame } from './transfer';
+import { gameOfSchema1, sampleGame } from './fixture';
 
 beforeEach(async () => {
   for (const g of await listGames()) await deleteGame(g.id);
@@ -89,12 +90,32 @@ test('после закрытия соединения браузером баз
 });
 
 test('a game saved before seats opens with seats in list order', async () => {
-  const game = sampleGame();
-  const old: Record<string, unknown> = { ...game, id: 'before-seats', opponents: game.opponents.map(({ faction, vp }) => ({ faction, vp })) };
+  const v1 = gameOfSchema1();
+  const old: Record<string, unknown> = { ...v1, id: 'before-seats', opponents: (v1.opponents as { faction: string; vp: number }[]).map(({ faction, vp }) => ({ faction, vp })) };
   for (const field of ['seat', 'color', 'vp']) delete old[field];
-  await saveGame(old as unknown as typeof game);
+  await saveGame(old as unknown as Game);
   const loaded = await loadGame('before-seats');
   expect([loaded!.seat, loaded!.color, loaded!.vp]).toEqual([1, 1, 0]);
   expect(loaded!.opponents.map(o => o.seat)).toEqual([2, 3, 4]);
   await deleteGame('before-seats');
+});
+
+test('a game saved at schema 1 opens with owners: its units and enemy planets belong to the first opponent', async () => {
+  await saveGame({ ...gameOfSchema1(), id: 'before-owners' } as unknown as Game);
+  const first = await loadGame('before-owners');
+  const again = await loadGame('before-owners');
+  expect(first!.schemaVersion).toBe(CURRENT_SCHEMA);
+  const id = first!.opponents[0].id;
+  expect(first!.enemyUnits).toEqual({ '1,0': { [id]: { dreadnought: 2 } }, '0,1': { [id]: { fighter: 3 } } });
+  expect(first!.planetOwner).toEqual({ arc: id, lazar: id });
+  expect(again!.opponents.map(o => o.id)).toEqual(first!.opponents.map(o => o.id));
+  await deleteGame('before-owners');
+});
+
+test('a game saved at the current schema opens unchanged, owners included', async () => {
+  const game = sampleGame();
+  const owned = { ...game, planetControl: { arc: 'enemy' as const }, planetOwner: { arc: game.opponents[2].id } };
+  await saveGame(owned);
+  expect(await loadGame(game.id)).toEqual(owned);
+  await deleteGame(game.id);
 });

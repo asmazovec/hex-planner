@@ -6,7 +6,8 @@ import type { UnitId } from './types';
  */
 
 export type TokenKind = UnitId | 'pds' | 'spacedock';
-export type StackOwner = 'me' | 'enemy';
+/** `me` or an opponent id. */
+export type StackOwner = string;
 
 export interface SpaceStack { kind: TokenKind; owner: StackOwner; count: number }
 export interface GroundStack extends SpaceStack { /** Index of the planet; wraps around the planets of the tile. */ planet: number }
@@ -18,6 +19,8 @@ export interface HexLayoutInput {
   planets: number;
   ground: GroundStack[];
   space: SpaceStack[];
+  /** Opponent ids in seat order. Any other owner follows them in order of appearance. */
+  opponents?: string[];
   /** Markers drawn on this tile: the command token, the ingress, the seat badge. */
   obstacles?: LayoutObstacle[];
 }
@@ -84,6 +87,8 @@ const groundSize = (size: number) => Math.min(size * 0.92, GROUND_LARGEST);
 
 const SIDES: [number, number][] = [[0, -1], [0, 1], [-0.866, -0.5], [0.866, -0.5], [-0.866, 0.5], [0.866, 0.5]];
 const COMB_CENTRE_Y = 1;
+/** Distance between neighbouring cells of the comb, in token sizes. */
+const COMB_SPACING = 1.4;
 /** Arc centres to try, in degrees: straight down first. */
 const ARC_CENTRES = [90, 135, 45, 180, 0, 225, 315, 270];
 
@@ -101,15 +106,19 @@ function planetsAt(count: number, size: number): Circle[] {
   return (PLANETS[count] ?? ringOfPlanets(count)).map(p => ({ x: p.x, y: p.y, r: p.r * k }));
 }
 
-/** The stacks of each planet on an arc around it, own from one end and enemy from the other. Null when they do not fit. */
-function placeGround(stacks: GroundStack[], planets: Circle[], size: number, obstacles: Circle[]): { stack: GroundStack; x: number; y: number }[] | null {
+/** The opponents among the stacks, in the order they stand on a tile. */
+const opponentOrder = (input: HexLayoutInput, stacks: SpaceStack[]): StackOwner[] =>
+  [...new Set([...(input.opponents ?? []), ...stacks.map(s => s.owner)])].filter(owner => owner !== 'me');
+
+/** The stacks of each planet on an arc around it, own from one end, then each opponent. Null when they do not fit. */
+function placeGround(stacks: GroundStack[], opponents: StackOwner[], planets: Circle[], size: number, obstacles: Circle[]): { stack: GroundStack; x: number; y: number }[] | null {
   const r = size * 0.54;
   const out: { stack: GroundStack; x: number; y: number }[] = [];
   for (let i = 0; i < planets.length; i += 1) {
     const planet = planets[i];
     const own = stacks.filter(s => s.planet === i && s.owner === 'me').sort((a, b) => rank(a) - rank(b));
-    const enemy = stacks.filter(s => s.planet === i && s.owner === 'enemy').sort((a, b) => rank(b) - rank(a));
-    const arc = [...own, ...enemy];
+    const others = opponents.flatMap(owner => stacks.filter(s => s.planet === i && s.owner === owner).sort((a, b) => rank(b) - rank(a)));
+    const arc = [...own, ...others];
     if (arc.length === 0) continue;
     const radius = planet.r + r + 1;
     const step = (2 * r * 1.05) / radius;
@@ -163,7 +172,7 @@ function mirroredPick<T extends Point>(cells: T[], count: number): T[] | null {
 /** Honeycomb cells for ships, chosen by the shape of the hex so that all six sides stick out equally. */
 function comb(count: number, size: number, obstacles: Circle[], insistOnMirror: boolean): Point[] | null {
   if (count === 0) return [];
-  const d = size * 1.4;
+  const d = size * COMB_SPACING;
   const h = d * 0.866;
   const margin = size * 0.3;
   const rowOffsets: number[] = [];
@@ -200,22 +209,57 @@ function comb(count: number, size: number, obstacles: Circle[], insistOnMirror: 
 
 const byRow = (a: Point, b: Point) => a.y - b.y || a.x - b.x;
 
+/**
+ * Hands out cells ordered left to right, one unbroken group per size, so that a planet in the middle never splits a
+ * group. A group starts at the leftmost free cell in a piece of the comb large enough for it and grows to its leftmost
+ * free neighbour, skipping a cell that would cut the free cells in two. A group breaks only when no free piece holds it.
+ */
+function groupsOfCells(cells: Point[], sizes: number[], spacing: number): Point[][] {
+  const touch = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y) < spacing * 1.01;
+  const pieces = (points: Point[]) => {
+    const found: Set<Point>[] = [];
+    for (const start of points) {
+      if (found.some(piece => piece.has(start))) continue;
+      const piece = new Set([start]);
+      for (const point of piece) for (const other of points) if (touch(point, other)) piece.add(other);
+      found.push(piece);
+    }
+    return found;
+  };
+  let free = [...cells];
+  return sizes.map(size => {
+    const group: Point[] = [];
+    while (group.length < size) {
+      const parts = pieces(free);
+      const near = group.length > 0
+        ? free.filter(c => group.some(g => touch(g, c)))
+        : free.filter(c => parts.some(piece => piece.has(c) && piece.size >= size));
+      const next = near.find(c => pieces(free.filter(o => o !== c)).length <= parts.length) ?? near[0] ?? free[0];
+      free = free.filter(c => c !== next);
+      group.push(next);
+    }
+    return group;
+  });
+}
+
 function attempt(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack[], size: number, insistOnMirror: boolean): HexLayout | null {
   const planets = planetsAt(input.planets, size);
   const onPlanet = groundSize(size);
   const markers = (input.obstacles ?? []).map(o => ({ x: o.x / HEX_SCALE, y: o.y / HEX_SCALE, r: o.r / HEX_SCALE }));
   const obstacles: Circle[] = [NUMBER_SPOT, ...markers, ...planets];
-  const placedGround = placeGround(ground, planets, onPlanet, obstacles);
+  const opponents = opponentOrder(input, [...ground, ...space]);
+  const placedGround = placeGround(ground, opponents, planets, onPlanet, obstacles);
   if (!placedGround) return null;
   const cells = comb(space.length, size, obstacles, insistOnMirror);
   if (!cells) return null;
 
-  // Own stacks fill the cells from the left, enemy stacks the rest; within a side they go in rows by rank.
+  // Own stacks fill the cells from the left, each opponent a group of the rest; within a group they go in rows by rank.
   const fromLeft = [...cells].sort((a, b) => a.x - b.x || a.y - b.y);
-  const own = space.filter(s => s.owner === 'me').sort((a, b) => rank(a) - rank(b));
-  const enemy = space.filter(s => s.owner === 'enemy').sort((a, b) => rank(a) - rank(b));
+  const ofOwner = (owner: StackOwner) => space.filter(s => s.owner === owner).sort((a, b) => rank(a) - rank(b));
+  const own = ofOwner('me');
+  const others = opponents.map(ofOwner);
   const ownCells = fromLeft.slice(0, own.length).sort(byRow);
-  const enemyCells = fromLeft.slice(own.length).sort(byRow);
+  const otherCells = groupsOfCells(fromLeft.slice(own.length), others.map(stacks => stacks.length), size * COMB_SPACING);
   const scale = (value: number) => value * HEX_SCALE;
   const placeShip = (stack: SpaceStack, cell: Point): PlacedStack => ({
     ...stack, key: `${stack.owner}|${stack.kind}|-`, x: scale(cell.x), y: scale(cell.y),
@@ -230,14 +274,18 @@ function attempt(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack
         key: `${stack.owner}|${stack.kind}|${stack.planet}`, x: scale(x), y: scale(y), size: scale(onPlanet),
       })),
       ...own.map((stack, i) => placeShip(stack, ownCells[i])),
-      ...enemy.map((stack, i) => placeShip(stack, enemyCells[i])),
+      ...others.flatMap((stacks, group) => {
+        const groupCells = otherCells[group].sort(byRow);
+        return stacks.map((stack, i) => placeShip(stack, groupCells[i]));
+      }),
     ],
   };
 }
 
 /** For a tile too full for arcs and comb: every stack in a plain grid over the hex, own ones on the left. */
 function plainGrid(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack[]): HexLayout {
-  const stacks = [...ground, ...space].sort((a, b) => Number(a.owner === 'enemy') - Number(b.owner === 'enemy'));
+  const owners = ['me', ...opponentOrder(input, [...ground, ...space])];
+  const stacks = [...ground, ...space].sort((a, b) => owners.indexOf(a.owner) - owners.indexOf(b.owner));
   const columns = Math.ceil(Math.sqrt(stacks.length));
   const step = 64 / columns;
   return {

@@ -99,7 +99,8 @@ export function HexMap({
   }, [pack, game.playerCount, game.layout, game.map]);
 
   const colours = tokenColours(game);
-  useEffect(() => { void prepareSprites([colours.me, colours.enemy]); }, [colours.me, colours.enemy]);
+  const palette = Object.values(colours).join();
+  useEffect(() => { void prepareSprites(palette.split(',')); }, [palette]);
 
   /** Home slots by slot key, with the player sitting there. */
   const seats = useMemo(() => {

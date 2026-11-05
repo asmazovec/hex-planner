@@ -23,7 +23,20 @@ export function sampleGame(): Game {
   ];
   game.plans[0].rounds[0].entries = entries;
   game.plans[0].rounds[0].strategyCard = 3;
-  game.enemyUnits = { '1,0': { dreadnought: 2 } };
+  game.enemyUnits = { '1,0': { [game.opponents[0].id]: { dreadnought: 2 } } };
   game.expedition = { slices: { s1: 'me', s2: null }, thundersEdgeSystem: '1,0' };
   return game;
+}
+
+/** The same game as schema version 1 saved it: opponents without ids, enemy units and enemy planets without an owner. */
+export function gameOfSchema1(): Record<string, unknown> {
+  const { planetOwner, opponents, ...rest } = sampleGame();
+  void planetOwner;
+  return {
+    ...rest,
+    schemaVersion: 1,
+    opponents: opponents.map(({ faction, vp, seat, color }) => ({ faction, vp, seat, color })),
+    enemyUnits: { '1,0': { dreadnought: 2 }, '0,1': { fighter: 3 } },
+    planetControl: { jord: 'me', arc: 'enemy', lazar: 'enemy' },
+  };
 }

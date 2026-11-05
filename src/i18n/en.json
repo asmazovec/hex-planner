@@ -50,7 +50,6 @@
       "ground": "Infantry and mechs stand in triangles.",
       "structure": "PDS and space docks stand in squares."
     },
-    "enemy": "enemy",
     "arrow": "Move from {{from}} to {{to}}",
     "sheet": {
       "title": "Tile {{number}}",
@@ -62,7 +61,6 @@
       "noPlanets": "No planets",
       "controlLabel": "Control of {{planet}}",
       "mine": "Mine",
-      "enemy": "Enemy",
       "none": "None",
       "dock": "Space dock",
       "exhausted": "Exhausted",
@@ -71,7 +69,7 @@
       "legendaryAbility": "Legendary ability",
       "traits": "Traits",
       "specialties": "Specialties",
-      "enemyUnits": "Enemy units",
+      "unitsOf": "Units of {{name}}",
       "plus": "Add one {{unit}}",
       "minus": "Remove one {{unit}}",
       "close": "Close"
@@ -326,6 +324,7 @@
     "needFaction": "Choose your faction to start",
     "newGame": "New game",
     "confirm": "Tiles on the map: {{filled}}, of them leaving: {{lost}}. The map moves to the new template and matching slots stay. Change the player count?",
+    "confirmHoldings": "Units on the map: {{units}}, planets: {{planets}}. The units and docks go, and the planets become free.",
     "confirmYes": "Change",
     "cancel": "Cancel",
     "open": "Players",

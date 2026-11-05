@@ -140,8 +140,9 @@ export interface GameStore {
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
   setOpponent(index: number, patch: { faction?: string; vp?: number }): void;
-  setEnemyUnits(systemId: string, units: UnitCounts): void;
-  setPlanetControl(planetId: string, owner: 'me' | 'enemy' | null): void;
+  setEnemyUnits(systemId: string, opponentId: string, units: UnitCounts): void;
+  /** `owner` is `me`, an opponent id, or null for a free planet. */
+  setPlanetControl(planetId: string, owner: string | null): void;
   /** Marks whether a planet has a space dock. */
   setDock(planetId: string, present: boolean): void;
   setSlice(id: string, owner: 'me' | 'other' | null): void;
@@ -294,12 +295,20 @@ export const useGame = create<GameStore>((set, get) => {
         const named = faction === undefined ? g : setPlayerFaction(g, index + 1, faction, pack);
         return vp === undefined ? named : setPlayerVp(named, index + 1, vp);
       }),
-    setEnemyUnits: (systemId, units) =>
-      commit(g => (sameUnits(g.enemyUnits[systemId] ?? {}, units)
-        ? g
-        : withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, hasUnits(units) ? units : null)))),
+    setEnemyUnits: (systemId, opponentId, units) =>
+      commit(g => {
+        const inSystem = g.enemyUnits[systemId] ?? {};
+        if (sameUnits(inSystem[opponentId] ?? {}, units)) return g;
+        const next = setOrDelete(inSystem, opponentId, hasUnits(units) ? units : null);
+        return withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, Object.keys(next).length > 0 ? next : null));
+      }),
     setPlanetControl: (planetId, owner) =>
-      commit(g => withField(g, 'planetControl', setOrDelete(g.planetControl, planetId, owner))),
+      commit(g => {
+        const control = owner === null ? null : owner === 'me' ? 'me' : 'enemy';
+        const planetControl = setOrDelete(g.planetControl, planetId, control);
+        const planetOwner = setOrDelete(g.planetOwner, planetId, control === 'enemy' ? owner : null);
+        return planetControl === g.planetControl && planetOwner === g.planetOwner ? g : { ...g, planetControl, planetOwner };
+      }),
     setDock: (planetId, present) =>
       commit(g => (g.docks.includes(planetId) === present
         ? g

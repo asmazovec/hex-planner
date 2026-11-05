@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { seatSlots } from './mapBuilder';
 import { createGame } from './newGame';
 import {
-  addPlayer, countChangeEffect, draftWithExpansions, maxPlayers, playersOf, removePlayer, setPlayerFaction, setPlayerVp, swapSeats,
+  addPlayer, countChangeEffect, draftWithExpansions, maxPlayers, opponentHoldings, opponentsBySeat, planetHolder, playersOf, removePlayer, setPlayerFaction, setPlayerVp, swapSeats,
 } from './players';
 import type { Game } from './types';
 
@@ -197,4 +197,105 @@ describe('a draft and its expansions', () => {
     expect(maxPlayers(loadPack([]))).toBe(6);
     expect(maxPlayers(pack)).toBe(8);
   });
+});
+
+describe('opponent ids', () => {
+  const ids = (game: Game) => game.opponents.map(o => o.id);
+
+  test('every opponent has its own id, and a new opponent gets a new one', () => {
+    const game = start(4);
+    expect(new Set(ids(game)).size).toBe(3);
+    const added = addPlayer(game, pack);
+    expect(new Set(ids(added)).size).toBe(4);
+    expect(ids(added).slice(0, 3)).toEqual(ids(game));
+    expect(ids(added)).not.toContain('me');
+  });
+
+  test('an id survives a seat swap, a faction change and the removal of another opponent', () => {
+    const game = start(5);
+    const [a, b, c, d] = ids(game);
+    expect(ids(swapSeats(game, 1, 3, pack))).toEqual([a, b, c, d]);
+    expect(ids(swapSeats(game, 0, 2, pack))).toEqual([a, b, c, d]);
+    expect(ids(setPlayerFaction(game, 2, 'hacan', pack))).toEqual([a, b, c, d]);
+    expect(ids(removePlayer(game, 2, pack))).toEqual([a, c, d]);
+  });
+
+  test('ids stay when the draft changes expansions', () => {
+    const draft = start(4, '');
+    expect(ids(draftWithExpansions(draft, ['pok'], loadPack(['pok'])))).toEqual(ids(draft));
+  });
+
+  test('seat order follows the seats, not the list', () => {
+    const game = swapSeats(start(4), 1, 3, pack);
+    const [a, b, c] = ids(game);
+    expect(opponentsBySeat(game).map(o => o.id)).toEqual([c, b, a]);
+  });
+});
+
+describe('who holds an enemy planet', () => {
+  test('its owner; with no owner, as in an old save, the first opponent', () => {
+    const game = start(4);
+    const [first, second] = game.opponents.map(o => o.id);
+    expect(planetHolder({ ...game, planetOwner: { arc: second } }, 'arc')).toBe(second);
+    expect(planetHolder(game, 'arc')).toBe(first);
+    expect(planetHolder({ ...game, opponents: [] }, 'arc')).toBeUndefined();
+  });
+});
+
+describe('removing an opponent with things on the map', () => {
+  const held = (): Game => {
+    const game = start(5);
+    const [a, b] = game.opponents.map(o => o.id);
+    return {
+      ...game,
+      enemyUnits: { '1,0': { [a]: { cruiser: 2 }, [b]: { cruiser: 1 } }, '0,1': { [a]: { fighter: 3 } } },
+      planetControl: { ...game.planetControl, arc: 'enemy', lazar: 'enemy', sakulag: 'enemy' },
+      planetOwner: { arc: a, lazar: b },
+      docks: [...game.docks, 'arc', 'lazar'],
+    };
+  };
+
+  test('their units, planets and docks go; the rest stays', () => {
+    const game = held();
+    const [a, b] = game.opponents.map(o => o.id);
+    const next = removePlayer(game, 2, pack); // b
+    expect(next.opponents.map(o => o.id)).not.toContain(b);
+    expect(next.enemyUnits).toEqual({ '1,0': { [a]: { cruiser: 2 } }, '0,1': { [a]: { fighter: 3 } } });
+    expect(next.planetControl.lazar).toBeUndefined();
+    expect(next.planetOwner).toEqual({ arc: a });
+    expect(next.docks).not.toContain('lazar');
+    expect(next.docks).toContain('arc');
+    expect(next.planetControl.sakulag).toBe('enemy');
+  });
+
+  test('the first opponent also takes along the planets without an owner, and a system left empty goes', () => {
+    const game = held();
+    const b = game.opponents[1].id;
+    const next = removePlayer(game, 1, pack); // a
+    expect(next.enemyUnits).toEqual({ '1,0': { [b]: { cruiser: 1 } } });
+    expect(next.planetControl.arc).toBeUndefined();
+    expect(next.planetControl.sakulag).toBeUndefined();
+    expect(next.planetControl.lazar).toBe('enemy');
+    expect(next.planetOwner).toEqual({ lazar: b });
+  });
+
+  test('holdings count their units and planets for the confirmation', () => {
+    const game = held();
+    const [a, b, c] = game.opponents.map(o => o.id);
+    expect(opponentHoldings(game, a)).toEqual({ units: 5, planets: 2 });
+    expect(opponentHoldings(game, b)).toEqual({ units: 1, planets: 1 });
+    expect(opponentHoldings(game, c)).toEqual({ units: 0, planets: 0 });
+  });
+});
+
+test('when my faction changes, its old and new home planets leave the owners', () => {
+  const game = start();
+  const [a] = game.opponents.map(o => o.id);
+  const hacanHome = pack.tiles[pack.factions.hacan.homeTile].planetIds;
+  const next = setPlayerFaction({
+    ...game,
+    planetControl: { ...game.planetControl, [hacanHome[0]]: 'enemy', arc: 'enemy' },
+    planetOwner: { [hacanHome[0]]: a, arc: a, jord: a },
+  }, 0, 'hacan', pack);
+  expect(next.planetOwner).toEqual({ arc: a });
 });

@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next';
+import { opponentsBySeat, planetHolder } from '../../domain/players';
 import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UNIT_ORDER } from '../units/unitOrder';
+import { opponentName } from './opponentName';
 import { PlanetDetails } from './PlanetDetails';
 
 export interface TileSheetProps {
@@ -12,7 +14,10 @@ export interface TileSheetProps {
   state: GameState;
 }
 
-type Owner = 'me' | 'enemy' | null;
+/** `me`, an opponent id, or null for a free planet. */
+type Owner = string | null;
+
+const OwnerDot = ({ color }: { color: number }) => <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${color})` }} />;
 
 /** Details of one tile, with manual edits of enemy units, planet control and space docks. */
 export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
@@ -28,12 +33,13 @@ export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
   const title = mapValue ? t('map.sheet.title', { number: tile?.number ?? tileId }) : t('map.emptySlot');
   const planets = systemPlanets(game, slotKey, pack);
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).map(name => t(`map.anomaly.${name}`)).join(', ');
-  const enemy = game.enemyUnits[slotKey] ?? {};
+  const enemies = game.enemyUnits[slotKey] ?? {};
+  const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, name: opponentName(game, pack, o.id, t) }));
   const unitIds = UNIT_ORDER.filter(u => pack.units[u]);
   const unitName = (u: UnitId): string => t(`unit.${u}`);
-  const owners: { value: Owner; label: string }[] = [
-    { value: 'me', label: t('map.sheet.mine') },
-    { value: 'enemy', label: t('map.sheet.enemy') },
+  const owners: { value: Owner; label: string; color?: number }[] = [
+    { value: 'me', label: t('map.sheet.mine'), color: game.color },
+    ...seated.map(o => ({ value: o.id, label: o.name, color: o.color })),
     { value: null, label: t('map.sheet.none') },
   ];
 
@@ -50,7 +56,8 @@ export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
       {tile && planets.length === 0 && <p className="muted">{t('map.sheet.noPlanets')}</p>}
 
       {planets.map(planet => {
-        const owner: Owner = state.control[planet.id] ?? null;
+        const control = state.control[planet.id];
+        const owner: Owner = control === 'enemy' ? planetHolder(game, planet.id) ?? null : control ?? null;
         return (
           <div key={planet.id} role="group" aria-label={planet.name} className="sheet-planet">
             <strong>{planet.name}</strong>
@@ -61,6 +68,7 @@ export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
                   key={String(o.value)} type="button" aria-pressed={owner === o.value}
                   onClick={() => setPlanetControl(planet.id, o.value)}
                 >
+                  {o.color !== undefined && <OwnerDot color={o.color} />}
                   {o.label}
                 </button>
               ))}
@@ -76,30 +84,36 @@ export function TileSheet({ slotKey, pack, game, state }: TileSheetProps) {
         );
       })}
 
-      <div role="group" aria-label={t('map.sheet.enemyUnits')} className="sheet-units">
-        <h3>{t('map.sheet.enemyUnits')}</h3>
-        {unitIds.map(unit => {
-          const n = enemy[unit] ?? 0;
-          return (
-            <div key={unit} className="row vp">
-              <span className="unit-name">{unitName(unit)}</span>
-              <button
-                type="button" aria-label={t('map.sheet.minus', { unit: unitName(unit) })} disabled={n === 0}
-                onClick={() => setEnemyUnits(slotKey, { ...enemy, [unit]: n - 1 })}
-              >
-                −
-              </button>
-              <output>{n}</output>
-              <button
-                type="button" aria-label={t('map.sheet.plus', { unit: unitName(unit) })}
-                onClick={() => setEnemyUnits(slotKey, { ...enemy, [unit]: n + 1 })}
-              >
-                +
-              </button>
-            </div>
-          );
-        })}
-      </div>
+      {seated.map(({ id, color, name }) => {
+        const units = enemies[id] ?? {};
+        const heading = t('map.sheet.unitsOf', { name });
+        return (
+          <div key={id} role="group" aria-label={heading} className="sheet-units">
+            <h3><OwnerDot color={color} />{heading}</h3>
+            {unitIds.map(unit => {
+              const n = units[unit] ?? 0;
+              return (
+                <div key={unit} className="row vp">
+                  <span className="unit-name">{unitName(unit)}</span>
+                  <button
+                    type="button" aria-label={t('map.sheet.minus', { unit: unitName(unit) })} disabled={n === 0}
+                    onClick={() => setEnemyUnits(slotKey, id, { ...units, [unit]: n - 1 })}
+                  >
+                    −
+                  </button>
+                  <output>{n}</output>
+                  <button
+                    type="button" aria-label={t('map.sheet.plus', { unit: unitName(unit) })}
+                    onClick={() => setEnemyUnits(slotKey, id, { ...units, [unit]: n + 1 })}
+                  >
+                    +
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </aside>
   );
 }

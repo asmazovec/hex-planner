@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { Game } from '../domain/types';
 
-export const CURRENT_SCHEMA = 1;
+export const CURRENT_SCHEMA = 2;
 
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
@@ -48,9 +48,10 @@ export const gameSchema = z.object({
   color: z.number().int(),
   vp: count,
   map: z.record(z.string(), z.string()),
-  opponents: z.array(z.object({ faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
-  enemyUnits: z.record(z.string(), unitCounts),
+  opponents: z.array(z.object({ id: z.string(), faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
+  enemyUnits: z.record(z.string(), z.record(z.string(), unitCounts)),
   planetControl: z.record(z.string(), control),
+  planetOwner: z.record(z.string(), z.string()),
   docks: z.array(z.string()),
   expedition: z.object({
     slices: z.record(z.string(), z.enum(['me', 'other']).nullable()),
@@ -79,11 +80,35 @@ function withSeats(doc: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * Version 1 had opponents without ids and enemies without an owner: each opponent gets an id, and old enemy units and
+ * enemy planets go to the first opponent. The ids are fixed by list position, since a migrated game is not written back
+ * until its next edit and may be migrated again. A game with no opponents has nowhere to put old enemy units: they are
+ * dropped.
+ */
+function withOwners(doc: Record<string, unknown>): Record<string, unknown> {
+  const opponents = (doc.opponents as Record<string, unknown>[]).map((o, i) => ({ ...o, id: `opponent-${i + 1}` }));
+  const first = opponents[0]?.id;
+  const { enemyUnits, planetControl } = doc;
+  const movedUnits = isRecord(enemyUnits) && first
+    ? Object.fromEntries(Object.entries(enemyUnits).map(([slot, units]) => [slot, { [first]: units }]))
+    : isRecord(enemyUnits) ? {} : enemyUnits;
+  const planetOwner = isRecord(planetControl) && first
+    ? Object.fromEntries(Object.keys(planetControl).filter(id => planetControl[id] === 'enemy').map(id => [id, first]))
+    : {};
+  return { ...doc, schemaVersion: 2, opponents, enemyUnits: movedUnits, planetOwner };
+}
+
 /** Brings a parsed file of an older schema up to CURRENT_SCHEMA, one version at a time. */
 export function migrate(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
   let doc = raw as Record<string, unknown>;
   // Version 0 files had the same shape; only the version marker changed.
   if (doc.schemaVersion === 0) doc = { ...doc, schemaVersion: 1 };
-  return Array.isArray(doc.opponents) ? withSeats(doc) : doc;
+  if (!Array.isArray(doc.opponents)) return doc;
+  doc = withSeats(doc);
+  return doc.schemaVersion === 1 ? withOwners(doc) : doc;
 }

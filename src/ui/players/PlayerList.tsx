@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
-import { countChangeEffect, maxPlayers, MIN_PLAYERS, playersOf } from '../../domain/players';
+import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
 import { useGame } from '../../state/gameStore';
 import { FactionCard } from '../plan/FactionCard';
 import type { SeatDrag } from './useSeatDrag';
@@ -51,17 +51,24 @@ export function PlayerList({ drag, action }: PlayerListProps) {
     removeOpponent(opponent);
     setAsked(null);
   };
+  const effectOf = (next: Asked) => ({
+    ...countChangeEffect(game, next.kind === 'add' ? count + 1 : count - 1, pack),
+    held: next.kind === 'remove' ? opponentHoldings(game, game.opponents[next.opponent].id) : { units: 0, planets: 0 },
+  });
   const ask = (next: Asked) => {
-    const { filled } = countChangeEffect(game, next.kind === 'add' ? count + 1 : count - 1, pack);
-    if (filled > 0) setAsked(next);
+    const { filled, held } = effectOf(next);
+    if (filled > 0 || held.units > 0 || held.planets > 0) setAsked(next);
     else if (next.kind === 'add') add();
     else remove(next.opponent);
   };
   const confirmBar = (next: Asked) => {
-    const { filled, lost } = countChangeEffect(game, next.kind === 'add' ? count + 1 : count - 1, pack);
+    const { filled, lost, held } = effectOf(next);
+    const texts = [];
+    if (held.units > 0 || held.planets > 0) texts.push(t('players.confirmHoldings', held));
+    if (filled > 0) texts.push(t('players.confirm', { filled, lost }));
     return (
       <div className="player-confirm">
-        <span>{t('players.confirm', { filled, lost })}</span>
+        <span>{texts.join(' ')}</span>
         <button type="button" className="primary" onClick={() => (next.kind === 'add' ? add() : remove(next.opponent))}>{t('players.confirmYes')}</button>
         <button type="button" onClick={() => setAsked(null)}>{t('players.cancel')}</button>
       </div>

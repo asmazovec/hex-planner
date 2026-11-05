@@ -205,6 +205,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-input form > button { flex: 1; padding: 8px 10px; }
 .tile-input .banner { margin: 0; }
 .tile-sheet { overflow: visible; }
+.tile-sheet .segment { flex-wrap: wrap; }
+.owner-dot { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; }
 .tile-sheet h3 { margin: 0 0 2px; font-size: var(--font-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
 .sheet-planet { display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--border-strong); }
 .planet-details { display: flex; flex-direction: column; gap: 2px; }

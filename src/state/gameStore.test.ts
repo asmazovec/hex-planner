@@ -103,10 +103,16 @@ describe('gameStore', () => {
   test('карта, юниты и контроль меняются точечно', () => {
     act().setTile('1,0', '25'); expect(game().map['1,0']).toBe('25');
     act().setTile('1,0', null); expect(game().map['1,0']).toBeUndefined();
-    act().setEnemyUnits('1,0', { cruiser: 2 }); expect(game().enemyUnits['1,0']).toEqual({ cruiser: 2 });
-    act().setEnemyUnits('1,0', {}); expect(game().enemyUnits['1,0']).toBeUndefined();
-    act().setPlanetControl('p', 'enemy'); expect(game().planetControl.p).toBe('enemy');
-    act().setPlanetControl('p', null); expect(game().planetControl.p).toBeUndefined();
+    const [a, b] = game().opponents.map(o => o.id);
+    act().setEnemyUnits('1,0', a, { cruiser: 2 }); expect(game().enemyUnits['1,0']).toEqual({ [a]: { cruiser: 2 } });
+    act().setEnemyUnits('1,0', b, { cruiser: 1 }); expect(game().enemyUnits['1,0']).toEqual({ [a]: { cruiser: 2 }, [b]: { cruiser: 1 } });
+    act().setEnemyUnits('1,0', a, {}); expect(game().enemyUnits['1,0']).toEqual({ [b]: { cruiser: 1 } });
+    act().setEnemyUnits('1,0', b, {}); expect(game().enemyUnits['1,0']).toBeUndefined();
+    act().setPlanetControl('p', b); expect(game().planetControl.p).toBe('enemy'); expect(game().planetOwner.p).toBe(b);
+    act().setPlanetControl('p', a); expect(game().planetControl.p).toBe('enemy'); expect(game().planetOwner.p).toBe(a);
+    act().setPlanetControl('p', 'me'); expect(game().planetControl.p).toBe('me'); expect(game().planetOwner.p).toBeUndefined();
+    act().setPlanetControl('p', b); act().setPlanetControl('p', null);
+    expect(game().planetControl.p).toBeUndefined(); expect(game().planetOwner.p).toBeUndefined();
     act().setDock('p', true); expect(game().docks).toContain('p');
     act().setDock('p', false); expect(game().docks).not.toContain('p');
     act().setOpponent(0, { vp: 3 }); expect(game().opponents[0].vp).toBe(3);
@@ -149,7 +155,9 @@ describe('действия без изменений', () => {
     const id = act().addEntry(1, { type: 'pass' }, 'action');
     act().setEntryStatus(id, 'done');
     act().setOpponent(0, { vp: 2 });
-    act().setEnemyUnits('1,0', { cruiser: 2 });
+    const opponent = game().opponents[0].id;
+    act().setEnemyUnits('1,0', opponent, { cruiser: 2 });
+    act().setPlanetControl('p', opponent);
     const before = game();
     await vi.waitFor(() => expect(saveGame).toHaveBeenLastCalledWith(before));
     vi.mocked(saveGame).mockClear();
@@ -164,16 +172,17 @@ describe('действия без изменений', () => {
       () => act().renamePlan(plan().name),
       () => act().setFractureActive(false),
       () => act().setTile('9,9', null),
-      () => act().setEnemyUnits('9,9', {}),
+      () => act().setEnemyUnits('9,9', opponent, {}),
       () => act().setPlanetControl('nope', null),
+      () => act().setPlanetControl('p', opponent),
       () => act().setSlice('res5', null),
       () => act().setDock('nope', false),
       () => act().setDock(game().docks[0], true),
       () => act().setThundersEdge(null),
       () => act().setOpponent(99, { vp: 1 }),
       () => act().setOpponent(0, { vp: 2 }),
-      () => act().setEnemyUnits('1,0', { cruiser: 2 }),
-      () => act().setEnemyUnits('1,0', { cruiser: 2, fighter: 0 }),
+      () => act().setEnemyUnits('1,0', opponent, { cruiser: 2 }),
+      () => act().setEnemyUnits('1,0', opponent, { cruiser: 2, fighter: 0 }),
       () => act().setActivePlan(game().activePlanId),
     ];
     for (const run of noops) {
@@ -182,8 +191,8 @@ describe('действия без изменений', () => {
     }
     await Promise.resolve();
     expect(saveGame).not.toHaveBeenCalled();
-    // History holds only the four real edits.
-    act().undo(); act().undo(); act().undo(); act().undo();
+    // History holds only the five real edits.
+    act().undo(); act().undo(); act().undo(); act().undo(); act().undo();
     expect(act().canUndo).toBe(false);
     expect(round().entries).toHaveLength(0);
   });
@@ -324,7 +333,31 @@ describe('addExpansion', () => {
   });
 });
 
+describe('removing an opponent in a game', () => {
+  test('units, planets and owners go in one undo step', () => {
+    const [a, b] = game().opponents.map(o => o.id);
+    act().setEnemyUnits('1,0', a, { cruiser: 2 });
+    act().setEnemyUnits('1,0', b, { fighter: 1 });
+    act().setPlanetControl('p', a);
+    const before = game();
+    act().removeOpponent(0);
+    expect(game().enemyUnits).toEqual({ '1,0': { [b]: { fighter: 1 } } });
+    expect(game().planetControl.p).toBeUndefined();
+    expect(game().planetOwner).toEqual({});
+    act().undo();
+    expect(game()).toBe(before);
+  });
+});
+
 describe("Thunder's Edge turned on in a game in progress", () => {
+  test('the owner of an enemy Mecatol moves with it', () => {
+    const [, b] = game().opponents.map(o => o.id);
+    act().setPlanetControl('mr', b);
+    act().addExpansion('te');
+    expect(game().planetControl).toMatchObject({ mrte: 'enemy' });
+    expect(game().planetOwner).toEqual({ mrte: b });
+  });
+
   test('Mecatol records move from mr to mrte in one undo step', () => {
     const entry = {
       type: 'tactical' as const, systemId: '0,0', moves: [{ from: 'mr', units: {} }],

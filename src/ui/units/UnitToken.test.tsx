@@ -81,9 +81,9 @@ test.each(['warsun', 'infantry', 'mech', 'pds', 'spacedock'] as const)('the game
   expect(iconSources[`/docs/icon-references/${kind}.svg`]).toContain(`d="${UNIT_ART[kind].paths[0]}"`);
 });
 
-test('enemy units take the colour of the first opponent', () => {
-  expect(tokenColours({ color: 2, opponents: [{ faction: '', vp: 0, seat: 2, color: 5 }, { faction: '', vp: 0, seat: 3, color: 6 }] }))
-    .toEqual({ me: PLAYER_COLOURS[1], enemy: PLAYER_COLOURS[4] });
+test('every player has a token colour: mine and one for each opponent id', () => {
+  expect(tokenColours({ color: 2, opponents: [{ id: 'a', faction: '', vp: 0, seat: 2, color: 5 }, { id: 'b', faction: '', vp: 0, seat: 3, color: 6 }] }))
+    .toEqual({ me: PLAYER_COLOURS[1], a: PLAYER_COLOURS[4], b: PLAYER_COLOURS[5] });
 });
 
 test('without a canvas the sprites stay away and the token draws vector art', async () => {
