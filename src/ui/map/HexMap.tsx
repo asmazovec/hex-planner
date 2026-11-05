@@ -39,13 +39,14 @@ export function HexMap({
   }, [pack, game.playerCount, game.map]);
 
   const bounds = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
-  const { view, handlers } = usePanZoom(bounds, svgRef);
+  const { view, handlers, reset } = usePanZoom(bounds, svgRef);
   const center = (key: string) => {
     const { q, r } = parseKey(key);
     return hexToPixel(q, r);
   };
 
   return (
+    <div className="hexmap-wrap">
     <svg
       ref={svgRef} className="hexmap" role="group" aria-label={t('map.label')}
       viewBox={`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`}
@@ -62,7 +63,7 @@ export function HexMap({
       <g transform={`translate(${view.x} ${view.y}) scale(${view.scale})`}>
         {slotKeys.map(key => (
           <TileView
-            key={key} slotKey={key} mapValue={game.map[key]} pack={pack} game={game} state={state}
+            key={key} slotKey={key} pack={pack} game={game} state={state}
             highlight={highlights?.[key]} selected={selectedId === key}
             onTap={onTileTap} onPointerDown={onTilePointerDown}
           />
@@ -81,5 +82,7 @@ export function HexMap({
         })}
       </g>
     </svg>
+    <button type="button" className="map-reset" onClick={reset}>{t('map.resetView')}</button>
+    </div>
   );
 }

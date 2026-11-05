@@ -75,6 +75,7 @@
       "plus": "Add one {{unit}}",
       "minus": "Remove one {{unit}}",
       "close": "Close"
-    }
+    },
+    "resetView": "Reset view"
   }
 }

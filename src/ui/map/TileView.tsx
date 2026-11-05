@@ -1,6 +1,7 @@
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { DataPack, Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domain/types';
+import { systemPlanets, tileIdOf } from '../../domain/project';
+import type { DataPack, Game, GameState, UnitCounts, UnitId } from '../../domain/types';
 import { HEX_SIZE, hexPoints, hexToPixel } from './geometry';
 import { UNIT_ORDER, UnitGlyph } from './UnitGlyph';
 
@@ -8,8 +9,6 @@ export type Highlight = 'valid' | 'dim' | 'active';
 
 export interface TileViewProps {
   slotKey: string;
-  /** The `Game.map` value of the slot: `<tileId>` or `<tileId>@<rotation>`; absent for an empty slot. */
-  mapValue: string | undefined;
   pack: DataPack;
   game: Game;
   state: GameState;
@@ -19,10 +18,10 @@ export interface TileViewProps {
   onPointerDown?: (slotKey: string, event: PointerEvent) => void;
 }
 
-const THUNDERS_EDGE_PLANET = 'thundersedge';
 const PLANET_RADIUS = 15;
-const SHIPS_PER_ROW = 3;
 const SHIP_CELL = 30;
+const SHIP_ROW = 16;
+const HEX_INNER = HEX_SIZE - 1.5;
 const GROUND_CELL = 24;
 
 
@@ -37,20 +36,43 @@ function planetSpots(count: number): { x: number; y: number }[] {
   return [{ x: 0, y: -26 }, { x: -30, y: 0 }, { x: 30, y: 0 }].concat(count > 3 ? [{ x: 0, y: 14 }] : []).slice(0, count);
 }
 
+/**
+ * Places the stacks of the space area in rows below the planets and shrinks the whole group until every
+ * cell lies inside the hex. Positions are the cell centres, relative to the hex centre.
+ */
+export function layoutUnits(count: number, planetCount: number): { scale: number; cells: { x: number; y: number }[] } {
+  if (count === 0) return { scale: 1, cells: [] };
+  const top = planetCount >= 3 ? 32 : 24;
+  const cols = Math.min(count, 4);
+  const rows = Math.ceil(count / cols);
+  let scale = 1;
+  while (scale > 0.1) {
+    const bottom = top + rows * SHIP_ROW * scale;
+    if (bottom <= 49 && cols * SHIP_CELL * scale <= 2 * (HEX_INNER - bottom / Math.sqrt(3)) - 2) break;
+    scale -= 0.02;
+  }
+  const cells = Array.from({ length: count }, (_, i) => {
+    const row = Math.floor(i / cols);
+    const inRow = Math.min(cols, count - row * cols);
+    return {
+      x: ((i % cols) - (inRow - 1) / 2) * SHIP_CELL * scale,
+      y: top + (row + 0.5) * SHIP_ROW * scale,
+    };
+  });
+  return { scale, cells };
+}
+
 export function TileView({
-  slotKey, mapValue, pack, game, state, highlight, selected, onTap, onPointerDown,
+  slotKey, pack, game, state, highlight, selected, onTap, onPointerDown,
 }: TileViewProps) {
   const { t } = useTranslation();
   const { x, y } = hexToPixel(...(slotKey.split(',').map(Number) as [number, number]));
-  const [tileId] = (mapValue ?? '').split('@');
+  const mapValue = game.map[slotKey];
+  const tileId = mapValue ? tileIdOf(game, slotKey) : '';
   const tile = mapValue ? pack.tiles[tileId] : undefined;
   const unknown = mapValue !== undefined && !tile;
 
-  const planets: PlanetDef[] = [
-    ...(tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined),
-    ...(game.expedition.thundersEdgeSystem === slotKey && pack.planets[THUNDERS_EDGE_PLANET]
-      ? [pack.planets[THUNDERS_EDGE_PLANET]] : []),
-  ];
+  const planets = systemPlanets(game, slotKey, pack);
   const spots = planetSpots(planets.length);
 
   const unitName = (unit: UnitId): string => pack.units[unit]?.name ?? unit.charAt(0).toUpperCase() + unit.slice(1);
@@ -61,9 +83,7 @@ export function TileView({
     ...unitsOf(state.systems[slotKey]).map(u => ({ ...u, owner: 'me' as const })),
     ...unitsOf(game.enemyUnits[slotKey]).map(u => ({ ...u, owner: 'enemy' as const })),
   ];
-  const rows: (typeof spaceUnits)[] = [];
-  for (let i = 0; i < spaceUnits.length; i += SHIPS_PER_ROW) rows.push(spaceUnits.slice(i, i + SHIPS_PER_ROW));
-  const shipTop = planets.length >= 3 ? 38 : 30;
+  const layout = layoutUnits(spaceUnits.length, planets.length);
 
   const label = unknown
     ? t('map.unknownTile', { id: tileId })
@@ -84,7 +104,7 @@ export function TileView({
       onKeyDown={onKeyDown}
       onPointerDown={e => onPointerDown?.(slotKey, e)}
     >
-      <polygon points={hexPoints(HEX_SIZE - 1.5)} className={`hex${tile ? ` hex-${tile.kind}` : ''}`} />
+      <polygon points={hexPoints(HEX_INNER)} className={`hex${tile ? ` hex-${tile.kind}` : ''}`} />
       {tile && <text x={0} y={-45} className="tile-number">{tile.number}</text>}
       {unknown && <text x={0} y={-45} className="tile-number">{tileId}</text>}
       {unknown && <text x={0} y={4} className="tile-warning">!</text>}
@@ -126,17 +146,14 @@ export function TileView({
         );
       })}
 
-      {rows.map((row, i) => (
-        <g key={i} transform={`translate(0 ${shipTop + i * 16})`}>
-          {row.map((cell, j) => (
-            <g key={`${cell.owner}-${cell.unit}`}
-              transform={`translate(${(j - (row.length - 1) / 2) * SHIP_CELL - (cell.count > 1 ? 4 : 0)} 0)`}>
-              <UnitGlyph
-                unit={cell.unit} owner={cell.owner} count={cell.count}
-                label={unitLabel(cell.unit, cell.count, cell.owner)} scale={isGround(cell.unit) ? 0.6 : 0.75}
-              />
-            </g>
-          ))}
+      {spaceUnits.map((cell, i) => (
+        <g key={`${cell.owner}-${cell.unit}`} transform={`translate(${layout.cells[i].x} ${layout.cells[i].y}) scale(${layout.scale})`}>
+          <g transform={`translate(${cell.count > 1 ? -4 : 0} 0)`}>
+            <UnitGlyph
+              unit={cell.unit} owner={cell.owner} count={cell.count}
+              label={unitLabel(cell.unit, cell.count, cell.owner)} scale={isGround(cell.unit) ? 0.6 : 0.75}
+            />
+          </g>
         </g>
       ))}
     </g>

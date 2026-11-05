@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import type { DataPack, Game, GameState, PlanetDef, UnitId } from '../../domain/types';
+import { systemPlanets, tileIdOf } from '../../domain/project';
+import type { DataPack, Game, GameState, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UNIT_ORDER } from './UnitGlyph';
 
@@ -11,7 +12,6 @@ export interface TileSheetProps {
   onClose: () => void;
 }
 
-const THUNDERS_EDGE_PLANET = 'thundersedge';
 type Owner = 'me' | 'enemy' | null;
 
 /** Details of one tile, with manual edits of enemy units, planet control and space docks. */
@@ -22,14 +22,11 @@ export function TileSheet({ slotKey, pack, game, state, onClose }: TileSheetProp
   const setDock = useGame(s => s.setDock);
 
   const mapValue = game.map[slotKey];
-  const [tileId, rotation] = (mapValue ?? '').split('@');
+  const tileId = mapValue ? tileIdOf(game, slotKey) : '';
+  const rotation = mapValue?.split('@')[1];
   const tile = mapValue ? pack.tiles[tileId] : undefined;
   const title = mapValue ? t('map.sheet.title', { number: tile?.number ?? tileId }) : t('map.emptySlot');
-  const planets = [
-    ...(tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined),
-    ...(game.expedition.thundersEdgeSystem === slotKey && pack.planets[THUNDERS_EDGE_PLANET]
-      ? [pack.planets[THUNDERS_EDGE_PLANET]] : []),
-  ];
+  const planets = systemPlanets(game, slotKey, pack);
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).join(', ');
   const enemy = game.enemyUnits[slotKey] ?? {};
   const unitIds = UNIT_ORDER.filter(u => pack.units[u]);

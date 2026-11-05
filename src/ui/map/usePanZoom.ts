@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type PointerEvent, type RefObject, type WheelEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type RefObject } from 'react';
 import type { Rect } from './geometry';
 
 export interface View { x: number; y: number; scale: number }
@@ -65,11 +65,21 @@ export function usePanZoom(viewBox: Rect, svgRef: RefObject<SVGSVGElement | null
 
   const onPointerEnd = (e: PointerEvent) => { pointers.current.delete(e.pointerId); };
 
-  const onWheel = (e: WheelEvent) => apply(Math.exp(-e.deltaY * 0.0015), { x: e.clientX, y: e.clientY }, { x: 0, y: 0 });
+  /** A non-passive listener, so the page does not scroll while the wheel zooms the map. */
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return undefined;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      apply(Math.exp(-e.deltaY * 0.0015), { x: e.clientX, y: e.clientY }, { x: 0, y: 0 });
+    };
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, [svgRef, apply]);
 
   return {
     view,
     reset: () => setView(IDENTITY),
-    handlers: { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd, onWheel },
+    handlers: { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd },
   };
 }

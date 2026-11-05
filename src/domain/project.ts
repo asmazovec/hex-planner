@@ -1,6 +1,6 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
 import type {
-  DataPack, Entry, Game, GameState, Payment, Phase, Plan, Projection, UnitCounts, UnitId, Warning,
+  DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
 } from './types';
 
 const PHASE_ORDER: Phase[] = ['strategy', 'action', 'status', 'agenda'];
@@ -22,7 +22,7 @@ const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind): numbe
 export const readyResources = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'resources');
 export const readyInfluence = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'influence');
 
-const tileIdOf = (game: Game, systemId: string): string => (game.map[systemId] ?? systemId).split('@')[0];
+export const tileIdOf = (game: Game, systemId: string): string => (game.map[systemId] ?? systemId).split('@')[0];
 
 /** Planets of a system; the Thunder's Edge planet belongs to the system the expedition put it in. */
 function planetsOf(game: Game, systemId: string, pack: DataPack): string[] {
@@ -32,6 +32,10 @@ function planetsOf(game: Game, systemId: string, pack: DataPack): string[] {
   }
   return planets;
 }
+
+/** Planet definitions of a system, including Thunder's Edge when the expedition placed it there. */
+export const systemPlanets = (game: Game, systemId: string, pack: DataPack): PlanetDef[] =>
+  planetsOf(game, systemId, pack).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined);
 
 function add(target: Record<string, UnitCounts>, key: string, units: UnitCounts): void {
   const bucket = (target[key] ??= {});

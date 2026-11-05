@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
@@ -8,7 +8,7 @@ import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { HexMap } from './HexMap';
 import { TileSheet } from './TileSheet';
-import { TileView } from './TileView';
+import { layoutUnits, TileView } from './TileView';
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -31,9 +31,10 @@ function setup(
 ) {
   const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
   const state = emptyState();
+  if (mapValue) game.map['1,0'] = mapValue; else delete game.map['1,0'];
   edit(game, state);
   return render(
-    <svg><TileView slotKey="1,0" mapValue={mapValue} pack={pack} game={game} state={state} {...props} /></svg>,
+    <svg><TileView slotKey="1,0" pack={pack} game={game} state={state} {...props} /></svg>,
   );
 }
 
@@ -133,4 +134,32 @@ test('the sheet edits dock, control and enemy units', async () => {
   expect(useGame.getState().game!.planetControl[planetId]).toBe('enemy');
   await userEvent.click(screen.getByRole('button', { name: 'Add one Cruiser' }));
   expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ cruiser: 1 });
+});
+
+test('unit stacks stay inside the hex for any number of stacks and planets', () => {
+  const inside = (x: number, y: number) => Math.abs(y) <= (58.5 * Math.sqrt(3)) / 2 && Math.abs(x) <= 58.5 - Math.abs(y) / Math.sqrt(3);
+  for (const planets of [0, 1, 2, 3]) {
+    for (let n = 1; n <= 18; n += 1) {
+      const { scale, cells } = layoutUnits(n, planets);
+      expect(cells).toHaveLength(n);
+      for (const c of cells) {
+        for (const [dx, dy] of [[-15, -8], [15, -8], [-15, 8], [15, 8]]) {
+          expect(inside(c.x + dx * scale, c.y + dy * scale), `n=${n} planets=${planets}`).toBe(true);
+        }
+      }
+    }
+  }
+});
+
+test('the wheel zooms without scrolling the page, and the reset button restores the view', async () => {
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  const svg = screen.getByRole('group', { name: 'Map' });
+  const wheel = new WheelEvent('wheel', { deltaY: -200, cancelable: true, bubbles: true });
+  act(() => { svg.dispatchEvent(wheel); });
+  expect(wheel.defaultPrevented).toBe(true);
+  const zoomed = svg.querySelector(':scope > g')!.getAttribute('transform');
+  expect(zoomed).not.toContain('scale(1)');
+  await userEvent.click(screen.getByRole('button', { name: 'Reset view' }));
+  expect(svg.querySelector(':scope > g')!.getAttribute('transform')).toBe('translate(0 0) scale(1)');
 });
