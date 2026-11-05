@@ -71,9 +71,13 @@ export function FlightLayer({ routes, colour, passed, onPass, onDone }: FlightLa
         e.preventDefault();
       };
       svg?.addEventListener('click', swallow, { capture: true, once: true });
-      window.addEventListener('pointerup', () => {
+      const release = () => {
+        window.removeEventListener('pointerup', release);
+        window.removeEventListener('pointercancel', release);
         setTimeout(() => svg?.removeEventListener('click', swallow, { capture: true }), CLICK_WINDOW_MS);
-      }, { once: true });
+      };
+      window.addEventListener('pointerup', release);
+      window.addEventListener('pointercancel', release);
       finish();
     };
     svg?.addEventListener('pointerdown', onPress, { capture: true });

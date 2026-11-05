@@ -36,6 +36,8 @@ export interface EntryListProps {
   onOpen: (entry: Entry) => void;
   /** The entry being read: its steps stand under its row. */
   shownId?: string | null;
+  /** The entry the round's playback has reached. */
+  playingId?: string | null;
   /** A tap on the row shows the entry, a second tap closes it. */
   onShow?: (entry: Entry) => void;
   /** The entry was just marked as done. */
@@ -174,7 +176,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle or the arrows within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
+  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, playingId = null, onShow, onDone, onStatusAdded, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -228,7 +230,7 @@ export function EntryList({
                 const before = dragging && others[drag.index]?.id === entry.id;
                 const after = dragging && drag.index === others.length && others.at(-1)?.id === entry.id;
                 const shown = entry.id === shownId;
-                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag?.id === entry.id && 'entry-dragging',
+                const cls = ['entry', shown && 'entry-shown', entry.id === playingId && 'entry-playing', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag?.id === entry.id && 'entry-dragging',
                   before && 'entry-drop-before', after && 'entry-drop-after'].filter(Boolean).join(' ');
                 return (
                   <li key={entry.id} className={cls} data-entry-id={entry.id} aria-label={label}>

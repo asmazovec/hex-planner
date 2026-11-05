@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { productionCost, productionPlaces, project, readyInfluence, readyResources, stateBeforeEntry, suggestUnits, tacticalMeters } from './project';
+import { productionCost, productionPlaces, project, readyInfluence, readyResources, stateBeforeEntry, tacticalMeters } from './project';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
@@ -691,13 +691,6 @@ describe('ship upgrades in the replay', () => {
       // Carrier, cruiser and the fifth fighter: the infantry stand on the planet and take no capacity.
       expect(meter.ships).toBe(3);
       expect(codes(go(g).warningsByEntry.m)).not.toContain('fleetPool');
-    });
-
-    test('the suggestion takes every flying fighter and leaves the room to ground units', () => {
-      const available = { carrier: 1, fighter: 6, infantry: 5 };
-      const g = start('arborec', []);
-      expect(suggestUnits(g, [], available, real)).toEqual({ carrier: 1, fighter: 4 });
-      expect(suggestUnits(g, ['fighter'], available, real)).toEqual({ carrier: 1, fighter: 6, infantry: 4 });
     });
   });
 });

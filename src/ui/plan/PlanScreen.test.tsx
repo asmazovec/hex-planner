@@ -5,13 +5,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
   loadGame: vi.fn(async () => null),
+  listGames: vi.fn(async () => []),
 }));
 
 import { loadPack } from '../../data/loadPack';
 import type { Entry } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
+import { App } from '../App';
 import { PlanScreen } from '../screens/PlanScreen';
+import type { Move } from './tactical';
 
 const pack = loadPack(['pok']);
 const HOME = '1,0';
@@ -445,6 +448,240 @@ describe('reading the plan', () => {
     await act(async () => { await new Promise(r => setTimeout(r, 450)); });
     expect(document.querySelector('.flight-layer')).toBeNull();
     vi.unstubAllGlobals();
+  });
+});
+
+describe('leaving', () => {
+  const tacticalBody = (moves: Move[]) => ({ type: 'tactical' as const, systemId: TARGET, moves, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } });
+  const startedRoute = async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+  };
+
+  test('a tile tap opens the stage and closes the reading', async () => {
+    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Tactical action · 25/ }));
+    expect(screen.getByRole('button', { name: 'Whole map' })).toBeVisible();
+    await userEvent.click(tile(WAY));
+    expect(screen.getByRole('dialog', { name: 'Tile 39' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
+    expect(screen.queryByText('Activate 25')).toBeNull();
+  });
+
+  test('a change of round during the reading closes it and clears the highlight', async () => {
+    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    useGame.getState().addRound();
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Tactical action · 25/ }));
+    expect(tile(TARGET)).toHaveClass('tile-active');
+    await userEvent.click(screen.getByRole('button', { name: 'Round 2' }));
+    expect(tile(TARGET)).not.toHaveClass('tile-active');
+    await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));
+    expect(screen.queryByText('Activate 25')).toBeNull();
+    expect(document.querySelector('.route.route-active')).toBeNull();
+  });
+
+  test('a change of plan during the reading closes it', async () => {
+    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Tactical action · 25/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(screen.queryByText('Activate 25')).toBeNull();
+    expect(tile(TARGET)).not.toHaveClass('tile-active');
+    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
+  });
+
+  test('undo during a tap route leaves no stale draft', async () => {
+    useGame.getState().addEntry(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+    await userEvent.click(tile(WAY));
+    await userEvent.click(tile(HOME));
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByRole('status')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+    await userEvent.click(tile(WAY));
+    expect(tile(HOME)).not.toHaveClass('tile-path');
+    await userEvent.click(tile(HOME));
+    // The tap starts a new route rather than continuing or undoing the old one.
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
+    expect(tile(HOME)).toHaveClass('tile-path');
+  });
+
+  test('a change of plan drops an empty source from the plan it was made in', async () => {
+    await startedRoute();
+    const [id, first] = [tactical().id, plan().id];
+    act(() => {
+      useGame.getState().renamePlan('First');
+      useGame.setState(s => ({ game: { ...s.game!, plans: [...s.game!.plans, { id: 'other', name: 'Other', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }] } }));
+    });
+    await userEvent.click(screen.getByRole('tab', { name: 'Other' }));
+    expect(plan().id).toBe('other');
+    const inFirst = game().plans.find(p => p.id === first)!.rounds[0].entries.find(e => e.id === id) as Extract<Entry, { type: 'tactical' }>;
+    expect(inFirst.moves).toEqual([]);
+  });
+
+  test('a copy of the plan does not inherit an empty source', async () => {
+    await startedRoute();
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+    expect(game().plans).toHaveLength(2);
+    for (const each of game().plans) {
+      const moved = each.rounds[0].entries.find(e => e.type === 'tactical') as Extract<Entry, { type: 'tactical' }>;
+      expect(moved.moves).toEqual([]);
+    }
+  });
+
+  test('leaving the screen drops an empty source and keeps a chosen one', async () => {
+    await startedRoute();
+    await addRouteByTaps(WAY, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    await userEvent.click(screen.getByRole('button', { name: /^5/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    cleanup();
+    expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
+  });
+
+  test('leaving through the app menu drops an empty source', async () => {
+    useGame.getState().setTile(TARGET, '25');
+    render(<App />);
+    await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+    await addRouteByTaps(TARGET, HOME, TARGET);
+    expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+    await userEvent.click(screen.getByRole('button', { name: 'Game' }));
+    expect(tactical().moves).toEqual([]);
+  });
+
+  test('marking an action done in Now shows no earlier planned move during its flight', async () => {
+    const add = useGame.getState().addEntry;
+    add(1, { type: 'adjustment', label: '', delta: { units: { systemId: WAY, units: { cruiser: 1 } } } }, 'strategy');
+    useGame.getState().setEntryStatus(entries()[0].id, 'done');
+    add(1, tacticalBody([{ from: HOME, units: { carrier: 1 } }]), 'action');
+    const later = add(1, tacticalBody([{ from: WAY, units: { cruiser: 1 } }]), 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Now' }));
+    const row = document.querySelector<HTMLElement>(`[data-entry-id="${later}"]`)!;
+    await userEvent.click(within(row).getByRole('checkbox', { name: 'Done' }));
+    expect(document.querySelector('.flight-layer')).toBeInTheDocument();
+    expect(within(tile(HOME) as HTMLElement).getByRole('img', { name: /Carrier/ })).toBeInTheDocument();
+    expect(within(tile(TARGET) as HTMLElement).queryByRole('img', { name: /Carrier/ })).toBeNull();
+    expect(document.querySelector('[data-flight-stack="cruiser"]')).toBeInTheDocument();
+  });
+});
+
+describe('playing the round', () => {
+  const body = (from: string, unit: string) => ({ type: 'tactical' as const, systemId: TARGET, moves: [{ from, units: { [unit]: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } });
+  const after = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
+  const pressMap = () => {
+    fireEvent.pointerDown(tile(WAY), { pointerId: 9 });
+    fireEvent.pointerUp(window, { pointerId: 9 });
+  };
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+  const seed = () => {
+    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: WAY, units: { cruiser: 1 } } } }, 'strategy');
+    const first = useGame.getState().addEntry(1, body(HOME, 'carrier'), 'action');
+    const between = useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    const last = useGame.getState().addEntry(1, body(WAY, 'cruiser'), 'action');
+    return { setup: entries()[0].id, first, between, last };
+  };
+  const playingRow = () => document.querySelector('.entry-playing')?.getAttribute('data-entry-id');
+  const play = () => screen.getByRole('button', { name: 'Play' });
+
+  test('the button stands beside the add button and waits for entries', () => {
+    render(<PlanScreen />);
+    expect(play().closest('.phase-add')).toBe(screen.getByRole('button', { name: 'Add action' }).closest('.phase-add'));
+    expect(play()).toBeDisabled();
+    cleanup();
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    render(<PlanScreen />);
+    expect(play()).toBeEnabled();
+  });
+
+  test('all entries in order: flights with the playing highlight, pauses for the rest, then the map as it was and the plan unchanged', () => {
+    const ids = seed();
+    const planBefore = structuredClone(plan());
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<PlanScreen />);
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Carrier/ })).toBeInTheDocument();
+    fireEvent.click(play());
+    // The map goes back to before the first entry.
+    expect(playingRow()).toBe(ids.setup);
+    expect(within(tile(TARGET) as HTMLElement).queryByRole('img', { name: /Carrier/ })).toBeNull();
+    after(260);
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    after(450);
+    after(260);
+    expect(playingRow()).toBe(ids.first);
+    expect(document.querySelector('[data-flight-stack="carrier"]')).toBeInTheDocument();
+    expect(tile(TARGET)).toHaveClass('tile-active');
+    expect(tile(HOME)).toHaveClass('tile-source');
+    expect(document.querySelector('.route.route-active')).toBeInTheDocument();
+    // A tap finishes the flight; the carrier is there for the next step.
+    pressMap();
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    expect(playingRow()).toBe(ids.between);
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Carrier/ })).toBeInTheDocument();
+    after(260);
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    after(450);
+    expect(playingRow()).toBe(ids.last);
+    after(260);
+    expect(document.querySelector('[data-flight-stack="cruiser"]')).toBeInTheDocument();
+    pressMap();
+    expect(playingRow()).toBeUndefined();
+    expect(tile(TARGET)).not.toHaveClass('tile-active');
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Cruiser/ })).toBeInTheDocument();
+    expect(plan()).toEqual(planBefore);
+  });
+
+  test('it closes a reading, and a second tap stops it', async () => {
+    seed();
+    render(<PlanScreen />);
+    await userEvent.click(screen.getAllByRole('button', { name: /^Tactical action · 25/ })[0]);
+    expect(document.querySelector('.entry-shown')).toBeInTheDocument();
+    await userEvent.click(play());
+    expect(document.querySelector('.entry-shown')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
+    expect(playingRow()).toBeTruthy();
+    await userEvent.click(play());
+    expect(playingRow()).toBeUndefined();
+  });
+
+  test('under reduced motion nothing flies, and the steps still pass', () => {
+    const ids = seed();
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<PlanScreen />);
+    fireEvent.click(play());
+    const step = () => { after(260); after(450); };
+    step();
+    expect(playingRow()).toBe(ids.first);
+    after(260);
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    after(450);
+    expect(playingRow()).toBe(ids.between);
+    step();
+    step();
+    expect(playingRow()).toBeUndefined();
+  });
+
+  test('a change to the plan ends it', () => {
+    seed();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<PlanScreen />);
+    fireEvent.click(play());
+    expect(playingRow()).toBeTruthy();
+    act(() => useGame.getState().addEntry(1, { type: 'pass' }, 'action'));
+    expect(playingRow()).toBeUndefined();
   });
 });
 

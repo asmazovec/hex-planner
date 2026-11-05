@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../domain/newGame';
-import { project, suggestUnits } from '../../domain/project';
+import { project } from '../../domain/project';
 import type { Game, GameState, UnitCounts, UnitId } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import type { Move, TacticalEntry } from './tactical';
@@ -14,17 +14,6 @@ const pack = loadPack(['pok']);
 
 afterEach(cleanup);
 beforeEach(() => setLanguage('en'));
-
-const suggestGame = (): Game => createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
-
-test('suggestUnits предлагает корабли и груз в пределах вместимости', () => {
-  expect(suggestUnits(suggestGame(), [], { carrier: 1, fighter: 3, infantry: 3 }, pack)).toEqual({ carrier: 1, fighter: 3, infantry: 1 });
-});
-
-test('suggestUnits takes no cargo without capacity, and does not count cargo as ships', () => {
-  expect(suggestUnits(suggestGame(), [], { destroyer: 2, fighter: 3, infantry: 1 }, pack)).toEqual({ destroyer: 2 });
-  expect(suggestUnits(suggestGame(), [], {}, pack)).toEqual({});
-});
 
 const SOURCE = '1,0';
 const TRANSIT = '1,1';

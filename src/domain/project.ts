@@ -89,25 +89,6 @@ function fleetCount(game: Game, units: UnitCounts, upgrades: UnitId[], pack: Dat
   return ships + Math.max(0, (units.fighter ?? 0) - Math.max(0, cap - load));
 }
 
-/** All ships and flying fighters, then as much cargo as they carry: other fighters first, then mechs, then infantry. */
-export function suggestUnits(game: Game, upgrades: UnitId[], available: UnitCounts, pack: DataPack): UnitCounts {
-  const flying = fightersFly(game, upgrades, pack);
-  const suggestion: UnitCounts = {};
-  for (const id of unitIds(available)) {
-    const def = pack.units[id];
-    if (def && !def.ground && (!def.fighter || flying)) suggestion[id] = available[id];
-  }
-  let room = capacity(game, suggestion, upgrades, pack).capacity;
-  for (const id of ['fighter', 'mech', 'infantry'] as const) {
-    if (id === 'fighter' && flying) continue;
-    const size = pack.units[id]?.capacityUsed ?? 1;
-    const count = Math.min(available[id] ?? 0, Math.floor(room / size));
-    if (count > 0) suggestion[id] = count;
-    room -= count * size;
-  }
-  return suggestion;
-}
-
 /** Exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
 function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[]): number {
   let value = 0;
@@ -451,6 +432,6 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
 export const project = (game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack): Projection =>
   replay(game, plan, filter, pack);
 
-/** The forecast state just before an entry applies: what that entry can move and pay with. */
-export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack): GameState =>
-  replay(game, plan, 'forecast', pack, entryId).state;
+/** The state just before an entry applies: by default the forecast, what that entry can move and pay with. */
+export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack, filter: 'now' | 'forecast' = 'forecast'): GameState =>
+  replay(game, plan, filter, pack, entryId).state;

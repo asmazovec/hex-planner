@@ -120,6 +120,22 @@ test('a press on the map finishes the flight at once, and its click reaches noth
   expect(onClick).not.toHaveBeenCalled();
 });
 
+test('a cancelled press leaves no listener to eat a later click', async () => {
+  const onClick = vi.fn();
+  render(
+    <svg role="group" aria-label="map">
+      <rect onClick={onClick} />
+      <FlightLayer routes={[route()]} colour="#7fb2ff" passed={[]} onPass={vi.fn()} onDone={vi.fn()} />
+    </svg>,
+  );
+  const tile = document.querySelector('rect')!;
+  fireEvent.pointerDown(tile, { pointerId: 1 });
+  fireEvent.pointerCancel(window, { pointerId: 1 });
+  await new Promise(r => setTimeout(r, 70));
+  fireEvent.click(tile);
+  expect(onClick).toHaveBeenCalledTimes(1);
+});
+
 test('nothing to fly ends at once', () => {
   const { onDone } = setup([]);
   flush(16);

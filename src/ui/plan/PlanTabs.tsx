@@ -12,6 +12,7 @@ export function planDisplayName(name: string, t: (key: string, options: { n: num
 export interface PlanTabsProps {
   game: Game;
   roundNo: number;
+  /** Called before the plan changes, so that what is open still closes in its own plan. */
   onSelectPlan: () => void;
   onSelectRound: (roundNo: number) => void;
   onAddRound: () => void;
@@ -35,14 +36,14 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
           return (
             <button
               key={plan.id} type="button" role="tab" className="plan-tab" aria-selected={plan.id === game.activePlanId}
-              onClick={() => { setActivePlan(plan.id); onSelectPlan(); }}
+              onClick={() => { onSelectPlan(); setActivePlan(plan.id); }}
             >
               {planDisplayName(plan.name, t)}
               {card != null && <small>{cards.find(c => c.initiative === card)?.name}</small>}
             </button>
           );
         })}
-        <button type="button" className="plan-copy" onClick={() => { copyPlan(); onSelectPlan(); }}>{t('plan.copy')}</button>
+        <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
       </div>
       <div className="plan-rounds" role="group" aria-label={t('plan.rounds')}>
         {active?.rounds.map(round => (
