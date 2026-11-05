@@ -187,3 +187,14 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
 .opponent .field { flex: 1; min-width: 0; }
 .action-menu { display: flex; flex-direction: column; gap: 4px; }
 .card-hint { margin: 2px 0 4px; font-size: 0.85rem; }
+
+.slice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.slice { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 6px; line-height: 1.2; }
+.slice[aria-pressed='true'] { border-color: var(--accent); }
+.slice[data-owner='other'] { background: color-mix(in srgb, var(--warning) 18%, var(--surface)); }
+.slice[data-owner='me'] { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); }
+.slice small { color: var(--text-muted); }
+.fracture-label { font-size: 18px; font-weight: 600; fill: var(--text-muted); text-anchor: start; }
+.tile-fracture { cursor: default; }
+.tile-fracture .hex { fill: transparent; stroke: var(--text-muted); stroke-dasharray: 3 5; stroke-width: 2; }
+.ingress { fill: var(--warning); stroke: var(--bg); stroke-width: 1.5; }

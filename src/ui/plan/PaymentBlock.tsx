@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { paymentValue, readyPlanetIds } from '../../domain/payment';
+import { paymentValue, readyPlanetIds, type PaymentKind } from '../../domain/payment';
 import type { DataPack, GameState, Payment } from '../../domain/types';
 import { Stepper } from './Stepper';
 
@@ -10,17 +10,19 @@ export interface PaymentBlockProps {
   state: GameState;
   pack: DataPack;
   manual: boolean;
+  /** What the payment must cover; resources unless an expedition part costs influence. */
+  kind?: PaymentKind;
   onManual: (open: boolean) => void;
   onChange: (payment: Payment) => void;
 }
 
 /** Shows the automatic payment; the manual choice of planets and trade goods opens on request. */
-export function PaymentBlock({ need, payment, state, pack, manual, onManual, onChange }: PaymentBlockProps) {
+export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resources', onManual, onChange }: PaymentBlockProps) {
   const { t } = useTranslation();
-  const value = (id: string): number => pack.planets[id]?.resources ?? 0;
+  const value = (id: string): number => pack.planets[id]?.[kind] ?? 0;
   const byValue = (ids: string[]): string[] =>
     [...ids].sort((a, b) => value(b) - value(a) || (a < b ? -1 : 1));
-  const paid = paymentValue(payment, 'resources', pack);
+  const paid = paymentValue(payment, kind, pack);
   const planetText = (id: string): string => `${pack.planets[id]?.name ?? id} ${value(id)}`;
   const choices = byValue([...new Set([...readyPlanetIds(state), ...payment.planets])]);
   const toggle = (id: string) => onChange({

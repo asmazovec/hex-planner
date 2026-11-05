@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
-import { project, sourceSlot, stateBeforeEntry } from '../../domain/project';
+import { EXPEDITION_SLICES } from '../../domain/payment';
+import { project, sourceSlot, stateBeforeEntry, tileIdOf } from '../../domain/project';
+import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import type { Entry, EntryBody, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { HexMap, type Arrow } from '../map/HexMap';
@@ -13,6 +15,8 @@ import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
 import { EntryList } from '../plan/EntryList';
+import { ExpeditionWidget, sliceOwners } from '../plan/ExpeditionWidget';
+import { FractureControl } from '../plan/FractureControl';
 import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
 import { StrategyCards } from '../plan/StrategyCards';
 import { SummaryBar } from '../plan/SummaryBar';
@@ -61,6 +65,8 @@ export function PlanScreen() {
   const game = useGame(s => s.game);
   const addEntry = useGame(s => s.addEntry);
   const updateEntry = useGame(s => s.updateEntry);
+  const toggleIngress = useGame(s => s.toggleIngress);
+  const setThundersEdge = useGame(s => s.setThundersEdge);
   const addRound = useGame(s => s.addRound);
   const pack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
 
@@ -72,6 +78,8 @@ export function PlanScreen() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [manualPayments, setManualPayments] = useState<string[]>([]);
   const [view, setView] = useState<'map' | 'plan'>('map');
+  const [placing, setPlacing] = useState(false);
+  const [marking, setMarking] = useState(false);
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo) ?? plan?.rounds.at(-1);
@@ -123,7 +131,26 @@ export function PlanScreen() {
     setOpenId(id);
   };
 
+  const hasTe = game.expansions.includes('te');
+  const owners = sliceOwners(game, plan);
+  const expeditionDone = hasTe && Object.keys(owners).length === EXPEDITION_SLICES.length;
+  const suitable = (slot: string): boolean => {
+    const tile = game.map[slot] ? pack.tiles[tileIdOf(game, slot)] : undefined;
+    return tile !== undefined && validThundersEdgeSystem(tile);
+  };
+
   const onTileTap = (slot: string) => {
+    if (marking) {
+      toggleIngress(slot);
+      return;
+    }
+    if (placing) {
+      if (suitable(slot)) {
+        setThundersEdge(slot);
+        setPlacing(false);
+      }
+      return;
+    }
     if (picking) {
       if (!game.map[slot]) return;
       const id = addEntry(round.number, {
@@ -169,8 +196,12 @@ export function PlanScreen() {
     highlights[activeSystem] = 'active';
   }
 
+  if (activeSystem === null && expeditionDone) {
+    for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
+  }
+
   const duplicates = building ? duplicateTiles(game.map) : [];
-  const hint = picking ? t('plan.tactical.pickHint')
+  const hint = marking ? t('fracture.markHint') : placing ? t('expedition.placeHint') : picking ? t('plan.tactical.pickHint')
     : session?.addingSource ? t('plan.tactical.sourceHint')
       : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;
   const manualPayment = entry !== undefined && manualPayments.includes(entry.id);
@@ -239,8 +270,15 @@ export function PlanScreen() {
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} round={round} />
+                {hasTe && (
+                  <>
+                    <ExpeditionWidget game={game} pack={pack} owners={owners} placing={placing} onPlacing={setPlacing} />
+                    <FractureControl game={game} marking={marking} onMarking={setMarking} />
+                  </>
+                )}
                 <EntryList
-                  game={game} pack={pack} round={round} warnings={forecast.warningsByEntry} state={forecast.state}
+                  game={game} pack={pack} round={round} plan={plan}
+                  stateBefore={id => stateBeforeEntry(game, plan, id, pack)} warnings={forecast.warningsByEntry} state={forecast.state}
                   openId={openId} onOpen={onOpenEntry}
                 />
                 {!hasStatusEntry && (

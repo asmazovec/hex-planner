@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useRef, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { slotKeyOf } from '../../domain/newGame';
 import type { DataPack, Game, GameState } from '../../domain/types';
-import { hexToPixel, mapBounds } from './geometry';
+import { HEX_SIZE, hexToPixel, mapBounds, type Rect } from './geometry';
 import { TileView, type Highlight } from './TileView';
 import type { ArrowPreview } from './useArrowDrag';
 import { usePanZoom } from './usePanZoom';
@@ -21,6 +21,30 @@ export interface HexMapProps {
   selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
+}
+
+/**
+ * The Fracture systems stand in two touching columns to the right of the map. Their real position is
+ * only on a diagram (see data-verification), so this is the app's own placement.
+ */
+export function fractureLayout(tileIds: string[], base: Rect): { spots: { tileId: string; x: number; y: number }[]; bounds: Rect; labelX: number; labelY: number } {
+  const step = HEX_SIZE * Math.sqrt(3);
+  const perColumn = Math.ceil(tileIds.length / 2);
+  const left = base.x + base.width + HEX_SIZE + 6;
+  const cy = base.y + base.height / 2;
+  const spots = tileIds.map((tileId, i) => {
+    const second = i >= perColumn;
+    const row = (second ? i - perColumn + 0.5 : i) - (perColumn - 1) / 2;
+    return { tileId, x: left + (second ? HEX_SIZE * 1.5 : 0), y: cy + row * step };
+  });
+  const top = Math.min(...spots.map(s => s.y)) - step / 2;
+  const bottom = Math.max(...spots.map(s => s.y)) + step / 2;
+  const right = Math.max(...spots.map(s => s.x)) + HEX_SIZE + 6;
+  const y = Math.min(base.y, top - 26);
+  return {
+    spots, labelX: left - HEX_SIZE, labelY: top - 8,
+    bounds: { x: base.x, y, width: right - base.x, height: Math.max(base.y + base.height, bottom + 6) - y },
+  };
 }
 
 const parseKey = (key: string): { q: number; r: number } => {
@@ -61,7 +85,15 @@ export function HexMap({
     return [...keys];
   }, [pack, game.playerCount, game.map]);
 
-  const bounds = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
+  const mapRect = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
+  const fractureIds = useMemo(
+    () => (game.fracture.active
+      ? Object.values(pack.tiles).filter(tile => tile.kind === 'fracture').map(tile => tile.id).sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+      : []),
+    [pack, game.fracture.active],
+  );
+  const fracture = useMemo(() => (fractureIds.length > 0 ? fractureLayout(fractureIds, mapRect) : null), [fractureIds, mapRect]);
+  const bounds = fracture?.bounds ?? mapRect;
   const { view, handlers, reset } = usePanZoom(bounds, svgRef);
   const center = (key: string) => {
     const { q, r } = parseKey(key);
@@ -87,10 +119,21 @@ export function HexMap({
         {slotKeys.map(key => (
           <TileView
             key={key} slotKey={key} pack={pack} game={game} state={state}
-            highlight={highlights?.[key]} selected={selectedId === key}
+            highlight={highlights?.[key]} selected={selectedId === key} ingress={game.fracture.ingress.includes(key)}
             onTap={onTileTap} onPointerDown={onTilePointerDown}
           />
         ))}
+        {fracture && (
+          <g role="group" aria-label={t('map.fractureGroup')} className="fracture-group">
+            <text x={fracture.labelX} y={fracture.labelY} className="fracture-label">{t('map.fractureLabel')}</text>
+            {fracture.spots.map((spot, i) => (
+              <TileView
+                key={spot.tileId} slotKey={spot.tileId} pack={pack} game={game} state={state}
+                fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }}
+              />
+            ))}
+          </g>
+        )}
         {(arrows ?? []).map(({ from, to, warn }) => {
           const a = center(from);
           const b = center(to);

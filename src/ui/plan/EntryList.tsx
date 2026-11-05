@@ -1,8 +1,10 @@
 import { useRef, useState, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Round, UnitId, Warning } from '../../domain/types';
+import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UNIT_ORDER } from '../map/UnitGlyph';
+import { ExpeditionEditor } from './ExpeditionEditor';
+import { sliceOwners } from './ExpeditionWidget';
 import { Stepper } from './Stepper';
 import { systemName } from './tactical';
 import { WarningText } from './WarningText';
@@ -15,6 +17,10 @@ export interface EntryListProps {
   game: Game;
   pack: DataPack;
   round: Round;
+  /** The plan the round belongs to: the expedition parts held by all its entries. */
+  plan?: Plan;
+  /** The state just before an entry, for the payment of an expedition part; defaults to the forecast. */
+  stateBefore?: (entryId: string) => GameState;
   warnings: Record<string, Warning[]>;
   /** The forecast, for the systems a manual adjustment can change. */
   state: GameState;
@@ -94,7 +100,7 @@ function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =
 }
 
 /** Entries of a round by phase: move them by the handle or the arrows, mark them done, delete them. */
-export function EntryList({ game, pack, round, warnings, state, openId, onOpen }: EntryListProps) {
+export function EntryList({ game, pack, round, plan, stateBefore, warnings, state, openId, onOpen }: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
   const moveEntry = useGame(s => s.moveEntry);
@@ -190,6 +196,16 @@ export function EntryList({ game, pack, round, warnings, state, openId, onOpen }
                     {entry.id === openId && entry.type === 'component' && (
                       <div className="entry-details">
                         <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={note => updateEntry(entry.id, { note })} />
+                      </div>
+                    )}
+                    {entry.id === openId && entry.type === 'expedition' && (
+                      <div className="entry-details">
+                        <ExpeditionEditor
+                          game={game} pack={pack} sliceId={entry.sliceId} payment={entry.payment}
+                          owners={plan ? sliceOwners(game, plan) : game.expedition.slices as Record<string, 'me' | 'other'>}
+                          before={stateBefore ? stateBefore(entry.id) : state}
+                          onChange={patch => updateEntry(entry.id, patch)}
+                        />
                       </div>
                     )}
                     {entry.id === openId && entry.type === 'adjustment' && (

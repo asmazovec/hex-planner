@@ -1,7 +1,7 @@
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { systemPlanets, tileIdOf } from '../../domain/project';
-import type { DataPack, Game, GameState, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domain/types';
 import { HEX_SIZE, hexPoints, hexToPixel } from './geometry';
 import { UNIT_ORDER, UnitGlyph } from './UnitGlyph';
 
@@ -14,6 +14,10 @@ export interface TileViewProps {
   state: GameState;
   highlight?: Highlight;
   selected?: boolean;
+  /** A Fracture system sits beside the map, not in a slot: its tile id and centre are given here. */
+  fracture?: { tileId: string; index: number; x: number; y: number };
+  /** An ingress marker is drawn on this tile. */
+  ingress?: boolean;
   onTap?: (slotKey: string) => void;
   onPointerDown?: (slotKey: string, event: PointerEvent) => void;
 }
@@ -63,16 +67,18 @@ export function layoutUnits(count: number, planetCount: number): { scale: number
 }
 
 export function TileView({
-  slotKey, pack, game, state, highlight, selected, onTap, onPointerDown,
+  slotKey, pack, game, state, highlight, selected, fracture, ingress, onTap, onPointerDown,
 }: TileViewProps) {
   const { t } = useTranslation();
-  const { x, y } = hexToPixel(...(slotKey.split(',').map(Number) as [number, number]));
+  const { x, y } = fracture ?? hexToPixel(...(slotKey.split(',').map(Number) as [number, number]));
   const mapValue = game.map[slotKey];
-  const tileId = mapValue ? tileIdOf(game, slotKey) : '';
-  const tile = mapValue ? pack.tiles[tileId] : undefined;
-  const unknown = mapValue !== undefined && !tile;
+  const tileId = fracture ? fracture.tileId : mapValue ? tileIdOf(game, slotKey) : '';
+  const tile = fracture || mapValue ? pack.tiles[tileId] : undefined;
+  const unknown = !fracture && mapValue !== undefined && !tile;
 
-  const planets = systemPlanets(game, slotKey, pack);
+  const planets = fracture
+    ? (tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined)
+    : systemPlanets(game, slotKey, pack);
   const spots = planetSpots(planets.length);
 
   const unitLabel = (unit: UnitId, count: number, owner: 'me' | 'enemy'): string =>
@@ -84,7 +90,7 @@ export function TileView({
   ];
   const layout = layoutUnits(spaceUnits.length, planets.length);
 
-  const label = unknown
+  const label = fracture ? t('map.fractureTile', { n: fracture.index + 1 }) : unknown
     ? t('map.unknownTile', { id: tileId })
     : tile ? t('map.tile', { number: tile.number }) : t('map.emptySlot');
 
@@ -96,15 +102,16 @@ export function TileView({
   return (
     <g
       transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
-      role="button" tabIndex={0} aria-label={label}
-      className={`tile${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
+      role={fracture ? 'group' : 'button'} tabIndex={fracture ? undefined : 0} aria-label={label}
+      data-fracture-tile={fracture ? tileId : undefined}
+      className={`tile${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
       data-slot={slotKey}
       onClick={activate}
       onKeyDown={onKeyDown}
       onPointerDown={e => onPointerDown?.(slotKey, e)}
     >
       <polygon points={hexPoints(HEX_INNER)} className={`hex${tile ? ` hex-${tile.kind}` : ''}`} />
-      {tile && <text x={0} y={-45} className="tile-number">{tile.number}</text>}
+      {tile && <text x={0} y={-45} className="tile-number">{fracture ? `F${fracture.index + 1}` : tile.number}</text>}
       {unknown && <text x={0} y={-45} className="tile-number">{tileId}</text>}
       {unknown && <text x={0} y={4} className="tile-warning">!</text>}
 
@@ -112,6 +119,12 @@ export function TileView({
         <g role="img" aria-label={t('map.commandToken')} transform="translate(-36 -28)">
           <circle r={7} className="token" />
           <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />
+        </g>
+      )}
+
+      {ingress && (
+        <g role="img" aria-label={t('map.ingress')} transform="translate(36 -28)">
+          <path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" />
         </g>
       )}
 

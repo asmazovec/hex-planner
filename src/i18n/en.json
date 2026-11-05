@@ -70,7 +70,11 @@
       "minus": "Remove one {{unit}}",
       "close": "Close"
     },
-    "resetView": "Reset view"
+    "resetView": "Reset view",
+    "fractureTile": "Fracture system {{n}}",
+    "ingress": "Ingress token",
+    "fractureGroup": "Fracture systems",
+    "fractureLabel": "Fracture"
   },
   "builder": {
     "title": "Set the tile",
@@ -222,5 +226,28 @@
       "unitsMissing": "{{where}} is missing {{missing}} × {{unit}}.",
       "sliceTaken": "Expedition part \"{{slice}}\" is already taken."
     }
+  },
+  "expedition": {
+    "title": "Expedition",
+    "counter": "{{n}} of {{total}}",
+    "hint": "Tap a part to mark it as taken by another player. Your own parts come from your plan.",
+    "owner": {
+      "me": "you",
+      "other": "other"
+    },
+    "complete": "All six parts are taken. Choose a system for Thunder's Edge.",
+    "choose": "Choose system",
+    "remove": "Remove",
+    "placedAt": "Thunder's Edge in system {{system}}",
+    "placeHint": "Tap a highlighted system to place Thunder's Edge.",
+    "part": "Expedition part"
+  },
+  "fracture": {
+    "title": "Fracture",
+    "open": "Open the Fracture",
+    "close": "Close the Fracture",
+    "mark": "Mark ingress",
+    "markHint": "Tap systems to add or remove ingress tokens.",
+    "ingressCount": "Ingress tokens: {{n}}"
   }
 }
