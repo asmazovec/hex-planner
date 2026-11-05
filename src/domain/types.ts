@@ -58,3 +58,76 @@ export interface DataPack {
   factions: Record<string, FactionDef>;
   templates: MapTemplate[];
 }
+
+export type EntryStatus = 'planned' | 'done' | 'cancelled';
+export type Phase = 'strategy' | 'action' | 'status' | 'agenda';
+
+/** `planets` is ordered by descending value, then id. */
+export interface Payment { planets: string[]; tradeGoods: number; }
+
+export interface AdjustmentDelta {
+  tradeGoods?: number;
+  tactic?: number;
+  fleet?: number;
+  strategy?: number;
+  vp?: number;
+  units?: { systemId: string; units: UnitCounts };
+}
+
+/**
+ * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
+ * (a slot key, or a planet id to pick ground units up) into `systemId`.
+ */
+export type EntryBody =
+  | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts }[];
+      landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment }
+  | { type: 'strategic' }
+  | { type: 'secondary' }
+  | { type: 'component'; note: string }
+  | { type: 'pass' }
+  | { type: 'expedition'; sliceId: string | null; payment: Payment }
+  | { type: 'adjustment'; label: string; delta: AdjustmentDelta }
+  | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number };
+
+export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus };
+
+export interface Round { number: number; strategyCard: number | null; backupCard: number | null; entries: Entry[]; }
+export interface Plan { id: string; name: string; rounds: Round[]; }
+
+export interface Game {
+  id: string;
+  schemaVersion: number;
+  dataVersion: string;
+  expansions: ExpansionId[];
+  playerCount: number;
+  faction: string;
+  /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
+  map: Record<string, string>;
+  opponents: { faction: string; vp: number }[];
+  enemyUnits: Record<string, UnitCounts>;
+  planetControl: Record<string, 'me' | 'enemy'>;
+  expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
+  fracture: { active: boolean; ingress: string[] };
+  plans: Plan[];
+  activePlanId: string;
+}
+
+export interface GameState {
+  /** The player's units in each system's space, by slot key. */
+  systems: Record<string, UnitCounts>;
+  /** The player's ground units on each planet, by planet id. */
+  ground: Record<string, UnitCounts>;
+  exhausted: string[];
+  control: Record<string, 'me' | 'enemy'>;
+  tokensOnMap: string[];
+  tradeGoods: number;
+  tactic: number;
+  fleet: number;
+  strategy: number;
+  vp: number;
+}
+
+export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
+  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing';
+export interface Warning { code: WarningCode; params: Record<string, string | number>; }
+export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };
