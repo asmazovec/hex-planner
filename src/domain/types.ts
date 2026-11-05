@@ -128,6 +128,6 @@ export interface GameState {
 }
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
-  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing';
+  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'sliceTaken';
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

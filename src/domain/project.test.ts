@@ -240,9 +240,129 @@ describe('project', () => {
     expect(enemy.state.exhausted).toEqual(['arc', 'lazar']);
   });
 
-  test('экспедиция: заглушка оплаты расходует планеты', () => {
+  test('экспедиция без части: оплата расходует планеты', () => {
     const g = gameWith([entry({ type: 'expedition', sliceId: null, payment: { planets: ['jord'], tradeGoods: 0 } })]);
     expect(run(g).state.exhausted).toEqual(['jord']);
+  });
+
+  test('товар идёт за 1 ресурс, излишек сгорает без предупреждения', () => {
+    const build = (production: UnitCounts, payment: Payment) =>
+      withId('p', entry(tactical({ systemId: 'H', production, payment })));
+    const tg = entry({ type: 'adjustment', label: 'card', delta: { tradeGoods: 2 } }, 'strategy');
+    const burn = run(gameWith([build({ cruiser: 1 }, { planets: ['jord'], tradeGoods: 0 })]));
+    expect(codes(burn.warningsByEntry.p)).toEqual([]);
+    const tgOnly = run(gameWith([tg, build({ cruiser: 1 }, { planets: [], tradeGoods: 2 })]));
+    expect(codes(tgOnly.warningsByEntry.p)).toEqual([]);
+    const short = run(gameWith([tg, build({ carrier: 1, cruiser: 1 }, { planets: ['jord'], tradeGoods: 0 })]));
+    expect(short.warningsByEntry.p).toContainEqual({ code: 'shortResources', params: { needed: 5, paid: 4 } });
+    const withTg = run(gameWith([tg, build({ carrier: 1, cruiser: 1 }, { planets: ['jord'], tradeGoods: 2 })]));
+    expect(codes(withTg.warningsByEntry.p)).toEqual([]);
+    expect(withTg.state.tradeGoods).toBe(0);
+  });
+
+  test('планета, истощённая раньше по плану, вызывает planetExhausted', () => {
+    const spend = withId('s', entry(tactical({ systemId: 'H', payment: { planets: ['jord'], tradeGoods: 0 } })));
+    const buy = withId('b', entry(tactical({ systemId: 'H', production: { cruiser: 1 }, payment: { planets: ['jord'], tradeGoods: 0 } })));
+    expect(codes(run(gameWith([spend, buy])).warningsByEntry.b)).toContain('planetExhausted');
+    expect(codes(run(gameWith([buy, spend])).warningsByEntry.s)).toContain('planetExhausted');
+    expect(codes(run(gameWith([buy])).warningsByEntry.b)).not.toContain('planetExhausted');
+  });
+
+  describe('захваченная высадкой планета', () => {
+    const land = (planetId: string, planets: string[]) =>
+      withId('t', entry(tactical({
+        landings: [{ planetId, units: { infantry: 2 } }], production: { cruiser: 1 }, payment: { planets, tradeGoods: 0 },
+      })));
+
+    test('входит истощённой и не платит в той же записи', () => {
+      const r = run(gameWith([setup('B', { infantry: 2 }), land('lazar', ['lazar'])]));
+      expect(r.state.control.lazar).toBe('me');
+      expect(r.state.exhausted).toEqual(['lazar']);
+      expect(r.warningsByEntry.t).toEqual(expect.arrayContaining([
+        { code: 'planetExhausted', params: { planetId: 'lazar' } },
+        { code: 'shortResources', params: { needed: 2, paid: 0 } },
+      ]));
+    });
+
+    test('истощена и без оплаты, а в следующем раунде готова', () => {
+      const same = run(gameWith([setup('B', { infantry: 2 }), land('lazar', [])]));
+      expect(same.state.exhausted).toEqual(['lazar']);
+      expect(readyResources(same.state, pack)).toBe(5);
+      const next = run(gameWith([setup('B', { infantry: 2 }), land('lazar', [])], {}, [entry({ type: 'pass' })]));
+      expect(next.state.exhausted).toEqual([]);
+      expect(readyResources(next.state, pack)).toBe(6);
+    });
+
+    test('своя планета остаётся готовой, высадка без юнитов ничего не меняет', () => {
+      const own = run(gameWith([setup('B', { infantry: 2 }), land('arc', ['arc'])]));
+      expect(codes(own.warningsByEntry.t)).not.toContain('planetExhausted');
+      expect(own.state.exhausted).toEqual(['arc']);
+      const none = run(gameWith([land('lazar', [])]));
+      expect(none.state.exhausted).toEqual([]);
+      expect(none.state.control.lazar).toBeUndefined();
+    });
+
+    test('планета, отнятая у соперника, тоже истощена', () => {
+      const g = gameWith([setup('B', { infantry: 2 }), land('lazar', [])], { planetControl: { lazar: 'enemy' } });
+      expect(run(g).state.exhausted).toEqual(['lazar']);
+    });
+  });
+
+  describe('экспедиция: части и стоимость', () => {
+    const expedition = (sliceId: string | null, payment: Partial<Payment>, id = 'x') =>
+      withId(id, entry({ type: 'expedition', sliceId, payment: { planets: [], tradeGoods: 0, ...payment } }));
+    const giveTg = (amount: number) =>
+      entry({ type: 'adjustment', label: 'card', delta: { tradeGoods: amount } }, 'strategy');
+
+    test('res5: ресурсы планет и товаров', () => {
+      const ok = run(gameWith([expedition('res5', { planets: ['jord', 'arc'] })]));
+      expect(ok.warningsByEntry.x).toEqual([]);
+      expect(ok.state.exhausted).toEqual(['jord', 'arc']);
+      const short = run(gameWith([expedition('res5', { planets: ['jord'] })]));
+      expect(short.warningsByEntry.x).toContainEqual({ code: 'shortResources', params: { needed: 5, paid: 4 } });
+      const viaTg = run(gameWith([giveTg(1), expedition('res5', { planets: ['jord'], tradeGoods: 1 })]));
+      expect(viaTg.warningsByEntry.x).toEqual([]);
+      expect(viaTg.state.tradeGoods).toBe(0);
+    });
+
+    test('inf5: считает влияние, товар идёт за 1 влияние', () => {
+      const short = run(gameWith([expedition('inf5', { planets: ['jord', 'arc'] })]));
+      expect(short.warningsByEntry.x).toContainEqual({ code: 'shortInfluence', params: { needed: 5, paid: 3 } });
+      expect(codes(short.warningsByEntry.x)).not.toContain('shortResources');
+      const ok = run(gameWith([giveTg(2), expedition('inf5', { planets: ['jord', 'arc'], tradeGoods: 2 })]));
+      expect(ok.warningsByEntry.x).toEqual([]);
+      expect(ok.state.tradeGoods).toBe(0);
+    });
+
+    test('tg3: тратит 3 товара, при нехватке предупреждает', () => {
+      const ok = run(gameWith([giveTg(4), expedition('tg3', { tradeGoods: 3 })]));
+      expect(ok.warningsByEntry.x).toEqual([]);
+      expect(ok.state.tradeGoods).toBe(1);
+      const exact = run(gameWith([giveTg(3), expedition('tg3', { tradeGoods: 3 })]));
+      expect(exact.state.tradeGoods).toBe(0);
+      const short = run(gameWith([giveTg(1), expedition('tg3', { tradeGoods: 3 })]));
+      expect(short.warningsByEntry.x).toContainEqual({ code: 'shortTradeGoods', params: { needed: 3, have: 1 } });
+      expect(short.state.tradeGoods).toBe(0);
+    });
+
+    test('secret, cards, tech: без стоимости в ресурсах', () => {
+      for (const id of ['secret', 'cards', 'tech']) {
+        expect(run(gameWith([expedition(id, {})])).warningsByEntry.x).toEqual([]);
+      }
+      expect(run(gameWith([expedition('tech', { planets: ['arc'] })])).state.exhausted).toEqual(['arc']);
+    });
+
+    test('часть занимается один раз', () => {
+      const twice = run(gameWith([giveTg(6), expedition('tg3', { tradeGoods: 3 }, 'a'), expedition('tg3', { tradeGoods: 3 }, 'b')]));
+      expect(codes(twice.warningsByEntry.a)).toEqual([]);
+      expect(twice.warningsByEntry.b).toContainEqual({ code: 'sliceTaken', params: { sliceId: 'tg3' } });
+      const other = run(gameWith([expedition('secret', {})], { expedition: { slices: { secret: 'other' }, thundersEdgeSystem: null } }));
+      expect(codes(other.warningsByEntry.x)).toContain('sliceTaken');
+      const cancelled = run(gameWith([
+        entry({ type: 'expedition', sliceId: 'secret', payment: noPay }, 'action', 'cancelled'), expedition('secret', {}),
+      ]));
+      expect(codes(cancelled.warningsByEntry.x)).toEqual([]);
+    });
   });
 });
 

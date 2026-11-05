@@ -1,3 +1,4 @@
+import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, Projection, UnitCounts, UnitId, Warning,
 } from './types';
@@ -15,13 +16,8 @@ export function productionCost(units: UnitCounts, pack: DataPack): number {
   return total;
 }
 
-function sumPlanets(state: GameState, pack: DataPack, field: 'resources' | 'influence'): number {
-  let total = 0;
-  for (const [planetId, owner] of Object.entries(state.control)) {
-    if (owner === 'me' && !state.exhausted.includes(planetId)) total += pack.planets[planetId]?.[field] ?? 0;
-  }
-  return total;
-}
+const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind): number =>
+  readyPlanetIds(state).reduce((total, id) => total + (pack.planets[id]?.[field] ?? 0), 0);
 
 export const readyResources = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'resources');
 export const readyInfluence = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'influence');
@@ -81,7 +77,8 @@ const shipCount = (units: UnitCounts, pack: DataPack): number =>
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
   }, 0);
 
-function pay(state: GameState, payment: Payment, pack: DataPack, warnings: Warning[]): number {
+/** Exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
+function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[]): number {
   let value = 0;
   for (const planetId of payment.planets) {
     if (state.exhausted.includes(planetId)) {
@@ -89,7 +86,7 @@ function pay(state: GameState, payment: Payment, pack: DataPack, warnings: Warni
       continue;
     }
     state.exhausted.push(planetId);
-    if (state.control[planetId] === 'me') value += pack.planets[planetId]?.resources ?? 0;
+    if (state.control[planetId] === 'me') value += pack.planets[planetId]?.[kind] ?? 0;
   }
   if (payment.tradeGoods > state.tradeGoods) {
     warnings.push({ code: 'shortTradeGoods', params: { needed: payment.tradeGoods, have: state.tradeGoods } });
@@ -137,6 +134,10 @@ function applyTactical(
     const landed = take(state.systems, target, landing.units, warnings);
     if (unitIds(landed).length === 0) continue;
     add(state.ground, landing.planetId, landed);
+    // A planet newly taken enters exhausted, so it cannot pay within this entry.
+    if (state.control[landing.planetId] !== 'me' && !state.exhausted.includes(landing.planetId)) {
+      state.exhausted.push(landing.planetId);
+    }
     state.control[landing.planetId] = 'me';
   }
   const produced = unitIds(entry.production);
@@ -151,7 +152,7 @@ function applyTactical(
     else add(state.systems, target, groundPart);
   }
   const cost = productionCost(entry.production, pack);
-  const paid = pay(state, entry.payment, pack, warnings);
+  const paid = pay(state, entry.payment, 'resources', pack, warnings);
   if (cost > paid) warnings.push({ code: 'shortResources', params: { needed: cost, paid } });
   if (entry.moves.length > 0 || produced.length > 0) {
     const here = state.systems[target] ?? {};
@@ -164,7 +165,34 @@ function applyTactical(
   }
 }
 
-function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack): Warning[] {
+function applyExpedition(
+  game: Game, state: GameState, entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack,
+  taken: Set<string>, warnings: Warning[],
+): void {
+  const slice = EXPEDITION_SLICES.find(s => s.id === entry.sliceId);
+  if (slice) {
+    if (taken.has(slice.id) || game.expedition.slices[slice.id] === 'other') {
+      warnings.push({ code: 'sliceTaken', params: { sliceId: slice.id } });
+    }
+    taken.add(slice.id);
+  }
+  const cost = slice?.cost;
+  if (cost?.kind === 'tradeGoods') {
+    // The cost is paid in trade goods only; the payment's planets are not used.
+    if (state.tradeGoods < cost.amount) {
+      warnings.push({ code: 'shortTradeGoods', params: { needed: cost.amount, have: state.tradeGoods } });
+    }
+    state.tradeGoods -= Math.min(cost.amount, state.tradeGoods);
+    return;
+  }
+  const kind = cost?.kind ?? 'resources';
+  const paid = pay(state, entry.payment, kind, pack, warnings);
+  if (cost && paid < cost.amount) {
+    warnings.push({ code: kind === 'influence' ? 'shortInfluence' : 'shortResources', params: { needed: cost.amount, paid } });
+  }
+}
+
+function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>): Warning[] {
   const warnings: Warning[] = [];
   switch (entry.type) {
     case 'tactical':
@@ -174,8 +202,7 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack):
       state.strategy -= 1;
       break;
     case 'expedition':
-      // Stub: only spends the payment. Task 4 adds the costs and their shortage warnings.
-      pay(state, entry.payment, pack, warnings);
+      applyExpedition(game, state, entry, pack, taken, warnings);
       break;
     case 'statusTokens':
       state.tactic += entry.tactic;
@@ -211,6 +238,7 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack):
 export function project(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack): Projection {
   const state = initialState(game, pack);
   const warningsByEntry: Record<string, Warning[]> = {};
+  const takenSlices = new Set<string>();
   const rounds = [...plan.rounds].sort((a, b) => a.number - b.number);
   for (const round of rounds) {
     state.exhausted = [];
@@ -219,7 +247,7 @@ export function project(game: Game, plan: Plan, filter: 'now' | 'forecast', pack
       for (const entry of round.entries) {
         if (entry.phase !== phase) continue;
         if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
-        warningsByEntry[entry.id] = applyEntry(game, state, entry, pack);
+        warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices);
       }
     }
   }
