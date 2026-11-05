@@ -184,9 +184,9 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     else change('setup', kind, planetId, 1);
   };
 
-  const hasPlanned = (kind: StructureKind, planetId: string): boolean => (kind === 'pds'
-    ? (state.pds[planetId] ?? 0) > (game.pds[planetId] ?? 0)
-    : state.docks.includes(planetId) && !game.docks.includes(planetId));
+  /** Whether the game itself holds this structure, apart from what entries plan. */
+  const inBaseline = (kind: StructureKind, planetId: string): boolean =>
+    (kind === 'pds' ? (game.pds[planetId] ?? 0) > 0 : game.docks.includes(planetId));
 
   const onToken = ({ kind, owner, planet, key }: PlacedStack) => {
     const planetId = planetIdOf(planet);
@@ -205,8 +205,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       setNews(bumped(news, key, -1));
       return;
     }
-    // A stack holding a planned structure takes no tap: only its entry can take that one back, and the baseline stays.
-    if (isStructure(kind) && hasPlanned(kind, planetId ?? '')) return;
+    // A stack can hold planned structures too: the baseline ones go first, and one only planned belongs to its entry, so it takes no tap.
+    if (isStructure(kind) && !inBaseline(kind, planetId ?? '')) return;
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
     else if (owner === 'me') change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
     else changeEnemy(owner, kind, planetId, -1);

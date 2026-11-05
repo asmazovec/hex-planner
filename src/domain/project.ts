@@ -1,5 +1,5 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
-import { CARD, cardCost, cardsHeld, costsStrategyToken, type CardEntry } from './strategy';
+import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, STATUS_TOKENS, type CardEntry } from './strategy';
 import { productionCost, unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
@@ -293,6 +293,10 @@ function applyTactical(
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) checkSystem(game, state, target, pack, warnings);
 }
 
+function checkTokensGiven(given: number, free: number, warnings: Warning[]): void {
+  if (given > free) warnings.push({ code: 'tokensOver', params: { given, free } });
+}
+
 /** Applies what a strategy card can track; everything else about it is shown only. `primaries` holds the cards of this round's so far. */
 function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPack, primaries: (number | undefined)[], warnings: Warning[]): void {
   const primary = entry.type === 'strategic';
@@ -312,9 +316,13 @@ function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPac
   if (cost.amount > paid) {
     warnings.push({ code: cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', params: { needed: cost.amount, paid } });
   }
-  state.tactic += effects.tokens?.tactic ?? 0;
-  state.fleet += effects.tokens?.fleet ?? 0;
-  state.strategy += effects.tokens?.strategy ?? 0;
+  const given = (effects.tokens?.tactic ?? 0) + (effects.tokens?.fleet ?? 0) + (effects.tokens?.strategy ?? 0);
+  checkTokensGiven(given, freeTokens(entry, game.expansions), warnings);
+  for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
+    const change = effects.tokens?.[pool] ?? 0;
+    state[pool] += change;
+    if (change < 0 && state[pool] < 0) warnings.push({ code: 'poolNegative', params: { pool, have: state[pool] } });
+  }
   state.exhausted = state.exhausted.filter(id => !effects.readied?.includes(id));
   addUpgrades(state, entry.upgrades);
   if (primary && entry.card === CARD.trade) state.tradeGoods += 3;
@@ -392,6 +400,7 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       applyExpedition(game, state, entry, pack, taken, warnings);
       break;
     case 'statusTokens':
+      checkTokensGiven(entry.tactic + entry.fleet + entry.strategy, STATUS_TOKENS, warnings);
       state.tactic += entry.tactic;
       state.fleet += entry.fleet;
       state.strategy += entry.strategy;

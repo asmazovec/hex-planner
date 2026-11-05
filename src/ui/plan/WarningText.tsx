@@ -23,6 +23,7 @@ export function WarningText({ warning, game, pack }: WarningTextProps) {
     system: params.systemId === undefined ? undefined : place(params.systemId),
     where: params.where === undefined ? undefined : place(params.where),
     unit: params.unit === undefined ? undefined : t(`unit.${params.unit}`),
+    pool: params.pool === undefined ? undefined : t(`plan.summary.${params.pool}`),
     slice: params.sliceId === undefined ? undefined : t(`plan.slice.${params.sliceId}`),
   });
   return <span className="warning-text">{text}</span>;

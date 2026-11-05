@@ -414,15 +414,21 @@ test('the shop opens on the active system and shows the price of each unit', asy
   expect(shop.getByRole('button', { name: 'Fighter' })).toHaveTextContent('½');
 });
 
-test('a status tile with no free tokens left resets', async () => {
+test('a status tile always adds: beyond 2 it warns, naming abilities, and reset clears the distribution', async () => {
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
+  expect(row.getByRole('button', { name: 'Reset' })).toBeDisabled();
   await userEvent.click(row.getByRole('button', { name: 'Tactic: 0' }));
   await userEvent.click(row.getByRole('button', { name: 'Tactic: 1' }));
+  expect(row.queryByText(/usually from abilities/)).toBeNull();
   await userEvent.click(row.getByRole('button', { name: 'Tactic: 2' }));
-  expect(entries()[0]).toMatchObject({ tactic: 0 });
-  expect(row.getByRole('button', { name: 'Tactic: 0' })).toBeVisible();
+  expect(entries()[0]).toMatchObject({ tactic: 3 });
+  expect(cell('Tactic')).toHaveTextContent('3 → 6');
+  expect(row.getByText(/usually from abilities/)).toBeVisible();
+  await userEvent.click(row.getByRole('button', { name: 'Reset' }));
+  expect(entries()[0]).toMatchObject({ tactic: 0, fleet: 0, strategy: 0 });
+  expect(row.queryByText(/usually from abilities/)).toBeNull();
 });
 
 test.each(['Plan 1', 'Rush'])('an empty name falls back to the default, starting from %s', async start => {

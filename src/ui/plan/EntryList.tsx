@@ -1,7 +1,7 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../domain/cards';
-import { CARD } from '../../domain/strategy';
+import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { playersOf } from '../../domain/players';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
@@ -16,8 +16,6 @@ import { WarningText } from './WarningText';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
-/** The tokens a player takes in the status phase; abilities that give more go through a manual adjustment. */
-const STATUS_TOKENS = 2;
 
 export interface EntryListProps {
   game: Game;

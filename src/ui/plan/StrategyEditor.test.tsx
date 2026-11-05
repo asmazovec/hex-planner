@@ -29,7 +29,7 @@ const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const click = (name: string | RegExp) => userEvent.click(button(name));
 const cell = (name: string) => within(screen.getByRole('group', { name: 'Totals, now and forecast' })).getByRole('group', { name });
 const cards = () => within(screen.getByRole('group', { name: 'Card' }));
-const tileOf = (name: string) => new RegExp(`^${name}: \\d+$`);
+const tileOf = (name: string) => new RegExp(`^${name}: [+−]?\\d+$`);
 const warningsShown = () => within(screen.getByRole('list', { name: 'Warnings' }));
 
 function start({ expansions = ['pok', 'te'] as ExpansionId[], playerCount = 6, faction = 'arborec' } = {}) {
@@ -113,6 +113,16 @@ describe('opening', () => {
 });
 
 describe('modes and the lock', () => {
+  test('the lock note has its place before a choice, empty, so the controls do not move', async () => {
+    await primary('Imperial');
+    const place = document.querySelector('.strategy-lock');
+    expect(place).not.toBeNull();
+    expect(place).toHaveTextContent('');
+    await click(/Mecatol Rex/);
+    expect(document.querySelector('.strategy-lock')).toBe(place);
+    expect(place).toHaveTextContent(/A choice has been made/);
+  });
+
   test('modes are free until a choice, and a secondary or a token primary costs a strategy token', async () => {
     await primary('Trade');
     expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
@@ -178,10 +188,15 @@ describe('Leadership', () => {
     await click(tileOf('Fleet'));
     expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
     await click(tileOf('Tactic'));
-    expect(cardEntry().effects?.tokens).toMatchObject({ tactic: 0, fleet: 1 });
-    expect(screen.getByText('Distribute tokens: 2 left')).toBeVisible();
-    await click('Add one Buy with influence');
+    expect(cardEntry().effects?.tokens).toMatchObject({ tactic: 3, fleet: 1 });
+    expect(screen.getByText('Distribute tokens: -1 left')).toBeVisible();
+    expect(warningsShown().getByText(/usually from abilities/)).toBeVisible();
+    await click('Reset');
     expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
+    expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
+    expect(button('Reset')).toBeDisabled();
+    await click('Add one Buy with influence');
+    expect(screen.getByText('Distribute tokens: 4 left')).toBeVisible();
     expect(screen.getByText('Bought 1, influence 3.')).toBeVisible();
     expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
     expect(within(screen.getByRole('group', { name: 'Payment' })).getByText(/3/)).toBeVisible();
@@ -199,45 +214,73 @@ describe('Leadership', () => {
     expect(cardEntry().effects?.payment).toEqual(autoPay(stateBeforeEntry(game(), game().plans[0], cardEntry().id, loadPack(['pok', 'te'])), 6, 'influence', loadPack(['pok', 'te'])));
   });
 
-  test('secondary: nothing free to distribute, a tile without free tokens stays at zero and no token is charged', async () => {
+  test('secondary: nothing free to distribute, a tap still adds and warns, and no strategy token is charged', async () => {
     await secondary('Leadership');
     expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
     await click(tileOf('Fleet'));
-    expect(cardEntry().effects?.tokens).toBeUndefined();
-    expect(game().plans[0].rounds[0].entries).toHaveLength(1);
+    expect(cardEntry().effects?.tokens).toMatchObject({ fleet: 1 });
+    expect(warningsShown().getByText(/usually from abilities/)).toBeVisible();
     expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
     expect(screen.queryByText('A secondary costs 1 strategy token.')).toBeNull();
   });
 });
 
 describe('Diplomacy', () => {
-  test('a system chosen on the map offers my planets there, up to 2', async () => {
-    const planets = game().map[HOME] ? loadPack(['pok', 'te']).tiles[game().map[HOME]].planetIds : [];
+  /** Hacan's three home planets and the one on the other tile, all mine and all spent. */
+  const spentAcrossTheMap = () => {
+    start({ faction: 'hacan' });
+    const data = loadPack(['pok', 'te']);
+    const home = data.tiles[data.factions.hacan.homeTile].planetIds;
+    const far = data.tiles['25'].planetIds[0];
+    store().setPlanetControl(far, 'me');
+    store().addEntry(1, { type: 'expedition', sliceId: null, payment: { planets: [...home, far], tradeGoods: 0 } }, 'action');
+    return { home, far, name: (id: string) => new RegExp(data.planets[id].name) };
+  };
+  const readyList = () => within(screen.getByRole('group', { name: 'Ready planets' }));
+
+  test('the secondary lists my exhausted planets across the map, up to 2, with no system to pick', async () => {
+    const { home, far, name } = spentAcrossTheMap();
+    await secondary('Diplomacy');
+    expect(screen.queryByRole('button', { name: /^Choose a system/ })).toBeNull();
+    expect(readyList().getAllByRole('button')).toHaveLength(home.length + 1);
+    await userEvent.click(readyList().getByRole('button', { name: name(home[0]) }));
+    await userEvent.click(readyList().getByRole('button', { name: name(far) }));
+    expect(cardEntry().effects?.readied).toEqual([home[0], far]);
+    expect(readyList().getByRole('button', { name: name(home[1]) })).toBeDisabled();
+  });
+
+  test('a planet that is not exhausted is not listed', async () => {
+    await secondary('Diplomacy');
+    expect(screen.queryByRole('group', { name: 'Ready planets' })).toBeNull();
+    expect(screen.getByText('No planets of yours are exhausted at this point.')).toBeVisible();
+  });
+
+  test('the primary picks a system for the others, and that does not limit or clear the planets', async () => {
+    const { home, far, name } = spentAcrossTheMap();
     await primary('Diplomacy');
     await click('Choose a system with your planet');
     expect(screen.getByRole('status')).toHaveTextContent('Tap a tile on the map.');
     await userEvent.click(tile(HOME));
     expect(cardEntry().effects?.systemId).toBe(HOME);
     expect(screen.queryByRole('status')).toBeNull();
-    const ready = within(screen.getByRole('group', { name: 'Ready planets' }));
-    const names = ready.getAllByRole('button');
-    expect(names).toHaveLength(planets.length);
-    await userEvent.click(names[0]);
-    expect(cardEntry().effects?.readied).toEqual([planets[0]]);
+    await userEvent.click(readyList().getByRole('button', { name: name(far) }));
+    await click(/^Choose a system with your planet/);
+    await userEvent.click(tile(OTHER));
+    expect(cardEntry().effects).toMatchObject({ systemId: OTHER, readied: [far] });
+    expect(readyList().getAllByRole('button')).toHaveLength(home.length + 1);
   });
 
-  test('never more than two, and a new system clears them', async () => {
-    start({ faction: 'hacan' });
-    await secondary('Diplomacy');
-    await click('System with exhausted planets');
+  test('the base primary readies in that system only, and a new system clears them', async () => {
+    start({ expansions: [], faction: 'sol' });
+    const data = loadPack([]);
+    const [planet] = data.tiles[data.factions.sol.homeTile].planetIds;
+    await primary('Diplomacy');
+    await click('Choose a system with your planet');
     await userEvent.click(tile(HOME));
-    const [first, second, third] = within(screen.getByRole('group', { name: 'Ready planets' })).getAllByRole('button');
-    await userEvent.click(first);
-    await userEvent.click(second);
-    expect(third).toBeDisabled();
-    await click(/^System with exhausted planets/);
+    await userEvent.click(readyList().getByRole('button', { name: new RegExp(data.planets[planet].name) }));
+    expect(cardEntry().effects?.readied).toEqual([planet]);
+    await click(/^Choose a system with your planet/);
     await userEvent.click(tile(OTHER));
-    expect(cardEntry().effects?.systemId).toBe(OTHER);
     expect(cardEntry().effects?.readied).toBeUndefined();
   });
 
@@ -383,12 +426,29 @@ describe('Warfare', () => {
     expect(entries()).toHaveLength(1);
   });
 
-  test('with Thunder\'s Edge no token is free to distribute and no system is picked', async () => {
+  test('with Thunder\'s Edge a tile takes a token from the fullest pool, signed on the tiles; reset clears it', async () => {
     await primary('Warfare');
-    expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
-    await click(tileOf('Fleet'));
-    expect(cell('Fleet')).toHaveTextContent(/^Fleet3$/);
     expect(screen.queryByRole('button', { name: /^Take a command token off/ })).toBeNull();
+    expect(button('Reset')).toBeDisabled();
+    await click(tileOf('Fleet'));
+    expect(cardEntry().effects?.tokens).toEqual({ tactic: -1, fleet: 1 });
+    expect(button('Fleet: +1')).toHaveTextContent('+1');
+    expect(button('Tactic: −1')).toHaveTextContent('−1');
+    expect(cell('Tactic')).toHaveTextContent('3 → 2');
+    expect(cell('Fleet')).toHaveTextContent('3 → 4');
+    expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
+    await click(tileOf('Strategy'));
+    expect(cardEntry().effects?.tokens).toEqual({ tactic: -1, fleet: 0, strategy: 1 });
+    await click('Reset');
+    expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
+    expect(button('Secondary')).toBeEnabled();
+  });
+
+  test('taking from empty pools goes below zero and warns', async () => {
+    store().addEntry(1, { type: 'adjustment', label: '', delta: { tactic: -3, fleet: -3, strategy: -2 } }, 'action');
+    await primary('Warfare');
+    await click(tileOf('Fleet'));
+    expect(warningsShown().getByText(/below zero/)).toBeVisible();
   });
 
   test('before Thunder\'s Edge there is no free tactical: a token comes off a chosen system and one is gained', async () => {
@@ -408,6 +468,11 @@ describe('Warfare', () => {
     expect(screen.getByText('Distribute tokens: 1 left')).toBeVisible();
     await click(tileOf('Fleet'));
     expect(cell('Fleet')).toHaveTextContent('3 → 4');
+    expect(cell('Tactic')).toHaveTextContent('3 → 2');
+    expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
+    await click(tileOf('Strategy'));
+    expect(cell('Strategy')).toHaveTextContent('2 → 3');
+    expect(cell('Fleet')).toHaveTextContent(/^Fleet3$/);
   });
 
   test('the shop is priced at the upgrades before the entry, not those of the round\'s end', async () => {

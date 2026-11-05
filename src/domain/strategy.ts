@@ -1,3 +1,4 @@
+import { strategyCardSet } from './cards';
 import { autoPay, type PaymentKind } from './payment';
 import { productionCost } from './unitStats';
 import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Round, StructureKind, UnitCounts, UnitId } from './types';
@@ -8,6 +9,8 @@ export type CardPatch = CardPlay & { type?: CardEntry['type'] };
 /** Initiative numbers, the same in every card set. */
 export const CARD = { leadership: 1, diplomacy: 2, politics: 3, construction: 4, trade: 5, warfare: 6, technology: 7, imperial: 8 } as const;
 
+/** The tokens a player takes in the status phase; abilities may give more, which only warns. */
+export const STATUS_TOKENS = 2;
 const INFLUENCE_PER_TOKEN = 3;
 const SECOND_RESEARCH = 6;
 const SECONDARY_RESEARCH = 4;
@@ -32,6 +35,13 @@ export function plannedCard(round: Round, playerCount: number): number | undefin
 /** A secondary or a primary for a token, except Leadership's secondary, which the card makes free of tokens. */
 export const costsStrategyToken = (entry: CardEntry): boolean =>
   entry.type === 'secondary' ? entry.card !== CARD.leadership : entry.forToken === true;
+
+/** What a card gives to distribute: Leadership's own and bought tokens, the token Warfare's primary gains before Thunder's Edge. */
+export function freeTokens(entry: CardEntry, expansions: ExpansionId[]): number {
+  const primary = entry.type === 'strategic';
+  if (entry.card === CARD.leadership) return (primary ? 3 : 0) + (entry.effects?.boughtTokens ?? 0);
+  return primary && entry.card === CARD.warfare && !expansions.includes('te') ? 1 : 0;
+}
 
 const techCost = (entry: CardEntry): number => {
   const count = entry.upgrades?.length ?? 0;
@@ -89,11 +99,11 @@ export function withProduction(effects: CardEffects, systemId: string, unit: Uni
   return { ...next, production: { systemId, units, ...(Object.keys(ground).length > 0 ? { ground } : {}) } };
 }
 
-/** The effects with a chosen system. What belongs to the old system goes: Diplomacy's readied planets, and the structures of Construction's secondary before Thunder's Edge. */
+/** The effects with a chosen system. What belongs to the old system goes: the readied planets of the base Diplomacy primary, whose text says "that system", and the structures of Construction's secondary before Thunder's Edge. */
 export function withSystem(entry: CardEntry, systemId: string, expansions: ExpansionId[]): CardEffects {
   const next: CardEffects = { ...entry.effects, systemId };
   if (systemId === entry.effects?.systemId) return next;
-  if (entry.card === CARD.diplomacy) delete next.readied;
+  if (entry.card === CARD.diplomacy && entry.type === 'strategic' && strategyCardSet(expansions) === 'base_game') delete next.readied;
   if (entry.card === CARD.construction && entry.type === 'secondary' && !expansions.includes('te')) delete next.structures;
   return next;
 }

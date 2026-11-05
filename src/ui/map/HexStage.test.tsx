@@ -449,14 +449,33 @@ describe('build', () => {
     expect(game().docks).not.toContain(quann());
   });
 
-  test('in setup a planned structure takes no tap, and the baseline PDS stays', async () => {
+  const planPds = () => useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'pds', planetId: quann() }] } }, 'action');
+  const plannedStructures = () => (entries().find(e => e.type === 'strategic') as Extract<Entry, { type: 'strategic' }>).effects?.structures;
+  const pdsStack = () => document.querySelector('[data-stack="me|pds|0"] .token-hit');
+
+  test('in battle a stack with a planned PDS loses the baseline one first; the planned one then takes no tap', async () => {
     useGame.getState().setPds(quann(), 1);
-    useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'pds', planetId: quann() }] } }, 'action');
+    planPds();
+    open({ initialMode: 'battle' });
+    await userEvent.click(pdsStack()!);
+    expect(game().pds[quann()]).toBeUndefined();
+    expect(plannedStructures()).toHaveLength(1);
+    const giveBack = screen.getByRole('button', { name: 'Give back PDS' });
+    expect(giveBack).toBeVisible();
+    await userEvent.click(pdsStack()!);
+    expect(plannedStructures()).toHaveLength(1);
+    expect(game().pds[quann()]).toBeUndefined();
+  });
+
+  test('in setup a stack follows what is visible: the baseline PDS comes off, then a planned one alone takes no tap', async () => {
+    useGame.getState().setPds(quann(), 1);
+    planPds();
     open({});
-    await userEvent.click(document.querySelector('[data-stack="me|pds|0"] .token-hit')!);
-    expect(game().pds[quann()]).toBe(1);
-    const planned = entries().find(e => e.type === 'strategic') as Extract<Entry, { type: 'strategic' }>;
-    expect(planned.effects?.structures).toHaveLength(1);
+    await userEvent.click(pdsStack()!);
+    expect(game().pds[quann()]).toBeUndefined();
+    expect(plannedStructures()).toHaveLength(1);
+    await userEvent.click(pdsStack()!);
+    expect(plannedStructures()).toHaveLength(1);
   });
 
   test('in setup a planned dock takes no tap; a baseline one still comes off', async () => {

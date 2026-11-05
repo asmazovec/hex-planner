@@ -174,6 +174,8 @@ const CASES: Record<WarningCode, Warning['params']> = {
   landingOverLimit: { unit: 'infantry', wanted: 3, available: 2 },
   shortStrategy: { have: 0 },
   primaryRepeated: { held: 1 },
+  tokensOver: { given: 3, free: 2 },
+  poolNegative: { pool: 'fleet', have: -1 },
   sliceTaken: { sliceId: 'res5' },
 };
 

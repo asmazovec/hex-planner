@@ -4,7 +4,7 @@ import { strategyCardSet, strategyCards } from '../../domain/cards';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat } from '../../domain/players';
 import { placesOf, systemPlanets } from '../../domain/project';
-import { CARD, cardChange, cardCost, costsStrategyToken, hasChoices, homeSlot, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
+import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices, homeSlot, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, UnitId, Warning } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import type { PurchaseTarget } from '../map/HexStage';
@@ -87,9 +87,12 @@ export function StrategyEditor({
     type: next === 'secondary' ? 'secondary' : 'strategic', forToken: next === 'forToken' ? true : undefined,
   });
 
-  const tokenPick = (free: number) => (
+  const tokenPick = (rearrange = false) => (
     <div className="editor-section">
-      <TokenTiles free={free} values={effects.tokens ?? {}} onChange={tokens => setEffects({ tokens })} />
+      <TokenTiles
+        free={freeTokens(entry, game.expansions)} values={effects.tokens ?? {}} onChange={tokens => setEffects({ tokens })}
+        pools={rearrange ? { tactic: before.tactic, fleet: before.fleet, strategy: before.strategy } : undefined}
+      />
     </div>
   );
 
@@ -121,17 +124,21 @@ export function StrategyEditor({
               <Stepper name={t('plan.strategy.buy')} value={bought} min={0} onChange={value => setEffects({ boughtTokens: value })} />
               <span className="muted">{t('plan.strategy.bought', { n: bought, cost: cost.amount })}</span>
             </div>
-            {tokenPick((primary ? 3 : 0) + bought)}
+            {tokenPick()}
           </>
         );
       }
       case CARD.diplomacy: {
+        // Only the base primary's text says "that system"; the others ready any of my planets.
         const unlimited = primary && strategyCardSet(game.expansions) === 'base_game';
         const readied = effects.readied ?? [];
-        const here = effects.systemId ? systemPlanets(game, effects.systemId, pack).filter(p => before.control[p.id] === 'me') : [];
+        const spent = [...new Set([...before.exhausted.filter(id => before.control[id] === 'me'), ...readied])].flatMap(id => pack.planets[id] ?? []);
+        const here = !unlimited ? spent
+          : effects.systemId ? systemPlanets(game, effects.systemId, pack).filter(p => before.control[p.id] === 'me') : [];
         return (
           <>
-            {pickButton('system', t(primary ? 'plan.strategy.systemPrimary' : 'plan.strategy.systemSecondary'), effects.systemId)}
+            {primary && pickButton('system', t('plan.strategy.systemPrimary'), effects.systemId)}
+            {!unlimited && here.length === 0 && <p className="muted">{t('plan.strategy.noExhausted')}</p>}
             {here.length > 0 && (
               <div className="editor-section" role="group" aria-label={t('plan.strategy.ready')}>
                 <strong>{t(unlimited ? 'plan.strategy.ready' : 'plan.strategy.readyTwo')}</strong>
@@ -215,7 +222,7 @@ export function StrategyEditor({
             return (
               <>
                 {pickButton('system', t('plan.strategy.liftToken'), effects.systemId)}
-                {tokenPick(1)}
+                {tokenPick(true)}
               </>
             );
           }
@@ -230,7 +237,7 @@ export function StrategyEditor({
                 )
                 : <button type="button" className="option" onClick={onStartTactical}>{t('plan.strategy.freeTactical')}</button>}
               <p className="muted">{t('plan.strategy.freeTacticalNote')}</p>
-              {tokenPick(0)}
+              {tokenPick(true)}
             </>
           );
         }
@@ -298,7 +305,7 @@ export function StrategyEditor({
           </button>
         ))}
       </div>
-      {locked && <p className="muted">{t('plan.strategy.locked')}</p>}
+      <p className="muted strategy-lock">{locked && t('plan.strategy.locked')}</p>
       {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
       {card && summary && (
         <>

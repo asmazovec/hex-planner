@@ -154,7 +154,7 @@ export type AdjustmentKind = 'losses' | 'build' | 'setup';
 
 /** What a strategy card did. Only tokens, payment, readied planets, Mecatol, production and structures reach the projection; the rest is shown. */
 export interface CardEffects {
-  /** Token distribution. Bought tokens count only once distributed. */
+  /** Token distribution, signed: Warfare's rearrangement takes from a pool. Bought tokens count only once distributed. */
   tokens?: { tactic?: number; fleet?: number; strategy?: number };
   /** Bought with influence on Leadership. */
   boughtTokens?: number;
@@ -281,6 +281,6 @@ export interface GameState {
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
   | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
-  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated';
+  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative';
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

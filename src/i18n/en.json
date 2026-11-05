@@ -256,7 +256,9 @@
       "landingOverLimit": "Landing needs {{wanted}} × {{unit}}, but only {{available}} arrived.",
       "sliceTaken": "Expedition part \"{{slice}}\" is already taken.",
       "shortStrategy": "Not enough strategy tokens: {{have}} left.",
-      "primaryRepeated": "The primary has already been played this round: cards held {{held}}."
+      "primaryRepeated": "The primary has already been played this round: cards held {{held}}.",
+      "tokensOver": "Distributed {{given}} tokens with {{free}} free: more usually from abilities or technologies.",
+      "poolNegative": "{{pool}}: the rearrangement goes below zero ({{have}})."
     },
     "phases": {
       "strategy": "Strategy",
@@ -294,7 +296,6 @@
       "buy": "Buy with influence",
       "bought": "Bought {{n}}, influence {{cost}}.",
       "systemPrimary": "Choose a system with your planet",
-      "systemSecondary": "System with exhausted planets",
       "ready": "Ready planets",
       "readyTwo": "Ready planets, up to 2",
       "exhausted": "exhausted",
@@ -320,8 +321,12 @@
       "mecatol": "I control Mecatol Rex: +1 point",
       "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",
       "imperialSecondary": "Draw a secret objective.",
-      "tokenNote": "A tap adds a token. With none free, the tile resets.",
-      "liftToken": "Take a command token off a system"
+      "tokenNote": "A tap adds a token.",
+      "liftToken": "Take a command token off a system",
+      "rearrangeNote": "A tap adds a token taken from the fullest pool.",
+      "rearrange": "Rearrange tokens",
+      "reset": "Reset",
+      "noExhausted": "No planets of yours are exhausted at this point."
     }
   },
   "expedition": {

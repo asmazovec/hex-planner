@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
 import { project, stateBeforeEntry } from './project';
 import { withTeMecatol } from './mecatol';
-import { cardChange, cardCost, cardsHeld, costsStrategyToken, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry } from './strategy';
+import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -383,14 +383,53 @@ describe('choices and changes', () => {
     expect(withProduction(two, HOME, 'infantry', NAR, -1).production).toEqual({ systemId: HOME, units: { infantry: 1 }, ground: { [JOL]: { infantry: 1 } } });
   });
 
-  test('a new system clears Diplomacy\'s readied planets and the structures of Construction\'s secondary before Thunder\'s Edge', () => {
+  test('a new system clears only the base primary\'s readied planets, and the structures of Construction\'s secondary before Thunder\'s Edge', () => {
     const diplomacy = primary(2, { systemId: HOME, readied: [JOL] });
-    expect(withSystem(diplomacy, OTHER, ['pok', 'te'])).toEqual({ systemId: OTHER });
-    expect(withSystem(diplomacy, HOME, ['pok', 'te'])).toEqual({ systemId: HOME, readied: [JOL] });
+    expect(withSystem(diplomacy, OTHER, [])).toEqual({ systemId: OTHER });
+    expect(withSystem(diplomacy, HOME, [])).toEqual({ systemId: HOME, readied: [JOL] });
+    expect(withSystem(diplomacy, OTHER, ['pok'])).toEqual({ systemId: OTHER, readied: [JOL] });
+    expect(withSystem(diplomacy, OTHER, ['pok', 'te'])).toEqual({ systemId: OTHER, readied: [JOL] });
     const built = { systemId: HOME, structures: [{ kind: 'pds' as const, planetId: JOL }] };
     expect(withSystem(secondary(4, built), OTHER, ['pok'])).toEqual({ systemId: OTHER });
     expect(withSystem(secondary(4, built), OTHER, ['pok', 'te'])).toEqual({ ...built, systemId: OTHER });
     expect(withSystem(primary(4, built), OTHER, ['pok'])).toEqual({ ...built, systemId: OTHER });
+  });
+
+  test('a Warfare rearrangement moves tokens with no net change, and a pool below zero warns without being stopped', () => {
+    const fine = primary(6, { tokens: { tactic: -1, fleet: 1 } });
+    const { state } = stateOf(start([fine]));
+    expect([state.tactic, state.fleet, state.strategy]).toEqual([2, 4, 2]);
+    expect(warningsOf(start([fine]), fine)).toEqual([]);
+    const over = primary(6, { tokens: { strategy: -3, fleet: 3 } });
+    const result = stateOf(start([over]));
+    expect(result.state.strategy).toBe(-1);
+    expect(result.warningsByEntry[over.id]).toEqual([{ code: 'poolNegative', params: { pool: 'strategy', have: -1 } }]);
+  });
+
+  test('freeTokens: what a card gives to distribute', () => {
+    expect(freeTokens(primary(1, { boughtTokens: 2 }), ['pok', 'te'])).toBe(5);
+    expect(freeTokens(secondary(1, { boughtTokens: 2 }), ['pok', 'te'])).toBe(2);
+    expect(freeTokens(primary(6), ['pok', 'te'])).toBe(0);
+    expect(freeTokens(primary(6), ['pok'])).toBe(1);
+  });
+
+  test('Leadership beyond its free tokens warns, naming how many, and still counts them', () => {
+    const over = primary(1, { tokens: { tactic: 4 } });
+    const { state, warningsByEntry } = stateOf(start([over]));
+    expect(state.tactic).toBe(7);
+    expect(warningsByEntry[over.id]).toEqual([{ code: 'tokensOver', params: { given: 4, free: 3 } }]);
+    const within = primary(1, { tokens: { tactic: 3 } });
+    expect(warningsOf(start([within]), within)).toEqual([]);
+  });
+
+  test('the status entry beyond 2 tokens warns and still counts them', () => {
+    const status = (tactic: number): Entry => ({ id: `st${++n}`, phase: 'status', status: 'planned', type: 'statusTokens', tactic, fleet: 1, strategy: 0 });
+    const over = status(2);
+    const { state, warningsByEntry } = stateOf(start([over]));
+    expect(state.tactic).toBe(5);
+    expect(warningsByEntry[over.id]).toEqual([{ code: 'tokensOver', params: { given: 3, free: 2 } }]);
+    const fine = status(1);
+    expect(warningsOf(start([fine]), fine)).toEqual([]);
   });
 
   test('Thunder\'s Edge moves what a card names on Mecatol Rex to the new planet', () => {
