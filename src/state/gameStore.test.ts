@@ -6,6 +6,7 @@ vi.mock('../storage/db', () => ({
 }));
 
 import { loadPack } from '../data/loadPack';
+import { seatSlots } from '../domain/mapBuilder';
 import { project } from '../domain/project';
 import type { Game } from '../domain/types';
 import { loadGame, saveGame } from '../storage/db';
@@ -242,5 +243,54 @@ describe('layout', () => {
     act().undo();
     expect(game().layout).toBe('standard');
     expect(game().map['-2,-1']).toBeUndefined();
+  });
+});
+
+describe('players', () => {
+  const pok = loadPack(['pok']);
+  const open = () => useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, pok);
+
+  test('edits go to the draft while no game is open, without saving or undo', () => {
+    useGame.getState().closeGame();
+    const before = useGame.getState().draft.opponents.length;
+    useGame.getState().addOpponent();
+    expect(useGame.getState().draft.opponents).toHaveLength(before + 1);
+    expect(useGame.getState().game).toBeNull();
+    expect(useGame.getState().canUndo).toBe(false);
+    useGame.getState().removeOpponent(before);
+    expect(useGame.getState().draft.opponents).toHaveLength(before);
+  });
+
+  test('starting turns the draft into the game and leaves a fresh draft', () => {
+    useGame.getState().closeGame();
+    useGame.getState().setFaction('sol');
+    useGame.getState().setVp(2);
+    const { draft } = useGame.getState();
+    useGame.getState().startGame();
+    expect(useGame.getState().game!.id).toBe(draft.id);
+    expect(useGame.getState().game!.vp).toBe(2);
+    expect(useGame.getState().draft.faction).toBe('');
+    expect(useGame.getState().draft.id).not.toBe(draft.id);
+  });
+
+  test('in an open game the player actions can be undone and my points count in the projection', () => {
+    open();
+    useGame.getState().addOpponent();
+    expect(useGame.getState().game!.playerCount).toBe(5);
+    useGame.getState().undo();
+    expect(useGame.getState().game!.playerCount).toBe(4);
+    useGame.getState().setVp(3);
+    const game = useGame.getState().game!;
+    expect(project(game, game.plans[0], 'now', pok).state.vp).toBe(3);
+  });
+
+  test('an opponent faction goes through the home tile rule, a seat swap moves the tile', () => {
+    open();
+    useGame.getState().setOpponent(0, { faction: 'hacan' });
+    const slots = seatSlots(4, pok, useGame.getState().game!.layout);
+    expect(useGame.getState().game!.map[slots[1]]).toBe('16');
+    useGame.getState().swapSeats(1, 2);
+    expect(useGame.getState().game!.map[slots[2]]).toBe('16');
+    expect(useGame.getState().game!.map[slots[1]]).toBeUndefined();
   });
 });

@@ -87,3 +87,14 @@ test('после закрытия соединения браузером баз
   expect(spy.calls).toBe(2);
   expect(await fresh.loadGame(game.id)).toEqual(game);
 });
+
+test('a game saved before seats opens with seats in list order', async () => {
+  const game = sampleGame();
+  const old: Record<string, unknown> = { ...game, id: 'before-seats', opponents: game.opponents.map(({ faction, vp }) => ({ faction, vp })) };
+  for (const field of ['seat', 'color', 'vp']) delete old[field];
+  await saveGame(old as unknown as typeof game);
+  const loaded = await loadGame('before-seats');
+  expect([loaded!.seat, loaded!.color, loaded!.vp]).toEqual([1, 1, 0]);
+  expect(loaded!.opponents.map(o => o.seat)).toEqual([2, 3, 4]);
+  await deleteGame('before-seats');
+});

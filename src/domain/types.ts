@@ -32,7 +32,16 @@ export interface UnitDef {
   capacityUsed: number;
   ground: boolean;
   fighter: boolean;
+  /** Combat value of the base unit; null when it has none. */
+  combat: number | null;
+  /** Null when the unit cannot move on its own. */
+  move: number | null;
+  /** Reinforcement limit; null means not confirmed or without a limit. */
+  limit: number | null;
 }
+
+export type TechType = 'propulsion' | 'biotic' | 'cybernetic' | 'warfare';
+export interface TechDef { id: string; name: string; type: TechType; }
 
 export interface FactionDef {
   id: string;
@@ -40,6 +49,15 @@ export interface FactionDef {
   /** Tile holding the home planets, where the starting units begin. */
   homeTile: string;
   startUnits: UnitCounts;
+  /** Technology ids the faction always starts with. */
+  startingTech: string[];
+  /** The faction chooses this many at setup; no options means any. */
+  startingTechChoice?: { amount: number; options: string[] };
+  commodities: number;
+  /** Ability names only. */
+  abilities: string[];
+  /** The tile that stands on the map when the home planets lie on an off-map tile. */
+  gateTile?: string;
 }
 
 /** `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five players). */
@@ -65,6 +83,8 @@ export interface DataPack {
   units: Partial<Record<UnitId, UnitDef>>;
   factions: Record<string, FactionDef>;
   templates: MapTemplate[];
+  technologies: Record<string, TechDef>;
+  structures: { id: 'pds' | 'spacedock'; limit: number | null }[];
 }
 
 export type EntryStatus = 'planned' | 'done' | 'cancelled';
@@ -111,9 +131,15 @@ export interface Game {
   /** Which map template of the player count is in use. */
   layout: MapLayout;
   faction: string;
+  /** Your seat: 1 at the top of the map, then clockwise. Seats of all players are a permutation of 1..playerCount. */
+  seat: number;
+  /** Number of your player colour, 1 to 8: `--player-<n>` in the theme. */
+  color: number;
+  /** Victory points set by hand; adjustments in the plan add to it. */
+  vp: number;
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;
-  opponents: { faction: string; vp: number }[];
+  opponents: { faction: string; vp: number; seat: number; color: number }[];
   enemyUnits: Record<string, UnitCounts>;
   planetControl: Record<string, 'me' | 'enemy'>;
   /** Ids of planets that have a space dock. */

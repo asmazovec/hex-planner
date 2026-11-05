@@ -111,7 +111,7 @@ test('the lanes of the old layout leave with it, and tiles in slots the new layo
   // 3,-3 is a lane slot with no counterpart in the 28-slot template: a tile of the player there is dropped.
   const back = changeLayout({ ...lanes, map: { ...lanes.map, '1,0': '25', '3,-3': '30' } }, 'standard', pok);
   expect(back.layout).toBe('standard');
-  expect(back.map).toEqual({ '0,0': '18', '1,0': '25' });
+  expect(back.map).toEqual({ '0,0': '18', '0,-3': lanes.map['0,-3'], '1,0': '25' });
 });
 
 test('a tile of the player on a lane slot is displaced by the lane', () => {

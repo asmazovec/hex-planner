@@ -1,6 +1,5 @@
-import { defaultLayout, templateFor, templateOf } from './layouts';
+import { defaultLayout, slotKeyOf, templateFor, templateOf } from './layouts';
 import type { DataPack, Game, MapLayout, MapTemplate, TileDef } from './types';
-import { slotKeyOf } from './newGame';
 
 export { defaultLayout, templateFor };
 
@@ -54,10 +53,23 @@ export function duplicateTiles(map: Game['map'], pack?: DataPack): string[] {
   return [...dupes];
 }
 
-/** True while the map holds nothing beyond the tiles its template places by itself. */
+/** Slots holding a player's own home tile at that player's seat; the app places and moves those tiles by itself. */
+export function ownHomeSlots(game: Game, pack: DataPack): Set<string> {
+  const slots = seatSlots(game.playerCount, pack, game.layout);
+  const own = new Set<string>();
+  for (const { faction, seat } of [game, ...game.opponents]) {
+    const def = pack.factions[faction];
+    const slot = slots[seat - 1];
+    if (def && slot && game.map[slot]?.split('@')[0] === (def.gateTile ?? def.homeTile)) own.add(slot);
+  }
+  return own;
+}
+
+/** True while the map holds nothing beyond the tiles its template places and the players' own home tiles. */
 export function mapIsEmpty(game: Game, pack: DataPack): boolean {
   const fixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
-  return Object.entries(game.map).every(([slot, tile]) => fixed.get(slot) === tile);
+  const own = ownHomeSlots(game, pack);
+  return Object.entries(game.map).every(([slot, tile]) => fixed.get(slot) === tile || own.has(slot));
 }
 
 const hexDistance = (q: number, r: number): number => Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
@@ -93,25 +105,29 @@ const isLane = (fixed: string | undefined, pack: DataPack): fixed is string =>
   fixed !== undefined && pack.tiles[fixed.split('@')[0]]?.kind === 'hyperlane';
 
 /**
- * The game with another layout of its player count. Hyperlanes of the new layout always go in, displacing whatever
- * stands on their slots. Other tiles stay in the slots both layouts have, except fixed tiles the player never changed,
- * which belong to the old layout and leave with it; the new layout's other fixed tile (the centre) fills an empty
- * slot. A layout the pack lacks, or the one in use, returns the same game.
+ * A map moved to another template. Hyperlanes of the new template always go in, displacing whatever stands on their
+ * slots. Other tiles stay in the slots both templates have, except fixed tiles the player never changed, which belong to
+ * the old template and leave with it; the new template's other fixed tile (the centre) fills an empty slot.
  */
-export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Game {
-  const next = templateFor(game.playerCount, layout, pack);
-  if (!next || game.layout === layout) return game;
-  const oldFixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+export function moveToTemplate(from: Game['map'], oldSlots: MapTemplate['slots'], next: MapTemplate, pack: DataPack): Game['map'] {
+  const oldFixed = new Map(oldSlots.map(s => [slotKeyOf(s.q, s.r), s.fixed]));
   const present = new Set(next.slots.map(s => slotKeyOf(s.q, s.r)));
   const map: Game['map'] = {};
-  for (const [slot, tile] of Object.entries(game.map)) {
+  for (const [slot, tile] of Object.entries(from)) {
     if (present.has(slot) && oldFixed.get(slot) !== tile) map[slot] = tile;
   }
   for (const slot of next.slots) {
     const key = slotKeyOf(slot.q, slot.r);
     if (slot.fixed && (isLane(slot.fixed, pack) || !(key in map))) map[key] = slot.fixed;
   }
-  return { ...game, layout, map };
+  return map;
+}
+
+/** The game with another layout of its player count; a layout the pack lacks, or the one in use, returns the same game. */
+export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Game {
+  const next = templateFor(game.playerCount, layout, pack);
+  if (!next || game.layout === layout) return game;
+  return { ...game, layout, map: moveToTemplate(game.map, slotsFor(game.playerCount, pack, game.layout), next, pack) };
 }
 
 /** How many tiles of the player a switch to `layout` removes: those in slots it lacks and those under its hyperlanes. */

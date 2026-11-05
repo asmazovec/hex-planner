@@ -13,7 +13,7 @@ test('меню переключается на английский и запо�
   setLanguage('ru');
   render(<App />);
   expect(screen.getByRole('button', { name: 'Партия' })).toBeVisible();
-  await userEvent.selectOptions(screen.getByLabelText('Язык интерфейса'), 'en');
+  await userEvent.click(screen.getByRole('radio', { name: 'English' }));
   expect(screen.getByRole('button', { name: 'Game' })).toBeVisible();
   expect(currentLanguage()).toBe('en');
   expect(localStorage.getItem('ti4.lang')).toBe('en');

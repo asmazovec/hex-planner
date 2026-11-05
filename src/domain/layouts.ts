@@ -1,5 +1,8 @@
 import type { DataPack, MapLayout, MapTemplate } from './types';
 
+/** Slot key of a map position: `"<q>,<r>"`. */
+export const slotKeyOf = (q: number, r: number): string => `${q},${r}`;
+
 /** The template of a player count and layout; undefined when the data pack has none (for example no Prophecy of Kings). */
 export const templateFor = (playerCount: number, layout: MapLayout, pack: DataPack): MapTemplate | undefined =>
   pack.templates.find(template => template.playerCount === playerCount && template.layout === layout);

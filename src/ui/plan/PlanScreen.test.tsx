@@ -22,6 +22,7 @@ beforeEach(() => {
   setLanguage('en');
   document.elementFromPoint = () => null;
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
+  useGame.getState().setTile('0,-3', null);
   useGame.getState().setTile(HOME, '5');
   useGame.getState().setTile(TARGET, '25');
 });
@@ -299,4 +300,14 @@ test.each(['Plan 1', 'Rush'])('an empty name falls back to the default, starting
   expect(plan().name).toBe('Plan 1');
   expect(screen.getByRole('textbox', { name: 'Plan name' })).toHaveValue('Plan 1');
   expect(screen.getByRole('tab', { name: /Plan 1/, selected: true })).toBeVisible();
+});
+
+test('the players button opens the same list of cards as a panel, and closes it', async () => {
+  render(<PlanScreen />);
+  expect(screen.queryByRole('group', { name: 'Player 1' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Players' }));
+  expect(screen.getAllByRole('group', { name: /^Player \d/ })).toHaveLength(6);
+  expect(within(screen.getByRole('group', { name: 'Player 1' })).getByText('My faction')).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(screen.queryByRole('group', { name: 'Player 1' })).toBeNull();
 });

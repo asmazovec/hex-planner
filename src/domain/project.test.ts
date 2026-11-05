@@ -6,7 +6,7 @@ import type {
 } from './types';
 
 const unit = (id: UnitId, o: Partial<UnitDef>): UnitDef =>
-  ({ id, name: id, cost: 1, capacity: 0, capacityUsed: 1, ground: false, fighter: false, ...o });
+  ({ id, name: id, cost: 1, capacity: 0, capacityUsed: 1, ground: false, fighter: false, combat: null, move: null, limit: null, ...o });
 
 const pack: DataPack = {
   version: 'test',
@@ -29,8 +29,10 @@ const pack: DataPack = {
     fighter: unit('fighter', { cost: 0.5, fighter: true }),
     infantry: unit('infantry', { cost: 0.5, ground: true }),
   },
-  factions: { sol: { id: 'sol', name: 'Sol', homeTile: 'home', startUnits: { carrier: 1, infantry: 2 } } },
+  factions: { sol: { id: 'sol', name: 'Sol', homeTile: 'home', startUnits: { carrier: 1, infantry: 2 }, startingTech: [], commodities: 0, abilities: [] } },
   templates: [{ playerCount: 3, layout: 'standard', slots: [{ q: 0, r: 0, fixed: '18' }, { q: 1, r: 0 }] }],
+  technologies: {},
+  structures: [],
 };
 
 const noPay: Payment = { planets: [], tradeGoods: 0 };
@@ -413,7 +415,7 @@ describe('createGame', () => {
     const g = createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
     expect(g.planetControl).toEqual({ jord: 'me', arc: 'me' });
     expect(g.docks).toEqual(['jord']);
-    expect(g.map).toEqual({ '0,0': '18' });
+    expect(g.map).toEqual({ '0,0': '18', '1,0': 'home' });
     expect(g.dataVersion).toBe('test');
     expect(g.opponents).toHaveLength(2);
     expect(g.activePlanId).toBe(g.plans[0].id);

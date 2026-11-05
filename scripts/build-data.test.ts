@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { checkCounts, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial } from './build-data';
+import { checkCounts, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -66,4 +66,18 @@ test('поворот гиперпута сдвигает номера гране
   expect(() => checkLaneRotations(lines.join('\n'))).not.toThrow();
   const wrong = [...lines.slice(0, 2), lines[2].replace('0,0,0,1,0,0;', '0,0,0,0,1,0;'), ...lines.slice(3)];
   expect(() => checkLaneRotations(wrong.join('\n'))).toThrow(/83a/);
+});
+
+test('стартовые технологии: фиксированный список, выбор, отсутствие', () => {
+  expect(readStartingTech({ startingTech: ['amd', 'nm'] })).toEqual({ startingTech: ['amd', 'nm'] });
+  expect(readStartingTech({ startingTechAmount: 2, startingTechOptions: ['nm', 'st'] }))
+    .toEqual({ startingTech: [], startingTechChoice: { amount: 2, options: ['nm', 'st'] } });
+  expect(readStartingTech({ startingTechAmount: 2 })).toEqual({ startingTech: [], startingTechChoice: { amount: 2, options: [] } });
+  expect(readStartingTech({ startingTechAmount: 0, startingTechOptions: [] })).toEqual({ startingTech: [] });
+});
+
+test('технология берётся без текста, неизвестный тип ломает сборку', () => {
+  const tech = { alias: 'amd', name: 'Antimass Deflectors', types: ['PROPULSION'], source: 'base', text: 'card text' };
+  expect(readTech(tech)).toEqual({ id: 'amd', name: 'Antimass Deflectors', type: 'propulsion' });
+  expect(() => readTech({ ...tech, types: ['NONE'] })).toThrow(/amd/);
 });

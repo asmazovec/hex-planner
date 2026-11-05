@@ -58,3 +58,21 @@ describe('раскладка карты', () => {
     expect(importGame(exportGame(lanes))).toEqual({ ok: true, game: lanes });
   });
 });
+
+test('seats, colours and points survive export and import', () => {
+  const game = sampleGame();
+  const moved = { ...game, seat: 3, color: 1, vp: 2, opponents: game.opponents.map((o, i) => ({ ...o, seat: i === 1 ? 1 : i + 2, color: 8 - i })) };
+  const result = importGame(exportGame(moved));
+  expect(result.ok && result.game.seat).toBe(3);
+  expect(result.ok && result.game.vp).toBe(2);
+  expect(result.ok && result.game.opponents.map(o => [o.seat, o.color])).toEqual(moved.opponents.map(o => [o.seat, o.color]));
+});
+
+test('a file from before seats gets them in list order', () => {
+  const { seat, color, vp, opponents, ...rest } = sampleGame();
+  void seat; void color; void vp;
+  const old = { ...rest, opponents: opponents.map(({ faction, vp: points }) => ({ faction, vp: points })) };
+  const result = importGame(JSON.stringify(old));
+  expect(result.ok && [result.game.seat, result.game.color, result.game.vp]).toEqual([1, 1, 0]);
+  expect(result.ok && result.game.opponents.map(o => [o.seat, o.color])).toEqual([[2, 2], [3, 3], [4, 4]]);
+});

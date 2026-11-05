@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
+import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, setPlayerVp, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts,
 } from '../domain/types';
@@ -99,9 +100,23 @@ function copyOf(game: Game): Game {
 
 export interface GameStore {
   game: Game | null;
+  /** The list being set up before a game starts. Edits of the players and the layout go here while no game is open. */
+  draft: Game;
   saveError: string | null;
   canUndo: boolean;
   newGame(input: { expansions: ExpansionId[]; playerCount: number; faction: string }, pack: DataPack): void;
+  /** Turns the draft into the open game. */
+  startGame(): void;
+  /** Leaves the open game, which stays saved, for a new draft. */
+  closeGame(): void;
+  setDraftExpansions(expansions: ExpansionId[]): void;
+  addOpponent(): void;
+  /** Index among the opponents. */
+  removeOpponent(index: number): void;
+  setFaction(faction: string): void;
+  setVp(vp: number): void;
+  /** Positions in the list of players, my faction being 0. */
+  swapSeats(a: number, b: number): void;
   /** Loads a saved game by id; an unknown id leaves the current game alone. */
   openGame(id: string): Promise<void>;
   addEntry(roundNo: number, body: EntryBody, phase: Phase): string;
@@ -121,7 +136,7 @@ export interface GameStore {
   setMap(map: Record<string, string>, layout?: MapLayout): void;
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
-  setOpponent(index: number, patch: Partial<Game['opponents'][number]>): void;
+  setOpponent(index: number, patch: { faction?: string; vp?: number }): void;
   setEnemyUnits(systemId: string, units: UnitCounts): void;
   setPlanetControl(planetId: string, owner: 'me' | 'enemy' | null): void;
   /** Marks whether a planet has a space dock. */
@@ -134,6 +149,10 @@ export interface GameStore {
   toggleIngress(systemId: string): void;
   undo(): void;
 }
+
+const DRAFT_EXPANSIONS: ExpansionId[] = ['pok', 'te'];
+const newDraft = (expansions: ExpansionId[] = DRAFT_EXPANSIONS): Game =>
+  createGame({ expansions, playerCount: 6, faction: '' }, loadPack(expansions));
 
 let history: Game[] = [];
 /** Writes run one after another so an older state can never overwrite a newer one. */
@@ -169,8 +188,15 @@ export const useGame = create<GameStore>((set, get) => {
     replace(next);
   };
 
+  /** Applies a players edit to the open game, or to the draft while none is open: no undo step and no save there. */
+  const commitPlayers = (edit: (game: Game, pack: DataPack) => Game): void => {
+    if (get().game) commit(g => edit(g, loadPack(g.expansions)));
+    else set(state => ({ draft: edit(state.draft, loadPack(state.draft.expansions)) }));
+  };
+
   return {
     game: null,
+    draft: newDraft(),
     saveError: null,
     canUndo: false,
 
@@ -178,6 +204,23 @@ export const useGame = create<GameStore>((set, get) => {
       history = [];
       replace(createGame(input, pack));
     },
+    startGame: () => {
+      const { draft } = get();
+      history = [];
+      replace(draft);
+      set({ draft: newDraft(draft.expansions) });
+    },
+    closeGame: () => {
+      history = [];
+      set({ game: null, canUndo: false });
+    },
+    setDraftExpansions: expansions =>
+      set(state => ({ draft: draftWithExpansions(state.draft, expansions, loadPack(expansions)) })),
+    addOpponent: () => commitPlayers(addPlayer),
+    removeOpponent: index => commitPlayers((g, pack) => removePlayer(g, index + 1, pack)),
+    setFaction: faction => commitPlayers((g, pack) => setPlayerFaction(g, 0, faction, pack)),
+    setVp: vp => commitPlayers(g => setPlayerVp(g, 0, vp)),
+    swapSeats: (a, b) => commitPlayers((g, pack) => swapSeats(g, a, b, pack)),
     openGame: async id => {
       const loaded = await loadGame(id);
       if (!loaded) return;
@@ -235,12 +278,12 @@ export const useGame = create<GameStore>((set, get) => {
       const nextLayout = layout ?? g.layout;
       return same && nextLayout === g.layout ? g : { ...g, map: next, layout: nextLayout };
     }),
-    setLayout: layout => commit(g => changeLayout(g, layout, loadPack(g.expansions))),
-    setOpponent: (index, patch) =>
-      commit(g => (index in g.opponents
-        && !Object.entries(patch).every(([k, v]) => g.opponents[index][k as keyof Game['opponents'][number]] === v)
-        ? { ...g, opponents: g.opponents.map((o, i) => (i === index ? { ...o, ...patch } : o)) }
-        : g)),
+    setLayout: layout => commitPlayers((g, pack) => changeLayout(g, layout, pack)),
+    setOpponent: (index, { faction, vp }) =>
+      commitPlayers((g, pack) => {
+        const named = faction === undefined ? g : setPlayerFaction(g, index + 1, faction, pack);
+        return vp === undefined ? named : setPlayerVp(named, index + 1, vp);
+      }),
     setEnemyUnits: (systemId, units) =>
       commit(g => (sameUnits(g.enemyUnits[systemId] ?? {}, units)
         ? g

@@ -897,7 +897,10 @@
       "capacity": 0,
       "capacityUsed": 1,
       "ground": true,
-      "fighter": false
+      "fighter": false,
+      "combat": 6,
+      "move": null,
+      "limit": null
     }
   },
   "factions": {
@@ -910,7 +913,14 @@
         "carrier": 2,
         "fighter": 2,
         "cruiser": 1
-      }
+      },
+      "startingTech": [],
+      "commodities": 2,
+      "abilities": [
+        "The Tribuni",
+        "Council Patronage",
+        "Law's Order"
+      ]
     },
     "keleresx": {
       "id": "keleresx",
@@ -921,7 +931,14 @@
         "carrier": 2,
         "fighter": 2,
         "cruiser": 1
-      }
+      },
+      "startingTech": [],
+      "commodities": 2,
+      "abilities": [
+        "The Tribuni",
+        "Council Patronage",
+        "Law's Order"
+      ]
     },
     "keleresa": {
       "id": "keleresa",
@@ -932,7 +949,14 @@
         "carrier": 2,
         "fighter": 2,
         "cruiser": 1
-      }
+      },
+      "startingTech": [],
+      "commodities": 2,
+      "abilities": [
+        "The Tribuni",
+        "Council Patronage",
+        "Law's Order"
+      ]
     },
     "argent": {
       "id": "argent",
@@ -943,7 +967,21 @@
         "destroyer": 2,
         "fighter": 2,
         "infantry": 5
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 2,
+        "options": [
+          "nm",
+          "st",
+          "ps"
+        ]
+      },
+      "commodities": 3,
+      "abilities": [
+        "Zeal",
+        "Raid Formation"
+      ]
     },
     "cabal": {
       "id": "cabal",
@@ -955,7 +993,16 @@
         "cruiser": 1,
         "fighter": 3,
         "infantry": 3
-      }
+      },
+      "startingTech": [
+        "sar"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Devour",
+        "Amalgamation",
+        "Riftmeld"
+      ]
     },
     "empyrean": {
       "id": "empyrean",
@@ -966,7 +1013,16 @@
         "destroyer": 1,
         "fighter": 2,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "det"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Voidborn",
+        "Aetherpassage",
+        "Dark Whispers"
+      ]
     },
     "mahact": {
       "id": "mahact",
@@ -978,7 +1034,17 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 3
-      }
+      },
+      "startingTech": [
+        "pi",
+        "bs"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Edict",
+        "Imperia",
+        "Hubris"
+      ]
     },
     "nomad": {
       "id": "nomad",
@@ -990,7 +1056,15 @@
         "fighter": 3,
         "flagship": 1,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "sr"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "The Company",
+        "Future Sight"
+      ]
     },
     "naaz": {
       "id": "naaz",
@@ -1002,7 +1076,16 @@
         "fighter": 2,
         "infantry": 3,
         "mech": 1
-      }
+      },
+      "startingTech": [
+        "pa",
+        "aida"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Distant Suns",
+        "Fabrication"
+      ]
     },
     "titans": {
       "id": "titans",
@@ -1013,7 +1096,17 @@
         "cruiser": 2,
         "fighter": 2,
         "infantry": 3
-      }
+      },
+      "startingTech": [
+        "amd",
+        "sdn"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Terragenesis",
+        "Awaken",
+        "Coalescence"
+      ]
     }
   },
   "templates": [
@@ -2057,5 +2150,68 @@
         }
       ]
     }
-  ]
+  ],
+  "technologies": {
+    "nm": {
+      "id": "nm",
+      "name": "Neural Motivator",
+      "type": "biotic"
+    },
+    "st": {
+      "id": "st",
+      "name": "Sarween Tools",
+      "type": "cybernetic"
+    },
+    "ps": {
+      "id": "ps",
+      "name": "Plasma Scoring",
+      "type": "warfare"
+    },
+    "sar": {
+      "id": "sar",
+      "name": "Self-Assembly Routines",
+      "type": "warfare"
+    },
+    "det": {
+      "id": "det",
+      "name": "Dark Energy Tap",
+      "type": "propulsion"
+    },
+    "pi": {
+      "id": "pi",
+      "name": "Predictive Intelligence",
+      "type": "cybernetic"
+    },
+    "bs": {
+      "id": "bs",
+      "name": "Bio-Stims",
+      "type": "biotic"
+    },
+    "sr": {
+      "id": "sr",
+      "name": "Sling Relay",
+      "type": "propulsion"
+    },
+    "pa": {
+      "id": "pa",
+      "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "aida": {
+      "id": "aida",
+      "name": "AI Development Algorithm",
+      "type": "warfare"
+    },
+    "amd": {
+      "id": "amd",
+      "name": "Antimass Deflectors",
+      "type": "propulsion"
+    },
+    "sdn": {
+      "id": "sdn",
+      "name": "Scanlink Drone Network",
+      "type": "cybernetic"
+    }
+  },
+  "structures": []
 }

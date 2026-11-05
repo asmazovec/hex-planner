@@ -25,6 +25,7 @@ test('suggestUnits takes no cargo without capacity, and does not count cargo as 
 
 function setup(moves: { from: string; units: UnitCounts }[], before: Partial<GameState> = {}, production: UnitCounts = {}) {
   const game: Game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
+  delete game.map['0,-3'];
   game.map['1,0'] = '5';
   const state = project(game, game.plans[0], 'forecast', pack).state;
   const merged = { ...state, ...before };

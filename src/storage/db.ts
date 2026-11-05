@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Game } from '../domain/types';
+import { migrate } from './schema';
 
 export interface GameSummary { id: string; faction: string; playerCount: number; updatedAt: number; }
 
@@ -26,7 +27,8 @@ export async function saveGame(game: Game): Promise<void> {
 }
 
 export async function loadGame(id: string): Promise<Game | null> {
-  return (await (await db()).get('games', id))?.game ?? null;
+  const stored = (await (await db()).get('games', id))?.game;
+  return stored ? (migrate(stored) as Game) : null;
 }
 
 /** Most recently saved first. */

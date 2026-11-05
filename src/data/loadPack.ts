@@ -33,5 +33,7 @@ export function loadPack(expansions: ExpansionId[]): DataPack {
     units: Object.assign({}, ...packs.map(pack => pack.units)),
     factions: Object.assign({}, ...packs.map(pack => pack.factions)),
     templates: expansions.includes('te') ? templates.map(withTeMecatol) : templates,
+    technologies: Object.assign({}, ...packs.map(pack => pack.technologies)),
+    structures: packs.flatMap(pack => pack.structures),
   };
 }

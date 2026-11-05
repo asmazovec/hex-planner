@@ -4,33 +4,20 @@
     "plan": "Plan & map"
   },
   "game": {
-    "new": "New game",
     "expansions": "Expansions",
-    "players": "Players",
-    "faction": "Your faction",
-    "start": "Start game",
     "saved": "Saved games",
     "none": "No saved games",
     "playersShort": "{{count}} players",
     "open": "Open",
     "export": "Export to file",
     "import": "Import game",
-    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original.",
-    "language": "Interface language"
+    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original."
   },
   "import": {
     "failed": "Could not import the file: {{reason}}",
     "invalidJson": "the file is not valid JSON",
     "invalidSchema": "the file is not a game or is damaged",
     "newerVersion": "the file was made by a newer version of the app"
-  },
-  "rivals": {
-    "opponent": "Opponent {{n}}",
-    "unknown": "Not chosen",
-    "plus": "Add a point",
-    "minus": "Remove a point",
-    "points": "Points",
-    "title": "Opponents"
   },
   "banner": {
     "saveError": "Could not save the game: {{error}}",
@@ -288,5 +275,40 @@
     "confirm_one": "The map has {{count}} tile that this layout removes (in slots it lacks or under hyperlanes). Switch?",
     "confirm_other": "The map has {{count}} tiles that this layout removes (in slots it lacks or under hyperlanes). Switch?",
     "milty": "Hyperlane layout as in Milty Draft: {{n}} hyperlane slots, more than the 9 hyperlane tiles in the box."
+  },
+  "players": {
+    "title": "Players",
+    "count": "{{n}} of {{max}}",
+    "me": "My faction",
+    "opponent": "Opponent",
+    "player": "Player {{n}}",
+    "choose": "Choose a faction",
+    "points": "Points",
+    "plus": "More points",
+    "minus": "Fewer points",
+    "remove": "Remove opponent",
+    "add": "＋ Add opponent",
+    "home": "Home system",
+    "start": "Start",
+    "commodities": "Commodities",
+    "tech": "Starting technologies",
+    "techChoice": "Chosen at setup: {{amount}} of these",
+    "techChoiceAny": "Chosen at setup: any ({{amount}})",
+    "techNone": "Not listed",
+    "seats": "Who sits where",
+    "seatsMap": "Seat map",
+    "seatsNote": "Every player has a number. Move the numbers on the map: on a taken seat the players swap. You can also tap one number, then another. Player 1 is your faction, marked with a white ring.",
+    "token": "Player {{n}}, {{name}}, seat {{seat}}",
+    "noFaction": "No faction chosen",
+    "begin": "Start game",
+    "needFaction": "Choose your faction to start",
+    "newGame": "New game",
+    "confirm": "Tiles on the map: {{filled}}, of them leaving: {{lost}}. The map moves to the new template and matching slots stay. Change the player count?",
+    "confirmYes": "Change",
+    "cancel": "Cancel",
+    "open": "Players",
+    "close": "Close",
+    "base": "Base game",
+    "language": "Language"
   }
 }

@@ -49,5 +49,8 @@
       "keleresa": "58"
     }
   },
+  "unconfirmed": {
+    "unitLimits": "Reinforcement limits are null: no public source confirmed them."
+  },
   "verification": "docs/data-verification.md"
 }

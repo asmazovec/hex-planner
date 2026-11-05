@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
-import { currentLanguage, setLanguage, type Language } from '../../i18n';
+import { playersOf } from '../../domain/players';
 import type { ExpansionId } from '../../domain/types';
+import { currentLanguage, setLanguage, type Language } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { listGames, saveGame, type GameSummary } from '../../storage/db';
 import { importGame } from '../../storage/transfer';
 import { Banner } from '../common/Banner';
-import { LayoutPicker } from '../map/LayoutPicker';
 import { downloadGame } from '../common/download';
+import { LayoutPicker } from '../map/LayoutPicker';
+import { PlayerList } from '../players/PlayerList';
+import { SeatMap } from '../players/SeatMap';
+import { useSeatDrag } from '../players/useSeatDrag';
 
 const EXPANSIONS: { id: ExpansionId; label: string }[] = [
   { id: 'pok', label: 'Prophecy of Kings' },
@@ -22,40 +26,34 @@ const LANGUAGES: { code: Language; label: string }[] = [
 
 const allFactions = loadPack(['pok', 'te']).factions;
 
+/** The players on the left; expansions, language, the seat map and saved games on the right. */
 export function GameScreen() {
   const { t } = useTranslation();
-  const game = useGame(s => s.game);
-  const newGame = useGame(s => s.newGame);
+  const open = useGame(s => s.game);
+  const game = useGame(s => s.game ?? s.draft);
   const openGame = useGame(s => s.openGame);
-  const setOpponent = useGame(s => s.setOpponent);
+  const startGame = useGame(s => s.startGame);
+  const closeGame = useGame(s => s.closeGame);
+  const setDraftExpansions = useGame(s => s.setDraftExpansions);
+  const swapSeats = useGame(s => s.swapSeats);
 
-  const [expansions, setExpansions] = useState<ExpansionId[]>([]);
-  const [playerCount, setPlayerCount] = useState(6);
-  const [faction, setFaction] = useState('');
   const [saved, setSaved] = useState<GameSummary[]>([]);
   const [importError, setImportError] = useState<string | null>(null);
 
-  const pack = useMemo(() => loadPack(expansions), [expansions]);
-  const gamePack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
-  const openFactions = useMemo(() => Object.values(gamePack.factions), [gamePack]);
-  const factions = useMemo(() => Object.values(pack.factions), [pack]);
-  const counts = [...new Set(pack.templates.map(template => template.playerCount))];
-  const chosenFaction = pack.factions[faction] ? faction : (factions[0]?.id ?? '');
-  const chosenCount = counts.includes(playerCount) ? playerCount : (counts.at(-1) ?? playerCount);
+  const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
+  const players = playersOf(game);
+  const { ghostRef, ...drag } = useSeatDrag(players, swapSeats);
 
   /** The list reloads after pending saves finish whenever the open game changes (new, opened, imported). */
   useEffect(() => {
     let live = true;
     flushSaves().then(listGames).then(list => live && setSaved(list), () => live && setSaved([]));
     return () => { live = false; };
-  }, [game?.id]);
+  }, [open?.id]);
 
-  const toggle = (id: ExpansionId) =>
-    setExpansions(current => (current.includes(id) ? current.filter(e => e !== id) : [...current, id]));
-
-  const start = () => {
-    newGame({ expansions, playerCount: chosenCount, faction: chosenFaction }, pack);
-    setImportError(null);
+  const toggle = (id: ExpansionId) => {
+    const on = game.expansions.includes(id);
+    setDraftExpansions(EXPANSIONS.map(e => e.id).filter(e => (e === id ? !on : game.expansions.includes(e))));
   };
 
   const importFile = async (file: File | undefined) => {
@@ -77,93 +75,74 @@ export function GameScreen() {
   };
 
   return (
-    <section className="screen game-screen">
-      {importError && <Banner kind="error" message={t('import.failed', { reason: importError })} />}
-
-      <div className="panel">
-        <h2>{t('game.new')}</h2>
-        <fieldset>
-          <legend>{t('game.expansions')}</legend>
-          {EXPANSIONS.map(({ id, label }) => (
-            <label key={id} className="check">
-              <input type="checkbox" checked={expansions.includes(id)} onChange={() => toggle(id)} />
-              {label}
+    <div className="players-screen">
+      <div className="players-main">
+        {importError && <Banner kind="error" message={t('import.failed', { reason: importError })} />}
+        <PlayerList
+          drag={drag}
+          action={!open && (
+            <>
+              {!game.faction && <span className="players-hint">{t('players.needFaction')}</span>}
+              <button type="button" className="primary" disabled={!game.faction} onClick={startGame}>{t('players.begin')}</button>
+            </>
+          )}
+        />
+      </div>
+      <aside className="players-aside">
+        <div className="side-group">
+          <p className="side-label">{t('game.expansions')}</p>
+          <div className="chips">
+            <span className="chip fix on">{t('players.base')}</span>
+            {EXPANSIONS.map(({ id, label }) => {
+              const on = game.expansions.includes(id);
+              if (open) return on ? <span key={id} className="chip fix on">{label}</span> : null;
+              return <button key={id} type="button" className="chip" aria-pressed={on} onClick={() => toggle(id)}>{label}</button>;
+            })}
+          </div>
+        </div>
+        <div className="side-group">
+          <p className="side-label" id="language-label">{t('players.language')}</p>
+          <div className="chips" role="radiogroup" aria-labelledby="language-label">
+            {LANGUAGES.map(({ code, label }) => (
+              <button
+                key={code} type="button" role="radio" className="chip" aria-checked={currentLanguage() === code}
+                onClick={() => setLanguage(code)}
+              >{label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="side-group">
+          <p className="side-label">{t('players.seats')}</p>
+          <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} />
+          <p className="side-note">{t('players.seatsNote')}</p>
+        </div>
+        <LayoutPicker game={game} pack={pack} />
+        <div className="side-group">
+          <p className="side-label">{t('game.saved')}</p>
+          {saved.length === 0 && <p className="side-note">{t('game.none')}</p>}
+          <ul className="saved-list">
+            {saved.map(s => (
+              <li key={s.id}>
+                <span>{allFactions[s.faction]?.name ?? s.faction} · {t('game.playersShort', { count: s.playerCount })}</span>
+                <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>
+              </li>
+            ))}
+          </ul>
+          <div className="side-actions">
+            {open && <button type="button" onClick={closeGame}>{t('players.newGame')}</button>}
+            <button type="button" disabled={!open} onClick={() => open && downloadGame(open)}>{t('game.export')}</button>
+            <label className="button">
+              {t('game.import')}
+              <input
+                type="file"
+                accept="application/json,.json"
+                className="visually-hidden"
+                onChange={e => { void importFile(e.target.files?.[0]); e.target.value = ''; }}
+              />
             </label>
-          ))}
-        </fieldset>
-        <label className="field">
-          {t('game.players')}
-          <select value={chosenCount} onChange={e => setPlayerCount(Number(e.target.value))}>
-            {counts.map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </label>
-        <label className="field">
-          {t('game.faction')}
-          <select value={chosenFaction} onChange={e => setFaction(e.target.value)}>
-            {factions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-          </select>
-        </label>
-        <button type="button" className="primary" onClick={start}>{t('game.start')}</button>
-      </div>
-
-      {game && <LayoutPicker game={game} pack={gamePack} />}
-
-      {game && (
-        <div className="panel">
-          <h2>{t('rivals.title')}</h2>
-          {game.opponents.map((opponent, index) => (
-            <div key={index} role="group" aria-label={t('rivals.opponent', { n: index + 1 })} className="opponent">
-              <label className="field">
-                {t('rivals.opponent', { n: index + 1 })}
-                <select value={opponent.faction} onChange={e => setOpponent(index, { faction: e.target.value })}>
-                  <option value="">{t('rivals.unknown')}</option>
-                  {openFactions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                </select>
-              </label>
-              <div className="row vp">
-                <button type="button" aria-label={t('rivals.minus')}
-                  onClick={() => setOpponent(index, { vp: Math.max(0, opponent.vp - 1) })}>−</button>
-                <output aria-label={t('rivals.points')}>{opponent.vp}</output>
-                <button type="button" aria-label={t('rivals.plus')}
-                  onClick={() => setOpponent(index, { vp: opponent.vp + 1 })}>+</button>
-              </div>
-            </div>
-          ))}
+          </div>
         </div>
-      )}
-
-      <div className="panel">
-        <h2>{t('game.saved')}</h2>
-        {saved.length === 0 && <p className="muted">{t('game.none')}</p>}
-        <ul className="saved-list">
-          {saved.map(s => (
-            <li key={s.id}>
-              <span>{allFactions[s.faction]?.name ?? s.faction} · {t('game.playersShort', { count: s.playerCount })}</span>
-              <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>
-            </li>
-          ))}
-        </ul>
-        <div className="row">
-          <button type="button" disabled={!game} onClick={() => game && downloadGame(game)}>
-            {t('game.export')}
-          </button>
-          <label className="button">
-            {t('game.import')}
-            <input
-              type="file"
-              accept="application/json,.json"
-              className="visually-hidden"
-              onChange={e => { void importFile(e.target.files?.[0]); e.target.value = ''; }}
-            />
-          </label>
-        </div>
-        <label className="field">
-          {t('game.language')}
-          <select value={currentLanguage()} onChange={e => setLanguage(e.target.value as Language)}>
-            {LANGUAGES.map(({ code, label }) => <option key={code} value={code}>{label}</option>)}
-          </select>
-        </label>
-      </div>
-    </section>
+      </aside>
+    </div>
   );
 }

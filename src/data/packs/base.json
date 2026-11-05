@@ -837,7 +837,10 @@
       "capacity": 4,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": false
+      "fighter": false,
+      "combat": 9,
+      "move": 1,
+      "limit": null
     },
     "cruiser": {
       "id": "cruiser",
@@ -846,7 +849,10 @@
       "capacity": 0,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": false
+      "fighter": false,
+      "combat": 7,
+      "move": 2,
+      "limit": null
     },
     "destroyer": {
       "id": "destroyer",
@@ -855,7 +861,10 @@
       "capacity": 0,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": false
+      "fighter": false,
+      "combat": 9,
+      "move": 2,
+      "limit": null
     },
     "dreadnought": {
       "id": "dreadnought",
@@ -864,7 +873,10 @@
       "capacity": 1,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": false
+      "fighter": false,
+      "combat": 5,
+      "move": 1,
+      "limit": null
     },
     "warsun": {
       "id": "warsun",
@@ -873,7 +885,10 @@
       "capacity": 6,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": false
+      "fighter": false,
+      "combat": 3,
+      "move": 2,
+      "limit": null
     },
     "flagship": {
       "id": "flagship",
@@ -882,7 +897,10 @@
       "capacity": 3,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": false
+      "fighter": false,
+      "combat": 7,
+      "move": 1,
+      "limit": null
     },
     "fighter": {
       "id": "fighter",
@@ -891,7 +909,10 @@
       "capacity": 0,
       "capacityUsed": 1,
       "ground": false,
-      "fighter": true
+      "fighter": true,
+      "combat": 9,
+      "move": null,
+      "limit": null
     },
     "infantry": {
       "id": "infantry",
@@ -900,7 +921,10 @@
       "capacity": 0,
       "capacityUsed": 1,
       "ground": true,
-      "fighter": false
+      "fighter": false,
+      "combat": 8,
+      "move": null,
+      "limit": null
     }
   },
   "factions": {
@@ -913,7 +937,14 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "md"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Mitosis"
+      ]
     },
     "ghost": {
       "id": "ghost",
@@ -924,7 +955,17 @@
         "destroyer": 2,
         "fighter": 2,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "gd"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Quantum Entanglement",
+        "Slipstream",
+        "Creuss Gate"
+      ],
+      "gateTile": "17"
     },
     "hacan": {
       "id": "hacan",
@@ -935,7 +976,17 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "st",
+        "amd"
+      ],
+      "commodities": 6,
+      "abilities": [
+        "Masters of Trade",
+        "Guild Ships",
+        "Arbiters"
+      ]
     },
     "jolnar": {
       "id": "jolnar",
@@ -946,7 +997,19 @@
         "carrier": 2,
         "fighter": 1,
         "infantry": 2
-      }
+      },
+      "startingTech": [
+        "amd",
+        "st",
+        "nm",
+        "ps"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Fragile",
+        "Brilliant",
+        "Analytical"
+      ]
     },
     "l1z1x": {
       "id": "l1z1x",
@@ -957,7 +1020,16 @@
         "carrier": 1,
         "fighter": 3,
         "infantry": 5
-      }
+      },
+      "startingTech": [
+        "ps",
+        "nm"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Assimilate",
+        "Harrow"
+      ]
     },
     "letnev": {
       "id": "letnev",
@@ -969,7 +1041,16 @@
         "destroyer": 1,
         "fighter": 1,
         "infantry": 3
-      }
+      },
+      "startingTech": [
+        "amd",
+        "ps"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Munitions Reserves",
+        "Armada"
+      ]
     },
     "mentak": {
       "id": "mentak",
@@ -980,7 +1061,16 @@
         "cruiser": 2,
         "fighter": 3,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "ps",
+        "st"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Ambush",
+        "Pillage"
+      ]
     },
     "muaat": {
       "id": "muaat",
@@ -990,7 +1080,15 @@
         "warsun": 1,
         "fighter": 2,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "ps"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Star Forge",
+        "Gashlai Physiology"
+      ]
     },
     "naalu": {
       "id": "naalu",
@@ -1002,7 +1100,16 @@
         "destroyer": 1,
         "fighter": 3,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "st",
+        "nm"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Telepathic",
+        "Foresight"
+      ]
     },
     "nekro": {
       "id": "nekro",
@@ -1014,7 +1121,16 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 2
-      }
+      },
+      "startingTech": [
+        "dxa"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Galactic Threat",
+        "Technological Singularity",
+        "Propagation"
+      ]
     },
     "saar": {
       "id": "saar",
@@ -1025,7 +1141,15 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "amd"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Scavenge",
+        "Nomadic"
+      ]
     },
     "sardakk": {
       "id": "sardakk",
@@ -1035,7 +1159,12 @@
         "carrier": 2,
         "cruiser": 1,
         "infantry": 5
-      }
+      },
+      "startingTech": [],
+      "commodities": 3,
+      "abilities": [
+        "Unrelenting"
+      ]
     },
     "sol": {
       "id": "sol",
@@ -1046,7 +1175,16 @@
         "destroyer": 1,
         "fighter": 3,
         "infantry": 5
-      }
+      },
+      "startingTech": [
+        "amd",
+        "nm"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Orbital Drop",
+        "Versatile"
+      ]
     },
     "winnu": {
       "id": "winnu",
@@ -1057,7 +1195,26 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 2
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "amd",
+          "det",
+          "nm",
+          "pa",
+          "st",
+          "sdn",
+          "ps",
+          "aida"
+        ]
+      },
+      "commodities": 3,
+      "abilities": [
+        "Blood Ties",
+        "Reclamation"
+      ]
     },
     "xxcha": {
       "id": "xxcha",
@@ -1068,7 +1225,15 @@
         "cruiser": 2,
         "fighter": 3,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "gls"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Peace Accords",
+        "Quash"
+      ]
     },
     "yin": {
       "id": "yin",
@@ -1079,7 +1244,15 @@
         "destroyer": 1,
         "fighter": 4,
         "infantry": 4
-      }
+      },
+      "startingTech": [
+        "st"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Indoctrination",
+        "Devotion"
+      ]
     },
     "yssaril": {
       "id": "yssaril",
@@ -1090,7 +1263,16 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 5
-      }
+      },
+      "startingTech": [
+        "nm"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Stall Tactics",
+        "Scheming",
+        "Crafty"
+      ]
     }
   },
   "templates": [
@@ -1703,6 +1885,78 @@
           "r": -2
         }
       ]
+    }
+  ],
+  "technologies": {
+    "md": {
+      "id": "md",
+      "name": "Magen Defense Grid ΩΩ",
+      "type": "warfare"
+    },
+    "gd": {
+      "id": "gd",
+      "name": "Gravity Drive",
+      "type": "propulsion"
+    },
+    "st": {
+      "id": "st",
+      "name": "Sarween Tools",
+      "type": "cybernetic"
+    },
+    "amd": {
+      "id": "amd",
+      "name": "Antimass Deflectors",
+      "type": "propulsion"
+    },
+    "nm": {
+      "id": "nm",
+      "name": "Neural Motivator",
+      "type": "biotic"
+    },
+    "ps": {
+      "id": "ps",
+      "name": "Plasma Scoring",
+      "type": "warfare"
+    },
+    "dxa": {
+      "id": "dxa",
+      "name": "Dacxive Animators",
+      "type": "biotic"
+    },
+    "det": {
+      "id": "det",
+      "name": "Dark Energy Tap",
+      "type": "propulsion"
+    },
+    "pa": {
+      "id": "pa",
+      "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "sdn": {
+      "id": "sdn",
+      "name": "Scanlink Drone Network",
+      "type": "cybernetic"
+    },
+    "aida": {
+      "id": "aida",
+      "name": "AI Development Algorithm",
+      "type": "warfare"
+    },
+    "gls": {
+      "id": "gls",
+      "name": "Graviton Laser System",
+      "type": "cybernetic"
+    }
+  },
+  "structures": [
+    {
+      "id": "pds",
+      "limit": null
+    },
+    {
+      "id": "spacedock",
+      "limit": null
     }
   ]
 }

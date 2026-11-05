@@ -681,7 +681,23 @@
         "carrier": 1,
         "dreadnought": 1,
         "cruiser": 1
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "amd",
+          "det",
+          "st",
+          "sdn"
+        ]
+      },
+      "commodities": 1,
+      "abilities": [
+        "Liberate",
+        "Galvanize",
+        "Phoenix Standard"
+      ]
     },
     "deepwrought": {
       "id": "deepwrought",
@@ -692,7 +708,17 @@
         "fighter": 4,
         "carrier": 1,
         "dreadnought": 1
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 2,
+        "options": []
+      },
+      "commodities": 3,
+      "abilities": [
+        "Research Team",
+        "Oceanbound"
+      ]
     },
     "firmament": {
       "id": "firmament",
@@ -704,7 +730,22 @@
         "fighter": 3,
         "cruiser": 1,
         "destroyer": 1
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "nm",
+          "pa",
+          "st",
+          "sdn"
+        ]
+      },
+      "commodities": 3,
+      "abilities": [
+        "Plots Within Plots",
+        "Puppets of the Blade"
+      ]
     },
     "obsidian": {
       "id": "obsidian",
@@ -716,7 +757,14 @@
         "fighter": 3,
         "cruiser": 1,
         "destroyer": 1
-      }
+      },
+      "startingTech": [],
+      "commodities": 3,
+      "abilities": [
+        "Nocturne",
+        "The Blade's Orchestra",
+        "Marionettes"
+      ]
     },
     "crimson": {
       "id": "crimson",
@@ -727,7 +775,24 @@
         "fighter": 3,
         "carrier": 1,
         "destroyer": 2
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "det",
+          "amd",
+          "ps",
+          "aida"
+        ]
+      },
+      "commodities": 2,
+      "abilities": [
+        "Sundered",
+        "Incursion",
+        "Sorrow"
+      ],
+      "gateTile": "94"
     },
     "ralnel": {
       "id": "ralnel",
@@ -739,8 +804,66 @@
         "fighter": 2,
         "dreadnought": 1,
         "destroyer": 1
-      }
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "nm",
+          "pa",
+          "ps",
+          "aida"
+        ]
+      },
+      "commodities": 4,
+      "abilities": [
+        "Survival Instinct",
+        "Miniaturization"
+      ]
     }
   },
-  "templates": []
+  "templates": [],
+  "technologies": {
+    "amd": {
+      "id": "amd",
+      "name": "Antimass Deflectors",
+      "type": "propulsion"
+    },
+    "det": {
+      "id": "det",
+      "name": "Dark Energy Tap",
+      "type": "propulsion"
+    },
+    "st": {
+      "id": "st",
+      "name": "Sarween Tools",
+      "type": "cybernetic"
+    },
+    "sdn": {
+      "id": "sdn",
+      "name": "Scanlink Drone Network",
+      "type": "cybernetic"
+    },
+    "nm": {
+      "id": "nm",
+      "name": "Neural Motivator",
+      "type": "biotic"
+    },
+    "pa": {
+      "id": "pa",
+      "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "ps": {
+      "id": "ps",
+      "name": "Plasma Scoring",
+      "type": "warfare"
+    },
+    "aida": {
+      "id": "aida",
+      "name": "AI Development Algorithm",
+      "type": "warfare"
+    }
+  },
+  "structures": []
 }

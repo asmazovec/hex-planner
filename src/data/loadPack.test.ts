@@ -187,3 +187,45 @@ describe('шаблоны карты', () => {
     expect(template([], 6)!.slots.some(s => s.q === 3 && s.r === -3)).toBe(true);
   });
 });
+
+describe('faction reference data', () => {
+  const full = loadPack(['pok', 'te']);
+
+  test('Sol has the starting technologies and commodities of the source', () => {
+    expect(full.factions.sol.startingTech).toEqual(['amd', 'nm']);
+    expect(full.factions.sol.commodities).toBe(4);
+    expect(full.factions.sol.abilities).toEqual(['Orbital Drop', 'Versatile']);
+  });
+
+  test('a faction that chooses its technologies carries the choice, not a fixed list', () => {
+    expect(full.factions.winnu.startingTech).toEqual([]);
+    expect(full.factions.winnu.startingTechChoice?.amount).toBe(1);
+    expect(full.factions.argent.startingTechChoice).toEqual({ amount: 2, options: ['nm', 'st', 'ps'] });
+    expect(full.factions.deepwrought.startingTechChoice).toEqual({ amount: 2, options: [] });
+  });
+
+  test('every technology a faction names is in the pack of that faction, with a type', () => {
+    for (const expansions of [[], ['pok'], ['te'], ['pok', 'te']] as ExpansionId[][]) {
+      const pack = loadPack(expansions);
+      for (const faction of Object.values(pack.factions)) {
+        for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) {
+          expect(pack.technologies[id]?.name, `${faction.id}: ${id}`).toBeTruthy();
+          expect(['propulsion', 'biotic', 'cybernetic', 'warfare']).toContain(pack.technologies[id].type);
+        }
+      }
+    }
+  });
+
+  test('a gate faction stands on its gate tile, its planets stay on the off-map tile', () => {
+    expect(full.factions.ghost.gateTile).toBe('17');
+    expect(full.factions.crimson.gateTile).toBe('94');
+    expect(full.factions.sol.gateTile).toBeUndefined();
+  });
+
+  test('unit values come from the source and an unconfirmed limit stays null', () => {
+    expect(full.units.carrier).toMatchObject({ combat: 9, move: 1, limit: null });
+    expect(full.units.fighter).toMatchObject({ combat: 9, move: null, limit: null });
+    expect(full.structures.map(s => s.id)).toEqual(['pds', 'spacedock']);
+    expect(full.structures.every(s => s.limit === null)).toBe(true);
+  });
+});

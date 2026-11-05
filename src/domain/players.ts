@@ -1,0 +1,139 @@
+import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
+import { createGame, slotKeyOf } from './newGame';
+import type { DataPack, ExpansionId, Game, MapLayout } from './types';
+
+export interface Player { faction: string; vp: number; seat: number; color: number; }
+
+export const MIN_PLAYERS = 3;
+const COLORS = 8;
+
+/** Everyone in list order: my faction first. A player's number is the position in this list plus one. */
+export const playersOf = (game: Game): Player[] => [
+  { faction: game.faction, vp: game.vp, seat: game.seat, color: game.color }, ...game.opponents,
+];
+
+/** The most players the map templates of the pack allow. */
+export const maxPlayers = (pack: DataPack): number => Math.max(MIN_PLAYERS, ...pack.templates.map(t => t.playerCount));
+
+/** The map tile of a faction's home: its gate when the planets lie on an off-map tile. */
+const homeTileOnMap = (faction: string, pack: DataPack): string | undefined => {
+  const def = pack.factions[faction];
+  return def?.gateTile ?? def?.homeTile;
+};
+
+/** The tiles the player placed: not fixed by the template and not a player's home tile at that player's seat. */
+const userTiles = (game: Game, pack: DataPack): string[] => {
+  const fixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+  const own = ownHomeSlots(game, pack);
+  return Object.entries(game.map).filter(([slot, tile]) => fixed.get(slot) !== tile && !own.has(slot)).map(([slot]) => slot);
+};
+
+/** A map with tiles of the player keeps its layout if the new count has it; otherwise the rules' layout applies. */
+const layoutForCount = (game: Game, count: number, pack: DataPack): MapLayout =>
+  (userTiles(game, pack).length > 0 && templateFor(count, game.layout, pack) ? game.layout : defaultLayout(count, pack));
+
+/** The map after the players change: own home tiles lift off, the template follows the count, homes land in empty seat slots. */
+function mapFor(game: Game, players: Player[], layout: MapLayout, pack: DataPack): Game['map'] {
+  const own = ownHomeSlots(game, pack);
+  const kept = Object.fromEntries(Object.entries(game.map).filter(([slot]) => !own.has(slot)));
+  const template = templateFor(players.length, layout, pack);
+  const map = players.length !== game.playerCount && template
+    ? moveToTemplate(kept, slotsFor(game.playerCount, pack, game.layout), template, pack)
+    : kept;
+  const slots = seatSlots(players.length, pack, layout);
+  for (const player of players) {
+    const slot = slots[player.seat - 1];
+    const tile = homeTileOnMap(player.faction, pack);
+    if (slot && tile && !map[slot]) map[slot] = tile;
+  }
+  return map;
+}
+
+function withPlayers(game: Game, players: Player[], pack: DataPack): Game {
+  const [me, ...opponents] = players;
+  const count = players.length;
+  const layout = count === game.playerCount ? game.layout : layoutForCount(game, count, pack);
+  return {
+    ...game,
+    faction: me.faction, vp: me.vp, seat: me.seat, color: me.color, opponents, playerCount: count, layout,
+    map: mapFor(game, players, layout, pack),
+    fracture: game.fracture.seat !== null && game.fracture.seat > count ? { ...game.fracture, seat: null } : game.fracture,
+  };
+}
+
+/** A new opponent takes the last seat and the first free colour. The maximum of the pack stops it. */
+export function addPlayer(game: Game, pack: DataPack): Game {
+  const players = playersOf(game);
+  if (players.length >= maxPlayers(pack)) return game;
+  const used = players.map(p => p.color);
+  const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
+  return withPlayers(game, [...players, { faction: '', vp: 0, seat: players.length + 1, color }], pack);
+}
+
+/** Removes a player by list position; later seats shift down. My faction (position 0) stays, and so do the last three players. */
+export function removePlayer(game: Game, index: number, pack: DataPack): Game {
+  const players = playersOf(game);
+  const leaving = players[index];
+  if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return game;
+  const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
+  return withPlayers(game, rest, pack);
+}
+
+const homePlanets = (faction: string, pack: DataPack): string[] =>
+  pack.tiles[pack.factions[faction]?.homeTile ?? '']?.planetIds ?? [];
+
+/** Sets a player's faction by list position; for my faction, control and the dock move to the new home as well. */
+export function setPlayerFaction(game: Game, index: number, faction: string, pack: DataPack): Game {
+  const players = playersOf(game);
+  if (!players[index] || players[index].faction === faction) return game;
+  const next = withPlayers(game, players.map((p, i) => (i === index ? { ...p, faction } : p)), pack);
+  if (index !== 0) return next;
+  const old = homePlanets(game.faction, pack);
+  const fresh = homePlanets(faction, pack);
+  const planetControl = Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !old.includes(id)));
+  for (const id of fresh) planetControl[id] = 'me';
+  return { ...next, planetControl, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)] };
+}
+
+export function setPlayerVp(game: Game, index: number, vp: number): Game {
+  const points = Math.max(0, vp);
+  const player = playersOf(game)[index];
+  if (!player || player.vp === points) return game;
+  if (index === 0) return { ...game, vp: points };
+  return { ...game, opponents: game.opponents.map((o, i) => (i === index - 1 ? { ...o, vp: points } : o)) };
+}
+
+/** Two players trade seats; their own home tiles trade with them. */
+export function swapSeats(game: Game, a: number, b: number, pack: DataPack): Game {
+  const players = playersOf(game);
+  if (a === b || !players[a] || !players[b]) return game;
+  return withPlayers(game, players.map((p, i) => {
+    if (i === a) return { ...p, seat: players[b].seat };
+    return i === b ? { ...p, seat: players[a].seat } : p;
+  }), pack);
+}
+
+/** What going to another count means for the map: the tiles the player has placed, and how many of them would leave. */
+export function countChangeEffect(game: Game, count: number, pack: DataPack): { filled: number; lost: number } {
+  const tiles = userTiles(game, pack);
+  const template = templateFor(count, layoutForCount(game, count, pack), pack);
+  if (!template) return { filled: tiles.length, lost: 0 };
+  const map = moveToTemplate(game.map, slotsFor(game.playerCount, pack, game.layout), template, pack);
+  return { filled: tiles.length, lost: tiles.filter(slot => map[slot] !== game.map[slot]).length };
+}
+
+/**
+ * A game not started yet, under another set of expansions: factions outside the set are cleared, players beyond its
+ * maximum leave from the end of the list, and the seats of the rest close up in order.
+ */
+export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack: DataPack): Game {
+  const kept = playersOf(draft).slice(0, maxPlayers(pack));
+  const order = [...kept].sort((a, b) => a.seat - b.seat);
+  const seated = kept.map(p => ({ ...p, seat: order.indexOf(p) + 1, faction: '' }));
+  const blank = createGame({ expansions, playerCount: kept.length, faction: '' }, pack);
+  const empty = withPlayers({ ...blank, id: draft.id }, seated, pack);
+  return kept.reduce<Game>(
+    (game, player, index) => (pack.factions[player.faction] ? setPlayerFaction(game, index, player.faction, pack) : game),
+    empty,
+  );
+}

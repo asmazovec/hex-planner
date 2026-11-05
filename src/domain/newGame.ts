@@ -1,4 +1,5 @@
-import { defaultLayout, templateOf } from './layouts';
+import { defaultLayout, slotKeyOf, templateOf } from './layouts';
+import { seatSlots } from './mapBuilder';
 import type { DataPack, ExpansionId, Game, MapLayout } from './types';
 
 let counter = 0;
@@ -8,8 +9,7 @@ function makeId(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}${counter}`;
 }
 
-/** Slot key of a map position: `"<q>,<r>"`. */
-export const slotKeyOf = (q: number, r: number): string => `${q},${r}`;
+export { slotKeyOf };
 
 export function createGame(
   input: { expansions: ExpansionId[]; playerCount: number; faction: string; layout?: MapLayout },
@@ -20,6 +20,8 @@ export function createGame(
   const template = templateOf(input.playerCount, pack, layout);
   const map: Record<string, string> = {};
   for (const slot of template?.slots ?? []) if (slot.fixed) map[slotKeyOf(slot.q, slot.r)] = slot.fixed;
+  const firstSeat = seatSlots(input.playerCount, pack, template?.layout ?? layout)[0];
+  if (faction && firstSeat && !map[firstSeat]) map[firstSeat] = faction.gateTile ?? faction.homeTile;
   const planetControl: Game['planetControl'] = {};
   for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) planetControl[planetId] = 'me';
   const planId = makeId('plan');
@@ -31,8 +33,11 @@ export function createGame(
     playerCount: input.playerCount,
     layout: template?.layout ?? layout,
     faction: input.faction,
+    seat: 1,
+    color: 1,
+    vp: 0,
     map,
-    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, () => ({ faction: '', vp: 0 })),
+    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ faction: '', vp: 0, seat: i + 2, color: i + 2 })),
     enemyUnits: {},
     planetControl,
     docks: pack.tiles[faction?.homeTile ?? '']?.planetIds.slice(0, 1) ?? [],

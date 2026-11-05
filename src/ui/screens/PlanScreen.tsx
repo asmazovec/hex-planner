@@ -19,6 +19,7 @@ import { EntryList } from '../plan/EntryList';
 import { ExpeditionWidget, sliceOwners } from '../plan/ExpeditionWidget';
 import { FractureControl } from '../plan/FractureControl';
 import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
+import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { SummaryBar } from '../plan/SummaryBar';
 import { arrowsOf, hasUnits, suggestMoves, type TacticalEntry } from '../plan/tactical';
@@ -82,6 +83,7 @@ export function PlanScreen() {
   const [view, setView] = useState<'map' | 'plan'>('map');
   const [placing, setPlacing] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [showPlayers, setShowPlayers] = useState(false);
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo) ?? plan?.rounds.at(-1);
@@ -231,6 +233,11 @@ export function PlanScreen() {
         <SummaryBar now={now.state} forecast={forecast.state} pack={pack} />
       </header>
       <div className="plan-body">
+        {showPlayers && (
+          <div className="players-panel">
+            <PlayerList action={<button type="button" onClick={() => setShowPlayers(false)}>{t('players.close')}</button>} />
+          </div>
+        )}
         <div className="plan-map">
           <HexMap
             game={game} state={shownState} pack={pack} highlights={highlights} arrows={[...arrows.values()]}
@@ -238,6 +245,7 @@ export function PlanScreen() {
             onPopoverClose={closeSheet}
             tools={(
               <div className="map-tools">
+                <button type="button" aria-pressed={showPlayers} onClick={() => setShowPlayers(!showPlayers)}>{t('players.open')}</button>
                 <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
                 {building && (
                   <button type="button" aria-pressed={importing} onClick={() => setImporting(!importing)}>{t('mapImport.title')}</button>

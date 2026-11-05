@@ -6,14 +6,14 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
 const COMMIT_DATE = '2026-11-05';
 const RESOURCES = 'src/main/resources/';
 const DATA_VERSION = `${COMMIT_DATE}-${COMMIT.slice(0, 7)}`;
-const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
+const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|technologies|abilities|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
 
 type PackId = 'base' | 'pok' | 'te';
 const PACK_OF_SOURCE: Record<string, PackId> = { base: 'base', pok: 'pok', thunders_edge: 'te' };
@@ -57,6 +57,10 @@ const TE_RULEBOOK_HYPERLANES = ['119A', '120A', '121A', '122A', '123A', '124A'];
 /** Gate tiles stand on the map, but the home planets and starting units are on another tile. */
 const HOME_PLANET_TILE: Record<string, string> = { ghost: '51', crimson: '118' };
 const KELERES_HOME_TILE: Record<string, string> = { keleresm: '2', keleresx: '14', keleresa: '58' };
+/** Reinforcement limits stay unset: no public source confirmed them, see docs/data-verification.md. */
+const UNCONFIRMED_LIMIT = null;
+const STRUCTURES: DataPack['structures'] = [{ id: 'pds', limit: UNCONFIRMED_LIMIT }, { id: 'spacedock', limit: UNCONFIRMED_LIMIT }];
+const TECH_TYPES: Record<string, TechType> = { PROPULSION: 'propulsion', BIOTIC: 'biotic', CYBERNETIC: 'cybernetic', WARFARE: 'warfare' };
 const UNIT_NAMES: Record<UnitId, string> = {
   carrier: 'Carrier', cruiser: 'Cruiser', destroyer: 'Destroyer', dreadnought: 'Dreadnought', warsun: 'War Sun',
   flagship: 'Flagship', fighter: 'Fighter', infantry: 'Infantry', mech: 'Mech',
@@ -164,15 +168,21 @@ interface SourceSystem {
 interface SourcePlanet { id: string; name: string; resources: number; influence: number; source: string; }
 interface SourceUnit {
   id: string; source: string; cost?: number; capacityValue?: number; capacityUsed?: number; isGroundForce?: boolean;
+  combatHitsOn?: number; moveValue?: number;
 }
-interface SourceFaction { alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; }
+interface SourceFaction {
+  alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
+  abilities: string[]; startingTech?: string[]; startingTechOptions?: string[]; startingTechAmount?: number;
+}
+interface SourceTech { alias: string; name: string; types: string[]; source: string; }
+interface SourceAbility { id: string; name: string; }
 interface SourceTemplate { alias: string; playerCount: number; templateTiles: { pos: string; staticTileId?: string }[]; }
 interface SourceCard { id: string; initiative: number; name: string; source: string; }
 interface SourceCardSet { alias: string; scIDs: string[]; }
 
 async function download(): Promise<string> {
   const root = join(tmpdir(), `ti4-source-${COMMIT}`);
-  const listPath = join(root, 'files.json');
+  const listPath = join(root, 'files-v2.json');
   if (!existsSync(listPath)) {
     const response = await fetch(`https://api.github.com/repos/${REPO}/git/trees/${COMMIT}?recursive=1`);
     if (!response.ok) throw new Error(`Tree request failed: ${response.status}`);
@@ -276,13 +286,33 @@ function buildUnits(root: string): Record<PackId, Partial<Record<UnitId, UnitDef
     return {
       id, name: UNIT_NAMES[id], cost: unit.cost, capacity: unit.capacityValue ?? 0, capacityUsed,
       ground: unit.isGroundForce === true, fighter: id === 'fighter',
+      combat: unit.combatHitsOn ?? null, move: unit.moveValue ?? null, limit: UNCONFIRMED_LIMIT,
     };
   };
   const base = ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry'] as UnitId[];
   return { base: Object.fromEntries(base.map(id => [id, make(id)])), pok: { mech: make('mech') }, te: {} };
 }
 
-function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string, TileDef>>): Record<PackId, Record<string, FactionDef>> {
+/**
+ * What a faction starts knowing. A faction with `startingTechOptions` chooses `startingTechAmount` of them; an empty list
+ * of options with a positive amount is a free choice, and an amount of 0 means no technology at all.
+ */
+export function readStartingTech(faction: Pick<SourceFaction, 'startingTech' | 'startingTechOptions' | 'startingTechAmount'>): Pick<FactionDef, 'startingTech' | 'startingTechChoice'> {
+  const amount = faction.startingTechAmount ?? 0;
+  return {
+    startingTech: faction.startingTech ?? [],
+    ...(amount > 0 ? { startingTechChoice: { amount, options: faction.startingTechOptions ?? [] } } : {}),
+  };
+}
+
+/** Names and types only: the source's card text is not read. */
+export function readTech(tech: SourceTech): TechDef {
+  const type = TECH_TYPES[tech.types[0]];
+  if (!type) throw new Error(`Technology ${tech.alias} has unknown type ${tech.types[0]}`);
+  return { id: tech.alias, name: tech.name, type };
+}
+
+function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string, TileDef>>, abilityNames: Map<string, string>): Record<PackId, Record<string, FactionDef>> {
   const factions: Record<PackId, Record<string, FactionDef>> = { base: {}, pok: {}, te: {} };
   for (const faction of all) {
     const pack = packOfSource(faction.source);
@@ -292,7 +322,17 @@ function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string
     const known = tiles.base[homeTile] ?? tiles[pack][homeTile];
     if (!known) throw new Error(`Faction ${id} has unknown home tile ${homeTile}`);
     if (known.planetIds.length === 0) throw new Error(`Home tile ${homeTile} of ${id} has no planets`);
-    factions[pack][id] = { id, name: faction.factionName, homeTile, startUnits: parseStartingFleet(faction.startingFleet) };
+    factions[pack][id] = {
+      id, name: faction.factionName, homeTile, startUnits: parseStartingFleet(faction.startingFleet),
+      ...readStartingTech(faction),
+      commodities: faction.commodities,
+      abilities: faction.abilities.map(ability => {
+        const name = abilityNames.get(ability);
+        if (!name) throw new Error(`Faction ${id} has unknown ability ${ability}`);
+        return name;
+      }),
+      ...(HOME_PLANET_TILE[id] ? { gateTile: normalizeTileId(faction.homeSystem) } : {}),
+    };
   }
   return factions;
 }
@@ -351,6 +391,22 @@ function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lan
     }
   }
   return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
+}
+
+/** Per pack, the technologies its factions name. A pack holds its own copy, so it works without the others. */
+function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<string, FactionDef>>): Record<PackId, Record<string, TechDef>> {
+  const known = new Map(all.filter(tech => packOfSource(tech.source)).map(tech => [tech.alias, tech]));
+  const result: Record<PackId, Record<string, TechDef>> = { base: {}, pok: {}, te: {} };
+  for (const pack of ['base', 'pok', 'te'] as PackId[]) {
+    for (const faction of Object.values(factions[pack])) {
+      for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) {
+        const tech = known.get(id);
+        if (!tech) throw new Error(`Faction ${faction.id} names unknown technology ${id}`);
+        result[pack][id] = readTech(tech);
+      }
+    }
+  }
+  return result;
 }
 
 function buildTemplates(root: string): Record<PackId, MapTemplate[]> {
@@ -413,7 +469,11 @@ function assertSchema(pack: DataPack, name: string): void {
     if (!tile.number || !Array.isArray(tile.planetIds) || !Array.isArray(tile.wormholes)) throw new Error(`${name}: bad tile ${tile.id}`);
   }
   for (const faction of Object.values(pack.factions)) {
-    if (!faction.name || !Object.values(faction.startUnits).every(isCount)) throw new Error(`${name}: bad faction ${faction.id}`);
+    if (!faction.name || !Object.values(faction.startUnits).every(isCount) || !isCount(faction.commodities)) throw new Error(`${name}: bad faction ${faction.id}`);
+    if (!Array.isArray(faction.startingTech) || !Array.isArray(faction.abilities)) throw new Error(`${name}: bad faction ${faction.id}`);
+    for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) {
+      if (!pack.technologies[id]) throw new Error(`${name}: faction ${faction.id} names unknown technology ${id}`);
+    }
   }
   for (const template of pack.templates) {
     const where = `${name}: template of ${template.playerCount} players (${template.layout})`;
@@ -444,8 +504,10 @@ async function main(): Promise<void> {
   const tiles = buildTiles(systems, parseHyperlanes(laneText));
   const planets = buildPlanets(readDir<SourcePlanet>(root, 'planets'), tiles);
   const units = buildUnits(root);
+  const abilityNames = new Map(readDir<SourceAbility[]>(root, 'data/abilities').flat().map(ability => [ability.id, ability.name]));
   const factions = buildFactions(readdirSync(join(root, 'data/factions'))
-    .flatMap(name => readJson<SourceFaction[]>(root, `data/factions/${name}`)), tiles);
+    .flatMap(name => readJson<SourceFaction[]>(root, `data/factions/${name}`)), tiles, abilityNames);
+  const technologies = buildTechnologies(readDir<SourceTech[]>(root, 'data/technologies').flat(), factions);
   const templates = buildTemplates(root);
   const cards = buildCards(root);
 
@@ -466,7 +528,8 @@ async function main(): Promise<void> {
   for (const name of ['base', 'pok', 'te'] as PackId[]) {
     const pack = {
       version: DATA_VERSION, tiles: tiles[name], planets: planets[name], units: units[name],
-      factions: factions[name], templates: templates[name],
+      factions: factions[name], templates: templates[name], technologies: technologies[name],
+      structures: name === 'base' ? STRUCTURES : [],
     };
     assertSchema(pack, name);
     writeFileSync(join(outDir, `${name}.json`), `${JSON.stringify(pack, null, 2)}\n`);
@@ -483,6 +546,7 @@ async function main(): Promise<void> {
     excludedPlanets: EXCLUDED_PLANETS,
     notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, reason: "Thunder's Edge rulebook; absent from the source at this commit" },
     corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
+    unconfirmed: { unitLimits: 'Reinforcement limits are null: no public source confirmed them.' },
     verification: 'docs/data-verification.md',
   }, null, 2)}\n`);
   console.log(`Built data ${DATA_VERSION}`);

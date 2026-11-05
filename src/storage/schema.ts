@@ -44,8 +44,11 @@ export const gameSchema = z.object({
   playerCount: z.number().int(),
   layout: z.enum(['standard', 'hyperlanes']).default('standard'),
   faction: z.string(),
+  seat: z.number().int(),
+  color: z.number().int(),
+  vp: count,
   map: z.record(z.string(), z.string()),
-  opponents: z.array(z.object({ faction: z.string(), vp: z.number() })),
+  opponents: z.array(z.object({ faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
   enemyUnits: z.record(z.string(), unitCounts),
   planetControl: z.record(z.string(), control),
   docks: z.array(z.string()),
@@ -64,11 +67,23 @@ export const gameSchema = z.object({
   activePlanId: z.string(),
 }) satisfies z.ZodType<Game>;
 
+/** Games saved before seats existed: seats and colours go in list order, my faction first. */
+function withSeats(doc: Record<string, unknown>): Record<string, unknown> {
+  const opponents = doc.opponents as Record<string, unknown>[];
+  return {
+    ...doc,
+    seat: doc.seat ?? 1,
+    color: doc.color ?? 1,
+    vp: doc.vp ?? 0,
+    opponents: opponents.map((o, i) => ({ ...o, seat: o.seat ?? i + 2, color: o.color ?? i + 2 })),
+  };
+}
+
 /** Brings a parsed file of an older schema up to CURRENT_SCHEMA, one version at a time. */
 export function migrate(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
   let doc = raw as Record<string, unknown>;
   // Version 0 files had the same shape; only the version marker changed.
   if (doc.schemaVersion === 0) doc = { ...doc, schemaVersion: 1 };
-  return doc;
+  return Array.isArray(doc.opponents) ? withSeats(doc) : doc;
 }

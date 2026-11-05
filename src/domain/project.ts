@@ -130,7 +130,7 @@ function initialState(game: Game, pack: DataPack): GameState {
   Object.assign(control, game.planetControl);
   return {
     systems, ground: {}, exhausted: [], control, tokensOnMap: [],
-    tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0,
+    tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp,
   };
 }
 
