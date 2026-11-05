@@ -74,3 +74,30 @@ test('a bare number shared by two sides asks for the side', async () => {
   await userEvent.click(screen.getByRole('button', { name: '83A' }));
   expect(map()[slot]).toBe('83A@0');
 });
+
+test('a prefix that is not a number says unknown, not two sides', async () => {
+  await tapEmptySlot();
+  await userEvent.type(screen.getByLabelText('Tile number'), '425');
+  await userEvent.click(screen.getByRole('button', { name: 'Place' }));
+  expect(screen.getByRole('alert')).toHaveTextContent('No tile');
+});
+
+test('a fixed template slot can be replaced and cleared, and Game.map overrides the template', async () => {
+  render(<MapBuilderScreen />);
+  expect(map()['0,0']).toBe('18');
+  const hex = () => document.querySelector('[data-slot="0,0"]')!;
+  expect(hex()).toHaveAccessibleName('Tile 18');
+  await userEvent.click(hex());
+  await userEvent.type(screen.getByLabelText('Tile number'), '25');
+  await userEvent.click(screen.getByRole('button', { name: 'Place' }));
+  expect(map()['0,0']).toBe('25');
+  expect(hex()).toHaveAccessibleName('Tile 25');
+  await userEvent.click(screen.getByRole('button', { name: 'Clear slot' }));
+  expect(map()['0,0']).toBeUndefined();
+  expect(hex()).toHaveAccessibleName('Empty slot');
+});
+
+test('the side panel has one Close button', async () => {
+  await tapEmptySlot();
+  expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
+});

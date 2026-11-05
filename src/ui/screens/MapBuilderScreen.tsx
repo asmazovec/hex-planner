@@ -36,7 +36,7 @@ export function MapBuilderScreen() {
         <div className="map-side">
           <TileNumberInput
             key={selected} pack={pack} value={game.map[selected]}
-            onChange={value => setTile(selected, value)} onClose={() => setSelected(null)}
+            onChange={value => setTile(selected, value)}
           />
           <TileSheet slotKey={selected} pack={pack} game={game} state={state} onClose={() => setSelected(null)} />
         </div>

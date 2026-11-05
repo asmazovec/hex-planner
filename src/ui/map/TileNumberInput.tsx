@@ -9,13 +9,12 @@ export interface TileNumberInputProps {
   value: string | undefined;
   /** A new map value, or null to clear the slot. */
   onChange: (value: string | null) => void;
-  onClose: () => void;
 }
 
 const MAX_SUGGESTIONS = 8;
 
 /** Enter a tile number for one slot; suggestions are tappable, hyperlanes get a rotate button. */
-export function TileNumberInput({ pack, value, onChange, onClose }: TileNumberInputProps) {
+export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps) {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -37,15 +36,15 @@ export function TileNumberInput({ pack, value, onChange, onClose }: TileNumberIn
     if (query === '') return;
     const tile = resolveTile(query, pack);
     if (tile) place(tile.id);
-    else setError(t(tileSuggestions(query, pack).length > 1 ? 'builder.ambiguous' : 'builder.unknown', { query }));
+    else {
+      const sides = Object.values(pack.tiles).filter(tile => tile.number.toUpperCase() === query.toUpperCase());
+      setError(t(sides.length > 1 ? 'builder.ambiguous' : 'builder.unknown', { query }));
+    }
   };
 
   return (
     <div className="panel tile-input" role="group" aria-label={t('builder.title')}>
-      <div className="row">
-        <h2>{t('builder.title')}</h2>
-        <button type="button" onClick={onClose}>{t('map.sheet.close')}</button>
-      </div>
+      <h2>{t('builder.title')}</h2>
       <form className="row" onSubmit={submit}>
         <label className="field">
           {t('builder.number')}
