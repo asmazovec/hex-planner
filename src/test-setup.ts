@@ -1,3 +1,4 @@
+import { afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
 
 // Node 25 ships an experimental global localStorage that shadows jsdom's and is
@@ -18,4 +19,6 @@ if (typeof localStorage?.getItem !== 'function') {
 }
 
 // Sprites are baked through a canvas, which jsdom lacks; without this function they stay on the vector art.
-Object.assign(URL, { createObjectURL: undefined });
+const withoutBlobUrls = () => { Object.assign(URL, { createObjectURL: undefined }); };
+withoutBlobUrls();
+afterEach(withoutBlobUrls);

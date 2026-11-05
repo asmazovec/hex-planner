@@ -64,8 +64,6 @@ describe.each([3, 4, 5, 6, 7, 8])('Fracture with %i players on the 1180x820 map 
     const window = capFit(mapRect, layout.bounds);
     const k = fit(window);
     expect(k).toBeGreaterThanOrEqual(fit(mapRect) * 0.8 - 1e-9);
-    // The number is small on purpose; zooming in makes it larger.
-    expect(k * NUMBER_FONT).toBeGreaterThanOrEqual(4);
 
     // Pan so that the group is in the middle, in screen pixels relative to the viewport centre.
     const midX = window.x + window.width / 2;
@@ -85,6 +83,31 @@ describe.each([3, 4, 5, 6, 7, 8])('Fracture with %i players on the 1180x820 map 
       expect(Math.abs(s.y - midY + view.y) + HEX_SIZE * 0.87).toBeLessThanOrEqual(SVG.height / k / 2 + 1);
     }
   });
+});
+
+/**
+ * The number is half size at the user's request, so these are measured floors, not targets: pixels at the fit that opens
+ * the map on the 1180x820 area. Lowering them means the number has shrunk again.
+ */
+test('the tile number keeps its measured size on every map, with and without the Fracture', () => {
+  const SMALLEST_PLAIN_PX = 5.16;
+  const SMALLEST_FRACTURE_PX = 4.19;
+  const pack = loadPack(['pok', 'te']);
+  const tiles = Object.values(pack.tiles).filter(tile => tile.kind === 'fracture').map(tile => tile.id);
+  const templates = pack.templates.filter(template => template.playerCount >= 3 && template.playerCount <= 8);
+  expect(new Set(templates.map(template => template.playerCount)).size).toBe(6);
+
+  const plain = templates.map(template => fit(mapBounds(template.slots)) * NUMBER_FONT);
+  const withFracture = templates.flatMap(template => {
+    const mapRect = mapBounds(template.slots);
+    const anchors = [null, ...(template.homes ?? []).map(key => {
+      const [q, r] = key.split(',').map(Number);
+      return hexToPixel(q, r);
+    })];
+    return anchors.map(anchor => fit(capFit(mapRect, fractureLayout(tiles, mapRect, anchor).bounds)) * NUMBER_FONT);
+  });
+  expect(Math.min(...plain)).toBeGreaterThanOrEqual(SMALLEST_PLAIN_PX);
+  expect(Math.min(...withFracture)).toBeGreaterThanOrEqual(SMALLEST_FRACTURE_PX);
 });
 
 test('without a seat the group is to the right of the map', () => {

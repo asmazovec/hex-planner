@@ -45,6 +45,63 @@ describe('hexLayout', () => {
     }
   });
 
+  test('four planets: the same stacks all fit, the planets stay in the hex and apart', () => {
+    for (let space = 0; space <= 17; space += 1) {
+      for (let ground = 0; ground <= 10; ground += 1) {
+        const layout = hexLayout({ planets: 4, space: spaceStacks(space), ground: groundStacks(ground, 4) });
+        const context = `space ${space}, ground ${ground}`;
+        expect(layout.items, context).toHaveLength(space + ground);
+        expect(layout.planets, context).toHaveLength(4);
+        expectApart(layout, context);
+        layout.planets.forEach((a, i) => {
+          expect(Math.abs(a.y) + a.r, context).toBeLessThanOrEqual((46 * HEX_INNER) / 53);
+          layout.planets.slice(i + 1).forEach(b => expect(distance(a, b), context).toBeGreaterThanOrEqual(a.r + b.r));
+        });
+      }
+    }
+  });
+
+  test('more planets or stacks than fit never fail: everything is still placed, only smaller', () => {
+    for (const planets of [5, 7, 12, 60]) {
+      const layout = hexLayout({ planets, space: spaceStacks(17), ground: groundStacks(10, planets) });
+      expect(layout.planets, `${planets} planets`).toHaveLength(planets);
+      expect(layout.items, `${planets} planets`).toHaveLength(27);
+    }
+    const flood = hexLayout({ planets: 3, space: spaceStacks(17), ground: Array.from({ length: 300 }, (_, i) => groundStacks(1, 3).map(g => ({ ...g, planet: i }))[0]) });
+    expect(flood.items).toHaveLength(317);
+    expectApart({ ...flood, items: flood.items.slice(0, 60) }, 'flood');
+    for (const item of flood.items) expect(Number.isFinite(item.x + item.y + item.size)).toBe(true);
+  });
+
+  test('markers on the tile keep every token off them, and spacing holds', () => {
+    const marker = { x: 26, y: -41, r: 6 };
+    const seat = { x: -15, y: -43, r: 4.6 };
+    for (let planets = 0; planets <= 4; planets += 1) {
+      for (const space of [1, 3, 6, 9, 14, 17]) {
+        for (const ground of [0, 4, 10]) {
+          const layout = hexLayout({ planets, space: spaceStacks(space), ground: groundStacks(ground, planets), obstacles: [marker, seat, { x: 36, y: -28, r: 6 }] });
+          const context = `planets ${planets}, space ${space}, ground ${ground}`;
+          expect(layout.items, context).toHaveLength(space + ground);
+          expectApart(layout, context);
+          for (const item of layout.items) {
+            expect(distance(item, marker), `${context}: ${item.key}`).toBeGreaterThanOrEqual(marker.r);
+            expect(distance(item, seat), `${context}: ${item.key}`).toBeGreaterThanOrEqual(seat.r);
+          }
+        }
+      }
+    }
+  });
+
+  test('a marker moves a ship that would stand on it, and no marker changes nothing', () => {
+    const space = spaceStacks(8);
+    const plain = hexLayout({ planets: 1, space, ground: [] });
+    const marker = { x: 26, y: -41, r: 6 };
+    expect(plain.items.some(item => distance(item, marker) < marker.r + item.size / 2)).toBe(true);
+    const moved = hexLayout({ planets: 1, space, ground: [], obstacles: [marker] });
+    expect(moved.items.every(item => distance(item, marker) >= marker.r + moved.size / 2 - 1e-9)).toBe(true);
+    expect(hexLayout({ planets: 1, space, ground: [], obstacles: [] })).toEqual(plain);
+  });
+
   test('all ground stacks on one planet still fit', () => {
     for (const planets of [1, 2, 3]) {
       const ground = groundStacks(10, 1);

@@ -4,7 +4,8 @@
     "plan": "Plan & map"
   },
   "game": {
-    "iconCredit": "Icons of the war sun, infantry, mech, PDS and space dock: Lorc and Delapouite, game-icons.net, CC BY 3.0.",
+    "iconCredit": "Unit icons from game-icons.net, recoloured with the background removed: Star prominences, Flying flag, Missile mech and Sentry gun by Lorc; Defense satellite by Delapouite. Licence:",
+    "iconLicence": "CC BY 3.0",
     "expansions": "Expansions",
     "saved": "Saved games",
     "none": "No saved games",

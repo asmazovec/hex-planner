@@ -1,6 +1,6 @@
-import type { KeyboardEvent, PointerEvent } from 'react';
+import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HEX_INNER, hexLayout, type GroundStack, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
+import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
 import { rotateLanes } from '../../domain/lanes';
 import { systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domain/types';
@@ -37,9 +37,11 @@ const NUMBER_BASELINE = -40.3;
 /** About as wide as one character of the number. */
 const NUMBER_CHAR = 4.3;
 const SEAT_RADIUS = 4.6;
+const SEAT_Y = NUMBER_BASELINE - 2.6;
 /** Top-right corner: the command token against the top edge, the ingress below it along the side. */
 const COMMAND_SPOT = { x: 26, y: -41, r: 6 };
 const INGRESS_SPOT = { x: 36, y: -28, scale: 0.75 };
+const INGRESS_RADIUS = 8 * INGRESS_SPOT.scale;
 const NAME_LENGTH = 11;
 /** The lower names of three planets lean inward, where the hex is wider. */
 const NAME_INWARD = 8;
@@ -68,8 +70,8 @@ const shortName = (name: string): string => (name.length > NAME_LENGTH ? `${name
 const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
   UNIT_ORDER.filter(u => (counts?.[u] ?? 0) > 0).map(unit => ({ unit, count: counts?.[unit] ?? 0 }));
 
-/** A name or caption goes when a token covers its box; tokens are taken as their round body. */
-function nameCovered(name: string, x: number, baseline: number, items: PlacedStack[]): boolean {
+/** A name or caption goes when a token or another planet covers its box; both are taken as round. */
+function nameCovered(name: string, x: number, baseline: number, items: { x: number; y: number; size: number }[]): boolean {
   const half = (name.length * NAME_CHAR) / 2;
   return items.some(item => {
     const dx = item.x - Math.max(x - half, Math.min(item.x, x + half));
@@ -79,6 +81,12 @@ function nameCovered(name: string, x: number, baseline: number, items: PlacedSta
 }
 
 const placeOn = (spot: PlacedPlanet | PlacedStack, scale: number) => ({ transform: `translate(${spot.x.toFixed(2)}px,${spot.y.toFixed(2)}px) scale(${scale.toFixed(4)})` });
+
+/** Every tile renders again on any change of the game, while its stacks rarely change. */
+function useHexLayout(input: HexLayoutInput) {
+  const key = JSON.stringify(input);
+  return useMemo(() => hexLayout(JSON.parse(key) as HexLayoutInput), [key]);
+}
 
 export function TileView({
   slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown,
@@ -125,7 +133,13 @@ export function TileView({
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
     if (game.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: 'me', count: 1, planet: i });
   });
-  const layout = hexLayout({ planets: planets.length, space, ground });
+  const hasCommandToken = state.tokensOnMap.includes(slotKey);
+  const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
+  const obstacles: LayoutObstacle[] = [];
+  if (hasCommandToken) obstacles.push(COMMAND_SPOT);
+  if (ingress) obstacles.push({ x: INGRESS_SPOT.x, y: INGRESS_SPOT.y, r: INGRESS_RADIUS });
+  if (tile && seat) obstacles.push({ x: seatX, y: SEAT_Y, r: SEAT_RADIUS });
+  const layout = useHexLayout({ planets: planets.length, space, ground, obstacles });
 
   const label = fracture ? t('map.fractureTile', { n: fracture.index + 1 }) : unknown
     ? t('map.unknownTile', { id: tileId })
@@ -184,7 +198,8 @@ export function TileView({
         const name = shortName(planet.name);
         const nameX = spot.x + (spot.x === 0 || planets.length < 3 ? 0 : -Math.sign(spot.x) * NAME_INWARD);
         const baseline = spot.y + spot.r + NAME_GAP;
-        if (nameCovered(name, nameX, baseline, layout.items)) return null;
+        const otherDiscs = layout.planets.filter(other => other !== spot).map(other => ({ x: other.x, y: other.y, size: 2 * other.r }));
+        if (nameCovered(name, nameX, baseline, [...layout.items, ...otherDiscs])) return null;
         return (
           <g key={planet.id} className="tk" style={{ transform: `translate(${nameX.toFixed(2)}px,${baseline.toFixed(2)}px)` }}>
             <text className="planet-name">{name}</text>
@@ -204,14 +219,14 @@ export function TileView({
       {tile && seat && (
         <g
           role="img" aria-label={t('map.seat', { n: seat.number })} className="tile-seat"
-          transform={`translate(${NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5} ${NUMBER_BASELINE - 2.6})`}
+          transform={`translate(${seatX} ${SEAT_Y})`}
         >
           <circle r={SEAT_RADIUS} style={{ fill: `var(--player-${seat.color})` }} />
           <text y={2.3}>{seat.number}</text>
         </g>
       )}
 
-      {state.tokensOnMap.includes(slotKey) && (
+      {hasCommandToken && (
         <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
           <circle r={7} className="token" />
           <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />

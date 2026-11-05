@@ -15,19 +15,29 @@ export function UnitLegend({ colour }: { colour: string }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!open) return undefined;
     const close = (event: Event) => {
       if (!box.current?.contains(event.target as Node)) setOpen(false);
     };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      button.current?.focus();
+    };
     document.addEventListener('pointerdown', close);
-    return () => document.removeEventListener('pointerdown', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [open]);
 
   return (
     <div className="map-legend" ref={box}>
-      <button type="button" className="map-legend-button" aria-expanded={open} aria-label={t('map.legend.open')} onClick={() => setOpen(!open)}>?</button>
+      <button ref={button} type="button" className="map-legend-button" aria-expanded={open} aria-label={t('map.legend.open')} onClick={() => setOpen(!open)}>?</button>
       {open && (
         <div className="map-legend-box" role="dialog" aria-label={t('map.legend.title')}>
           {ROWS.map(({ kinds, text }) => (

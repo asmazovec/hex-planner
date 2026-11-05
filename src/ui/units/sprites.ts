@@ -80,24 +80,36 @@ export function subscribeSprites(listener: () => void): () => void {
   return () => { listeners.delete(listener); };
 }
 
-/** Draws a token once to a bitmap. On a failure the token simply stays vector art. */
+/** Longer than any real bake; an image that neither loads nor fails must not hold the map back. */
+export const BAKE_TIMEOUT_MS = 5000;
+
+/** Draws a token once to a bitmap. On any failure no sprite is stored, and the token simply stays vector art. */
 function bake(kind: TokenKind, colour: string): Promise<void> {
   return new Promise(resolve => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-SPRITE_REACH} ${-SPRITE_REACH} ${2 * SPRITE_REACH} ${2 * SPRITE_REACH}" width="${SPRITE_PX}" height="${SPRITE_PX}">${tokenMarkup(kind, colour)}</svg>`;
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
     const image = new Image();
+    const finish = () => {
+      clearTimeout(timer);
+      URL.revokeObjectURL(url);
+      image.onload = null;
+      image.onerror = null;
+      resolve();
+    };
+    const timer = setTimeout(finish, BAKE_TIMEOUT_MS);
     image.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = SPRITE_PX;
       canvas.height = SPRITE_PX;
-      canvas.getContext('2d')?.drawImage(image, 0, 0);
-      URL.revokeObjectURL(url);
+      const context = canvas.getContext('2d');
+      if (!context) { finish(); return; }
+      context.drawImage(image, 0, 0);
       canvas.toBlob(blob => {
         if (blob) sprites.set(spriteKey(kind, colour), URL.createObjectURL(blob));
-        resolve();
+        finish();
       });
     };
-    image.onerror = () => { URL.revokeObjectURL(url); resolve(); };
+    image.onerror = finish;
     image.src = url;
   });
 }
@@ -112,7 +124,8 @@ export async function prepareSprites(colours: string[]): Promise<void> {
     const key = spriteKey(kind, colour);
     let job = baking.get(key);
     if (!job) {
-      job = bake(kind, colour);
+      // A failed bake may be tried again by the next call.
+      job = bake(kind, colour).then(() => { if (!sprites.has(key)) baking.delete(key); });
       baking.set(key, job);
     }
     return job;

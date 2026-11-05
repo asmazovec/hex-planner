@@ -2,6 +2,7 @@ import { act, cleanup, render, screen, waitFor, within } from '@testing-library/
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
+import { hexLayout } from '../../domain/hexLayout';
 import { createGame } from '../../domain/newGame';
 import type { Game, GameState } from '../../domain/types';
 import { setLanguage } from '../../i18n';
@@ -10,6 +11,11 @@ import { useGame } from '../../state/gameStore';
 import { HexMap } from './HexMap';
 import { TileSheet } from './TileSheet';
 import { TileView } from './TileView';
+
+vi.mock('../../domain/hexLayout', async original => {
+  const actual = await original<typeof import('../../domain/hexLayout')>();
+  return { ...actual, hexLayout: vi.fn(actual.hexLayout) };
+});
 
 vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -121,6 +127,67 @@ test('enemy ground units stand on the arc of the first planet, or on the comb wi
   cleanup();
   setup('39', (g) => { g.enemyUnits['1,0'] = { mech: 1 }; });
   expect(stackOf('Mech ×1 (enemy)')).not.toHaveAttribute('data-planet');
+});
+
+test('Thunder\'s Edge beside three planets draws all four instead of breaking the map', () => {
+  const tePack = loadPack(['pok', 'te']);
+  const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, tePack);
+  game.map['1,0'] = '16';
+  game.expedition.thundersEdgeSystem = '1,0';
+  render(<svg><TileView slotKey="1,0" pack={tePack} game={game} state={emptyState()} /></svg>);
+  expect(tePack.tiles['16'].planetIds).toHaveLength(3);
+  const discs = [...document.querySelectorAll('.planet')].map(placed);
+  expect(discs).toHaveLength(4);
+  for (const disc of discs) expect(Math.abs(disc.y) + disc.scale * PLANET_BASE).toBeLessThan(50.6);
+});
+
+test('with a command token, an ingress and a seat badge no token stands on them', () => {
+  const stacks = { flagship: 1, warsun: 1, dreadnought: 1, carrier: 1, cruiser: 1, destroyer: 1, fighter: 1 };
+  setup('25', (g, s) => { s.tokensOnMap.push('1,0'); s.systems['1,0'] = stacks; g.enemyUnits['1,0'] = stacks; }, { ingress: true, seat: { number: 2, color: 2 } });
+  const centres = ['Command token', 'Ingress token', 'Seat 2'].map(name => {
+    const [x, y] = screen.getByLabelText(name).getAttribute('transform')!.match(/-?[\d.]+/g)!.map(Number);
+    return { name, x, y };
+  });
+  const tokens = [...document.querySelectorAll('[data-stack]')].map(placed);
+  expect(tokens).toHaveLength(14);
+  for (const { name, x, y } of centres) {
+    for (const token of tokens) expect(Math.hypot(token.x - x, token.y - y), name).toBeGreaterThanOrEqual(4.6);
+  }
+});
+
+test('a command token only takes room while it is drawn', () => {
+  const units = { carrier: 1, cruiser: 1, destroyer: 1, fighter: 1, flagship: 1, dreadnought: 1, warsun: 1 };
+  const enemy = { carrier: 1 };
+  const positions = () => [...document.querySelectorAll('[data-stack]')].map(n => (n as SVGElement).style.transform);
+  setup('25', (g, s) => { s.systems['1,0'] = units; g.enemyUnits['1,0'] = enemy; });
+  const without = positions();
+  cleanup();
+  setup('25', (g, s) => { s.systems['1,0'] = units; g.enemyUnits['1,0'] = enemy; s.tokensOnMap.push('1,0'); });
+  expect(positions()).not.toEqual(without);
+});
+
+test('the layout is worked out again only when the stacks change', () => {
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  game.map['1,0'] = '25';
+  const view = (state: GameState) => <svg><TileView slotKey="1,0" pack={pack} game={game} state={state} /></svg>;
+  const { rerender } = render(view({ ...emptyState(), systems: { '1,0': { carrier: 1 } } }));
+  const calls = vi.mocked(hexLayout).mock.calls.length;
+  rerender(view({ ...emptyState(), tradeGoods: 9, systems: { '1,0': { carrier: 1 } } }));
+  expect(vi.mocked(hexLayout).mock.calls.length).toBe(calls);
+  rerender(view({ ...emptyState(), systems: { '1,0': { carrier: 2 } } }));
+  expect(vi.mocked(hexLayout).mock.calls.length).toBe(calls + 1);
+});
+
+test('the legend closes on Escape and gives the focus back to its button', async () => {
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  const button = screen.getByRole('button', { name: 'What the tokens mean' });
+  await userEvent.click(button);
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  button.blur();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(button).toHaveFocus();
 });
 
 test('a planet name goes when a token covers it, and stays otherwise', () => {

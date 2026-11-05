@@ -11,10 +11,15 @@ export type StackOwner = 'me' | 'enemy';
 export interface SpaceStack { kind: TokenKind; owner: StackOwner; count: number }
 export interface GroundStack extends SpaceStack { /** Index of the planet; wraps around the planets of the tile. */ planet: number }
 
+/** Something drawn on the tile that tokens keep clear of, in the tile's own units. */
+export interface LayoutObstacle { x: number; y: number; r: number }
+
 export interface HexLayoutInput {
   planets: number;
   ground: GroundStack[];
   space: SpaceStack[];
+  /** Markers drawn on this tile: the command token, the ingress, the seat badge. */
+  obstacles?: LayoutObstacle[];
 }
 
 export interface PlacedPlanet { x: number; y: number; r: number }
@@ -42,7 +47,21 @@ const PLANETS: Circle[][] = [
   [{ x: 0, y: 1, r: 13 }],
   [{ x: -20, y: -12, r: 11 }, { x: 20, y: 15, r: 11 }],
   [{ x: 0, y: -22, r: 10.5 }, { x: -21, y: 14.4, r: 10.5 }, { x: 21, y: 14.4, r: 10.5 }],
+  // The Thunder's Edge planet joins a system of three under the triangle.
+  [{ x: 0, y: -22, r: 10.5 }, { x: -21, y: 14.4, r: 10.5 }, { x: 21, y: 14.4, r: 10.5 }, { x: 0, y: 27, r: 9 }],
 ];
+const RING_RADIUS = 28;
+const RING_PLANET = 9;
+
+/** No tile has more planets than the table knows, but a ring still gives each one a place. */
+function ringOfPlanets(count: number): Circle[] {
+  const r = Math.min(RING_PLANET, RING_RADIUS * Math.sin(Math.PI / count) * 0.9);
+  return Array.from({ length: count }, (_, i) => {
+    const a = (2 * Math.PI * i) / count - Math.PI / 2;
+    return { x: RING_RADIUS * Math.cos(a), y: RING_RADIUS * Math.sin(a), r };
+  });
+}
+
 /** The tile number in the top-left corner. */
 const NUMBER_SPOT: Circle = { x: -25, y: -39, r: 4 };
 
@@ -55,7 +74,8 @@ const CLASS_SCALE: Partial<Record<TokenKind, number>> = {
 };
 
 const LARGEST = 22;
-const SMALLEST = 6;
+/** The prototype stops at 6; below that only an overfull tile goes, which must still show everything. */
+const SMALLEST = 1;
 const STEP = 0.5;
 const GROUND_LARGEST = 17;
 /** How much smaller an even group around one planet may get to stand mirror symmetric. */
@@ -78,7 +98,7 @@ const hexDistance = (x: number, y: number) => {
 /** In a crowded system the planets shrink too, down to 62%. */
 function planetsAt(count: number, size: number): Circle[] {
   const k = Math.max(0.62, Math.min(1, 0.62 + (0.38 * (size - 10)) / 10));
-  return PLANETS[count].map(p => ({ x: p.x, y: p.y, r: p.r * k }));
+  return (PLANETS[count] ?? ringOfPlanets(count)).map(p => ({ x: p.x, y: p.y, r: p.r * k }));
 }
 
 /** The stacks of each planet on an arc around it, own from one end and enemy from the other. Null when they do not fit. */
@@ -149,14 +169,16 @@ function comb(count: number, size: number, obstacles: Circle[], insistOnMirror: 
   const rowOffsets: number[] = [];
   for (let phase = 0; phase < 8; phase += 1) rowOffsets.push(COMB_CENTRE_Y + (phase * h) / 8);
   for (const o of obstacles) if (o.r > 7) rowOffsets.push(o.y);
+  // Enough rows and columns to cover the hex at this size.
+  const reachCells = Math.max(7, Math.ceil(60 / h));
   let best: { score: number; pick: Point[] } | null = null;
   for (const xOffset of [0, d / 2]) {
     for (const yOffset of rowOffsets) {
       const cells: (Point & { dist: number })[] = [];
-      for (let j = -7; j < 8; j += 1) {
+      for (let j = -reachCells; j <= reachCells; j += 1) {
         const y = yOffset + j * h;
         const shift = j % 2 !== 0 ? d / 2 : 0;
-        for (let i = -7; i < 8; i += 1) {
+        for (let i = -reachCells; i <= reachCells; i += 1) {
           const x = xOffset + shift + i * d;
           if (!inside(x, y, margin)) continue;
           if (obstacles.some(o => Math.hypot(o.x - x, o.y - y) < o.r + size * 0.5)) continue;
@@ -181,7 +203,8 @@ const byRow = (a: Point, b: Point) => a.y - b.y || a.x - b.x;
 function attempt(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack[], size: number, insistOnMirror: boolean): HexLayout | null {
   const planets = planetsAt(input.planets, size);
   const onPlanet = groundSize(size);
-  const obstacles: Circle[] = [NUMBER_SPOT, ...planets];
+  const markers = (input.obstacles ?? []).map(o => ({ x: o.x / HEX_SCALE, y: o.y / HEX_SCALE, r: o.r / HEX_SCALE }));
+  const obstacles: Circle[] = [NUMBER_SPOT, ...markers, ...planets];
   const placedGround = placeGround(ground, planets, onPlanet, obstacles);
   if (!placedGround) return null;
   const cells = comb(space.length, size, obstacles, insistOnMirror);
@@ -212,6 +235,27 @@ function attempt(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack
   };
 }
 
+/** For a tile too full for arcs and comb: every stack in a plain grid over the hex, own ones on the left. */
+function plainGrid(input: HexLayoutInput, ground: GroundStack[], space: SpaceStack[]): HexLayout {
+  const stacks = [...ground, ...space].sort((a, b) => Number(a.owner === 'enemy') - Number(b.owner === 'enemy'));
+  const columns = Math.ceil(Math.sqrt(stacks.length));
+  const step = 64 / columns;
+  return {
+    size: step * 0.9 * HEX_SCALE,
+    planets: planetsAt(input.planets, SMALLEST).map(p => ({ x: p.x * HEX_SCALE, y: p.y * HEX_SCALE, r: p.r * HEX_SCALE })),
+    items: stacks.map((stack, i) => {
+      const planet = 'planet' in stack ? stack.planet as number : undefined;
+      return {
+        kind: stack.kind, owner: stack.owner, count: stack.count, planet,
+        key: `${stack.owner}|${stack.kind}|${planet ?? '-'}`,
+        x: (Math.floor(i / columns) - (columns - 1) / 2) * step * HEX_SCALE,
+        y: ((i % columns) - (columns - 1) / 2) * step * HEX_SCALE,
+        size: step * 0.9 * HEX_SCALE,
+      };
+    }),
+  };
+}
+
 /**
  * The largest size at which every stack finds a place. An even group of ships alone around a lone planet stands mirror
  * symmetric, unlike in the prototype, where the tile number blocking one top corner left 10 and 14 ships lopsided: it
@@ -230,5 +274,5 @@ export function hexLayout(input: HexLayoutInput): HexLayout {
     unbalanced ??= { layout, size };
   }
   if (unbalanced) return unbalanced.layout;
-  throw new Error(`No room on a tile for ${ground.length + space.length} stacks`);
+  return plainGrid(input, ground, space);
 }

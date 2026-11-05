@@ -4,7 +4,8 @@
     "plan": "План и карта"
   },
   "game": {
-    "iconCredit": "Иконки солнца войны, пехоты, меха, ПСО и космодока: Lorc и Delapouite, game-icons.net, CC BY 3.0.",
+    "iconCredit": "Иконки юнитов с game-icons.net, перекрашены, фон убран: Star prominences, Flying flag, Missile mech и Sentry gun, автор Lorc; Defense satellite, автор Delapouite. Лицензия:",
+    "iconLicence": "CC BY 3.0",
     "expansions": "Дополнения",
     "saved": "Сохранённые партии",
     "none": "Сохранённых партий нет",

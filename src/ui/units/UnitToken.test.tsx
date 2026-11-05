@@ -1,15 +1,23 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { TokenKind } from '../../domain/hexLayout';
-import { getSprite, PLAYER_COLOURS, prepareSprites, tokenColours, tokenMarkup } from './sprites';
+import { BAKE_TIMEOUT_MS, getSprite, PLAYER_COLOURS, prepareSprites, tokenColours, tokenMarkup } from './sprites';
 import { UNIT_ART } from './unitArt';
 import { UnitToken } from './UnitToken';
+
+const realRevoke = URL.revokeObjectURL;
 
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  // test-setup clears createObjectURL again after every test.
+  URL.revokeObjectURL = realRevoke;
 });
+
+function stubBlobUrls(): void {
+  Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:stub'), revokeObjectURL: vi.fn() });
+}
 
 const iconSources = import.meta.glob<string>('/docs/icon-references/*.svg', { query: '?raw', import: 'default', eager: true });
 
@@ -85,11 +93,7 @@ test('without a canvas the sprites stay away and the token draws vector art', as
 });
 
 test('a token is baked once per kind and colour, and the token switches to the bitmap', async () => {
-  const urls: string[] = [];
-  Object.assign(URL, {
-    createObjectURL: vi.fn(() => { urls.push(`blob:${urls.length}`); return urls.at(-1)!; }),
-    revokeObjectURL: vi.fn(),
-  });
+  stubBlobUrls();
   vi.stubGlobal('Image', class {
     onload: () => void = () => undefined;
     set src(_: string) { queueMicrotask(() => this.onload()); }
@@ -111,5 +115,41 @@ test('a token is baked once per kind and colour, and the token switches to the b
 
   await prepareSprites([colour]);
   expect(toBlob).toHaveBeenCalledTimes(Object.keys(UNIT_ART).length);
-  Object.assign(URL, { createObjectURL: undefined });
+});
+
+test('without a 2d context no blank bitmap is stored, and the token stays vector art', async () => {
+  stubBlobUrls();
+  vi.stubGlobal('Image', class {
+    onload: (() => void) | null = null;
+    set src(_: string) { queueMicrotask(() => this.onload?.()); }
+  });
+  const toBlob = vi.fn();
+  const create = document.createElement.bind(document);
+  vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => (tag === 'canvas'
+    ? { getContext: () => null, toBlob }
+    : create(tag))) as typeof document.createElement);
+  const colour = PLAYER_COLOURS[3];
+  await prepareSprites([colour]);
+  expect(toBlob).not.toHaveBeenCalled();
+  expect(getSprite('carrier', colour)).toBeUndefined();
+});
+
+test('an image that never answers does not hold the promise, and leaves vector art', async () => {
+  stubBlobUrls();
+  vi.stubGlobal('Image', class { set src(_: string) { /* neither loads nor fails */ } });
+  vi.useFakeTimers();
+  try {
+    const colour = PLAYER_COLOURS[4];
+    let done = false;
+    const job = prepareSprites([colour]).then(() => { done = true; });
+    await vi.advanceTimersByTimeAsync(BAKE_TIMEOUT_MS - 1);
+    expect(done).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    await job;
+    expect(done).toBe(true);
+    expect(getSprite('carrier', colour)).toBeUndefined();
+    expect(URL.revokeObjectURL).toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
 });

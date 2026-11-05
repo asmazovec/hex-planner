@@ -326,5 +326,9 @@ test('a failing save during import shows an error instead of throwing', async ()
 
 test('the screen credits the authors of the game-icons', () => {
   render(<GameScreen />);
-  expect(screen.getByText(/Lorc.*Delapouite.*game-icons\.net.*CC BY 3\.0/)).toBeInTheDocument();
+  const credit = screen.getByText(/game-icons\.net/);
+  for (const part of ['recoloured', 'Star prominences', 'Flying flag', 'Missile mech', 'Sentry gun', 'Lorc', 'Defense satellite', 'Delapouite']) {
+    expect(credit).toHaveTextContent(part);
+  }
+  expect(screen.getByRole('link', { name: 'CC BY 3.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/3.0/');
 });

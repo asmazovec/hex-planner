@@ -142,7 +142,9 @@ export function GameScreen() {
             </label>
           </div>
         </div>
-        <p className="side-note">{t('game.iconCredit')}</p>
+        <p className="side-note">
+          {t('game.iconCredit')} <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">{t('game.iconLicence')}</a>
+        </p>
       </aside>
     </div>
   );

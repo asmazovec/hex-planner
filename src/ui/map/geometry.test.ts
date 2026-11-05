@@ -1,3 +1,4 @@
+import { HEX_INNER } from '../../domain/hexLayout';
 import { expect, test } from 'vitest';
 import { HEX_SIZE, hexCorners, hexToPixel, mapBounds } from './geometry';
 
@@ -45,4 +46,8 @@ test('bounds contain every hex fully', () => {
     expect(y - apothem).toBeGreaterThanOrEqual(b.y);
     expect(y + apothem).toBeLessThanOrEqual(b.y + b.height);
   }
+});
+
+test('the hex radius the layout works with is the drawn one', () => {
+  expect(HEX_INNER).toBe(HEX_SIZE - 1.5);
 });
