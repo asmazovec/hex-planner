@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../domain/payment';
-import { productionCost, systemPlanets } from '../../domain/project';
+import { productionCost, sourceSlot, systemPlanets } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 import { UNIT_ORDER } from '../map/UnitGlyph';
 import { PaymentBlock } from './PaymentBlock';
 import { Stepper } from './Stepper';
-import { addUnits, hasUnits, sourceSlot, systemName, withCount, type TacticalEntry } from './tactical';
+import { addUnits, hasUnits, systemName, withCount, type TacticalEntry } from './tactical';
 import { UnitPicker } from './UnitPicker';
 import { WarningText } from './WarningText';
 
@@ -22,7 +22,6 @@ export interface TacticalEditorProps {
   onUpdate: (patch: Partial<TacticalEntry>) => void;
   onAddSource: () => void;
   onOpenPicker: (source: string | null) => void;
-  onChangeSystem: () => void;
   onManualPayment: (open: boolean) => void;
   onDone: () => void;
 }
@@ -30,7 +29,7 @@ export interface TacticalEditorProps {
 /** The whole tactical action on one screen: system, arrows and units, optional landing and build, payment, warnings. */
 export function TacticalEditor({
   game, pack, entry, before, warnings, addingSource, pickerFrom, manualPayment,
-  onUpdate, onAddSource, onOpenPicker, onChangeSystem, onManualPayment, onDone,
+  onUpdate, onAddSource, onOpenPicker, onManualPayment, onDone,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
@@ -83,10 +82,7 @@ export function TacticalEditor({
       {target !== null && (
         <>
           <div className="editor-section">
-            <div className="panel-head">
-              <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>
-              <button type="button" onClick={onChangeSystem}>{t('plan.tactical.changeSystem')}</button>
-            </div>
+            <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>
             <span className="muted">{t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
           </div>
 
@@ -103,7 +99,7 @@ export function TacticalEditor({
 
           {pickerFrom !== null && (
             <UnitPicker
-              game={game} pack={pack} before={before} target={target} source={pickerFrom} moves={entry.moves}
+              game={game} pack={pack} before={before} entry={entry} source={pickerFrom}
               onChange={moves => onUpdate({ moves })} onClose={() => onOpenPicker(null)}
             />
           )}
@@ -138,6 +134,7 @@ export function TacticalEditor({
                 {UNIT_ORDER.filter(u => pack.units[u]).map(unit => (
                   <Stepper
                     key={unit} name={t(`unit.${unit}`)} value={entry.production[unit] ?? 0} min={0}
+                    note={t('plan.tactical.price', { cost: pack.units[unit]?.cost ?? 0 })}
                     onChange={count => setProduction(withCount(entry.production, unit, count))}
                   />
                 ))}

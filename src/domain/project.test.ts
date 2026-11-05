@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { createGame } from './newGame';
-import { productionCost, project, readyInfluence, readyResources } from './project';
+import { productionCost, project, readyInfluence, readyResources, stateBeforeEntry, tacticalMeters } from './project';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
@@ -125,6 +125,48 @@ describe('project', () => {
     const r = run(g);
     expect(r.state.ground.jord.infantry).toBe(1);
     expect(r.state.systems.B.infantry).toBe(1);
+  });
+
+  describe('planet pickups belong to the group of their system', () => {
+    const landAtHome = () => withId('l', entry(tactical({ systemId: 'H', landings: [{ planetId: 'jord', units: { infantry: 2 } }] }), 'strategy'));
+    const moves = (list: { from: string; units: UnitCounts }[], over = {}) => withId('m', entry(tactical({ moves: list, ...over })));
+
+    test('a pickup beyond the capacity of the ships from that system warns', () => {
+      const g = gameWith([setup('H', { cruiser: 1 }), landAtHome(),
+        moves([{ from: 'H', units: { cruiser: 1 } }, { from: 'jord', units: { infantry: 1 } }])]);
+      expect(run(g).warningsByEntry.m).toContainEqual({ code: 'capacityGroup', params: { from: 'H', load: 1, capacity: 0 } });
+    });
+
+    test('a pickup carried by ships from that system does not warn', () => {
+      const g = gameWith([landAtHome(), moves([{ from: 'H', units: { carrier: 1 } }, { from: 'jord', units: { infantry: 2 } }])]);
+      expect(codes(run(g).warningsByEntry.m)).not.toContain('capacityGroup');
+    });
+
+    test('one warning per system, not one per move', () => {
+      const g = gameWith([setup('H', { fighter: 1 }), landAtHome(),
+        moves([{ from: 'H', units: { fighter: 1 } }, { from: 'jord', units: { infantry: 1 } }])]);
+      expect(run(g).warningsByEntry.m.filter(w => w.code === 'capacityGroup')).toEqual([
+        { code: 'capacityGroup', params: { from: 'H', load: 2, capacity: 0 } },
+      ]);
+    });
+
+    test('the meters give the same numbers as the warnings, with production in the fleet', () => {
+      const m = moves([{ from: 'H', units: { cruiser: 1 } }, { from: 'jord', units: { infantry: 1 } }], { production: { cruiser: 3 } });
+      const g = gameWith([setup('H', { cruiser: 1 }), setup('B', { cruiser: 1 }), landAtHome(), m]);
+      const meters = tacticalMeters(g, m as Extract<Entry, { type: 'tactical' }>, 'H', stateBeforeEntry(g, g.plans[0], 'm', pack), pack);
+      expect(meters).toEqual({ group: { load: 1, capacity: 0 }, ships: 5, fleet: 3 });
+      const warnings = run(g).warningsByEntry.m;
+      expect(warnings).toContainEqual({ code: 'capacityGroup', params: { from: 'H', load: 1, capacity: 0 } });
+      expect(warnings).toContainEqual({ code: 'fleetPool', params: { systemId: 'B', ships: 5, fleet: 3 } });
+    });
+
+    test('the meters count only what the source really holds, as the warnings do', () => {
+      const m = moves([{ from: 'A', units: { carrier: 2 } }]);
+      const g = gameWith([setup('A', { carrier: 1 }), m]);
+      const meters = tacticalMeters(g, m as Extract<Entry, { type: 'tactical' }>, 'A', stateBeforeEntry(g, g.plans[0], 'm', pack), pack);
+      expect(meters.group).toEqual({ load: 0, capacity: 4 });
+      expect(meters.ships).toBe(1);
+    });
   });
 
   test('высадка меняет контроль и переносит юниты на планету', () => {

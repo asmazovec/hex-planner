@@ -181,7 +181,7 @@ export function EntryList({ game, pack, round, warnings, state, openId, onOpen }
                       <div className="entry-details">
                         {TOKEN_FIELDS.map(field => (
                           <Stepper
-                            key={field} name={t(`plan.summary.${field}`)} value={entry[field]}
+                            key={field} name={t(`plan.summary.${field}`)} value={entry[field]} min={0}
                             onChange={value => updateEntry(entry.id, { [field]: value })}
                           />
                         ))}

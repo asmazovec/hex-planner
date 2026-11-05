@@ -11,11 +11,16 @@ export interface StrategyCardsProps {
   round: Round;
 }
 
-/** One tap makes a card the main one, the next the backup, the next clears it. Starts collapsed once a card is chosen. */
+/** One tap makes a card the backup, the next the main one, the next clears it. A main card collapses the list. */
 export function StrategyCards({ expansions, round }: StrategyCardsProps) {
   const { t } = useTranslation();
   const setStrategyCard = useGame(s => s.setStrategyCard);
-  const [open, setOpen] = useState(round.strategyCard === null && round.backupCard === null);
+  const [open, setOpen] = useState(round.strategyCard === null);
+  const [lastMain, setLastMain] = useState(round.strategyCard);
+  if (round.strategyCard !== lastMain) {
+    setLastMain(round.strategyCard);
+    setOpen(round.strategyCard === null);
+  }
   const lang = currentLanguage();
   const cards = strategyCards(expansions)
     .filter(c => open || c.initiative === round.strategyCard || c.initiative === round.backupCard);
@@ -26,6 +31,7 @@ export function StrategyCards({ expansions, round }: StrategyCardsProps) {
         <h3>{t('plan.cards.title')}</h3>
         <button type="button" onClick={() => setOpen(!open)}>{open ? t('plan.cards.collapse') : t('plan.cards.all')}</button>
       </div>
+      {open && <p className="muted card-hint">{t('plan.cards.hint')}</p>}
       <ul className="card-list">
         {cards.map(card => {
           const summary = cardSummary(card.summaryKey, lang);

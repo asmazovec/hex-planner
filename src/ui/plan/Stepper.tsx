@@ -5,16 +5,18 @@ export interface StepperProps {
   value: number;
   /** Shown after the value, e.g. "1/3" for one of three available. */
   of?: number;
+  /** Shown small beside the name, e.g. the price. */
+  note?: string;
   /** Lowest value; omit where a negative change makes sense. */
   min?: number;
   onChange: (value: number) => void;
 }
 
-export function Stepper({ name, value, of, min, onChange }: StepperProps) {
+export function Stepper({ name, value, of, note, min, onChange }: StepperProps) {
   const { t } = useTranslation();
   return (
     <div className="stepper" role="group" aria-label={name}>
-      <span className="stepper-name">{name}</span>
+      <span className="stepper-name">{name}{note && <small className="muted"> {note}</small>}</span>
       <button
         type="button" aria-label={t('plan.stepper.minus', { name })} disabled={min !== undefined && value <= min}
         onClick={() => onChange(value - 1)}

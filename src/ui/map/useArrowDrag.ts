@@ -60,7 +60,7 @@ export function useArrowDrag({ activeSystem, onComplete, onCancel }: ArrowDragOp
   }, [pointerId, from, activeSystem, onComplete, onCancel]);
 
   const onTilePointerDown = (systemId: string, e: ReactPointerEvent) => {
-    if (activeSystem === null || drag) return;
+    if (!e.isPrimary || e.button !== 0 || activeSystem === null || drag) return;
     setDrag({
       pointerId: e.pointerId, from: systemId, clientX: e.clientX, clientY: e.clientY, reverse: systemId === activeSystem,
     });

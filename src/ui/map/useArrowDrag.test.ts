@@ -26,8 +26,8 @@ afterEach(cleanup);
 
 function setup(activeSystem: string | null = 'X') {
   const { result } = renderHook(() => useArrowDrag({ activeSystem, onComplete, onCancel }));
-  const start = (slot: string) => act(() => {
-    result.current.onTilePointerDown(slot, { pointerId: 1, clientX: 10, clientY: 10, isPrimary: true } as ReactPointerEvent);
+  const start = (slot: string, over: Partial<ReactPointerEvent> = {}) => act(() => {
+    result.current.onTilePointerDown(slot, { pointerId: 1, clientX: 10, clientY: 10, isPrimary: true, button: 0, ...over } as ReactPointerEvent);
   });
   const fire = (name: 'pointercancel' | 'pointerup' | 'pointermove' | 'secondPointerDown', x = 50, y = 60) => act(() => {
     const type = name === 'secondPointerDown' ? 'pointerdown' : name;
@@ -93,5 +93,13 @@ test('a release that does not join a tile and the active system cancels', () => 
 test('without an active system nothing starts', () => {
   const { start, arrowPreview } = setup(null);
   start('A');
+  expect(arrowPreview()).toBeNull();
+});
+
+test('only a primary pointer with the main button starts an arrow', () => {
+  const { start, arrowPreview } = setup();
+  start('A', { isPrimary: false });
+  expect(arrowPreview()).toBeNull();
+  start('A', { button: 2 });
   expect(arrowPreview()).toBeNull();
 });

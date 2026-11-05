@@ -84,14 +84,14 @@ test('a source can be added by taps, and opens the picker with a suggestion', as
 test('an arrow drag opens the same picker, in both directions', async () => {
   await chooseSystem();
   document.elementFromPoint = () => tile(TARGET);
-  fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1 });
+  fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
   expect(screen.getByText('Capacity: 4 of 4')).toBeVisible();
 
   useGame.getState().updateEntry(tactical().id, { moves: [] });
   document.elementFromPoint = () => tile(HOME);
-  fireEvent.pointerDown(tile(TARGET), { pointerId: 1, clientX: 1, clientY: 1 });
+  fireEvent.pointerDown(tile(TARGET), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(tactical().moves.map(m => m.from)).toEqual([HOME]);
 });
@@ -99,7 +99,7 @@ test('an arrow drag opens the same picker, in both directions', async () => {
 test('outside the editor a tile tap opens its sheet and drags do nothing', async () => {
   render(<PlanScreen />);
   document.elementFromPoint = () => tile(TARGET);
-  fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1 });
+  fireEvent.pointerDown(tile(HOME), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
   fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
   expect(entries()).toHaveLength(0);
   await userEvent.click(tile(TARGET));
@@ -239,4 +239,64 @@ test('undo of a just created entry closes its editor', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
   expect(entries()).toHaveLength(0);
   expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
+});
+
+test('the system of an entry cannot be changed in place', async () => {
+  await chooseSystem();
+  expect(screen.queryByRole('button', { name: 'Change' })).toBeNull();
+});
+
+test('an arrow to or from an empty slot does nothing', async () => {
+  const EMPTY = '-1,0';
+  await chooseSystem();
+  document.elementFromPoint = () => tile(EMPTY);
+  fireEvent.pointerDown(tile(TARGET), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+  fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
+  document.elementFromPoint = () => tile(TARGET);
+  fireEvent.pointerDown(tile(EMPTY), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+  fireEvent.pointerUp(window, { pointerId: 1, clientX: 5, clientY: 5 });
+  expect(tactical().moves).toEqual([]);
+  expect(screen.queryByRole('button', { name: 'Close picker' })).toBeNull();
+});
+
+test('Add action stays pinned below the scrolling part of the panel', () => {
+  render(<PlanScreen />);
+  const add = screen.getByRole('button', { name: 'Add action' });
+  expect(add.closest('.plan-footer')).not.toBeNull();
+  expect(add.closest('.plan-scroll')).toBeNull();
+  expect(screen.getByRole('textbox', { name: 'Plan name' }).closest('.plan-scroll')).not.toBeNull();
+});
+
+test('the card list stays collapsed after the editor closes when a main card exists', async () => {
+  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 5);
+  await chooseSystem();
+  await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
+  expect(screen.queryByRole('button', { name: /Warfare/ })).toBeNull();
+  expect(screen.getByRole('button', { name: /Trade/ })).toBeVisible();
+});
+
+test('the build list shows the price of each unit', async () => {
+  await chooseSystem(HOME);
+  const build = within(screen.getByRole('group', { name: 'Build' }));
+  expect(build.getByRole('group', { name: 'Cruiser' })).toHaveTextContent('cost 2');
+  expect(build.getByRole('group', { name: 'Fighter' })).toHaveTextContent('cost 0.5');
+});
+
+test('status tokens do not go below zero', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Status phase tokens' }));
+  const row = within(screen.getByRole('listitem', { name: 'Status phase tokens' }));
+  expect(row.getByRole('button', { name: 'Remove one Tactic' })).toBeDisabled();
+});
+
+test.each(['Plan 1', 'Rush'])('an empty name falls back to the default, starting from %s', async start => {
+  useGame.getState().renamePlan(start);
+  render(<PlanScreen />);
+  const input = screen.getByRole('textbox', { name: 'Plan name' });
+  await userEvent.clear(input);
+  await userEvent.type(input, '   {Enter}');
+  expect(plan().name).toBe('Plan 1');
+  expect(screen.getByRole('textbox', { name: 'Plan name' })).toHaveValue('Plan 1');
+  expect(screen.getByRole('tab', { name: /Plan 1/, selected: true })).toBeVisible();
 });

@@ -4,8 +4,9 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../domain/newGame';
 import { project, suggestUnits } from '../../domain/project';
-import type { Game, GameState } from '../../domain/types';
+import type { Game, GameState, UnitCounts } from '../../domain/types';
 import { setLanguage } from '../../i18n';
+import type { TacticalEntry } from './tactical';
 import { UnitPicker } from './UnitPicker';
 
 const pack = loadPack(['pok']);
@@ -22,15 +23,18 @@ test('suggestUnits takes no cargo without capacity, and does not count cargo as 
   expect(suggestUnits({}, pack)).toEqual({});
 });
 
-function setup(moves: { from: string; units: Record<string, number> }[], before: Partial<GameState> = {}) {
+function setup(moves: { from: string; units: UnitCounts }[], before: Partial<GameState> = {}, production: UnitCounts = {}) {
   const game: Game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
   game.map['1,0'] = '5';
   const state = project(game, game.plans[0], 'forecast', pack).state;
   const merged = { ...state, ...before };
   const onChange = vi.fn();
+  const entry: TacticalEntry = {
+    id: 'e', phase: 'action', status: 'planned', type: 'tactical', systemId: '0,0', moves, landings: [], production, payment: { planets: [], tradeGoods: 0 },
+  };
   render(
     <UnitPicker
-      game={game} pack={pack} before={merged} target="0,0" source="1,0" moves={moves}
+      game={game} pack={pack} before={merged} entry={entry} source="1,0"
       onChange={onChange} onClose={() => undefined}
     />,
   );
@@ -83,4 +87,13 @@ test.each(['en', 'ru'] as const)('every unit id has a %s name', async lang => {
     ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'fighter', 'flagship', 'infantry', 'mech', 'warsun'],
   );
   expect(Object.values(dict.unit).every(name => name.length > 0)).toBe(true);
+});
+
+test('a pickup from a planet counts in the capacity meter, production in the fleet meter', () => {
+  setup(
+    [{ from: '1,0', units: { cruiser: 1 } }, { from: 'nestphar', units: { infantry: 1 } }],
+    { ground: { nestphar: { infantry: 2 } } }, { cruiser: 3 },
+  );
+  expect(screen.getByText('Capacity: 1 of 0')).toBeVisible();
+  expect(screen.getByText('Fleet pool: 4 of 3')).toBeVisible();
 });

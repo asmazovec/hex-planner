@@ -63,9 +63,9 @@ function placeEntry(entries: Entry[], id: string, phase: Phase, toIndex: number)
 }
 
 function cycleCard(round: Round, initiative: number): Round {
-  if (round.strategyCard === initiative) return { ...round, strategyCard: null, backupCard: initiative };
-  if (round.backupCard === initiative) return { ...round, backupCard: null };
-  return { ...round, strategyCard: initiative };
+  if (round.strategyCard === initiative) return { ...round, strategyCard: null };
+  if (round.backupCard === initiative) return { ...round, strategyCard: initiative, backupCard: null };
+  return { ...round, backupCard: initiative };
 }
 
 function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
@@ -107,7 +107,7 @@ export interface GameStore {
   moveEntry(id: string, toPhase: Phase, toIndex: number): void;
   removeEntry(id: string): void;
   setEntryStatus(id: string, status: EntryStatus): void;
-  /** Primary, then backup, then removed. */
+  /** Backup, then primary, then removed. */
   setStrategyCard(roundNo: number, initiative: number): void;
   addRound(): void;
   copyPlan(): void;

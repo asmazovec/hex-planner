@@ -129,7 +129,8 @@
       "backup": "Backup",
       "changed": "Changed in TE",
       "primary": "Primary:",
-      "secondary": "Secondary:"
+      "secondary": "Secondary:",
+      "hint": "Tap once for backup, again for main, again to clear."
     },
     "menu": {
       "add": "Add action",
@@ -163,7 +164,6 @@
       "cancel": "Cancel",
       "system": "System {{name}}",
       "token": "Tactic tokens: {{from}} → {{to}}",
-      "changeSystem": "Change",
       "pickHint": "Tap the system to activate: it spends a tactic token.",
       "sourceHint": "Tap the system the ships come from.",
       "moves": "Movement",
@@ -177,7 +177,8 @@
       "build": "Build",
       "noDock": "No space dock in this system.",
       "noPlanets": "No planets in this system.",
-      "warnings": "Warnings"
+      "warnings": "Warnings",
+      "price": "cost {{cost}}"
     },
     "picker": {
       "title": "From {{from}} to {{to}}",

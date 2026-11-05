@@ -25,10 +25,10 @@ beforeEach(() => {
 });
 
 describe('gameStore', () => {
-  test('цикл карты: основная, запасная, снято', () => {
-    act().setStrategyCard(1, 6); expect(round().strategyCard).toBe(6);
+  test('цикл карты: запасная, основная, снято', () => {
     act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: 6 });
-    act().setStrategyCard(1, 6); expect(round().backupCard).toBeNull();
+    act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: 6, backupCard: null });
+    act().setStrategyCard(1, 6); expect(round()).toMatchObject({ strategyCard: null, backupCard: null });
   });
 
   test('копия плана независима', () => {

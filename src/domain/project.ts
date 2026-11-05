@@ -63,7 +63,7 @@ function take(
 }
 
 /** Cargo against ship capacity: only fighters and ground units count as load. */
-export function capacity(units: UnitCounts, pack: DataPack): { load: number; capacity: number } {
+function capacity(units: UnitCounts, pack: DataPack): { load: number; capacity: number } {
   let load = 0;
   let cap = 0;
   for (const id of unitIds(units)) {
@@ -76,7 +76,7 @@ export function capacity(units: UnitCounts, pack: DataPack): { load: number; cap
   return { load, capacity: cap };
 }
 
-export const shipCount = (units: UnitCounts, pack: DataPack): number =>
+const shipCount = (units: UnitCounts, pack: DataPack): number =>
   unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
@@ -134,22 +134,53 @@ function initialState(game: Game, pack: DataPack): GameState {
   };
 }
 
+type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
+
+/** The system a move leaves: its `from`, or for a planet pickup the system holding that planet. */
+export function sourceSlot(game: Game, pack: DataPack, from: string): string | null {
+  if (!(from in pack.planets)) return from;
+  return Object.keys(game.map).find(slot => planetsOf(game, slot, pack).includes(from)) ?? null;
+}
+
+/**
+ * Carries the moves into the target and returns what each source system really sent, by slot.
+ * Pickups from the target's own planets stay in the system, so they join no group.
+ */
+function applyMoves(
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
+): Record<string, UnitCounts> {
+  const groups: Record<string, UnitCounts> = {};
+  for (const move of entry.moves) {
+    const taken = take(move.from in pack.planets ? state.ground : state.systems, move.from, move.units, warnings);
+    add(state.systems, target, taken);
+    const slot = sourceSlot(game, pack, move.from);
+    if (slot !== null && slot !== target) add(groups, slot, taken);
+  }
+  return groups;
+}
+
+/** The numbers behind `capacityGroup` and `fleetPool`, for the source being edited. */
+export function tacticalMeters(
+  game: Game, entry: TacticalEntry, source: string, before: GameState, pack: DataPack,
+): { group: { load: number; capacity: number }; ships: number; fleet: number } {
+  const state = structuredClone(before);
+  const groups = entry.systemId === null ? {} : applyMoves(game, state, entry.systemId, entry, pack, []);
+  const ships = shipCount(state.systems[entry.systemId ?? ''] ?? {}, pack) + shipCount(entry.production, pack);
+  return { group: capacity(groups[source] ?? {}, pack), ships, fleet: before.fleet };
+}
+
 function applyTactical(
-  game: Game, state: GameState, entry: Extract<Entry, { type: 'tactical' }>, pack: DataPack, warnings: Warning[],
+  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
 ): void {
   const target = entry.systemId;
   if (target === null) return;
   state.tactic -= 1;
   if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
-  for (const move of entry.moves) {
-    const fromPlanet = move.from in pack.planets;
-    const taken = take(fromPlanet ? state.ground : state.systems, move.from, move.units, warnings);
-    add(state.systems, target, taken);
-    if (!fromPlanet) {
-      const group = capacity(taken, pack);
-      if (group.load > group.capacity) {
-        warnings.push({ code: 'capacityGroup', params: { from: move.from, load: group.load, capacity: group.capacity } });
-      }
+  const groups = applyMoves(game, state, target, entry, pack, warnings);
+  for (const [from, units] of Object.entries(groups)) {
+    const group = capacity(units, pack);
+    if (group.load > group.capacity) {
+      warnings.push({ code: 'capacityGroup', params: { from, load: group.load, capacity: group.capacity } });
     }
   }
   for (const landing of entry.landings) {

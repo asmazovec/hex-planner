@@ -62,17 +62,31 @@ test('cards show their summaries and the Thunder\'s Edge change; taps cycle prim
   expect(screen.getByRole('button', { name: /Trade/ })).toHaveTextContent('Primary:');
   expect(screen.getByRole('button', { name: /Trade/ })).toHaveTextContent('Secondary:');
 
+  expect(screen.getByText('Tap once for backup, again for main, again to clear.')).toBeVisible();
+
   await userEvent.click(warfare);
-  expect(plan().rounds[0].strategyCard).toBe(6);
-  expect(screen.getByRole('button', { name: /Warfare/ })).toHaveTextContent('Main');
-  await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: 6 });
   expect(screen.getByRole('button', { name: /Warfare/ })).toHaveTextContent('Backup');
+  expect(screen.getAllByRole('listitem')).toHaveLength(cards.length);
+  await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 6, backupCard: null });
+  expect(screen.getByRole('button', { name: /Warfare/ })).toHaveTextContent('Main');
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
 });
 
+test('choosing a main card collapses the list; clearing it opens the list again', async () => {
+  render(<StrategyCardsLive />);
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(screen.getAllByRole('listitem')).toHaveLength(8);
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(screen.getAllByRole('listitem')).toHaveLength(8);
+});
+
 test('the card list collapses to the chosen cards', async () => {
+  useGame.getState().setStrategyCard(1, 5);
   useGame.getState().setStrategyCard(1, 5);
   render(<StrategyCardsLive />);
   expect(screen.getAllByRole('listitem')).toHaveLength(1);

@@ -1,4 +1,4 @@
-import { suggestUnits, systemPlanets, tileIdOf } from '../../domain/project';
+import { sourceSlot, suggestUnits, systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Entry, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 import type { Arrow } from '../map/HexMap';
 
@@ -9,12 +9,6 @@ export type Move = TacticalEntry['moves'][number];
 export function systemName(game: Game, pack: DataPack, slot: string): string {
   const tileId = tileIdOf(game, slot);
   return pack.tiles[tileId]?.number ?? tileId;
-}
-
-/** A move's `from` is a slot, or a planet whose ground units are picked up: this gives the slot in both cases. */
-export function sourceSlot(game: Game, pack: DataPack, from: string): string | null {
-  if (!(from in pack.planets)) return from;
-  return Object.keys(game.map).find(slot => systemPlanets(game, slot, pack).some(p => p.id === from)) ?? null;
 }
 
 export const hasUnits = (units: UnitCounts | undefined): boolean =>
@@ -66,13 +60,13 @@ export function suggestMoves(game: Game, pack: DataPack, before: GameState, sour
 export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry, warnings: Warning[]): Arrow[] {
   if (entry.systemId === null) return [];
   const to = entry.systemId;
-  const flagged = (move: Move) => warnings.some(w =>
-    (w.code === 'capacityGroup' && w.params.from === move.from) || (w.code === 'unitsMissing' && w.params.where === move.from));
+  const flagged = (move: Move, from: string) => warnings.some(w =>
+    (w.code === 'capacityGroup' && w.params.from === from) || (w.code === 'unitsMissing' && w.params.where === move.from));
   const arrows = new Map<string, Arrow>();
   for (const move of entry.moves) {
     const from = sourceSlot(game, pack, move.from);
     if (from === null) continue;
-    arrows.set(from, { from, to, warn: flagged(move) || arrows.get(from)?.warn });
+    arrows.set(from, { from, to, warn: flagged(move, from) || arrows.get(from)?.warn });
   }
   return [...arrows.values()];
 }
