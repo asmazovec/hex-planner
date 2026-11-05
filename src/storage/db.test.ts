@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { deleteGame, listGames, loadGame, requestPersistence, saveGame } from './db';
 import { exportGame, importGame } from './transfer';
 import { sampleGame } from './fixture';
@@ -48,18 +48,42 @@ test('requestPersistence без поддержки возвращает false', 
   expect(await requestPersistence()).toBe(false);
 });
 
-test('сбой открытия базы не ломает следующие сохранения', async () => {
+afterEach(() => {
+  vi.doUnmock('idb');
+  vi.resetModules();
+});
+
+/** Loads a fresh db module whose openDB is wrapped: it counts calls, may fail the first, and exposes `terminated`. */
+async function freshDb(failFirst: boolean) {
   vi.resetModules();
   const real = await vi.importActual<typeof import('idb')>('idb');
-  let calls = 0;
+  const spy = { calls: 0, terminated: undefined as (() => void) | undefined };
   vi.doMock('idb', () => ({
-    openDB: (...args: Parameters<typeof real.openDB>) =>
-      ++calls === 1 ? Promise.reject(new Error('open failed')) : real.openDB(...args),
+    openDB: (...args: Parameters<typeof real.openDB>) => {
+      spy.calls += 1;
+      spy.terminated = args[2]?.terminated;
+      return failFirst && spy.calls === 1 ? Promise.reject(new Error('open failed')) : real.openDB(...args);
+    },
   }));
-  const fresh = await import('./db');
+  return { fresh: await import('./db'), spy };
+}
+
+test('сбой открытия базы не ломает следующие сохранения', async () => {
+  const { fresh } = await freshDb(true);
   const game = sampleGame();
   await expect(fresh.saveGame(game)).rejects.toThrow('open failed');
   await fresh.saveGame(game);
   expect(await fresh.loadGame(game.id)).toEqual(game);
-  vi.doUnmock('idb');
+});
+
+test('после закрытия соединения браузером база открывается заново', async () => {
+  const { fresh, spy } = await freshDb(false);
+  const game = sampleGame();
+  await fresh.saveGame(game);
+  await fresh.saveGame(game);
+  expect(spy.calls).toBe(1);
+  spy.terminated?.();
+  await fresh.saveGame(game);
+  expect(spy.calls).toBe(2);
+  expect(await fresh.loadGame(game.id)).toEqual(game);
 });
