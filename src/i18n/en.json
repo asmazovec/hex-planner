@@ -23,7 +23,9 @@
   },
   "banner": {
     "saveError": "Could not save the game: {{error}}",
-    "export": "Export"
+    "export": "Export",
+    "exportVolatile": "Your games live only in this browser, and it may clear them. Save a file copy.",
+    "exportStale": "The last file copy is more than a week old. Save a new one."
   },
   "map": {
     "label": "Map",

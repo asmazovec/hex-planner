@@ -4,6 +4,7 @@ import { loadPack } from '../data/loadPack';
 import { useGame } from '../state/gameStore';
 import { Banner } from './common/Banner';
 import { downloadGame } from './common/download';
+import { ExportReminder } from './common/ExportReminder';
 import { GameScreen } from './screens/GameScreen';
 import { PlanScreen } from './screens/PlanScreen';
 
@@ -28,6 +29,7 @@ export function App() {
           action={game ? { label: t('banner.export'), onClick: () => downloadGame(game) } : undefined}
         />
       )}
+      <ExportReminder game={game} onExport={() => game && downloadGame(game)} />
       <main data-screen={screen}>
         {screen === 'game' && <GameScreen />}
         {screen === 'plan' && <PlanScreen />}

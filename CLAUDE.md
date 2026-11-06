@@ -9,10 +9,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Линт: `npm run lint`
 - Все тесты: `npm test` (то же, что `npx vitest run`)
 - Один тест: `npx vitest run src/ui/App.test.tsx` (или `npx vitest run -t "часть названия"`)
+- Сквозные тесты: `npm run e2e` (Playwright, установленный Chrome, 1180×820). Сам собирает приложение и запускает `vite preview` на порту 5301: у каждого порта своя база браузера, партии на 5199 не затрагиваются. Сервис-воркер есть только в сборке, не в `npm run dev`.
 
 В `src/test-setup.ts` подменяется `localStorage`: глобальный `localStorage` в Node 25 затеняет jsdom и без флага не работает.
 
-Полный дизайн: [docs/superpowers/specs/2026-11-05-ti4-planner-design.md](docs/superpowers/specs/2026-11-05-ti4-planner-design.md). Спецификация пока на проверке у пользователя.
+Полный дизайн: [docs/superpowers/specs/2026-11-05-ti4-planner-design.md](docs/superpowers/specs/2026-11-05-ti4-planner-design.md). Сверка игровых данных с источниками: [docs/data-verification.md](docs/data-verification.md).
 
 ## Продукт
 
@@ -30,6 +31,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `src/ui`: экраны, карта, жесты на pointer-событиях, i18n.
 
 Состояние партии не хранится, а всегда вычисляется повторением записей плана. «Сейчас» считается только по выполненным записям, «прогноз» по выполненным и запланированным. Каждый план на вкладке хранит собственную копию записей.
+
+## Интерфейс
+
+- Меню из двух экранов: «Партия» и «План и карта». Игроки, дополнения и язык живут на «Партии». План и карта на одном экране, сборка карты включается кнопкой «Собрать карту».
+- Нажатие на систему открывает большой гекс (сцену) для расстановки, боя и покупок. Fracture ставится по номеру места игрока.
+- Напоминание об экспорте (`ExportReminder`) просит постоянное хранение и показывается, пока файловой копии нет сутки (при отказе) или неделю.
 
 ## Правила домена
 

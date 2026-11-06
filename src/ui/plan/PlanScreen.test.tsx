@@ -6,6 +6,7 @@ vi.mock('../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
   loadGame: vi.fn(async () => null),
   listGames: vi.fn(async () => []),
+  requestPersistence: vi.fn(async () => true),
 }));
 
 import { loadPack } from '../../data/loadPack';
