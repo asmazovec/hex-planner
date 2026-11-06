@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, DataPack, FactionDef, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
@@ -15,7 +15,7 @@ export const SOURCE_CACHE = join(tmpdir(), `ti4-source-${COMMIT}`);
 const COMMIT_DATE = '2026-11-05';
 const RESOURCES = 'src/main/resources/';
 const DATA_VERSION = `${COMMIT_DATE}-${COMMIT.slice(0, 7)}`;
-const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|technologies|abilities|map_templates|strategy_card_sets|strategy_cards)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
+const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|technologies|abilities|map_templates|strategy_card_sets|strategy_cards|leaders|breakthroughs)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
 
 type PackId = 'base' | 'pok' | 'te';
 const PACK_OF_SOURCE: Record<string, PackId> = { base: 'base', pok: 'pok', thunders_edge: 'te' };
@@ -181,16 +181,19 @@ interface SourceUnit {
 interface SourceFaction {
   alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
   abilities: string[]; startingTech?: string[]; startingTechOptions?: string[]; startingTechAmount?: number;
+  leaders?: string[]; units?: string[];
 }
+interface SourceLeader { id: string; type: string; name: string; title?: string; source: string; }
+interface SourceBreakthrough { alias: string; name: string; faction: string; source: string; }
 interface SourceTech { alias: string; name: string; types: string[]; source: string; }
-interface SourceAbility { id: string; name: string; }
+interface SourceAbility { id: string; name: string; source: string; }
 interface SourceTemplate { alias: string; playerCount: number; templateTiles: { pos: string; staticTileId?: string }[]; }
 interface SourceCard { id: string; initiative: number; name: string; source: string; }
 interface SourceCardSet { alias: string; scIDs: string[]; }
 
 async function download(): Promise<string> {
   const root = SOURCE_CACHE;
-  const listPath = join(root, 'files-v2.json');
+  const listPath = join(root, 'files-v3.json');
   if (!existsSync(listPath)) {
     const response = await fetch(`https://api.github.com/repos/${REPO}/git/trees/${COMMIT}?recursive=1`);
     if (!response.ok) throw new Error(`Tree request failed: ${response.status}`);
@@ -427,6 +430,61 @@ export function readTech(tech: SourceTech): TechDef {
   return { id: tech.alias, name: tech.name, type };
 }
 
+const LEADER_TYPES: Record<string, LeaderType> = { agent: 'agent', commander: 'commander', hero: 'hero' };
+/** Files of the official leaders; the others of `data/leaders` are homebrew. */
+const LEADER_FILES = ['pok', 'te_leaders', 'other', 'generic'];
+const BREAKTHROUGH_FILE = 'data/breakthroughs/te_breakthroughs.json';
+/** What Thunder's Edge replaces. The source files only the new card under each id; the printed swap of Jol-Nar is in the rulebook's Expansion Integration. */
+const JOLNAR_OLD_COMMANDER = { id: 'jolnarcommander-pok', type: 'commander' as const, name: 'Ta Zern', pack: 'pok' as const };
+const REPLACED_BY_TE: Record<string, string> = {
+  jolnarcommander: JOLNAR_OLD_COMMANDER.id, 'xxchahero-te': 'xxchahero', 'naaluagent-te': 'naaluagent', naalu_mech_te: 'naalu_mech_omega',
+};
+/** Leaders and mechs a faction's source entry no longer lists: the printed cards of an earlier expansion, and Eidolon Maximum of the Naaz-Rokha. */
+const EXTRA_LEADERS: Record<string, string[]> = { naalu: ['naaluagent'], xxcha: ['xxchahero-te'] };
+const EXTRA_MECHS: Record<string, string[]> = { naalu: ['naalu_mech_omega'], naaz: ['naaz_voltron'] };
+
+const componentPack = (source: string, what: string): ComponentPack => {
+  const pack = packOfSource(source);
+  if (!pack) throw new Error(`${what} has source ${source}, which is not in scope`);
+  return pack;
+};
+
+/** Names, origins and numbers only: the card text is retold in `sheetSummaries`. */
+export function buildSheet(
+  faction: Pick<SourceFaction, 'alias' | 'abilities' | 'leaders' | 'units'>, abilities: Map<string, SourceAbility>, leaders: Map<string, SourceLeader>, units: Map<string, SourceUnit>, breakthrough?: SourceBreakthrough,
+): FactionSheet {
+  const owner = faction.alias;
+  const replaces = (id: string) => (REPLACED_BY_TE[id] ? { replaces: REPLACED_BY_TE[id] } : {});
+  const leaderIds = [...new Set([...(faction.leaders ?? []), ...(EXTRA_LEADERS[owner] ?? [])])];
+  const mechIds = [...new Set([...(faction.units ?? []), ...(EXTRA_MECHS[owner] ?? [])])]
+    .filter(id => units.get(id)?.baseType === 'mech' && id !== 'mech');
+  return {
+    abilities: faction.abilities.map(id => {
+      const found = abilities.get(id);
+      if (!found) throw new Error(`Faction ${owner} has unknown ability ${id}`);
+      return { id, name: found.name, pack: componentPack(found.source, id) };
+    }),
+    leaders: [
+      ...(owner === 'jolnar' ? [JOLNAR_OLD_COMMANDER] : []),
+      ...leaderIds.map(id => {
+        const found = leaders.get(id);
+        const type = found && LEADER_TYPES[found.type];
+        if (!found || !type) throw new Error(`Faction ${owner} has unknown leader ${id}`);
+        const pack: ComponentPack = REPLACED_BY_TE[id] ? 'te' : componentPack(found.source, id);
+        return { id, type, name: found.name, ...(found.title ? { title: found.title } : {}), pack, ...replaces(id) };
+      }),
+    ],
+    mechs: mechIds.map(id => {
+      const unit = units.get(id)!;
+      return {
+        id, name: unit.name?.trim() ?? id, pack: componentPack(unit.source, id), cost: unit.cost ?? null, combat: unit.combatHitsOn ?? null,
+        dice: unit.combatDieCount ?? 1, ...(unit.sustainDamage ? { sustain: true as const } : {}), ...replaces(id),
+      };
+    }),
+    ...(breakthrough ? { breakthrough: { id: breakthrough.alias, name: breakthrough.name, pack: componentPack(breakthrough.source, breakthrough.alias) } } : {}),
+  };
+}
+
 function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string, TileDef>>, abilityNames: Map<string, string>): Record<PackId, Record<string, FactionDef>> {
   const factions: Record<PackId, Record<string, FactionDef>> = { base: {}, pok: {}, te: {} };
   for (const faction of all) {
@@ -618,11 +676,26 @@ async function main(): Promise<void> {
   checkLaneRotations(laneText);
   const tiles = buildTiles(systems, parseHyperlanes(laneText));
   const planets = buildPlanets(readDir<SourcePlanet>(root, 'planets'), tiles);
-  const abilityNames = new Map(readDir<SourceAbility[]>(root, 'data/abilities').flat().map(ability => [ability.id, ability.name]));
-  const factions = buildFactions(readdirSync(join(root, 'data/factions'))
-    .flatMap(name => readJson<SourceFaction[]>(root, `data/factions/${name}`)), tiles, abilityNames);
+  const abilitySource = readDir<SourceAbility[]>(root, 'data/abilities').flat();
+  const abilityNames = new Map(abilitySource.map(ability => [ability.id, ability.name]));
+  const factionSource = readdirSync(join(root, 'data/factions'))
+    .flatMap(name => readJson<SourceFaction[]>(root, `data/factions/${name}`));
+  const factions = buildFactions(factionSource, tiles, abilityNames);
   const factionIds = Object.values(factions).flatMap(pack => Object.keys(pack));
-  const ships = selectShips(SHIP_FILES.flatMap(file => readJson<SourceUnit[]>(root, `data/units/${file}.json`)), factionIds);
+  const unitSource = SHIP_FILES.flatMap(file => readJson<SourceUnit[]>(root, `data/units/${file}.json`));
+  const ships = selectShips(unitSource, factionIds);
+  const officialAbilities = new Map(abilitySource.filter(a => packOfSource(a.source)).map(a => [a.id, a]));
+  const officialLeaders = new Map(LEADER_FILES.flatMap(file => readJson<SourceLeader[]>(root, `data/leaders/${file}.json`)).map(l => [l.id, l]));
+  const unitsById = new Map(unitSource.map(unit => [unit.id, unit]));
+  const breakthroughs = readJson<SourceBreakthrough[]>(root, BREAKTHROUGH_FILE);
+  for (const pack of Object.values(factions)) {
+    for (const faction of Object.values(pack)) {
+      const source = factionSource.find(f => f.alias === faction.id && packOfSource(f.source));
+      if (!source) throw new Error(`Faction ${faction.id} has no source entry`);
+      const owner = faction.id.startsWith('keleres') ? 'keleres' : faction.id;
+      faction.sheet = buildSheet(source, officialAbilities, officialLeaders, unitsById, breakthroughs.find(b => b.faction === owner));
+    }
+  }
   for (const pack of Object.values(factions)) for (const faction of Object.values(pack)) faction.ships = ships.factions[faction.id];
   const units = buildUnits(root, ships.generic);
   console.log('Ships excluded:', ships.excluded);
@@ -663,7 +736,7 @@ async function main(): Promise<void> {
     keptSources: ['base', 'pok', 'codex*', 'thunders_edge'],
     excludedSystems: EXCLUDED_SYSTEMS,
     excludedPlanets: EXCLUDED_PLANETS,
-    notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, reason: "Thunder's Edge rulebook; absent from the source at this commit" },
+    notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, leaders: [JOLNAR_OLD_COMMANDER.name], reason: "Thunder's Edge rulebook; absent from the source at this commit" },
     corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
     unconfirmed: { unitLimits: 'Reinforcement limits are null: no public source confirmed them.' },
     verification: 'docs/data-verification.md',

@@ -83,7 +83,35 @@ export interface UnitDef {
 
 export interface TechDef { id: string; name: string; type: TechType; }
 
+/** Where a component comes from; shown on it. */
+export type ComponentPack = 'base' | 'pok' | 'te';
+export type LeaderType = 'agent' | 'commander' | 'hero';
+export interface SheetItem {
+  /** Source id: the key of the retelling in `sheetSummaries`. */
+  id: string;
+  name: string;
+  pack: ComponentPack;
+  /** The id of the item this one takes the place of when its expansion is on. */
+  replaces?: string;
+}
+export interface SheetLeader extends SheetItem { type: LeaderType; title?: string }
+export interface SheetMech extends SheetItem {
+  cost: number | null;
+  combat: number | null;
+  dice: number;
+  sustain?: true;
+}
+/** What is printed about a faction beyond its ships, each with its origin. */
+export interface FactionSheet {
+  abilities: SheetItem[];
+  leaders: SheetLeader[];
+  mechs: SheetMech[];
+  breakthrough?: SheetItem;
+}
+
 export interface FactionDef {
+  /** Abilities, leaders, mechs and the breakthrough, before the expansions choose among them. */
+  sheet?: FactionSheet;
   id: string;
   name: string;
   /** Tile holding the home planets, where the starting units begin. */
@@ -158,6 +186,8 @@ export interface CardEffects {
   tokens?: { tactic?: number; fleet?: number; strategy?: number };
   /** Bought with influence on Leadership. */
   boughtTokens?: number;
+  /** Technology's technologies other than ship upgrades, which the app counts and does not name. */
+  researched?: number;
   /** The chosen system. */
   systemId?: string;
   /** Planet ids. */
@@ -253,7 +283,8 @@ export interface Game {
   /** Planet id to the number of PDS on it. */
   pds: Record<string, number>;
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
-  fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null };
+  fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null;
+    /** While open: slot key beside the map to its Fracture tile, so ships fly there like to any system. Absent in games saved earlier, until their next opening. */ tiles?: Record<string, string> };
   plans: Plan[];
   activePlanId: string;
 }
@@ -283,6 +314,6 @@ export interface GameState {
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
   | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
-  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative';
+  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative' | 'systemHasToken' | 'constructionUnits';
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

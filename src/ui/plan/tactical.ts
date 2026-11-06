@@ -1,5 +1,5 @@
 import { hexLayout } from '../../domain/hexLayout';
-import { fightersFly, sourceSlot, systemPlanets, tileIdOf } from '../../domain/project';
+import { fightersFly, isOnMap, sourceSlot, systemPlanets, systemsAdjacent, tileIdOf } from '../../domain/project';
 import { flightDuration, joinShare, type CurveSegment, type RouteShape } from '../../domain/route';
 import type { DataPack, Entry, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 
@@ -9,7 +9,9 @@ export type Move = TacticalEntry['moves'][number];
 /** Printed tile number of a slot, which is what the player sees on the table. */
 export function systemName(game: Game, pack: DataPack, slot: string): string {
   const tileId = tileIdOf(game, slot);
-  return pack.tiles[tileId]?.number ?? tileId;
+  const tile = pack.tiles[tileId];
+  if (tile?.kind === 'fracture') return `F${tileId.replace(/\D/g, '')}`;
+  return tile?.number ?? tileId;
 }
 
 export const hasUnits = (units: UnitCounts | undefined): boolean =>
@@ -132,7 +134,7 @@ export function entrySystems(game: Game, pack: DataPack, entry: Entry): string[]
   } else if (entry.type === 'adjustment') {
     slots.push(entry.delta.units?.systemId, ...Object.keys(entry.delta.ground ?? {}).map(id => sourceSlot(game, pack, id)));
   }
-  return [...new Set(slots)].filter((s): s is string => Boolean(s) && game.map[s as string] !== undefined);
+  return [...new Set(slots)].filter((s): s is string => Boolean(s) && isOnMap(game, s as string));
 }
 
 /** A cell of a route's formation. `joins` say when its units come on board, as a share of the route's length; 0 is the start. */
@@ -173,7 +175,7 @@ export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, b
     const { items } = hexLayout({ planets: 0, ground: [], space });
     routes.push({
       segments,
-      durationMs: flightDuration(slots),
+      durationMs: flightDuration(slots, systemsAdjacent(game)),
       delayMs: routes.length * STAGGER_MS,
       stacks: items.map(item => ({ kind: item.kind as UnitId, x: item.x, y: item.y, size: item.size, joins: joins.get(item.kind as UnitId) ?? [] })),
     });

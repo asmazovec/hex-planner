@@ -4,6 +4,7 @@ import { productionCost, systemPlanets } from '../../domain/project';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { PaymentBlock } from './PaymentBlock';
+import { HexRemove } from './RowIcon';
 import { Stepper } from './Stepper';
 import { addUnits, fliesNow, groupOf, hasUnits, sourcesOf, systemName, viaOf, withCount, withoutSource, type TacticalEntry } from './tactical';
 import { UnitPicker } from './UnitPicker';
@@ -100,7 +101,7 @@ export function TacticalEditor({
                     {via.length > 0 ? t('plan.tactical.via', { name, list: via.map(v => systemName(game, pack, v)).join(', ') }) : name}
                     <small>{sourceLine(source)}</small>
                   </button>
-                  <button type="button" aria-label={t('plan.tactical.removeSource', { name })} onClick={() => onUpdate({ moves: withoutSource(game, pack, entry.moves, source) })}>✕</button>
+                  <HexRemove label={t('plan.tactical.removeSource', { name })} onClick={() => onUpdate({ moves: withoutSource(game, pack, entry.moves, source) })} />
                 </div>
               );
             })}

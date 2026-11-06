@@ -6,7 +6,7 @@ import { loadPack } from '../../data/loadPack';
 import { seatSlots } from '../../domain/mapBuilder';
 import { createGame } from '../../domain/newGame';
 import { setLanguage } from '../../i18n';
-import { useGame } from '../../state/gameStore';
+import { flushSaves, useGame } from '../../state/gameStore';
 import { deleteGame, listGames, saveGame } from '../../storage/db';
 import { sampleGame } from '../../storage/fixture';
 import { exportGame } from '../../storage/transfer';
@@ -24,9 +24,13 @@ beforeEach(async () => {
 
 const cards = () => screen.getAllByRole('group', { name: /^Player \d/ });
 const card = (n: number) => screen.getByRole('group', { name: `Player ${n}` });
-const factionOf = (n: number) => within(card(n)).getByRole('combobox');
+const factionOf = (n: number) => within(card(n)).getByRole('button', { name: /^(My faction|Opponent)$/ });
+const option = (faction: string) => document.querySelector<HTMLButtonElement>(`[data-faction="${faction}"]`)!;
 const token = (n: number) => screen.getByRole('button', { name: new RegExp(`^Player ${n},`) });
-const pick = (n: number, faction: string) => userEvent.selectOptions(factionOf(n), faction);
+const pick = async (n: number, faction: string) => {
+  await userEvent.click(factionOf(n));
+  await userEvent.click(option(faction));
+};
 const startOpen = (playerCount = 4, faction = 'sol') =>
   useGame.getState().newGame({ expansions: ['pok', 'te'], playerCount, faction }, loadPack(['pok', 'te']));
 const seats = () => {
@@ -84,7 +88,11 @@ test('a card shows faction data only after the choice, with no extra tap', async
 test('a faction taken by one player is disabled for the others', async () => {
   render(<GameScreen />);
   await pick(1, 'sol');
-  expect(within(factionOf(2)).getByRole('option', { name: 'The Federation of Sol' })).toBeDisabled();
+  await userEvent.click(factionOf(2));
+  expect(option('sol')).toBeDisabled();
+  expect(option('sol')).toHaveTextContent('Already taken');
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 test('only starting information: no points on the cards', () => {
@@ -125,13 +133,18 @@ test('a started game appears in the saved list, and a new game can follow', asyn
 
 test('faction options follow the expansions, and a dropped faction is cleared', async () => {
   render(<GameScreen />);
-  const options = () => within(factionOf(1)).getAllByRole('option').length - 1;
-  expect(options()).toBe(Object.keys(loadPack(['pok', 'te']).factions).length);
+  const options = async () => {
+    await userEvent.click(factionOf(1));
+    const count = document.querySelectorAll('[data-faction]').length;
+    await userEvent.keyboard('{Escape}');
+    return count;
+  };
+  expect(await options()).toBe(Object.keys(loadPack(['pok', 'te']).factions).length);
   await pick(1, 'argent');
   await userEvent.click(screen.getByRole('button', { name: 'Prophecy of Kings' }));
   await userEvent.click(screen.getByRole('button', { name: "Thunder's Edge" }));
-  expect(options()).toBe(Object.keys(loadPack([]).factions).length);
-  expect(factionOf(1)).toHaveValue('');
+  expect(await options()).toBe(Object.keys(loadPack([]).factions).length);
+  expect(factionOf(1)).toHaveTextContent('Choose');
 });
 
 test('without Prophecy of Kings the list stops at six', async () => {
@@ -145,7 +158,7 @@ test('without Prophecy of Kings the list stops at six', async () => {
 test('a started game shows its expansions but does not change them', () => {
   startOpen();
   render(<GameScreen />);
-  expect(screen.getByText('Prophecy of Kings')).toBeInTheDocument();
+  expect(screen.getByText('Prophecy of Kings', { selector: '.chip' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Prophecy of Kings' })).toBeNull();
 });
 
@@ -349,4 +362,46 @@ test('the screen credits the authors of the game-icons', () => {
     expect(credit).toHaveTextContent(part);
   }
   expect(screen.getByRole('link', { name: 'CC BY 3.0' })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/3.0/');
+});
+
+test('a saved game goes after a second tap, and the open one closes with it', async () => {
+  startOpen();
+  await flushSaves();
+  const { id } = useGame.getState().game!;
+  render(<GameScreen />);
+  await userEvent.click(await screen.findByRole('button', { name: 'Delete game' }));
+  expect(await listGames()).toHaveLength(1);
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(await listGames()).toHaveLength(1);
+  await userEvent.click(screen.getByRole('button', { name: 'Delete game' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete for good' }));
+  await waitFor(async () => expect((await listGames()).map(g => g.id)).not.toContain(id));
+  expect(useGame.getState().game).toBeNull();
+});
+
+test('the blur setting is remembered and reaches the stylesheet', async () => {
+  render(<GameScreen />);
+  const chip = screen.getByRole('button', { name: 'Background blur' });
+  expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(chip);
+  expect(chip).toHaveAttribute('aria-pressed', 'false');
+  expect(document.documentElement.dataset.blur).toBe('off');
+  expect(localStorage.getItem('ti4.blur')).toBe('off');
+  await userEvent.click(chip);
+  expect(document.documentElement.dataset.blur).toBe('on');
+});
+
+test('the faction sheet groups by expansion, marks the choice, closes on a tap outside and can take the choice back', async () => {
+  render(<GameScreen />);
+  await pick(2, 'hacan');
+  await userEvent.click(factionOf(2));
+  const sheet = screen.getByRole('dialog', { name: /choose a faction/ });
+  expect(within(sheet).getByRole('region', { name: 'Prophecy of Kings' })).toBeInTheDocument();
+  expect(within(sheet).getByRole('region', { name: "Thunder's Edge" })).toBeInTheDocument();
+  expect(option('hacan')).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(sheet.parentElement!);
+  expect(screen.queryByRole('dialog')).toBeNull();
+  await userEvent.click(factionOf(2));
+  await userEvent.click(screen.getByRole('button', { name: 'No faction' }));
+  expect(factionOf(2)).toHaveTextContent('Choose');
 });

@@ -21,6 +21,7 @@ const cardPlay = {
   effects: z.object({
     tokens: z.object({ tactic: z.number().int().optional(), fleet: z.number().int().optional(), strategy: z.number().int().optional() }).optional(),
     boughtTokens: count.optional(),
+    researched: count.optional(),
     systemId: z.string().optional(),
     readied: z.array(z.string()).optional(),
     speaker: z.string().optional(),
@@ -84,7 +85,7 @@ export const gameSchema = z.object({
     slices: z.record(z.string(), z.enum(['me', 'other']).nullable()),
     thundersEdgeSystem: z.string().nullable(),
   }),
-  fracture: z.object({ active: z.boolean(), ingress: z.array(z.string()), seat: z.number().nullable().default(null) }),
+  fracture: z.object({ active: z.boolean(), ingress: z.array(z.string()), seat: z.number().nullable().default(null), tiles: z.record(z.string(), z.string()).optional() }),
   plans: z.array(z.object({
     id: z.string(), name: z.string(),
     rounds: z.array(z.object({

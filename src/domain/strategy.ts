@@ -44,8 +44,23 @@ export function freeTokens(entry: CardEntry, expansions: ExpansionId[]): number 
   return primary && entry.card === CARD.warfare && !expansions.includes('te') ? 1 : 0;
 }
 
+const LEADERSHIP_FREE = 3;
+
+/** Leadership's tokens as tapped: what goes beyond the free ones is bought. */
+export function withLeadershipTokens(effects: CardEffects, tokens: CardEffects['tokens'], primary: boolean): CardEffects {
+  const given = Object.values(tokens ?? {}).reduce<number>((sum, n) => sum + (n ?? 0), 0);
+  const next: CardEffects = { ...effects, tokens };
+  const bought = Math.max(0, given - (primary ? LEADERSHIP_FREE : 0));
+  if (bought > 0) next.boughtTokens = bought;
+  else delete next.boughtTokens;
+  return next;
+}
+
+/** The technologies an entry researches: ship upgrades and those only counted. */
+export const researchCount = (entry: CardEntry): number => (entry.upgrades?.length ?? 0) + (entry.effects?.researched ?? 0);
+
 const techCost = (entry: CardEntry): number => {
-  const count = entry.upgrades?.length ?? 0;
+  const count = researchCount(entry);
   return entry.type === 'strategic' ? Math.max(0, count - 1) * SECOND_RESEARCH : count * SECONDARY_RESEARCH;
 };
 
@@ -61,7 +76,7 @@ export function cardCost(entry: CardEntry, factionId: string, upgrades: UnitId[]
 export function hasChoices(entry: CardEntry, round: Round): boolean {
   const e = entry.effects ?? {};
   return Object.values(e.tokens ?? {}).some(Boolean) || Boolean(e.boughtTokens) || Boolean(e.systemId) || Boolean(e.speaker) || Boolean(e.mecatol)
-    || Boolean(e.readied?.length) || Boolean(e.freeSecondary?.length) || Boolean(e.structures?.length) || e.production !== undefined
+    || Boolean(e.researched) || Boolean(e.readied?.length) || Boolean(e.freeSecondary?.length) || Boolean(e.structures?.length) || e.production !== undefined
     || Boolean(entry.upgrades?.length)
     || round.entries.some(other => other.type === 'tactical' && other.fromCard === entry.id);
 }

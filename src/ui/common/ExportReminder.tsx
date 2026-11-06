@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../domain/types';
 import { requestPersistence } from '../../storage/db';
-import { Banner } from './Banner';
+import { RowIcon } from '../plan/RowIcon';
 import { EXPORTED_EVENT, LAST_EXPORT_KEY } from './download';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -23,7 +23,7 @@ function readLastExport(): number | null {
   }
 }
 
-/** Asks the browser to keep the data, and reminds the player to save a file while that is not certain. */
+/** The export button of the menu. It asks the browser to keep the data, and is marked when a new file is due, with the reason in its name. */
 export function ExportReminder({ game, onExport }: { game: Game | null; onExport: () => void }) {
   const { t } = useTranslation();
   const [persisted, setPersisted] = useState<boolean | null>(null);
@@ -45,14 +45,14 @@ export function ExportReminder({ game, onExport }: { game: Game | null; onExport
     return () => window.removeEventListener(EXPORTED_EVENT, update);
   }, []);
 
-  if (!hasGame || persisted === null) return null;
-  if (!shouldRemindExport({ persisted, lastExportAt, now })) return null;
+  if (!hasGame) return null;
+  const due = persisted !== null && shouldRemindExport({ persisted, lastExportAt, now });
+  const reason = !persisted ? 'banner.exportVolatile' : lastExportAt === null ? 'banner.exportNever' : 'banner.exportStale';
+  const label = due ? `${t('banner.export')}. ${t(reason)}` : t('banner.export');
 
   return (
-    <Banner
-      kind="info"
-      message={t(!persisted ? 'banner.exportVolatile' : lastExportAt === null ? 'banner.exportNever' : 'banner.exportStale')}
-      action={{ label: t('banner.export'), onClick: onExport }}
-    />
+    <button type="button" className={`hex-button nav-export${due ? ' nav-export-due' : ''}`} aria-label={label} title={label} onClick={onExport}>
+      <RowIcon name="export" />
+    </button>
   );
 }

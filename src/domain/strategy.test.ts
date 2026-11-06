@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
 import { project, stateBeforeEntry } from './project';
 import { withTeMecatol } from './mecatol';
-import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry } from './strategy';
+import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -451,5 +451,14 @@ describe('choices and changes', () => {
     expect(two.structures).toHaveLength(2);
     expect(withStructure(two, 'pds', JOL, -1).structures).toEqual([{ kind: 'pds', planetId: JOL }]);
     expect(withStructure(withStructure({}, 'pds', JOL, 1), 'pds', JOL, -1).structures).toBeUndefined();
+  });
+});
+
+describe('Leadership as tapped', () => {
+  test('buys only what goes beyond the free tokens', () => {
+    expect(withLeadershipTokens({}, { tactic: 3 }, true).boughtTokens).toBeUndefined();
+    expect(withLeadershipTokens({}, { tactic: 3, fleet: 2 }, true).boughtTokens).toBe(2);
+    expect(withLeadershipTokens({}, { fleet: 2 }, false).boughtTokens).toBe(2);
+    expect(withLeadershipTokens({ boughtTokens: 4 }, { tactic: 1 }, true).boughtTokens).toBeUndefined();
   });
 });

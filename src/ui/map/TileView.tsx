@@ -4,7 +4,7 @@ import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type Layou
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { opponentsBySeat, planetHolder } from '../../domain/players';
 import { rotateLanes } from '../../domain/lanes';
-import { systemPlanets, tileIdOf } from '../../domain/project';
+import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
@@ -129,7 +129,7 @@ export function TileView({
   const { x, y } = fracture ?? slotToPixel(slotKey);
   const mapValue = game.map[slotKey];
   // An off-map home is opened by its tile's own id.
-  const tileId = fracture ? fracture.tileId : mapValue ? tileIdOf(game, slotKey) : pack.tiles[slotKey] ? slotKey : '';
+  const tileId = fracture ? fracture.tileId : isOnMap(game, slotKey) ? tileIdOf(game, slotKey) : pack.tiles[slotKey] ? slotKey : '';
   const tile = pack.tiles[tileId];
   const unknown = !fracture && mapValue !== undefined && !tile;
 
@@ -201,7 +201,7 @@ export function TileView({
   return (
     <g
       transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
-      role={fracture || stage ? 'group' : 'button'} tabIndex={fracture || stage ? undefined : 0} aria-label={label}
+      role={stage ? 'group' : 'button'} tabIndex={stage ? undefined : 0} aria-label={label}
       data-fracture-tile={fracture ? tileId : undefined}
       className={`tile${stage ? ' tile-stage' : ''}${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
       data-slot={stage ? undefined : slotKey}
@@ -289,7 +289,7 @@ export function TileView({
 
       {tile && (
         <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">
-          {fracture ? `F${fracture.index + 1}` : tile.number}
+          {tile.kind === 'fracture' ? `F${tile.id.replace(/\D/g, '')}` : tile.number}
           {worm && <tspan className="tile-worm"> {worm}</tspan>}
         </text>
       )}

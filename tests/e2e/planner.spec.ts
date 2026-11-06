@@ -53,7 +53,8 @@ test('a game from the first screen to an exported file, and back offline', async
   await test.step("start a game with Prophecy of Kings and Thunder's Edge", async () => {
     await expect(page.getByRole('button', { name: 'Prophecy of Kings' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('button', { name: "Thunder's Edge" })).toHaveAttribute('aria-pressed', 'true');
-    await page.getByLabel('My faction').selectOption({ label: 'The Argent Flight' });
+    await page.getByRole('button', { name: 'My faction', exact: true }).click();
+    await page.getByRole('button', { name: 'The Argent Flight' }).click();
     await page.getByRole('button', { name: 'Start game' }).click();
     await page.getByRole('button', { name: 'Plan & map' }).click();
   });
@@ -162,7 +163,7 @@ test('a game from the first screen to an exported file, and back offline', async
   });
 
   await test.step('export the game and import it back', async () => {
-    await page.getByRole('button', { name: 'Game' }).click();
+    await page.getByRole('button', { name: 'Game', exact: true }).click();
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export to file' }).click();
     const file = testInfo.outputPath('game.json');
@@ -178,17 +179,19 @@ test('a game from the first screen to an exported file, and back offline', async
   });
 
   await test.step('a language choice sticks across a reload', async () => {
-    await page.getByRole('button', { name: 'Game' }).click();
+    await page.getByRole('button', { name: 'Game', exact: true }).click();
     await page.getByRole('radio', { name: 'Русский' }).click();
     await page.reload();
-    await expect(page.getByRole('button', { name: 'Партия' })).toBeVisible();
+    await expect(page.getByRole('radio', { name: 'Русский' })).toHaveAttribute('aria-checked', 'true');
+    await expect(page.getByText('Язык')).toBeVisible();
   });
 });
 
 test('a faction whose home is not on the pasted map starts at its seat and can send a route', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto('/');
-  await page.getByLabel('My faction').selectOption({ label: 'The Federation of Sol' });
+  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'The Federation of Sol' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
   await page.getByRole('button', { name: 'Plan & map' }).click();
   await page.getByRole('button', { name: 'Paste map' }).click();
@@ -207,6 +210,6 @@ test('a faction whose home is not on the pasted map starts at its seat and can s
   await dragRoute(page, [58, 110, 66]);
   await expect(page.getByText('Flight 58 → 66')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Game' }).click();
+  await page.getByRole('button', { name: 'Game', exact: true }).click();
   await expect(page.getByText('Seat 1 holds the home system of The Argent Flight, and your faction is The Federation of Sol.')).toBeVisible();
 });

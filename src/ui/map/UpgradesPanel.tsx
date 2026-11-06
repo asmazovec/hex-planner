@@ -12,11 +12,10 @@ export interface UpgradesPanelProps {
   upgraded: UnitId[];
   /** Types an entry of the plan upgraded, not to toggle here, with the round. */
   locked: Partial<Record<UnitId, number>>;
-  onClose: () => void;
 }
 
 /** My ships, one card per type: a tap toggles the baseline between levels I and II. */
-export function UpgradesPanel({ game, pack, upgraded, locked, onClose }: UpgradesPanelProps) {
+export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelProps) {
   const { t } = useTranslation();
   const toggleUpgrade = useGame(s => s.toggleUpgrade);
   const title = t('ships.upgrades');
@@ -25,10 +24,7 @@ export function UpgradesPanel({ game, pack, upgraded, locked, onClose }: Upgrade
       className="upgrades-panel" role="dialog" aria-label={title}
       style={{ '--player': `var(--player-${game.color})` } as React.CSSProperties}
     >
-      <div className="panel-head">
-        <h2>{title}</h2>
-        <button type="button" className="icon-button" aria-label={t('players.close')} onClick={onClose}>✕</button>
-      </div>
+      <h2>{title}</h2>
       {SHIP_KINDS.map(kind => {
         const base = unitStats(game.faction, kind, false, pack);
         const current = unitStats(game.faction, kind, upgraded.includes(kind), pack);

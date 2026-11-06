@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, type PointerEvent, type ReactNode } from 'react';
+import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { curveThrough, type Point, type RouteShape } from '../../domain/route';
@@ -6,14 +6,14 @@ import { fractureSlots } from '../../domain/thundersEdge';
 import { slotKeyOf } from '../../domain/newGame';
 import { playersOf } from '../../domain/players';
 import type { DataPack, Game, GameState } from '../../domain/types';
+import { RowIcon } from '../plan/RowIcon';
 import type { RouteArrow } from '../plan/tactical';
 import { prepareSprites, tokenColours } from '../units/sprites';
-import { UnitLegend } from '../units/UnitLegend';
 import { HEX_SIZE, hexToPixel, mapBounds, slotToPixel, type Rect } from './geometry';
 import { TilePopover } from './TilePopover';
 import { TileView, type Highlight } from './TileView';
 import { capFit } from './viewLimits';
-import { usePanZoom } from './usePanZoom';
+import { animates, usePanZoom } from './usePanZoom';
 
 /** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
 export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape }
@@ -28,8 +28,10 @@ export interface HexMapProps {
   highlights?: Record<string, Highlight>;
   arrows?: Arrow[];
   arrowPreview?: RouteDraftView | null;
-  /** The area the camera shows; back to the earlier view when it turns null. */
+  /** The area the camera shows; back to the whole map when it turns null. */
   focusRect?: Rect | null;
+  /** Each new value sends the camera to the whole map, as the reset button does. */
+  resetSignal?: number;
   /** Drawn over the arrows, in the coordinates of the map. */
   overlay?: ReactNode;
   selectedId?: string | null;
@@ -62,6 +64,40 @@ export function fractureFrame(
   const right = Math.max(tiles.x + tiles.width, labelX + LABEL_HALF_WIDTH);
   const bottom = Math.max(tiles.y + tiles.height, labelY + 4);
   return { spots, labelX, labelY, bounds: { x: left, y: top, width: right - left, height: bottom - top } };
+}
+
+/** Where a Fracture tile flies in from: out from the middle of the group, further for those at its ends. */
+const FLY_FROM = 1.6;
+const FLY_OUT = 150;
+const FLY_STEP_MS = 55;
+
+/** As long as the tiles of the Fracture take to arrive. */
+const CAMERA_MS = 760;
+const easeOut = (t: number): number => 1 - (1 - t) ** 3;
+
+/** What the frame of the map shows, moving smoothly to a new frame when the map grows or shrinks. */
+function useSmoothRect(target: Rect): Rect {
+  const [shown, setShown] = useState(target);
+  const current = useRef(target);
+  const { x, y, width, height } = target;
+  useEffect(() => {
+    const to = { x, y, width, height };
+    const from = current.current;
+    if (from.x === x && from.y === y && from.width === width && from.height === height) return undefined;
+    const show = (rect: Rect) => { current.current = rect; setShown(rect); };
+    if (!animates()) { show(to); return undefined; }
+    const start = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / CAMERA_MS);
+      const e = easeOut(t);
+      show({ x: from.x + (x - from.x) * e, y: from.y + (y - from.y) * e, width: from.width + (width - from.width) * e, height: from.height + (height - from.height) * e });
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [x, y, width, height]);
+  return shown;
 }
 
 const LABEL_HALF_WIDTH = 45;
@@ -180,7 +216,7 @@ function RouteDraftLine({ draft }: { draft: RouteDraftView }) {
 }
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, overlay, selectedId, onTileTap, onTilePointerDown, startsArrow, tools, popover, onPopoverClose,
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, selectedId, onTileTap, onTilePointerDown, startsArrow, tools, popover, onPopoverClose,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -206,18 +242,45 @@ export function HexMap({
   }, [game, pack]);
 
   const mapRect = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
-  const fracture = useMemo(() => {
-    if (!game.fracture.active) return null;
-    const slots = fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout);
+  const fractureAt = useMemo(() => (game.fracture.active ? fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout) : []), [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout]);
+  const fracture = useMemo(() => (fractureAt.length === 0 ? null : fractureFrame(slotKeys.map(parseKey), fractureAt)), [fractureAt, slotKeys]);
+  // Only opening it or moving it plays: coming back to a map where it stands open does not. A new run starts the animation anew.
+  const [seenPlace, setSeenPlace] = useState({ active: game.fracture.active, seat: game.fracture.seat });
+  const [opening, setOpening] = useState(false);
+  const [flyRun, setFlyRun] = useState(0);
+  /** The seat the Fracture has just left: it stays there a moment, fading, and no longer counts for the frame of the map. */
+  const [leftSeat, setLeftSeat] = useState<{ seat: number | null } | null>(null);
+  if (seenPlace.active !== game.fracture.active || seenPlace.seat !== game.fracture.seat) {
+    setSeenPlace({ active: game.fracture.active, seat: game.fracture.seat });
+    setOpening(game.fracture.active);
+    setLeftSeat(seenPlace.active && animates() ? { seat: seenPlace.seat } : null);
+    setFlyRun(flyRun + 1);
+  }
+  const leaving = useMemo(() => {
+    if (!leftSeat) return null;
+    const slots = fractureSlots(leftSeat.seat, game.playerCount, pack, game.layout);
     return slots.length === 0 ? null : fractureFrame(slotKeys.map(parseKey), slots);
-  }, [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout, slotKeys]);
+  }, [leftSeat, game.playerCount, pack, game.layout, slotKeys]);
+  /** How a Fracture tile comes to its place. */
+  const flyStyle = (index: number): CSSProperties | undefined => {
+    if (!fracture) return undefined;
+    const apex = fracture.spots[Math.floor(fracture.spots.length / 2)];
+    const spot = fracture.spots[index];
+    const length = Math.hypot(apex.x, apex.y) || 1;
+    const x = (spot.x - apex.x) * FLY_FROM + (apex.x / length) * FLY_OUT;
+    const y = (spot.y - apex.y) * FLY_FROM + (apex.y / length) * FLY_OUT;
+    const step = Math.abs(index - Math.floor(fracture.spots.length / 2));
+    return { '--fly-x': `${x.toFixed(1)}px`, '--fly-y': `${y.toFixed(1)}px`, animationDelay: `${step * FLY_STEP_MS}ms` } as CSSProperties;
+  };
   const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
   const { view, handlers, reset, focus } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect, startsArrow);
   const focusKey = focusRect ? JSON.stringify(focusRect) : null;
   useEffect(() => { focus(focusKey === null ? null : JSON.parse(focusKey) as Rect); }, [focusKey, focus]);
+  useEffect(() => { if (resetSignal > 0) reset(); }, [resetSignal, reset]);
   // The view scales around the middle of the map.
-  const midX = bounds.x + bounds.width / 2;
-  const midY = bounds.y + bounds.height / 2;
+  const camera = useSmoothRect(bounds);
+  const midX = camera.x + camera.width / 2;
+  const midY = camera.y + camera.height / 2;
   // The tiles stay as they are on every frame of a movement; only the transform around them changes.
   const content = useMemo(() => slotKeys.map(key => (
     <TileView
@@ -231,15 +294,14 @@ export function HexMap({
     <div className="hexmap-frame">
     <div className="map-strip">
       <div className="map-strip-start">
-        <button type="button" onClick={reset}>{t('map.resetView')}</button>
-        <UnitLegend colour={colours.me} />
+        <button type="button" className="hex-button" aria-label={t('map.resetView')} title={t('map.resetView')} onClick={reset}><RowIcon name="reset" /></button>
       </div>
       {tools}
     </div>
     <div className="hexmap-wrap" ref={areaRef}>
     <svg
       ref={svgRef} className="hexmap" role="group" aria-label={t('map.label')}
-      viewBox={`${bounds.x} ${bounds.y} ${bounds.width} ${bounds.height}`}
+      viewBox={`${camera.x} ${camera.y} ${camera.width} ${camera.height}`}
       {...handlers}
     >
       <defs>
@@ -249,14 +311,25 @@ export function HexMap({
       </defs>
       <g transform={`translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`}>
         {content}
+        {leaving && (
+          <g key={`left-${flyRun}`} className="fracture-group fracture-closing" aria-hidden="true" onAnimationEnd={e => { if (e.target === e.currentTarget) setLeftSeat(null); }}>
+            <text x={leaving.labelX} y={leaving.labelY} className="fracture-label">{t('map.fractureLabel')}</text>
+            {leaving.spots.map((spot, i) => (
+              <TileView key={spot.tileId} slotKey={`left-${spot.tileId}`} pack={pack} game={game} state={state} fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }} />
+            ))}
+          </g>
+        )}
         {fracture && (
-          <g role="group" aria-label={t('map.fractureGroup')} className="fracture-group">
+          <g key={flyRun} role="group" aria-label={t('map.fractureGroup')} className={`fracture-group${opening ? ' fracture-opening' : ''}`}>
             <text x={fracture.labelX} y={fracture.labelY} className="fracture-label">{t('map.fractureLabel')}</text>
             {fracture.spots.map((spot, i) => (
-              <TileView
-                key={spot.tileId} slotKey={spot.tileId} pack={pack} game={game} state={state}
+              <g key={spot.tileId} className="fracture-fly" style={opening ? flyStyle(i) : undefined}>
+              <TileView slotKey={slotKeyOf(fractureAt[i].q, fractureAt[i].r)} pack={pack} game={game} state={state}
                 fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }}
+                highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={game.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
+                onTap={onTileTap} onPointerDown={onTilePointerDown}
               />
+              </g>
             ))}
           </g>
         )}

@@ -5,7 +5,9 @@ import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { withTeMecatol } from '../domain/mecatol';
 import { startingDocks } from '../domain/strategy';
+import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
 import { toggleUpgrade } from '../domain/unitStats';
+import { slotKeyOf } from '../domain/layouts';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
@@ -100,6 +102,25 @@ function copiedEntries(entries: Entry[]): Entry[] {
   }));
 }
 
+/** The tiles of the open Fracture by slot. They follow its seat and the map's size. */
+function withFractureTiles(game: Game): Game {
+  const tiles = game.fracture.active
+    ? Object.fromEntries(fractureSlots(game.fracture.seat, game.playerCount, loadPack(game.expansions), game.layout).map(s => [slotKeyOf(s.q, s.r), s.tileId]))
+    : {};
+  const old = game.fracture.tiles ?? {};
+  const same = Object.keys(tiles).length === Object.keys(old).length && Object.entries(tiles).every(([slot, id]) => old[slot] === id);
+  return same ? game : { ...game, fracture: { ...game.fracture, tiles } };
+}
+
+/** A round goes and the later ones close the gap; the plan keeps at least one. */
+function withoutRound(plan: Plan, roundNo: number): Plan {
+  if (plan.rounds.length <= 1 || !plan.rounds.some(r => r.number === roundNo)) return plan;
+  return {
+    ...plan,
+    rounds: plan.rounds.filter(r => r.number !== roundNo).map(r => (r.number > roundNo ? { ...r, number: r.number - 1 } : r)),
+  };
+}
+
 function copyOf(game: Game): Game {
   const source = game.plans.find(p => p.id === game.activePlanId);
   if (!source) return game;
@@ -141,9 +162,13 @@ export interface GameStore {
   /** Backup, then primary, then removed. */
   setStrategyCard(roundNo: number, initiative: number): void;
   addRound(): void;
+  /** Later rounds take its number; the last round of a plan stays. */
+  deleteRound(roundNo: number): void;
   copyPlan(): void;
   renamePlan(name: string): void;
   deletePlan(id: string): void;
+  /** Puts a plan at this place among the plans. */
+  movePlan(id: string, toIndex: number): void;
   setActivePlan(id: string): void;
   /** Turns an expansion on for the open game in one undo step; the draft has its own toggle. */
   addExpansion(id: ExpansionId): void;
@@ -205,7 +230,7 @@ export const useGame = create<GameStore>((set, get) => {
   const commit = (edit: (game: Game) => Game): void => {
     const current = get().game;
     if (!current) return;
-    const next = edit(current);
+    const next = withFractureTiles(withFractureMoved(current, edit(current), loadPack(current.expansions)));
     if (next === current) return;
     history = [...history.slice(-(HISTORY_LIMIT - 1)), current];
     replace(next);
@@ -248,7 +273,7 @@ export const useGame = create<GameStore>((set, get) => {
       const loaded = await loadGame(id);
       if (!loaded) return;
       history = [];
-      set({ game: loaded, canUndo: false, saveError: null });
+      set({ game: withFractureTiles(loaded), canUndo: false, saveError: null });
     },
 
     addEntry: (roundNo, body, phase) => {
@@ -282,6 +307,7 @@ export const useGame = create<GameStore>((set, get) => {
           number: Math.max(0, ...plan.rounds.map(r => r.number)) + 1, strategyCard: null, backupCard: null, entries: [],
         }],
       }))),
+    deleteRound: roundNo => commit(g => editPlan(g, plan => withoutRound(plan, roundNo))),
 
     copyPlan: () => commit(copyOf),
     renamePlan: name =>
@@ -294,6 +320,14 @@ export const useGame = create<GameStore>((set, get) => {
         if (g.plans.length <= 1 || !g.plans.some(p => p.id === id)) return g;
         const plansLeft = g.plans.filter(p => p.id !== id);
         return { ...g, plans: plansLeft, activePlanId: g.activePlanId === id ? plansLeft[0].id : g.activePlanId };
+      }),
+    movePlan: (id, toIndex) =>
+      commit(g => {
+        const from = g.plans.findIndex(p => p.id === id);
+        const to = Math.max(0, Math.min(toIndex, g.plans.length - 1));
+        if (from < 0 || from === to) return g;
+        const rest = g.plans.filter(p => p.id !== id);
+        return { ...g, plans: [...rest.slice(0, to), g.plans[from], ...rest.slice(to)] };
       }),
     setActivePlan: id =>
       commit(g => (g.activePlanId === id || !g.plans.some(p => p.id === id) ? g : { ...g, activePlanId: id })),

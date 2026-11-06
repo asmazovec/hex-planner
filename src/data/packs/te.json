@@ -811,6 +811,64 @@
         "Galvanize",
         "Phoenix Standard"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "liberate",
+            "name": "Liberate",
+            "pack": "te"
+          },
+          {
+            "id": "galvanize",
+            "name": "Galvanize",
+            "pack": "te"
+          },
+          {
+            "id": "phoenixstandard",
+            "name": "Phoenix Standard",
+            "pack": "te"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "bastionagent",
+            "type": "agent",
+            "name": "Dame Briar",
+            "title": "Bastion Valiant",
+            "pack": "te"
+          },
+          {
+            "id": "bastioncommander",
+            "type": "commander",
+            "name": "Nip and Tuck",
+            "title": "Children of Ordinian",
+            "pack": "te"
+          },
+          {
+            "id": "bastionhero",
+            "type": "hero",
+            "name": "Lyra Keen",
+            "title": "Shield of the Reef",
+            "pack": "te"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "bastion_mech",
+            "name": "A3 Valiance",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "bastionbt",
+          "name": "The Icon",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -846,6 +904,59 @@
         "Research Team",
         "Oceanbound"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "researchteam",
+            "name": "Research Team",
+            "pack": "te"
+          },
+          {
+            "id": "oceanbound",
+            "name": "Oceanbound",
+            "pack": "te"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "deepwroughtagent",
+            "type": "agent",
+            "name": "Doctor Carrina",
+            "title": "Oceanographer",
+            "pack": "te"
+          },
+          {
+            "id": "deepwroughtcommander",
+            "type": "commander",
+            "name": "Aello",
+            "title": "Ikaten Kieros",
+            "pack": "te"
+          },
+          {
+            "id": "deepwroughthero",
+            "type": "hero",
+            "name": "Ta Zern",
+            "title": "Conclave Founder",
+            "pack": "te"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "deepwrought_mech",
+            "name": "Eanautic",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "deepwroughtbt",
+          "name": "Visionaria Select",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -887,6 +998,59 @@
         "Plots Within Plots",
         "Puppets of the Blade"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "plotsplots",
+            "name": "Plots Within Plots",
+            "pack": "te"
+          },
+          {
+            "id": "puppetsoftheblade",
+            "name": "Puppets of the Blade",
+            "pack": "te"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "firmamentagent",
+            "type": "agent",
+            "name": "Myru Vos",
+            "title": "The Hungry Shadow",
+            "pack": "te"
+          },
+          {
+            "id": "firmamentcommander",
+            "type": "commander",
+            "name": "Captain Aroz",
+            "title": "The Black Flag",
+            "pack": "te"
+          },
+          {
+            "id": "firmamenthero",
+            "type": "hero",
+            "name": "Sharsiss",
+            "title": "The Coiling Void",
+            "pack": "te"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "firmament_mech",
+            "name": "Viper EX-23",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "firmamentbt",
+          "name": "The Sowing",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -920,6 +1084,64 @@
         "The Blade's Orchestra",
         "Marionettes"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "nocturne",
+            "name": "Nocturne",
+            "pack": "te"
+          },
+          {
+            "id": "bladesorchestra",
+            "name": "The Blade's Orchestra",
+            "pack": "te"
+          },
+          {
+            "id": "marionettes",
+            "name": "Marionettes",
+            "pack": "te"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "obsidianagent",
+            "type": "agent",
+            "name": "Vos Hollow",
+            "title": "Hunger Burning",
+            "pack": "te"
+          },
+          {
+            "id": "obsidiancommander",
+            "type": "commander",
+            "name": "Aroz Hollow",
+            "title": "Broken Standard",
+            "pack": "te"
+          },
+          {
+            "id": "obsidianhero",
+            "type": "hero",
+            "name": "Sharsiss Hollow",
+            "title": "Sanity Snapped",
+            "pack": "te"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "obsidian_mech",
+            "name": "Viper Hollow",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "obsidianbt",
+          "name": "The Reaping",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -962,6 +1184,64 @@
         "Sorrow"
       ],
       "gateTile": "94",
+      "sheet": {
+        "abilities": [
+          {
+            "id": "sundered",
+            "name": "Sundered",
+            "pack": "te"
+          },
+          {
+            "id": "incursion",
+            "name": "Incursion",
+            "pack": "te"
+          },
+          {
+            "id": "sorrow",
+            "name": "Sorrow",
+            "pack": "te"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "crimsonagent",
+            "type": "agent",
+            "name": "Ahk Ravin",
+            "title": "Forlorn Shadow",
+            "pack": "te"
+          },
+          {
+            "id": "crimsoncommander",
+            "type": "commander",
+            "name": "Ahk Siever",
+            "title": "Wistful Soul",
+            "pack": "te"
+          },
+          {
+            "id": "crimsonhero",
+            "type": "hero",
+            "name": "Homesick Phantom",
+            "title": "Wayward Riftwalker",
+            "pack": "te"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "crimson_mech",
+            "name": "Revenant",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "crimsonbt",
+          "name": "Resonance Generator",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1031,6 +1311,59 @@
         "Survival Instinct",
         "Miniaturization"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "survivalinstinct",
+            "name": "Survival Instinct",
+            "pack": "te"
+          },
+          {
+            "id": "miniaturization",
+            "name": "Miniaturization",
+            "pack": "te"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "ralnelagent",
+            "type": "agent",
+            "name": "Kan Kip Rel",
+            "title": "Courier Prime",
+            "pack": "te"
+          },
+          {
+            "id": "ralnelcommander",
+            "type": "commander",
+            "name": "Watchful Ojz",
+            "title": "Actuary General",
+            "pack": "te"
+          },
+          {
+            "id": "ralnelhero",
+            "type": "hero",
+            "name": "Director Nel",
+            "title": "Acquisitive Mind",
+            "pack": "te"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "ralnel_mech",
+            "name": "Alarum",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "ralnelbt",
+          "name": "Data Skimmer",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {

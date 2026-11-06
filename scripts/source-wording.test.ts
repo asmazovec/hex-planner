@@ -2,7 +2,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test } from 'vitest';
 import { legendarySummary } from '../src/data/legendarySummaries';
+import { sheetSummary } from '../src/data/sheetSummaries';
 import { shipSummary } from '../src/data/shipSummaries';
+import { loadPack } from '../src/data/loadPack';
 import { SOURCE_CACHE } from './build-data';
 
 // Own retellings must not repeat the source. The source text is read from the build's cached copy and never stored in the repo.
@@ -65,4 +67,31 @@ test.skipIf(!existsSync(UNITS))('every ship with an ability has its own retellin
   }
   expect(shared).toEqual([]);
   expect(ships.length).toBeGreaterThanOrEqual(40);
+});
+
+const SOURCE_DATA = join(SOURCE_CACHE, 'data');
+const LEADERS = join(SOURCE_DATA, 'leaders/te_leaders.json');
+
+test.skipIf(!existsSync(LEADERS))('every ability, leader, mech and breakthrough has a retelling in both languages, sharing no run of 6 words with the source', () => {
+  const read = <T>(path: string) => JSON.parse(readFileSync(join(SOURCE_DATA, path), 'utf8')) as T;
+  const texts = new Map<string, string>();
+  for (const a of readdirSync(join(SOURCE_DATA, 'abilities')).flatMap(file => read<{ id: string; source: string; permanentEffect?: string; window?: string; windowEffect?: string }[]>(`abilities/${file}`))) {
+    if (/^(base|pok|thunders_edge|codex\d*)$/.test(a.source)) texts.set(a.id, [a.permanentEffect, a.window, a.windowEffect].join(' '));
+  }
+  for (const l of ['pok', 'te_leaders', 'other', 'generic'].flatMap(file => read<{ id: string; abilityWindow?: string; abilityText?: string }[]>(`leaders/${file}.json`))) texts.set(l.id, [l.abilityWindow, l.abilityText].join(' '));
+  for (const u of ['pok', 'te_units', 'keleres'].flatMap(file => read<{ id: string; ability?: string }[]>(`units/${file}.json`))) if (u.ability) texts.set(u.id, u.ability);
+  for (const b of read<{ alias: string; text: string }[]>('breakthroughs/te_breakthroughs.json')) texts.set(b.alias, b.text);
+  const shared: string[] = [];
+  const missing: string[] = [];
+  for (const faction of Object.values(loadPack(['pok', 'te']).factions)) {
+    const sheet = faction.sheet!;
+    for (const { id } of [...sheet.abilities, ...sheet.leaders, ...sheet.mechs, ...(sheet.breakthrough ? [sheet.breakthrough] : [])]) {
+      const en = sheetSummary(id, 'en');
+      const ru = sheetSummary(id, 'ru');
+      if (!en?.text || !ru?.text) { missing.push(id); continue; }
+      shared.push(...sharedRuns(en.text, texts.get(id) ?? '').map(run => `${id}: ${run}`));
+    }
+  }
+  expect(missing).toEqual([]);
+  expect(shared).toEqual([]);
 });

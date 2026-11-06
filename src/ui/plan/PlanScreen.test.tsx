@@ -576,145 +576,6 @@ describe('leaving', () => {
   });
 });
 
-describe('playing the round', () => {
-  const body = (from: string, unit: string) => ({ type: 'tactical' as const, systemId: TARGET, moves: [{ from, units: { [unit]: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } });
-  const after = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
-  const pressMap = () => {
-    fireEvent.pointerDown(tile(WAY), { pointerId: 9 });
-    fireEvent.pointerUp(window, { pointerId: 9 });
-  };
-  afterEach(() => {
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-  });
-  const seed = () => {
-    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: WAY, units: { cruiser: 1 } } } }, 'strategy');
-    const first = useGame.getState().addEntry(1, body(HOME, 'carrier'), 'action');
-    const between = useGame.getState().addEntry(1, { type: 'pass' }, 'action');
-    const last = useGame.getState().addEntry(1, body(WAY, 'cruiser'), 'action');
-    return { setup: entries()[0].id, first, between, last };
-  };
-  const playingRow = () => document.querySelector('.entry-playing')?.getAttribute('data-entry-id');
-  const play = () => screen.getByRole('button', { name: 'Play' });
-
-  test('undo during the playback stops it and brings the map back', () => {
-    seed();
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    render(<PlanScreen />);
-    fireEvent.click(play());
-    expect(playingRow()).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(playingRow()).toBeUndefined();
-    after(5000);
-    expect(playingRow()).toBeUndefined();
-    expect(document.querySelector('.flight-layer')).toBeNull();
-    expect(play()).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  test('a change of round during the playback stops it', () => {
-    const ids = seed();
-    useGame.getState().addRound();
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    render(<PlanScreen />);
-    fireEvent.click(screen.getByRole('button', { name: 'Round 1' }));
-    fireEvent.click(play());
-    expect(playingRow()).toBe(ids.setup);
-    fireEvent.click(screen.getByRole('button', { name: 'Round 2' }));
-    expect(playingRow()).toBeUndefined();
-    after(5000);
-    expect(playingRow()).toBeUndefined();
-    expect(document.querySelector('.flight-layer')).toBeNull();
-    expect(plan().rounds).toHaveLength(2);
-  });
-
-  test('the button stands beside the add button and waits for entries', () => {
-    render(<PlanScreen />);
-    expect(play().closest('.phase-add')).toBe(screen.getByRole('button', { name: 'Add action' }).closest('.phase-add'));
-    expect(play()).toBeDisabled();
-    cleanup();
-    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
-    render(<PlanScreen />);
-    expect(play()).toBeEnabled();
-  });
-
-  test('all entries in order: flights with the playing highlight, pauses for the rest, then the map as it was and the plan unchanged', () => {
-    const ids = seed();
-    const planBefore = structuredClone(plan());
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    render(<PlanScreen />);
-    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Carrier/ })).toBeInTheDocument();
-    fireEvent.click(play());
-    // The map goes back to before the first entry.
-    expect(playingRow()).toBe(ids.setup);
-    expect(within(tile(TARGET) as HTMLElement).queryByRole('img', { name: /Carrier/ })).toBeNull();
-    after(260);
-    expect(document.querySelector('.flight-layer')).toBeNull();
-    after(450);
-    after(260);
-    expect(playingRow()).toBe(ids.first);
-    expect(document.querySelector('[data-flight-stack="carrier"]')).toBeInTheDocument();
-    expect(tile(TARGET)).toHaveClass('tile-active');
-    expect(tile(HOME)).toHaveClass('tile-source');
-    expect(document.querySelector('.route.route-active')).toBeInTheDocument();
-    // A tap finishes the flight; the carrier is there for the next step.
-    pressMap();
-    expect(document.querySelector('.flight-layer')).toBeNull();
-    expect(playingRow()).toBe(ids.between);
-    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Carrier/ })).toBeInTheDocument();
-    after(260);
-    expect(document.querySelector('.flight-layer')).toBeNull();
-    after(450);
-    expect(playingRow()).toBe(ids.last);
-    after(260);
-    expect(document.querySelector('[data-flight-stack="cruiser"]')).toBeInTheDocument();
-    pressMap();
-    expect(playingRow()).toBeUndefined();
-    expect(tile(TARGET)).not.toHaveClass('tile-active');
-    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Cruiser/ })).toBeInTheDocument();
-    expect(plan()).toEqual(planBefore);
-  });
-
-  test('it closes a reading, and a second tap stops it', async () => {
-    seed();
-    render(<PlanScreen />);
-    await userEvent.click(screen.getAllByRole('button', { name: /^Tactical action · 25/ })[0]);
-    expect(document.querySelector('.entry-shown')).toBeInTheDocument();
-    await userEvent.click(play());
-    expect(document.querySelector('.entry-shown')).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Whole map' })).toBeNull();
-    expect(playingRow()).toBeTruthy();
-    await userEvent.click(play());
-    expect(playingRow()).toBeUndefined();
-  });
-
-  test('under reduced motion nothing flies, and the steps still pass', () => {
-    const ids = seed();
-    vi.stubGlobal('matchMedia', () => ({ matches: true }));
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    render(<PlanScreen />);
-    fireEvent.click(play());
-    const step = () => { after(260); after(450); };
-    step();
-    expect(playingRow()).toBe(ids.first);
-    after(260);
-    expect(document.querySelector('.flight-layer')).toBeNull();
-    after(450);
-    expect(playingRow()).toBe(ids.between);
-    step();
-    step();
-    expect(playingRow()).toBeUndefined();
-  });
-
-  test('a change to the plan ends it', () => {
-    seed();
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    render(<PlanScreen />);
-    fireEvent.click(play());
-    expect(playingRow()).toBeTruthy();
-    act(() => useGame.getState().addEntry(1, { type: 'pass' }, 'action'));
-    expect(playingRow()).toBeUndefined();
-  });
-});
 
 describe('flying', () => {
   test('Fly plays the action and a press on the map finishes it, without acting as a tap', async () => {
@@ -814,7 +675,7 @@ test('the status section makes one entry of tokens and points, and the menu has 
   // The add control is gone; only the entry's own label is left. A status entry has no moving controls.
   const row = within(phase('Status').getByRole('listitem', { name: 'Tokens and points' }));
   expect(phase('Status').getAllByRole('button', { name: 'Tokens and points' })).toEqual([row.getByRole('button', { name: 'Tokens and points' })]);
-  expect(row.queryByRole('button', { name: 'Move up' })).toBeNull();
+  expect(row.queryByRole('button', { name: 'Drag to move' })).toBeNull();
   expect(row.queryByRole('button', { name: 'Drag' })).toBeNull();
   expect(phase('Status').getByText(/Planets refresh at the start of the next round/)).toBeVisible();
 });
@@ -870,9 +731,19 @@ test('a manual adjustment has a label and changes values, including units', asyn
   await userEvent.click(row.getByRole('button', { name: 'Add one Trade goods' }));
   expect(entries()[0]).toMatchObject({ label: 'Card: +2', delta: { tradeGoods: 1 } });
   expect(cell('Trade goods')).toHaveTextContent('0 → 1');
-  await userEvent.selectOptions(row.getByRole('combobox', { name: 'System' }), HOME);
+  expect(row.queryByRole('combobox')).toBeNull();
+  await userEvent.click(row.getByRole('button', { name: 'Choose on the map' }));
+  expect(tile(TARGET)).toHaveClass('tile-valid');
+  expect(tile(HOME)).toHaveClass('tile-valid');
+  expect(screen.getByText('Tap a tile on the map.')).toBeVisible();
+  await userEvent.click(tile(HOME));
+  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(tile(HOME)).not.toHaveClass('tile-valid');
   await userEvent.click(row.getByRole('button', { name: 'Remove one Carrier' }));
   expect(entries()[0]).toMatchObject({ delta: { units: { systemId: HOME, units: { carrier: -1 } } } });
+  await userEvent.click(row.getByRole('button', { name: 'Clear the system' }));
+  expect(entries()[0]).toMatchObject({ delta: { units: undefined } });
+  expect(row.getByRole('button', { name: 'Choose on the map' })).toBeVisible();
 });
 
 test('a component action keeps a note', async () => {
@@ -978,6 +849,64 @@ test('the players button opens the same list of cards as a panel, and closes it'
   await userEvent.click(screen.getByRole('button', { name: 'Players' }));
   expect(screen.getAllByRole('group', { name: /^Player \d/ })).toHaveLength(6);
   expect(within(screen.getByRole('group', { name: 'Player 1' })).getByText('My faction')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  await userEvent.click(screen.getByTestId('drawer-scrim'));
   expect(screen.queryByRole('group', { name: 'Player 1' })).toBeNull();
+});
+
+describe('the drawers', () => {
+  test('players and the legend hang on tabs and close on a tap outside or on Escape', async () => {
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Players' }));
+    expect(screen.getByRole('heading', { name: 'Players' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Close' })).toBeNull();
+    await userEvent.click(screen.getByTestId('drawer-scrim'));
+    expect(screen.queryByRole('heading', { name: 'Players' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Legend' }));
+    const legend = screen.getByRole('dialog', { name: 'Legend' });
+    for (const name of ['Flagship', 'War Sun', 'Dreadnought', 'Carrier', 'Cruiser', 'Destroyer', 'Fighter', 'Infantry', 'Mech', 'PDS', 'Space dock']) expect(legend).toHaveTextContent(name);
+    expect(legend).toHaveTextContent('Dashed');
+    expect(legend).toHaveTextContent('now → forecast');
+    expect(legend.querySelectorAll('[data-unit]')).toHaveLength(11);
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog', { name: 'Legend' })).toBeNull();
+  });
+
+  test('a right drawer leaves the map and the plan at hand, and only its tab closes it', async () => {
+    render(<PlanScreen />);
+    const tab = () => screen.getByRole('button', { name: /Ship upgrades/ });
+    await userEvent.click(tab());
+    expect(screen.queryByTestId('drawer-scrim')).toBeNull();
+    await userEvent.click(tile(TARGET));
+    expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    expect(screen.getByRole('button', { name: 'Tactical action' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+    await userEvent.click(tab());
+    expect(screen.queryByRole('dialog', { name: 'Ship upgrades' })).toBeNull();
+  });
+
+  test('the strip over the map keeps only what acts on the map', () => {
+    render(<PlanScreen />);
+    const strip = document.querySelector('.map-strip') as HTMLElement;
+    expect(within(strip).queryByRole('button', { name: 'Players' })).toBeNull();
+    expect(within(strip).queryByRole('button', { name: /Ship upgrades/ })).toBeNull();
+    expect(within(strip).queryByRole('button', { name: 'Forecast' })).toBeNull();
+    expect(within(screen.getByRole('group', { name: 'Rounds' }).parentElement!).getByRole('button', { name: 'Forecast' })).toBeVisible();
+    expect(within(document.querySelector('.drawer-rail-right') as HTMLElement).getByRole('button', { name: /Ship upgrades/ })).toBeVisible();
+  });
+});
+
+test('reading a setup entry lights its system, and closing it puts the light out', async () => {
+  useGame.getState().changeAdjustment(1, { kind: 'setup', systemId: TARGET, unit: 'cruiser', planetId: null, amount: 1 });
+  render(<PlanScreen />);
+  const label = screen.getByRole('button', { name: /^Setup/ });
+  expect(tile(TARGET)).not.toHaveClass('tile-active');
+  await userEvent.click(label);
+  expect(tile(TARGET)).toHaveClass('tile-active');
+  await userEvent.click(label);
+  expect(tile(TARGET)).not.toHaveClass('tile-active');
 });

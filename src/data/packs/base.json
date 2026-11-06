@@ -1211,6 +1211,54 @@
       "abilities": [
         "Mitosis"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "mitosis",
+            "name": "Mitosis",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "arborecagent",
+            "type": "agent",
+            "name": "Letani Ospha",
+            "title": "Unity Through Peace",
+            "pack": "pok"
+          },
+          {
+            "id": "arboreccommander",
+            "type": "commander",
+            "name": "Dirzuga Rophal",
+            "title": "Peace Through Strength",
+            "pack": "pok"
+          },
+          {
+            "id": "arborechero",
+            "type": "hero",
+            "name": "Letani Miasmiala",
+            "title": "Strength Through Unity",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "arborec_mech",
+            "name": "Letani Behemoth",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "arborecbt",
+          "name": "Psychospore",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1246,6 +1294,64 @@
         "Creuss Gate"
       ],
       "gateTile": "17",
+      "sheet": {
+        "abilities": [
+          {
+            "id": "quantum_entanglement",
+            "name": "Quantum Entanglement",
+            "pack": "base"
+          },
+          {
+            "id": "slipstream",
+            "name": "Slipstream",
+            "pack": "base"
+          },
+          {
+            "id": "creuss_gate",
+            "name": "Creuss Gate",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "ghostagent",
+            "type": "agent",
+            "name": "Emissary Taivra",
+            "title": "The Azure Whisper",
+            "pack": "pok"
+          },
+          {
+            "id": "ghostcommander",
+            "type": "commander",
+            "name": "Sai Seravus",
+            "title": "Gatewarden",
+            "pack": "pok"
+          },
+          {
+            "id": "ghosthero",
+            "type": "hero",
+            "name": "Riftwalker Meian",
+            "title": "Shaleri Guardian",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "ghost_mech",
+            "name": "Icarus Drive",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "ghostbt",
+          "name": "Particle Synthesis",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1281,6 +1387,64 @@
         "Guild Ships",
         "Arbiters"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "master_of_trade",
+            "name": "Masters of Trade",
+            "pack": "base"
+          },
+          {
+            "id": "guild_ships",
+            "name": "Guild Ships",
+            "pack": "base"
+          },
+          {
+            "id": "arbiters",
+            "name": "Arbiters",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "hacanagent",
+            "type": "agent",
+            "name": "Carth of Golden Sands",
+            "title": "Tripartite Governor",
+            "pack": "pok"
+          },
+          {
+            "id": "hacancommander",
+            "type": "commander",
+            "name": "Gila the Silvertongue",
+            "title": "Kenaran Ambassador",
+            "pack": "pok"
+          },
+          {
+            "id": "hacanhero",
+            "type": "hero",
+            "name": "Harrugh Gefhara",
+            "title": "The Nascent Twilight",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "hacan_mech",
+            "name": "Pride of Kenara",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "hacanbt",
+          "name": "Auto-Factories",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1318,6 +1482,71 @@
         "Brilliant",
         "Analytical"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "fragile",
+            "name": "Fragile",
+            "pack": "base"
+          },
+          {
+            "id": "brilliant",
+            "name": "Brilliant",
+            "pack": "base"
+          },
+          {
+            "id": "analytical",
+            "name": "Analytical",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "jolnarcommander-pok",
+            "type": "commander",
+            "name": "Ta Zern",
+            "pack": "pok"
+          },
+          {
+            "id": "jolnaragent",
+            "type": "agent",
+            "name": "Doctor Sucaban",
+            "title": "Head of Medical \"R&D\"",
+            "pack": "pok"
+          },
+          {
+            "id": "jolnarcommander",
+            "type": "commander",
+            "name": "Agnlan Oln",
+            "title": "Advisor Adjunct",
+            "pack": "te",
+            "replaces": "jolnarcommander-pok"
+          },
+          {
+            "id": "jolnarhero",
+            "type": "hero",
+            "name": "Rin, the Master's Legacy",
+            "title": "Perfected Being",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "jolnar_mech",
+            "name": "Shield Paling",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "jolnarbt",
+          "name": "Specialist Compounds",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1352,6 +1581,59 @@
         "Assimilate",
         "Harrow"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "assimilate",
+            "name": "Assimilate",
+            "pack": "base"
+          },
+          {
+            "id": "harrow",
+            "name": "Harrow",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "l1z1xagent",
+            "type": "agent",
+            "name": "I48S",
+            "title": "Enhancer Prodigy",
+            "pack": "pok"
+          },
+          {
+            "id": "l1z1xcommander",
+            "type": "commander",
+            "name": "2RAM",
+            "title": "Integrated Systems Engineer",
+            "pack": "pok"
+          },
+          {
+            "id": "l1z1xhero",
+            "type": "hero",
+            "name": "The Helmsman",
+            "title": "The Last Record",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "l1z1x_mech",
+            "name": "Annihilator",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "l1z1xbt",
+          "name": "Fealty Uplink",
+          "pack": "te"
+        }
+      },
       "ships": {
         "dreadnought": {
           "one": {
@@ -1417,6 +1699,59 @@
         "Munitions Reserves",
         "Armada"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "munitions",
+            "name": "Munitions Reserves",
+            "pack": "base"
+          },
+          {
+            "id": "armada",
+            "name": "Armada",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "letnevagent",
+            "type": "agent",
+            "name": "Viscount Unlenn",
+            "title": "The Dunlain Scourge",
+            "pack": "pok"
+          },
+          {
+            "id": "letnevcommander",
+            "type": "commander",
+            "name": "Rear Admiral Farran",
+            "title": "Sector XVIII Viceroy",
+            "pack": "pok"
+          },
+          {
+            "id": "letnevhero",
+            "type": "hero",
+            "name": "Darktalon Treilla",
+            "title": "Void Revenant",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "letnev_mech",
+            "name": "Dunlain Reaper",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "letnevbt",
+          "name": "Gravleash Maneuvers",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1455,6 +1790,59 @@
         "Ambush",
         "Pillage"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "ambush",
+            "name": "Ambush",
+            "pack": "base"
+          },
+          {
+            "id": "pillage",
+            "name": "Pillage",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "mentakagent",
+            "type": "agent",
+            "name": "Suffi An",
+            "title": "90% Smuggler, 110% Energy",
+            "pack": "pok"
+          },
+          {
+            "id": "mentakcommander",
+            "type": "commander",
+            "name": "S'ula Mentarion",
+            "title": "Everyone's \"Best Friend\"",
+            "pack": "pok"
+          },
+          {
+            "id": "mentakhero",
+            "type": "hero",
+            "name": "Ipswitch, Loose Cannon",
+            "title": "Mercenary Raider",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "mentak_mech",
+            "name": "Moll Terminus",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "mentakbt",
+          "name": "The Table's Grace",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1487,6 +1875,59 @@
         "Star Forge",
         "Gashlai Physiology"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "star_forge",
+            "name": "Star Forge",
+            "pack": "base"
+          },
+          {
+            "id": "gashlai_physiology",
+            "name": "Gashlai Physiology",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "muaatagent",
+            "type": "agent",
+            "name": "Umbat",
+            "title": "Forgemaster",
+            "pack": "pok"
+          },
+          {
+            "id": "muaatcommander",
+            "type": "commander",
+            "name": "Magmus",
+            "title": "Gashlai Tribune",
+            "pack": "pok"
+          },
+          {
+            "id": "muaathero",
+            "type": "hero",
+            "name": "Adjudicator Ba'al",
+            "title": "Starscourge",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "muaat_mech",
+            "name": "Ember Colossus",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "muaatbt",
+          "name": "Stellar Genesis",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1552,6 +1993,77 @@
         "Telepathic",
         "Foresight"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "telepathic",
+            "name": "Telepathic",
+            "pack": "base"
+          },
+          {
+            "id": "foresight",
+            "name": "Foresight",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "naaluagent-te",
+            "type": "agent",
+            "name": "Z'eu",
+            "title": "Agent of the Nefishh",
+            "pack": "te",
+            "replaces": "naaluagent"
+          },
+          {
+            "id": "naalucommander",
+            "type": "commander",
+            "name": "M'aban",
+            "title": "Crystalline Sorceress",
+            "pack": "pok"
+          },
+          {
+            "id": "naaluhero",
+            "type": "hero",
+            "name": "The Oracle",
+            "title": "Corrupted Mind",
+            "pack": "pok"
+          },
+          {
+            "id": "naaluagent",
+            "type": "agent",
+            "name": "Z'eu",
+            "title": "Agent of the Nefishh",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "naalu_mech_te",
+            "name": "Iconoclast TE",
+            "pack": "te",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true,
+            "replaces": "naalu_mech_omega"
+          },
+          {
+            "id": "naalu_mech_omega",
+            "name": "Iconoclast Omega",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "naalubt",
+          "name": "Mindsieve",
+          "pack": "te"
+        }
+      },
       "ships": {
         "fighter": {
           "one": {
@@ -1607,6 +2119,64 @@
         "Technological Singularity",
         "Propagation"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "galactic_threat",
+            "name": "Galactic Threat",
+            "pack": "base"
+          },
+          {
+            "id": "technological_singularity",
+            "name": "Technological Singularity",
+            "pack": "base"
+          },
+          {
+            "id": "propagation",
+            "name": "Propagation",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "nekroagent",
+            "type": "agent",
+            "name": "Nekro Malleon",
+            "title": "The Shifting Host",
+            "pack": "pok"
+          },
+          {
+            "id": "nekrocommander",
+            "type": "commander",
+            "name": "Nekro Acidos",
+            "title": "Obsidian Reaper",
+            "pack": "pok"
+          },
+          {
+            "id": "nekrohero",
+            "type": "hero",
+            "name": "UNIT.DSGN.FLAYESH",
+            "title": "Recursive Tyrant",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "nekro_mech",
+            "name": "Mordred",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "nekrobt",
+          "name": "Valefar Assimilator Z",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1640,6 +2210,59 @@
         "Scavenge",
         "Nomadic"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "scavenge",
+            "name": "Scavenge",
+            "pack": "base"
+          },
+          {
+            "id": "nomadic",
+            "name": "Nomadic",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "saaragent",
+            "type": "agent",
+            "name": "Captain Mendosa",
+            "title": "Captain of the Fifth Fleet",
+            "pack": "pok"
+          },
+          {
+            "id": "saarcommander",
+            "type": "commander",
+            "name": "Rowl Sarrig",
+            "title": "Relay Engineer",
+            "pack": "pok"
+          },
+          {
+            "id": "saarhero",
+            "type": "hero",
+            "name": "Gurno Aggero",
+            "title": "Captain of the First Fleet",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "saar_mech",
+            "name": "Scavenger Zeta",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "saarbt",
+          "name": "Deorbit Barrage",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1673,6 +2296,54 @@
       "abilities": [
         "Unrelenting"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "unrelenting",
+            "name": "Unrelenting",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "sardakkagent",
+            "type": "agent",
+            "name": "T'ro",
+            "title": "Tekklar Legionnaire",
+            "pack": "pok"
+          },
+          {
+            "id": "sardakkcommander",
+            "type": "commander",
+            "name": "G'hom Sek'kus",
+            "title": "Valkyrie Elite",
+            "pack": "pok"
+          },
+          {
+            "id": "sardakkhero",
+            "type": "hero",
+            "name": "Sh'val, Harbinger",
+            "title": "Master of the First",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "sardakk_mech",
+            "name": "Valkyrie Exoskeleton",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "sardakkbt",
+          "name": "N'orr Supremacy",
+          "pack": "te"
+        }
+      },
       "ships": {
         "dreadnought": {
           "one": {
@@ -1737,6 +2408,59 @@
         "Orbital Drop",
         "Versatile"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "orbital_drop",
+            "name": "Orbital Drop",
+            "pack": "base"
+          },
+          {
+            "id": "versatile",
+            "name": "Versatile",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "solagent",
+            "type": "agent",
+            "name": "Evelyn DeLouis",
+            "title": "Master Tactician",
+            "pack": "pok"
+          },
+          {
+            "id": "solcommander",
+            "type": "commander",
+            "name": "Claire Gibson",
+            "title": "Voice of the People",
+            "pack": "pok"
+          },
+          {
+            "id": "solhero",
+            "type": "hero",
+            "name": "Jace X, 4th Air Legion",
+            "title": "Federation Hero",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "sol_mech",
+            "name": "ZS Thunderbolt M2",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "solbt",
+          "name": "Bellum Gloriosum",
+          "pack": "te"
+        }
+      },
       "ships": {
         "carrier": {
           "one": {
@@ -1802,6 +2526,59 @@
         "Blood Ties",
         "Reclamation"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "blood_ties",
+            "name": "Blood Ties",
+            "pack": "base"
+          },
+          {
+            "id": "reclamation",
+            "name": "Reclamation",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "winnuagent",
+            "type": "agent",
+            "name": "Berekar Berekon",
+            "title": "Arbiter of Divine Right",
+            "pack": "pok"
+          },
+          {
+            "id": "winnucommander",
+            "type": "commander",
+            "name": "Rickar Rickani",
+            "title": "The Hand of the Emperor",
+            "pack": "pok"
+          },
+          {
+            "id": "winnuhero",
+            "type": "hero",
+            "name": "Mathis Mathinus",
+            "title": "Reclamation Executor",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "winnu_mech",
+            "name": "Reclaimer",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "winnubt",
+          "name": "Imperator",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1835,6 +2612,67 @@
         "Peace Accords",
         "Quash"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "peace_accords",
+            "name": "Peace Accords",
+            "pack": "base"
+          },
+          {
+            "id": "quash",
+            "name": "Quash",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "xxchaagent",
+            "type": "agent",
+            "name": "Ggrocuto Rinn",
+            "title": "The King's Shield",
+            "pack": "pok"
+          },
+          {
+            "id": "xxchacommander",
+            "type": "commander",
+            "name": "Elder Qanoj",
+            "title": "The Doom from Kklaj",
+            "pack": "pok"
+          },
+          {
+            "id": "xxchahero",
+            "type": "hero",
+            "name": "Xxekir Grom",
+            "title": "The Council's Heart",
+            "pack": "pok"
+          },
+          {
+            "id": "xxchahero-te",
+            "type": "hero",
+            "name": "Xxekir Grom",
+            "title": "The Council's Heart",
+            "pack": "te",
+            "replaces": "xxchahero"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "xxcha_mech",
+            "name": "Indomitus",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "xxchabt",
+          "name": "Archon's Gift",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1872,6 +2710,59 @@
         "Indoctrination",
         "Devotion"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "indoctrination",
+            "name": "Indoctrination",
+            "pack": "base"
+          },
+          {
+            "id": "devotion",
+            "name": "Devotion",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "yinagent",
+            "type": "agent",
+            "name": "Brother Milor",
+            "title": "Purified by Fire",
+            "pack": "pok"
+          },
+          {
+            "id": "yincommander",
+            "type": "commander",
+            "name": "Brother Omar",
+            "title": "Spinner Devotee",
+            "pack": "pok"
+          },
+          {
+            "id": "yinhero",
+            "type": "hero",
+            "name": "Dannel of the Tenth",
+            "title": "High Priest of Yin",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "yin_mech",
+            "name": "Moyin's Ashes",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "yinbt",
+          "name": "Yin Ascendant",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1906,6 +2797,64 @@
         "Scheming",
         "Crafty"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "stall_tactics",
+            "name": "Stall Tactics",
+            "pack": "base"
+          },
+          {
+            "id": "scheming",
+            "name": "Scheming",
+            "pack": "base"
+          },
+          {
+            "id": "crafty",
+            "name": "Crafty",
+            "pack": "base"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "yssarilagent",
+            "type": "agent",
+            "name": "Ssruu",
+            "title": "Clever, Clever Ssruu",
+            "pack": "pok"
+          },
+          {
+            "id": "yssarilcommander",
+            "type": "commander",
+            "name": "So Ata",
+            "title": "Loyal Only to a Point",
+            "pack": "pok"
+          },
+          {
+            "id": "yssarilhero",
+            "type": "hero",
+            "name": "Kyver, Blade and Key",
+            "title": "Guild Assassin",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "yssaril_mech",
+            "name": "Blackshade Infiltrator",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "yssarilbt",
+          "name": "Deepgloom Executable",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {

@@ -4,7 +4,7 @@ import { strategyCardSet, strategyCards } from '../../domain/cards';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat } from '../../domain/players';
 import { placesOf, systemPlanets } from '../../domain/project';
-import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices, homeSlot, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
+import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices, homeSlot, researchCount, withLeadershipTokens, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, UnitId, Warning } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import type { PurchaseTarget } from '../map/HexStage';
@@ -12,7 +12,6 @@ import { opponentName } from '../map/opponentName';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { EntryUpgrades } from './EntryUpgrades';
 import { PaymentBlock } from './PaymentBlock';
-import { Stepper } from './Stepper';
 import { systemName, type TacticalEntry } from './tactical';
 import { TokenTiles } from './TokenTiles';
 import { WarningText } from './WarningText';
@@ -31,6 +30,8 @@ export function cardPurchases(
   return {
     bought: placesOf(game, before, slot, production?.units ?? {}, pack, production?.ground),
     upgrades: before.upgrades,
+    before,
+    entryId: entry.id,
     change: (unit: UnitId, planetId, amount) => apply(withProduction(effects, slot, unit, planetId, amount)),
     structures: effects.structures,
     changeStructure: (kind, planetId, amount) => apply(withStructure(effects, kind, planetId, amount)),
@@ -87,10 +88,10 @@ export function StrategyEditor({
     type: next === 'secondary' ? 'secondary' : 'strategic', forToken: next === 'forToken' ? true : undefined,
   });
 
-  const tokenPick = (rearrange = false) => (
+  const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
     <div className="editor-section">
       <TokenTiles
-        free={freeTokens(entry, game.expansions)} values={effects.tokens ?? {}} onChange={tokens => setEffects({ tokens })}
+        free={freeTokens(entry, game.expansions)} values={effects.tokens ?? {}} onChange={onTokens}
         pools={rearrange ? { tactic: before.tactic, fleet: before.fleet, strategy: before.strategy } : undefined}
       />
     </div>
@@ -120,11 +121,8 @@ export function StrategyEditor({
         const bought = effects.boughtTokens ?? 0;
         return (
           <>
-            <div className="editor-section">
-              <Stepper name={t('plan.strategy.buy')} value={bought} min={0} onChange={value => setEffects({ boughtTokens: value })} />
-              <span className="muted">{t('plan.strategy.bought', { n: bought, cost: cost.amount })}</span>
-            </div>
-            {tokenPick()}
+            {tokenPick(false, tokens => change({ effects: withLeadershipTokens(effects, tokens, primary) }))}
+            <p className="muted">{bought > 0 ? t('plan.strategy.bought', { n: bought, cost: cost.amount }) : t(primary ? 'plan.strategy.boughtNonePrimary' : 'plan.strategy.boughtNoneSecondary')}</p>
           </>
         );
       }
@@ -191,7 +189,7 @@ export function StrategyEditor({
                 })}
               </p>
             )}
-            {primary && te && (production
+            {te && (production
               ? <button type="button" className="option" aria-pressed="true" onClick={() => onOpenShop(production.systemId, 'units')}>{t('plan.strategy.dock')} · {tile(production.systemId)}</button>
               : pickButton('dock', t('plan.strategy.dock')))}
             {builtLine}
@@ -256,13 +254,31 @@ export function StrategyEditor({
         );
       }
       case CARD.technology: {
-        const count = entry.upgrades?.length ?? 0;
+        const count = researchCount(entry);
+        const researched = effects.researched ?? 0;
+        const setResearched = (value: number) => {
+          const next = { ...effects };
+          if (value > 0) next.researched = value;
+          else delete next.researched;
+          change({ effects: next });
+        };
         return (
-          <div className="editor-section">
-            <strong>{t('plan.strategy.upgrades')}</strong>
-            {upgradeRow}
-            <span className="muted">{t(primary ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}</span>
-          </div>
+          <>
+            <div className="editor-section">
+              <strong>{t('plan.strategy.research', { n: count })}</strong>
+              <div className="research-row">
+                <button type="button" className="option" aria-pressed={researched > 0} onClick={() => setResearched(researched + 1)}>
+                  {t('plan.strategy.researchAdd')}{researched > 0 ? ` · ${researched}` : ''}
+                </button>
+                {researched > 0 && <button type="button" aria-label={t('plan.strategy.researchTake')} onClick={() => setResearched(researched - 1)}>−</button>}
+              </div>
+              <span className="muted">{t(primary ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}</span>
+            </div>
+            <div className="editor-section">
+              <strong>{t('plan.strategy.upgrades')}</strong>
+              {upgradeRow}
+            </div>
+          </>
         );
       }
       case CARD.imperial:

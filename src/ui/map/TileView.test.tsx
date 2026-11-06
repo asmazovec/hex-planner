@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
@@ -239,18 +239,6 @@ test('the layout is worked out again only when the stacks change', () => {
   expect(vi.mocked(hexLayout).mock.calls.length).toBe(calls + 1);
 });
 
-test('the legend closes on Escape and gives the focus back to its button', async () => {
-  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  render(<HexMap game={game} state={emptyState()} pack={pack} />);
-  const button = screen.getByRole('button', { name: 'What the tokens mean' });
-  await userEvent.click(button);
-  expect(screen.getByRole('dialog')).toBeInTheDocument();
-  button.blur();
-  await userEvent.keyboard('{Escape}');
-  expect(screen.queryByRole('dialog')).toBeNull();
-  expect(button).toHaveFocus();
-});
-
 test('a planet name goes when a token covers it, and stays otherwise', () => {
   const id = pack.tiles['25'].planetIds[0];
   const name = pack.planets[id].name;
@@ -309,20 +297,6 @@ test('a home system shows the seat number of its player in the colour of that pl
   expect(within(document.querySelector(`[data-slot="${seat1}"]`)!).getByLabelText('Seat 1').querySelector('circle')!.style.fill).toBe('var(--player-1)');
   expect(within(document.querySelector(`[data-slot="${seat2}"]`)!).getByLabelText('Seat 2').querySelector('circle')!.style.fill).toBe('var(--player-7)');
   expect(within(document.querySelector('[data-slot="1,0"]')!).queryByLabelText(/^Seat/)).toBeNull();
-});
-
-test('the legend opens from the map and explains the shapes and the badge', async () => {
-  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-  render(<HexMap game={game} state={emptyState()} pack={pack} />);
-  expect(screen.queryByRole('dialog')).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'What the tokens mean' }));
-  const legend = screen.getByRole('dialog', { name: 'Unit tokens' });
-  expect(legend).toHaveTextContent('fleet pool');
-  expect(legend).toHaveTextContent('triangles');
-  expect(legend).toHaveTextContent('squares');
-  expect(legend.querySelectorAll('[data-unit]')).toHaveLength(6);
-  await userEvent.click(document.querySelector('.hexmap')!);
-  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 test('shows a command token and a space dock marker', () => {
@@ -605,4 +579,21 @@ test('enemy ground units stand on the arc of their own planet, merged with any l
   expect(stackOf('Infantry ×2 (Player 2)')).toHaveAttribute('data-planet', '0');
   expect(document.querySelectorAll('[data-stack$="|infantry|1"]')).toHaveLength(1);
   expect(document.querySelectorAll('[data-stack$="|infantry|0"]')).toHaveLength(1);
+});
+
+test('a new reset signal sends the camera back to the whole map, as the reset button does', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+  const { rerender } = render(<HexMap game={game} state={emptyState()} pack={pack} />);
+  const svg = document.querySelector('.hexmap')!;
+  svg.getBoundingClientRect = () => ({ left: 0, top: 0, right: 800, bottom: 600, width: 800, height: 600, x: 0, y: 0, toJSON: () => undefined });
+  const camera = () => svg.querySelector(':scope > g')!.getAttribute('transform');
+  const start = camera();
+  fireEvent.pointerDown(svg, { pointerId: 1, clientX: 100, clientY: 100 });
+  fireEvent.pointerMove(svg, { pointerId: 1, clientX: 160, clientY: 100 });
+  fireEvent.pointerUp(svg, { pointerId: 1, clientX: 160, clientY: 100 });
+  expect(camera()).not.toBe(start);
+  rerender(<HexMap game={game} state={emptyState()} pack={pack} resetSignal={1} />);
+  expect(camera()).toBe(start);
+  vi.unstubAllGlobals();
 });

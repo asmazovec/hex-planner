@@ -90,7 +90,7 @@ describe('the table', () => {
 
 describe('the Game screen card', () => {
   test('shows base values, read only', () => {
-    render(<FactionCard faction={pack.factions.l1z1x} pack={pack} />);
+    render(<FactionCard faction={pack.factions.l1z1x} pack={pack} expansions={['pok', 'te']} />);
     expect(row('dreadnought').querySelectorAll('.ship-row-value')[1].textContent).toBe('2');
     expect(row('dreadnought').tagName).not.toBe('BUTTON');
   });
@@ -103,19 +103,16 @@ describe('the players panel of the plan screen', () => {
   };
   const cardOf = (n: number) => screen.getByRole('group', { name: `Игрок ${n}` });
 
-  test('a tap on my row edits the baseline in one undo step, an opponent row their own list', async () => {
+  test('it is a reference: no way to change a faction, add or remove a player, or toggle a ship', async () => {
     startPlan();
     act(() => useGame.getState().setOpponent(0, { faction: 'sol' }));
     await openPlayers();
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(within(cardOf(2)).getByText(/Federation of Sol/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Добавить игрока' })).toBeNull();
+    expect(within(cardOf(2)).queryByRole('button', { name: 'Убрать игрока' })).toBeNull();
     await userEvent.click(within(cardOf(1)).getByTestId('ship-row-carrier'));
-    expect(game().upgrades.me).toEqual(['carrier']);
-    expect(within(cardOf(1)).getByTestId('ship-row-carrier').querySelectorAll('.ship-row-value')[1].textContent).toBe('4 → 6');
-    await userEvent.click(within(cardOf(2)).getByTestId('ship-row-carrier'));
-    expect(game().upgrades.opponents[game().opponents[0].id]).toEqual(['carrier']);
-    expect(within(cardOf(2)).getByTestId('ship-row-carrier').querySelectorAll('.ship-row-value')[1].textContent).toBe('6 → 8');
-    act(() => useGame.getState().undo());
-    expect(game().upgrades.opponents).toEqual({});
-    expect(game().upgrades.me).toEqual(['carrier']);
+    expect(game().upgrades.me).toEqual([]);
   });
 
   test('a type upgraded by an entry shows the current value and its round, and does not toggle', async () => {
@@ -125,7 +122,6 @@ describe('the players panel of the plan screen', () => {
     const carrier = within(cardOf(1)).getByTestId('ship-row-carrier');
     expect(carrier.querySelectorAll('.ship-row-value')[1].textContent).toBe('4 → 6');
     expect(carrier).toHaveTextContent('раунд 1');
-    expect(carrier).toBeDisabled();
   });
 });
 
@@ -172,7 +168,7 @@ describe('the upgrades panel', () => {
     expect(card(panel, 'carrier')).toBeDisabled();
     expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
     expect(card(panel, 'carrier')).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(screen.getByRole('button', { name: 'Сейчас' }));
+    await userEvent.click(screen.getByRole('button', { name: 'По факту' }));
     expect(card(panel, 'carrier')).toBeEnabled();
     expect(card(panel, 'carrier')).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(card(panel, 'carrier'));
@@ -190,10 +186,10 @@ describe('the upgrades panel', () => {
     expect(game().upgrades.me).toEqual(['carrier']);
   });
 
-  test('closes', async () => {
+  test('closes on a second tap on its tab', async () => {
     startPlan();
-    const panel = await open();
-    await userEvent.click(within(panel).getByRole('button', { name: 'Закрыть' }));
+    await open();
+    await userEvent.click(screen.getByRole('button', { name: /Улучшения кораблей/ }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

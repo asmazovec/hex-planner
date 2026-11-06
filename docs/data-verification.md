@@ -243,3 +243,11 @@ TE подтверждает, что заменяются именно Constructi
 Сверка с KW (`tileData.js`, поля `trait` и `specialty`): по имени сопоставились 129 планет. Черты совпали у 124; у 4 расхождение только в порядке двух черт, у Lisis KW даёт cultural, источник industrial (известная путаница имён Cealdri и Lisis). Легендарность совпала у всех, кроме Mecatol Rex: KW отмечает его легендарным, а в источнике у него нет `legendaryAbilityName` (способность Custodian's Favour у Custodia Vigilia). Mecatol Rex отметки не получает.
 
 Значок реликвии показывается у планет на тайлах Излома (`kind: 'fracture'`): правила дают его каждой планете Излома.
+
+## Faction sheets: abilities, leaders, mechs, breakthroughs
+
+Names, origins and numbers come from the source (`data/abilities`, `data/leaders`, `data/units`, `data/breakthroughs`); the texts in `src/data/sheetSummaries.json` are own retellings, checked against the source by `scripts/source-wording.test.ts`.
+
+- The Thunder's Edge rulebook (Expansion Integration) replaces Jol-Nar's Ta Zern with Agnlan Oln, and removes all leaders and mechs when playing without Prophecy of Kings.
+- Ta Zern is not in the source at this commit. Its text is assumed to be that of Agnlan Oln, filed under the same source id; this is not confirmed by a public source.
+- Xxcha's hero (`xxchahero-te`), Naalu's agent (`naaluagent-te`) and Naalu's mech (`naalu_mech_te`) are marked as Thunder's Edge cards by the source; the rulebook does not list them one by one, it only counts replacement leaders and a mech.

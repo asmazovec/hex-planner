@@ -63,7 +63,7 @@ test('the widgets live in a panel the map tools open and close, and are not in t
   const panel = screen.getByRole('dialog', { name: "Thunder's Edge" });
   expect(within(panel).getByRole('group', { name: 'Expedition' })).toBeVisible();
   expect(within(panel).getByRole('group', { name: 'Fracture' })).toHaveTextContent('Not an action');
-  await userEvent.click(within(panel).getByRole('button', { name: 'Close' }));
+  await userEvent.click(teButton());
   expect(screen.queryByRole('dialog', { name: "Thunder's Edge" })).toBeNull();
 });
 
@@ -157,6 +157,10 @@ test('the Fracture button adds its systems beside the map', async () => {
   expect(game().fracture.active).toBe(true);
   const group = screen.getByRole('group', { name: 'Fracture systems' });
   expect(group.querySelectorAll('[data-fracture-tile]').length).toBe(7);
+  expect(group).toHaveClass('fracture-opening');
+  const middle = group.querySelectorAll<SVGGElement>('.fracture-fly')[3];
+  expect(middle.style.animationDelay).toBe('0ms');
+  expect(group.querySelectorAll<SVGGElement>('.fracture-fly')[0].style.animationDelay).toBe('165ms');
   expect(within(group).getByRole('group', { name: /Styx/ })).toBeTruthy();
 });
 
@@ -232,4 +236,71 @@ test('the way back from choosing on the map stands outside the spoken hint', asy
   expect(back).not.toBeNull();
   expect(back!.closest('[role="status"]')).toBeNull();
   expect(screen.getByRole('status')).toHaveTextContent(/./);
+});
+
+test('ships fly to the Fracture: its systems take the taps of a tactical action, and the system is told by its F number', async () => {
+  await openPanel();
+  await userEvent.click(within(fracture()).getByRole('button', { name: 'Open the Fracture' }));
+  const tiles = game().fracture.tiles!;
+  const [slot, tileId] = Object.entries(tiles)[0];
+  expect(tileId).toBe('fracture1');
+  await userEvent.click(teButton());
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+  const group = screen.getByRole('group', { name: 'Fracture systems' });
+  await userEvent.click(group.querySelector(`[data-slot="${slot}"]`)!);
+  const entry = plan().rounds[0].entries.find(e => e.type === 'tactical');
+  expect(entry).toMatchObject({ systemId: slot });
+  expect(screen.getByText(/System F1|F1/, { selector: 'strong' })).toBeVisible();
+});
+
+test('the Fracture\'s systems follow its seat and go when it closes', () => {
+  act(() => useGame.getState().setFractureActive(true));
+  const first = game().fracture.tiles!;
+  expect(Object.values(first)).toHaveLength(7);
+  act(() => useGame.getState().setFractureSeat(3));
+  expect(game().fracture.tiles).not.toEqual(first);
+  act(() => useGame.getState().setFractureActive(false));
+  expect(game().fracture.tiles).toEqual({});
+});
+
+test('a Fracture already open does not play its opening again when the map comes back', () => {
+  act(() => useGame.getState().setFractureActive(true));
+  render(<PlanScreen />);
+  expect(screen.getByRole('group', { name: 'Fracture systems' })).not.toHaveClass('fracture-opening');
+});
+
+test('moving the open Fracture to another seat plays its arrival again', () => {
+  act(() => useGame.getState().setFractureActive(true));
+  render(<PlanScreen />);
+  const before = screen.getByRole('group', { name: 'Fracture systems' });
+  expect(before).not.toHaveClass('fracture-opening');
+  act(() => useGame.getState().setFractureSeat(3));
+  const after = screen.getByRole('group', { name: 'Fracture systems' });
+  expect(after).toHaveClass('fracture-opening');
+  expect(after).not.toBe(before);
+});
+
+test('closing the Fracture fades it where it stands, and then it is gone', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  act(() => useGame.getState().setFractureActive(true));
+  render(<PlanScreen />);
+  act(() => useGame.getState().setFractureActive(false));
+  expect(screen.queryByRole('group', { name: 'Fracture systems' })).toBeNull();
+  const group = document.querySelector('.fracture-closing')!;
+  expect(group.querySelectorAll('[data-fracture-tile]')).toHaveLength(7);
+  fireEvent.animationEnd(group);
+  fireEvent(group, new Event('webkitAnimationEnd', { bubbles: true }));
+  expect(document.querySelector('.fracture-closing')).toBeNull();
+  vi.unstubAllGlobals();
+});
+
+test('moving the Fracture fades it where it stood while it arrives at the new seat', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  act(() => useGame.getState().setFractureActive(true));
+  render(<PlanScreen />);
+  act(() => useGame.getState().setFractureSeat(3));
+  expect(document.querySelector('.fracture-closing')).not.toBeNull();
+  expect(screen.getByRole('group', { name: 'Fracture systems' })).toHaveClass('fracture-opening');
+  vi.unstubAllGlobals();
 });

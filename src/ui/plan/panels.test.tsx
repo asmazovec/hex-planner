@@ -177,6 +177,8 @@ const CASES: Record<WarningCode, Warning['params']> = {
   tokensOver: { given: 3, free: 2 },
   poolNegative: { pool: 'fleet', have: -1 },
   sliceTaken: { sliceId: 'res5' },
+  systemHasToken: { systemId: '1,0' },
+  constructionUnits: {},
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {
@@ -204,9 +206,53 @@ test('default plan names render localized; own names stay', () => {
 function PlanTabsLive() {
   const live = useGame(s => s.game)!;
   return (
-    <PlanTabs game={live} roundNo={1} onSelectRound={() => undefined} onSelectPlan={() => undefined} onAddRound={() => undefined} />
+    <PlanTabs game={live} roundNo={1} onSelectRound={() => undefined} onSelectPlan={() => undefined} onAddRound={() => undefined} onDeleteRound={() => useGame.getState().deleteRound(1)} onDeletePlan={() => useGame.getState().deletePlan(live.activePlanId)} />
   );
 }
+
+test('a plan and a round can be deleted, the last of each stays, and undo brings them back', async () => {
+  render(<PlanTabsLive />);
+  expect(screen.getByRole('button', { name: 'Delete plan' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Delete round 1' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete plan' }));
+  expect(game().plans).toHaveLength(1);
+  act(() => useGame.getState().undo());
+  expect(game().plans).toHaveLength(2);
+  await userEvent.click(screen.getByRole('button', { name: 'Add round' }).parentElement!.querySelector('button')!);
+  act(() => { useGame.getState().addRound(); useGame.getState().addRound(); });
+  useGame.getState().addEntry(3, { type: 'pass' }, 'action');
+  await userEvent.click(screen.getByRole('button', { name: 'Delete round 1' }));
+  const { rounds } = game().plans.find(p => p.id === game().activePlanId)!;
+  expect(rounds.map(r => r.number)).toEqual([1, 2]);
+  expect(rounds[1].entries).toHaveLength(1);
+});
+
+test('a plan tab is dragged along the row to change the order; a short press stays a tap', async () => {
+  useGame.getState().copyPlan();
+  useGame.getState().copyPlan();
+  render(<PlanTabsLive />);
+  const tabs = () => screen.getAllByRole('tab');
+  tabs().forEach((el, i) => {
+    el.getBoundingClientRect = () => ({ left: i * 100, width: 100, right: i * 100 + 100, top: 0, bottom: 40, height: 40, x: i * 100, y: 0, toJSON: () => undefined });
+  });
+  const order = () => game().plans.map(p => p.name);
+  const before = order();
+  const first = tabs()[0];
+  fireEvent.pointerDown(first, { pointerId: 1, clientX: 50 });
+  fireEvent.pointerMove(first, { pointerId: 1, clientX: 180 });
+  expect(first).toHaveClass('plan-tab-dragging');
+  expect(first.style.transform).toBe('translateX(130px)');
+  expect(tabs()[1].style.transform).toBe('translateX(-100px)');
+  expect(tabs()[2].style.transform).toBe('translateX(0px)');
+  fireEvent.pointerUp(first, { pointerId: 1, clientX: 180 });
+  expect(order()).toEqual([before[1], before[0], before[2]]);
+  const active = game().activePlanId;
+  fireEvent.click(first);
+  expect(game().activePlanId).toBe(active);
+  useGame.getState().undo();
+  expect(order()).toEqual(before);
+});
 
 test('the Copy tab makes a new plan with its own entries', async () => {
   useGame.getState().addEntry(1, { type: 'pass' }, 'action');
@@ -249,18 +295,6 @@ function threeEntries(): string[] {
 
 const order = () => plan().rounds[0].entries.map(e => e.type);
 
-test('up and down buttons move an entry, and stop at the ends', async () => {
-  threeEntries();
-  render(<EntryListLive />);
-  const row = () => screen.getByRole('listitem', { name: 'Strategy' });
-  await userEvent.click(within(row()).getByRole('button', { name: 'Move up' }));
-  expect(order()).toEqual(['strategic', 'pass', 'secondary']);
-  expect(within(row()).getByRole('button', { name: 'Move up' })).toBeDisabled();
-  await userEvent.click(within(row()).getByRole('button', { name: 'Move down' }));
-  await userEvent.click(within(row()).getByRole('button', { name: 'Move down' }));
-  expect(order()).toEqual(['pass', 'secondary', 'strategic']);
-});
-
 test('dragging the handle moves the entry; pointercancel leaves it', () => {
   threeEntries();
   render(<EntryListLive />);
@@ -276,6 +310,8 @@ test('dragging the handle moves the entry; pointercancel leaves it', () => {
 
   fireEvent.pointerDown(handle, { pointerId: 1, clientY: 10 });
   fireEvent.pointerMove(handle, { pointerId: 1, clientY: 140 });
+  expect(rows[0].style.transform).toBe('translateY(130px)');
+  expect(rows[1].style.transform).toBe('translateY(-50px)');
   fireEvent.pointerUp(handle, { pointerId: 1, clientY: 140 });
   expect(order()).toEqual(['strategic', 'secondary', 'pass']);
 });

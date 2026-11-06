@@ -38,6 +38,9 @@
       "123A",
       "124A"
     ],
+    "leaders": [
+      "Ta Zern"
+    ],
     "reason": "Thunder's Edge rulebook; absent from the source at this commit"
   },
   "corrections": {

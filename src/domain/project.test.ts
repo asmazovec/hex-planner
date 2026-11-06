@@ -1,7 +1,9 @@
+import type { CardEffects, ExpansionId } from './types';
+import { CARD } from './strategy';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { productionCost, productionPlaces, project, readyInfluence, readyResources, stateBeforeEntry, tacticalMeters } from './project';
+import { productionCost, productionPlaces, project, readyInfluence, readyResources, stateBeforeEntry, tacticalMeters, systemsAdjacent } from './project';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
@@ -858,5 +860,41 @@ describe('pickups on the way', () => {
     const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
     expect(state.systems.T).toEqual({ carrier: 1, fighter: 2 });
     expect(warningsByEntry.r).toContainEqual({ code: 'unitsMissing', params: { where: 'M', unit: 'fighter', missing: 1 } });
+  });
+});
+
+describe('Construction\'s secondary', () => {
+  const secondaryOn = (expansions: ExpansionId[], effects: CardEffects) => {
+    const pack = loadPack(expansions);
+    const game = createGame({ expansions, playerCount: 6, faction: 'sol' }, pack);
+    const round = game.plans[0].rounds[0];
+    round.entries.push(
+      { id: 't', phase: 'action', status: 'planned', type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } },
+      { id: 'c', phase: 'action', status: 'planned', type: 'secondary', card: CARD.construction, effects },
+    );
+    return project(game, game.plans[0], 'forecast', pack);
+  };
+
+  test('warns before Thunder\'s Edge when its token would join one of mine, and does not forbid it', () => {
+    expect(secondaryOn(['pok'], { systemId: '1,0' }).warningsByEntry.c.map(w => w.code)).toEqual(['systemHasToken']);
+    const free = secondaryOn(['pok'], { systemId: '2,0' });
+    expect(free.warningsByEntry.c).toEqual([]);
+    expect(free.state.tokensOnMap).toContain('2,0');
+  });
+
+  test('says so when units are built through it, and leaves no token with Thunder\'s Edge', () => {
+    const built = secondaryOn(['pok', 'te'], { systemId: '1,0', production: { systemId: '1,0', units: { cruiser: 1 } } });
+    expect(built.warningsByEntry.c.map(w => w.code)).toContain('constructionUnits');
+    expect(built.warningsByEntry.c.map(w => w.code)).not.toContain('systemHasToken');
+  });
+});
+
+describe('adjacency at the edge of the Fracture', () => {
+  const game = { fracture: { active: true, ingress: [], seat: null, tiles: { '0,-4': 'fracture4', '1,-4': 'fracture5' } } } as unknown as Game;
+  test('a Fracture system does not touch the map beside it, but does touch the Fracture system beside it', () => {
+    const adjacent = systemsAdjacent(game);
+    expect(adjacent('0,-4', '0,-3')).toBe(false);
+    expect(adjacent('0,-4', '1,-4')).toBe(true);
+    expect(adjacent('0,-3', '0,-2')).toBe(true);
   });
 });

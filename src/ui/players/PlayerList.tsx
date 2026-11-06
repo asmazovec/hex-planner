@@ -5,6 +5,8 @@ import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf
 import type { UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { FactionCard } from '../plan/FactionCard';
+import { HexRemove } from '../plan/RowIcon';
+import { FactionPicker } from './FactionPicker';
 import type { SeatDrag } from './useSeatDrag';
 
 type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
@@ -14,7 +16,7 @@ export interface PlayerListProps {
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
   /** Stands at the end of the heading. */
   action?: ReactNode;
-  /** On the plan screen: my ships in the state the map shows; opponents come from the game. Rows toggle upgrades. Points are totals by player id, read only. */
+  /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
   live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
@@ -26,7 +28,6 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
   const setOpponent = useGame(s => s.setOpponent);
   const addOpponent = useGame(s => s.addOpponent);
   const removeOpponent = useGame(s => s.removeOpponent);
-  const toggleUpgrade = useGame(s => s.toggleUpgrade);
   const started = useGame(s => s.game !== null);
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
   const factions = useMemo(
@@ -105,30 +106,25 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
               <div className={badge.join(' ')} onAnimationEnd={drag?.clearBump}>{index + 1}</div>
               <div className="player-name">
                 <div className="player-role">{t(index === 0 ? 'players.me' : 'players.opponent')}</div>
-                <select
-                  className="fac" aria-label={t(index === 0 ? 'players.me' : 'players.opponent')} value={player.faction}
-                  onChange={e => (index === 0 ? setFaction(e.target.value) : setOpponent(opponent, { faction: e.target.value }))}
-                >
-                  <option value="" disabled={index === 0 && started}>{t('players.choose')}</option>
-                  {factions.map(f => <option key={f.id} value={f.id} disabled={taken.has(f.id)}>{f.name}</option>)}
-                </select>
+                {live ? <div className="fac fac-fixed">{faction?.name ?? player.faction}</div> : (
+                  <FactionPicker
+                    label={t(index === 0 ? 'players.me' : 'players.opponent')} value={player.faction} factions={factions} taken={taken} clearable={!(index === 0 && started)}
+                    onPick={id => (index === 0 ? setFaction(id) : setOpponent(opponent, { faction: id }))}
+                  />
+                )}
               </div>
               {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
-              {index === 0 ? <span /> : (
-                <button
-                  type="button" className="icon-button" aria-label={t('players.remove')} title={t('players.remove')}
-                  disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })}
-                >✕</button>
+              {index === 0 || live ? <span /> : (
+                <HexRemove label={t('players.remove')} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })} />
               )}
             </div>
             {asked?.kind === 'remove' && asked.opponent === opponent && confirmBar(asked)}
             {faction && (
               <FactionCard
-                faction={faction} pack={pack}
+                faction={faction} pack={pack} expansions={game.expansions}
                 live={live && {
                   upgraded: index === 0 ? live.upgraded : game.upgrades.opponents[player.id],
                   locked: index === 0 ? live.locked : undefined,
-                  onToggle: unit => toggleUpgrade(player.id, unit),
                 }}
               />
             )}
@@ -136,7 +132,7 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
         );
       })}
       {asked?.kind === 'add' && confirmBar(asked)}
-      {count < max && (
+      {count < max && !live && (
         <button type="button" className="add-opponent" onClick={() => ask({ kind: 'add' })}>{t('players.add')}</button>
       )}
     </section>

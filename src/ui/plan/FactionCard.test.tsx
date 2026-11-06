@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
+import type { ExpansionId } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { FactionCard } from './FactionCard';
 
@@ -9,7 +10,7 @@ const pack = loadPack(['pok', 'te']);
 afterEach(cleanup);
 beforeEach(() => setLanguage('ru'));
 
-const show = (faction: string) => render(<FactionCard faction={pack.factions[faction]} pack={pack} />);
+const show = (faction: string, expansions: ExpansionId[] = ['pok', 'te']) => render(<FactionCard faction={pack.factions[faction]} pack={pack} expansions={expansions} />);
 
 test('home hex shows the tile number and each planet with its resources and influence', () => {
   show('letnev');
@@ -86,4 +87,36 @@ test('a long planet name beside another planet takes two lines, whole in the tex
   const hex = screen.getByRole('img', { name: 'Домашний гекс' });
   const lines = [...hex.querySelectorAll('.home-hex-name')].map(name => name.querySelectorAll('tspan').length);
   expect(lines).toEqual(pack.tiles[pack.factions.obsidian.homeTile].planetIds.map(id => (pack.planets[id].name.length > 10 ? 2 : 1)));
+});
+
+const itemOf = (name: string) => screen.getAllByTestId('sheet-item').find(item => item.textContent?.includes(name));
+
+test('abilities, leaders, the mech and the breakthrough are signed with their expansion, and told in own words', () => {
+  show('jolnar');
+  expect(screen.getByText('Особенности фракции')).toBeInTheDocument();
+  expect(itemOf('Brilliant')).toHaveTextContent('Base');
+  expect(itemOf('Doctor Sucaban')).toHaveTextContent('Prophecy of Kings');
+  expect(itemOf('Doctor Sucaban')).toHaveTextContent('Агент');
+  const mech = pack.factions.jolnar.sheet!.mechs[0].name;
+  expect(itemOf(mech)).toHaveTextContent('Цена 2');
+  expect(itemOf(pack.factions.jolnar.sheet!.breakthrough!.name)).toHaveTextContent("Thunder's Edge");
+});
+
+test('Thunder\'s Edge puts Agnlan Oln in the place of Ta Zern, with the condition to unlock', () => {
+  show('jolnar', ['pok']);
+  expect(itemOf('Ta Zern')).toHaveTextContent('Prophecy of Kings');
+  expect(itemOf('Agnlan Oln')).toBeUndefined();
+  cleanup();
+  show('jolnar', ['pok', 'te']);
+  expect(itemOf('Ta Zern')).toBeUndefined();
+  expect(itemOf('Agnlan Oln')).toHaveTextContent("Thunder's Edge");
+  expect(itemOf('Agnlan Oln')).toHaveTextContent('Открытие: Владейте 8 технологиями.');
+});
+
+test('without the expansions only the abilities stay', () => {
+  show('jolnar', []);
+  expect(screen.queryByText('Лидеры')).toBeNull();
+  expect(screen.queryByText('Мех')).toBeNull();
+  expect(screen.queryByText('Прорыв')).toBeNull();
+  expect(itemOf('Brilliant')).toBeDefined();
 });

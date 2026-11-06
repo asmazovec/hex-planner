@@ -3,18 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { isOnMap, project, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
 import { focusRect, routeShapes, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { CARD, cardChange, plannedCard, primaryPlayed, withSystem, type CardEntry } from '../../domain/strategy';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
-import type { AdjustmentKind, Entry, EntryBody, Game, Phase, Plan } from '../../domain/types';
+import type { AdjustmentKind, Entry, EntryBody, Game, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { Drawer, DrawerTab } from '../map/Drawer';
 import { FlightLayer } from '../map/FlightLayer';
 import { HexMap, type Arrow } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/HexStage';
 import { MapBuilderPanel } from '../map/MapBuilderPanel';
+import { MapLegend } from '../map/MapLegend';
 import { MapStringImport } from '../map/MapStringImport';
 import { ThundersEdgePanel } from '../map/ThundersEdgePanel';
 import { UpgradesPanel } from '../map/UpgradesPanel';
@@ -26,6 +28,7 @@ import { ActionMenu } from '../plan/ActionMenu';
 import { EntryList } from '../plan/EntryList';
 import { sliceOwners } from '../plan/ExpeditionWidget';
 import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
+import { RowIcon } from '../plan/RowIcon';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { cardPurchases, StrategyEditor, type MapPick } from '../plan/StrategyEditor';
@@ -35,24 +38,16 @@ import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry; `fromCard` makes that one Warfare's free action. */
+type DrawerName = 'players' | 'legend' | 'upgrades' | 'te';
+
 interface Editing { entryId: string | null; pickerFrom: string | null; fromCard?: string }
 
 /** A flight under way: it ends when the game it started from changes. `passed` holds the moves already taken on board on the way; `filter` is the replay its map stands on. */
 interface Flight { entryId: string; run: number; game: Game; passed: number[]; filter: 'now' | 'forecast' }
 
-/** The round being played: its entry, and whether it is in the pause before it, flying, or holding for a moment instead of flying. */
-interface Playback { index: number; step: 'pause' | 'flying' | 'hold'; game: Game }
-
 /** The pause before a shown action first flies, and between its flights. */
 const LOOP_START_MS = 380;
 const LOOP_PAUSE_MS = 750;
-/** The round's playback: the pause before each entry, and the moment an entry that does not fly stays lit. */
-const PLAY_PAUSE_MS = 260;
-const PLAY_HOLD_MS = 450;
-const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
-
-const nextStep = (playing: Playback, count: number): Playback | null =>
-  (playing.index + 1 < count ? { ...playing, index: playing.index + 1, step: 'pause' } : null);
 
 /** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
 function pruneEmptySources(entryId: string | undefined) {
@@ -107,6 +102,8 @@ export function PlanScreen() {
   const setThundersEdge = useGame(s => s.setThundersEdge);
   const addRound = useGame(s => s.addRound);
   const removeEntry = useGame(s => s.removeEntry);
+  const deleteRound = useGame(s => s.deleteRound);
+  const deletePlan = useGame(s => s.deletePlan);
   const pack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
 
   const [roundNo, setRoundNo] = useState<number | null>(null);
@@ -121,18 +118,26 @@ export function PlanScreen() {
   /** The entry being read, and how many of its flights have started. */
   const [shown, setShown] = useState<{ id: string; plays: number } | null>(null);
   const [flight, setFlight] = useState<Flight | null>(null);
+  /** Counts the times an entry with no place on the map was opened: the camera goes to the whole map. */
+  const [viewResets, setViewResets] = useState(0);
   const flightRuns = useRef(0);
-  const [playing, setPlaying] = useState<Playback | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [cardId, setCardId] = useState<string | null>(null);
   const [mapPick, setMapPick] = useState<MapPick | null>(null);
+  /** The manual adjustment whose system the next tap on the map chooses. */
+  const [systemPickFor, setSystemPickFor] = useState<string | null>(null);
   const [manualPayments, setManualPayments] = useState<string[]>([]);
   const [view, setView] = useState<'map' | 'plan'>('map');
   const [placing, setPlacing] = useState(false);
   const [marking, setMarking] = useState(false);
-  const [showPlayers, setShowPlayers] = useState(false);
-  const [showUpgrades, setShowUpgrades] = useState(false);
-  const [showTe, setShowTe] = useState(false);
+  /** One drawer at a time. */
+  const [drawer, setDrawer] = useState<DrawerName | null>(null);
+  /** What the right drawer holds, kept while it slides away. */
+  const [rightDrawer, setRightDrawer] = useState<'upgrades' | 'te'>('upgrades');
+  const [leftDrawer, setLeftDrawer] = useState<'players' | 'legend'>('players');
+  const showTe = drawer === 'te';
+  const closeTe = () => setDrawer(open => (open === 'te' ? null : open));
+  const toggleDrawer = (name: DrawerName) => setDrawer(open => (open === name ? null : name));
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo) ?? plan?.rounds.at(-1);
@@ -149,26 +154,22 @@ export function PlanScreen() {
 
   /** A finished route keeps the earlier ones: it adds its source, or gives a known source a new way. */
   const openRoute = ({ from, via }: RouteDraft) => {
-    if (!game || !entry || !session || !game.map[from]) return;
+    if (!game || !entry || !session || !isOnMap(game, from)) return;
     const known = sourcesOf(game, pack, entry).includes(from);
     if (!known || viaOf(entry, from).join() !== via.join()) updateEntry(entry.id, { moves: withRoute(game, pack, entry.moves, from, via) });
     setEditing({ ...session, pickerFrom: from });
     setView('plan');
   };
 
-  const arrow = useArrowDrag({ activeSystem, onComplete: openRoute, onCancel: () => undefined, isSystem: slot => game?.map[slot] !== undefined });
+  const arrow = useArrowDrag({ activeSystem, onComplete: openRoute, onCancel: () => undefined, isSystem: slot => game !== null && isOnMap(game, slot) });
 
   const shownEntry = round?.entries.find(e => e.id === shown?.id);
   // A change of the game, undo for one, ends what depended on it.
   if (flight && flight.game !== game) setFlight(null);
-  if (playing && playing.game !== game) setPlaying(null);
   if (shown && round && !shownEntry) setShown(null);
   if (tapPath && !entry) setTapPath(null);
   const flying = flight?.game === game ? flight : null;
   const loops = shownEntry?.type === 'tactical' && shownEntry.moves.some(m => hasUnits(m.units)) && !reducedMotion();
-  const playList = PHASES.flatMap(phase => (round?.entries ?? []).filter(e => e.phase === phase && e.status !== 'cancelled'));
-  const playEntry = playing?.game === game ? playList[playing.index] : undefined;
-  const playEntryFlies = playEntry?.type === 'tactical' && playEntry.moves.some(m => hasUnits(m.units)) && !reducedMotion();
 
   const startFlight = useCallback((entryId: string, filter: 'now' | 'forecast' = 'forecast') => {
     const current = useGame.getState().game;
@@ -176,18 +177,6 @@ export function PlanScreen() {
     flightRuns.current += 1;
     setFlight({ entryId, run: flightRuns.current, game: current, passed: [], filter });
   }, []);
-
-  useEffect(() => {
-    if (!playing || !playEntry || playing.step === 'flying') return undefined;
-    const count = playList.length;
-    const timer = playing.step === 'pause'
-      ? setTimeout(() => {
-        if (playEntryFlies) startFlight(playEntry.id);
-        setPlaying({ ...playing, step: playEntryFlies ? 'flying' : 'hold' });
-      }, PLAY_PAUSE_MS)
-      : setTimeout(() => setPlaying(nextStep(playing, count)), PLAY_HOLD_MS);
-    return () => clearTimeout(timer);
-  }, [playing, playEntry, playEntryFlies, playList.length, startFlight]);
 
   /** What the editor holds on leaving the screen, whichever way: the menu has no way to ask. */
   const editedId = useRef<string | undefined>(undefined);
@@ -203,6 +192,7 @@ export function PlanScreen() {
     return () => clearTimeout(timer);
   }, [shown, loops, flying, startFlight]);
 
+  const closeDrawer = useCallback(() => setDrawer(null), []);
   const closeSheet = useCallback(() => setSheet(null), []);
   const closeStage = useCallback(() => setStage(null), []);
 
@@ -218,7 +208,6 @@ export function PlanScreen() {
   const closeShown = () => {
     setShown(null);
     setFlight(null);
-    setPlaying(null);
   };
 
   const leaveEditor = () => {
@@ -228,9 +217,10 @@ export function PlanScreen() {
   };
 
   const closePanels = () => {
+    setSystemPickFor(null);
     setPlacing(false);
     setMarking(false);
-    setShowTe(false);
+    closeTe();
     closeShown();
     leaveEditor();
     setSheet(null);
@@ -245,7 +235,7 @@ export function PlanScreen() {
     setTapPath(null);
     closeShown();
     if (type === 'tactical') {
-      setShowTe(false);
+      closeTe();
       setSheet(null);
       setBuilding(false);
       setEditing({ entryId: null, pickerFrom: null });
@@ -256,7 +246,7 @@ export function PlanScreen() {
       const card = type === 'strategic' ? plannedCard(round, game.playerCount) : undefined;
       setCardId(addEntry(round.number, card === undefined ? { type } : { type, card }, 'action'));
       setMapPick(null);
-      setShowTe(false);
+      closeTe();
       setView('plan');
       return;
     }
@@ -265,15 +255,24 @@ export function PlanScreen() {
   };
 
   const hasTe = game.expansions.includes('te');
+  // Undo can remove the adjustment, which ends the choice.
+  const adjustPick = round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === systemPickFor && e.type === 'adjustment');
   const owners = sliceOwners(game, plan);
   const suitable = (slot: string): boolean => {
-    const tile = game.map[slot] ? pack.tiles[tileIdOf(game, slot)] : undefined;
+    const tile = isOnMap(game, slot) ? pack.tiles[tileIdOf(game, slot)] : undefined;
     return tile !== undefined && validThundersEdgeSystem(tile);
   };
 
   const onTileTap = (slot: string) => {
+    if (adjustPick) {
+      if (!isOnMap(game, slot)) return;
+      updateEntry(adjustPick.id, { delta: { ...adjustPick.delta, units: { systemId: slot, units: adjustPick.delta.units?.units ?? {} } } });
+      setSystemPickFor(null);
+      setView('plan');
+      return;
+    }
     if (cardPick && cardEntry) {
-      if (!game.map[slot]) return;
+      if (!isOnMap(game, slot)) return;
       if (cardPick !== 'dock') updateEntry(cardEntry.id, { effects: withSystem(cardEntry, slot, game.expansions) });
       if (cardPick !== 'system') setStage({ slot, mode: 'build', only: cardPick === 'build' ? 'build' : 'units', forCard: true });
       setMapPick(null);
@@ -292,7 +291,7 @@ export function PlanScreen() {
       return;
     }
     if (picking) {
-      if (!game.map[slot]) return;
+      if (!isOnMap(game, slot)) return;
       const id = addEntry(round.number, {
         type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: EMPTY_PAYMENT,
         ...(session?.fromCard ? { free: true, fromCard: session.fromCard } : {}),
@@ -302,7 +301,7 @@ export function PlanScreen() {
       return;
     }
     if (session && entry) {
-      if (!game.map[slot]) return;
+      if (!isOnMap(game, slot)) return;
       const step = tapStep(tapPath, slot, entry.systemId ?? '');
       if (step.onActive) {
         // The wrong system: while the action has no routes a tap takes it back and returns to choosing.
@@ -316,7 +315,9 @@ export function PlanScreen() {
       if (step.route) openRoute(step.route);
       return;
     }
-    if (!building && !game.map[slot]) return;
+    if (!building && !isOnMap(game, slot)) return;
+    // The Fracture's tiles are fixed: there is nothing to build there.
+    if (building && game.fracture.tiles?.[slot]) return;
     closeShown();
     if (building) setSheet(slot);
     else setStage({ slot, mode: 'setup' });
@@ -331,8 +332,9 @@ export function PlanScreen() {
   const onShowEntry = (tapped: Entry) => {
     if (tapped.type === 'pass') return;
     setFlight(null);
-    setPlaying(null);
-    setShown(shown?.id === tapped.id ? null : { id: tapped.id, plays: 0 });
+    const opening = shown?.id !== tapped.id;
+    setShown(opening ? { id: tapped.id, plays: 0 } : null);
+    if (opening && entrySystems(game, pack, tapped).length === 0) setViewResets(n => n + 1);
   };
 
   const onOpenEntry = (opened: Entry) => {
@@ -343,10 +345,10 @@ export function PlanScreen() {
     if (opened.type === 'adjustment' && opened.kind && opened.delta.units) {
       setStage({ slot: opened.delta.units.systemId, mode: STAGE_MODE[opened.kind] });
     } else if (opened.type === 'tactical') {
-      setShowTe(false);
+      closeTe();
       setEditing({ entryId: opened.id, pickerFrom: null });
     } else if (opened.type === 'strategic' || opened.type === 'secondary') {
-      setShowTe(false);
+      closeTe();
       setCardId(opened.id);
       setMapPick(null);
     } else {
@@ -360,14 +362,14 @@ export function PlanScreen() {
   const lockedUpgrades = entryUpgradeRounds(upToRound, shownFilter);
   const upgradeCount = SHIP_KINDS.filter(kind => shownState.upgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
-  /** The action the map speaks of: the one being edited, read or played. */
-  const focusId = entry?.id ?? shownEntry?.id ?? playEntry?.id ?? flying?.entryId;
+  /** The action the map speaks of: the one being edited or read. */
+  const focusId = entry?.id ?? shownEntry?.id ?? flying?.entryId;
   const numbers = tacticalNumbers(round.entries);
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || session || mapMode !== 'now'))
     .flatMap(item => arrowsOf(game, pack, item, forecast.warningsByEntry[item.id] ?? []).map(a => ({
       ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
     })));
-  const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]));
+  const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]), systemsAdjacent(game));
   const arrows: Arrow[] = drawn.map((a, i) => ({ ...a, shape: shapes[i] }));
 
   const draft = session && entry ? arrow.preview ?? (tapPath && { path: tapPath }) : null;
@@ -382,27 +384,37 @@ export function PlanScreen() {
     highlights[focused.systemId] = 'active';
   }
 
+  // Any other entry being read lights the systems it speaks of: the camera alone does not say which ones.
+  if (shownEntry && shownEntry.type !== 'tactical') {
+    for (const slot of entrySystems(game, pack, shownEntry)) highlights[slot] = 'active';
+  }
+
   const flyingEntry = flying ? tacticals.find(item => item.id === flying.entryId) : undefined;
   const beforeFlight = flying && flyingEntry ? stateBeforeEntry(game, plan, flyingEntry.id, pack, flying.filter) : null;
-  // The playback shows the round as it unfolds: the state before the entry it has reached.
-  const beforePlay = playEntry ? stateBeforeEntry(game, plan, playEntry.id, pack) : null;
-  const mapState = flying && flyingEntry && beforeFlight ? stateInFlight(pack, flyingEntry, beforeFlight, flying.passed) : beforePlay ?? shownState;
+  const mapState = flying && flyingEntry && beforeFlight ? stateInFlight(pack, flyingEntry, beforeFlight, flying.passed) : shownState;
   const shownArea = shownEntry ? focusRect(entrySystems(game, pack, shownEntry)) : null;
 
   if (placing) {
-    for (const slot of Object.keys(game.map)) if (suitable(slot)) highlights[slot] = 'valid';
+    for (const slot of systemSlots(game)) if (suitable(slot)) highlights[slot] = 'valid';
+  }
+
+  if (adjustPick) {
+    for (const slot of systemSlots(game)) if (pack.tiles[tileIdOf(game, slot)]) highlights[slot] = 'valid';
   }
 
   if (cardPick && cardEntry) {
     const primaryCard = (card: number) => cardEntry.type === 'strategic' && cardEntry.card === card;
     if (primaryCard(CARD.warfare)) {
-      for (const slot of stateBeforeEntry(game, plan, cardEntry.id, pack).tokensOnMap) if (game.map[slot]) highlights[slot] = 'valid';
+      for (const slot of stateBeforeEntry(game, plan, cardEntry.id, pack).tokensOnMap) if (isOnMap(game, slot)) highlights[slot] = 'valid';
     } else {
       const fits = (planetId: string) => (cardPick === 'dock' ? forecast.state.docks.includes(planetId) : forecast.state.control[planetId] === 'me');
       const excluded = primaryCard(CARD.diplomacy) ? MECATOL_PLANETS : [];
-      for (const slot of Object.keys(game.map)) {
+      // Construction's secondary leaves its token there before Thunder's Edge: any system can be tapped, those without one are lit.
+      const placesToken = cardEntry.type === 'secondary' && cardEntry.card === CARD.construction && !hasTe;
+      const tokened = placesToken ? stateBeforeEntry(game, plan, cardEntry.id, pack).tokensOnMap : [];
+      for (const slot of systemSlots(game)) {
         const planets = systemPlanets(game, slot, pack);
-        if (planets.some(p => fits(p.id)) && !planets.some(p => excluded.includes(p.id))) highlights[slot] = 'valid';
+        if (planets.some(p => fits(p.id)) && !planets.some(p => excluded.includes(p.id)) && !tokened.includes(slot)) highlights[slot] = 'valid';
       }
     }
   }
@@ -415,7 +427,7 @@ export function PlanScreen() {
   };
 
   const duplicates = building ? duplicateTiles(game.map, pack) : [];
-  const hint = cardPick ? t('plan.strategy.mapHint') : marking ? t('fracture.markHint') : placing ? t('expedition.placeHint')
+  const hint = cardPick || adjustPick ? t('plan.strategy.mapHint') : marking ? t('fracture.markHint') : placing ? t('expedition.placeHint')
     : picking ? t(session?.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')
     : session && tapPath ? t('plan.tactical.tapHint')
       : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;
@@ -423,20 +435,25 @@ export function PlanScreen() {
   const totalSlices = EXPEDITION_SLICES.length;
   const takenSlices = Object.keys(owners).length;
   const placedTe = game.expedition.thundersEdgeSystem;
+  // The panel stands aside while the map chooses for it.
+  const teOpen = hasTe && showTe && !placing && !marking;
+  const rightOpen = drawer === 'upgrades' || teOpen;
+  const rightNow = drawer === 'upgrades' ? 'upgrades' : teOpen ? 'te' : null;
+  if (rightNow && rightNow !== rightDrawer) setRightDrawer(rightNow);
+  const leftOpen = drawer === 'players' || drawer === 'legend';
+  if ((drawer === 'players' || drawer === 'legend') && drawer !== leftDrawer) setLeftDrawer(drawer);
   const toggleUpgrades = () => {
     setPlacing(false);
     setMarking(false);
-    setShowTe(false);
-    setShowUpgrades(!showUpgrades);
+    toggleDrawer('upgrades');
   };
   const toggleTe = () => {
-    setShowUpgrades(false);
     // While the panel stands aside for the map, the button brings it back.
     if (placing || marking) {
       setPlacing(false);
       setMarking(false);
     } else {
-      setShowTe(!showTe);
+      toggleDrawer('te');
     }
   };
 
@@ -451,66 +468,58 @@ export function PlanScreen() {
             addRound();
             setRoundNo(Math.max(...plan.rounds.map(r => r.number)) + 1);
           }}
+          onDeleteRound={() => { closePanels(); deleteRound(round.number); }}
+          onDeletePlan={() => { closePanels(); deletePlan(plan.id); setRoundNo(null); }}
+          afterRounds={!building && (
+            <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
+              {(['forecast', 'now'] as const).map(mode => (
+                <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null || cardEntry !== undefined} onClick={() => setMapMode(mode)}>
+                  {t(`plan.${mode}`)}
+                </button>
+              ))}
+            </div>
+          )}
         />
         <SummaryBar now={now.state} forecast={forecast.state} pack={pack} />
       </header>
       <div className="plan-body">
-        {showPlayers && (
-          <div className="players-panel">
-            <PlayerList
-              action={<button type="button" onClick={() => setShowPlayers(false)}>{t('players.close')}</button>}
-              live={{ upgraded: shownState.upgrades, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
-            />
+        <Drawer open={leftOpen} className={`drawer-left drawer-${leftDrawer}`} onDismiss={closeDrawer}>
+          <div key={leftDrawer} className="drawer-swap">
+            {leftDrawer === 'players'
+              ? (
+                <div className="players-panel">
+                  <PlayerList
+                    live={{ upgraded: shownState.upgrades, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
+                  />
+                </div>
+              )
+              : <MapLegend colour={playerColour(game.color)} pack={pack} />}
           </div>
-        )}
+        </Drawer>
+        {/* Beside the map, not in it: it stands over the scrim and rides on the edge of its drawer. */}
+        <div className={`drawer-rail drawer-rail-left${leftOpen ? ` drawer-rail-open-${leftDrawer}` : ''}`} role="group" aria-label={t('plan.drawers')}>
+          <DrawerTab side="left" open={drawer === 'players'} onClick={() => toggleDrawer('players')}>{t('players.open')}</DrawerTab>
+          <DrawerTab side="left" open={drawer === 'legend'} onClick={() => toggleDrawer('legend')}>{t('map.legend.tab')}</DrawerTab>
+        </div>
         <div className="plan-map">
           <HexMap
             game={game} state={mapState} pack={pack} highlights={highlights} arrows={arrows}
-            arrowPreview={draft} focusRect={shownArea} selectedId={sheet} onTileTap={onTileTap}
+            arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} selectedId={sheet} onTileTap={onTileTap}
             overlay={flying && flyingEntry && beforeFlight && (
               <FlightLayer
                 key={flying.run} colour={playerColour(game.color)} passed={flying.passed}
                 routes={flightRoutes(game, pack, flyingEntry, beforeFlight, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
                 onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
-                onDone={() => {
-                  setFlight(null);
-                  setPlaying(p => (p?.step === 'flying' ? nextStep(p, playList.length) : p));
-                }}
+                onDone={() => setFlight(null)}
               />
             )}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e); }} startsArrow={startsArrow}
             onPopoverClose={closeSheet}
             tools={(
               <div className="map-tools">
-                <button type="button" aria-pressed={showPlayers} onClick={() => setShowPlayers(!showPlayers)}>{t('players.open')}</button>
-                <button
-                  type="button" aria-pressed={showUpgrades} onClick={toggleUpgrades}
-                  aria-label={upgradeCount > 0 ? `${t('ships.upgrades')} · ${upgradeCount}` : t('ships.upgrades')}
-                >
-                  {upgradeCount > 0 ? `${t('ships.upgradesShort')} · ${upgradeCount}` : t('ships.upgradesShort')}
-                </button>
-                {hasTe && (
-                  <button
-                    type="button" aria-pressed={showTe} onClick={toggleTe}
-                    className={takenSlices === totalSlices && placedTe === null ? 'te-ready' : undefined}
-                  >
-                    {placedTe === null
-                      ? t('thundersEdge.taken', { n: takenSlices, total: totalSlices })
-                      : t('thundersEdge.placed', { system: systemName(game, pack, placedTe) })}
-                  </button>
-                )}
-                <button type="button" aria-pressed={building} onClick={toggleBuilding}>{t('plan.buildMap')}</button>
+                <button type="button" className="hex-button" aria-label={t('plan.buildMap')} title={t('plan.buildMap')} aria-pressed={building} onClick={toggleBuilding}><RowIcon name="build" /></button>
                 {building && (
-                  <button type="button" aria-pressed={importing} onClick={() => setImporting(!importing)}>{t('mapImport.title')}</button>
-                )}
-                {!building && (
-                  <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
-                    {(['forecast', 'now'] as const).map(mode => (
-                      <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null || cardEntry !== undefined} onClick={() => setMapMode(mode)}>
-                        {t(`plan.${mode}`)}
-                      </button>
-                    ))}
-                  </div>
+                  <button type="button" className="hex-button" aria-label={t('mapImport.title')} title={t('mapImport.title')} aria-pressed={importing} onClick={() => setImporting(!importing)}><RowIcon name="paste" /></button>
                 )}
               </div>
             )}
@@ -529,15 +538,30 @@ export function PlanScreen() {
               {(placing || marking) && <button type="button" onClick={toggleTe}>{t('thundersEdge.back')}</button>}
             </div>
           )}
-          {showUpgrades && (
-            <UpgradesPanel game={game} pack={pack} upgraded={shownState.upgrades} locked={lockedUpgrades} onClose={() => setShowUpgrades(false)} />
-          )}
-          {hasTe && showTe && !placing && !marking && (
-            <ThundersEdgePanel
-              game={game} pack={pack} owners={owners} onClose={() => setShowTe(false)}
-              onPlace={() => setPlacing(true)} onMark={() => setMarking(true)}
-            />
-          )}
+          <div className={`drawer-rail drawer-rail-right${rightOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
+            <DrawerTab side="right" open={drawer === 'upgrades'} onClick={toggleUpgrades} label={upgradeCount > 0 ? `${t('ships.upgrades')} · ${upgradeCount}` : t('ships.upgrades')}>
+              {upgradeCount > 0 ? `${t('ships.upgradesShort')} · ${upgradeCount}` : t('ships.upgradesShort')}
+            </DrawerTab>
+            {hasTe && (
+              <DrawerTab side="right" open={showTe} onClick={toggleTe} className={takenSlices === totalSlices && placedTe === null ? 'te-ready' : undefined}>
+                {placedTe === null
+                  ? t('thundersEdge.taken', { n: takenSlices, total: totalSlices })
+                  : t('thundersEdge.placed', { system: systemName(game, pack, placedTe) })}
+              </DrawerTab>
+            )}
+          </div>
+          <Drawer open={rightOpen} className="drawer-under">
+            <div key={rightDrawer} className="drawer-swap">
+              {rightDrawer === 'upgrades'
+                ? <UpgradesPanel game={game} pack={pack} upgraded={shownState.upgrades} locked={lockedUpgrades} />
+                : (
+                  <ThundersEdgePanel
+                    game={game} pack={pack} owners={owners}
+                    onPlace={() => setPlacing(true)} onMark={() => setMarking(true)}
+                  />
+                )}
+            </div>
+          </Drawer>
         </div>
         <div className="plan-panel">
           <div className="plan-scroll">
@@ -584,24 +608,11 @@ export function PlanScreen() {
                 <EntryList
                   game={game} pack={pack} round={round} plan={plan}
                   stateBefore={id => stateBeforeEntry(game, plan, id, pack)} warnings={forecast.warningsByEntry} state={forecast.state}
-                  openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} playingId={playEntry?.id ?? null} onShow={onShowEntry} onStatusAdded={setOpenId}
+                  pickingSystemFor={adjustPick?.id ?? null} onPickSystem={id => { setSystemPickFor(systemPickFor === id ? null : id); setView('map'); }}
+                  openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry} onStatusAdded={setOpenId}
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) startFlight(done.id, shownFilter); }}
                   strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
-                  addAction={(
-                    <>
-                      <ActionMenu onPick={onPick} primaryPlayed={primaryPlayed(round, game.playerCount)} />
-                      <button
-                        type="button" className="phase-play" aria-pressed={playEntry !== undefined} disabled={playList.length === 0}
-                        onClick={() => {
-                          const running = playEntry !== undefined;
-                          closeShown();
-                          if (!running) setPlaying({ index: 0, step: 'pause', game });
-                        }}
-                      >
-                        {t('plan.play')}
-                      </button>
-                    </>
-                  )}
+                  addAction={<ActionMenu onPick={onPick} primaryPlayed={primaryPlayed(round, game.playerCount)} />}
                 />
               </>
             )}

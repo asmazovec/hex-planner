@@ -10,19 +10,15 @@ export interface ThundersEdgePanelProps {
   /** Choosing the system or marking ingress needs the whole map: the panel steps aside for it. */
   onPlace: () => void;
   onMark: () => void;
-  onClose: () => void;
 }
 
 /** The expedition and the Fracture, which are not plan entries, except for a contribution of mine. */
-export function ThundersEdgePanel({ game, pack, owners, onPlace, onMark, onClose }: ThundersEdgePanelProps) {
+export function ThundersEdgePanel({ game, pack, owners, onPlace, onMark }: ThundersEdgePanelProps) {
   const { t } = useTranslation();
   const title = t('thundersEdge.title');
   return (
     <aside className="te-panel" role="dialog" aria-label={title}>
-      <div className="panel-head">
-        <h2>{title}</h2>
-        <button type="button" className="icon-button" aria-label={t('players.close')} onClick={onClose}>✕</button>
-      </div>
+      <h2>{title}</h2>
       <ExpeditionWidget game={game} pack={pack} owners={owners} onPlace={onPlace} />
       <FractureControl game={game} pack={pack} onMark={onMark} />
     </aside>

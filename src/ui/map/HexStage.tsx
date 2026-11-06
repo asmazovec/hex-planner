@@ -4,12 +4,14 @@ import type { PlacedStack, TokenKind } from '../../domain/hexLayout';
 import { mergedCounts } from '../../domain/losses';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat, planetHolder } from '../../domain/players';
-import { productionCost, productionPlaces, project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { isOnMap, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, systemMeters, systemPlanets, tileIdOf } from '../../domain/project';
 import { startingDocks } from '../../domain/strategy';
 import { unitStats } from '../../domain/unitStats';
 import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { withCount, type TacticalEntry } from '../plan/tactical';
+import { systemName, withCount, type TacticalEntry } from '../plan/tactical';
+import { HexRemove } from '../plan/RowIcon';
+import { WarningText } from '../plan/WarningText';
 import { tokenColours } from '../units/sprites';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { slotToPixel } from './geometry';
@@ -32,6 +34,10 @@ export interface PurchaseTarget {
   changeStructure?: (kind: StructureKind, planetId: string, amount: 1 | -1) => void;
   /** The upgrades my prices follow; defaults to the round's end. */
   upgrades?: UnitId[];
+  /** The state the purchase pays with. */
+  before?: GameState;
+  /** The entry whose warnings the shop shows. */
+  entryId?: string;
 }
 
 export interface HexStageProps {
@@ -103,7 +109,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const round = plan?.rounds.find(r => r.number === roundNo);
   if (!game || !plan || !round) return null;
 
-  const state = project(game, { ...plan, rounds: plan.rounds.filter(r => r.number <= roundNo) }, 'forecast', pack).state;
+  const projection = project(game, { ...plan, rounds: plan.rounds.filter(r => r.number <= roundNo) }, 'forecast', pack);
+  const { state } = projection;
   const planets = systemPlanets(game, slot, pack);
   const target = Math.min(chosenPlanet, Math.max(0, planets.length - 1));
   const targetPlanet = planets.at(target);
@@ -285,13 +292,25 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
+  /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
+  const payer = onPurchase?.before ?? beforeTactical ?? state;
+  const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);
+  const spendable = readyResources(payer, pack) + payer.tradeGoods;
+  const meters = systemMeters(game, state.systems[slot] ?? {}, state.upgrades, pack);
+  const meterRows = [
+    { key: 'resources', now: spent, of: spendable, over: spent > spendable },
+    { key: 'fleet', now: meters.ships, of: state.fleet, over: meters.ships > state.fleet },
+    { key: 'capacity', now: meters.load, of: meters.capacity, over: meters.load > meters.capacity },
+  ];
+  const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
+  const entryWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
 
   const mapValue = game.map[slot];
-  const tileId = mapValue ? tileIdOf(game, slot) : pack.tiles[slot] ? slot : '';
+  const tileId = isOnMap(game, slot) ? tileIdOf(game, slot) : pack.tiles[slot] ? slot : '';
   const tile = pack.tiles[tileId];
   const rotation = mapValue?.split('@')[1];
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).map(name => t(`map.anomaly.${name}`)).join(', ');
-  const title = t('map.sheet.title', { number: tile?.number ?? tileId });
+  const title = t('map.sheet.title', { number: tile ? systemName(game, pack, slot) : tileId });
   const shown = shownState ?? state;
   const control = targetPlanet ? shown.control[targetPlanet.id] : undefined;
   const planetOwner = control === 'enemy' && targetPlanet ? planetHolder(game, targetPlanet.id) ?? null : control ?? null;
@@ -319,7 +338,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
         <div className="stage-panel">
           <div className="stage-head">
             <strong>{title}</strong>
-            <button type="button" aria-label={t('map.sheet.close')} onClick={onClose}>✕</button>
+            <HexRemove label={t('map.sheet.close')} onClick={onClose} />
           </div>
           {!onPurchase?.changeStructure && (
             <div className="segment" role="group" aria-label={t('stage.modes')}>
@@ -352,8 +371,23 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
               {inBuild && (
                 <div className="stage-total">
                   <span>{t('stage.bought', { n: boughtTotal })}</span>
-                  <b>{productionCost(sideUnits, sideFaction, sideUpgrades, pack)}</b>
+                  <b>{spent}</b>
                 </div>
+              )}
+              {inBuild && side === 'me' && only !== 'build' && (
+                <div className="stage-meters" role="group" aria-label={t('stage.meters')}>
+                  {meterRows.map(({ key, now, of, over }) => (
+                    <div key={key} className={over ? 'stage-meter stage-meter-over' : 'stage-meter'}>
+                      <span>{t(`stage.meter.${key}`)}</span>
+                      <b>{now} / {of}</b>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {inBuild && side === 'me' && entryWarnings.length > 0 && (
+                <ul className="warning-list" aria-label={t('plan.tactical.warnings')}>
+                  {entryWarnings.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+                </ul>
               )}
               {inBuild && only !== 'build' && !planets.some(p => state.docks.includes(p.id)) && <p className="warning-text">{t('plan.tactical.noDock')}</p>}
               <p className="muted">{t(inBuild ? 'stage.buildNote' : 'stage.setupNote')}</p>

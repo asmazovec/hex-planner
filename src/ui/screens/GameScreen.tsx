@@ -6,11 +6,13 @@ import { homeNotes } from '../../domain/strategy';
 import type { ExpansionId } from '../../domain/types';
 import { currentLanguage, setLanguage, type Language } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
-import { listGames, saveGame, type GameSummary } from '../../storage/db';
+import { deleteGame, listGames, saveGame, type GameSummary } from '../../storage/db';
 import { importGame } from '../../storage/transfer';
 import { Banner } from '../common/Banner';
+import { blurOn, setBlur } from '../common/blur';
 import { downloadGame } from '../common/download';
 import { LayoutPicker } from '../map/LayoutPicker';
+import { HexRemove } from '../plan/RowIcon';
 import { PlayerList } from '../players/PlayerList';
 import { SeatMap } from '../players/SeatMap';
 import { useSeatDrag } from '../players/useSeatDrag';
@@ -27,7 +29,7 @@ const LANGUAGES: { code: Language; label: string }[] = [
 
 const allFactions = loadPack(['pok', 'te']).factions;
 
-/** The players on the left; expansions, language, the seat map and saved games on the right. */
+/** The players on the left; expansions, the seat map and saved games on the right, language and settings last. */
 export function GameScreen() {
   const { t } = useTranslation();
   const open = useGame(s => s.game);
@@ -40,6 +42,9 @@ export function GameScreen() {
 
   const [saved, setSaved] = useState<GameSummary[]>([]);
   const [importError, setImportError] = useState<string | null>(null);
+  /** The save asked about before it goes: deleting cannot be undone. */
+  const [asked, setAsked] = useState<string | null>(null);
+  const [blur, setBlurState] = useState(blurOn);
 
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
   const players = playersOf(game);
@@ -55,6 +60,15 @@ export function GameScreen() {
   const toggle = (id: ExpansionId) => {
     const on = game.expansions.includes(id);
     setDraftExpansions(EXPANSIONS.map(e => e.id).filter(e => (e === id ? !on : game.expansions.includes(e))));
+  };
+
+  const remove = async (id: string) => {
+    setAsked(null);
+    if (open?.id === id) closeGame();
+    // A save still queued for this game must not bring it back.
+    await flushSaves();
+    await deleteGame(id);
+    setSaved(await listGames());
   };
 
   const importFile = async (file: File | undefined) => {
@@ -102,17 +116,6 @@ export function GameScreen() {
           </div>
         </div>
         <div className="side-group">
-          <p className="side-label" id="language-label">{t('players.language')}</p>
-          <div className="chips" role="radiogroup" aria-labelledby="language-label">
-            {LANGUAGES.map(({ code, label }) => (
-              <button
-                key={code} type="button" role="radio" className="chip" aria-checked={currentLanguage() === code}
-                onClick={() => setLanguage(code)}
-              >{label}</button>
-            ))}
-          </div>
-        </div>
-        <div className="side-group">
           <p className="side-label">{t('players.seats')}</p>
           <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} />
           <p className="side-note">{t('players.seatsNote')}</p>
@@ -132,7 +135,19 @@ export function GameScreen() {
             {saved.map(s => (
               <li key={s.id}>
                 <span>{allFactions[s.faction]?.name ?? s.faction} · {t('game.playersShort', { count: s.playerCount })}</span>
-                <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>
+                {asked === s.id
+                  ? (
+                    <>
+                      <button type="button" className="danger" onClick={() => void remove(s.id)}>{t('game.deleteYes')}</button>
+                      <button type="button" onClick={() => setAsked(null)}>{t('players.cancel')}</button>
+                    </>
+                  )
+                  : (
+                    <>
+                      <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>
+                      <HexRemove label={t('game.delete')} onClick={() => setAsked(s.id)} />
+                    </>
+                  )}
               </li>
             ))}
           </ul>
@@ -148,6 +163,23 @@ export function GameScreen() {
                 onChange={e => { void importFile(e.target.files?.[0]); e.target.value = ''; }}
               />
             </label>
+          </div>
+        </div>
+        <div className="side-group">
+          <p className="side-label" id="language-label">{t('players.language')}</p>
+          <div className="chips" role="radiogroup" aria-labelledby="language-label">
+            {LANGUAGES.map(({ code, label }) => (
+              <button
+                key={code} type="button" role="radio" className="chip" aria-checked={currentLanguage() === code}
+                onClick={() => setLanguage(code)}
+              >{label}</button>
+            ))}
+          </div>
+        </div>
+        <div className="side-group">
+          <p className="side-label">{t('game.settings')}</p>
+          <div className="chips">
+            <button type="button" className="chip" aria-pressed={blur} onClick={() => { setBlur(!blur); setBlurState(!blur); }}>{t('game.blur')}</button>
           </div>
         </div>
         <p className="side-note">

@@ -685,3 +685,28 @@ describe('fix round 1', () => {
     expect(strip.getByRole('button', { name: 'Give back Mech' })).toBeVisible();
   });
 });
+
+describe('the shop counts along', () => {
+  const meter = (name: RegExp) => within(screen.getByRole('group', { name: 'Counters' })).getByText(name).parentElement!;
+
+  test('cost against resources, ships against the fleet pool, load against capacity, and over the limit it says so at once', async () => {
+    addMine({ carrier: 1 });
+    open({ initialMode: 'build' });
+    expect(meter(/^Ships/)).toHaveTextContent('1 / 3');
+    await tap('Carrier');
+    expect(meter(/^Cost/)).toHaveTextContent(/3 \/ /);
+    expect(meter(/^Ships/)).toHaveTextContent('2 / 3');
+    await tap('Carrier');
+    await tap('Carrier');
+    expect(meter(/^Ships/)).toHaveTextContent('4 / 3');
+    expect(meter(/^Ships/)).toHaveClass('stage-meter-over');
+  });
+
+  test('a tactical action\'s warnings stand in the window', async () => {
+    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    open({ initialMode: 'build', tacticalId: id });
+    for (let i = 0; i < 4; i += 1) await tap('Dreadnought');
+    expect(within(screen.getByRole('list', { name: 'Warnings' })).getByText(/fleet pool/)).toBeVisible();
+    expect(within(screen.getByRole('list', { name: 'Warnings' })).getByText(/resources/i)).toBeVisible();
+  });
+});

@@ -31,43 +31,45 @@ test('an export just now hides the reminder in both cases', () => {
   expect(shouldRemindExport({ persisted: true, lastExportAt: now, now })).toBe(false);
 });
 
-test('the banner shows for an open game, exports on the button and then goes away', async () => {
+test('the button of an open game says a file is due, exports, and then stops saying so', async () => {
   persistence(true);
   const exported = vi.fn(() => {
     localStorage.setItem(LAST_EXPORT_KEY, String(Date.now()));
     window.dispatchEvent(new Event(EXPORTED_EVENT));
   });
   render(<ExportReminder game={sampleGame()} onExport={exported} />);
-  const button = await screen.findByRole('button', { name: 'Export' });
+  const button = await screen.findByRole('button', { name: /^Export\. / });
+  expect(button).toHaveClass('nav-export-due');
   await userEvent.click(button);
   expect(exported).toHaveBeenCalled();
-  expect(screen.queryByRole('button', { name: 'Export' })).toBeNull();
+  expect(button).not.toHaveClass('nav-export-due');
+  expect(button).toHaveAccessibleName('Export');
   expect(Number(localStorage.getItem(LAST_EXPORT_KEY))).toBeGreaterThan(0);
 });
 
-test('the banner stays hidden after a recent export and with no game', async () => {
+test('after a recent export the button is plain, and with no game there is none', async () => {
   persistence(true);
   localStorage.setItem(LAST_EXPORT_KEY, String(Date.now()));
   render(<ExportReminder game={sampleGame()} onExport={() => {}} />);
   await act(async () => {});
-  expect(screen.queryByRole('status')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Export' })).not.toHaveClass('nav-export-due');
   cleanup();
   localStorage.clear();
   render(<ExportReminder game={null} onExport={() => {}} />);
   await act(async () => {});
-  expect(screen.queryByRole('status')).toBeNull();
+  expect(screen.queryByRole('button')).toBeNull();
 });
 
 test('with persistent storage and no copy yet, the text says there is none', async () => {
   persistence(true);
   render(<ExportReminder game={sampleGame()} onExport={() => {}} />);
-  expect(await screen.findByText(/no file copy/)).toBeVisible();
-  expect(screen.queryByText(/week old/)).toBeNull();
+  expect(await screen.findByRole('button', { name: /no file copy/ })).toBeVisible();
+  expect(screen.queryByRole('button', { name: /week old/ })).toBeNull();
 });
 
 test('with persistent storage and an old copy, the text says it is over a week old', async () => {
   persistence(true);
   localStorage.setItem(LAST_EXPORT_KEY, String(Date.now() - 8 * DAY));
   render(<ExportReminder game={sampleGame()} onExport={() => {}} />);
-  expect(await screen.findByText(/week old/)).toBeVisible();
+  expect(await screen.findByRole('button', { name: /week old/ })).toBeVisible();
 });

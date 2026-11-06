@@ -1,5 +1,6 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
 import { absentHomePlanets, CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, homePlanets, homeSlot, startingDocks, STATUS_TOKENS, type CardEntry } from './strategy';
+import { areAdjacent, type Adjacency } from './route';
 import { productionCost, unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
@@ -19,7 +20,17 @@ const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind): numbe
 export const readyResources = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'resources');
 export const readyInfluence = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'influence');
 
-export const tileIdOf = (game: Game, systemId: string): string => (game.map[systemId] ?? systemId).split('@')[0];
+export const tileIdOf = (game: Game, systemId: string): string => (game.map[systemId] ?? game.fracture.tiles?.[systemId] ?? systemId).split('@')[0];
+
+/** Whether a slot holds a system ships can go to: a tile of the map, or of the open Fracture. */
+export const isOnMap = (game: Game, slot: string): boolean => game.map[slot] !== undefined || game.fracture.tiles?.[slot] !== undefined;
+
+/** Grid neighbours, except across the edge of the Fracture: its systems do not touch the map they stand next to. */
+export const systemsAdjacent = (game: Game): Adjacency => (a, b) =>
+  areAdjacent(a, b) && Boolean(game.fracture.tiles?.[a]) === Boolean(game.fracture.tiles?.[b]);
+
+/** Every slot holding a system. */
+export const systemSlots = (game: Game): string[] => [...Object.keys(game.map), ...Object.keys(game.fracture.tiles ?? {})];
 
 /** Planets of a system; the Thunder's Edge planet belongs to the system the expedition put it in. */
 function planetsOf(game: Game, systemId: string, pack: DataPack): string[] {
@@ -89,6 +100,11 @@ function fleetCount(game: Game, units: UnitCounts, upgrades: UnitId[], pack: Dat
   return ships + Math.max(0, (units.fighter ?? 0) - Math.max(0, cap - load));
 }
 
+/** What a system's stack holds against the fleet pool and its own capacity. */
+export function systemMeters(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack): { load: number; capacity: number; ships: number } {
+  return { ...capacity(game, units, upgrades, pack), ships: fleetCount(game, units, upgrades, pack) };
+}
+
 /** Exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
 function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[]): number {
   let value = 0;
@@ -130,7 +146,7 @@ type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 /** The system a move leaves: its `from`, or for a planet pickup the system holding that planet. */
 export function sourceSlot(game: Game, pack: DataPack, from: string): string | null {
   if (!(from in pack.planets)) return from;
-  return Object.keys(game.map).find(slot => planetsOf(game, slot, pack).includes(from)) ?? null;
+  return systemSlots(game).find(slot => planetsOf(game, slot, pack).includes(from)) ?? null;
 }
 
 /**
@@ -309,9 +325,12 @@ function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPac
   if (primary && entry.card === CARD.trade) state.tradeGoods += 3;
   if (primary && entry.card === CARD.imperial && effects.mecatol) state.vp += 1;
   // The card itself says so: before Thunder's Edge this secondary leaves its token in the chosen system.
-  if (!primary && entry.card === CARD.construction && effects.systemId && !game.expansions.includes('te') && !state.tokensOnMap.includes(effects.systemId)) {
-    state.tokensOnMap.push(effects.systemId);
+  if (!primary && entry.card === CARD.construction && effects.systemId && !game.expansions.includes('te')) {
+    if (state.tokensOnMap.includes(effects.systemId)) warnings.push({ code: 'systemHasToken', params: { systemId: effects.systemId } });
+    else state.tokensOnMap.push(effects.systemId);
   }
+  // Thunder's Edge's secondary text speaks of a structure only; building units there is allowed, and said so.
+  if (!primary && entry.card === CARD.construction && effects.production) warnings.push({ code: 'constructionUnits', params: {} });
   // Before Thunder's Edge this primary lifts a token off the board; the one gained is distributed like any other.
   if (primary && entry.card === CARD.warfare && effects.systemId && !game.expansions.includes('te')) {
     state.tokensOnMap = state.tokensOnMap.filter(id => id !== effects.systemId);

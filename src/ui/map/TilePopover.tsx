@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode, type R
 import { useTranslation } from 'react-i18next';
 import type { View } from './usePanZoom';
 import { popoverPosition } from './viewLimits';
+import { HexRemove } from '../plan/RowIcon';
 
 export interface TilePopoverProps {
   slot: string;
@@ -57,7 +58,7 @@ export function TilePopover({ slot, view, areaRef, onClose, children }: TilePopo
 
   return (
     <div ref={ref} className="tile-popover" data-slot-popover={slot}>
-      <button type="button" className="popover-close" aria-label={t('map.sheet.close')} onClick={onClose}>✕</button>
+      <HexRemove className="popover-close" label={t('map.sheet.close')} onClick={onClose} />
       {children}
     </div>
   );

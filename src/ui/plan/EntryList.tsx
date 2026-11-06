@@ -1,4 +1,4 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../domain/cards';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
@@ -6,11 +6,13 @@ import { tacticalNumbers } from '../../domain/route';
 import { playersOf } from '../../domain/players';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { useReorderDrag } from '../common/useReorderDrag';
 import { factionShortName } from '../players/factionName';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { EntrySteps } from './EntrySteps';
 import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
+import { HexRemove, RowIcon } from './RowIcon';
 import { Stepper } from './Stepper';
 import { systemName } from './tactical';
 import { TokenTiles } from './TokenTiles';
@@ -36,8 +38,6 @@ export interface EntryListProps {
   onOpen: (entry: Entry) => void;
   /** The entry being read: its steps stand under its row. */
   shownId?: string | null;
-  /** The entry the round's playback has reached. */
-  playingId?: string | null;
   /** A tap on the row shows the entry, a second tap closes it. */
   onShow?: (entry: Entry) => void;
   /** The entry was just marked as done. */
@@ -46,6 +46,10 @@ export interface EntryListProps {
   onStatusAdded?: (id: string) => void;
   /** Stands in the strategy section in place of its title and line. */
   strategy?: ReactNode;
+  /** The adjustment whose system the next tap on the map chooses. */
+  pickingSystemFor?: string | null;
+  /** Starts or stops that choice. */
+  onPickSystem?: (id: string) => void;
   /** The add button of the action section, kept in view while its list is long. */
   addAction?: ReactNode;
 }
@@ -64,8 +68,11 @@ function NoteField({ label, value, onCommit }: { label: string; value: string; o
   );
 }
 
-function AdjustmentFields({ entry, game, pack, state }: {
+function AdjustmentFields({ entry, game, pack, state, picking, onPickSystem }: {
   entry: Extract<Entry, { type: 'adjustment' }>; game: Game; pack: DataPack; state: GameState;
+  /** The next tap on the map chooses this adjustment's system. */
+  picking: boolean;
+  onPickSystem: () => void;
 }) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -75,7 +82,6 @@ function AdjustmentFields({ entry, game, pack, state }: {
   const changes = delta.units?.units ?? {};
   const held = state.systems[systemId] ?? {};
   const unitIds: UnitId[] = UNIT_ORDER.filter(u => pack.units[u]);
-  const systems = Object.keys(game.map).filter(slot => pack.tiles[game.map[slot].split('@')[0]]);
   return (
     <>
       <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => updateEntry(entry.id, { label })} />
@@ -85,16 +91,13 @@ function AdjustmentFields({ entry, game, pack, state }: {
           onChange={value => setDelta({ [field]: value })}
         />
       ))}
-      <label className="field">
-        {t('plan.entries.system')}
-        <select
-          value={systemId}
-          onChange={e => setDelta({ units: e.target.value ? { systemId: e.target.value, units: changes } : undefined })}
-        >
-          <option value="">{t('plan.entries.noneSystem')}</option>
-          {systems.map(slot => <option key={slot} value={slot}>{systemName(game, pack, slot)}</option>)}
-        </select>
-      </label>
+      <div className="adjust-system" role="group" aria-label={t('plan.entries.system')}>
+        <span>{t('plan.entries.system')}</span>
+        <button type="button" aria-pressed={picking} onClick={onPickSystem}>
+          {systemId ? systemName(game, pack, systemId) : t('plan.entries.pickSystem')}
+        </button>
+        {systemId && <HexRemove label={t('plan.entries.clearSystem')} onClick={() => setDelta({ units: undefined })} />}
+      </div>
       {systemId && unitIds.map(unit => (
         <Stepper
           key={unit} name={t(`unit.${unit}`)} value={changes[unit] ?? 0} of={held[unit] ?? 0}
@@ -174,9 +177,9 @@ function OrderHex({ number, label }: { number: number; label: string }) {
   );
 }
 
-/** A round's four phases, always shown. Entries move by the handle or the arrows within a phase, get marked done or deleted. */
+/** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, playingId = null, onShow, onDone, onStatusAdded, strategy, addAction,
+  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, pickingSystemFor = null, onPickSystem, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -185,63 +188,46 @@ export function EntryList({
   const setEntryStatus = useGame(s => s.setEntryStatus);
   const addStatusEntry = useGame(s => s.addStatusEntry);
   const listRef = useRef<HTMLDivElement>(null);
-  const [rawDrag, setDrag] = useState<{ id: string; pointerId: number; index: number } | null>(null);
-  // An entry removed mid-drag (undo, another tab) must not keep the drag, and with it every new one, from starting.
-  const drag = rawDrag && round.entries.some(e => e.id === rawDrag.id) ? rawDrag : null;
-  const numbers = tacticalNumbers(round.entries);
-
-  const dropIndex = (entry: Entry, clientY: number): number => {
-    const others = round.entries.filter(e => e.phase === entry.phase && e.id !== entry.id);
-    const rows = others.map(e => listRef.current?.querySelector(`[data-entry-id="${e.id}"]`)?.getBoundingClientRect());
-    return rows.filter(rect => rect && rect.top + rect.height / 2 < clientY).length;
-  };
-
-  const handlers = (entry: Entry, index: number) => ({
-    onPointerDown: (e: PointerEvent<HTMLElement>) => {
-      if (drag) return;
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-      setDrag({ id: entry.id, pointerId: e.pointerId, index });
+  // An entry removed mid-drag (undo, another tab) ends the drag. Entries move within their phase.
+  const drag = useReorderDrag({
+    axis: 'y',
+    element: id => listRef.current?.querySelector(`[data-entry-id="${id}"]`),
+    siblings: id => {
+      const phase = round.entries.find(e => e.id === id)?.phase;
+      return round.entries.filter(e => e.phase === phase).map(e => e.id);
     },
-    onPointerMove: (e: PointerEvent) => {
-      if (drag?.id === entry.id && drag.pointerId === e.pointerId) setDrag({ ...drag, index: dropIndex(entry, e.clientY) });
+    exists: id => round.entries.some(e => e.id === id),
+    onDrop: (id, toIndex) => {
+      const phase = round.entries.find(e => e.id === id)?.phase;
+      if (phase) moveEntry(id, phase, toIndex);
     },
-    onPointerUp: (e: PointerEvent) => {
-      if (drag?.id !== entry.id || drag.pointerId !== e.pointerId) return;
-      setDrag(null);
-      moveEntry(entry.id, entry.phase, dropIndex(entry, e.clientY));
-    },
-    onPointerCancel: () => setDrag(null),
   });
+  const numbers = tacticalNumbers(round.entries);
 
   return (
     <div className="plan-entries" ref={listRef}>
       {PHASES.map(phase => {
         const entries = round.entries.filter(e => e.phase === phase);
-        const others = entries.filter(e => e.id !== drag?.id);
-        const dragging = drag !== null && entries.some(e => e.id === drag.id);
         return (
           <section key={phase} className="phase" aria-label={t(`plan.phases.${phase}`)}>
             {phase === 'strategy' && strategy ? strategy : <h4 className="phase-title">{t(`plan.phases.${phase}`)}</h4>}
             {entries.length === 0 && !(phase === 'strategy' && strategy) && <p className="muted phase-auto">{t(`plan.phases.${phase}Empty`)}</p>}
             <ul className="entry-list">
-              {entries.map((entry, index) => {
+              {entries.map(entry => {
                 const label = entryLabel(entry, game, pack, t);
                 // The round has one status entry, so there is nothing to move it past.
                 const movable = entry.type !== 'statusTokens';
                 const list = warnings[entry.id] ?? [];
-                const before = dragging && others[drag.index]?.id === entry.id;
-                const after = dragging && drag.index === others.length && others.at(-1)?.id === entry.id;
                 const shown = entry.id === shownId;
-                const cls = ['entry', shown && 'entry-shown', entry.id === playingId && 'entry-playing', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag?.id === entry.id && 'entry-dragging',
-                  before && 'entry-drop-before', after && 'entry-drop-after'].filter(Boolean).join(' ');
+                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
                 return (
-                  <li key={entry.id} className={cls} data-entry-id={entry.id} aria-label={label}>
+                  <li key={entry.id} className={cls} style={drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
-                      {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...handlers(entry, index)}>⠿</button>}
+                      {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
                       <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>{label}</button>
-                      {entry.type !== 'pass' && <button type="button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}>✎</button>}
-                      <label className="check entry-check">
+                      {entry.type !== 'pass' && <button type="button" className="hex-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>}
+                      <label className="hex-button entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
                         <input
                           type="checkbox" checked={entry.status === 'done'}
@@ -250,24 +236,9 @@ export function EntryList({
                             if (e.target.checked) onDone?.(entry);
                           }}
                         />
+                        <RowIcon name="done" />
                       </label>
-                      {movable && (
-                        <>
-                          <button
-                            type="button" aria-label={t('plan.entries.up')} disabled={index === 0}
-                            onClick={() => moveEntry(entry.id, phase, index - 1)}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            type="button" aria-label={t('plan.entries.down')} disabled={index === entries.length - 1}
-                            onClick={() => moveEntry(entry.id, phase, index + 1)}
-                          >
-                            ↓
-                          </button>
-                        </>
-                      )}
-                      <button type="button" aria-label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)}>✕</button>
+                      <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
                     {shown && <EntrySteps entry={entry} game={game} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
@@ -292,7 +263,7 @@ export function EntryList({
                     )}
                     {entry.id === openId && entry.type === 'adjustment' && !entry.kind && (
                       <div className="entry-details">
-                        <AdjustmentFields entry={entry} game={game} pack={pack} state={state} />
+                        <AdjustmentFields entry={entry} game={game} pack={pack} state={state} picking={pickingSystemFor === entry.id} onPickSystem={() => onPickSystem?.(entry.id)} />
                       </div>
                     )}
                     {list.length > 0 && (

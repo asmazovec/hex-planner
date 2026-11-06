@@ -29,6 +29,7 @@ export function TokenTiles({ free, values, pools, onChange }: TokenTilesProps) {
     }
     onChange(next);
   };
+  const take = (field: Field) => onChange({ ...values, [field]: countOf(field) - 1 });
   const rearranging = pools !== undefined && free === 0;
   return (
     <div className="token-pick" role="group" aria-label={t('plan.strategy.tokens')}>
@@ -39,9 +40,12 @@ export function TokenTiles({ free, values, pools, onChange }: TokenTilesProps) {
           const count = countOf(field);
           const shown = pools ? signed(count) : String(count);
           return (
-            <button key={field} type="button" className={`token-tile${count ? ' token-tile-on' : ''}`} aria-label={`${name}: ${shown}`} onClick={() => tap(field)}>
-              <b>{shown}</b>{name}
-            </button>
+            <div key={field} className="token-cell">
+              <button type="button" className={`token-tile${count ? ' token-tile-on' : ''}`} aria-label={`${name}: ${shown}`} onClick={() => tap(field)}>
+                <b>{shown}</b>{name}
+              </button>
+              {!pools && count > 0 && <button type="button" className="token-take" aria-label={t('plan.strategy.takeToken', { name })} onClick={() => take(field)}>−</button>}
+            </div>
           );
         })}
       </div>

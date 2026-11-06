@@ -30,6 +30,8 @@ export function areAdjacent(a: string, b: string): boolean {
   return p !== null && s !== null && NEIGHBOURS.some(([q, r]) => p.q + q === s.q && p.r + r === s.r);
 }
 
+export type Adjacency = (a: string, b: string) => boolean;
+
 /** One step of a drawn route: the previous hex removes the last step, a hex already on it changes nothing, any other is added. */
 export function extendPath(path: string[], slot: string): string[] {
   if (path.at(-1) === slot) return path;
@@ -163,16 +165,26 @@ export function separateRoutes(routes: string[][]): Point[][] {
 }
 
 const CORNER_STEPS = 14;
+/** A corner begins no further than half the way between neighbours: on a long leg the line stays straight until the hex it turns in, and does not cut the corner past it. */
+const CORNER_REACH = (HEX_SIZE * Math.sqrt(3)) / 2;
 
-/** The smooth line through the control points: a straight one between two points, curved corners otherwise. */
-export function curveThrough(control: Point[]): Point[] {
-  if (control.length < 3) return control;
+/** The line through the control points, and where in it each waypoint comes closest. */
+function buildCurve(control: Point[]): { curve: Point[]; waypoints: number[] } {
+  if (control.length < 3) return { curve: control, waypoints: [] };
   const curve = [control[0]];
-  let start = control[0];
+  const waypoints: number[] = [];
   for (let i = 1; i < control.length - 1; i += 1) {
     const corner = control[i];
-    const next = control[i + 1];
-    const end = i === control.length - 2 ? next : { x: (corner.x + next.x) / 2, y: (corner.y + next.y) / 2 };
+    const reach = (other: Point) => Math.min(CORNER_REACH, Math.hypot(other.x - corner.x, other.y - corner.y) / 2);
+    // The first corner starts where the route does when that is near, the last one ends where it ends: nothing is left straight at the ends of a short route.
+    const before = control[i - 1];
+    const after = control[i + 1];
+    const near = (other: Point) => Math.hypot(other.x - corner.x, other.y - corner.y) <= 2 * CORNER_REACH;
+    const start = i === 1 && near(before) ? before : towards(corner, before, reach(before));
+    const end = i === control.length - 2 && near(after) ? after : towards(corner, after, reach(after));
+    const last = curve[curve.length - 1];
+    if (Math.hypot(start.x - last.x, start.y - last.y) > 1e-6) curve.push(start);
+    const from = curve.length - 1;
     for (let step = 1; step <= CORNER_STEPS; step += 1) {
       const u = step / CORNER_STEPS;
       const a = (1 - u) * (1 - u);
@@ -180,21 +192,25 @@ export function curveThrough(control: Point[]): Point[] {
       const c = u * u;
       curve.push({ x: a * start.x + b * corner.x + c * end.x, y: a * start.y + b * corner.y + c * end.y });
     }
-    start = end;
+    waypoints.push(from + CORNER_STEPS / 2);
   }
-  return curve;
+  const end = control[control.length - 1];
+  const last = curve[curve.length - 1];
+  if (Math.hypot(end.x - last.x, end.y - last.y) > 1e-6) curve.push(end);
+  return { curve, waypoints };
 }
+
+/** The smooth line through the control points: a straight one between two points, curved corners otherwise. */
+export const curveThrough = (control: Point[]): Point[] => buildCurve(control).curve;
 
 /** A piece of the curve from one waypoint to the next. `gap` marks a step between hexes that are no neighbours. */
 export interface CurveSegment { points: Point[]; gap: boolean }
 
 /** The curve cut at the waypoints, where each corner is closest to its hex. */
-export function curveSegments(control: Point[], slots: string[]): CurveSegment[] {
-  const curve = curveThrough(control);
-  const cuts = [0];
-  for (let i = 1; i < control.length - 1; i += 1) cuts.push(CORNER_STEPS / 2 + CORNER_STEPS * (i - 1));
-  cuts.push(curve.length - 1);
-  return cuts.slice(1).map((cut, i) => ({ points: curve.slice(cuts[i], cut + 1), gap: !areAdjacent(slots[i], slots[i + 1]) }));
+export function curveSegments(control: Point[], slots: string[], adjacent: Adjacency = areAdjacent): CurveSegment[] {
+  const { curve, waypoints } = buildCurve(control);
+  const cuts = [0, ...waypoints, curve.length - 1];
+  return cuts.slice(1).map((cut, i) => ({ points: curve.slice(cuts[i], cut + 1), gap: !adjacent(slots[i], slots[i + 1]) }));
 }
 
 export function pathLength(points: Point[]): number {
@@ -249,11 +265,11 @@ export function badgeSpots(curves: Point[][]): Point[] {
 /** Everything drawn for one route, and what its flight follows. */
 export interface RouteShape { curve: Point[]; segments: CurveSegment[]; badge: Point }
 
-export function routeShapes(routes: string[][]): RouteShape[] {
+export function routeShapes(routes: string[][], adjacent: Adjacency = areAdjacent): RouteShape[] {
   const controls = separateRoutes(routes);
   const curves = controls.map(curveThrough);
   const badges = badgeSpots(curves);
-  return routes.map((slots, i) => ({ curve: curves[i], segments: curveSegments(controls[i], slots), badge: badges[i] }));
+  return routes.map((slots, i) => ({ curve: curves[i], segments: curveSegments(controls[i], slots, adjacent), badge: badges[i] }));
 }
 
 const FLIGHT_HEX_MS = 300;
@@ -262,9 +278,9 @@ const FLIGHT_MAX_MS = 1600;
 const GAP_SPEED = 3;
 
 /** How long a route flies: about 300 ms per hex, a third of that on a broken step, capped at 1.6 s. */
-export function flightDuration(slots: string[]): number {
+export function flightDuration(slots: string[], adjacent: Adjacency = areAdjacent): number {
   let time = 0;
-  for (let i = 1; i < slots.length; i += 1) time += areAdjacent(slots[i - 1], slots[i]) ? FLIGHT_HEX_MS : FLIGHT_HEX_MS / GAP_SPEED;
+  for (let i = 1; i < slots.length; i += 1) time += adjacent(slots[i - 1], slots[i]) ? FLIGHT_HEX_MS : FLIGHT_HEX_MS / GAP_SPEED;
   return Math.min(FLIGHT_MAX_MS, time);
 }
 

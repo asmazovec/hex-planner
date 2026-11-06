@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest';
+import { createGame } from './newGame';
+import { describe, expect, test, it } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { fractureSlots, validThundersEdgeSystem } from './thundersEdge';
+import { fractureSlots, validThundersEdgeSystem, withFractureMoved } from './thundersEdge';
 import { seatSlots } from './mapBuilder';
 import type { TileDef } from './types';
 
@@ -63,5 +64,39 @@ describe('fractureSlots', () => {
       expect(new Set(slots.map(s => `${s.q},${s.r}`)).size).toBe(7);
       for (const s of slots) expect(taken.has(`${s.q},${s.r}`)).toBe(false);
     }
+  });
+});
+
+describe('moving the Fracture', () => {
+  const data = loadPack(['pok', 'te']);
+  const slotOf = (seat: number | null, tileId: string) => {
+    const s = fractureSlots(seat, 6, data, 'standard').find(x => x.tileId === tileId)!;
+    return `${s.q},${s.r}`;
+  };
+
+  it('takes along what the plans and the board say about its systems, and nothing else', () => {
+    const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, data);
+    const a = slotOf(null, 'fracture1');
+    const b = slotOf(null, 'fracture2');
+    game.fracture = { ...game.fracture, active: true, ingress: [a, '0,-1'] };
+    game.enemyUnits = { [a]: { x: { cruiser: 1 } }, '0,-1': { x: { cruiser: 2 } } };
+    const round = game.plans[0].rounds[0];
+    round.entries.push(
+      { id: 't', phase: 'action', status: 'planned', type: 'tactical', systemId: a, moves: [{ from: b, units: { cruiser: 1 }, via: [a, '0,-1'], pickupOf: b }, { from: 'jord', units: { infantry: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } },
+      { id: 'c', phase: 'action', status: 'planned', type: 'secondary', card: 4, effects: { systemId: a, production: { systemId: b, units: { cruiser: 1 } } } },
+      { id: 'd', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: { units: { systemId: b, units: { cruiser: 1 } } } },
+    );
+    const next = { ...game, fracture: { ...game.fracture, seat: 3 } };
+    const moved = withFractureMoved(game, next, data);
+    const a2 = slotOf(3, 'fracture1');
+    const b2 = slotOf(3, 'fracture2');
+    expect(a2).not.toBe(a);
+    const [t, c, e] = moved.plans[0].rounds[0].entries as unknown as [Record<string, never>, Record<string, never>, Record<string, never>];
+    expect(t).toMatchObject({ systemId: a2, moves: [{ from: b2, via: [a2, '0,-1'], pickupOf: b2 }, { from: 'jord' }] });
+    expect(c).toMatchObject({ effects: { systemId: a2, production: { systemId: b2 } } });
+    expect(e).toMatchObject({ delta: { units: { systemId: b2 } } });
+    expect(moved.fracture.ingress).toEqual([a2, '0,-1']);
+    expect(Object.keys(moved.enemyUnits).sort()).toEqual(['0,-1', a2].sort());
+    expect(withFractureMoved(game, game, data)).toBe(game);
   });
 });

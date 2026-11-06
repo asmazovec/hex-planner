@@ -225,7 +225,7 @@ test('the limit is measured on the given rectangle, not on the whole drawing', (
   expect(result.current.view.x).toBeCloseTo(-50 + 100 / 3);
 });
 
-test('a Fracture tile counts as empty space: it pans, and a tap on it is reported', () => {
+test('a Fracture tile is a tile like any other: a tap on it is no tap on empty space', () => {
   const fracture = document.createElementNS(SVG, 'g');
   fracture.setAttribute('data-slot', 'f1');
   fracture.setAttribute('data-fracture-tile', 'f1');
@@ -235,10 +235,7 @@ test('a Fracture tile counts as empty space: it pans, and a tap on it is reporte
   const result = setup(onEmptyTap);
   act(() => result.current.handlers.onPointerDown(ev(1, 0, 0, hex)));
   act(() => result.current.handlers.onPointerUp(ev(1, 0, 0, hex)));
-  expect(onEmptyTap).toHaveBeenCalledTimes(1);
-  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0, hex)));
-  act(() => result.current.handlers.onPointerMove(ev(1, 20, 0, hex)));
-  expect(result.current.view.x).toBe(20);
+  expect(onEmptyTap).not.toHaveBeenCalled();
 });
 
 test('reset travels to the start through in-between frames', () => {
@@ -265,4 +262,21 @@ test('with reduced motion the view jumps without frames', () => {
   act(() => result.current.reset());
   expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
   expect(frames).toHaveLength(0);
+});
+
+test('when the focus ends the camera goes to the whole map, wherever it stood before', () => {
+  const result = setup();
+  act(() => result.current.handlers.onPointerDown(ev(1, 0, 0)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 40, 0)));
+  act(() => result.current.handlers.onPointerUp(ev(1, 40, 0)));
+  runFrames(200);
+  expect(result.current.view.x).not.toBe(0);
+  act(() => result.current.focus({ x: 10, y: 10, width: 30, height: 30 }));
+  runFrames(300);
+  expect(result.current.view.scale).toBeGreaterThan(1);
+  act(() => result.current.focus(null));
+  runFrames(400);
+  expect(result.current.view.x).toBeCloseTo(0);
+  expect(result.current.view.y).toBeCloseTo(0);
+  expect(result.current.view.scale).toBeCloseTo(1);
 });

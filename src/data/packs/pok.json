@@ -1044,6 +1044,64 @@
         "Council Patronage",
         "Law's Order"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "the_tribuni",
+            "name": "The Tribuni",
+            "pack": "pok"
+          },
+          {
+            "id": "council_patronage",
+            "name": "Council Patronage",
+            "pack": "pok"
+          },
+          {
+            "id": "laws_order",
+            "name": "Law's Order",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "keleresagent",
+            "type": "agent",
+            "name": "Xander Alexin Victori III",
+            "title": "Miracle Worker",
+            "pack": "pok"
+          },
+          {
+            "id": "kelerescommander",
+            "type": "commander",
+            "name": "Suffi An",
+            "title": "Working Multiple Angles",
+            "pack": "pok"
+          },
+          {
+            "id": "keleresheroharka",
+            "type": "hero",
+            "name": "Harka Leeds",
+            "title": "Keleres Tribunii",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "keleres_mech",
+            "name": "Omniopiares",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "keleresbt",
+          "name": "I.I.H.Q. Modernization",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1076,6 +1134,64 @@
         "Council Patronage",
         "Law's Order"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "the_tribuni",
+            "name": "The Tribuni",
+            "pack": "pok"
+          },
+          {
+            "id": "council_patronage",
+            "name": "Council Patronage",
+            "pack": "pok"
+          },
+          {
+            "id": "laws_order",
+            "name": "Law's Order",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "keleresagent",
+            "type": "agent",
+            "name": "Xander Alexin Victori III",
+            "title": "Miracle Worker",
+            "pack": "pok"
+          },
+          {
+            "id": "kelerescommander",
+            "type": "commander",
+            "name": "Suffi An",
+            "title": "Working Multiple Angles",
+            "pack": "pok"
+          },
+          {
+            "id": "keleresheroodlynn",
+            "type": "hero",
+            "name": "Odlynn Myrr",
+            "title": "Keleres Tribunii",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "keleres_mech",
+            "name": "Omniopiares",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "keleresbt",
+          "name": "I.I.H.Q. Modernization",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1108,6 +1224,64 @@
         "Council Patronage",
         "Law's Order"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "the_tribuni",
+            "name": "The Tribuni",
+            "pack": "pok"
+          },
+          {
+            "id": "council_patronage",
+            "name": "Council Patronage",
+            "pack": "pok"
+          },
+          {
+            "id": "laws_order",
+            "name": "Law's Order",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "keleresagent",
+            "type": "agent",
+            "name": "Xander Alexin Victori III",
+            "title": "Miracle Worker",
+            "pack": "pok"
+          },
+          {
+            "id": "kelerescommander",
+            "type": "commander",
+            "name": "Suffi An",
+            "title": "Working Multiple Angles",
+            "pack": "pok"
+          },
+          {
+            "id": "keleresherokuuasi",
+            "type": "hero",
+            "name": "Kuuasi Aun Jalatai",
+            "title": "Keleres Tribunii",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "keleres_mech",
+            "name": "Omniopiares",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "keleresbt",
+          "name": "I.I.H.Q. Modernization",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1147,6 +1321,59 @@
         "Zeal",
         "Raid Formation"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "zeal",
+            "name": "Zeal",
+            "pack": "pok"
+          },
+          {
+            "id": "raid_formation",
+            "name": "Raid Formation",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "argentagent",
+            "type": "agent",
+            "name": "Trilossa Aun Mirik",
+            "title": "Scorn of Ylir",
+            "pack": "pok"
+          },
+          {
+            "id": "argentcommander",
+            "type": "commander",
+            "name": "Trrakan Aun Zulok",
+            "title": "Strike Wing Commander",
+            "pack": "pok"
+          },
+          {
+            "id": "argenthero",
+            "type": "hero",
+            "name": "Mirik Aun Sissiri",
+            "title": "Flightmaster",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "argent_mech",
+            "name": "Aerie Sentinel",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "argentbt",
+          "name": "Wing Transfer",
+          "pack": "te"
+        }
+      },
       "ships": {
         "destroyer": {
           "one": {
@@ -1210,6 +1437,64 @@
         "Amalgamation",
         "Riftmeld"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "devour",
+            "name": "Devour",
+            "pack": "pok"
+          },
+          {
+            "id": "amalgamation",
+            "name": "Amalgamation",
+            "pack": "pok"
+          },
+          {
+            "id": "riftmeld",
+            "name": "Riftmeld",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "cabalagent",
+            "type": "agent",
+            "name": "The Stillness of Stars",
+            "title": "Oppressive Silence",
+            "pack": "pok"
+          },
+          {
+            "id": "cabalcommander",
+            "type": "commander",
+            "name": "That Which Molds Flesh",
+            "title": "Grisly Abomination",
+            "pack": "pok"
+          },
+          {
+            "id": "cabalhero",
+            "type": "hero",
+            "name": "It Feeds on Carrion",
+            "title": "Twisted Horror",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "cabal_mech",
+            "name": "Reanimator",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "cabalbt",
+          "name": "Al'Raith Ix Ianovar",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1248,6 +1533,64 @@
         "Aetherpassage",
         "Dark Whispers"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "voidborn",
+            "name": "Voidborn",
+            "pack": "pok"
+          },
+          {
+            "id": "aetherpassage",
+            "name": "Aetherpassage",
+            "pack": "pok"
+          },
+          {
+            "id": "dark_whispers",
+            "name": "Dark Whispers",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "empyreanagent",
+            "type": "agent",
+            "name": "Acamar",
+            "title": "The Gift of Night",
+            "pack": "pok"
+          },
+          {
+            "id": "empyreancommander",
+            "type": "commander",
+            "name": "Xuange",
+            "title": "The Archivist",
+            "pack": "pok"
+          },
+          {
+            "id": "empyreanhero",
+            "type": "hero",
+            "name": "Conservator Procyon",
+            "title": "One with the Void",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "empyrean_mech",
+            "name": "Watcher",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "empyreanbt",
+          "name": "Void Tether",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1284,6 +1627,64 @@
         "Imperia",
         "Hubris"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "edict",
+            "name": "Edict",
+            "pack": "pok"
+          },
+          {
+            "id": "imperia",
+            "name": "Imperia",
+            "pack": "pok"
+          },
+          {
+            "id": "hubris",
+            "name": "Hubris",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "mahactagent",
+            "type": "agent",
+            "name": "Jae Mir Kan",
+            "title": "Archon of Prosperity",
+            "pack": "pok"
+          },
+          {
+            "id": "mahactcommander",
+            "type": "commander",
+            "name": "Il Na Viroset",
+            "title": "Archon of Virtue",
+            "pack": "pok"
+          },
+          {
+            "id": "mahacthero",
+            "type": "hero",
+            "name": "Airo Shir Aur",
+            "title": "Archon of Command",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "mahact_mech",
+            "name": "Starlancer",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "mahactbt",
+          "name": "Vaults of the Heir",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1318,6 +1719,73 @@
         "The Company",
         "Future Sight"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "the_company",
+            "name": "The Company",
+            "pack": "pok"
+          },
+          {
+            "id": "future_sight",
+            "name": "Future Sight",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "nomadagentmercer",
+            "type": "agent",
+            "name": "Field Marshal Mercer",
+            "title": "Shikrai General",
+            "pack": "pok"
+          },
+          {
+            "id": "nomadagentthundarian",
+            "type": "agent",
+            "name": "The Thundarian",
+            "title": "Temporal Enigma",
+            "pack": "pok"
+          },
+          {
+            "id": "nomadagentartuno",
+            "type": "agent",
+            "name": "Artuno the Betrayer",
+            "title": "Sumerian Overseer",
+            "pack": "pok"
+          },
+          {
+            "id": "nomadcommander",
+            "type": "commander",
+            "name": "Navarch Feng",
+            "title": "Company Shipmaster",
+            "pack": "pok"
+          },
+          {
+            "id": "nomadhero",
+            "type": "hero",
+            "name": "Ahk-Syl Siven",
+            "title": "Sole Survivor",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "nomad_mech",
+            "name": "Quantum Manipulator",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "nomadbt",
+          "name": "Thunder's Paradox",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1371,6 +1839,76 @@
         "Distant Suns",
         "Fabrication"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "distant_suns",
+            "name": "Distant Suns",
+            "pack": "pok"
+          },
+          {
+            "id": "fabrication",
+            "name": "Fabrication",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "naazagent",
+            "type": "agent",
+            "name": "Garv and Gunn",
+            "title": "Plucky Archaeologists",
+            "pack": "pok"
+          },
+          {
+            "id": "naazcommander",
+            "type": "commander",
+            "name": "Dart and Tai",
+            "title": "Adrenaline Junkies",
+            "pack": "pok"
+          },
+          {
+            "id": "naazhero",
+            "type": "hero",
+            "name": "Hesh and Prit",
+            "title": "Architect Savants",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "naaz_mech",
+            "name": "Eidolon",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 2,
+            "sustain": true
+          },
+          {
+            "id": "naaz_mech_space",
+            "name": "Z-Grav Eidolon",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 8,
+            "dice": 2
+          },
+          {
+            "id": "naaz_voltron",
+            "name": "Eidolon Maximum",
+            "pack": "te",
+            "cost": null,
+            "combat": 4,
+            "dice": 4,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "naazbt",
+          "name": "Absolute Synergy",
+          "pack": "te"
+        }
+      },
       "ships": {
         "flagship": {
           "one": {
@@ -1406,6 +1944,64 @@
         "Awaken",
         "Coalescence"
       ],
+      "sheet": {
+        "abilities": [
+          {
+            "id": "terragenesis",
+            "name": "Terragenesis",
+            "pack": "pok"
+          },
+          {
+            "id": "awaken",
+            "name": "Awaken",
+            "pack": "pok"
+          },
+          {
+            "id": "coalescence",
+            "name": "Coalescence",
+            "pack": "pok"
+          }
+        ],
+        "leaders": [
+          {
+            "id": "titansagent",
+            "type": "agent",
+            "name": "Tellurian",
+            "title": "The Protector",
+            "pack": "pok"
+          },
+          {
+            "id": "titanscommander",
+            "type": "commander",
+            "name": "Tungstantus",
+            "title": "The Gardener",
+            "pack": "pok"
+          },
+          {
+            "id": "titanshero",
+            "type": "hero",
+            "name": "Ul the Progenitor",
+            "title": "Elysium's Core",
+            "pack": "pok"
+          }
+        ],
+        "mechs": [
+          {
+            "id": "titans_mech",
+            "name": "Hecatoncheires",
+            "pack": "pok",
+            "cost": 2,
+            "combat": 6,
+            "dice": 1,
+            "sustain": true
+          }
+        ],
+        "breakthrough": {
+          "id": "titansbt",
+          "name": "Slumberstate Computing",
+          "pack": "te"
+        }
+      },
       "ships": {
         "cruiser": {
           "one": {

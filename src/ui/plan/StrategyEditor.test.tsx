@@ -177,7 +177,7 @@ describe('modes and the lock', () => {
 });
 
 describe('Leadership', () => {
-  test('primary: three tokens to distribute, bought tokens add to them and cost influence with an automatic payment', async () => {
+  test('primary: taps distribute right away, three free, each further one is bought for influence with an automatic payment', async () => {
     await primary('Leadership');
     expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
     await click(tileOf('Tactic'));
@@ -187,39 +187,41 @@ describe('Leadership', () => {
     await click(tileOf('Tactic'));
     await click(tileOf('Fleet'));
     expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
+    expect(cardEntry().effects?.boughtTokens).toBeUndefined();
+    expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
     await click(tileOf('Tactic'));
     expect(cardEntry().effects?.tokens).toMatchObject({ tactic: 3, fleet: 1 });
-    expect(screen.getByText('Distribute tokens: -1 left')).toBeVisible();
-    expect(warningsShown().getByText(/usually from abilities/)).toBeVisible();
-    await click('Reset');
-    expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
-    expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
-    expect(button('Reset')).toBeDisabled();
-    await click('Add one Buy with influence');
-    expect(screen.getByText('Distribute tokens: 4 left')).toBeVisible();
-    expect(screen.getByText('Bought 1, influence 3.')).toBeVisible();
+    expect(cardEntry().effects?.boughtTokens).toBe(1);
+    expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
+    expect(screen.getByText(/1 bought beyond the free ones, influence to pay: 3/)).toBeVisible();
     expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
     expect(within(screen.getByRole('group', { name: 'Payment' })).getByText(/3/)).toBeVisible();
+    expect(screen.queryByText(/usually from abilities/)).toBeNull();
+    await click('Take a token back: Tactic');
+    expect(cardEntry().effects?.boughtTokens).toBeUndefined();
+    await click('Reset');
+    expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
+    expect(button('Reset')).toBeDisabled();
   });
 
   test('a manual payment stays as chosen when the cost changes', async () => {
     await primary('Leadership');
-    await click('Add one Buy with influence');
+    for (let i = 0; i < 4; i += 1) await click(tileOf('Tactic'));
     const before = cardEntry().effects?.payment;
     await click('Choose manually');
-    await click('Add one Buy with influence');
+    await click(tileOf('Tactic'));
     expect(cardEntry().effects?.payment).toEqual(before);
     await click('Pick automatically');
     expect(cardEntry().effects).toMatchObject({ boughtTokens: 2 });
     expect(cardEntry().effects?.payment).toEqual(autoPay(stateBeforeEntry(game(), game().plans[0], cardEntry().id, loadPack(['pok', 'te'])), 6, 'influence', loadPack(['pok', 'te'])));
   });
 
-  test('secondary: nothing free to distribute, a tap still adds and warns, and no strategy token is charged', async () => {
+  test('secondary: every token is bought, and no strategy token is charged', async () => {
     await secondary('Leadership');
     expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
     await click(tileOf('Fleet'));
-    expect(cardEntry().effects?.tokens).toMatchObject({ fleet: 1 });
-    expect(warningsShown().getByText(/usually from abilities/)).toBeVisible();
+    expect(cardEntry().effects).toMatchObject({ tokens: { fleet: 1 }, boughtTokens: 1 });
+    expect(screen.queryByText(/usually from abilities/)).toBeNull();
     expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
     expect(screen.queryByText('A secondary costs 1 strategy token.')).toBeNull();
   });
@@ -359,9 +361,9 @@ describe('Construction', () => {
     expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' })).toHaveTextContent('+1');
   });
 
-  test('its secondary, and every use before Thunder\'s Edge, has no dock production', async () => {
+  test('with Thunder\'s Edge the secondary can build units too; before it there is no dock production', async () => {
     await secondary('Construction');
-    expect(screen.queryByRole('button', { name: /^Production in a space dock/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /^Production in a space dock/ })).toBeVisible();
     cleanup();
     start({ expansions: ['pok'] });
     await primary('Construction');
@@ -545,15 +547,29 @@ describe('Technology', () => {
     expect(cardEntry().upgrades).toEqual(['carrier']);
     expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
     await userEvent.click(row.getByRole('button', { name: 'Cruiser' }));
-    expect(screen.getByText(/Cost now: 6/)).toBeVisible();
+    expect(screen.getByText(/To pay: 6/)).toBeVisible();
     expect(screen.getByRole('group', { name: 'Payment' })).toBeVisible();
-    expect(screen.getByText(/The app does not track other technologies/)).toBeVisible();
+  });
+
+  test('a technology is marked by a tap, without naming it: the primary\'s second one costs 6', async () => {
+    await primary('Technology');
+    await click('Research a technology');
+    expect(cardEntry().effects?.researched).toBe(1);
+    expect(screen.getByText('Technologies researched: 1')).toBeVisible();
+    expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
+    await click(/^Research a technology/);
+    expect(cardEntry().effects?.researched).toBe(2);
+    expect(screen.getByText(/To pay: 6/)).toBeVisible();
+    expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
+    await click('Take a technology back');
+    await click('Take a technology back');
+    expect(cardEntry().effects?.researched).toBeUndefined();
   });
 
   test('the secondary costs 4 each, and the mark locks the card', async () => {
     await secondary('Technology');
     await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
-    expect(screen.getByText(/Now: 4/)).toBeVisible();
+    expect(screen.getByText(/To pay: 4/)).toBeVisible();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
   });
 });

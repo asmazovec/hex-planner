@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import {
-  areAdjacent, badgeSpots, curveSegments, curveThrough, extendPath, flightAt, flightDuration, focusRect, pathLength, pointAlong,
+  areAdjacent, badgeSpots, HEX_SIZE, curveSegments, curveThrough, extendPath, flightAt, flightDuration, focusRect, pathLength, pointAlong,
   routeFromPath, routeShapes, separateRoutes, slotToPixel, tacticalNumbers, tapStep,
 } from './route';
 import type { Entry } from './types';
@@ -189,4 +189,45 @@ test('numbering counts tactical actions only, in entry order; a cancelled one ke
   expect(tacticalNumbers(list)).toEqual({ a: 1, c: 2, d: 3 });
   expect(tacticalNumbers([list[4], list[1], list[3], list[0]])).toEqual({ d: 1, c: 2, a: 3 });
   expect(tacticalNumbers([])).toEqual({});
+});
+
+test('on long legs a sharp turn stays in its hex instead of cutting the corner past it', () => {
+  const slots = ['-4,0', '2,-3', '-3,2'];
+  const control = separateRoutes([slots])[0];
+  const curve = curveThrough(control);
+  const corner = slotToPixel('2,-3');
+  const nearest = Math.min(...curve.map(p => hypot(p, corner)));
+  expect(nearest).toBeLessThan(HEX_SIZE * 0.6);
+  const segments = curveSegments(control, slots);
+  expect(segments).toHaveLength(2);
+  expect(hypot(segments[0].points.at(-1)!, corner)).toBeLessThan(HEX_SIZE * 0.6);
+});
+
+test('between neighbours a corner keeps its smooth shape, and no point repeats', () => {
+  const control = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 150, y: 85 }];
+  const curve = curveThrough(control);
+  expect(curve).toHaveLength(1 + 14);
+  expect(curve.at(-1)).toEqual(control[2]);
+  const long = curveThrough([{ x: 0, y: 0 }, { x: 400, y: 0 }, { x: 400, y: 400 }, { x: 800, y: 400 }]);
+  for (let i = 1; i < long.length; i += 1) expect(hypot(long[i], long[i - 1])).toBeGreaterThan(0);
+});
+
+test('whatever its shape, a route passes through every hex on its way', () => {
+  const slots: string[] = [];
+  for (let q = -3; q <= 3; q += 1) for (let r = -3; r <= 3; r += 1) if (Math.abs(q + r) <= 3) slots.push(`${q},${r}`);
+  const inner = HEX_SIZE * (Math.sqrt(3) / 2);
+  let checked = 0;
+  for (const a of slots) {
+    for (const b of slots) {
+      if (a === b) continue;
+      for (const c of slots) {
+        if (c === a || c === b) continue;
+        const curve = curveThrough(separateRoutes([[a, b, c]])[0]);
+        const corner = slotToPixel(b);
+        expect(Math.min(...curve.map(p => hypot(p, corner)))).toBeLessThan(inner);
+        checked += 1;
+      }
+    }
+  }
+  expect(checked).toBeGreaterThan(40000);
 });
