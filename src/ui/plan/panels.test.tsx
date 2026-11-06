@@ -280,6 +280,17 @@ test('dragging the handle moves the entry; pointercancel leaves it', () => {
   expect(order()).toEqual(['strategic', 'secondary', 'pass']);
 });
 
+test('a warning stands below the open status fields, so the tiles do not move', async () => {
+  const id = useGame.getState().addStatusEntry(1);
+  useGame.getState().updateEntry(id, { tactic: 3 });
+  const round = plan().rounds[0];
+  const state = project(game(), plan(), 'forecast', pack);
+  render(<EntryList game={game()} pack={pack} round={round} plan={plan()} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
+  const details = document.querySelector('.entry-details')!;
+  const warnings = document.querySelector('.warning-list')!;
+  expect(details.compareDocumentPosition(warnings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
 test('an entry can be marked done and deleted, and shows its warnings', async () => {
   const [id] = threeEntries();
   render(<EntryListLive warnings={{ [id]: [{ code: 'shortResources', params: { needed: 3, paid: 1 } }] }} />);

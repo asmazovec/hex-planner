@@ -166,6 +166,7 @@ describe('the upgrades panel', () => {
 
   test('follows the mode of the map: a planned entry shows in the forecast, not now; it does not toggle', async () => {
     startPlan();
+    useGame.getState().setTile('1,0', '25');
     addEntry({ type: 'secondary', upgrades: ['carrier'] });
     const panel = await open();
     expect(card(panel, 'carrier')).toBeDisabled();

@@ -13,6 +13,7 @@ import { withCount, type TacticalEntry } from '../plan/tactical';
 import { tokenColours } from '../units/sprites';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { slotToPixel } from './geometry';
+import { factionShortName } from '../players/factionName';
 import { opponentName } from './opponentName';
 import { PlanetDetails } from './PlanetDetails';
 import { TileView } from './TileView';
@@ -110,6 +111,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const side = only ? 'me' : chosenSide;
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, name: opponentName(game, pack, o.id, t) }));
+  const shortName = (o: { name: string; faction: string }): string => (pack.factions[o.faction] ? factionShortName(o.faction, o.name) : o.name);
   const holderOf = (planetId: string): string => (state.control[planetId] === 'enemy' ? planetHolder(game, planetId) ?? 'me' : 'me');
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
@@ -297,7 +299,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const planetOwner = control === 'enemy' && targetPlanet ? planetHolder(game, targetPlanet.id) ?? null : control ?? null;
   const owners: { value: string | null; label: string; color?: number }[] = [
     { value: 'me', label: t('map.sheet.mine'), color: game.color },
-    ...seated.map(o => ({ value: o.id, label: o.name, color: o.color })),
+    ...seated.map(o => ({ value: o.id, label: shortName(o), color: o.color })),
     { value: null, label: t('map.sheet.none') },
   ];
   const { x, y } = slotToPixel(slot);
@@ -339,10 +341,10 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
             <>
               {!only && (
                 <div className="segment stage-owners" role="group" aria-label={t('stage.owner')}>
-                  {[{ id: 'me', name: t('stage.mine'), color: game.color }, ...seated].map(o => (
+                  {[{ id: 'me', name: t('stage.mine'), color: game.color, faction: '' }, ...seated].map(o => (
                     <button key={o.id} type="button" aria-pressed={side === o.id} onClick={() => setSide(o.id)}>
                       <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${o.color})` }} />
-                      {o.name}
+                      {shortName(o)}
                     </button>
                   ))}
                 </div>

@@ -156,9 +156,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
 legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; padding: 0 4px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.saved-list { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 170px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.saved-list { list-style: none; margin: 0 0 8px; padding: 4px 0; display: flex; flex-direction: column; gap: 8px; max-height: 170px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .saved-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
-.saved-list button { flex: none; min-height: 36px; padding: 4px 10px; font-size: var(--font-s); }
+.saved-list button { position: relative; flex: none; min-height: 36px; padding: 4px 10px; font-size: var(--font-s); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .value-resources { color: var(--gold); fill: var(--gold); font-weight: 700; }
 .value-influence { color: var(--accent); fill: var(--accent); font-weight: 700; }
@@ -449,8 +449,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .entry-details { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px 8px; border-top: 1px solid var(--border); }
 .plan-entries { display: flex; flex-direction: column; gap: 12px; }
 .phase { display: flex; flex-direction: column; gap: 5px; }
-.phase-title { margin: 0; font-size: 13px; font-weight: 650; color: var(--text); }
-.phase-auto { margin: 0; padding: 6px 9px; background: var(--surface-2); border-left: 4px solid var(--border-strong); border-radius: var(--radius-s); font-size: var(--font-s); }
+.phase-title { margin: 0; font-size: var(--font-xs); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); }
+.phase-auto { margin: 0; color: var(--text-dim); font-size: var(--font-s); }
 .phase-add { position: sticky; bottom: 0; z-index: 1; padding-top: 3px; background: var(--surface); display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
 .phase-add .action-menu { flex: 1 1 0; min-width: 0; }
 .phase-add .action-menu:has(> button[aria-expanded='true']) { flex-basis: 100%; }
@@ -517,7 +517,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 
 /* Add an action: the dashed button under the plan. */
 .action-menu { display: flex; flex-direction: column; gap: 4px; }
-.action-menu > button.primary { width: 100%; background: transparent; color: var(--accent); border: 1px dashed var(--border-strong); border-radius: var(--radius-s); }
+.action-menu > button.primary { width: 100%; background: var(--accent-soft); color: #fff; border: 1px solid var(--accent); border-radius: var(--radius-s); font-weight: 400; }
 .action-menu .card-list { gap: 3px; }
 .action-menu .card-list button { text-align: left; font-size: var(--font-s); }
 
@@ -533,7 +533,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .ingress { fill: var(--violet); stroke: var(--bg); stroke-width: 1.5; }
 
 @media (hover: hover) {
-  .action-menu > button.primary:hover { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+  .action-menu > button.primary:hover { background: #2a3e63; border-color: var(--accent); color: #fff; }
   .entry-main button:hover:not(:disabled) { background: var(--surface-3); border-color: transparent; color: #fff; }
   .plan-copy:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--accent); }
   .popover-close:hover { background: var(--surface-2); border-color: transparent; color: #fff; }
@@ -555,7 +555,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 
 /* Pasting a Milty Draft map string: a card over the top right of the map. */
 .map-import { position: absolute; top: 52px; right: 8px; z-index: 6; width: min(360px, calc(100% - 16px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow); animation: pop-in var(--motion) var(--ease); }
-.map-import textarea { width: 100%; resize: vertical; font-size: var(--font-s); }
+.map-import textarea { width: 100%; padding: 8px 10px; resize: vertical; font: var(--font-s)/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius-s); }
+.map-import textarea:focus { border-color: var(--accent); outline: none; }
 .map-import p { margin: 0; font-size: var(--font-s); }
 
 /* The Game screen: the list of players, and the side panel. */
@@ -567,7 +568,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .players-head h1 { font-size: var(--font-xl); font-weight: 650; margin: 0; letter-spacing: -0.01em; }
 .players-head > span { color: var(--text-dim); font-size: 13px; }
 .players-action { margin: -8px 0 -8px auto; align-self: center; display: flex; align-items: center; gap: 12px; }
-.players-action button { min-height: 38px; padding: 6px 18px; }
+.players-action button { position: relative; min-height: 38px; padding: 6px 18px; }
 .players-hint { color: var(--text-dim); font-size: 13px; }
 .players-aside { border-left: 1px solid var(--border); background: var(--surface); padding: 18px; overflow-y: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .side-group { margin-bottom: 20px; }
@@ -577,14 +578,14 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .side-actions button, .side-actions .button { min-height: 36px; padding: 5px 12px; font-size: 13px; color: var(--text-muted); position: relative; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip, button.chip { position: relative; padding: 7px 12px; min-height: 36px; min-width: 0; border-radius: 18px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-size: 13px; line-height: 1.45; display: flex; align-items: center; cursor: pointer; transition: background-color var(--motion), border-color var(--motion), color var(--motion); }
-button.chip::after, .side-actions button::after, .side-actions .button::after { content: ''; position: absolute; inset: -4px 0; }
+button.chip::after, .side-actions button::after, .side-actions .button::after, .saved-list button::after, .players-action button::after, .players-aside .layout-picker .segment button::after { content: ''; position: absolute; inset: -4px 0; }
 .icon-button::after { content: ''; position: absolute; inset: -4px; }
 .chip.on, button.chip[aria-pressed='true'], button.chip[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
 .chip.fix { cursor: default; opacity: 0.85; }
 .chip:active:not(:disabled) { transform: none; }
 .players-aside .layout-picker { background: transparent; border: 0; border-radius: 0; padding: 0; margin-bottom: 20px; gap: 8px; }
 .players-aside .layout-picker strong { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
-.players-aside .layout-picker .segment button { font-size: 13px; min-height: 36px; padding: 5px 8px; }
+.players-aside .layout-picker .segment button { position: relative; font-size: 13px; min-height: 36px; padding: 5px 8px; }
 .players-aside .layout-picker p, .players-aside .layout-picker .row { font-size: 12px; margin: 0; line-height: 1.4; }
 
 .player-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; transition: border-color var(--motion), opacity var(--motion), transform var(--motion), box-shadow var(--motion); }

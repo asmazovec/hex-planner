@@ -167,11 +167,18 @@ test('the map controls stand above the map, not on it', () => {
   renderBuilding();
   const strip = document.querySelector('.map-strip')!;
   const area = document.querySelector('.hexmap-wrap')!;
-  for (const name of ['Build map', 'Reset view', 'Forecast', 'Now']) {
+  for (const name of ['Build map', 'Reset view']) {
     const button = screen.getByRole('button', { name });
     expect(strip.contains(button), name).toBe(true);
     expect(area.contains(button), name).toBe(false);
   }
+});
+
+test('the forecast switch leaves the tools while the map is being built, which keeps them on one line', async () => {
+  renderBuilding();
+  expect(screen.queryByRole('button', { name: 'Forecast' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Build map' }));
+  expect(screen.getByRole('button', { name: 'Forecast' })).toBeVisible();
 });
 
 test('a tap on another tile moves the popover there', async () => {

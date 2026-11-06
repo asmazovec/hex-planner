@@ -411,7 +411,7 @@ describe('build', () => {
     store().toggleUpgrade('me', 'warsun');
     open({ initialMode: 'build' });
     expect(warsun().getByText('10')).toBeVisible();
-    await side('The Federation of Sol');
+    await side('Sol');
     expect(warsun().getByText('12')).toBeVisible();
   });
 
@@ -486,6 +486,22 @@ describe('build', () => {
     expect(screen.getByRole('status')).toHaveTextContent('planned in an entry');
     await userEvent.click(screen.getByRole('button', { name: /Carrier/ }));
     expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  test('a loss the plan cannot hold says so instead of doing nothing', async () => {
+    const FROM = '2,0';
+    store().setTile(FROM, '26');
+    const noPay = { planets: [], tradeGoods: 0 };
+    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: FROM, units: { carrier: 1 } } } }, 'strategy');
+    store().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: SLOT, units: { fighter: 2 } } } }, 'strategy');
+    store().addEntry(1, { type: 'adjustment', label: '', kind: 'losses', delta: { units: { systemId: SLOT, units: { fighter: -1 } } } }, 'action');
+    store().addEntry(1, { type: 'tactical', systemId: FROM, moves: [{ from: SLOT, units: { fighter: 2 } }], landings: [], production: {}, payment: noPay }, 'action');
+    store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [{ from: FROM, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
+    const before = game();
+    open({ initialMode: 'battle' });
+    await userEvent.click(document.querySelector('[data-stack="me|carrier|-"] .token-hit')!);
+    expect(game()).toBe(before);
+    expect(screen.getByRole('status')).toHaveTextContent('Not recorded');
   });
 
   test('in setup a planned dock takes no tap; a baseline one still comes off', async () => {

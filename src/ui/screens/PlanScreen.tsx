@@ -503,13 +503,15 @@ export function PlanScreen() {
                 {building && (
                   <button type="button" aria-pressed={importing} onClick={() => setImporting(!importing)}>{t('mapImport.title')}</button>
                 )}
-                <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
-                  {(['forecast', 'now'] as const).map(mode => (
-                    <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null || cardEntry !== undefined} onClick={() => setMapMode(mode)}>
-                      {t(`plan.${mode}`)}
-                    </button>
-                  ))}
-                </div>
+                {!building && (
+                  <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
+                    {(['forecast', 'now'] as const).map(mode => (
+                      <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={session !== null || cardEntry !== undefined} onClick={() => setMapMode(mode)}>
+                        {t(`plan.${mode}`)}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             popover={sheet !== null && (
