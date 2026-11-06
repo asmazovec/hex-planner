@@ -1,0 +1,2609 @@
+{
+  "version": "2026-11-05-9eee64a",
+  "tiles": {
+    "1": {
+      "id": "1",
+      "number": "1",
+      "planetIds": [
+        "jord"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "2": {
+      "id": "2",
+      "number": "2",
+      "planetIds": [
+        "mollprimus"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "3": {
+      "id": "3",
+      "number": "3",
+      "planetIds": [
+        "darien"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "4": {
+      "id": "4",
+      "number": "4",
+      "planetIds": [
+        "muaat"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "5": {
+      "id": "5",
+      "number": "5",
+      "planetIds": [
+        "nestphar"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "6": {
+      "id": "6",
+      "number": "6",
+      "planetIds": [
+        "0.0.0"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "7": {
+      "id": "7",
+      "number": "7",
+      "planetIds": [
+        "winnu"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "8": {
+      "id": "8",
+      "number": "8",
+      "planetIds": [
+        "mordaiii"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "9": {
+      "id": "9",
+      "number": "9",
+      "planetIds": [
+        "maaluuk",
+        "druaa"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "10": {
+      "id": "10",
+      "number": "10",
+      "planetIds": [
+        "arcprime",
+        "wrenterra"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "11": {
+      "id": "11",
+      "number": "11",
+      "planetIds": [
+        "lisisii",
+        "ragh"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "12": {
+      "id": "12",
+      "number": "12",
+      "planetIds": [
+        "nar",
+        "jol"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "13": {
+      "id": "13",
+      "number": "13",
+      "planetIds": [
+        "trenlak",
+        "quinarra"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "14": {
+      "id": "14",
+      "number": "14",
+      "planetIds": [
+        "archonren",
+        "archontau"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "15": {
+      "id": "15",
+      "number": "15",
+      "planetIds": [
+        "retillion",
+        "shalloq"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "16": {
+      "id": "16",
+      "number": "16",
+      "planetIds": [
+        "hercant",
+        "arretze",
+        "kamdorn"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "17": {
+      "id": "17",
+      "number": "17",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [
+        "delta"
+      ]
+    },
+    "18": {
+      "id": "18",
+      "number": "18",
+      "planetIds": [
+        "mr"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "19": {
+      "id": "19",
+      "number": "19",
+      "planetIds": [
+        "wellon"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "20": {
+      "id": "20",
+      "number": "20",
+      "planetIds": [
+        "vefutii"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "21": {
+      "id": "21",
+      "number": "21",
+      "planetIds": [
+        "thibah"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "22": {
+      "id": "22",
+      "number": "22",
+      "planetIds": [
+        "tarmann"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "23": {
+      "id": "23",
+      "number": "23",
+      "planetIds": [
+        "saudor"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "24": {
+      "id": "24",
+      "number": "24",
+      "planetIds": [
+        "meharxull"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "25": {
+      "id": "25",
+      "number": "25",
+      "planetIds": [
+        "quann"
+      ],
+      "kind": "system",
+      "wormholes": [
+        "beta"
+      ]
+    },
+    "26": {
+      "id": "26",
+      "number": "26",
+      "planetIds": [
+        "lodor"
+      ],
+      "kind": "system",
+      "wormholes": [
+        "alpha"
+      ]
+    },
+    "27": {
+      "id": "27",
+      "number": "27",
+      "planetIds": [
+        "newalbion",
+        "starpoint"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "28": {
+      "id": "28",
+      "number": "28",
+      "planetIds": [
+        "tequran",
+        "torkan"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "29": {
+      "id": "29",
+      "number": "29",
+      "planetIds": [
+        "qucenn",
+        "rarron"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "30": {
+      "id": "30",
+      "number": "30",
+      "planetIds": [
+        "mellon",
+        "zohbat"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "31": {
+      "id": "31",
+      "number": "31",
+      "planetIds": [
+        "lazar",
+        "sakulag"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "32": {
+      "id": "32",
+      "number": "32",
+      "planetIds": [
+        "dalbootha",
+        "xxehan"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "33": {
+      "id": "33",
+      "number": "33",
+      "planetIds": [
+        "corneeq",
+        "resculon"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "34": {
+      "id": "34",
+      "number": "34",
+      "planetIds": [
+        "centauri",
+        "gral"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "35": {
+      "id": "35",
+      "number": "35",
+      "planetIds": [
+        "bereg",
+        "lirtaiv"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "36": {
+      "id": "36",
+      "number": "36",
+      "planetIds": [
+        "arnor",
+        "lor"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "37": {
+      "id": "37",
+      "number": "37",
+      "planetIds": [
+        "arinam",
+        "meer"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "38": {
+      "id": "38",
+      "number": "38",
+      "planetIds": [
+        "abyz",
+        "fria"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "39": {
+      "id": "39",
+      "number": "39",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [
+        "alpha"
+      ]
+    },
+    "40": {
+      "id": "40",
+      "number": "40",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [
+        "beta"
+      ]
+    },
+    "41": {
+      "id": "41",
+      "number": "41",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "rift"
+    },
+    "42": {
+      "id": "42",
+      "number": "42",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "nebula"
+    },
+    "43": {
+      "id": "43",
+      "number": "43",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "supernova"
+    },
+    "44": {
+      "id": "44",
+      "number": "44",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "asteroid"
+    },
+    "45": {
+      "id": "45",
+      "number": "45",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "asteroid"
+    },
+    "46": {
+      "id": "46",
+      "number": "46",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "47": {
+      "id": "47",
+      "number": "47",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "48": {
+      "id": "48",
+      "number": "48",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "49": {
+      "id": "49",
+      "number": "49",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "50": {
+      "id": "50",
+      "number": "50",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "51": {
+      "id": "51",
+      "number": "51",
+      "planetIds": [
+        "creuss"
+      ],
+      "kind": "home",
+      "wormholes": [
+        "delta"
+      ]
+    }
+  },
+  "planets": {
+    "jord": {
+      "id": "jord",
+      "name": "Jord",
+      "resources": 4,
+      "influence": 2
+    },
+    "mollprimus": {
+      "id": "mollprimus",
+      "name": "Moll Primus",
+      "resources": 4,
+      "influence": 1
+    },
+    "darien": {
+      "id": "darien",
+      "name": "Darien",
+      "resources": 4,
+      "influence": 4
+    },
+    "muaat": {
+      "id": "muaat",
+      "name": "Muaat",
+      "resources": 4,
+      "influence": 1
+    },
+    "nestphar": {
+      "id": "nestphar",
+      "name": "Nestphar",
+      "resources": 3,
+      "influence": 2
+    },
+    "0.0.0": {
+      "id": "0.0.0",
+      "name": "[0.0.0]",
+      "resources": 5,
+      "influence": 0
+    },
+    "winnu": {
+      "id": "winnu",
+      "name": "Winnu",
+      "resources": 3,
+      "influence": 4
+    },
+    "mordaiii": {
+      "id": "mordaiii",
+      "name": "Mordai II",
+      "resources": 4,
+      "influence": 0
+    },
+    "maaluuk": {
+      "id": "maaluuk",
+      "name": "Maaluuk",
+      "resources": 0,
+      "influence": 2
+    },
+    "druaa": {
+      "id": "druaa",
+      "name": "Druaa",
+      "resources": 3,
+      "influence": 1
+    },
+    "arcprime": {
+      "id": "arcprime",
+      "name": "Arc Prime",
+      "resources": 4,
+      "influence": 0
+    },
+    "wrenterra": {
+      "id": "wrenterra",
+      "name": "Wren Terra",
+      "resources": 2,
+      "influence": 1
+    },
+    "lisisii": {
+      "id": "lisisii",
+      "name": "Lisis II",
+      "resources": 1,
+      "influence": 0
+    },
+    "ragh": {
+      "id": "ragh",
+      "name": "Ragh",
+      "resources": 2,
+      "influence": 1
+    },
+    "nar": {
+      "id": "nar",
+      "name": "Nar",
+      "resources": 2,
+      "influence": 3
+    },
+    "jol": {
+      "id": "jol",
+      "name": "Jol",
+      "resources": 1,
+      "influence": 2
+    },
+    "trenlak": {
+      "id": "trenlak",
+      "name": "Tren'lak",
+      "resources": 1,
+      "influence": 0
+    },
+    "quinarra": {
+      "id": "quinarra",
+      "name": "Quinarra",
+      "resources": 3,
+      "influence": 1
+    },
+    "archonren": {
+      "id": "archonren",
+      "name": "Archon Ren",
+      "resources": 2,
+      "influence": 3
+    },
+    "archontau": {
+      "id": "archontau",
+      "name": "Archon Tau",
+      "resources": 1,
+      "influence": 1
+    },
+    "retillion": {
+      "id": "retillion",
+      "name": "Retillion",
+      "resources": 2,
+      "influence": 3
+    },
+    "shalloq": {
+      "id": "shalloq",
+      "name": "Shalloq",
+      "resources": 1,
+      "influence": 2
+    },
+    "hercant": {
+      "id": "hercant",
+      "name": "Hercant",
+      "resources": 1,
+      "influence": 1
+    },
+    "arretze": {
+      "id": "arretze",
+      "name": "Arretze",
+      "resources": 2,
+      "influence": 0
+    },
+    "kamdorn": {
+      "id": "kamdorn",
+      "name": "Kamdorn",
+      "resources": 0,
+      "influence": 1
+    },
+    "mr": {
+      "id": "mr",
+      "name": "Mecatol Rex",
+      "resources": 1,
+      "influence": 6
+    },
+    "wellon": {
+      "id": "wellon",
+      "name": "Wellon",
+      "resources": 1,
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "vefutii": {
+      "id": "vefutii",
+      "name": "Vefut II",
+      "resources": 2,
+      "influence": 2,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "thibah": {
+      "id": "thibah",
+      "name": "Thibah",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "tarmann": {
+      "id": "tarmann",
+      "name": "Tar'mann",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "saudor": {
+      "id": "saudor",
+      "name": "Saudor",
+      "resources": 2,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "meharxull": {
+      "id": "meharxull",
+      "name": "Mehar Xull",
+      "resources": 1,
+      "influence": 3,
+      "tech": [
+        "warfare"
+      ],
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "quann": {
+      "id": "quann",
+      "name": "Quann",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "lodor": {
+      "id": "lodor",
+      "name": "Lodor",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "newalbion": {
+      "id": "newalbion",
+      "name": "New Albion",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "starpoint": {
+      "id": "starpoint",
+      "name": "Starpoint",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "tequran": {
+      "id": "tequran",
+      "name": "Tequ'ran",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "torkan": {
+      "id": "torkan",
+      "name": "Torkan",
+      "resources": 0,
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "qucenn": {
+      "id": "qucenn",
+      "name": "Qucen'n",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "rarron": {
+      "id": "rarron",
+      "name": "Rarron",
+      "resources": 0,
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "mellon": {
+      "id": "mellon",
+      "name": "Mellon",
+      "resources": 0,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "zohbat": {
+      "id": "zohbat",
+      "name": "Zohbat",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "lazar": {
+      "id": "lazar",
+      "name": "Lazar",
+      "resources": 1,
+      "influence": 0,
+      "tech": [
+        "cybernetic"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "sakulag": {
+      "id": "sakulag",
+      "name": "Sakulag",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "dalbootha": {
+      "id": "dalbootha",
+      "name": "Dal Bootha",
+      "resources": 0,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "xxehan": {
+      "id": "xxehan",
+      "name": "Xxehan",
+      "resources": 1,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "corneeq": {
+      "id": "corneeq",
+      "name": "Corneeq",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "resculon": {
+      "id": "resculon",
+      "name": "Resculon",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "centauri": {
+      "id": "centauri",
+      "name": "Centauri",
+      "resources": 1,
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "gral": {
+      "id": "gral",
+      "name": "Gral",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "bereg": {
+      "id": "bereg",
+      "name": "Bereg",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "lirtaiv": {
+      "id": "lirtaiv",
+      "name": "Lirta IV",
+      "resources": 2,
+      "influence": 3,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "arnor": {
+      "id": "arnor",
+      "name": "Arnor",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "lor": {
+      "id": "lor",
+      "name": "Lor",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "arinam": {
+      "id": "arinam",
+      "name": "Arinam",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "meer": {
+      "id": "meer",
+      "name": "Meer",
+      "resources": 0,
+      "influence": 4,
+      "tech": [
+        "warfare"
+      ],
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "abyz": {
+      "id": "abyz",
+      "name": "Abyz",
+      "resources": 3,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "fria": {
+      "id": "fria",
+      "name": "Fria",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "creuss": {
+      "id": "creuss",
+      "name": "Creuss",
+      "resources": 4,
+      "influence": 2
+    }
+  },
+  "units": {
+    "carrier": {
+      "id": "carrier",
+      "name": "Carrier",
+      "cost": 3,
+      "capacity": 4,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": false,
+      "combat": 9,
+      "move": 1,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "carrier",
+          "name": "Carrier I",
+          "cost": 3,
+          "capacity": 4,
+          "combat": 9,
+          "dice": 1,
+          "move": 1
+        },
+        "two": {
+          "id": "carrier2",
+          "name": "Carrier II",
+          "cost": 3,
+          "capacity": 6,
+          "combat": 9,
+          "dice": 1,
+          "move": 2
+        }
+      }
+    },
+    "cruiser": {
+      "id": "cruiser",
+      "name": "Cruiser",
+      "cost": 2,
+      "capacity": 0,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": false,
+      "combat": 7,
+      "move": 2,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "cruiser",
+          "name": "Cruiser I",
+          "cost": 2,
+          "capacity": 0,
+          "combat": 7,
+          "dice": 1,
+          "move": 2
+        },
+        "two": {
+          "id": "cruiser2",
+          "name": "Cruiser II",
+          "cost": 2,
+          "capacity": 1,
+          "combat": 6,
+          "dice": 1,
+          "move": 3
+        }
+      }
+    },
+    "destroyer": {
+      "id": "destroyer",
+      "name": "Destroyer",
+      "cost": 1,
+      "capacity": 0,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": false,
+      "combat": 9,
+      "move": 2,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "destroyer",
+          "name": "Destroyer I",
+          "cost": 1,
+          "capacity": 0,
+          "combat": 9,
+          "dice": 1,
+          "move": 2,
+          "barrage": {
+            "hit": 9,
+            "dice": 2
+          }
+        },
+        "two": {
+          "id": "destroyer2",
+          "name": "Destroyer II",
+          "cost": 1,
+          "capacity": 0,
+          "combat": 8,
+          "dice": 1,
+          "move": 2,
+          "barrage": {
+            "hit": 6,
+            "dice": 3
+          }
+        }
+      }
+    },
+    "dreadnought": {
+      "id": "dreadnought",
+      "name": "Dreadnought",
+      "cost": 4,
+      "capacity": 1,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": false,
+      "combat": 5,
+      "move": 1,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "dreadnought",
+          "name": "Dreadnought I",
+          "cost": 4,
+          "capacity": 1,
+          "combat": 5,
+          "dice": 1,
+          "move": 1,
+          "sustain": true,
+          "bombard": {
+            "hit": 5,
+            "dice": 1
+          }
+        },
+        "two": {
+          "id": "dreadnought2",
+          "name": "Dreadnought II",
+          "cost": 4,
+          "capacity": 1,
+          "combat": 5,
+          "dice": 1,
+          "move": 2,
+          "sustain": true,
+          "bombard": {
+            "hit": 5,
+            "dice": 1
+          }
+        }
+      }
+    },
+    "warsun": {
+      "id": "warsun",
+      "name": "War Sun",
+      "cost": 12,
+      "capacity": 6,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": false,
+      "combat": 3,
+      "move": 2,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "warsun",
+          "name": "War Sun",
+          "cost": 12,
+          "capacity": 6,
+          "combat": 3,
+          "dice": 3,
+          "move": 2,
+          "sustain": true,
+          "bombard": {
+            "hit": 3,
+            "dice": 3
+          }
+        }
+      }
+    },
+    "flagship": {
+      "id": "flagship",
+      "name": "Flagship",
+      "cost": 8,
+      "capacity": 3,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": false,
+      "combat": 7,
+      "move": 1,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "flagship",
+          "name": "Factionless Flagship",
+          "cost": 8,
+          "capacity": 3,
+          "combat": 7,
+          "dice": 2,
+          "move": 1,
+          "sustain": true
+        }
+      }
+    },
+    "fighter": {
+      "id": "fighter",
+      "name": "Fighter",
+      "cost": 0.5,
+      "capacity": 0,
+      "capacityUsed": 1,
+      "ground": false,
+      "fighter": true,
+      "combat": 9,
+      "move": null,
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "fighter",
+          "name": "Fighter I",
+          "cost": 0.5,
+          "capacity": 0,
+          "combat": 9,
+          "dice": 1,
+          "move": null
+        },
+        "two": {
+          "id": "fighter2",
+          "name": "Fighter II",
+          "cost": 0.5,
+          "capacity": 0,
+          "combat": 8,
+          "dice": 1,
+          "move": 2
+        }
+      }
+    },
+    "infantry": {
+      "id": "infantry",
+      "name": "Infantry",
+      "cost": 0.5,
+      "capacity": 0,
+      "capacityUsed": 1,
+      "ground": true,
+      "fighter": false,
+      "combat": 8,
+      "move": null,
+      "limit": null
+    }
+  },
+  "factions": {
+    "arborec": {
+      "id": "arborec",
+      "name": "The Arborec",
+      "homeTile": "5",
+      "startUnits": {
+        "carrier": 1,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 4
+      },
+      "startingTech": [
+        "md"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Mitosis"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "arborec_flagship",
+            "name": "Duha Menaimon",
+            "cost": 8,
+            "capacity": 5,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "ghost": {
+      "id": "ghost",
+      "name": "The Ghosts of Creuss",
+      "homeTile": "51",
+      "startUnits": {
+        "carrier": 1,
+        "destroyer": 2,
+        "fighter": 2,
+        "infantry": 4
+      },
+      "startingTech": [
+        "gd"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Quantum Entanglement",
+        "Slipstream",
+        "Creuss Gate"
+      ],
+      "gateTile": "17",
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "ghost_flagship",
+            "name": "Hil Colish",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 1,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "hacan": {
+      "id": "hacan",
+      "name": "The Emirates of Hacan",
+      "homeTile": "16",
+      "startUnits": {
+        "carrier": 2,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 4
+      },
+      "startingTech": [
+        "st",
+        "amd"
+      ],
+      "commodities": 6,
+      "abilities": [
+        "Masters of Trade",
+        "Guild Ships",
+        "Arbiters"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "hacan_flagship",
+            "name": "Wrath of Kenara",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "jolnar": {
+      "id": "jolnar",
+      "name": "The Universities of Jol-Nar",
+      "homeTile": "12",
+      "startUnits": {
+        "dreadnought": 1,
+        "carrier": 2,
+        "fighter": 1,
+        "infantry": 2
+      },
+      "startingTech": [
+        "amd",
+        "st",
+        "nm",
+        "ps"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Fragile",
+        "Brilliant",
+        "Analytical"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "jolnar_flagship",
+            "name": "J.N.S. Hylarim",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 6,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "l1z1x": {
+      "id": "l1z1x",
+      "name": "The L1Z1X Mindnet",
+      "homeTile": "6",
+      "startUnits": {
+        "dreadnought": 1,
+        "carrier": 1,
+        "fighter": 3,
+        "infantry": 5
+      },
+      "startingTech": [
+        "ps",
+        "nm"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Assimilate",
+        "Harrow"
+      ],
+      "ships": {
+        "dreadnought": {
+          "one": {
+            "id": "l1z1x_dreadnought",
+            "name": "Super Dreadnought I",
+            "cost": 4,
+            "capacity": 2,
+            "combat": 5,
+            "dice": 1,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 5,
+              "dice": 1
+            }
+          },
+          "two": {
+            "id": "l1z1x_dreadnought2",
+            "name": "Super Dreadnought II",
+            "cost": 4,
+            "capacity": 2,
+            "combat": 4,
+            "dice": 1,
+            "move": 2,
+            "sustain": true,
+            "bombard": {
+              "hit": 4,
+              "dice": 1
+            }
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "l1z1x_flagship",
+            "name": "[0.0.1]",
+            "cost": 8,
+            "capacity": 5,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "letnev": {
+      "id": "letnev",
+      "name": "The Barony of Letnev",
+      "homeTile": "10",
+      "startUnits": {
+        "dreadnought": 1,
+        "carrier": 1,
+        "destroyer": 1,
+        "fighter": 1,
+        "infantry": 3
+      },
+      "startingTech": [
+        "amd",
+        "ps"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Munitions Reserves",
+        "Armada"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "letnev_flagship",
+            "name": "Arc Secundus",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 5,
+              "dice": 3
+            }
+          }
+        }
+      }
+    },
+    "mentak": {
+      "id": "mentak",
+      "name": "The Mentak Coalition",
+      "homeTile": "2",
+      "startUnits": {
+        "carrier": 1,
+        "cruiser": 2,
+        "fighter": 3,
+        "infantry": 4
+      },
+      "startingTech": [
+        "ps",
+        "st"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Ambush",
+        "Pillage"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "mentak_flagship",
+            "name": "Fourth Moon",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "muaat": {
+      "id": "muaat",
+      "name": "The Embers of Muaat",
+      "homeTile": "4",
+      "startUnits": {
+        "warsun": 1,
+        "fighter": 2,
+        "infantry": 4
+      },
+      "startingTech": [
+        "ps"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Star Forge",
+        "Gashlai Physiology"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "muaat_flagship",
+            "name": "The Inferno",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        },
+        "warsun": {
+          "one": {
+            "id": "muaat_warsun",
+            "name": "Prototype War Sun I",
+            "cost": 12,
+            "capacity": 6,
+            "combat": 3,
+            "dice": 3,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 3,
+              "dice": 3
+            }
+          },
+          "two": {
+            "id": "muaat_warsun2",
+            "name": "Prototype War Sun II",
+            "cost": 10,
+            "capacity": 6,
+            "combat": 3,
+            "dice": 3,
+            "move": 3,
+            "sustain": true,
+            "bombard": {
+              "hit": 3,
+              "dice": 3
+            }
+          }
+        }
+      }
+    },
+    "naalu": {
+      "id": "naalu",
+      "name": "The Naalu Collective",
+      "homeTile": "9",
+      "startUnits": {
+        "carrier": 1,
+        "cruiser": 1,
+        "destroyer": 1,
+        "fighter": 3,
+        "infantry": 4
+      },
+      "startingTech": [
+        "st",
+        "nm"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Telepathic",
+        "Foresight"
+      ],
+      "ships": {
+        "fighter": {
+          "one": {
+            "id": "naalu_fighter",
+            "name": "Hybrid Crystal Fighter I",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": null
+          },
+          "two": {
+            "id": "naalu_fighter2",
+            "name": "Hybrid Crystal Fighter II",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": 2
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "naalu_flagship",
+            "name": "Matriarch",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "nekro": {
+      "id": "nekro",
+      "name": "The Nekro Virus",
+      "homeTile": "8",
+      "startUnits": {
+        "dreadnought": 1,
+        "carrier": 1,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 2
+      },
+      "startingTech": [
+        "dxa"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Galactic Threat",
+        "Technological Singularity",
+        "Propagation"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "nekro_flagship",
+            "name": "The Alastor",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "saar": {
+      "id": "saar",
+      "name": "The Clan of Saar",
+      "homeTile": "11",
+      "startUnits": {
+        "carrier": 2,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 4
+      },
+      "startingTech": [
+        "amd"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Scavenge",
+        "Nomadic"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "saar_flagship",
+            "name": "Son of Ragh",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "barrage": {
+              "hit": 6,
+              "dice": 4
+            }
+          }
+        }
+      }
+    },
+    "sardakk": {
+      "id": "sardakk",
+      "name": "Sardakk Norr",
+      "homeTile": "13",
+      "startUnits": {
+        "carrier": 2,
+        "cruiser": 1,
+        "infantry": 5
+      },
+      "startingTech": [],
+      "commodities": 3,
+      "abilities": [
+        "Unrelenting"
+      ],
+      "ships": {
+        "dreadnought": {
+          "one": {
+            "id": "sardakk_dreadnought",
+            "name": "Exotrireme I",
+            "cost": 4,
+            "capacity": 1,
+            "combat": 5,
+            "dice": 1,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 4,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "sardakk_dreadnought2",
+            "name": "Exotrireme II",
+            "cost": 4,
+            "capacity": 1,
+            "combat": 5,
+            "dice": 1,
+            "move": 2,
+            "sustain": true,
+            "bombard": {
+              "hit": 4,
+              "dice": 2
+            }
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "sardakk_flagship",
+            "name": "C'morran N'orr",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 6,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "sol": {
+      "id": "sol",
+      "name": "The Federation of Sol",
+      "homeTile": "1",
+      "startUnits": {
+        "carrier": 2,
+        "destroyer": 1,
+        "fighter": 3,
+        "infantry": 5
+      },
+      "startingTech": [
+        "amd",
+        "nm"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Orbital Drop",
+        "Versatile"
+      ],
+      "ships": {
+        "carrier": {
+          "one": {
+            "id": "sol_carrier",
+            "name": "Advanced Carrier I",
+            "cost": 3,
+            "capacity": 6,
+            "combat": 9,
+            "dice": 1,
+            "move": 1
+          },
+          "two": {
+            "id": "sol_carrier2",
+            "name": "Advanced Carrier II",
+            "cost": 3,
+            "capacity": 8,
+            "combat": 9,
+            "dice": 1,
+            "move": 2,
+            "sustain": true
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "sol_flagship",
+            "name": "Genesis",
+            "cost": 8,
+            "capacity": 12,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "winnu": {
+      "id": "winnu",
+      "name": "The Winnu",
+      "homeTile": "7",
+      "startUnits": {
+        "carrier": 1,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 2
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "amd",
+          "det",
+          "nm",
+          "pa",
+          "st",
+          "sdn",
+          "ps",
+          "aida"
+        ]
+      },
+      "commodities": 3,
+      "abilities": [
+        "Blood Ties",
+        "Reclamation"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "winnu_flagship",
+            "name": "Salai Sai Corian",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 0,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "xxcha": {
+      "id": "xxcha",
+      "name": "The Xxcha Kingdom",
+      "homeTile": "14",
+      "startUnits": {
+        "carrier": 1,
+        "cruiser": 2,
+        "fighter": 3,
+        "infantry": 4
+      },
+      "startingTech": [
+        "gls"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Peace Accords",
+        "Quash"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "xxcha_flagship",
+            "name": "Loncara Ssodu",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "cannon": {
+              "hit": 5,
+              "dice": 3
+            }
+          }
+        }
+      }
+    },
+    "yin": {
+      "id": "yin",
+      "name": "The Yin Brotherhood",
+      "homeTile": "3",
+      "startUnits": {
+        "carrier": 2,
+        "destroyer": 1,
+        "fighter": 4,
+        "infantry": 4
+      },
+      "startingTech": [
+        "st"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Indoctrination",
+        "Devotion"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "yin_flagship",
+            "name": "Van Hauge",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "yssaril": {
+      "id": "yssaril",
+      "name": "The Yssaril Tribes",
+      "homeTile": "15",
+      "startUnits": {
+        "carrier": 2,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 5
+      },
+      "startingTech": [
+        "nm"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Stall Tactics",
+        "Scheming",
+        "Crafty"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "yssaril_flagship",
+            "name": "Y'sia Y'ssrila",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 2,
+            "sustain": true
+          }
+        }
+      }
+    }
+  },
+  "templates": [
+    {
+      "playerCount": 3,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,0",
+        "-3,3"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 4,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "0,3",
+        "-3,3"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1
+        },
+        {
+          "q": -3,
+          "r": 0
+        },
+        {
+          "q": -2,
+          "r": -1
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 5,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "3,0",
+        "-3,3",
+        "-3,0"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1
+        },
+        {
+          "q": -3,
+          "r": 0
+        },
+        {
+          "q": -2,
+          "r": -1
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 6,
+      "layout": "standard",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "3,0",
+        "0,3",
+        "-3,3",
+        "-3,0"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1
+        },
+        {
+          "q": -3,
+          "r": 0
+        },
+        {
+          "q": -2,
+          "r": -1
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    }
+  ],
+  "technologies": {
+    "md": {
+      "id": "md",
+      "name": "Magen Defense Grid ΩΩ",
+      "type": "warfare"
+    },
+    "gd": {
+      "id": "gd",
+      "name": "Gravity Drive",
+      "type": "propulsion"
+    },
+    "st": {
+      "id": "st",
+      "name": "Sarween Tools",
+      "type": "cybernetic"
+    },
+    "amd": {
+      "id": "amd",
+      "name": "Antimass Deflectors",
+      "type": "propulsion"
+    },
+    "nm": {
+      "id": "nm",
+      "name": "Neural Motivator",
+      "type": "biotic"
+    },
+    "ps": {
+      "id": "ps",
+      "name": "Plasma Scoring",
+      "type": "warfare"
+    },
+    "dxa": {
+      "id": "dxa",
+      "name": "Dacxive Animators",
+      "type": "biotic"
+    },
+    "det": {
+      "id": "det",
+      "name": "Dark Energy Tap",
+      "type": "propulsion"
+    },
+    "pa": {
+      "id": "pa",
+      "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "sdn": {
+      "id": "sdn",
+      "name": "Scanlink Drone Network",
+      "type": "cybernetic"
+    },
+    "aida": {
+      "id": "aida",
+      "name": "AI Development Algorithm",
+      "type": "warfare"
+    },
+    "gls": {
+      "id": "gls",
+      "name": "Graviton Laser System",
+      "type": "cybernetic"
+    }
+  },
+  "structures": [
+    {
+      "id": "pds",
+      "limit": null
+    },
+    {
+      "id": "spacedock",
+      "limit": null
+    }
+  ]
+}

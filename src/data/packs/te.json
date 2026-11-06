@@ -1,0 +1,1122 @@
+{
+  "version": "2026-11-05-9eee64a",
+  "tiles": {
+    "92": {
+      "id": "92",
+      "number": "92",
+      "planetIds": [
+        "ordinian",
+        "revelation"
+      ],
+      "kind": "home",
+      "wormholes": [],
+      "anomaly": "nebula"
+    },
+    "93": {
+      "id": "93",
+      "number": "93",
+      "planetIds": [
+        "mez",
+        "rep"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "94": {
+      "id": "94",
+      "number": "94",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [
+        "epsilon"
+      ]
+    },
+    "95": {
+      "id": "95",
+      "number": "95",
+      "planetIds": [
+        "ikatena"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "97": {
+      "id": "97",
+      "number": "97",
+      "planetIds": [
+        "faunus"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "98": {
+      "id": "98",
+      "number": "98",
+      "planetIds": [
+        "garbozia"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "99": {
+      "id": "99",
+      "number": "99",
+      "planetIds": [
+        "emelpar"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "100": {
+      "id": "100",
+      "number": "100",
+      "planetIds": [
+        "tempesta"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "101": {
+      "id": "101",
+      "number": "101",
+      "planetIds": [
+        "olergodt"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "102": {
+      "id": "102",
+      "number": "102",
+      "planetIds": [
+        "andeara"
+      ],
+      "kind": "system",
+      "wormholes": [
+        "alpha"
+      ]
+    },
+    "103": {
+      "id": "103",
+      "number": "103",
+      "planetIds": [
+        "virapicsiii"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "104": {
+      "id": "104",
+      "number": "104",
+      "planetIds": [
+        "lesab"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "105": {
+      "id": "105",
+      "number": "105",
+      "planetIds": [
+        "neutera",
+        "tinnes"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "106": {
+      "id": "106",
+      "number": "106",
+      "planetIds": [
+        "cresius",
+        "lazulrex"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "107": {
+      "id": "107",
+      "number": "107",
+      "planetIds": [
+        "tiamat",
+        "hercalor"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "108": {
+      "id": "108",
+      "number": "108",
+      "planetIds": [
+        "kostboth",
+        "capha"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "109": {
+      "id": "109",
+      "number": "109",
+      "planetIds": [
+        "bellatrix",
+        "tsionstation"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "110": {
+      "id": "110",
+      "number": "110",
+      "planetIds": [
+        "horizon",
+        "elnath",
+        "luthieniv"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "111": {
+      "id": "111",
+      "number": "111",
+      "planetIds": [
+        "tarana",
+        "oluzstation"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "112": {
+      "id": "112",
+      "number": "112",
+      "planetIds": [
+        "mrte"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "113": {
+      "id": "113",
+      "number": "113",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [
+        "beta"
+      ],
+      "anomaly": "rift"
+    },
+    "114": {
+      "id": "114",
+      "number": "114",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "scar"
+    },
+    "115": {
+      "id": "115",
+      "number": "115",
+      "planetIds": [
+        "industrex"
+      ],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "asteroid"
+    },
+    "116": {
+      "id": "116",
+      "number": "116",
+      "planetIds": [
+        "lemox"
+      ],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "scar"
+    },
+    "117": {
+      "id": "117",
+      "number": "117",
+      "planetIds": [
+        "thewatchtower"
+      ],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "rift",
+      "secondAnomaly": "asteroid"
+    },
+    "118": {
+      "id": "118",
+      "number": "118",
+      "planetIds": [
+        "ahkcreuxx"
+      ],
+      "kind": "home",
+      "wormholes": [
+        "epsilon"
+      ]
+    },
+    "96A": {
+      "id": "96A",
+      "number": "96",
+      "planetIds": [
+        "cronos",
+        "tallin"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "96B": {
+      "id": "96B",
+      "number": "96",
+      "planetIds": [
+        "cronoshollow",
+        "tallinhollow"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "fracture1": {
+      "id": "fracture1",
+      "number": "fracture1",
+      "planetIds": [
+        "cocytus"
+      ],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "fracture2": {
+      "id": "fracture2",
+      "number": "fracture2",
+      "planetIds": [],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "fracture3": {
+      "id": "fracture3",
+      "number": "fracture3",
+      "planetIds": [],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "fracture4": {
+      "id": "fracture4",
+      "number": "fracture4",
+      "planetIds": [
+        "styx"
+      ],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "fracture5": {
+      "id": "fracture5",
+      "number": "fracture5",
+      "planetIds": [],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "fracture6": {
+      "id": "fracture6",
+      "number": "fracture6",
+      "planetIds": [],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "fracture7": {
+      "id": "fracture7",
+      "number": "fracture7",
+      "planetIds": [
+        "lethe",
+        "phlegethon"
+      ],
+      "kind": "fracture",
+      "wormholes": []
+    },
+    "119A": {
+      "id": "119A",
+      "number": "119",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": []
+    },
+    "120A": {
+      "id": "120A",
+      "number": "120",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": []
+    },
+    "121A": {
+      "id": "121A",
+      "number": "121",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": []
+    },
+    "122A": {
+      "id": "122A",
+      "number": "122",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": []
+    },
+    "123A": {
+      "id": "123A",
+      "number": "123",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": []
+    },
+    "124A": {
+      "id": "124A",
+      "number": "124",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": []
+    }
+  },
+  "planets": {
+    "ordinian": {
+      "id": "ordinian",
+      "name": "Ordinian",
+      "resources": 0,
+      "influence": 0,
+      "legendary": "4X41D \"Hyperion\" VI"
+    },
+    "revelation": {
+      "id": "revelation",
+      "name": "Revelation",
+      "resources": 1,
+      "influence": 2
+    },
+    "mez": {
+      "id": "mez",
+      "name": "Mez Lo Orz Fei Zsha",
+      "resources": 2,
+      "influence": 1
+    },
+    "rep": {
+      "id": "rep",
+      "name": "Rep Lo Orz Qet",
+      "resources": 1,
+      "influence": 3
+    },
+    "ikatena": {
+      "id": "ikatena",
+      "name": "Ikatena",
+      "resources": 4,
+      "influence": 4
+    },
+    "faunus": {
+      "id": "faunus",
+      "name": "Faunus",
+      "resources": 1,
+      "influence": 3,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "industrial"
+      ],
+      "legendary": "Maxis Central Control"
+    },
+    "garbozia": {
+      "id": "garbozia",
+      "name": "Garbozia",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "Dok 'N Pic's Salvage Yard"
+    },
+    "emelpar": {
+      "id": "emelpar",
+      "name": "Emelpar",
+      "resources": 0,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "The Acropolis"
+    },
+    "tempesta": {
+      "id": "tempesta",
+      "name": "Tempesta",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ],
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "Ionian Fuel Refinery"
+    },
+    "olergodt": {
+      "id": "olergodt",
+      "name": "Olergodt",
+      "resources": 2,
+      "influence": 1,
+      "tech": [
+        "warfare",
+        "cybernetic"
+      ],
+      "traits": [
+        "hazardous",
+        "cultural"
+      ]
+    },
+    "andeara": {
+      "id": "andeara",
+      "name": "Andeara",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "propulsion"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "virapicsiii": {
+      "id": "virapicsiii",
+      "name": "Vira Pics III",
+      "resources": 2,
+      "influence": 3,
+      "traits": [
+        "cultural",
+        "hazardous"
+      ]
+    },
+    "lesab": {
+      "id": "lesab",
+      "name": "Lesab",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "industrial",
+        "hazardous"
+      ]
+    },
+    "neutera": {
+      "id": "neutera",
+      "name": "New Terra",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "tinnes": {
+      "id": "tinnes",
+      "name": "Tinnes",
+      "resources": 2,
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "industrial",
+        "hazardous"
+      ]
+    },
+    "cresius": {
+      "id": "cresius",
+      "name": "Cresius",
+      "resources": 0,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "lazulrex": {
+      "id": "lazulrex",
+      "name": "Lazul Rex",
+      "resources": 2,
+      "influence": 2,
+      "traits": [
+        "industrial",
+        "cultural"
+      ]
+    },
+    "tiamat": {
+      "id": "tiamat",
+      "name": "Tiamat",
+      "resources": 1,
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ],
+      "traits": [
+        "cultural"
+      ]
+    },
+    "hercalor": {
+      "id": "hercalor",
+      "name": "Hercalor",
+      "resources": 1,
+      "influence": 0,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "kostboth": {
+      "id": "kostboth",
+      "name": "Kostboth",
+      "resources": 0,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "capha": {
+      "id": "capha",
+      "name": "Capha",
+      "resources": 3,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "bellatrix": {
+      "id": "bellatrix",
+      "name": "Bellatrix",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "tsionstation": {
+      "id": "tsionstation",
+      "name": "Tsion Station",
+      "resources": 1,
+      "influence": 1
+    },
+    "horizon": {
+      "id": "horizon",
+      "name": "Horizon",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "elnath": {
+      "id": "elnath",
+      "name": "El'Nath",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "luthieniv": {
+      "id": "luthieniv",
+      "name": "Luthien VI",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "tarana": {
+      "id": "tarana",
+      "name": "Tarana",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "cultural",
+        "industrial"
+      ]
+    },
+    "oluzstation": {
+      "id": "oluzstation",
+      "name": "Oluz Station",
+      "resources": 1,
+      "influence": 1
+    },
+    "mrte": {
+      "id": "mrte",
+      "name": "Mecatol Rex",
+      "resources": 1,
+      "influence": 6,
+      "legendary": "The Galactic Council"
+    },
+    "industrex": {
+      "id": "industrex",
+      "name": "Industrex",
+      "resources": 2,
+      "influence": 0,
+      "tech": [
+        "warfare"
+      ],
+      "traits": [
+        "industrial"
+      ],
+      "legendary": "Aeurex Mechanica"
+    },
+    "lemox": {
+      "id": "lemox",
+      "name": "Lemox",
+      "resources": 0,
+      "influence": 3,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "thewatchtower": {
+      "id": "thewatchtower",
+      "name": "The Watchtower",
+      "resources": 1,
+      "influence": 1
+    },
+    "ahkcreuxx": {
+      "id": "ahkcreuxx",
+      "name": "Ahk Creuxx",
+      "resources": 4,
+      "influence": 2
+    },
+    "cronos": {
+      "id": "cronos",
+      "name": "Cronos",
+      "resources": 2,
+      "influence": 1
+    },
+    "tallin": {
+      "id": "tallin",
+      "name": "Tallin",
+      "resources": 1,
+      "influence": 2
+    },
+    "cronoshollow": {
+      "id": "cronoshollow",
+      "name": "Cronos Hollow",
+      "resources": 3,
+      "influence": 0
+    },
+    "tallinhollow": {
+      "id": "tallinhollow",
+      "name": "Tallin Hollow",
+      "resources": 3,
+      "influence": 0
+    },
+    "cocytus": {
+      "id": "cocytus",
+      "name": "Cocytus",
+      "resources": 3,
+      "influence": 0
+    },
+    "styx": {
+      "id": "styx",
+      "name": "Styx",
+      "resources": 4,
+      "influence": 0,
+      "legendary": "A Song Like Marrow"
+    },
+    "lethe": {
+      "id": "lethe",
+      "name": "Lethe",
+      "resources": 0,
+      "influence": 2
+    },
+    "phlegethon": {
+      "id": "phlegethon",
+      "name": "Phlegethon",
+      "resources": 1,
+      "influence": 2
+    },
+    "thundersedge": {
+      "id": "thundersedge",
+      "name": "Thunder's Edge",
+      "resources": 5,
+      "influence": 1,
+      "legendary": "Jupiter Brain"
+    },
+    "avernus": {
+      "id": "avernus",
+      "name": "Avernus",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "The Nucleus"
+    },
+    "triad": {
+      "id": "triad",
+      "name": "The Triad",
+      "resources": 3,
+      "influence": 3
+    },
+    "ocean1": {
+      "id": "ocean1",
+      "name": "Coral Reef",
+      "resources": 1,
+      "influence": 1
+    },
+    "ocean2": {
+      "id": "ocean2",
+      "name": "Lost Fleet",
+      "resources": 1,
+      "influence": 1
+    },
+    "ocean3": {
+      "id": "ocean3",
+      "name": "Deep Abyss",
+      "resources": 1,
+      "influence": 1
+    },
+    "ocean4": {
+      "id": "ocean4",
+      "name": "Brine Pool",
+      "resources": 1,
+      "influence": 1
+    },
+    "ocean5": {
+      "id": "ocean5",
+      "name": "Ice Shelf",
+      "resources": 1,
+      "influence": 1
+    }
+  },
+  "units": {},
+  "factions": {
+    "bastion": {
+      "id": "bastion",
+      "name": "Last Bastion",
+      "homeTile": "92",
+      "startUnits": {
+        "infantry": 3,
+        "fighter": 2,
+        "carrier": 1,
+        "dreadnought": 1,
+        "cruiser": 1
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "amd",
+          "det",
+          "st",
+          "sdn"
+        ]
+      },
+      "commodities": 1,
+      "abilities": [
+        "Liberate",
+        "Galvanize",
+        "Phoenix Standard"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "bastion_flagship",
+            "name": "The Egeiro",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 9,
+            "dice": 1,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "deepwrought": {
+      "id": "deepwrought",
+      "name": "The Deepwrought Scholarate",
+      "homeTile": "95",
+      "startUnits": {
+        "infantry": 3,
+        "fighter": 4,
+        "carrier": 1,
+        "dreadnought": 1
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 2,
+        "options": []
+      },
+      "commodities": 3,
+      "abilities": [
+        "Research Team",
+        "Oceanbound"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "deepwrought_flagship",
+            "name": "D.W.S. Luminous",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "firmament": {
+      "id": "firmament",
+      "name": "The Firmament",
+      "homeTile": "96A",
+      "startUnits": {
+        "infantry": 3,
+        "carrier": 1,
+        "fighter": 3,
+        "cruiser": 1,
+        "destroyer": 1
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "nm",
+          "pa",
+          "st",
+          "sdn"
+        ]
+      },
+      "commodities": 3,
+      "abilities": [
+        "Plots Within Plots",
+        "Puppets of the Blade"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "firmament_flagship",
+            "name": "Heaven's Eye",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "obsidian": {
+      "id": "obsidian",
+      "name": "The Obsidian",
+      "homeTile": "96B",
+      "startUnits": {
+        "infantry": 3,
+        "carrier": 1,
+        "fighter": 3,
+        "cruiser": 1,
+        "destroyer": 1
+      },
+      "startingTech": [],
+      "commodities": 3,
+      "abilities": [
+        "Nocturne",
+        "The Blade's Orchestra",
+        "Marionettes"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "obsidian_flagship",
+            "name": "Heaven's Hollow",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 3,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "crimson": {
+      "id": "crimson",
+      "name": "The Crimson Rebellion",
+      "homeTile": "118",
+      "startUnits": {
+        "infantry": 4,
+        "fighter": 3,
+        "carrier": 1,
+        "destroyer": 2
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "det",
+          "amd",
+          "ps",
+          "aida"
+        ]
+      },
+      "commodities": 2,
+      "abilities": [
+        "Sundered",
+        "Incursion",
+        "Sorrow"
+      ],
+      "gateTile": "94",
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "crimson_flagship",
+            "name": "Quietus",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        },
+        "destroyer": {
+          "one": {
+            "id": "crimson_destroyer",
+            "name": "Exile I",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 9,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "crimson_destroyer2",
+            "name": "Exile II",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 6,
+              "dice": 3
+            }
+          }
+        }
+      }
+    },
+    "ralnel": {
+      "id": "ralnel",
+      "name": "The Ral Nel Consortium",
+      "homeTile": "93",
+      "startUnits": {
+        "infantry": 4,
+        "carrier": 1,
+        "fighter": 2,
+        "dreadnought": 1,
+        "destroyer": 1
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 1,
+        "options": [
+          "nm",
+          "pa",
+          "ps",
+          "aida"
+        ]
+      },
+      "commodities": 4,
+      "abilities": [
+        "Survival Instinct",
+        "Miniaturization"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "ralnel_flagship",
+            "name": "Last Dispatch",
+            "cost": 8,
+            "capacity": 4,
+            "combat": 8,
+            "dice": 2,
+            "move": 2,
+            "sustain": true
+          }
+        },
+        "destroyer": {
+          "one": {
+            "id": "ralnel_destroyer",
+            "name": "Linkship I",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 9,
+            "dice": 1,
+            "move": 3,
+            "barrage": {
+              "hit": 9,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "ralnel_destroyer2",
+            "name": "Linkship II",
+            "cost": 1,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": 4,
+            "barrage": {
+              "hit": 6,
+              "dice": 3
+            }
+          }
+        }
+      }
+    }
+  },
+  "templates": [],
+  "technologies": {
+    "amd": {
+      "id": "amd",
+      "name": "Antimass Deflectors",
+      "type": "propulsion"
+    },
+    "det": {
+      "id": "det",
+      "name": "Dark Energy Tap",
+      "type": "propulsion"
+    },
+    "st": {
+      "id": "st",
+      "name": "Sarween Tools",
+      "type": "cybernetic"
+    },
+    "sdn": {
+      "id": "sdn",
+      "name": "Scanlink Drone Network",
+      "type": "cybernetic"
+    },
+    "nm": {
+      "id": "nm",
+      "name": "Neural Motivator",
+      "type": "biotic"
+    },
+    "pa": {
+      "id": "pa",
+      "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "ps": {
+      "id": "ps",
+      "name": "Plasma Scoring",
+      "type": "warfare"
+    },
+    "aida": {
+      "id": "aida",
+      "name": "AI Development Algorithm",
+      "type": "warfare"
+    }
+  },
+  "structures": []
+}

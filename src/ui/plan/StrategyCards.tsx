@@ -1,0 +1,76 @@
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { cardSummary } from '../../data/cardSummaries';
+import { strategyCards } from '../../domain/cards';
+import { cardsHeld } from '../../domain/strategy';
+import type { ExpansionId, Round } from '../../domain/types';
+import { currentLanguage } from '../../i18n';
+import { useGame } from '../../state/gameStore';
+
+export interface StrategyCardsProps {
+  expansions: ExpansionId[];
+  playerCount: number;
+  round: Round;
+}
+
+/**
+ * All eight cards in a grid that only plans: one tap makes a card the backup, the next the main one, the next clears it.
+ * With 3 or 4 players two cards are held, so the backup is the second card. The tapped card shows its details.
+ */
+export function StrategyCards({ expansions, playerCount, round }: StrategyCardsProps) {
+  const { t } = useTranslation();
+  const setStrategyCard = useGame(s => s.setStrategyCard);
+  const [shown, setShown] = useState<number | null>(null);
+  const lang = currentLanguage();
+  const cards = strategyCards(expansions);
+  const backupName = t(cardsHeld(playerCount) > 1 ? 'plan.cards.second' : 'plan.cards.backup');
+  const tap = (initiative: number) => {
+    setStrategyCard(round.number, initiative);
+    setShown(round.strategyCard === initiative ? null : initiative);
+  };
+  const named = (initiative: number | null) => {
+    const card = cards.find(c => c.initiative === initiative);
+    return card ? `${card.initiative} ${card.name}` : null;
+  };
+  const choice = [
+    round.strategyCard !== null && `${t('plan.cards.main')}: ${named(round.strategyCard)}`,
+    round.backupCard !== null && `${backupName}: ${named(round.backupCard)}`,
+  ].filter(Boolean).join(' · ');
+  const details = cards.find(c => c.initiative === shown);
+  const summary = details && cardSummary(details.summaryKey, lang);
+
+  return (
+    <div className="plan-cards">
+      <h4 className="phase-title">{t('plan.phases.strategy')}</h4>
+      <div className="card-grid" role="group" aria-label={t('plan.phases.strategy')}>
+        {cards.map(card => {
+          const main = card.initiative === round.strategyCard;
+          const backup = card.initiative === round.backupCard;
+          return (
+            <button
+              key={card.initiative} type="button" onClick={() => tap(card.initiative)}
+              className={`card-cell${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}`}
+            >
+              <b>{card.initiative}</b>{card.name}
+              {main && <small>{t('plan.cards.main')}</small>}
+              {backup && <small>{backupName}</small>}
+            </button>
+          );
+        })}
+      </div>
+      {choice ? <p className="card-choice">{choice}</p> : <p className="muted card-hint">{t('plan.phases.strategyEmpty')}</p>}
+      <p className="muted card-hint">{t(cardsHeld(playerCount) > 1 ? 'plan.cards.hintTwo' : 'plan.cards.hint')}</p>
+      {details && summary && (
+        <div className="card-details" role="group" aria-label={details.name}>
+          <span className="card-title">
+            {details.name}
+            {details.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
+          </span>
+          <span className="card-text"><b>{t('plan.cards.primary')}</b> {summary.primary}</span>
+          <span className="card-text"><b>{t('plan.cards.secondary')}</b> {summary.secondary}</span>
+          {summary.change && <span className="card-note">{summary.change}</span>}
+        </div>
+      )}
+    </div>
+  );
+}

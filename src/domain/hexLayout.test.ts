@@ -1,0 +1,358 @@
+import { describe, expect, test } from 'vitest';
+import { HEX_INNER, hexLayout, type GroundStack, type HexLayout, type HexLayoutInput, type SpaceStack, type StackOwner, type TokenKind } from './hexLayout';
+
+const SHIPS: TokenKind[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
+const GROUND: TokenKind[] = ['infantry', 'mech', 'pds', 'spacedock'];
+
+/** Every kind only once per owner: my seven ships, the enemy's seven, then ground stacks without a planet. */
+function spaceStacks(count: number): SpaceStack[] {
+  const extras: { kind: TokenKind; owner: StackOwner }[] = [
+    { kind: 'infantry', owner: 'me' }, { kind: 'mech', owner: 'me' }, { kind: 'infantry', owner: 'enemy' },
+  ];
+  return Array.from({ length: count }, (_, i) => ({
+    ...(i < 14 ? { kind: SHIPS[i % 7], owner: (i < 7 ? 'me' : 'enemy') as StackOwner } : extras[i - 14]),
+    count: 1 + (i % 3),
+  }));
+}
+
+function groundStacks(count: number, planets: number): GroundStack[] {
+  return Array.from({ length: count }, (_, i) => ({
+    kind: GROUND[i % 4], owner: (i % 8 < 4 ? 'me' : 'enemy') as StackOwner, planet: planets > 0 ? i % planets : 0, count: 1,
+  }));
+}
+
+const distance = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function expectApart(layout: HexLayout, context: string): void {
+  layout.items.forEach((a, i) => layout.items.slice(i + 1).forEach(b => {
+    expect(distance(a, b), `${context}: ${a.key} and ${b.key}`).toBeGreaterThanOrEqual((0.95 * (a.size + b.size)) / 2);
+  }));
+}
+
+describe('hexLayout', () => {
+  test('every stack is placed and nothing overlaps for 0 to 3 planets, 1 to 17 space stacks, up to 10 ground stacks', () => {
+    for (let planets = 0; planets <= 3; planets += 1) {
+      for (let space = 1; space <= 17; space += 1) {
+        for (let ground = 0; ground <= 10; ground += 1) {
+          const input: HexLayoutInput = { planets, space: spaceStacks(space), ground: groundStacks(ground, planets) };
+          const layout = hexLayout(input);
+          const context = `planets ${planets}, space ${space}, ground ${ground}`;
+          expect(layout.items, context).toHaveLength(space + ground);
+          expect(layout.planets, context).toHaveLength(planets);
+          expectApart(layout, context);
+        }
+      }
+    }
+  });
+
+  test('four planets: the same stacks all fit, the planets stay in the hex and apart', () => {
+    for (let space = 0; space <= 17; space += 1) {
+      for (let ground = 0; ground <= 10; ground += 1) {
+        const layout = hexLayout({ planets: 4, space: spaceStacks(space), ground: groundStacks(ground, 4) });
+        const context = `space ${space}, ground ${ground}`;
+        expect(layout.items, context).toHaveLength(space + ground);
+        expect(layout.planets, context).toHaveLength(4);
+        expectApart(layout, context);
+        layout.planets.forEach((a, i) => {
+          expect(Math.abs(a.y) + a.r, context).toBeLessThanOrEqual((46 * HEX_INNER) / 53);
+          layout.planets.slice(i + 1).forEach(b => expect(distance(a, b), context).toBeGreaterThanOrEqual(a.r + b.r));
+        });
+      }
+    }
+  });
+
+  test('more planets or stacks than fit never fail: everything is still placed, only smaller', () => {
+    for (const planets of [5, 7, 12, 60]) {
+      const layout = hexLayout({ planets, space: spaceStacks(17), ground: groundStacks(10, planets) });
+      expect(layout.planets, `${planets} planets`).toHaveLength(planets);
+      expect(layout.items, `${planets} planets`).toHaveLength(27);
+    }
+    const flood = hexLayout({ planets: 3, space: spaceStacks(17), ground: Array.from({ length: 300 }, (_, i) => groundStacks(1, 3).map(g => ({ ...g, planet: i }))[0]) });
+    expect(flood.items).toHaveLength(317);
+    expectApart({ ...flood, items: flood.items.slice(0, 60) }, 'flood');
+    for (const item of flood.items) expect(Number.isFinite(item.x + item.y + item.size)).toBe(true);
+  });
+
+  test('markers on the tile keep every token off them, and spacing holds', () => {
+    const marker = { x: 26, y: -41, r: 6 };
+    const seat = { x: -15, y: -43, r: 4.6 };
+    for (let planets = 0; planets <= 4; planets += 1) {
+      for (const space of [1, 3, 6, 9, 14, 17]) {
+        for (const ground of [0, 4, 10]) {
+          const layout = hexLayout({ planets, space: spaceStacks(space), ground: groundStacks(ground, planets), obstacles: [marker, seat, { x: 36, y: -28, r: 6 }] });
+          const context = `planets ${planets}, space ${space}, ground ${ground}`;
+          expect(layout.items, context).toHaveLength(space + ground);
+          expectApart(layout, context);
+          for (const item of layout.items) {
+            expect(distance(item, marker), `${context}: ${item.key}`).toBeGreaterThanOrEqual(marker.r);
+            expect(distance(item, seat), `${context}: ${item.key}`).toBeGreaterThanOrEqual(seat.r);
+          }
+        }
+      }
+    }
+  });
+
+  test('a marker moves a ship that would stand on it, and no marker changes nothing', () => {
+    const space = spaceStacks(8);
+    const plain = hexLayout({ planets: 1, space, ground: [] });
+    const marker = { x: 26, y: -41, r: 6 };
+    expect(plain.items.some(item => distance(item, marker) < marker.r + item.size / 2)).toBe(true);
+    const moved = hexLayout({ planets: 1, space, ground: [], obstacles: [marker] });
+    expect(moved.items.every(item => distance(item, marker) >= marker.r + moved.size / 2 - 1e-9)).toBe(true);
+    expect(hexLayout({ planets: 1, space, ground: [], obstacles: [] })).toEqual(plain);
+  });
+
+  test('all ground stacks on one planet still fit', () => {
+    for (const planets of [1, 2, 3]) {
+      const ground = groundStacks(10, 1);
+      const layout = hexLayout({ planets, space: spaceStacks(17), ground });
+      expect(layout.items).toHaveLength(27);
+      expectApart(layout, `planets ${planets}`);
+    }
+  });
+
+  test('the most a tile can hold still fits: every kind for both owners on each of three planets', () => {
+    const ground = [0, 1, 2].flatMap(planet => GROUND.flatMap(kind => (['me', 'enemy'] as const).map(owner => ({ kind, owner, planet, count: 1 }))));
+    const layout = hexLayout({ planets: 3, ground, space: spaceStacks(14) });
+    expect(layout.items).toHaveLength(38);
+  });
+
+  test('the approved picture comes out as in the prototype', () => {
+    const k = HEX_INNER / 53;
+    const { items, size } = hexLayout({
+      planets: 1,
+      space: [
+        { kind: 'flagship', owner: 'me', count: 1 }, { kind: 'dreadnought', owner: 'me', count: 1 }, { kind: 'carrier', owner: 'me', count: 2 },
+        { kind: 'fighter', owner: 'me', count: 3 }, { kind: 'destroyer', owner: 'enemy', count: 2 }, { kind: 'cruiser', owner: 'enemy', count: 1 },
+      ],
+      ground: [
+        { kind: 'infantry', owner: 'me', planet: 0, count: 2 }, { kind: 'mech', owner: 'me', planet: 0, count: 1 }, { kind: 'infantry', owner: 'enemy', planet: 0, count: 1 },
+      ],
+    });
+    const at = (key: string) => {
+      const item = items.find(i => i.key === key)!;
+      return [Math.round((item.x / k) * 10) / 10, Math.round((item.y / k) * 10) / 10];
+    };
+    expect(size / k).toBeCloseTo(19.5);
+    expect(at('me|infantry|0')).toEqual([-17.1, 16.3]);
+    expect(at('me|mech|0')).toEqual([0, 23.9]);
+    expect(at('enemy|infantry|0')).toEqual([17.1, 16.3]);
+    expect(at('me|flagship|-')).toEqual([0, -31.5]);
+    expect(at('me|dreadnought|-')).toEqual([-40.9, -7.9]);
+    expect(at('me|carrier|-')).toEqual([-13.6, 39.4]);
+    expect(at('me|fighter|-')).toEqual([13.7, 39.4]);
+    expect(at('enemy|cruiser|-')).toEqual([27.3, -31.5]);
+    expect(at('enemy|destroyer|-')).toEqual([40.9, -7.9]);
+  });
+
+  test('without stacks the tile keeps the largest size and full-size planets', () => {
+    const empty = hexLayout({ planets: 1, space: [], ground: [] });
+    expect(empty.items).toEqual([]);
+    expect(empty.size).toBeCloseTo((22 * HEX_INNER) / 53);
+    expect(empty.planets[0].r).toBeCloseTo((13 * HEX_INNER) / 53);
+  });
+
+  test('is deterministic', () => {
+    const input: HexLayoutInput = { planets: 2, space: spaceStacks(9), ground: groundStacks(5, 2) };
+    expect(hexLayout(input)).toEqual(hexLayout({ ...input, space: [...input.space], ground: [...input.ground] }));
+  });
+
+  test('an even count around one planet is mirror symmetric', () => {
+    for (const count of [2, 4, 6, 8, 10, 12, 14, 16]) {
+      const stacks = Array.from({ length: count }, (_, i) => ({ kind: SHIPS[i % 7], owner: (i < 7 ? 'me' : 'enemy') as StackOwner, count: 1 }));
+      const { items } = hexLayout({ planets: 1, space: stacks, ground: [] });
+      for (const item of items) {
+        expect(items.some(other => Math.abs(other.x + item.x) < 0.6 && Math.abs(other.y - item.y) < 0.6), `${count} stacks, ${item.key}`).toBe(true);
+      }
+    }
+  });
+
+  test('ground stacks stay on the arc of their planet, own ones at one end and enemy ones at the other', () => {
+    const ground: GroundStack[] = [
+      { kind: 'infantry', owner: 'me', planet: 0, count: 2 },
+      { kind: 'mech', owner: 'me', planet: 0, count: 1 },
+      { kind: 'infantry', owner: 'enemy', planet: 0, count: 1 },
+      { kind: 'pds', owner: 'me', planet: 1, count: 1 },
+      { kind: 'spacedock', owner: 'me', planet: 1, count: 1 },
+    ];
+    const layout = hexLayout({ planets: 2, space: spaceStacks(5), ground });
+    for (const item of layout.items.filter(i => i.planet !== undefined)) {
+      const planet = layout.planets[item.planet!];
+      const radius = distance(item, planet);
+      expect(radius).toBeCloseTo(planet.r + item.size * 0.54 + (1 * HEX_INNER) / 53, 5);
+    }
+    const onFirst = layout.items.filter(i => i.planet === 0).sort((a, b) => a.x - b.x);
+    expect(onFirst.at(-1)!.owner).toBe('enemy');
+  });
+
+  test('own ships lie left of enemy ships', () => {
+    for (let planets = 0; planets <= 3; planets += 1) {
+      for (let count = 2; count <= 14; count += 1) {
+        const stacks = Array.from({ length: count }, (_, i) => ({
+          kind: SHIPS[i % 7], owner: (i % 2 === 0 ? 'me' : 'enemy') as StackOwner, count: 1,
+        })).map((stack, i) => ({ ...stack, kind: SHIPS[Math.floor(i / 2) % 7] }));
+        const { items } = hexLayout({ planets, space: stacks, ground: [] });
+        const own = Math.max(...items.filter(i => i.owner === 'me').map(i => i.x));
+        const enemy = Math.min(...items.filter(i => i.owner === 'enemy').map(i => i.x));
+        expect(own, `planets ${planets}, count ${count}`).toBeLessThanOrEqual(enemy + 1e-9);
+      }
+    }
+  });
+
+  describe('three opponents', () => {
+    const order = ['c', 'a', 'b'];
+    const ships = (owner: StackOwner, n: number): SpaceStack[] => SHIPS.slice(0, n).map(kind => ({ kind, owner, count: 1 }));
+    /** Neighbours on the comb stand 1.4 token sizes apart. */
+    const connected = (cells: { x: number; y: number }[], size: number) => {
+      const seen = new Set([cells[0]]);
+      for (const cell of seen) for (const other of cells) if (distance(cell, other) < size * 1.4 * 1.01) seen.add(other);
+      return seen.size === cells.length;
+    };
+
+    test('mine stay left of every opponent, and the first seat stands left of the last', () => {
+      for (let planets = 0; planets <= 1; planets += 1) {
+        for (const mine of [0, 1, 2, 3]) {
+          for (const c of [1, 2, 3]) {
+            for (const a of [1, 2, 3]) {
+              const input: HexLayoutInput = { planets, ground: [], opponents: order, space: [...ships('a', a), ...ships('b', 2), ...ships('me', mine), ...ships('c', c)] };
+              const { items, size } = hexLayout(input);
+              const context = `planets ${planets}, mine ${mine}, c ${c}, a ${a}`;
+              const of = (owner: string) => items.filter(i => i.owner === owner);
+              expect(items, context).toHaveLength(mine + c + a + 2);
+              if (mine > 0) {
+                const right = Math.max(...of('me').map(i => i.x));
+                for (const owner of order) expect(right, context).toBeLessThanOrEqual(Math.min(...of(owner).map(i => i.x)) + 1e-9);
+              }
+              const middle = (owner: string) => of(owner).reduce((sum, i) => sum + i.x, 0) / of(owner).length;
+              expect(middle('c'), context).toBeLessThanOrEqual(middle('b') + 1e-9);
+              if (planets > 0) continue;
+              // The comb is full here: strictly left to right, with every group in one piece.
+              const lefts = order.map(owner => Math.min(...of(owner).map(i => i.x)));
+              expect(lefts[0], context).toBeLessThanOrEqual(lefts[1] + 1e-9);
+              expect(lefts[1], context).toBeLessThanOrEqual(lefts[2] + 1e-9);
+              for (const owner of order) expect(connected(of(owner), size), `${context}, ${owner}`).toBe(true);
+            }
+          }
+        }
+      }
+    });
+
+    test('around one planet, groups of equal size stay in one piece', () => {
+      for (const mine of [0, 1, 2, 3]) {
+        for (const each of [1, 2, 3]) {
+          const { items, size } = hexLayout({ planets: 1, ground: [], opponents: order, space: [...ships('me', mine), ...order.flatMap(owner => ships(owner, each))] });
+          for (const owner of order) expect(connected(items.filter(i => i.owner === owner), size), `mine ${mine}, each ${each}, ${owner}`).toBe(true);
+        }
+      }
+    });
+
+    test('on an arc the same order holds: mine, then the opponents by seat, each together', () => {
+      const ground: GroundStack[] = (['a', 'me', 'c', 'b'] as const).flatMap(owner => (['infantry', 'mech'] as const).map(kind => ({ kind, owner, planet: 0, count: 1 })));
+      const { items, planets } = hexLayout({ planets: 1, ground, space: [], opponents: order });
+      const angle = (i: { x: number; y: number }) => {
+        const a = Math.atan2(i.y - planets[0].y, i.x - planets[0].x);
+        return a < -Math.PI / 2 ? a + 2 * Math.PI : a;
+      };
+      // The arc runs along the planet from its left end: angles fall from mine towards the last seat.
+      const around = [...items].sort((p, q) => angle(q) - angle(p));
+      expect(around.map(i => i.owner)).toEqual(['me', 'me', 'c', 'c', 'a', 'a', 'b', 'b']);
+    });
+
+    test('the same kind of two opponents stays two stacks with their own keys', () => {
+      const { items } = hexLayout({
+        planets: 1, opponents: ['a', 'b'],
+        space: [{ kind: 'cruiser', owner: 'a', count: 2 }, { kind: 'cruiser', owner: 'b', count: 1 }],
+        ground: [{ kind: 'infantry', owner: 'a', planet: 0, count: 1 }, { kind: 'infantry', owner: 'b', planet: 0, count: 2 }],
+      });
+      expect(items.map(i => i.key).sort()).toEqual(['a|cruiser|-', 'a|infantry|0', 'b|cruiser|-', 'b|infantry|0']);
+      expect(new Set(items.map(i => `${i.x},${i.y}`)).size).toBe(4);
+    });
+
+    test('an overfull tile keeps the owners together in order', () => {
+      const flood = (owner: StackOwner, planet: number): GroundStack => ({ kind: 'infantry', owner, planet, count: 1 });
+      const ground = Array.from({ length: 400 }, (_, i) => flood(['c', 'a', 'b', 'me'][i % 4], i));
+      const { items } = hexLayout({ planets: 3, ground, space: [], opponents: order });
+      const owners = items.map(i => i.owner);
+      expect(items).toHaveLength(400);
+      expect([...new Set(owners)]).toEqual(['me', ...order]);
+      expect(owners.indexOf('c')).toBe(100);
+      expect(owners.lastIndexOf('b')).toBe(399);
+    });
+  });
+
+  test('one opponent draws exactly as with the plain enemy owner, whatever the id', () => {
+    const rename = <T extends { owner: StackOwner }>(stack: T): T => ({ ...stack, owner: stack.owner === 'enemy' ? 'id-1' : stack.owner });
+    const shape = ({ x, y, size, kind, count }: HexLayout['items'][number]) => ({ x, y, size, kind, count });
+    for (const planets of [0, 1, 2, 3]) {
+      for (const n of [3, 8, 14, 17]) {
+        const space = spaceStacks(n);
+        const ground = groundStacks(5, planets);
+        const plain = hexLayout({ planets, space, ground });
+        const named = hexLayout({ planets, space: space.map(rename), ground: ground.map(rename), opponents: ['id-1'] });
+        expect(named.items.map(shape)).toEqual(plain.items.map(shape));
+      }
+    }
+  });
+
+  test('heavy ships are larger than light ones', () => {
+    const { items } = hexLayout({
+      planets: 0, ground: [],
+      space: [{ kind: 'flagship', owner: 'me', count: 1 }, { kind: 'carrier', owner: 'me', count: 1 }, { kind: 'fighter', owner: 'me', count: 1 }],
+    });
+    const size = (kind: TokenKind) => items.find(i => i.kind === kind)!.size;
+    expect(size('flagship')).toBeGreaterThan(size('carrier'));
+    expect(size('carrier')).toBeGreaterThan(size('fighter'));
+  });
+
+  test('a crowded system shrinks its planets, but never below 62%', () => {
+    const roomy = hexLayout({ planets: 1, space: [{ kind: 'carrier', owner: 'me', count: 1 }], ground: [] });
+    const crowded = hexLayout({ planets: 1, space: spaceStacks(17), ground: groundStacks(8, 1) });
+    expect(crowded.size).toBeLessThan(roomy.size);
+    expect(crowded.planets[0].r).toBeLessThan(roomy.planets[0].r);
+    expect(crowded.planets[0].r).toBeGreaterThanOrEqual(roomy.planets[0].r * 0.62 - 1e-9);
+  });
+
+  test('planets stand as approved: one in the middle, two on a diagonal, three in a triangle', () => {
+    const at = (planets: number) => hexLayout({ planets, space: [], ground: [] }).planets;
+    expect(Math.abs(at(1)[0].x)).toBeLessThan(0.01);
+    const [a, b] = at(2);
+    expect(a.x).toBeLessThan(0);
+    expect(b.x).toBeGreaterThan(0);
+    expect(a.y).toBeLessThan(0);
+    expect(b.y).toBeGreaterThan(0);
+    const [top, left, right] = at(3);
+    expect(distance(top, left)).toBeCloseTo(distance(left, right), 0);
+    expect(distance(top, right)).toBeCloseTo(distance(left, right), 0);
+  });
+
+  test('ground stacks go on the comb when there is no planet, and planet numbers wrap', () => {
+    const empty = hexLayout({ planets: 0, space: [], ground: [{ kind: 'infantry', owner: 'enemy', planet: 0, count: 2 }] });
+    expect(empty.items).toHaveLength(1);
+    expect(empty.items[0].planet).toBeUndefined();
+    const wrapped = hexLayout({ planets: 2, space: [], ground: [{ kind: 'infantry', owner: 'me', planet: 3, count: 1 }] });
+    expect(wrapped.items[0].planet).toBe(1);
+  });
+
+  test('a stack keeps the same key whichever way it is placed', () => {
+    const ground: GroundStack = { kind: 'infantry', owner: 'me', planet: 1, count: 3 };
+    const space: SpaceStack = { kind: 'carrier', owner: 'enemy', count: 2 };
+    const { items } = hexLayout({ planets: 2, space: [space], ground: [ground] });
+    expect(items.map(i => i.key).sort()).toEqual(['enemy|carrier|-', 'me|infantry|1']);
+    expect(items.find(i => i.kind === 'carrier')!.count).toBe(2);
+  });
+
+  test('a crowded tile with several planets and three opponents: all stacks placed once, none on another', () => {
+    const owners: StackOwner[] = ['me', 'a', 'b', 'c'];
+    for (const planets of [2, 3]) {
+      for (const each of [1, 2, 3, 4]) {
+        const space = owners.flatMap(owner => SHIPS.slice(0, each).map((kind): SpaceStack => ({ kind, owner, count: 1 })));
+        const ground = owners.flatMap((owner, i): GroundStack[] => [{ kind: 'infantry', owner, planet: i % planets, count: 2 }]);
+        const layout = hexLayout({ planets, space, ground, opponents: ['a', 'b', 'c'] });
+        const context = `${planets} planets, ${each} ships each`;
+        expect(layout.items, context).toHaveLength(space.length + ground.length);
+        expect(new Set(layout.items.map(item => item.key)).size, context).toBe(layout.items.length);
+        expectApart(layout, context);
+      }
+    }
+  });
+});

@@ -1,0 +1,130 @@
+{
+  "base_game": [
+    {
+      "initiative": 1,
+      "name": "Leadership",
+      "summaryKey": "pok1leadership"
+    },
+    {
+      "initiative": 2,
+      "name": "Diplomacy",
+      "summaryKey": "base2"
+    },
+    {
+      "initiative": 3,
+      "name": "Politics",
+      "summaryKey": "pok3politics"
+    },
+    {
+      "initiative": 4,
+      "name": "Construction",
+      "summaryKey": "base4"
+    },
+    {
+      "initiative": 5,
+      "name": "Trade",
+      "summaryKey": "pok5trade"
+    },
+    {
+      "initiative": 6,
+      "name": "Warfare",
+      "summaryKey": "pok6warfare"
+    },
+    {
+      "initiative": 7,
+      "name": "Technology",
+      "summaryKey": "pok7technology"
+    },
+    {
+      "initiative": 8,
+      "name": "Imperial",
+      "summaryKey": "pok8imperial"
+    }
+  ],
+  "pok": [
+    {
+      "initiative": 1,
+      "name": "Leadership",
+      "summaryKey": "pok1leadership"
+    },
+    {
+      "initiative": 2,
+      "name": "Diplomacy",
+      "summaryKey": "pok2diplomacy"
+    },
+    {
+      "initiative": 3,
+      "name": "Politics",
+      "summaryKey": "pok3politics"
+    },
+    {
+      "initiative": 4,
+      "name": "Construction",
+      "summaryKey": "pok4construction"
+    },
+    {
+      "initiative": 5,
+      "name": "Trade",
+      "summaryKey": "pok5trade"
+    },
+    {
+      "initiative": 6,
+      "name": "Warfare",
+      "summaryKey": "pok6warfare"
+    },
+    {
+      "initiative": 7,
+      "name": "Technology",
+      "summaryKey": "pok7technology"
+    },
+    {
+      "initiative": 8,
+      "name": "Imperial",
+      "summaryKey": "pok8imperial"
+    }
+  ],
+  "te": [
+    {
+      "initiative": 1,
+      "name": "Leadership",
+      "summaryKey": "pok1leadership"
+    },
+    {
+      "initiative": 2,
+      "name": "Diplomacy",
+      "summaryKey": "pok2diplomacy"
+    },
+    {
+      "initiative": 3,
+      "name": "Politics",
+      "summaryKey": "pok3politics"
+    },
+    {
+      "initiative": 4,
+      "name": "Construction",
+      "summaryKey": "te4construction",
+      "changedIn": "te"
+    },
+    {
+      "initiative": 5,
+      "name": "Trade",
+      "summaryKey": "pok5trade"
+    },
+    {
+      "initiative": 6,
+      "name": "Warfare",
+      "summaryKey": "te6warfare",
+      "changedIn": "te"
+    },
+    {
+      "initiative": 7,
+      "name": "Technology",
+      "summaryKey": "pok7technology"
+    },
+    {
+      "initiative": 8,
+      "name": "Imperial",
+      "summaryKey": "pok8imperial"
+    }
+  ]
+}

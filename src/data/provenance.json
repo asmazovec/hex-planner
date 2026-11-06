@@ -1,0 +1,56 @@
+{
+  "source": "https://github.com/AsyncTI4/TI4_map_generator_bot",
+  "commit": "9eee64a3b13fc698b3ee174590dde40e005c0dfe",
+  "commitDate": "2026-11-05",
+  "dataVersion": "2026-11-05-9eee64a",
+  "license": "Source code is public domain (Unlicense); that license excludes art. Rights to the game data are not confirmed.",
+  "keptSources": [
+    "base",
+    "pok",
+    "codex*",
+    "thunders_edge"
+  ],
+  "excludedSystems": {
+    "c41": "source-only Ordinian variant, outside the printed 1-51 range",
+    "92new": "Keleres uses the physical home tile of an absent faction (14)",
+    "93new": "Keleres uses the physical home tile of an absent faction (58)",
+    "94new": "Keleres uses the physical home tile of an absent faction (2)",
+    "silver_flame": "relic marker with no planets or printed number"
+  },
+  "excludedPlanets": {
+    "ordinianc4": "lies on excluded tile c41",
+    "archonrenk": "lies on excluded tile 92new",
+    "archontauk": "lies on excluded tile 92new",
+    "valkk": "lies on excluded tile 93new",
+    "ylirk": "lies on excluded tile 93new",
+    "avark": "lies on excluded tile 93new",
+    "mollprimusk": "lies on excluded tile 94new",
+    "illusion": "renamed copy of Mirage, no official component found",
+    "phantasm": "renamed copy of Mirage, no official component found",
+    "loststation": "no official component found"
+  },
+  "notFromSource": {
+    "tiles": [
+      "119A",
+      "120A",
+      "121A",
+      "122A",
+      "123A",
+      "124A"
+    ],
+    "reason": "Thunder's Edge rulebook; absent from the source at this commit"
+  },
+  "corrections": {
+    "homeTiles": {
+      "ghost": "51",
+      "crimson": "118",
+      "keleresm": "2",
+      "keleresx": "14",
+      "keleresa": "58"
+    }
+  },
+  "unconfirmed": {
+    "unitLimits": "Reinforcement limits are null: no public source confirmed them."
+  },
+  "verification": "docs/data-verification.md"
+}

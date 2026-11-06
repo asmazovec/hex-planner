@@ -1,0 +1,2551 @@
+{
+  "version": "2026-11-05-9eee64a",
+  "tiles": {
+    "52": {
+      "id": "52",
+      "number": "52",
+      "planetIds": [
+        "ixth"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "53": {
+      "id": "53",
+      "number": "53",
+      "planetIds": [
+        "arcturus"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "54": {
+      "id": "54",
+      "number": "54",
+      "planetIds": [
+        "acheron"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "55": {
+      "id": "55",
+      "number": "55",
+      "planetIds": [
+        "elysium"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "56": {
+      "id": "56",
+      "number": "56",
+      "planetIds": [
+        "thedark"
+      ],
+      "kind": "home",
+      "wormholes": [],
+      "anomaly": "nebula"
+    },
+    "57": {
+      "id": "57",
+      "number": "57",
+      "planetIds": [
+        "naazir",
+        "rokha"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "58": {
+      "id": "58",
+      "number": "58",
+      "planetIds": [
+        "valk",
+        "ylir",
+        "avar"
+      ],
+      "kind": "home",
+      "wormholes": []
+    },
+    "59": {
+      "id": "59",
+      "number": "59",
+      "planetIds": [
+        "archonvail"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "60": {
+      "id": "60",
+      "number": "60",
+      "planetIds": [
+        "perimeter"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "61": {
+      "id": "61",
+      "number": "61",
+      "planetIds": [
+        "ang"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "62": {
+      "id": "62",
+      "number": "62",
+      "planetIds": [
+        "semlore"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "63": {
+      "id": "63",
+      "number": "63",
+      "planetIds": [
+        "vorhal"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "64": {
+      "id": "64",
+      "number": "64",
+      "planetIds": [
+        "atlas"
+      ],
+      "kind": "system",
+      "wormholes": [
+        "beta"
+      ]
+    },
+    "65": {
+      "id": "65",
+      "number": "65",
+      "planetIds": [
+        "primor"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "66": {
+      "id": "66",
+      "number": "66",
+      "planetIds": [
+        "hopesend"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "67": {
+      "id": "67",
+      "number": "67",
+      "planetIds": [
+        "cormund"
+      ],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "rift"
+    },
+    "68": {
+      "id": "68",
+      "number": "68",
+      "planetIds": [
+        "everra"
+      ],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "nebula"
+    },
+    "69": {
+      "id": "69",
+      "number": "69",
+      "planetIds": [
+        "accoen",
+        "jeolir"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "70": {
+      "id": "70",
+      "number": "70",
+      "planetIds": [
+        "kraag",
+        "siig"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "71": {
+      "id": "71",
+      "number": "71",
+      "planetIds": [
+        "bakal",
+        "alioprima"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "72": {
+      "id": "72",
+      "number": "72",
+      "planetIds": [
+        "lisis",
+        "velnor"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "73": {
+      "id": "73",
+      "number": "73",
+      "planetIds": [
+        "cealdri",
+        "xanhact"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "74": {
+      "id": "74",
+      "number": "74",
+      "planetIds": [
+        "vegamajor",
+        "vegaminor"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "75": {
+      "id": "75",
+      "number": "75",
+      "planetIds": [
+        "loki",
+        "abaddon",
+        "ashtroth"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "76": {
+      "id": "76",
+      "number": "76",
+      "planetIds": [
+        "rigeliii",
+        "rigelii",
+        "rigeli"
+      ],
+      "kind": "system",
+      "wormholes": []
+    },
+    "77": {
+      "id": "77",
+      "number": "77",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "78": {
+      "id": "78",
+      "number": "78",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": []
+    },
+    "79": {
+      "id": "79",
+      "number": "79",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [
+        "alpha"
+      ],
+      "anomaly": "asteroid"
+    },
+    "80": {
+      "id": "80",
+      "number": "80",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "supernova"
+    },
+    "81": {
+      "id": "81",
+      "number": "81",
+      "planetIds": [],
+      "kind": "system",
+      "wormholes": [],
+      "anomaly": "supernova"
+    },
+    "82A": {
+      "id": "82A",
+      "number": "82",
+      "planetIds": [
+        "lockedmallice"
+      ],
+      "kind": "system",
+      "wormholes": [
+        "gamma"
+      ]
+    },
+    "82B": {
+      "id": "82B",
+      "number": "82",
+      "planetIds": [
+        "mallice"
+      ],
+      "kind": "system",
+      "wormholes": [
+        "beta",
+        "alpha",
+        "gamma"
+      ]
+    },
+    "83A": {
+      "id": "83A",
+      "number": "83",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          4
+        ]
+      ]
+    },
+    "83B": {
+      "id": "83B",
+      "number": "83",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ]
+    },
+    "84A": {
+      "id": "84A",
+      "number": "84",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          2,
+          5
+        ]
+      ]
+    },
+    "84B": {
+      "id": "84B",
+      "number": "84",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ]
+      ]
+    },
+    "85A": {
+      "id": "85A",
+      "number": "85",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          5
+        ]
+      ]
+    },
+    "85B": {
+      "id": "85B",
+      "number": "85",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ]
+    },
+    "86A": {
+      "id": "86A",
+      "number": "86",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          5
+        ]
+      ]
+    },
+    "86B": {
+      "id": "86B",
+      "number": "86",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ]
+      ]
+    },
+    "87A": {
+      "id": "87A",
+      "number": "87",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          2,
+          5
+        ]
+      ]
+    },
+    "87B": {
+      "id": "87B",
+      "number": "87",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ]
+    },
+    "88A": {
+      "id": "88A",
+      "number": "88",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          4
+        ],
+        [
+          2,
+          4
+        ]
+      ]
+    },
+    "88B": {
+      "id": "88B",
+      "number": "88",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ],
+        [
+          3,
+          5
+        ]
+      ]
+    },
+    "89A": {
+      "id": "89A",
+      "number": "89",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          2,
+          4
+        ]
+      ]
+    },
+    "89B": {
+      "id": "89B",
+      "number": "89",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    "90A": {
+      "id": "90A",
+      "number": "90",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          4
+        ]
+      ]
+    },
+    "90B": {
+      "id": "90B",
+      "number": "90",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ]
+      ]
+    },
+    "91A": {
+      "id": "91A",
+      "number": "91",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          3
+        ],
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          3
+        ]
+      ]
+    },
+    "91B": {
+      "id": "91B",
+      "number": "91",
+      "planetIds": [],
+      "kind": "hyperlane",
+      "wormholes": [],
+      "lanes": [
+        [
+          0,
+          2
+        ],
+        [
+          0,
+          3
+        ]
+      ]
+    }
+  },
+  "planets": {
+    "ixth": {
+      "id": "ixth",
+      "name": "Ixth",
+      "resources": 3,
+      "influence": 5
+    },
+    "arcturus": {
+      "id": "arcturus",
+      "name": "Arcturus",
+      "resources": 4,
+      "influence": 4
+    },
+    "acheron": {
+      "id": "acheron",
+      "name": "Acheron",
+      "resources": 4,
+      "influence": 0
+    },
+    "elysium": {
+      "id": "elysium",
+      "name": "Elysium",
+      "resources": 4,
+      "influence": 1
+    },
+    "thedark": {
+      "id": "thedark",
+      "name": "The Dark",
+      "resources": 3,
+      "influence": 4
+    },
+    "naazir": {
+      "id": "naazir",
+      "name": "Naazir",
+      "resources": 2,
+      "influence": 1
+    },
+    "rokha": {
+      "id": "rokha",
+      "name": "Rokha",
+      "resources": 1,
+      "influence": 2
+    },
+    "valk": {
+      "id": "valk",
+      "name": "Valk",
+      "resources": 2,
+      "influence": 0
+    },
+    "ylir": {
+      "id": "ylir",
+      "name": "Ylir",
+      "resources": 0,
+      "influence": 2
+    },
+    "avar": {
+      "id": "avar",
+      "name": "Avar",
+      "resources": 1,
+      "influence": 1
+    },
+    "archonvail": {
+      "id": "archonvail",
+      "name": "Archon Vail",
+      "resources": 1,
+      "influence": 3,
+      "tech": [
+        "propulsion"
+      ],
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "perimeter": {
+      "id": "perimeter",
+      "name": "Perimeter",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "ang": {
+      "id": "ang",
+      "name": "Ang",
+      "resources": 2,
+      "influence": 0,
+      "tech": [
+        "warfare"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "semlore": {
+      "id": "semlore",
+      "name": "Sem-Lore",
+      "resources": 3,
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ],
+      "traits": [
+        "cultural"
+      ]
+    },
+    "vorhal": {
+      "id": "vorhal",
+      "name": "Vorhal",
+      "resources": 0,
+      "influence": 2,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "cultural"
+      ]
+    },
+    "atlas": {
+      "id": "atlas",
+      "name": "Atlas",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "primor": {
+      "id": "primor",
+      "name": "Primor",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "The Atrament"
+    },
+    "hopesend": {
+      "id": "hopesend",
+      "name": "Hope's End",
+      "resources": 3,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ],
+      "legendary": "Imperial Arms Vault"
+    },
+    "cormund": {
+      "id": "cormund",
+      "name": "Cormund",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "everra": {
+      "id": "everra",
+      "name": "Everra",
+      "resources": 3,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "accoen": {
+      "id": "accoen",
+      "name": "Accoen",
+      "resources": 2,
+      "influence": 3,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "jeolir": {
+      "id": "jeolir",
+      "name": "Jeol Ir",
+      "resources": 2,
+      "influence": 3,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "kraag": {
+      "id": "kraag",
+      "name": "Kraag",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "siig": {
+      "id": "siig",
+      "name": "Siig",
+      "resources": 0,
+      "influence": 2,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "bakal": {
+      "id": "bakal",
+      "name": "Bakal",
+      "resources": 3,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "alioprima": {
+      "id": "alioprima",
+      "name": "Alio Prima",
+      "resources": 1,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "lisis": {
+      "id": "lisis",
+      "name": "Lisis",
+      "resources": 2,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "velnor": {
+      "id": "velnor",
+      "name": "Velnor",
+      "resources": 2,
+      "influence": 1,
+      "tech": [
+        "warfare"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "cealdri": {
+      "id": "cealdri",
+      "name": "Cealdri",
+      "resources": 0,
+      "influence": 2,
+      "tech": [
+        "cybernetic"
+      ],
+      "traits": [
+        "cultural"
+      ]
+    },
+    "xanhact": {
+      "id": "xanhact",
+      "name": "Xanhact",
+      "resources": 0,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "vegamajor": {
+      "id": "vegamajor",
+      "name": "Vega Major",
+      "resources": 2,
+      "influence": 1,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "vegaminor": {
+      "id": "vegaminor",
+      "name": "Vega Minor",
+      "resources": 1,
+      "influence": 2,
+      "tech": [
+        "propulsion"
+      ],
+      "traits": [
+        "cultural"
+      ]
+    },
+    "loki": {
+      "id": "loki",
+      "name": "Loki",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "abaddon": {
+      "id": "abaddon",
+      "name": "Abaddon",
+      "resources": 1,
+      "influence": 0,
+      "traits": [
+        "cultural"
+      ]
+    },
+    "ashtroth": {
+      "id": "ashtroth",
+      "name": "Ashtroth",
+      "resources": 2,
+      "influence": 0,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "rigeliii": {
+      "id": "rigeliii",
+      "name": "Rigel III",
+      "resources": 1,
+      "influence": 1,
+      "tech": [
+        "biotic"
+      ],
+      "traits": [
+        "industrial"
+      ]
+    },
+    "rigelii": {
+      "id": "rigelii",
+      "name": "Rigel II",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "industrial"
+      ]
+    },
+    "rigeli": {
+      "id": "rigeli",
+      "name": "Rigel I",
+      "resources": 0,
+      "influence": 1,
+      "traits": [
+        "hazardous"
+      ]
+    },
+    "lockedmallice": {
+      "id": "lockedmallice",
+      "name": "Locked Mallice",
+      "resources": 0,
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "Exterrix Headquarters"
+    },
+    "mallice": {
+      "id": "mallice",
+      "name": "Mallice",
+      "resources": 0,
+      "influence": 3,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "Exterrix Headquarters"
+    },
+    "mirage": {
+      "id": "mirage",
+      "name": "Mirage",
+      "resources": 1,
+      "influence": 2,
+      "traits": [
+        "cultural"
+      ],
+      "legendary": "Mirage Flight Academy"
+    },
+    "custodiavigilia": {
+      "id": "custodiavigilia",
+      "name": "Custodia Vigilia",
+      "resources": 2,
+      "influence": 3,
+      "legendary": "Custodian's Favour"
+    }
+  },
+  "units": {
+    "mech": {
+      "id": "mech",
+      "name": "Mech",
+      "cost": 2,
+      "capacity": 0,
+      "capacityUsed": 1,
+      "ground": true,
+      "fighter": false,
+      "combat": 6,
+      "move": null,
+      "limit": null
+    }
+  },
+  "factions": {
+    "keleresm": {
+      "id": "keleresm",
+      "name": "The Council Keleres - Mentak",
+      "homeTile": "2",
+      "startUnits": {
+        "infantry": 2,
+        "carrier": 2,
+        "fighter": 2,
+        "cruiser": 1
+      },
+      "startingTech": [],
+      "commodities": 2,
+      "abilities": [
+        "The Tribuni",
+        "Council Patronage",
+        "Law's Order"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "keleres_flagship",
+            "name": "Artemiris",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "keleresx": {
+      "id": "keleresx",
+      "name": "The Council Keleres - Xxcha",
+      "homeTile": "14",
+      "startUnits": {
+        "infantry": 2,
+        "carrier": 2,
+        "fighter": 2,
+        "cruiser": 1
+      },
+      "startingTech": [],
+      "commodities": 2,
+      "abilities": [
+        "The Tribuni",
+        "Council Patronage",
+        "Law's Order"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "keleres_flagship",
+            "name": "Artemiris",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "keleresa": {
+      "id": "keleresa",
+      "name": "The Council Keleres - Argent",
+      "homeTile": "58",
+      "startUnits": {
+        "infantry": 2,
+        "carrier": 2,
+        "fighter": 2,
+        "cruiser": 1
+      },
+      "startingTech": [],
+      "commodities": 2,
+      "abilities": [
+        "The Tribuni",
+        "Council Patronage",
+        "Law's Order"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "keleres_flagship",
+            "name": "Artemiris",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "argent": {
+      "id": "argent",
+      "name": "The Argent Flight",
+      "homeTile": "58",
+      "startUnits": {
+        "carrier": 1,
+        "destroyer": 2,
+        "fighter": 2,
+        "infantry": 5
+      },
+      "startingTech": [],
+      "startingTechChoice": {
+        "amount": 2,
+        "options": [
+          "nm",
+          "st",
+          "ps"
+        ]
+      },
+      "commodities": 3,
+      "abilities": [
+        "Zeal",
+        "Raid Formation"
+      ],
+      "ships": {
+        "destroyer": {
+          "one": {
+            "id": "argent_destroyer",
+            "name": "Strike Wing Alpha I",
+            "cost": 1,
+            "capacity": 1,
+            "combat": 8,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 9,
+              "dice": 2
+            }
+          },
+          "two": {
+            "id": "argent_destroyer2",
+            "name": "Strike Wing Alpha II",
+            "cost": 1,
+            "capacity": 1,
+            "combat": 7,
+            "dice": 1,
+            "move": 2,
+            "barrage": {
+              "hit": 6,
+              "dice": 3
+            }
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "argent_flagship",
+            "name": "Quetzecoatl",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "cabal": {
+      "id": "cabal",
+      "name": "The Vuil'raith Cabal",
+      "homeTile": "54",
+      "startUnits": {
+        "dreadnought": 1,
+        "carrier": 1,
+        "cruiser": 1,
+        "fighter": 3,
+        "infantry": 3
+      },
+      "startingTech": [
+        "sar"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Devour",
+        "Amalgamation",
+        "Riftmeld"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "cabal_flagship",
+            "name": "The Terror Between",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "bombard": {
+              "hit": 5,
+              "dice": 1
+            }
+          }
+        }
+      }
+    },
+    "empyrean": {
+      "id": "empyrean",
+      "name": "The Empyrean",
+      "homeTile": "56",
+      "startUnits": {
+        "carrier": 2,
+        "destroyer": 1,
+        "fighter": 2,
+        "infantry": 4
+      },
+      "startingTech": [
+        "det"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "Voidborn",
+        "Aetherpassage",
+        "Dark Whispers"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "empyrean_flagship",
+            "name": "Dynamo",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "mahact": {
+      "id": "mahact",
+      "name": "The Mahact Gene-Sorcerers",
+      "homeTile": "52",
+      "startUnits": {
+        "dreadnought": 1,
+        "carrier": 1,
+        "cruiser": 1,
+        "fighter": 2,
+        "infantry": 3
+      },
+      "startingTech": [
+        "pi",
+        "bs"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Edict",
+        "Imperia",
+        "Hubris"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "mahact_flagship",
+            "name": "Arvicon Rex",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 5,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "nomad": {
+      "id": "nomad",
+      "name": "The Nomad",
+      "homeTile": "53",
+      "startUnits": {
+        "carrier": 1,
+        "destroyer": 1,
+        "fighter": 3,
+        "flagship": 1,
+        "infantry": 4
+      },
+      "startingTech": [
+        "sr"
+      ],
+      "commodities": 4,
+      "abilities": [
+        "The Company",
+        "Future Sight"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "nomad_flagship",
+            "name": "Memoria I",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true,
+            "barrage": {
+              "hit": 8,
+              "dice": 3
+            }
+          },
+          "two": {
+            "id": "nomad_flagship2",
+            "name": "Memoria II",
+            "cost": 8,
+            "capacity": 6,
+            "combat": 5,
+            "dice": 2,
+            "move": 2,
+            "sustain": true,
+            "barrage": {
+              "hit": 5,
+              "dice": 3
+            }
+          }
+        }
+      }
+    },
+    "naaz": {
+      "id": "naaz",
+      "name": "The Naaz-Rokha Alliance",
+      "homeTile": "57",
+      "startUnits": {
+        "carrier": 2,
+        "destroyer": 1,
+        "fighter": 2,
+        "infantry": 3,
+        "mech": 1
+      },
+      "startingTech": [
+        "pa",
+        "aida"
+      ],
+      "commodities": 3,
+      "abilities": [
+        "Distant Suns",
+        "Fabrication"
+      ],
+      "ships": {
+        "flagship": {
+          "one": {
+            "id": "naaz_flagship",
+            "name": "Visz El Vir",
+            "cost": 8,
+            "capacity": 4,
+            "combat": 9,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    },
+    "titans": {
+      "id": "titans",
+      "name": "The Titans of Ul",
+      "homeTile": "55",
+      "startUnits": {
+        "dreadnought": 1,
+        "cruiser": 2,
+        "fighter": 2,
+        "infantry": 3
+      },
+      "startingTech": [
+        "amd",
+        "sdn"
+      ],
+      "commodities": 2,
+      "abilities": [
+        "Terragenesis",
+        "Awaken",
+        "Coalescence"
+      ],
+      "ships": {
+        "cruiser": {
+          "one": {
+            "id": "titans_cruiser",
+            "name": "Saturn Engine I",
+            "cost": 2,
+            "capacity": 1,
+            "combat": 7,
+            "dice": 1,
+            "move": 2
+          },
+          "two": {
+            "id": "titans_cruiser2",
+            "name": "Saturn Engine II",
+            "cost": 2,
+            "capacity": 2,
+            "combat": 6,
+            "dice": 1,
+            "move": 3,
+            "sustain": true
+          }
+        },
+        "flagship": {
+          "one": {
+            "id": "titans_flagship",
+            "name": "Ouranos",
+            "cost": 8,
+            "capacity": 3,
+            "combat": 7,
+            "dice": 2,
+            "move": 1,
+            "sustain": true
+          }
+        }
+      }
+    }
+  },
+  "templates": [
+    {
+      "playerCount": 3,
+      "layout": "hyperlanes",
+      "homes": [
+        "0,-3",
+        "3,0",
+        "-3,3"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1,
+          "fixed": "85A@4"
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1,
+          "fixed": "85A@0"
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2,
+          "fixed": "87A@0"
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1,
+          "fixed": "87A@4"
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1,
+          "fixed": "87A@2"
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2,
+          "fixed": "87A@0"
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1,
+          "fixed": "87A@4"
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1,
+          "fixed": "87A@2"
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3,
+          "fixed": "83A@1"
+        },
+        {
+          "q": 3,
+          "r": -3,
+          "fixed": "85A@4"
+        },
+        {
+          "q": 3,
+          "r": -2,
+          "fixed": "83A@2"
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2,
+          "fixed": "83A@0"
+        },
+        {
+          "q": 0,
+          "r": 3,
+          "fixed": "85A@0"
+        },
+        {
+          "q": -1,
+          "r": 3,
+          "fixed": "83A@1"
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1,
+          "fixed": "83A@2"
+        },
+        {
+          "q": -3,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": -2,
+          "r": -1,
+          "fixed": "83A@0"
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 4,
+      "layout": "hyperlanes",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "0,3",
+        "-3,3"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0,
+          "fixed": "85A@5"
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1,
+          "fixed": "87A@1"
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1,
+          "fixed": "87A@5"
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1,
+          "fixed": "87A@4"
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1,
+          "fixed": "87A@2"
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1,
+          "fixed": "83A@2"
+        },
+        {
+          "q": 3,
+          "r": 0,
+          "fixed": "85A@5"
+        },
+        {
+          "q": 2,
+          "r": 1,
+          "fixed": "83A@0"
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1,
+          "fixed": "83A@2"
+        },
+        {
+          "q": -3,
+          "r": 0,
+          "fixed": "85A@2"
+        },
+        {
+          "q": -2,
+          "r": -1,
+          "fixed": "83A@0"
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 5,
+      "layout": "hyperlanes",
+      "homes": [
+        "0,-3",
+        "3,-3",
+        "3,0",
+        "-3,3",
+        "-3,0"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1,
+          "fixed": "86A@0"
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1,
+          "fixed": "88A@0"
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2,
+          "fixed": "87A@0"
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2,
+          "fixed": "83A@0"
+        },
+        {
+          "q": 0,
+          "r": 3,
+          "fixed": "85A@0"
+        },
+        {
+          "q": -1,
+          "r": 3,
+          "fixed": "84A@0"
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1
+        },
+        {
+          "q": -3,
+          "r": 0
+        },
+        {
+          "q": -2,
+          "r": -1
+        },
+        {
+          "q": -1,
+          "r": -2
+        }
+      ]
+    },
+    {
+      "playerCount": 7,
+      "layout": "standard",
+      "homes": [
+        "0,-4",
+        "3,-3",
+        "3,0",
+        "0,4",
+        "-3,4",
+        "-4,2",
+        "-3,-1"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1
+        },
+        {
+          "q": -3,
+          "r": 0
+        },
+        {
+          "q": -2,
+          "r": -1
+        },
+        {
+          "q": -1,
+          "r": -2
+        },
+        {
+          "q": 0,
+          "r": -4
+        },
+        {
+          "q": 1,
+          "r": -4
+        },
+        {
+          "q": 2,
+          "r": -4
+        },
+        {
+          "q": 3,
+          "r": -4
+        },
+        {
+          "q": 4,
+          "r": -4
+        },
+        {
+          "q": 4,
+          "r": -3
+        },
+        {
+          "q": 4,
+          "r": -2
+        },
+        {
+          "q": 4,
+          "r": -1
+        },
+        {
+          "q": 4,
+          "r": 0
+        },
+        {
+          "q": 3,
+          "r": 1
+        },
+        {
+          "q": 2,
+          "r": 2
+        },
+        {
+          "q": 1,
+          "r": 3
+        },
+        {
+          "q": 0,
+          "r": 4
+        },
+        {
+          "q": -1,
+          "r": 4
+        },
+        {
+          "q": -2,
+          "r": 4
+        },
+        {
+          "q": -3,
+          "r": 4
+        },
+        {
+          "q": -4,
+          "r": 4
+        },
+        {
+          "q": -4,
+          "r": 3
+        },
+        {
+          "q": -4,
+          "r": 2
+        },
+        {
+          "q": -4,
+          "r": 1
+        },
+        {
+          "q": -4,
+          "r": 0
+        },
+        {
+          "q": -3,
+          "r": -1
+        },
+        {
+          "q": -2,
+          "r": -2
+        },
+        {
+          "q": -1,
+          "r": -3
+        }
+      ]
+    },
+    {
+      "playerCount": 8,
+      "layout": "standard",
+      "homes": [
+        "0,-4",
+        "3,-4",
+        "4,-2",
+        "3,1",
+        "0,4",
+        "-3,4",
+        "-4,2",
+        "-3,-1"
+      ],
+      "slots": [
+        {
+          "q": 0,
+          "r": 0,
+          "fixed": "18"
+        },
+        {
+          "q": 0,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": -1
+        },
+        {
+          "q": 1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 1
+        },
+        {
+          "q": -1,
+          "r": 0
+        },
+        {
+          "q": 0,
+          "r": -2
+        },
+        {
+          "q": 1,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -2
+        },
+        {
+          "q": 2,
+          "r": -1
+        },
+        {
+          "q": 2,
+          "r": 0
+        },
+        {
+          "q": 1,
+          "r": 1
+        },
+        {
+          "q": 0,
+          "r": 2
+        },
+        {
+          "q": -1,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 2
+        },
+        {
+          "q": -2,
+          "r": 1
+        },
+        {
+          "q": -2,
+          "r": 0
+        },
+        {
+          "q": -1,
+          "r": -1
+        },
+        {
+          "q": 0,
+          "r": -3
+        },
+        {
+          "q": 1,
+          "r": -3
+        },
+        {
+          "q": 2,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -3
+        },
+        {
+          "q": 3,
+          "r": -2
+        },
+        {
+          "q": 3,
+          "r": -1
+        },
+        {
+          "q": 3,
+          "r": 0
+        },
+        {
+          "q": 2,
+          "r": 1
+        },
+        {
+          "q": 1,
+          "r": 2
+        },
+        {
+          "q": 0,
+          "r": 3
+        },
+        {
+          "q": -1,
+          "r": 3
+        },
+        {
+          "q": -2,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 3
+        },
+        {
+          "q": -3,
+          "r": 2
+        },
+        {
+          "q": -3,
+          "r": 1
+        },
+        {
+          "q": -3,
+          "r": 0
+        },
+        {
+          "q": -2,
+          "r": -1
+        },
+        {
+          "q": -1,
+          "r": -2
+        },
+        {
+          "q": 0,
+          "r": -4
+        },
+        {
+          "q": 1,
+          "r": -4
+        },
+        {
+          "q": 2,
+          "r": -4
+        },
+        {
+          "q": 3,
+          "r": -4
+        },
+        {
+          "q": 4,
+          "r": -4
+        },
+        {
+          "q": 4,
+          "r": -3
+        },
+        {
+          "q": 4,
+          "r": -2
+        },
+        {
+          "q": 4,
+          "r": -1
+        },
+        {
+          "q": 4,
+          "r": 0
+        },
+        {
+          "q": 3,
+          "r": 1
+        },
+        {
+          "q": 2,
+          "r": 2
+        },
+        {
+          "q": 1,
+          "r": 3
+        },
+        {
+          "q": 0,
+          "r": 4
+        },
+        {
+          "q": -1,
+          "r": 4
+        },
+        {
+          "q": -2,
+          "r": 4
+        },
+        {
+          "q": -3,
+          "r": 4
+        },
+        {
+          "q": -4,
+          "r": 4
+        },
+        {
+          "q": -4,
+          "r": 3
+        },
+        {
+          "q": -4,
+          "r": 2
+        },
+        {
+          "q": -4,
+          "r": 1
+        },
+        {
+          "q": -4,
+          "r": 0
+        },
+        {
+          "q": -3,
+          "r": -1
+        },
+        {
+          "q": -2,
+          "r": -2
+        },
+        {
+          "q": -1,
+          "r": -3
+        }
+      ]
+    }
+  ],
+  "technologies": {
+    "nm": {
+      "id": "nm",
+      "name": "Neural Motivator",
+      "type": "biotic"
+    },
+    "st": {
+      "id": "st",
+      "name": "Sarween Tools",
+      "type": "cybernetic"
+    },
+    "ps": {
+      "id": "ps",
+      "name": "Plasma Scoring",
+      "type": "warfare"
+    },
+    "sar": {
+      "id": "sar",
+      "name": "Self-Assembly Routines",
+      "type": "warfare"
+    },
+    "det": {
+      "id": "det",
+      "name": "Dark Energy Tap",
+      "type": "propulsion"
+    },
+    "pi": {
+      "id": "pi",
+      "name": "Predictive Intelligence",
+      "type": "cybernetic"
+    },
+    "bs": {
+      "id": "bs",
+      "name": "Bio-Stims",
+      "type": "biotic"
+    },
+    "sr": {
+      "id": "sr",
+      "name": "Sling Relay",
+      "type": "propulsion"
+    },
+    "pa": {
+      "id": "pa",
+      "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "aida": {
+      "id": "aida",
+      "name": "AI Development Algorithm",
+      "type": "warfare"
+    },
+    "amd": {
+      "id": "amd",
+      "name": "Antimass Deflectors",
+      "type": "propulsion"
+    },
+    "sdn": {
+      "id": "sdn",
+      "name": "Scanlink Drone Network",
+      "type": "cybernetic"
+    }
+  },
+  "structures": []
+}
