@@ -173,3 +173,29 @@ test('a game from the first screen to an exported file, and back offline', async
     await expect(page.getByRole('button', { name: 'Партия' })).toBeVisible();
   });
 });
+
+test('a faction whose home is not on the pasted map starts at its seat and can send a route', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  await page.goto('/');
+  await page.getByLabel('My faction').selectOption({ label: 'The Federation of Sol' });
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Paste map' }).click();
+  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Build map' }).click();
+
+  // The seat keeps its number and holds the start units although tile 58 is another faction's home.
+  await expect(tile(page, 58).getByRole('img', { name: 'Seat 1' })).toBeVisible();
+  await expect(tile(page, 58).getByRole('img', { name: 'Carrier ×2' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action' }).click();
+  await tile(page, 66).click();
+  await dragRoute(page, [58, 110, 66]);
+  await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Game' }).click();
+  await expect(page.getByText('Seat 1 holds the home system of The Argent Flight, and your faction is The Federation of Sol.')).toBeVisible();
+});

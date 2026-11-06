@@ -501,7 +501,7 @@ describe('ship upgrades in the replay', () => {
   const real = loadPack(['pok']);
   const start = (faction: string, entries: Entry[], baseline: UnitId[] = []): Game => {
     const g = createGame({ expansions: ['pok'], playerCount: 3, faction }, real);
-    g.map = { A: '19', B: '20' };
+    g.map = { A: '19', B: '20', H: real.factions[faction].homeTile };
     g.upgrades.me = baseline;
     g.plans[0].rounds = [{ number: 1, strategyCard: null, backupCard: null, entries }];
     return g;
@@ -779,7 +779,7 @@ describe('production on a chosen planet', () => {
 
   test('without a planet of mine the rest stays in space', () => {
     const e = withId('b', entry({ type: 'tactical', systemId: 'T', moves: [], landings: [], production: { infantry: 1 }, payment: noPay }));
-    const g = gameWith([e], { map: { T: 't2' } });
+    const g = gameWith([e], { map: { T: 't2', H: 'home' } });
     const before = stateBeforeEntry(g, g.plans[0], 'b', pack);
     expect(productionPlaces(g, e as TacticalBody, before, pack)).toEqual([{ unit: 'infantry', planetId: null, count: 1 }]);
     expect(run(g).state.systems.T).toEqual({ infantry: 1 });
@@ -790,7 +790,7 @@ describe('pickups on the way', () => {
   const route = (over: Partial<TacticalBody>, id = 'r') => withId(id, entry(tactical({ systemId: 'T', ...over })));
   const game = (entries: Entry[]) => {
     const g = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, pack);
-    g.map = { A: 't1', M: 't2', T: 't1' };
+    g.map = { A: 't1', M: 't2', T: 't1', H: 'home' };
     g.plans[0].rounds[0].entries = [setup('A', { carrier: 1 }), setup('M', { fighter: 2 }), ...entries];
     return g;
   };

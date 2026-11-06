@@ -1,4 +1,5 @@
 import { strategyCardSet } from './cards';
+import { seatSlots } from './mapBuilder';
 import { autoPay, type PaymentKind } from './payment';
 import { productionCost } from './unitStats';
 import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Round, StructureKind, UnitCounts, UnitId } from './types';
@@ -117,10 +118,53 @@ export function withStructure(effects: CardEffects, kind: StructureKind, planetI
   return next;
 }
 
-/** Where my home planets are: the home tile's slot, or for an off-map home with its gate on the map the tile's own id, which is where the projection keeps its units. */
-export function homeSlot(game: Game, pack: DataPack): string | null {
+export interface Home {
+  /** Where my start units stand and where home production happens, or null with nothing on the map. */
+  slot: string | null;
+  /** True when my seat holds no tile and the first slot with a tile stands in. */
+  fallback: boolean;
+}
+
+/**
+ * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id,
+ * which is where the projection keeps its units); otherwise the slot of my seat, whatever tile stands there; with an
+ * empty seat, the first slot with a tile.
+ */
+export function homeOf(game: Game, pack: DataPack): Home {
   const faction = pack.factions[game.faction];
-  if (!faction) return null;
+  if (!faction) return { slot: null, fallback: false };
   const onMap = (tile: string | undefined) => Object.keys(game.map).find(slot => game.map[slot].split('@')[0] === tile);
-  return onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : null);
+  const own = onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : undefined);
+  if (own) return { slot: own, fallback: false };
+  const seat = seatSlots(game.playerCount, pack, game.layout)[game.seat - 1];
+  if (seat && game.map[seat]) return { slot: seat, fallback: false };
+  const first = Object.keys(game.map).find(slot => slot !== '0,0') ?? null;
+  return { slot: first, fallback: first !== null };
+}
+
+export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(game, pack).slot;
+
+export type HomeNote =
+  | { kind: 'foreign'; seat: number; other: string; mine: string }
+  | { kind: 'noHome'; seat: number };
+
+/** What the Game screen says about the homes: a seat holding another faction's home system, or my seat holding nothing. */
+export function homeNotes(game: Game, pack: DataPack): HomeNote[] {
+  const slots = seatSlots(game.playerCount, pack, game.layout);
+  const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
+  const notes: HomeNote[] = [];
+  for (const player of [game, ...game.opponents]) {
+    const def = pack.factions[player.faction];
+    if (!def || onMap(def.homeTile) || onMap(def.gateTile)) continue;
+    const tile = game.map[slots[player.seat - 1]]?.split('@')[0];
+    if (tile === undefined) {
+      if (player === game) notes.push({ kind: 'noHome', seat: player.seat });
+      continue;
+    }
+    if (pack.tiles[tile]?.kind !== 'home') continue;
+    const owners = Object.values(pack.factions).filter(f => f.homeTile === tile || f.gateTile === tile);
+    const other = owners.find(f => !f.id.startsWith('keleres')) ?? owners[0];
+    if (other) notes.push({ kind: 'foreign', seat: player.seat, other: other.id, mine: player.faction });
+  }
+  return notes;
 }

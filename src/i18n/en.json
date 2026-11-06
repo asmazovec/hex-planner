@@ -13,7 +13,9 @@
     "open": "Open",
     "export": "Export to file",
     "import": "Import game",
-    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original."
+    "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original.",
+    "homeForeign": "Seat {{seat}} holds the home system of {{other}}, and your faction is {{mine}}. Start units stand there; nothing is blocked.",
+    "homeNone": "Seat {{seat}} holds no tile, so the start units stand on the first tile found. Place a home system there."
   },
   "import": {
     "failed": "Could not import the file: {{reason}}",

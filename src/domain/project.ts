@@ -1,5 +1,5 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
-import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, STATUS_TOKENS, type CardEntry } from './strategy';
+import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, homeSlot, STATUS_TOKENS, type CardEntry } from './strategy';
 import { productionCost, unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
@@ -113,8 +113,7 @@ function initialState(game: Game, pack: DataPack): GameState {
   const systems: Record<string, UnitCounts> = {};
   const control: GameState['control'] = {};
   if (faction) {
-    const homeSlot = Object.keys(game.map).find(slot => tileIdOf(game, slot) === faction.homeTile) ?? faction.homeTile;
-    add(systems, homeSlot, faction.startUnits);
+    add(systems, homeSlot(game, pack) ?? faction.homeTile, faction.startUnits);
     for (const planetId of pack.tiles[faction.homeTile]?.planetIds ?? []) control[planetId] = 'me';
   }
   Object.assign(control, game.planetControl);

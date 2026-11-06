@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { playersOf } from '../../domain/players';
+import { homeNotes } from '../../domain/strategy';
 import type { ExpansionId } from '../../domain/types';
 import { currentLanguage, setLanguage, type Language } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
@@ -115,6 +116,13 @@ export function GameScreen() {
           <p className="side-label">{t('players.seats')}</p>
           <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} />
           <p className="side-note">{t('players.seatsNote')}</p>
+          {open && homeNotes(open, pack).map(note => (
+            <p key={`${note.kind}-${note.seat}`} className="side-note" role="status">
+              {note.kind === 'foreign'
+                ? t('game.homeForeign', { seat: note.seat, other: allFactions[note.other]?.name ?? note.other, mine: allFactions[note.mine]?.name ?? note.mine })
+                : t('game.homeNone', { seat: note.seat })}
+            </p>
+          ))}
         </div>
         <LayoutPicker game={game} pack={pack} />
         <div className="side-group">
