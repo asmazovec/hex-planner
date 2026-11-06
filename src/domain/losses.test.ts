@@ -198,4 +198,15 @@ describe('a removal must count at the place of its entry', () => {
     const bought = changeOnBoard(game, round, { kind: 'build', systemId: SLOT, unit: 'carrier', planetId: null, amount: 1 }, pack, newId);
     expect(remove(game, bought, 'carrier', null, 'build').entries).toEqual([]);
   });
+
+  test('a move that would drop another loss is refused: a fighter lost, a later tactical moving them out, then a carrier in', () => {
+    const out = entry({
+      type: 'tactical', systemId: FROM, moves: [{ from: SLOT, units: { fighter: 2 } }], landings: [], production: {}, payment: noPay,
+    }, 'action', 'out');
+    const { game, round } = start([startFleet, fighters, earlier, out, tacticalIn]);
+    // The loss leaves one fighter to fly. Behind the flight it would hit nothing, and both would arrive.
+    expect(forecast(game, round).systems[FROM]).toEqual({ fighter: 1 });
+    expect(forecast(game, round).systems[SLOT]).toEqual({ carrier: 1 });
+    expect(remove(game, round, 'carrier')).toBe(round);
+  });
 });

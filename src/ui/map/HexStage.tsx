@@ -5,6 +5,7 @@ import { mergedCounts } from '../../domain/losses';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat, planetHolder } from '../../domain/players';
 import { productionCost, productionPlaces, project, stateBeforeEntry, systemPlanets, tileIdOf } from '../../domain/project';
+import { startingDocks } from '../../domain/strategy';
 import { unitStats } from '../../domain/unitStats';
 import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
@@ -88,6 +89,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const [chosenPlanet, setPlanet] = useState(0);
   const [news, setNews] = useState<Record<string, number>>({});
   const [lost, setLost] = useState<Record<string, number>>({});
+  /** Why the last tap on a token changed nothing. */
+  const [tapNote, setTapNote] = useState<'planned' | 'kept' | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -166,6 +169,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   }
 
   const buy = (kind: TokenKind) => {
+    setTapNote(null);
     if (isStructure(kind)) {
       if (!targetPlanet || (kind === 'spacedock' && state.docks.includes(targetPlanet.id))) return;
       if (purchases.changeStructure) {
@@ -186,10 +190,11 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
   /** Whether the game itself holds this structure, apart from what entries plan. */
   const inBaseline = (kind: StructureKind, planetId: string): boolean =>
-    (kind === 'pds' ? (game.pds[planetId] ?? 0) > 0 : game.docks.includes(planetId));
+    (kind === 'pds' ? (game.pds[planetId] ?? 0) > 0 : startingDocks(game, pack).includes(planetId));
 
   const onToken = ({ kind, owner, planet, key }: PlacedStack) => {
     const planetId = planetIdOf(planet);
+    setTapNote(null);
     if (mode === 'build') {
       if ((bought[key] ?? 0) === 0) return;
       if (isStructure(kind) && purchases.changeStructure) {
@@ -206,10 +211,15 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       return;
     }
     // A stack can hold planned structures too: the baseline ones go first, and one only planned belongs to its entry, so it takes no tap.
-    if (isStructure(kind) && !inBaseline(kind, planetId ?? '')) return;
+    if (isStructure(kind) && !inBaseline(kind, planetId ?? '')) {
+      setTapNote('planned');
+      return;
+    }
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
-    else if (owner === 'me') change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
-    else changeEnemy(owner, kind, planetId, -1);
+    else if (owner === 'me') {
+      change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
+      if (useGame.getState().game === game) setTapNote('kept');
+    } else changeEnemy(owner, kind, planetId, -1);
     if (mode === 'battle' && (owner !== 'me' || isStructure(kind))) setLost(bumped(lost, key, 1));
   };
 
@@ -350,6 +360,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
               {planets.length > 1 && <p className="muted">{t('stage.planetNote')}</p>}
             </>
           )}
+
+          {tapNote && <p className="warning-text" role="status">{t(`stage.tapNote.${tapNote}`)}</p>}
 
           {mode === 'setup' && (
             <div className="stage-facts">

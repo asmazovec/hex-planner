@@ -153,3 +153,28 @@ test('an image that never answers does not hold the promise, and leaves vector a
     vi.useRealTimers();
   }
 });
+
+test('a bitmap finished after the timeout is not stored', async () => {
+  stubBlobUrls();
+  vi.stubGlobal('Image', class {
+    onload: (() => void) | null = null;
+    set src(_: string) { queueMicrotask(() => this.onload?.()); }
+  });
+  const late: ((blob: Blob) => void)[] = [];
+  const create = document.createElement.bind(document);
+  vi.spyOn(document, 'createElement').mockImplementation(((tag: string) => (tag === 'canvas'
+    ? { getContext: () => ({ drawImage: vi.fn() }), toBlob: (done: (blob: Blob) => void) => late.push(done) }
+    : create(tag))) as typeof document.createElement);
+  vi.useFakeTimers();
+  try {
+    const colour = PLAYER_COLOURS[5];
+    const job = prepareSprites([colour]);
+    await vi.advanceTimersByTimeAsync(BAKE_TIMEOUT_MS);
+    await job;
+    expect(late).toHaveLength(Object.keys(UNIT_ART).length);
+    for (const done of late) done(new Blob(['png']));
+    expect(getSprite('carrier', colour)).toBeUndefined();
+  } finally {
+    vi.useRealTimers();
+  }
+});

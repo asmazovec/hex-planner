@@ -89,7 +89,9 @@ function bake(kind: TokenKind, colour: string): Promise<void> {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-SPRITE_REACH} ${-SPRITE_REACH} ${2 * SPRITE_REACH} ${2 * SPRITE_REACH}" width="${SPRITE_PX}" height="${SPRITE_PX}">${tokenMarkup(kind, colour)}</svg>`;
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
     const image = new Image();
+    let finished = false;
     const finish = () => {
+      finished = true;
       clearTimeout(timer);
       URL.revokeObjectURL(url);
       image.onload = null;
@@ -105,6 +107,8 @@ function bake(kind: TokenKind, colour: string): Promise<void> {
       if (!context) { finish(); return; }
       context.drawImage(image, 0, 0);
       canvas.toBlob(blob => {
+        // Past the timeout the bake has given up, and the next call may be baking this token again.
+        if (finished) return;
         if (blob) sprites.set(spriteKey(kind, colour), URL.createObjectURL(blob));
         finish();
       });

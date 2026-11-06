@@ -340,4 +340,19 @@ describe('hexLayout', () => {
     expect(items.map(i => i.key).sort()).toEqual(['enemy|carrier|-', 'me|infantry|1']);
     expect(items.find(i => i.kind === 'carrier')!.count).toBe(2);
   });
+
+  test('a crowded tile with several planets and three opponents: all stacks placed once, none on another', () => {
+    const owners: StackOwner[] = ['me', 'a', 'b', 'c'];
+    for (const planets of [2, 3]) {
+      for (const each of [1, 2, 3, 4]) {
+        const space = owners.flatMap(owner => SHIPS.slice(0, each).map((kind): SpaceStack => ({ kind, owner, count: 1 })));
+        const ground = owners.flatMap((owner, i): GroundStack[] => [{ kind: 'infantry', owner, planet: i % planets, count: 2 }]);
+        const layout = hexLayout({ planets, space, ground, opponents: ['a', 'b', 'c'] });
+        const context = `${planets} planets, ${each} ships each`;
+        expect(layout.items, context).toHaveLength(space.length + ground.length);
+        expect(new Set(layout.items.map(item => item.key)).size, context).toBe(layout.items.length);
+        expectApart(layout, context);
+      }
+    }
+  });
 });

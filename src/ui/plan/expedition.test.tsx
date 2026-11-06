@@ -216,3 +216,20 @@ test('marking keeps the panel away for many taps; the tools button brings it bac
   fireEvent.click(tile(ok));
   expect(game().fracture.ingress).toEqual([]);
 });
+
+test('a change of round closes the panel, like the other panels', async () => {
+  useGame.getState().addRound();
+  await openPanel();
+  expect(screen.getByRole('button', { name: /^Thunder's Edge · / })).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(screen.getByRole('button', { name: 'Round 1' }));
+  expect(screen.getByRole('button', { name: /^Thunder's Edge · / })).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('the way back from choosing on the map stands outside the spoken hint', async () => {
+  await openPanel();
+  await userEvent.click(screen.getByRole('button', { name: 'Mark ingress' }));
+  const back = document.querySelector('.map-hint button');
+  expect(back).not.toBeNull();
+  expect(back!.closest('[role="status"]')).toBeNull();
+  expect(screen.getByRole('status')).toHaveTextContent(/./);
+});

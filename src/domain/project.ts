@@ -1,5 +1,5 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
-import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, homeSlot, STATUS_TOKENS, type CardEntry } from './strategy';
+import { absentHomePlanets, CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, homePlanets, homeSlot, startingDocks, STATUS_TOKENS, type CardEntry } from './strategy';
 import { productionCost, unitStats } from './unitStats';
 import type {
   DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
@@ -114,13 +114,14 @@ function initialState(game: Game, pack: DataPack): GameState {
   const control: GameState['control'] = {};
   if (faction) {
     add(systems, homeSlot(game, pack) ?? faction.homeTile, faction.startUnits);
-    for (const planetId of pack.tiles[faction.homeTile]?.planetIds ?? []) control[planetId] = 'me';
+    for (const planetId of homePlanets(game, pack)) control[planetId] = 'me';
   }
   Object.assign(control, game.planetControl);
+  for (const planetId of absentHomePlanets(game, pack)) delete control[planetId];
   return {
     systems, ground: {}, exhausted: [], control, tokensOnMap: [],
     tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), upgrades: [...game.upgrades.me],
-    docks: [...game.docks], pds: { ...game.pds },
+    docks: startingDocks(game, pack), pds: { ...game.pds },
   };
 }
 

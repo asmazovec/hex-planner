@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { seatSlots } from './mapBuilder';
+import { changeLayout, seatSlots } from './mapBuilder';
 import { createGame } from './newGame';
 import {
   addPlayer, countChangeEffect, draftWithExpansions, maxPlayers, opponentHoldings, opponentsBySeat, planetHolder, playersOf, removePlayer, setPlayerFaction, swapSeats,
@@ -189,6 +189,15 @@ describe('a draft and its expansions', () => {
     expect(seats(next)).toEqual(seats(draft));
     expect(next.map[seatSlots(6, base, next.layout)[0]]).toBe('1');
     expect(next.id).toBe(draft.id);
+  });
+
+  test('the chosen layout survives, unless the set has no such template', () => {
+    const five = changeLayout(start(5), 'standard', pack);
+    expect(five.layout).toBe('standard');
+    expect(draftWithExpansions(five, ['pok'], loadPack(['pok'])).layout).toBe('standard');
+    const four = changeLayout(start(4), 'hyperlanes', pack);
+    expect(draftWithExpansions(four, ['pok'], loadPack(['pok'])).layout).toBe('hyperlanes');
+    expect(draftWithExpansions(four, [], loadPack([])).layout).toBe('standard');
   });
 
   test('players above what the set allows leave, seats close up', () => {

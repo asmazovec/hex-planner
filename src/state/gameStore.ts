@@ -4,6 +4,7 @@ import { changeOnBoard, type MergedChange } from '../domain/losses';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { withTeMecatol } from '../domain/mecatol';
+import { startingDocks } from '../domain/strategy';
 import { toggleUpgrade } from '../domain/unitStats';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
@@ -228,6 +229,7 @@ export const useGame = create<GameStore>((set, get) => {
     },
     startGame: () => {
       const { draft } = get();
+      if (!draft.faction) return;
       history = [];
       replace(draft);
       set({ draft: newDraft(draft.expansions) });
@@ -337,9 +339,13 @@ export const useGame = create<GameStore>((set, get) => {
         return planetControl === g.planetControl && planetOwner === g.planetOwner ? g : { ...g, planetControl, planetOwner };
       }),
     setDock: (planetId, present) =>
-      commit(g => (g.docks.includes(planetId) === present
-        ? g
-        : { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(p => p !== planetId) })),
+      commit(g => {
+        const pack = loadPack(g.expansions);
+        if (startingDocks(g, pack).includes(planetId) === present) return g;
+        // The dock on the tile at my seat is written down under my absent home planet.
+        const standsThere = (id: string) => startingDocks({ ...g, docks: [id] }, pack).includes(planetId);
+        return { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(id => !standsThere(id)) };
+      }),
     setPds: (planetId, count) => commit(g => withField(g, 'pds', setOrDelete(g.pds, planetId, count > 0 ? count : null))),
     changeAdjustment: (roundNo, change) => commit(g => editRound(g, roundNo, r => changeOnBoard(g, r, change, loadPack(g.expansions), newId))),
     setSlice: (id, owner) =>

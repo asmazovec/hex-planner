@@ -597,6 +597,36 @@ describe('playing the round', () => {
   const playingRow = () => document.querySelector('.entry-playing')?.getAttribute('data-entry-id');
   const play = () => screen.getByRole('button', { name: 'Play' });
 
+  test('undo during the playback stops it and brings the map back', () => {
+    seed();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<PlanScreen />);
+    fireEvent.click(play());
+    expect(playingRow()).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(playingRow()).toBeUndefined();
+    after(5000);
+    expect(playingRow()).toBeUndefined();
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    expect(play()).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  test('a change of round during the playback stops it', () => {
+    const ids = seed();
+    useGame.getState().addRound();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    render(<PlanScreen />);
+    fireEvent.click(screen.getByRole('button', { name: 'Round 1' }));
+    fireEvent.click(play());
+    expect(playingRow()).toBe(ids.setup);
+    fireEvent.click(screen.getByRole('button', { name: 'Round 2' }));
+    expect(playingRow()).toBeUndefined();
+    after(5000);
+    expect(playingRow()).toBeUndefined();
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    expect(plan().rounds).toHaveLength(2);
+  });
+
   test('the button stands beside the add button and waits for entries', () => {
     render(<PlanScreen />);
     expect(play().closest('.phase-add')).toBe(screen.getByRole('button', { name: 'Add action' }).closest('.phase-add'));
@@ -862,6 +892,17 @@ test('the plan name can be changed', async () => {
   await userEvent.type(input, 'Rush{Enter}');
   expect(plan().name).toBe('Rush');
   expect(screen.getByRole('tab', { name: /Rush/, selected: true })).toBeVisible();
+});
+
+test('undo of creating the status entry removes it and closes its fields, and the button is back', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
+  expect(entries().filter(e => e.type === 'statusTokens')).toHaveLength(1);
+  expect(screen.getByRole('group', { name: 'Token distribution' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+  expect(entries().filter(e => e.type === 'statusTokens')).toHaveLength(0);
+  expect(screen.queryByRole('group', { name: 'Token distribution' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Tokens and points' })).toBeVisible();
 });
 
 test('undo of a just created entry closes its editor', async () => {

@@ -117,9 +117,9 @@ export function TacticalEditor({
             <details className="editor-section" open>
               <summary>{t('plan.tactical.landing')}</summary>
               {landable.map(unit => (
-                <span key={unit} className="muted">
+                <div key={unit} className="muted">
                   {t('plan.tactical.landingCount', { unit: t(`unit.${unit}`), available: here[unit] ?? 0, assigned: landed[unit] ?? 0 })}
-                </span>
+                </div>
               ))}
               {planets.map(planet => (
                 <div key={planet.id} role="group" aria-label={t('plan.tactical.landingOn', { planet: planet.name })}>

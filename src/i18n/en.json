@@ -82,7 +82,6 @@
       "exhausted": "Exhausted",
       "ready": "Ready",
       "relic": "Relic icon",
-      "legendaryAbility": "Legendary ability",
       "traits": "Traits",
       "specialties": "Specialties",
       "close": "Close"
@@ -527,6 +526,10 @@
     "battleNote": "Tap a token to record a loss. Tap a picture here to give the unit back.",
     "buildNote": "Tap a token with a gold ring to take a purchase back.",
     "setupNote": "Tap a token on the hex to remove one.",
-    "planetNote": "Tap a planet: ground units and structures go there."
+    "planetNote": "Tap a planet: ground units and structures go there.",
+    "tapNote": {
+      "planned": "This structure is planned in an entry of the plan: change it there.",
+      "kept": "Not recorded: another loss in this system would be dropped. Reorder the entries in the plan."
+    }
   }
 }

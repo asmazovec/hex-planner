@@ -230,6 +230,7 @@ export function PlanScreen() {
   const closePanels = () => {
     setPlacing(false);
     setMarking(false);
+    setShowTe(false);
     closeShown();
     leaveEditor();
     setSheet(null);
@@ -323,7 +324,6 @@ export function PlanScreen() {
 
   const toggleBuilding = () => {
     closePanels();
-    setShowTe(false);
     setImporting(false);
     setBuilding(!building);
   };
@@ -522,10 +522,10 @@ export function PlanScreen() {
           {shownArea && <button type="button" className="map-home" onClick={closeShown}>{t('map.home')}</button>}
           {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
           {hint && (
-            <p className="map-hint" role="status">
-              {hint}
+            <div className="map-hint">
+              <span role="status">{hint}</span>
               {(placing || marking) && <button type="button" onClick={toggleTe}>{t('thundersEdge.back')}</button>}
-            </p>
+            </div>
           )}
           {showUpgrades && (
             <UpgradesPanel game={game} pack={pack} upgraded={shownState.upgrades} locked={lockedUpgrades} onClose={() => setShowUpgrades(false)} />

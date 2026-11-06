@@ -478,6 +478,16 @@ describe('build', () => {
     expect(plannedStructures()).toHaveLength(1);
   });
 
+  test('a tap on a structure only planned says where it lives, and the next tap clears that', async () => {
+    planPds();
+    open({});
+    expect(screen.queryByRole('status')).toBeNull();
+    await userEvent.click(pdsStack()!);
+    expect(screen.getByRole('status')).toHaveTextContent('planned in an entry');
+    await userEvent.click(screen.getByRole('button', { name: /Carrier/ }));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   test('in setup a planned dock takes no tap; a baseline one still comes off', async () => {
     useGame.getState().addEntry(1, { type: 'strategic', card: 4, effects: { structures: [{ kind: 'spacedock', planetId: quann() }] } }, 'action');
     const before = [...game().docks];

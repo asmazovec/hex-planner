@@ -9,6 +9,8 @@ import type { SeatDrag } from './useSeatDrag';
 const STEP_X = 39;
 const STEP_Y = 45;
 const HEX_RADIUS = 25;
+/** What the side panel leaves for the map at its usual width. */
+const SIDE_PANEL_WIDTH = 294;
 
 /** The small map is not to scale of the big one: slightly apart hexes, so tokens stand out. */
 const position = (q: number, r: number): [number, number] => [STEP_X * q, STEP_Y * (r + q / 2)];
@@ -39,6 +41,8 @@ export function SeatMap({ game, pack, drag, ghostRef }: SeatMapProps) {
   const halfHeight = STEP_Y * rings + 35;
   // The caption keeps its size on screen when a bigger map shrinks.
   const captionSize = (10 * halfWidth) / (STEP_X * 3 + 43);
+  // 44 px across on screen, however far the map shrinks to fit the side panel.
+  const hitRadius = (22 * 2 * halfWidth) / SIDE_PANEL_WIDTH;
   const dragged = drag.lifted === null ? null : players[drag.lifted];
   const nameOf = (faction: string) => pack.factions[faction]?.name ?? t('players.noFaction');
 
@@ -86,7 +90,8 @@ export function SeatMap({ game, pack, drag, ghostRef }: SeatMapProps) {
                   drag.tap(index);
                 }}
               >
-                <circle r="17" style={{ fill: `var(--player-${player.color})` }} />
+                <circle r="17" className="seat-disc" style={{ fill: `var(--player-${player.color})` }} />
+                <circle r={hitRadius} className="seat-hit" />
                 <text y="6">{index + 1}</text>
               </g>
               {faction && <text y="29" className="seat-caption" style={{ fontSize: captionSize }}>{factionShortName(faction.id, faction.name)}</text>}

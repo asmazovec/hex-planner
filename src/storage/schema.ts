@@ -107,6 +107,28 @@ function withSeats(doc: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
+/** A file can hold seats no game can: the first holder of a valid seat keeps it, everyone else takes the lowest free one. A seat that is no whole number is left for the schema to refuse. */
+function withValidSeats(doc: Record<string, unknown>): Record<string, unknown> {
+  const opponents = doc.opponents as Record<string, unknown>[];
+  const seats = [doc.seat, ...opponents.map(o => o.seat)];
+  if (!seats.every(Number.isInteger)) return doc;
+  const taken = new Set<number>();
+  const kept = (seats as number[]).map(seat => {
+    if (seat < 1 || seat > seats.length || taken.has(seat)) return null;
+    taken.add(seat);
+    return seat;
+  });
+  if (!kept.includes(null)) return doc;
+  const fixed = kept.map(seat => {
+    if (seat !== null) return seat;
+    let free = 1;
+    while (taken.has(free)) free += 1;
+    taken.add(free);
+    return free;
+  });
+  return { ...doc, seat: fixed[0], opponents: opponents.map((o, i) => ({ ...o, seat: fixed[i + 1] })) };
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -157,7 +179,7 @@ export function migrate(raw: unknown): unknown {
   // Version 0 files had the same shape; only the version marker changed.
   if (doc.schemaVersion === 0) doc = { ...doc, schemaVersion: 1 };
   if (!Array.isArray(doc.opponents)) return doc;
-  doc = withSeats(doc);
+  doc = withValidSeats(withSeats(doc));
   if (doc.schemaVersion === 1) doc = withOwners(doc);
   if (doc.schemaVersion === 2) doc = { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } };
   if (doc.schemaVersion === 3) doc = { ...doc, schemaVersion: 4, pds: {} };

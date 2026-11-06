@@ -144,6 +144,30 @@ export function homeOf(game: Game, pack: DataPack): Home {
 
 export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(game, pack).slot;
 
+/** The planets of my faction's own home tile, on the map or not. */
+const ownHomePlanets = (game: Game, pack: DataPack): string[] =>
+  pack.tiles[pack.factions[game.faction]?.homeTile ?? '']?.planetIds ?? [];
+
+/** The planets I start with: of my own home, or of the tile at my seat when mine is not on the map. A fallback tile only holds the units until the seat has one. */
+export function homePlanets(game: Game, pack: DataPack): string[] {
+  const { slot, fallback } = homeOf(game, pack);
+  if (slot === null || fallback) return ownHomePlanets(game, pack);
+  return pack.tiles[(game.map[slot] ?? slot).split('@')[0]]?.planetIds ?? ownHomePlanets(game, pack);
+}
+
+/** Planets that lost their place to the tile at my seat: nothing on the map stands for them. */
+export const absentHomePlanets = (game: Game, pack: DataPack): string[] => {
+  const home = homePlanets(game, pack);
+  return ownHomePlanets(game, pack).filter(id => !home.includes(id));
+};
+
+/** The docks of the game as they stand on the map: the one of my absent home stands on the first planet of the tile at my seat. */
+export function startingDocks(game: Game, pack: DataPack): string[] {
+  const absent = absentHomePlanets(game, pack);
+  const [first] = homePlanets(game, pack);
+  return [...new Set(game.docks.flatMap(id => (absent.includes(id) ? (first === undefined ? [] : [first]) : [id])))];
+}
+
 export type HomeNote =
   | { kind: 'foreign'; seat: number; other: string; mine: string }
   | { kind: 'noHome'; seat: number };

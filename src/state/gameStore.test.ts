@@ -301,6 +301,26 @@ describe('players', () => {
     expect(useGame.getState().draft.opponents).toHaveLength(before);
   });
 
+  test('a draft without my faction does not start', () => {
+    useGame.getState().closeGame();
+    const { draft } = useGame.getState();
+    useGame.getState().startGame();
+    expect(useGame.getState().game).toBeNull();
+    expect(useGame.getState().draft).toBe(draft);
+  });
+
+  test('the dock standing for my absent home comes off, and goes back', () => {
+    const pack = loadPack(['pok']);
+    useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
+    const seat = Object.keys(useGame.getState().game!.map).find(slot => useGame.getState().game!.map[slot] === pack.factions.sol.homeTile)!;
+    useGame.getState().setTile(seat, '4');
+    const planet = pack.tiles['4'].planetIds[0];
+    useGame.getState().setDock(planet, false);
+    expect(useGame.getState().game!.docks).toEqual([]);
+    useGame.getState().setDock(planet, true);
+    expect(useGame.getState().game!.docks).toEqual([planet]);
+  });
+
   test('starting turns the draft into the game and leaves a fresh draft', () => {
     useGame.getState().closeGame();
     useGame.getState().setFaction('sol');

@@ -267,11 +267,6 @@ export function EntryList({
                       )}
                       <button type="button" aria-label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)}>✕</button>
                     </div>
-                    {list.length > 0 && (
-                      <ul className="warning-list">
-                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
-                      </ul>
-                    )}
                     {shown && <EntrySteps entry={entry} game={game} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
@@ -297,6 +292,11 @@ export function EntryList({
                       <div className="entry-details">
                         <AdjustmentFields entry={entry} game={game} pack={pack} state={state} />
                       </div>
+                    )}
+                    {list.length > 0 && (
+                      <ul className="warning-list">
+                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+                      </ul>
                     )}
                   </li>
                 );

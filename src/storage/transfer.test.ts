@@ -1,5 +1,5 @@
-import { loadPack } from '../data/loadPack';
 import { describe, expect, test } from 'vitest';
+import { loadPack } from '../data/loadPack';
 import { CURRENT_SCHEMA, exportGame, importGame, migrate } from './transfer';
 import { gameOfSchema1, sampleGame } from './fixture';
 
@@ -280,5 +280,38 @@ describe('routes in a saved game', () => {
   test('the way and the pickups of a route survive saving', () => {
     const moves = [{ from: '1,0', units: { carrier: 1 }, via: ['1,1'] }, { from: '1,1', units: { fighter: 1 }, pickupOf: '1,0' }];
     expect(movesOf(importGame(withMoves(moves)))).toEqual(moves);
+  });
+});
+
+describe('seats of an imported file', () => {
+  const withSeats = (me: number, others: number[]) => {
+    const doc = structuredClone(sampleGame());
+    const template = doc.opponents[0] ?? { id: '', faction: '', vp: 0, seat: 2, color: 2 };
+    doc.seat = me;
+    doc.opponents = others.map((seat, i) => ({ ...template, id: `o${i}`, color: i + 2, seat }));
+    return JSON.stringify(doc);
+  };
+  const seatsOf = (text: string) => {
+    const result = importGame(text);
+    if (!result.ok) throw new Error(result.reason);
+    return [result.game.seat, ...result.game.opponents.map(o => o.seat)];
+  };
+
+  test('valid seats stay as they are', () => {
+    expect(seatsOf(withSeats(3, [1, 2]))).toEqual([3, 1, 2]);
+  });
+
+  test('a duplicate takes the lowest free seat, the first holder keeps it', () => {
+    expect(seatsOf(withSeats(2, [2, 3]))).toEqual([2, 1, 3]);
+  });
+
+  test('a seat out of range takes a free one', () => {
+    expect(seatsOf(withSeats(1, [9, 0]))).toEqual([1, 2, 3]);
+  });
+
+  test('a seat that is no number stays invalid', () => {
+    const doc = JSON.parse(withSeats(1, [2, 3]));
+    doc.opponents[0].seat = 'two';
+    expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 });

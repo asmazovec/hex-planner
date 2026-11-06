@@ -178,7 +178,8 @@ export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack
   const kept = playersOf(draft).slice(0, maxPlayers(pack));
   const order = [...kept].sort((a, b) => a.seat - b.seat);
   const seated = kept.map(p => ({ ...p, seat: order.indexOf(p) + 1, faction: '' }));
-  const blank = createGame({ expansions, playerCount: kept.length, faction: '' }, pack);
+  const layout = templateFor(kept.length, draft.layout, pack) ? draft.layout : undefined;
+  const blank = createGame({ expansions, playerCount: kept.length, faction: '', layout }, pack);
   const empty = withPlayers({ ...blank, id: draft.id }, seated, pack);
   return kept.reduce<Game>(
     (game, player, index) => (pack.factions[player.faction] ? setPlayerFaction(game, index, player.faction, pack) : game),
