@@ -899,3 +899,10 @@ button.fac-option:disabled { opacity: 0.45; }
 
 /* Closing, the Fracture simply fades where it stands, as the camera comes back. */
 .fracture-closing { pointer-events: none; animation: fade-out 0.3s linear forwards; }
+
+/* Every warning starts with the same sign: a triangle with an exclamation mark, in the colour of its text. */
+.warning-text::before, .banner-warning .banner-text::before {
+  content: ''; display: inline-block; width: 1.1em; height: 1.1em; margin-right: 0.35em; vertical-align: -0.2em; background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 2.5 23 21.5H1ZM11 9.5v6.5h2V9.5Zm0 8v2h2v-2Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 2.5 23 21.5H1ZM11 9.5v6.5h2V9.5Zm0 8v2h2v-2Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}

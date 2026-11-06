@@ -168,7 +168,7 @@ describe('the upgrades panel', () => {
     expect(card(panel, 'carrier')).toBeDisabled();
     expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
     expect(card(panel, 'carrier')).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(screen.getByRole('button', { name: 'По факту' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Факт' }));
     expect(card(panel, 'carrier')).toBeEnabled();
     expect(card(panel, 'carrier')).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(card(panel, 'carrier'));

@@ -1,4 +1,4 @@
-import { expect, test } from 'vitest';
+import { expect, test, describe } from 'vitest';
 import {
   areAdjacent, badgeSpots, HEX_SIZE, curveSegments, curveThrough, extendPath, flightAt, flightDuration, focusRect, pathLength, pointAlong,
   routeFromPath, routeShapes, separateRoutes, slotToPixel, tacticalNumbers, tapStep,
@@ -230,4 +230,126 @@ test('whatever its shape, a route passes through every hex on its way', () => {
     }
   }
   expect(checked).toBeGreaterThan(40000);
+});
+
+describe('routes over one line move apart', () => {
+  const MAP: string[] = [];
+  for (let q = -3; q <= 3; q += 1) for (let r = -3; r <= 3; r += 1) if (Math.abs(q + r) <= 3) MAP.push(`${q},${r}`);
+  const STEPS = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
+  const step = (slot: string, [dq, dr]: number[]): string => {
+    const [q, r] = slot.split(',').map(Number);
+    return `${q + dq},${r + dr}`;
+  };
+  /** Every pair of neighbouring hexes on the map, each way. */
+  const NEIGHBOURS = MAP.flatMap(slot => STEPS.map(s => [slot, step(slot, s)] as const).filter(([, other]) => MAP.includes(other)));
+  type P = { x: number; y: number };
+  const distanceToSegment = (p: P, a: P, b: P): number => {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  };
+  const distanceToLine = (p: P, line: P[]): number => {
+    let best = Infinity;
+    for (let i = 1; i < line.length; i += 1) best = Math.min(best, distanceToSegment(p, line[i - 1], line[i]));
+    return best;
+  };
+  const middle = (a: P, b: P): P => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const INNER = HEX_SIZE * (Math.sqrt(3) / 2);
+
+  test('two routes over the same step never lie on each other, flying either way', () => {
+    for (const [a, b] of NEIGHBOURS) {
+      const after = step(b, [1, 0]);
+      const before = step(a, [-1, 0]);
+      for (const routes of [[[a, b, after], [before, a, b]], [[a, b], [a, b]], [[a, b], [b, a]]]) {
+        const [one, two] = separateRoutes(routes);
+        const iOne = routes[0].indexOf(a) === -1 ? 0 : Math.min(routes[0].indexOf(a), routes[0].indexOf(b));
+        const iTwo = Math.min(routes[1].indexOf(a), routes[1].indexOf(b));
+        const gap = hypot(middle(one[iOne], one[iOne + 1]), middle(two[iTwo], two[iTwo + 1]));
+        expect(gap, `${JSON.stringify(routes)}`).toBeGreaterThan(5);
+      }
+    }
+  });
+
+  test('a shared step spreads routes evenly around it, in route order', () => {
+    const [a, b, c] = separateRoutes([['0,0', '1,0'], ['0,0', '1,0'], ['0,0', '1,0']]);
+    const mids = [a, b, c].map(line => middle(line[0], line[1]));
+    const centre = middle(slotToPixel('0,0'), slotToPixel('1,0'));
+    expect(hypot(mids[0], centre)).toBeCloseTo(hypot(mids[2], centre), 0);
+    expect(hypot(mids[0], mids[1])).toBeCloseTo(hypot(mids[1], mids[2]), 0);
+    expect(hypot(mids[1], centre)).toBeLessThan(hypot(mids[0], centre));
+  });
+
+  test('however many routes share a step, they stay apart and end inside the system they arrive at', () => {
+    for (const count of [2, 3, 4, 6, 8, 12]) {
+      const lines = separateRoutes(Array.from({ length: count }, () => ['0,0', '1,0']));
+      const target = slotToPixel('1,0');
+      for (const line of lines) expect(hypot(line.at(-1)!, target), String(count)).toBeLessThan(INNER);
+      const starts = lines.map(line => line[0]);
+      for (let i = 1; i < count; i += 1) expect(hypot(starts[i], starts[i - 1]), String(count)).toBeGreaterThan(1);
+    }
+  });
+
+  test('flying the other way keeps a route on the same side of the shared line', () => {
+    const a = slotToPixel('0,0');
+    const b = slotToPixel('1,0');
+    const length = hypot(a, b);
+    /** How far a point stands off the line from a to b, on one fixed side; the two ways stop at different distances along it, not across. */
+    const across = (p: P) => ((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x)) / length;
+    const [forward] = separateRoutes([['0,0', '1,0'], ['0,0', '1,0']]);
+    const [backward] = separateRoutes([['1,0', '0,0'], ['1,0', '0,0']]);
+    expect(Math.abs(across(forward[0]))).toBeGreaterThan(5);
+    expect(across(backward[0])).toBeCloseTo(across(forward[0]), 5);
+  });
+
+  test('a route alone on its line is not moved aside', () => {
+    for (const [a, b] of NEIGHBOURS) {
+      const [line] = separateRoutes([[a, b]]);
+      const centre = [slotToPixel(a), slotToPixel(b)];
+      expect(distanceToSegment(middle(line[0], line[1]), centre[0], centre[1])).toBeLessThan(0.01);
+    }
+  });
+
+  test('steps on one line that do not overlap leave each other alone', () => {
+    const [left, right] = separateRoutes([['-2,0', '-1,0'], ['1,0', '2,0']]);
+    const alone = separateRoutes([['-2,0', '-1,0']])[0];
+    expect(left).toEqual(alone);
+    expect(right).toEqual(separateRoutes([['1,0', '2,0']])[0]);
+  });
+
+  test('routes that arrive at one system end apart, from whatever direction', () => {
+    for (const target of MAP) {
+      const sources = STEPS.map(s => step(target, s)).filter(slot => MAP.includes(slot));
+      const lines = separateRoutes(sources.map(source => [source, target]));
+      const ends = lines.map(line => line.at(-1)!);
+      for (let i = 0; i < ends.length; i += 1) for (let j = i + 1; j < ends.length; j += 1) expect(hypot(ends[i], ends[j]), `${target} ${i} ${j}`).toBeGreaterThanOrEqual(11.9);
+    }
+  });
+
+  test('two routes through one corner both pass through its hex, for every shape', () => {
+    for (const b of MAP) {
+      const around = STEPS.map(s => step(b, s)).filter(slot => MAP.includes(slot));
+      for (const a of around) {
+        for (const c of around) {
+          if (a === c) continue;
+          for (const other of around) {
+            if (other === a) continue;
+            const routes = [[a, b, c], [a, b, other]];
+            const curves = separateRoutes(routes).map(curveThrough);
+            const corner = slotToPixel(b);
+            for (const curve of curves) expect(distanceToLine(corner, curve), JSON.stringify(routes)).toBeLessThan(INNER);
+          }
+        }
+      }
+    }
+  });
+
+  test('adding routes keeps every line unbroken', () => {
+    const lines = separateRoutes([['-2,0', '-1,0', '0,0', '1,0'], ['-1,0', '0,0', '1,0', '2,0'], ['0,-2', '0,-1', '0,0', '0,1']]);
+    for (const line of lines) {
+      const curve = curveThrough(line);
+      expect(pathLength(curve)).toBeLessThan(pathLength(line) + 1);
+      for (const p of curve) { expect(Number.isFinite(p.x)).toBe(true); expect(Number.isFinite(p.y)).toBe(true); }
+    }
+  });
 });

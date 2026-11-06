@@ -64,8 +64,9 @@ const ARRIVAL_CUT = 30;
 const START_LEAD = 18;
 const START_LEAD_STRAIGHT = 4;
 const END_SHARE = 0.4;
-/** Ends of routes at one system stay this far apart. */
+/** Ends of routes at one system stay this far apart, as long as they stay this near its centre. */
 const ARRIVAL_GAP = 12;
+const ARRIVAL_REACH = HEX_SIZE * 0.8;
 
 interface Span { route: number; segment: number; line: string; from: number; to: number; normal: Point }
 
@@ -156,8 +157,12 @@ export function separateRoutes(routes: string[][]): Point[][] {
     const taken = ends.get(target) ?? [];
     const last = points.length - 1;
     const dir = towards({ x: 0, y: 0 }, { x: points[last].x - points[last - 1].x, y: points[last].y - points[last - 1].y }, 1);
+    const centre = slotToPixel(target);
     for (let tries = 0; tries < taken.length + 1 && taken.some(p => Math.hypot(p.x - points[last].x, p.y - points[last].y) < ARRIVAL_GAP); tries += 1) {
-      points[last] = { x: points[last].x - dir.y * ARRIVAL_GAP, y: points[last].y + dir.x * ARRIVAL_GAP };
+      const aside = { x: points[last].x - dir.y * ARRIVAL_GAP, y: points[last].y + dir.x * ARRIVAL_GAP };
+      // Many routes on one step may crowd rather than point past the system they arrive at.
+      if (Math.hypot(aside.x - centre.x, aside.y - centre.y) > ARRIVAL_REACH) break;
+      points[last] = aside;
     }
     ends.set(target, [...taken, points[last]]);
   });
