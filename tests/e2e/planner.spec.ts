@@ -42,7 +42,12 @@ test('a game from the first screen to an exported file, and back offline', async
   await test.step('the precache is small and leaves the prototype pages out', async () => {
     const sw = await (await page.request.get('/sw.js')).text();
     expect(sw).not.toMatch(/approved|docs\//);
-    expect(sw.match(/url:"/g)?.length ?? 0).toBeLessThan(20);
+    const entries = sw.match(/url:"[^"]+"/g) ?? [];
+    expect(entries.length).toBeGreaterThanOrEqual(5);
+    expect(entries.length).toBeLessThan(20);
+    for (const needle of ['index.html', /assets\/index-[^"]+\.js/, /assets\/index-[^"]+\.css/]) {
+      expect(entries.some(e => (typeof needle === 'string' ? e.includes(needle) : needle.test(e)))).toBe(true);
+    }
   });
 
   await test.step("start a game with Prophecy of Kings and Thunder's Edge", async () => {
@@ -95,18 +100,24 @@ test('a game from the first screen to an exported file, and back offline', async
     await expect(page.getByText("Land on Hope's End")).toBeVisible();
     await page.getByRole('button', { name: 'Edit: Tactical action · 66' }).click();
     await expect(page.getByRole('group', { name: "Landing on Hope's End" })).toBeVisible();
+    // A real edit: drop the landing, and the reading no longer has that step.
     await page.getByRole('button', { name: 'Remove one Infantry' }).click();
-    await page.getByRole('button', { name: 'Add one Infantry' }).click();
     await page.getByRole('button', { name: 'Done editing' }).click();
+    await entry(page, 'Tactical action · 66').click();
+    await expect(page.getByText('Fly 58 → 110 → 66')).toBeVisible();
+    await expect(page.getByText("Land on Hope's End")).toHaveCount(0);
+    // Close the reading, so the camera goes back to the whole map.
+    await entry(page, 'Tactical action · 66').click();
+    await expect(page.getByText('Fly 58 → 110 → 66')).toHaveCount(0);
     await page.getByRole('listitem', { name: 'Tactical action · 66' }).getByRole('checkbox', { name: 'Done' }).check();
-    await expect(summary('Tactic')).toContainText('2');
+    await expect(summary('Tactic')).toHaveText(/(?<!\d)2$/);
   });
 
   await test.step('add a status entry with points', async () => {
     await page.getByRole('button', { name: 'Tokens and points' }).click();
     await page.getByRole('button', { name: 'Tactic: 0' }).click();
     await page.getByRole('button', { name: 'Add one Argent' }).click();
-    await expect(summary('VP')).toContainText('1');
+    await expect(summary('VP')).toHaveText(/(?<!\d)1$/);
   });
 
   await test.step('open the stage and buy a unit', async () => {
@@ -125,7 +136,7 @@ test('a game from the first screen to an exported file, and back offline', async
     await page.getByRole('button', { name: 'Strategic action' }).click();
     await expect(page.getByRole('button', { name: '5 Trade' })).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Done', exact: true }).click();
-    await expect(summary('Trade goods')).toContainText('3');
+    await expect(summary('Trade goods')).toHaveText(/(?<!\d)3$/);
   });
 
   // Setup, tactical action, purchase and strategy card in the action phase, one status entry.

@@ -27,6 +27,7 @@
     "saveError": "Could not save the game: {{error}}",
     "export": "Export",
     "exportVolatile": "Your games live only in this browser, and it may clear them. Save a file copy.",
+    "exportNever": "There is no file copy of your games yet. Save one.",
     "exportStale": "The last file copy is more than a week old. Save a new one."
   },
   "map": {

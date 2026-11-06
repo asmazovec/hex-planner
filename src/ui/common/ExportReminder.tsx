@@ -51,7 +51,7 @@ export function ExportReminder({ game, onExport }: { game: Game | null; onExport
   return (
     <Banner
       kind="info"
-      message={t(persisted ? 'banner.exportStale' : 'banner.exportVolatile')}
+      message={t(!persisted ? 'banner.exportVolatile' : lastExportAt === null ? 'banner.exportNever' : 'banner.exportStale')}
       action={{ label: t('banner.export'), onClick: onExport }}
     />
   );

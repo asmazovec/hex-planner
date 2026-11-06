@@ -57,3 +57,17 @@ test('the banner stays hidden after a recent export and with no game', async () 
   await act(async () => {});
   expect(screen.queryByRole('status')).toBeNull();
 });
+
+test('with persistent storage and no copy yet, the text says there is none', async () => {
+  persistence(true);
+  render(<ExportReminder game={sampleGame()} onExport={() => {}} />);
+  expect(await screen.findByText(/no file copy/)).toBeVisible();
+  expect(screen.queryByText(/week old/)).toBeNull();
+});
+
+test('with persistent storage and an old copy, the text says it is over a week old', async () => {
+  persistence(true);
+  localStorage.setItem(LAST_EXPORT_KEY, String(Date.now() - 8 * DAY));
+  render(<ExportReminder game={sampleGame()} onExport={() => {}} />);
+  expect(await screen.findByText(/week old/)).toBeVisible();
+});

@@ -10,6 +10,7 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
+    // Needs Google Chrome installed on the machine: no browser is downloaded for the tests.
     channel: 'chrome',
     viewport: { width: 1180, height: 820 },
     hasTouch: true,
