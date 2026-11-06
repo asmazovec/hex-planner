@@ -310,6 +310,18 @@ describe('project', () => {
     expect(codes(moveFirst.warningsByEntry.m)).toContain('unitsMissing');
   });
 
+  test('потеря раньше прибытия юнита: счёт зажат в ноль и есть unitsMissing, после смены порядка предупреждение уходит', () => {
+    const loss = withId('l', entry({ type: 'adjustment', label: '', kind: 'losses', delta: { units: { systemId: 'B', units: { cruiser: -1 } } } }, 'action'));
+    const arrival = withId('a', entry(tactical({ moves: [{ from: 'A', units: { cruiser: 1 } }] }), 'action'));
+    const start = setup('A', { cruiser: 1 });
+    const lossFirst = run(gameWith([start, loss, arrival]));
+    expect(lossFirst.warningsByEntry.l).toContainEqual({ code: 'unitsMissing', params: { where: 'B', unit: 'cruiser', missing: 1 } });
+    expect(lossFirst.state.systems.B.cruiser).toBe(1);
+    const arrivalFirst = run(gameWith([start, arrival, loss]));
+    expect(codes(arrivalFirst.warningsByEntry.l)).not.toContain('unitsMissing');
+    expect(arrivalFirst.state.systems.B.cruiser ?? 0).toBe(0);
+  });
+
   test('записи идут по фазам внутри раунда, а не по массиву', () => {
     const late = withId('late', entry({ type: 'statusTokens', tactic: 1, fleet: 0, strategy: 0 }, 'status'));
     const early = withId('early', entry(tactical({}), 'action'));

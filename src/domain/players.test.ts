@@ -111,6 +111,18 @@ describe('adding and removing', () => {
     expect(game.playerCount).toBe(4);
   });
 
+  test('an opponent who leaves is forgotten in card effects', () => {
+    const game = start(5);
+    const [a, b] = game.opponents.map(o => o.id);
+    game.plans[0].rounds = [{
+      number: 1, strategyCard: null, backupCard: null,
+      entries: [{ id: 'c', phase: 'action', status: 'planned', type: 'strategic', effects: { speaker: a, freeSecondary: [a, b] } }],
+    }];
+    const next = removePlayer(game, 1, pack);
+    const entry = next.plans[0].rounds[0].entries[0];
+    expect(entry.type === 'strategic' && entry.effects).toEqual({ freeSecondary: [b] });
+  });
+
   test('my faction cannot be removed, the count stays between 3 and the maximum', () => {
     const three = start(3);
     expect(removePlayer(start(4), 0, pack).playerCount).toBe(4);

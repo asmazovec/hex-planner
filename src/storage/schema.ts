@@ -129,6 +129,12 @@ function withValidSeats(doc: Record<string, unknown>): Record<string, unknown> {
   return { ...doc, seat: fixed[0], opponents: opponents.map((o, i) => ({ ...o, seat: fixed[i + 1] })) };
 }
 
+/** The count of players is the opponents and me; a file that disagrees is corrected. A count that is no number is left for the schema to refuse. */
+function withPlayerCount(doc: Record<string, unknown>): Record<string, unknown> {
+  if (!Number.isInteger(doc.playerCount)) return doc;
+  return { ...doc, playerCount: (doc.opponents as unknown[]).length + 1 };
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -179,7 +185,7 @@ export function migrate(raw: unknown): unknown {
   // Version 0 files had the same shape; only the version marker changed.
   if (doc.schemaVersion === 0) doc = { ...doc, schemaVersion: 1 };
   if (!Array.isArray(doc.opponents)) return doc;
-  doc = withValidSeats(withSeats(doc));
+  doc = withPlayerCount(withValidSeats(withSeats(doc)));
   if (doc.schemaVersion === 1) doc = withOwners(doc);
   if (doc.schemaVersion === 2) doc = { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } };
   if (doc.schemaVersion === 3) doc = { ...doc, schemaVersion: 4, pds: {} };

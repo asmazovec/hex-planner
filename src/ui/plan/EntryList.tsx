@@ -185,7 +185,9 @@ export function EntryList({
   const setEntryStatus = useGame(s => s.setEntryStatus);
   const addStatusEntry = useGame(s => s.addStatusEntry);
   const listRef = useRef<HTMLDivElement>(null);
-  const [drag, setDrag] = useState<{ id: string; pointerId: number; index: number } | null>(null);
+  const [rawDrag, setDrag] = useState<{ id: string; pointerId: number; index: number } | null>(null);
+  // An entry removed mid-drag (undo, another tab) must not keep the drag, and with it every new one, from starting.
+  const drag = rawDrag && round.entries.some(e => e.id === rawDrag.id) ? rawDrag : null;
   const numbers = tacticalNumbers(round.entries);
 
   const dropIndex = (entry: Entry, clientY: number): number => {

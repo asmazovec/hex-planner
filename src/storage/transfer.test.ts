@@ -315,3 +315,17 @@ describe('seats of an imported file', () => {
     expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 });
+
+describe('player count of an imported file', () => {
+  test('is set from the opponents, however the file states it', () => {
+    const doc = structuredClone(sampleGame());
+    doc.playerCount = doc.opponents.length + 4;
+    const result = importGame(JSON.stringify(doc));
+    expect(result.ok && result.game.playerCount).toBe(doc.opponents.length + 1);
+  });
+
+  test('a count that is no number stays invalid', () => {
+    const doc = { ...structuredClone(sampleGame()), playerCount: 'four' };
+    expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
+  });
+});

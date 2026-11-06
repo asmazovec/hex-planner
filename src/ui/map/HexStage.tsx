@@ -91,7 +91,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const [news, setNews] = useState<Record<string, number>>({});
   const [lost, setLost] = useState<Record<string, number>>({});
   /** Why the last tap on a token changed nothing. */
-  const [tapNote, setTapNote] = useState<'planned' | 'kept' | null>(null);
+  const [tapNote, setTapNote] = useState<'planned' | null>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -218,10 +218,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       return;
     }
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
-    else if (owner === 'me') {
-      change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
-      if (useGame.getState().game === game) setTapNote('kept');
-    } else changeEnemy(owner, kind, planetId, -1);
+    else if (owner === 'me') change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
+    else changeEnemy(owner, kind, planetId, -1);
     if (mode === 'battle' && (owner !== 'me' || isStructure(kind))) setLost(bumped(lost, key, 1));
   };
 

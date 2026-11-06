@@ -166,7 +166,7 @@ export function tacticalMeters(
 }
 
 /** Where a system's production puts ground forces: one of the player's planets there, or null for its space area. */
-export const productionPlanet = (game: Game, state: GameState, systemId: string, pack: DataPack): string | null =>
+const productionPlanet = (game: Game, state: GameState, systemId: string, pack: DataPack): string | null =>
   planetsOf(game, systemId, pack).find(p => state.control[p] === 'me') ?? null;
 
 /** Ground units land in the target after the moves. */
@@ -353,11 +353,13 @@ function applyExpedition(
   }
 }
 
-/** A signed change of counts; a stack stops at nothing and an empty one leaves the record. */
-function shiftUnits(target: Record<string, UnitCounts>, key: string, units: UnitCounts): void {
+/** A signed change of counts; a stack stops at nothing (the shortfall is reported) and an empty one leaves the record. */
+function shiftUnits(target: Record<string, UnitCounts>, key: string, units: UnitCounts, warnings: Warning[]): void {
   const bucket = (target[key] ??= {});
   for (const id of Object.keys(units) as UnitId[]) {
-    const next = Math.max(0, (bucket[id] ?? 0) + (units[id] ?? 0));
+    const sum = (bucket[id] ?? 0) + (units[id] ?? 0);
+    if (sum < 0) warnings.push({ code: 'unitsMissing', params: { where: key, unit: id, missing: -sum } });
+    const next = Math.max(0, sum);
     if (next > 0) bucket[id] = next;
     else delete bucket[id];
   }
@@ -397,8 +399,8 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       state.fleet += d.fleet ?? 0;
       state.strategy += d.strategy ?? 0;
       state.vp += d.vp ?? 0;
-      if (d.units) shiftUnits(state.systems, d.units.systemId, d.units.units);
-      for (const [planetId, units] of Object.entries(d.ground ?? {})) shiftUnits(state.ground, planetId, units);
+      if (d.units) shiftUnits(state.systems, d.units.systemId, d.units.units, warnings);
+      for (const [planetId, units] of Object.entries(d.ground ?? {})) shiftUnits(state.ground, planetId, units, warnings);
       break;
     }
     case 'component':

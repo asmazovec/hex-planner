@@ -87,7 +87,7 @@ const sameCounts = (a: Map<string, number>, b: Map<string, number>): boolean =>
  * A tap on the board. The replay stops a stack at nothing, so a removal written before the unit arrives would do nothing
  * and leave a negative count behind, while the hex shows the end of the round. Such a removal moves the entry to the end
  * of the first phase where it counts. A place counts only if the board then differs by the tapped unit alone: moving the
- * entry past a later flight can silently drop another of its losses. With no such place the round stays as it was.
+ * entry past a later flight can silently drop another of its losses. With no such place the removal gets an entry of its own at the end of the action phase.
  */
 export function changeOnBoard(game: Game, round: Round, change: MergedChange, pack: DataPack, newId: () => string): Round {
   const edited = changeMerged(round, change, newId);
@@ -108,7 +108,14 @@ export function changeOnBoard(game: Game, round: Round, change: MergedChange, pa
   if (left < 0) return round;
   if (left === 0) wanted.delete(key);
   else wanted.set(key, left);
-  return [edited, ...moved].find(candidate => sameCounts(shown(candidate), wanted)) ?? round;
+  const fits = [edited, ...moved].find(candidate => sameCounts(shown(candidate), wanted));
+  if (fits) return fits;
+  // No place of the one entry reproduces the board: the removal goes to an entry of its own, behind everything of the action phase.
+  const own: MergedEntry = {
+    id: newId(), phase: 'action', status: 'planned', type: 'adjustment', kind, label: '',
+    delta: changedDelta({ units: { systemId, units: {} } }, change),
+  };
+  return { ...round, entries: [...round.entries, own] };
 }
 
 /** The signed counts of a merged entry: space first, then by planet. */

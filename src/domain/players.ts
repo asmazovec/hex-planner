@@ -1,6 +1,6 @@
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
 import { createGame, makeId, slotKeyOf } from './newGame';
-import type { DataPack, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
+import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
 /** An opponent, or me under the id `me`. */
 export type Player = Opponent;
@@ -106,16 +106,26 @@ export function addPlayer(game: Game, pack: DataPack): Game {
   return withPlayers(game, [...players, { id: makeId('opponent'), faction: '', vp: 0, seat: players.length + 1, color }], pack);
 }
 
-/** Status entries forget the points of an opponent who left. */
+/** Entries forget an opponent who left: their points and their place in card effects. */
 const withoutPoints = (plans: Plan[], opponentId: string): Plan[] => plans.map(plan => ({
   ...plan,
   rounds: plan.rounds.map(round => ({
     ...round,
-    entries: round.entries.map(entry => {
-      if (entry.type !== 'statusTokens' || !entry.opponentVp) return entry;
-      const { [opponentId]: gone, ...opponentVp } = entry.opponentVp;
-      void gone;
-      return { ...entry, opponentVp };
+    entries: round.entries.map((entry): Entry => {
+      if (entry.type === 'statusTokens' && entry.opponentVp) {
+        const { [opponentId]: gone, ...opponentVp } = entry.opponentVp;
+        void gone;
+        return { ...entry, opponentVp };
+      }
+      if ((entry.type === 'strategic' || entry.type === 'secondary') && entry.effects) {
+        const { speaker, freeSecondary, ...rest } = entry.effects;
+        const effects: CardEffects = { ...rest };
+        if (speaker !== undefined && speaker !== opponentId) effects.speaker = speaker;
+        const free = (freeSecondary ?? []).filter(id => id !== opponentId);
+        if (free.length > 0) effects.freeSecondary = free;
+        return { ...entry, effects };
+      }
+      return entry;
     }),
   })),
 }));

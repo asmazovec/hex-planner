@@ -199,7 +199,7 @@ describe('a removal must count at the place of its entry', () => {
     expect(remove(game, bought, 'carrier', null, 'build').entries).toEqual([]);
   });
 
-  test('a move that would drop another loss is refused: a fighter lost, a later tactical moving them out, then a carrier in', () => {
+  test('a move that would drop another loss makes a second losses entry at the end of the action phase: a fighter lost, a later tactical moving them out, then a carrier in', () => {
     const out = entry({
       type: 'tactical', systemId: FROM, moves: [{ from: SLOT, units: { fighter: 2 } }], landings: [], production: {}, payment: noPay,
     }, 'action', 'out');
@@ -207,6 +207,11 @@ describe('a removal must count at the place of its entry', () => {
     // The loss leaves one fighter to fly. Behind the flight it would hit nothing, and both would arrive.
     expect(forecast(game, round).systems[FROM]).toEqual({ fighter: 1 });
     expect(forecast(game, round).systems[SLOT]).toEqual({ carrier: 1 });
-    expect(remove(game, round, 'carrier')).toBe(round);
+    const next = remove(game, round, 'carrier');
+    expect(next.entries.slice(0, -1).map(e => e.id)).toEqual(['fleet', 'fighters', 'merged', 'out', 'move']);
+    expect(next.entries.at(-1)).toMatchObject({ type: 'adjustment', kind: 'losses', phase: 'action', status: 'planned', delta: { units: { systemId: SLOT, units: { carrier: -1 } } } });
+    expect(mergedEntry(next, 'losses', SLOT)?.delta.units?.units).toEqual({ fighter: -1 });
+    expect(forecast(game, next).systems[SLOT] ?? {}).toEqual({});
+    expect(forecast(game, next).systems[FROM]).toEqual({ fighter: 1 });
   });
 });

@@ -26,6 +26,7 @@
   "banner": {
     "saveError": "Could not save the game: {{error}}",
     "export": "Export",
+    "crash": "Something went wrong: {{error}}",
     "exportVolatile": "Your games live only in this browser, and it may clear them. Save a file copy.",
     "exportNever": "There is no file copy of your games yet. Save one.",
     "exportStale": "The last file copy is more than a week old. Save a new one."
@@ -528,8 +529,7 @@
     "setupNote": "Tap a token on the hex to remove one.",
     "planetNote": "Tap a planet: ground units and structures go there.",
     "tapNote": {
-      "planned": "This structure is planned in an entry of the plan: change it there.",
-      "kept": "Not recorded: another loss in this system would be dropped. Reorder the entries in the plan."
+      "planned": "This structure is planned in an entry of the plan: change it there."
     }
   }
 }

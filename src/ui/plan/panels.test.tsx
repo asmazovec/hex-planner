@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -278,6 +278,23 @@ test('dragging the handle moves the entry; pointercancel leaves it', () => {
   fireEvent.pointerMove(handle, { pointerId: 1, clientY: 140 });
   fireEvent.pointerUp(handle, { pointerId: 1, clientY: 140 });
   expect(order()).toEqual(['strategic', 'secondary', 'pass']);
+});
+
+test('a drag does not wedge when its entry disappears meanwhile', () => {
+  const [pass] = threeEntries();
+  render(<EntryListLive />);
+  const handle = within(screen.getAllByRole('listitem')[0]).getByRole('button', { name: 'Drag to move' });
+  fireEvent.pointerDown(handle, { pointerId: 1, clientY: 10 });
+  act(() => useGame.getState().removeEntry(pass));
+  const rows = screen.getAllByRole('listitem');
+  rows.forEach((el, i) => {
+    el.getBoundingClientRect = () => ({ top: i * 50, height: 50, bottom: i * 50 + 50, left: 0, right: 100, width: 100, x: 0, y: i * 50, toJSON: () => undefined });
+  });
+  const next = within(rows[0]).getByRole('button', { name: 'Drag to move' });
+  fireEvent.pointerDown(next, { pointerId: 2, clientY: 10 });
+  fireEvent.pointerMove(next, { pointerId: 2, clientY: 140 });
+  fireEvent.pointerUp(next, { pointerId: 2, clientY: 140 });
+  expect(order()).toEqual(['secondary', 'strategic']);
 });
 
 test('a warning stands below the open status fields, so the tiles do not move', async () => {

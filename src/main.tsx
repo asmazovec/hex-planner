@@ -4,12 +4,15 @@ import './i18n';
 import './ui/theme.css';
 import { registerSW } from 'virtual:pwa-register';
 import { App } from './ui/App';
+import { ErrorBoundary } from './ui/common/ErrorBoundary';
 
 // Without an update handler the new version simply waits for the next opening.
 if (import.meta.env.PROD) registerSW();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );
