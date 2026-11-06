@@ -529,8 +529,8 @@ describe('Warfare', () => {
     expect(screen.getByRole('group', { name: 'Payment' })).toBeVisible();
   });
 
-  test('no home on the map, no shop', async () => {
-    store().setTile(HOME, null);
+  test('nothing on the map, no home and no shop', async () => {
+    for (const slot of Object.keys(store().game!.map)) store().setTile(slot, null);
     await secondary('Warfare');
     expect(button('Production in the home system')).toBeDisabled();
     expect(screen.getByText('The home system is not on the map.')).toBeVisible();
