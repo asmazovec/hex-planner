@@ -230,20 +230,18 @@
       "changed": "Changed in TE",
       "primary": "Primary",
       "secondary": "Secondary",
-      "hint": "Tap once for the details, again for backup, a third time for main, once more to clear. The card is played in the action phase.",
+      "hint": "Tap once for the details, again for backup, a third time for main, once more to clear. A tap outside this block goes back to the main card. The card is played in the action phase.",
       "second": "Second",
-      "hintTwo": "With 3 or 4 players two cards are held. Tap once for the details, again for the second card, a third time for main, once more to clear. Cards are played in the action phase."
+      "hintTwo": "With 3 or 4 players two cards are held. Tap once for the details, again for the second card, a third time for main, once more to clear. A tap outside this block goes back to the main card. Cards are played in the action phase."
     },
     "menu": {
       "add": "Add action",
       "tactical": "Tactical action",
-      "strategic": "Strategic action",
-      "secondary": "Secondary ability, any number of times",
+      "strategic": "Strategy",
       "component": "Component action",
       "expedition": "Expedition contribution, end of turn",
       "pass": "Pass",
-      "adjustment": "Manual adjustment",
-      "strategicPlayed": "Strategic action · primary already played"
+      "adjustment": "Manual adjustment"
     },
     "entries": {
       "statusTokens": "Tokens and points",
@@ -382,11 +380,6 @@
       "agendaEmpty": "A vote, if Mecatol Rex is held. No entries here yet."
     },
     "strategy": {
-      "title": {
-        "primary": "Strategic action",
-        "secondary": "Secondary action",
-        "forToken": "Primary for a token"
-      },
       "mode": {
         "primary": "Primary",
         "secondary": "Secondary",
@@ -396,8 +389,7 @@
       "cards": "Card",
       "locked": "A choice has been made. To change the card or the mode, cancel the action.",
       "chooseCard": "Choose a card.",
-      "tokenCost": "A secondary costs 1 strategy token.",
-      "forTokenNote": "Costs 1 strategy token. For faction abilities, such as Jol-Nar's Brilliant on Technology.",
+      "tokenCost": "−1 strategy token",
       "cancel": "Cancel action",
       "done": "Done",
       "tile": "tile {{name}}",
@@ -415,7 +407,7 @@
       "buildPrimary": "Build a structure",
       "buildSecondary": "Place a structure",
       "built": "Built: {{list}}",
-      "dock": "Production in a space dock, the Thunder's Edge primary",
+      "dock": "Production in a space dock instead of the first build",
       "tradePrimary": "+3 trade goods, commodities replenish.",
       "tradeSecondary": "Commodities replenish.",
       "free": "Who uses the secondary for free",

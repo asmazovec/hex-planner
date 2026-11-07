@@ -4,7 +4,7 @@ import { strategyCardSet, strategyCards } from '../../domain/cards';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat } from '../../domain/players';
 import { placesOf, systemPlanets } from '../../domain/project';
-import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices, homeSlot, researchCount, withLeadershipTokens, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
+import { CARD, cardChange, cardCost, freeTokens, hasChoices, heldCards, homeSlot, playOf, researchCount, startsAsPrimary, withLeadershipTokens, withProduction, withStructure, type CardEntry, type CardPatch } from '../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, UnitId, Warning } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import type { PurchaseTarget } from '../map/HexStage';
@@ -62,7 +62,7 @@ export interface StrategyEditorProps {
   onDone: () => void;
 }
 
-/** A strategy card played: the mode and the card stay free until something is chosen, then cancelling is the way back. */
+/** A strategy card played: first the card, then its primary or secondary, both free to change until something is chosen, then cancelling is the way back. */
 export function StrategyEditor({
   game, pack, round, entry, before, warnings, manualPayment, picking,
   onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onCancel, onDone,
@@ -74,7 +74,7 @@ export function StrategyEditor({
   const primary = entry.type === 'strategic';
   const effects = entry.effects ?? {};
   const locked = card !== undefined && hasChoices(entry, round);
-  const mode = entry.forToken ? 'forToken' : primary ? 'primary' : 'secondary';
+  const mine = !entry.owner;
   const te = game.expansions.includes('te');
   const cost = cardCost(entry, game.faction, before.upgrades, pack);
   const change = (patch: CardPatch) => onUpdate(cardChange(entry, patch, before, game.faction, pack, manualPayment));
@@ -85,9 +85,10 @@ export function StrategyEditor({
   const toggled = (list: string[] | undefined, id: string) =>
     (list?.includes(id) ? list.filter(other => other !== id) : [...(list ?? []), id]);
 
-  const setMode = (next: typeof mode) => change({
-    type: next === 'secondary' ? 'secondary' : 'strategic', forToken: next === 'forToken' ? true : undefined,
-  });
+  const pickCard = (initiative: number) => {
+    if (initiative === entry.card) return;
+    change({ card: initiative, ...playOf(round, game.playerCount, initiative, startsAsPrimary(round, game.playerCount, initiative, entry), mine) });
+  };
 
   const placer = placeWarnings(warnings);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
@@ -197,7 +198,7 @@ export function StrategyEditor({
             )}
             {te && (production
               ? <button type="button" className="option" aria-pressed="true" onClick={() => onOpenShop(production.systemId, 'units')}>{t('plan.strategy.dock')} · {tile(production.systemId)}</button>
-              : pickButton('dock', t('plan.strategy.dock')))}
+              : primary && pickButton('dock', t('plan.strategy.dock')))}
             {builtLine}
             {list(placer.at('production'))}
           </>
@@ -312,14 +313,23 @@ export function StrategyEditor({
   };
 
   const cardWarnings = placer.at('card');
+  const ability = (asPrimary: boolean, text: string, costsToken: boolean) => (
+    <button
+      type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary} disabled={locked}
+      onClick={() => { if (card) change(playOf(round, game.playerCount, card.initiative, asPrimary, mine)); }}
+    >
+      <b>{t(asPrimary ? 'plan.cards.primary' : 'plan.cards.secondary')}{costsToken && <span className="card-ability-cost">{t('plan.strategy.tokenCost')}</span>}</b>
+      <span>{text}</span>
+    </button>
+  );
   const cardBlocks = card && summary && (
     <>
-      <p className="card-text">
-        {primary ? summary.primary : summary.secondary}
+      <div className="card-abilities" role="group" aria-label={t('plan.strategy.modes')}>
         {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
-      </p>
-      {mode === 'secondary' && costsStrategyToken(entry) && <p className="muted">{t('plan.strategy.tokenCost')}</p>}
-      {mode === 'forToken' && <p className="muted">{t('plan.strategy.forTokenNote')}</p>}
+        {ability(true, summary.primary, entry.forToken === true || (mine && !heldCards(round, game.playerCount).includes(card.initiative)))}
+        {ability(false, summary.secondary, card.initiative !== CARD.leadership)}
+        {summary.change && <span className="card-note">{summary.change}</span>}
+      </div>
       {sections()}
       {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
         <PaymentBlock
@@ -334,17 +344,12 @@ export function StrategyEditor({
 
   return (
     <div className="strategy-editor panel-stack">
-      <h2>{t(`plan.strategy.title.${mode}`)}</h2>
-      <div className="segment" role="group" aria-label={t('plan.strategy.modes')}>
-        {(['primary', 'secondary', 'forToken'] as const).map(m => (
-          <button key={m} type="button" aria-pressed={mode === m} disabled={locked} onClick={() => setMode(m)}>{t(`plan.strategy.mode.${m}`)}</button>
-        ))}
-      </div>
+      <h2>{t('plan.menu.strategic')}</h2>
       <div className="card-grid" role="group" aria-label={t('plan.strategy.cards')}>
         {cards.map(c => (
           <button
             key={c.initiative} type="button" className="card-cell" aria-pressed={c.initiative === entry.card}
-            disabled={locked && c.initiative !== entry.card} onClick={() => change({ card: c.initiative })}
+            disabled={locked && c.initiative !== entry.card} onClick={() => pickCard(c.initiative)}
           >
             <b>{c.initiative}</b>{c.name}
           </button>

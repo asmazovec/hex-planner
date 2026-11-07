@@ -99,7 +99,7 @@ describe('the strategy editor', () => {
     const { container } = card([{ code: 'primaryRepeated', params: { held: 1 } }], { card: CARD.leadership });
     const warning = screen.getByText(/primary has already been played/);
     expect(follows(container.querySelector('.card-grid')!, warning)).toBe(true);
-    expect(follows(warning, container.querySelector('.card-text')!)).toBe(true);
+    expect(follows(warning, container.querySelector('.card-abilities')!)).toBe(true);
   });
 
   test('a warning about tokens stands in the block of the tokens', () => {

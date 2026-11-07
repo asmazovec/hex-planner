@@ -136,7 +136,7 @@ test('a game from the first screen to an exported file, and back offline', async
     await page.getByRole('button', { name: '5 Trade' }).click();
     await page.getByRole('button', { name: '5 Trade' }).click();
     await page.getByRole('button', { name: 'Add action' }).click();
-    await page.getByRole('button', { name: 'Strategic action' }).click();
+    await page.getByRole('button', { name: 'Strategy', exact: true }).click();
     await expect(page.getByRole('button', { name: '5 Trade' })).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(summary('Trade goods')).toHaveText(/(?<!\d)3$/);
@@ -232,7 +232,7 @@ test('the tabs of the left drawers stay beside the map through the actions, and 
 
   // A strategy card opens in the plan.
   await page.getByRole('button', { name: 'Add action' }).click();
-  await page.getByRole('button', { name: 'Strategic action' }).click();
+  await page.getByRole('button', { name: 'Strategy', exact: true }).click();
   await tabsStay();
   await page.getByRole('button', { name: 'Done', exact: true }).click();
   await tabsStay();

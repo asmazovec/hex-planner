@@ -14,6 +14,7 @@ import type { CardEntry } from '../../domain/strategy';
 import { unitStats } from '../../domain/unitStats';
 import type { Entry, ExpansionId } from '../../domain/types';
 import { setLanguage } from '../../i18n';
+import { strategyCards } from '../../domain/cards';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 
@@ -40,14 +41,24 @@ function start({ expansions = ['pok', 'te'] as ExpansionId[], playerCount = 6, f
 }
 
 /** Opens the editor through the menu, with a card picked. */
-async function open(mode: 'Strategic action' | RegExp, card?: string) {
+async function open(card?: string) {
   render(<PlanScreen />);
   await click('Add action');
-  await click(mode);
+  await click('Strategy');
   if (card) await userEvent.click(cards().getByRole('button', { name: new RegExp(card) }));
 }
-const primary = (card?: string) => open('Strategic action', card);
-const secondary = (card?: string) => open(/^Secondary ability/, card);
+const ability = (name: 'Primary' | 'Secondary') => button(new RegExp(`^${name}`));
+/** The primary of a card that is mine: planned in the grid first, as in play. */
+const primary = (card?: string) => {
+  const mine = strategyCards(game().expansions).find(c => c.name === card);
+  if (mine) {
+    store().setStrategyCard(1, mine.initiative);
+    store().setStrategyCard(1, mine.initiative);
+  }
+  return open(card);
+};
+/** A card that is not mine starts as its secondary. */
+const secondary = (card?: string) => open(card);
 
 beforeEach(() => {
   setLanguage('en');
@@ -57,25 +68,87 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('opening', () => {
-  test('the planned card fills itself in on a primary, not on a secondary', async () => {
+  test('one menu item: my card not played yet is chosen, once it is played nothing is', async () => {
     store().setStrategyCard(1, 5);
     store().setStrategyCard(1, 5);
     await primary();
     expect(cardEntry()).toMatchObject({ type: 'strategic', card: 5, phase: 'action' });
     expect(cards().getByRole('button', { name: /Trade/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: /^Secondary ability/ })).toBeNull();
     await click('Done');
     await click('Add action');
-    await click(/^Secondary ability/);
-    expect(entries()[1]).toMatchObject({ type: 'secondary' });
+    await click('Strategy');
     expect((entries()[1] as CardEntry).card).toBeUndefined();
     expect(screen.getByText('Choose a card.')).toBeVisible();
+    expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
+    expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
+  });
+
+  test('another player\'s card starts as the secondary for a token, its primary costs a token too and can be taken', async () => {
+    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, 5);
+    await primary();
+    await userEvent.click(cards().getByRole('button', { name: /Imperial/ }));
+    expect(cardEntry()).toMatchObject({ type: 'secondary', card: 8 });
+    expect(ability('Secondary')).toHaveAttribute('aria-pressed', 'true');
+    expect(ability('Primary')).toHaveTextContent('−1 strategy token');
+    expect(ability('Secondary')).toHaveTextContent('−1 strategy token');
+    expect(cell('Strategy')).toHaveTextContent('2 → 1');
+    await userEvent.click(ability('Primary'));
+    expect(cardEntry()).toMatchObject({ type: 'strategic', card: 8, forToken: true });
+    expect(cell('Strategy')).toHaveTextContent('2 → 1');
+  });
+
+  test('on my card the primary is free; playing it a second time warns and stays free', async () => {
+    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, 5);
+    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    await primary();
+    await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
+    expect((entries()[1] as CardEntry)).toMatchObject({ type: 'secondary', card: 5 });
+    expect(ability('Primary')).not.toHaveTextContent('strategy token');
+    expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
+    await userEvent.click(ability('Primary'));
+    expect((entries()[1] as CardEntry).forToken).toBeUndefined();
+    expect(warningsShown().getByText(/primary has already been played/)).toBeVisible();
+  });
+
+  test('the pool follows the number of players: at 6 the backup is not mine, at 3 it is', async () => {
+    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, 2);
+    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    await primary();
+    await userEvent.click(cards().getByRole('button', { name: /Diplomacy/ }));
+    expect(ability('Primary')).toHaveTextContent('−1 strategy token');
+    cleanup();
+    start({ playerCount: 3 });
+    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, 5);
+    store().setStrategyCard(1, 2);
+    store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+    await primary();
+    expect(entries()[1]).toMatchObject({ type: 'strategic', card: 2 });
+    expect(ability('Primary')).not.toHaveTextContent('strategy token');
+  });
+
+  test('Leadership\'s secondary is shown without a token price', async () => {
+    await secondary('Leadership');
+    expect(ability('Secondary')).not.toHaveTextContent('strategy token');
+  });
+
+  test('both abilities are in view as in the details, with what Thunder\'s Edge changed', async () => {
+    await primary('Warfare');
+    expect(ability('Primary')).toHaveTextContent(/tactical action in any system/);
+    expect(ability('Secondary')).toHaveTextContent(/PRODUCTION of your units/);
+    expect(screen.getByText(/In Thunder's Edge the primary gives a tactical action/)).toBeVisible();
   });
 
   test('an entry opens the editor again from the list', async () => {
     const id = store().addEntry(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Strategy: Imperial' }));
-    expect(button(/Mecatol Rex/)).toHaveAttribute('aria-pressed', 'true');
+    expect(button(/^I control Mecatol Rex/)).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('card text follows the expansions', async () => {
@@ -89,15 +162,6 @@ describe('opening', () => {
     expect(screen.queryByText('Changed in TE')).toBeNull();
   });
 
-  test('the menu says so when the primary is played, and still works: 6 players', async () => {
-    store().addEntry(1, { type: 'strategic', card: 1 }, 'action');
-    render(<PlanScreen />);
-    await click('Add action');
-    await click('Strategic action · primary already played');
-    expect(entries()).toHaveLength(2);
-    expect(warningsShown().getByText(/primary has already been played/)).toBeVisible();
-  });
-
   test('at 3 players the second primary takes the other planned card and warns about nothing', async () => {
     start({ playerCount: 3 });
     store().setStrategyCard(1, 5);
@@ -106,7 +170,7 @@ describe('opening', () => {
     store().addEntry(1, { type: 'strategic', card: 5 }, 'action');
     render(<PlanScreen />);
     await click('Add action');
-    await click('Strategic action');
+    await click('Strategy');
     expect(entries()[1]).toMatchObject({ card: 2 });
     expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
   });
@@ -118,23 +182,18 @@ describe('modes and the lock', () => {
     const place = document.querySelector('.strategy-lock');
     expect(place).not.toBeNull();
     expect(place).toHaveTextContent('');
-    await click(/Mecatol Rex/);
+    await click(/^I control Mecatol Rex/);
     expect(document.querySelector('.strategy-lock')).toBe(place);
     expect(place).toHaveTextContent(/A choice has been made/);
   });
 
-  test('modes are free until a choice, and a secondary or a token primary costs a strategy token', async () => {
+  test('the abilities are free until a choice, and a secondary costs a strategy token', async () => {
     await primary('Trade');
     expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
-    await click('Secondary');
+    await userEvent.click(ability('Secondary'));
     expect(cardEntry().type).toBe('secondary');
     expect(cell('Strategy')).toHaveTextContent('2 → 1');
-    expect(screen.getByText('A secondary costs 1 strategy token.')).toBeVisible();
-    await click('Primary for a token');
-    expect(cardEntry()).toMatchObject({ type: 'strategic', forToken: true });
-    expect(cell('Strategy')).toHaveTextContent('2 → 1');
-    expect(screen.getByRole('heading', { name: 'Primary for a token' })).toBeVisible();
-    await click('Primary');
+    await userEvent.click(ability('Primary'));
     expect(cardEntry().type).toBe('strategic');
     expect(cardEntry().forToken).toBeUndefined();
     await userEvent.click(cards().getByRole('button', { name: /Imperial/ }));
@@ -144,13 +203,13 @@ describe('modes and the lock', () => {
   test('a choice locks the mode and the other cards, with the note; undoing it frees them', async () => {
     await primary('Imperial');
     expect(screen.queryByText(/A choice has been made/)).toBeNull();
-    await click(/Mecatol Rex/);
+    await click(/^I control Mecatol Rex/);
     expect(screen.getByText(/A choice has been made/)).toBeVisible();
-    for (const mode of ['Primary', 'Secondary', 'Primary for a token']) expect(button(mode)).toBeDisabled();
+    for (const name of ['Primary', 'Secondary'] as const) expect(ability(name)).toBeDisabled();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
     expect(cards().getByRole('button', { name: /Imperial/ })).toBeEnabled();
     act(() => store().undo());
-    expect(button('Secondary')).toBeEnabled();
+    expect(ability('Secondary')).toBeEnabled();
   });
 
   test('cancel removes the entry and all it holds in one undo step', async () => {
@@ -361,13 +420,32 @@ describe('Construction', () => {
     expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' })).toHaveTextContent('+1');
   });
 
-  test('with Thunder\'s Edge the secondary can build units too; before it there is no dock production', async () => {
+  test('dock production replaces the first build of the Thunder\'s Edge primary: the secondary places a structure only', async () => {
+    await primary('Construction');
+    expect(screen.getByRole('button', { name: 'Production in a space dock instead of the first build' })).toBeVisible();
+    await userEvent.click(ability('Secondary'));
+    expect(screen.queryByRole('button', { name: /^Production in a space dock/ })).toBeNull();
+    expect(button('Place a structure')).toBeVisible();
+  });
+
+  test('the primary of a card that is not mine offers dock production too, for a token', async () => {
     await secondary('Construction');
+    await userEvent.click(ability('Primary'));
+    expect(cardEntry().forToken).toBe(true);
     expect(screen.getByRole('button', { name: /^Production in a space dock/ })).toBeVisible();
-    cleanup();
+  });
+
+  test('before Thunder\'s Edge there is no dock production', async () => {
     start({ expansions: ['pok'] });
     await primary('Construction');
     expect(screen.queryByRole('button', { name: /^Production in a space dock/ })).toBeNull();
+  });
+
+  test('units a saved secondary already built stay in view with the warning, so they can be taken back', async () => {
+    await secondary('Construction');
+    act(() => store().updateEntry(cardEntry().id, { effects: { production: { systemId: HOME, units: { cruiser: 1 } } } }));
+    expect(screen.getByRole('button', { name: /^Production in a space dock.*· tile/ })).toBeVisible();
+    expect(screen.getByText(/gives the secondary a structure only/)).toBeVisible();
   });
 });
 
@@ -404,7 +482,7 @@ describe('Warfare', () => {
     expect(within(tile(OTHER) as HTMLElement).queryByRole('img', { name: 'Command token' })).toBeNull();
     await click('Done editing');
     expect(button(/^Tactical action without a token/)).toBeVisible();
-    expect(button('Secondary')).toBeDisabled();
+    expect(ability('Secondary')).toBeDisabled();
     await click(/^Tactical action without a token/);
     expect(button('Done editing')).toBeVisible();
   });
@@ -443,7 +521,7 @@ describe('Warfare', () => {
     expect(cardEntry().effects?.tokens).toEqual({ tactic: -1, fleet: 0, strategy: 1 });
     await click('Reset');
     expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
-    expect(button('Secondary')).toBeEnabled();
+    expect(ability('Secondary')).toBeEnabled();
   });
 
   test('taking from empty pools goes below zero and warns', async () => {
@@ -597,16 +675,16 @@ describe('entries saved before cards', () => {
 describe('Imperial', () => {
   test('Mecatol Rex on the primary is a point, and toggles off', async () => {
     await primary('Imperial');
-    await click(/Mecatol Rex/);
+    await click(/^I control Mecatol Rex/);
     expect(cell('VP')).toHaveTextContent('0 → 1');
-    await click(/Mecatol Rex/);
+    await click(/^I control Mecatol Rex/);
     expect(cell('VP')).toHaveTextContent(/^VP0$/);
     expect(screen.getByText(/Otherwise draw a secret objective/)).toBeVisible();
   });
 
   test('the secondary draws a secret objective only', async () => {
     await secondary('Imperial');
-    expect(screen.queryByRole('button', { name: /Mecatol Rex/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^I control Mecatol Rex/ })).toBeNull();
     expect(screen.getByText('Draw a secret objective.')).toBeVisible();
   });
 });

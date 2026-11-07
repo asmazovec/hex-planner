@@ -31,7 +31,7 @@ test('starting ships have Russian unit names and counts from the pack', () => {
 
 test('commodities are shown under their Russian name', () => {
   show('hacan');
-  expect(screen.getByText('Товары на обмен').parentElement).toHaveTextContent(String(pack.factions.hacan.commodities));
+  expect(screen.getByText('Продукция').parentElement).toHaveTextContent(String(pack.factions.hacan.commodities));
 });
 
 test('starting technologies show name, own description and the colour of their type', () => {

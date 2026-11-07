@@ -22,15 +22,27 @@ export const cardsHeld = (playerCount: number): number => (playerCount <= 4 ? 2 
 const isMainPrimary = (entry: Entry): boolean =>
   entry.type === 'strategic' && !entry.forToken && entry.status !== 'cancelled';
 
-/** Whether the round's plan already holds as many primaries as cards are held. */
-export const primaryPlayed = (round: Round, playerCount: number): boolean =>
-  round.entries.filter(isMainPrimary).length >= cardsHeld(playerCount);
+/** The cards that are mine this round: the main one, and with 3 or 4 players the second one too. */
+export const heldCards = (round: Round, playerCount: number): number[] =>
+  (cardsHeld(playerCount) > 1 ? [round.strategyCard, round.backupCard] : [round.strategyCard]).filter((card): card is number => card !== null);
 
-/** The planned card a new primary starts with: the first not played yet. The other card counts only when two are held. */
+/** How a card is played: its primary is free on a card of mine and on a rival's, whose cards are not planned, and costs a token otherwise. */
+export function playOf(round: Round, playerCount: number, card: number, primary: boolean, mine: boolean): Pick<CardPatch, 'type' | 'forToken'> {
+  if (!primary) return { type: 'secondary', forToken: undefined };
+  return { type: 'strategic', forToken: mine && !heldCards(round, playerCount).includes(card) ? true : undefined };
+}
+
+/** What a tapped card starts as: the primary of a card of mine not played yet this round, the secondary otherwise. A rival's cards are not planned: the primary. */
+export function startsAsPrimary(round: Round, playerCount: number, card: number, entry: CardEntry): boolean {
+  if (entry.owner) return true;
+  const played = round.entries.some(other => other.id !== entry.id && !other.owner && isMainPrimary(other) && (other as CardEntry).card === card);
+  return heldCards(round, playerCount).includes(card) && !played;
+}
+
+/** The planned card a new strategy action starts with: the first of mine not played yet. */
 export function plannedCard(round: Round, playerCount: number): number | undefined {
-  const played = round.entries.filter(isMainPrimary).map(e => (e as CardEntry).card);
-  const planned = cardsHeld(playerCount) > 1 ? [round.strategyCard, round.backupCard] : [round.strategyCard];
-  return planned.find((card): card is number => card !== null && !played.includes(card));
+  const played = round.entries.filter(e => !e.owner && isMainPrimary(e)).map(e => (e as CardEntry).card);
+  return heldCards(round, playerCount).find(card => !played.includes(card));
 }
 
 /** A secondary or a primary for a token, except Leadership's secondary, which the card makes free of tokens. */

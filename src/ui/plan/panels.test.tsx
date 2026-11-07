@@ -117,6 +117,52 @@ test('a held card tapped after looking at another only shows its details again',
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
 });
 
+test('without a look at another card the details are of the main card, and the first tap on it changes nothing', async () => {
+  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 5);
+  render(<StrategyCardsLive />);
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+  expect(screen.getByRole('button', { name: /Trade/ })).not.toHaveAttribute('aria-current');
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+  expect(screen.getByRole('button', { name: /Trade/ })).toHaveAttribute('aria-current', 'true');
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
+});
+
+test('a tap outside the strategy block closes the look at a card, back to the main one, and the count starts over', async () => {
+  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 5);
+  render(<><StrategyCardsLive /><button type="button">Elsewhere</button></>);
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  expect(screen.getByRole('group', { name: 'Imperial' })).toBeVisible();
+  expect(screen.queryByRole('group', { name: 'Trade' })).toBeNull();
+
+  // Within the block the look stays: the details can be read and touched.
+  await userEvent.click(screen.getByRole('group', { name: 'Imperial' }));
+  expect(screen.getByRole('group', { name: 'Imperial' })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }));
+  expect(screen.queryByRole('group', { name: 'Imperial' })).toBeNull();
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+  await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }));
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+});
+
+test('with no main card there is nothing to show until a card is tapped, and a tap outside hides it again', async () => {
+  useGame.getState().setStrategyCard(1, 2);
+  render(<><StrategyCardsLive /><button type="button">Elsewhere</button></>);
+  expect(document.querySelector('.card-details')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }));
+  expect(document.querySelector('.card-details')).toBeNull();
+});
+
 test('another card shows its own details; a card without a change has no mark', async () => {
   render(<StrategyCardsLive />);
   await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
@@ -151,14 +197,14 @@ function StrategyCardsLive({ playerCount = 6 }: { playerCount?: number }) {
   return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round} />;
 }
 
-test('the menu holds all seven items', async () => {
+test('the menu holds one item for a strategy card', async () => {
   const onPick = vi.fn();
   render(<ActionMenu onPick={onPick} />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  const names = ['Tactical action', 'Strategic action', 'Secondary ability, any number of times', 'Component action', 'Pass', 'Expedition contribution, end of turn', 'Manual adjustment'];
+  const names = ['Tactical action', 'Strategy', 'Component action', 'Pass', 'Expedition contribution, end of turn', 'Manual adjustment'];
   const menu = screen.getAllByRole('button').slice(1);
   expect(menu.map(b => b.textContent)).toEqual(names);
-  expect(ACTION_TYPES).toHaveLength(7);
+  expect(ACTION_TYPES).toHaveLength(6);
   await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
   expect(onPick).toHaveBeenCalledWith('pass');
   expect(screen.queryByRole('button', { name: 'Pass' })).toBeNull();

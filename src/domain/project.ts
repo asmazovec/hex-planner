@@ -453,7 +453,8 @@ function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPac
     if (state.strategy < 1) warnings.push({ code: 'shortStrategy', params: { have: state.strategy } });
     state.strategy -= 1;
   }
-  if (primary && !entry.forToken) {
+  // No card chosen yet is no repeat of anything.
+  if (primary && !entry.forToken && entry.card !== undefined) {
     const held = cardsHeld(game.playerCount);
     const sameCard = entry.card !== undefined && primaries.includes(entry.card);
     primaries.push(entry.card);
@@ -481,7 +482,7 @@ function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPac
     if (state.tokensOnMap.includes(effects.systemId)) warnings.push({ code: 'systemHasToken', params: { systemId: effects.systemId } });
     else state.tokensOnMap.push(effects.systemId);
   }
-  // Thunder's Edge's secondary text speaks of a structure only; building units there is allowed, and said so.
+  // The secondary places a structure only and the editor no longer offers units; a plan saved with them keeps them, and is told.
   if (!primary && entry.card === CARD.construction && effects.production) warnings.push({ code: 'constructionUnits', params: {} });
   // Before Thunder's Edge this primary lifts a token off the board; the one gained is distributed like any other.
   if (primary && entry.card === CARD.warfare && effects.systemId && !game.expansions.includes('te')) {

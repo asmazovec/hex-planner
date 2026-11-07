@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
 import { project, stateBeforeEntry } from './project';
 import { withTeMecatol } from './mecatol';
-import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
+import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, heldCards, homeSlot, plannedCard, playOf, startsAsPrimary, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -82,6 +82,42 @@ describe('now and forecast', () => {
   });
 });
 
+describe('how a card is played', () => {
+  test('my cards depend on the number of players: the backup counts only when two are held', () => {
+    expect(heldCards(emptyRound([], 5, 2), 6)).toEqual([5]);
+    expect(heldCards(emptyRound([], 5, 2), 4)).toEqual([5, 2]);
+    expect(heldCards(emptyRound([], null, 2), 3)).toEqual([2]);
+  });
+
+  test('the primary is free on my card and costs a token on another, the secondary is just the secondary', () => {
+    const round = emptyRound([], 5, 2);
+    expect(playOf(round, 6, 5, true, true)).toEqual({ type: 'strategic', forToken: undefined });
+    expect(playOf(round, 6, 2, true, true)).toEqual({ type: 'strategic', forToken: true });
+    expect(playOf(round, 4, 2, true, true)).toEqual({ type: 'strategic', forToken: undefined });
+    expect(playOf(round, 6, 5, false, true)).toEqual({ type: 'secondary', forToken: undefined });
+  });
+
+  test('a rival is not charged for the primary: their cards are not planned', () => {
+    expect(playOf(emptyRound([], 5), 6, 2, true, false)).toEqual({ type: 'strategic', forToken: undefined });
+  });
+
+  test('a card starts as the primary only while it is mine and not played yet', () => {
+    const entry = play({ type: 'strategic' });
+    expect(startsAsPrimary(emptyRound([entry], 5), 6, 5, entry)).toBe(true);
+    expect(startsAsPrimary(emptyRound([entry], 5), 6, 2, entry)).toBe(false);
+    expect(startsAsPrimary(emptyRound([primary(5), entry], 5), 6, 5, entry)).toBe(false);
+    expect(startsAsPrimary(emptyRound([primary(5, undefined, 'cancelled'), entry], 5), 6, 5, entry)).toBe(true);
+    expect(startsAsPrimary(emptyRound([{ ...primary(5), owner: 'r' }, entry], 5), 6, 5, entry)).toBe(true);
+  });
+
+  test('an action with no card yet costs nothing and repeats nothing', () => {
+    const bare = play({ type: 'strategic' });
+    const game = start([primary(1), bare]);
+    expect(warningsOf(game, bare)).toEqual([]);
+    expect(stateOf(game).state.strategy).toBe(2);
+  });
+});
+
 describe('the second primary', () => {
   test('warns at 6 players, where one card is held', () => {
     const first = primary(1);
@@ -123,11 +159,6 @@ describe('the second primary', () => {
   });
 
   test('the menu knows when the held primaries are played', () => {
-    expect(primaryPlayed(emptyRound([primary(1)]), 6)).toBe(true);
-    expect(primaryPlayed(emptyRound([forToken(1)]), 6)).toBe(false);
-    expect(primaryPlayed(emptyRound([primary(1, undefined, 'cancelled')]), 6)).toBe(false);
-    expect(primaryPlayed(emptyRound([primary(1)]), 3)).toBe(false);
-    expect(primaryPlayed(emptyRound([primary(1), primary(2)]), 3)).toBe(true);
   });
 });
 

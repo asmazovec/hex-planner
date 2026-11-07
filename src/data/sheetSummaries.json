@@ -120,7 +120,7 @@
   "en": "Infantry of yours that die on this planet go onto your faction sheet as captured."
  },
  "cabalagent": {
-  "ru": "После пополнения товаров другим игроком истощите: его товары становятся торговыми выгодами, и вы захватываете из его запаса юнит со стоимостью не выше его значения товаров.",
+  "ru": "После пополнения продукции другим игроком истощите: его продукция становится товарами, и вы захватываете из его запаса юнит со стоимостью не выше его значения продукции.",
   "en": "Right after another player refreshes commodities, exhaust to turn them into trade goods and capture a unit from that player's reinforcements costing no more than their commodity value."
  },
  "cabalbt": {
@@ -144,7 +144,7 @@
   "en": "Should your flagship or AWAKEN put your units alongside another player's in the same space area or on the same planet, those units must fight in the Space Combat or Ground Combat step."
  },
  "council_patronage": {
-  "ru": "В начале фазы стратегии пополните торговую выгоду, затем получите 1 товар.",
+  "ru": "В начале фазы стратегии пополните продукцию, затем получите 1 товар.",
   "en": "Strategy phase begins: refill your commodities, then take 1 trade good."
  },
  "crafty": {
@@ -168,7 +168,7 @@
   "en": "On your tactical actions, ships starting from your home system or a system with an active breach move 1 further. ACTION: exhaust to flip any breach, or create an active breach in any non-home system where you have units."
  },
  "crimsoncommander": {
-  "ru": "В конце боя между любыми игроками получите 1 товар (commodity) или обменяйте 1 свой товар на торговую выгоду.",
+  "ru": "В конце боя между любыми игроками получите 1 продукцию или обменяйте 1 свою продукцию на товар.",
   "en": "Once any combat between players is over, gain a commodity or convert one of yours to a trade good.",
   "unlockRu": "Поставьте жетон breach в систему с юнитом другого игрока.",
   "unlockEn": "Put a breach token into a system with another player's unit."
@@ -196,7 +196,7 @@
   "en": "ACTION: exhaust to offer each other player a deal: 3 trade goods plus a promissory note to you. Whoever accepts may research a non-faction technology that isn't a unit upgrade, and you gain every technology so researched."
  },
  "deepwroughtcommander": {
-  "ru": "Когда другой игрок тратит ресурсы на изучение технологии, он может снизить цену на 1; тогда получите 1 товар (commodity) или обменяйте 1 свой товар на торговую выгоду.",
+  "ru": "Когда другой игрок тратит ресурсы на изучение технологии, он может снизить цену на 1; тогда получите 1 продукцию или обменяйте 1 свою продукцию на товар.",
   "en": "When another player pays resources to research, they may shave 1 off the price; if they do, you gain a commodity or turn one of yours into a trade good.",
   "unlockRu": "Имейте в игре карту океана.",
   "unlockEn": "An ocean card is in play for you."
@@ -332,7 +332,7 @@
   "en": "You may hand over this planet's card in a deal, but then all your units here must relocate to another planet you control."
  },
  "hacanagent": {
-  "ru": "В фазе действий истощите, чтобы получить 2 товара или пополнить товары другого игрока.",
+  "ru": "В фазе действий истощите, чтобы получить 2 продукции или пополнить продукцию другого игрока.",
   "en": "In the action phase, exhaust to take 2 commodities or to refill another player's commodities."
  },
  "hacanbt": {
@@ -400,7 +400,7 @@
   "en": "Anyone landing ground forces on this mech's planet has to pay 1 influence."
  },
  "keleresagent": {
-  "ru": "В любой момент истощите, чтобы любой игрок мог тратить торговые выгоды как товары.",
+  "ru": "В любой момент истощите, чтобы любой игрок мог платить продукцией как товарами.",
   "en": "Any time, exhaust to let any player pay with commodities exactly like trade goods."
  },
  "keleresbt": {
@@ -456,7 +456,7 @@
   "unlockEn": "Score 3 objectives."
  },
  "laws_order": {
-  "ru": "В начале хода любого игрока можете потратить 1 товар или 1 торговую выгоду, чтобы до конца этого хода все законы считались пустыми.",
+  "ru": "В начале хода любого игрока можете потратить 1 товар или 1 продукцию, чтобы до конца этого хода все законы считались пустыми.",
   "en": "When anyone's turn starts, pay 1 trade good or commodity so that laws have no effect until that turn ends."
  },
  "letnev_mech": {
@@ -748,7 +748,7 @@
   "en": "When a combat finishes, galvanize one of your units that took part."
  },
  "pillage": {
-  "ru": "Когда у вашего соседа появляются товары или он завершает сделку, и у него 3 товара или больше, вы можете забрать 1 его товар или торговую выгоду.",
+  "ru": "Когда у вашего соседа появляются товары или он завершает сделку, и у него 3 товара или больше, вы можете забрать 1 его товар или 1 его продукцию.",
   "en": "Whenever a neighbor gains trade goods or finishes a transaction while holding at least 3 of them (goods), you may snatch 1 trade good or commodity from them."
  },
  "plotsplots": {

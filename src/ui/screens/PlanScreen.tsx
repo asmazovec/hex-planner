@@ -6,7 +6,7 @@ import { EXPEDITION_SLICES } from '../../domain/payment';
 import { fleetSpeed, isOnMap, project, routeMove, routeReach, routeSteps, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
 import { focusRect, pausedPath, routeShapes, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
-import { CARD, cardChange, plannedCard, primaryPlayed, withSystem, type CardEntry } from '../../domain/strategy';
+import { CARD, cardChange, plannedCard, withSystem, type CardEntry } from '../../domain/strategy';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
 import type { AdjustmentKind, Entry, EntryBody, Game, Plan } from '../../domain/types';
@@ -41,6 +41,10 @@ import { arrowsOf, entrySystems, flightRoutes, hasUnits, isUntouched, sourcePool
 import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
+/** How many rivals still fit on the line of whose action with their whole names. */
+const FULL_NAMES_UP_TO = 3;
+const SHORT_TAG = 3;
+
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry; `fromCard` makes that one Warfare's free action. */
 type DrawerName = 'players' | 'legend' | 'upgrades' | 'te';
 
@@ -67,7 +71,7 @@ const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };
 
 const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
-const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical' | 'strategic' | 'secondary'>, EntryBody> = {
+const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical' | 'strategic'>, EntryBody> = {
   component: { type: 'component', note: '' },
   expedition: { type: 'expedition', sliceId: null, payment: EMPTY_PAYMENT },
   pass: { type: 'pass' },
@@ -264,8 +268,8 @@ export function PlanScreen() {
       setView('map');
       return;
     }
-    if (type === 'strategic' || type === 'secondary') {
-      const card = type === 'strategic' && !actor ? plannedCard(round, game.playerCount) : undefined;
+    if (type === 'strategic') {
+      const card = actor ? undefined : plannedCard(round, game.playerCount);
       setCardId(addEntry(round.number, card === undefined ? { type } : { type, card }, 'action', actor));
       setMapPick(null);
       closeTe();
@@ -710,21 +714,25 @@ export function PlanScreen() {
                   addAction={(
                     <div className="acting-add">
                       <div className="segment stage-owners acting-for" role="group" aria-label={t('plan.actingLabel')}>
-                        <button type="button" aria-pressed={!actor} onClick={() => setActingAs(null)}>
-                          <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${game.color})` }} />
+                        <button type="button" aria-pressed={!actor} style={{ '--owner': `var(--player-${game.color})` } as CSSProperties} onClick={() => setActingAs(null)}>
                           {t('plan.mine')}
                         </button>
                         {opponentsBySeat(game).map(o => {
                           const faction = pack.factions[o.faction];
+                          const name = faction ? factionShortName(faction.id, faction.name) : t('players.player', { n: o.seat });
+                          // All the players stay on one line: with many of them the colour and three letters tell them apart.
+                          const tag = faction ? name.slice(0, SHORT_TAG) : String(o.seat);
                           return (
-                            <button key={o.id} type="button" aria-pressed={actor === o.id} onClick={() => setActingAs(o.id)}>
-                              <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${o.color})` }} />
-                              {faction ? factionShortName(faction.id, faction.name) : t('players.player', { n: o.seat })}
+                            <button
+                              key={o.id} type="button" aria-pressed={actor === o.id} aria-label={name}
+                              style={{ '--owner': `var(--player-${o.color})` } as CSSProperties} onClick={() => setActingAs(o.id)}
+                            >
+                              {game.opponents.length > FULL_NAMES_UP_TO ? tag : name}
                             </button>
                           );
                         })}
                       </div>
-                      <ActionMenu onPick={onPick} primaryPlayed={!actor && primaryPlayed(round, game.playerCount)} />
+                      <ActionMenu onPick={onPick} />
                     </div>
                   )}
                 />

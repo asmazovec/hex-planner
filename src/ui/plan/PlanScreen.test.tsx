@@ -360,6 +360,24 @@ describe('an opponent in the plan', () => {
     expect(entries()[0].owner).toBe(rival().id);
   });
 
+  test('with many players a rival takes three letters, the colour is the edge of the cell and the full name stays for the reader', () => {
+    useGame.getState().setOpponent(1, { faction: 'hacan' });
+    render(<PlanScreen />);
+    const hacan = whose().getByRole('button', { name: 'Hacan' });
+    expect(hacan).toHaveTextContent(/^Hac$/);
+    expect(hacan.style.getPropertyValue('--owner')).toBe(`var(--player-${game().opponents[1].color})`);
+    expect(whose().getByRole('button', { name: 'Player 4' })).toHaveTextContent(/^4$/);
+    expect(hacan.querySelector('.owner-dot')).toBeNull();
+    expect(whose().getByRole('button', { name: 'Mine' })).toHaveTextContent(/^Mine$/);
+  });
+
+  test('with few players a rival keeps the whole name', () => {
+    useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
+    useGame.getState().setOpponent(0, { faction: 'hacan' });
+    render(<PlanScreen />);
+    expect(whose().getByRole('button', { name: 'Hacan' })).toHaveTextContent(/^Hacan$/);
+  });
+
   test('their row wears their colour and says whose it is', async () => {
     useGame.getState().addEntry(1, { type: 'pass' }, 'action', rival().id);
     render(<PlanScreen />);

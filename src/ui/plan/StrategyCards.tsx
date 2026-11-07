@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../data/cardSummaries';
 import { strategyCards } from '../../domain/cards';
@@ -14,14 +14,25 @@ export interface StrategyCardsProps {
 }
 
 /**
- * All eight cards in a grid that only plans: a tap on a card not shown opens its details and takes nothing. Further taps
- * make it the backup, then the main one, then clear it and close the details.
+ * All eight cards in a grid that only plans. The details are those of the main card, until a tap opens another look: the
+ * first tap on any card, the main one too, only shows it and takes nothing. Further taps on it make it the backup, then
+ * the main one, then clear it. A tap outside this block ends the look, so the count starts over from the first tap.
  * With 3 or 4 players two cards are held, so the backup is the second card.
  */
 export function StrategyCards({ expansions, playerCount, round }: StrategyCardsProps) {
   const { t } = useTranslation();
   const setStrategyCard = useGame(s => s.setStrategyCard);
+  /** The card being looked at, which further taps change. */
   const [shown, setShown] = useState<number | null>(null);
+  const block = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (shown === null) return undefined;
+    const away = (e: PointerEvent) => {
+      if (!block.current?.contains(e.target as Node)) setShown(null);
+    };
+    window.addEventListener('pointerdown', away);
+    return () => window.removeEventListener('pointerdown', away);
+  }, [shown]);
   const lang = currentLanguage();
   const cards = strategyCards(expansions);
   const backupName = t(cardsHeld(playerCount) > 1 ? 'plan.cards.second' : 'plan.cards.backup');
@@ -41,11 +52,11 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
     round.strategyCard !== null && `${t('plan.cards.main')}: ${named(round.strategyCard)}`,
     round.backupCard !== null && `${backupName}: ${named(round.backupCard)}`,
   ].filter(Boolean).join(' · ');
-  const details = cards.find(c => c.initiative === shown);
+  const details = cards.find(c => c.initiative === (shown ?? round.strategyCard));
   const summary = details && cardSummary(details.summaryKey, lang);
 
   return (
-    <div className="plan-cards">
+    <div className="plan-cards" ref={block}>
       <h4 className="phase-title">{t('plan.phases.strategy')}</h4>
       <div className="card-grid" role="group" aria-label={t('plan.phases.strategy')}>
         {cards.map(card => {
