@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
@@ -14,14 +14,12 @@ type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
 export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
-  /** Stands at the end of the heading. */
-  action?: ReactNode;
   /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
   live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
-export function PlayerList({ drag, action, live }: PlayerListProps) {
+export function PlayerList({ drag, live }: PlayerListProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game ?? s.draft);
   const setFaction = useGame(s => s.setFaction);
@@ -84,7 +82,6 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
       <div className="players-head">
         <h1>{t('players.title')}</h1>
         <span>{t('players.count', { n: count, max })}</span>
-        {action && <div className="players-action">{action}</div>}
       </div>
       {players.map((player, index) => {
         const faction = pack.factions[player.faction];
@@ -132,7 +129,7 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
         );
       })}
       {asked?.kind === 'add' && confirmBar(asked)}
-      {count < max && !live && (
+      {count < max && !live && !started && (
         <button type="button" className="add-opponent" onClick={() => ask({ kind: 'add' })}>{t('players.add')}</button>
       )}
     </section>

@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "preview": "vite preview",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "deploy": "node scripts/deploy-pages.mjs"
   },
   "dependencies": {
     "i18next": "^26.7.2",

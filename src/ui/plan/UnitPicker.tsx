@@ -1,10 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { systemPlanets, tacticalMeters } from '../../domain/project';
-import type { DataPack, Game, GameState, UnitId } from '../../domain/types';
+import { routeSteps, systemPlanets, tacticalMeters } from '../../domain/project';
+import type { DataPack, Game, GameState, UnitId, Warning } from '../../domain/types';
 import { playerColour } from '../units/sprites';
 import { TokenPicture } from '../units/UnitToken';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { fliesNow, groupOf, hasUnits, systemName, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from './tactical';
+import { WarningList } from './WarningText';
 
 export interface UnitPickerProps {
   game: Game;
@@ -14,6 +15,8 @@ export interface UnitPickerProps {
   /** Only the moves of `source` are edited here. */
   entry: TacticalEntry;
   source: string;
+  /** What is wrong with this flight: over the cargo by the cargo, the rest by the fleet line. */
+  warnings?: Warning[];
   onChange: (moves: Move[]) => void;
   onClose: () => void;
   onFly: () => void;
@@ -34,17 +37,17 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
   );
 }
 
-function UnitButton({ unit, count, colour, label, taken, onClick }: { unit: UnitId; count: number; colour: string; label: string; taken?: boolean; onClick: () => void }) {
+export function UnitButton({ unit, count, colour, label, taken, showOne, onClick }: { unit: UnitId; count: number; colour: string; label: string; taken?: boolean; /** Writes a count of one too. */ showOne?: boolean; onClick: () => void }) {
   return (
     <button type="button" className={`pic${taken ? ' pic-taken' : ''}`} aria-label={label} onClick={onClick}>
       <TokenPicture kind={unit} colour={colour} px={PICTURE_PX} />
-      {count !== 1 && <i>{count}</i>}
+      {(showOne || count !== 1) && <i>{count}</i>}
     </button>
   );
 }
 
 /** The flight of one source, approved in the prototype: who flies, what rides on board, what is taken from each system on the way. Nothing is chosen at first; limits warn, never forbid. */
-export function UnitPicker({ game, pack, before, entry, source, onChange, onClose, onFly }: UnitPickerProps) {
+export function UnitPicker({ game, pack, before, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
   const colour = playerColour(game.color);
   const target = entry.systemId ?? '';
@@ -121,6 +124,7 @@ export function UnitPicker({ game, pack, before, entry, source, onChange, onClos
         <strong>{t('plan.picker.title', { from: systemName(game, pack, source), to: systemName(game, pack, target) })}</strong>
         <button type="button" onClick={onClose}>{t('plan.picker.close')}</button>
       </div>
+      <small className="picker-distance">{t('plan.tactical.distance', { n: routeSteps(game, [source, ...viaOf(entry, source), target], pack) })}</small>
 
       <h4 className="picker-title">{t('plan.picker.inSystem', { name: systemName(game, pack, source) })}</h4>
       <div className="pics">
@@ -151,9 +155,10 @@ export function UnitPicker({ game, pack, before, entry, source, onChange, onClos
         {flyingNow.length === 0 && <span className="muted">{t('plan.picker.nobody')}</span>}
       </div>
 
-      <h4 className={`picker-title${load.load > load.capacity ? ' meter-over' : ''}`}>{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</h4>
+      <h4 className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</h4>
       <CargoPips load={load.load} capacity={load.capacity} />
       {Math.max(load.load, load.capacity) === 0 && <span className="muted">{t('plan.picker.noRoom')}</span>}
+      <WarningList warnings={warnings.filter(w => w.code === 'capacityGroup')} game={game} pack={pack} />
 
       <ol className="stops">
         {line(source, 'start')}
@@ -161,7 +166,9 @@ export function UnitPicker({ game, pack, before, entry, source, onChange, onClos
         <li className="stop stop-target"><span className="stop-name">{systemName(game, pack, target)} · {t('plan.picker.target')}</span></li>
       </ol>
 
-      <p className={`picker-fleet${ships > fleet ? ' meter-over' : ' muted'}`}>{t('plan.picker.fleet', { ships, fleet })}</p>
+      {/* Over the limit the warning below says it, in the look of every warning. */}
+      {ships <= fleet && <p className="picker-fleet muted">{t('plan.picker.fleet', { ships, fleet })}</p>}
+      <WarningList warnings={warnings.filter(w => w.code !== 'capacityGroup')} game={game} pack={pack} />
 
       <div className="picker-foot">
         <button type="button" onClick={() => { onChange(withoutSource(game, pack, entry.moves, source)); onClose(); }}>{t('plan.picker.removeSource')}</button>

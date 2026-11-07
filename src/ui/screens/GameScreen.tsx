@@ -10,7 +10,10 @@ import { deleteGame, listGames, saveGame, type GameSummary } from '../../storage
 import { importGame } from '../../storage/transfer';
 import { Banner } from '../common/Banner';
 import { blurOn, setBlur } from '../common/blur';
+import { shareLinkQuery } from '../../domain/shareLink';
+import { NoteField } from '../plan/EntryList';
 import { downloadGame } from '../common/download';
+import { flightLoopOn, setFlightLoop } from '../common/flightLoop';
 import { LayoutPicker } from '../map/LayoutPicker';
 import { HexRemove } from '../plan/RowIcon';
 import { PlayerList } from '../players/PlayerList';
@@ -39,12 +42,15 @@ export function GameScreen() {
   const closeGame = useGame(s => s.closeGame);
   const setDraftExpansions = useGame(s => s.setDraftExpansions);
   const swapSeats = useGame(s => s.swapSeats);
+  const setName = useGame(s => s.setName);
 
   const [saved, setSaved] = useState<GameSummary[]>([]);
   const [importError, setImportError] = useState<string | null>(null);
   /** The save asked about before it goes: deleting cannot be undone. */
   const [asked, setAsked] = useState<string | null>(null);
   const [blur, setBlurState] = useState(blurOn);
+  const [flightLoop, setFlightLoopState] = useState(flightLoopOn);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
   const players = playersOf(game);
@@ -71,6 +77,18 @@ export function GameScreen() {
     setSaved(await listGames());
   };
 
+  /** A link to what stands on the screen: the map, the seats and the expansions, not the plans. */
+  const copyLink = async () => {
+    const link = `${window.location.origin}${window.location.pathname}?${shareLinkQuery(game)}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+    } catch {
+      // No clipboard here, an insecure address for one: the address bar still carries the link.
+      window.history.replaceState(null, '', link);
+    }
+  };
+
   const importFile = async (file: File | undefined) => {
     if (!file) return;
     try {
@@ -93,17 +111,19 @@ export function GameScreen() {
     <div className="players-screen">
       <div className="players-main">
         {importError && <Banner kind="error" message={t('import.failed', { reason: importError })} />}
-        <PlayerList
-          drag={drag}
-          action={!open && (
-            <>
-              {!game.faction && <span className="players-hint">{t('players.needFaction')}</span>}
-              <button type="button" className="primary" disabled={!game.faction} onClick={startGame}>{t('players.begin')}</button>
-            </>
-          )}
-        />
+        <PlayerList drag={drag} />
       </div>
       <aside className="players-aside">
+        <div className="side-group">
+          {/* The name is chosen before the game starts: a link finds the save by it. */}
+          <NoteField key={game.id} label={t('game.name')} value={game.name ?? ''} disabled={Boolean(open)} onCommit={setName} />
+          {!open && (
+            <div className="start-game">
+              <button type="button" className="primary" disabled={!game.faction} onClick={startGame}>{t('players.begin')}</button>
+              {!game.faction && <span className="players-hint">{t('players.needFaction')}</span>}
+            </div>
+          )}
+        </div>
         <div className="side-group">
           <p className="side-label">{t('game.expansions')}</p>
           <div className="chips">
@@ -117,8 +137,8 @@ export function GameScreen() {
         </div>
         <div className="side-group">
           <p className="side-label">{t('players.seats')}</p>
-          <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} />
-          <p className="side-note">{t('players.seatsNote')}</p>
+          <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} locked={Boolean(open)} />
+          {!open && <p className="side-note">{t('players.seatsNote')}</p>}
           {open && homeNotes(open, pack).map(note => (
             <p key={`${note.kind}-${note.seat}`} className="side-note" role="status">
               {note.kind === 'foreign'
@@ -134,7 +154,10 @@ export function GameScreen() {
           <ul className="saved-list">
             {saved.map(s => (
               <li key={s.id}>
-                <span>{allFactions[s.faction]?.name ?? s.faction} · {t('game.playersShort', { count: s.playerCount })}</span>
+                <span>
+                  <strong>{s.name ?? allFactions[s.faction]?.name ?? s.faction}</strong>
+                  <small>{[...(s.name ? [allFactions[s.faction]?.name ?? s.faction] : []), t('game.playersShort', { count: s.playerCount })].join(' · ')}</small>
+                </span>
                 {asked === s.id
                   ? (
                     <>
@@ -154,6 +177,7 @@ export function GameScreen() {
           <div className="side-actions">
             {open && <button type="button" onClick={closeGame}>{t('players.newGame')}</button>}
             <button type="button" disabled={!open} onClick={() => open && downloadGame(open)}>{t('game.export')}</button>
+            <button type="button" onClick={() => void copyLink()}>{t(linkCopied ? 'game.linkCopied' : 'game.copyLink')}</button>
             <label className="button">
               {t('game.import')}
               <input
@@ -180,6 +204,7 @@ export function GameScreen() {
           <p className="side-label">{t('game.settings')}</p>
           <div className="chips">
             <button type="button" className="chip" aria-pressed={blur} onClick={() => { setBlur(!blur); setBlurState(!blur); }}>{t('game.blur')}</button>
+            <button type="button" className="chip" aria-pressed={flightLoop} onClick={() => { setFlightLoop(!flightLoop); setFlightLoopState(!flightLoop); }}>{t('game.flightLoop')}</button>
           </div>
         </div>
         <p className="side-note">

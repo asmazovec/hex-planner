@@ -10,9 +10,11 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { project } from '../../domain/project';
 import type { Entry } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
+import { gameSchema } from '../../storage/schema';
 import { App } from '../App';
 import { PlanScreen } from '../screens/PlanScreen';
 import type { Move } from './tactical';
@@ -108,6 +110,346 @@ test('a tap on the last hex removes it, and on the source alone gives up', async
   expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
 });
 
+describe('the system and the sources, chosen from the panel', () => {
+  const field = () => screen.getByRole('button', { name: /^Active system: 25/ });
+  const addSource = () => screen.getByRole('button', { name: 'Add source' });
+
+  test('the field of an empty action chooses another system for the same entry', async () => {
+    await chooseSystem();
+    const id = tactical().id;
+    await userEvent.click(field());
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the new active system');
+    await userEvent.click(tile(WAY));
+    expect(entries()).toHaveLength(1);
+    expect(tactical()).toMatchObject({ id, systemId: WAY });
+    expect(cell('Tactic')).toHaveTextContent('3 → 2');
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(tile(WAY)).toHaveClass('tile-active');
+    expect(tile(TARGET)).not.toHaveClass('tile-active');
+  });
+
+  test('a second tap on the field, or on the same system, gives up the choice', async () => {
+    await chooseSystem();
+    await userEvent.click(field());
+    await userEvent.click(field());
+    expect(screen.queryByRole('status')).toBeNull();
+    await userEvent.click(field());
+    await userEvent.click(tile(TARGET));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(tactical().systemId).toBe(TARGET);
+  });
+
+  test('with anything filled in the field is no longer a button', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
+    expect(screen.getByText('Active system: 25')).toBeVisible();
+  });
+
+  test('a production or a landing keeps the system too, and a tap on it does not take the action back', async () => {
+    await chooseSystem();
+    act(() => useGame.getState().updateEntry(tactical().id, { production: { fighter: 1 } }));
+    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
+    await userEvent.click(tile(TARGET));
+    expect(entries()).toHaveLength(1);
+    expect(tactical().production).toEqual({ fighter: 1 });
+  });
+
+  test('an empty action still goes back to choosing on a tap on its system', async () => {
+    await chooseSystem();
+    await userEvent.click(tile(TARGET));
+    expect(entries()).toHaveLength(0);
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the system');
+  });
+
+  test('choosing a source only starts the route: nothing is recorded until it reaches the active system', async () => {
+    await chooseSystem();
+    await userEvent.click(addSource());
+    expect(addSource()).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the system the ships come from');
+    await userEvent.click(tile(HOME));
+    expect(tactical().moves).toEqual([]);
+    expect(addSource()).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByText('Flight 5 → 25')).toBeNull();
+    expect(tile(HOME)).toHaveClass('tile-path');
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
+    await addRouteByTaps(WAY, TARGET);
+    expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY] }]);
+    expect(screen.getByText('Flight 5 → 25')).toBeVisible();
+  });
+
+  test('a source already there starts a new way, and its ships stay', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, WAY, TARGET);
+    act(() => useGame.getState().updateEntry(tactical().id, { moves: [{ from: HOME, units: { fighter: 1 }, via: [WAY] }] }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    await userEvent.click(addSource());
+    await userEvent.click(tile(HOME));
+    expect(tactical().moves).toEqual([{ from: HOME, units: { fighter: 1 }, via: [WAY] }]);
+    await userEvent.click(tile(TARGET));
+    expect(tactical().moves).toEqual([{ from: HOME, units: { fighter: 1 } }]);
+  });
+
+  test('the route under way shows the speed of the source and lights what it still reaches', async () => {
+    useGame.getState().setTile(HOME, pack.factions.arborec.homeTile);
+    await chooseSystem();
+    await userEvent.click(addSource());
+    await userEvent.click(tile(HOME));
+    expect(screen.getByRole('status')).toHaveTextContent(/Speed \d: 0 made, \d left/);
+    expect(tile(WAY)).toHaveClass('tile-valid');
+    await userEvent.click(tile(WAY));
+    expect(screen.getByRole('status')).toHaveTextContent(/Speed \d: 1 made/);
+  });
+
+  test('a source without ships has no speed to show, and the route still starts and says its distance', async () => {
+    await chooseSystem();
+    await userEvent.click(addSource());
+    await userEvent.click(tile(WAY));
+    expect(tile(WAY)).toHaveClass('tile-path');
+    expect(screen.getByRole('status')).not.toHaveTextContent('Speed');
+    await userEvent.click(tile(HOME));
+    expect(screen.getByRole('status')).toHaveTextContent('Distance: 1');
+  });
+
+  test('a route says its distance in its picker and on its row', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, WAY, TARGET);
+    expect(document.querySelector('.picker-distance')).toHaveTextContent('Distance: 2');
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    expect(document.querySelector('.source-button')).toHaveTextContent('Distance: 2');
+  });
+
+  test('a second tap on the button or a tap on the active system adds nothing', async () => {
+    await chooseSystem();
+    await userEvent.click(addSource());
+    await userEvent.click(addSource());
+    expect(screen.queryByRole('status')).toBeNull();
+    await userEvent.click(addSource());
+    await userEvent.click(tile(TARGET));
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(tactical().moves).toEqual([]);
+    expect(entries()).toHaveLength(1);
+  });
+
+  test('a source goes by its cross and by the button in its picker', async () => {
+    await chooseSystem();
+    await userEvent.click(addSource());
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Remove route' }));
+    expect(tactical().moves).toEqual([]);
+    await userEvent.click(addSource());
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Remove source 5' }));
+    expect(tactical().moves).toEqual([]);
+  });
+
+  test('leaving the editor ends the choice', async () => {
+    await chooseSystem();
+    await userEvent.click(addSource());
+    await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
+    expect(screen.queryByRole('status')).toBeNull();
+    await userEvent.click(tile(WAY));
+    expect(screen.getByRole('dialog')).toBeVisible();
+    expect(tactical().moves).toEqual([]);
+  });
+});
+
+describe('a route of drags and taps', () => {
+  const NEXT = '2,1';
+  beforeEach(() => useGame.getState().setTile(NEXT, '40'));
+  const press = (slot: string) => fireEvent.pointerDown(tile(slot), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+  const moveTo = (slot: string) => {
+    hoverPath(slot);
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 2, clientY: 2 });
+  };
+  const lift = () => fireEvent.pointerUp(window, { pointerId: 1, clientX: 2, clientY: 2 });
+
+  test('a drag, a lifted finger, a tap, and a drag again make one route', async () => {
+    await chooseSystem();
+    press(HOME);
+    moveTo(WAY);
+    lift();
+    expect(tactical().moves).toEqual([]);
+    expect(screen.getByRole('status')).toHaveTextContent('finish on the active system');
+    expect(tile(WAY)).toHaveClass('tile-path');
+    await userEvent.click(tile(NEXT));
+    expect(tile(NEXT)).toHaveClass('tile-path');
+    press(NEXT);
+    moveTo(TARGET);
+    lift();
+    expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY, NEXT] }]);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  test('taps first, then a drag from the last hex finishes it', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, WAY);
+    press(WAY);
+    moveTo(TARGET);
+    lift();
+    expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY] }]);
+  });
+
+  test('a drag, then a tap on the active system finishes it', async () => {
+    await chooseSystem();
+    press(HOME);
+    moveTo(WAY);
+    lift();
+    await userEvent.click(tile(TARGET));
+    expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY] }]);
+  });
+
+  test('with a route under way a drag from another hex moves the map, not the route', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, WAY);
+    press(NEXT);
+    moveTo(TARGET);
+    lift();
+    expect(tactical().moves).toEqual([]);
+    expect(tile(NEXT)).not.toHaveClass('tile-path');
+    expect(tile(WAY)).toHaveClass('tile-path');
+  });
+
+  test('a second finger during a later stroke keeps what was already laid', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, WAY);
+    press(WAY);
+    moveTo(NEXT);
+    fireEvent.pointerDown(window, { pointerId: 2 });
+    expect(tile(WAY)).toHaveClass('tile-path');
+    expect(tile(NEXT)).not.toHaveClass('tile-path');
+    await userEvent.click(tile(TARGET));
+    expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY] }]);
+  });
+
+  test('a stroke over the active system and past it does not put it inside the route', async () => {
+    await chooseSystem();
+    press(HOME);
+    moveTo(TARGET);
+    moveTo(WAY);
+    lift();
+    expect(tile(WAY)).not.toHaveClass('tile-path');
+    await userEvent.click(tile(TARGET));
+    expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+  });
+
+  test('adding a source drops the route under way', async () => {
+    await chooseSystem();
+    press(HOME);
+    moveTo(WAY);
+    lift();
+    await userEvent.click(screen.getByRole('button', { name: 'Add source' }));
+    expect(tile(WAY)).not.toHaveClass('tile-path');
+    expect(screen.getByRole('status')).toHaveTextContent('Tap the system the ships come from');
+  });
+});
+
+describe('an opponent in the plan', () => {
+  const noPay = { planets: [], tradeGoods: 0 };
+  const rival = () => game().opponents[0];
+  beforeEach(() => useGame.getState().setOpponent(0, { faction: 'sol' }));
+  const whose = () => within(screen.getByRole('group', { name: 'Whose action' }));
+
+  test('the choice of whose action comes first, and the entry then belongs to them', async () => {
+    render(<PlanScreen />);
+    expect(whose().getByRole('button', { name: 'Mine' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(whose().getByRole('button', { name: /Sol/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
+    expect(entries()[0].owner).toBe(rival().id);
+  });
+
+  test('their row wears their colour and says whose it is', async () => {
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action', rival().id);
+    render(<PlanScreen />);
+    const row = screen.getByRole('listitem', { name: /Sol/ });
+    expect(row).toHaveClass('entry-rival');
+    expect(row.style.getPropertyValue('--owner')).toBe(`var(--player-${rival().color})`);
+  });
+
+  test('my own rows stay as they were', async () => {
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    render(<PlanScreen />);
+    expect(screen.getByRole('listitem', { name: 'Pass' })).not.toHaveClass('entry-rival');
+  });
+
+  test('a tactical action of theirs spends their token, not mine, and the panel says whose it is', async () => {
+    render(<PlanScreen />);
+    await userEvent.click(whose().getByRole('button', { name: /Sol/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
+    expect(document.querySelector('.acting-as')).toHaveTextContent('Sol');
+    await userEvent.click(tile(TARGET));
+    expect(tactical()).toMatchObject({ owner: rival().id, systemId: TARGET });
+    expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
+    expect(document.querySelector('.acting-as')).toHaveTextContent('Sol');
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Command token of/ })).toBeInTheDocument();
+    expect(tile(TARGET)).not.toHaveClass('tile-activated');
+  });
+
+  test('their units move on the map, and their route wears their colour', () => {
+    useGame.getState().setEnemyUnits(HOME, rival().id, { cruiser: 2 });
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    render(<PlanScreen />);
+    expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: /Cruiser ×1/ })).toBeInTheDocument();
+    expect((document.querySelector('.route') as SVGElement).style.getPropertyValue('--route')).toBe(`var(--player-${rival().color})`);
+  });
+
+  test('a warning does not repaint a route: mine keeps its colour, theirs keeps theirs', () => {
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { dreadnought: 9 } }], landings: [], production: {}, payment: noPay }, 'action');
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { dreadnought: 9 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    render(<PlanScreen />);
+    const [mine, theirs] = [...document.querySelectorAll<SVGElement>('.route:not(.route-badge)')];
+    expect(screen.getAllByText(/is missing/).length).toBeGreaterThan(0);
+    expect(mine.style.getPropertyValue('--route')).toBe('');
+    expect(theirs.style.getPropertyValue('--route')).toBe(`var(--player-${rival().color})`);
+    expect(document.querySelector('.arrow-warn')).toBeNull();
+  });
+
+  test('the number of their action on the map wears their colour, and mine stays as it was', () => {
+    useGame.getState().setEnemyUnits(HOME, rival().id, { cruiser: 1 });
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: WAY, moves: [{ from: HOME, units: { carrier: 1 } }], landings: [], production: {}, payment: noPay }, 'action');
+    render(<PlanScreen />);
+    const [theirs, mine] = [...document.querySelectorAll<SVGElement>('.route-badge')];
+    expect(theirs.style.getPropertyValue('--route')).toBe(`var(--player-${rival().color})`);
+    expect(mine.style.getPropertyValue('--route')).toBe('');
+    expect(screen.getByRole('listitem', { name: /Sol/ }).querySelector('.order-hex')).toBeInTheDocument();
+  });
+
+  test('in their battle a loss is theirs, mine stay out of reach', async () => {
+    useGame.getState().setEnemyUnits(TARGET, rival().id, { cruiser: 2 });
+    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { fighter: 1 } } } }, 'strategy');
+    const id = useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Sol: Tactical action/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Start battle' }));
+    const dialog = within(screen.getByRole('dialog'));
+    await userEvent.click(dialog.getByRole('button', { name: /^Cruiser ×2/ }));
+    expect(entries().find(e => e.id === id)).toMatchObject({ losses: { cruiser: 1 } });
+    await userEvent.click(dialog.getByRole('button', { name: /^Fighter ×1/ }));
+    expect(entries().filter(e => e.type === 'adjustment')).toHaveLength(1);
+  });
+
+  test('their purchase is theirs and paid from their pool', async () => {
+    useGame.getState().setTile(TARGET, pack.factions.sol.homeTile);
+    const id = useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: noPay }, 'action', rival().id);
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Sol: Tactical action/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
+    expect(entries().find(e => e.id === id)).toMatchObject({ production: { cruiser: 1 } });
+    expect(project(game(), plan(), 'forecast', pack).state.systems[TARGET]).toBeUndefined();
+  });
+
+  test('a saved game keeps whose an entry is', () => {
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action', rival().id);
+    const saved = gameSchema.parse(game()) as unknown as ReturnType<typeof game>;
+    expect(saved.plans[0].rounds[0].entries[0].owner).toBe(rival().id);
+  });
+});
+
 test('a straight arrow needs only the source and the active system, and keeps no way', async () => {
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
@@ -125,6 +467,25 @@ test('every arrow adds a source and keeps the earlier ones, also a source with n
   expect(tactical().moves[1]).toEqual({ from: WAY, units: { dreadnought: 1 } });
   expect(within(screen.getByRole('list', { name: 'Warnings' })).getAllByRole('listitem').length).toBeGreaterThan(0);
   expect(screen.getByRole('button', { name: 'Fly' })).toBeEnabled();
+});
+
+test('the outline of an arrow goes round its head too, as one shape with the line', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  const head = document.querySelector('.route-head')!;
+  const outline = document.querySelector('.route-casings .route-head-casing')!;
+  expect(outline.getAttribute('points')).toBe(head.getAttribute('points'));
+  expect(document.querySelector('.route-casings .route-casing')).not.toBeNull();
+});
+
+test('the number badge of an arrow has the same outline, under the badge itself', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  const badge = document.querySelector('.route-badge')!;
+  const outline = badge.querySelector('.route-badge-casing')!;
+  const hex = badge.querySelector('.route-badge-hex')!;
+  expect(outline.getAttribute('points')).toBe(hex.getAttribute('points'));
+  expect(outline.compareDocumentPosition(hex) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 });
 
 test('each source is listed with its units and can be removed', async () => {
@@ -153,7 +514,7 @@ test('a source with nothing chosen goes when the editor closes', async () => {
 test('a tap on the active system with no routes takes the action back: token returned, choosing again, one undo step', async () => {
   await chooseSystem();
   expect(screen.getByText('Active system: 25')).toBeVisible();
-  expect(screen.getByText('Wrong system? Tap it again.')).toBeVisible();
+  expect(screen.getByText(/^Wrong system\?/)).toBeVisible();
   await userEvent.click(tile(TARGET));
   expect(entries()).toHaveLength(0);
   expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
@@ -170,7 +531,7 @@ test('with a route a tap on the active system cancels nothing', async () => {
   await addRouteByTaps(HOME, TARGET);
   await userEvent.click(tile(TARGET));
   expect(entries()).toHaveLength(1);
-  expect(screen.queryByText('Wrong system? Tap it again.')).toBeNull();
+  expect(screen.queryByText(/^Wrong system\?/)).toBeNull();
 });
 
 test('a drag through hexes records the way, and pulling it back removes the step', async () => {
@@ -222,44 +583,278 @@ test('landing puts ground units on a planet and changes its control', async () =
   await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
   const planet = screen.getByRole('group', { name: 'Landing on Quann' });
-  await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
+  expect(planet).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
   expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 1 } }]);
   expect(within(tile(TARGET) as HTMLElement).getByRole('group', { name: /Quann: .*yours/ })).toBeInTheDocument();
 });
 
-test('landing is hidden in a system without planets', async () => {
-  useGame.getState().setTile(TARGET, '39');
+test('a planet of the landing shows its picture, name and state, and who stands there', async () => {
+  useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 1 } } } }, 'strategy');
+  useGame.getState().setEnemyGround('quann', useGame.getState().game!.opponents[0].id, { infantry: 2 });
   await chooseSystem();
-  expect(screen.queryByText('Landing (optional)')).toBeNull();
-  expect(screen.queryByText(/No planets/)).toBeNull();
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+  const group = screen.getByRole('group', { name: 'Landing on Quann' });
+  const planet = within(group);
+  expect(group.querySelector('.planet-disc')).toBeInTheDocument();
+  expect(group).toHaveTextContent(/Quann/);
+  expect(group).toHaveTextContent(/Ready/);
+  expect(planet.getByRole('img', { name: 'Mech ×1' })).toBeInTheDocument();
+  expect(planet.getByRole('img', { name: 'Infantry ×2' })).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+  expect(planet.getByRole('button', { name: 'Give back Infantry' })).toBeVisible();
 });
 
-test('landing is hidden while no ground units are in the system', async () => {
+test('with two planets each has its own buttons, and what they land is shared', async () => {
+  useGame.getState().setTile(TARGET, '27');
   await chooseSystem();
-  expect(screen.queryByText('Landing (optional)')).toBeNull();
+  act(() => useGame.getState().updateEntry(tactical().id, { moves: [{ from: TARGET, units: { infantry: 2 } }] }));
+  useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { infantry: 2 } } } }, 'strategy');
+  const groups = screen.getAllByRole('group', { name: /^Landing on / });
+  expect(groups).toHaveLength(2);
+  const [first, second] = groups.map(g => within(g));
+  await userEvent.click(second.getByRole('button', { name: 'Land one Infantry' }));
+  expect(tactical().landings.map(l => l.units)).toEqual([{ infantry: 1 }]);
+  expect(first.queryByRole('button', { name: 'Give back Infantry' })).toBeNull();
+  expect(second.getByRole('button', { name: 'Give back Infantry' })).toBeVisible();
+  await userEvent.click(first.getByRole('button', { name: 'Land one Infantry' }));
+  expect(tactical().landings).toHaveLength(2);
 });
 
-test('landing shows counts of what arrived and what is assigned; no stepper for a unit that is absent', async () => {
+test('landing goes by icons: a tap adds one, a tap on the landed one gives it back', async () => {
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
   await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
-  expect(screen.getByText('Landing (optional)')).toBeVisible();
-  expect(screen.getByText('Infantry: 2, assigned 0')).toBeVisible();
-  const planet = screen.getByRole('group', { name: 'Landing on Quann' });
-  expect(within(planet).queryByRole('group', { name: 'Mech' })).toBeNull();
-  await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
-  expect(screen.getByText('Infantry: 2, assigned 1')).toBeVisible();
+  const planet = within(screen.getByRole('group', { name: 'Landing on Quann' }));
+  expect(planet.queryByRole('button', { name: 'Give back Infantry' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+  expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
+  await userEvent.click(planet.getByRole('button', { name: 'Give back Infantry' }));
+  await userEvent.click(planet.getByRole('button', { name: 'Give back Infantry' }));
+  expect(tactical().landings).toEqual([]);
+  expect(planet.queryByRole('button', { name: 'Give back Infantry' })).toBeNull();
+});
+
+describe('a system already activated', () => {
+  const noPay = { planets: [], tradeGoods: 0 };
+
+  test('stands out by its fill, not only by the token', async () => {
+    await chooseSystem();
+    expect(tile(TARGET)).toHaveClass('tile-activated');
+    expect(tile(HOME)).not.toHaveClass('tile-activated');
+  });
+
+  test('warns when ships are sent out of it, and only in a later action', async () => {
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: noPay }, 'action');
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: {} }], landings: [], production: {}, payment: noPay }, 'action');
+    const warnings = project(game(), plan(), 'forecast', pack).warningsByEntry;
+    const [first, second] = entries();
+    expect(warnings[first.id] ?? []).toEqual([]);
+    expect(warnings[second.id]).toContainEqual({ code: 'sourceActivated', params: { from: HOME } });
+  });
+
+  test('flying through it is allowed', () => {
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: WAY, moves: [], landings: [], production: {}, payment: noPay }, 'action');
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: {}, via: [WAY] }], landings: [], production: {}, payment: noPay }, 'action');
+    const warnings = project(game(), plan(), 'forecast', pack).warningsByEntry[entries()[1].id] ?? [];
+    expect(warnings.map(w => w.code)).not.toContain('sourceActivated');
+  });
+});
+
+describe('the battle of a tactical action', () => {
+  const action = () => entries().find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical')!;
+  async function fourCruisersArrive() {
+    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: HOME, units: { cruiser: 4 } } } }, 'strategy');
+    await chooseSystem();
+    act(() => useGame.getState().updateEntry(action().id, { moves: [{ from: HOME, units: { cruiser: 4 } }] }));
+  }
+  const startBattle = () => userEvent.click(screen.getByRole('button', { name: 'Start battle' }));
+  const dialog = () => within(screen.getByRole('dialog'));
+
+  test('the button opens the big hex in its battle, and no units are chosen in the panel', async () => {
+    await fourCruisersArrive();
+    expect(screen.queryByRole('group', { name: 'Battle' })).toBeNull();
+    await startBattle();
+    expect(dialog().getByRole('button', { name: 'Battle' })).toHaveAttribute('aria-pressed', 'true');
+    expect(dialog().getByText(/^Tap a token to record a loss/)).toBeVisible();
+  });
+
+  test('a loss in that battle belongs to the action, and the fleet limit follows it', async () => {
+    await fourCruisersArrive();
+    expect(screen.getByRole('group', { name: 'Action result' })).toHaveTextContent(/fleet pool/);
+    await startBattle();
+    await userEvent.click(dialog().getByRole('button', { name: /^Cruiser ×4/ }));
+    expect(action().losses).toEqual({ cruiser: 1 });
+    expect(entries().filter(e => e.type === 'adjustment')).toHaveLength(1);
+    expect(screen.queryByRole('group', { name: 'Action result' })).toBeNull();
+    await userEvent.click(within(dialog().getByRole('group', { name: 'Losses, mine' })).getByRole('button', { name: /Give back Cruiser/ }));
+    expect(action().losses).toBeUndefined();
+    expect(screen.getByRole('group', { name: 'Action result' })).toHaveTextContent(/fleet pool/);
+  });
+
+  test('the panel then names what was lost and offers to go on', async () => {
+    await fourCruisersArrive();
+    await startBattle();
+    await userEvent.click(dialog().getByRole('button', { name: /^Cruiser ×4/ }));
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    expect(screen.getByText('Cruiser 1')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue the battle' })).toBeVisible();
+  });
+
+  test('a loss on a planet belongs to the action too', async () => {
+    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { infantry: 2 } } } }, 'strategy');
+    await chooseSystem();
+    await startBattle();
+    await userEvent.click(dialog().getByRole('button', { name: /^Infantry ×2/ }));
+    expect(action().groundLosses).toEqual({ quann: { infantry: 1 } });
+    expect(project(game(), plan(), 'forecast', pack).state.ground.quann).toEqual({ infantry: 1 });
+  });
+
+  test('a battle opened by a tap on the map still goes to the round', async () => {
+    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { units: { systemId: TARGET, units: { cruiser: 2 } } } }, 'strategy');
+    render(<PlanScreen />);
+    await userEvent.click(tile(TARGET));
+    await userEvent.click(dialog().getByRole('button', { name: 'Battle' }));
+    await userEvent.click(dialog().getByRole('button', { name: /^Cruiser ×2/ }));
+    expect(entries().some(e => e.type === 'adjustment' && e.kind === 'losses')).toBe(true);
+  });
+
+  test('a loss fills the action in: the active system can no longer change', async () => {
+    await chooseSystem();
+    act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 } }));
+    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
+    act(() => useGame.getState().updateEntry(action().id, { losses: undefined, groundLosses: { quann: { infantry: 1 } } }));
+    expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
+  });
+
+  test('what fell in battle cannot land: only what is left is counted for the landing', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('2');
+    act(() => useGame.getState().updateEntry(action().id, { losses: { infantry: 1 } }));
+    expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
+  });
+
+  test('a unit of the landing lost in the battle leaves the landing, and giving it back makes it free to land again', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+    expect(action().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
+
+    await startBattle();
+    await userEvent.click(dialog().getByRole('button', { name: /^Infantry ×2/ }));
+    expect(action().landings).toEqual([{ planetId: 'quann', units: { infantry: 1 } }]);
+    expect(action().losses).toEqual({ infantry: 1 });
+    expect(action().groundLosses).toBeUndefined();
+    const warnings = project(game(), plan(), 'forecast', pack).warningsByEntry[action().id];
+    expect(warnings.map(w => w.code)).not.toContain('landingOverLimit');
+    expect(warnings.map(w => w.code)).not.toContain('unitsMissing');
+
+    await userEvent.click(within(dialog().getByRole('group', { name: 'Losses, mine' })).getByRole('button', { name: /Give back Infantry/ }));
+    expect(action().losses).toBeUndefined();
+    expect(action().landings).toEqual([{ planetId: 'quann', units: { infantry: 1 } }]);
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
+  });
+
+  test('the last unit of a landing lost in the battle takes the planet with it', async () => {
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+    expect(project(game(), plan(), 'forecast', pack).state.control.quann).toBe('me');
+    await startBattle();
+    await userEvent.click(dialog().getByRole('button', { name: /^Infantry ×1/ }));
+    expect(action().landings).toEqual([]);
+    expect(project(game(), plan(), 'forecast', pack).state.control.quann).toBeUndefined();
+  });
+
+  test('those who stood on the planet before are lost apart from the landing, and the landing block shows who is left', async () => {
+    useGame.getState().addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 2 } } } }, 'strategy');
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+    const group = () => within(screen.getByRole('group', { name: 'Landing on Quann' }));
+    expect(group().getByRole('img', { name: 'Mech ×2' })).toBeInTheDocument();
+    await startBattle();
+    await userEvent.click(dialog().getByRole('button', { name: /^Mech ×2/ }));
+    expect(action().groundLosses).toEqual({ quann: { mech: 1 } });
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    expect(group().getByRole('img', { name: 'Mech ×1' })).toBeInTheDocument();
+  });
+
+  test('the details read the losses out', async () => {
+    await fourCruisersArrive();
+    act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 } }));
+    await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Tactical action · 25/ }));
+    expect(screen.getByText('Lost in battle')).toBeVisible();
+  });
+
+  test('a saved game keeps its losses', async () => {
+    await fourCruisersArrive();
+    act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } }));
+    const saved = gameSchema.parse(game()) as unknown as ReturnType<typeof game>;
+    const entry = saved.plans[0].rounds.flatMap(r => r.entries).find(e => e.type === 'tactical');
+    expect(entry).toMatchObject({ losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } });
+  });
+});
+
+test('the optional landing opens by a chevron icon', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+  expect(screen.getByText('Landing').closest('summary')!.querySelector('svg')).toBeInTheDocument();
+});
+
+test('landing is hidden in a system without planets', async () => {
+  useGame.getState().setTile(TARGET, '39');
+  await chooseSystem();
+  expect(screen.queryByText('Landing')).toBeNull();
+  expect(screen.queryByText(/No planets/)).toBeNull();
+});
+
+test('landing is hidden while no ground units are in the system', async () => {
+  await chooseSystem();
+  expect(screen.queryByText('Landing')).toBeNull();
+});
+
+test('landing shows counts of what arrived and what is assigned; no icon for a unit that is absent', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Close picker' }));
+  expect(screen.getByText('Landing')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('2');
+  expect(screen.queryByRole('button', { name: 'Land one Mech' })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
+  // The landing writes a count of one too, on both pictures.
+  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
+  expect(screen.getByRole('button', { name: 'Give back Infantry' })).toHaveTextContent('1');
 });
 
 test('a landing whose units are gone stays visible, can go over the limit, and warns', async () => {
   await chooseSystem();
   act(() => useGame.getState().updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
-  expect(screen.getByText('Landing (optional)')).toBeVisible();
-  expect(screen.getByText('Infantry: 0, assigned 1')).toBeVisible();
-  const planet = screen.getByRole('group', { name: 'Landing on Quann' });
-  await userEvent.click(within(planet).getByRole('button', { name: 'Add one Infantry' }));
+  expect(screen.getByText('Landing')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('0');
+  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
   expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
   expect(screen.getByText('Landing needs 2 × Infantry, but only 0 arrived.')).toBeVisible();
 });
@@ -276,12 +871,14 @@ test('during a tactical action a tile tap opens no big hex', async () => {
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 
-test('production without a dock warns and still works', async () => {
+test('production without a dock warns once something is built, and still works', async () => {
   await chooseSystem();
-  expect(screen.getByText('No space dock in this system.')).toBeVisible();
+  expect(screen.queryByText('No space dock in this system.')).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));
+  expect(screen.queryByText('No space dock in this system.')).toBeNull();
   await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
   expect(tactical().production).toEqual({ cruiser: 1 });
+  expect(within(screen.getByRole('dialog')).getByText('No space dock in this system.')).toBeVisible();
 });
 
 test('a merged entry names its system and opens the big hex in its own mode', async () => {
@@ -320,7 +917,7 @@ test('production picks the payment by itself and warns about the shortfall; manu
   expect(screen.getByText(/short by 1/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('button', { name: 'Choose manually' }));
-  await userEvent.click(screen.getByRole('button', { name: /Nestphar/ }));
+  await userEvent.click(within(screen.getByRole('group', { name: 'Payment' })).getByRole('button', { name: /Nestphar/ }));
   expect(tactical().payment.planets).toEqual([]);
   await shop(/^Cruiser ×/);
   expect(tactical().production).toEqual({ cruiser: 1 });
@@ -334,8 +931,7 @@ test('warnings come only from the projection', async () => {
   expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
   await addRouteByTaps(HOME, TARGET);
   await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
-  expect(within(screen.getByRole('list', { name: 'Warnings' })).getAllByRole('listitem').length).toBeGreaterThan(0);
-  expect(document.querySelector('.route.arrow-warn')).toBeInTheDocument();
+  expect(screen.getAllByRole('list', { name: 'Warnings' }).length).toBeGreaterThan(0);
 });
 
 test('Done returns to the plan, and the pencil reopens the editor', async () => {
@@ -722,28 +1318,97 @@ test('the status phase entry distributes tokens', async () => {
   expect(row.getByRole('button', { name: 'Tokens and points' })).toBeVisible();
 });
 
-test('a manual adjustment has a label and changes values, including units', async () => {
-  render(<PlanScreen />);
-  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Manual adjustment' }));
-  const row = within(screen.getByRole('listitem', { name: /Manual adjustment/ }));
-  await userEvent.type(row.getByRole('textbox', { name: 'Label' }), 'Card: +2{Enter}');
-  await userEvent.click(row.getByRole('button', { name: 'Add one Trade goods' }));
-  expect(entries()[0]).toMatchObject({ label: 'Card: +2', delta: { tradeGoods: 1 } });
-  expect(cell('Trade goods')).toHaveTextContent('0 → 1');
-  expect(row.queryByRole('combobox')).toBeNull();
-  await userEvent.click(row.getByRole('button', { name: 'Choose on the map' }));
-  expect(tile(TARGET)).toHaveClass('tile-valid');
-  expect(tile(HOME)).toHaveClass('tile-valid');
-  expect(screen.getByText('Tap a tile on the map.')).toBeVisible();
-  await userEvent.click(tile(HOME));
-  expect(screen.queryByRole('dialog')).toBeNull();
-  expect(tile(HOME)).not.toHaveClass('tile-valid');
-  await userEvent.click(row.getByRole('button', { name: 'Remove one Carrier' }));
-  expect(entries()[0]).toMatchObject({ delta: { units: { systemId: HOME, units: { carrier: -1 } } } });
-  await userEvent.click(row.getByRole('button', { name: 'Clear the system' }));
-  expect(entries()[0]).toMatchObject({ delta: { units: undefined } });
-  expect(row.getByRole('button', { name: 'Choose on the map' })).toBeVisible();
+describe('a manual adjustment', () => {
+  async function openAdjustment() {
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Manual adjustment' }));
+  }
+  const dialog = () => within(screen.getByRole('dialog'));
+
+  test('opens a menu of its own in place of the list, like a tactical action', async () => {
+    await openAdjustment();
+    expect(screen.getByRole('heading', { name: 'Manual adjustment' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Add action' })).toBeNull();
+    await userEvent.type(screen.getByRole('textbox', { name: 'Label' }), 'Card: +2{Enter}');
+    await userEvent.click(screen.getByRole('button', { name: 'Add one Trade goods' }));
+    expect(entries()[0]).toMatchObject({ label: 'Card: +2', delta: { tradeGoods: 1 } });
+    expect(cell('Trade goods')).toHaveTextContent('0 → 1');
+  });
+
+  test('on the plan it is one short row, and the pencil brings the menu back', async () => {
+    await openAdjustment();
+    await userEvent.click(screen.getByRole('button', { name: 'Add one Trade goods' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
+    const row = within(screen.getByRole('listitem', { name: /Manual adjustment/ }));
+    expect(row.queryByRole('textbox')).toBeNull();
+    expect(row.queryByRole('button', { name: 'Add one Trade goods' })).toBeNull();
+    await userEvent.click(row.getByRole('button', { name: /^Manual adjustment/ }));
+    expect(row.getByText(/Trade goods \+1/)).toBeVisible();
+    await userEvent.click(row.getByRole('button', { name: /^Edit: Manual adjustment/ }));
+    expect(screen.getByRole('button', { name: 'Add one Trade goods' })).toBeVisible();
+  });
+
+  test('its system comes from the map, and its units are changed in the big hex, not in the menu', async () => {
+    await openAdjustment();
+    expect(screen.queryByRole('button', { name: 'Add one Carrier' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Choose on the map' }));
+    expect(tile(HOME)).toHaveClass('tile-valid');
+    expect(screen.getByText('Tap a tile on the map.')).toBeVisible();
+    await userEvent.click(tile(HOME));
+    expect(entries()[0]).toMatchObject({ delta: { units: { systemId: HOME, units: {} } } });
+    // Only this adjustment's changes here: no other modes, no other players.
+    expect(dialog().queryByRole('group', { name: 'Modes' })).toBeNull();
+    expect(dialog().queryByRole('button', { name: 'Battle' })).toBeNull();
+    expect(dialog().queryByRole('group', { name: 'Whose units' })).toBeNull();
+    await userEvent.click(dialog().getByRole('button', { name: 'Cruiser' }));
+    expect(entries()).toHaveLength(1);
+    expect(entries()[0]).toMatchObject({ delta: { units: { systemId: HOME, units: { cruiser: 1 } } } });
+    await userEvent.click(dialog().getByRole('button', { name: /^Carrier ×/ }));
+    expect(entries()[0]).toMatchObject({ delta: { units: { systemId: HOME, units: { cruiser: 1, carrier: -1 } } } });
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('button', { name: 'Remove one Carrier' })).toBeNull();
+  });
+
+  test('the system row opens the big hex again, and its cross clears the system', async () => {
+    await openAdjustment();
+    await userEvent.click(screen.getByRole('button', { name: 'Choose on the map' }));
+    await userEvent.click(tile(HOME));
+    await userEvent.click(dialog().getByRole('button', { name: 'Cruiser' }));
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    expect(screen.getByText('Cruiser +1')).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: /^5/ }));
+    await userEvent.click(dialog().getByRole('button', { name: 'Cruiser' }));
+    expect(entries()[0]).toMatchObject({ delta: { units: { units: { cruiser: 2 } } } });
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear the system' }));
+    expect(entries()[0]).toMatchObject({ delta: { units: undefined } });
+    expect(screen.getByRole('button', { name: 'Choose on the map' })).toBeVisible();
+  });
+
+  test('a unit given and taken back leaves nothing', async () => {
+    await openAdjustment();
+    await userEvent.click(screen.getByRole('button', { name: 'Choose on the map' }));
+    await userEvent.click(tile(HOME));
+    await userEvent.click(dialog().getByRole('button', { name: 'Fighter' }));
+    await userEvent.click(dialog().getByRole('button', { name: /^Fighter ×/ }));
+    expect(entries()[0]).toMatchObject({ delta: { units: { systemId: HOME, units: {} } } });
+  });
+
+  test('a warning stands in its system block', async () => {
+    await openAdjustment();
+    await userEvent.click(screen.getByRole('button', { name: 'Choose on the map' }));
+    await userEvent.click(tile(WAY));
+    await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
+    act(() => useGame.getState().updateEntry(entries()[0].id, { delta: { units: { systemId: WAY, units: { cruiser: -1 } } } }));
+    expect(screen.getByText(/is missing 1 × Cruiser/).closest('.editor-section')).toHaveTextContent('System');
+  });
+
+  test('undo that removes it closes the menu', async () => {
+    await openAdjustment();
+    act(() => useGame.getState().removeEntry(entries()[0].id));
+    expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
+  });
 });
 
 test('a component action keeps a note', async () => {

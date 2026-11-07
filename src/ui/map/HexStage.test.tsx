@@ -312,8 +312,10 @@ describe('build', () => {
 
   test('without a tactical entry my purchases go to a merged adjustment, and a warning does not block them', async () => {
     open({ initialMode: 'build' });
-    expect(screen.getByText('No space dock in this system.')).toBeVisible();
+    // Nothing built yet, nothing to warn about.
+    expect(screen.queryByText('No space dock in this system.')).toBeNull();
     await tap('Carrier');
+    expect(screen.getByText('No space dock in this system.')).toBeVisible();
     await tap('Carrier');
     await tap('Infantry');
     expect(entries()).toHaveLength(1);
@@ -708,5 +710,14 @@ describe('the shop counts along', () => {
     for (let i = 0; i < 4; i += 1) await tap('Dreadnought');
     expect(within(screen.getByRole('list', { name: 'Warnings' })).getByText(/fleet pool/)).toBeVisible();
     expect(within(screen.getByRole('list', { name: 'Warnings' })).getByText(/resources/i)).toBeVisible();
+  });
+
+  test('the shop keeps to what it sets up: a landing warning stays in the editor', async () => {
+    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [{ planetId: 'nestphar', units: { mech: 5 } }], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    open({ initialMode: 'build', tacticalId: id });
+    expect(screen.queryByText(/^Landing needs/)).toBeNull();
+    for (let i = 0; i < 4; i += 1) await tap('Dreadnought');
+    expect(within(screen.getByRole('list', { name: 'Warnings' })).getByText(/fleet pool/)).toBeVisible();
+    expect(screen.queryByText(/^Landing needs/)).toBeNull();
   });
 });

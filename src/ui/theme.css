@@ -53,6 +53,7 @@
   --hex-mecatol: #3a3320;
   --hex-anomaly: #37222c;
   --hex-wormhole: #1f2b42;
+  --hex-activated: #43350f;
   --hex-hyperlane: #161b24;
   --hex-fracture: #2a1f42;
   --token-fill: #26303f;
@@ -85,7 +86,9 @@
   color-scheme: dark;
 }
 
-* { box-sizing: border-box; }
+/* A tap on a tablet paints no rectangle over a control: pressing has its own look here. */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:focus:not(:focus-visible) { outline: none; }
 html, body, #root { height: 100%; margin: 0; }
 body {
   background: var(--bg);
@@ -156,7 +159,11 @@ fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
 legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; padding: 0 4px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .saved-list { list-style: none; margin: 0 0 8px; padding: 4px 0; display: flex; flex-direction: column; gap: 8px; max-height: 170px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
-.saved-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted); }
+/* A save is a card: its text takes the free room, its controls stand inside it at the right edge. */
+.saved-list li { display: flex; align-items: center; gap: 5px; padding: 4px 5px 4px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); font-size: 13px; color: var(--text-muted); }
+.saved-list li > span { flex: 1 1 auto; min-width: 0; }
+.saved-list strong { display: block; overflow-wrap: anywhere; font-size: var(--font-s); font-weight: 600; color: var(--text); }
+.saved-list small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
 .saved-list button { position: relative; flex: none; min-height: 36px; padding: 4px 10px; font-size: var(--font-s); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .value-resources { color: var(--gold); fill: var(--gold); font-weight: 700; }
@@ -275,6 +282,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-active .hex { stroke: var(--gold); stroke-width: 3.5; fill: #2a2618; }
 .tile-source .hex { stroke: var(--accent); stroke-width: 2.5; }
 .tile-path .hex { fill: #1c2a42; stroke: #5a7fb8; }
+/* A system with my command token: the fill says it even where the token is easy to miss. */
+.tile-activated .hex { fill: var(--hex-activated); }
 .tile-dim { opacity: 0.42; }
 .tile text { text-anchor: middle; fill: var(--text); font-family: inherit; pointer-events: none; }
 .tile .tile-number { text-anchor: start; font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 1.25px; stroke-linejoin: round; }
@@ -319,17 +328,20 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .unit-counter { fill: #0d1016; stroke: #6a7589; }
 .tile .unit-count { font-weight: 700; fill: #eef1f6; }
 .arrow-head { fill: var(--gold); stroke: none; }
+.arrow-head-casing { fill: #0d1016; stroke: #0d1016; stroke-width: 2.1; stroke-linejoin: round; }
 .routes, .flight-layer, .flight-layer * { pointer-events: none; }
 .flight-layer text { text-anchor: middle; font-family: inherit; }
 .flight-layer .unit-count { font-weight: 700; fill: #eef1f6; }
 .route { --route: #d7deea; --route-width: 4px; --route-opacity: 1; }
 .route-active { --route: var(--gold); --route-width: 5px; }
 .route-done { --route-opacity: 0.4; }
-.route.arrow-warn:not(.route-active) { --route: var(--warning); }
 .route-casing, .route-line, .route-pull { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.route-casing { stroke: #0d1016; stroke-width: 9px; opacity: 0.7; transition: opacity var(--motion-route); }
-.route-casing.route-gap { opacity: 0.35; stroke-dasharray: 11 9; }
-.route-done .route-casing { opacity: 0.3; }
+/* The opacity is on the group: the outlines of the line and the head overlap and read as one shape. */
+.route-casings { opacity: 0.7; transition: opacity var(--motion-route); }
+.route-done .route-casings { opacity: 0.3; }
+.route-casing { stroke: #0d1016; stroke-width: 9px; }
+.route-casing.route-gap { opacity: 0.5; stroke-dasharray: 11 9; }
+.route-head-casing { fill: #0d1016; stroke: #0d1016; stroke-width: calc(9px - var(--route-width)); stroke-linejoin: round; }
 .route-line { stroke: var(--route); stroke-width: var(--route-width); opacity: var(--route-opacity); transition: stroke var(--motion-route), stroke-width var(--motion-route), opacity var(--motion-route); }
 .route-line.route-gap { stroke-dasharray: 11 9; }
 .route-dot, .route-head { fill: var(--route); opacity: var(--route-opacity); transition: fill var(--motion-route), opacity var(--motion-route); }
@@ -337,11 +349,14 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .route-pull { stroke: var(--gold); stroke-width: 4px; stroke-dasharray: 8 7; }
 .route-badge, .route-tag { --route-opacity: 1; transition: opacity var(--motion-route); }
 .route-badge.route-done, .route-tag.route-done { opacity: 0.5; }
+/* As wide as the outline of a line beyond its stroke. The done badge is dimmed as a whole, so this comes to the 0.3 of a done line. */
+.route-badge-casing { fill: none; stroke: #0d1016; stroke-width: 6.8px; stroke-linejoin: round; opacity: 0.7; }
+.route-done .route-badge-casing { opacity: 0.6; }
 .route-badge-hex { fill: #12171f; stroke: var(--route); stroke-width: 1.8px; stroke-linejoin: round; transition: stroke var(--motion-route); }
 .route-badge-number, .route-tag text { fill: var(--route); font-size: 11px; font-weight: 700; text-anchor: middle; transition: fill var(--motion-route); }
 .route-tag rect { fill: #12171f; stroke: var(--route); stroke-width: 1.4px; transition: stroke var(--motion-route); }
 @media (prefers-reduced-motion: reduce) {
-  .hex, .route-badge, .route-tag, .route-casing, .route-line, .route-dot, .route-head, .route-badge-hex, .route-badge-number, .route-tag text, .route-tag rect { transition: none; }
+  .hex, .route-badge, .route-tag, .route-casings, .route-line, .route-dot, .route-head, .route-badge-hex, .route-badge-number, .route-tag text, .route-tag rect { transition: none; }
 }
 .map-home { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; background: var(--accent-solid); border-color: var(--accent); color: #fff; }
 .hexmap-frame { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
@@ -374,6 +389,10 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .summary-cell > span { display: block; font-size: var(--font-xs); color: var(--text-dim); }
 .summary-cell b { font-size: 15px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .summary-negative { color: var(--danger); }
+.summary-forecast { display: inline-block; overflow: hidden; vertical-align: bottom; white-space: pre; animation: summary-forecast-in 0.26s var(--ease) both; }
+.summary-forecast-leaving { animation: summary-forecast-out 0.26s var(--ease) forwards; }
+@keyframes summary-forecast-in { from { max-width: 0; opacity: 0; } to { max-width: 4em; opacity: 1; } }
+@keyframes summary-forecast-out { from { max-width: 4em; opacity: 1; } to { max-width: 0; opacity: 0; } }
 .plan-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--panel-width); grid-template-rows: minmax(0, 1fr); }
 .plan-map { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
 .hexmap { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -408,9 +427,13 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .card-cell:active:not(:disabled) { transform: scale(0.99); }
 .card-cell.card-main { border-color: var(--accent); background: var(--accent-soft); }
 .card-cell.card-backup { border: 1px dashed var(--accent); }
+.card-cell.card-shown { box-shadow: inset 0 0 0 1px var(--text-dim); color: var(--text); }
 .card-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 600; font-size: var(--font-m); color: var(--text); }
 .card-text { grid-column: 2; color: var(--text-muted); margin-top: 2px; }
-.card-text b { font-weight: 600; color: var(--text-dim); }
+.card-ability { display: flex; flex-direction: column; gap: 1px; margin-top: 6px; padding-left: 8px; border-left: 2px solid var(--border); color: var(--text-muted); }
+.card-ability b { font-size: var(--font-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
+.card-ability-primary { border-left-color: var(--gold); color: var(--text); }
+.card-ability-primary b { color: var(--gold); }
 .card-note { grid-column: 2; color: var(--gold); margin-top: 3px; font-size: 12px; }
 .pill { font-size: var(--font-xs); font-weight: 600; border-radius: 9px; padding: 0 7px; background: var(--accent-solid); color: #fff; }
 .pill-change { background: #4a3a14; color: var(--gold); }
@@ -484,6 +507,9 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .status-reminder { margin: 4px 0 0; font-size: var(--font-s); }
 .warning-list { padding: 0 10px 8px; }
 .warning-text { color: var(--warning); font-size: var(--font-s); }
+/* A warning inside the block it speaks of: the same edge as a warned entry in the list. */
+.place-warnings, .warning-list.place-warnings { display: block; margin: 0; padding: 3px 0 3px 8px; border-left: 3px solid var(--warning); }
+.warning-list.place-warnings { display: flex; }
 
 .stepper { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: var(--font-s); }
 .stepper .stepper-name { flex: 1; min-width: 0; }
@@ -492,15 +518,40 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .editor-section { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); margin: 0; }
 .editor-section > strong, .editor-section .panel-head > strong { font-size: var(--font-m); font-weight: 600; }
 .editor-section summary { min-height: var(--touch); display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 600; font-size: var(--font-m); }
-.editor-section summary::after { content: '▾'; color: var(--text-dim); transform: rotate(-90deg); transition: transform var(--motion-fast); }
-.editor-section[open] summary::after { transform: none; }
+.editor-section summary { list-style: none; }
+.editor-section summary::-webkit-details-marker { display: none; }
+.editor-section summary > svg { flex: none; width: 20px; height: 20px; color: var(--text-muted); transform: rotate(-90deg); transition: transform var(--motion-fast); }
+.editor-section[open] summary > svg { transform: none; }
 .editor-section .row button { padding: 4px 10px; font-size: var(--font-s); }
 .source-row { display: flex; gap: 5px; align-items: stretch; }
+/* The control of a card stands inside the card, at its right edge: the first button is the card, the last its control. */
+.in-card { position: relative; display: flex; flex: 1 1 auto; min-width: 0; }
+.in-card > button:first-child { flex: 1 1 auto; min-width: 0; }
+.in-card > button:first-child:not(:last-child) { padding-right: 52px; }
+.in-card > button:last-child:not(:first-child) { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); }
 .source-button { flex: 1; min-width: 0; text-align: left; font-size: var(--font-s); }
 .source-button small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.landing { display: flex; flex-direction: column; gap: 8px; }
+.landing-planet { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.landing-target { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; min-width: 120px; }
+.landing-target svg { flex: none; overflow: visible; }
+.landing-target span { min-width: 0; }
+.landing-target strong { display: block; font-size: var(--font-s); }
+.landing-target small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.landing-stacks { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.landing-stacks svg { display: block; overflow: visible; }
+.start-game { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+/* What is expected of an opponent stands apart from my own: set in from the left and tinted with their colour. Its left edge says done or warned, as on every entry. */
+.entry-rival { margin-left: 16px; background: color-mix(in srgb, var(--owner) 14%, var(--surface-2)); }
+.entry-rival .order-hex { color: var(--owner); }
+.acting-as { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-left: 3px solid var(--owner); border-radius: var(--radius-s); background: color-mix(in srgb, var(--owner) 14%, var(--surface-2)); font-size: var(--font-s); font-weight: 600; }
+.acting-add { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.link-dialog { width: min(440px, calc(100vw - 32px)); margin: auto; display: flex; flex-direction: column; gap: 10px; padding: 18px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
+.link-dialog p { margin: 0; }
+.optional-note { margin-left: 4px; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.picker-distance { color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
 .token-picture { display: block; overflow: visible; pointer-events: none; }
 .picker-title { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); }
-.picker-title.meter-over { color: var(--danger); }
 .picker-note, .picker-fleet { margin: 0; font-size: var(--font-s); }
 .pics { display: flex; flex-wrap: wrap; gap: 5px; }
 .pic-pair { display: contents; }
@@ -524,7 +575,6 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .stop-place small { font-size: var(--font-xs); color: var(--text-dim); }
 .picker-foot { display: flex; gap: 6px; }
 .picker-foot > button { flex: 1; }
-.meter-over { color: var(--danger); }
 .pay-planets { display: flex; flex-wrap: wrap; gap: 4px; }
 .pay-planets button { padding: 4px 10px; font-size: var(--font-s); }
 
@@ -558,7 +608,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
   .plan-header { flex-wrap: wrap; padding: 6px 8px; }
   .plan-tabs { flex-basis: 100%; }
   .plan-body { grid-template-columns: minmax(0, 1fr); }
-  .plan-screen[data-view='map'] .plan-panel, .plan-screen[data-view='plan'] .plan-map { display: none; }
+  .plan-screen[data-view='map'] .plan-panel, .plan-screen[data-view='plan'] .plan-map, .plan-screen[data-view='plan'] .drawer-rail-left { display: none; }
   .plan-switch { display: flex; gap: 8px; padding: 6px 8px; background: var(--surface); }
   .plan-switch button { flex: 1; }
   .summary-bar { flex-wrap: wrap; }
@@ -582,8 +632,6 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .players-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; min-height: 30px; }
 .players-head h1 { font-size: var(--font-xl); font-weight: 650; margin: 0; letter-spacing: -0.01em; }
 .players-head > span { color: var(--text-dim); font-size: 13px; }
-.players-action { margin: -8px 0 -8px auto; align-self: center; display: flex; align-items: center; gap: 12px; }
-.players-action button { position: relative; min-height: 38px; padding: 6px 18px; }
 .players-hint { color: var(--text-dim); font-size: 13px; }
 .players-aside { border-left: 1px solid var(--border); background: var(--surface); padding: 18px; overflow-y: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 .side-group { margin-bottom: 18px; }
@@ -593,7 +641,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .side-actions button, .side-actions .button { min-height: 36px; padding: 5px 12px; font-size: 13px; color: var(--text-muted); position: relative; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip, button.chip { position: relative; padding: 7px 12px; min-height: 36px; min-width: 0; border-radius: 18px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-size: 13px; line-height: 1.45; display: flex; align-items: center; cursor: pointer; transition: background-color var(--motion), border-color var(--motion), color var(--motion); }
-button.chip::after, .side-actions button::after, .side-actions .button::after, .saved-list button::after, .players-action button::after, .players-aside .layout-picker .segment button::after { content: ''; position: absolute; inset: -4px 0; }
+button.chip::after, .side-actions button::after, .side-actions .button::after, .saved-list button::after, .players-aside .layout-picker .segment button::after { content: ''; position: absolute; inset: -4px 0; }
 .icon-button::after { content: ''; position: absolute; inset: -4px; }
 .chip.on, button.chip[aria-pressed='true'], button.chip[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
 .chip.fix { cursor: default; opacity: 0.85; }
@@ -670,6 +718,7 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .seat-spot { fill: #222b39; stroke: #465268; stroke-width: 1.5; cursor: grab; touch-action: none; }
 .seat-move { transition: transform 0.28s var(--ease); }
 .seat-token { cursor: grab; touch-action: none; transition: transform 0.16s; outline: none; }
+.seat-token-locked { cursor: default; touch-action: auto; }
 .seat-token .seat-disc { stroke-width: 0; transition: stroke-width 0.15s; }
 .seat-hit { fill: transparent; }
 .seat-token text { font-size: 17px; font-weight: 700; fill: var(--bg); pointer-events: none; }
@@ -690,7 +739,6 @@ body.seat-dragging, body.seat-dragging * { cursor: grabbing !important; user-sel
 /* The list of players as a panel over the plan. */
 .plan-body { position: relative; overflow: hidden; }
 .players-panel { height: 100%; display: flex; flex-direction: column; background: var(--bg); }
-.players-panel .players-action button { background: var(--surface-2); }
 
 @media (hover: hover) {
   .player-card:hover { border-color: #46536a; }
@@ -763,7 +811,6 @@ small.ship-row-round { color: var(--gold); }
 .drawer-rail-left { left: 0; z-index: 11; }
 .drawer-rail-open-players { transform: translateX(calc(min(860px, 100cqw - 34px) - 2px)); }
 .drawer-rail-open-legend { transform: translateX(calc(min(460px, 100cqw - 34px) - 2px)); }
-.plan-screen[data-view='plan'] .drawer-rail-left { display: none; }
 .drawer-rail-right { right: 0; z-index: 7; }
 .drawer-rail-open { transform: translateX(calc(2px - min(388px, 100cqw - 34px))); }
 .drawer-tab { pointer-events: auto; min-width: 0; min-height: 0; width: 34px; padding: 14px 0; display: grid; place-items: center; font-size: var(--font-s); font-weight: 600; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); white-space: nowrap; }
@@ -838,7 +885,6 @@ button.hex-button.popover-close { position: absolute; }
 .picker-title, .stage-panel h3, .status-points { margin: 10px 0 4px; }
 .legend-panel h3 { margin: 16px 0 8px; }
 .legend-panel h2 + h3 { margin-top: 0; }
-.picker-title.meter-over { color: var(--danger); }
 
 /* Plan tabs hang from the edge of the screen below them, signed like the drawers: the free edge carries the stripe. */
 .plan-tabs { padding-top: 2px; }
@@ -906,3 +952,7 @@ button.fac-option:disabled { opacity: 0.45; }
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 2.5 23 21.5H1ZM11 9.5v6.5h2V9.5Zm0 8v2h2v-2Z'/%3E%3C/svg%3E") center / contain no-repeat;
   mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill-rule='evenodd' d='M12 2.5 23 21.5H1ZM11 9.5v6.5h2V9.5Zm0 8v2h2v-2Z'/%3E%3C/svg%3E") center / contain no-repeat;
 }
+
+/* A left drawer scrolls on its left edge: right-to-left flips only the scrollbar, the content reads as usual. */
+.drawer-left .players-list, .drawer-left .legend-panel { direction: rtl; }
+.drawer-left .players-list > *, .drawer-left .legend-panel > * { direction: ltr; }

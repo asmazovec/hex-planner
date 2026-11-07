@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { paymentValue, readyPlanetIds, type PaymentKind } from '../../domain/payment';
 import type { DataPack, GameState, Payment } from '../../domain/types';
@@ -14,10 +15,12 @@ export interface PaymentBlockProps {
   kind?: PaymentKind;
   onManual: (open: boolean) => void;
   onChange: (payment: Payment) => void;
+  /** The warnings about this payment. */
+  children?: ReactNode;
 }
 
 /** Shows the automatic payment; the manual choice of planets and trade goods opens on request. */
-export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resources', onManual, onChange }: PaymentBlockProps) {
+export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resources', onManual, onChange, children }: PaymentBlockProps) {
   const { t } = useTranslation();
   const value = (id: string): number => pack.planets[id]?.[kind] ?? 0;
   const byValue = (ids: string[]): string[] =>
@@ -57,6 +60,7 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
           />
         </>
       )}
+      {children}
     </div>
   );
 }

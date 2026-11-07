@@ -195,7 +195,7 @@ describe('Leadership', () => {
     expect(screen.getByText('Distribute tokens: 0 left')).toBeVisible();
     expect(screen.getByText(/1 bought beyond the free ones, influence to pay: 3/)).toBeVisible();
     expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
-    expect(within(screen.getByRole('group', { name: 'Payment' })).getByText(/3/)).toBeVisible();
+    expect(within(screen.getByRole('group', { name: 'Payment' })).getByText(/^Cost 3,/)).toBeVisible();
     expect(screen.queryByText(/usually from abilities/)).toBeNull();
     await click('Take a token back: Tactic');
     expect(cardEntry().effects?.boughtTokens).toBeUndefined();

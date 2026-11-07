@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { seatSlots } from '../../domain/mapBuilder';
 import { createGame } from '../../domain/newGame';
@@ -179,6 +179,20 @@ test('player 1 has the white ring, the others do not', () => {
   expect(token(2)).not.toHaveClass('seat-token-me');
 });
 
+test('in a started game the seat map only shows: nothing to press, nothing moves, no instruction', () => {
+  startOpen();
+  render(<GameScreen />);
+  const map = screen.getByRole('group', { name: 'Seat map' });
+  expect(within(map).queryAllByRole('button')).toEqual([]);
+  expect(within(map).getAllByRole('img', { name: /^Player \d,/ })).toHaveLength(4);
+  const before = seats();
+  fireEvent.pointerDown(within(map).getAllByRole('img', { name: /^Player \d,/ })[0], { button: 0, isPrimary: true, clientX: 10, clientY: 10 });
+  act(() => { window.dispatchEvent(new PointerEvent('pointerup', { clientX: 60, clientY: 60 })); });
+  expect(seats()).toEqual(before);
+  expect(document.querySelector('.seat-token.picked')).toBeNull();
+  expect(screen.queryByText(/Every player has a number/)).toBeNull();
+});
+
 test('dragging a token onto another swaps the two players', () => {
   render(<GameScreen />);
   drag(2, 5)();
@@ -284,15 +298,17 @@ test('removing an opponent who has units or planets says so, and only then asks'
 });
 
 test('adding on a filled map asks first too; a map with only home tiles does not', async () => {
-  startOpen(4);
+  const pack = loadPack(['pok', 'te']);
+  const draft = createGame({ expansions: ['pok', 'te'], playerCount: 4, faction: '' }, pack);
+  useGame.setState({ game: null, draft });
   render(<GameScreen />);
   await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
-  expect(useGame.getState().game!.playerCount).toBe(5);
-  act(() => useGame.getState().setTile('1,0', '30'));
+  expect(useGame.getState().draft.playerCount).toBe(5);
+  act(() => useGame.setState(state => ({ draft: { ...state.draft, map: { ...state.draft.map, '1,0': '30' } } })));
   await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
-  expect(useGame.getState().game!.playerCount).toBe(5);
+  expect(useGame.getState().draft.playerCount).toBe(5);
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-  expect(useGame.getState().game!.playerCount).toBe(6);
+  expect(useGame.getState().draft.playerCount).toBe(6);
 });
 
 test('the interface language is chosen here and remembered', async () => {
@@ -389,6 +405,90 @@ test('the blur setting is remembered and reaches the stylesheet', async () => {
   expect(localStorage.getItem('ti4.blur')).toBe('off');
   await userEvent.click(chip);
   expect(document.documentElement.dataset.blur).toBe('on');
+});
+
+describe('a link to a game', () => {
+  const store = () => useGame.getState();
+
+  test('without a name it fills the draft of a new game', async () => {
+    useGame.setState({ game: null });
+    await store().openShareLink('?factions=sol,arborec,hacan&exp=pok');
+    expect(store().draft.playerCount).toBe(3);
+    expect(store().draft.faction).toBe('sol');
+    expect(store().draft.expansions).toEqual(['pok']);
+  });
+
+  test('never touches a game that is open', async () => {
+    store().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, loadPack(['pok']));
+    const open = store().game;
+    const draft = store().draft;
+    await store().openShareLink('?name=Other&factions=sol,arborec,hacan');
+    expect(store().game).toBe(open);
+    expect(store().draft).toBe(draft);
+  });
+
+  test('without game parameters nothing changes', async () => {
+    useGame.setState({ game: null });
+    const draft = store().draft;
+    await store().openShareLink('?utm=x');
+    expect(store().draft).toBe(draft);
+  });
+
+  test('a game is named before it starts, and after that the field is closed and nobody more joins', async () => {
+    useGame.setState({ game: null });
+    const { unmount } = render(<GameScreen />);
+    await userEvent.type(screen.getByRole('textbox', { name: 'Game name' }), 'Friday{Enter}');
+    expect(store().draft.name).toBe('Friday');
+    expect(screen.getByRole('button', { name: /Add opponent/ })).toBeVisible();
+    unmount();
+    store().setFaction('arborec');
+    store().startGame();
+    expect(store().game?.name).toBe('Friday');
+    render(<GameScreen />);
+    expect(screen.getByRole('textbox', { name: 'Game name' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
+    await flushSaves();
+    expect((await listGames()).find(g => g.id === store().game?.id)?.name).toBe('Friday');
+  });
+
+  test('a save shows its name apart from what it is, and one without a name goes by its faction', async () => {
+    store().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, loadPack(['pok']));
+    store().setName('Friday');
+    await flushSaves();
+    store().closeGame();
+    store().newGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, loadPack(['pok']));
+    await flushSaves();
+    render(<GameScreen />);
+    const named = (await screen.findByText('Friday')).closest('li')!;
+    expect(named.querySelector('strong')).toHaveTextContent(/^Friday$/);
+    expect(named.querySelector('small')).toHaveTextContent('The Arborec');
+    const unnamed = (await screen.findByText('The Federation of Sol', { selector: '.saved-list strong' })).closest('li')!;
+    expect(unnamed.querySelector('small')).not.toHaveTextContent('The Federation of Sol');
+  });
+
+  test('the button copies a link to what stands on the screen', async () => {
+    const user = userEvent.setup();
+    render(<GameScreen />);
+    await user.click(screen.getByRole('button', { name: 'Copy link' }));
+    expect(screen.getByRole('button', { name: 'Link copied' })).toBeVisible();
+    const copied = await navigator.clipboard.readText();
+    expect(copied).toContain('?exp=');
+    expect(copied).toContain('factions=');
+  });
+});
+
+test('the setting that loops flights is on until turned off, and is remembered', async () => {
+  localStorage.removeItem('ti4.flightLoop');
+  const { unmount } = render(<GameScreen />);
+  const chip = screen.getByRole('button', { name: 'Loop flights' });
+  expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(chip);
+  expect(chip).toHaveAttribute('aria-pressed', 'false');
+  expect(localStorage.getItem('ti4.flightLoop')).toBe('off');
+  unmount();
+  render(<GameScreen />);
+  expect(screen.getByRole('button', { name: 'Loop flights' })).toHaveAttribute('aria-pressed', 'false');
+  localStorage.removeItem('ti4.flightLoop');
 });
 
 test('the faction sheet groups by expansion, marks the choice, closes on a tap outside and can take the choice back', async () => {

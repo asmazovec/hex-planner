@@ -17,10 +17,10 @@ function Hex({ fill, state }: { fill: string; state?: string }) {
   );
 }
 
-function Route({ tone = 'planned', gap, warn }: { tone?: string; gap?: boolean; warn?: boolean }) {
+function Route({ tone = 'planned', gap }: { tone?: string; gap?: boolean }) {
   return (
     <svg viewBox="0 0 48 16" className="legend-svg legend-route" aria-hidden="true">
-      <g className={`route route-${tone}${warn ? ' arrow-warn' : ''}`}><path d="M3,8H45" className={`route-line${gap ? ' route-gap' : ''}`} /></g>
+      <g className={`route route-${tone}`}><path d="M3,8H45" className={`route-line${gap ? ' route-gap' : ''}`} /></g>
     </svg>
   );
 }
@@ -93,6 +93,7 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
       })}
 
       {title('marks')}
+      <Row mark={<Hex fill="system" state="activated" />} text={k('activated')} />
       <Row mark={<svg viewBox="-9 -9 18 18" className="legend-svg" aria-hidden="true"><circle r={7} className="token" /><path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" /></svg>} text={k('command')} />
       <Row mark={<svg viewBox="-9 -9 18 18" className="legend-svg" aria-hidden="true"><path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" /></svg>} text={k('ingress')} />
       <Row mark={<i className="legend-seat" style={{ background: 'var(--player-2)' }}>2</i>} text={k('seat')} />
@@ -101,7 +102,6 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
       <Row mark={<Route tone="active" />} text={k('routeActive')} />
       <Row mark={<Route />} text={k('routePlanned')} />
       <Row mark={<Route tone="done" />} text={k('routeDone')} />
-      <Row mark={<Route warn />} text={k('routeWarn')} />
       <Row mark={<Route gap />} text={k('routeGap')} />
       <Row
         mark={<svg viewBox="-13 -12 26 24" className="legend-svg" aria-hidden="true"><g className="route route-badge route-planned"><polygon points={BADGE} className="route-badge-hex" /><text y={4} className="route-badge-number">1</text></g></svg>}

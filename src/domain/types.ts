@@ -224,6 +224,8 @@ export interface CardPlay {
 export type EntryBody =
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
+      /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
+      /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
       /** Where the ground units of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
@@ -237,7 +239,8 @@ export type EntryBody =
       /** My points gained this round. */ vp?: number;
       /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number> };
 
-export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus };
+export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
+  /** The opponent this is expected of; without it the entry is mine. */ owner?: string };
 
 export interface Round { number: number; strategyCard: number | null; backupCard: number | null; entries: Entry[]; }
 export interface Plan { id: string; name: string; rounds: Round[]; }
@@ -253,6 +256,8 @@ export interface Opponent {
 
 export interface Game {
   id: string;
+  /** What the player calls this game; a link finds its save by this. */
+  name?: string;
   schemaVersion: number;
   dataVersion: string;
   expansions: ExpansionId[];
@@ -310,10 +315,14 @@ export interface GameState {
   docks: string[];
   /** Planet id to PDS count, the same way. */
   pds: Record<string, number>;
+  /** Each opponent counted the same way, from what stands on the map for them and their entries replayed so far. */
+  rivals?: Record<string, GameState>;
+  /** Planet id to the opponent whose entries landed there, ahead of the owner set by hand. */
+  rivalHolds?: Record<string, string>;
 }
 
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
   | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
-  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative' | 'systemHasToken' | 'constructionUnits';
+  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative' | 'systemHasToken' | 'constructionUnits' | 'speedShort' | 'routeBlocked' | 'sourceActivated';
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

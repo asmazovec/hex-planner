@@ -1,3 +1,4 @@
+import type { KeyboardEvent, PointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
@@ -28,10 +29,12 @@ export interface SeatMapProps {
   pack: DataPack;
   drag: Omit<SeatDrag, 'ghostRef'>;
   ghostRef: SeatDrag['ghostRef'];
+  /** The game has started: the seats are shown and no longer change. */
+  locked?: boolean;
 }
 
 /** Who sits where: a token per player on the home positions, seat 1 at the top and then clockwise. */
-export function SeatMap({ game, pack, drag, ghostRef }: SeatMapProps) {
+export function SeatMap({ game, pack, drag, ghostRef, locked = false }: SeatMapProps) {
   const { t } = useTranslation();
   const players = playersOf(game);
   const slots = slotsFor(game.playerCount, pack, game.layout);
@@ -62,7 +65,7 @@ export function SeatMap({ game, pack, drag, ghostRef }: SeatMapProps) {
           return (
             <polygon
               key={key} points={hexPoints(x, y)} className="seat-spot" data-seat={i + 1} data-seat-spot={i + 1}
-              onPointerDown={occupant >= 0 ? e => drag.onPointerDown(occupant, e) : undefined}
+              onPointerDown={occupant >= 0 && !locked ? e => drag.onPointerDown(occupant, e) : undefined}
             />
           );
         })}
@@ -73,6 +76,7 @@ export function SeatMap({ game, pack, drag, ghostRef }: SeatMapProps) {
           const faction = pack.factions[player.faction];
           const classes = ['seat-token'];
           if (index === 0) classes.push('seat-token-me');
+          if (locked) classes.push('seat-token-locked');
           if (drag.picked === index) classes.push('picked');
           if (drag.lifted !== null) classes.push('target');
           if (drag.hoverSeat === player.seat && drag.lifted !== index) classes.push('hover');
@@ -80,15 +84,17 @@ export function SeatMap({ game, pack, drag, ghostRef }: SeatMapProps) {
             // The colour is the player's for good, so the token keeps its element and glides to a new seat.
             <g key={player.color} className="seat-move" style={{ transform: `translate(${x}px, ${y}px)` }}>
               <g
-                className={classes.join(' ')} role="button" tabIndex={0} data-seat={player.seat}
-                aria-pressed={drag.picked === index}
+                className={classes.join(' ')} data-seat={player.seat}
                 aria-label={t('players.token', { n: index + 1, name: nameOf(player.faction), seat: player.seat })}
-                onPointerDown={e => drag.onPointerDown(index, e)}
-                onKeyDown={e => {
-                  if (e.key !== 'Enter' && e.key !== ' ') return;
-                  e.preventDefault();
-                  drag.tap(index);
-                }}
+                {...(locked ? { role: 'img' } : {
+                  role: 'button', tabIndex: 0, 'aria-pressed': drag.picked === index,
+                  onPointerDown: (e: PointerEvent) => drag.onPointerDown(index, e),
+                  onKeyDown: (e: KeyboardEvent) => {
+                    if (e.key !== 'Enter' && e.key !== ' ') return;
+                    e.preventDefault();
+                    drag.tap(index);
+                  },
+                })}
               >
                 <circle r="17" className="seat-disc" style={{ fill: `var(--player-${player.color})` }} />
                 <circle r={hitRadius} className="seat-hit" />

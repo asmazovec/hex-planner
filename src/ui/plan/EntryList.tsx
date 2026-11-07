@@ -1,14 +1,13 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../domain/cards';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
-import { playersOf } from '../../domain/players';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
+import { gameAs, playersOf } from '../../domain/players';
+import type { DataPack, Entry, Game, GameState, Phase, Plan, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { factionShortName } from '../players/factionName';
-import { UNIT_ORDER } from '../units/unitOrder';
 import { EntrySteps } from './EntrySteps';
 import { ExpeditionEditor } from './ExpeditionEditor';
 import { sliceOwners } from './ExpeditionWidget';
@@ -16,10 +15,9 @@ import { HexRemove, RowIcon } from './RowIcon';
 import { Stepper } from './Stepper';
 import { systemName } from './tactical';
 import { TokenTiles } from './TokenTiles';
-import { WarningText } from './WarningText';
+import { WarningList, WarningText } from './WarningText';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
-const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
 
 export interface EntryListProps {
   game: Game;
@@ -46,71 +44,27 @@ export interface EntryListProps {
   onStatusAdded?: (id: string) => void;
   /** Stands in the strategy section in place of its title and line. */
   strategy?: ReactNode;
-  /** The adjustment whose system the next tap on the map chooses. */
-  pickingSystemFor?: string | null;
-  /** Starts or stops that choice. */
-  onPickSystem?: (id: string) => void;
   /** The add button of the action section, kept in view while its list is long. */
   addAction?: ReactNode;
 }
 
 /** A text field that writes to the plan when it is left, so typing leaves one undo step. */
-function NoteField({ label, value, onCommit }: { label: string; value: string; onCommit: (value: string) => void }) {
+export function NoteField({ label, value, disabled, onCommit }: { label: string; value: string; disabled?: boolean; onCommit: (value: string) => void }) {
   const [text, setText] = useState(value);
   return (
     <label className="field">
       {label}
       <input
-        type="text" value={text} onChange={e => setText(e.target.value)} onBlur={() => onCommit(text)}
+        type="text" value={text} disabled={disabled} onChange={e => setText(e.target.value)} onBlur={() => onCommit(text)}
         onKeyDown={e => { if (e.key === 'Enter') onCommit(text); }}
       />
     </label>
   );
 }
 
-function AdjustmentFields({ entry, game, pack, state, picking, onPickSystem }: {
-  entry: Extract<Entry, { type: 'adjustment' }>; game: Game; pack: DataPack; state: GameState;
-  /** The next tap on the map chooses this adjustment's system. */
-  picking: boolean;
-  onPickSystem: () => void;
-}) {
-  const { t } = useTranslation();
-  const updateEntry = useGame(s => s.updateEntry);
-  const { delta } = entry;
-  const setDelta = (patch: Partial<AdjustmentDelta>) => updateEntry(entry.id, { delta: { ...delta, ...patch } });
-  const systemId = delta.units?.systemId ?? '';
-  const changes = delta.units?.units ?? {};
-  const held = state.systems[systemId] ?? {};
-  const unitIds: UnitId[] = UNIT_ORDER.filter(u => pack.units[u]);
-  return (
-    <>
-      <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => updateEntry(entry.id, { label })} />
-      {DELTA_FIELDS.map(field => (
-        <Stepper
-          key={field} name={t(`plan.summary.${field}`)} value={delta[field] ?? 0}
-          onChange={value => setDelta({ [field]: value })}
-        />
-      ))}
-      <div className="adjust-system" role="group" aria-label={t('plan.entries.system')}>
-        <span>{t('plan.entries.system')}</span>
-        <button type="button" aria-pressed={picking} onClick={onPickSystem}>
-          {systemId ? systemName(game, pack, systemId) : t('plan.entries.pickSystem')}
-        </button>
-        {systemId && <HexRemove label={t('plan.entries.clearSystem')} onClick={() => setDelta({ units: undefined })} />}
-      </div>
-      {systemId && unitIds.map(unit => (
-        <Stepper
-          key={unit} name={t(`unit.${unit}`)} value={changes[unit] ?? 0} of={held[unit] ?? 0}
-          onChange={value => setDelta({ units: { systemId, units: { ...changes, [unit]: value } } })}
-        />
-      ))}
-    </>
-  );
-}
-
 /** The status entry: the tokens taken this round, the points each player gains with their running total. */
-function StatusFields({ entry, game, pack, state }: {
-  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState;
+function StatusFields({ entry, game, pack, state, warnings }: {
+  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState; warnings: Warning[];
 }) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -121,6 +75,7 @@ function StatusFields({ entry, game, pack, state }: {
         free={STATUS_TOKENS} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
         onChange={values => updateEntry(entry.id, values)}
       />
+      <WarningList warnings={warnings} game={game} pack={pack} />
       <h5 className="status-points">{t('plan.entries.roundPoints')}</h5>
       {playersOf(game).map((player, index) => {
         const faction = pack.factions[player.faction];
@@ -144,7 +99,14 @@ function StatusFields({ entry, game, pack, state }: {
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
 
+/** An opponent's entry says whose it is before what it is. */
 function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
+  const faction = pack.factions[game.opponents.find(o => o.id === entry.owner)?.faction ?? ''];
+  const name = bareLabel(entry, game, pack, t);
+  return faction ? `${factionShortName(faction.id, faction.name)}: ${name}` : name;
+}
+
+function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
   switch (entry.type) {
     case 'tactical':
       return `${entry.free ? `${cardName(game, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
@@ -179,7 +141,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, pickingSystemFor = null, onPickSystem, strategy, addAction,
+  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -217,11 +179,14 @@ export function EntryList({
                 const label = entryLabel(entry, game, pack, t);
                 // The round has one status entry, so there is nothing to move it past.
                 const movable = entry.type !== 'statusTokens';
+                const rival = game.opponents.find(o => o.id === entry.owner);
                 const list = warnings[entry.id] ?? [];
                 const shown = entry.id === shownId;
-                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
+                // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
+                const fieldsOpen = entry.id === openId && (entry.type === 'statusTokens' || entry.type === 'expedition');
+                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
                 return (
-                  <li key={entry.id} className={cls} style={drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
+                  <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), '--owner': `var(--player-${rival.color})` } as CSSProperties : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
@@ -240,10 +205,15 @@ export function EntryList({
                       </label>
                       <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
-                    {shown && <EntrySteps entry={entry} game={game} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
+                    {list.length > 0 && !fieldsOpen && (
+                      <ul className="warning-list">
+                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+                      </ul>
+                    )}
+                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
-                        <StatusFields entry={entry} game={game} pack={pack} state={state} />
+                        <StatusFields entry={entry} game={game} pack={pack} state={state} warnings={list} />
                       </div>
                     )}
                     {entry.id === openId && entry.type === 'component' && (
@@ -256,20 +226,10 @@ export function EntryList({
                         <ExpeditionEditor
                           game={game} pack={pack} sliceId={entry.sliceId} payment={entry.payment}
                           owners={plan ? sliceOwners(game, plan) : game.expedition.slices as Record<string, 'me' | 'other'>}
-                          before={stateBefore ? stateBefore(entry.id) : state}
+                          before={stateBefore ? stateBefore(entry.id) : state} warnings={list}
                           onChange={patch => updateEntry(entry.id, patch)}
                         />
                       </div>
-                    )}
-                    {entry.id === openId && entry.type === 'adjustment' && !entry.kind && (
-                      <div className="entry-details">
-                        <AdjustmentFields entry={entry} game={game} pack={pack} state={state} picking={pickingSystemFor === entry.id} onPickSystem={() => onPickSystem?.(entry.id)} />
-                      </div>
-                    )}
-                    {list.length > 0 && (
-                      <ul className="warning-list">
-                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
-                      </ul>
                     )}
                   </li>
                 );

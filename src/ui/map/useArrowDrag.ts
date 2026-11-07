@@ -12,6 +12,8 @@ export interface ArrowDragOptions {
   /** The route in flight order, whichever way it was drawn. */
   onComplete: (route: RouteDraft) => void;
   onCancel: () => void;
+  /** The finger was lifted short of the end of the route: the path waits for more taps or another stroke. */
+  onPause?: (path: string[]) => void;
   /** Only such hexes join a route; by default every hex. */
   isSystem?: (slot: string) => boolean;
 }
@@ -21,12 +23,15 @@ const slotAt = (x: number, y: number): string | null =>
 
 /**
  * One finger pulls a route between a tile and the active system, hex by hex: each hex entered is added, the previous one
- * removes the last step. Only a change of the route renders; a second finger cancels it, so the map can pinch.
+ * removes the last step. Only a change of the route renders; a second finger cancels the stroke, so the map can pinch.
+ * A stroke can go on from a path laid before, and one lifted short of the active system hands its path to `onPause`.
  */
-export function useArrowDrag({ activeSystem, onComplete, onCancel, isSystem }: ArrowDragOptions) {
+export function useArrowDrag({ activeSystem, onComplete, onCancel, onPause, isSystem }: ArrowDragOptions) {
   const [drag, setDrag] = useState<(ArrowPreview & { pointerId: number }) | null>(null);
   const pointerId = drag?.pointerId ?? null;
   const path = useRef<string[]>([]);
+  /** The path the stroke began with: a press that changes nothing is a tap. */
+  const started = useRef<string[]>([]);
 
   useEffect(() => {
     if (pointerId === null) return undefined;
@@ -50,12 +55,15 @@ export function useArrowDrag({ activeSystem, onComplete, onCancel, isSystem }: A
       if (e.pointerId !== pointerId) return;
       step(e.clientX, e.clientY);
       const route = activeSystem === null ? null : routeFromPath(path.current, activeSystem);
-      if (route === null) {
+      if (route !== null) {
+        setDrag(null);
+        onComplete(route);
+      } else if (onPause && activeSystem !== null && path.current.join() !== started.current.join()) {
+        setDrag(null);
+        onPause(path.current);
+      } else {
         cancel();
-        return;
       }
-      setDrag(null);
-      onComplete(route);
     };
     const onCancelEvent = (e: PointerEvent) => {
       if (e.pointerId === pointerId) cancel();
@@ -73,12 +81,13 @@ export function useArrowDrag({ activeSystem, onComplete, onCancel, isSystem }: A
       window.removeEventListener('pointercancel', onCancelEvent);
       window.removeEventListener('pointerdown', onDown);
     };
-  }, [pointerId, activeSystem, onComplete, onCancel, isSystem]);
+  }, [pointerId, activeSystem, onComplete, onCancel, onPause, isSystem]);
 
-  const onTilePointerDown = (systemId: string, e: ReactPointerEvent) => {
+  const onTilePointerDown = (systemId: string, e: ReactPointerEvent, laid?: string[]) => {
     if (!e.isPrimary || e.button !== 0 || activeSystem === null || drag) return;
-    path.current = [systemId];
-    setDrag({ pointerId: e.pointerId, path: path.current, clientX: e.clientX, clientY: e.clientY, reverse: systemId === activeSystem });
+    path.current = laid ?? [systemId];
+    started.current = path.current;
+    setDrag({ pointerId: e.pointerId, path: path.current, clientX: e.clientX, clientY: e.clientY, reverse: path.current[0] === activeSystem });
   };
 
   const preview: ArrowPreview | null = drag

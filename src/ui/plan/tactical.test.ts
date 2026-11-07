@@ -61,18 +61,13 @@ describe('a source and its route', () => {
   });
 
   test('one arrow per source, with its way and a tag per system where cargo is taken', () => {
-    const [arrow, ...rest] = arrowsOf(game(), pack, entry(ROUTE), []);
+    const [arrow, ...rest] = arrowsOf(game(), pack, entry(ROUTE));
     expect(rest).toEqual([]);
-    expect(arrow).toMatchObject({ from: HOME, via: [WAY], to: TARGET, warn: false, pickups: [{ slot: WAY, count: 3 }] });
-  });
-
-  test('a warning about a pickup flags the arrow of the group it joins', () => {
-    const [arrow] = arrowsOf(game(), pack, entry(ROUTE), [{ code: 'unitsMissing', params: { where: WAY, unit: 'fighter', missing: 1 } }]);
-    expect(arrow.warn).toBe(true);
+    expect(arrow).toMatchObject({ from: HOME, via: [WAY], to: TARGET, pickups: [{ slot: WAY, count: 3 }] });
   });
 
   test('an empty source has an arrow all the same', () => {
-    expect(arrowsOf(game(), pack, entry([{ from: HOME, units: {} }]), [])).toHaveLength(1);
+    expect(arrowsOf(game(), pack, entry([{ from: HOME, units: {} }]))).toHaveLength(1);
   });
 });
 

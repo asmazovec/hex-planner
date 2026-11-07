@@ -58,6 +58,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
     const target = e.systemId;
     if (target === null) return null;
     const landings = e.landings.filter(landing => hasUnits(landing.units));
+    const lost = [e.losses, ...Object.values(e.groundLosses ?? {})].filter((units): units is UnitCounts => hasUnits(units));
     return (
       <div className="entry-steps entry-flights">
         <p className="flight-activate">
@@ -111,6 +112,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
             </section>
           );
         })}
+        {lost.length > 0 && <p className="flight-after"><span>{t('plan.steps.losses')}</span>{lost.map((units, i) => <span key={i}>{pictures(units)}</span>)}</p>}
         {landings.map(landing => (
           <p key={landing.planetId} className="flight-after"><span>{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>
         ))}

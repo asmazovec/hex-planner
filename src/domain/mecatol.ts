@@ -16,6 +16,7 @@ function migrateEntry(entry: Entry): Entry {
       moves: entry.moves.map(move => ({ ...move, from: toTe(move.from) })),
       landings: entry.landings.map(landing => ({ ...landing, planetId: toTe(landing.planetId) })),
       payment: { ...entry.payment, planets: entry.payment.planets.map(toTe) },
+      ...(entry.groundLosses ? { groundLosses: Object.fromEntries(Object.entries(entry.groundLosses).map(([id, units]) => [toTe(id), units])) } : {}),
       ...(entry.productionGround ? { productionGround: Object.fromEntries(Object.entries(entry.productionGround).map(([id, units]) => [toTe(id), units])) } : {}),
     };
   }

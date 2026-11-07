@@ -14,8 +14,9 @@ export interface StrategyCardsProps {
 }
 
 /**
- * All eight cards in a grid that only plans: one tap makes a card the backup, the next the main one, the next clears it.
- * With 3 or 4 players two cards are held, so the backup is the second card. The tapped card shows its details.
+ * All eight cards in a grid that only plans: a tap on a card not shown opens its details and takes nothing. Further taps
+ * make it the backup, then the main one, then clear it and close the details.
+ * With 3 or 4 players two cards are held, so the backup is the second card.
  */
 export function StrategyCards({ expansions, playerCount, round }: StrategyCardsProps) {
   const { t } = useTranslation();
@@ -25,8 +26,12 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
   const cards = strategyCards(expansions);
   const backupName = t(cardsHeld(playerCount) > 1 ? 'plan.cards.second' : 'plan.cards.backup');
   const tap = (initiative: number) => {
+    if (shown !== initiative) {
+      setShown(initiative);
+      return;
+    }
     setStrategyCard(round.number, initiative);
-    setShown(round.strategyCard === initiative ? null : initiative);
+    if (round.strategyCard === initiative) setShown(null);
   };
   const named = (initiative: number | null) => {
     const card = cards.find(c => c.initiative === initiative);
@@ -48,8 +53,8 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
           const backup = card.initiative === round.backupCard;
           return (
             <button
-              key={card.initiative} type="button" onClick={() => tap(card.initiative)}
-              className={`card-cell${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}`}
+              key={card.initiative} type="button" onClick={() => tap(card.initiative)} aria-current={card.initiative === shown ? 'true' : undefined}
+              className={`card-cell${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}${card.initiative === shown ? ' card-shown' : ''}`}
             >
               <b>{card.initiative}</b>{card.name}
               {main && <small>{t('plan.cards.main')}</small>}
@@ -66,8 +71,8 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
             {details.name}
             {details.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
           </span>
-          <span className="card-text"><b>{t('plan.cards.primary')}</b> {summary.primary}</span>
-          <span className="card-text"><b>{t('plan.cards.secondary')}</b> {summary.secondary}</span>
+          <div className="card-ability card-ability-primary"><b>{t('plan.cards.primary')}</b><span>{summary.primary}</span></div>
+          <div className="card-ability card-ability-secondary"><b>{t('plan.cards.secondary')}</b><span>{summary.secondary}</span></div>
           {summary.change && <span className="card-note">{summary.change}</span>}
         </div>
       )}

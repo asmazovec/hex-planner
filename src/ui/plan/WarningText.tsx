@@ -28,3 +28,20 @@ export function WarningText({ warning, game, pack }: WarningTextProps) {
   });
   return <span className="warning-text">{text}</span>;
 }
+
+export interface WarningListProps {
+  warnings: Warning[];
+  game: Game;
+  pack: DataPack;
+}
+
+/** The warnings of one block, inside that block and marked the same way everywhere. */
+export function WarningList({ warnings, game, pack }: WarningListProps) {
+  const { t } = useTranslation();
+  if (warnings.length === 0) return null;
+  return (
+    <ul className="warning-list place-warnings" aria-label={t('plan.tactical.warnings')}>
+      {warnings.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+    </ul>
+  );
+}

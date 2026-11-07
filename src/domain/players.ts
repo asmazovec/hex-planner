@@ -48,6 +48,45 @@ function withoutHoldings(game: Game, opponentId: string): Game {
   };
 }
 
+/** The game as an opponent plays it: they are the player, what they hold is theirs, what I hold is an enemy's. For me, or for someone gone, it is the game itself. */
+export function gameAs(game: Game, owner: string | undefined): Game {
+  const rival = game.opponents.find(o => o.id === owner);
+  if (!rival) return game;
+  const without = (record: Game['enemyUnits']): Game['enemyUnits'] => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => {
+    const { [rival.id]: mine, ...others } = byOwner;
+    void mine;
+    return Object.keys(others).length > 0 ? [[place, others]] : [];
+  }));
+  return {
+    ...game,
+    faction: rival.faction, seat: rival.seat, color: rival.color, vp: rival.vp,
+    upgrades: { ...game.upgrades, me: game.upgrades.opponents[rival.id] ?? [] },
+    planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, game.planetControl[id] === 'enemy' && planetHolder(game, id) === rival.id ? 'me' as const : 'enemy' as const])),
+    enemyUnits: without(game.enemyUnits),
+    enemyGround: without(game.enemyGround),
+  };
+}
+
+/** A game begins: every opponent stands at their seat with their faction's start units, and their home planets are theirs. */
+export function placeStartUnits(game: Game, pack: DataPack): Game {
+  const slots = seatSlots(game.playerCount, pack, game.layout);
+  return game.opponents.reduce<Game>((next, { id, faction, seat }) => {
+    const def = pack.factions[faction];
+    const slot = slots[seat - 1];
+    if (!def || !slot) return next;
+    const homes = pack.tiles[def.homeTile]?.planetIds ?? [];
+    const onMap = [def.homeTile, def.gateTile].includes(next.map[slot]?.split('@')[0]);
+    return {
+      ...next,
+      enemyUnits: { ...next.enemyUnits, [slot]: { ...next.enemyUnits[slot], [id]: def.startUnits } },
+      ...(onMap ? {
+        planetControl: { ...next.planetControl, ...Object.fromEntries(homes.map(planet => [planet, 'enemy' as const])) },
+        planetOwner: { ...next.planetOwner, ...Object.fromEntries(homes.map(planet => [planet, id])) },
+      } : {}),
+    };
+  }, game);
+}
+
 /** The most players the map templates of the pack allow. */
 export const maxPlayers = (pack: DataPack): number => Math.max(MIN_PLAYERS, ...pack.templates.map(t => t.playerCount));
 
@@ -111,7 +150,7 @@ const withoutPoints = (plans: Plan[], opponentId: string): Plan[] => plans.map(p
   ...plan,
   rounds: plan.rounds.map(round => ({
     ...round,
-    entries: round.entries.map((entry): Entry => {
+    entries: round.entries.filter(entry => entry.owner !== opponentId).map((entry): Entry => {
       if (entry.type === 'statusTokens' && entry.opponentVp) {
         const { [opponentId]: gone, ...opponentVp } = entry.opponentVp;
         void gone;

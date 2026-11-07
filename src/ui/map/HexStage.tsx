@@ -3,15 +3,16 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../domain/hexLayout';
 import { mergedCounts } from '../../domain/losses';
 import { autoPay } from '../../domain/payment';
-import { opponentsBySeat, planetHolder } from '../../domain/players';
+import { gameAs, opponentsBySeat, planetHolder } from '../../domain/players';
 import { isOnMap, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, systemMeters, systemPlanets, tileIdOf } from '../../domain/project';
 import { startingDocks } from '../../domain/strategy';
 import { unitStats } from '../../domain/unitStats';
 import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { systemName, withCount, type TacticalEntry } from '../plan/tactical';
+import { lossesOf, systemName, withAdjustedUnit, withCount, withLoss, type TacticalEntry } from '../plan/tactical';
 import { HexRemove } from '../plan/RowIcon';
-import { WarningText } from '../plan/WarningText';
+import { placesOf, type WarningPlace } from '../plan/warningPlaces';
+import { WarningList } from '../plan/WarningText';
 import { tokenColours } from '../units/sprites';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { slotToPixel } from './geometry';
@@ -54,6 +55,10 @@ export interface HexStageProps {
   manualPayments?: string[];
   /** The tactical entry that takes my purchases, when one is being edited; otherwise the round's last one on this system. */
   tacticalId?: string;
+  /** The manual adjustment that takes my units: the hex then shows only that. */
+  adjustmentId?: string;
+  /** The opponent whose card this hex serves; an action's own owner counts without it. */
+  owner?: string;
   /** What the map shows: control and readiness of a planet follow it, while the hex always shows the forecast. */
   shownState?: GameState;
   onClose: () => void;
@@ -81,7 +86,7 @@ function bumped(record: Record<string, number>, key: string, amount: number): Re
  * losses, build buys. Tile details live in the setup panel. Enemy units and structures have no entry to hold what was
  * lost or bought, so those strips last as long as this view.
  */
-export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, shownState, onClose }: HexStageProps) {
+export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownState, onClose }: HexStageProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game);
   const setEnemyUnits = useGame(s => s.setEnemyUnits);
@@ -92,7 +97,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const changeAdjustment = useGame(s => s.changeAdjustment);
   const updateEntry = useGame(s => s.updateEntry);
   const [mode, setMode] = useState(initialMode);
-  const [chosenSide, setSide] = useState('me');
+  const [chosenSide, setSide] = useState<string | null>(null);
   const [chosenPlanet, setPlanet] = useState(0);
   const [news, setNews] = useState<Record<string, number>>({});
   const [lost, setLost] = useState<Record<string, number>>({});
@@ -115,11 +120,15 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const target = Math.min(chosenPlanet, Math.max(0, planets.length - 1));
   const targetPlanet = planets.at(target);
   const planetIdOf = (planet: number | undefined): string | null => (planet === undefined ? null : planets[planet]?.id ?? null);
-  const side = only ? 'me' : chosenSide;
+  /** Whose hand this hex is in: mine, or the opponent whose expected action is being set up. */
+  const mine = ownerGiven ?? round.entries.find(e => e.id === tacticalId || e.id === adjustmentId)?.owner ?? 'me';
+  const view = gameAs(game, mine === 'me' ? undefined : mine);
+  const acting = (mine !== 'me' && state.rivals?.[mine]) || state;
+  const side = only ? mine : chosenSide ?? mine;
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, name: opponentName(game, pack, o.id, t) }));
   const shortName = (o: { name: string; faction: string }): string => (pack.factions[o.faction] ? factionShortName(o.faction, o.name) : o.name);
-  const holderOf = (planetId: string): string => (state.control[planetId] === 'enemy' ? planetHolder(game, planetId) ?? 'me' : 'me');
+  const holderOf = (planetId: string): string => (state.control[planetId] === 'enemy' ? state.rivalHolds?.[planetId] ?? planetHolder(game, planetId) ?? 'me' : 'me');
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
   /** Ground units go by planet; one still listed with the system comes off there. */
@@ -132,22 +141,28 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const units = game.enemyUnits[slot]?.[owner] ?? {};
     setEnemyUnits(slot, owner, withCount(units, unit, (units[unit] ?? 0) + amount));
   };
-  const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) =>
-    changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
+  /** The tactical action this hex was opened from: its battle belongs to it, and the fleet limit counts it. */
+  const fightingFor = tacticalId ? round.entries.find((e): e is Entry & TacticalEntry => e.id === tacticalId && e.type === 'tactical') : undefined;
+  const adjusting = adjustmentId ? round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment') : undefined;
+  const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {
+    if (kind === 'losses' && fightingFor) updateEntry(fightingFor.id, withLoss(fightingFor, unit, planetId, amount));
+    else if (kind === 'setup' && adjusting) updateEntry(adjusting.id, { delta: withAdjustedUnit(adjusting.delta, slot, unit, planetId, amount) });
+    else changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
+  };
   const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => {
     if (kind === 'spacedock') setDock(planetId, amount > 0);
     else setPds(planetId, (game.pds[planetId] ?? 0) + amount);
   };
 
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical' && e.systemId === slot && e.status !== 'cancelled');
-  const tactical = onPurchase ? undefined : tacticals.find(e => e.id === tacticalId) ?? tacticals.at(-1);
+  const tactical = onPurchase ? undefined : tacticals.find(e => e.id === tacticalId) ?? tacticals.filter(e => !e.owner).at(-1);
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && stateBeforeEntry(game, plan, tactical.id, pack);
-  const produced = tactical && beforeTactical ? productionPlaces(game, tactical, beforeTactical, pack) : [];
+  const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
   const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) => {
     const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
-    const cost = productionCost(production, game.faction, before.upgrades, pack);
-    const seed = !manualPayments.includes(entry.id) && cost !== productionCost(entry.production, game.faction, before.upgrades, pack);
+    const cost = productionCost(production, view.faction, before.upgrades, pack);
+    const seed = !manualPayments.includes(entry.id) && cost !== productionCost(entry.production, view.faction, before.upgrades, pack);
     const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
     const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
     const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;
@@ -167,7 +182,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
   const keyOfBought = ({ unit, planetId }: BoughtUnit): string => {
     const index = planets.findIndex(p => p.id === planetId);
-    return stackKey('me', unit, index < 0 ? undefined : index);
+    return stackKey(mine, unit, index < 0 ? undefined : index);
   };
   const bought: Record<string, number> = { ...news };
   for (const item of purchases.bought) bought[keyOfBought(item)] = (bought[keyOfBought(item)] ?? 0) + item.count;
@@ -190,7 +205,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       return;
     }
     const planetId = pack.units[kind]?.ground ? targetPlanet?.id ?? null : null;
-    if (side !== 'me') {
+    if (side !== mine) {
       changeEnemy(side, kind, planetId, 1);
       if (mode === 'build') setNews(bumped(news, stackKey(side, kind, pack.units[kind]?.ground ? target : undefined), 1));
     } else if (mode === 'build') purchases.change(kind, planetId, 1);
@@ -204,13 +219,15 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const onToken = ({ kind, owner, planet, key }: PlacedStack) => {
     const planetId = planetIdOf(planet);
     setTapNote(null);
+    // In an opponent's expected action only their own units are theirs to touch.
+    if (mine !== 'me' && owner !== mine) return;
     if (mode === 'build') {
       if ((bought[key] ?? 0) === 0) return;
       if (isStructure(kind) && purchases.changeStructure) {
         purchases.changeStructure(kind, planetId ?? '', -1);
         return;
       }
-      if (owner === 'me' && !isStructure(kind)) {
+      if (owner === mine && !isStructure(kind)) {
         purchases.change(kind, planetId, -1);
         return;
       }
@@ -225,9 +242,9 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       return;
     }
     if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
-    else if (owner === 'me') change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
+    else if (owner === mine) change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
     else changeEnemy(owner, kind, planetId, -1);
-    if (mode === 'battle' && (owner !== 'me' || isStructure(kind))) setLost(bumped(lost, key, 1));
+    if (mode === 'battle' && (owner !== mine || isStructure(kind))) setLost(bumped(lost, key, 1));
   };
 
   const giveBack = (key: string) => {
@@ -237,11 +254,11 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     setLost(bumped(lost, key, -1));
   };
 
-  const myLosses = mergedCounts(round, 'losses', slot).filter(c => c.count < 0);
+  const myLosses = fightingFor ? lossesOf(fightingFor) : mine === 'me' ? mergedCounts(round, 'losses', slot).filter(c => c.count < 0) : [];
   const lossStrip = (owner: string, heading: string) => {
     const session = Object.keys(lost).filter(key => parseKey(key).owner === owner);
     const pictures = [
-      ...(owner === 'me' ? myLosses.map(c => ({
+      ...(owner === mine ? myLosses.map(c => ({
         key: `${c.unit}|${c.planetId}`, kind: c.unit as TokenKind, planetId: c.planetId, count: -c.count, back: () => change('losses', c.unit, c.planetId, 1),
       })) : []),
       ...session.map(key => ({ key, kind: parseKey(key).kind, planetId: planetIdOf(parseKey(key).planet), count: lost[key], back: () => giveBack(key) })),
@@ -272,8 +289,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     );
   };
 
-  const sideFaction = side === 'me' ? game.faction : seated.find(o => o.id === side)?.faction ?? '';
-  const sideUpgrades = side === 'me' ? onPurchase?.upgrades ?? beforeTactical?.upgrades ?? state.upgrades : game.upgrades.opponents[side] ?? [];
+  const sideFaction = side === mine ? view.faction : seated.find(o => o.id === side)?.faction ?? '';
+  const sideUpgrades = side === mine ? onPurchase?.upgrades ?? beforeTactical?.upgrades ?? acting.upgrades : game.upgrades.opponents[side] ?? [];
   const inBuild = mode === 'build';
   const units = UNIT_ORDER.filter(u => pack.units[u]);
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
@@ -293,17 +310,20 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
-  const payer = onPurchase?.before ?? beforeTactical ?? state;
+  const payer = onPurchase?.before ?? beforeTactical ?? acting;
   const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);
   const spendable = readyResources(payer, pack) + payer.tradeGoods;
-  const meters = systemMeters(game, state.systems[slot] ?? {}, state.upgrades, pack);
+  const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.upgrades, pack);
   const meterRows = [
     { key: 'resources', now: spent, of: spendable, over: spent > spendable },
-    { key: 'fleet', now: meters.ships, of: state.fleet, over: meters.ships > state.fleet },
+    { key: 'fleet', now: meters.ships, of: acting.fleet, over: meters.ships > acting.fleet },
     { key: 'capacity', now: meters.load, of: meters.capacity, over: meters.load > meters.capacity },
   ];
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
-  const entryWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
+  // The shop answers for what is bought and how it is paid; a route or a landing has its own block in the editor.
+  const shopPlaces: WarningPlace[] = onPurchase ? ['production', 'payment', 'units'] : ['production', 'payment'];
+  const entryWarnings = (warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [])
+    .filter(w => placesOf(w).some(place => shopPlaces.includes(place)));
 
   const mapValue = game.map[slot];
   const tileId = isOnMap(game, slot) ? tileIdOf(game, slot) : pack.tiles[slot] ? slot : '';
@@ -340,11 +360,14 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
             <strong>{title}</strong>
             <HexRemove label={t('map.sheet.close')} onClick={onClose} />
           </div>
-          {!onPurchase?.changeStructure && (
+          {!onPurchase?.changeStructure && !adjusting && (
             <div className="segment" role="group" aria-label={t('stage.modes')}>
               {MODES.map(m => <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>{t(`stage.mode.${m}`)}</button>)}
             </div>
           )}
+
+          {/* It answers a tap on the hex, so it stands at the top of the panel beside it. */}
+          {tapNote && <p className="warning-text place-warnings" role="status">{t(`stage.tapNote.${tapNote}`)}</p>}
 
           {mode === 'battle' && (
             <>
@@ -356,7 +379,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
           {mode !== 'battle' && (
             <>
-              {!only && (
+              {!only && mine === 'me' && (
                 <div className="segment stage-owners" role="group" aria-label={t('stage.owner')}>
                   {[{ id: 'me', name: t('stage.mine'), color: game.color, faction: '' }, ...seated].map(o => (
                     <button key={o.id} type="button" aria-pressed={side === o.id} onClick={() => setSide(o.id)}>
@@ -374,7 +397,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                   <b>{spent}</b>
                 </div>
               )}
-              {inBuild && side === 'me' && only !== 'build' && (
+              {inBuild && side === mine && only !== 'build' && (
                 <div className="stage-meters" role="group" aria-label={t('stage.meters')}>
                   {meterRows.map(({ key, now, of, over }) => (
                     <div key={key} className={over ? 'stage-meter stage-meter-over' : 'stage-meter'}>
@@ -384,18 +407,12 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                   ))}
                 </div>
               )}
-              {inBuild && side === 'me' && entryWarnings.length > 0 && (
-                <ul className="warning-list" aria-label={t('plan.tactical.warnings')}>
-                  {entryWarnings.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
-                </ul>
-              )}
-              {inBuild && only !== 'build' && !planets.some(p => state.docks.includes(p.id)) && <p className="warning-text">{t('plan.tactical.noDock')}</p>}
+              {inBuild && side === mine && <WarningList warnings={entryWarnings} game={game} pack={pack} />}
+              {inBuild && only !== 'build' && boughtTotal > 0 && !planets.some(p => state.docks.includes(p.id)) && <p className="warning-text place-warnings">{t('plan.tactical.noDock')}</p>}
               <p className="muted">{t(inBuild ? 'stage.buildNote' : 'stage.setupNote')}</p>
               {planets.length > 1 && <p className="muted">{t('stage.planetNote')}</p>}
             </>
           )}
-
-          {tapNote && <p className="warning-text" role="status">{t(`stage.tapNote.${tapNote}`)}</p>}
 
           {mode === 'setup' && (
             <div className="stage-facts">

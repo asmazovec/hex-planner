@@ -191,6 +191,13 @@ test('numbering counts tactical actions only, in entry order; a cancelled one ke
   expect(tacticalNumbers([])).toEqual({});
 });
 
+test('each player counts their own turns: the first action of everyone is 1, wherever it stands in the plan', () => {
+  const action = (id: string, owner?: string, status = 'planned') => ({ id, type: 'tactical', status, owner }) as Entry;
+  const list = [action('a'), action('b', 'hacan'), action('c', 'muaat'), action('d', 'hacan'), action('e'), action('f', 'hacan', 'cancelled'), action('g', 'hacan')];
+  expect(tacticalNumbers(list)).toEqual({ a: 1, b: 1, c: 1, d: 2, e: 2, g: 3 });
+  expect(tacticalNumbers([list[3], list[0], list[1]])).toEqual({ d: 1, a: 1, b: 2 });
+});
+
 test('on long legs a sharp turn stays in its hex instead of cutting the corner past it', () => {
   const slots = ['-4,0', '2,-3', '-3,2'];
   const control = separateRoutes([slots])[0];

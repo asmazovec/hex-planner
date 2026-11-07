@@ -14,7 +14,8 @@ import { EntryUpgrades } from './EntryUpgrades';
 import { PaymentBlock } from './PaymentBlock';
 import { systemName, type TacticalEntry } from './tactical';
 import { TokenTiles } from './TokenTiles';
-import { WarningText } from './WarningText';
+import { placeWarnings } from './warningPlaces';
+import { WarningList } from './WarningText';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
@@ -88,12 +89,16 @@ export function StrategyEditor({
     type: next === 'secondary' ? 'secondary' : 'strategic', forToken: next === 'forToken' ? true : undefined,
   });
 
+  const placer = placeWarnings(warnings);
+  const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
+
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
     <div className="editor-section">
       <TokenTiles
         free={freeTokens(entry, game.expansions)} values={effects.tokens ?? {}} onChange={onTokens}
         pools={rearrange ? { tactic: before.tactic, fleet: before.fleet, strategy: before.strategy } : undefined}
       />
+      {list(placer.at('tokens'))}
     </div>
   );
 
@@ -182,6 +187,7 @@ export function StrategyEditor({
         return (
           <>
             {pickButton('build', t(primary ? 'plan.strategy.buildPrimary' : 'plan.strategy.buildSecondary'), effects.systemId)}
+            {list(placer.at('system'))}
             {(effects.structures?.length ?? 0) > 0 && (
               <p className="muted">
                 {t('plan.strategy.built', {
@@ -193,6 +199,7 @@ export function StrategyEditor({
               ? <button type="button" className="option" aria-pressed="true" onClick={() => onOpenShop(production.systemId, 'units')}>{t('plan.strategy.dock')} · {tile(production.systemId)}</button>
               : pickButton('dock', t('plan.strategy.dock')))}
             {builtLine}
+            {list(placer.at('production'))}
           </>
         );
       case CARD.trade:
@@ -249,6 +256,7 @@ export function StrategyEditor({
               {t('plan.strategy.homeProduction')}
             </button>
             {builtLine}
+            {list(placer.at('production'))}
             <p className="muted">{t(home === null ? 'plan.strategy.noHome' : 'plan.strategy.shopNote')}</p>
           </>
         );
@@ -266,7 +274,7 @@ export function StrategyEditor({
           <>
             <div className="editor-section">
               <strong>{t('plan.strategy.research', { n: count })}</strong>
-              <div className="research-row">
+              <div className="research-row in-card">
                 <button type="button" className="option" aria-pressed={researched > 0} onClick={() => setResearched(researched + 1)}>
                   {t('plan.strategy.researchAdd')}{researched > 0 ? ` · ${researched}` : ''}
                 </button>
@@ -303,6 +311,27 @@ export function StrategyEditor({
     if (!open) onUpdate({ effects: { ...effects, payment: autoPay(before, cost.amount, cost.kind, pack) } });
   };
 
+  const cardWarnings = placer.at('card');
+  const cardBlocks = card && summary && (
+    <>
+      <p className="card-text">
+        {primary ? summary.primary : summary.secondary}
+        {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
+      </p>
+      {mode === 'secondary' && costsStrategyToken(entry) && <p className="muted">{t('plan.strategy.tokenCost')}</p>}
+      {mode === 'forToken' && <p className="muted">{t('plan.strategy.forTokenNote')}</p>}
+      {sections()}
+      {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
+        <PaymentBlock
+          need={cost.amount} payment={payment} state={before} pack={pack} manual={manualPayment} kind={cost.kind}
+          onManual={toggleManual} onChange={next => onUpdate({ effects: { ...effects, payment: next } })}
+        >
+          {list(placer.at('payment'))}
+        </PaymentBlock>
+      )}
+    </>
+  );
+
   return (
     <div className="strategy-editor panel-stack">
       <h2>{t(`plan.strategy.title.${mode}`)}</h2>
@@ -322,34 +351,15 @@ export function StrategyEditor({
         ))}
       </div>
       <p className="muted strategy-lock">{locked && t('plan.strategy.locked')}</p>
+      {/* The mode and the card decide these; a warning whose block is not on the screen stands here too, where it cannot be missed. */}
+      {list([...cardWarnings, ...placer.rest()])}
       {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
-      {card && summary && (
-        <>
-          <p className="card-text">
-            {primary ? summary.primary : summary.secondary}
-            {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
-          </p>
-          {mode === 'secondary' && costsStrategyToken(entry) && <p className="muted">{t('plan.strategy.tokenCost')}</p>}
-          {mode === 'forToken' && <p className="muted">{t('plan.strategy.forTokenNote')}</p>}
-          {sections()}
-          {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
-            <PaymentBlock
-              need={cost.amount} payment={payment} state={before} pack={pack} manual={manualPayment} kind={cost.kind}
-              onManual={toggleManual} onChange={next => onUpdate({ effects: { ...effects, payment: next } })}
-            />
-          )}
-        </>
-      )}
+      {cardBlocks}
       {entry.card !== CARD.technology && (entry.upgrades?.length ?? 0) > 0 && (
         <div className="editor-section">
           <strong>{t('plan.strategy.upgrades')}</strong>
           {upgradeRow}
         </div>
-      )}
-      {warnings.length > 0 && (
-        <ul className="warning-list" aria-label={t('plan.tactical.warnings')}>
-          {warnings.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
-        </ul>
       )}
       <div className="strategy-foot">
         <button type="button" onClick={onCancel}>{t('plan.strategy.cancel')}</button>

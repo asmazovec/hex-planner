@@ -6,7 +6,8 @@ const MAP_STRING = '66 22 61 19 72 24 110 79 48 106 117 33 41 71 28 44 46 30 58 
 
 const tile = (page: Page, n: number) => page.getByRole('button', { name: `Tile ${n}`, exact: true });
 const entry = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
-const actions = (page: Page) => page.getByRole('region', { name: 'Actions' }).getByRole('listitem');
+/** The entries themselves: a warning inside one is a list item too. */
+const actions = (page: Page) => page.getByRole('region', { name: 'Actions' }).locator('.entry');
 
 /** The map glides after a tap on the active system; wait until the element stops before a drag aims at it. */
 async function centreWhenStill(target: Locator): Promise<{ x: number; y: number }> {
@@ -89,7 +90,7 @@ test('a game from the first screen to an exported file, and back offline', async
     await page.getByRole('group', { name: 'Horizon' }).getByRole('button', { name: 'Take one Infantry' }).click();
     await expect(page.getByRole('heading', { name: 'Cargo on board: 1 of 4' })).toBeVisible();
     await page.getByRole('button', { name: 'Fly' }).click();
-    await page.getByRole('button', { name: 'Add one Infantry' }).click();
+    await page.getByRole('button', { name: 'Land one Infantry' }).click();
     await page.getByRole('button', { name: 'Done editing' }).click();
     await expect(entry(page, 'Tactical action · 66')).toBeVisible();
   });
@@ -102,7 +103,7 @@ test('a game from the first screen to an exported file, and back offline', async
     await page.getByRole('button', { name: 'Edit: Tactical action · 66' }).click();
     await expect(page.getByRole('group', { name: "Landing on Hope's End" })).toBeVisible();
     // A real edit: drop the landing, and the reading no longer has that step.
-    await page.getByRole('button', { name: 'Remove one Infantry' }).click();
+    await page.getByRole('button', { name: 'Give back Infantry' }).click();
     await page.getByRole('button', { name: 'Done editing' }).click();
     await entry(page, 'Tactical action · 66').click();
     await expect(page.getByText('Fly 58 → 110 → 66')).toBeVisible();
@@ -130,7 +131,8 @@ test('a game from the first screen to an exported file, and back offline', async
   });
 
   await test.step('play a strategy card', async () => {
-    // First tap makes the card the backup, the second the main one.
+    // The first tap shows the card, the second makes it the backup, the third the main one.
+    await page.getByRole('button', { name: '5 Trade' }).click();
     await page.getByRole('button', { name: '5 Trade' }).click();
     await page.getByRole('button', { name: '5 Trade' }).click();
     await page.getByRole('button', { name: 'Add action' }).click();
@@ -185,6 +187,235 @@ test('a game from the first screen to an exported file, and back offline', async
     await expect(page.getByRole('radio', { name: 'Русский' })).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByText('Язык')).toBeVisible();
   });
+});
+
+test('the tabs of the left drawers stay beside the map through the actions, and only a phone hides them with the map', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'The Argent Flight' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Paste map' }).click();
+  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Build map' }).click();
+
+  const players = page.locator('.drawer-tab-left').first();
+  const legend = page.locator('.drawer-tab-left').last();
+  const tabsStay = async () => {
+    await expect(players).toBeVisible();
+    await expect(legend).toBeVisible();
+  };
+  await tabsStay();
+
+  // Choosing the active system takes the editor to the plan.
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action' }).click();
+  await tile(page, 66).click();
+  await expect(page.getByText('Active system: 66')).toBeVisible();
+  await tabsStay();
+
+  // A route does the same.
+  await dragRoute(page, [58, 110, 66]);
+  await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+  await tabsStay();
+
+  // The drawer really opens from there.
+  await players.click();
+  await expect(players).toHaveAttribute('aria-pressed', 'true');
+  await page.getByTestId('drawer-scrim').click({ position: { x: 1100, y: 400 } });
+  await expect(players).toHaveAttribute('aria-pressed', 'false');
+  await page.getByRole('button', { name: 'Done editing' }).click();
+  await tabsStay();
+
+  // A strategy card opens in the plan.
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Strategic action' }).click();
+  await tabsStay();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
+  await tabsStay();
+
+  // On a phone the plan replaces the map, and the tabs go with it.
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.getByRole('button', { name: 'Plan', exact: true }).click();
+  await expect(players).toBeHidden();
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await expect(players).toBeVisible();
+});
+
+test('a route is drawn by a finger, tapped on, and drawn on again, and the panel adds and removes sources', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'The Argent Flight' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Paste map' }).click();
+  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Build map' }).click();
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action' }).click();
+  await tile(page, 66).click();
+
+  // The field chooses another system while the action is empty.
+  await page.getByRole('button', { name: /^Active system: 66/ }).click();
+  await tile(page, 61).click();
+  await expect(page.getByText('Active system: 61')).toBeVisible();
+  await page.getByRole('button', { name: /^Active system: 61/ }).click();
+  await tile(page, 66).click();
+  await expect(page.getByText('Active system: 66')).toBeVisible();
+
+  // A real finger: a stroke lifted half way, then a tap removes nothing it should not, then the stroke goes on.
+  await dragRoute(page, [58, 110]);
+  const hint = page.getByRole('status');
+  await expect(hint).toContainText('finish on the active system');
+  await expect(tile(page, 110)).toHaveClass(/tile-path/);
+  await tile(page, 79).click();
+  await expect(tile(page, 79)).toHaveClass(/tile-path/);
+  await dragRoute(page, [79, 66]);
+  await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+  await expect(hint).toHaveCount(0);
+  await page.getByRole('button', { name: 'Close picker' }).click();
+  await expect(page.getByRole('button', { name: /^58 via 110, 79/ })).toBeVisible();
+
+  // Taps first, the finger after.
+  await tile(page, 110).click();
+  await tile(page, 48).click();
+  await dragRoute(page, [48, 66]);
+  await expect(page.getByText('Flight 110 → 66')).toBeVisible();
+  await page.getByRole('button', { name: 'Remove route' }).click();
+
+  // The button only starts a route from the source; it is recorded on reaching the active system. The cross takes it away.
+  await page.getByRole('button', { name: 'Add source' }).click();
+  await tile(page, 110).click();
+  await expect(page.getByText('Flight 110 → 66')).toHaveCount(0);
+  await expect(tile(page, 110)).toHaveClass(/tile-path/);
+  await tile(page, 66).click();
+  await expect(page.getByText('Flight 110 → 66')).toBeVisible();
+  await page.getByRole('button', { name: 'Close picker' }).click();
+  await page.getByRole('button', { name: 'Remove source 110' }).click();
+  await expect(page.getByRole('button', { name: 'Remove source 110' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Remove source 58' })).toBeVisible();
+});
+
+test('a link makes a named game, opens it again, and asks when it disagrees with the save', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  const link = `/?name=Friday&exp=pok&factions=argent,sol,hacan&map=${MAP_STRING.split(' ').slice(0, 6).join('+')}`;
+
+  // No such save: the game is made, opened and saved, and the address tells all about it.
+  await page.goto(link);
+  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Friday');
+  await expect(page.getByRole('button', { name: 'Plan & map' })).toBeVisible();
+  await expect.poll(() => new URL(page.url()).searchParams.get('name')).toBe('Friday');
+  expect(new URL(page.url()).searchParams.get('factions')).toMatch(/^[0-9a-f]{3},[0-9a-f]{3},[0-9a-f]{3}$/);
+
+  // The address can be reloaded or passed on as it is: the same save opens, and nothing is asked.
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Game', exact: true }).click();
+  const before = page.url();
+  await page.reload();
+  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Friday');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect.poll(() => page.url()).toBe(before);
+
+  // The same link: the save opens, nothing is asked and nothing is added.
+  await page.goto(link);
+  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Friday');
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.locator('.saved-list strong', { hasText: /^Friday$/ })).toHaveCount(1);
+
+  // Another map under the same name: the player chooses, and ignoring keeps the save.
+  await page.goto('/?name=Friday&exp=pok&factions=argent,sol,hacan&map=30');
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toContainText('map tiles');
+  await dialog.getByRole('button', { name: 'Ignore the link, open the save' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Friday');
+
+  // Again, and this time a new game under another name, beside the save.
+  await page.goto('/?name=Friday&exp=pok&factions=argent,sol,hacan&map=30');
+  await expect(dialog.getByRole('textbox', { name: 'Name of the new game' })).toHaveValue('Friday 2');
+  await dialog.getByRole('button', { name: 'Create a new game' }).click();
+  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Friday 2');
+  await expect(page.locator('.saved-list strong', { hasText: /^Friday( 2)?$/ })).toHaveCount(2);
+});
+
+test('a flight loops in the details by default, and with the setting off plays once on details and once on done', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('ti4.lang', 'en');
+    // Every run mounts a new layer, so counting the layers counts the plays.
+    const seen = new WeakSet<Element>();
+    const counter = window as unknown as { flights: number };
+    counter.flights = 0;
+    new MutationObserver(() => {
+      for (const layer of document.querySelectorAll('.flight-layer')) {
+        if (!seen.has(layer)) {
+          seen.add(layer);
+          counter.flights += 1;
+        }
+      }
+    }).observe(document, { childList: true, subtree: true });
+  });
+  const flights = () => page.evaluate(() => (window as unknown as { flights: number }).flights);
+  /** Waits out the flight and the pause a loop would take before the next one. */
+  const staysAt = async (count: number) => {
+    await expect.poll(flights).toBe(count);
+    await expect(page.locator('.flight-layer')).toHaveCount(0, { timeout: 15000 });
+    await page.waitForTimeout(1500);
+    expect(await flights()).toBe(count);
+  };
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'The Argent Flight' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Paste map' }).click();
+  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'Build map' }).click();
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action' }).click();
+  await tile(page, 66).click();
+  await dragRoute(page, [58, 110, 66]);
+  await page.getByRole('button', { name: 'Take one Carrier' }).click();
+  await page.getByRole('button', { name: 'Done editing' }).click();
+
+  const row = entry(page, 'Tactical action · 66');
+
+  // On by default: the details keep flying.
+  await row.click();
+  await expect.poll(flights, { timeout: 20000 }).toBeGreaterThanOrEqual(2);
+  await row.click();
+  await expect(page.locator('.flight-layer')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Game', exact: true }).click();
+  await page.getByRole('button', { name: 'Loop flights' }).click();
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+
+  // Off: one play on opening the details, and another on opening them again.
+  let count = await flights();
+  await row.click();
+  count += 1;
+  await staysAt(count);
+  await row.click();
+  await row.click();
+  count += 1;
+  await staysAt(count);
+  await row.click();
+
+  // Off: one play on marking it done, none on taking the mark back.
+  await page.getByRole('listitem', { name: 'Tactical action · 66' }).getByRole('checkbox', { name: 'Done' }).check();
+  count += 1;
+  await staysAt(count);
+  await page.getByRole('listitem', { name: 'Tactical action · 66' }).getByRole('checkbox', { name: 'Done' }).uncheck();
+  await page.waitForTimeout(500);
+  expect(await flights()).toBe(count);
 });
 
 test('a faction whose home is not on the pasted map starts at its seat and can send a route', async ({ page }) => {

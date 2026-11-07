@@ -182,5 +182,11 @@ test('a pickup from a planet counts in the cargo, production in the fleet line',
     { ground: { nestphar: { infantry: 2 } } }, { cruiser: 3 },
   );
   expect(screen.getByText('Cargo on board: 1 of 0')).toBeVisible();
-  expect(screen.getByText('Fleet pool: 4 of 3')).toBeVisible();
+  // Over the limit the line gives way to the warning, in the look of every warning.
+  expect(screen.queryByText('Fleet pool: 4 of 3')).toBeNull();
+});
+
+test('within the limit the fleet line stands as a quiet note', () => {
+  setup([{ from: SOURCE, units: { cruiser: 1 } }], {}, { cruiser: 1 });
+  expect(screen.getByText('Fleet pool: 2 of 3')).toHaveClass('muted');
 });

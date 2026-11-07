@@ -1,7 +1,7 @@
 import { hexLayout } from '../../domain/hexLayout';
 import { fightersFly, isOnMap, sourceSlot, systemPlanets, systemsAdjacent, tileIdOf } from '../../domain/project';
 import { flightDuration, joinShare, type CurveSegment, type RouteShape } from '../../domain/route';
-import type { DataPack, Entry, Game, GameState, UnitCounts, UnitId, Warning } from '../../domain/types';
+import type { AdjustmentDelta, DataPack, Entry, Game, GameState, UnitCounts, UnitId } from '../../domain/types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -29,6 +29,54 @@ export function addUnits(target: UnitCounts, units: UnitCounts): UnitCounts {
   const sum = { ...target };
   for (const id of Object.keys(units) as UnitId[]) sum[id] = (sum[id] ?? 0) + (units[id] ?? 0);
   return sum;
+}
+
+/** Nothing of the action is filled in yet, so its system can still change. */
+export const isUntouched = (entry: TacticalEntry): boolean =>
+  entry.moves.length === 0 && entry.landings.length === 0 && !hasUnits(entry.production) && !hasUnits(entry.losses) && !entry.groundLosses
+  && entry.payment.planets.length === 0 && entry.payment.tradeGoods === 0;
+
+/** What the battle of an action cost: each kept as a negative count, as the round's merged losses are. */
+export function lossesOf(entry: TacticalEntry): { unit: UnitId; planetId: string | null; count: number }[] {
+  const of = (units: UnitCounts, planetId: string | null) =>
+    (Object.keys(units) as UnitId[]).filter(unit => (units[unit] ?? 0) > 0).map(unit => ({ unit, planetId, count: -(units[unit] ?? 0) }));
+  return [...of(entry.losses ?? {}, null), ...Object.entries(entry.groundLosses ?? {}).flatMap(([planetId, units]) => of(units, planetId))];
+}
+
+/**
+ * One more lost (-1) or given back (1), in space or on a planet; nothing left leaves no trace in the entry. A unit this
+ * action lands that falls in its battle never makes the landing: it leaves the landing and counts as lost on the way.
+ */
+export function withLoss(entry: TacticalEntry, unit: UnitId, planetId: string | null, amount: number): Partial<TacticalEntry> {
+  const landing = entry.landings.find(l => l.planetId === planetId);
+  if (planetId !== null && amount < 0 && landing && (landing.units[unit] ?? 0) > 0) {
+    const units = withCount(landing.units, unit, (landing.units[unit] ?? 0) + amount);
+    return {
+      landings: hasUnits(units) ? entry.landings.map(l => (l === landing ? { ...l, units } : l)) : entry.landings.filter(l => l !== landing),
+      losses: withCount(entry.losses ?? {}, unit, (entry.losses?.[unit] ?? 0) - amount),
+    };
+  }
+  if (planetId === null) {
+    const units = withCount(entry.losses ?? {}, unit, (entry.losses?.[unit] ?? 0) - amount);
+    return { losses: hasUnits(units) ? units : undefined };
+  }
+  const { [planetId]: here = {}, ...others } = entry.groundLosses ?? {};
+  const units = withCount(here, unit, (here[unit] ?? 0) - amount);
+  const groundLosses = hasUnits(units) ? { ...others, [planetId]: units } : others;
+  return { groundLosses: Object.keys(groundLosses).length > 0 ? groundLosses : undefined };
+}
+
+/** A signed change of one unit in a manual adjustment: in the space of its system, or on a planet. */
+export function withAdjustedUnit(delta: AdjustmentDelta, slot: string, unit: UnitId, planetId: string | null, amount: number): AdjustmentDelta {
+  const shifted = (units: UnitCounts): UnitCounts => {
+    const { [unit]: count = 0, ...rest } = units;
+    return count + amount === 0 ? rest : { ...rest, [unit]: count + amount };
+  };
+  if (planetId === null) return { ...delta, units: { systemId: slot, units: shifted(delta.units?.units ?? {}) } };
+  const { [planetId]: here = {}, ...others } = delta.ground ?? {};
+  const units = shifted(here);
+  const ground = Object.keys(units).length > 0 ? { ...others, [planetId]: units } : others;
+  return { ...delta, units: delta.units ?? { systemId: slot, units: {} }, ground: Object.keys(ground).length > 0 ? ground : undefined };
 }
 
 /** Where a system's units can come from: its space area, then its planets that hold ground units. */
@@ -97,25 +145,23 @@ export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): 
   });
 }
 
-export interface RouteArrow { from: string; via: string[]; to: string; warn?: boolean; pickups: { slot: string; count: number }[] }
+export interface RouteArrow { from: string; via: string[]; to: string; pickups: { slot: string; count: number }[] }
 
 const countOf = (units: UnitCounts): number => Object.values(units).reduce<number>((sum, n) => sum + (n ?? 0), 0);
 
-/** One arrow per source system, flagged when the projection warned about one of its moves. */
-export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry, warnings: Warning[]): RouteArrow[] {
+/** One arrow per source system. */
+export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry): RouteArrow[] {
   const to = entry.systemId;
   if (to === null) return [];
   return sourcesOf(game, pack, entry).filter(from => from !== to).map(from => {
     const group = groupOf(game, pack, entry.moves, from);
-    const flagged = warnings.some(w => (w.code === 'capacityGroup' && w.params.from === from)
-      || (w.code === 'unitsMissing' && group.some(m => m.from === w.params.where)));
     const taken = new Map<string, number>();
     for (const move of group) {
       const slot = move.pickupOf === undefined ? null : sourceSlot(game, pack, move.from);
       if (slot !== null) taken.set(slot, (taken.get(slot) ?? 0) + countOf(move.units));
     }
     return {
-      from, to, via: viaOf(entry, from), warn: flagged,
+      from, to, via: viaOf(entry, from),
       pickups: [...taken].filter(([, count]) => count > 0).map(([slot, count]) => ({ slot, count })),
     };
   });

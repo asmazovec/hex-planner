@@ -3,16 +3,17 @@ import { loadPack } from '../data/loadPack';
 import { changeOnBoard, type MergedChange } from '../domain/losses';
 import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
+import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
 import { startingDocks } from '../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
 import { toggleUpgrade } from '../domain/unitStats';
 import { slotKeyOf } from '../domain/layouts';
-import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
+import { placeStartUnits, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
 } from '../domain/types';
-import { loadGame, saveGame } from '../storage/db';
+import { loadGame, saveGame, listGames } from '../storage/db';
 
 const HISTORY_LIMIT = 50;
 
@@ -139,6 +140,13 @@ export interface GameStore {
   saveError: string | null;
   canUndo: boolean;
   newGame(input: { expansions: ExpansionId[]; playerCount: number; faction: string }, pack: DataPack): void;
+  /** A link names a save and disagrees with it; nothing changes until the player chooses. */
+  linkConflict: { share: ShareParams; savedId: string; name: string; differences: ShareDifference[]; taken: string[] } | null;
+  /** Follows a link: finds the save it names, opens it, makes it, or asks. Without a name it only fills the draft. */
+  openShareLink(search: string): Promise<void>;
+  resolveLinkConflict(choice: { keepSaved: true } | { newName: string }): Promise<void>;
+  /** Names the open game, or the draft while none is open. */
+  setName(name: string): void;
   /** Turns the draft into the open game. */
   startGame(): void;
   /** Leaves the open game, which stays saved, for a new draft. */
@@ -152,7 +160,8 @@ export interface GameStore {
   swapSeats(a: number, b: number): void;
   /** Loads a saved game by id; an unknown id leaves the current game alone. */
   openGame(id: string): Promise<void>;
-  addEntry(roundNo: number, body: EntryBody, phase: Phase): string;
+  /** `owner` is the opponent it is expected of; without it the entry is mine. */
+  addEntry(roundNo: number, body: EntryBody, phase: Phase, owner?: string): string;
   /** The round's one status entry: created on first use, its id afterwards. */
   addStatusEntry(roundNo: number): string;
   updateEntry(id: string, patch: Partial<EntryBody>): void;
@@ -242,21 +251,66 @@ export const useGame = create<GameStore>((set, get) => {
     else set(state => ({ draft: edit(state.draft, loadPack(state.draft.expansions)) }));
   };
 
+  const startFromShare = (share: ShareParams): void => {
+    const game = draftFromShare(share, get().draft, loadPack);
+    if (game.faction) {
+      history = [];
+      replace(placeStartUnits(game, loadPack(game.expansions)));
+      set({ draft: newDraft(game.expansions) });
+    } else {
+      set({ draft: game });
+    }
+  };
+
   return {
     game: null,
     draft: newDraft(),
     saveError: null,
     canUndo: false,
+    linkConflict: null,
 
     newGame: (input, pack) => {
       history = [];
       replace(createGame(input, pack));
     },
+    openShareLink: async search => {
+      const share = readShareLink(search);
+      if (!share || get().game) return;
+      /** A game whose player is known starts at once; otherwise it waits in the draft for the choice of a faction. */
+      if (!share.name) {
+        set(state => ({ draft: draftFromShare(share, state.draft, loadPack) }));
+        return;
+      }
+      const saves = await listGames();
+      const found = saves.find(save => save.name === share.name);
+      const saved = found ? await loadGame(found.id) : null;
+      if (!saved) {
+        startFromShare(share);
+        return;
+      }
+      const differences = shareDifferences(share, saved, loadPack);
+      if (differences.length === 0) await get().openGame(saved.id);
+      else set({ linkConflict: { share, savedId: saved.id, name: share.name, differences, taken: saves.flatMap(save => save.name ?? []) } });
+    },
+    resolveLinkConflict: async choice => {
+      const conflict = get().linkConflict;
+      if (!conflict) return;
+      set({ linkConflict: null });
+      if ('keepSaved' in choice) await get().openGame(conflict.savedId);
+      else startFromShare({ ...conflict.share, name: choice.newName });
+    },
+    setName: name => commitPlayers(g => {
+      const next = name.trim();
+      if (next === (g.name ?? '')) return g;
+      const { name: old, ...rest } = g;
+      void old;
+      return next ? { ...rest, name: next } : rest;
+    }),
     startGame: () => {
       const { draft } = get();
       if (!draft.faction) return;
       history = [];
-      replace(draft);
+      replace(placeStartUnits(draft, loadPack(draft.expansions)));
       set({ draft: newDraft(draft.expansions) });
     },
     closeGame: () => {
@@ -268,7 +322,8 @@ export const useGame = create<GameStore>((set, get) => {
     addOpponent: () => commitPlayers(addPlayer),
     removeOpponent: index => commitPlayers((g, pack) => removePlayer(g, index + 1, pack)),
     setFaction: faction => commitPlayers((g, pack) => setPlayerFaction(g, 0, faction, pack)),
-    swapSeats: (a, b) => commitPlayers((g, pack) => swapSeats(g, a, b, pack)),
+    // The seats are settled when the game starts: its units and plans stand on them.
+    swapSeats: (a, b) => { if (!get().game) commitPlayers((g, pack) => swapSeats(g, a, b, pack)); },
     openGame: async id => {
       const loaded = await loadGame(id);
       if (!loaded) return;
@@ -276,9 +331,9 @@ export const useGame = create<GameStore>((set, get) => {
       set({ game: withFractureTiles(loaded), canUndo: false, saveError: null });
     },
 
-    addEntry: (roundNo, body, phase) => {
+    addEntry: (roundNo, body, phase, owner) => {
       const id = newId();
-      const entry = { ...body, id, phase, status: 'planned' } as Entry;
+      const entry = { ...body, id, phase, status: 'planned', ...(owner ? { owner } : {}) } as Entry;
       commit(g => editRound(g, roundNo, r => ({ ...r, entries: [...r.entries, entry] })));
       return id;
     },

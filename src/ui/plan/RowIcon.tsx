@@ -9,6 +9,7 @@ const ICONS = {
   game: <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9" />,
   plan: <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3zM9 4v13M15 7v13" />,
   export: <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14" />,
+  chevron: <path d="M6 9l6 6 6-6" />,
 };
 
 /** The icons of a plan row. */

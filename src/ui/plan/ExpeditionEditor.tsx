@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
-import type { DataPack, Game, GameState, Payment } from '../../domain/types';
+import type { DataPack, Game, GameState, Payment, Warning } from '../../domain/types';
 import { PaymentBlock } from './PaymentBlock';
 import type { SliceOwners } from './ExpeditionWidget';
+import { placeWarnings } from './warningPlaces';
+import { WarningList } from './WarningText';
 
 const NO_PAYMENT: Payment = { planets: [], tradeGoods: 0 };
 
@@ -16,11 +18,12 @@ export interface ExpeditionEditorProps {
   owners: SliceOwners;
   /** The state just before the entry. */
   before: GameState;
+  warnings?: Warning[];
   onChange: (patch: { sliceId?: string | null; payment?: Payment }) => void;
 }
 
 /** Choice of the expedition part and its payment. A part taken by someone else cannot be chosen. */
-export function ExpeditionEditor({ sliceId, payment, owners, before, pack, onChange }: ExpeditionEditorProps) {
+export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack, warnings = [], onChange }: ExpeditionEditorProps) {
   const { t } = useTranslation();
   const [manual, setManual] = useState(false);
   const cost = EXPEDITION_SLICES.find(s => s.id === sliceId)?.cost;
@@ -32,6 +35,10 @@ export function ExpeditionEditor({ sliceId, payment, owners, before, pack, onCha
     setManual(false);
     onChange({ sliceId: id, payment: pays ? autoPay(before, next.amount, next.kind as 'resources' | 'influence', pack) : NO_PAYMENT });
   };
+
+  const placer = placeWarnings(warnings);
+  const sliceWarnings = placer.at('slice');
+  const paymentWarnings = paidWith ? placer.at('payment') : [];
 
   return (
     <div className="panel-stack">
@@ -46,6 +53,8 @@ export function ExpeditionEditor({ sliceId, payment, owners, before, pack, onCha
           </button>
         ))}
       </div>
+      {/* A part paid in trade goods has no payment block: its shortage stands by the choice of the part. */}
+      <WarningList warnings={[...sliceWarnings, ...placer.rest()]} game={game} pack={pack} />
       {paidWith && (
         <PaymentBlock
           need={paidWith.amount} kind={paidWith.kind as 'resources' | 'influence'} payment={payment} state={before} pack={pack}
@@ -55,7 +64,9 @@ export function ExpeditionEditor({ sliceId, payment, owners, before, pack, onCha
             if (!open) onChange({ payment: autoPay(before, paidWith.amount, paidWith.kind as 'resources' | 'influence', pack) });
           }}
           onChange={next => onChange({ payment: next })}
-        />
+        >
+          <WarningList warnings={paymentWarnings} game={game} pack={pack} />
+        </PaymentBlock>
       )}
     </div>
   );

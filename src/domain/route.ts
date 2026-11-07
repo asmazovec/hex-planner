@@ -23,6 +23,27 @@ export function slotToPixel(slot: string): Point {
 
 const NEIGHBOURS = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
 
+/** The way across each edge of a hex: edge 0 is at the top and numbers go clockwise, as hyperlane lines count them. */
+const ACROSS_EDGE = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]];
+
+export const oppositeEdge = (edge: number): number => (edge + 3) % 6;
+
+/** The slot on the other side of an edge; null for a key that is no `q,r`. */
+export function slotAcross(slot: string, edge: number): string | null {
+  const at = parseSlot(slot);
+  return at && `${at.q + ACROSS_EDGE[edge][0]},${at.r + ACROSS_EDGE[edge][1]}`;
+}
+
+/** Hexes between two slots by the grid alone, holes in the map or not; 1 for a key that is no `q,r`. */
+export function gridDistance(a: string, b: string): number {
+  const p = parseSlot(a);
+  const s = parseSlot(b);
+  if (!p || !s) return 1;
+  const q = p.q - s.q;
+  const r = p.r - s.r;
+  return Math.max(Math.abs(q), Math.abs(r), Math.abs(q + r));
+}
+
 /** Plain grid neighbours: wormholes and hyperlanes are not interpreted. */
 export function areAdjacent(a: string, b: string): boolean {
   const p = parseSlot(a);
@@ -46,6 +67,12 @@ export function routeFromPath(path: string[], active: string): RouteDraft | null
   if (path.length < 2) return null;
   const flight = path[0] === active ? [...path].reverse() : path;
   return flight.at(-1) === active ? { from: flight[0], via: flight.slice(1, -1) } : null;
+}
+
+/** What stays of a stroke lifted short of the end: the active system is where a route ends, never a hex on its way. */
+export function pausedPath(path: string[], active: string): string[] {
+  const at = path.indexOf(active);
+  return at > 0 ? path.slice(0, at) : path;
 }
 
 /** One tap in arrow mode. `onActive` is a tap on the active system with no route under way. */
@@ -336,11 +363,12 @@ export function focusRect(slots: string[]): Rect | null {
 /** The order number of each tactical action of a round, in entry order. A cancelled one keeps no number. */
 export function tacticalNumbers(entries: Entry[]): Record<string, number> {
   const numbers: Record<string, number> = {};
-  let next = 1;
+  const counted = new Map<string | undefined, number>();
   for (const entry of entries) {
     if (entry.type === 'tactical' && entry.status !== 'cancelled') {
+      const next = (counted.get(entry.owner) ?? 0) + 1;
+      counted.set(entry.owner, next);
       numbers[entry.id] = next;
-      next += 1;
     }
   }
   return numbers;

@@ -2,7 +2,7 @@ import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Game } from '../domain/types';
 import { migrate } from './schema';
 
-export interface GameSummary { id: string; faction: string; playerCount: number; updatedAt: number; }
+export interface GameSummary { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; }
 
 interface StoredGame extends GameSummary { game: Game; }
 interface Ti4DB extends DBSchema { games: { key: string; value: StoredGame }; }
@@ -22,8 +22,8 @@ function db(): Promise<IDBPDatabase<Ti4DB>> {
 }
 
 export async function saveGame(game: Game): Promise<void> {
-  const { id, faction, playerCount } = game;
-  await (await db()).put('games', { id, faction, playerCount, updatedAt: Date.now(), game });
+  const { id, name, faction, playerCount } = game;
+  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game });
 }
 
 export async function loadGame(id: string): Promise<Game | null> {
@@ -35,7 +35,7 @@ export async function loadGame(id: string): Promise<Game | null> {
 export async function listGames(): Promise<GameSummary[]> {
   const all = await (await db()).getAll('games');
   return all
-    .map(({ id, faction, playerCount, updatedAt }) => ({ id, faction, playerCount, updatedAt }))
+    .map(({ id, name, faction, playerCount, updatedAt }) => ({ id, name, faction, playerCount, updatedAt }))
     .sort((a, b) => b.updatedAt - a.updatedAt);
 }
 

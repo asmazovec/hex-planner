@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode  } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { curveThrough, type Point, type RouteShape } from '../../domain/route';
@@ -16,7 +16,8 @@ import { capFit } from './viewLimits';
 import { animates, usePanZoom } from './usePanZoom';
 
 /** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
-export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape }
+export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape;
+  /** The colour of the opponent whose action this is. */ player?: number }
 
 /** The route under way, in the order it was drawn. The screen point is given while a finger pulls it. */
 export interface RouteDraftView { path: string[]; reverse?: boolean; clientX?: number; clientY?: number }
@@ -111,7 +112,7 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 /** A line from the last hex to the pointer. It follows the pointer by itself, so a move renders nothing. */
-function PreviewLine({ start, clientX, clientY, reverse }: { start: Point; clientX: number; clientY: number; reverse?: boolean }) {
+function PreviewLine({ start, clientX, clientY, reverse, outline }: { start: Point; clientX: number; clientY: number; reverse?: boolean; outline?: boolean }) {
   const ref = useRef<SVGLineElement>(null);
   useLayoutEffect(() => {
     const place = (x: number, y: number) => {
@@ -127,7 +128,7 @@ function PreviewLine({ start, clientX, clientY, reverse }: { start: Point; clien
     window.addEventListener('pointermove', onMove);
     return () => window.removeEventListener('pointermove', onMove);
   }, [clientX, clientY]);
-  return <line ref={ref} x1={start.x} y1={start.y} x2={start.x} y2={start.y} className="route-pull" markerEnd={reverse ? undefined : 'url(#arrow-head)'} />;
+  return <line ref={ref} x1={start.x} y1={start.y} x2={start.x} y2={start.y} className={outline ? 'route-casing' : 'route-pull'} markerEnd={reverse ? undefined : `url(#${outline ? 'arrow-head-casing' : 'arrow-head'})`} />;
 }
 
 const svgPath = (points: Point[]): string => `M${points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`;
@@ -168,20 +169,20 @@ const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrows: Arro
       )}
       <g mask="url(#route-gaps)">
         {arrows.map(a => (
-          <g key={a.key} className={`route route-${a.tone}${a.warn ? ' arrow-warn' : ''}`} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
-            {a.shape.segments.map((segment, i) => (
-              <Fragment key={i}>
-                <path d={svgPath(segment.points)} className={`route-casing${segment.gap ? ' route-gap' : ''}`} />
-                <path d={svgPath(segment.points)} className={`route-line${segment.gap ? ' route-gap' : ''}`} />
-              </Fragment>
-            ))}
+          <g key={a.key} className={`route route-${a.tone}`} style={a.player ? { '--route': `var(--player-${a.player})` } as CSSProperties : undefined} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
+            <g className="route-casings">
+              {a.shape.segments.map((segment, i) => <path key={i} d={svgPath(segment.points)} className={`route-casing${segment.gap ? ' route-gap' : ''}`} />)}
+              <polygon points={arrowHead(a.shape.curve)} className="route-head-casing" />
+            </g>
+            {a.shape.segments.map((segment, i) => <path key={i} d={svgPath(segment.points)} className={`route-line${segment.gap ? ' route-gap' : ''}`} />)}
             {a.shape.segments.slice(1).map((segment, i) => <circle key={i} cx={segment.points[0].x.toFixed(1)} cy={segment.points[0].y.toFixed(1)} r={4} className="route-dot" />)}
             <polygon points={arrowHead(a.shape.curve)} className="route-head" />
           </g>
         ))}
       </g>
       {arrows.map(a => (
-        <g key={a.key} className={`route route-badge route-${a.tone}${a.warn ? ' arrow-warn' : ''}`} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
+        <g key={a.key} className={`route route-badge route-${a.tone}`} style={a.player ? { '--route': `var(--player-${a.player})` } as CSSProperties : undefined} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
+          <polygon points={BADGE_HEX} className="route-badge-casing" />
           <polygon points={BADGE_HEX} className="route-badge-hex" />
           <text y={4} className="route-badge-number">{a.number}</text>
         </g>
@@ -204,13 +205,18 @@ const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrows: Arro
 function RouteDraftLine({ draft }: { draft: RouteDraftView }) {
   const points = draft.path.map(slotToPixel);
   const curve = curveThrough(points);
+  const pulled = draft.clientX !== undefined && draft.clientY !== undefined
+    ? { start: points[points.length - 1], clientX: draft.clientX, clientY: draft.clientY, reverse: draft.reverse }
+    : null;
   return (
     <g className="routes route route-active route-draft">
+      <g className="route-casings">
+        {points.length > 1 && <path d={svgPath(curve)} className="route-casing" />}
+        {pulled && <PreviewLine {...pulled} outline />}
+      </g>
       {points.length > 1 && <path d={svgPath(curve)} className="route-line" />}
       {points.slice(0, -1).map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} className="route-dot" />)}
-      {draft.clientX !== undefined && draft.clientY !== undefined && (
-        <PreviewLine start={points[points.length - 1]} clientX={draft.clientX} clientY={draft.clientY} reverse={draft.reverse} />
-      )}
+      {pulled && <PreviewLine {...pulled} />}
     </g>
   );
 }
@@ -307,6 +313,10 @@ export function HexMap({
       <defs>
         <marker id="arrow-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 Z" className="arrow-head" />
+        </marker>
+        {/* The same head at the same size: a marker scales with its line by default, and the outline's line is wider. */}
+        <marker id="arrow-head-casing" viewBox="0 0 10 10" refX="8" refY="5" markerUnits="userSpaceOnUse" markerWidth="24" markerHeight="24" orient="auto-start-reverse" overflow="visible">
+          <path d="M0,0 L10,5 L0,10 Z" className="arrow-head-casing" />
         </marker>
       </defs>
       <g transform={`translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`}>

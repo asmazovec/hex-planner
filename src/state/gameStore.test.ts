@@ -342,14 +342,14 @@ describe('players', () => {
     expect(project(game, game.plans[0], 'now', pok).state.vp).toBe(3);
   });
 
-  test('an opponent faction goes through the home tile rule, a seat swap moves the tile', () => {
+  test('an opponent faction goes through the home tile rule, and in a started game the seats stay', () => {
     open();
     useGame.getState().setOpponent(0, { faction: 'hacan' });
     const slots = seatSlots(4, pok, useGame.getState().game!.layout);
     expect(useGame.getState().game!.map[slots[1]]).toBe('16');
+    const before = useGame.getState().game;
     useGame.getState().swapSeats(1, 2);
-    expect(useGame.getState().game!.map[slots[2]]).toBe('16');
-    expect(useGame.getState().game!.map[slots[1]]).toBeUndefined();
+    expect(useGame.getState().game).toBe(before);
   });
 });
 

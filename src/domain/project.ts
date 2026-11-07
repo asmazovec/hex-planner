@@ -1,9 +1,11 @@
 import { EXPEDITION_SLICES, readyPlanetIds, type PaymentKind } from './payment';
 import { absentHomePlanets, CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, homePlanets, homeSlot, startingDocks, STATUS_TOKENS, type CardEntry } from './strategy';
-import { areAdjacent, type Adjacency } from './route';
+import { rotateLanes } from './lanes';
+import { gameAs } from './players';
+import { areAdjacent, gridDistance, oppositeEdge, slotAcross, type Adjacency } from './route';
 import { productionCost, unitStats } from './unitStats';
 import type {
-  DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
+  Anomaly, DataPack, Entry, Game, GameState, Payment, Phase, Plan, PlanetDef, Projection, UnitCounts, UnitId, Warning,
 } from './types';
 
 export { productionCost };
@@ -31,6 +33,152 @@ export const systemsAdjacent = (game: Game): Adjacency => (a, b) =>
 
 /** Every slot holding a system. */
 export const systemSlots = (game: Game): string[] => [...Object.keys(game.map), ...Object.keys(game.fracture.tiles ?? {})];
+
+const routeGraphs = new WeakMap<Game, Map<string, string[]>>();
+
+const tileAt = (game: Game, slot: string, pack: DataPack) => pack.tiles[tileIdOf(game, slot)];
+const isLane = (game: Game, slot: string, pack: DataPack): boolean => tileAt(game, slot, pack)?.kind === 'hyperlane';
+
+/** The edges a line of this hyperlane leads to from one edge, or from any with none given. A tile whose lines the data lacks joins all its sides. */
+function laneExits(game: Game, slot: string, entry: number | null, pack: DataPack): number[] {
+  const known = tileAt(game, slot, pack)?.lanes;
+  if (!known) return [0, 1, 2, 3, 4, 5].filter(edge => edge !== entry);
+  const turns = Number((game.map[slot] ?? '').split('@')[1] ?? 0) % 6 || 0;
+  const lanes = rotateLanes(known, turns);
+  if (entry === null) return lanes.flat();
+  return lanes.flatMap(([a, b]) => (a === entry ? [b] : b === entry ? [a] : []));
+}
+
+/** The systems at the far ends of the lines leaving a hyperlane, through any hyperlanes that follow it. */
+function systemsAlongLanes(game: Game, slot: string, entry: number | null, pack: DataPack, seen = new Set<string>()): string[] {
+  return laneExits(game, slot, entry, pack).flatMap(edge => {
+    const next = slotAcross(slot, edge);
+    if (next === null || !isOnMap(game, next)) return [];
+    if (!isLane(game, next, pack)) return [next];
+    const arrival = `${next}:${oppositeEdge(edge)}`;
+    if (seen.has(arrival)) return [];
+    seen.add(arrival);
+    return systemsAlongLanes(game, next, oppositeEdge(edge), pack, seen);
+  });
+}
+
+/** What a ship can step to from each system: its neighbours, those a hyperlane's line joins it to, and those sharing a wormhole with it. */
+function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
+  const known = routeGraphs.get(game);
+  if (known) return known;
+  const slots = systemSlots(game);
+  const adjacent = systemsAdjacent(game);
+  const holes = (slot: string) => tileAt(game, slot, pack)?.wormholes ?? [];
+  const stepsOf = (slot: string): string[] => {
+    if (isLane(game, slot, pack)) return systemsAlongLanes(game, slot, null, pack);
+    const across = [0, 1, 2, 3, 4, 5].flatMap(edge => {
+      const next = slotAcross(slot, edge);
+      if (next === null || !isOnMap(game, next) || !adjacent(slot, next)) return [];
+      return isLane(game, next, pack) ? systemsAlongLanes(game, next, oppositeEdge(edge), pack) : [next];
+    });
+    return [...across, ...slots.filter(other => holes(slot).some(hole => holes(other).includes(hole)))];
+  };
+  const graph = new Map(slots.map(slot => [slot, [...new Set(stepsOf(slot))].filter(other => other !== slot)]));
+  routeGraphs.set(game, graph);
+  return graph;
+}
+
+const hasAnomaly = (game: Game, slot: string, anomaly: Anomaly, pack: DataPack): boolean => {
+  const tile = tileAt(game, slot, pack);
+  return tile?.anomaly === anomaly || tile?.secondAnomaly === anomaly;
+};
+
+/** A ship can neither enter nor pass: asteroids and a supernova. */
+const closedToRoute = (game: Game, slot: string, pack: DataPack): boolean =>
+  hasAnomaly(game, slot, 'asteroid', pack) || hasAnomaly(game, slot, 'supernova', pack);
+
+/** A ship can enter only to end its move, so only as the active system: a nebula, or a system holding other players' ships. */
+const endsRoute = (game: Game, slot: string, pack: DataPack): boolean =>
+  hasAnomaly(game, slot, 'nebula', pack)
+  || Object.values(game.enemyUnits[slot] ?? {}).some(units => unitIds(units).some(id => !pack.units[id]?.ground));
+
+/** Steps from a system to every system joined to it, whatever stands in the way: this measures a route already drawn. */
+export function routeDistances(game: Game, from: string, pack: DataPack): Map<string, number> {
+  const graph = routeGraph(game, pack);
+  const steps = new Map([[from, 0]]);
+  const queue = [from];
+  for (let i = 0; i < queue.length; i += 1) {
+    for (const next of graph.get(queue[i]) ?? []) {
+      if (steps.has(next)) continue;
+      steps.set(next, steps.get(queue[i])! + 1);
+      queue.push(next);
+    }
+  }
+  return steps;
+}
+
+/** The length of a drawn route: a hyperlane is no system and takes no step. Two systems no way joins, over holes of a map not finished or into the Fracture, count by the grid. */
+export function routeSteps(game: Game, path: string[], pack: DataPack): number {
+  const stops = path.filter(slot => !isLane(game, slot, pack));
+  return stops.slice(1).reduce((sum, slot, i) => sum + (routeDistances(game, stops[i], pack).get(slot) ?? gridDistance(stops[i], slot)), 0);
+}
+
+export const shipSpeed = (game: Game, unit: UnitId, upgrades: UnitId[], pack: DataPack): number | null =>
+  unitStats(game.faction, unit, upgrades.includes(unit), pack)?.move ?? null;
+
+/** How far the fastest ship among these units flies; null without a ship that flies by itself. */
+export function fleetSpeed(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack): number | null {
+  const speeds = unitIds(units).flatMap(id => shipSpeed(game, id, upgrades, pack) ?? []);
+  return speeds.length > 0 ? Math.max(...speeds) : null;
+}
+
+/** A ship's speed having left these systems, the first its start: a start in a nebula makes it 1, a gravity rift adds 1, once a ship. */
+export function routeMove(game: Game, left: string[], speed: number, pack: DataPack): number {
+  const start = hasAnomaly(game, left[0], 'nebula', pack) ? 1 : speed;
+  return start + (left.some(slot => hasAnomaly(game, slot, 'rift', pack)) ? 1 : 0);
+}
+
+/** The systems a ship can still go to from the end of a path, by the rules for anomalies, other players' ships and speed. */
+export function routeReach(game: Game, path: string[], speed: number, active: string, pack: DataPack): Set<string> {
+  const graph = routeGraph(game, pack);
+  const reached = new Set<string>();
+  const start = { slot: path.at(-1)!, steps: routeSteps(game, path, pack), left: path };
+  const queue = [start];
+  const seen = new Map<string, number>();
+  for (let i = 0; i < queue.length; i += 1) {
+    const { slot, steps, left } = queue[i];
+    if (steps >= routeMove(game, left, speed, pack)) continue;
+    for (const next of graph.get(slot) ?? []) {
+      if (closedToRoute(game, next, pack) || (endsRoute(game, next, pack) && next !== active)) continue;
+      reached.add(next);
+      if (next === active) continue;
+      // Having passed a rift is what can change later, so a system is looked at again only with that gained.
+      const passed = [...left, next];
+      const key = `${next}:${passed.some(s => hasAnomaly(game, s, 'rift', pack))}`;
+      if ((seen.get(key) ?? Infinity) <= steps + 1) continue;
+      seen.set(key, steps + 1);
+      queue.push({ slot: next, steps: steps + 1, left: passed });
+    }
+  }
+  for (const slot of path) reached.delete(slot);
+  return reached;
+}
+
+/** Warns about what a route cannot do by the rules: abilities and technologies may still allow it. */
+function checkRoutes(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): void {
+  for (const move of entry.moves) {
+    if (move.pickupOf !== undefined || move.from in pack.planets || move.from === target) continue;
+    if (state.tokensOnMap.includes(move.from)) warnings.push({ code: 'sourceActivated', params: { from: move.from } });
+    const via = move.via ?? [];
+    for (const slot of via) {
+      if (closedToRoute(game, slot, pack) || endsRoute(game, slot, pack)) warnings.push({ code: 'routeBlocked', params: { from: move.from, systemId: slot } });
+    }
+    if (closedToRoute(game, target, pack)) warnings.push({ code: 'routeBlocked', params: { from: move.from, systemId: target } });
+    const left = [move.from, ...via];
+    const steps = routeSteps(game, [...left, target], pack);
+    for (const unit of unitIds(move.units)) {
+      const speed = shipSpeed(game, unit, state.upgrades, pack);
+      if (speed === null) continue;
+      const moves = routeMove(game, left, speed, pack);
+      if (moves < steps) warnings.push({ code: 'speedShort', params: { from: move.from, unit, move: moves, steps } });
+    }
+  }
+}
 
 /** Planets of a system; the Thunder's Edge planet belongs to the system the expedition put it in. */
 function planetsOf(game: Game, systemId: string, pack: DataPack): string[] {
@@ -242,7 +390,9 @@ function placeProduction(
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
 ): void {
+  if (entry.losses) take(state.systems, target, entry.losses, warnings);
   landUnits(state, target, entry, warnings);
+  for (const [planetId, units] of Object.entries(entry.groundLosses ?? {})) take(state.ground, planetId, units, warnings);
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
 }
 
@@ -252,6 +402,7 @@ export function productionPlaces(game: Game, entry: TacticalEntry, before: GameS
   if (target === null) return [];
   const state = structuredClone(before);
   applyMoves(game, state, target, entry, pack, []);
+  if (entry.losses) take(state.systems, target, entry.losses, []);
   landUnits(state, target, entry, []);
   return placesOf(game, state, target, entry.production, pack, entry.productionGround);
 }
@@ -276,6 +427,7 @@ function applyTactical(
     state.tactic -= 1;
     if (!state.tokensOnMap.includes(target)) state.tokensOnMap.push(target);
   }
+  checkRoutes(game, state, target, entry, pack, warnings);
   const groups = applyMoves(game, state, target, entry, pack, warnings);
   for (const [from, units] of Object.entries(groups)) {
     const group = capacity(game, units, state.upgrades, pack);
@@ -429,21 +581,49 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
   return warnings;
 }
 
+/** An opponent counted like me: what stands on the map for them is where they begin. */
+function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameState {
+  const pick = (record: Game['enemyUnits']) => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => (byOwner[id] ? [[place, { ...byOwner[id] }]] : [])));
+  return { ...initialState(view, pack), systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
+}
+
 function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack, stopBefore?: string): Projection {
   const state = initialState(game, pack);
   const warningsByEntry: Record<string, Warning[]> = {};
   const takenSlices = new Set<string>();
+  const views = new Map(game.opponents.map(o => [o.id, gameAs(game, o.id)]));
+  const rivals: Record<string, GameState> = Object.fromEntries(game.opponents.map(o => [o.id, rivalState(game, views.get(o.id)!, o.id, pack)]));
+  if (game.opponents.length > 0) {
+    state.rivals = rivals;
+    state.rivalHolds = {};
+  }
   const rounds = [...plan.rounds].sort((a, b) => a.number - b.number);
   for (const round of rounds) {
     state.exhausted = [];
     state.tokensOnMap = [];
+    for (const rival of Object.values(rivals)) {
+      rival.exhausted = [];
+      rival.tokensOnMap = [];
+    }
     const primaries: (number | undefined)[] = [];
+    const rivalPrimaries: Record<string, (number | undefined)[]> = {};
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {
         if (entry.phase !== phase) continue;
         if (entry.id === stopBefore) return { state, warningsByEntry };
         if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
-        warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, primaries);
+        const rival = entry.owner ? rivals[entry.owner] : undefined;
+        if (rival && entry.owner) {
+          warningsByEntry[entry.id] = applyEntry(views.get(entry.owner)!, rival, entry, pack, takenSlices, (rivalPrimaries[entry.owner] ??= []));
+          if (entry.type === 'tactical') {
+            for (const { planetId } of entry.landings) {
+              state.control[planetId] = 'enemy';
+              if (state.rivalHolds) state.rivalHolds[planetId] = entry.owner;
+            }
+          }
+        } else {
+          warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, primaries);
+        }
       }
     }
   }
@@ -454,5 +634,8 @@ export const project = (game: Game, plan: Plan, filter: 'now' | 'forecast', pack
   replay(game, plan, filter, pack);
 
 /** The state just before an entry applies: by default the forecast, what that entry can move and pay with. */
-export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack, filter: 'now' | 'forecast' = 'forecast'): GameState =>
-  replay(game, plan, filter, pack, entryId).state;
+export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack, filter: 'now' | 'forecast' = 'forecast'): GameState => {
+  const { state } = replay(game, plan, filter, pack, entryId);
+  const owner = plan.rounds.flatMap(r => r.entries).find(e => e.id === entryId)?.owner;
+  return (owner && state.rivals?.[owner]) || state;
+};
