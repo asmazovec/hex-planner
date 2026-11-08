@@ -17,7 +17,7 @@ describe('LRR 23 Component Limitations', () => {
         [primary(CARD.leadership, { tokens: { tactic: 3 } }), last],
       ],
     });
-    expect(codesOf(game, pack, last)).toContain('reinforcementsEmpty');
+    expect(codesOf(game, pack, last)).toContain('noReinforcements');
   });
 
   test.todo('23.3: depleted unlimited tokens may be replaced by a substitute — not modelled: physical tokens');
