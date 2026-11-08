@@ -2,8 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { seatSlots } from '../../domain/mapBuilder';
 import { fractureSlots } from '../../domain/thundersEdge';
-import { fractureFrame } from './HexMap';
-import { HEX_SIZE, hexToPixel, mapBounds } from './geometry';
+import { fractureFrame, HEX_SIZE, hexToPixel, mapBounds } from './geometry';
 import { NUMBER_FONT } from './TileView';
 import { capFit, clampView } from './viewLimits';
 

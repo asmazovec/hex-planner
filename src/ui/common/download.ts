@@ -1,12 +1,12 @@
 import type { Game } from '../../domain/types';
 import { exportGame } from '../../storage/transfer';
+import { lastExport } from './preferences';
 
-export const LAST_EXPORT_KEY = 'ti4.lastExportAt';
 export const EXPORTED_EVENT = 'ti4:exported';
 
 /** Remembers when a file copy was made, so the reminder can stay quiet for a while. */
 function markExported(): void {
-  try { localStorage.setItem(LAST_EXPORT_KEY, String(Date.now())); } catch { /* the reminder returns on the next visit */ }
+  lastExport.write(Date.now());
   window.dispatchEvent(new Event(EXPORTED_EVENT));
 }
 

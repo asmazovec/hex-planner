@@ -10,7 +10,7 @@ import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { hexPoints, slotToPixel } from './geometry';
-import { opponentName } from './opponentName';
+import { opponentName } from '../players/names';
 
 export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
 

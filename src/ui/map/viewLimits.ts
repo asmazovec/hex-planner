@@ -1,11 +1,11 @@
+import type { Rect } from './geometry';
+
 /** `x` and `y` move the map centre away from the viewport centre, in the units of `Size`. */
 export interface View { x: number; y: number; scale: number }
 export interface Size { width: number; height: number }
 export interface HexRect { left: number; right: number; top: number; bottom: number }
 /** The rectangle the limits apply to, at scale 1; its centre may lie away from the origin of the view. */
 export interface LimitRect extends Size { centerX?: number; centerY?: number }
-// TODO(P2-270) #ws:ui-structure #type:dup #size:s #geometry — Локальная копия Rect из domain/route (через geometry.ts): импортировать
-interface Rect { x: number; y: number; width: number; height: number }
 
 /** The part of the viewport the map must keep covering on each axis. */
 const KEPT_SHARE = 1 / 3;

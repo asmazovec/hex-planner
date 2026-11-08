@@ -5,6 +5,12 @@ import en from './en.json';
 
 export type Language = 'ru' | 'en';
 
+/** The languages to choose from, each named in itself. */
+export const LANGUAGES: { code: Language; label: string }[] = [
+  { code: 'ru', label: 'Русский' },
+  { code: 'en', label: 'English' },
+];
+
 const STORAGE_KEY = 'ti4.lang';
 
 function readStoredLanguage(): Language {

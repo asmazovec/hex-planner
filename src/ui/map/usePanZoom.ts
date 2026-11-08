@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject } from 'react';
 import type { Rect } from './geometry';
+import { reducedMotion } from '../common/motion';
 import { clampView, type View } from './viewLimits';
 
 export type { View };
@@ -18,11 +19,6 @@ const FIRST_FRAME_MS = 16;
 const FOCUS_SMOOTHING_MS = 130;
 
 const clampScale = (v: number) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, v));
-// TODO(P2-235) #ws:ui-structure #type:arch #size:s #motion #energy — reducedMotion/animates — настройка приложения, а не жест карты (их берут Drawer, SummaryBar, PlanScreen), и сами читают data-energy мимо common/energy.ts: перенести в common/motion.ts
-/** The system's setting, or the app's energy saving: everything that plays motion asks here. */
-export const reducedMotion = () => document.documentElement.dataset.energy === 'on' || (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false);
-/** Without motion, or where the browser cannot say, things go straight to their end. */
-export const animates = (): boolean => typeof window.matchMedia === 'function' && !reducedMotion();
 /** The tile under a press. */
 const tileAt = (target: EventTarget | null): Element | null =>
   (target instanceof Element ? target.closest('[data-slot]') : null);

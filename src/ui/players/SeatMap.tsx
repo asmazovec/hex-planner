@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { playersOf } from '../../domain/players';
 import type { DataPack, Game } from '../../domain/types';
-import { factionShortName } from './factionName';
+import { hexPoints } from '../map/geometry';
+import { factionShortName } from './names';
 import type { SeatDrag } from './useSeatDrag';
 
 const STEP_X = 39;
@@ -19,11 +20,6 @@ const parseSlot = (key: string): [number, number] => {
   const [q, r] = key.split(',').map(Number);
   return position(q, r);
 };
-// TODO(P2-466) #ws:ui-structure #type:dup #size:s #hex-geometry — третий генератор вершин гекса (есть map/geometry.ts и FactionCard): общая функция геометрии
-const hexPoints = (x: number, y: number): string => Array.from({ length: 6 }, (_, i) => {
-  const angle = (Math.PI / 3) * i;
-  return `${(x + HEX_RADIUS * Math.cos(angle)).toFixed(1)},${(y + HEX_RADIUS * Math.sin(angle)).toFixed(1)}`;
-}).join(' ');
 
 export interface SeatMapProps {
   game: Game;
@@ -58,14 +54,14 @@ export function SeatMap({ game, pack, drag, ghostRef, locked = false }: SeatMapP
       >
         {slots.map(s => {
           const [x, y] = position(s.q, s.r);
-          return <polygon key={`${s.q},${s.r}`} points={hexPoints(x, y)} className="seat-cell" />;
+          return <polygon key={`${s.q},${s.r}`} points={hexPoints(HEX_RADIUS, { x, y }, 1)} className="seat-cell" />;
         })}
         {seats.map((key, i) => {
           const [x, y] = parseSlot(key);
           const occupant = players.findIndex(p => p.seat === i + 1);
           return (
             <polygon
-              key={key} points={hexPoints(x, y)} className="seat-spot" data-seat={i + 1} data-seat-spot={i + 1}
+              key={key} points={hexPoints(HEX_RADIUS, { x, y }, 1)} className="seat-spot" data-seat={i + 1} data-seat-spot={i + 1}
               onPointerDown={occupant >= 0 && !locked ? e => drag.onPointerDown(occupant, e) : undefined}
             />
           );

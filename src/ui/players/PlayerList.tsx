@@ -4,10 +4,8 @@ import { loadPack } from '../../data/loadPack';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
 import type { UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-// TODO(P2-464) #ws:ui-structure #type:arch #size:s — карточка фракции лежит в plan/, а нужна только списку игроков: перенести в players/ вместе с FactionComponents
-import { FactionCard } from '../plan/FactionCard';
-// TODO(P2-465) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — HexRemove из фичевой папки plan/: импортировать из primitives/
-import { HexRemove } from '../plan/RowIcon';
+import { FactionCard } from './FactionCard';
+import { HexRemove } from '../primitives/Icon';
 import { FactionPicker } from './FactionPicker';
 import type { SeatDrag } from './useSeatDrag';
 

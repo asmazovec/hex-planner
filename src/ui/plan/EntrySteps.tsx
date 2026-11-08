@@ -5,11 +5,13 @@ import { strategyCards } from '../../domain/cards';
 import { sourceSlot, tacticalMeters } from '../../domain/project';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId } from '../../domain/types';
-import { opponentName } from '../map/opponentName';
+import { currentLanguage } from '../../i18n';
+import { opponentName } from '../players/names';
 import { playerColour } from '../units/sprites';
 import { TokenPicture } from '../units/UnitToken';
 import { UNIT_ORDER } from '../units/unitOrder';
-import { fliesNow, groupOf, hasUnits, sourcesOf, systemName, viaOf, type TacticalEntry } from './tactical';
+import { fliesNow, groupOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from './tactical';
+import { systemName } from '../map/systemName';
 
 const PICTURE_PX = 32;
 
@@ -41,9 +43,8 @@ export interface EntryStepsProps {
 
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
 export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
-  const { t, i18n } = useTranslation();
-  // TODO(P2-342) #ws:ui-structure #type:dup #size:s — язык выводится вручную; currentLanguage() из i18n, как в остальных
-  const lang = i18n.language === 'en' ? 'en' : 'ru';
+  const { t } = useTranslation();
+  const lang = currentLanguage();
   const name = (slot: string) => systemName(game, pack, slot);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} game={game} t={t} />;
   const planetName = (id: string) => pack.planets[id]?.name ?? id;

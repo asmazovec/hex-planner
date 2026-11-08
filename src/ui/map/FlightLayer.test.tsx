@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { curveSegments, separateRoutes } from '../../domain/route';
+import { curveSegments, separateRoutes } from './geometry';
 import type { FlightRoute } from '../plan/tactical';
 import { FlightLayer } from './FlightLayer';
 

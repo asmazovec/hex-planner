@@ -3,7 +3,7 @@ import { loadPack } from '../../data/loadPack';
 import { hexLayout } from '../../domain/hexLayout';
 import { createGame } from '../../domain/newGame';
 import { project } from '../../domain/project';
-import { routeShapes } from '../../domain/route';
+import { routeShapes } from '../map/geometry';
 import type { Entry, Game, GameState } from '../../domain/types';
 import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
 
