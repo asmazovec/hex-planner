@@ -1,9 +1,10 @@
 /** Strategy cards: the primary as a strategic action and the secondary, with their cost, tokens and what the replay tracks of them. */
 import { violation } from '../rules/registry';
 import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, type CardEntry } from '../strategy';
+import { checkStationStructures } from '../thundersEdge';
 import type { DataPack, Game, GameState, Warning } from '../types';
 import { pay } from './payment';
-import { placeProduction } from './production';
+import { checkProduction, placeProduction } from './production';
 import { addUpgrades } from './state';
 import { checkTokensGiven } from './status';
 import { checkSystem } from './transport';
@@ -62,8 +63,12 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + 1;
     else if (!state.docks.includes(planetId)) state.docks.push(planetId);
   }
-  // TODO(P2-030) #ws:production #type:check #rule:99.3 #test:099-warfare #size:s #warfare #card-production — Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production
+  warnings.push(...checkStationStructures(effects.structures ?? [], pack));
   if (effects.production) {
+    // Warfare's secondary uses one space dock in the home system (99.3); another card, a dock of its system.
+    const source = !primary && entry.card === CARD.warfare ? 'homeDock' : 'card';
+    const { systemId, units, ground } = effects.production;
+    warnings.push(...checkProduction(game, state, systemId, units, pack, ground, source, 'card'));
     placeProduction(game, state, effects.production.systemId, effects.production.units, pack, effects.production.ground);
     warnings.push(...checkSystem(game, state, effects.production.systemId, pack));
   }

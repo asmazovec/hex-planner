@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { autoPay, EXPEDITION_SLICES } from '../../../domain/payment';
+import { autoPay, EXPEDITION_SLICES, techSlicePlanets } from '../../../domain/payment';
 import type { DataPack, Game, GameState, Payment, Warning } from '../../../domain/types';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import type { SliceOwners } from '../../drawers/ExpeditionWidget';
@@ -31,17 +31,22 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
   const cost = EXPEDITION_SLICES.find(s => s.id === sliceId)?.cost;
   const paidWith = cost?.kind === 'resources' || cost?.kind === 'influence' ? cost : null;
 
-  // TODO(P2-365) #ws:thunders-edge #type:bug #rule:expedition-4.5 #test:te-expedition — часть технологий без cost получает пустую оплату и считается оплаченной; нужна оплата истощением своей планеты с технологической специализацией
+  // The technology part is paid by exhausting one planet of mine with a technology specialty.
+  const techPlanet = EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet === true;
+  const techPlanets = techSlicePlanets(before, pack);
   const choose = (id: string | null) => {
-    const next = EXPEDITION_SLICES.find(s => s.id === id)?.cost;
+    const slice = EXPEDITION_SLICES.find(s => s.id === id);
+    const next = slice?.cost;
     const pays = next?.kind === 'resources' || next?.kind === 'influence';
     setManual(false);
-    onChange({ sliceId: id, payment: pays ? autoPay(before, next.amount, next.kind as 'resources' | 'influence', pack) : NO_PAYMENT });
+    const payment = pays ? autoPay(before, next.amount, next.kind as 'resources' | 'influence', pack)
+      : slice?.techPlanet && techPlanets.length > 0 ? { planets: [techPlanets[0]], tradeGoods: 0 } : NO_PAYMENT;
+    onChange({ sliceId: id, payment });
   };
 
   const placer = placeWarnings(warnings);
   const sliceWarnings = placer.at('slice');
-  const paymentWarnings = paidWith ? placer.at('payment') : [];
+  const paymentWarnings = paidWith || techPlanet ? placer.at('payment') : [];
 
   return (
     <div className="panel-stack">
@@ -71,6 +76,21 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
         >
           <WarningList warnings={paymentWarnings} game={game} pack={pack} />
         </PaymentBlock>
+      )}
+      {techPlanet && (
+        <div className="editor-section" role="group" aria-label={t('expedition.techPlanet')}>
+          <strong>{t('expedition.techPlanet')}</strong>
+          {techPlanets.length === 0 && <p className="muted">{t('expedition.noTechPlanet')}</p>}
+          {techPlanets.map(id => (
+            <button
+              key={id} type="button" className="option" aria-pressed={payment.planets.includes(id)}
+              onClick={() => onChange({ payment: payment.planets.includes(id) ? NO_PAYMENT : { planets: [id], tradeGoods: 0 } })}
+            >
+              {pack.planets[id]?.name ?? id}
+            </button>
+          ))}
+          <WarningList warnings={paymentWarnings} game={game} pack={pack} />
+        </div>
       )}
     </div>
   );

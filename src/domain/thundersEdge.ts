@@ -1,6 +1,9 @@
 import { clockwiseAngle, hexDistance, seatSlots, slotsFor } from './mapBuilder';
 import { slotKeyOf } from './layouts';
-import type { DataPack, Entry, Game, MapLayout, TileDef } from './types';
+import { isStation, planetsOf } from './replay/board';
+import { othersIn } from './replay/production';
+import { violation } from './rules/registry';
+import type { DataPack, Entry, Game, GameState, MapLayout, TileDef, Warning } from './types';
 
 /**
  * Thunder's Edge goes into a system with no planet, no supernova and no printed wormhole (TE rules).
@@ -99,4 +102,25 @@ export function withFractureMoved(before: Game, next: Game, pack: DataPack): Gam
       rounds: plan.rounds.map(round => ({ ...round, entries: round.entries.map(entry => movedEntry(entry, to)) })),
     })),
   };
+}
+
+/** Check: ground forces cannot land on a space station (space stations 4). The landing itself is left as written. */
+export const checkStationLandings = (entry: Extract<Entry, { type: 'tactical' }>, pack: DataPack): Warning[] =>
+  entry.landings.filter(l => isStation(pack, l.planetId) && Object.values(l.units).some(n => (n ?? 0) > 0))
+    .map(l => violation('stationGround', { planetId: l.planetId }));
+
+/** Check: a structure cannot be put on a space station (space stations 4). */
+export const checkStationStructures = (structures: { planetId: string }[], pack: DataPack): Warning[] =>
+  structures.filter(s => isStation(pack, s.planetId)).map(s => violation('stationStructure', { planetId: s.planetId }));
+
+/**
+ * Effect: being the only player with units in a system gives control of its space stations (space stations 2); leaving
+ * keeps it. Other players' ships still there mean a combat first, so nothing changes (2.1).
+ */
+export function claimStations(game: Game, state: GameState, systemId: string, pack: DataPack): void {
+  const stations = planetsOf(game, systemId, pack).filter(id => isStation(pack, id));
+  if (stations.length === 0 || othersIn(game, state, systemId, pack, true)) return;
+  const mine = [state.systems[systemId], ...planetsOf(game, systemId, pack).map(id => state.ground[id])]
+    .some(units => Object.values(units ?? {}).some(n => (n ?? 0) > 0));
+  if (mine) for (const id of stations) state.control[id] = 'me';
 }

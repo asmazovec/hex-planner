@@ -26,6 +26,18 @@ const PLACES: Record<WarningCode, WarningPlace[]> = {
   poolNegative: ['tokens'],
   systemHasToken: ['system'],
   constructionUnits: ['production'],
+  // production, thunders-edge
+  noProduction: ['production'],
+  productionBlockaded: ['production'],
+  blockaded: ['production'],
+  productionOver: ['production'],
+  reinforcementsOut: ['production'],
+  productionPlace: ['production'],
+  scarProduction: ['production'],
+  expeditionUnpaid: ['payment'],
+  expeditionTwicePerTurn: ['slice'],
+  stationGround: ['landing'],
+  stationStructure: ['system'],
 };
 
 export const placesOf = (warning: Warning): WarningPlace[] => PLACES[warning.code];

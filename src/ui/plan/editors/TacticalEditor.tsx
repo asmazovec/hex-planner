@@ -45,8 +45,6 @@ export function TacticalEditor({
   const { t } = useTranslation();
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
-  // TODO(P2-309) #ws:production #type:check #rule:67-/-79 #rule:79.4 #test:067-producing-units #test:079-space-dock #duplicate-of-domain #warning-channel — «нет базы» считает UI по before.docks (чужая база тоже засчитывается); нужен код noProduction в домене, hasDock убрать
-  const hasDock = planets.some(p => before.docks.includes(p.id));
   const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.upgrades, pack);
   const cost = priceOf(entry.production);
   const unitsIn = (list: { units: UnitCounts }[]): UnitCounts =>
@@ -172,8 +170,8 @@ export function TacticalEditor({
           <div className="editor-section">
             <strong>{t('plan.tactical.production')} <small className="optional-note">{t('plan.tactical.optional')}</small></strong>
             {hasUnits(entry.production) && <span className="muted">{unitText(entry.production)}</span>}
-            {/* TODO(P2-310) #ws:ui-warnings #type:ui #size:s #dep:P2-309 #warning-channel — своё span.warning-text мимо WarningList; показывать noProduction через placer.at('production') */}
-            {!hasDock && hasUnits(entry.production) && <span className="warning-text place-warnings">{t('plan.tactical.noDock')}</span>}
+            {/* The limits of the system stand in the action's result; here only what the production itself breaks. */}
+            {list(placer.at('production', w => !limitsSystem(w)))}
             <button type="button" onClick={onOpenShop}>{t('plan.tactical.openShop')}</button>
           </div>
 

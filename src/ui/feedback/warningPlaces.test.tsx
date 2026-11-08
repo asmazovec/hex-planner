@@ -211,25 +211,27 @@ describe('the tactical editor', () => {
     expect(screen.queryByText(/\(optional\)/)).toBeNull();
   });
 
-  test('no word about a space dock until something is built', () => {
+  test('no word about a space dock of its own: the domain\'s noProduction stands in the production block', () => {
     useGame.getState().setTile(SOURCE, '25');
     const { unmount } = render(
-      <TacticalEditor
-        game={game()} pack={pack} before={before()} warnings={[]} pickerFrom={null} manualPayment={false} choosing={null} onChoose={() => undefined}
-        entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onFly={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined}
-      />,
-    );
-    expect(screen.queryByText('No space dock in this system.')).toBeNull();
-    unmount();
-    render(
       <TacticalEditor
         game={game()} pack={pack} before={before()} warnings={[]} pickerFrom={null} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
         onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onFly={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined}
       />,
     );
-    expect(screen.getByText('No space dock in this system.')).toBeVisible();
+    expect(screen.queryByText(/with Production/)).toBeNull();
+    unmount();
+    render(
+      <TacticalEditor
+        game={game()} pack={pack} before={before()} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} pickerFrom={null} manualPayment={false} choosing={null} onChoose={() => undefined}
+        entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
+        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onFly={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined}
+      />,
+    );
+    const warning = screen.getByText(/with Production/);
+    expect(warning).toBeVisible();
+    expect(warning.closest('.editor-section')).toHaveTextContent('Production');
   });
 
   test('a warning whose block is not shown is not lost: it stands first, above the blocks', () => {

@@ -289,7 +289,6 @@
       "result": "Action result",
       "optional": "optional",
       "production": "Production",
-      "noDock": "No space dock in this system.",
       "warnings": "Warnings",
       "openShop": "Open the shop",
       "freeToken": "Warfare: no tactic token is spent and no command token goes down.",
@@ -369,7 +368,18 @@
       "constructionUnits": "The card text gives the secondary a structure only: building units here may break the rules.",
       "speedShort": "{{unit}} from {{from}} has speed {{move}}, and the route takes {{steps}} steps.",
       "sourceActivated": "{{from}} already holds your command token: by the rules ships cannot move out of it.",
-      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass."
+      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass.",
+      "noProduction": "{{system}} has no unit of yours with Production for this: an opponent's space dock does not count, and a card may need the one in your home system.",
+      "productionBlockaded": "{{system}} holds other players' ships: by the rules ships cannot be produced there, ground forces can.",
+      "blockaded": "Your space dock in {{system}} is blockaded: other players' ships and none of yours, so it produces no ships.",
+      "productionOver": "Production {{value}}, and {{count}} units are built: each fighter and infantry counts.",
+      "reinforcementsOut": "{{unit}}: {{have}} of {{limit}} are already on the board, the reinforcements hold no more.",
+      "productionPlace": "{{planet}} has no space dock of yours that produces: ground forces go to the planet with the dock.",
+      "scarProduction": "{{system}} is an entropic scar: units in it cannot use Production.",
+      "expeditionUnpaid": "The technology part is paid by exhausting a ready planet of yours with a technology specialty.",
+      "expeditionTwicePerTurn": "One expedition part per turn: this is the second one since your last action.",
+      "stationGround": "{{planet}} is a space station: ground forces cannot land on it.",
+      "stationStructure": "{{planet}} is a space station: structures cannot be placed on it."
     },
     "phases": {
       "strategy": "Strategy",
@@ -493,7 +503,9 @@
     "remove": "Remove",
     "placedAt": "Thunder's Edge in system {{system}}",
     "placeHint": "Tap a highlighted system to place Thunder's Edge.",
-    "part": "Expedition part"
+    "part": "Expedition part",
+    "techPlanet": "Planet to exhaust: one of yours with a technology specialty",
+    "noTechPlanet": "No ready planet of yours has a technology specialty."
   },
   "thundersEdge": {
     "title": "Thunder's Edge",

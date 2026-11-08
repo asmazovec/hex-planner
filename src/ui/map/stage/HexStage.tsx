@@ -409,8 +409,6 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                 </div>
               )}
               {inBuild && side === mine && <WarningList warnings={entryWarnings} game={game} pack={pack} />}
-              {/* TODO(P2-216) #ws:ui-warnings #type:dup #size:s #warning-channel #duplicate-of-domain #test:067-producing-units #test:079-space-dock — «Нет базы» считает UI (вторая копия в TacticalEditor) и рисует p.warning-text: доменный код нарушения через WarningList */}
-              {inBuild && only !== 'build' && boughtTotal > 0 && !planets.some(p => state.docks.includes(p.id)) && <p className="warning-text place-warnings">{t('plan.tactical.noDock')}</p>}
               <p className="muted">{t(inBuild ? 'stage.buildNote' : 'stage.setupNote')}</p>
               {planets.length > 1 && <p className="muted">{t('stage.planetNote')}</p>}
             </>

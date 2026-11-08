@@ -3,12 +3,13 @@
  * 89.4 invasion, 89.5 production and its payment, then the system's limits. Each step checks the state it is given, then
  * changes it; the steps themselves live in their own modules.
  */
+import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { activate, checkActivation } from './activation';
 import { removeGroundLosses, removeLosses } from './combat';
 import { landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
-import { payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
+import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { unitIds, type TacticalEntry } from './state';
 import { capacity, checkGroups, checkSystem, fleetCount, isPickup } from './transport';
 
@@ -25,9 +26,12 @@ function landAndBuild(
 ): void {
   // TODO(P2-019) #ws:combat-order #type:bug #rule:76.2 #rule:89.3 #test:076-ships #test:089-tactical-action #size:m #fleet-pool #capacity #battle — Потери снимаются до проверки флота и до высадки: флот надо проверять при прилёте (37.3), а высадку ограничивать местами на борту после боя (16.3.3). Порядок: прилёт → флот → бой → места на борту → высадка → производство
   removeLosses(state, target, entry, warnings);
+  warnings.push(...checkStationLandings(entry, pack));
   landUnits(state, target, entry, warnings);
   removeGroundLosses(state, entry, warnings);
+  warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround));
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
+  claimStations(game, state, target, pack);
 }
 
 export function applyTactical(

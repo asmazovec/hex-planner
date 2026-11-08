@@ -21,6 +21,8 @@ export interface PlanetDef {
   traits?: PlanetTrait[];
   /** English name of the legendary planet ability; absent for an ordinary planet. */
   legendary?: string;
+  /** A space station (Thunder's Edge): taken by ships alone, it holds no ground forces and no structures. */
+  station?: true;
 }
 
 export type Anomaly = 'asteroid' | 'nebula' | 'supernova' | 'rift' | 'scar';
@@ -344,7 +346,10 @@ export interface GameState {
 /** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */
 export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoods', 'planetExhausted',
   'capacityGroup', 'capacitySystem', 'fleetPool', 'unitsMissing', 'landingOverLimit',
-  'sliceTaken', 'shortStrategy', 'primaryRepeated', 'tokensOver', 'poolNegative', 'systemHasToken', 'constructionUnits', 'speedShort', 'routeBlocked', 'sourceActivated'] as const;
+  'sliceTaken', 'shortStrategy', 'primaryRepeated', 'tokensOver', 'poolNegative', 'systemHasToken', 'constructionUnits', 'speedShort', 'routeBlocked', 'sourceActivated',
+  // production, thunders-edge
+  'noProduction', 'productionBlockaded', 'blockaded', 'productionOver', 'reinforcementsOut', 'productionPlace', 'scarProduction',
+  'expeditionUnpaid', 'expeditionTwicePerTurn', 'stationGround', 'stationStructure'] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
 export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition';

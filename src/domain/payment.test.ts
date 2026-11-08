@@ -89,7 +89,7 @@ describe('EXPEDITION_SLICES', () => {
       { id: 'tg3', cost: { kind: 'tradeGoods', amount: 3 } },
       { id: 'secret' },
       { id: 'cards' },
-      { id: 'tech' },
+      { id: 'tech', techPlanet: true },
     ]);
   });
 });
