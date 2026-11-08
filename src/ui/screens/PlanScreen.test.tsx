@@ -1333,6 +1333,26 @@ test('status points: every player in a stepper with a running total, in the summ
   expect(document.querySelector('.player-card button[aria-label*="points" i]')).toBeNull();
 });
 
+test('the status entry folds like the others: a second tap on its name, or a tap in the panel away from the actions', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
+  const row = () => within(screen.getByRole('listitem', { name: 'Tokens and points' }));
+  const label = () => row().getByRole('button', { name: 'Tokens and points' });
+  expect(row().getByText('Distribute tokens: 2 left')).toBeVisible();
+  // The fields opened with the entry fold on a tap on its name, as the steps of any other action do.
+  await userEvent.click(label());
+  expect(row().queryByText('Distribute tokens: 2 left')).toBeNull();
+  expect(label()).toHaveAttribute('aria-expanded', 'false');
+  await userEvent.click(label());
+  expect(label()).toHaveAttribute('aria-expanded', 'true');
+  fireEvent.pointerDown(document.querySelector('.plan-panel .phase-title')!);
+  expect(label()).toHaveAttribute('aria-expanded', 'false');
+  await userEvent.click(row().getByRole('button', { name: /^Edit/ }));
+  expect(row().getByText('Distribute tokens: 2 left')).toBeVisible();
+  fireEvent.pointerDown(document.querySelector('.plan-panel .phase-title')!);
+  expect(row().queryByText('Distribute tokens: 2 left')).toBeNull();
+});
+
 test('the status phase entry distributes tokens', async () => {
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
