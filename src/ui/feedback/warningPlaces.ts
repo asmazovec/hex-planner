@@ -2,7 +2,7 @@ import type { DataPack, Game, Warning, WarningCode } from '../../domain/types';
 import { groupOf, type Move } from '../plan/tactical';
 
 /** The block of an editor where the thing a warning speaks of is set up. */
-export type WarningPlace = 'route' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action';
+export type WarningPlace = 'route' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action' | 'ready' | 'research';
 
 // TODO(P2-381) #ws:ui-warnings #type:arch — место предупреждения выводится из кода таблицей в UI; брать шаг и место из доменного нарушения, таблицу удалить
 const PLACES: Record<WarningCode, WarningPlace[]> = {
@@ -33,6 +33,14 @@ const PLACES: Record<WarningCode, WarningPlace[]> = {
   actionOutsidePhase: ['action'],
   planetNotControlled: ['payment'],
   readyNotControlled: ['card'],
+  // strategy-cards
+  foreignPrimary: ['card'],
+  ownSecondary: ['card'],
+  secondaryRepeated: ['card'],
+  readyOverLimit: ['ready'],
+  diplomacySystem: ['system'],
+  researchOverLimit: ['research'],
+  researchOwned: ['research'],
 };
 
 export const placesOf = (warning: Warning): WarningPlace[] => PLACES[warning.code];

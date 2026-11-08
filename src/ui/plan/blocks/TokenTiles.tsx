@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { tappedTokens } from '../../../domain/strategy';
 
 const FIELDS = ['tactic', 'fleet', 'strategy'] as const;
 type Field = (typeof FIELDS)[number];
@@ -20,16 +21,7 @@ export function TokenTiles({ free, values, pools, onChange }: TokenTilesProps) {
   const { t } = useTranslation();
   const countOf = (field: Field) => values[field] ?? 0;
   const left = free - FIELDS.reduce((sum, field) => sum + countOf(field), 0);
-  // TODO(P2-339) #ws:strategy-cards #type:arch #duplicate-of-domain — перераспределение Warfare (жетон из самого полного пула) — правило, не UI; в domain/strategy.ts
-  const tap = (field: Field) => {
-    const next: TokenCounts = { ...values, [field]: countOf(field) + 1 };
-    if (pools && left <= 0) {
-      const after = (f: Field) => pools[f] + countOf(f);
-      const source = FIELDS.filter(f => f !== field).reduce((best, f) => (after(f) > after(best) ? f : best));
-      next[source] = countOf(source) - 1;
-    }
-    onChange(next);
-  };
+  const tap = (field: Field) => onChange(tappedTokens(values, field, free, pools));
   const take = (field: Field) => onChange({ ...values, [field]: countOf(field) - 1 });
   const rearranging = pools !== undefined && free === 0;
   return (

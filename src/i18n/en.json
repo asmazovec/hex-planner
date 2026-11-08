@@ -375,7 +375,14 @@
       "passBeforeStrategy": "The pass comes before the strategic action of your card (cards left: {{cards}}): by the rules a player passes only after it.",
       "actionOutsidePhase": "Turns are taken only in the action phase: this action stands in another phase.",
       "planetNotControlled": "{{planet}} is not your planet: by the rules you exhaust only planets you control.",
-      "readyNotControlled": "{{planet}} is not your planet: an effect readies only planets you control."
+      "readyNotControlled": "{{planet}} is not your planet: an effect readies only planets you control.",
+      "foreignPrimary": "This strategy card is not yours this round: its holder resolves the primary ability.",
+      "ownSecondary": "This strategy card is yours: only the other players resolve its secondary ability.",
+      "secondaryRepeated": "The secondary ability of this card has already been resolved this round.",
+      "readyOverLimit": "{{readied}} planets readied, and the card allows at most {{limit}}.",
+      "diplomacySystem": "{{system}}: Diplomacy picks a system with your planet, other than the Mecatol Rex system.",
+      "researchOverLimit": "{{count}} technologies researched, and this ability gives at most {{limit}}.",
+      "researchOwned": "{{unit}}: the upgrade is already researched and is not researched again."
     },
     "phases": {
       "strategy": "Strategy",
@@ -429,6 +436,7 @@
       "techPrimary": "The first is free, the second costs 6 resources. To pay: {{n}}.",
       "techSecondary": "4 resources per technology. To pay: {{n}}.",
       "mecatol": "I control Mecatol Rex: +1 point",
+      "mecatolNone": "Mecatol Rex is not under your control: no point.",
       "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",
       "imperialSecondary": "Draw a secret objective.",
       "tokenNote": "A tap adds a token.",

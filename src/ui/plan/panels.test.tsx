@@ -271,6 +271,14 @@ const CASES: Record<WarningCode, Warning['params']> = {
   actionOutsidePhase: {},
   planetNotControlled: { planetId: 'nestphar' },
   readyNotControlled: { planetId: 'nestphar' },
+  // strategy-cards
+  foreignPrimary: {},
+  ownSecondary: {},
+  secondaryRepeated: {},
+  readyOverLimit: { limit: 2, readied: 3 },
+  diplomacySystem: { systemId: '1,0' },
+  researchOverLimit: { limit: 1, count: 2 },
+  researchOwned: { unit: 'carrier' },
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {

@@ -1,11 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../../data/cardSummaries';
 import { strategyCards } from '../../../data/loadPack';
-import { strategyCardSet } from '../../../domain/cards';
 import { autoPay } from '../../../domain/payment';
 import { opponentsBySeat } from '../../../domain/players';
-import { systemPlanets } from '../../../domain/project';
-import { CARD, cardChange, cardCost, freeTokens, hasChoices, heldCards, homeSlot, playOf, researchCount, startsAsPrimary, withLeadershipTokens, type CardEntry, type CardPatch } from '../../../domain/strategy';
+import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, Warning } from '../../../domain/types';
 import { currentLanguage } from '../../../i18n';
 import { opponentName } from '../../players/names';
@@ -13,15 +11,13 @@ import { UNIT_ORDER } from '../../units/unitOrder';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { systemName } from '../../map/systemName';
-import type { TacticalEntry } from '../tactical';
 import { TokenTiles } from '../blocks/TokenTiles';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { CARD_BLOCKS, type CardKit } from './cards';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
-
-const READY_LIMIT = 2;
 
 export interface StrategyEditorProps {
   game: Game;
@@ -82,7 +78,7 @@ export function StrategyEditor({
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
     <div className="editor-section">
       <TokenTiles
-        free={freeTokens(entry, game.expansions)} values={effects.tokens ?? {}} onChange={onTokens}
+        free={freeTokens(entry, game.expansions, before)} values={effects.tokens ?? {}} onChange={onTokens}
         pools={rearrange ? { tactic: before.tactic, fleet: before.fleet, strategy: before.strategy } : undefined}
       />
       {list(placer.at('tokens'))}
@@ -107,195 +103,12 @@ export function StrategyEditor({
     .map(u => `${t(`unit.${u}`)} ${production.units[u]}`).join(', ');
   const builtLine = builtUnits && <p className="muted">{t('plan.strategy.built', { list: `${tile(production.systemId)}: ${builtUnits}` })}</p>;
 
-  // TODO(P2-336) #ws:strategy-cards #type:arch — один switch на все карты в редакторе; по компоненту на карту (plan/editors/cards/*) вслед за обработчиками карт в домене
-  const sections = () => {
-    switch (entry.card) {
-      case CARD.leadership: {
-        const bought = effects.boughtTokens ?? 0;
-        return (
-          <>
-            {tokenPick(false, tokens => change({ effects: withLeadershipTokens(effects, tokens, primary) }))}
-            <p className="muted">{bought > 0 ? t('plan.strategy.bought', { n: bought, cost: cost.amount }) : t(primary ? 'plan.strategy.boughtNonePrimary' : 'plan.strategy.boughtNoneSecondary')}</p>
-          </>
-        );
-      }
-      case CARD.diplomacy: {
-        // TODO(P2-326) #ws:strategy-cards #type:check #rule:32.2 #rule:32.3 #rule:71-note-3 #test:032-diplomacy #test:071-readied #duplicate-of-domain — какие планеты готовить и лимит READY_LIMIT решает UI (disabled), домен не предупреждает; правило и список планет в domain/strategy.ts, здесь только показ
-        // Only the base primary's text says "that system"; the others ready any of my planets.
-        const unlimited = primary && strategyCardSet(game.expansions) === 'base_game';
-        const readied = effects.readied ?? [];
-        const spent = [...new Set([...before.exhausted.filter(id => before.control[id] === 'me'), ...readied])].flatMap(id => pack.planets[id] ?? []);
-        const here = !unlimited ? spent
-          : effects.systemId ? systemPlanets(game, effects.systemId, pack).filter(p => before.control[p.id] === 'me') : [];
-        return (
-          <>
-            {primary && pickButton('system', t('plan.strategy.systemPrimary'), effects.systemId)}
-            {!unlimited && here.length === 0 && <p className="muted">{t('plan.strategy.noExhausted')}</p>}
-            {here.length > 0 && (
-              <div className="editor-section" role="group" aria-label={t('plan.strategy.ready')}>
-                <strong>{t(unlimited ? 'plan.strategy.ready' : 'plan.strategy.readyTwo')}</strong>
-                <div className="pay-planets">
-                  {here.map(planet => {
-                    const on = readied.includes(planet.id);
-                    return (
-                      <button
-                        key={planet.id} type="button" aria-pressed={on} disabled={!on && !unlimited && readied.length >= READY_LIMIT}
-                        onClick={() => setEffects({ readied: toggled(readied, planet.id) })}
-                      >
-                        {planet.name} {planet.resources}/{planet.influence}{before.exhausted.includes(planet.id) ? ` · ${t('plan.strategy.exhausted')}` : ''}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </>
-        );
-      }
-      case CARD.politics:
-        return (
-          <>
-            {primary && (
-              <div className="editor-section" role="group" aria-label={t('plan.strategy.speaker')}>
-                <strong>{t('plan.strategy.speaker')}</strong>
-                {/* TODO(P2-329) #ws:ui-containers #type:ui #player-choice #needs:prototype — выбор игрока (точка цвета + имя, inline var(--player-…)) собран руками здесь, в Trade ниже, в HexStage и PlanScreen; общий PlayerChoice с PlayerDot */}
-                {opponents.map(o => (
-                  <button
-                    key={o.id} type="button" className="option" aria-pressed={effects.speaker === o.id}
-                    onClick={() => setEffects({ speaker: effects.speaker === o.id ? undefined : o.id })}
-                  >
-                    <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${o.color})` }} />
-                    {named(o.id)}
-                  </button>
-                ))}
-              </div>
-            )}
-            <p className="muted">{t(primary ? 'plan.strategy.politicsPrimary' : 'plan.strategy.politicsSecondary')}</p>
-          </>
-        );
-      case CARD.construction:
-        return (
-          <>
-            {pickButton('build', t(primary ? 'plan.strategy.buildPrimary' : 'plan.strategy.buildSecondary'), effects.systemId)}
-            {list(placer.at('system'))}
-            {(effects.structures?.length ?? 0) > 0 && (
-              <p className="muted">
-                {t('plan.strategy.built', {
-                  list: effects.structures?.map(s => `${t(s.kind === 'pds' ? 'map.pds' : 'map.spaceDock')} (${pack.planets[s.planetId]?.name ?? s.planetId})`).join(', '),
-                })}
-              </p>
-            )}
-            {te && (production
-              ? <button type="button" className="option" aria-pressed="true" onClick={() => onOpenShop(production.systemId, 'units')}>{t('plan.strategy.dock')} · {tile(production.systemId)}</button>
-              : primary && pickButton('dock', t('plan.strategy.dock')))}
-            {builtLine}
-            {list(placer.at('production'))}
-          </>
-        );
-      case CARD.trade:
-        if (!primary) return <p className="muted">{t('plan.strategy.tradeSecondary')}</p>;
-        return (
-          <>
-            <p className="muted">{t('plan.strategy.tradePrimary')}</p>
-            <div className="editor-section" role="group" aria-label={t('plan.strategy.free')}>
-              <strong>{t('plan.strategy.free')}</strong>
-              {/* TODO(P2-330) #ws:ui-containers #type:ui #size:s #player-choice #dep:P2-329 #dep:P2-328 — вторая ручная сборка выбора игрока; PlayerChoice */}
-              {opponents.map(o => (
-                <button
-                  key={o.id} type="button" className="option" aria-pressed={effects.freeSecondary?.includes(o.id) ?? false}
-                  onClick={() => setEffects({ freeSecondary: toggled(effects.freeSecondary, o.id) })}
-                >
-                  <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${o.color})` }} />
-                  {named(o.id)}
-                </button>
-              ))}
-            </div>
-          </>
-        );
-      case CARD.warfare: {
-        if (primary) {
-          if (!te) {
-            return (
-              <>
-                {pickButton('system', t('plan.strategy.liftToken'), effects.systemId)}
-                {tokenPick(true)}
-              </>
-            );
-          }
-          const tactical = round.entries.find((e): e is typeof e & TacticalEntry => e.type === 'tactical' && e.fromCard === entry.id);
-          return (
-            <>
-              {tactical
-                ? (
-                  <button type="button" className="option" aria-pressed="true" onClick={() => onOpenTactical(tactical.id)}>
-                    {t('plan.strategy.freeTacticalOpen')}{tactical.systemId ? ` · ${tile(tactical.systemId)}` : ''}
-                  </button>
-                )
-                : <button type="button" className="option" onClick={onStartTactical}>{t('plan.strategy.freeTactical')}</button>}
-              <p className="muted">{t('plan.strategy.freeTacticalNote')}</p>
-              {tokenPick(true)}
-            </>
-          );
-        }
-        const home = homeSlot(game, pack);
-        return (
-          <>
-            <button
-              type="button" className="option" aria-pressed={production !== undefined} disabled={home === null}
-              onClick={() => { if (home) onOpenShop(home, 'units'); }}
-            >
-              {t('plan.strategy.homeProduction')}
-            </button>
-            {builtLine}
-            {list(placer.at('production'))}
-            <p className="muted">{t(home === null ? 'plan.strategy.noHome' : 'plan.strategy.shopNote')}</p>
-          </>
-        );
-      }
-      case CARD.technology: {
-        const count = researchCount(entry);
-        const researched = effects.researched ?? 0;
-        const setResearched = (value: number) => {
-          const next = { ...effects };
-          if (value > 0) next.researched = value;
-          else delete next.researched;
-          change({ effects: next });
-        };
-        return (
-          <>
-            <div className="editor-section">
-              <strong>{t('plan.strategy.research', { n: count })}</strong>
-              <div className="research-row in-card">
-                <button type="button" className="option" aria-pressed={researched > 0} onClick={() => setResearched(researched + 1)}>
-                  {t('plan.strategy.researchAdd')}{researched > 0 ? ` · ${researched}` : ''}
-                </button>
-                {/* TODO(P2-332) #ws:ui-containers #type:ui #needs:prototype #size:s — «−» на месте .in-card, где по соглашению удаление, а делает уменьшение; Stepper */}
-                {researched > 0 && <button type="button" aria-label={t('plan.strategy.researchTake')} onClick={() => setResearched(researched - 1)}>−</button>}
-              </div>
-              <span className="muted">{t(primary ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}</span>
-            </div>
-            <div className="editor-section">
-              <strong>{t('plan.strategy.upgrades')}</strong>
-              {upgradeRow}
-            </div>
-          </>
-        );
-      }
-      case CARD.imperial:
-        if (!primary) return <p className="muted">{t('plan.strategy.imperialSecondary')}</p>;
-        return (
-          <>
-            {/* TODO(P2-331) #ws:strategy-cards #type:bug #rule:45.2 #rule:45-note-3 #test:045-imperial — очко Imperial по флажку, доступному и без контроля Mecatol Rex; убрать переключатель, очко считает домен по контролю */}
-            <button type="button" className="option" aria-pressed={effects.mecatol ?? false} onClick={() => setEffects({ mecatol: !effects.mecatol })}>
-              {t('plan.strategy.mecatol')}
-            </button>
-            <p className="muted">{t('plan.strategy.imperialNote')}</p>
-          </>
-        );
-      default:
-        return null;
-    }
+  const kit: CardKit = {
+    t, game, pack, round, entry, before, effects, primary, te, cost, change, setEffects, placer, list, tokenPick, pickButton,
+    tile, builtLine, upgradeRow, opponents, named, toggled, onOpenShop, onStartTactical, onOpenTactical,
   };
+  // Called here, not rendered as a component, so the blocks take their warnings before the rest is shown.
+  const sections = () => (entry.card === undefined ? null : CARD_BLOCKS[entry.card]?.(kit) ?? null);
 
   const summary = card && cardSummary(card.summaryKey, lang);
   const payment = effects.payment ?? { planets: [], tradeGoods: 0 };
@@ -305,6 +118,11 @@ export function StrategyEditor({
   };
 
   const cardWarnings = placer.at('card');
+  /** Whether that side of this card spends a strategy token: the domain decides, from the round's cards for my primary. */
+  const costsOf = (asPrimary: boolean) => card !== undefined && costsStrategyToken(
+    { ...entry, card: card.initiative, ...playOf(round, game.playerCount, card.initiative, asPrimary, mine) } as CardEntry,
+    { held: mine ? heldCards(round, game.playerCount) : [] },
+  );
   const ability = (asPrimary: boolean, text: string, costsToken: boolean) => (
     <button
       type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary} disabled={locked}
@@ -318,9 +136,8 @@ export function StrategyEditor({
     <>
       <div className="card-abilities" role="group" aria-label={t('plan.strategy.modes')}>
         {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
-        {/* TODO(P2-333) #ws:strategy-cards #type:dup #duplicate-of-domain #size:s — цена жетоном повторяет playOf и costsStrategyToken (и CARD.leadership ниже); звать costsStrategyToken({ ...entry, ...playOf(...) }) */}
-        {ability(true, summary.primary, entry.forToken === true || (mine && !heldCards(round, game.playerCount).includes(card.initiative)))}
-        {ability(false, summary.secondary, card.initiative !== CARD.leadership)}
+        {ability(true, summary.primary, costsOf(true))}
+        {ability(false, summary.secondary, costsOf(false))}
         {summary.change && <span className="card-note">{summary.change}</span>}
       </div>
       {sections()}

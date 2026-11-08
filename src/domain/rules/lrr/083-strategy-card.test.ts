@@ -78,6 +78,14 @@ describe('LRR 83 Strategy Card', () => {
     expect(codesOf(game, pack, again)).not.toEqual([]);
   });
 
+  test('83.3 / 83.7: a primary of a card not held is a foreignPrimary, a second secondary of a card a secondaryRepeated', () => {
+    const foreign = primary(CARD.trade);
+    const again = secondary(CARD.politics);
+    const game = holding(rulesGame({ entries: [foreign, secondary(CARD.politics), again] }), CARD.imperial);
+    expect(codesOf(game, pack, foreign)).toEqual(['foreignPrimary']);
+    expect(codesOf(game, pack, again)).toContain('secondaryRepeated');
+  });
+
   test.todo('83.8: a card lies in the common area or in a player\'s area — not modelled: only my own choice per round is kept');
   test.todo('83.8.1: cards in the common area can be chosen — not modelled: the common area and other players\' choices are not kept');
 

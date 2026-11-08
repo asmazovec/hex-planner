@@ -39,6 +39,14 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   actionOutsidePhase: { rules: ['40.2'], step: 'round' },
   planetNotControlled: { rules: ['34-note-2', '64-note-5'], step: 'payment' },
   readyNotControlled: { rules: ['71-note-3'], step: 'card' },
+  // strategy-cards
+  foreignPrimary: { rules: ['83.3', '82.1'], step: 'card' },
+  ownSecondary: { rules: ['83.4', '82.1', '20.5'], step: 'card' },
+  secondaryRepeated: { rules: ['83.7', '92.4.2'], step: 'card' },
+  readyOverLimit: { rules: ['32.2', '32.3'], step: 'card' },
+  diplomacySystem: { rules: ['32.2'], step: 'card' },
+  researchOverLimit: { rules: ['91.2', '91.3'], step: 'card' },
+  researchOwned: { rules: ['90.10'], step: 'card' },
 };
 
 /** The rule and step of a code, from the registry. */
