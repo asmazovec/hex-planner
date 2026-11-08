@@ -76,8 +76,8 @@ export interface FactionCardProps {
   pack: DataPack;
   /** Choose which leaders, mechs and breakthroughs the card shows. */
   expansions: ExpansionId[];
-  /** Current values and taps on the plan screen; without it the table shows base values, read only. */
-  live?: Pick<ShipStatsProps, 'upgraded' | 'onToggle' | 'locked'>;
+  /** Current values on the plan screen; without it the table shows base values, read only. */
+  live?: Pick<ShipStatsProps, 'upgraded' | 'locked'>;
 }
 
 /** What a faction starts with, all visible at once. Colours come from `--player` of the surrounding card. */

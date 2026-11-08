@@ -29,7 +29,6 @@ export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelPro
         const hasTwo = hasLevelTwo(game.faction, kind, pack);
         const on = current !== base;
         const round = locked[kind];
-        // TODO(P2-264) #ws:ui-containers #type:dup #needs:prototype #size:s #upgrade-toggle — Переключатель улучшения .upgrade-card повторяет .ship-row-live из ShipStats: один вид
         return (
           <button
             key={kind} type="button" className={`upgrade-card${on ? ' on' : ''}`} data-testid={`upgrade-${kind}`} aria-pressed={on}

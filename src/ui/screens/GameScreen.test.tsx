@@ -284,6 +284,7 @@ test('removing an opponent who has units or planets says so, and only then asks'
   expect(useGame.getState().game!.playerCount).toBe(6);
   expect(screen.getByText(/Units on the map: 3, planets: 1/)).toBeInTheDocument();
   expect(screen.queryByText(/Tiles on the map/)).toBeNull();
+  expect(within(card(2)).queryByRole('button', { name: 'Remove opponent' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [first]: { cruiser: 2 } });
   await userEvent.click(within(card(3)).getByRole('button', { name: 'Remove opponent' }));
@@ -307,6 +308,8 @@ test('adding on a filled map asks first too; a map with only home tiles does not
   act(() => useGame.setState(state => ({ draft: { ...state.draft, map: { ...state.draft.map, '1,0': '30' } } })));
   await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
   expect(useGame.getState().draft.playerCount).toBe(5);
+  // The question stands in for the button that asked it.
+  expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
   expect(useGame.getState().draft.playerCount).toBe(6);
 });

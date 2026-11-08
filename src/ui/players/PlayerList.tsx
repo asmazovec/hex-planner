@@ -113,7 +113,8 @@ export function PlayerList({ drag, live }: PlayerListProps) {
                 )}
               </div>
               {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
-              {index === 0 || live ? <span /> : (
+              {/* The question stands in for the cross that asked it. */}
+              {index === 0 || live || (asked?.kind === 'remove' && asked.opponent === opponent) ? <span /> : (
                 <HexRemove label={t('players.remove')} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })} />
               )}
             </div>
@@ -131,7 +132,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
         );
       })}
       {asked?.kind === 'add' && confirmBar(asked)}
-      {count < max && !live && !started && (
+      {count < max && !live && !started && asked?.kind !== 'add' && (
         <button type="button" className="add-opponent" onClick={() => ask({ kind: 'add' })}>{t('players.add')}</button>
       )}
     </section>

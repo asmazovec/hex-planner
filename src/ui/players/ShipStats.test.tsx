@@ -53,9 +53,9 @@ describe('the table', () => {
   });
 
   test('a changed value is gold with old and new; the name, properties and retelling follow the level', () => {
-    const { rerender } = render(<ShipStats factionId="argent" pack={pack} upgraded={[]} onToggle={() => undefined} />);
+    const { rerender } = render(<ShipStats factionId="argent" pack={pack} upgraded={[]} />);
     expect(row('destroyer')).toHaveTextContent('Заградительный огонь 9×2');
-    rerender(<ShipStats factionId="argent" pack={pack} upgraded={['destroyer']} onToggle={() => undefined} />);
+    rerender(<ShipStats factionId="argent" pack={pack} upgraded={['destroyer']} />);
     expect(within(row('destroyer')).getByText('Strike Wing Alpha II')).toBeInTheDocument();
     const combat = row('destroyer').querySelectorAll('.ship-row-value')[2];
     expect(combat.textContent).toBe('8 → 7');
@@ -76,15 +76,6 @@ describe('the table', () => {
     render(<ShipStats factionId="xxcha" pack={pack} />);
     expect(row('flagship')).toHaveTextContent('Sustain Damage');
     expect(row('flagship').textContent).toMatch(/adjacent systems/);
-  });
-
-  test('a tap toggles a type with a level II only', async () => {
-    const onToggle = vi.fn();
-    render(<ShipStats factionId="arborec" pack={pack} upgraded={[]} onToggle={onToggle} />);
-    await userEvent.click(row('carrier'));
-    expect(onToggle).toHaveBeenCalledWith('carrier');
-    expect(row('warsun')).toBeDisabled();
-    expect(row('flagship')).toBeDisabled();
   });
 });
 

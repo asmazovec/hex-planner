@@ -4,6 +4,8 @@ import type { SliceOwners } from '../../domain/thundersEdge';
 import type { DataPack, Game } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { systemName } from '../map/systemName';
+import { HexRemove } from '../primitives/Icon';
+import { MapPickButton } from '../primitives/MapPickButton';
 
 export type { SliceOwners } from '../../domain/thundersEdge';
 
@@ -45,16 +47,21 @@ export function ExpeditionWidget({ game, pack, owners, onPlace }: ExpeditionWidg
         })}
       </div>
       <span className="muted">{t('expedition.hint')}</span>
-      {taken === EXPEDITION_SLICES.length && placed === null && <span role="status">{t('expedition.complete')}</span>}
-      {(taken === EXPEDITION_SLICES.length || placed !== null) && (
-        <div className="row">
-          {placed !== null && <span>{t('expedition.placedAt', { system: systemName(game, pack, placed) })}</span>}
-          <button type="button" onClick={onPlace}>{t('expedition.choose')}</button>
-          {/* TODO(P2-371) #ws:ui-containers #type:ui #needs:prototype #dep:P2-323 — текстовое «Убрать» вместо HexRemove */}
-          {placed !== null && (
-            <button type="button" onClick={() => setThundersEdge(null)}>{t('expedition.remove')}</button>
-          )}
+      {placed !== null ? (
+        // The placed Thunder's Edge is a card, as a source row: a tap chooses the system again, the cross removes it.
+        // The panel steps aside while the map chooses, so the button is never seen pressed.
+        <div className="in-card">
+          <MapPickButton active={false} className="source-button" onToggle={onPlace}>
+            {t('expedition.placedAt', { system: systemName(game, pack, placed) })}
+            <small>{t('expedition.repick')}</small>
+          </MapPickButton>
+          <HexRemove label={t('expedition.remove')} onClick={() => setThundersEdge(null)} />
         </div>
+      ) : taken === EXPEDITION_SLICES.length && (
+        <>
+          <span role="status">{t('expedition.complete')}</span>
+          <MapPickButton active={false} onToggle={onPlace}>{t('expedition.choose')}</MapPickButton>
+        </>
       )}
     </div>
   );

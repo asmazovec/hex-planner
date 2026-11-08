@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { shipSummary } from '../../data/shipSummaries';
-import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
+import { isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
 import type { DataPack, ShipStats as Stats, UnitId, UnitRoll } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import { UnitIcon } from '../units/UnitIcon';
@@ -59,14 +59,15 @@ export interface ShipStatsProps {
   pack: DataPack;
   /** The player's upgraded types; none means base values. */
   upgraded?: UnitId[];
-  /** With it, a tap on a row with a level II toggles it; without it the table is read only. */
-  onToggle?: (unit: UnitId) => void;
-  /** Types an entry of the plan upgraded, not to toggle here, with the round. */
+  /** Types an entry of the plan upgraded, with the round. */
   locked?: Partial<Record<UnitId, number>>;
 }
 
-/** A player's ships: cost, capacity, combat and move at the current level, then properties and the retelling. */
-export function ShipStats({ factionId, pack, upgraded = [], onToggle, locked = {} }: ShipStatsProps) {
+/**
+ * A player's ships, read only: cost, capacity, combat and move at the current level, then properties and the retelling.
+ * Upgrades are toggled by the cards of the upgrades panel.
+ */
+export function ShipStats({ factionId, pack, upgraded = [], locked = {} }: ShipStatsProps) {
   const { t } = useTranslation();
   return (
     <div className="ship-table">
@@ -79,9 +80,8 @@ export function ShipStats({ factionId, pack, upgraded = [], onToggle, locked = {
         const current = unitStats(factionId, kind, upgraded.includes(kind), pack);
         if (!base || !current) return null;
         const round = locked[kind];
-        const on = current !== base;
-        const content = (
-          <>
+        return (
+          <div key={kind} className="ship-row" data-testid={`ship-row-${kind}`}>
             <UnitIcon unit={kind} />
             <span className="ship-row-name">
               <b>{t(`unit.${kind}`)}</b>
@@ -92,17 +92,8 @@ export function ShipStats({ factionId, pack, upgraded = [], onToggle, locked = {
               <span key={name} className="ship-row-value"><StatValue name={name} base={base} current={current} /></span>
             ))}
             <ShipNotes stat={current} />
-          </>
+          </div>
         );
-        const id = `ship-row-${kind}`;
-        return onToggle ? (
-          <button
-            key={kind} type="button" className={`ship-row ship-row-live${on ? ' on' : ''}`} data-testid={id} aria-pressed={on}
-            disabled={!hasLevelTwo(factionId, kind, pack) || round !== undefined} onClick={() => onToggle(kind)}
-          >
-            {content}
-          </button>
-        ) : <div key={kind} className="ship-row" data-testid={id}>{content}</div>;
       })}
     </div>
   );
