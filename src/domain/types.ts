@@ -324,9 +324,24 @@ export interface GameState {
   rivalHolds?: Record<string, string>;
 }
 
-export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
-  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
-  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative' | 'systemHasToken' | 'constructionUnits' | 'speedShort' | 'routeBlocked' | 'sourceActivated';
-// TODO(P2-001) #ws:rule-engine #type:arch #size:l #warning-channel #violation — Предупреждение не знает правила, шага и места: добавить rule (номер LRR), step (activation, movement, transport, combat, invasion, production, payment, card, status), place (entryId, source, planetId); WarningCode свести к реестру правил
-export interface Warning { code: WarningCode; params: Record<string, string | number>; }
+/** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */
+export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoods', 'planetExhausted',
+  'capacityGroup', 'capacitySystem', 'fleetPool', 'unitsMissing', 'landingOverLimit',
+  'sliceTaken', 'shortStrategy', 'primaryRepeated', 'tokensOver', 'poolNegative', 'systemHasToken', 'constructionUnits', 'speedShort', 'routeBlocked', 'sourceActivated'] as const;
+export type WarningCode = (typeof WARNING_CODES)[number];
+/** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
+export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition';
+/** Where a violation arose: the entry, and within it the source system or the planet when there is one. */
+export interface ViolationPlace { entryId: string; source?: string; planetId?: string }
+/**
+ * A rule the plan breaks; it forbids nothing. The replay gives `rule` (LRR number as in the rules tests' names), `step` and `place`;
+ * a warning written by hand (tests) may lack them.
+ */
+export interface Warning {
+  code: WarningCode;
+  params: Record<string, string | number>;
+  readonly rule?: string;
+  readonly step?: RuleStep;
+  readonly place?: ViolationPlace;
+}
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };
