@@ -134,7 +134,7 @@
         "destroyer": ": a cheap ship that hits fighters before combat.",
         "fighter": ": cheap support, usually on board.",
         "infantry": ": takes and holds planets.",
-        "mech": ": the faction's stronger ground unit.",
+        "mech": ": the faction's stronger ground force.",
         "pds": ": fires at ships in its system.",
         "spacedock": ": produces units at a planet."
       }
@@ -664,7 +664,7 @@
     "giveBackOn": "Give back {{unit}}, {{planet}}",
     "buildNote": "Tap a token with a gold ring to take a purchase back.",
     "setupNote": "Tap a token on the hex to remove one.",
-    "planetNote": "Tap a planet: ground units and structures go there.",
+    "planetNote": "Tap a planet: ground forces and structures go there.",
     "tapNote": {
       "planned": "This structure is planned in an entry of the plan: change it there."
     },

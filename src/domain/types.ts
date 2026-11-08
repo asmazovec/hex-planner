@@ -194,7 +194,7 @@ export interface AdjustmentDelta {
   vp?: number;
   /** Signed. */
   units?: { systemId: string; units: UnitCounts };
-  /** Ground units by planet id; signed. */
+  /** Ground forces by planet id; signed. */
   ground?: Record<string, UnitCounts>;
 }
 
@@ -218,7 +218,7 @@ export interface CardEffects {
   /** Opponent ids. */
   freeSecondary?: string[];
   mecatol?: boolean;
-  /** `ground` holds where ground units of `units` were bought, by planet id; what is not listed goes to the first planet I control. */
+  /** `ground` holds where ground forces of `units` were bought, by planet id; what is not listed goes to the first planet I control. */
   production?: { systemId: string; units: UnitCounts; ground?: Record<string, UnitCounts> };
   /** One item per structure. */
   structures?: { kind: StructureKind; planetId: string }[];
@@ -238,7 +238,7 @@ export interface CardPlay {
 
 /**
  * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
- * (a slot key, or a planet id to pick ground units up) into `systemId`. The route of a source is held by the move
+ * (a slot key, or a planet id to pick ground forces up) into `systemId`. The route of a source is held by the move
  * whose `from` is that source: `via` lists the slots on the way, in flight order. A move with `pickupOf` takes units
  * on board on the way: it joins the group of that source slot.
  */
@@ -247,7 +247,7 @@ export type EntryBody =
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
       /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
       /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
-      /** Where the ground units of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
+      /** Where the ground forces of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
   | ({ type: 'strategic' } & CardPlay)
@@ -297,9 +297,9 @@ export interface Game {
   opponents: Opponent[];
   /** Set by hand. `me` is the baseline, such as starting technology; entries of a plan add to it. Opponents have no plan. */
   upgrades: { me: UnitId[]; opponents: Record<string, UnitId[]> };
-  /** Slot key to opponent id to that opponent's units in space; ground units only in a system without planets. */
+  /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
   enemyUnits: Record<string, Record<string, UnitCounts>>;
-  /** Planet id to opponent id to that opponent's ground units there. */
+  /** Planet id to opponent id to that opponent's ground forces there. */
   enemyGround: Record<string, Record<string, UnitCounts>>;
   planetControl: Record<string, 'me' | 'enemy'>;
   /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
@@ -318,7 +318,7 @@ export interface Game {
 export interface GameState {
   /** The player's units in each system's space, by slot key. */
   systems: Record<string, UnitCounts>;
-  /** The player's ground units on each planet, by planet id. */
+  /** The player's ground forces on each planet, by planet id. */
   ground: Record<string, UnitCounts>;
   exhausted: string[];
   control: Record<string, 'me' | 'enemy'>;

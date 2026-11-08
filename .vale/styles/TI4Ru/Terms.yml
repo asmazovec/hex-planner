@@ -1,7 +1,6 @@
 # Russian game terms as the Russian Rules Reference (Hobby World, 2021) names them,
 # with the project's own choices from CLAUDE.md: commodities are "Продукция", trade goods "товары".
 # Go's \b is ASCII-only, so the patterns match Cyrillic word stems with nonword on.
-# TODO(P2-060) #ws:vocab #type:vocab #size:m #needs:decision #i18n — ru.json: «жетон команд», «космодок», «вторичное», «наземные юниты», «вместимость», «Мекатол Рекс» → термины Hobby World; решить, разрешить ли короткие формы («жетон тактики») здесь
 extends: substitution
 message: "Термин игры: «%s» вместо «%s»."
 level: warning

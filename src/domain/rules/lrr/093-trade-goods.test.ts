@@ -1,4 +1,4 @@
-/** LRR 93 Trade Goods. Source: tirules2 rules-reference/trade-goods.md. */
+/** LRR 93 Trade Goods. Source: tirules2 rules-reference, the trade goods page. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import type { Entry } from '../../types';

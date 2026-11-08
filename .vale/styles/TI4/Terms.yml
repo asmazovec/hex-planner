@@ -1,5 +1,4 @@
 # English game terms as the Rules Reference names them (LRR section in the comment).
-# TODO(P2-061) #ws:vocab #type:vocab #size:s #i18n #comments — en.json и комментарии кода: «ground units» → «ground forces» (25 мест), «strategy action» → «strategic action»; npm run lint:terms должен быть чистым
 extends: substitution
 message: "Game term: use '%s' instead of '%s'."
 link: https://tirules2.com

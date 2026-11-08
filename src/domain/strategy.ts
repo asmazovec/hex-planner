@@ -68,7 +68,7 @@ export function startsAsPrimary(round: Round, playerCount: number, card: number,
   return held.includes(card) && !played;
 }
 
-/** The planned card a new strategy action starts with: the first of mine not played yet. */
+/** The planned card a new strategic action starts with: the first of mine not played yet. */
 export function plannedCard(round: Round, playerCount: number): number | undefined {
   const held = heldCards(round, playerCount);
   const played = round.entries.filter(e => !e.owner && isMainPrimary(e, held)).map(e => (e as CardEntry).card);
@@ -154,7 +154,7 @@ const counted = (units: UnitCounts, unit: UnitId, amount: number): UnitCounts =>
   return next;
 };
 
-/** One tap of the shop: a card produces in one system, ground units by planet, and taking the last unit back drops the production. */
+/** One tap of the shop: a card produces in one system, ground forces by planet, and taking the last unit back drops the production. */
 export function withProduction(effects: CardEffects, systemId: string, unit: UnitId, planetId: string | null, amount: 1 | -1): CardEffects {
   const units = counted(effects.production?.units ?? {}, unit, amount);
   const next: CardEffects = { ...effects };

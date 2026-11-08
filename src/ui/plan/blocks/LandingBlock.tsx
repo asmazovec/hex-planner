@@ -13,7 +13,7 @@ export interface LandingBlockProps {
   before: GameState;
   /** The whole board just before the action, the opponents in `rivals`: the others' ground forces come from it. */
   board?: GameState;
-  /** Ground units that reach the landing, by type, and how many of each. */
+  /** Ground forces that reach the landing, by type, and how many of each. */
   units: UnitId[];
   arrived: UnitCounts;
   /** Who fell in the battle among those already standing there, by planet: the stacks show who is left. */

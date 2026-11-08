@@ -24,7 +24,7 @@ const TRIANGLE_DROP = 10;
 const ART_RADIUS: Record<TokenKind, number> = {
   flagship: 74, dreadnought: 74, carrier: 74, cruiser: 74, destroyer: 74, warsun: 59, fighter: 50, infantry: 36, mech: 42, pds: 40, spacedock: 50,
 };
-/** The shape that says a unit takes a fleet pool slot, in a box of 100. Fighters and ground units have none. */
+/** The shape that says a unit takes a fleet pool slot, in a box of 100. Fighters and ground forces have none. */
 const BADGES: Partial<Record<TokenKind, string>> = {
   warsun: '<path d="M50 2a48 48 0 1 0 .01 0Z M50 30a20 20 0 1 1 -.01 0Z"/>',
   flagship: '<polygon points="50,0 63,34 100,36 71,58 81,96 50,75 19,96 29,58 0,36 37,34"/>',
