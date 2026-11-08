@@ -341,31 +341,10 @@
       "text": "Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity — P2 note: after P2-010 the off-map home is a node of the route graph, so no real system key reaches this fallback; Infinity breaks about 20 unit and screen tests whose fixtures use letter slot keys ('A', 'B', 'H') one step apart, so the fallback stays until those fixtures move to q,r keys"
     },
     {
-      "id": "P2-200",
-      "num": 200,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 71,
-      "ws": "ui-nesting",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "l",
-      "tags": [
-        "hex-stage",
-        "srp"
-      ],
-      "text": "440 строк: модал, три режима, правка чужих юнитов, оплата производства и счётчики в одном компоненте; разделить на оболочку и панели setup/battle/build, покупки вынести в хук"
-    },
-    {
       "id": "P2-210",
       "num": 210,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 279,
+      "file": "src/ui/map/stage/useStage.ts",
+      "line": 235,
       "ws": "ui-warnings",
       "type": "dup",
       "layer": "ui",
@@ -381,31 +360,10 @@
       "text": "Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build"
     },
     {
-      "id": "P2-217",
-      "num": 217,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 380,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [
-        "nesting",
-        "hex-stage"
-      ],
-      "text": "Свойства тайла и контроль планеты лежат пятым-шестым уровнем под режимом: отдельный режим сегмента или поповер"
-    },
-    {
       "id": "P2-240",
       "num": 240,
       "file": "src/ui/drawers/MapLegend.tsx",
-      "line": 103,
+      "line": 104,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -424,346 +382,10 @@
       "text": "Значок места свёрстан заново с жёстким var(--player-2) во style: тот же значок, что на тайле — P2 note: the colour now comes through playerStyle; the tile's own SVG seat mark is smaller and drawn in the tile's scale, so putting it here changes how the legend looks: needs prototype"
     },
     {
-      "id": "P2-243",
-      "num": 243,
-      "file": "src/ui/drawers/MapLegend.tsx",
-      "line": 31,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "legend",
-        "planet"
-      ],
-      "text": "Своя планета легенды вместо PlanetMark из TileView: легенда расходится с картой; рисовать PlanetMark"
-    },
-    {
-      "id": "P2-247",
-      "num": 247,
-      "file": "src/ui/map/builder/MapStringImport.tsx",
-      "line": 46,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "close-button"
-      ],
-      "text": "Текстовая кнопка «Закрыть»: HexRemove, как везде"
-    },
-    {
-      "id": "P2-248",
-      "num": 248,
-      "file": "src/ui/map/builder/MapStringImport.tsx",
-      "line": 41,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-259"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "popover",
-        "section"
-      ],
-      "text": "Плавающая карточка .map-import повторяет .tile-popover, а panel-head собран руками: Popover с якорем и Section — P2 note: Popover exists (overlays/Popover.tsx, TilePopover uses it) and the card's look is one rule with .tile-popover; anchoring this panel would move it beside the paste button and close it on an outside press, and its head holds the text Close of P2-247: needs prototype"
-    },
-    {
-      "id": "P2-250",
-      "num": 250,
-      "file": "src/ui/map/builder/MapStringImport.tsx",
-      "line": 60,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "confirm-bar"
-      ],
-      "text": "Строка подтверждения .row (текст, «Заменить», «Отмена») — четвёртый вид после player-confirm, GameScreen и LayoutPicker: ConfirmBar"
-    },
-    {
-      "id": "P2-253",
-      "num": 253,
-      "file": "src/ui/map/builder/LayoutPicker.tsx",
-      "line": 52,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-250"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "confirm-bar"
-      ],
-      "text": "Строка подтверждения .row собрана руками: ConfirmBar"
-    },
-    {
-      "id": "P2-261",
-      "num": 261,
-      "file": "src/ui/map/stage/UnitShop.tsx",
-      "line": 24,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [
-        "unit-tile"
-      ],
-      "text": "Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitTile take/taken/loss/mini/stack in ui/units): UnitTile с вариантами take/taken/loss/shop"
-    },
-    {
-      "id": "P2-264",
-      "num": 264,
-      "file": "src/ui/drawers/UpgradesPanel.tsx",
-      "line": 32,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "upgrade-toggle"
-      ],
-      "text": "Переключатель улучшения .upgrade-card повторяет .ship-row-live из ShipStats: один вид"
-    },
-    {
-      "id": "P2-317",
-      "num": 317,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 142,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-316"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "«Бой» и «Производство» — блоки из одной кнопки; сделать строками .in-card"
-    },
-    {
-      "id": "P2-318",
-      "num": 318,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 134,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "UnitPicker раскрывается внутри редактора (6 уровней); шаги: пока открыт перелёт, показывать только его с «Назад»"
-    },
-    {
-      "id": "P2-319",
-      "num": 319,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 184,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [
-        "editor-frame"
-      ],
-      "text": "голова и подвал редакторов четырёх видов (здесь panel-head и «Готово» вверху, у StrategyEditor h2 и подвал, у UnitPicker текстовое «Закрыть»); класса .tactical-editor в CSS нет. Одна рамка редактора"
-    },
-    {
-      "id": "P2-323",
-      "num": 323,
-      "file": "src/ui/plan/editors/UnitPicker.tsx",
-      "line": 117,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-319"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "текстовое «Закрыть» вместо HexRemove; «Удалить источник» в подвале повторяет крестик строки источника"
-    },
-    {
-      "id": "P2-329",
-      "num": 329,
-      "file": "src/ui/plan/editors/cards/politics.tsx",
-      "line": 8,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [
-        "player-choice"
-      ],
-      "text": "выбор игрока (точка цвета + имя, inline var(--player-…)) собран руками здесь, в Trade ниже, в HexStage и PlanScreen; общий PlayerChoice с PlayerDot"
-    },
-    {
-      "id": "P2-332",
-      "num": 332,
-      "file": "src/ui/plan/editors/cards/technology.tsx",
-      "line": 21,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [],
-      "text": "«−» на месте .in-card, где по соглашению удаление, а делает уменьшение; Stepper"
-    },
-    {
-      "id": "P2-334",
-      "num": 334,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 158,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-319"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "голый h2 и подвал .strategy-foot вместо общей рамки редактора"
-    },
-    {
-      "id": "P2-337",
-      "num": 337,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 155,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "редактор длинный, 4 уровня; шаги: (1) карта и свойство, (2) параметры"
-    },
-    {
-      "id": "P2-340",
-      "num": 340,
-      "file": "src/ui/plan/blocks/TokenTiles.tsx",
-      "line": 40,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-332"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [],
-      "text": "ещё один вид «−»; Stepper"
-    },
-    {
-      "id": "P2-346",
-      "num": 346,
-      "file": "src/ui/plan/EntrySteps.tsx",
-      "line": 60,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "подробности тактики 7 уровней; строки «откуда → куда» с UnitTile, полная схема в поповере"
-    },
-    {
       "id": "P2-349",
       "num": 349,
       "file": "src/ui/plan/EntryList.tsx",
-      "line": 55,
+      "line": 51,
       "ws": "ui-nesting",
       "type": "ui",
       "layer": "ui",
@@ -781,7 +403,7 @@
       "id": "P2-352",
       "num": 352,
       "file": "src/ui/plan/EntryList.tsx",
-      "line": 120,
+      "line": 127,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -792,181 +414,6 @@
       "size": "s",
       "tags": [],
       "text": "бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент — P2 note: the map and the legend now share RouteBadge; this one is an HTML number over a 12-wide hexagon in the row's own colours, and drawing the map's SVG badge here changes how the row looks: needs prototype"
-    },
-    {
-      "id": "P2-355",
-      "num": 355,
-      "file": "src/ui/plan/EntryList.tsx",
-      "line": 213,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-349"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "экспедиция раскрывается внутри строки (5 уровней); отдельное меню, как жетоны статуса"
-    },
-    {
-      "id": "P2-356",
-      "num": 356,
-      "file": "src/ui/plan/editors/ExpeditionEditor.tsx",
-      "line": 28,
-      "ws": "ui-containers",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock — P2 note: the one place is PlanScreen's manualPayments, which the big hex reads too; the expedition editor sits inside the entry row (EntryList), so the flag would travel through EntryList and PlanScreen state, both edited by ui-plan-screen now (P2-429 merges the two toggles there): left for that wave"
-    },
-    {
-      "id": "P2-357",
-      "num": 357,
-      "file": "src/ui/plan/ActionMenu.tsx",
-      "line": 17,
-      "ws": "ui-nesting",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "список действий раскрывается в подвале списка записей (4 уровня); поповер над кнопкой"
-    },
-    {
-      "id": "P2-362",
-      "num": 362,
-      "file": "src/ui/plan/editors/AdjustmentEditor.tsx",
-      "line": 43,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-319",
-        "P2-316"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "чужой класс .tactical-editor (которого нет в CSS), своя голова и ручные блоки; общая рамка редактора и Section"
-    },
-    {
-      "id": "P2-371",
-      "num": 371,
-      "file": "src/ui/drawers/ExpeditionWidget.tsx",
-      "line": 53,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-323"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "текстовое «Убрать» вместо HexRemove"
-    },
-    {
-      "id": "P2-383",
-      "num": 383,
-      "file": "src/ui/plan/PlanTabs.tsx",
-      "line": 95,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [],
-      "text": "удаление плана текстовой кнопкой и раунда «−» ниже вместо HexRemove"
-    },
-    {
-      "id": "P2-427",
-      "num": 427,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 502,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "editor-head"
-      ],
-      "text": "своя голова редактора с текстовой «Отмена» вместо общей головы редактора и HexRemove (аудит 3.3, 3.4)"
-    },
-    {
-      "id": "P2-428",
-      "num": 428,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 509,
-      "ws": "ui-nesting",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [
-        "prototype"
-      ],
-      "size": "l",
-      "tags": [
-        "nesting"
-      ],
-      "text": "редакторы и список взаимоисключаются цепочкой !session && !cardEntry && ..., редактор вложен в панель, UnitPicker и HexStage ещё глубже: один слот панели по состоянию автомата, шаги или отдельное меню по прототипу"
-    },
-    {
-      "id": "P2-436",
-      "num": 436,
-      "file": "src/ui/screens/GameScreen.tsx",
-      "line": 155,
-      "ws": "ui-containers",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "prototype"
-      ],
-      "size": "s",
-      "tags": [
-        "confirm-bar"
-      ],
-      "text": "своя строка подтверждения удаления, ещё один вид рядом с .player-confirm и строками LayoutPicker/MapStringImport: общий ConfirmBar"
     },
     {
       "id": "P2-452",
@@ -987,31 +434,10 @@
       "text": "модал собран руками (.stage + .link-dialog) без Escape и шапки с HexRemove, третья копия рядом с HexStage и FactionPicker: общий Modal (аудит 3.5) — P2 note: now the shared Modal; a head with HexRemove (and Escape closing it) would add a third way out of the choice and a new head row: needs prototype"
     },
     {
-      "id": "P2-503",
-      "num": 503,
-      "file": "src/ui/theme.css",
-      "line": 171,
-      "ws": "ui-css",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "decision",
-        "prototype"
-      ],
-      "size": "m",
-      "tags": [
-        "selected-state"
-      ],
-      "text": "три цвета «выбрано» для одной роли: голубой здесь, .chip 706, .slice 646, .card-main 462; золотой .option 457, .card-cell 450, .card-abilities 472, .pic-taken 616, .token-tile-on 540, .ship-row-live 838, .upgrade-card.on 857, .entry-upgrades 871, .hex-button:has(checked) 508; зелёный .hex-button[aria-pressed] 1009, .fac-option 1018, вкладки и шторки. Решить по прототипу, какой цвет у переключателей — P2 note: needs a decision and a page prototype, left as it is"
-    },
-    {
       "id": "P2-512",
       "num": 512,
       "file": "src/ui/theme.css",
-      "line": 216,
+      "line": 214,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1029,7 +455,7 @@
       "id": "P2-515",
       "num": 515,
       "file": "src/ui/theme.css",
-      "line": 265,
+      "line": 263,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1047,7 +473,7 @@
       "id": "P2-517",
       "num": 517,
       "file": "src/ui/theme.css",
-      "line": 274,
+      "line": 271,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1062,30 +488,10 @@
       "text": "коробка модала трижды: .stage-dialog, .link-dialog 603, .fac-sheet 1012, скругления 14px и var(--radius) вперемешку; общий Modal — P2 note: the three boxes now come from one Modal (overlays/Modal.tsx); their sizes, padding, background (the sheet of factions sits on --bg) and corners still differ, and one box would change two of them: needs prototype"
     },
     {
-      "id": "P2-520",
-      "num": 520,
-      "file": "src/ui/theme.css",
-      "line": 286,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-548"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "unit-tile"
-      ],
-      "text": ".shop-item (84px) ещё одна плитка юнита с числом: перейти на общий UnitTile — P2 note: the shop cell is P2-261, which needs prototype; UnitTile (units/UnitTile.tsx) has no shop variant yet"
-    },
-    {
       "id": "P2-542",
       "num": 542,
       "file": "src/ui/theme.css",
-      "line": 553,
+      "line": 540,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1102,48 +508,10 @@
       "text": "кружок игрока через ::before: перейти на PlayerDot — P2 note: the dot stands inside the name of a Stepper, whose name is also the accessible name of the group: an element there needs a slot in Stepper and changes nothing visible, so it waits for the Stepper rework"
     },
     {
-      "id": "P2-548",
-      "num": 548,
-      "file": "src/ui/theme.css",
-      "line": 607,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "unit-tile"
-      ],
-      "text": "плитка юнита с числом: 4 класса (.pic, .shop-item 254, .stage-loss 268, .upic 524) и 5 компонентов, размеры 62/84/62/32, бейдж числа 257, 270, 617, 525; общий UnitTile с размером, радиус var(--radius-s) вместо 10px — P2 note: UnitTile now draws .pic, .stage-loss, .upic and the landing stacks, with the sizes they had; one size, one counter badge and var(--radius-s) for all would change how each looks: needs prototype"
-    },
-    {
-      "id": "P2-549",
-      "num": 549,
-      "file": "src/ui/theme.css",
-      "line": 672,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-513"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "floating-card"
-      ],
-      "text": ".map-import повторяет .tile-popover: перейти на общий Popover — P2 note: the look of the card is shared now (one rule with .tile-popover); the Popover itself would anchor the panel beside the paste button and close it on a press outside, a change of place and behaviour: needs prototype, with P2-248"
-    },
-    {
       "id": "P2-552",
       "num": 552,
       "file": "src/ui/theme.css",
-      "line": 699,
+      "line": 689,
       "ws": "ui-css",
       "type": "dup",
       "layer": "ui",
@@ -1163,7 +531,7 @@
       "id": "P2-554",
       "num": 554,
       "file": "src/ui/theme.css",
-      "line": 710,
+      "line": 700,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1180,66 +548,10 @@
       "text": ".player-badge: кружок игрока большого размера, перейти на PlayerDot — P2 note: the card badge takes its colour from the card (--player), animates when a seat is bumped and stays a block of 38 px with the seat number: moving it to PlayerDot changes no look and adds an inline colour, left as is"
     },
     {
-      "id": "P2-556",
-      "num": 556,
-      "file": "src/ui/theme.css",
-      "line": 721,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "confirm-bar"
-      ],
-      "text": "строка подтверждения: .player-confirm, строка сохранения GameScreen:163, .row в LayoutPicker и MapStringImport; общий ConfirmBar — P2 note: ConfirmBar (primitives/ConfirmBar.tsx) now draws .player-confirm and the save row of GameScreen; the rows of LayoutPicker and MapStringImport are P2-253 and P2-250, which need prototype"
-    },
-    {
-      "id": "P2-562",
-      "num": 562,
-      "file": "src/ui/theme.css",
-      "line": 813,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "upgrade-toggle"
-      ],
-      "text": "переключатель улучшения дважды: .ship-row-live и .upgrade-card 855 (рамка, gold при выборе, disabled без затухания); один компонент — P2 note: one toggle for both needs the look of P2-264, which needs prototype"
-    },
-    {
-      "id": "P2-563",
-      "num": 563,
-      "file": "src/ui/theme.css",
-      "line": 831,
-      "ws": "ui-containers",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-562"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "upgrade-toggle"
-      ],
-      "text": ".upgrade-card повторяет .ship-row-live 836: перейти на общий переключатель — P2 note: waits for P2-562 and P2-264 (prototype)"
-    },
-    {
       "id": "P2-568",
       "num": 568,
       "file": "src/ui/theme.css",
-      "line": 899,
+      "line": 898,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
