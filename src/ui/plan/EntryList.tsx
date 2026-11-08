@@ -126,9 +126,10 @@ function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =>
 
 // TODO(P2-352) #ws:ui-containers #type:dup #size:s — бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент — P2 note: the map and the legend now share RouteBadge; this one is an HTML number over a 12-wide hexagon in the row's own colours, and drawing the map's SVG badge here changes how the row looks: needs prototype
 /** The number of a tactical action, in the same hexagon as on its arrows. */
-function OrderHex({ number, label }: { number: number; label: string }) {
+function OrderHex({ number, label, onClick }: { number: number; label: string; onClick?: () => void }) {
   return (
-    <span className="order-hex" role="img" aria-label={label}>
+    // The name beside it is the button for the keyboard; the number is only a wider target for the pointer.
+    <span className={onClick ? 'order-hex order-hex-tap' : 'order-hex'} role="img" aria-label={label} onClick={onClick}>
       <svg viewBox="-13 -11.5 26 23" width="26" height="23" aria-hidden="true">
         <polygon points="12,0 6,10.4 -6,10.4 -12,0 -6,-10.4 6,-10.4" />
       </svg>
@@ -189,7 +190,8 @@ export function EntryList({
                   <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
-                      {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
+                      {/* The number shows the action as its name does: a tap on either, and both light up under the pointer. */}
+                      {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} onClick={() => onShow?.(entry)} />}
                       <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
                         {label}
                         {/* Read without opening; the steps of a shown entry say it in full. */}
