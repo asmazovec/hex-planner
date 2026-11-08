@@ -68,7 +68,9 @@ function ringOfPlanets(count: number): Circle[] {
 /** The tile number in the top-left corner. */
 const NUMBER_SPOT: Circle = { x: -25, y: -39, r: 4 };
 
-const ORDER: TokenKind[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter', 'infantry', 'mech', 'pds', 'spacedock'];
+/** Units from the heaviest ship down to the ground forces: the order of stacks on a tile, of the shop and of every list of units. */
+export const UNIT_ORDER: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter', 'infantry', 'mech'];
+const ORDER: TokenKind[] = [...UNIT_ORDER, 'pds', 'spacedock'];
 const rank = (stack: { kind: TokenKind }) => ORDER.indexOf(stack.kind);
 
 /** Heavy ships are larger, small ones smaller. */

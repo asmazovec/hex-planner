@@ -4,7 +4,7 @@ import type { DataPack, Game, GameState, UnitId, Warning } from '../../../domain
 import { playerColour } from '../../units/sprites';
 import { TokenPicture } from '../../units/UnitToken';
 import { UNIT_ORDER } from '../../units/unitOrder';
-import { fliesNow, groupOf, hasUnits, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../tactical';
+import { availableFor, fliesNow, groupOf, hasUnits, pickedFrom, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
 import { systemName } from '../../map/systemName';
 import { WarningList } from '../../feedback/WarningText';
 
@@ -58,15 +58,9 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const flying = known.filter(u => fliesNow(game, pack, before.upgrades, u));
   const cargo = known.filter(u => !flying.includes(u));
 
-  const picked = (from: string, unit: UnitId): number =>
-    group.filter(m => m.from === from).reduce((sum, m) => sum + (m.units[unit] ?? 0), 0);
-  // TODO(P2-321) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-304 — «доступно за вычетом других маршрутов» считает UI; в домен рядом с groupOf
+  const picked = (from: string, unit: UnitId): number => pickedFrom(group, from, unit);
   /** What stands there, less what the other routes of this action take. */
-  const available = (from: string, unit: UnitId): number => {
-    const pool = from in pack.planets ? before.ground[from] : before.systems[from];
-    const elsewhere = entry.moves.filter(m => m.from === from && !group.includes(m)).reduce((sum, m) => sum + (m.units[unit] ?? 0), 0);
-    return (pool?.[unit] ?? 0) - elsewhere;
-  };
+  const available = (from: string, unit: UnitId): number => availableFor(game, pack, before, entry, source, from, unit);
   const setCount = (from: string, unit: UnitId, count: number) => onChange(withUnitCount(game, pack, entry.moves, source, from, unit, count));
   const unitName = (unit: UnitId) => t(`unit.${unit}`);
 

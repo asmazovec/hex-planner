@@ -2,14 +2,13 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
-import { autoPay } from '../../../domain/payment';
 import { gameAs, opponentsBySeat, planetHolder } from '../../../domain/players';
 import { isOnMap, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, structureOwner, systemMeters, systemPlanets, tileIdOf } from '../../../domain/project';
-import { startingDocks } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
 import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
-import { lossesOf, withAdjustedUnit, withCount, withLoss, type TacticalEntry } from '../../plan/tactical';
+import { lossesOf, withAdjustedUnit, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
+import { enemyChange, holderIn, structureInGame } from '../../../domain/stacks';
 import { HexRemove } from '../../primitives/Icon';
 import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
@@ -115,20 +114,14 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, name: opponentName(game, pack, o.id, t) }));
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
-  // TODO(P2-203) #ws:ui-logic-to-domain #type:dup #size:s #duplicate-of-domain #rivals — holderOf повторяет TileView: держателя планеты в состоянии (rivalHolds, затем planetHolder) считать одной функцией домена в players.ts
-  const holderOf = (planetId: string): string => (state.control[planetId] === 'enemy' ? state.rivalHolds?.[planetId] ?? planetHolder(game, planetId) ?? 'me' : 'me');
+  const holderOf = (planetId: string): string => holderIn(game, state, planetId) ?? 'me';
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
-  // TODO(P2-204) #ws:ui-logic-to-domain #type:arch #size:m #rivals #enemy-units — Правило «наземные по планетам, числящиеся за системой снимаются первыми» решает UI: перенести в действие стора или домен
   /** Ground units go by planet; one still listed with the system comes off there. */
   const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => {
-    const onPlanet = planetId === null ? {} : game.enemyGround[planetId]?.[owner] ?? {};
-    if (planetId !== null && (amount > 0 || (onPlanet[unit] ?? 0) > 0)) {
-      setEnemyGround(planetId, owner, withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount));
-      return;
-    }
-    const units = game.enemyUnits[slot]?.[owner] ?? {};
-    setEnemyUnits(slot, owner, withCount(units, unit, (units[unit] ?? 0) + amount));
+    const next = enemyChange(game, slot, owner, unit, planetId, amount);
+    if ('planetId' in next) setEnemyGround(next.planetId, owner, next.units);
+    else setEnemyUnits(next.slot, owner, next.units);
   };
   // TODO(P2-219) #ws:ui-nesting #type:dup #dep:P2-200 #size:s #hex-stage — Тактическая запись ищется дважды (fightingFor и tactical ниже) по разным правилам: одна запись, которой принадлежат бой и покупки
   /** The tactical action this hex was opened from: its battle belongs to it, and the fleet limit counts it. */
@@ -149,20 +142,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && stateBeforeEntry(game, plan, tactical.id, pack);
   const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
-  // TODO(P2-205) #ws:ui-logic-to-domain #type:arch #size:m #production #payment #duplicate-of-domain — Сборка production/productionGround и автооплата (autoPay, если оплата не ручная) считаются в UI: функция домена рядом с withLoss, общая с редактором тактики
-  const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) => {
-    const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
-    const cost = productionCost(production, view.faction, before.upgrades, pack);
-    const seed = !manualPayments.includes(entry.id) && cost !== productionCost(entry.production, view.faction, before.upgrades, pack);
-    const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
-    const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
-    const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;
-    updateEntry(entry.id, {
-      production,
-      ...(planetId === null || !pack.units[unit]?.ground ? {} : { productionGround: Object.keys(productionGround).length > 0 ? productionGround : undefined }),
-      ...(seed ? { payment: autoPay(before, cost, 'resources', pack) } : {}),
-    });
-  };
+  const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
+    updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id)));
   const purchases: PurchaseTarget = onPurchase ?? {
     bought: [...produced, ...mergedCounts(round, 'build', slot)],
     change: (unit, planetId, amount) => {
@@ -203,10 +184,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     else change('setup', kind, planetId, 1);
   };
 
-  // TODO(P2-209) #ws:ui-logic-to-domain #type:arch #size:s #structures — Есть ли строение в самой партии, а не в записях (game.pds, startingDocks), решает UI: нужна функция домена
   /** Whether the game itself holds this structure, apart from what entries plan. */
-  const inBaseline = (kind: StructureKind, planetId: string): boolean =>
-    (kind === 'pds' ? (game.pds[planetId] ?? 0) > 0 : startingDocks(game, pack).includes(planetId));
+  const inBaseline = (kind: StructureKind, planetId: string): boolean => structureInGame(game, pack, kind, planetId);
 
   // TODO(P2-207) #ws:ui-nesting #type:arch #dep:P2-200 #size:m #hex-stage — Один обработчик нажатия на жетон ветвится по режиму, владельцу, виду и базовому составу: разбить на обработчики режимов
   const onToken = ({ kind, owner, planet, key }: PlacedStack) => {

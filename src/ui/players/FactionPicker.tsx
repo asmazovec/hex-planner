@@ -2,11 +2,11 @@ import { useEffect, useState, type MouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
+import { factionsByExpansion } from '../../domain/factionSheet';
 import type { FactionDef } from '../../domain/types';
 import { EXPANSION_NAMES } from '../common/expansions';
 import { HexRemove } from '../primitives/Icon';
 
-// TODO(P2-457) #ws:ui-logic-to-domain #type:arch #size:s #faction-groups — дополнение фракции выясняется тремя loadPack и вычитанием наборов: дополнение фракции из домена (factionSheet)
 const baseFactions = loadPack([]).factions;
 const pokFactions = loadPack(['pok']).factions;
 
@@ -36,11 +36,8 @@ export function FactionPicker({ label, value, factions, taken, clearable, onPick
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const groups = [
-    { title: t('players.base'), list: factions.filter(f => baseFactions[f.id]) },
-    { title: EXPANSION_NAMES.pok, list: factions.filter(f => !baseFactions[f.id] && pokFactions[f.id]) },
-    { title: EXPANSION_NAMES.te, list: factions.filter(f => !baseFactions[f.id] && !pokFactions[f.id]) },
-  ].filter(group => group.list.length > 0);
+  const groups = factionsByExpansion(factions, baseFactions, pokFactions)
+    .map(({ expansion, list }) => ({ title: expansion === 'base' ? t('players.base') : EXPANSION_NAMES[expansion], list }));
   const choose = (id: string) => {
     onPick(id);
     setOpen(false);

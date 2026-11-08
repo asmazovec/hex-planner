@@ -1,14 +1,14 @@
 import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
+import { HEX_INNER, hexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
-import { opponentsBySeat, planetHolder } from '../../domain/players';
+import { opponentsBySeat } from '../../domain/players';
+import { holderIn, stacksOf } from '../../domain/stacks';
 import { rotateLanes } from '../../domain/lanes';
-import { isOnMap, structuresOn, systemPlanets, tileIdOf } from '../../domain/project';
-import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
+import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
+import type { DataPack, Game, GameState, PlanetDef, TechType } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
-import { UNIT_ORDER } from '../units/unitOrder';
 import { hexPoints, slotToPixel } from './geometry';
 import { opponentName } from '../players/names';
 
@@ -103,9 +103,6 @@ function lanePath([a, b]: [number, number]): string {
 
 const shortName = (name: string): string => (name.length > NAME_LENGTH ? `${name.slice(0, NAME_LENGTH - 1)}…` : name);
 
-const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
-  UNIT_ORDER.filter(u => (counts?.[u] ?? 0) > 0).map(unit => ({ unit, count: counts?.[unit] ?? 0 }));
-
 /** A name or caption goes when a token or another planet covers its box; both are taken as round. */
 function nameCovered(name: string, x: number, baseline: number, items: { x: number; y: number; size: number }[]): boolean {
   const half = (name.length * NAME_CHAR) / 2;
@@ -197,31 +194,8 @@ export function TileView({
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game);
   /** The opponent a planet belongs to in the state shown; undefined when it is mine or free. */
-  // TODO(P2-220) #ws:ui-logic-to-domain #type:dup #dep:P2-203 #size:s #duplicate-of-domain #rivals — Копия holderOf из HexStage: держатель планеты из функции домена
-  const holderOf = (planetId: string) => (state.control[planetId] === 'enemy' ? state.rivalHolds?.[planetId] ?? planetHolder(game, planetId) : undefined);
-
-  // TODO(P2-221) #ws:ui-logic-to-domain #type:arch #size:m #duplicate-of-domain #rivals #stacks — Стеки тайла (мои, соперников по replay или по game.enemyUnits, наземные на первой планете, строения) собираются в UI: функция домена stacksOf
-  const space: SpaceStack[] = [];
-  const ground: GroundStack[] = [];
-  for (const { unit, count } of unitsOf(state.systems[slotKey])) space.push({ kind: unit, owner: 'me', count });
-  for (const { id: owner } of seated) {
-    // The plan's expected actions move them; without a replay it is what stands on the map.
-    const rival = state.rivals?.[owner];
-    const left = (rival ? rival.systems[slotKey] : game.enemyUnits[slotKey]?.[owner]) ?? {};
-    for (const { unit, count } of unitsOf(left)) if (unit !== 'infantry' && unit !== 'mech') space.push({ kind: unit, owner, count });
-    for (const unit of ['infantry', 'mech'] as const) {
-      // Ground units still listed with the system stand on its first planet, or on the comb without planets.
-      if (planets.length === 0 && left[unit]) ground.push({ kind: unit, owner, count: left[unit], planet: 0 });
-      planets.forEach((planet, i) => {
-        const count = ((rival ? rival.ground[planet.id] : game.enemyGround[planet.id]?.[owner])?.[unit] ?? 0) + (i === 0 ? left[unit] ?? 0 : 0);
-        if (count > 0) ground.push({ kind: unit, owner, count, planet: i });
-      });
-    }
-  }
-  planets.forEach((planet, i) => {
-    for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
-    for (const { kind, owner, count } of structuresOn(state, planet.id)) ground.push({ kind, owner, count, planet: i });
-  });
+  const holderOf = (planetId: string) => holderIn(game, state, planetId);
+  const { space, ground } = stacksOf(game, state, slotKey, planets, pack);
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
   const rivalTokens = seated.filter(o => state.rivals?.[o.id]?.tokensOnMap.includes(slotKey));

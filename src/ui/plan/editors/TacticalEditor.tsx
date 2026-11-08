@@ -7,7 +7,7 @@ import { UNIT_ORDER } from '../../units/unitOrder';
 import { LandingBlock } from '../blocks/LandingBlock';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { HexRemove, RowIcon } from '../../primitives/Icon';
-import { addUnits, fliesNow, groupOf, hasUnits, isUntouched, sourcesOf, viaOf, withCount, withoutSource, type TacticalEntry } from '../tactical';
+import { addUnits, afterBattle, countOf, groupOf, hasUnits, isUntouched, sourcesOf, splitFlight, unitsIn, viaOf, withLanding, withoutSource, type TacticalEntry } from '../../../domain/tactical';
 import { systemName } from '../../map/systemName';
 import { UnitPicker } from './UnitPicker';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
@@ -19,6 +19,8 @@ export interface TacticalEditorProps {
   entry: TacticalEntry;
   /** The state just before the entry. */
   before: GameState;
+  /** The whole board just before the entry, every opponent in `rivals`. */
+  board?: GameState;
   warnings: Warning[];
   pickerFrom: string | null;
   manualPayment: boolean;
@@ -39,7 +41,7 @@ export interface TacticalEditorProps {
 
 /** The whole tactical action on one screen: system, arrows and units, optional landing and build, payment. Each block shows its own warnings. */
 export function TacticalEditor({
-  game, pack, entry, before, warnings, pickerFrom, manualPayment, choosing, onChoose,
+  game, pack, entry, before, board, warnings, pickerFrom, manualPayment, choosing, onChoose,
   onUpdate, onOpenPicker, onManualPayment, onFly, onOpenShop, onOpenBattle, onDone,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
@@ -47,43 +49,25 @@ export function TacticalEditor({
   const planets = target === null ? [] : systemPlanets(game, target, pack);
   const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.upgrades, pack);
   const cost = priceOf(entry.production);
-  const unitsIn = (list: { units: UnitCounts }[]): UnitCounts =>
-    list.reduce((sum, item) => addUnits(sum, item.units), {} as UnitCounts);
   // TODO(P2-314) #ws:ui-containers #type:dup #size:s — строка «юнит N, …» собрана здесь, в StrategyEditor (builtUnits), AdjustmentEditor и EntrySteps (signed); один помощник unitsText в ui/units
   const unitText = (units: UnitCounts): string =>
     UNIT_ORDER.filter(u => (units[u] ?? 0) > 0).map(u => `${t(`unit.${u}`)} ${units[u]}`).join(', ');
 
   const sources = sourcesOf(game, pack, entry);
-  // TODO(P2-311) #ws:ui-logic-to-domain #type:dup #duplicate-of-domain — деление «летит / груз» источника считается здесь, в EntrySteps и в tacticalMeters; брать из одной доменной функции
   /** A source in the list: its ships, then how much rides as cargo. */
   const sourceLine = (source: string): string => {
-    const units = unitsIn(groupOf(game, pack, entry.moves, source));
-    const flying = Object.fromEntries((Object.keys(units) as UnitId[]).filter(u => fliesNow(game, pack, before.upgrades, u)).map(u => [u, units[u]])) as UnitCounts;
-    const cargo = (Object.keys(units) as UnitId[]).reduce((sum, u) => (u in flying ? sum : sum + (units[u] ?? 0)), 0);
-    return `${unitText(flying) || t('plan.tactical.noShips')}${cargo > 0 ? t('plan.tactical.cargoShort', { n: cargo }) : ''}`;
+    const { ships, cargo } = splitFlight(game, pack, before.upgrades, unitsIn(groupOf(game, pack, entry.moves, source)));
+    const aboard = countOf(cargo);
+    return `${unitText(ships) || t('plan.tactical.noShips')}${aboard > 0 ? t('plan.tactical.cargoShort', { n: aboard }) : ''}`;
   };
 
-  // TODO(P2-312) #ws:ui-logic-to-domain #type:arch #size:s — наземные юниты заданы списком; брать pack.units[u].ground
-  const groundUnits = (['infantry', 'mech'] as UnitId[]).filter(u => pack.units[u]);
-  // TODO(P2-313) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-312 — что прилетело, что осталось после боя и что можно высадить считает UI; это шаг replay (после перелёта и потерь, до высадки), брать состояние после боя из домена
-  const arrived = addUnits(before.systems[target ?? ''] ?? {}, unitsIn(entry.moves));
   const lost = entry.losses ?? {};
-  /** What fights in the active system, by the order of the shop. */
-  const fighting = UNIT_ORDER.filter(u => pack.units[u] && ((arrived[u] ?? 0) > 0 || (lost[u] ?? 0) > 0));
-  /** What the battle leaves; the landing comes after it. */
-  const here = Object.fromEntries(fighting.map(u => [u, Math.max(0, (arrived[u] ?? 0) - (lost[u] ?? 0))])) as UnitCounts;
-  const landed = unitsIn(entry.landings);
-  /** Ground unit types that arrived or are already assigned; only these can land. */
-  const landable = groundUnits.filter(u => (here[u] ?? 0) > 0 || (landed[u] ?? 0) > 0);
+  /** What the battle leaves, and the ground unit types that arrived or are already assigned: only these can land. */
+  const { left: here, landable } = afterBattle(pack, entry, before, UNIT_ORDER);
   const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0);
 
   const landedOn = (planetId: string, unit: UnitId): number => entry.landings.find(l => l.planetId === planetId)?.units[unit] ?? 0;
-  const setLanding = (planetId: string, unit: UnitId, count: number) => {
-    const current = entry.landings.find(l => l.planetId === planetId)?.units ?? {};
-    const rest = entry.landings.filter(l => l.planetId !== planetId);
-    const units = withCount(current, unit, count);
-    onUpdate({ landings: hasUnits(units) ? [...rest, { planetId, units }] : rest });
-  };
+  const setLanding = (planetId: string, unit: UnitId, count: number) => onUpdate(withLanding(entry, planetId, unit, count));
   const lostAnywhere = unitText(Object.values(entry.groundLosses ?? {}).reduce(addUnits, lost));
 
   const toggleManual = (open: boolean) => {
@@ -160,7 +144,7 @@ export function TacticalEditor({
             <details className="editor-section" open>
               <summary><span>{t('plan.tactical.landing')} <small className="optional-note">{t('plan.tactical.optional')}</small></span><RowIcon name="chevron" /></summary>
               <LandingBlock
-                game={game} planets={planets} before={before} units={landable} arrived={here} lost={entry.groundLosses}
+                game={game} planets={planets} before={before} board={board} units={landable} arrived={here} lost={entry.groundLosses}
                 landedOn={landedOn} onLand={setLanding}
               />
               {list(placer.at('landing'))}

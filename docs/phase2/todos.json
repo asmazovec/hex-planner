@@ -335,116 +335,6 @@
       "text": "Контрактные тесты: каждый test() в rules/lrr ссылается на правило реестра, у каждого правила есть тест, у каждого шага есть место показа, src/ui не создаёт нарушений; codesOf перевести на номера правил — P2 note: registry and contract tests done (src/domain/rules/registry.ts, contract.test.ts: every code registered and exercised, src/ui creates no warning; violations carry rule, step, place; rulesOf below); left: «у каждого шага есть место показа» needs warningPlaces by step, for the UI wave"
     },
     {
-      "id": "P2-006",
-      "num": 6,
-      "file": "src/domain/replay/movement.ts",
-      "line": 10,
-      "ws": "movement",
-      "type": "arch",
-      "layer": "domain",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "srp",
-        "route-graph"
-      ],
-      "text": "Граф маршрутов и аномалии (180 строк) живут в модуле расчёта состояния: вынести в src/domain/movement.ts"
-    },
-    {
-      "id": "P2-007",
-      "num": 7,
-      "file": "src/domain/replay/movement.ts",
-      "line": 100,
-      "ws": "movement",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "41.3",
-        "41-note-6"
-      ],
-      "tests": [
-        "041-gravity-rift"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "gravity-rift"
-      ],
-      "text": "Разлом даёт +1 один раз на корабль; по примечанию 6 к 41 — +1 за каждый разлом и каждое прохождение. Ключ seen в routeReach тоже булев"
-    },
-    {
-      "id": "P2-008",
-      "num": 8,
-      "file": "src/domain/replay/movement.ts",
-      "line": 84,
-      "ws": "movement",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "58.3.2"
-      ],
-      "tests": [
-        "058-movement"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "route",
-        "skipped-stop"
-      ],
-      "text": "Шаги между отмеченными точками считаются поиском, который не видит аномалий и чужих кораблей: системы между точками не проверяются. Восстанавливать весь путь или требовать соседние точки (tapStep)"
-    },
-    {
-      "id": "P2-009",
-      "num": 9,
-      "file": "src/domain/replay/movement.ts",
-      "line": 128,
-      "ws": "movement",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "58.3.5"
-      ],
-      "tests": [
-        "058-movement"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "route-highlight"
-      ],
-      "text": "Удаляет из подсветки и активную систему, если путь начался в ней: 58.3.5 разрешает вылететь и вернуться"
-    },
-    {
-      "id": "P2-010",
-      "num": 10,
-      "file": "src/domain/strategy.ts",
-      "line": 167,
-      "ws": "movement",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "6-note-2"
-      ],
-      "tests": [
-        "006-adjacency"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "Creuss",
-        "off-map-home"
-      ],
-      "text": "Дом вне карты (Creuss) получает ключ тайла 51, а не слот: граф маршрутов его не знает, gridDistance даёт 1 до любой системы, подсветка пуста. Нужен слот дома вне карты, смежный только через червоточину"
-    },
-    {
       "id": "P2-011",
       "num": 11,
       "file": "src/domain/route.ts",
@@ -466,775 +356,7 @@
       "tags": [
         "Creuss"
       ],
-      "text": "Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity"
-    },
-    {
-      "id": "P2-012",
-      "num": 12,
-      "file": "src/domain/replay/movement.ts",
-      "line": 58,
-      "ws": "movement",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "44.2"
-      ],
-      "tests": [
-        "044-hyperlanes"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "hyperlane"
-      ],
-      "text": "Гиперпуть не система: его нельзя выбрать активной системой и в нём нельзя закончить ход — нет нарушения"
-    },
-    {
-      "id": "P2-013",
-      "num": 13,
-      "file": "src/domain/replay/transport.ts",
-      "line": 8,
-      "ws": "transport",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "95.1",
-        "95.3"
-      ],
-      "tests": [
-        "095-transport"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "pickup",
-        "token"
-      ],
-      "text": "Подборы пропускаются целиком: нет проверки, что подбор из старта, пути или активной системы (95.1), и что в системе подбора нет моего жетона (95.3). Тот баг, что нашёл пользователь"
-    },
-    {
-      "id": "P2-014",
-      "num": 14,
-      "file": "src/domain/replay/transport.ts",
-      "line": 48,
-      "ws": "transport",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "16.3",
-        "16-note-4",
-        "43.1",
-        "55-note-1",
-        "95-note-4"
-      ],
-      "tests": [
-        "016-capacity",
-        "043-ground-forces",
-        "055-mechs",
-        "095-transport"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "capacity",
-        "left-behind"
-      ],
-      "text": "Места на борту проверяются только в активной системе: истребители и наземные войска, брошенные без мест на борту в системе, откуда улетели корабли, не дают нарушения"
-    },
-    {
-      "id": "P2-019",
-      "num": 19,
-      "file": "src/domain/replay/tactical.ts",
-      "line": 26,
-      "ws": "combat-order",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "76.2",
-        "89.3"
-      ],
-      "tests": [
-        "076-ships",
-        "089-tactical-action"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "fleet-pool",
-        "capacity",
-        "battle"
-      ],
-      "text": "Потери снимаются до проверки флота и до высадки: флот надо проверять при прилёте (37.3), а высадку ограничивать местами на борту после боя (16.3.3). Порядок: прилёт → флот → бой → места на борту → высадка → производство"
-    },
-    {
-      "id": "P2-020",
-      "num": 20,
-      "file": "src/domain/replay/invasion.ts",
-      "line": 32,
-      "ws": "invasion",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "49.5",
-        "42.4.4"
-      ],
-      "tests": [
-        "049-invasion",
-        "042-ground-combat"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "control"
-      ],
-      "text": "Контроль ставится до снятия groundLosses: если все высадившиеся погибли, контроль всё равно мой. Устанавливать контроль после потерь на планете"
-    },
-    {
-      "id": "P2-021",
-      "num": 21,
-      "file": "src/domain/replay/invasion.ts",
-      "line": 20,
-      "ws": "invasion",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "76.1",
-        "49.2",
-        "89.4"
-      ],
-      "tests": [
-        "076-ships",
-        "049-invasion",
-        "089-tactical-action"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "landing"
-      ],
-      "text": "Высаживает любой тип юнита, в том числе корабли, и на любую планету: только наземные войска и только планеты активной системы"
-    },
-    {
-      "id": "P2-022",
-      "num": 22,
-      "file": "src/domain/replay/invasion.ts",
-      "line": 39,
-      "ws": "invasion",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "49.5",
-        "25.5"
-      ],
-      "tests": [
-        "049-invasion",
-        "025-control"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "rivals",
-        "control"
-      ],
-      "text": "Высадка соперника переворачивает контроль по одному списку landings: без проверки, что кто-то высадился и выжил; планета, взятая мной у соперника, остаётся его в state.rivals"
-    },
-    {
-      "id": "P2-023",
-      "num": 23,
-      "file": "src/domain/replay/tactical.ts",
-      "line": 22,
-      "ws": "invasion",
-      "type": "model",
-      "layer": "domain",
-      "rules": [
-        "27.2",
-        "27.3",
-        "49-note-4",
-        "54.1"
-      ],
-      "tests": [
-        "027-custodians-token",
-        "049-invasion",
-        "054-mecatol-rex"
-      ],
-      "deps": [],
-      "needs": [
-        "decision"
-      ],
-      "size": "m",
-      "tags": [
-        "custodians"
-      ],
-      "text": "Нет жетона custodians: высадка на Mecatol Rex без 6 влияния и без очка. Решить, моделировать ли"
-    },
-    {
-      "id": "P2-024",
-      "num": 24,
-      "file": "src/domain/types.ts",
-      "line": 305,
-      "ws": "structures",
-      "type": "model",
-      "layer": "domain",
-      "rules": [
-        "49.5.1",
-        "63.4",
-        "79.4"
-      ],
-      "tests": [
-        "049-invasion",
-        "063-pds",
-        "079-space-dock"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "structure-owner",
-        "schema"
-      ],
-      "text": "У баз и PDS нет владельца: при захвате планеты чужие строения переходят к захватчику вместо уничтожения. Хранить владельца, уничтожать при смене контроля, миграция схемы"
-    },
-    {
-      "id": "P2-025",
-      "num": 25,
-      "file": "src/storage/schema.ts",
-      "line": 191,
-      "ws": "structures",
-      "type": "model",
-      "layer": "storage",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-024"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "schema",
-        "migration"
-      ],
-      "text": "Миграция: владелец строений (P2-024) — существующие базы и PDS отдать тому, кто контролирует планету"
-    },
-    {
-      "id": "P2-026",
-      "num": 26,
-      "file": "src/domain/replay/cards.ts",
-      "line": 59,
-      "ws": "structures",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "24.2",
-        "24.3",
-        "24-note-1",
-        "24-note-2",
-        "63.3",
-        "79.3",
-        "85.4",
-        "85.5",
-        "85.6"
-      ],
-      "tests": [
-        "024-construction",
-        "063-pds",
-        "079-space-dock",
-        "085-structures"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "construction",
-        "limits"
-      ],
-      "text": "Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется"
-    },
-    {
-      "id": "P2-027",
-      "num": 27,
-      "file": "src/domain/replay/production.ts",
-      "line": 12,
-      "ws": "production",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "68.3",
-        "67.4.1"
-      ],
-      "tests": [
-        "068-production",
-        "067-producing-units"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "placement"
-      ],
-      "text": "Пехота идёт на первую свою планету системы (в том числе только что захваченную), а не на планету с базой; productionGround принимается и на чужую планету (placesOf)"
-    },
-    {
-      "id": "P2-028",
-      "num": 28,
-      "file": "src/domain/replay/production.ts",
-      "line": 39,
-      "ws": "production",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "14.1",
-        "67.6",
-        "67-/-79"
-      ],
-      "tests": [
-        "014-blockaded",
-        "067-producing-units",
-        "079-space-dock"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "blockade",
-        "no-dock"
-      ],
-      "text": "Производство не проверяет базу (сейчас «нет дока» считается в UI), блокаду и чужие корабли в системе: нарушения noProduction и productionBlockaded в домене"
-    },
-    {
-      "id": "P2-029",
-      "num": 29,
-      "file": "src/domain/replay/production.ts",
-      "line": 49,
-      "ws": "production",
-      "type": "model",
-      "layer": "domain",
-      "rules": [
-        "68.1",
-        "79.1",
-        "67.5",
-        "72.1",
-        "96.3"
-      ],
-      "tests": [
-        "068-production",
-        "079-space-dock",
-        "067-producing-units",
-        "072-reinforcements",
-        "096-units"
-      ],
-      "deps": [],
-      "needs": [
-        "decision"
-      ],
-      "size": "m",
-      "tags": [
-        "production-limit",
-        "reinforcements"
-      ],
-      "text": "Нет лимита Production и запаса отрядов: данные есть (UnitDef.limit, structures[].limit, structures[].levels.production), нужны нарушения productionOver и reinforcementsOut. Решить, нужно ли"
-    },
-    {
-      "id": "P2-030",
-      "num": 30,
-      "file": "src/domain/replay/cards.ts",
-      "line": 64,
-      "ws": "production",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "99.3"
-      ],
-      "tests": [
-        "099-warfare"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "warfare",
-        "card-production"
-      ],
-      "text": "Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production"
-    },
-    {
-      "id": "P2-033",
-      "num": 33,
-      "file": "src/domain/replay/cards.ts",
-      "line": 12,
-      "ws": "strategy-cards",
-      "type": "arch",
-      "layer": "domain",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "ocp",
-        "card-handlers"
-      ],
-      "text": "Цепочка if (entry.card === CARD.x) по всей функции: обработчик на каждую карту (основное, второстепенное, стоимость, свободные жетоны, нарушения) в src/domain/cards/"
-    },
-    {
-      "id": "P2-034",
-      "num": 34,
-      "file": "src/domain/strategy.ts",
-      "line": 49,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "83.3"
-      ],
-      "tests": [
-        "083-strategy-card"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "for-token"
-      ],
-      "text": "Стоимость основного берётся из сохранённого forToken, который ставит редактор при выборе карты; после смены карт раунда он устаревает. Выводить из round.strategyCard/backupCard при повторе; основное чужой карты — нарушение"
-    },
-    {
-      "id": "P2-035",
-      "num": 35,
-      "file": "src/state/gameStore.ts",
-      "line": 75,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "state",
-      "rules": [
-        "83.3"
-      ],
-      "tests": [
-        "083-strategy-card"
-      ],
-      "deps": [
-        "P2-034"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "for-token"
-      ],
-      "text": "Меняет карты раунда, не трогая forToken записей; после P2-034 флаг не нужен"
-    },
-    {
-      "id": "P2-036",
-      "num": 36,
-      "file": "src/domain/replay/cards.ts",
-      "line": 15,
-      "ws": "strategy-cards",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "20.5",
-        "82.1",
-        "83.4",
-        "83.7",
-        "92.4.2"
-      ],
-      "tests": [
-        "020-command-tokens",
-        "082-strategic-action",
-        "083-strategy-card",
-        "092-trade"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "secondary"
-      ],
-      "text": "Нет понятия «чья карта»: второстепенное своей карты и повтор второстепенного одной карты за раунд проходят молча"
-    },
-    {
-      "id": "P2-037",
-      "num": 37,
-      "file": "src/domain/replay/cards.ts",
-      "line": 45,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "45.2",
-        "45-note-3"
-      ],
-      "tests": [
-        "045-imperial"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "imperial",
-        "mecatol"
-      ],
-      "text": "Очко по флажку effects.mecatol, а не по контролю Mecatol Rex (mr/mrte) в состоянии"
-    },
-    {
-      "id": "P2-038",
-      "num": 38,
-      "file": "src/domain/strategy.ts",
-      "line": 57,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "99.1",
-        "99-note-1"
-      ],
-      "tests": [
-        "099-warfare"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "warfare"
-      ],
-      "text": "Warfare до Thunder's Edge всегда даёт жетон, даже если снять с карты нечего: давать только при снятом жетоне"
-    },
-    {
-      "id": "P2-039",
-      "num": 39,
-      "file": "src/domain/replay/cards.ts",
-      "line": 43,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "92.4"
-      ],
-      "tests": [
-        "092-trade"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "trade",
-        "rivals"
-      ],
-      "text": "effects.freeSecondary хранится, но расчёт его не читает: выбранные соперники платят жетон за второстепенное"
-    },
-    {
-      "id": "P2-040",
-      "num": 40,
-      "file": "src/domain/replay/cards.ts",
-      "line": 33,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "32.2",
-        "32.3",
-        "32-note-3"
-      ],
-      "tests": [
-        "032-diplomacy"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "diplomacy",
-        "rivals"
-      ],
-      "text": "Diplomacy: соперники не получают жетон в выбранной системе; нет нарушений «больше двух планет», «Mecatol Rex», «система без моей планеты» (лимит 2 сейчас только в UI)"
-    },
-    {
-      "id": "P2-041",
-      "num": 41,
-      "file": "src/domain/strategy.ts",
-      "line": 76,
-      "ws": "strategy-cards",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "91.2",
-        "91.3",
-        "90.10"
-      ],
-      "tests": [
-        "091-technology-sc",
-        "090-technology"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "technology"
-      ],
-      "text": "Число исследований не ограничено (2 на основном, 1 на второстепенном) и уже известная технология оплачивается повторно"
-    },
-    {
-      "id": "P2-043",
-      "num": 43,
-      "file": "src/domain/replay/movement.ts",
-      "line": 63,
-      "ws": "rivals",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "58.3.2"
-      ],
-      "tests": [
-        "058-movement"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "rivals",
-        "route"
-      ],
-      "text": "Блокировка берётся из game.enemyUnits (расставлено вручную), а не из состояния соперников при повторе: приведённые соперником корабли не мешают, уведённые мешают; маршруты соперника не видят моих кораблей"
-    },
-    {
-      "id": "P2-044",
-      "num": 44,
-      "file": "src/domain/players.ts",
-      "line": 52,
-      "ws": "rivals",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "92.4"
-      ],
-      "tests": [
-        "092-trade"
-      ],
-      "deps": [
-        "P2-043"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "rivals",
-        "game-as"
-      ],
-      "text": "Взгляд соперника оставляет opponents как есть (в списках выбора есть он сам и нет меня) и не добавляет мои юниты в enemyUnits"
-    },
-    {
-      "id": "P2-045",
-      "num": 45,
-      "file": "src/domain/replay/expedition.ts",
-      "line": 28,
-      "ws": "thunders-edge",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "expedition-4.5"
-      ],
-      "tests": [
-        "te-expedition"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "expedition"
-      ],
-      "text": "Часть «технология» без cost: оплата без планеты считается оплаченной, нет проверки специализации и контроля планеты"
-    },
-    {
-      "id": "P2-046",
-      "num": 46,
-      "file": "src/domain/replay/expedition.ts",
-      "line": 13,
-      "ws": "thunders-edge",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "expedition-5"
-      ],
-      "tests": [
-        "te-expedition"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "expedition"
-      ],
-      "text": "Часть, отмеченная в партии как моя, берётся снова; две части за один ход не дают нарушения"
-    },
-    {
-      "id": "P2-047",
-      "num": 47,
-      "file": "src/domain/replay/production.ts",
-      "line": 16,
-      "ws": "thunders-edge",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "entropic-scars-2"
-      ],
-      "tests": [
-        "te-entropic-scars"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "entropic-scar"
-      ],
-      "text": "Производство в энтропийном шраме (тактика и карты) без нарушения"
-    },
-    {
-      "id": "P2-048",
-      "num": 48,
-      "file": "src/domain/replay/board.ts",
-      "line": 29,
-      "ws": "thunders-edge",
-      "type": "model",
-      "layer": "domain",
-      "rules": [
-        "space-stations-2",
-        "space-stations-4"
-      ],
-      "tests": [
-        "te-space-stations"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "space-station"
-      ],
-      "text": "Станция — обычная планета: контроль берётся высадкой, пехота и строения ставятся на неё. Нужен признак станции и контроль присутствием кораблей"
-    },
-    {
-      "id": "P2-049",
-      "num": 49,
-      "file": "src/domain/replay/board.ts",
-      "line": 13,
-      "ws": "thunders-edge",
-      "type": "model",
-      "layer": "domain",
-      "rules": [
-        "fracture-5"
-      ],
-      "tests": [
-        "te-fracture"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "fracture"
-      ],
-      "text": "Входы Излома (game.fracture.ingress) не смежны с его выходами (TileDef.egress): в Излом нельзя проложить маршрут"
+      "text": "Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity — P2 note: after P2-010 the off-map home is a node of the route graph, so no real system key reaches this fallback; Infinity breaks about 20 unit and screen tests whose fixtures use letter slot keys ('A', 'B', 'H') one step apart, so the fallback stays until those fixtures move to q,r keys"
     },
     {
       "id": "P2-060",
@@ -1276,32 +398,10 @@
       "text": "en.json и комментарии кода: «ground units» → «ground forces» (25 мест), «strategy action» → «strategic action»; npm run lint:terms должен быть чистым"
     },
     {
-      "id": "P2-062",
-      "num": 62,
-      "file": "CLAUDE.md",
-      "line": 46,
-      "ws": "docs",
-      "type": "doc",
-      "layer": "docs",
-      "rules": [
-        "41-note-6"
-      ],
-      "tests": [],
-      "deps": [
-        "P2-007"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "gravity-rift"
-      ],
-      "text": "Строка противоречит примечанию 6 к LRR 41: +1 за каждый разлом и каждое прохождение"
-    },
-    {
       "id": "P2-063",
       "num": 63,
       "file": "CLAUDE.md",
-      "line": 69,
+      "line": 68,
       "ws": "docs",
       "type": "doc",
       "layer": "docs",
@@ -1323,7 +423,7 @@
       "id": "P2-064",
       "num": 64,
       "file": "CLAUDE.md",
-      "line": 67,
+      "line": 66,
       "ws": "docs",
       "type": "doc",
       "layer": "docs",
@@ -1341,7 +441,7 @@
       "id": "P2-200",
       "num": 200,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 69,
+      "line": 68,
       "ws": "ui-nesting",
       "type": "arch",
       "layer": "ui",
@@ -1362,7 +462,7 @@
       "id": "P2-201",
       "num": 201,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 342,
+      "line": 320,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1380,7 +480,7 @@
       "id": "P2-202",
       "num": 202,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 93,
+      "line": 92,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1397,90 +497,10 @@
       "text": "Свой обработчик Escape, как в Drawer и FactionPicker: его возьмёт на себя Modal"
     },
     {
-      "id": "P2-203",
-      "num": 203,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 118,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "duplicate-of-domain",
-        "rivals"
-      ],
-      "text": "holderOf повторяет TileView: держателя планеты в состоянии (rivalHolds, затем planetHolder) считать одной функцией домена в players.ts"
-    },
-    {
-      "id": "P2-204",
-      "num": 204,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 122,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "rivals",
-        "enemy-units"
-      ],
-      "text": "Правило «наземные по планетам, числящиеся за системой снимаются первыми» решает UI: перенести в действие стора или домен"
-    },
-    {
-      "id": "P2-205",
-      "num": 205,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 152,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "production",
-        "payment",
-        "duplicate-of-domain"
-      ],
-      "text": "Сборка production/productionGround и автооплата (autoPay, если оплата не ручная) считаются в UI: функция домена рядом с withLoss, общая с редактором тактики"
-    },
-    {
-      "id": "P2-206",
-      "num": 206,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 254,
-      "ws": "combat-order",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "78.6.2"
-      ],
-      "tests": [
-        "078-space-combat"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "losses"
-      ],
-      "text": "Возврат ошибочной потери десантника идёт через withLoss(+1) и только уменьшает losses: юнит остаётся в космосе, а не в landings; чинить в withLoss"
-    },
-    {
       "id": "P2-207",
       "num": 207,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 211,
+      "line": 190,
       "ws": "ui-nesting",
       "type": "arch",
       "layer": "ui",
@@ -1500,7 +520,7 @@
       "id": "P2-208",
       "num": 208,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 270,
+      "line": 248,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1517,28 +537,10 @@
       "text": "Кнопка потери .stage-loss — ещё одна плитка юнита с числом: UnitTile variant=\"loss\""
     },
     {
-      "id": "P2-209",
-      "num": 209,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 206,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "structures"
-      ],
-      "text": "Есть ли строение в самой партии, а не в записях (game.pds, startingDocks), решает UI: нужна функция домена"
-    },
-    {
       "id": "P2-210",
       "num": 210,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 308,
+      "line": 286,
       "ws": "ui-warnings",
       "type": "dup",
       "layer": "ui",
@@ -1557,7 +559,7 @@
       "id": "P2-212",
       "num": 212,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 368,
+      "line": 346,
       "ws": "ui-warnings",
       "type": "ui",
       "layer": "ui",
@@ -1575,7 +577,7 @@
       "id": "P2-213",
       "num": 213,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 381,
+      "line": 359,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1595,7 +597,7 @@
       "id": "P2-214",
       "num": 214,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 431,
+      "line": 407,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1616,7 +618,7 @@
       "id": "P2-215",
       "num": 215,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 392,
+      "line": 370,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1631,32 +633,10 @@
       "text": "Голые h3 здесь и в lossStrip, уровни заголовков произвольные: SectionTitle"
     },
     {
-      "id": "P2-216",
-      "num": 216,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 412,
-      "ws": "ui-warnings",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [
-        "067-producing-units",
-        "079-space-dock"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "warning-channel",
-        "duplicate-of-domain"
-      ],
-      "text": "«Нет базы» считает UI (вторая копия в TacticalEditor) и рисует p.warning-text: доменный код нарушения через WarningList"
-    },
-    {
       "id": "P2-217",
       "num": 217,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 419,
+      "line": 395,
       "ws": "ui-nesting",
       "type": "ui",
       "layer": "ui",
@@ -1674,32 +654,10 @@
       "text": "Свойства тайла и контроль планеты лежат пятым-шестым уровнем под режимом: отдельный режим сегмента или поповер"
     },
     {
-      "id": "P2-218",
-      "num": 218,
-      "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 294,
-      "ws": "structures",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "49.5.1"
-      ],
-      "tests": [],
-      "deps": [
-        "P2-222"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "player-colour"
-      ],
-      "text": "Строение красится цветом держателя планеты: чужая база после захвата выглядит моей; брать владельца строения"
-    },
-    {
       "id": "P2-219",
       "num": 219,
       "file": "src/ui/map/stage/HexStage.tsx",
-      "line": 133,
+      "line": 126,
       "ws": "ui-nesting",
       "type": "dup",
       "layer": "ui",
@@ -1716,75 +674,10 @@
       "text": "Тактическая запись ищется дважды (fightingFor и tactical ниже) по разным правилам: одна запись, которой принадлежат бой и покупки"
     },
     {
-      "id": "P2-220",
-      "num": 220,
-      "file": "src/ui/map/TileView.tsx",
-      "line": 200,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-203"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "duplicate-of-domain",
-        "rivals"
-      ],
-      "text": "Копия holderOf из HexStage: держатель планеты из функции домена"
-    },
-    {
-      "id": "P2-221",
-      "num": 221,
-      "file": "src/ui/map/TileView.tsx",
-      "line": 203,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain",
-        "rivals",
-        "stacks"
-      ],
-      "text": "Стеки тайла (мои, соперников по replay или по game.enemyUnits, наземные на первой планете, строения) собираются в UI: функция домена stacksOf"
-    },
-    {
-      "id": "P2-222",
-      "num": 222,
-      "file": "src/ui/map/TileView.tsx",
-      "line": 223,
-      "ws": "structures",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "49.5.1",
-        "63.4",
-        "79.4"
-      ],
-      "tests": [
-        "049-invasion",
-        "063-pds",
-        "079-space-dock"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "PDS и база рисуются за держателем планеты: после захвата чужие строения переходят к захватчику; рисовать по владельцу строения"
-    },
-    {
       "id": "P2-223",
       "num": 223,
       "file": "src/ui/map/TileView.tsx",
-      "line": 129,
+      "line": 126,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1803,7 +696,7 @@
       "id": "P2-224",
       "num": 224,
       "file": "src/ui/map/TileView.tsx",
-      "line": 316,
+      "line": 287,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1824,7 +717,7 @@
       "id": "P2-225",
       "num": 225,
       "file": "src/ui/map/TileView.tsx",
-      "line": 335,
+      "line": 306,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -1846,7 +739,7 @@
       "id": "P2-226",
       "num": 226,
       "file": "src/ui/map/TileView.tsx",
-      "line": 327,
+      "line": 298,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -1865,7 +758,7 @@
       "id": "P2-227",
       "num": 227,
       "file": "src/ui/map/TileView.tsx",
-      "line": 343,
+      "line": 314,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -2190,49 +1083,10 @@
       "text": "Строка подтверждения .row (текст, «Заменить», «Отмена») — четвёртый вид после player-confirm, GameScreen и LayoutPicker: ConfirmBar"
     },
     {
-      "id": "P2-251",
-      "num": 251,
-      "file": "src/ui/map/builder/LayoutPicker.tsx",
-      "line": 8,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "layout"
-      ],
-      "text": "Какие числа игроков выбирают раскладку и где гиперпути от Milty, решает UI: перенести в domain/mapBuilder.ts"
-    },
-    {
-      "id": "P2-252",
-      "num": 252,
-      "file": "src/ui/map/builder/LayoutPicker.tsx",
-      "line": 39,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-251"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "layout",
-        "hyperlanes"
-      ],
-      "text": "Число мест с гиперпутями считается по шаблону в UI: функция в domain/mapBuilder.ts"
-    },
-    {
       "id": "P2-253",
       "num": 253,
       "file": "src/ui/map/builder/LayoutPicker.tsx",
-      "line": 61,
+      "line": 53,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -2254,7 +1108,7 @@
       "id": "P2-254",
       "num": 254,
       "file": "src/ui/map/builder/LayoutPicker.tsx",
-      "line": 43,
+      "line": 35,
       "ws": "ui-css",
       "type": "dead",
       "layer": "ui",
@@ -2272,7 +1126,7 @@
       "id": "P2-255",
       "num": 255,
       "file": "src/ui/map/builder/TileNumberInput.tsx",
-      "line": 46,
+      "line": 42,
       "ws": "ui-css",
       "type": "dead",
       "layer": "ui",
@@ -2292,7 +1146,7 @@
       "id": "P2-256",
       "num": 256,
       "file": "src/ui/map/builder/TileNumberInput.tsx",
-      "line": 61,
+      "line": 57,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -2310,7 +1164,7 @@
       "id": "P2-257",
       "num": 257,
       "file": "src/ui/map/builder/TileNumberInput.tsx",
-      "line": 63,
+      "line": 59,
       "ws": "ui-css",
       "type": "ui",
       "layer": "ui",
@@ -2323,24 +1177,6 @@
         "chips"
       ],
       "text": "Ряд подсказок на .row без общего класса, хотя есть .chips: перевести на .chips"
-    },
-    {
-      "id": "P2-258",
-      "num": 258,
-      "file": "src/ui/map/builder/TileNumberInput.tsx",
-      "line": 40,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "map-builder"
-      ],
-      "text": "Причину отказа (номер неоднозначен или неизвестен) UI выясняет сам, повторяя поиск: пусть resolveTile в domain/mapBuilder.ts её возвращает"
     },
     {
       "id": "P2-259",
@@ -2463,251 +1299,10 @@
       "text": "Свой aside role=dialog с h2: DrawerSheet"
     },
     {
-      "id": "P2-300",
-      "num": 300,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 40,
-      "ws": "combat-order",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "78.6.2"
-      ],
-      "tests": [
-        "078-space-combat"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "losses"
-      ],
-      "text": "возврат (amount > 0) только уменьшает losses, а высадка, из которой десантник ушёл при потере, не восстанавливается: он остаётся в космосе. Возврат должен вернуть его в landings той планеты"
-    },
-    {
-      "id": "P2-301",
-      "num": 301,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 9,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "арифметика UnitCounts (hasUnits, withCount, addUnits, countOf) нужна и домену; перенести в src/domain вместе с остальной тактикой"
-    },
-    {
-      "id": "P2-302",
-      "num": 302,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 27,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-300"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [],
-      "text": "правки записи (isUntouched, lossesOf, withLoss, withAdjustedUnit) — правила записи тактики и корректировки, не UI; в src/domain/tactical.ts"
-    },
-    {
-      "id": "P2-303",
-      "num": 303,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 77,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "sourcePools и fliesNow решают, откуда что берётся и кто летит сам (fliesNow повторяет fightersFly и ground домена); в src/domain/tactical.ts"
-    },
-    {
-      "id": "P2-304",
-      "num": 304,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 96,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [],
-      "text": "модель ходов тактики (sourcesOf, groupOf, viaOf, withRoute, withoutSource, withUnitCount, withoutEmptySources) живёт в UI, а project.ts группирует ходы тем же sourceSlot; в src/domain/tactical.ts"
-    },
-    {
-      "id": "P2-305",
-      "num": 305,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 145,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "arrowsOf и entrySystems выводят из записи стрелки и системы для камеры: чистые функции записи, в src/domain/tactical.ts"
-    },
-    {
-      "id": "P2-306",
-      "num": 306,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 231,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "flies и stateInFlight повторяют снятие юнитов и выставление жетона из applyTactical (project.ts); состояние в полёте должен давать домен шагом replay"
-    },
-    {
-      "id": "P2-307",
-      "num": 307,
-      "file": "src/ui/plan/tactical.ts",
-      "line": 208,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-306"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "выбор пула «планета или космос» по move.from повторён в flightRoutes, flies, stateInFlight и UnitPicker.available; один доменный poolOf"
-    },
-    {
-      "id": "P2-309",
-      "num": 309,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 48,
-      "ws": "production",
-      "type": "check",
-      "layer": "ui",
-      "rules": [
-        "67-/-79",
-        "79.4"
-      ],
-      "tests": [
-        "067-producing-units",
-        "079-space-dock"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain",
-        "warning-channel"
-      ],
-      "text": "«нет базы» считает UI по before.docks (чужая база тоже засчитывается); нужен код noProduction в домене, hasDock убрать"
-    },
-    {
-      "id": "P2-310",
-      "num": 310,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 175,
-      "ws": "ui-warnings",
-      "type": "ui",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-309"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "warning-channel"
-      ],
-      "text": "своё span.warning-text мимо WarningList; показывать noProduction через placer.at('production')"
-    },
-    {
-      "id": "P2-311",
-      "num": 311,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 59,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "деление «летит / груз» источника считается здесь, в EntrySteps и в tacticalMeters; брать из одной доменной функции"
-    },
-    {
-      "id": "P2-312",
-      "num": 312,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 68,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "наземные юниты заданы списком; брать pack.units[u].ground"
-    },
-    {
-      "id": "P2-313",
-      "num": 313,
-      "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 70,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-312"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "что прилетело, что осталось после боя и что можно высадить считает UI; это шаг replay (после перелёта и потерь, до высадки), брать состояние после боя из домена"
-    },
-    {
       "id": "P2-314",
       "num": 314,
       "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 54,
+      "line": 52,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -2723,7 +1318,7 @@
       "id": "P2-315",
       "num": 315,
       "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 98,
+      "line": 80,
       "ws": "ui-warnings",
       "type": "arch",
       "layer": "ui",
@@ -2739,7 +1334,7 @@
       "id": "P2-316",
       "num": 316,
       "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 107,
+      "line": 89,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -2757,7 +1352,7 @@
       "id": "P2-317",
       "num": 317,
       "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 153,
+      "line": 135,
       "ws": "ui-nesting",
       "type": "ui",
       "layer": "ui",
@@ -2777,7 +1372,7 @@
       "id": "P2-318",
       "num": 318,
       "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 145,
+      "line": 127,
       "ws": "ui-nesting",
       "type": "ui",
       "layer": "ui",
@@ -2795,7 +1390,7 @@
       "id": "P2-319",
       "num": 319,
       "file": "src/ui/plan/editors/TacticalEditor.tsx",
-      "line": 200,
+      "line": 182,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -2830,53 +1425,10 @@
       "text": "плитка юнита с числом: UnitButton, Stack (LandingBlock), UnitPictures (EntrySteps), плитки HexStage и UnitShop — разные компоненты и классы; один UnitTile с вариантами take/taken/loss/shop в ui/units"
     },
     {
-      "id": "P2-321",
-      "num": 321,
-      "file": "src/ui/plan/editors/UnitPicker.tsx",
-      "line": 63,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-304"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "«доступно за вычетом других маршрутов» считает UI; в домен рядом с groupOf"
-    },
-    {
-      "id": "P2-322",
-      "num": 322,
-      "file": "src/ui/plan/editors/UnitPicker.tsx",
-      "line": 78,
-      "ws": "transport",
-      "type": "check",
-      "layer": "ui",
-      "rules": [
-        "95.3"
-      ],
-      "tests": [
-        "095-transport"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "pickup",
-        "token"
-      ],
-      "text": "подбор предлагается в любой системе пути, и со своим жетоном (кроме активной); предлагать по доменной проверке подбора. Местное имя placesOf затеняет доменное"
-    },
-    {
       "id": "P2-323",
       "num": 323,
       "file": "src/ui/plan/editors/UnitPicker.tsx",
-      "line": 129,
+      "line": 127,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -2896,7 +1448,7 @@
       "id": "P2-324",
       "num": 324,
       "file": "src/ui/plan/editors/UnitPicker.tsx",
-      "line": 167,
+      "line": 165,
       "ws": "ui-warnings",
       "type": "arch",
       "layer": "ui",
@@ -2914,7 +1466,7 @@
       "id": "P2-325",
       "num": 325,
       "file": "src/ui/plan/editors/UnitPicker.tsx",
-      "line": 134,
+      "line": 132,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -2927,57 +1479,10 @@
       "text": "заголовки подблоков h4.picker-title вручную; SectionTitle"
     },
     {
-      "id": "P2-326",
-      "num": 326,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 123,
-      "ws": "strategy-cards",
-      "type": "check",
-      "layer": "ui",
-      "rules": [
-        "32.2",
-        "32.3",
-        "71-note-3"
-      ],
-      "tests": [
-        "032-diplomacy",
-        "071-readied"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "какие планеты готовить и лимит READY_LIMIT решает UI (disabled), домен не предупреждает; правило и список планет в domain/strategy.ts, здесь только показ"
-    },
-    {
-      "id": "P2-328",
-      "num": 328,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 68,
-      "ws": "rivals",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "92.4"
-      ],
-      "tests": [
-        "092-trade"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "player-choice"
-      ],
-      "text": "на карте соперника game = gameAs: списки Trade и Politics предлагают самого соперника и не предлагают меня; нужен доменный список «другие игроки владельца записи»"
-    },
-    {
       "id": "P2-329",
       "num": 329,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 161,
+      "file": "src/ui/plan/editors/cards/politics.tsx",
+      "line": 8,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -2996,8 +1501,8 @@
     {
       "id": "P2-330",
       "num": 330,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 202,
+      "file": "src/ui/plan/editors/cards/trade.tsx",
+      "line": 10,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3015,31 +1520,10 @@
       "text": "вторая ручная сборка выбора игрока; PlayerChoice"
     },
     {
-      "id": "P2-331",
-      "num": 331,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 288,
-      "ws": "strategy-cards",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "45.2",
-        "45-note-3"
-      ],
-      "tests": [
-        "045-imperial"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [],
-      "text": "очко Imperial по флажку, доступному и без контроля Mecatol Rex; убрать переключатель, очко считает домен по контролю"
-    },
-    {
       "id": "P2-332",
       "num": 332,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 272,
+      "file": "src/ui/plan/editors/cards/technology.tsx",
+      "line": 21,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3054,28 +1538,10 @@
       "text": "«−» на месте .in-card, где по соглашению удаление, а делает уменьшение; Stepper"
     },
     {
-      "id": "P2-333",
-      "num": 333,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 321,
-      "ws": "strategy-cards",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "цена жетоном повторяет playOf и costsStrategyToken (и CARD.leadership ниже); звать costsStrategyToken({ ...entry, ...playOf(...) })"
-    },
-    {
       "id": "P2-334",
       "num": 334,
       "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 341,
+      "line": 157,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3095,7 +1561,7 @@
       "id": "P2-335",
       "num": 335,
       "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 343,
+      "line": 159,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -3108,26 +1574,10 @@
       "text": "сетка карт стратегии повторяет StrategyCards.tsx; общий CardGrid"
     },
     {
-      "id": "P2-336",
-      "num": 336,
-      "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 110,
-      "ws": "strategy-cards",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [],
-      "text": "один switch на все карты в редакторе; по компоненту на карту (plan/editors/cards/*) вслед за обработчиками карт в домене"
-    },
-    {
       "id": "P2-337",
       "num": 337,
       "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 338,
+      "line": 154,
       "ws": "ui-nesting",
       "type": "ui",
       "layer": "ui",
@@ -3145,7 +1595,7 @@
       "id": "P2-338",
       "num": 338,
       "file": "src/ui/plan/editors/StrategyEditor.tsx",
-      "line": 81,
+      "line": 76,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3162,28 +1612,10 @@
       "text": "блоки (жетоны, Diplomacy, Politics, Trade, Technology, улучшения) собраны вручную из div.editor-section; Section"
     },
     {
-      "id": "P2-339",
-      "num": 339,
-      "file": "src/ui/plan/blocks/TokenTiles.tsx",
-      "line": 23,
-      "ws": "strategy-cards",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "перераспределение Warfare (жетон из самого полного пула) — правило, не UI; в domain/strategy.ts"
-    },
-    {
       "id": "P2-340",
       "num": 340,
       "file": "src/ui/plan/blocks/TokenTiles.tsx",
-      "line": 48,
+      "line": 40,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3220,30 +1652,10 @@
       "text": "своя плитка юнита (.upic); UnitTile"
     },
     {
-      "id": "P2-343",
-      "num": 343,
-      "file": "src/ui/plan/EntrySteps.tsx",
-      "line": 74,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-311"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "кто летит, кто на борту и где подобран пересчитаны здесь; брать из домена"
-    },
-    {
       "id": "P2-344",
       "num": 344,
       "file": "src/ui/plan/EntrySteps.tsx",
-      "line": 99,
+      "line": 80,
       "ws": "ui-warnings",
       "type": "ui",
       "layer": "ui",
@@ -3261,7 +1673,7 @@
       "id": "P2-345",
       "num": 345,
       "file": "src/ui/plan/EntrySteps.tsx",
-      "line": 115,
+      "line": 96,
       "ws": "ui-warnings",
       "type": "ui",
       "layer": "ui",
@@ -3279,7 +1691,7 @@
       "id": "P2-346",
       "num": 346,
       "file": "src/ui/plan/EntrySteps.tsx",
-      "line": 65,
+      "line": 62,
       "ws": "ui-nesting",
       "type": "ui",
       "layer": "ui",
@@ -3297,7 +1709,7 @@
       "id": "P2-347",
       "num": 347,
       "file": "src/ui/plan/EntrySteps.tsx",
-      "line": 182,
+      "line": 163,
       "ws": "ui-containers",
       "type": "dup",
       "layer": "ui",
@@ -3455,7 +1867,7 @@
       "id": "P2-358",
       "num": 358,
       "file": "src/ui/plan/blocks/LandingBlock.tsx",
-      "line": 7,
+      "line": 8,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3470,44 +1882,6 @@
         "unit-tile"
       ],
       "text": "плитка юнита берётся из файла перелёта, а Stack ниже — ещё одна плитка; обе заменить UnitTile"
-    },
-    {
-      "id": "P2-359",
-      "num": 359,
-      "file": "src/ui/plan/blocks/LandingBlock.tsx",
-      "line": 56,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-313"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "кто остался на планете после потерь считает UI; брать состояние после боя из домена"
-    },
-    {
-      "id": "P2-360",
-      "num": 360,
-      "file": "src/ui/plan/blocks/LandingBlock.tsx",
-      "line": 59,
-      "ws": "rivals",
-      "type": "check",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "rivals"
-      ],
-      "text": "чужие войска берутся из game.enemyGround (расстановка), а не из состояния соперников по плану (state.rivals): их высадки раньше в плане не видны"
     },
     {
       "id": "P2-361",
@@ -3585,46 +1959,10 @@
       "text": "signed повторён в EntrySteps"
     },
     {
-      "id": "P2-365",
-      "num": 365,
-      "file": "src/ui/plan/editors/ExpeditionEditor.tsx",
-      "line": 34,
-      "ws": "thunders-edge",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "expedition-4.5"
-      ],
-      "tests": [
-        "te-expedition"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [],
-      "text": "часть технологий без cost получает пустую оплату и считается оплаченной; нужна оплата истощением своей планеты с технологической специализацией"
-    },
-    {
-      "id": "P2-366",
-      "num": 366,
-      "file": "src/ui/plan/editors/ExpeditionEditor.tsx",
-      "line": 30,
-      "ws": "payment",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "«платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части — P2 note: UI-файл вне списка файлов волны B для payment, рядом правит P2-365 (thunders-edge); оставлено, чтобы не править чужой модуль"
-    },
-    {
       "id": "P2-367",
       "num": 367,
       "file": "src/ui/plan/editors/ExpeditionEditor.tsx",
-      "line": 59,
+      "line": 57,
       "ws": "ui-warnings",
       "type": "ui",
       "layer": "ui",
@@ -3637,44 +1975,10 @@
       "text": "остаток предупреждений стоит у выбора части; по CLAUDE.md — вверху редактора"
     },
     {
-      "id": "P2-368",
-      "num": 368,
-      "file": "src/ui/plan/EntryList.tsx",
-      "line": 216,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-369"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "без plan владельцы частей берутся сырыми game.expedition.slices с приведением типа и без частей из плана; всегда sliceOwners (plan обязателен)"
-    },
-    {
-      "id": "P2-369",
-      "num": 369,
-      "file": "src/ui/drawers/ExpeditionWidget.tsx",
-      "line": 9,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "sliceOwners — правило владения частями экспедиции; в domain/thundersEdge.ts"
-    },
-    {
       "id": "P2-371",
       "num": 371,
       "file": "src/ui/drawers/ExpeditionWidget.tsx",
-      "line": 65,
+      "line": 53,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -3779,448 +2083,10 @@
       "text": "--player inline-стилем у корня; data-player / playerVar()"
     },
     {
-      "id": "P2-400",
-      "num": 400,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 103,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "map-pick",
-        "state-machine"
-      ],
-      "text": "13 состояний режима (editing, choosing, tapPath, mapPick, systemPickFor, placing, marking, sheet, stage, adjustmentId, cardId, openId, shown) допускают невозможные сочетания и сбрасываются вручную: один автомат mapPick, размеченное объединение «что выбирает следующее нажатие» + «что открыто на панели»"
-    },
-    {
-      "id": "P2-401",
-      "num": 401,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 105,
-      "ws": "ui-plan-screen",
-      "type": "model",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "map-pick"
-      ],
-      "text": "stage с флагами forCard/tacticalId/adjustmentId: размеченное объединение по тому, для кого открыт большой гекс, как часть автомата"
-    },
-    {
-      "id": "P2-402",
-      "num": 402,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 52,
-      "ws": "ui-plan-screen",
-      "type": "doc",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "комментарий про Editing стоит над DrawerName: перенести к интерфейсу Editing"
-    },
-    {
-      "id": "P2-403",
-      "num": 403,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 172,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "сброс состояний через setState во время рендера (и ниже rightDrawer/leftDrawer): выводить из game в автомате, а не догонять"
-    },
-    {
-      "id": "P2-404",
-      "num": 404,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 182,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "flight"
-      ],
-      "text": "перелёт и его повтор (startFlight, таймер повтора, loops, resting, inFlight, mapState) разбросаны по экрану: хук useFlightLoop, который отдаёт состояние карты и слой перелёта"
-    },
-    {
-      "id": "P2-405",
-      "num": 405,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 435,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-404"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "flight"
-      ],
-      "text": "состояние карты во время перелёта и между повторами считается посреди рендера: часть useFlightLoop"
-    },
-    {
-      "id": "P2-406",
-      "num": 406,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 79,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "new-entry",
-        "duplicate-of-domain"
-      ],
-      "text": "тела новых записей собраны в экране (здесь и тактическое в onTileTap): фабрика domain/newEntry.ts по типу действия"
-    },
-    {
-      "id": "P2-407",
-      "num": 407,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 318,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-406"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "new-entry"
-      ],
-      "text": "тело тактической записи и её владелец по fromCard собираются здесь: брать из domain/newEntry.ts"
-    },
-    {
-      "id": "P2-408",
-      "num": 408,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 232,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "closePanels, onPick, onOpenEntry, toggleUpgrades сбрасывают по 3-11 флагов вручную, и наборы расходятся: один переход автомата «закрыть всё»"
-    },
-    {
-      "id": "P2-409",
-      "num": 409,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 281,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "thunders-edge",
-        "duplicate-of-domain"
-      ],
-      "text": "годность системы для Thunder's Edge по слоту решает экран: функция домена от game и слота (validThundersEdgeSystem берёт только тайл)"
-    },
-    {
-      "id": "P2-410",
-      "num": 410,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 36,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "thunders-edge"
-      ],
-      "text": "владельцы частей экспедиции берутся из виджета plan/: импортировать из domain/thundersEdge.ts после переноса sliceOwners"
-    },
-    {
-      "id": "P2-411",
-      "num": 411,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 287,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "map-pick"
-      ],
-      "text": "onTileTap из 8 веток с ранним return, их порядок и есть приоритет режимов: по обработчику на состояние автомата"
-    },
-    {
-      "id": "P2-414",
-      "num": 414,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 407,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-415"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "отбор и тон стрелок плана (фокус, выполнено, режим «сейчас») перемешаны с рендером: в хук карты вместе с подсветкой"
-    },
-    {
-      "id": "P2-415",
-      "num": 415,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 418,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "highlight"
-      ],
-      "text": "подсветку пишут в один объект 8 мест экрана, приоритет задаёт порядок записи и проверки !highlights[slot]: хук useMapHighlights(режим) с явным приоритетом, правила из домена"
-    },
-    {
-      "id": "P2-416",
-      "num": 416,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 486,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [
-        "99",
-        "32",
-        "24"
-      ],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "card-targets",
-        "duplicate-of-domain"
-      ],
-      "text": "цели карт на карте (Warfare: системы с жетоном; Diplomacy без Mecatol; Construction без жетона до TE; база для dock) считает экран: domain/strategy.ts cardTargets(entry, состояние), здесь только раскраска"
-    },
-    {
-      "id": "P2-417",
-      "num": 417,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 477,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "valid-sources"
-      ],
-      "text": "годный источник (система с доступными юнитами) считается здесь и в startsArrow одинаково: одна функция домена над состоянием перед записью"
-    },
-    {
-      "id": "P2-418",
-      "num": 418,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 505,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-417"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "valid-sources"
-      ],
-      "text": "та же проверка годного источника, что в подсветке выбора: взять функцию домена"
-    },
-    {
-      "id": "P2-419",
-      "num": 419,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 457,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "route-hint"
-      ],
-      "text": "скорость, шаги и остаток хода считает экран, а IIFE ещё и пишет подсветку побочным эффектом: domain routeHint(draft, before) → {speed, steps, left, reach}"
-    },
-    {
-      "id": "P2-420",
-      "num": 420,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 466,
-      "ws": "rivals",
-      "type": "bug",
-      "layer": "ui",
-      "rules": [
-        "58.3.2"
-      ],
-      "tests": [
-        "058-movement"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "rivals"
-      ],
-      "text": "досягаемость считается по gameAs и вручную расставленным game.enemyUnits: корабли, приведённые или уведённые соперниками по плану, не учтены, соперник не видит моих (B2); блокировки брать из состояния перед записью"
-    },
-    {
-      "id": "P2-421",
-      "num": 421,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 216,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "perf"
-      ],
-      "text": "stateBeforeEntry повторяет replay около 10 раз за рендер для одной записи (loops, routeSpeed, choosing, карты, startsArrow, редакторы, HexStage): считать один раз на запись в фокусе"
-    },
-    {
-      "id": "P2-422",
-      "num": 422,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 514,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "map-pick"
-      ],
-      "text": "цепочка тернарников подсказки повторяет приоритет режимов из onTileTap: подсказка как свойство состояния автомата"
-    },
-    {
-      "id": "P2-423",
-      "num": 423,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 133,
-      "ws": "ui-plan-screen",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "drawer"
-      ],
-      "text": "drawer, rightDrawer, leftDrawer, teOpen и их догон в рендере: хук useDrawers; «шторка уступает карте» при placing/marking — состояние автомата"
-    },
-    {
-      "id": "P2-424",
-      "num": 424,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 548,
-      "ws": "ui-plan-screen",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [
-        "P2-400"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "rivals"
-      ],
-      "text": "владелец записи в руках ищется заново тем же поиском по fromCard, что в onTileTap: брать из состояния автомата"
-    },
-    {
       "id": "P2-425",
       "num": 425,
       "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 659,
+      "line": 495,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4239,7 +2105,7 @@
       "id": "P2-427",
       "num": 427,
       "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 666,
+      "line": 502,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4259,7 +2125,7 @@
       "id": "P2-428",
       "num": 428,
       "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 673,
+      "line": 509,
       "ws": "ui-nesting",
       "type": "arch",
       "layer": "ui",
@@ -4278,26 +2144,10 @@
       "text": "редакторы и список взаимоисключаются цепочкой !session && !cardEntry && ..., редактор вложен в панель, UnitPicker и HexStage ещё глубже: один слот панели по состоянию автомата, шаги или отдельное меню по прототипу"
     },
     {
-      "id": "P2-429",
-      "num": 429,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 693,
-      "ws": "ui-plan-screen",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [],
-      "text": "переключатель ручной оплаты по id записи написан дважды (тактика и карта): одна функция toggleManualPayment(id)"
-    },
-    {
       "id": "P2-430",
       "num": 430,
       "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 729,
+      "line": 569,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4315,28 +2165,10 @@
       "text": "выбор «за кого» занимает класс большого гекса stage-owners и красит кнопки inline-стилем: PlayerChoice (аудит 3.6)"
     },
     {
-      "id": "P2-432",
-      "num": 432,
-      "file": "src/ui/screens/PlanScreen.tsx",
-      "line": 758,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "card-purchases"
-      ],
-      "text": "покупки карты для большого гекса собираются прямо в JSX: cardPurchases из StrategyEditor, cardChange и два одинаковых stateBeforeEntry; обработчик карты в домене или хуке"
-    },
-    {
       "id": "P2-436",
       "num": 436,
       "file": "src/ui/screens/GameScreen.tsx",
-      "line": 156,
+      "line": 154,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4356,7 +2188,7 @@
       "id": "P2-437",
       "num": 437,
       "file": "src/ui/screens/GameScreen.tsx",
-      "line": 160,
+      "line": 158,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4374,28 +2206,10 @@
       "text": "класс .danger не описан в теме, «Удалить» выглядит обычной кнопкой: вариант danger у ConfirmBar"
     },
     {
-      "id": "P2-439",
-      "num": 439,
-      "file": "src/ui/screens/GameScreen.tsx",
-      "line": 92,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "import"
-      ],
-      "text": "новый id при совпадении придумывается в экране через Date.now: импорт под свободным id в storage/transfer"
-    },
-    {
       "id": "P2-443",
       "num": 443,
       "file": "src/ui/screens/GameScreen.tsx",
-      "line": 121,
+      "line": 119,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4446,28 +2260,10 @@
       "text": "предупреждение собрано классами warning-text place-warnings: WarningList с произвольным текстом"
     },
     {
-      "id": "P2-457",
-      "num": 457,
-      "file": "src/ui/players/FactionPicker.tsx",
-      "line": 9,
-      "ws": "ui-logic-to-domain",
-      "type": "arch",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "faction-groups"
-      ],
-      "text": "дополнение фракции выясняется тремя loadPack и вычитанием наборов: дополнение фракции из домена (factionSheet)"
-    },
-    {
       "id": "P2-459",
       "num": 459,
       "file": "src/ui/players/FactionPicker.tsx",
-      "line": 55,
+      "line": 52,
       "ws": "ui-containers",
       "type": "ui",
       "layer": "ui",
@@ -4581,24 +2377,6 @@
         "player-colour"
       ],
       "text": "цвета игроков повторяют --player-1..8 из темы и могут разойтись: тест на совпадение с theme.css или чтение CSS-переменных перед выпечкой спрайтов"
-    },
-    {
-      "id": "P2-470",
-      "num": 470,
-      "file": "src/ui/units/unitOrder.ts",
-      "line": 3,
-      "ws": "ui-logic-to-domain",
-      "type": "dup",
-      "layer": "ui",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "duplicate-of-domain"
-      ],
-      "text": "порядок юнитов повторяет ORDER из domain/hexLayout.ts: экспортировать из домена и брать оттуда"
     },
     {
       "id": "P2-503",

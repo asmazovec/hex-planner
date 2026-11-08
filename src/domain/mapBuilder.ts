@@ -24,13 +24,19 @@ export function tileSuggestions(query: string, pack: DataPack): TileDef[] {
  * A number shared by two sides (83) is ambiguous and gives null.
  */
 export function resolveTile(input: string, pack: DataPack): TileDef | null {
+  const found = lookUpTile(input, pack);
+  return typeof found === 'string' ? null : found;
+}
+
+/** Like `resolveTile`, but says why nothing was found: a number two sides share, or no such tile (empty input too). */
+export function lookUpTile(input: string, pack: DataPack): TileDef | 'ambiguous' | 'unknown' {
   const q = input.trim().toUpperCase();
-  if (q === '') return null;
+  if (q === '') return 'unknown';
   const tiles = Object.values(pack.tiles);
   const exact = tiles.find(tile => tile.id.toUpperCase() === q);
   if (exact) return exact;
   const sameNumber = tiles.filter(tile => tile.number.toUpperCase() === q);
-  return sameNumber.length === 1 ? sameNumber[0] : null;
+  return sameNumber.length === 1 ? sameNumber[0] : sameNumber.length > 1 ? 'ambiguous' : 'unknown';
 }
 
 /** The hyperlane sides that Milty Draft's 3 and 4 player maps use in several slots. */
@@ -138,3 +144,14 @@ export function tilesLostByLayout(game: Game, layout: MapLayout, pack: DataPack)
   const oldFixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
   return Object.entries(game.map).filter(([slot, tile]) => oldFixed.get(slot) !== tile && kept[slot] !== tile).length;
 }
+
+// ui-logic-to-domain (P2-251, P2-252)
+/** Player counts whose map has a choice of layouts. */
+export const LAYOUT_CHOICE_COUNTS = [3, 4, 5];
+
+/** Whether a player count's hyperlane layout is Milty Draft's own, not a layout of the rules. */
+export const isMiltyLanes = (playerCount: number): boolean => playerCount === 3 || playerCount === 4;
+
+/** How many slots of a player count's hyperlane layout hold a fixed hyperlane. */
+export const hyperlaneSlotCount = (playerCount: number, pack: DataPack): number =>
+  (templateFor(playerCount, 'hyperlanes', pack)?.slots ?? []).filter(slot => slot.fixed && pack.tiles[slot.fixed.split('@')[0]]?.kind === 'hyperlane').length;

@@ -142,3 +142,7 @@ export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: 
   const owner = plan.rounds.flatMap(r => r.entries).find(e => e.id === entryId)?.owner;
   return (owner && state.rivals?.[owner]) || state;
 };
+
+/** The whole board just before an entry, mine and every opponent's (`rivals`), whoever the entry belongs to. */
+export const boardBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack, filter: 'now' | 'forecast' = 'forecast'): GameState =>
+  replay(game, plan, filter, pack, entryId).state;

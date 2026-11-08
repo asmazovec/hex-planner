@@ -10,7 +10,7 @@ import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
 import { ExpeditionEditor } from './editors/ExpeditionEditor';
-import { sliceOwners } from '../drawers/ExpeditionWidget';
+import { sliceOwners } from '../../domain/thundersEdge';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
@@ -213,12 +213,11 @@ export function EntryList({
                       </div>
                     )}
                     {/* TODO(P2-355) #ws:ui-nesting #type:ui #needs:prototype #dep:P2-349 — экспедиция раскрывается внутри строки (5 уровней); отдельное меню, как жетоны статуса */}
-                    {/* TODO(P2-368) #ws:ui-logic-to-domain #type:arch #size:s #dep:P2-369 — без plan владельцы частей берутся сырыми game.expedition.slices с приведением типа и без частей из плана; всегда sliceOwners (plan обязателен) */}
                     {entry.id === openId && entry.type === 'expedition' && (
                       <div className="entry-details">
                         <ExpeditionEditor
                           game={game} pack={pack} sliceId={entry.sliceId} payment={entry.payment}
-                          owners={plan ? sliceOwners(game, plan) : game.expedition.slices as Record<string, 'me' | 'other'>}
+                          owners={sliceOwners(game, plan)}
                           before={stateBefore ? stateBefore(entry.id) : state} warnings={list}
                           onChange={patch => updateEntry(entry.id, patch)}
                         />

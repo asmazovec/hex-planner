@@ -2,15 +2,15 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../data/cardSummaries';
 import { strategyCards } from '../../data/loadPack';
-import { sourceSlot, tacticalMeters } from '../../domain/project';
+import { tacticalMeters } from '../../domain/project';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
-import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Entry, Game, GameState, Payment, UnitCounts } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import { opponentName } from '../players/names';
 import { playerColour } from '../units/sprites';
 import { TokenPicture } from '../units/UnitToken';
 import { UNIT_ORDER } from '../units/unitOrder';
-import { fliesNow, groupOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from './tactical';
+import { flightOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from '../../domain/tactical';
 import { systemName } from '../map/systemName';
 
 const PICTURE_PX = 32;
@@ -29,9 +29,6 @@ function UnitPictures({ units, game, t }: { units: UnitCounts; game: Game; t: (k
     </span>
   );
 }
-
-const only = (units: UnitCounts, keep: (unit: UnitId) => boolean): UnitCounts =>
-  Object.fromEntries((Object.keys(units) as UnitId[]).filter(keep).map(u => [u, units[u]]));
 
 export interface EntryStepsProps {
   entry: Entry;
@@ -70,24 +67,8 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
           <small>{e.free ? t('plan.steps.free') : t('plan.steps.token')}</small>
         </p>
         {sourcesOf(game, pack, e).map(source => {
-          const group = groupOf(game, pack, e.moves, source);
-          // TODO(P2-343) #ws:ui-logic-to-domain #type:dup #duplicate-of-domain #dep:P2-311 — кто летит, кто на борту и где подобран пересчитаны здесь; брать из домена
-          const flying = group.filter(m => m.from === source && m.pickupOf === undefined).reduce((sum, m) => ({ ...sum, ...m.units }), {} as UnitCounts);
-          const ships = only(flying, u => fliesNow(game, pack, before.upgrades, u));
+          const { ships, board, stops } = flightOf(game, pack, before.upgrades, e, source);
           const via = viaOf(e, source);
-          const board = group.filter(m => m.pickupOf === undefined).reduce<UnitCounts>((sum, m) => {
-            const next = { ...sum };
-            for (const unit of Object.keys(m.units) as UnitId[]) if (!fliesNow(game, pack, before.upgrades, unit)) next[unit] = (next[unit] ?? 0) + (m.units[unit] ?? 0);
-            return next;
-          }, {});
-          const stops = new Map<string, UnitCounts>();
-          for (const move of group) {
-            const slot = move.pickupOf === undefined ? null : sourceSlot(game, pack, move.from);
-            if (slot === null) continue;
-            const held = { ...stops.get(slot) };
-            for (const unit of Object.keys(move.units) as UnitId[]) held[unit] = (held[unit] ?? 0) + (move.units[unit] ?? 0);
-            stops.set(slot, held);
-          }
           const { group: load } = tacticalMeters(game, e, source, before, pack);
           const over = load.load > load.capacity;
           return (

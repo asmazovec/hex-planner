@@ -27,3 +27,18 @@ export function factionSheet(faction: FactionDef, expansions: ExpansionId[]): Fa
     ...(breakthrough ? { breakthrough } : {}),
   };
 }
+
+/**
+ * Factions grouped by the expansion that brings them, in the order given: those of the base game, of Prophecy of Kings,
+ * then of Thunder's Edge. `base` and `pok` are the factions of the packs without expansions and with Prophecy of Kings only.
+ */
+export function factionsByExpansion(
+  factions: FactionDef[], base: Record<string, FactionDef>, pok: Record<string, FactionDef>,
+): { expansion: 'base' | ExpansionId; list: FactionDef[] }[] {
+  const groups: { expansion: 'base' | ExpansionId; list: FactionDef[] }[] = [
+    { expansion: 'base', list: factions.filter(f => base[f.id]) },
+    { expansion: 'pok', list: factions.filter(f => !base[f.id] && pok[f.id]) },
+    { expansion: 'te', list: factions.filter(f => !base[f.id] && !pok[f.id]) },
+  ];
+  return groups.filter(group => group.list.length > 0);
+}

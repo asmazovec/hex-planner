@@ -7,7 +7,7 @@ import type { ExpansionId } from '../../domain/types';
 import { currentLanguage, LANGUAGES, setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { deleteGame, listGames, saveGame, type GameSummary } from '../../storage/db';
-import { importGame } from '../../storage/transfer';
+import { importGame, withFreeId } from '../../storage/transfer';
 import { Banner } from '../feedback/Banner';
 import { blur as blurSetting, energy as energySetting, flightLoop as flightLoopSetting } from '../common/preferences';
 import { shareLinkQuery } from '../../domain/shareLink';
@@ -89,9 +89,7 @@ export function GameScreen() {
         setImportError(t(`import.${result.reason}`));
         return;
       }
-      // TODO(P2-439) #ws:ui-logic-to-domain #type:arch #size:s #import — новый id при совпадении придумывается в экране через Date.now: импорт под свободным id в storage/transfer
-      const taken = (await listGames()).some(g => g.id === result.game.id);
-      const imported = taken ? { ...result.game, id: `${result.game.id}-${Date.now().toString(36)}` } : result.game;
+      const imported = withFreeId(result.game, (await listGames()).map(g => g.id));
       await saveGame(imported);
       await openGame(imported.id);
       setImportError(null);
