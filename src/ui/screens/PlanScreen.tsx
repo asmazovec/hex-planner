@@ -28,6 +28,9 @@ import { ActionMenu } from '../plan/ActionMenu';
 import { gameAs, opponentsBySeat } from '../../domain/players';
 import { playerName, shortName } from '../players/names';
 import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
+import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
+import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
+import { EditorFrame } from '../primitives/EditorFrame';
 import { EntryList } from '../plan/EntryList';
 import { PlanName, PlanTabs } from '../plan/PlanTabs';
 import { PlayerList } from '../players/PlayerList';
@@ -38,7 +41,7 @@ import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { mapHighlights, planArrows, shownSystemsOf } from './plan/mapMarks';
-import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, resolvePick, START, tacticalIn, type PickState } from './plan/pick';
+import { adjustmentIn, backFrom, cardIn, choosesForTe, expeditionIn, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, type PickState, type Slot } from './plan/pick';
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
@@ -100,6 +103,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const cardPick = panel.kind === 'card' && next.kind === 'card' ? next.pick : null;
   const adjustmentEntry = panel.kind === 'adjustment' ? adjustmentIn(round, panel.entryId) : undefined;
   const adjustPick = next.kind === 'adjustmentSystem' ? adjustmentEntry : undefined;
+  const expeditionEntry = panel.kind === 'expedition' ? expeditionIn(round, panel.entryId) : undefined;
   const tapPath = next.kind === 'route' ? next.path : null;
   const choosing = next.kind === 'choose' ? next.what : null;
   const shown = panel.kind === 'list' ? panel.shown : null;
@@ -163,7 +167,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** Who the next entry belongs to, while that opponent is still in the game. */
   const actor = game.opponents.some(o => o.id === actingAs) ? actingAs ?? undefined : undefined;
   /** Whose action stands in an editor now; a new tactical action is the card's owner's or the one it is added for. */
-  const handOwner = picking ? tacticalOwner(round, tactical?.fromCard, actor) : (entry ?? cardEntry ?? adjustmentEntry)?.owner;
+  const handOwner = picking ? tacticalOwner(round, tactical?.fromCard, actor) : (entry ?? cardEntry ?? adjustmentEntry ?? expeditionEntry)?.owner;
 
   const onPick = (type: ActionType) => {
     flight.stop();
@@ -178,8 +182,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       drawers.closeTe();
       update(state => ({ ...state, panel: { kind: 'card', entryId: id }, next: IDLE }));
       setView('plan');
-    } else if (type === 'adjustment') {
-      update(state => ({ ...state, panel: { kind: 'adjustment', entryId: id }, next: IDLE }));
+    } else if (type === 'adjustment' || type === 'expedition') {
+      update(state => ({ ...state, panel: { kind: type, entryId: id }, next: IDLE }));
     } else {
       update(state => ({ ...state, panel: LIST, next: IDLE, openId: id }));
     }
@@ -286,6 +290,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     } else if (opened.type === 'strategic' || opened.type === 'secondary') {
       drawers.closeTe();
       update(state => ({ ...opening(state), panel: { kind: 'card', entryId: opened.id } }));
+    } else if (opened.type === 'expedition') {
+      update(state => ({ ...opening(state), panel: { kind: 'expedition', entryId: opened.id } }));
     } else {
       update(state => ({ ...opening(state), openId: state.openId === opened.id ? null : opened.id }));
     }
@@ -376,6 +382,109 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     if (cardEntry && cardBefore) updateEntry(cardEntry.id, cardChange(cardEntry, { effects }, cardBefore, cardGame.faction, pack, manualPayments.includes(cardEntry.id)));
   };
   const stageFor = stage?.for;
+
+  /** Back to the list, or to the card a tactical action was opened from. */
+  const toList = () => update(state => ({ ...state, panel: state.panel.kind === 'tactical' ? backFrom(state.panel) : LIST, next: IDLE }));
+  /** The cross of an editor's head: the entry goes and the panel returns. */
+  const removeEdited = (id: string) => {
+    removeEntry(id);
+    toList();
+  };
+  const toPicker = (source: string | null) => update(state => (state.panel.kind === 'tactical' ? { ...state, panel: { ...state.panel, pickerFrom: source } } : state));
+
+  /** The one slot of the panel: an editor, a step of one, or the choice of a system; the list stands there otherwise. */
+  const editorIn = (slot: Exclude<Slot, { kind: 'list' }>) => {
+    switch (slot.kind) {
+      case 'pickSystem':
+        return (
+          <EditorFrame title={t('plan.tactical.title')} removeLabel={t('plan.tactical.cancel')} onRemove={toList}>
+            <span className="muted">{t(slot.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')}</span>
+          </EditorFrame>
+        );
+      case 'flight': {
+        const flown = slot.entry;
+        return (
+          <UnitPicker
+            game={entryGame} pack={pack} before={boards.before(flown.id)} entry={flown} source={slot.source}
+            warnings={flightWarnings(forecast.warningsByEntry[flown.id] ?? [], entryGame, pack, flown, slot.source)}
+            onChange={moves => updateEntry(flown.id, { moves })} onClose={() => toPicker(null)}
+            onFly={() => {
+              toPicker(null);
+              flight.start(flown.id);
+              setView('map');
+            }}
+          />
+        );
+      }
+      case 'tactical': {
+        const edited = slot.entry;
+        const systemId = edited.systemId;
+        return (
+          <TacticalEditor
+            game={entryGame} pack={pack} entry={edited} before={boards.before(edited.id)} board={boards.board(edited.id)}
+            warnings={forecast.warningsByEntry[edited.id] ?? []}
+            manualPayment={manualPayment} choosing={choosing}
+            onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) setView('map'); }}
+            onUpdate={patch => updateEntry(edited.id, patch)}
+            onOpenPicker={toPicker}
+            onManualPayment={open => toggleManualPayment(edited.id, open)}
+            onOpenShop={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'build', for: { kind: 'tactical', id: edited.id } } })); }}
+            onOpenBattle={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'battle', for: { kind: 'tactical', id: edited.id } } })); }}
+            onDone={leaveEditor}
+            onRemove={() => removeEdited(edited.id)}
+          />
+        );
+      }
+      case 'card': {
+        const played = slot.entry;
+        return (
+          <StrategyEditor
+            game={cardGame} pack={pack} round={round} entry={played} before={boards.before(played.id)}
+            warnings={forecast.warningsByEntry[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
+            onUpdate={patch => updateEntry(played.id, patch)}
+            onManualPayment={open => toggleManualPayment(played.id, open)}
+            onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) setView('map'); }}
+            onOpenShop={(at, only) => update(state => ({ ...state, stage: { slot: at, mode: 'build', only, for: { kind: 'card' } } }))}
+            onStartTactical={() => {
+              update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null, fromCard: played.id, card: played.id }, next: IDLE }));
+              setView('map');
+            }}
+            onOpenTactical={id => update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: played.id }, next: IDLE }))}
+            onDone={toList}
+            onRemove={() => removeEdited(played.id)}
+          />
+        );
+      }
+      case 'adjustment': {
+        const adjusted = slot.entry;
+        return (
+          <AdjustmentEditor
+            key={adjusted.id} game={gameAs(game, adjusted.owner)} pack={pack} entry={adjusted} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
+            picking={adjustPick !== undefined}
+            onPickSystem={() => { update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
+            onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
+            onUpdate={patch => updateEntry(adjusted.id, patch)}
+            onDone={toList}
+            onRemove={() => removeEdited(adjusted.id)}
+          />
+        );
+      }
+      case 'expedition': {
+        const given = slot.entry;
+        return (
+          <ExpeditionEditor
+            key={given.id} game={gameAs(game, given.owner)} pack={pack} sliceId={given.sliceId} payment={given.payment}
+            owners={owners} before={boards.before(given.id)} warnings={forecast.warningsByEntry[given.id] ?? []}
+            manualPayment={manualPayments.includes(given.id)} onManualPayment={open => toggleManualPayment(given.id, open)}
+            onChange={patch => updateEntry(given.id, patch)}
+            onDone={toList}
+            onRemove={() => removeEdited(given.id)}
+          />
+        );
+      }
+    }
+  };
+  const slot = slotOf(pick, round);
 
   return (
     <section className="plan-screen" data-view={view}>
@@ -469,65 +578,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                 {t('plan.actingFor', { name: playerName(pack, inHand.faction, inHand.seat, t) })}
               </div>
             )}
-            {/* TODO(P2-427) #ws:ui-containers #type:ui #size:s #needs:prototype #editor-head — своя голова редактора с текстовой «Отмена» вместо общей головы редактора и HexRemove (аудит 3.3, 3.4) */}
-            {picking && (
-              <div className="panel-head">
-                <h2>{t('plan.tactical.title')}</h2>
-                <button type="button" onClick={() => update(state => ({ ...state, panel: backFrom(state.panel), next: IDLE }))}>{t('plan.tactical.cancel')}</button>
-              </div>
-            )}
-            {/* TODO(P2-428) #ws:ui-nesting #type:arch #size:l #needs:prototype #dep:P2-400 #nesting — редакторы и список взаимоисключаются цепочкой !session && !cardEntry && ..., редактор вложен в панель, UnitPicker и HexStage ещё глубже: один слот панели по состоянию автомата, шаги или отдельное меню по прототипу */}
-            {tactical && entry && entryBefore && (
-              <TacticalEditor
-                game={entryGame} pack={pack} entry={entry} before={entryBefore} board={boards.board(entry.id)}
-                warnings={forecast.warningsByEntry[entry.id] ?? []}
-                pickerFrom={tactical.pickerFrom} manualPayment={manualPayment} choosing={choosing}
-                onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) setView('map'); }}
-                onUpdate={patch => updateEntry(entry.id, patch)}
-                onOpenPicker={source => update(state => (state.panel.kind === 'tactical' ? { ...state, panel: { ...state.panel, pickerFrom: source } } : state))}
-                onManualPayment={open => toggleManualPayment(entry.id, open)}
-                onOpenShop={() => { if (entry.systemId !== null) update(state => ({ ...state, stage: { slot: entry.systemId!, mode: 'build', for: { kind: 'tactical', id: entry.id } } })); }}
-                onOpenBattle={() => { if (entry.systemId !== null) update(state => ({ ...state, stage: { slot: entry.systemId!, mode: 'battle', for: { kind: 'tactical', id: entry.id } } })); }}
-                onFly={() => {
-                  update(state => (state.panel.kind === 'tactical' ? { ...state, panel: { ...state.panel, pickerFrom: null } } : state));
-                  flight.start(entry.id);
-                  setView('map');
-                }}
-                onDone={leaveEditor}
-              />
-            )}
-            {!tactical && cardEntry && cardBefore && (
-              <StrategyEditor
-                game={cardGame} pack={pack} round={round} entry={cardEntry} before={cardBefore}
-                warnings={forecast.warningsByEntry[cardEntry.id] ?? []} manualPayment={manualPayments.includes(cardEntry.id)} picking={cardPick}
-                onUpdate={patch => updateEntry(cardEntry.id, patch)}
-                onManualPayment={open => toggleManualPayment(cardEntry.id, open)}
-                onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) setView('map'); }}
-                onOpenShop={(slot, only) => update(state => ({ ...state, stage: { slot, mode: 'build', only, for: { kind: 'card' } } }))}
-                onStartTactical={() => {
-                  update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null, fromCard: cardEntry.id, card: cardEntry.id }, next: IDLE }));
-                  setView('map');
-                }}
-                onOpenTactical={id => update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: cardEntry.id }, next: IDLE }))}
-                onCancel={() => { removeEntry(cardEntry.id); update(state => ({ ...state, panel: LIST, next: IDLE })); }}
-                onDone={() => update(state => ({ ...state, panel: LIST, next: IDLE }))}
-              />
-            )}
-            {adjustmentEntry && (
-              <AdjustmentEditor
-                key={adjustmentEntry.id} game={gameAs(game, adjustmentEntry.owner)} pack={pack} entry={adjustmentEntry} warnings={forecast.warningsByEntry[adjustmentEntry.id] ?? []}
-                picking={adjustPick !== undefined}
-                onPickSystem={() => { update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
-                onOpenHex={slot => update(state => ({ ...state, stage: { slot, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjustmentEntry.id } } }))}
-                onUpdate={patch => updateEntry(adjustmentEntry.id, patch)}
-                onDone={() => update(state => ({ ...state, panel: LIST, next: IDLE }))}
-              />
-            )}
-            {panel.kind === 'list' && (
+            {slot.kind !== 'list' ? editorIn(slot) : (
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
-                  game={game} pack={pack} round={round} plan={plan}
+                  game={game} pack={pack} round={round}
                   stateBefore={id => boards.before(id)} warnings={forecast.warningsByEntry} state={forecast.state}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))}

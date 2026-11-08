@@ -14,13 +14,15 @@ export interface Shown { id: string; plays: number }
  * - `list`: the round's entries, `shown` the one being read.
  * - `tactical`: the tactical editor. `entryId` is null while a new action waits for its system: the next tap creates the
  *   entry; `fromCard` makes that one Warfare's free action. `card` is the card editor it was opened from and returns to.
- * - `card`, `adjustment`: their editors.
+ *   `pickerFrom` is the source whose flight step stands in the editor's place.
+ * - `card`, `adjustment`, `expedition`: their editors.
  */
 export type Panel =
   | { kind: 'list'; shown: Shown | null }
   | { kind: 'tactical'; entryId: string | null; pickerFrom: string | null; fromCard?: string; card?: string }
   | { kind: 'card'; entryId: string }
-  | { kind: 'adjustment'; entryId: string };
+  | { kind: 'adjustment'; entryId: string }
+  | { kind: 'expedition'; entryId: string };
 
 /**
  * What the next tap on the map chooses. `idle` does what the panel does by default: opens the big hex, creates a waiting
@@ -55,6 +57,7 @@ export const START: PickState = { panel: LIST, next: IDLE, stage: null, openId: 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
 type AdjustmentEntry = Extract<Entry, { type: 'adjustment' }>;
+type ExpeditionEntry = Extract<Entry, { type: 'expedition' }>;
 
 const find = (round: Round | undefined, id: string | null | undefined) => (id ? round?.entries.find(e => e.id === id) : undefined);
 export const tacticalIn = (round: Round | undefined, id: string | null | undefined) => {
@@ -70,6 +73,11 @@ export const adjustmentIn = (round: Round | undefined, id: string | null | undef
   return found?.type === 'adjustment' ? found as AdjustmentEntry : undefined;
 };
 
+export const expeditionIn = (round: Round | undefined, id: string | null | undefined) => {
+  const found = find(round, id);
+  return found?.type === 'expedition' ? found as ExpeditionEntry : undefined;
+};
+
 /** Where an editor goes back to: the card it was opened from, or the list. */
 export const backFrom = (panel: Panel): Panel => (panel.kind === 'tactical' && panel.card ? { kind: 'card', entryId: panel.card } : LIST);
 
@@ -82,6 +90,7 @@ export function resolvePick(state: PickState, round: Round | undefined): PickSta
   if (panel.kind === 'tactical' && panel.entryId !== null && !tacticalIn(round, panel.entryId)) panel = backFrom(panel);
   if (panel.kind === 'card' && !cardIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'adjustment' && !adjustmentIn(round, panel.entryId)) panel = LIST;
+  if (panel.kind === 'expedition' && !expeditionIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'list' && panel.shown && round && !find(round, panel.shown.id)) panel = LIST;
   const { next } = state;
   const fits = next.kind === 'route' || next.kind === 'choose' ? panel.kind === 'tactical' && panel.entryId !== null
@@ -112,5 +121,44 @@ export function hintKey(state: PickState): string | null {
     case 'idle':
       if (panel.kind === 'tactical' && panel.entryId === null) return panel.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint';
       return null;
+  }
+}
+
+/**
+ * What the one slot of the panel shows, one of seven states: the list; the choice of a system for a new tactical action;
+ * the tactical editor or, in its place, the flight step of one source; the strategy, adjustment or expedition editor.
+ */
+export type Slot =
+  | { kind: 'list' }
+  | { kind: 'pickSystem'; fromCard?: string }
+  | { kind: 'tactical'; entry: TacticalEntry }
+  | { kind: 'flight'; entry: TacticalEntry; source: string }
+  | { kind: 'card'; entry: CardEntry }
+  | { kind: 'adjustment'; entry: AdjustmentEntry }
+  | { kind: 'expedition'; entry: ExpeditionEntry };
+
+/** The slot of a resolved state: an editor whose entry is gone shows the list. */
+export function slotOf({ panel }: PickState, round: Round | undefined): Slot {
+  switch (panel.kind) {
+    case 'list':
+      return { kind: 'list' };
+    case 'tactical': {
+      if (panel.entryId === null) return { kind: 'pickSystem', ...(panel.fromCard ? { fromCard: panel.fromCard } : {}) };
+      const entry = tacticalIn(round, panel.entryId);
+      if (!entry) return { kind: 'list' };
+      return panel.pickerFrom === null ? { kind: 'tactical', entry } : { kind: 'flight', entry, source: panel.pickerFrom };
+    }
+    case 'card': {
+      const entry = cardIn(round, panel.entryId);
+      return entry ? { kind: 'card', entry } : { kind: 'list' };
+    }
+    case 'adjustment': {
+      const entry = adjustmentIn(round, panel.entryId);
+      return entry ? { kind: 'adjustment', entry } : { kind: 'list' };
+    }
+    case 'expedition': {
+      const entry = expeditionIn(round, panel.entryId);
+      return entry ? { kind: 'expedition', entry } : { kind: 'list' };
+    }
   }
 }

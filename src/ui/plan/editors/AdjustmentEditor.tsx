@@ -8,6 +8,8 @@ import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { unitsText } from '../../units/unitsText';
 import { MapPickButton } from '../../primitives/MapPickButton';
+import { EditorFrame } from '../../primitives/EditorFrame';
+import { Section } from '../../primitives/Section';
 
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
 
@@ -23,10 +25,12 @@ export interface AdjustmentEditorProps {
   onOpenHex: (slot: string) => void;
   onUpdate: (patch: { label?: string; delta?: AdjustmentDelta }) => void;
   onDone: () => void;
+  /** The cross of the head: the adjustment goes. */
+  onRemove: () => void;
 }
 
 /** A manual adjustment on one screen: its label, the numbers it changes, and the system whose units it changes in the big hex. */
-export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickSystem, onOpenHex, onUpdate, onDone }: AdjustmentEditorProps) {
+export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
   const { t } = useTranslation();
   const { delta } = entry;
   const setDelta = (patch: Partial<AdjustmentDelta>) => onUpdate({ delta: { ...delta, ...patch } });
@@ -40,28 +44,22 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
   const placer = placeWarnings(warnings);
   const systemWarnings = [...placer.at('units'), ...placer.at('system')];
 
-  // TODO(P2-362) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 #dep:P2-316 — чужой класс .tactical-editor (которого нет в CSS), своя голова и ручные блоки; общая рамка редактора и Section
   return (
-    <div className="tactical-editor panel-stack">
-      <div className="panel-head">
-        <h2>{t('plan.menu.adjustment')}</h2>
-        <button type="button" className="primary" onClick={onDone}>{t('plan.tactical.done')}</button>
-      </div>
+    <EditorFrame title={t('plan.menu.adjustment')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
 
-      <div className="editor-section">
+      <Section>
         <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
-      </div>
+      </Section>
 
-      <div className="editor-section">
+      <Section>
         {DELTA_FIELDS.map(field => (
           <Stepper key={field} name={t(`plan.summary.${field}`)} value={delta[field] ?? 0} onChange={value => setDelta({ [field]: value })} />
         ))}
-      </div>
+      </Section>
 
-      <div className="editor-section" role="group" aria-label={t('plan.entries.system')}>
-        <strong>{t('plan.entries.system')}</strong>
+      <Section label={t('plan.entries.system')} title={t('plan.entries.system')} warnings={<WarningList warnings={systemWarnings} game={game} pack={pack} />}>
         {systemId
           ? (
             <div className="source-row in-card">
@@ -74,8 +72,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
             </div>
           )
           : <MapPickButton active={picking} onToggle={onPickSystem}>{t('plan.entries.pickSystem')}</MapPickButton>}
-        <WarningList warnings={systemWarnings} game={game} pack={pack} />
-      </div>
-    </div>
+      </Section>
+    </EditorFrame>
   );
 }

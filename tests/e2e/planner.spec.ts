@@ -115,7 +115,7 @@ test('a game from the first screen to an exported file, and back offline', async
     await expect(page.getByRole('heading', { name: 'Cargo on board: 1 of 4' })).toBeVisible();
     await page.getByRole('button', { name: 'Fly' }).click();
     await page.getByRole('button', { name: 'Land one Infantry' }).click();
-    await page.getByRole('button', { name: 'Done editing' }).click();
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
     await expect(entry(page, 'Tactical action · 66')).toBeVisible();
   });
 
@@ -128,7 +128,7 @@ test('a game from the first screen to an exported file, and back offline', async
     await expect(page.getByRole('group', { name: "Landing on Hope's End" })).toBeVisible();
     // A real edit: drop the landing, and the reading no longer has that step.
     await page.getByRole('button', { name: 'Give back Infantry' }).click();
-    await page.getByRole('button', { name: 'Done editing' }).click();
+    await page.getByRole('button', { name: 'Done', exact: true }).click();
     await entry(page, 'Tactical action · 66').click();
     await expect(page.getByText('Fly 58 → 110 → 66')).toBeVisible();
     await expect(page.getByText("Land on Hope's End")).toHaveCount(0);
@@ -247,7 +247,8 @@ test('the tabs of the left drawers stay beside the map through the actions, and 
   await expect(players).toHaveAttribute('aria-pressed', 'true');
   await page.getByTestId('drawer-scrim').click({ position: { x: 1100, y: 400 } });
   await expect(players).toHaveAttribute('aria-pressed', 'false');
-  await page.getByRole('button', { name: 'Done editing' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   await tabsStay();
 
   // A strategy card opens in the plan.
@@ -295,7 +296,7 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await dragRoute(page, [79, 66]);
   await expect(page.getByText('Flight 58 → 66')).toBeVisible();
   await expect(hint).toHaveCount(0);
-  await page.getByRole('button', { name: 'Close picker' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('button', { name: /^58 via 110, 79/ })).toBeVisible();
 
   // Taps first, the finger after.
@@ -312,7 +313,7 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await expect(tile(page, 110)).toHaveClass(/tile-path/);
   await tile(page, 66).click();
   await expect(page.getByText('Flight 110 → 66')).toBeVisible();
-  await page.getByRole('button', { name: 'Close picker' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
   await page.getByRole('button', { name: 'Remove source 110' }).click();
   await expect(page.getByRole('button', { name: 'Remove source 110' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Remove source 58' })).toBeVisible();
@@ -396,14 +397,17 @@ test('a flight loops in the details by default, and with the setting off plays o
   await tile(page, 66).click();
   await dragRoute(page, [58, 110, 66]);
   await page.getByRole('button', { name: 'Take one Carrier' }).click();
-  await page.getByRole('button', { name: 'Done editing' }).click();
+  // The flight is a step without «Done»: back to the editor first.
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   // A later action, whose unit must not blink on the map while the first one repeats.
   await page.getByRole('button', { name: 'Add action' }).click();
   await page.getByRole('button', { name: 'Tactical action', exact: true }).click();
   await tile(page, 110).click();
   await dragRoute(page, [58, 110]);
   await page.getByRole('button', { name: 'Take one Destroyer' }).click();
-  await page.getByRole('button', { name: 'Done editing' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Done', exact: true }).click();
   const laterUnit = tile(page, 110).getByRole('img', { name: /Destroyer/ });
   await expect(laterUnit).not.toHaveCount(0);
 

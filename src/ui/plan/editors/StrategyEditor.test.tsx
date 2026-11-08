@@ -224,7 +224,7 @@ describe('modes and the lock', () => {
     await click('PDS');
     await click('PDS');
     await click('Close');
-    await click(/^Cancel action/);
+    await click('Remove action');
     expect(entries()).toEqual([]);
     expect(button('Add action')).toBeVisible();
     act(() => store().undo());
@@ -500,19 +500,19 @@ describe('Warfare', () => {
     expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
     expect(screen.getByText(/no command token goes down/)).toBeVisible();
     expect(within(tile(OTHER) as HTMLElement).queryByRole('img', { name: 'Command token' })).toBeNull();
-    await click('Done editing');
+    await click('Done');
     expect(button(/^Tactical action without a token/)).toBeVisible();
     expect(ability('Secondary')).toBeDisabled();
     await click(/^Tactical action without a token/);
-    expect(button('Done editing')).toBeVisible();
+    expect(button('Done')).toBeVisible();
   });
 
   test('cancelling the card takes the free tactical with it, and one undo brings both back', async () => {
     await primary('Warfare');
     await click('Start a tactical action without a token');
     await userEvent.click(tile(OTHER));
-    await click('Done editing');
-    await click(/^Cancel action/);
+    await click('Done');
+    await click('Remove action');
     expect(entries()).toEqual([]);
     act(() => store().undo());
     expect(entries().map(e => e.type)).toEqual(['strategic', 'tactical']);

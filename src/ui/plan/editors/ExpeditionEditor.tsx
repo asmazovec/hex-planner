@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay, EXPEDITION_SLICES, sliceAutoPayment, slicePlanetCost, techSlicePlanets } from '../../../domain/payment';
 import type { DataPack, Game, GameState, Payment, Warning } from '../../../domain/types';
@@ -6,6 +5,8 @@ import { PaymentBlock } from '../blocks/PaymentBlock';
 import type { SliceOwners } from '../../../domain/thundersEdge';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { EditorFrame } from '../../primitives/EditorFrame';
+import { Section } from '../../primitives/Section';
 
 const NO_PAYMENT: Payment = { planets: [], tradeGoods: 0 };
 
@@ -19,21 +20,27 @@ export interface ExpeditionEditorProps {
   /** The state just before the entry. */
   before: GameState;
   warnings?: Warning[];
+  /** The payment is chosen by hand, kept by the plan screen like every payment's. */
+  manualPayment: boolean;
+  onManualPayment: (open: boolean) => void;
   onChange: (patch: { sliceId?: string | null; payment?: Payment }) => void;
+  onDone: () => void;
+  /** The cross of the head: the contribution goes. */
+  onRemove: () => void;
 }
 
-/** Choice of the expedition part and its payment. A part taken by someone else cannot be chosen. */
-export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack, warnings = [], onChange }: ExpeditionEditorProps) {
+/** The editor of an expedition contribution: the part and its payment. A part taken by someone else cannot be chosen. */
+export function ExpeditionEditor({
+  game, sliceId, payment, owners, before, pack, warnings = [], manualPayment, onManualPayment, onChange, onDone, onRemove,
+}: ExpeditionEditorProps) {
   const { t } = useTranslation();
-  // TODO(P2-356) #ws:ui-containers #type:arch #size:s — флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock — P2 note: the one place is PlanScreen's manualPayments, which the big hex reads too; the expedition editor sits inside the entry row (EntryList), so the flag would travel through EntryList and PlanScreen state, both edited by ui-plan-screen now (P2-429 merges the two toggles there): left for that wave
-  const [manual, setManual] = useState(false);
   const paidWith = slicePlanetCost(sliceId);
 
   // The technology part is paid by exhausting one planet of mine with a technology specialty.
   const techPlanet = EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet === true;
   const techPlanets = techSlicePlanets(before, pack);
   const choose = (id: string | null) => {
-    setManual(false);
+    onManualPayment(false);
     onChange({ sliceId: id, payment: sliceAutoPayment(before, id, pack) });
   };
 
@@ -43,27 +50,28 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
   const sliceWarnings = [...placer.at('slice'), ...placer.at('payment'), ...placer.at('action')];
 
   return (
-    <div className="panel-stack">
+    <EditorFrame title={t('expedition.title')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
-      <div className="slice-grid" role="group" aria-label={t('expedition.part')}>
-        {EXPEDITION_SLICES.map(({ id }) => (
-          <button
-            key={id} type="button" className="slice" aria-pressed={sliceId === id}
-            disabled={sliceId !== id && owners[id] !== undefined}
-            onClick={() => choose(sliceId === id ? null : id)}
-          >
-            {t(`plan.slice.${id}`)}
-          </button>
-        ))}
-      </div>
-      <WarningList warnings={sliceWarnings} game={game} pack={pack} />
+      <Section label={t('expedition.part')} title={t('expedition.part')} warnings={<WarningList warnings={sliceWarnings} game={game} pack={pack} />}>
+        <div className="slice-grid">
+          {EXPEDITION_SLICES.map(({ id }) => (
+            <button
+              key={id} type="button" className="slice" aria-pressed={sliceId === id}
+              disabled={sliceId !== id && owners[id] !== undefined}
+              onClick={() => choose(sliceId === id ? null : id)}
+            >
+              {t(`plan.slice.${id}`)}
+            </button>
+          ))}
+        </div>
+      </Section>
       {paidWith && (
         <PaymentBlock
           need={paidWith.amount} kind={paidWith.kind} payment={payment} state={before} pack={pack}
-          manual={manual}
+          manual={manualPayment}
           onManual={open => {
-            setManual(open);
+            onManualPayment(open);
             if (!open) onChange({ payment: autoPay(before, paidWith.amount, paidWith.kind, pack) });
           }}
           onChange={next => onChange({ payment: next })}
@@ -72,8 +80,7 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
         </PaymentBlock>
       )}
       {techPlanet && (
-        <div className="editor-section" role="group" aria-label={t('expedition.techPlanet')}>
-          <strong>{t('expedition.techPlanet')}</strong>
+        <Section label={t('expedition.techPlanet')} title={t('expedition.techPlanet')} warnings={<WarningList warnings={paymentWarnings} game={game} pack={pack} />}>
           {techPlanets.length === 0 && <p className="muted">{t('expedition.noTechPlanet')}</p>}
           {techPlanets.map(id => (
             <button
@@ -83,9 +90,8 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
               {pack.planets[id]?.name ?? id}
             </button>
           ))}
-          <WarningList warnings={paymentWarnings} game={game} pack={pack} />
-        </div>
+        </Section>
       )}
-    </div>
+    </EditorFrame>
   );
 }

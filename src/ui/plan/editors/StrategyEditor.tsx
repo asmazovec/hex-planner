@@ -18,6 +18,7 @@ import { unitsText } from '../../units/unitsText';
 import { Section } from '../../primitives/Section';
 import { CardGrid } from '../blocks/CardGrid';
 import { MapPickButton } from '../../primitives/MapPickButton';
+import { EditorFrame } from '../../primitives/EditorFrame';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
@@ -41,14 +42,15 @@ export interface StrategyEditorProps {
   /** Warfare's primary: starts the free tactical action. */
   onStartTactical: () => void;
   onOpenTactical: (id: string) => void;
-  onCancel: () => void;
   onDone: () => void;
+  /** The cross of the head: the card goes, with what it holds. */
+  onRemove: () => void;
 }
 
-/** A strategy card played: first the card, then its primary or secondary, both free to change until something is chosen, then cancelling is the way back. */
+/** A strategy card played: first the card, then its primary or secondary, both free to change until something is chosen, then removing it is the way back. */
 export function StrategyEditor({
   game, pack, round, entry, before, warnings, manualPayment, picking,
-  onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onCancel, onDone,
+  onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
   const lang = currentLanguage();
@@ -152,11 +154,8 @@ export function StrategyEditor({
     </>
   );
 
-  // TODO(P2-337) #ws:ui-nesting #type:ui #needs:prototype — редактор длинный, 4 уровня; шаги: (1) карта и свойство, (2) параметры
   return (
-    <div className="strategy-editor panel-stack">
-      {/* TODO(P2-334) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 — голый h2 и подвал .strategy-foot вместо общей рамки редактора */}
-      <h2>{t('plan.menu.strategic')}</h2>
+    <EditorFrame className="strategy-editor" title={t('plan.menu.strategic')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       <CardGrid
         label={t('plan.strategy.cards')} cards={cards}
         cellOf={c => ({ pressed: c.initiative === entry.card, disabled: locked && c.initiative !== entry.card, onClick: () => pickCard(c.initiative) })}
@@ -169,10 +168,6 @@ export function StrategyEditor({
       {entry.card !== CARD.technology && (entry.upgrades?.length ?? 0) > 0 && (
         <Section title={t('plan.strategy.upgrades')}>{upgradeRow}</Section>
       )}
-      <div className="strategy-foot">
-        <button type="button" onClick={onCancel}>{t('plan.strategy.cancel')}</button>
-        <button type="button" className="primary" onClick={onDone}>{t('plan.strategy.done')}</button>
-      </div>
-    </div>
+    </EditorFrame>
   );
 }
