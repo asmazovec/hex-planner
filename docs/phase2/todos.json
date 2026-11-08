@@ -341,85 +341,6 @@
       "text": "Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity — P2 note: after P2-010 the off-map home is a node of the route graph, so no real system key reaches this fallback; Infinity breaks about 20 unit and screen tests whose fixtures use letter slot keys ('A', 'B', 'H') one step apart, so the fallback stays until those fixtures move to q,r keys"
     },
     {
-      "id": "P2-060",
-      "num": 60,
-      "file": ".vale/styles/TI4Ru/Terms.yml",
-      "line": 4,
-      "ws": "vocab",
-      "type": "vocab",
-      "layer": "i18n",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [
-        "decision"
-      ],
-      "size": "m",
-      "tags": [
-        "i18n"
-      ],
-      "text": "ru.json: «жетон команд», «космодок», «вторичное», «наземные юниты», «вместимость», «Мекатол Рекс» → термины Hobby World; решить, разрешить ли короткие формы («жетон тактики») здесь"
-    },
-    {
-      "id": "P2-061",
-      "num": 61,
-      "file": ".vale/styles/TI4/Terms.yml",
-      "line": 2,
-      "ws": "vocab",
-      "type": "vocab",
-      "layer": "i18n",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "i18n",
-        "comments"
-      ],
-      "text": "en.json и комментарии кода: «ground units» → «ground forces» (25 мест), «strategy action» → «strategic action»; npm run lint:terms должен быть чистым"
-    },
-    {
-      "id": "P2-063",
-      "num": 63,
-      "file": "CLAUDE.md",
-      "line": 68,
-      "ws": "docs",
-      "type": "doc",
-      "layer": "docs",
-      "rules": [
-        "83.3"
-      ],
-      "tests": [],
-      "deps": [
-        "P2-034"
-      ],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "for-token"
-      ],
-      "text": "forToken сейчас не выводится, а хранится и устаревает (P2-034)"
-    },
-    {
-      "id": "P2-064",
-      "num": 64,
-      "file": "CLAUDE.md",
-      "line": 66,
-      "ws": "docs",
-      "type": "doc",
-      "layer": "docs",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "warning-channel"
-      ],
-      "text": "Описать канал нарушений: правило, шаг, место, реестр, контрактные тесты"
-    },
-    {
       "id": "P2-200",
       "num": 200,
       "file": "src/ui/map/stage/HexStage.tsx",
@@ -457,7 +378,7 @@
         "warning-channel",
         "duplicate-of-domain"
       ],
-      "text": "Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build"
+      "text": "Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build"
     },
     {
       "id": "P2-217",

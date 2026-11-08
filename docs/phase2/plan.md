@@ -2,7 +2,7 @@
 
 Собрано скриптом `npm run plan:todos` из комментариев `TODO(P2-…)` в коде. Не правьте этот файл руками: правьте TODO и запустите скрипт снова.
 
-Всего: **52** TODO в **27** файлах, **25** потоков.
+Всего: **48** TODO в **24** файлах, **25** потоков.
 
 ## По типам
 
@@ -12,14 +12,12 @@
 | `arch` | Архитектура: ответственность не на месте | 3 |
 | `dup` | Дублирование | 22 |
 | `ui` | Визуальный язык: элемент вне общего контейнера | 22 |
-| `vocab` | Термины игры | 2 |
-| `doc` | Документация | 2 |
 
 ## Волны
 
 Поток стоит на волну позже самого позднего из тех, на чей результат он опирается. Потоки одной волны независимы: их можно делать параллельно, у каждого свои файлы.
 
-**Волна 0:** [rule-engine](#ws-rule-engine) (0), [domain-purity](#ws-domain-purity) (0), [data](#ws-data) (0), [ui-structure](#ws-ui-structure) (0), [ui-css](#ws-ui-css) (2), [vocab](#ws-vocab) (2), [docs](#ws-docs) (2)
+**Волна 0:** [rule-engine](#ws-rule-engine) (0), [domain-purity](#ws-domain-purity) (0), [data](#ws-data) (0), [ui-structure](#ws-ui-structure) (0), [ui-css](#ws-ui-css) (2), [vocab](#ws-vocab) (0), [docs](#ws-docs) (0)
 
 **Волна 1:** [replay-steps](#ws-replay-steps) (0), [ui-logic-to-domain](#ws-ui-logic-to-domain) (0), [ui-warnings](#ws-ui-warnings) (1), [ui-containers](#ws-ui-containers) (34)
 
@@ -88,14 +86,7 @@ _Нет TODO._
 
 **Файлы потока:** `src/i18n/*.json`, `comments`
 
-**Нужно ваше решение или прототип:** P2-060 (decision)
-
-Порядок исправления: сначала ошибки, затем проверки, модели, архитектура, остальное.
-
-| ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
-|---|---|---|---|---|---|---|---|
-| P2-060 | vocab |  | [.vale/styles/TI4Ru/Terms.yml:4](../../.vale/styles/TI4Ru/Terms.yml#L4) | ru.json: «жетон команд», «космодок», «вторичное», «наземные юниты», «вместимость», «Мекатол Рекс» → термины Hobby World; решить, разрешить ли короткие формы («жетон тактики») здесь | #i18n | m |  |
-| P2-061 | vocab |  | [.vale/styles/TI4/Terms.yml:2](../../.vale/styles/TI4/Terms.yml#L2) | en.json и комментарии кода: «ground units» → «ground forces» (25 мест), «strategy action» → «strategic action»; npm run lint:terms должен быть чистым | #i18n #comments | s |  |
+_Нет TODO._
 
 <a id="ws-docs"></a>
 ### Документация · `docs` · волна 0
@@ -104,12 +95,7 @@ _Нет TODO._
 
 **Файлы потока:** `CLAUDE.md`
 
-Порядок исправления: сначала ошибки, затем проверки, модели, архитектура, остальное.
-
-| ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
-|---|---|---|---|---|---|---|---|
-| P2-063 | doc | 83.3 | [CLAUDE.md:68](../../CLAUDE.md#L68) | forToken сейчас не выводится, а хранится и устаревает (P2-034) | #for-token | s | ~~P2-034~~ ✓ |
-| P2-064 | doc |  | [CLAUDE.md:66](../../CLAUDE.md#L66) | Описать канал нарушений: правило, шаг, место, реестр, контрактные тесты | #warning-channel | s |  |
+_Нет TODO._
 
 <a id="ws-replay-steps"></a>
 ### Повтор плана по шагам правил · `replay-steps` · волна 1
@@ -146,7 +132,7 @@ _Нет TODO._
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-210 | dup |  | [src/ui/map/stage/HexStage.tsx:279](../../src/ui/map/stage/HexStage.tsx#L279) | Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build | #warning-channel #duplicate-of-domain | m |  |
+| P2-210 | dup |  | [src/ui/map/stage/HexStage.tsx:279](../../src/ui/map/stage/HexStage.tsx#L279) | Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build | #warning-channel #duplicate-of-domain | m |  |
 
 <a id="ws-ui-containers"></a>
 ### Контейнеры визуального языка · `ui-containers` · волна 1
@@ -376,10 +362,9 @@ _Нет TODO._
 | Правило | TODO |
 |---|---|
 | 6-note-2 | P2-011 |
-| 83.3 | P2-063 |
 
 ## По слоям и тегам
 
-Слои: domain 1, i18n 2, docs 2, ui 47.
+Слои: domain 1, ui 47.
 
-Теги: #confirm-bar 4, #player-dot 4, #unit-tile 3, #upgrade-toggle 3, #i18n 2, #warning-channel 2, #hex-stage 2, #nesting 2, #legend 2, #modal 2, #Creuss 1, #comments 1, #for-token 1, #srp 1, #duplicate-of-domain 1, #player-colour 1, #inline-style 1, #planet 1, #close-button 1, #popover 1, #section 1, #editor-frame 1, #player-choice 1, #editor-head 1, #selected-state 1, #small-button 1, #floating-card 1, #section-title 1.
+Теги: #confirm-bar 4, #player-dot 4, #unit-tile 3, #upgrade-toggle 3, #hex-stage 2, #nesting 2, #legend 2, #modal 2, #Creuss 1, #srp 1, #warning-channel 1, #duplicate-of-domain 1, #player-colour 1, #inline-style 1, #planet 1, #close-button 1, #popover 1, #section 1, #editor-frame 1, #player-choice 1, #editor-head 1, #selected-state 1, #small-button 1, #floating-card 1, #section-title 1.
