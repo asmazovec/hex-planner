@@ -1334,8 +1334,8 @@ test('the status phase entry distributes tokens', async () => {
   expect(entry).toMatchObject({ type: 'statusTokens', phase: 'status', tactic: 0, fleet: 0, strategy: 0 });
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
   expect(row.getByText('Distribute tokens: 2 left')).toBeVisible();
-  await userEvent.click(row.getByRole('button', { name: 'Tactic: 0' }));
-  await userEvent.click(row.getByRole('button', { name: 'Fleet: 0' }));
+  await userEvent.click(row.getByRole('button', { name: 'Add one Tactic' }));
+  await userEvent.click(row.getByRole('button', { name: 'Add one Fleet' }));
   expect(entries()[0]).toMatchObject({ tactic: 1, fleet: 1, strategy: 0 });
   expect(cell('Tactic')).toHaveTextContent('3 → 4');
   expect(row.getByText('Distribute tokens: 0 left')).toBeVisible();
@@ -1506,20 +1506,20 @@ test('the shop opens on the active system and shows the price of each unit', asy
   expect(shop.getByRole('button', { name: 'Fighter' })).toHaveTextContent('½');
 });
 
-test('a status tile always adds: beyond 2 it warns, naming abilities, and reset clears the distribution', async () => {
+test('a status Stepper adds beyond 2 and warns, naming abilities; «−» takes the tokens back', async () => {
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
   const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
-  expect(row.getByRole('button', { name: 'Reset' })).toBeDisabled();
-  await userEvent.click(row.getByRole('button', { name: 'Tactic: 0' }));
-  await userEvent.click(row.getByRole('button', { name: 'Tactic: 1' }));
+  expect(row.queryByRole('button', { name: 'Reset' })).toBeNull();
+  expect(row.getByRole('button', { name: 'Remove one Tactic' })).toBeDisabled();
+  for (let i = 0; i < 2; i += 1) await userEvent.click(row.getByRole('button', { name: 'Add one Tactic' }));
   expect(row.queryByText(/usually from abilities/)).toBeNull();
-  await userEvent.click(row.getByRole('button', { name: 'Tactic: 2' }));
+  await userEvent.click(row.getByRole('button', { name: 'Add one Tactic' }));
   expect(entries()[0]).toMatchObject({ tactic: 3 });
   expect(cell('Tactic')).toHaveTextContent('3 → 6');
   expect(row.getByText(/usually from abilities/)).toBeVisible();
-  await userEvent.click(row.getByRole('button', { name: 'Reset' }));
-  expect(entries()[0]).toMatchObject({ tactic: 0, fleet: 0, strategy: 0 });
+  for (let i = 0; i < 3; i += 1) await userEvent.click(row.getByRole('button', { name: 'Remove one Tactic' }));
+  expect(entries()[0]).toMatchObject({ tactic: 0 });
   expect(row.queryByText(/usually from abilities/)).toBeNull();
 });
 

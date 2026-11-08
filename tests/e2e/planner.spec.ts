@@ -117,7 +117,7 @@ test('a game from the first screen to an exported file, and back offline', async
 
   await test.step('add a status entry with points', async () => {
     await page.getByRole('button', { name: 'Tokens and points' }).click();
-    await page.getByRole('button', { name: 'Tactic: 0' }).click();
+    await page.getByRole('button', { name: 'Add one Tactic' }).click();
     await page.getByRole('button', { name: 'Add one Argent' }).click();
     await expect(summary('VP')).toHaveText(/(?<!\d)1$/);
   });

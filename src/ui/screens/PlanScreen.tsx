@@ -28,7 +28,7 @@ import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
 import { gameAs, opponentsBySeat } from '../../domain/players';
-import { nameTag, playerName, shortName } from '../players/names';
+import { playerName, shortName } from '../players/names';
 import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { EntryList } from '../plan/EntryList';
 import { PlanName, PlanTabs } from '../plan/PlanTabs';
@@ -45,10 +45,7 @@ import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, reso
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
-import { PlayerChoice, PlayerDot, playerStyle } from '../primitives/player';
-
-/** How many rivals still fit on the line of whose action with their whole names. */
-const FULL_NAMES_UP_TO = 3;
+import { PlayerChoice, PlayerDot, playerStyle, playerTag } from '../primitives/player';
 
 /** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
 function pruneEmptySources(entryId: string | undefined) {
@@ -567,16 +564,13 @@ export function PlanScreen() {
                   addAction={(
                     <div className="acting-add">
                       <PlayerChoice
-                        label={t('plan.actingLabel')} className="acting-for" colour="owner"
+                        label={t('plan.actingLabel')}
                         chosen={value => (value === null ? !actor : actor === value)} onPick={value => setActingAs(value)}
                         options={[
                           { value: null, label: t('plan.mine'), color: game.color },
                           ...opponentsBySeat(game).map(o => {
-                            const faction = pack.factions[o.faction];
                             const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
-                            // All the players stay on one line: with many of them the colour and three letters tell them apart.
-                            const tag = faction ? nameTag(name) : String(o.seat);
-                            return { value: o.id, label: game.opponents.length > FULL_NAMES_UP_TO ? tag : name, color: o.color, ariaLabel: name };
+                            return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
                           }),
                         ]}
                       />

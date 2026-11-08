@@ -29,7 +29,11 @@ const button = (name: string | RegExp) => screen.getByRole('button', { name });
 const click = (name: string | RegExp) => userEvent.click(button(name));
 const cell = (name: string) => within(screen.getByRole('group', { name: 'Totals, now and forecast' })).getByRole('group', { name });
 const cards = () => within(screen.getByRole('group', { name: 'Card' }));
-const tileOf = (name: string) => new RegExp(`^${name}: [+−]?\\d+$`);
+const tileOf = (name: string) => `Add one ${name}`;
+const takeOf = (name: string) => `Remove one ${name}`;
+/** What the token Stepper of a pool shows. */
+const tokensOf = (name: string) =>
+  within(screen.getByRole('group', { name: 'Token distribution' })).getByRole('group', { name }).querySelector('output')!.textContent;
 const warningsShown = () => within(screen.getByRole('list', { name: 'Warnings' }));
 
 function start({ expansions = ['pok', 'te'] as ExpansionId[], playerCount = 6, faction = 'arborec' } = {}) {
@@ -183,7 +187,7 @@ describe('modes and the lock', () => {
     const place = document.querySelector('.strategy-lock');
     expect(place).not.toBeNull();
     expect(place).toHaveTextContent('');
-    await click(/^Research a technology/);
+    await click('Add one Researched');
     expect(document.querySelector('.strategy-lock')).toBe(place);
     expect(place).toHaveTextContent(/A choice has been made/);
   });
@@ -204,7 +208,7 @@ describe('modes and the lock', () => {
   test('a choice locks the mode and the other cards, with the note; undoing it frees them', async () => {
     await primary('Technology');
     expect(screen.queryByText(/A choice has been made/)).toBeNull();
-    await click(/^Research a technology/);
+    await click('Add one Researched');
     expect(screen.getByText(/A choice has been made/)).toBeVisible();
     for (const name of ['Primary', 'Secondary'] as const) expect(ability(name)).toBeDisabled();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
@@ -242,7 +246,7 @@ describe('Leadership', () => {
     expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
     await click(tileOf('Tactic'));
     expect(screen.getByText('Distribute tokens: 2 left')).toBeVisible();
-    expect(button(tileOf('Tactic'))).toHaveTextContent('1');
+    expect(tokensOf('Tactic')).toBe('1');
     expect(cell('Tactic')).toHaveTextContent('3 → 4');
     await click(tileOf('Tactic'));
     await click(tileOf('Fleet'));
@@ -257,11 +261,14 @@ describe('Leadership', () => {
     expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
     expect(within(screen.getByRole('group', { name: 'Payment' })).getByText(/^Cost 3,/)).toBeVisible();
     expect(screen.queryByText(/usually from abilities/)).toBeNull();
-    await click('Take a token back: Tactic');
+    await click(takeOf('Tactic'));
     expect(cardEntry().effects?.boughtTokens).toBeUndefined();
-    await click('Reset');
+    await click(takeOf('Tactic'));
+    await click(takeOf('Tactic'));
+    await click(takeOf('Fleet'));
     expect(screen.getByText('Distribute tokens: 3 left')).toBeVisible();
-    expect(button('Reset')).toBeDisabled();
+    expect(button(takeOf('Tactic'))).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
   });
 
   test('a manual payment stays as chosen when the cost changes', async () => {
@@ -380,6 +387,16 @@ describe('Politics', () => {
     expect(first).toHaveAttribute('aria-pressed', 'false');
     expect(second).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/\+2 action cards, 2 agendas/)).toBeVisible();
+  });
+
+  test('with six players the choice stays one line: tags underlined in the colour, the name for the reader', async () => {
+    store().setOpponent(1, { faction: 'hacan' });
+    await primary('Politics');
+    const speaker = within(screen.getByRole('group', { name: 'The speaker passes to' }));
+    const hacan = speaker.getByRole('button', { name: 'Hacan' });
+    expect(hacan).toHaveTextContent(/^Hac$/);
+    expect(hacan.style.getPropertyValue('--owner')).toBe(`var(--player-${game().opponents[1].color})`);
+    expect(speaker.getByRole('button', { name: 'Player 2' })).toHaveTextContent(/^2$/);
   });
 
   test('the secondary has no speaker', async () => {
@@ -509,20 +526,22 @@ describe('Warfare', () => {
     expect(entries()).toHaveLength(1);
   });
 
-  test('with Thunder\'s Edge a tile takes a token from the fullest pool, signed on the tiles; reset clears it', async () => {
+  test('with Thunder\'s Edge «+» takes a token from the fullest pool, signed on the Steppers; «−» puts it back', async () => {
     await primary('Warfare');
     expect(screen.queryByRole('button', { name: /^Take a command token off/ })).toBeNull();
-    expect(button('Reset')).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
     await click(tileOf('Fleet'));
     expect(cardEntry().effects?.tokens).toEqual({ tactic: -1, fleet: 1 });
-    expect(button('Fleet: +1')).toHaveTextContent('+1');
-    expect(button('Tactic: −1')).toHaveTextContent('−1');
+    expect(tokensOf('Fleet')).toBe('+1');
+    expect(tokensOf('Tactic')).toBe('−1');
     expect(cell('Tactic')).toHaveTextContent('3 → 2');
     expect(cell('Fleet')).toHaveTextContent('3 → 4');
     expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
     await click(tileOf('Strategy'));
     expect(cardEntry().effects?.tokens).toEqual({ tactic: -1, fleet: 0, strategy: 1 });
-    await click('Reset');
+    await click(takeOf('Strategy'));
+    await click(tileOf('Tactic'));
+    expect(cardEntry().effects?.tokens).toEqual({ tactic: 0, fleet: 0, strategy: 0 });
     expect(cell('Tactic')).toHaveTextContent(/^Tactic3$/);
     expect(ability('Secondary')).toBeEnabled();
   });
@@ -634,16 +653,16 @@ describe('Technology', () => {
 
   test('a technology is marked by a tap, without naming it: the primary\'s second one costs 6', async () => {
     await primary('Technology');
-    await click('Research a technology');
+    await click('Add one Researched');
     expect(cardEntry().effects?.researched).toBe(1);
     expect(screen.getByText('Technologies researched: 1')).toBeVisible();
     expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
-    await click(/^Research a technology/);
+    await click('Add one Researched');
     expect(cardEntry().effects?.researched).toBe(2);
     expect(screen.getByText(/To pay: 6/)).toBeVisible();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
-    await click('Take a technology back');
-    await click('Take a technology back');
+    await click('Remove one Researched');
+    await click('Remove one Researched');
     expect(cardEntry().effects?.researched).toBeUndefined();
   });
 

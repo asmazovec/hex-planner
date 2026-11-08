@@ -65,12 +65,13 @@ describe('the stage as a window', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  test('the owner toggle lists me and each opponent in their colours', () => {
+  test('the owner toggle lists me and each opponent, underlined in their colours', () => {
     open();
     const owners = within(screen.getByRole('group', { name: 'Whose units' }));
     expect(owners.getAllByRole('button').map(b => b.textContent)).toEqual(['Mine', 'Player 2', 'Player 3', 'Player 4']);
-    const dot = owners.getByRole('button', { name: 'Player 3' }).querySelector('.owner-dot') as HTMLElement;
-    expect(dot.style.background).toContain(`--player-${game().opponents[1].color}`);
+    const third = owners.getByRole('button', { name: 'Player 3' });
+    expect(third.style.getPropertyValue('--owner')).toBe(`var(--player-${game().opponents[1].color})`);
+    expect(third.querySelector('.owner-dot')).toBeNull();
   });
 
   test('a mode can be given, the shop limited, and the toggle goes with a limit', () => {
