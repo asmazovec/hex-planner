@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тактический редактор</title>
+<link rel="stylesheet" href="/src/ui/theme.css">
+<link rel="stylesheet" href="./proto.css">
+<style>
+  /* Every pane here is one panel wide: keeps the panes side by side. */
+  .proto .compare > .pane { max-width: var(--panel-width); }
+  /* The app's own .screen (theme.css) starts its items; the panel here fills the frame. */
+  .proto .screen { align-items: stretch; gap: 0; }
+  /* Unit pictures: a plain token with the unit's short name, not the game's art. */
+  .proto .proto-unit circle { fill: var(--player-1); stroke: var(--token-stroke); stroke-width: 1.5; }
+  .proto .proto-unit text { fill: var(--text-strong); font: 700 13px var(--font-family); text-anchor: middle; }
+  /* The one head of an editor: title, then its controls at the right edge. */
+  .proto .editor-head { min-height: var(--touch); }
+  .proto .editor-head h2 { flex: 1 1 auto; min-width: 0; }
+  .proto .editor-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+  .proto .editor-head > .proto-back { flex: none; }
+  .proto .screen-caption { font-size: var(--font-xs); color: var(--text-dim); margin: 0 0 2px; }
+  .proto .stack-of-screens { display: flex; flex-direction: column; gap: 10px; }
+  .proto .stack-of-screens .screen { min-height: 0; }
+  .proto .proto-gap { flex: 1; min-height: 40px; color: var(--text-dim); font-size: var(--font-xs); display: grid; place-items: center; border: 1px dashed var(--border); border-radius: var(--radius-s); }
+  .proto .proto-foot { display: flex; gap: 6px; }
+  .proto .proto-foot > button { flex: 1; }
+  .proto .proto-hidden { display: none; }
+  .proto .proto-reset { font-size: var(--font-xs); }
+  /* The flow of the panel slot. */
+  .proto .flow { display: flex; flex-direction: column; gap: 10px; }
+  .proto .flow-lane { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .proto .flow-lane > span { color: var(--text-dim); }
+  .proto .flow-lane > button { font-size: var(--font-s); padding: 4px 10px; min-height: 36px; }
+  .proto .flow-start { padding-left: 0; }
+  .proto .chain { margin: 0; padding: 8px 10px 8px 26px; font-size: var(--font-s); color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+  .proto .chain code { color: var(--text); font-size: var(--font-xs); }
+  .proto .chain li { margin-bottom: 4px; }
+  .proto .proto-padded { padding: 10px 12px; gap: 12px; }
+  .proto .proto-slot { border: 1px solid var(--border); border-radius: var(--radius-s); }
+</style>
+</head>
+<body class="proto">
+<nav class="back"><a href="./index.html">← Все прототипы</a></nav>
+<h1>Тактический редактор</h1>
+<p class="lead">Редактор действия в панели плана. Сейчас у редакторов четыре вида головы и подвала, перелёт раскрывается внутри редактора на шесть уровней, а «Бой» и «Производство» занимают по блоку ради одной кнопки. Предлагаю одну голову для всех редакторов, перелёт отдельным шагом с «Назад», бой и производство строками-карточками и один слот панели с понятными состояниями.</p>
+<div class="todos"><span>P2-319</span><span>P2-362</span><span>P2-427</span><span>P2-318</span><span>P2-323</span><span>P2-317</span><span>P2-428</span></div>
+
+<!-- ============================================================ 1 -->
+<section class="change">
+  <h2>1. Одна голова редактора</h2>
+  <p>Тактика и ручная правка: заголовок и «Завершить правку» сверху. Стратегия: голый заголовок и две кнопки внизу. Перелёт: текстовое «Закрыть выбор» и «Убрать маршрут» внизу. Выбор системы: своя голова с текстовой «Отмена».</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="stack-of-screens">
+        <div>
+          <p class="screen-caption">Тактическое действие, ручная правка</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="tactical-editor panel-stack">
+            <div class="panel-head"><h2>Тактическое действие</h2><button type="button" class="primary">Завершить правку</button></div>
+            <div class="editor-section"><strong>Активная система: Lodor</strong><span class="muted">Тактический резерв: 3 → 2</span></div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Стратегия: заголовок без кнопок, кнопки в подвале</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="strategy-editor panel-stack">
+            <h2>Стратегия</h2>
+            <div class="proto-gap">карты, свойство, параметры, оплата</div>
+            <div class="strategy-foot"><button type="button">Отменить действие</button><button type="button" class="primary">Готово</button></div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Перелёт внутри редактора</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="editor-section unit-picker">
+              <div class="panel-head"><strong>Перелёт Jord → Lodor</strong><button type="button">Закрыть выбор</button></div>
+              <div class="proto-gap">юниты, груз, остановки</div>
+              <div class="picker-foot"><button type="button">Убрать маршрут</button><button type="button" class="primary">Лететь</button></div>
+            </div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Выбор активной системы (PlanScreen)</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll">
+            <div class="panel-head"><h2>Тактическое действие</h2><button type="button">Отмена</button></div>
+          </div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane option recommended">
+      <span class="tag">Вариант А</span>
+      <div class="stack-of-screens">
+        <div>
+          <p class="screen-caption">Тактика, стратегия, ручная правка: одна голова</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="panel-head editor-head"><h2>Тактическое действие</h2><span class="editor-head-actions"><button type="button" class="primary">Готово</button><button type="button" class="hex-button" aria-label="Убрать действие" title="Убрать действие"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+            <div class="editor-section"><strong>Активная система: Lodor</strong><span class="muted">Тактический резерв: 3 → 2</span></div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Стратегия: подвала больше нет</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="panel-head editor-head"><h2>Стратегия</h2><span class="editor-head-actions"><button type="button" class="primary">Готово</button><button type="button" class="hex-button" aria-label="Убрать действие" title="Убрать действие"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+            <div class="proto-gap">карты, свойство, параметры, оплата</div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Выбор системы: действия ещё нет, сохранять нечего</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="panel-head editor-head"><h2>Тактическое действие</h2><span class="editor-head-actions"><button type="button" class="hex-button" aria-label="Отменить" title="Отменить"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+            <span class="muted">Нажмите систему, которую активируете: потратится жетон из тактического резерва.</span>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Шаг внутри редактора (перелёт, см. п. 2)</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="panel-head editor-head"><button type="button" class="proto-back">← Назад</button><h2>Перелёт Jord → Lodor</h2><span class="editor-head-actions"><button type="button" class="hex-button" aria-label="Убрать маршрут" title="Убрать маршрут"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+            <div class="proto-gap">юниты, груз, остановки</div>
+          </div></div></div></div>
+        </div>
+      </div>
+      <p class="note">«Готово» закрывает и сохраняет, крестик убирает то, что правится: действие или маршрут, как сейчас «Отменить действие» и «Убрать маршрут». «Назад» есть только у шага.</p>
+    </div>
+
+    <div class="pane option">
+      <span class="tag">Вариант Б</span>
+      <div class="stack-of-screens">
+        <div>
+          <p class="screen-caption">Крестик закрывает, как у шторок и окон</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="panel-head editor-head"><h2>Тактическое действие</h2><span class="editor-head-actions"><button type="button" class="hex-button" aria-label="Закрыть" title="Закрыть"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+            <div class="editor-section"><strong>Активная система: Lodor</strong><span class="muted">Тактический резерв: 3 → 2</span></div>
+          </div></div></div></div>
+        </div>
+      </div>
+      <p class="note">Без «Готово»: запись сохраняется сразу, крестик только закрывает. Удалить действие можно в строке списка. Короче, но крестик в голове значит не то же, что крестик строки.</p>
+    </div>
+  </div>
+  <div class="decide">Ответьте «А» или «Б»: что делает крестик в голове редактора. В А он убирает действие (или маршрут), рядом «Готово»; в Б он только закрывает, а удаление остаётся в списке.</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="change">
+  <h2>2. Перелёт отдельным шагом</h2>
+  <p>Выбор юнитов открывается внутри редактора между «Источниками» и «Боем», до шести уровней вложенности. Закрывает его текстовая кнопка, а «Убрать маршрут» в подвале повторяет крестик строки источника.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen"><div class="plan-panel"><div class="plan-scroll"><div class="tactical-editor panel-stack">
+        <div class="panel-head"><h2>Тактическое действие</h2><button type="button" class="primary">Завершить правку</button></div>
+        <div class="editor-section"><strong>Активная система: Lodor</strong><span class="muted">Тактический резерв: 3 → 2</span></div>
+        <div class="editor-section">
+          <strong>Источники</strong>
+          <span class="muted">Ведите стрелку пальцем от системы с кораблями к активной через нужные гексы или обратно от активной.</span>
+          <div class="source-row in-card">
+            <button type="button" class="source-button">Arnor / Lor через Quann<small>Транспортник 1, груз 2</small><small>Расстояние: 2</small></button>
+            <button type="button" class="hex-button" aria-label="Убрать источник Arnor / Lor" title="Убрать источник Arnor / Lor"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          </div>
+          <button type="button" aria-pressed="false">Добавить источник</button>
+        </div>
+        <div class="editor-section unit-picker">
+          <div class="panel-head"><strong>Перелёт Jord → Lodor</strong><button type="button">Закрыть выбор</button></div>
+          <small class="picker-distance">Расстояние: 1</small>
+          <h4 class="section-title picker-title">В системе Jord</h4>
+          <div class="pics" data-tiles="CA:1,DD:2"></div>
+          <h4 class="section-title picker-title">Летят</h4>
+          <div class="pics" data-tiles="DN:1:taken,CV:2:taken"></div>
+          <h4 class="section-title picker-title">Груз на борту: 4 из 8</h4>
+          <div class="pips" data-pips="4/8"></div>
+          <ol class="stops">
+            <li class="stop"><span class="stop-name">Jord · старт</span>
+              <div class="stop-place" role="group"><div class="pics" data-tiles="FF:2,FF:2:taken"></div></div>
+              <div class="stop-place" role="group"><small>Jord</small><div class="pics" data-tiles="INF:3,INF:2:taken"></div></div>
+            </li>
+            <li class="stop stop-target"><span class="stop-name">Lodor · цель</span></li>
+          </ol>
+          <p class="picker-fleet muted">Резерв флота: 4 из 3</p>
+          <ul class="warning-list place-warnings"><li><span class="warning-text">Система Lodor превышает резерв флота: кораблей 4, жетонов 3.</span></li></ul>
+          <div class="picker-foot"><button type="button">Убрать маршрут</button><button type="button" class="primary">Лететь</button></div>
+        </div>
+        <div class="editor-section"><strong>Бой <small class="optional-note">по желанию</small></strong><button type="button">Начать бой</button></div>
+        <div class="editor-section"><strong>Производство <small class="optional-note">по желанию</small></strong><button type="button">Открыть магазин</button></div>
+      </div></div></div></div>
+    </div>
+
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen" id="flow2"><div class="plan-panel"><div class="plan-scroll">
+        <!-- The editor -->
+        <div class="panel-stack" data-view="editor">
+          <div class="panel-head editor-head"><h2>Тактическое действие</h2><span class="editor-head-actions"><button type="button" class="primary">Готово</button><button type="button" class="hex-button" aria-label="Убрать действие" title="Убрать действие"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+          <div class="editor-section"><strong>Активная система: Lodor</strong><span class="muted">Тактический резерв: 3 → 2</span></div>
+          <div class="editor-section">
+            <strong>Источники</strong>
+            <span class="muted">Нажмите источник, чтобы выбрать, кто летит.</span>
+            <div class="source-row in-card" data-source="jord">
+              <button type="button" class="source-button" data-open="jord">Jord<small>Дредноут 1, Транспортник 2, груз 4</small><small>Расстояние: 1</small></button>
+              <button type="button" class="hex-button" data-remove="jord" aria-label="Убрать источник Jord" title="Убрать источник Jord"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <ul class="warning-list place-warnings" data-source="jord"><li><span class="warning-text">Система Lodor превышает резерв флота: кораблей 4, жетонов 3.</span></li></ul>
+            <div class="source-row in-card" data-source="arnor">
+              <button type="button" class="source-button" data-open="arnor">Arnor / Lor через Quann<small>Транспортник 1, груз 2</small><small>Расстояние: 2</small></button>
+              <button type="button" class="hex-button" data-remove="arnor" aria-label="Убрать источник Arnor / Lor" title="Убрать источник Arnor / Lor"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+            </div>
+            <ul class="warning-list place-warnings" data-source="arnor"><li><span class="warning-text">Транспортник из Arnor / Lor: скорость 1, а маршрут занимает шагов: 2.</span></li></ul>
+            <button type="button" aria-pressed="false">Добавить источник</button>
+          </div>
+          <div class="source-row in-card"><button type="button" class="source-button">Бой <small>по желанию · Начать бой</small></button></div>
+          <div class="source-row in-card"><button type="button" class="source-button">Производство <small>по желанию · Открыть магазин</small></button></div>
+          <button type="button" class="proto-reset proto-hidden" data-reset>Вернуть источники (только в прототипе)</button>
+        </div>
+        <!-- The flight step: only it, with Back -->
+        <div class="panel-stack proto-hidden" data-view="flight">
+          <div class="panel-head editor-head"><button type="button" class="proto-back" data-back>← Назад</button><h2 data-title>Перелёт Jord → Lodor</h2><span class="editor-head-actions"><button type="button" class="hex-button" data-drop aria-label="Убрать маршрут" title="Убрать маршрут"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+          <small class="picker-distance" data-distance>Расстояние: 1</small>
+          <div class="editor-section">
+            <h4 class="section-title picker-title" data-insystem>В системе Jord</h4>
+            <div class="pics" data-slot="offered"></div>
+            <h4 class="section-title picker-title">Летят</h4>
+            <div class="pics" data-slot="flying"></div>
+          </div>
+          <div class="editor-section">
+            <h4 class="section-title picker-title" data-cargo>Груз на борту: 4 из 8</h4>
+            <div class="pips" data-slot="pips"></div>
+            <ol class="stops" data-slot="stops"></ol>
+          </div>
+          <p class="picker-fleet muted proto-hidden" data-fleet></p>
+          <ul class="warning-list place-warnings" data-slot="warn"></ul>
+          <button type="button" class="primary">Лететь</button>
+        </div>
+      </div></div></div>
+      <p class="note">Нажмите строку источника: открывается шаг перелёта, остальное скрыто. «Назад» возвращает в редактор. Крестик в голове шага убирает маршрут, поэтому в подвале остаётся только «Лететь». Уровней: панель, блок, остановка.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="change">
+  <h2>3. Бой и производство строками</h2>
+  <p>Оба блока состоят из заголовка, пометки «по желанию» и одной кнопки; итог (потери, что построено) стоит отдельной строкой. Это два лишних блока в и без того длинном редакторе.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="tactical-editor panel-stack">
+        <div class="editor-section"><strong>Бой <small class="optional-note">по желанию</small></strong><span class="muted">Эсминец 1, Пехота 1</span><button type="button">Продолжить бой</button></div>
+        <details class="editor-section"><summary><span>Высадка <small class="optional-note">по желанию</small></span><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary></details>
+        <div class="editor-section">
+          <strong>Производство <small class="optional-note">по желанию</small></strong>
+          <span class="muted">Дредноут 1, Истребитель 2</span>
+          <ul class="warning-list place-warnings"><li><span class="warning-text">«Производство» 2, а построено юнитов: 3. Каждый истребитель и каждая пехота считаются.</span></li></ul>
+          <button type="button">Открыть магазин</button>
+        </div>
+      </div></div></div></div>
+    </div>
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+        <div class="source-row in-card"><button type="button" class="source-button">Бой<small>Потери: Эсминец 1, Пехота 1</small></button></div>
+        <details class="editor-section"><summary><span>Высадка <small class="optional-note">по желанию</small></span><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></summary></details>
+        <div class="source-row in-card"><button type="button" class="source-button">Производство<small>Дредноут 1, Истребитель 2</small></button></div>
+        <ul class="warning-list place-warnings"><li><span class="warning-text">«Производство» 2, а построено юнитов: 3. Каждый истребитель и каждая пехота считаются.</span></li></ul>
+      </div></div></div></div>
+      <p class="screen-caption">Пока ничего не выбрано:</p>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+        <div class="source-row in-card"><button type="button" class="source-button">Бой<small>по желанию · Начать бой</small></button></div>
+        <div class="source-row in-card"><button type="button" class="source-button">Производство<small>по желанию · Открыть магазин</small></button></div>
+      </div></div></div></div>
+      <p class="note">Строка сама и есть кнопка: нажатие открывает большой гекс в режиме боя или магазина. Внутри итог, а пока ничего нет, «по желанию» и что откроется. Предупреждение стоит сразу под своей строкой, как у источников.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="change">
+  <h2>4. Один слот панели</h2>
+  <p>Что показать в панели, PlanScreen решает цепочкой условий: голова выбора системы, тактика, стратегия, ручная правка, список. Перелёт и большой гекс лежат ещё глубже, внутри редактора.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen auto proto-padded">
+        <ol class="chain">
+          <li><code>picking &amp;&amp;</code> своя голова с «Отмена»</li>
+          <li><code>tactical &amp;&amp; entry &amp;&amp; entryBefore &amp;&amp;</code> TacticalEditor, а в нём UnitPicker при <code>pickerFrom</code></li>
+          <li><code>!tactical &amp;&amp; cardEntry &amp;&amp; cardBefore &amp;&amp;</code> StrategyEditor</li>
+          <li><code>adjustmentEntry &amp;&amp;</code> AdjustmentEditor</li>
+          <li><code>panel.kind === 'list' &amp;&amp;</code> название плана и список</li>
+        </ol>
+      </div>
+      <p class="note">Условия независимы: ничто, кроме порядка проверок, не мешает двум редакторам стоять друг под другом.</p>
+    </div>
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen auto proto-padded">
+        <div class="flow" id="flow4">
+          <div class="flow-lane">
+            <button type="button" data-state="list" aria-pressed="true">Список</button>
+          </div>
+          <div class="flow-lane">
+            <span>→</span><button type="button" data-state="pick">Выбор системы</button><span>→</span><button type="button" data-state="tactical">Тактика</button><span>⇄</span><button type="button" data-state="flight">Перелёт</button>
+          </div>
+          <div class="flow-lane">
+            <span>→</span><button type="button" data-state="card1">Стратегия: карта</button><span>⇄</span><button type="button" data-state="card2">Стратегия: параметры</button>
+          </div>
+          <div class="flow-lane">
+            <span>→</span><button type="button" data-state="adjust">Ручная правка</button>
+          </div>
+        </div>
+        <div class="plan-panel proto-slot"><div class="panel-stack" id="slot4"></div></div>
+      </div>
+      <p class="note">В панели всегда одно состояние из семи, показано одной рамкой (п. 1). Из любого редактора «Готово» и крестик ведут в список, «Назад» на шаг влево. Большой гекс открывается поверх карты и слот не меняет. Нажимайте состояния.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const X = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const NAMES = { DN: 'Дредноут', CV: 'Транспортник', CA: 'Крейсер', DD: 'Эсминец', FF: 'Истребитель', INF: 'Пехота' };
+  const tile = (kind, count, taken) =>
+    `<button type="button" class="pic${taken ? ' pic-taken' : ''}" aria-label="${taken ? 'Вернуть' : 'Взять'}: ${NAMES[kind]}">` +
+    `<svg class="proto-unit" viewBox="0 0 58 58" width="58" height="58" aria-hidden="true"><circle cx="29" cy="29" r="21"/><text x="29" y="34">${kind}</text></svg>` +
+    (count !== 1 ? `<i>${count}</i>` : '') + '</button>';
+  const tiles = spec => spec ? spec.split(',').map(s => { const [k, n, t] = s.split(':'); return tile(k, Number(n), t === 'taken'); }).join('') : '';
+  const pips = (load, cap) => Array.from({ length: Math.max(load, cap) }, (_, i) =>
+    `<svg width="14" height="13" viewBox="-7 -6.5 14 13"><polygon points="6.4,0 3.2,5.6 -3.2,5.6 -6.4,0 -3.2,-5.6 3.2,-5.6" class="pip${i < load ? ' pip-full' : ''}${i >= cap ? ' pip-over' : ''}"/></svg>`).join('');
+  document.querySelectorAll('[data-tiles]').forEach(el => { el.innerHTML = tiles(el.dataset.tiles); });
+  document.querySelectorAll('[data-pips]').forEach(el => { const [l, c] = el.dataset.pips.split('/').map(Number); el.innerHTML = pips(l, c); });
+
+  // 2. The flight step.
+  const flow = document.getElementById('flow2');
+  const SOURCES = {
+    jord: {
+      title: 'Перелёт Jord → Lodor', distance: 'Расстояние: 1', inSystem: 'В системе Jord', offered: 'CA:1,DD:2', flying: 'DN:1:taken,CV:2:taken',
+      load: 4, cap: 8, fleet: null,
+      stops: `<li class="stop"><span class="stop-name">Jord · старт</span><div class="stop-place" role="group"><div class="pics">${tiles('FF:2,FF:2:taken')}</div></div><div class="stop-place" role="group"><small>Jord</small><div class="pics">${tiles('INF:3,INF:2:taken')}</div></div></li><li class="stop stop-target"><span class="stop-name">Lodor · цель</span></li>`,
+      warn: 'Система Lodor превышает резерв флота: кораблей 4, жетонов 3.',
+    },
+    arnor: {
+      title: 'Перелёт Arnor / Lor → Lodor', distance: 'Расстояние: 2', inSystem: 'В системе Arnor / Lor', offered: '', flying: 'CV:1:taken',
+      load: 2, cap: 4, fleet: 'Резерв флота: 1 из 3',
+      stops: `<li class="stop"><span class="stop-name">Arnor / Lor · старт</span><div class="stop-place" role="group"><small>Arnor</small><div class="pics">${tiles('INF:2:taken')}</div></div></li><li class="stop"><span class="stop-name">Quann · по дороге</span><span class="muted">Забрать нечего</span></li><li class="stop stop-target"><span class="stop-name">Lodor · цель</span></li>`,
+      warn: 'Транспортник из Arnor / Lor: скорость 1, а маршрут занимает шагов: 2.',
+    },
+  };
+  let open = null;
+  const editor = flow.querySelector('[data-view="editor"]');
+  const step = flow.querySelector('[data-view="flight"]');
+  const q = sel => step.querySelector(sel);
+  const show = id => {
+    open = id;
+    editor.classList.toggle('proto-hidden', id !== null);
+    step.classList.toggle('proto-hidden', id === null);
+    if (id === null) return;
+    const s = SOURCES[id];
+    q('[data-title]').textContent = s.title;
+    q('[data-distance]').textContent = s.distance;
+    q('[data-insystem]').textContent = s.inSystem;
+    q('[data-slot="offered"]').innerHTML = tiles(s.offered) || '<span class="muted">Все корабли уже летят.</span>';
+    q('[data-slot="flying"]').innerHTML = tiles(s.flying);
+    q('[data-cargo]').textContent = `Груз на борту: ${s.load} из ${s.cap}`;
+    q('[data-slot="pips"]').innerHTML = pips(s.load, s.cap);
+    q('[data-slot="stops"]').innerHTML = s.stops;
+    const fleet = q('[data-fleet]');
+    fleet.textContent = s.fleet ?? '';
+    fleet.classList.toggle('proto-hidden', !s.fleet);
+    q('[data-slot="warn"]').innerHTML = `<li><span class="warning-text">${s.warn}</span></li>`;
+  };
+  const drop = id => {
+    flow.querySelectorAll(`[data-source="${id}"]`).forEach(el => el.classList.add('proto-hidden'));
+    flow.querySelector('[data-reset]').classList.remove('proto-hidden');
+  };
+  flow.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => show(b.dataset.open)));
+  flow.querySelectorAll('[data-remove]').forEach(b => b.addEventListener('click', () => drop(b.dataset.remove)));
+  q('[data-back]').addEventListener('click', () => show(null));
+  q('[data-drop]').addEventListener('click', () => { drop(open); show(null); });
+  flow.querySelector('[data-reset]').addEventListener('click', e => {
+    flow.querySelectorAll('[data-source]').forEach(el => el.classList.remove('proto-hidden'));
+    e.currentTarget.classList.add('proto-hidden');
+  });
+
+  // 4. The slot and its states.
+  const head = (title, { done = true, back = false, remove = 'Убрать действие' } = {}) =>
+    `<div class="panel-head editor-head">${back ? '<button type="button" class="proto-back" data-go="' + back + '">← Назад</button>' : ''}<h2>${title}</h2>` +
+    `<span class="editor-head-actions">${done ? '<button type="button" class="primary" data-go="list">Готово</button>' : ''}` +
+    `<button type="button" class="hex-button" data-go="${back ? back : 'list'}" aria-label="${remove}" title="${remove}">${X}</button></span></div>`;
+  const STATES = {
+    list: '<input type="text" value="Основной план" aria-label="Название плана"><span class="muted">Записи раунда, внизу «Новое действие».</span>',
+    pick: head('Тактическое действие', { done: false, remove: 'Отменить' }) + '<span class="muted">Нажмите систему, которую активируете: потратится жетон из тактического резерва.</span>',
+    tactical: head('Тактическое действие') + '<span class="muted">Система, источники, бой, высадка, производство, оплата.</span>',
+    flight: head('Перелёт Jord → Lodor', { done: false, back: 'tactical', remove: 'Убрать маршрут' }) + '<span class="muted">Юниты, груз, остановки, «Лететь».</span>',
+    card1: head('Стратегия') + '<span class="muted">Карта и свойство.</span>',
+    card2: head('Technology · основное', { done: true, back: 'card1' }) + '<span class="muted">Параметры свойства и оплата.</span>',
+    adjust: head('Ручная правка') + '<span class="muted">Подпись, числа, система.</span>',
+  };
+  const slot = document.getElementById('slot4');
+  const flowButtons = document.querySelectorAll('#flow4 [data-state]');
+  const go = state => {
+    slot.innerHTML = STATES[state];
+    flowButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.state === state)));
+    slot.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => go(b.dataset.go)));
+  };
+  flowButtons.forEach(b => b.addEventListener('click', () => go(b.dataset.state)));
+  go('list');
+})();
+</script>
+</body>
+</html>

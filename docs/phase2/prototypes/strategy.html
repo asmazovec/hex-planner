@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Редактор стратегии</title>
+<link rel="stylesheet" href="/src/ui/theme.css">
+<link rel="stylesheet" href="./proto.css">
+<style>
+  /* Every pane here is one panel wide: keeps the panes side by side. */
+  .proto .compare > .pane { max-width: var(--panel-width); }
+  /* The app's own .screen (theme.css) starts its items; the panel here fills the frame. */
+  .proto .screen { align-items: stretch; gap: 0; }
+  /* The head of an editor as on the tactical page: title, then its controls at the right edge. */
+  .proto .editor-head { min-height: var(--touch); }
+  .proto .editor-head h2 { flex: 1 1 auto; min-width: 0; }
+  .proto .editor-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+  .proto .editor-head > .proto-back { flex: none; }
+  /* A ship in the upgrade row: its short name instead of the game's icon. */
+  .proto .proto-icon { font-size: var(--font-xs); font-weight: 700; color: var(--text-muted); }
+  .proto .entry-upgrades button[aria-pressed='true'] .proto-icon { color: var(--gold); }
+  .proto .proto-hidden { display: none; }
+  .proto .proto-gap { min-height: 40px; color: var(--text-dim); font-size: var(--font-xs); display: grid; place-items: center; border: 1px dashed var(--border); border-radius: var(--radius-s); }
+  .proto .screen-caption { font-size: var(--font-xs); color: var(--text-dim); margin: 0 0 2px; }
+  .proto .stack-of-screens { display: flex; flex-direction: column; gap: 10px; }
+</style>
+</head>
+<body class="proto">
+<nav class="back"><a href="./index.html">← Все прототипы</a></nav>
+<h1>Редактор стратегии</h1>
+<p class="lead">Редактор стратегического действия в панели плана. Сейчас он длинный и четырёхуровневый: сетка карт, свойства, параметры, оплата и подвал на одном экране. Предлагаю два шага, (1) карта и свойство, (2) параметры свойства; общую голову редактора с тактической страницы; общий выбор игрока с точкой цвета и счётчики Stepper вместо «−».</p>
+<div class="todos"><span>P2-337</span><span>P2-334</span><span>P2-329</span><span>P2-332</span><span>P2-340</span></div>
+
+<!-- ============================================================ 1 -->
+<section class="change">
+  <h2>1. Два шага: карта и свойство, затем параметры</h2>
+  <p>Всё на одном экране: восемь карт, оба свойства с текстом, параметры, улучшения, оплата и две кнопки в подвале. Параметры оказываются ниже края панели.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen"><div class="plan-panel"><div class="plan-scroll"><div class="strategy-editor panel-stack">
+        <h2>Стратегия</h2>
+        <div class="card-grid" role="group" aria-label="Карта" data-grid="now"></div>
+        <p class="muted strategy-lock"></p>
+        <div class="card-abilities" role="group" aria-label="Режим карты">
+          <button type="button" class="card-ability card-ability-primary" aria-pressed="true"><b>Основное</b><span>Изучите 1 технологию. Затем можно изучить ещё одну за 6 ресурсов.</span></button>
+          <button type="button" class="card-ability card-ability-secondary" aria-pressed="false"><b>Второстепенное<span class="card-ability-cost">−1 жетон стратегического резерва</span></b><span>Жетон из стратегического пула и 4 ресурса: изучите 1 технологию.</span></button>
+        </div>
+        <div class="editor-section">
+          <strong>Изучаю технологий: 2</strong>
+          <div class="research-row in-card">
+            <button type="button" class="option" aria-pressed="true">Изучить технологию · 2</button>
+            <button type="button" aria-label="Убрать технологию">−</button>
+          </div>
+          <span class="muted">Первая бесплатно, вторая за 6 ресурсов. К оплате: 6.</span>
+        </div>
+        <div class="editor-section">
+          <strong>Улучшение кораблей</strong>
+          <div class="entry-upgrades" data-upgrades="CV"></div>
+        </div>
+        <div class="editor-section" role="group" aria-label="Оплата">
+          <div class="panel-head"><strong>Стоимость 6, оплачено 6</strong><button type="button">Выбрать вручную</button></div>
+          <span class="muted">Jord 4, Lodor 3</span>
+          <span class="muted">Излишек 1 сгорит</span>
+        </div>
+        <div class="strategy-foot"><button type="button">Отменить действие</button><button type="button" class="primary">Готово</button></div>
+      </div></div></div></div>
+    </div>
+
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen" id="steps"><div class="plan-panel"><div class="plan-scroll">
+        <!-- Step 1: the card and its ability -->
+        <div class="panel-stack" data-step="1">
+          <div class="panel-head editor-head"><h2>Стратегия</h2><span class="editor-head-actions"><button type="button" class="primary">Готово</button><button type="button" class="hex-button" aria-label="Убрать действие" title="Убрать действие"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+          <div class="card-grid" role="group" aria-label="Карта" data-grid="steps"></div>
+          <p class="muted strategy-lock" data-lock></p>
+          <div class="card-abilities" role="group" aria-label="Режим карты" data-abilities></div>
+        </div>
+        <!-- Step 2: what the ability needs -->
+        <div class="panel-stack proto-hidden" data-step="2">
+          <div class="panel-head editor-head"><button type="button" class="proto-back" data-back>← Назад</button><h2 data-step-title></h2><span class="editor-head-actions"><button type="button" class="primary">Готово</button><button type="button" class="hex-button" aria-label="Убрать действие" title="Убрать действие"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+          <p class="muted" data-step-text></p>
+          <div class="panel-stack" data-params></div>
+        </div>
+      </div></div></div>
+      <p class="note">По умолчанию выбрана своя несыгранная карта. Нажмите другую карту, потом свойство: откроется шаг 2 только с его параметрами. «Назад» возвращает к картам. Когда в шаге 2 что-то выбрано, карта и свойство закрепляются, как сейчас, и запись дальше открывается сразу на шаге 2.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="change">
+  <h2>2. Общая рамка вместо голого заголовка и подвала</h2>
+  <p>У стратегии заголовок без кнопок, а «Отменить действие» и «Готово» стоят в подвале <code>.strategy-foot</code>, под оплатой, часто за краем экрана. У тактики и ручной правки кнопка сверху.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="strategy-editor panel-stack">
+        <h2>Стратегия</h2>
+        <div class="proto-gap">карты, свойства, параметры, оплата</div>
+        <div class="strategy-foot"><button type="button">Отменить действие</button><button type="button" class="primary">Готово</button></div>
+      </div></div></div></div>
+    </div>
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+        <div class="panel-head editor-head"><h2>Стратегия</h2><span class="editor-head-actions"><button type="button" class="primary">Готово</button><button type="button" class="hex-button" aria-label="Убрать действие" title="Убрать действие"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></span></div>
+        <div class="proto-gap">карты, свойства, параметры, оплата</div>
+      </div></div></div></div>
+      <p class="note">Та же голова, что у тактики (страница «Тактический редактор», п. 1): «Готово» и крестик вместо «Отменить действие». Что делает крестик, решается там.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="change">
+  <h2>3. Выбор игрока: PlayerChoice с точкой цвета</h2>
+  <p>В Politics выбор спикера собран руками: столбик кнопок, точка цвета через inline-стиль. Trade уже берёт PlayerChoice, но без группы, тем же столбиком. Над списком плана тот же выбор выглядит иначе: строка соединённых кнопок.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="strategy-editor panel-stack">
+        <div class="editor-section" role="group" aria-label="Спикер переходит к">
+          <strong>Спикер переходит к</strong>
+          <div data-choice="now-speaker"></div>
+        </div>
+        <p class="muted">Карт действий: +2, 2 повестки вверх или вниз колоды.</p>
+        <div class="editor-section" role="group" aria-label="Кто пользуется вторичкой бесплатно">
+          <strong>Кто пользуется вторичкой бесплатно</strong>
+          <div data-choice="now-free"></div>
+        </div>
+      </div></div></div></div>
+    </div>
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+        <div class="editor-section">
+          <strong>Спикер переходит к</strong>
+          <div class="segment player-choice" role="group" aria-label="Спикер переходит к" data-choice="new-speaker"></div>
+        </div>
+        <p class="muted">Карт действий: +2, 2 повестки вверх или вниз колоды.</p>
+        <div class="editor-section">
+          <strong>Кто пользуется вторичкой бесплатно</strong>
+          <div class="segment player-choice" role="group" aria-label="Кто пользуется вторичкой бесплатно" data-choice="new-free"></div>
+        </div>
+      </div></div></div></div>
+      <p class="note">Одна строка соединённых кнопок с PlayerDot и коротким именем, как в выборе «за кого» над списком. Спикер один, бесплатных можно несколько. Нажимайте.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="change">
+  <h2>4. «−» → Stepper</h2>
+  <p>В Technology «−» стоит у правого края карточки, где по соглашению удаление, а делает уменьшение. В распределении жетонов свой круглый «−» в углу плитки. Счётчик с «−» и «+» в приложении уже есть: Stepper, как в ручной правке и оплате товарами.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="stack-of-screens">
+        <div>
+          <p class="screen-caption">Technology</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="strategy-editor panel-stack">
+            <div class="editor-section">
+              <strong>Изучаю технологий: 2</strong>
+              <div class="research-row in-card">
+                <button type="button" class="option" aria-pressed="true">Изучить технологию · 1</button>
+                <button type="button" aria-label="Убрать технологию">−</button>
+              </div>
+              <span class="muted">Первая бесплатно, вторая за 6 ресурсов. К оплате: 0.</span>
+            </div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Leadership: распределение жетонов</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="strategy-editor panel-stack">
+            <div class="editor-section">
+              <div class="token-pick" role="group" aria-label="Распределение жетонов">
+                <strong>Распределить жетоны: осталось 1</strong>
+                <div class="token-tiles">
+                  <div class="token-cell"><button type="button" class="token-tile token-tile-on"><b>1</b>Тактика</button><button type="button" class="token-take" aria-label="Убрать жетон: Тактика">−</button></div>
+                  <div class="token-cell"><button type="button" class="token-tile token-tile-on"><b>1</b>Флот</button><button type="button" class="token-take" aria-label="Убрать жетон: Флот">−</button></div>
+                  <div class="token-cell"><button type="button" class="token-tile"><b>0</b>Стратегия</button></div>
+                </div>
+                <div class="token-foot"><p class="muted token-note">Нажатие добавляет жетон.</p><button type="button">Сбросить</button></div>
+              </div>
+            </div>
+          </div></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane option recommended">
+      <span class="tag">Вариант А</span>
+      <div class="stack-of-screens">
+        <div>
+          <p class="screen-caption">Technology</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="editor-section" data-stepper-group="tech">
+              <strong>Изучаю технологий: 2</strong>
+              <div class="stepper" role="group" aria-label="Изучено" data-stepper="researched" data-min="0" data-value="1">
+                <span class="stepper-name">Изучено</span><button type="button" aria-label="Убрать: Изучено">−</button><output>1</output><button type="button" aria-label="Добавить: Изучено">+</button>
+              </div>
+              <span class="muted" data-tech-note>Первая бесплатно, вторая за 6 ресурсов. К оплате: 0.</span>
+            </div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Leadership</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="editor-section" data-stepper-group="tokens" data-free="3">
+              <strong data-left>Распределить жетоны: осталось 1</strong>
+              <div class="stepper" role="group" aria-label="Тактика" data-stepper data-min="0" data-value="1"><span class="stepper-name">Тактика</span><button type="button" aria-label="Убрать: Тактика">−</button><output>1</output><button type="button" aria-label="Добавить: Тактика">+</button></div>
+              <div class="stepper" role="group" aria-label="Флот" data-stepper data-min="0" data-value="1"><span class="stepper-name">Флот</span><button type="button" aria-label="Убрать: Флот">−</button><output>1</output><button type="button" aria-label="Добавить: Флот">+</button></div>
+              <div class="stepper" role="group" aria-label="Стратегия" data-stepper data-min="0" data-value="0"><span class="stepper-name">Стратегия</span><button type="button" aria-label="Убрать: Стратегия">−</button><output>0</output><button type="button" aria-label="Добавить: Стратегия">+</button></div>
+              <ul class="warning-list place-warnings proto-hidden" data-over><li><span class="warning-text"></span></li></ul>
+            </div>
+          </div></div></div></div>
+        </div>
+      </div>
+      <p class="note">Три счётчика, как в ручной правке. «Сбросить» не нужен. Для Warfare и Leadership с перераспределением тот же Stepper без нижней границы: «−» снимает жетон с пула, значения со знаком.</p>
+    </div>
+
+    <div class="pane option">
+      <span class="tag">Вариант Б</span>
+      <div class="stack-of-screens">
+        <div>
+          <p class="screen-caption">Technology: как в А</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="editor-section">
+              <strong>Изучаю технологий: 2</strong>
+              <div class="stepper" role="group" aria-label="Изучено"><span class="stepper-name">Изучено</span><button type="button" aria-label="Убрать: Изучено">−</button><output>1</output><button type="button" aria-label="Добавить: Изучено">+</button></div>
+              <span class="muted">Первая бесплатно, вторая за 6 ресурсов. К оплате: 0.</span>
+            </div>
+          </div></div></div></div>
+        </div>
+        <div>
+          <p class="screen-caption">Leadership: плитки остаются, «−» уходит</p>
+          <div class="screen auto"><div class="plan-panel"><div class="plan-scroll"><div class="panel-stack">
+            <div class="editor-section" data-tiles-b data-free="3">
+              <div class="token-pick" role="group" aria-label="Распределение жетонов">
+                <strong data-left>Распределить жетоны: осталось 1</strong>
+                <div class="token-tiles">
+                  <div class="token-cell"><button type="button" class="token-tile token-tile-on" data-count="1"><b>1</b>Тактика</button></div>
+                  <div class="token-cell"><button type="button" class="token-tile token-tile-on" data-count="1"><b>1</b>Флот</button></div>
+                  <div class="token-cell"><button type="button" class="token-tile" data-count="0"><b>0</b>Стратегия</button></div>
+                </div>
+                <div class="token-foot"><p class="muted token-note">Нажатие добавляет жетон.</p><button type="button" data-reset>Сбросить</button></div>
+              </div>
+            </div>
+          </div></div></div></div>
+        </div>
+      </div>
+      <p class="note">Большие плитки удобнее пальцу, но ошибку можно исправить только «Сбросить» и набором заново.</p>
+    </div>
+  </div>
+  <div class="decide">Ответьте «А» или «Б» для жетонов: три Stepper или плитки без «−». Technology в обоих вариантах получает Stepper.</div>
+</section>
+
+<script>
+(() => {
+  const X = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const CARDS = [
+    { n: 1, name: 'Leadership', primary: 'Получите 3 жетона команд. Затем можно потратить влияние: 1 жетон за каждые 3 влияния.', secondary: 'Потратьте влияние: 1 жетон команд за каждые 3 влияния.' },
+    { n: 2, name: 'Diplomacy', primary: 'Выберите систему со своей планетой, кроме Mecatol Rex: остальные игроки кладут туда жетон из запаса. Затем подготовьте до 2 своих истощённых планет.', secondary: 'Жетон из стратегического пула: подготовьте до 2 своих истощённых планет.' },
+    { n: 3, name: 'Politics', primary: 'Передайте жетон спикера другому игроку, возьмите 2 карты действий и разложите 2 верхние карты колоды повесток сверху или снизу.', secondary: 'Жетон из стратегического пула: возьмите 2 карты действий.' },
+    { n: 4, name: 'Construction', primary: 'Поставьте PDS или Space Dock на свою планету, затем ещё один PDS на свою планету.', secondary: 'Положите жетон из стратегического пула в любую систему и можете поставить там на свою планету PDS или Space Dock.' },
+    { n: 5, name: 'Trade', primary: 'Получите 3 товара, пополните свою продукцию и выберите игроков, которые бесплатно используют дополнительное действие этой карты.', secondary: 'Жетон из стратегического пула: пополните свою продукцию.' },
+    { n: 6, name: 'Warfare', primary: 'Снимите свой жетон команд с карты и получите 1 жетон. Затем перераспределите жетоны на планшете.', secondary: 'Жетон из стратегического пула, который не кладётся на карту: используйте PRODUCTION одного Space Dock в домашней системе.' },
+    { n: 7, name: 'Technology', primary: 'Изучите 1 технологию. Затем можно изучить ещё одну за 6 ресурсов.', secondary: 'Жетон из стратегического пула и 4 ресурса: изучите 1 технологию.' },
+    { n: 8, name: 'Imperial', primary: 'Сразу выполните публичную цель, если подходите под условия. Затем получите 1 очко, если контролируете Mecatol Rex, иначе возьмите секретную цель.', secondary: 'Жетон из стратегического пула: возьмите секретную цель.' },
+  ];
+  const MINE = 7;
+  const PLAYERS = [
+    { id: 'hacan', name: 'Hacan', color: 2 }, { id: 'jolnar', name: 'Jol-Nar', color: 3 },
+    { id: 'sardakk', name: "Sardakk N'orr", color: 4 }, { id: 'xxcha', name: 'Xxcha', color: 5 },
+  ];
+  const FULL = { hacan: 'The Emirates of Hacan', jolnar: 'The Universities of Jol-Nar', sardakk: "Sardakk N'orr", xxcha: 'The Xxcha Kingdom' };
+  const dot = c => `<span class="owner-dot" aria-hidden="true" style="background: var(--player-${c})"></span>`;
+  const grid = (el, chosen, locked) => {
+    el.innerHTML = CARDS.map(c => `<button type="button" class="card-cell" data-card="${c.n}" aria-pressed="${c.n === chosen}"${locked && c.n !== chosen ? ' disabled' : ''}><b>${c.n}</b>${c.name}</button>`).join('');
+  };
+  grid(document.querySelector('[data-grid="now"]'), 7, false);
+
+  // Upgrade rows: the ship's short name in place of its icon.
+  const upgrades = (el, on) => {
+    el.innerHTML = ['DD', 'CA', 'CV', 'DN', 'FF'].map(k => `<button type="button" aria-pressed="${on.includes(k)}" aria-label="${k}"><span class="proto-icon">${k}</span></button>`).join('');
+    el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));
+  };
+  document.querySelectorAll('[data-upgrades]').forEach(el => upgrades(el, el.dataset.upgrades.split(',')));
+
+  // A Stepper wired to its output.
+  const wireStepper = (el, onChange) => {
+    const out = el.querySelector('output');
+    const [minus, plus] = el.querySelectorAll('button');
+    const min = el.dataset.min === undefined ? -Infinity : Number(el.dataset.min);
+    const set = v => { el.dataset.value = v; out.textContent = v; minus.disabled = v <= min; onChange?.(v); };
+    minus.addEventListener('click', () => set(Number(el.dataset.value) - 1));
+    plus.addEventListener('click', () => set(Number(el.dataset.value) + 1));
+    set(Number(el.dataset.value ?? 0));
+  };
+  const stepperHtml = (name, value, min) => `<div class="stepper" role="group" aria-label="${name}" data-stepper data-value="${value}"${min === undefined ? '' : ` data-min="${min}"`}><span class="stepper-name">${name}</span><button type="button" aria-label="Убрать: ${name}">−</button><output>${value}</output><button type="button" aria-label="Добавить: ${name}">+</button></div>`;
+
+  // PlayerChoice: joined buttons, a dot of colour before the short name.
+  const choice = (el, multiple, chosen = []) => {
+    let picked = [...chosen];
+    const render = () => {
+      el.innerHTML = PLAYERS.map(p => `<button type="button" data-id="${p.id}" aria-pressed="${picked.includes(p.id)}">${dot(p.color)}${p.name}</button>`).join('');
+      el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+        const id = b.dataset.id;
+        picked = picked.includes(id) ? picked.filter(x => x !== id) : multiple ? [...picked, id] : [id];
+        render(); el.dispatchEvent(new Event('change'));
+      }));
+    };
+    render();
+  };
+  // Today: a column of .option buttons, the dot painted inline.
+  const column = (el, chosen) => {
+    el.innerHTML = PLAYERS.map(p => `<button type="button" class="option" aria-pressed="${chosen.includes(p.id)}">${dot(p.color)}${FULL[p.id]}</button>`).join('');
+    el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));
+  };
+  column(document.querySelector('[data-choice="now-speaker"]'), ['jolnar']);
+  column(document.querySelector('[data-choice="now-free"]'), ['hacan', 'xxcha']);
+  choice(document.querySelector('[data-choice="new-speaker"]'), false, ['jolnar']);
+  choice(document.querySelector('[data-choice="new-free"]'), true, ['hacan', 'xxcha']);
+
+  // 1. The two steps.
+  const root = document.getElementById('steps');
+  const s1 = root.querySelector('[data-step="1"]');
+  const s2 = root.querySelector('[data-step="2"]');
+  const state = { card: MINE, primary: true, locked: false };
+  const costs = (n, asPrimary) => (n === MINE ? !asPrimary : asPrimary || n !== 1);
+  const ability = (asPrimary, c) => `<button type="button" class="card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}" data-primary="${asPrimary}" aria-pressed="${state.primary === asPrimary}"${state.locked ? ' disabled' : ''}>` +
+    `<b>${asPrimary ? 'Основное' : 'Второстепенное'}${costs(c.n, asPrimary) ? '<span class="card-ability-cost">−1 жетон стратегического резерва</span>' : ''}</b><span>${asPrimary ? c.primary : c.secondary}</span></button>`;
+  const showStep1 = () => {
+    s1.classList.remove('proto-hidden'); s2.classList.add('proto-hidden');
+    const g = s1.querySelector('[data-grid]');
+    grid(g, state.card, state.locked);
+    g.querySelectorAll('[data-card]').forEach(b => b.addEventListener('click', () => {
+      const n = Number(b.dataset.card);
+      if (n === state.card) return;
+      state.card = n; state.primary = n === MINE; showStep1();
+    }));
+    s1.querySelector('[data-lock]').textContent = state.locked ? 'Выбор уже сделан. Чтобы поменять карту или режим, отмените действие.' : '';
+    const c = CARDS.find(x => x.n === state.card);
+    const ab = s1.querySelector('[data-abilities]');
+    ab.innerHTML = ability(true, c) + ability(false, c) +
+      (state.locked ? '' : '<span class="muted">Нажмите свойство: дальше его параметры.</span>');
+    ab.querySelectorAll('[data-primary]').forEach(b => b.addEventListener('click', () => { state.primary = b.dataset.primary === 'true'; showStep2(); }));
+    if (state.locked) ab.insertAdjacentHTML('beforeend', '<button type="button" class="option" data-next>Параметры →</button>');
+    ab.querySelector('[data-next]')?.addEventListener('click', showStep2);
+  };
+  const lock = () => { state.locked = true; };
+  const params = c => {
+    const p = state.primary;
+    switch (c.n) {
+      case 1: return `<div class="editor-section"><strong>Распределить жетоны: осталось ${p ? 3 : 0}</strong>${stepperHtml('Тактика', 0, 0)}${stepperHtml('Флот', 0, 0)}${stepperHtml('Стратегия', 0, 0)}<span class="muted">${p ? 'Три жетона бесплатно, каждый следующий покупается за 3 влияния.' : 'Каждый жетон покупается за 3 влияния.'}</span></div>`;
+      case 3: return p ? '<div class="editor-section"><strong>Спикер переходит к</strong><div class="segment player-choice" role="group" aria-label="Спикер переходит к" data-pc="one"></div></div>' : '<p class="muted">Карт действий: +2.</p>';
+      case 5: return p ? '<p class="muted">+3 товара, продукция пополняется.</p><div class="editor-section"><strong>Кто пользуется вторичкой бесплатно</strong><div class="segment player-choice" role="group" aria-label="Кто пользуется вторичкой бесплатно" data-pc="many"></div></div>' : '<p class="muted">Продукция пополняется.</p>';
+      case 7: return `<div class="editor-section"><strong>Изучаю технологий: ${p ? 2 : 1}</strong>${stepperHtml('Изучено', 0, 0)}<span class="muted">${p ? 'Первая бесплатно, вторая за 6 ресурсов. К оплате: 0.' : '4 ресурса за технологию. К оплате: 0.'}</span></div>` +
+        '<div class="editor-section"><strong>Улучшение кораблей</strong><div class="entry-upgrades" data-up></div></div>';
+      case 8: return p ? '<p>Mecatol Rex не под вашим контролем: очка нет.</p><p class="muted">Иначе берётся секретная цель. Публичная цель отмечается в фазе статуса.</p>' : '<p class="muted">Берётся секретная цель.</p>';
+      default: return '<button type="button" class="option" aria-pressed="false" data-map>Выбрать на карте</button><span class="muted">Нажмите тайл на карте.</span>';
+    }
+  };
+  const showStep2 = () => {
+    s1.classList.add('proto-hidden'); s2.classList.remove('proto-hidden');
+    const c = CARDS.find(x => x.n === state.card);
+    s2.querySelector('[data-step-title]').textContent = `${c.name} · ${state.primary ? 'основное' : 'второстепенное'}`;
+    s2.querySelector('[data-step-text]').textContent = state.primary ? c.primary : c.secondary;
+    const box = s2.querySelector('[data-params]');
+    box.innerHTML = params(c);
+    box.querySelectorAll('[data-stepper]').forEach(el => wireStepper(el, v => { if (v > 0) lock(); }));
+    box.querySelectorAll('[data-pc]').forEach(el => { choice(el, el.dataset.pc === 'many'); el.addEventListener('change', lock); });
+    box.querySelectorAll('[data-up]').forEach(el => { upgrades(el, []); el.addEventListener('click', lock); });
+    box.querySelectorAll('[data-map]').forEach(b => b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));
+  };
+  s2.querySelector('[data-back]').addEventListener('click', showStep1);
+  showStep1();
+
+  // 4A. Steppers.
+  const tech = document.querySelector('[data-stepper-group="tech"]');
+  wireStepper(tech.querySelector('[data-stepper]'), v => {
+    tech.querySelector('[data-tech-note]').textContent = `Первая бесплатно, вторая за 6 ресурсов. К оплате: ${v >= 2 ? 6 : 0}.`;
+  });
+  const tokens = document.querySelector('[data-stepper-group="tokens"]');
+  const recount = () => {
+    const given = [...tokens.querySelectorAll('[data-stepper]')].reduce((s, el) => s + Number(el.dataset.value), 0);
+    const free = Number(tokens.dataset.free);
+    tokens.querySelector('[data-left]').textContent = `Распределить жетоны: осталось ${Math.max(0, free - given)}`;
+    const over = tokens.querySelector('[data-over]');
+    over.classList.toggle('proto-hidden', given <= free);
+    over.querySelector('.warning-text').textContent = `Распределено жетонов: ${given} при ${free} свободных. Обычно больше дают способности и технологии.`;
+  };
+  tokens.querySelectorAll('[data-stepper]').forEach(el => wireStepper(el, recount));
+
+  // 4B. Tiles without the minus.
+  const b = document.querySelector('[data-tiles-b]');
+  const tiles = [...b.querySelectorAll('.token-tile')];
+  const recountB = () => {
+    const given = tiles.reduce((s, t) => s + Number(t.dataset.count), 0);
+    b.querySelector('[data-left]').textContent = `Распределить жетоны: осталось ${Math.max(0, Number(b.dataset.free) - given)}`;
+    tiles.forEach(t => { t.querySelector('b').textContent = t.dataset.count; t.classList.toggle('token-tile-on', t.dataset.count !== '0'); });
+  };
+  tiles.forEach(t => t.addEventListener('click', () => { t.dataset.count = Number(t.dataset.count) + 1; recountB(); }));
+  b.querySelector('[data-reset]').addEventListener('click', () => { tiles.forEach(t => { t.dataset.count = 0; }); recountB(); });
+})();
+</script>
+</body>
+</html>

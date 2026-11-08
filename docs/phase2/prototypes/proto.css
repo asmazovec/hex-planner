@@ -1,0 +1,25 @@
+/* Frame of the Phase 2 prototypes. The panels inside use the app's own theme (src/ui/theme.css) and classes. */
+body.proto { margin: 0; padding: 20px 24px 60px; background: var(--bg); color: var(--text); font: var(--font-m)/1.4 var(--font-family); overflow: auto; height: auto; }
+.proto h1 { font-size: var(--font-xl); margin: 0 0 4px; }
+.proto .lead { color: var(--text-muted); max-width: 900px; margin: 0 0 16px; }
+.proto .todos { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 20px; }
+.proto .todos span { font-size: var(--font-xs); padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text-muted); }
+.proto section.change { margin: 0 0 36px; }
+.proto section.change > h2 { font-size: var(--font-l); margin: 0 0 4px; }
+.proto section.change > p { color: var(--text-muted); max-width: 900px; margin: 0 0 12px; }
+/* Before and after side by side, each a panel at its real width. */
+.proto .compare { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start; }
+.proto .pane { display: flex; flex-direction: column; gap: 6px; }
+.proto .pane > .tag { font-size: var(--font-xs); letter-spacing: .07em; text-transform: uppercase; font-weight: 650; color: var(--text-dim); }
+.proto .pane.after > .tag { color: var(--success); }
+.proto .pane.option > .tag { color: var(--accent); }
+.proto .pane.option.recommended > .tag::after { content: ' · рекомендую'; color: var(--gold); }
+/* `.screen` is also an app class (theme.css): its grid placement is reset here. */
+.proto .screen { width: var(--panel-width); min-height: 520px; position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; place-items: stretch; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+.proto .screen.wide { width: 1180px; min-height: 820px; }
+.proto .screen.auto { min-height: 0; }
+.proto .screen > .plan-panel { flex: 1; border-left: 0; overflow: auto; }
+.proto .note { font-size: var(--font-s); color: var(--text-muted); max-width: var(--panel-width); }
+.proto .decide { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--gold); border-radius: var(--radius-s); background: var(--gold-soft); max-width: 900px; }
+.proto nav.back { margin: 0 0 12px; font-size: var(--font-s); }
+.proto a { color: var(--accent); }

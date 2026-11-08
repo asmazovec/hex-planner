@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Большой гекс</title>
+<link rel="stylesheet" href="/src/ui/theme.css">
+<link rel="stylesheet" href="./proto.css">
+<style>
+  .proto [hidden] { display: none !important; }
+  /* The modal stays inside its frame instead of the whole page. */
+  .proto .screen.wide { background: var(--bg); }
+  .proto .screen .stage { position: absolute; }
+  .proto .fake-map { position: absolute; inset: 0; opacity: .5; }
+  .proto .fake-map polygon { fill: var(--hex-system); stroke: var(--hex-stroke); stroke-width: 1.5; }
+  .proto .stage-panel { height: 780px; max-height: 780px; }
+  .proto .stage-dialog { max-height: 800px; }
+
+  /* The placeholder hex: the layout around it matters, not its art. */
+  .proto .big-hex .hex { fill: var(--hex-system); stroke: var(--hex-stroke); stroke-width: 1.2; }
+  .proto .big-hex .planet-disc { cursor: pointer; }
+  .proto .big-hex .planet-target { stroke: var(--gold); stroke-width: 1.6; }
+  .proto .big-hex text { font-family: inherit; text-anchor: middle; }
+  .proto .big-hex .planet-name { font-size: 6px; fill: var(--planet-name-ink); }
+  .proto .big-hex .tile-number { font-size: 7px; fill: var(--tile-number-ink); }
+
+  /* Option B: the tile popover beside the hex. */
+  .proto .facts-pop { top: 16px; left: 16px; width: 300px; padding: 8px 0; }
+  .proto .facts-pop .tile-input { gap: 6px; }
+  .proto .info-button { min-height: 36px; padding: 4px 12px; font-size: var(--font-s); }
+  .proto .stage-hex { position: relative; }
+  .proto .stage-hex .hex-button svg { width: 17px; height: 17px; }
+
+  /* P2-261: the tiles of today, labelled with their sizes. */
+  .proto .tile-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; padding: 14px; }
+  .proto .tile-sample { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .proto .tile-sample > small { font-size: var(--font-xs); color: var(--text-dim); text-align: center; line-height: 1.3; }
+  .proto .tile-sample .shop-item { width: 84px; }
+  .proto .tile-sample .shop { display: block; }
+
+  /* The one UnitTile: one box, one counter badge, one radius; a variant changes only the edge and the caption. */
+  .proto .unit-tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; width: 62px; min-width: 0; min-height: 62px; padding: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); font-size: var(--font-xs); font-weight: 400; line-height: 1.25; color: var(--text-muted); }
+  .proto .unit-tile svg { pointer-events: none; overflow: visible; }
+  .proto .unit-tile > i { position: absolute; right: 2px; top: 34px; font-style: normal; font-weight: 700; font-size: 10.5px; line-height: 1.3; background: var(--bg); border: 1px solid var(--counter-stroke); border-radius: 8px; padding: 0 3px; color: var(--text); }
+  .proto .unit-tile > small { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-xs); text-align: center; }
+  .proto .unit-tile > b { color: var(--gold); font-size: 13px; }
+  .proto .unit-tile.unit-tile-taken { border-color: var(--gold); background: var(--gold-soft); }
+  .proto .unit-tile.unit-tile-shop { width: auto; }
+  .proto .unit-tile.unit-tile-mini { width: 32px; min-height: 32px; padding: 0; background: transparent; border: 0; }
+  .proto .unit-tile.unit-tile-mini > i { top: auto; bottom: -2px; right: -2px; }
+  .proto .tiles-legend { margin: 0; padding: 0 14px 14px; font-size: var(--font-s); color: var(--text-muted); display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; }
+  .proto .tiles-legend dt { color: var(--text); font-weight: 600; }
+  .proto .tiles-legend dd { margin: 0; }
+  .proto .shop-demo { padding: 0 14px 14px; width: 296px; }
+</style>
+</head>
+<body class="proto">
+<nav class="back"><a href="./index.html">← Все прототипы</a></nav>
+<h1>Большой гекс</h1>
+<p class="lead">Окно поверх карты: гекс слева, панель справа с тремя режимами — «Расстановка», «Бой», «Строительство». Сейчас свойства тайла и контроль планет лежат пятым-шестым уровнем внизу «Расстановки», а плитки юнитов в окне трёх разных видов. Предлагаю: свойства тайла и контроль — в отдельный четвёртый режим «Тайл» (или в поповер, второй вариант), а все плитки юнитов — один компонент <code>UnitTile</code> с вариантами. Компонент заодно делится на оболочку и панель на каждый режим (P2-200) — снаружи это видно только как четыре равных режима.</p>
+<div class="todos"><span>P2-200</span><span>P2-217</span><span>P2-261</span></div>
+
+<!-- ============================================================ P2-200 + P2-217 -->
+<section class="change">
+  <h2>Свойства тайла и контроль планет: отдельный режим или поповер</h2>
+  <p>В режиме «Расстановка» под магазином и подсказками идёт блок с поворотом, аномалией и планетой: её числа, черты, готовность и выбор владельца. Он виден только в одном режиме и только для планеты, выбранной на гексе; чтобы сменить контроль второй планеты, надо сначала нажать её на гексе. Переключайте режимы во всех трёх окнах.</p>
+
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen wide" data-stage="now"></div>
+    </div>
+  </div>
+
+  <div class="compare" style="margin-top:20px">
+    <div class="pane option recommended">
+      <span class="tag">Вариант А: режим «Тайл»</span>
+      <div class="screen wide" data-stage="a"></div>
+      <p class="note" style="max-width:900px">Четвёртый режим в том же сегменте. В нём все планеты системы сразу, у каждой свой блок: числа, черты, специализация, готовность и выбор владельца — без нажатия на гекс. Факты тайла (номер, поворот, аномалия, червоточины) — первой строкой. «Расстановка» остаётся только расстановкой. Уровни: панель → блок планеты → выбор владельца. Одна панель на режим — ровно то, на что делится компонент в P2-200.</p>
+    </div>
+  </div>
+
+  <div class="compare" style="margin-top:20px">
+    <div class="pane option">
+      <span class="tag">Вариант Б: поповер</span>
+      <div class="screen wide" data-stage="b"></div>
+      <p class="note" style="max-width:900px">Режимов три, как сейчас. Кнопка «О тайле» под гексом открывает поповер с тем же содержимым поверх гекса (нажмите). Доступен из любого режима, но закрывает гекс, пока открыт, и это ещё один вид окна внутри окна. Нажатие на планету оставляем выбору цели для пехоты и зданий, поэтому поповер не открывается от планеты.</p>
+    </div>
+  </div>
+
+  <div class="decide">Ответьте «А» или «Б». Рекомендую А: тот же сегмент, без нового окна; режим «Тайл» нужен нечасто (контроль меняется руками только при расхождении с планом), поэтому четвёртая кнопка не мешает остальным.</div>
+</section>
+
+<!-- ============================================================ P2-261 -->
+<section class="change">
+  <h2>Плитки юнитов: один UnitTile с вариантами</h2>
+  <p>Картинка юнита с числом нарисована пятью способами: у каждой свой размер (62, 62, 84, 32, 40), своё место числа и свой радиус. В большом гексе стоят три из них — магазин, потери, а в редакторе ещё и выбор.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">Сейчас</span>
+      <div class="screen auto" style="width:auto">
+        <div class="tile-row" data-tiles="now"></div>
+      </div>
+    </div>
+    <div class="pane after">
+      <span class="tag">Предлагаю</span>
+      <div class="screen auto" style="width:auto">
+        <div class="tile-row" data-tiles="after"></div>
+        <dl class="tiles-legend">
+          <dt>take</dt><dd>взять юнита, число — сколько можно взять</dd>
+          <dt>taken</dt><dd>уже взят, золотой край; нажатие возвращает</dd>
+          <dt>loss</dt><dd>потеря, подпись планеты внизу, если их две</dd>
+          <dt>shop</dt><dd>магазин: название и цена внизу, купленное — то же число с «+» и золотой край</dd>
+          <dt>mini</dt><dd>в строке текста, 32 px, без рамки</dd>
+        </dl>
+        <div class="shop-demo">
+          <h3 class="section-title">Магазин · так в большом гексе</h3>
+          <div class="shop" data-shop="after"></div>
+        </div>
+      </div>
+      <p class="note">Одна рамка шириной 62 px (у <code>mini</code> 32 px без рамки), картинка 52 px, число всегда в одном бейдже справа под картинкой, радиус <code>var(--radius-s)</code>. Вариант меняет только край и подписи; в магазине ячейка растягивается по сетке. Плитка <code>stack</code> на высадке остаётся рисунком жетона, как на карте, — это не кнопка.</p>
+    </div>
+  </div>
+  <div class="decide">Ответьте, оставить ли в магазине название под картинкой (как на макете). Без него ячейка магазина становится квадратом 62 px, как остальные плитки, и окно короче, но юнит узнаётся только по картинке и цене.</div>
+</section>
+
+<script>
+(() => {
+  const ABBR = { flagship: 'Фл', warsun: 'СВ', dreadnought: 'Др', carrier: 'Тр', cruiser: 'Кр', destroyer: 'Эс', fighter: 'Ис', infantry: 'Пх', mech: 'Мх', pds: 'ПСО', spacedock: 'Б' };
+  const NAME = { flagship: 'Флагман', warsun: 'Солнце войны', dreadnought: 'Дредноут', carrier: 'Транспортник', cruiser: 'Крейсер', destroyer: 'Эсминец', fighter: 'Истребитель', infantry: 'Пехота', mech: 'Мех', pds: 'ПСО', spacedock: 'База' };
+  const PRICE = { flagship: 8, warsun: 12, dreadnought: 4, carrier: 3, cruiser: 2, destroyer: 1, fighter: '½', infantry: '½', mech: 2 };
+  const token = (kind, px, colour = 1) => `<svg class="token-picture" viewBox="-68 -68 136 136" width="${px}" height="${px}" aria-hidden="true"><circle r="50" style="fill:var(--token-fill);stroke:var(--player-${colour});stroke-width:7"/><text y="15" text-anchor="middle" font-size="${ABBR[kind].length > 2 ? 32 : 42}" font-weight="700" style="fill:var(--player-${colour})">${ABBR[kind]}</text></svg>`;
+  const remove = `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+  const hexRemove = (label, cls = '') => `<button type="button" class="hex-button${cls ? ` ${cls}` : ''}" aria-label="${label}" title="${label}">${remove}</button>`;
+  const dot = c => `<span class="owner-dot" aria-hidden="true" style="background:var(--player-${c})"></span>`;
+  const playerChoice = (label, options, chosen) => `<div class="segment player-choice" role="group" aria-label="${label}">${options.map(([v, n, c]) => `<button type="button" aria-pressed="${v === chosen}">${c ? dot(c) : ''}${n}</button>`).join('')}</div>`;
+  const sides = [['me', 'Мои', 1], ['hacan', 'Hacan', 3], ['sol', 'Sol', 4]];
+  const owners = [['me', 'Мой', 1], ['hacan', 'Hacan', 3], ['sol', 'Sol', 4], ['none', 'Нет']];
+  const UNITS = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter', 'infantry', 'mech'];
+
+  // Today's shop cell, 84 px.
+  const shopItem = (kind, { price, bought, colour = 1 } = {}) => `<button type="button" class="shop-item" aria-label="${NAME[kind]}">${bought ? `<i>+${bought}</i>` : ''}${token(kind, 46, colour)}<span>${NAME[kind]}</span>${price !== undefined ? `<b>${price}</b>` : ''}</button>`;
+  const shop = build => `<div class="shop">${[...UNITS, 'pds', 'spacedock'].map(k => shopItem(k, build ? { price: PRICE[k], bought: { dreadnought: 1, fighter: 2 }[k] } : {})).join('')}</div>`;
+  const loss = (kind, count, caption, colour = 1) => `<button type="button" class="stage-loss" aria-label="Вернуть: ${NAME[kind]}">${token(kind, 52, colour)}${count > 1 ? `<i>${count}</i>` : ''}${caption ? `<small>${caption}</small>` : ''}</button>`;
+
+  // The placeholder hex: two planets, a few tokens.
+  const bigHex = (target = 0) => `<svg class="big-hex" viewBox="-68 -62 136 124" role="group" aria-label="Большой гекс">
+    <polygon class="hex" points="64,0 32,55.4 -32,55.4 -64,0 -32,-55.4 32,-55.4"/>
+    <text class="tile-number" x="0" y="-46">27</text>
+    <g data-planet="0"><circle class="planet-disc${target === 0 ? ' planet-target' : ''}" cx="-22" cy="-12" r="15"/><text class="planet-name" x="-22" y="10">New Albion</text></g>
+    <g data-planet="1"><circle class="planet-disc${target === 1 ? ' planet-target' : ''}" cx="22" cy="14" r="17"/><text class="planet-name" x="22" y="38">Starpoint</text></g>
+    <g transform="translate(-30 26) scale(.16)">${token('carrier', 100).replace(/<\/?svg[^>]*>/g, '')}</g>
+    <g transform="translate(-12 34) scale(.16)">${token('cruiser', 100, 3).replace(/<\/?svg[^>]*>/g, '')}</g>
+    <g transform="translate(-22 -12) scale(.12)">${token('infantry', 100).replace(/<\/?svg[^>]*>/g, '')}</g>
+    <g transform="translate(36 -22) scale(.16)">${token('dreadnought', 100).replace(/<\/?svg[^>]*>/g, '')}</g>
+  </svg>`;
+
+  const facts = `<p class="muted">Поворот: 0°</p>`;
+  const planetFacts = (name, ri, traits, tech, choice) => `<div class="planet-details">
+      <span class="muted"><span class="value-resources">${ri[0]}</span>/<span class="value-influence">${ri[1]}</span> · Готова</span>
+      <span class="muted" aria-label="Черты"><span class="trait"><span class="trait-swatch trait-${traits[0]}" aria-hidden="true"></span>${traits[1]} </span></span>
+      ${tech ? `<span class="muted" aria-label="Специализации">${tech}</span>` : ''}
+    </div>
+    ${playerChoice(`Контроль: ${name}`, owners, choice)}`;
+  const PLANETS = [['New Albion', [1, 1], ['industrial', 'Промышленная'], 'Биотех', 'me'], ['Starpoint', [3, 1], ['hazardous', 'Опасная'], '', 'none']];
+
+  const note = t => `<p class="muted">${t}</p>`;
+  const setupBody = (withFacts, target) => `
+    ${playerChoice('Чьи юниты', sides, 'me')}
+    <h3 class="section-title">Поставить на гекс</h3>
+    ${shop(false)}
+    ${note('Нажмите жетон на гексе, чтобы убрать одного.')}
+    ${note('Нажмите планету: наземные войска и здания пойдут на неё.')}
+    ${withFacts ? `<div class="stage-facts">${facts}
+      <div role="group" aria-label="${PLANETS[target][0]}" class="stage-planet"><strong>${PLANETS[target][0]}</strong>${planetFacts(...PLANETS[target])}</div>
+    </div>` : ''}`;
+  const battleBody = () => `
+    <div role="group" aria-label="Потери, мои"><h3 class="section-title">Потери, мои</h3><div class="stage-losses">${loss('cruiser', 1)}${loss('infantry', 2, 'Starpoint')}${loss('infantry', 1, 'New Albion')}</div></div>
+    <div role="group" aria-label="Потери, Hacan"><h3 class="section-title">Потери, Hacan</h3><div class="stage-losses">${loss('cruiser', 1, '', 3)}</div></div>
+    <div role="group" aria-label="Потери, Sol"><h3 class="section-title">Потери, Sol</h3><p class="muted">Потерь нет</p><div class="stage-losses"></div></div>
+    ${note('Нажмите жетон, чтобы записать потерю. Нажмите картинку здесь, чтобы вернуть юнита.')}`;
+  const buildBody = () => `
+    ${playerChoice('Чьи юниты', sides, 'me')}
+    <h3 class="section-title">Магазин</h3>
+    ${shop(true)}
+    <div class="stage-total"><span>Куплено: 3</span><b>5</b></div>
+    <div class="stage-meters" role="group" aria-label="Счётчики">
+      <div class="stage-meter stage-meter-over"><span>Цена / доступно ресурсов</span><b>5 / 4</b></div>
+      <div class="stage-meter"><span>Корабли / резерв флота</span><b>3 / 3</b></div>
+      <div class="stage-meter"><span>Груз / мест на борту</span><b>3 / 4</b></div>
+    </div>
+    <ul class="warning-list place-warnings"><li><span class="warning-text">Не хватает ресурсов: нужно 5, оплачено 4, остаток 1.</span></li></ul>
+    ${note('Нажмите жетон с золотым кольцом, чтобы отменить покупку.')}`;
+  const tileBody = () => `
+    <p class="muted">Поворот: 0° · аномалий и червоточин нет</p>
+    ${PLANETS.map(p => `<div class="editor-section" role="group" aria-label="${p[0]}"><strong>${p[0]}</strong>${planetFacts(...p)}</div>`).join('')}`;
+
+  const MODES = { setup: 'Расстановка', battle: 'Бой', build: 'Строительство', tile: 'Тайл' };
+  const map = `<svg class="fake-map" viewBox="0 0 1180 820" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${
+    Array.from({ length: 9 }, (_, c) => Array.from({ length: 7 }, (_, r) => {
+      const x = 90 + c * 120, y = 70 + r * 128 + (c % 2) * 64;
+      return `<polygon transform="translate(${x} ${y})" points="80,0 40,69 -40,69 -80,0 -40,-69 40,-69"/>`;
+    }).join('')).join('')}</svg>`;
+
+  const renderStage = (el, variant, mode = 'setup', target = 0, pop = false) => {
+    const modes = variant === 'a' ? ['setup', 'battle', 'build', 'tile'] : ['setup', 'battle', 'build'];
+    const body = mode === 'setup' ? setupBody(variant === 'now', target) : mode === 'battle' ? battleBody() : mode === 'build' ? buildBody() : tileBody();
+    el.innerHTML = `${map}<div class="stage"><div class="stage-dialog" role="dialog" aria-modal="true" aria-label="Тайл 27">
+      <div class="stage-hex">${bigHex(target)}
+        ${variant === 'b' ? `<button type="button" class="info-button" style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%)" aria-expanded="${pop}" data-info>О тайле</button>` : ''}
+        ${variant === 'b' && pop ? `<div class="tile-popover facts-pop" data-pop>${hexRemove('Закрыть', 'popover-close')}<div class="tile-input"><h2>Тайл 27</h2>${tileBody()}</div></div>` : ''}
+      </div>
+      <div class="stage-panel">
+        <div class="stage-head"><strong>Тайл 27</strong>${hexRemove('Закрыть')}</div>
+        <div class="segment" role="group" aria-label="Режим">${modes.map(m => `<button type="button" aria-pressed="${m === mode}" data-mode="${m}">${MODES[m]}</button>`).join('')}</div>
+        ${body}
+      </div>
+    </div></div>`;
+    el.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => renderStage(el, variant, b.dataset.mode, target, pop)));
+    el.querySelectorAll('[data-planet]').forEach(g => g.addEventListener('click', () => renderStage(el, variant, mode, Number(g.dataset.planet), pop)));
+    el.querySelector('[data-info]')?.addEventListener('click', () => renderStage(el, variant, mode, target, !pop));
+    el.querySelector('[data-pop] .popover-close')?.addEventListener('click', () => renderStage(el, variant, mode, target, false));
+  };
+  document.querySelectorAll('[data-stage]').forEach(el => renderStage(el, el.dataset.stage, 'setup', 0, el.dataset.stage === 'b'));
+
+  // P2-261: today's five tiles.
+  const sample = (html, caption) => `<div class="tile-sample">${html}<small>${caption}</small></div>`;
+  document.querySelector('[data-tiles="now"]').innerHTML = [
+    sample(`<button type="button" class="pic" aria-label="Взять: Дредноут">${token('dreadnought', 58)}<i>2</i></button>`, '.pic · take<br>62 px, число внизу'),
+    sample(`<button type="button" class="pic pic-taken" aria-label="Вернуть: Дредноут">${token('dreadnought', 58)}<i>1</i></button>`, '.pic-taken · taken<br>62 px, радиус 10'),
+    sample(loss('infantry', 2, 'Starpoint'), '.stage-loss · loss<br>62 px, картинка 52'),
+    sample(shopItem('dreadnought', { price: 4, bought: 1 }), '.shop-item · магазин<br>84 px, «+1» вверху'),
+    sample(`<span class="upic" title="Пехота">${token('infantry', 32)}<i>3</i></span>`, '.upic · mini<br>32 px, бейдж'),
+    sample(`<svg viewBox="-68 -68 136 136" width="40" height="40">${token('infantry', 100).replace(/<\/?svg[^>]*>/g, '')}<circle cx="44" cy="40" r="14" class="unit-counter" stroke-width="2"/><text x="44" y="47" font-size="20" text-anchor="middle" class="unit-count" style="fill:var(--text);font-weight:700">3</text></svg>`, 'stack · на высадке<br>40 px, жетон'),
+  ].join('');
+
+  // P2-261: one UnitTile.
+  const tile = (kind, variant, { count, caption, price, colour = 1 } = {}) => {
+    const mini = variant === 'mini';
+    const cls = `unit-tile${variant === 'taken' || (variant === 'shop' && count) ? ' unit-tile-taken' : ''}${variant === 'shop' ? ' unit-tile-shop' : ''}${mini ? ' unit-tile-mini' : ''}`;
+    const badge = count ? `<i>${variant === 'shop' ? '+' : ''}${count}</i>` : '';
+    const tag = mini ? 'span' : 'button';
+    return `<${tag}${mini ? '' : ' type="button"'} class="${cls}" aria-label="${NAME[kind]}">${token(kind, mini ? 32 : 52, colour)}${badge}${caption ? `<small>${caption}</small>` : ''}${price !== undefined ? `<b>${price}</b>` : ''}</${tag}>`;
+  };
+  document.querySelector('[data-tiles="after"]').innerHTML = [
+    sample(tile('dreadnought', 'take', { count: 2 }), 'take'),
+    sample(tile('dreadnought', 'taken', { count: 1 }), 'taken'),
+    sample(tile('infantry', 'loss', { count: 2, caption: 'Starpoint' }), 'loss'),
+    sample(tile('dreadnought', 'shop', { count: 1, caption: 'Дредноут', price: 4 }), 'shop'),
+    sample(tile('infantry', 'mini', { count: 3 }), 'mini'),
+  ].join('');
+  document.querySelector('[data-shop="after"]').innerHTML = UNITS.map(k => tile(k, 'shop', { count: { dreadnought: 1, fighter: 2 }[k], caption: NAME[k], price: PRICE[k] })).join('');
+})();
+</script>
+</body>
+</html>
