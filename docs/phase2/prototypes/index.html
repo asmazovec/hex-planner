@@ -6,52 +6,10 @@
 <title>Прототипы Фазы 2</title>
 <link rel="stylesheet" href="/src/ui/theme.css">
 <link rel="stylesheet" href="./proto.css">
-<style>
-.proto table { border-collapse: collapse; margin: 8px 0 24px; max-width: 1100px; }
-.proto th, .proto td { text-align: left; vertical-align: top; padding: 6px 10px; border-bottom: 1px solid var(--border); font-size: var(--font-s); }
-.proto th { color: var(--text-dim); font-weight: 600; }
-.proto td.code { white-space: nowrap; font-weight: 650; }
-.proto td .rec { color: var(--gold); }
-</style>
 </head>
 <body class="proto">
 <h1>Прототипы Фазы 2</h1>
-<p class="lead">Пункты плана, которые меняют вид страниц. На каждой странице «Сейчас» и «Предлагаю»; где нужен выбор, варианты с кодами. Панели собраны из настоящих классов приложения в ширину планшета; шаги и переключатели нажимаются. Ответ — одним списком, например: «1Г, 2А, 3А, 4Б, 5А, 6А, 7Б, 8А, 9А, 10–25 да, 26 да».</p>
-
-<h2>Решения с вариантами</h2>
-<table>
-<tr><th>№</th><th>Вопрос</th><th>Варианты</th><th>Страница</th></tr>
-<tr><td class="code">1</td><td>Цвет «выбрано»</td><td>1А голубой и зелёный · 1Б золотой и голубой · 1В всё зелёное · <span class="rec">1Г три состояния: не выбрано — без выделения, выбрано — голубой везде (и вкладки), выполнено — зелёный (рекомендую)</span></td><td><a href="./selected.html">selected</a></td></tr>
-<tr><td class="code">2</td><td>Крестик в голове редактора</td><td><span class="rec">2А убирает действие или маршрут, рядом «Готово» (рекомендую)</span> · 2Б только закрывает</td><td><a href="./tactical.html">tactical</a></td></tr>
-<tr><td class="code">3</td><td>Жетоны Leadership и Warfare</td><td><span class="rec">3А три счётчика (рекомендую)</span> · 3Б плитки и «Сбросить»</td><td><a href="./strategy.html">strategy</a></td></tr>
-<tr><td class="code">4</td><td>Шаг 2 у свойств без параметров</td><td>4А открывать всегда · 4Б сразу записывать действие</td><td><a href="./strategy.html">strategy</a></td></tr>
-<tr><td class="code">5</td><td>Свойства тайла и контроль планет в большом гексе</td><td><span class="rec">5А режим «Тайл» (рекомендую)</span> · 5Б поповер</td><td><a href="./stage.html">stage</a></td></tr>
-<tr><td class="code">6</td><td>Название юнита в магазине</td><td>6А оставить под картинкой · 6Б убрать, ячейка как остальные плитки</td><td><a href="./stage.html">stage</a></td></tr>
-<tr><td class="code">7</td><td>Поповер «Схема перелёта» в подробностях тактики</td><td>7А нужен · 7Б не нужен, хватает карты</td><td><a href="./entries.html">entries</a></td></tr>
-<tr><td class="code">8</td><td>Кнопки удаления, правки и «выполнено»</td><td><span class="rec">8А тихие значки (рекомендую)</span> · 8Б рамка 32 px · 8В «⋯» в строке плана</td><td><a href="./details.html">details</a></td></tr>
-<tr><td class="code">9</td><td>Сборка карты на «Партии»</td><td><span class="rec">9А блок «Карта и места» на том же экране (рекомендую)</span> · 9Б переключатель «Игроки | Карта»</td><td><a href="./setup.html">setup</a></td></tr>
-</table>
-
-<h2>Изменения на одобрение (да / нет)</h2>
-<table>
-<tr><th>№</th><th>Изменение</th><th>Страница</th></tr>
-<tr><td class="code">10</td><td>Одна голова у всех редакторов: заголовок, «Готово», крестик; без подвалов</td><td><a href="./tactical.html">tactical</a>, <a href="./strategy.html">strategy</a></td></tr>
-<tr><td class="code">11</td><td>Перелёт отдельным шагом с «Назад»</td><td><a href="./tactical.html">tactical</a></td></tr>
-<tr><td class="code">12</td><td>«Бой» и «Производство» строками с итогом внутри</td><td><a href="./tactical.html">tactical</a></td></tr>
-<tr><td class="code">13</td><td>Один слот панели: понятные состояния вместо цепочки условий</td><td><a href="./tactical.html">tactical</a></td></tr>
-<tr><td class="code">14</td><td>Редактор стратегии в два шага: карта и свойство, затем параметры</td><td><a href="./strategy.html">strategy</a></td></tr>
-<tr><td class="code">15</td><td>Крестик вместо текстовых «Закрыть», «Убрать», «Удалить»</td><td><a href="./details.html">details</a></td></tr>
-<tr><td class="code">16</td><td>Одна строка подтверждения</td><td><a href="./details.html">details</a></td></tr>
-<tr><td class="code">17</td><td>Легенда рисует планеты так же, как карта</td><td><a href="./details.html">details</a></td></tr>
-<tr><td class="code">18</td><td>Один переключатель улучшения, неиспользуемый .ship-row-live удалить</td><td><a href="./details.html">details</a></td></tr>
-<tr><td class="code">19</td><td>Выбор игрока одинаковый везде: точка цвета и имя</td><td><a href="./strategy.html">strategy</a></td></tr>
-<tr><td class="code">20</td><td>Счётчик вместо «−» у исследований</td><td><a href="./strategy.html">strategy</a></td></tr>
-<tr><td class="code">21</td><td>Жетоны статуса и экспедиция открываются на месте списка</td><td><a href="./entries.html">entries</a></td></tr>
-<tr><td class="code">22</td><td>Список действий — поповер над кнопкой</td><td><a href="./entries.html">entries</a></td></tr>
-<tr><td class="code">23</td><td>Подробности тактики строками «откуда → куда»</td><td><a href="./entries.html">entries</a></td></tr>
-<tr><td class="code">24</td><td>Удаление плана и раунда крестиком</td><td><a href="./entries.html">entries</a></td></tr>
-<tr><td class="code">25</td><td>Одна плитка юнита одного размера везде</td><td><a href="./stage.html">stage</a></td></tr>
-<tr><td class="code">26</td><td>Номера тайлов можно править на «Партии» и после старта партии (раскладка и места после старта закрыты)</td><td><a href="./setup.html">setup</a></td></tr>
-</table>
+<p class="lead">Все варианты на одной странице, у каждого свой сквозной номер: <a href="./all.html">все варианты</a>. Пришлите номера понравившихся.</p>
+<p class="lead">Интерактивные страницы с теми же номерами: <a href="./selected.html">цвет «выбрано»</a>, <a href="./tactical.html">тактический редактор</a>, <a href="./strategy.html">редактор стратегии</a>, <a href="./entries.html">список записей</a>, <a href="./stage.html">большой гекс</a>, <a href="./details.html">кнопки и мелочи</a>, <a href="./setup.html">сборка карты на «Партии»</a>.</p>
 </body>
 </html>

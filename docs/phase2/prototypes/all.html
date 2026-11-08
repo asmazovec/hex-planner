@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Все варианты</title>
+<link rel="stylesheet" href="/src/ui/theme.css">
+<link rel="stylesheet" href="./proto.css">
+<style>
+.proto .group { margin: 0 0 40px; }
+.proto .group > h2 { font-size: var(--font-l); margin: 0 0 4px; }
+.proto .group .src { font-size: var(--font-s); font-weight: 400; margin-left: 8px; }
+.proto .lead2 { color: var(--text-muted); max-width: 900px; margin: 0 0 12px; font-size: var(--font-s); }
+.proto .row { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start; }
+.proto .card { margin: 0; display: flex; flex-direction: column; gap: 6px; max-width: 100%; }
+.proto .card img { display: block; max-width: 100%; height: auto; border-radius: var(--radius-s); border: 1px solid var(--border); }
+.proto .card p { max-width: 440px; }
+.proto .card.current img { opacity: 0.75; }
+.proto .card.text { width: 300px; padding: 12px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--surface-2); }
+.proto .card p { margin: 0; font-size: var(--font-s); color: var(--text-muted); }
+.proto .card.text p { color: var(--text); font-size: var(--font-m); }
+.proto figcaption { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.proto .id { font-size: 26px; font-weight: 750; color: var(--accent); min-width: 1.4em; }
+.proto .id.now { font-size: var(--font-xs); letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); font-weight: 650; }
+.proto .t { font-weight: 600; }
+.proto .r { font-size: var(--font-xs); color: var(--gold); }
+</style>
+</head>
+<body class="proto">
+<h1>Все варианты</h1>
+<p class="lead">У каждого варианта свой номер, сквозной на всей странице. Пришлите номера тех, что нравятся, например «4, 5, 9, 12». Номер, которого нет в ответе, — отклонён. Слева в каждой группе для сравнения «как сейчас» (без номера). Нажатие на картинку открывает интерактивную страницу, где у вариантов те же номера.</p>
+
+  <section class="group">
+    <h2>Сейчас: три цвета для одной роли <a class="src" href="./selected.html">интерактивно ↗</a></h2>
+    <p class="lead2">Голубой у чипов, сегментов, частей экспедиции и основной карты раунда. Золотой у карты в редакторе стратегии, свойства карты, вариантов, жетонов, юнитов, улучшений и даже у галочки «выполнено». Зелёный у вкладок, шторок, действий над картой и листа фракций.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./selected.html" title="Открыть интерактивно"><img src="./shots/selected-0-0.png" alt="" loading="lazy"></a>
+        
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Цвет «выбрано»: варианты <a class="src" href="./selected.html">интерактивно ↗</a></h2>
+    <p class="lead2">Те же элементы, только с другим правилом цвета. Золото как цвет значений (ресурсы, изменённое число, «пора сделать копию») во всех вариантах остаётся.</p>
+    <div class="row">
+      <figure class="card">
+        <figcaption><span class="id">1</span> <span class="t">голубой и зелёный</span></figcaption>
+        <a href="./selected.html" title="Открыть интерактивно"><img src="./shots/selected-1-0.png" alt="" loading="lazy"></a>
+        <p>Голубой: всё, что включено или выбрано нажатием. Зелёный: только полоса по краю (вкладки, шторки, лист фракций), текущий экран меню и «выполнено». Золотой: только значения. Это уже базовое правило кнопок в theme.css: золотые и зелёные переопределения просто удаляются.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">2</span> <span class="t">золотой и голубой</span></figcaption>
+        <a href="./selected.html" title="Открыть интерактивно"><img src="./shots/selected-1-1.png" alt="" loading="lazy"></a>
+        <p>Золотой: одно значение из нескольких (карта, свойство, язык, раунд, игрок). Голубой: вкл/выкл (улучшения, энергосбережение, действия над картой). Граница спорная: жетоны и юниты в перелёте и то и другое. Золото начинает значить и «выбрано», и «ресурсы».</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">3</span> <span class="t">всё зелёное</span></figcaption>
+        <a href="./selected.html" title="Открыть интерактивно"><img src="./shots/selected-1-2.png" alt="" loading="lazy"></a>
+        <p>Зелёный везде. Просто, но выбранная карта или вариант выглядит так же, как выполненное действие, и зелёный цвет перестаёт говорить «сделано».</p>
+      </figure>
+      <figure class="card rec">
+        <figcaption><span class="id">4</span> <span class="t">три состояния</span> <span class="r">рекомендую</span></figcaption>
+        <a href="./selected.html" title="Открыть интерактивно"><img src="./shots/selected-1-3.png" alt="" loading="lazy"></a>
+        <p>Три состояния. Не выбрано: без подсветки, край нейтральный. Выбрано: голубой везде, в том числе вкладки плана, шторки (и край открытой шторки), текущий экран меню, лист фракций, действия над картой. Выполнено: зелёный, и только у действий: галочка записи и край выполненной строки. Золотой: только значения.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Одна голова редактора <a class="src" href="./tactical.html">интерактивно ↗</a></h2>
+    <p class="lead2">Тактика и ручная правка: заголовок и «Завершить правку» сверху. Стратегия: голый заголовок и две кнопки внизу. Перелёт: текстовое «Закрыть выбор» и «Убрать маршрут» внизу. Выбор системы: своя голова с текстовой «Отмена».</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-0-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card rec">
+        <figcaption><span class="id">5</span> <span class="t">крестик убирает действие, рядом «Готово»</span> <span class="r">рекомендую</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-0-1.png" alt="" loading="lazy"></a>
+        <p>«Готово» закрывает и сохраняет, крестик убирает то, что правится: действие или маршрут, как сейчас «Отменить действие» и «Убрать маршрут». «Назад» есть только у шага.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">6</span> <span class="t">крестик только закрывает, удаление в списке</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-0-2.png" alt="" loading="lazy"></a>
+        <p>Без «Готово»: запись сохраняется сразу, крестик только закрывает. Удалить действие можно в строке списка. Короче, но крестик в голове значит не то же, что крестик строки.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Перелёт отдельным шагом <a class="src" href="./tactical.html">интерактивно ↗</a></h2>
+    <p class="lead2">Выбор юнитов открывается внутри редактора между «Источниками» и «Боем», до шести уровней вложенности. Закрывает его текстовая кнопка, а «Убрать маршрут» в подвале повторяет крестик строки источника.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-1-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">7</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-1-1.png" alt="" loading="lazy"></a>
+        <p>Нажмите строку источника: открывается шаг перелёта, остальное скрыто. «Назад» возвращает в редактор. Крестик в голове шага убирает маршрут, поэтому в подвале остаётся только «Лететь». Уровней: панель, блок, остановка.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Бой и производство строками <a class="src" href="./tactical.html">интерактивно ↗</a></h2>
+    <p class="lead2">Оба блока состоят из заголовка, пометки «по желанию» и одной кнопки; итог (потери, что построено) стоит отдельной строкой. Это два лишних блока в и без того длинном редакторе.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-2-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">8</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-2-1.png" alt="" loading="lazy"></a>
+        <p>Строка сама и есть кнопка: нажатие открывает большой гекс в режиме боя или магазина. Внутри итог, а пока ничего нет, «по желанию» и что откроется. Предупреждение стоит сразу под своей строкой, как у источников.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Один слот панели <a class="src" href="./tactical.html">интерактивно ↗</a></h2>
+    <p class="lead2">Что показать в панели, PlanScreen решает цепочкой условий: голова выбора системы, тактика, стратегия, ручная правка, список. Перелёт и большой гекс лежат ещё глубже, внутри редактора.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-3-0.png" alt="" loading="lazy"></a>
+        <p>Условия независимы: ничто, кроме порядка проверок, не мешает двум редакторам стоять друг под другом.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">9</span></figcaption>
+        <a href="./tactical.html" title="Открыть интерактивно"><img src="./shots/tactical-3-1.png" alt="" loading="lazy"></a>
+        <p>В панели всегда одно состояние из семи, показано одной рамкой (п. 1). Из любого редактора «Готово» и крестик ведут в список, «Назад» на шаг влево. Большой гекс открывается поверх карты и слот не меняет. Нажимайте состояния.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Два шага: карта и свойство, затем параметры <a class="src" href="./strategy.html">интерактивно ↗</a></h2>
+    <p class="lead2">Всё на одном экране: восемь карт, оба свойства с текстом, параметры, улучшения, оплата и две кнопки в подвале. Параметры оказываются ниже края панели.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-0-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">10</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-0-1.png" alt="" loading="lazy"></a>
+        <p>По умолчанию выбрана своя несыгранная карта. Нажмите другую карту, потом свойство: откроется шаг 2 только с его параметрами. «Назад» возвращает к картам. Когда в шаге 2 что-то выбрано, карта и свойство закрепляются, как сейчас, и запись дальше открывается сразу на шаге 2.</p>
+      </figure>
+      <figure class="card text"><figcaption><span class="id">11</span></figcaption><p>Шаг 2 открывается всегда, даже у свойств без параметров — одно правило для всех карт.</p></figure>
+      <figure class="card text"><figcaption><span class="id">12</span></figcaption><p>У свойств без параметров (второстепенное Imperial, Politics, Trade) действие записывается сразу, без шага 2.</p></figure></div>
+  </section>
+  <section class="group">
+    <h2>Общая рамка вместо голого заголовка и подвала <a class="src" href="./strategy.html">интерактивно ↗</a></h2>
+    <p class="lead2">У стратегии заголовок без кнопок, а «Отменить действие» и «Готово» стоят в подвале .strategy-foot, под оплатой, часто за краем экрана. У тактики и ручной правки кнопка сверху.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-1-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">13</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-1-1.png" alt="" loading="lazy"></a>
+        <p>Та же голова, что у тактики (страница «Тактический редактор», п. 1): «Готово» и крестик вместо «Отменить действие». Что делает крестик, решается там.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Выбор игрока: PlayerChoice с точкой цвета <a class="src" href="./strategy.html">интерактивно ↗</a></h2>
+    <p class="lead2">В Politics выбор спикера собран руками: столбик кнопок, точка цвета через inline-стиль. Trade уже берёт PlayerChoice, но без группы, тем же столбиком. Над списком плана тот же выбор выглядит иначе: строка соединённых кнопок.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-2-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">14</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-2-1.png" alt="" loading="lazy"></a>
+        <p>Одна строка соединённых кнопок с PlayerDot и коротким именем, как в выборе «за кого» над списком. Спикер один, бесплатных можно несколько. Нажимайте.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>«−» → Stepper <a class="src" href="./strategy.html">интерактивно ↗</a></h2>
+    <p class="lead2">В Technology «−» стоит у правого края карточки, где по соглашению удаление, а делает уменьшение. В распределении жетонов свой круглый «−» в углу плитки. Счётчик с «−» и «+» в приложении уже есть: Stepper, как в ручной правке и оплате товарами.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-3-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card rec">
+        <figcaption><span class="id">15</span> <span class="t">три счётчика жетонов</span> <span class="r">рекомендую</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-3-1.png" alt="" loading="lazy"></a>
+        <p>Три счётчика, как в ручной правке. «Сбросить» не нужен. Для Warfare и Leadership с перераспределением тот же Stepper без нижней границы: «−» снимает жетон с пула, значения со знаком.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">16</span> <span class="t">плитки жетонов и «Сбросить»</span></figcaption>
+        <a href="./strategy.html" title="Открыть интерактивно"><img src="./shots/strategy-3-2.png" alt="" loading="lazy"></a>
+        <p>Большие плитки удобнее пальцу, но ошибку можно исправить только «Сбросить» и набором заново.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Список действий: поповер над кнопкой <a class="src" href="./entries.html">интерактивно ↗</a></h2>
+    <p class="lead2">«Новое действие» раскрывает список из шести пунктов внутри закреплённого подвала: подвал вырастает и закрывает записи, а сам список стоит на четвёртом уровне. Нажмите кнопку в обеих панелях.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-0-0.png" alt="" loading="lazy"></a>
+        <p>Открытый список закрывает три записи из четырёх; выбрать пункт можно, только не видя, после чего он встанет.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">17</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-0-1.png" alt="" loading="lazy"></a>
+        <p>Поповер — общий Popover (карточка .tile-popover, крестик в углу), растёт вверх от кнопки. Подвал не меняет высоту. Закрывается выбором пункта, крестиком или нажатием вне него. Уровни: панель → поповер → пункт.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Жетоны и очки: правка на месте списка <a class="src" href="./entries.html">интерактивно ↗</a></h2>
+    <p class="lead2">Карандаш у записи «Жетоны и очки» раскрывает под строкой плитки жетонов и очки всех игроков — пять уровней внутри списка, а строка растягивается на полэкрана.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-1-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">18</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-1-1.png" alt="" loading="lazy"></a>
+        <p>Нажмите карандаш, затем «Завершить правку». Голова и подвал те же, что у ручной правки: заголовок и «Завершить правку». Уровни: панель → блок → строка. Предупреждения о жетонах стоят в блоке «Жетоны».</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Вклад в экспедицию: правка на месте списка <a class="src" href="./entries.html">интерактивно ↗</a></h2>
+    <p class="lead2">То же с экспедицией: выбор части и оплата раскрываются внутри строки записи, пять уровней, предупреждения без своего места.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-2-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">19</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-2-1.png" alt="" loading="lazy"></a>
+        <p>Нажмите карандаш у экспедиции. Блоки «Часть экспедиции» и «Оплата» — общий Section; предупреждение об оплате стоит в блоке оплаты, остальные — вверху редактора.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Подробности тактики: строки «откуда → куда» <a class="src" href="./entries.html">интерактивно ↗</a></h2>
+    <p class="lead2">Нажатие на тактическое действие раскрывает под ним схему: каждый перелёт с остановками, бортом и грузом — до семи уровней вложенности, и одно действие занимает весь экран.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-3-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">20</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-3-1.png" alt="" loading="lazy"></a>
+        <p>Строка — откуда и куда, справа плитки юнитов (UnitTile mini); всё, что взято по дороге, уже в плитках. Предупреждение стоит в строке того перелёта, о котором говорит. Остановки, борт и груз — в поповере «Схема перелёта» (нажмите), это прежняя разметка. Уровни: запись → строка → плитка.</p>
+      </figure>
+      <figure class="card text"><figcaption><span class="id">21</span></figcaption><p>Поповер «Схема перелёта» нужен: полная схема остановок по кнопке.</p></figure>
+      <figure class="card text"><figcaption><span class="id">22</span></figcaption><p>Поповер «Схема перелёта» не нужен: хватает стрелок и повтора перелёта на карте.</p></figure></div>
+  </section>
+  <section class="group">
+    <h2>Удаление плана и раунда: крестик <a class="src" href="./entries.html">интерактивно ↗</a></h2>
+    <p class="lead2">План удаляется текстовой кнопкой «Удалить план» рядом с «Копия», а раунд — кнопкой «−» в ряду номеров; обе выглядят иначе, чем крестик, который удаляет всё остальное.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-4-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">23</span></figcaption>
+        <a href="./entries.html" title="Открыть интерактивно"><img src="./shots/entries-4-1.png" alt="" loading="lazy"></a>
+        <p>Крестик стоит внутри выбранной вкладки, у её правого края, и удаляет этот план (нажмите другую вкладку — крестик перейдёт). Крестик после номеров удаляет выбранный раунд, подпись «Удалить раунд 2». Последний план и последний раунд крестик не удаляет: он неактивен. «Копия» остаётся текстом: это не удаление.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Свойства тайла и контроль планет <a class="src" href="./stage.html">интерактивно ↗</a></h2>
+    <p class="lead2">В режиме «Расстановка» под магазином и подсказками идёт блок с поворотом, аномалией и планетой: её числа, черты, готовность и выбор владельца. Он виден только в одном режиме и только для планеты, выбранной на гексе; чтобы сменить контроль второй планеты, надо сначала нажать её на гексе. Переключайте режимы во всех трёх окнах.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./stage.html" title="Открыть интерактивно"><img src="./shots/stage-0-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card rec">
+        <figcaption><span class="id">24</span> <span class="t">режим «Тайл»</span> <span class="r">рекомендую</span></figcaption>
+        <a href="./stage.html" title="Открыть интерактивно"><img src="./shots/stage-0-1.png" alt="" loading="lazy"></a>
+        <p>Четвёртый режим в том же сегменте. В нём все планеты системы сразу, у каждой свой блок: числа, черты, специализация, готовность и выбор владельца — без нажатия на гекс. Факты тайла (номер, поворот, аномалия, червоточины) — первой строкой. «Расстановка» остаётся только расстановкой. Уровни: панель → блок планеты → выбор владельца. Одна панель на режим — ровно то, на что делится компонент в P2-200.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">25</span> <span class="t">поповер</span></figcaption>
+        <a href="./stage.html" title="Открыть интерактивно"><img src="./shots/stage-0-2.png" alt="" loading="lazy"></a>
+        <p>Режимов три, как сейчас. Кнопка «О тайле» под гексом открывает поповер с тем же содержимым поверх гекса (нажмите). Доступен из любого режима, но закрывает гекс, пока открыт, и это ещё один вид окна внутри окна. Нажатие на планету оставляем выбору цели для пехоты и зданий, поэтому поповер не открывается от планеты.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Плитки юнитов: один UnitTile с вариантами <a class="src" href="./stage.html">интерактивно ↗</a></h2>
+    <p class="lead2">Картинка юнита с числом нарисована пятью способами: у каждой свой размер (62, 62, 84, 32, 40), своё место числа и свой радиус. В большом гексе стоят три из них — магазин, потери, а в редакторе ещё и выбор.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./stage.html" title="Открыть интерактивно"><img src="./shots/stage-1-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">26</span></figcaption>
+        <a href="./stage.html" title="Открыть интерактивно"><img src="./shots/stage-1-1.png" alt="" loading="lazy"></a>
+        <p>Одна рамка шириной 62 px (у mini 32 px без рамки), картинка 52 px, число всегда в одном бейдже справа под картинкой, радиус var(--radius-s). Вариант меняет только край и подписи; в магазине ячейка растягивается по сетке. Плитка stack на высадке остаётся рисунком жетона, как на карте, — это не кнопка.</p>
+      </figure>
+      <figure class="card text"><figcaption><span class="id">27</span></figcaption><p>В магазине название юнита остаётся под картинкой.</p></figure>
+      <figure class="card text"><figcaption><span class="id">28</span></figcaption><p>В магазине названия нет: ячейка — такая же квадратная плитка, как остальные.</p></figure></div>
+  </section>
+  <section class="group">
+    <h2>Кнопки удаления и правки <a class="src" href="./details.html">интерактивно ↗</a></h2>
+    <p class="lead2">Крестик, карандаш и галочка нарисованы шестиугольными кнопками 42×38 с заливкой. В строке плана их три подряд, и они тяжелее самого текста записи; в шапке, в строке источника и в карточке игрока шестиугольник тоже выбивается из спокойных прямоугольных карточек. Ниже одни и те же места: как сейчас и в трёх вариантах. Галочка нажимается, крестик и карандаш реагируют на наведение и нажатие. Во всех вариантах место для пальца остаётся 44×44, мельче становится только видимый знак.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-0-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card rec">
+        <figcaption><span class="id">29</span> <span class="t">тихие значки</span> <span class="r">рекомендую</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-0-1.png" alt="" loading="lazy"></a>
+        <p>Знак 24 px без рамки и заливки в поле 44×44. Цвет приглушённый, на наведении и нажатии ярче, нажатие даёт мягкий круг. Крестик краснеет только на наведении. Галочка выполненного зелёная (по 1Г) с зелёным кругом. Текст записи снова главный в строке.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">30</span> <span class="t">рамка 32 px</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-0-2.png" alt="" loading="lazy"></a>
+        <p>Скруглённый квадрат 32×32 с тонкой рамкой, как маленькая обычная кнопка приложения; поле нажатия 44×44 вокруг него. Видно, что это кнопка, но три рамки в строке плана всё же шумят. Выполненное: зелёная рамка и заливка.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">31</span> <span class="t">⋯ в строке плана</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-0-3.png" alt="" loading="lazy"></a>
+        <p>Тихие значки, как в 8А, но в строке плана видна только галочка и «⋯»: нажатие раскрывает рядом карандаш и крестик, и они остаются, пока «⋯» не нажать снова (без наведения и свайпа). Там, где действие одно (источник, шапка, игрок), значок стоит сразу. Удаление дальше от пальца, зато правка требует лишнего нажатия.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Крестик вместо текстовых кнопок: «Закрыть» во вставке карты (P2-247) <a class="src" href="./details.html">интерактивно ↗</a></h2>
+    <p class="lead2">У панели «Вставить карту» единственная текстовая кнопка «Закрыть» в приложении. Везде закрывает крестик HexRemove.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-1-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">32</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-1-1.png" alt="" loading="lazy"></a>
+        <p>Крестик стоит в шапке справа, как в большом гексе. Где панель стоит на экране, не меняется (это P2-248).</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Крестик вместо текстовых кнопок: «Убрать» у Thunder's Edge (P2-371) <a class="src" href="./details.html">интерактивно ↗</a></h2>
+    <p class="lead2">Когда Thunder's Edge поставлен, в блоке экспедиции стоят текст, кнопка «Выбрать систему» и текстовая «Убрать». Убирает в приложении только крестик, а строка с системой и есть карточка.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-2-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">33</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-2-1.png" alt="" loading="lazy"></a>
+        <p>Поставленный Thunder's Edge стал карточкой .in-card, как строка источника: нажатие на неё выбирает систему заново (MapPickButton), крестик внутри у правого края убирает. Без системы остаётся одна кнопка «Выбрать систему». Нажмите крестик и кнопку.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Одна строка подтверждения (P2-250, P2-253, P2-436) <a class="src" href="./details.html">интерактивно ↗</a></h2>
+    <p class="lead2">Вопрос «точно?» собран четырьмя способами: рамкой .player-confirm у игроков, кнопками в карточке сохранённой партии и строками .row в раскладке и во вставке карты, с разным размером текста и кнопок. Справа ответ на вопрос возвращает кнопку, которая его вызвала; нажмите её снова.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-3-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">34</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-3-1.png" alt="" loading="lazy"></a>
+        <p>Одна форма ConfirmBar: текст слева, «да» (primary, у удаления danger), затем «нет», кнопки одного размера. В отдельной строке это рамка блока, в карточке сохранённой партии сама карточка и есть рамка: кнопки встают на место «Открыть» и крестика (так уже сделано, P2-436 только убирает лишнюю обёртку). Вопрос заменяет кнопку, которая его вызвала.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Легенда как карта: планета в легенде (P2-243) <a class="src" href="./details.html">интерактивно ↗</a></h2>
+    <p class="lead2">Легенда рисует свою планету: больше, без оттенка черты и значка технологии, с другими цифрами. На карте планета выглядит иначе, и легенда объясняет не то, что видно.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-4-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">35</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-4-1.png" alt="" loading="lazy"></a>
+        <p>Легенда рисует PlanetMark из TileView на настоящих планетах (Wellon, Lodor) в обёртке .tile, как блок высадки. Свой компонент Planet уходит.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Один переключатель улучшения, удалить .ship-row-live (P2-264) <a class="src" href="./details.html">интерактивно ↗</a></h2>
+    <p class="lead2">Улучшение корабля переключается карточкой .upgrade-card в шторке «Улучшения». У таблицы кораблей в карточке игрока есть второй вид того же, строка .ship-row-live, но ни один экран её не включает: onToggle никто не передаёт, в карточке игрока таблица только для чтения.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-5-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">36</span></figcaption>
+        <a href="./details.html" title="Открыть интерактивно"><img src="./shots/details-5-1.png" alt="" loading="lazy"></a>
+        <p>Один переключатель, карточка шторки. Ветка onToggle в ShipStats и правила .ship-row-live удаляются (заодно P2-562, P2-563). Цвет включённой карточки берётся из решения по P2-503.</p>
+      </figure></div>
+  </section>
+  <section class="group">
+    <h2>Сборка карты на «Партии» <a class="src" href="./setup.html">интерактивно ↗</a></h2>
+    <p class="lead2">На «Партии» видно только, кто где сидит: пустые гексы без номеров. Сами тайлы ставятся позже и в другом месте, поверх игровой карты, и инструменты сборки остаются там на всю партию.</p>
+    <div class="row">
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span> <span class="t">«Партия», подготовка</span></figcaption>
+        <a href="./setup.html" title="Открыть интерактивно"><img src="./shots/setup-0-0.png" alt="" loading="lazy"></a>
+        
+      </figure>
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span> <span class="t">«План и карта», режим сборки</span></figcaption>
+        <a href="./setup.html" title="Открыть интерактивно"><img src="./shots/setup-0-1.png" alt="" loading="lazy"></a>
+        <p>Кнопки внизу справа: «Собрать карту» и «Вставить карту». Нажатие на гекс открывает поповер с номером и кнопкой «Открыть большой гекс»; повтор тайла видно только в подсказке над картой. Карта на макетах упрощена: номера вместо планет.</p>
+      </figure>
+      <figure class="card rec">
+        <figcaption><span class="id">37</span> <span class="t">блок «Карта» рядом с игроками</span> <span class="r">рекомендую</span></figcaption>
+        <a href="./setup.html" title="Открыть интерактивно"><img src="./shots/setup-0-2.png" alt="" loading="lazy"></a>
+        <p>Один экран. Правая колонка шире (480 вместо 330 px), блок «Кто где сидит» становится блоком «Карта»: раскладка, мини-карта, «Вставить строку Milty» и предупреждения. Нажмите пустую клетку или клетку с номером: откроется ввод номера (введите, например, 4 и выберите подсказку). Нажмите номер игрока, затем другой: игроки поменяются местами, их домашние системы тоже. Переключите раскладку: гиперпути встанут сами.</p>
+      </figure>
+      <figure class="card">
+        <figcaption><span class="id">38</span> <span class="t">переключатель «Игроки | Карта»</span></figcaption>
+        <a href="./setup.html" title="Открыть интерактивно"><img src="./shots/setup-0-3.png" alt="" loading="lazy"></a>
+        <p>Над списком игроков переключатель. На шаге «Карта» мини-карта во всю левую часть, номера крупнее. Правая колонка как сейчас, но без схемы мест: места двигаются на шаге «Карта», а карточки фракций — на шаге «Игроки», поэтому перетащить номер с карточки на схему больше нельзя.</p>
+      </figure>
+      <figure class="card current">
+        <figcaption><span class="id now">как сейчас</span> <span class="t">Предлагаю · «План и карта» в игре</span></figcaption>
+        <a href="./setup.html" title="Открыть интерактивно"><img src="./shots/setup-0-4.png" alt="" loading="lazy"></a>
+        <p>Над картой только «Сбросить вид»: кнопок «Собрать карту» и «Вставить карту» нет. Нажатие на гекс сразу открывает большой гекс (нажмите любой) с режимами «Расстановка», «Бой», «Строительство»: расстановка, бой и покупки остаются как есть. Если карта не собрана, подсказка над картой ведёт на «Партию».</p>
+      </figure>
+      <figure class="card text"><figcaption><span class="id">39</span></figcaption><p>Номера тайлов можно править на «Партии» и после старта партии; раскладка и места после старта закрыты.</p></figure></div>
+  </section>
+</body>
+</html>
