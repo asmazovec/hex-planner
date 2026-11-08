@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { fleetSpeed, isOnMap, project, routeMove, routeReach, routeSteps, stateAfterEntry, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
+import { blockersBefore, fleetSpeed, isOnMap, project, routeMove, routeReach, routeSteps, stateAfterEntry, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
 import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect, routeShapes } from '../map/geometry';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
@@ -463,8 +463,9 @@ export function PlanScreen() {
     if (fastest === null) return { speed: null, steps, left: null };
     const speed = routeMove(entryGame, draft.path, fastest, pack);
     if (activeSystem !== null) {
-      // TODO(P2-420) #ws:rivals #type:bug #size:m #rule:58.3.2 #test:058-movement #rivals — досягаемость считается по gameAs и вручную расставленным game.enemyUnits: корабли, приведённые или уведённые соперниками по плану, не учтены, соперник не видит моих (B2); блокировки брать из состояния перед записью
-      for (const slot of routeReach(entryGame, draft.path, fastest, activeSystem, pack)) if (!highlights[slot]) highlights[slot] = 'valid';
+      // Other players' ships stand as the plan has them just before this action, mine among them for an opponent's.
+      const blockers = blockersBefore(game, plan, entry.id, pack);
+      for (const slot of routeReach(entryGame, draft.path, fastest, activeSystem, pack, blockers)) if (!highlights[slot]) highlights[slot] = 'valid';
     }
     return { speed, steps, left: Math.max(0, speed - steps) };
   })();

@@ -1,13 +1,46 @@
 /** Transport (LRR 95, 16): pickups, the capacity of each moving group and of a system, and what a system holds against the fleet pool. */
+import { blockersOf, fullPath, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
 import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../types';
+import { sourceSlot } from './board';
 import { unitIds, type Move } from './state';
 
 /** A move that only picks units up, so no route to check: from a planet, from the active system itself, or marked as a pickup. */
-// TODO(P2-013) #ws:transport #type:check #rule:95.1 #rule:95.3 #test:095-transport #size:m #pickup #token — Подборы пропускаются целиком: нет проверки, что подбор из старта, пути или активной системы (95.1), и что в системе подбора нет моего жетона (95.3). Тот баг, что нашёл пользователь
 export const isPickup = (move: Move, target: string, pack: DataPack): boolean =>
   move.pickupOf !== undefined || move.from in pack.planets || move.from === target;
+
+/** Whether units may be picked up in a system: not where my command token lies, unless it is the active system (95.3). */
+export const pickupAllowed = (state: Pick<GameState, 'tokensOnMap'>, target: string, slot: string): boolean =>
+  slot === target || !state.tokensOnMap.includes(slot);
+
+/**
+ * Check, after the activation: a ship picks units up only in the system it starts in, one it passes or the active one
+ * (95.1), and never where my command token lies other than the active system (95.3).
+ */
+export function checkPickups(game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, blockers: Blockers = blockersOf(game, null, undefined, pack)): Warning[] {
+  const sources = new Set(moves.filter(move => !isPickup(move, target, pack)).map(move => move.from));
+  const warnings: Warning[] = [];
+  const warned = new Set<string>();
+  for (const move of moves) {
+    if (!isPickup(move, target, pack)) continue;
+    const slot = sourceSlot(game, pack, move.from);
+    if (slot === null || slot === target) continue;
+    const from = move.pickupOf ?? slot;
+    if (move.pickupOf !== undefined) {
+      const carrier = moves.find(other => other.from === move.pickupOf && other.pickupOf === undefined);
+      if (!fullPath(game, [move.pickupOf, ...(carrier?.via ?? []), target], pack, blockers).includes(slot)) {
+        warnings.push(violation('pickupOffRoute', { from, systemId: slot }));
+      }
+    }
+    // A source holding my token is warned about by its route already.
+    if (!pickupAllowed(state, target, slot) && !sources.has(slot) && !warned.has(`${from}:${slot}`)) {
+      warned.add(`${from}:${slot}`);
+      warnings.push(violation('sourceActivated', { from, systemId: slot, context: 'pickup' }, 'transport'));
+    }
+  }
+  return warnings;
+}
 
 /** Whether my fighters move by themselves at this point of the replay: their current stat has a move value. */
 export const fightersFly = (game: Game, upgrades: UnitId[], pack: DataPack): boolean =>
@@ -45,11 +78,32 @@ export function systemMeters(game: Game, units: UnitCounts, upgrades: UnitId[], 
 }
 
 /** Check: each group that left a system carries no more than its ships' capacity. */
-// TODO(P2-014) #ws:transport #type:check #rule:16.3 #rule:16-note-4 #rule:43.1 #rule:55-note-1 #rule:95-note-4 #test:016-capacity #test:043-ground-forces #test:055-mechs #test:095-transport #size:m #capacity #left-behind — Места на борту проверяются только в активной системе: истребители и наземные войска, брошенные без мест на борту в системе, откуда улетели корабли, не дают нарушения
 export function checkGroups(game: Game, state: GameState, groups: Record<string, UnitCounts>, pack: DataPack): Warning[] {
   return Object.entries(groups).flatMap(([from, units]) => {
     const group = capacity(game, units, state.upgrades, pack);
     return group.load > group.capacity ? [violation('capacityGroup', { from, load: group.load, capacity: group.capacity })] : [];
+  });
+}
+
+/** How far each system units leave is over its capacity, before or after the move. */
+export function overflowLeft(game: Game, state: GameState, target: string, moves: Move[], pack: DataPack): Map<string, number> {
+  const left = new Set(moves.filter(move => !(move.from in pack.planets) && move.from !== target).map(move => move.from));
+  return new Map([...left].map(slot => {
+    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, state.upgrades, pack);
+    return [slot, load - room];
+  }));
+}
+
+/**
+ * Check: what stays in the systems units left, against the capacity of the ships still there (16.3, 43.1, 95 note 4):
+ * fighters and ground forces left in space without room on board are removed, which the plan must show. Only what the
+ * leaving adds is warned about: ground forces of a start stand in the space of the home system.
+ */
+export function checkLeftBehind(game: Game, state: GameState, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] {
+  return [...overflowLeft(game, state, target, moves, pack)].flatMap(([slot, over]) => {
+    if (over <= 0 || over <= (before.get(slot) ?? 0)) return [];
+    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, state.upgrades, pack);
+    return [violation('capacitySystem', { systemId: slot, load, capacity: room })];
   });
 }
 

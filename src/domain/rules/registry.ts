@@ -66,6 +66,8 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   expeditionTwicePerTurn: { rules: ['expedition-5'], step: 'expedition' },
   stationGround: { rules: ['space-stations-4'], step: 'invasion' },
   stationStructure: { rules: ['space-stations-4'], step: 'card' },
+  // transport
+  pickupOffRoute: { rules: ['95.1'], step: 'transport' },
 };
 
 /** The rule and step of a code, from the registry. */

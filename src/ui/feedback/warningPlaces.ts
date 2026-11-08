@@ -60,6 +60,8 @@ const PLACES: Record<WarningCode, WarningPlace[]> = {
   expeditionTwicePerTurn: ['slice'],
   stationGround: ['landing'],
   stationStructure: ['system'],
+  // transport
+  pickupOffRoute: ['route'],
 };
 
 export const placesOf = (warning: Warning): WarningPlace[] => PLACES[warning.code];

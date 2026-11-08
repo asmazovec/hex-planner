@@ -56,7 +56,7 @@ export function LandingBlock({ game, planets, before, units, arrived, lost = {},
         // TODO(P2-359) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-313 — кто остался на планете после потерь считает UI; брать состояние после боя из домена
         const left = (unit: UnitId) => (before.ground[planet.id]?.[unit] ?? 0) - (lost[planet.id]?.[unit] ?? 0);
         const standing = (Object.keys(before.ground[planet.id] ?? {}) as UnitId[]).filter(unit => left(unit) > 0);
-        // TODO(P2-360) #ws:rivals #type:check #rivals — чужие войска берутся из game.enemyGround (расстановка), а не из состояния соперников по плану (state.rivals): их высадки раньше в плане не видны
+        // TODO(P2-360) #ws:rivals #type:check #rivals — чужие войска берутся из game.enemyGround (расстановка), а не из состояния соперников по плану (state.rivals): их высадки раньше в плане не видны — P2 note: rivals wave did the domain side (route blockers from the replay, gameAs opponents); this block gets only the owner's `before`, which lacks the other players' ground (for a rival's entry mine is nowhere in it), so it needs the full replay state passed in — a props change of a ui-containers file, left to the UI wave
         const enemies = opponentsBySeat(game).flatMap(o => (Object.keys(game.enemyGround[planet.id]?.[o.id] ?? {}) as UnitId[])
           .filter(unit => (game.enemyGround[planet.id]?.[o.id]?.[unit] ?? 0) > 0)
           .map(unit => ({ owner: o.id, unit, count: game.enemyGround[planet.id]?.[o.id]?.[unit] ?? 0 })));

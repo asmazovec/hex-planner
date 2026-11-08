@@ -298,6 +298,8 @@ const CASES: Record<WarningCode, Warning['params']> = {
   expeditionTwicePerTurn: { sliceId: 'res5' },
   stationGround: { planetId: 'nestphar' },
   stationStructure: { planetId: 'nestphar' },
+  // transport
+  pickupOffRoute: { from: '1,0', systemId: '0,1' },
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {

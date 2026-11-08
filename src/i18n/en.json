@@ -322,6 +322,7 @@
       "transit": "on the way",
       "target": "target",
       "nothing": "Nothing to take",
+      "tokenHere": "Your command token is here: by the rules nothing can be picked up",
       "take": "Take one {{unit}}",
       "put": "Return one {{unit}}",
       "fly": "Fly"
@@ -398,7 +399,10 @@
       "expeditionUnpaid": "The technology part is paid by exhausting a ready planet of yours with a technology specialty.",
       "expeditionTwicePerTurn": "One expedition part per turn: this is the second one since your last action.",
       "stationGround": "{{planet}} is a space station: ground forces cannot land on it.",
-      "stationStructure": "{{planet}} is a space station: structures cannot be placed on it."
+      "stationStructure": "{{planet}} is a space station: structures cannot be placed on it.",
+      "routeBlocked_hyperlane": "The route from {{from}} ends on the hyperlane {{system}}: by the rules a hyperlane is no system, it cannot be the active system and no move ends there.",
+      "sourceActivated_pickup": "{{system}} holds your command token: by the rules units cannot be picked up there, only in the active system.",
+      "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move."
     },
     "phases": {
       "strategy": "Strategy",
