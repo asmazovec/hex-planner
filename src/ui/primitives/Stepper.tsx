@@ -9,10 +9,12 @@ export interface StepperProps {
   note?: string;
   /** Lowest value; omit where a negative change makes sense. */
   min?: number;
+  /** How the value reads, e.g. with its sign for a change; the number itself by default. */
+  format?: (value: number) => string;
   onChange: (value: number) => void;
 }
 
-export function Stepper({ name, value, of, note, min, onChange }: StepperProps) {
+export function Stepper({ name, value, of, note, min, format = String, onChange }: StepperProps) {
   const { t } = useTranslation();
   return (
     <div className="stepper" role="group" aria-label={name}>
@@ -23,7 +25,7 @@ export function Stepper({ name, value, of, note, min, onChange }: StepperProps) 
       >
         −
       </button>
-      <output>{of === undefined ? value : `${value}/${of}`}</output>
+      <output>{of === undefined ? format(value) : `${format(value)}/${of}`}</output>
       <button type="button" aria-label={t('plan.stepper.plus', { name })} onClick={() => onChange(value + 1)}>+</button>
     </div>
   );

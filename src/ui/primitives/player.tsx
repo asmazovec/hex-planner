@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { nameTag } from '../players/names';
 
 /** The theme variable of a player's colour: `--player-1` to `--player-8`. */
 export const playerVar = (color: number): string => `var(--player-${color})`;
@@ -22,40 +23,49 @@ export function PlayerDot({ color, className = 'owner-dot', children }: PlayerDo
 export interface PlayerOption {
   /** What a tap chooses; null stands for no player. */
   value: string | null;
-  label: ReactNode;
-  /** No colour, no dot: "none" has neither. */
+  /** The name: a short faction name, "mine", "none". */
+  label: string;
+  /** No colour, no underline: "none" has neither. */
   color?: number;
-  /** A shorter label shown instead of the name keeps the full name for the screen reader. */
-  ariaLabel?: string;
+  /** What stands instead of the name when many players share the line; the name stays for the screen reader. */
+  tag?: string;
 }
 
+/** Up to this many players on the line keep whole names; with more, each shows its tag. */
+const FULL_NAMES_UP_TO = 4;
+
+/** The tag of a player on a crowded line: three letters of a faction, the seat number without one. */
+export const playerTag = (name: string, hasFaction: boolean, seat: number): string => (hasFaction ? nameTag(name) : String(seat));
+
 export interface PlayerChoiceProps {
-  /** The name of the group; without it the buttons stand alone in their block. */
-  label?: string;
+  /** The name of the group for the screen reader. */
+  label: string;
   options: PlayerOption[];
   chosen: (value: string | null) => boolean;
   onPick: (value: string | null) => void;
-  /** Added to the group, e.g. `acting-for`. */
+  /** Added to the group. */
   className?: string;
-  /** The class of each button when they stand alone, e.g. `option`. */
-  buttonClassName?: string;
-  /**
-   * How the colour shows: a dot before the name, or the `--owner` variable that the group's own rule paints with.
-   */
-  colour?: 'dot' | 'owner';
 }
 
-/** Players to choose from: joined buttons, each with the player's colour and name. */
-export function PlayerChoice({ label, options, chosen, onPick, className, buttonClassName, colour = 'dot' }: PlayerChoiceProps) {
-  const buttons = options.map(o => (
-    <button
-      key={String(o.value)} type="button" className={buttonClassName} aria-pressed={chosen(o.value)} aria-label={o.ariaLabel}
-      style={colour === 'owner' ? playerStyle('--owner', o.color) : undefined} onClick={() => onPick(o.value)}
-    >
-      {colour === 'dot' && o.color !== undefined && <PlayerDot color={o.color} />}
-      {o.label}
-    </button>
-  ));
-  if (label === undefined) return <>{buttons}</>;
-  return <div className={`segment player-choice${className ? ` ${className}` : ''}`} role="group" aria-label={label}>{buttons}</div>;
+/**
+ * Players to choose from: one line of joined buttons, each underlined in the player's colour. With many players the
+ * names give way to tags, so six or eight still fit on the line.
+ */
+export function PlayerChoice({ label, options, chosen, onPick, className }: PlayerChoiceProps) {
+  const crowded = options.filter(o => o.color !== undefined).length > FULL_NAMES_UP_TO;
+  return (
+    <div className={`segment player-choice${className ? ` ${className}` : ''}`} role="group" aria-label={label}>
+      {options.map(o => {
+        const short = crowded && o.tag !== undefined;
+        return (
+          <button
+            key={String(o.value)} type="button" aria-pressed={chosen(o.value)} aria-label={short ? o.label : undefined}
+            style={playerStyle('--owner', o.color)} onClick={() => onPick(o.value)}
+          >
+            {short ? o.tag : o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }

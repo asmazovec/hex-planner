@@ -10,7 +10,7 @@ import { useGame } from '../../../state/gameStore';
 import { lossesOf, withAdjustedUnit, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
 import { enemyChange, holderIn, structureInGame } from '../../../domain/stacks';
 import { HexRemove } from '../../primitives/Icon';
-import { PlayerChoice } from '../../primitives/player';
+import { PlayerChoice, playerTag, type PlayerOption } from '../../primitives/player';
 import { Modal } from '../../overlays/Modal';
 import { SectionTitle } from '../../primitives/SectionTitle';
 import { UnitTile } from '../../units/UnitTile';
@@ -108,8 +108,14 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const acting = (mine !== 'me' && state.rivals?.[mine]) || state;
   const side = only ? mine : chosenSide ?? mine;
   const colours = tokenColours(game);
-  const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, name: opponentName(game, pack, o.id, t) }));
+  const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, seat: o.seat, name: opponentName(game, pack, o.id, t) }));
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
+  /** An opponent in a player choice: the short name, and the tag for a crowded line. */
+  const seatOption = (o: (typeof seated)[number]): PlayerOption => {
+    const label = seatName(o);
+    return { value: o.id, label, color: o.color, tag: playerTag(label, Boolean(pack.factions[o.faction]), o.seat) };
+  };
+  const meOption = (label: string): PlayerOption => ({ value: 'me', label, color: game.color });
   const holderOf = (planetId: string): string => holderIn(game, state, planetId) ?? 'me';
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
@@ -304,11 +310,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const shown = shownState ?? state;
   const control = targetPlanet ? shown.control[targetPlanet.id] : undefined;
   const planetOwner = control === 'enemy' && targetPlanet ? planetHolder(game, targetPlanet.id) ?? null : control ?? null;
-  const owners: { value: string | null; label: string; color?: number }[] = [
-    { value: 'me', label: t('map.sheet.mine'), color: game.color },
-    ...seated.map(o => ({ value: o.id, label: seatName(o), color: o.color })),
-    { value: null, label: t('map.sheet.none') },
-  ];
+  const owners: PlayerOption[] = [meOption(t('map.sheet.mine')), ...seated.map(seatOption), { value: null, label: t('map.sheet.none') }];
   const { x, y } = slotToPixel(slot);
 
   return (
@@ -350,7 +352,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
               {!only && mine === 'me' && (
                 <PlayerChoice
                   label={t('stage.owner')} chosen={value => side === value} onPick={value => setSide(value)}
-                  options={[{ id: 'me', name: t('stage.mine'), color: game.color, faction: '' }, ...seated].map(o => ({ value: o.id, label: seatName(o), color: o.color }))}
+                  options={[meOption(t('stage.mine')), ...seated.map(seatOption)]}
                 />
               )}
               <SectionTitle>{t(only === 'build' ? 'stage.structures' : inBuild ? 'stage.shop' : 'stage.place')}</SectionTitle>

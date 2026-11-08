@@ -459,18 +459,14 @@
       "mecatolNone": "Mecatol Rex is not under your control: no point.",
       "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",
       "imperialSecondary": "Draw a secret objective.",
-      "tokenNote": "A tap adds a token.",
       "liftToken": "Take a command token off a system",
-      "rearrangeNote": "A tap adds a token taken from the fullest pool.",
+      "rearrangeNote": "With nothing left to distribute, «+» takes the token from the fullest pool.",
       "rearrange": "Rearrange tokens",
-      "reset": "Reset",
       "noExhausted": "No planets of yours are exhausted at this point.",
       "boughtNonePrimary": "Three tokens are free, each further one costs 3 influence.",
       "boughtNoneSecondary": "Each token costs 3 influence.",
-      "takeToken": "Take a token back: {{name}}",
       "research": "Technologies researched: {{n}}",
-      "researchAdd": "Research a technology",
-      "researchTake": "Take a technology back"
+      "researched": "Researched"
     },
     "steps": {
       "activate": "Activate {{name}}",
