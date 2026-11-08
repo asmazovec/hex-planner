@@ -10,7 +10,7 @@ export const tileIdOf = (game: Game, systemId: string): string => (game.map[syst
 export const isOnMap = (game: Game, slot: string): boolean => game.map[slot] !== undefined || game.fracture.tiles?.[slot] !== undefined;
 
 /** Grid neighbours, except across the edge of the Fracture: its systems do not touch the map they stand next to. */
-// TODO(P2-049) #ws:thunders-edge #type:model #rule:fracture-5 #test:te-fracture #dep:P2-054 #size:m #fracture — Входы Излома (game.fracture.ingress) не смежны с его выходами: в Излом нельзя проложить маршрут
+// TODO(P2-049) #ws:thunders-edge #type:model #rule:fracture-5 #test:te-fracture #size:m #fracture — Входы Излома (game.fracture.ingress) не смежны с его выходами (TileDef.egress): в Излом нельзя проложить маршрут
 export const systemsAdjacent = (game: Game): Adjacency => (a, b) =>
   areAdjacent(a, b) && Boolean(game.fracture.tiles?.[a]) === Boolean(game.fracture.tiles?.[b]);
 

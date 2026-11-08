@@ -960,7 +960,7 @@
       "fighter": false,
       "combat": 9,
       "move": 1,
-      "limit": null,
+      "limit": 4,
       "levels": {
         "one": {
           "id": "carrier",
@@ -992,7 +992,7 @@
       "fighter": false,
       "combat": 7,
       "move": 2,
-      "limit": null,
+      "limit": 8,
       "levels": {
         "one": {
           "id": "cruiser",
@@ -1024,7 +1024,7 @@
       "fighter": false,
       "combat": 9,
       "move": 2,
-      "limit": null,
+      "limit": 8,
       "levels": {
         "one": {
           "id": "destroyer",
@@ -1064,7 +1064,7 @@
       "fighter": false,
       "combat": 5,
       "move": 1,
-      "limit": null,
+      "limit": 5,
       "levels": {
         "one": {
           "id": "dreadnought",
@@ -1106,7 +1106,7 @@
       "fighter": false,
       "combat": 3,
       "move": 2,
-      "limit": null,
+      "limit": 2,
       "levels": {
         "one": {
           "id": "warsun",
@@ -1134,7 +1134,7 @@
       "fighter": false,
       "combat": 7,
       "move": 1,
-      "limit": null,
+      "limit": 1,
       "levels": {
         "one": {
           "id": "flagship",
@@ -1190,7 +1190,27 @@
       "fighter": false,
       "combat": 8,
       "move": null,
-      "limit": null
+      "limit": null,
+      "levels": {
+        "one": {
+          "id": "infantry",
+          "name": "Infantry I",
+          "cost": 0.5,
+          "capacity": 0,
+          "combat": 8,
+          "dice": 1,
+          "move": null
+        },
+        "two": {
+          "id": "infantry2",
+          "name": "Infantry II",
+          "cost": 0.5,
+          "capacity": 0,
+          "combat": 7,
+          "dice": 1,
+          "move": null
+        }
+      }
     }
   },
   "factions": {
@@ -1270,6 +1290,26 @@
             "dice": 2,
             "move": 1,
             "sustain": true
+          }
+        },
+        "infantry": {
+          "one": {
+            "id": "arborec_infantry",
+            "name": "Letani Warrior I",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": null
+          },
+          "two": {
+            "id": "arborec_infantry2",
+            "name": "Letani Warrior II",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": null
           }
         }
       }
@@ -2494,6 +2534,26 @@
             "move": 1,
             "sustain": true
           }
+        },
+        "infantry": {
+          "one": {
+            "id": "sol_infantry",
+            "name": "Spec Ops I",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": null
+          },
+          "two": {
+            "id": "sol_infantry2",
+            "name": "Spec Ops II",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 6,
+            "dice": 1,
+            "move": null
+          }
         }
       }
     },
@@ -3548,11 +3608,41 @@
   "structures": [
     {
       "id": "pds",
-      "limit": null
+      "limit": 6,
+      "levels": {
+        "one": {
+          "id": "pds",
+          "name": "PDS I",
+          "cannon": {
+            "hit": 6,
+            "dice": 1
+          }
+        },
+        "two": {
+          "id": "pds2",
+          "name": "PDS II",
+          "cannon": {
+            "hit": 5,
+            "dice": 1
+          }
+        }
+      }
     },
     {
       "id": "spacedock",
-      "limit": null
+      "limit": 3,
+      "levels": {
+        "one": {
+          "id": "spacedock",
+          "name": "Space Dock I",
+          "production": 2
+        },
+        "two": {
+          "id": "spacedock2",
+          "name": "Space Dock II",
+          "production": 4
+        }
+      }
     }
   ]
 }

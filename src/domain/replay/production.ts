@@ -46,7 +46,7 @@ export function placeProduction(
 }
 
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. */
-// TODO(P2-029) #ws:production #type:model #rule:68.1 #rule:79.1 #rule:67.5 #rule:72.1 #rule:96.3 #test:068-production #test:079-space-dock #test:067-producing-units #test:072-reinforcements #test:096-units #dep:P2-050 #dep:P2-051 #size:m #needs:decision #production-limit #reinforcements — Нет лимита Production и запаса отрядов: нужны данные (P2-050, P2-051), затем нарушения productionOver и reinforcementsOut. Решить, нужно ли
+// TODO(P2-029) #ws:production #type:model #rule:68.1 #rule:79.1 #rule:67.5 #rule:72.1 #rule:96.3 #test:068-production #test:079-space-dock #test:067-producing-units #test:072-reinforcements #test:096-units #size:m #needs:decision #production-limit #reinforcements — Нет лимита Production и запаса отрядов: данные есть (UnitDef.limit, structures[].limit, structures[].levels.production), нужны нарушения productionOver и reinforcementsOut. Решить, нужно ли
 export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): void {
   const cost = productionCost(entry.production, game.faction, state.upgrades, pack);
   const paid = pay(state, entry.payment, 'resources', pack, warnings);

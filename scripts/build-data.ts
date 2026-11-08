@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, StructureDef, StructureKind, StructureStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
@@ -59,10 +59,17 @@ const TE_RULEBOOK_HYPERLANES = ['119A', '120A', '121A', '122A', '123A', '124A'];
 /** Gate tiles stand on the map, but the home planets and starting units are on another tile. */
 const HOME_PLANET_TILE: Record<string, string> = { ghost: '51', crimson: '118' };
 const KELERES_HOME_TILE: Record<string, string> = { keleresm: '2', keleresx: '14', keleresa: '58' };
-// TODO(P2-052) #ws:data #type:data #rule:96.2 #dep:P2-050 #size:s #reinforcements #provenance — Заполнить лимиты из LRR 96.2 с указанием источника в provenance.json и docs/data-verification.md
-/** Reinforcement limits stay unset: no public source confirmed them, see docs/data-verification.md. */
-const UNCONFIRMED_LIMIT = null;
-const STRUCTURES: DataPack['structures'] = [{ id: 'pds', limit: UNCONFIRMED_LIMIT }, { id: 'spacedock', limit: UNCONFIRMED_LIMIT }];
+/** Where the reinforcement limits come from: LRR 96.2 in the tirules2 copy of the Rules Reference. */
+const LIMITS_SOURCE = { source: 'https://tirules2.com/R_units', repository: 'https://github.com/dangothemango/tirules', license: 'GPL-3.0', section: 'LRR 96.2' };
+/**
+ * Figures of each unit in one colour, LRR 96.2. The 12 infantry and 10 fighter figures are no limit: tokens stand in
+ * for them (LRR 96 note 2.1), so theirs stay null.
+ */
+const UNIT_LIMITS: Record<UnitId, number | null> = {
+  carrier: 4, cruiser: 8, destroyer: 8, dreadnought: 5, warsun: 2, flagship: 1, mech: 4, infantry: null, fighter: null,
+};
+const TOKEN_UNITS = { infantry: 12, fighter: 10 };
+const STRUCTURE_LIMITS: Record<StructureKind, number> = { pds: 6, spacedock: 3 };
 const TECH_TYPES: Record<string, TechType> = { PROPULSION: 'propulsion', BIOTIC: 'biotic', CYBERNETIC: 'cybernetic', WARFARE: 'warfare' };
 const SKIPS: Record<string, NonNullable<PlanetDef['skip']>> = { UNITSKIP: 'unit', NONUNITSKIP: 'nonUnit' };
 const UNIT_NAMES: Record<UnitId, string> = {
@@ -167,7 +174,7 @@ const tileNumber = (id: string) => id.replace(/[AB]$/, '');
 // Source shapes: only the fields read here, checked against the files at COMMIT.
 interface SourceSystem {
   id: string; source: string; planets?: string[]; wormholes?: string[]; tileBack?: string;
-  isHyperlane?: boolean; isFracture?: boolean; [flag: string]: unknown;
+  isHyperlane?: boolean; isFracture?: boolean; hasEgress?: boolean; [flag: string]: unknown;
 }
 interface SourcePlanet {
   id: string; name: string; resources: number; influence: number; source: string; techSpecialties?: string[] | null;
@@ -178,6 +185,7 @@ interface SourceUnit {
   combatHitsOn?: number; moveValue?: number; baseType?: string; name?: string; faction?: string; upgradesFromUnitId?: string;
   homebrewReplacesID?: string; combatDieCount?: number; sustainDamage?: boolean; afbHitsOn?: number; afbDieCount?: number;
   bombardHitsOn?: number; bombardDieCount?: number; spaceCannonHitsOn?: number; spaceCannonDieCount?: number;
+  productionValue?: string | number; basicProduction?: string;
 }
 interface SourceFaction {
   alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
@@ -238,6 +246,7 @@ function buildTile(system: SourceSystem, pack: PackId): TileDef {
   };
   if (anomalies[0]) tile.anomaly = anomalies[0];
   if (anomalies[1]) tile.secondAnomaly = anomalies[1];
+  if (system.hasEgress === true) tile.egress = true;
   if (!TILE_IDS[pack].test(system.id)) throw new Error(`Tile ${system.id} is not expected in pack ${pack}`);
   return tile;
 }
@@ -311,6 +320,8 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
 }
 
 const SHIP_TYPES: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
+/** Unit types read with levels: the ships, and infantry for Infantry II. */
+const LEVEL_TYPES: UnitId[] = [...SHIP_TYPES, 'infantry'];
 /** The official units; the other files of `data/units` are homebrew, and `ds.json` marks its Ghemina carriers as `base`. */
 const SHIP_FILES = ['baseUnits', 'pok', 'te_units', 'keleres'];
 /** Beyond levels I and II, which is all the app has; anything else unexpected fails the build. */
@@ -363,7 +374,7 @@ export function selectShips(units: SourceUnit[], factionIds: string[]): ShipSele
   const excluded: ShipSelection['excluded'] = { homebrew: 0, nowarsun: 0, cavalry: 0, otherSource: 0, thirdLevel: 0 };
   const groups = new Map<string, SourceUnit[]>();
   for (const unit of units) {
-    if (!SHIP_TYPES.includes(unit.baseType as UnitId)) continue;
+    if (!LEVEL_TYPES.includes(unit.baseType as UnitId)) continue;
     if (!packOfSource(unit.source)) excluded.otherSource += 1;
     else if (unit.homebrewReplacesID) excluded.homebrew += 1;
     else if (unit.id === 'nowarsun') excluded.nowarsun += 1;
@@ -400,16 +411,43 @@ function buildUnits(root: string, ships: ShipTable): Record<PackId, Partial<Reco
     // The generic War Sun has no capacityUsed in the source; its only faction variant says 1.
     const capacityUsed = unit.capacityUsed ?? (id === 'warsun' ? find('muaat_warsun').capacityUsed : undefined);
     if (unit.cost === undefined || capacityUsed === undefined) throw new Error(`Unit ${id} lacks cost or capacityUsed`);
-    if (SHIP_TYPES.includes(id) && !ships[id]) throw new Error(`Ship type ${id} has no base entry`);
+    if (LEVEL_TYPES.includes(id) && !ships[id]) throw new Error(`Unit type ${id} has no base entry`);
     return {
       id, name: UNIT_NAMES[id], cost: unit.cost, capacity: unit.capacityValue ?? 0, capacityUsed,
       ground: unit.isGroundForce === true, fighter: id === 'fighter',
-      combat: unit.combatHitsOn ?? null, move: unit.moveValue ?? null, limit: UNCONFIRMED_LIMIT,
+      combat: unit.combatHitsOn ?? null, move: unit.moveValue ?? null, limit: UNIT_LIMITS[id],
       ...(ships[id] ? { levels: ships[id] } : {}),
     };
   };
   const base = ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry'] as UnitId[];
   return { base: Object.fromEntries(base.map(id => [id, make(id)])), pok: { mech: make('mech') }, te: {} };
+}
+
+/** "+2" with basicProduction "res": the planet's resources plus 2. Anything else fails the build. */
+export function readDockProduction(unit: Pick<SourceUnit, 'id' | 'productionValue' | 'basicProduction'>): number {
+  const match = typeof unit.productionValue === 'string' ? unit.productionValue.match(/^\+(\d+)$/) : null;
+  if (!match || unit.basicProduction !== 'res') throw new Error(`Space dock ${unit.id} has no production of resources plus a number`);
+  return Number(match[1]);
+}
+
+function readStructure(unit: SourceUnit): StructureStats {
+  if (!unit.name) throw new Error(`Structure ${unit.id} lacks a name`);
+  const cannon = readRoll(unit.spaceCannonHitsOn, unit.spaceCannonDieCount);
+  return {
+    id: unit.id, name: unit.name.trim(),
+    ...(unit.baseType === 'spacedock' ? { production: readDockProduction(unit) } : {}),
+    ...(cannon ? { cannon } : {}),
+  };
+}
+
+/** The common PDS and space dock at both levels; faction structures (Hel-Titan, Floating Factory, Dimensional Tear) are not read. */
+export function buildStructures(units: SourceUnit[]): StructureDef[] {
+  return (['pds', 'spacedock'] as StructureKind[]).map(id => {
+    const one = units.find(unit => unit.id === id && !unit.faction);
+    const two = units.find(unit => unit.upgradesFromUnitId === id && !unit.faction);
+    if (!one || !two) throw new Error(`Structure ${id} lacks a level in the source`);
+    return { id, limit: STRUCTURE_LIMITS[id], levels: { one: readStructure(one), two: readStructure(two) } };
+  });
 }
 
 /**
@@ -699,6 +737,7 @@ async function main(): Promise<void> {
   }
   for (const pack of Object.values(factions)) for (const faction of Object.values(pack)) faction.ships = ships.factions[faction.id];
   const units = buildUnits(root, ships.generic);
+  const structures = buildStructures(readJson<SourceUnit[]>(root, 'data/units/baseUnits.json'));
   console.log('Ships excluded:', ships.excluded);
   const technologies = buildTechnologies(readDir<SourceTech[]>(root, 'data/technologies').flat(), factions);
   const templates = buildTemplates(root);
@@ -722,7 +761,7 @@ async function main(): Promise<void> {
     const pack = {
       version: DATA_VERSION, tiles: tiles[name], planets: planets[name], units: units[name],
       factions: factions[name], templates: templates[name], technologies: technologies[name],
-      structures: name === 'base' ? STRUCTURES : [],
+      structures: name === 'base' ? structures : [],
     };
     assertSchema(pack, name);
     writeFileSync(join(outDir, `${name}.json`), `${JSON.stringify(pack, null, 2)}\n`);
@@ -739,7 +778,13 @@ async function main(): Promise<void> {
     excludedPlanets: EXCLUDED_PLANETS,
     notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, leaders: [JOLNAR_OLD_COMMANDER.name], reason: "Thunder's Edge rulebook; absent from the source at this commit" },
     corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
-    unconfirmed: { unitLimits: 'Reinforcement limits are null: no public source confirmed them.' },
+    reinforcements: {
+      ...LIMITS_SOURCE,
+      units: UNIT_LIMITS,
+      structures: STRUCTURE_LIMITS,
+      tokenUnits: { figures: TOKEN_UNITS, reason: 'Fighters and infantry are not limited by their figures: tokens stand in for them (LRR 96 note 2.1), so their limit is null.' },
+    },
+    production: { spacedock: "Production of a space dock is the planet's resources plus the number in its levels: source productionValue, LRR 79.1." },
     verification: 'docs/data-verification.md',
   }, null, 2)}\n`);
   console.log(`Built data ${DATA_VERSION}`);

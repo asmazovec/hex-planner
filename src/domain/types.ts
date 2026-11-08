@@ -37,6 +37,8 @@ export interface TileDef {
   wormholes: string[];
   /** Hyperlanes only: pairs of tile edges the lanes join, edge 0 at the top and numbered clockwise, before any rotation. */
   lanes?: [number, number][];
+  /** Fracture systems only: a printed egress, adjacent to each ingress (Thunder's Edge, The Fracture 5). */
+  egress?: true;
 }
 
 /** A roll of a unit ability: hits on `hit`, with `dice` dice. */
@@ -75,10 +77,9 @@ export interface UnitDef {
   combat: number | null;
   /** Null when the unit cannot move on its own. */
   move: number | null;
-  // TODO(P2-050) #ws:data #type:data #rule:96.2 #rule:72.1 #rule:24.4 #test:096-units #test:072-reinforcements #test:024-construction #size:s #reinforcements — Лимиты null, хотя LRR 96.2 (tirules2) даёт состав набора: 4 carrier, 8 cruiser, 8 destroyer, 5 dreadnought, 2 war sun, 1 flagship, 4 mech, 3 space dock, 6 PDS
-  /** Reinforcement limit; null means not confirmed or without a limit. */
+  /** Reinforcement limit, the figures of one colour (LRR 96.2); null for fighters and infantry, which tokens make unlimited. */
   limit: number | null;
-  /** Ships only: the base table's levels; a faction's `ships` entry replaces them. */
+  /** Ships and infantry: the base table's levels; a faction's `ships` entry replaces them. */
   levels?: ShipLevels;
 }
 
@@ -155,8 +156,24 @@ export interface DataPack {
   factions: Record<string, FactionDef>;
   templates: MapTemplate[];
   technologies: Record<string, TechDef>;
-  // TODO(P2-051) #ws:data #type:data #rule:68.1 #rule:79.1 #size:s #production-value — У базы нет значения Production (ресурсы планеты + 2 у Space Dock I, + 4 у II): без него не проверить лимит производства
-  structures: { id: 'pds' | 'spacedock'; limit: number | null }[];
+  structures: StructureDef[];
+}
+
+/** A structure's numbers at one level, from the source. */
+export interface StructureStats {
+  /** Source id. */
+  id: string;
+  name: string;
+  /** Space docks: the Production value is the planet's resources plus this (LRR 79.1). */
+  production?: number;
+  cannon?: UnitRoll;
+}
+
+export interface StructureDef {
+  id: StructureKind;
+  /** Reinforcement limit, the figures of one colour (LRR 96.2). */
+  limit: number | null;
+  levels: { one: StructureStats; two?: StructureStats };
 }
 
 export type EntryStatus = 'planned' | 'done' | 'cancelled';

@@ -9,9 +9,8 @@ export function productionCost(units: UnitCounts, factionId: string, upgrades: U
   return total;
 }
 
-/** The types that have stats and upgrades, in display order. */
-// TODO(P2-053) #ws:data #type:data #rule:97.1 #test:097-unit-upgrades #size:m #unit-upgrade — Улучшения есть только у кораблей: нет Infantry II, у war sun нет второго уровня, нет PDS II и Space Dock II
-export const SHIP_KINDS: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
+/** The unit types that have stats and upgrades, in display order: the ships, then infantry (Infantry II). */
+export const SHIP_KINDS: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter', 'infantry'];
 
 /** A faction's own entry replaces the base entry whole; ground units and packs without levels read the unit table. */
 function levelsOf(factionId: string, kind: UnitId, pack: DataPack): ShipLevels | undefined {

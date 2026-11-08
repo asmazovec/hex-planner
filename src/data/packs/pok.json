@@ -1023,7 +1023,7 @@
       "fighter": false,
       "combat": 6,
       "move": null,
-      "limit": null
+      "limit": 4
     }
   },
   "factions": {
@@ -1696,6 +1696,26 @@
             "dice": 2,
             "move": 1,
             "sustain": true
+          }
+        },
+        "infantry": {
+          "one": {
+            "id": "mahact_infantry",
+            "name": "Crimson Legionnaire I",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 8,
+            "dice": 1,
+            "move": null
+          },
+          "two": {
+            "id": "mahact_infantry2",
+            "name": "Crimson Legionnaire II",
+            "cost": 0.5,
+            "capacity": 0,
+            "combat": 7,
+            "dice": 1,
+            "move": null
           }
         }
       }
