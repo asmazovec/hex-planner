@@ -1,6 +1,6 @@
 /** LRR 48 Initiative Order. Source: tirules2 rules-reference/initiative-order.md. */
 import { describe, expect, test } from 'vitest';
-import { strategyCards } from '../../cards';
+import { strategyCards } from '../../../data/loadPack';
 import { CARD } from '../../strategy';
 
 describe('LRR 48 Initiative Order', () => {

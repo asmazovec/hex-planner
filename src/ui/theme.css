@@ -4,32 +4,62 @@
   --surface: #151a23;
   --surface-2: #1b212c;
   --surface-3: #232b38;
+  --surface-ghost: #222a37;
   --border: #2b3442;
   --border-strong: #3b4658;
+  /* Borders under the pointer or the finger: each keeps its own shade. */
+  --border-hover: #55617a;
+  --border-hover-chip: #5d6a83;
+  --border-hover-card: #46536a;
+  --border-me: #4a6490;
 
   /* Text. */
   --text: #eef1f6;
   --text-muted: #a7b0c0;
   --text-dim: #737e91;
+  --text-strong: #fff;
+  --text-soft: #cfd6e2;
 
   /* Meaning. */
   --accent: #7fb2ff;
   --accent-solid: #2f6fd0;
   --accent-soft: #233454;
   --accent-text: #ffffff;
+  --accent-solid-hover: #3a7ade;
+  --accent-soft-hover: #2a3e63;
+  --accent-faint: #1c2636;
+  --accent-deep: #141c2a;
   --gold: #e8c56a;
+  --gold-soft: #2a2618;
+  --gold-fill: #3a3218;
+  --gold-fill-hover: #4a3f1c;
+  --gold-fill-strong: #4a3a14;
   --warning: #f0a463;
   --danger: #ea7f76;
   --success: #74d09a;
+  --success-soft: #17352a;
+  --success-ink: #d7f5e6;
   --violet: #b89bf5;
 
   /* Shape and size. */
   --radius: 12px;
   --radius-s: 9px;
+  --radius-m: 10px;
+  --radius-l: 14px;
   --gap: 16px;
   --touch: 44px;
   --panel-width: 420px;
   --shadow: 0 14px 34px rgb(0 0 0 / 0.55);
+  --shadow-lift: 0 14px 34px rgb(0 0 0 / 0.8);
+  --shadow-drag: 0 8px 18px rgb(0 0 0 / 0.55);
+  --shadow-drawer: 16px 0 26px rgb(0 0 0 / 0.65);
+  --shadow-drawer-under: -16px 0 26px rgb(0 0 0 / 0.65);
+  --shadow-map-edge: inset 0 0 44px 10px rgb(0 0 0 / 0.7);
+  /* The scrim over the page, as channels: each use sets its own opacity. */
+  --scrim: 6 8 12;
+
+  /* Type. */
+  --font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   /* Type scale. */
   --font-xs: 11px;
@@ -56,6 +86,20 @@
   --hex-activated: #43350f;
   --hex-hyperlane: #161b24;
   --hex-fracture: #2a1f42;
+  --hex-free-stroke: #293241;
+  --hex-path: #1c2a42;
+  --hex-path-stroke: #5a7fb8;
+  --hex-stroke-hover: #66748c;
+  --hex-stroke-pressed: #7c8aa3;
+  --hex-edge: #39445a;
+  --hex-button-ink: #c5cddb;
+  --tile-number-ink: #c3cad6;
+  --planet-name-ink: #c7cddb;
+  --counter-stroke: #6a7589;
+  --route-neutral: #d7deea;
+  --badge-fill: #12171f;
+  --seat-spot: #222b39;
+  --seat-spot-stroke: #465268;
   --token-fill: #26303f;
   --token-spent: #12161e;
   --token-stroke: #566078;
@@ -93,17 +137,16 @@ html, body, #root { height: 100%; margin: 0; }
 body {
   background: var(--bg);
   color: var(--text);
-  font: var(--font-m)/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font: var(--font-m)/1.45 var(--font-family);
   overflow: hidden;
 }
 
 /* The frame: content, then the menu. */
 .app { display: flex; flex-direction: column; height: 100%; }
-/* TODO(P2-500) #ws:ui-css #type:dup #size:s #scrollbar — scrollbar-width/scrollbar-color повторены 9 раз (103, 171, 207-208, 243, 436, 690, 695, 849, 1012): одна утилита или общее правило для прокручиваемых блоков */
-.app-body > main { flex: 1; min-height: 0; overflow: auto; padding: 20px 22px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+/* Every block that scrolls: a thin bar in the colour of a strong border. */
+.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .upgrades-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.app-body > main { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 20px 22px; }
 .app-body { flex: 1; min-height: 0; display: flex; }
-/* TODO(P2-501) #ws:ui-css #type:dup #size:s #duplicate-selector — .app-body > main второй раз, первое правило на 103: слить в одно */
-.app-body > main { min-width: 0; }
 .app-rail { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; background: var(--surface); border-right: 1px solid var(--border); }
 .app-rail .nav-export { margin-top: auto; }
 
@@ -122,11 +165,11 @@ button, select, .button {
 }
 button:active:not(:disabled) { transform: scale(0.97); }
 button:disabled { opacity: 0.45; cursor: default; }
-/* TODO(P2-502) #ws:ui-css #type:ui #size:s #danger-button — нет правила button.danger: «Удалить» в GameScreen.tsx:166 выглядит обычной кнопкой; добавить рядом с .primary на var(--danger) */
 button.primary { background: var(--accent-solid); color: var(--accent-text); border-color: var(--accent-solid); font-weight: 600; }
-/* TODO(P2-503) #ws:ui-css #type:ui #size:m #needs:decision #needs:prototype #selected-state — три цвета «выбрано» для одной роли: голубой здесь, .chip 706, .slice 646, .card-main 462; золотой .option 457, .card-cell 450, .card-abilities 472, .pic-taken 616, .token-tile-on 540, .ship-row-live 838, .upgrade-card.on 857, .entry-upgrades 871, .hex-button:has(checked) 508; зелёный .hex-button[aria-pressed] 1009, .fac-option 1018, вкладки и шторки. Решить по прототипу, какой цвет у переключателей */
-/* TODO(P2-504) #ws:ui-css #type:ui #size:m #colour-token — #fff вместо переменной, 26 раз: 129, 147, 305, 353, 354, 392, 410, 432, 478, 640, 656-658, 661, 706, 817, 819, 895, 980, 983, 993, 994, 999, 1000, 1018; токен --text-strong (или --accent-text там, где текст на синем) */
-button[aria-pressed='true'], button[role='radio'][aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
+/* A control that deletes: the colour of danger on the text and the frame. */
+button.danger { color: var(--danger); border-color: var(--danger); }
+/* TODO(P2-503) #ws:ui-css #type:ui #size:m #needs:decision #needs:prototype #selected-state — три цвета «выбрано» для одной роли: голубой здесь, .chip 706, .slice 646, .card-main 462; золотой .option 457, .card-cell 450, .card-abilities 472, .pic-taken 616, .token-tile-on 540, .ship-row-live 838, .upgrade-card.on 857, .entry-upgrades 871, .hex-button:has(checked) 508; зелёный .hex-button[aria-pressed] 1009, .fac-option 1018, вкладки и шторки. Решить по прототипу, какой цвет у переключателей — P2 note: needs a decision and a page prototype, left as it is */
+button[aria-pressed='true'], button[role='radio'][aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
 .button { display: inline-flex; align-items: center; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 input[type='text'], input:not([type]) {
@@ -143,15 +186,13 @@ input:focus { border-color: var(--accent); }
 input[type='checkbox'] { accent-color: var(--accent-solid); }
 
 @media (hover: hover) {
-/* TODO(P2-505) #ws:ui-css #type:ui #size:s #colour-token #hover — рамка при наведении: шесть близких оттенков без переменной: #55617a 147, 154, 619, 658, 819; #66748c 152; #7c8aa3 304; #5d6a83 816; #46536a 814; #465268 785; один токен --border-hover */
-  button:hover:not(:disabled), select:hover { background: var(--surface-3); border-color: #55617a; color: #fff; }
-/* TODO(P2-506) #ws:ui-css #type:ui #size:s #colour-token #hover — #3a7ade (наведение на .primary) без переменной: токен --accent-solid-hover */
-  button.primary:hover:not(:disabled) { background: #3a7ade; border-color: #3a7ade; }
-/* TODO(P2-507) #ws:ui-css #type:ui #size:s #colour-token #hover — #2a3e63 (наведение на выбранное) без переменной, ещё 656: токен --accent-soft-hover */
-  button[aria-pressed='true']:hover:not(:disabled), button[role='radio'][aria-checked='true']:hover:not(:disabled) { background: #2a3e63; border-color: var(--accent); }
-  .tile:hover .hex { stroke: #66748c; }
+  button:hover:not(:disabled), select:hover { background: var(--surface-3); border-color: var(--border-hover); color: var(--text-strong); }
+  button.primary:hover:not(:disabled) { background: var(--accent-solid-hover); border-color: var(--accent-solid-hover); }
+  button.danger:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); }
+  button[aria-pressed='true']:hover:not(:disabled), button[role='radio'][aria-checked='true']:hover:not(:disabled) { background: var(--accent-soft-hover); border-color: var(--accent); }
+  .tile:hover .hex { stroke: var(--hex-stroke-hover); }
   .tile-fracture:hover .hex { stroke: var(--violet); }
-  .card-cell:hover:not(:disabled) { border-color: #55617a; background: var(--surface-2); }
+  .card-cell:hover:not(:disabled) { border-color: var(--border-hover); background: var(--surface-2); }
   .card-cell.card-main:hover { background: var(--accent-soft); border-color: var(--accent); }
 }
 
@@ -161,21 +202,17 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .muted { color: var(--text-muted); }
 .field { display: flex; flex-direction: column; gap: 4px; font-size: var(--font-s); color: var(--text-muted); }
 .field > input, .field > select { font-size: var(--font-m); color: var(--text); }
-/* TODO(P2-508) #ws:ui-css #type:dead #size:s #dead-css — .check нигде не используется в src/ui: удалить */
-.check { display: flex; align-items: center; gap: 10px; min-height: var(--touch); }
-.check input { width: 20px; height: 20px; }
-/* TODO(P2-509) #ws:ui-css #type:dead #size:s #dead-css — fieldset и legend в разметке нет: удалить оба правила */
-fieldset { border: 1px solid var(--border); border-radius: var(--radius); }
-legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; padding: 0 4px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.saved-list { list-style: none; margin: 0 0 8px; padding: 4px 0; display: flex; flex-direction: column; gap: 8px; max-height: 170px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.saved-list { list-style: none; margin: 0 0 8px; padding: 4px 0; display: flex; flex-direction: column; gap: 8px; max-height: 170px; overflow-y: auto; }
+/* The surface of a card. */
+.saved-list li, .card-cell, .card-details, .entry, .token-tile, .editor-section, .upgrade-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
 /* A save is a card: its text takes the free room, its controls stand inside it at the right edge. */
-/* TODO(P2-510) #ws:ui-css #type:dup #size:m #card-surface — поверхность карточки (surface-2 + border + radius-s) собрана заново в 10 классах: 174, 447, 452, 484, 538, 568, 615, 836, 855, 1016; одна утилита карточки */
-.saved-list li { display: flex; align-items: center; gap: 5px; padding: 4px 5px 4px 10px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); font-size: 13px; color: var(--text-muted); }
+.saved-list li { display: flex; align-items: center; gap: 5px; padding: 4px 5px 4px 10px; font-size: 13px; color: var(--text-muted); }
 .saved-list li > span { flex: 1 1 auto; min-width: 0; }
 .saved-list strong { display: block; overflow-wrap: anywhere; font-size: var(--font-s); font-weight: 600; color: var(--text); }
-/* TODO(P2-511) #ws:ui-css #type:dup #size:s #caption-small — подпись small (display:block, text-dim, font-xs) описана 9 раз: 178, 411, 449, 584, 591, 632, 802, 840, 1017; одна утилита подписи */
-.saved-list small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+/* A caption under a line of a card: small and dim, on a line of its own. */
+.saved-list small, .plan-tab small, .source-button small, .landing-target small, .ship-row-name small, .upgrade-body > small { display: block; color: var(--text-dim); font-size: var(--font-xs); }
+.saved-list small { font-weight: 400; }
 /* TODO(P2-512) #ws:ui-containers #type:dup #size:m #small-button — маленькая кнопка: 14 контекстных переопределений padding/min-height/font-size: 180, 226, 251, 398, 401, 418, 433, 440, 547, 576, 636, 701, 712, 739; модификатор .small или проп у кнопки */
 .saved-list button { position: relative; flex: none; min-height: 36px; padding: 4px 10px; font-size: var(--font-s); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -204,8 +241,6 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
   width: min(320px, calc(100% - 16px));
   max-height: calc(100% - 16px);
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
   background: var(--surface-3);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
@@ -233,18 +268,14 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-open-stage { display: block; margin: 8px 12px; width: calc(100% - 24px); }
 
 /* The big hex over the map. */
-/* TODO(P2-516) #ws:ui-css #type:ui #size:s #colour-token #scrim — затемнение фона rgb(6 8 12 / …) без переменной: 237, 265, 904; токен --scrim */
-.stage { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgb(6 8 12 / 0.72); }
+.stage { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgb(var(--scrim) / 0.72); }
 /* TODO(P2-517) #ws:ui-containers #type:dup #size:m #modal — коробка модала трижды: .stage-dialog, .link-dialog 603, .fac-sheet 1012, скругления 14px и var(--radius) вперемешку; общий Modal */
-/* TODO(P2-518) #ws:ui-css #type:ui #size:s #radius-token — скругления числами вместо токенов: 14px 240, 1012; 10px 615; 9px 478, 892, 893, 978; на --radius и --radius-s */
-.stage-dialog { display: grid; grid-template-columns: minmax(0, 490px) 320px; max-width: 100vw; max-height: 100dvh; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; overflow: hidden; }
+.stage-dialog { display: grid; grid-template-columns: minmax(0, 490px) 320px; max-width: 100vw; max-height: 100dvh; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-l); overflow: hidden; }
 .stage-hex { padding: 10px; display: flex; align-items: center; justify-content: center; min-width: 0; }
 .stage-hex svg { width: 470px; max-width: 100%; height: auto; overflow: visible; touch-action: manipulation; user-select: none; }
-.stage-panel { display: flex; flex-direction: column; gap: 6px; padding: 12px; max-height: min(780px, 100dvh); overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; border-left: 1px solid var(--border); }
+.stage-panel { display: flex; flex-direction: column; gap: 6px; padding: 12px; max-height: min(780px, 100dvh); overflow-y: auto; border-left: 1px solid var(--border); }
 .stage-panel > * { flex: none; }
 .stage-panel p { margin: 0; font-size: var(--font-s); }
-/* TODO(P2-519) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .stage-panel h3 перебит общим заголовком раздела 959-971: удалить раннее определение */
-.stage-panel h3 { margin: 6px 0 2px; font-size: var(--font-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
 .stage-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .stage-head button { padding: 0; width: 44px; }
 .stage-owners { flex-wrap: wrap; }
@@ -260,9 +291,8 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .stage-meters { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); color: var(--text-muted); }
 .stage-meter { display: flex; justify-content: space-between; gap: 8px; }
 .stage-meter b { color: var(--text); font-weight: 600; }
-/* TODO(P2-521) #ws:ui-css #type:ui #size:s #colour-token #warning — var(--warning, #e8a33d): запасной цвет не совпадает с токеном #f0a463, оставить var(--warning) */
-.stage-meter-over, .stage-meter-over b { color: var(--warning, #e8a33d); }
-:root[data-blur='on'] .stage { background: rgb(6 8 12 / 0.5); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
+.stage-meter-over, .stage-meter-over b { color: var(--warning); }
+:root[data-blur='on'] .stage { background: rgb(var(--scrim) / 0.5); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
 .stage-losses { display: flex; flex-wrap: wrap; gap: 5px; }
 /* TODO(P2-522) #ws:ui-containers #type:dup #size:s #unit-tile #dep:P2-548 — .stage-loss (62px) ещё одна плитка юнита с числом: перейти на общий UnitTile */
 .stage-loss { position: relative; display: flex; flex-direction: column; align-items: center; width: 62px; min-height: 62px; padding: 0 0 2px; background: var(--surface-2); }
@@ -279,41 +309,37 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .tile-stage [data-unit] { pointer-events: none; }
 .token-ring { fill: none; stroke: var(--gold); stroke-width: 5; pointer-events: none; }
 .token-ring-shade { fill: none; stroke: var(--bg); stroke-width: 10; pointer-events: none; }
-/* TODO(P2-523) #ws:ui-css #type:ui #size:s #colour-token — #eef1f6 равен --text, ещё 358, 363: заменить на var(--text) */
-.planet-target { fill: none; stroke: #eef1f6; stroke-width: 1.6; }
+.planet-target { fill: none; stroke: var(--text); stroke-width: 1.6; }
 @media (max-width: 860px) {
   .stage-dialog { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
   .stage-panel { max-height: none; border-left: 0; border-top: 1px solid var(--border); }
 }
 
 /* The map. */
-.hexmap { touch-action: none; user-select: none; display: block; cursor: grab; }
+.hexmap { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; display: block; cursor: grab; }
 .hexmap:active { cursor: grabbing; }
 .tile { cursor: pointer; }
 .tile:focus, .tile:focus-visible { outline: none; }
 .tile:focus-visible .hex { stroke: var(--accent); stroke-width: 3; }
 .tile, .tile-dim { transition: opacity var(--motion); }
 .hex { fill: var(--hex-system); stroke: var(--hex-stroke); stroke-width: 1.6; transition: fill var(--motion-route), stroke var(--motion-route), stroke-width var(--motion-route); }
-/* TODO(P2-524) #ws:ui-css #type:ui #size:s #colour-token #map — оттенки карты числами: #293241 298, #1c2a42 и #5a7fb8 310; токены --hex-free-stroke, --hex-path, --hex-path-stroke */
-.hex-free { fill: var(--hex-free); stroke: #293241; stroke-dasharray: 4 4; }
+.hex-free { fill: var(--hex-free); stroke: var(--hex-free-stroke); stroke-dasharray: 4 4; }
 .hex-home { fill: var(--hex-home); }
 .hex-mecatol { fill: var(--hex-mecatol); }
 .hex-anomaly { fill: var(--hex-anomaly); }
 .hex-wormhole { fill: var(--hex-wormhole); }
 .hex-hyperlane { fill: var(--hex-hyperlane); }
-.tile:active .hex { stroke: #7c8aa3; transition-duration: var(--motion-fast); }
-.tile-selected .hex { stroke: #fff; stroke-width: 3; }
+.tile:active .hex { stroke: var(--hex-stroke-pressed); transition-duration: var(--motion-fast); }
+.tile-selected .hex { stroke: var(--text-strong); stroke-width: 3; }
 .tile-valid .hex { stroke: var(--accent); stroke-width: 3.5; }
-/* TODO(P2-525) #ws:ui-css #type:ui #size:s #colour-token #selected-state — #2a2618 (золотой фон выбранного) 8 раз: 308, 450, 457, 472, 616, 838, 857, 871; токен --gold-soft */
-.tile-active .hex { stroke: var(--gold); stroke-width: 3.5; fill: #2a2618; }
+.tile-active .hex { stroke: var(--gold); stroke-width: 3.5; fill: var(--gold-soft); }
 .tile-source .hex { stroke: var(--accent); stroke-width: 2.5; }
-.tile-path .hex { fill: #1c2a42; stroke: #5a7fb8; }
+.tile-path .hex { fill: var(--hex-path); stroke: var(--hex-path-stroke); }
 /* A system with my command token: the fill says it even where the token is easy to miss. */
 .tile-activated .hex { fill: var(--hex-activated); }
 .tile-dim { opacity: 0.42; }
 .tile text { text-anchor: middle; fill: var(--text); font-family: inherit; pointer-events: none; }
-/* TODO(P2-526) #ws:ui-css #type:ui #size:s #colour-token — светло-серый текст пятью близкими числами: #c3cad6 316, #c7cddb 334, #c5cddb 500, #cfd6e2 752, 756, 797; один токен --text-soft */
-.tile .tile-number { text-anchor: start; font-weight: 700; fill: #c3cad6; paint-order: stroke; stroke: var(--bg); stroke-width: 1.25px; stroke-linejoin: round; }
+.tile .tile-number { text-anchor: start; font-weight: 700; fill: var(--tile-number-ink); paint-order: stroke; stroke: var(--bg); stroke-width: 1.25px; stroke-linejoin: round; }
 .tile-seat circle { stroke: var(--bg); stroke-width: 0.8; }
 .tile .tile-seat text { font-size: 6.5px; font-weight: 700; fill: var(--bg); }
 .tile .tile-worm { fill: var(--accent); }
@@ -331,7 +357,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .planet-enemy { stroke: var(--control-enemy); stroke-width: 1.9; }
 .tile .planet-values { font-size: 8.6px; font-weight: 700; }
 .tile .value-slash { fill: var(--text-dim); font-weight: 400; }
-.tile .planet-name { font-size: 9px; fill: #c7cddb; }
+.tile .planet-name { font-size: 9px; fill: var(--planet-name-ink); }
 .planet-exhausted .planet-disc { fill: var(--token-spent); }
 .planet-exhausted .planet-values { opacity: 0.5; }
 .planet-tech { stroke: var(--token-fill); stroke-width: 1.1; stroke-linejoin: round; paint-order: stroke; }
@@ -350,28 +376,25 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .trait-swatch.trait-hazardous { background: var(--trait-hazardous); }
 .trait-swatch.trait-industrial { background: var(--trait-industrial); }
 .planet-strike { stroke: var(--text-muted); stroke-width: 1.1; stroke-linecap: round; }
-.token { fill: var(--accent-solid); stroke: #fff; stroke-width: 1.2; }
-.token-mark { fill: #fff; }
-/* TODO(P2-527) #ws:ui-css #type:ui #size:s #colour-token — #0d1016 равен --bg, 9 раз: 357, 360 (×2), 372, 374 (×2), 383, 525, 933; заменить на var(--bg) */
-/* TODO(P2-528) #ws:ui-css #type:ui #size:s #colour-token — #6a7589 (рамка счётчика юнитов) без переменной, ещё 525: токен --counter-stroke */
-.unit-counter { fill: #0d1016; stroke: #6a7589; }
-.tile .unit-count { font-weight: 700; fill: #eef1f6; }
+.token { fill: var(--accent-solid); stroke: var(--accent-text); stroke-width: 1.2; }
+.token-mark { fill: var(--accent-text); }
+.unit-counter { fill: var(--bg); stroke: var(--counter-stroke); }
+.tile .unit-count { font-weight: 700; fill: var(--text); }
 .arrow-head { fill: var(--gold); stroke: none; }
-.arrow-head-casing { fill: #0d1016; stroke: #0d1016; stroke-width: 2.1; stroke-linejoin: round; }
+.arrow-head-casing { fill: var(--bg); stroke: var(--bg); stroke-width: 2.1; stroke-linejoin: round; }
 .routes, .flight-layer, .flight-layer * { pointer-events: none; }
 .flight-layer text { text-anchor: middle; font-family: inherit; }
-.flight-layer .unit-count { font-weight: 700; fill: #eef1f6; }
-/* TODO(P2-529) #ws:ui-css #type:ui #size:s #colour-token #route — #d7deea (нейтральная линия маршрута) без переменной, ещё 510, 625: токен --route-neutral */
-.route { --route: #d7deea; --route-width: 4px; --route-opacity: 1; }
+.flight-layer .unit-count { font-weight: 700; fill: var(--text); }
+.route { --route: var(--route-neutral); --route-width: 4px; --route-opacity: 1; }
 .route-active { --route: var(--gold); --route-width: 5px; }
 .route-done { --route-opacity: 0.4; }
 .route-casing, .route-line, .route-pull { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 /* The opacity is on the group: the outlines of the line and the head overlap and read as one shape. */
 .route-casings { opacity: 0.7; transition: opacity var(--motion-route); }
 .route-done .route-casings { opacity: 0.3; }
-.route-casing { stroke: #0d1016; stroke-width: 9px; }
+.route-casing { stroke: var(--bg); stroke-width: 9px; }
 .route-casing.route-gap { opacity: 0.5; stroke-dasharray: 11 9; }
-.route-head-casing { fill: #0d1016; stroke: #0d1016; stroke-width: calc(9px - var(--route-width)); stroke-linejoin: round; }
+.route-head-casing { fill: var(--bg); stroke: var(--bg); stroke-width: calc(9px - var(--route-width)); stroke-linejoin: round; }
 .route-line { stroke: var(--route); stroke-width: var(--route-width); opacity: var(--route-opacity); transition: stroke var(--motion-route), stroke-width var(--motion-route), opacity var(--motion-route); }
 .route-line.route-gap { stroke-dasharray: 11 9; }
 .route-dot, .route-head { fill: var(--route); opacity: var(--route-opacity); transition: fill var(--motion-route), opacity var(--motion-route); }
@@ -380,24 +403,21 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .route-badge, .route-tag { --route-opacity: 1; transition: opacity var(--motion-route); }
 .route-badge.route-done, .route-tag.route-done { opacity: 0.5; }
 /* As wide as the outline of a line beyond its stroke. The done badge is dimmed as a whole, so this comes to the 0.3 of a done line. */
-.route-badge-casing { fill: none; stroke: #0d1016; stroke-width: 6.8px; stroke-linejoin: round; opacity: 0.7; }
+.route-badge-casing { fill: none; stroke: var(--bg); stroke-width: 6.8px; stroke-linejoin: round; opacity: 0.7; }
 .route-done .route-badge-casing { opacity: 0.6; }
-/* TODO(P2-530) #ws:ui-css #type:ui #size:s #colour-token #route — #12171f (фон бейджа номера) без переменной, ещё 388, 512; почти равен --hex-free: токен --badge-fill */
-.route-badge-hex { fill: #12171f; stroke: var(--route); stroke-width: 1.8px; stroke-linejoin: round; transition: stroke var(--motion-route); }
+.route-badge-hex { fill: var(--badge-fill); stroke: var(--route); stroke-width: 1.8px; stroke-linejoin: round; transition: stroke var(--motion-route); }
 .route-badge-number, .route-tag text { fill: var(--route); font-size: 11px; font-weight: 700; text-anchor: middle; transition: fill var(--motion-route); }
-.route-tag rect { fill: #12171f; stroke: var(--route); stroke-width: 1.4px; transition: stroke var(--motion-route); }
+.route-tag rect { fill: var(--badge-fill); stroke: var(--route); stroke-width: 1.4px; transition: stroke var(--motion-route); }
 @media (prefers-reduced-motion: reduce) {
   .hex, .route-badge, .route-tag, .route-casings, .route-line, .route-dot, .route-head, .route-badge-hex, .route-badge-number, .route-tag text, .route-tag rect { transition: none; }
 }
-.map-home { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; background: var(--accent-solid); border-color: var(--accent); color: #fff; }
+.map-home { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 3; background: var(--accent-solid); border-color: var(--accent); color: var(--accent-text); }
 .hexmap-frame { position: relative; display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
 .hexmap-wrap { position: relative; flex: 1; width: 100%; min-height: 0; overflow: hidden; }
-.map-strip { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; padding: 8px; pointer-events: none; }
-.map-strip button { pointer-events: auto; }
-/* TODO(P2-531) #ws:ui-css #type:dup #size:s #duplicate-selector — .map-strip button второй раз подряд, первое на 396: слить */
-.map-strip button { font-size: var(--font-s); padding: 4px 12px; white-space: nowrap; }
+.map-strip { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; padding: 10px; pointer-events: none; }
+.map-strip button { pointer-events: auto; font-size: var(--font-s); padding: 4px 12px; white-space: nowrap; }
 .map-strip-start { display: flex; align-items: center; gap: 6px; }
-.map-tools { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.map-tools { display: flex; flex-wrap: nowrap; justify-content: flex-end; gap: 8px; }
 .map-tools button { padding: 4px 10px; }
 
 /* Plan and map: one row of tabs, rounds and totals, the map, the plan. */
@@ -405,10 +425,11 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .plan-screen { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .plan-header { flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 12px 0; background: var(--surface); border-bottom: 1px solid var(--border); min-height: 56px; }
 .plan-top { display: contents; }
-.plan-tabs { order: 1; flex: 1 1 0; align-self: flex-end; display: flex; align-items: flex-end; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.plan-tab { flex: none; max-width: 180px; min-height: 48px; padding: 5px 14px; text-align: left; white-space: nowrap; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-m); color: var(--text-muted); background: var(--surface-2); border: 0; border-radius: var(--radius-s) var(--radius-s) 0 0; }
-.plan-tab[aria-selected='true'] { background: var(--bg); color: #fff; font-weight: 600; box-shadow: inset 0 2px 0 var(--accent); }
-.plan-tab small { display: block; font-size: var(--font-xs); font-weight: 400; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; }
+.plan-tabs { order: 1; flex: 1 1 0; align-self: flex-end; display: flex; align-items: flex-end; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding-top: 2px; position: relative; z-index: 1; margin-bottom: -1px; }
+.plan-tab { flex: none; max-width: 180px; min-height: 48px; padding: 5px 14px; text-align: left; white-space: nowrap; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-m); color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); border-top: 3px solid var(--accent); border-bottom-color: var(--border); border-radius: var(--radius-s) var(--radius-s) 0 0; touch-action: none; cursor: grab; }
+/* The chosen plan speaks as an open drawer's tab does: the same frame, green on the free edge, and no line between it and the map. */
+.plan-tab[aria-selected='true'] { background: var(--bg); color: var(--text-strong); font-weight: 600; box-shadow: none; border-top-color: var(--success); border-bottom-color: var(--bg); }
+.plan-tab small { font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
 .plan-tab:active:not(:disabled) { transform: none; }
 .plan-copy { flex: none; align-self: center; margin-bottom: 4px; background: transparent; border-color: transparent; color: var(--accent); font-weight: 600; font-size: var(--font-s); padding: 4px 10px; }
 .plan-delete { color: var(--text-muted); }
@@ -425,15 +446,13 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .summary-forecast-leaving { animation: summary-forecast-out 0.26s var(--ease) forwards; }
 @keyframes summary-forecast-in { from { max-width: 0; opacity: 0; } to { max-width: 4em; opacity: 1; } }
 @keyframes summary-forecast-out { from { max-width: 4em; opacity: 1; } to { max-width: 0; opacity: 0; } }
-.plan-body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--panel-width); grid-template-rows: minmax(0, 1fr); }
-.plan-map { position: relative; min-width: 0; min-height: 0; background: var(--bg); }
-/* TODO(P2-532) #ws:ui-css #type:dup #size:s #duplicate-selector — .hexmap второй раз, первое правило на 290: слить */
-.hexmap { position: absolute; inset: 0; width: 100%; height: 100%; }
-.map-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; width: max-content; padding: 7px 14px; background: var(--accent-solid); color: #fff; font-size: var(--font-s); border-radius: var(--radius-s); pointer-events: none; max-width: 90%; box-shadow: var(--shadow); animation: fade-in var(--motion) var(--ease); }
+.plan-body { position: relative; overflow: hidden; container-type: inline-size; flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) var(--panel-width); grid-template-rows: minmax(0, 1fr); }
+.plan-map { position: relative; min-width: 0; min-height: 0; background: var(--bg); container-type: inline-size; }
+.map-hint { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; width: max-content; padding: 7px 14px; background: var(--accent-solid); color: var(--accent-text); font-size: var(--font-s); border-radius: var(--radius-s); pointer-events: none; max-width: 90%; box-shadow: var(--shadow); animation: fade-in var(--motion) var(--ease); }
 .map-hint button { flex: none; padding: 2px 10px; pointer-events: auto; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .plan-panel { position: relative; z-index: 8; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface); border-left: 1px solid var(--border); }
-.plan-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 2px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.plan-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 2px; }
 .plan-panel h2, .plan-panel h3 { margin: 0; font-size: var(--font-m); font-weight: 650; }
 .plan-panel input[type='text'] { width: 100%; font-weight: 600; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -442,19 +461,17 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .plan-switch { display: none; }
 
 /* Strategy cards. */
-.card-list, .entry-list, .warning-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
+.card-list, .entry-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
 .card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
-.card-cell { min-height: var(--touch); padding: 3px 2px; display: flex; flex-direction: column; align-items: center; font-size: 11px; line-height: 1.15; font-weight: 500; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); overflow-wrap: anywhere; }
+.card-cell { min-height: var(--touch); padding: 3px 2px; display: flex; flex-direction: column; align-items: center; font-size: 11px; line-height: 1.15; font-weight: 500; color: var(--text-muted); overflow-wrap: anywhere; }
 .card-cell b { font-size: 14px; color: var(--gold); }
 .card-cell small { font-size: 10px; color: var(--accent); }
-.card-cell[aria-pressed='true'] { border-color: var(--gold); background: #2a2618; color: var(--text); }
+.card-cell[aria-pressed='true'] { border-color: var(--gold); background: var(--gold-soft); color: var(--text); }
 .card-choice { margin: 4px 0 0; font-size: var(--font-s); font-weight: 600; }
-.card-details { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding: 7px 10px; font-size: var(--font-s); line-height: 1.35; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+.card-details { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding: 7px 10px; font-size: var(--font-s); line-height: 1.35; }
 .strategy-editor p { margin: 0; font-size: var(--font-s); }
-/* TODO(P2-533) #ws:ui-css #type:dead #size:s #dead-css #dep:P2-534 — .strategy-editor .card-text: класса card-text в разметке нет, удалить */
-.strategy-editor .card-text { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .option { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; font-size: var(--font-s); }
-.option[aria-pressed='true'] { border-color: var(--gold); background: #2a2618; }
+.option[aria-pressed='true'] { border-color: var(--gold); background: var(--gold-soft); }
 .strategy-foot { display: flex; gap: 8px; }
 .strategy-foot > button { flex: 1; }
 .strategy-editor .entry-upgrades { padding: 0; }
@@ -463,53 +480,39 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .card-cell.card-backup { border: 1px dashed var(--accent); }
 .card-cell.card-shown { box-shadow: inset 0 0 0 1px var(--text-dim); color: var(--text); }
 .card-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 600; font-size: var(--font-m); color: var(--text); }
-/* TODO(P2-534) #ws:ui-css #type:dead #size:s #dead-css — .card-text нигде не используется в src/ui: удалить (и 455) */
-.card-text { grid-column: 2; color: var(--text-muted); margin-top: 2px; }
 .card-ability { display: flex; flex-direction: column; gap: 1px; margin-top: 6px; padding-left: 8px; border-left: 2px solid var(--border); color: var(--text-muted); }
 .card-ability b { font-size: var(--font-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
 .card-abilities { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .card-abilities .card-ability { width: 100%; margin-top: 0; padding: 7px 10px; text-align: left; font-weight: 400; font-size: var(--font-s); line-height: 1.35; }
-.card-abilities .card-ability[aria-pressed='true'] { background: #2a2618; border-color: var(--gold); border-left-width: 2px; }
+.card-abilities .card-ability[aria-pressed='true'] { background: var(--gold-soft); border-color: var(--gold); border-left-width: 2px; }
 .card-ability-cost { margin-left: 8px; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--gold); }
 .card-abilities .card-note { margin-top: 0; }
 .card-ability-primary { border-left-color: var(--gold); color: var(--text); }
 .card-ability-primary b { color: var(--gold); }
 .card-note { grid-column: 2; color: var(--gold); margin-top: 3px; font-size: 12px; }
-.pill { font-size: var(--font-xs); font-weight: 600; border-radius: 9px; padding: 0 7px; background: var(--accent-solid); color: #fff; }
-/* TODO(P2-535) #ws:ui-css #type:ui #size:s #colour-token — тёмно-золотые заливки числами: #4a3a14 480, #3a3218 508, 990, #4a3f1c 659; токены --gold-fill и --gold-fill-hover */
-.pill-change { background: #4a3a14; color: var(--gold); }
+.pill { font-size: var(--font-xs); font-weight: 600; border-radius: var(--radius-s); padding: 0 7px; background: var(--accent-solid); color: var(--accent-text); }
+.pill-change { background: var(--gold-fill-strong); color: var(--gold); }
 .card-hint { margin: 2px 0 4px; font-size: var(--font-s); color: var(--text-dim); }
 
 /* Entries of the plan. */
-.entry { background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--border-strong); border-radius: var(--radius-s); display: flex; flex-direction: column; transition: opacity var(--motion), border-color var(--motion), box-shadow var(--motion); }
-/* TODO(P2-536) #ws:ui-css #type:ui #size:s #colour-token — #141c2a (фон открытой записи) без переменной: токен или color-mix от --accent-soft */
-.entry-shown { border: 1.5px solid var(--accent); background: #141c2a; }
+.entry { border-left: 3px solid var(--border-strong); display: flex; flex-direction: column; transition: opacity var(--motion), border-color var(--motion), box-shadow var(--motion); }
+.entry-shown { border: 1.5px solid var(--accent); background: var(--accent-deep); }
 .entry-done { border-left-color: var(--success); }
 .entry-warned { border-left-color: var(--warning); }
 .entry-done .entry-label { text-decoration: line-through; color: var(--text-dim); }
-.entry-dragging { box-shadow: 0 8px 18px rgb(0 0 0 / 0.55); }
-.entry-main { display: flex; align-items: center; }
+.entry-dragging { box-shadow: var(--shadow-drag); }
+.entry-main { display: flex; align-items: center; gap: 4px; }
 .entry-main button { padding: 0; background: transparent; border-color: transparent; color: var(--text-dim); }
-.entry-main .entry-handle { touch-action: none; cursor: grab; }
+.entry-main .entry-handle { flex: none; width: 26px; min-width: 0; color: var(--text-dim); touch-action: none; cursor: grab; }
 .entry-main .entry-label { flex: 1; min-width: 0; text-align: left; padding: 4px 6px; color: var(--text); font-weight: 600; font-size: var(--font-s); line-height: 1.3; }
-/* TODO(P2-537) #ws:ui-css #type:dup #size:s #duplicate-selector — .entry-main второй раз (первое 491), .entry-main .entry-handle второй раз (первое 493): слить */
-.entry-main { gap: 4px; }
-.entry-main .entry-handle { flex: none; width: 26px; min-width: 0; color: var(--text-dim); }
-.hex-button, .entry-main .hex-button {
-/* TODO(P2-538) #ws:ui-css #type:ui #size:s #colour-token #hex-button — #39445a (рамка гекс-кнопки) без переменной: токен --hex-edge в :root */
-  --hex-edge: #39445a; --hex-fill: var(--surface-2); --hex-ink: #c5cddb;
-  flex: none; position: relative; width: 42px; min-width: 0; height: 38px; min-height: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
-  color: var(--hex-ink); background: var(--hex-edge); border: 0; border-radius: 0;
-  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
-}
 .hex-button::before { content: ''; position: absolute; inset: 1.5px; background: var(--hex-fill); clip-path: inherit; }
 .hex-button svg { position: relative; pointer-events: none; }
 .hex-button input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.hex-button:has(input:checked) { --hex-edge: var(--gold); --hex-fill: #3a3218; --hex-ink: var(--gold); }
+.hex-button:has(input:checked) { --hex-edge: var(--gold); --hex-fill: var(--gold-fill); --hex-ink: var(--gold); }
 .hex-button:focus-visible, .hex-button:has(input:focus-visible) { --hex-edge: var(--accent); outline: none; }
-.order-hex { position: relative; flex: none; width: 26px; height: 23px; margin-left: 4px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #d7deea; }
+.order-hex { position: relative; flex: none; width: 26px; height: 23px; margin-left: 4px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--route-neutral); }
 .order-hex svg { position: absolute; inset: 0; }
-.order-hex polygon { fill: #12171f; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+.order-hex polygon { fill: var(--badge-fill); stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
 .order-hex b { position: relative; font-weight: 700; }
 .entry-steps { padding: 8px 10px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-muted); }
 .entry-steps ol { margin: 0; padding: 0; list-style: none; counter-reset: step; }
@@ -522,12 +525,10 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .upics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
 /* TODO(P2-539) #ws:ui-containers #type:dup #size:s #unit-tile #dep:P2-548 — .upic (32px) ещё одна плитка юнита с числом, бейдж i повторяет .pic i: перейти на общий UnitTile */
 .upic { position: relative; width: 32px; height: 32px; }
-.upic i { position: absolute; right: -2px; bottom: -2px; font-style: normal; font-weight: 700; font-size: 10.5px; background: #0d1016; border: 1px solid #6a7589; border-radius: 8px; padding: 0 3px; color: var(--text); }
+.upic i { position: absolute; right: -2px; bottom: -2px; font-style: normal; font-weight: 700; font-size: 10.5px; background: var(--bg); border: 1px solid var(--counter-stroke); border-radius: 8px; padding: 0 3px; color: var(--text); }
 .entry-details { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px 8px; border-top: 1px solid var(--border); }
 .plan-entries { display: flex; flex-direction: column; gap: 12px; }
 .phase { display: flex; flex-direction: column; gap: 5px; }
-/* TODO(P2-540) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .phase-title перебит общим заголовком раздела 959-971: удалить раннее определение */
-.phase-title { margin: 0; font-size: var(--font-xs); font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); }
 .phase-auto { margin: 0; color: var(--text-dim); font-size: var(--font-s); }
 .phase-add { position: sticky; bottom: 0; z-index: 1; padding-top: 3px; background: var(--surface); display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
 .phase-add .action-menu { flex: 1 1 0; min-width: 0; }
@@ -535,7 +536,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .phase > button { width: 100%; }
 .token-pick { display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); }
 .token-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-.token-tile { min-height: 62px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: var(--font-s); font-weight: 500; color: var(--text-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+.token-tile { min-height: 62px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: var(--font-s); font-weight: 500; color: var(--text-muted); }
 .token-tile b { font-size: 20px; font-weight: 700; color: var(--text); }
 .token-tile-on { border-color: var(--gold); }
 .token-cell { position: relative; display: flex; min-width: 0; }
@@ -548,28 +549,22 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .token-note { margin: 0; font-size: var(--font-xs); }
 .strategy-editor .strategy-lock { min-height: calc(2 * 1.35em); line-height: 1.35; }
 @media (max-width: 420px) { .strategy-editor .strategy-lock { min-height: calc(3 * 1.35em); } }
-/* TODO(P2-541) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .status-points перебит общим заголовком раздела 959-971: удалить раннее определение */
-.status-points { margin: 6px 0 2px; font-size: var(--font-s); font-weight: 600; color: var(--text-muted); }
 /* TODO(P2-542) #ws:ui-containers #type:dup #size:s #player-dot #dep:P2-515 — кружок игрока через ::before: перейти на PlayerDot */
 .status-player .stepper-name::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--player); }
 .status-reminder { margin: 4px 0 0; font-size: var(--font-s); }
-/* TODO(P2-543) #ws:ui-css #type:dup #size:s #duplicate-selector #warning — .warning-list второй раз, первое в групповом правиле 445: слить */
-.warning-list { padding: 0 10px 8px; }
+.warning-list { list-style: none; margin: 0; padding: 0 10px 8px; display: flex; flex-direction: column; gap: 5px; }
 .warning-text { color: var(--warning); font-size: var(--font-s); }
 /* A warning inside the block it speaks of: the same edge as a warned entry in the list. */
-.place-warnings, .warning-list.place-warnings { display: block; margin: 0; padding: 3px 0 3px 8px; border-left: 3px solid var(--warning); }
-/* TODO(P2-544) #ws:ui-css #type:dup #size:s #duplicate-selector #warning — .warning-list.place-warnings перебивает display из 560 строкой ниже: свести в одно правило */
+.place-warnings { display: block; margin: 0; padding: 3px 0 3px 8px; border-left: 3px solid var(--warning); }
 .warning-list.place-warnings { display: flex; }
 
 .stepper { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: var(--font-s); }
 .stepper .stepper-name { flex: 1; min-width: 0; }
 .stepper output { min-width: 3ch; text-align: center; font-weight: 600; font-size: var(--font-m); }
 .stepper button { padding: 0; }
-.editor-section { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); margin: 0; }
+.editor-section { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); margin: 0; }
 .editor-section > strong, .editor-section .panel-head > strong { font-size: var(--font-m); font-weight: 600; }
-.editor-section summary { min-height: var(--touch); display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 600; font-size: var(--font-m); }
-/* TODO(P2-545) #ws:ui-css #type:dup #size:s #duplicate-selector — .editor-section summary второй раз подряд, первое на 570: слить */
-.editor-section summary { list-style: none; }
+.editor-section summary { min-height: var(--touch); display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 600; font-size: var(--font-m); list-style: none; }
 .editor-section summary::-webkit-details-marker { display: none; }
 .editor-section summary > svg { flex: none; width: 20px; height: 20px; color: var(--text-muted); transform: rotate(-90deg); transition: transform var(--motion-fast); }
 .editor-section[open] summary > svg { transform: none; }
@@ -581,14 +576,14 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .in-card > button:first-child:not(:last-child) { padding-right: 52px; }
 .in-card > button:last-child:not(:first-child) { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); }
 .source-button { flex: 1; min-width: 0; text-align: left; font-size: var(--font-s); }
-.source-button small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.source-button small { font-weight: 400; }
 .landing { display: flex; flex-direction: column; gap: 8px; }
 .landing-planet { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .landing-target { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; min-width: 120px; }
 .landing-target svg { flex: none; overflow: visible; }
 .landing-target span { min-width: 0; }
 .landing-target strong { display: block; font-size: var(--font-s); }
-.landing-target small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.landing-target small { font-weight: 400; }
 .landing-stacks { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
 .landing-stacks svg { display: block; overflow: visible; }
 .start-game { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
@@ -602,27 +597,24 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .acting-for > button[aria-pressed='true'] { background: color-mix(in srgb, var(--owner) 30%, var(--surface-2)); border-color: var(--owner); color: var(--text); }
 .link-dialog { width: min(440px, calc(100vw - 32px)); margin: auto; display: flex; flex-direction: column; gap: 10px; padding: 18px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
 .link-dialog p { margin: 0; }
-.optional-note { margin-left: 4px; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
-/* TODO(P2-546) #ws:ui-css #type:dup #size:s #caption-small — .picker-distance совпадает с .optional-note 605: один класс */
-.picker-distance { color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.optional-note, .picker-distance { color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.optional-note { margin-left: 4px; }
 .token-picture { display: block; overflow: visible; pointer-events: none; }
-/* TODO(P2-547) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .picker-title перебит общим заголовком раздела 959-971: удалить раннее определение */
-.picker-title { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); }
 .picker-note, .picker-fleet { margin: 0; font-size: var(--font-s); }
 .pics { display: flex; flex-wrap: wrap; gap: 5px; }
 .pic-pair { display: contents; }
 /* TODO(P2-548) #ws:ui-containers #type:dup #size:m #unit-tile — плитка юнита с числом: 4 класса (.pic, .shop-item 254, .stage-loss 268, .upic 524) и 5 компонентов, размеры 62/84/62/32, бейдж числа 257, 270, 617, 525; общий UnitTile с размером, радиус var(--radius-s) вместо 10px */
-.pic { position: relative; width: 62px; height: 62px; padding: 2px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
-.pic-taken { border-color: var(--gold); background: #2a2618; }
+.pic { position: relative; width: 62px; height: 62px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--surface-2); }
+.pic-taken { border-color: var(--gold); background: var(--gold-soft); }
 .pic i { position: absolute; right: 3px; bottom: 1px; font-style: normal; font-weight: 700; font-size: 12px; color: var(--text); }
 .pips { display: flex; flex-wrap: wrap; gap: 3px; }
-.pip { fill: transparent; stroke: #55617a; stroke-width: 1; }
+.pip { fill: transparent; stroke: var(--border-hover); stroke-width: 1; }
 .pip-full { fill: var(--accent); }
 .pip-over { stroke: var(--danger); }
 .pip-full.pip-over { fill: var(--danger); }
 .stops { margin: 4px 0 0; padding: 0; list-style: none; }
 .stop { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 0 0 10px 22px; }
-.stop::before { content: ''; position: absolute; left: 5px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: #d7deea; }
+.stop::before { content: ''; position: absolute; left: 5px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--route-neutral); }
 .stop::after { content: ''; position: absolute; left: 9px; top: 16px; bottom: 0; width: 2px; background: var(--border-strong); }
 .stop-target { padding-bottom: 0; }
 .stop-target::before { background: var(--gold); }
@@ -637,7 +629,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 
 /* Add an action: the dashed button under the plan. */
 .action-menu { display: flex; flex-direction: column; gap: 4px; }
-.action-menu > button.primary { width: 100%; background: var(--accent-soft); color: #fff; border: 1px solid var(--accent); border-radius: var(--radius-s); font-weight: 400; }
+.action-menu > button.primary { width: 100%; background: var(--accent-soft); color: var(--text-strong); border: 1px solid var(--accent); border-radius: var(--radius-s); font-weight: 400; }
 .action-menu .card-list { gap: 3px; }
 .action-menu .card-list button { text-align: left; font-size: var(--font-s); }
 
@@ -653,12 +645,12 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .ingress { fill: var(--violet); stroke: var(--bg); stroke-width: 1.5; }
 
 @media (hover: hover) {
-  .action-menu > button.primary:hover { background: #2a3e63; border-color: var(--accent); color: #fff; }
-  .entry-main button:hover:not(:disabled):not(.hex-button) { background: var(--surface-3); border-color: transparent; color: #fff; }
-  button.hex-button:hover:not(:disabled), label.hex-button:hover { background: #55617a; --hex-fill: var(--surface-3); --hex-ink: #fff; color: #fff; }
-  label.hex-button:has(input:checked):hover { background: var(--gold); --hex-fill: #4a3f1c; --hex-ink: var(--gold); color: var(--gold); }
+  .action-menu > button.primary:hover { background: var(--accent-soft-hover); border-color: var(--accent); color: var(--text-strong); }
+  .entry-main button:hover:not(:disabled):not(.hex-button) { background: var(--surface-3); border-color: transparent; color: var(--text-strong); }
+  button.hex-button:hover:not(:disabled), label.hex-button:hover { background: var(--border-hover); --hex-fill: var(--surface-3); --hex-ink: var(--text-strong); color: var(--text-strong); }
+  label.hex-button:has(input:checked):hover { background: var(--gold); --hex-fill: var(--gold-fill-hover); --hex-ink: var(--gold); color: var(--gold); }
   .plan-copy:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--accent); }
-  .popover-close:hover { background: var(--surface-2); border-color: transparent; color: #fff; }
+  .popover-close:hover { background: var(--surface-2); border-color: transparent; color: var(--text-strong); }
 }
 
 @media (max-width: 767px) {
@@ -678,8 +670,7 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 /* Pasting a Milty Draft map string: a card over the top right of the map. */
 /* TODO(P2-549) #ws:ui-containers #type:dup #size:s #floating-card #dep:P2-513 — .map-import повторяет .tile-popover: перейти на общий Popover */
 .map-import { position: absolute; bottom: 56px; right: 8px; z-index: 6; width: min(360px, calc(100% - 16px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface-3); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow); animation: pop-in var(--motion) var(--ease); }
-/* TODO(P2-550) #ws:ui-css #type:dup #size:s #font-stack — стек system-ui… повторён 6 раз вне body: 682, 730, 750, 777, 782, 933; font: inherit или токен --font-family */
-.map-import textarea { width: 100%; padding: 8px 10px; resize: vertical; font: var(--font-s)/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius-s); }
+.map-import textarea { width: 100%; padding: 8px 10px; resize: vertical; font: var(--font-s)/1.4 var(--font-family); color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius-s); }
 .map-import textarea:focus { border-color: var(--accent); outline: none; }
 .map-import p { margin: 0; font-size: var(--font-s); }
 
@@ -687,34 +678,30 @@ legend { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppe
 .app-body > main[data-screen='game'] { padding: 0; overflow: hidden; }
 .players-screen { display: grid; grid-template-columns: minmax(0, 1fr) 330px; height: 100%; min-height: 0; }
 .players-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.players-list { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 22px 28px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.players-list { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 22px 28px; }
 .players-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; min-height: 30px; }
 .players-head h1 { font-size: var(--font-xl); font-weight: 650; margin: 0; letter-spacing: -0.01em; }
 .players-head > span { color: var(--text-dim); font-size: 13px; }
 .players-hint { color: var(--text-dim); font-size: 13px; }
-.players-aside { border-left: 1px solid var(--border); background: var(--surface); padding: 18px; overflow-y: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.players-aside { border-left: 1px solid var(--border); background: var(--surface); padding: 18px; overflow-y: auto; min-height: 0; }
 .side-group { margin-bottom: 18px; }
-/* TODO(P2-551) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .side-label перебит общим заголовком раздела 959-971: удалить раннее определение */
-.side-label { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 8px; font-weight: 600; }
 .side-note { font-size: 12px; color: var(--text-dim); line-height: 1.4; margin: 0; }
 .side-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .side-actions button, .side-actions .button { min-height: 36px; padding: 5px 12px; font-size: 13px; color: var(--text-muted); position: relative; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip, button.chip { position: relative; padding: 7px 12px; min-height: 36px; min-width: 0; border-radius: 18px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-size: 13px; line-height: 1.45; display: flex; align-items: center; cursor: pointer; transition: background-color var(--motion), border-color var(--motion), color var(--motion); }
 button.chip::after, .side-actions button::after, .side-actions .button::after, .saved-list button::after, .players-aside .layout-picker .segment button::after { content: ''; position: absolute; inset: -4px 0; }
-.icon-button::after { content: ''; position: absolute; inset: -4px; }
-.chip.on, button.chip[aria-pressed='true'], button.chip[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
+.chip.on, button.chip[aria-pressed='true'], button.chip[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
 .chip.fix { cursor: default; opacity: 0.85; }
 .chip:active:not(:disabled) { transform: none; }
 .players-aside .layout-picker { background: transparent; border: 0; border-radius: 0; padding: 0; margin-bottom: 20px; gap: 8px; }
-/* TODO(P2-552) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — заголовок LayoutPicker собран своим правилом, а не общим заголовком раздела 959: перейти на общий */
+/* TODO(P2-552) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — заголовок LayoutPicker собран своим правилом, а не общим заголовком раздела 959: перейти на общий — P2 note: the common heading draws lines on both sides, so moving the LayoutPicker title to it changes the page; it also needs the markup (P2-570, ui-containers) */
 .players-aside .layout-picker strong { font-size: var(--font-xs); letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
 .players-aside .layout-picker .segment button { position: relative; font-size: 13px; min-height: 36px; padding: 5px 8px; }
 .players-aside .layout-picker p, .players-aside .layout-picker .row { font-size: 12px; margin: 0; line-height: 1.4; }
 
 .player-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; transition: border-color var(--motion), opacity var(--motion), transform var(--motion), box-shadow var(--motion); }
-/* TODO(P2-553) #ws:ui-css #type:ui #size:s #colour-token — #4a6490 (рамка своей карточки) без переменной, ещё 815: токен или color-mix от --accent */
-.player-card.me { border-color: #4a6490; box-shadow: inset 3px 0 0 var(--accent); }
+.player-card.me { border-color: var(--border-me); box-shadow: inset 3px 0 0 var(--accent); }
 .player-card.fresh { animation: card-in 0.25s ease; }
 .player-card.lifted { opacity: 0.35; transform: scale(0.985); }
 @keyframes card-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
@@ -727,19 +714,15 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .player-name { position: relative; min-width: 0; }
 .player-role { position: relative; z-index: 1; pointer-events: none; font-size: var(--font-xs); color: var(--text-dim); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
 /* The whole field, label included, takes the tap: 44 px high while it looks like a line of text. */
-.player-card button.fac-button { display: block; width: 100%; min-width: 0; min-height: 0; height: 44px; margin: -18px 0 -1px; padding: 18px 22px 2px 0; border: 0; border-radius: 0; font: 600 16px system-ui, -apple-system, 'Segoe UI', sans-serif; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); cursor: pointer; outline-offset: 3px; background-color: transparent; background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%); background-size: 5px 5px; background-position: calc(100% - 9px) 72%, calc(100% - 4px) 72%; background-repeat: no-repeat; }
+.player-card button.fac-button { display: block; width: 100%; min-width: 0; min-height: 0; height: 44px; margin: -18px 0 -1px; padding: 18px 22px 2px 0; border: 0; border-radius: 0; font: 600 16px var(--font-family); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); cursor: pointer; outline-offset: 3px; background-color: transparent; background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%); background-size: 5px 5px; background-position: calc(100% - 9px) 72%, calc(100% - 4px) 72%; background-repeat: no-repeat; }
 .player-vp { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
 .player-vp b { font-size: var(--font-l); color: var(--text); min-width: 20px; text-align: center; }
-/* TODO(P2-555) #ws:ui-css #type:dead #size:s #dead-css — .icon-button нигде не используется в src/ui: удалить вместе с 705 и 819 */
-.icon-button { position: relative; width: 36px; height: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: var(--radius-s); border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--text-muted); font-size: 17px; line-height: 1; }
 /* TODO(P2-556) #ws:ui-containers #type:dup #size:m #confirm-bar — строка подтверждения: .player-confirm, строка сохранения GameScreen:163, .row в LayoutPicker и MapStringImport; общий ConfirmBar */
 .player-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 13px; color: var(--text-muted); }
 .players-list > .player-confirm { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; }
 .player-confirm span { flex: 1 1 260px; }
 .player-confirm button { min-height: 36px; padding: 5px 14px; font-size: 13px; }
 .player-body { display: grid; grid-template-columns: 150px 200px minmax(0, 1fr); gap: 18px; padding: 12px 14px 15px; border-top: 1px solid var(--border); }
-/* TODO(P2-557) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .player-sec перебит общим заголовком раздела 959-971: удалить раннее определение */
-.player-sec { font-size: var(--font-xs); color: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; margin-bottom: 7px; }
 .player-stat { display: flex; justify-content: space-between; font-size: 13px; margin-top: 6px; color: var(--text-muted); }
 .player-stat b { color: var(--text); }
 .ship-list { display: grid; gap: 5px; }
@@ -747,13 +730,13 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .ship b { color: var(--text); }
 .unit-icon { width: 22px; height: 22px; display: block; color: var(--player, var(--accent)); }
 .home-hex { display: block; }
-.home-hex text { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; text-anchor: middle; }
+.home-hex text { font-family: var(--font-family); text-anchor: middle; }
 .home-hex-tile { fill: var(--hex-home); stroke: var(--player, var(--border-strong)); stroke-width: 2; }
-.home-hex-number { font-size: 13px; font-weight: 700; fill: #cfd6e2; }
+.home-hex-number { font-size: 13px; font-weight: 700; fill: var(--text-soft); }
 .home-hex-planet { fill: var(--token-fill); stroke: var(--player, var(--border-strong)); stroke-width: 1.5; }
 .home-hex-values { font-weight: 700; }
 .home-hex-slash { fill: var(--text-dim); font-weight: 700; }
-.home-hex-name { font-size: 10px; fill: #cfd6e2; }
+.home-hex-name { font-size: 10px; fill: var(--text-soft); }
 .tech { padding-left: 10px; border-left: 3px solid; margin-bottom: 9px; }
 .tech b { display: block; font-size: 13px; font-weight: 600; }
 .tech p { margin: 1px 0 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.35; }
@@ -774,15 +757,14 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .sheet-item p { margin: 1px 0 0; font-size: 12.5px; color: var(--text-muted); line-height: 1.35; }
 .sheet-item .sheet-unlock { color: var(--text-dim); }
 .fac-fixed { font-weight: 600; }
-.add-opponent { width: 100%; border: 1px dashed var(--border-strong); background: transparent; border-radius: var(--radius); color: var(--accent); font: 600 14px system-ui, -apple-system, 'Segoe UI', sans-serif; padding: 14px; transition: background-color var(--motion), border-color var(--motion); }
+.add-opponent { width: 100%; border: 1px dashed var(--border-strong); background: transparent; border-radius: var(--radius); color: var(--accent); font: 600 14px var(--font-family); padding: 14px; transition: background-color var(--motion), border-color var(--motion); }
 .add-opponent:active:not(:disabled) { transform: none; }
 
 /* Who sits where. */
 .seat-map { display: block; user-select: none; }
-.seat-map text { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; text-anchor: middle; }
+.seat-map text { font-family: var(--font-family); text-anchor: middle; }
 .seat-cell { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
-/* TODO(P2-558) #ws:ui-css #type:ui #size:s #colour-token — поверхности числами: #222b39 785, #222a37 799, #1c2636 818, #28303e 819; заменить на --surface-3 / --accent-soft или завести токены */
-.seat-spot { fill: #222b39; stroke: #465268; stroke-width: 1.5; cursor: grab; touch-action: none; }
+.seat-spot { fill: var(--seat-spot); stroke: var(--seat-spot-stroke); stroke-width: 1.5; cursor: grab; touch-action: none; }
 .seat-move { transition: transform 0.28s var(--ease); }
 .seat-token { cursor: grab; touch-action: none; transition: transform 0.16s; outline: none; }
 .seat-token-locked { cursor: default; touch-action: auto; }
@@ -794,9 +776,8 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .seat-token.hover { transform: scale(1.18); }
 .seat-token.picked .seat-disc, .seat-token:focus-visible .seat-disc { stroke: var(--text); stroke-width: 3; }
 .seat-token.picked { transform: scale(1.12); }
-.seat-map .seat-caption { font-weight: 600; fill: #cfd6e2; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
-/* TODO(P2-559) #ws:ui-css #type:ui #size:s #colour-token #shadow — тени rgb(0 0 0 / 0.55-0.8) числами при токене --shadow: 490, 799, 880, 898, 908; свести к --shadow и --shadow-drawer */
-.seat-ghost { position: fixed; left: 0; top: 0; z-index: 9; display: none; gap: 10px; align-items: center; padding: 9px 14px 9px 9px; border-radius: var(--radius); background: #222a37; border: 1px solid var(--border-strong); pointer-events: none; box-shadow: 0 14px 34px rgb(0 0 0 / 0.8); opacity: 0; transition: transform 0.09s linear, opacity 0.16s; }
+.seat-map .seat-caption { font-weight: 600; fill: var(--text-soft); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.seat-ghost { position: fixed; left: 0; top: 0; z-index: 9; display: none; gap: 10px; align-items: center; padding: 9px 14px 9px 9px; border-radius: var(--radius); background: var(--surface-ghost); border: 1px solid var(--border-strong); pointer-events: none; box-shadow: var(--shadow-lift); opacity: 0; transition: transform 0.09s linear, opacity 0.16s; }
 .seat-ghost.up { opacity: 1; }
 .seat-ghost.land { transition: transform 0.22s var(--ease), opacity 0.22s; opacity: 0; }
 .seat-ghost small { display: block; font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
@@ -806,17 +787,14 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 body.seat-dragging, body.seat-dragging * { cursor: grabbing !important; user-select: none; }
 
 /* The list of players as a panel over the plan. */
-/* TODO(P2-561) #ws:ui-css #type:dup #size:s #duplicate-selector — .plan-body второй раз, первое правило на 428: слить */
-.plan-body { position: relative; overflow: hidden; }
 .players-panel { height: 100%; display: flex; flex-direction: column; background: var(--bg); }
 
 @media (hover: hover) {
-  .player-card:hover { border-color: #46536a; }
-  .player-card.me:hover { border-color: #4a6490; }
-  button.chip:hover:not(:disabled) { background: transparent; border-color: #5d6a83; color: var(--text-muted); }
-  button.chip[aria-pressed='true']:hover:not(:disabled), button.chip[aria-checked='true']:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: #fff; }
-  .add-opponent:hover:not(:disabled) { background: #1c2636; border-color: var(--accent); color: var(--accent); }
-  .icon-button:hover:not(:disabled) { background: #28303e; color: #fff; border-color: #55617a; }
+  .player-card:hover { border-color: var(--border-hover-card); }
+  .player-card.me:hover { border-color: var(--border-me); }
+  button.chip:hover:not(:disabled) { background: transparent; border-color: var(--border-hover-chip); color: var(--text-muted); }
+  button.chip[aria-pressed='true']:hover:not(:disabled), button.chip[aria-checked='true']:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
+  .add-opponent:hover:not(:disabled) { background: var(--accent-faint); border-color: var(--accent); color: var(--accent); }
 }
 
 @media (max-width: 767px) {
@@ -835,9 +813,8 @@ body.seat-dragging, body.seat-dragging * { cursor: grabbing !important; user-sel
 /* TODO(P2-562) #ws:ui-containers #type:dup #size:m #upgrade-toggle — переключатель улучшения дважды: .ship-row-live и .upgrade-card 855 (рамка, gold при выборе, disabled без затухания); один компонент */
 .ship-row-live { min-height: var(--touch); cursor: pointer; border-color: var(--border); background: var(--surface-2); }
 .ship-row-live:disabled { cursor: default; opacity: 1; background: transparent; }
-.ship-row-live[aria-pressed='true'], .ship-row-live[aria-pressed='true']:disabled { color: var(--text-muted); border-color: var(--gold); background: #2a2618; }
+.ship-row-live[aria-pressed='true'], .ship-row-live[aria-pressed='true']:disabled { color: var(--text-muted); border-color: var(--gold); background: var(--gold-soft); }
 .ship-row-name b { display: block; color: var(--text); font-weight: 600; }
-.ship-row-name small, .upgrade-body > small { display: block; color: var(--text-dim); font-size: var(--font-xs); }
 small.ship-row-round { color: var(--gold); }
 .ship-row-value { text-align: center; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ship-row-value em, .ship-stat-line em { font-style: normal; font-weight: 700; color: var(--gold); }
@@ -846,15 +823,15 @@ small.ship-row-round { color: var(--gold); }
 .ship-notes small { flex-basis: 100%; font-size: var(--font-xs); color: var(--text-dim); line-height: 1.3; }
 
 /* My ship upgrades: a panel sliding in over the right of the map. */
-.upgrades-panel, .te-panel, .legend-panel { height: 100%; overflow-y: auto; padding: 14px 16px; background: var(--bg); scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.upgrades-panel, .te-panel, .legend-panel { height: 100%; overflow-y: auto; padding: 14px 16px; background: var(--bg); }
 .upgrades-panel h2, .te-panel h2, .legend-panel h2 { margin: 0 0 12px; font-size: var(--font-xl); font-weight: 650; letter-spacing: -0.01em; }
 .te-panel .editor-section { margin-bottom: 8px; }
 .te-panel .row[role='group'] { gap: 4px; }
 .te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
 /* TODO(P2-563) #ws:ui-containers #type:dup #size:s #upgrade-toggle #dep:P2-562 — .upgrade-card повторяет .ship-row-live 836: перейти на общий переключатель */
-.upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); }
+.upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }
 .upgrade-card:disabled { cursor: default; opacity: 1; color: var(--text-muted); }
-.upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--gold); background: #2a2618; }
+.upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--gold); background: var(--gold-soft); }
 .upgrade-card .unit-icon { width: 42px; height: 42px; }
 .upgrade-body b { display: block; color: var(--text); font-size: 13.5px; }
 .ship-stat-line { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
@@ -868,20 +845,16 @@ small.ship-row-round { color: var(--gold); }
 .entry-upgrades { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 6px 6px; }
 .entry-upgrades button { width: var(--touch); height: var(--touch); padding: 0; display: grid; place-items: center; background: transparent; border-color: var(--border); }
 .entry-upgrades button .unit-icon { width: 28px; height: 28px; }
-.entry-upgrades button[aria-pressed='true'] { background: #2a2618; border-color: var(--gold); }
+.entry-upgrades button[aria-pressed='true'] { background: var(--gold-soft); border-color: var(--gold); }
 .entry-upgrades button[aria-pressed='true'] .unit-icon { color: var(--gold); }
 .entry-upgrades .entry-upgrade-owned:disabled { opacity: 1; border-style: dashed; border-color: var(--gold); }
 .entry-upgrades .entry-upgrade-owned .unit-icon { color: var(--text-dim); }
 
 /* Drawers: the vertical tabs at the sides of the map and the sheets they pull out. */
 /* The map lies deep: its whole edge is in shadow, and a drawer slides out over it and casts its own. */
-/* TODO(P2-564) #ws:ui-css #type:dup #size:s #duplicate-selector — .plan-map второй раз, первое правило на 429: слить */
-.plan-map { container-type: inline-size; }
-.plan-map::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-shadow: inset 0 0 44px 10px rgb(0 0 0 / 0.7); }
+.plan-map::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-shadow: var(--shadow-map-edge); }
 .plan-map > .map-hint, .plan-map > .map-home { z-index: 3; }
 .drawer-rail { position: absolute; top: 14px; z-index: 5; display: flex; flex-direction: column; gap: 6px; transition: transform 0.26s var(--ease); pointer-events: none; }
-/* TODO(P2-565) #ws:ui-css #type:dup #size:s #duplicate-selector — .plan-body третий раз (428, 810): слить в одно */
-.plan-body { container-type: inline-size; }
 .drawer-rail-left { left: 0; z-index: 11; }
 .drawer-rail-open-players { transform: translateX(calc(min(860px, 100cqw - 34px) - 2px)); }
 .drawer-rail-open-legend { transform: translateX(calc(min(460px, 100cqw - 34px) - 2px)); }
@@ -889,23 +862,20 @@ small.ship-row-round { color: var(--gold); }
 .drawer-rail-open { transform: translateX(calc(2px - min(388px, 100cqw - 34px))); }
 .drawer-tab { pointer-events: auto; min-width: 0; min-height: 0; width: 34px; padding: 14px 0; display: grid; place-items: center; font-size: var(--font-s); font-weight: 600; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); white-space: nowrap; }
 .drawer-tab span { writing-mode: vertical-rl; }
-.drawer-tab-left { border-left: 0; border-right: 3px solid var(--accent); border-radius: 0 9px 9px 0; }
-.drawer-tab-right { border-right: 0; border-left: 3px solid var(--accent); border-radius: 9px 0 0 9px; }
+.drawer-tab-left { border-left: 0; border-right: 3px solid var(--accent); border-radius: 0 var(--radius-s) var(--radius-s) 0; }
+.drawer-tab-right { border-right: 0; border-left: 3px solid var(--accent); border-radius: var(--radius-s) 0 0 var(--radius-s); }
 .drawer-tab-right span { transform: rotate(180deg); }
-.drawer-tab[aria-pressed='true'] { color: #fff; background: var(--bg); }
 .drawer-tab.te-ready { color: var(--gold); }
 .drawer { position: absolute; top: 0; bottom: 0; }
-.drawer-left { left: 0; z-index: 10; border-right: 2px solid var(--success); box-shadow: 16px 0 26px rgb(0 0 0 / 0.65); animation: drawer-from-left 0.26s var(--ease); }
+.drawer-left { left: 0; z-index: 10; border-right: 2px solid var(--success); box-shadow: var(--shadow-drawer); animation: drawer-from-left 0.26s var(--ease); transition: width 0.26s var(--ease); }
 .drawer-left.drawer-leaving { animation: drawer-to-left 0.26s var(--ease) forwards; }
-/* TODO(P2-566) #ws:ui-css #type:dup #size:s #duplicate-selector — .drawer-left второй раз, первое правило на 898: слить */
-.drawer-left { transition: width 0.26s var(--ease); }
 .drawer-players { width: min(860px, calc(100% - 34px)); }
 .drawer-legend { width: min(460px, calc(100% - 34px)); }
-.drawer-scrim { position: absolute; inset: 0; z-index: 9; background: rgb(6 8 12 / 0.45); animation: fade-in 0.2s linear; }
+.drawer-scrim { position: absolute; inset: 0; z-index: 9; background: rgb(var(--scrim) / 0.45); animation: fade-in 0.2s linear; }
 .drawer-scrim-leaving { animation: fade-out 0.2s linear forwards; pointer-events: none; }
 :root[data-blur='on'] .drawer-scrim { -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 /* Behind the plan's panel, flush with it: the sheet comes out from under it, and its shadow grows on the map as it moves. */
-.drawer-under { right: 0; z-index: 6; width: min(388px, calc(100% - 34px)); border-left: 2px solid var(--success); box-shadow: -16px 0 26px rgb(0 0 0 / 0.65); animation: drawer-from-under 0.26s var(--ease); }
+.drawer-under { right: 0; z-index: 6; width: min(388px, calc(100% - 34px)); border-left: 2px solid var(--success); box-shadow: var(--shadow-drawer-under); animation: drawer-from-under 0.26s var(--ease); }
 .drawer-under.drawer-leaving { animation: drawer-to-under 0.26s var(--ease) forwards; }
 .drawer-swap { height: 100%; animation: fade-in 0.16s linear; }
 @keyframes drawer-from-left { from { transform: translateX(-100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } to { transform: none; } }
@@ -921,8 +891,6 @@ small.ship-row-round { color: var(--gold); }
 :root[data-energy='on'] .stage, :root[data-energy='on'] .drawer-scrim { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 
 /* The legend. */
-/* TODO(P2-567) #ws:ui-css #type:dup #size:s #section-title #dep:P2-570 — .legend-panel h3 перебит общим заголовком раздела 959-971: удалить раннее определение */
-.legend-panel h3 { margin: 14px 0 6px; font-size: var(--font-xs); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
 .legend-row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; padding: 3px 0; font-size: 12.5px; line-height: 1.35; color: var(--text-muted); }
 .legend-mark { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 30px; }
 .legend-svg { width: 34px; height: 30px; display: block; overflow: visible; }
@@ -930,7 +898,7 @@ small.ship-row-round { color: var(--gold); }
 .legend-values { font-size: 10px; text-anchor: middle; fill: var(--text-muted); }
 /* TODO(P2-568) #ws:ui-containers #type:dup #size:s #player-dot #dep:P2-515 — .legend-dot и .legend-seat 933: кружок игрока, перейти на PlayerDot */
 .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: block; }
-.legend-seat { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 700 12px system-ui, sans-serif; color: #0d1016; }
+.legend-seat { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 700 12px var(--font-family); color: var(--bg); }
 .legend-number { color: var(--gold); font-size: 13px; white-space: nowrap; }
 .legend-word { font-size: 12px; color: var(--text); text-align: center; }
 .legend-grip { color: var(--text-dim); display: grid; place-items: center; }
@@ -949,8 +917,13 @@ small.ship-row-round { color: var(--gold); }
 .stops-over .stop::after { background: var(--warning); }
 
 /* The hexagon stays a hexagon inside any list or head. */
-/* TODO(P2-569) #ws:ui-css #type:dup #size:s #duplicate-selector #hex-button — button.hex-button повторяет свойства .hex-button 498-504 ради специфичности: оставить одно правило */
-button.hex-button { flex: none; width: 42px; min-width: 0; height: 38px; min-height: 0; padding: 0; color: var(--hex-ink); background: var(--hex-edge); border: 0; border-radius: 0; }
+/* Late in the sheet and with the element in it, so it outweighs the button rules of any list or head. */
+.hex-button, .entry-main .hex-button, button.hex-button {
+  --hex-fill: var(--surface-2); --hex-ink: var(--hex-button-ink);
+  flex: none; position: relative; width: 42px; min-width: 0; height: 38px; min-height: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
+  color: var(--hex-ink); background: var(--hex-edge); border: 0; border-radius: 0;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
 button.hex-button::after { content: none; }
 button.hex-button.popover-close { position: absolute; }
 
@@ -971,59 +944,42 @@ button.hex-button.popover-close { position: absolute; }
 .legend-panel h2 + h3 { margin-top: 0; }
 
 /* Plan tabs hang from the edge of the screen below them, signed like the drawers: the free edge carries the stripe. */
-/* TODO(P2-571) #ws:ui-css #type:dup #size:s #duplicate-selector — .plan-tabs второй и третий раз (первое на 408): слить */
-.plan-tabs { padding-top: 2px; }
-.plan-tabs { position: relative; z-index: 1; margin-bottom: -1px; }
-/* TODO(P2-572) #ws:ui-css #type:dup #size:s #duplicate-selector — .plan-tab перебивает фон, рамку и радиус из 409, а [aria-selected] на 980 перебивает 410: слить */
-.plan-tab { touch-action: none; cursor: grab; background: var(--bg); border: 1px solid var(--border-strong); border-top: 3px solid var(--accent); border-bottom-color: var(--border); border-radius: 9px 9px 0 0; }
-/* The chosen plan speaks as an open drawer's tab does: the same frame, green on the free edge, and no line between it and the map. */
-.plan-tab[aria-selected='true'] { color: #fff; background: var(--bg); box-shadow: none; border-top-color: var(--success); border-bottom-color: var(--bg); }
 .plan-tab-dragging { cursor: grabbing; }
 @media (hover: hover) {
-  button.plan-tab:hover:not(:disabled) { background: var(--bg); color: #fff; border-color: var(--border-strong); border-top-color: var(--accent); border-bottom-color: var(--border); }
+  button.plan-tab:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-top-color: var(--accent); border-bottom-color: var(--border); }
   button.plan-tab[aria-selected='true']:hover:not(:disabled) { border-top-color: var(--success); border-bottom-color: var(--bg); }
 }
 
 /* The menu: a hexagon per screen, the current one green; the export turns gold when a file is due. */
-/* TODO(P2-573) #ws:ui-css #type:ui #size:s #colour-token #selected-state — #17352a и #d7f5e6 (зелёный выбранного) числами: 989, 1009, 1018; токены --success-soft и --success-ink */
-button.hex-button[aria-current='page'] { --hex-edge: var(--success); --hex-fill: #17352a; --hex-ink: #d7f5e6; }
-button.hex-button.nav-export-due { --hex-edge: var(--gold); --hex-fill: #3a3218; --hex-ink: var(--gold); }
+button.hex-button[aria-current='page'] { --hex-edge: var(--success); --hex-fill: var(--success-soft); --hex-ink: var(--success-ink); }
+button.hex-button.nav-export-due { --hex-edge: var(--gold); --hex-fill: var(--gold-fill); --hex-ink: var(--gold); }
 
 @media (hover: hover) {
-  button.drawer-tab.drawer-tab-left:hover:not(:disabled) { background: var(--bg); color: #fff; border-color: var(--border-strong); border-right-color: var(--accent); }
-  button.drawer-tab.drawer-tab-right:hover:not(:disabled) { background: var(--bg); color: #fff; border-color: var(--border-strong); border-left-color: var(--accent); }
+  button.drawer-tab.drawer-tab-left:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-right-color: var(--accent); }
+  button.drawer-tab.drawer-tab-right:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-left-color: var(--accent); }
 }
 
 /* An open drawer is edged in green, the colour of what is chosen. Its own tab lies over that line and joins the sheet; the other tab stays outside it. */
-/* TODO(P2-574) #ws:ui-css #type:dup #size:s #duplicate-selector — выбранная вкладка шторки перебивает .drawer-tab[aria-pressed] 895 и наведение 993-994: оставить одно правило на сторону */
-button.drawer-tab.drawer-tab-left[aria-pressed='true'], button.drawer-tab.drawer-tab-left[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: #fff; border-color: var(--border-strong); border-right-color: var(--success); }
-button.drawer-tab.drawer-tab-right[aria-pressed='true'], button.drawer-tab.drawer-tab-right[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: #fff; border-color: var(--border-strong); border-left-color: var(--success); }
+button.drawer-tab.drawer-tab-left[aria-pressed='true'], button.drawer-tab.drawer-tab-left[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-right-color: var(--success); }
+button.drawer-tab.drawer-tab-right[aria-pressed='true'], button.drawer-tab.drawer-tab-right[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-left-color: var(--success); }
 .drawer-rail-open-players .drawer-tab[aria-pressed='false'], .drawer-rail-open-legend .drawer-tab[aria-pressed='false'] { transform: translateX(2px); }
 .drawer-rail-open .drawer-tab[aria-pressed='false'] { transform: translateX(-2px); }
 
 /* The map's own actions hang in its corners, as hexagons like every other control; the one switched on is green. */
-/* TODO(P2-575) #ws:ui-css #type:dup #size:s #duplicate-selector — .map-strip второй раз, первое правило на 395: слить */
-.map-strip { padding: 10px; align-items: flex-end; }
-/* TODO(P2-576) #ws:ui-css #type:dup #size:s #duplicate-selector — .map-tools второй раз, первое правило на 400: слить */
-.map-tools { flex-wrap: nowrap; gap: 8px; }
-button.hex-button[aria-pressed='true'] { --hex-edge: var(--success); --hex-fill: #17352a; --hex-ink: #d7f5e6; }
+button.hex-button[aria-pressed='true'] { --hex-edge: var(--success); --hex-fill: var(--success-soft); --hex-ink: var(--success-ink); }
 
 /* The sheet of factions: every one in view, a finger's room each. Blue edge is free to choose, green is the choice. */
-.fac-sheet { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 14px 18px 18px; background: var(--bg); border: 1px solid var(--border-strong); border-radius: 14px; scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.fac-sheet { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 14px 18px 18px; background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius-l); }
 .fac-sheet .stage-head { margin-bottom: 8px; font-size: var(--font-xl); }
 .fac-group { margin: 12px 0 8px; }
 .fac-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
 button.fac-option { min-height: 48px; padding: 6px 12px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; font-weight: 600; font-size: 14px; line-height: 1.25; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-left: 3px solid var(--accent); border-radius: var(--radius-s); }
 button.fac-option small { font-weight: 400; font-size: var(--font-xs); color: var(--text-dim); }
-button.fac-option[aria-pressed='true'], button.fac-option[aria-pressed='true']:hover:not(:disabled) { color: #fff; background: #17352a; border-color: var(--success); }
+button.fac-option[aria-pressed='true'], button.fac-option[aria-pressed='true']:hover:not(:disabled) { color: var(--text-strong); background: var(--success-soft); border-color: var(--success); }
 button.fac-option:disabled { opacity: 0.45; }
 .fac-clear { display: block; margin: 14px 0 0 auto; }
 
 
-/* A manual adjustment's system: chosen on the map, not from a list of numbers. */
-/* TODO(P2-577) #ws:ui-css #type:dead #size:s #dead-css — .adjust-system нигде не используется в src/ui: удалить */
-.adjust-system { display: flex; align-items: center; gap: 8px; font-size: var(--font-s); color: var(--text-muted); }
-.adjust-system > button:not(.hex-button) { flex: 1 1 auto; min-width: 0; }
 
 .legend-row b { color: var(--text); font-weight: 600; }
 

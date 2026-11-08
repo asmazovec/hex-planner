@@ -1,5 +1,5 @@
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
-import { createGame, makeId, slotKeyOf } from './newGame';
+import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
 /** An opponent, or me under the id `me`. */
@@ -138,12 +138,12 @@ function withPlayers(game: Game, players: Player[], pack: DataPack): Game {
 }
 
 /** A new opponent takes the last seat and the first free colour. The maximum of the pack stops it. */
-export function addPlayer(game: Game, pack: DataPack): Game {
+export function addPlayer(game: Game, pack: DataPack, newId: IdMaker = timeIdMaker): Game {
   const players = playersOf(game);
   if (players.length >= maxPlayers(pack)) return game;
   const used = players.map(p => p.color);
   const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
-  return withPlayers(game, [...players, { id: makeId('opponent'), faction: '', vp: 0, seat: players.length + 1, color }], pack);
+  return withPlayers(game, [...players, { id: makeId('opponent', newId), faction: '', vp: 0, seat: players.length + 1, color }], pack);
 }
 
 /** Entries forget an opponent who left: their points and their place in card effects. */

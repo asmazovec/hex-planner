@@ -1,6 +1,6 @@
 import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { strategyCards } from '../../domain/cards';
+import { strategyCards } from '../../data/loadPack';
 import type { Game } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';

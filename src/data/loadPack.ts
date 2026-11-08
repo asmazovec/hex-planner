@@ -1,7 +1,9 @@
+import { strategyCardSet, type StrategyCard, type StrategyCardSetId } from '../domain/cards';
 import { MECATOL_TILE, MECATOL_TILE_TE } from '../domain/mecatol';
 import type { DataPack, ExpansionId, MapTemplate } from '../domain/types';
 import base from './packs/base.json';
 import pok from './packs/pok.json';
+import strategyCardSets from './packs/strategyCards.json';
 import te from './packs/te.json';
 
 const PACKS: Record<ExpansionId, unknown> = { pok, te };
@@ -35,4 +37,9 @@ export function loadPack(expansions: ExpansionId[]): DataPack {
     technologies: Object.assign({}, ...packs.map(pack => pack.technologies)),
     structures: packs.flatMap(pack => pack.structures),
   };
+}
+
+/** The strategy cards of the set the expansions choose, in initiative order. */
+export function strategyCards(expansions: ExpansionId[]): StrategyCard[] {
+  return (strategyCardSets as Record<StrategyCardSetId, StrategyCard[]>)[strategyCardSet(expansions)];
 }

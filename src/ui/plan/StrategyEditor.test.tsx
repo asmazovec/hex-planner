@@ -7,14 +7,13 @@ vi.mock('../../storage/db', () => ({
   loadGame: vi.fn(async () => null),
 }));
 
-import { loadPack } from '../../data/loadPack';
+import { loadPack, strategyCards } from '../../data/loadPack';
 import { autoPay } from '../../domain/payment';
 import { stateBeforeEntry } from '../../domain/project';
 import type { CardEntry } from '../../domain/strategy';
 import { unitStats } from '../../domain/unitStats';
 import type { Entry, ExpansionId } from '../../domain/types';
 import { setLanguage } from '../../i18n';
-import { strategyCards } from '../../domain/cards';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 

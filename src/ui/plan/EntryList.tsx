@@ -1,6 +1,6 @@
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { strategyCards } from '../../domain/cards';
+import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
