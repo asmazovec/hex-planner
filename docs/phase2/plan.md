@@ -260,9 +260,9 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-062 | doc | 41-note-6 | [CLAUDE.md:45](../../CLAUDE.md#L45) | Строка противоречит примечанию 6 к LRR 41: +1 за каждый разлом и каждое прохождение | #gravity-rift | s | P2-007 |
-| P2-063 | doc | 83.3 | [CLAUDE.md:68](../../CLAUDE.md#L68) | forToken сейчас не выводится, а хранится и устаревает (P2-034) | #for-token | s | P2-034 |
-| P2-064 | doc |  | [CLAUDE.md:66](../../CLAUDE.md#L66) | Описать канал нарушений: правило, шаг, место, реестр, контрактные тесты | #warning-channel | s | P2-001 |
+| P2-062 | doc | 41-note-6 | [CLAUDE.md:46](../../CLAUDE.md#L46) | Строка противоречит примечанию 6 к LRR 41: +1 за каждый разлом и каждое прохождение | #gravity-rift | s | P2-007 |
+| P2-063 | doc | 83.3 | [CLAUDE.md:69](../../CLAUDE.md#L69) | forToken сейчас не выводится, а хранится и устаревает (P2-034) | #for-token | s | P2-034 |
+| P2-064 | doc |  | [CLAUDE.md:67](../../CLAUDE.md#L67) | Описать канал нарушений: правило, шаг, место, реестр, контрактные тесты | #warning-channel | s | P2-001 |
 
 <a id="ws-replay-steps"></a>
 ### Повтор плана по шагам правил · `replay-steps` · волна 1
@@ -863,7 +863,3 @@
 Слои: domain 56, storage 1, state 1, data 1, i18n 2, docs 3, ui 309.
 
 Теги: #duplicate-of-domain 21, #colour-token 21, #duplicate-selector 17, #rivals 16, #player-colour 15, #inline-style 13, #warning-channel 12, #section-title 12, #unit-tile 9, #svg 7, #preferences 7, #primitives 7, #confirm-bar 6, #names 6, #dead-css 6, #srp 5, #modal 5, #drawer-sheet 5, #player-dot 5, #route 4, #fracture 4, #purity 4, #geometry 4, #hex-stage 4, #imports 4, #section 4, #player-choice 4, #map-pick 4, #reinforcements 3, #for-token 3, #i18n 3, #route-badge 3, #motion 3, #drawer 3, #legend 3, #popover 3, #upgrade-toggle 3, #thunders-edge 3, #selected-state 3, #hover 3, #warning 3, #gravity-rift 2, #Creuss 2, #pickup 2, #token 2, #capacity 2, #fleet-pool 2, #construction 2, #control 2, #schema 2, #warfare 2, #payment 2, #expedition 2, #losses 2, #nesting 2, #command-token 2, #ingress 2, #route-draft 2, #overlays 2, #layout 2, #panel 2, #banner 2, #token-picture 2, #player-name 2, #flight 2, #new-entry 2, #valid-sources 2, #expansion-names 2, #caption-small 2, #floating-card 2, #hex-button 2, #violation 1, #contract-test 1, #phases 1, #status-phase 1, #phase-order 1, #route-graph 1, #skipped-stop 1, #route-highlight 1, #off-map-home 1, #hyperlane 1, #left-behind 1, #activation 1, #token-supply 1, #redistribute 1, #battle 1, #landing 1, #custodians 1, #structure-owner 1, #migration 1, #limits 1, #placement 1, #blockade 1, #no-dock 1, #production-limit 1, #card-production 1, #ready 1, #ocp 1, #card-handlers 1, #secondary 1, #imperial 1, #mecatol 1, #trade 1, #diplomacy 1, #technology 1, #pass 1, #game-as 1, #entropic-scar 1, #space-station 1, #production-value 1, #provenance 1, #unit-upgrade 1, #data-cycle 1, #layering 1, #magic-number 1, #comments 1, #enemy-units 1, #production 1, #structures 1, #stacks 1, #energy 1, #planet 1, #close-button 1, #expansions 1, #hyperlanes 1, #chips 1, #map-builder 1, #editor-frame 1, #state-machine 1, #highlight 1, #card-targets 1, #route-hint 1, #perf 1, #editor-head 1, #card-purchases 1, #tests 1, #danger 1, #import 1, #share-link 1, #units 1, #faction-groups 1, #hex-geometry 1, #scrollbar 1, #danger-button 1, #card-surface 1, #small-button 1, #panel-reset 1, #scrim 1, #radius-token 1, #map 1, #font-stack 1, #shadow 1.
-
-## Падающие тесты правил без TODO
-
-Каждый падающий тест правил закрыт TODO.
