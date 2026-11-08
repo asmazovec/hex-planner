@@ -8,7 +8,7 @@ import type { DataPack, Entry, Game, GameState, Plan, Projection, Warning } from
 import { applyCard } from './cards';
 import { applyExpedition } from './expedition';
 import { rivalLandings } from './invasion';
-import { checkFlow, PHASE_ORDER } from './round';
+import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, clearBoard } from './status';
 import { applyTactical } from './tactical';
@@ -21,8 +21,8 @@ export { START_TOKENS } from './state';
 export { productionPlaces, tacticalMeters } from './tactical';
 export { fightersFly, systemMeters } from './transport';
 
-function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>, primaries: (number | undefined)[]): Warning[] {
-  const warnings: Warning[] = [];
+function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>, primaries: (number | undefined)[], flow: RoundFlow): Warning[] {
+  const warnings: Warning[] = checkFlow(game, entry, flow, primaries);
   switch (entry.type) {
     case 'tactical':
       applyTactical(game, state, entry, pack, warnings);
@@ -35,14 +35,13 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
       applyExpedition(game, state, entry, pack, taken, warnings);
       break;
     case 'statusTokens':
-      applyStatusTokens(state, entry, warnings);
+      applyStatusTokens(game, state, entry, pack, warnings);
       break;
     case 'adjustment':
       applyAdjustment(state, entry, warnings);
       break;
     case 'component':
     case 'pass':
-      warnings.push(...checkFlow());
       break;
   }
   return placeIn(warnings, entry.id);
@@ -77,6 +76,7 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
     };
     const primaries: (number | undefined)[] = [];
     const rivalPrimaries: Record<string, (number | undefined)[]> = {};
+    const flow = roundFlow(round);
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {
         if (entry.phase !== phase) continue;
@@ -86,10 +86,10 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
         if (skipped) continue;
         const rival = entry.owner ? rivals[entry.owner] : undefined;
         if (rival && entry.owner) {
-          warningsByEntry[entry.id] = applyEntry(views.get(entry.owner)!, rival, entry, pack, takenSlices, (rivalPrimaries[entry.owner] ??= []));
+          warningsByEntry[entry.id] = applyEntry(views.get(entry.owner)!, rival, entry, pack, takenSlices, (rivalPrimaries[entry.owner] ??= []), flow);
           if (entry.type === 'tactical') rivalLandings(state, entry, entry.owner);
         } else {
-          warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, primaries);
+          warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, primaries, flow);
         }
         if (entry.type === 'statusTokens') finishStatus();
         if (entry.id === stopAfter) return { state, warningsByEntry };

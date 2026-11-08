@@ -27,7 +27,7 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
   const { t } = useTranslation();
   // TODO(P2-356) #ws:ui-containers #type:arch #size:s — флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock
   const [manual, setManual] = useState(false);
-  // TODO(P2-366) #ws:payment #type:dup #size:s — «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части
+  // TODO(P2-366) #ws:payment #type:dup #size:s — «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части — P2 note: UI-файл вне списка файлов волны B для payment, рядом правит P2-365 (thunders-edge); оставлено, чтобы не править чужой модуль
   const cost = EXPEDITION_SLICES.find(s => s.id === sliceId)?.cost;
   const paidWith = cost?.kind === 'resources' || cost?.kind === 'influence' ? cost : null;
 

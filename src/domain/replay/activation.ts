@@ -1,11 +1,15 @@
 /** Step 89.1 Activation: a command token from the tactic pool goes to the active system. */
+import { violation } from '../rules/registry';
 import type { GameState, Warning } from '../types';
 import type { TacticalEntry } from './state';
 
-/** Check, over the state before activation: nothing is checked yet. */
-// TODO(P2-015) #ws:command-tokens #type:check #rule:5.2 #rule:89.1 #rule:20.4 #test:005-active-system #test:089-tactical-action #test:020-command-tokens #size:s #activation — Активация системы со своим жетоном и тактика без жетона в тактическом резерве проходят молча: нарушения systemHasToken и poolNegative(tactic)
-export function checkActivation(): Warning[] {
-  return [];
+/** Check, over the state before activation: the system already holds my token (5.2), or the tactic pool is empty (20.4). */
+export function checkActivation(state: GameState, target: string, entry: TacticalEntry): Warning[] {
+  if (entry.free) return [];
+  const warnings: Warning[] = [];
+  if (state.tokensOnMap.includes(target)) warnings.push(violation('systemHasToken', { systemId: target }));
+  if (state.tactic < 1) warnings.push(violation('poolNegative', { pool: 'tactic', have: state.tactic - 1 }, 'activation'));
+  return warnings;
 }
 
 /** Effect: unless the action is free, a tactic token leaves the pool for the active system. */
