@@ -41,18 +41,22 @@ describe('LRR 90 Technology', () => {
   test.todo('90.7: a technology that is no unit upgrade has a colour — kept in the pack as its type, no effect to compute');
   test.todo('90.7.1: a colour satisfies prerequisites of that colour — not modelled: prerequisites are not tracked');
 
-  test('90.7.2: unit upgrades have no colour: they are not among the coloured technologies of the pack', () => {
-    const names = Object.values(pack.technologies).map(t => t.name);
-    expect(names.some(name => / II$/.test(name))).toBe(false);
+  test('90.7.2: unit upgrades have no colour: the faction unit upgrades of the pack have no type', () => {
+    const upgrades = Object.values(loadPack(['pok', 'te']).technologies).filter(t => t.upgrade);
+    expect(upgrades.length).toBeGreaterThan(0);
+    for (const tech of upgrades) expect(tech.type, tech.id).toBeNull();
   });
 
   test('90.7.3: there are four colours of technology', () => {
-    const colours = new Set(Object.values(loadPack(['pok', 'te']).technologies).map(t => t.type));
+    const colours = new Set(Object.values(loadPack(['pok', 'te']).technologies).flatMap(t => t.type ?? []));
     expect([...colours].sort()).toEqual(['biotic', 'cybernetic', 'propulsion', 'warfare']);
   });
 
-  test.todo('90.8: the prerequisites printed on a card — not modelled: prerequisites are not in the pack');
-  test.todo('90.8.1: prerequisites give the number and colour needed — not modelled: prerequisites are not in the pack');
+  test.todo('90.8: the prerequisites printed on a card — kept for faction technologies only and shown on the faction sheet; research does not check them');
+
+  test('90.8.1: prerequisites give the number and colour needed: Prototype War Sun II needs three warfare and one cybernetic', () => {
+    expect(loadPack([]).technologies.pws2.requires).toEqual({ warfare: 3, cybernetic: 1 });
+  });
   test.todo('90.9: research comes from the Technology card or other effects — the card side is tested at 90.3.1; other effects are entered as upgrades on any card entry');
 
   test('90.10: research takes a card from the deck, so a technology already owned cannot be researched again', () => {

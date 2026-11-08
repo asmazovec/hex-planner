@@ -18,6 +18,16 @@ test('every starting technology of every faction has a retelling in both languag
   }
 });
 
+test('every faction technology of every faction has a retelling in both languages', () => {
+  const pack = loadPack(['pok', 'te']);
+  const ids = Object.values(pack.factions).flatMap(faction => faction.sheet!.techs.map(tech => tech.id));
+  expect(new Set(ids).size).toBeGreaterThanOrEqual(60);
+  for (const id of ids) {
+    expect(techSummary(id, 'ru'), `${id} ru`).toMatch(/[а-яё]{3}/i);
+    expect(techSummary(id, 'en'), `${id} en`).toMatch(/[a-z]{3}/i);
+  }
+});
+
 test('an unknown technology has no retelling', () => {
   expect(techSummary('nope', 'ru')).toBeNull();
 });

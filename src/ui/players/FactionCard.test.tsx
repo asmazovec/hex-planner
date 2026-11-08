@@ -120,3 +120,33 @@ test('without the expansions only the abilities stay', () => {
   expect(screen.queryByText('Прорыв')).toBeNull();
   expect(itemOf('Brilliant')).toBeDefined();
 });
+
+test('faction technologies: name, type mark, prerequisites as marks, pack, own retelling; a unit upgrade points to the ship table', () => {
+  show('muaat');
+  const group = screen.getByText('Технологии фракции').parentElement!;
+  const reactor = within(group).getByText('Magmus Reactor').closest('.sheet-item')!;
+  expect(within(reactor as HTMLElement).getByRole('img', { name: 'Военные' })).toBeInTheDocument();
+  expect(within(reactor as HTMLElement).getByRole('img', { name: 'Требования: Военные, Военные' })).toBeInTheDocument();
+  expect(reactor.textContent).toMatch(/сверхнов/);
+  expect(reactor.textContent).toContain('Base');
+  const warSun = within(group).getByText('Prototype War Sun II').closest('.sheet-item')!;
+  expect(warSun.textContent).toContain('Улучшение юнита: Солнце войны. Числа в таблице кораблей');
+  expect(within(warSun as HTMLElement).getByRole('img', { name: 'Требования: Кибернетика, Военные, Военные, Военные' })).toBeInTheDocument();
+});
+
+test('a structure upgrade is a unit upgrade without the ship table; Keleres gets Executive Order with Thunder\'s Edge', () => {
+  show('saar');
+  const dock = screen.getByText('Floating Factory II').closest('.sheet-item')!;
+  expect(dock.textContent).toContain('Улучшение юнита: База');
+  expect(dock.textContent).not.toContain('таблице кораблей');
+  cleanup();
+  // With Thunder's Edge the name I.I.H.Q. Modernization returns as the Keleres breakthrough, outside this group.
+  const techGroup = () => within(screen.getByText('Технологии фракции').parentElement!);
+  show('keleresa');
+  expect(techGroup().getByText('Executive Order')).toBeInTheDocument();
+  expect(techGroup().queryByText('I.I.H.Q. Modernization')).toBeNull();
+  cleanup();
+  show('keleresa', ['pok']);
+  expect(techGroup().getByText('I.I.H.Q. Modernization')).toBeInTheDocument();
+  expect(techGroup().queryByText('Executive Order')).toBeNull();
+});

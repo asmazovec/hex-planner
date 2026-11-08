@@ -1096,6 +1096,24 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "iihq",
+            "name": "I.I.H.Q. Modernization",
+            "pack": "pok"
+          },
+          {
+            "id": "asn",
+            "name": "Agency Supply Network",
+            "pack": "pok"
+          },
+          {
+            "id": "executiveorder",
+            "name": "Executive Order",
+            "pack": "te",
+            "replaces": "iihq"
+          }
+        ],
         "breakthrough": {
           "id": "keleresbt",
           "name": "I.I.H.Q. Modernization",
@@ -1184,6 +1202,24 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "iihq",
+            "name": "I.I.H.Q. Modernization",
+            "pack": "pok"
+          },
+          {
+            "id": "asn",
+            "name": "Agency Supply Network",
+            "pack": "pok"
+          },
+          {
+            "id": "executiveorder",
+            "name": "Executive Order",
+            "pack": "te",
+            "replaces": "iihq"
           }
         ],
         "breakthrough": {
@@ -1276,6 +1312,24 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "iihq",
+            "name": "I.I.H.Q. Modernization",
+            "pack": "pok"
+          },
+          {
+            "id": "asn",
+            "name": "Agency Supply Network",
+            "pack": "pok"
+          },
+          {
+            "id": "executiveorder",
+            "name": "Executive Order",
+            "pack": "te",
+            "replaces": "iihq"
+          }
+        ],
         "breakthrough": {
           "id": "keleresbt",
           "name": "I.I.H.Q. Modernization",
@@ -1366,6 +1420,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "ah",
+            "name": "Aerie Hololattice",
+            "pack": "pok"
+          },
+          {
+            "id": "swa2",
+            "name": "Strike Wing Alpha II",
+            "pack": "pok"
           }
         ],
         "breakthrough": {
@@ -1489,6 +1555,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "dt2",
+            "name": "Dimensional Tear II",
+            "pack": "pok"
+          },
+          {
+            "id": "vtx",
+            "name": "Vortex",
+            "pack": "pok"
+          }
+        ],
         "breakthrough": {
           "id": "cabalbt",
           "name": "Al'Raith Ix Ianovar",
@@ -1585,6 +1663,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "vw",
+            "name": "Voidwatch",
+            "pack": "pok"
+          },
+          {
+            "id": "as",
+            "name": "Aetherstream",
+            "pack": "pok"
+          }
+        ],
         "breakthrough": {
           "id": "empyreanbt",
           "name": "Void Tether",
@@ -1677,6 +1767,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "cl2",
+            "name": "Crimson Legionnaire II",
+            "pack": "pok"
+          },
+          {
+            "id": "gr",
+            "name": "Genetic Recombination",
+            "pack": "pok"
           }
         ],
         "breakthrough": {
@@ -1798,6 +1900,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "m2",
+            "name": "Memoria II",
+            "pack": "pok"
+          },
+          {
+            "id": "tcs",
+            "name": "Temporal Command Suite",
+            "pack": "pok"
           }
         ],
         "breakthrough": {
@@ -1923,6 +2037,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "pfa",
+            "name": "Pre-Fab Arcologies",
+            "pack": "pok"
+          },
+          {
+            "id": "sc",
+            "name": "Supercharge",
+            "pack": "pok"
+          }
+        ],
         "breakthrough": {
           "id": "naazbt",
           "name": "Absolute Synergy",
@@ -2014,6 +2140,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "ht2",
+            "name": "Hel-Titan II",
+            "pack": "pok"
+          },
+          {
+            "id": "se2",
+            "name": "Saturn Engine II",
+            "pack": "pok"
           }
         ],
         "breakthrough": {
@@ -3102,6 +3240,30 @@
     }
   ],
   "technologies": {
+    "iihq": {
+      "id": "iihq",
+      "name": "I.I.H.Q. Modernization",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      }
+    },
+    "asn": {
+      "id": "asn",
+      "name": "Agency Supply Network",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "executiveorder": {
+      "id": "executiveorder",
+      "name": "Executive Order",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      }
+    },
     "nm": {
       "id": "nm",
       "name": "Neural Motivator",
@@ -3117,15 +3279,65 @@
       "name": "Plasma Scoring",
       "type": "warfare"
     },
+    "ah": {
+      "id": "ah",
+      "name": "Aerie Hololattice",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      }
+    },
+    "swa2": {
+      "id": "swa2",
+      "name": "Strike Wing Alpha II",
+      "type": null,
+      "requires": {
+        "warfare": 2
+      },
+      "upgrade": "destroyer"
+    },
     "sar": {
       "id": "sar",
       "name": "Self-Assembly Routines",
       "type": "warfare"
     },
+    "dt2": {
+      "id": "dt2",
+      "name": "Dimensional Tear II",
+      "type": null,
+      "requires": {
+        "cybernetic": 2
+      },
+      "upgrade": "spacedock"
+    },
+    "vtx": {
+      "id": "vtx",
+      "name": "Vortex",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      }
+    },
     "det": {
       "id": "det",
       "name": "Dark Energy Tap",
       "type": "propulsion"
+    },
+    "vw": {
+      "id": "vw",
+      "name": "Voidwatch",
+      "type": "biotic",
+      "requires": {
+        "biotic": 1
+      }
+    },
+    "as": {
+      "id": "as",
+      "name": "Aetherstream",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 2
+      }
     },
     "pi": {
       "id": "pi",
@@ -3137,10 +3349,46 @@
       "name": "Bio-Stims",
       "type": "biotic"
     },
+    "cl2": {
+      "id": "cl2",
+      "name": "Crimson Legionnaire II",
+      "type": null,
+      "requires": {
+        "biotic": 2
+      },
+      "upgrade": "infantry"
+    },
+    "gr": {
+      "id": "gr",
+      "name": "Genetic Recombination",
+      "type": "biotic",
+      "requires": {
+        "biotic": 1
+      }
+    },
     "sr": {
       "id": "sr",
       "name": "Sling Relay",
       "type": "propulsion"
+    },
+    "m2": {
+      "id": "m2",
+      "name": "Memoria II",
+      "type": null,
+      "requires": {
+        "biotic": 1,
+        "propulsion": 1,
+        "cybernetic": 1
+      },
+      "upgrade": "flagship"
+    },
+    "tcs": {
+      "id": "tcs",
+      "name": "Temporal Command Suite",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      }
     },
     "pa": {
       "id": "pa",
@@ -3152,6 +3400,22 @@
       "name": "AI Development Algorithm",
       "type": "warfare"
     },
+    "pfa": {
+      "id": "pfa",
+      "name": "Pre-Fab Arcologies",
+      "type": "biotic",
+      "requires": {
+        "biotic": 3
+      }
+    },
+    "sc": {
+      "id": "sc",
+      "name": "Supercharge",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      }
+    },
     "amd": {
       "id": "amd",
       "name": "Antimass Deflectors",
@@ -3161,6 +3425,27 @@
       "id": "sdn",
       "name": "Scanlink Drone Network",
       "type": "cybernetic"
+    },
+    "ht2": {
+      "id": "ht2",
+      "name": "Hel-Titan II",
+      "type": null,
+      "requires": {
+        "cybernetic": 1,
+        "warfare": 1
+      },
+      "upgrade": "pds"
+    },
+    "se2": {
+      "id": "se2",
+      "name": "Saturn Engine II",
+      "type": null,
+      "requires": {
+        "biotic": 1,
+        "cybernetic": 1,
+        "warfare": 1
+      },
+      "upgrade": "cruiser"
     }
   },
   "structures": []

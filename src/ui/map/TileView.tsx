@@ -6,11 +6,11 @@ import { opponentsBySeat } from '../../domain/players';
 import { holderIn, stacksOf } from '../../domain/stacks';
 import { rotateLanes } from '../../domain/lanes';
 import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
-import type { DataPack, Game, GameState, PlanetDef, TechType } from '../../domain/types';
+import type { DataPack, Game, GameState, PlanetDef } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { hexPoints, slotToPixel } from './geometry';
-import { CommandTokenMark, IngressMark } from './marks';
+import { CommandTokenMark, IngressMark, TECH_SHAPES } from './marks';
 import { playerStyle } from '../primitives/player';
 import { opponentName } from '../players/names';
 
@@ -70,13 +70,6 @@ const TECH_RADIUS = 12.4;
 const techMarkAt = (n: number): { x: number; y: number } => {
   const angle = ((45 - 35 * n) * Math.PI) / 180;
   return { x: TECH_RADIUS * Math.sin(angle), y: -TECH_RADIUS * Math.cos(angle) };
-};
-/** One simple shape per type, so the colour is not the only sign. */
-const TECH_SHAPES: Record<TechType, string> = {
-  propulsion: 'M0,-3.9 L3.6,2.6 L-3.6,2.6 Z',
-  biotic: 'M0,-3.6 A3.6,3.6 0 1 1 0,3.6 A3.6,3.6 0 1 1 0,-3.6 Z',
-  cybernetic: 'M0,-4 L4,0 L0,4 L-4,0 Z',
-  warfare: 'M-3.2,-3.2 L3.2,-3.2 L3.2,3.2 L-3.2,3.2 Z',
 };
 /** The legendary mark mirrors the first technology mark, on the upper left; a four-point star of its own. */
 const LEGENDARY_SHAPE = 'M0,-4.2 L1.2,-1.2 L4.2,0 L1.2,1.2 L0,4.2 L-1.2,1.2 L-4.2,0 L-1.2,-1.2 Z';

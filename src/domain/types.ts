@@ -85,7 +85,16 @@ export interface UnitDef {
   levels?: ShipLevels;
 }
 
-export interface TechDef { id: string; name: string; type: TechType; }
+export interface TechDef {
+  id: string;
+  name: string;
+  /** Null for a unit upgrade and for a faction card with no colour (Valefar Assimilator). */
+  type: TechType | null;
+  /** Prerequisites, how many of each colour; absent when there are none. Read for faction technologies only. */
+  requires?: Partial<Record<TechType, number>>;
+  /** A unit upgrade: the unit or structure it upgrades. Its numbers are in the ship table, not here. */
+  upgrade?: UnitId | StructureKind;
+}
 
 /** Where a component comes from; shown on it. */
 export type ComponentPack = 'base' | 'pok' | 'te';
@@ -110,11 +119,13 @@ export interface FactionSheet {
   abilities: SheetItem[];
   leaders: SheetLeader[];
   mechs: SheetMech[];
+  /** Faction technologies; the details are in the pack's `technologies` under the same id. */
+  techs: SheetItem[];
   breakthrough?: SheetItem;
 }
 
 export interface FactionDef {
-  /** Abilities, leaders, mechs and the breakthrough, before the expansions choose among them. */
+  /** Abilities, leaders, mechs, faction technologies and the breakthrough, before the expansions choose among them. */
   sheet?: FactionSheet;
   id: string;
   name: string;

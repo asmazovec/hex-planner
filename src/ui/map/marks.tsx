@@ -1,4 +1,22 @@
+import type { TechType } from '../../domain/types';
 import { playerStyle } from '../primitives/player';
+
+/** One simple shape per technology type in a box of 8 around the centre, so the colour is not the only sign. */
+export const TECH_SHAPES: Record<TechType, string> = {
+  propulsion: 'M0,-3.9 L3.6,2.6 L-3.6,2.6 Z',
+  biotic: 'M0,-3.6 A3.6,3.6 0 1 1 0,3.6 A3.6,3.6 0 1 1 0,-3.6 Z',
+  cybernetic: 'M0,-4 L4,0 L0,4 L-4,0 Z',
+  warfare: 'M-3.2,-3.2 L3.2,-3.2 L3.2,3.2 L-3.2,3.2 Z',
+};
+
+/** A technology type as the planets on the map show it, standing alone in the text. */
+export function TechMark({ type, size = 12 }: { type: TechType; size?: number }) {
+  return (
+    <svg viewBox="-5 -5 10 10" width={size} height={size} className="tech-mark" aria-hidden="true">
+      <path d={TECH_SHAPES[type]} className={`planet-tech planet-tech-${type}`} />
+    </svg>
+  );
+}
 
 /**
  * The hexagon of an arrow's number, and the gap cut around it in the arrows: the same hexagon, 1.4 times its size. They

@@ -118,7 +118,7 @@ export function FactionCard({ faction, pack, expansions, live }: FactionCardProp
         {faction.startingTech.length === 0 && !choice && <p className="tech-choice">{t('players.techNone')}</p>}
       </div>
       <div className="player-ships">
-        <FactionComponents faction={faction} expansions={expansions} />
+        <FactionComponents faction={faction} expansions={expansions} technologies={pack.technologies} />
       </div>
       <div className="player-ships">
         <SectionTitle as="div" className="player-sec">{t('ships.title')}</SectionTitle>

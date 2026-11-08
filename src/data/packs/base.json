@@ -1273,6 +1273,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "bio",
+            "name": "Bioplasmosis",
+            "pack": "base"
+          },
+          {
+            "id": "lw2",
+            "name": "Letani Warrior II",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "arborecbt",
           "name": "Psychospore",
@@ -1386,6 +1398,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "ds",
+            "name": "Dimensional Splicer",
+            "pack": "base"
+          },
+          {
+            "id": "wg",
+            "name": "Wormhole Generator",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "ghostbt",
           "name": "Particle Synthesis",
@@ -1477,6 +1501,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "qdn",
+            "name": "Quantum Datahub Node",
+            "pack": "base"
+          },
+          {
+            "id": "pm",
+            "name": "Production Biomes",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -1581,6 +1617,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "ers",
+            "name": "E-Res Siphons",
+            "pack": "base"
+          },
+          {
+            "id": "scc",
+            "name": "Spatial Conduit Cylinder",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "jolnarbt",
           "name": "Specialist Compounds",
@@ -1666,6 +1714,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "is",
+            "name": "Inheritance Systems",
+            "pack": "base"
+          },
+          {
+            "id": "sdn2",
+            "name": "Super Dreadnought II",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -1786,6 +1846,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "l4",
+            "name": "L4 Disruptors",
+            "pack": "base"
+          },
+          {
+            "id": "nes",
+            "name": "Non-Euclidean Shielding",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "letnevbt",
           "name": "Gravleash Maneuvers",
@@ -1877,6 +1949,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "mc",
+            "name": "Mirror Computing",
+            "pack": "base"
+          },
+          {
+            "id": "so",
+            "name": "Salvage Operations",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "mentakbt",
           "name": "The Table's Grace",
@@ -1960,6 +2044,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "pws2",
+            "name": "Prototype War Sun II",
+            "pack": "base"
+          },
+          {
+            "id": "mr",
+            "name": "Magmus Reactor",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -2098,6 +2194,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "ng",
+            "name": "Neuroglaive",
+            "pack": "base"
+          },
+          {
+            "id": "hcf2",
+            "name": "Hybrid Crystal Fighter II",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "naalubt",
           "name": "Mindsieve",
@@ -2211,6 +2319,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "vax",
+            "name": "Valefar Assimilator X",
+            "pack": "base"
+          },
+          {
+            "id": "vay",
+            "name": "Valefar Assimilator Y",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "nekrobt",
           "name": "Valefar Assimilator Z",
@@ -2297,6 +2417,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "ffac2",
+            "name": "Floating Factory II",
+            "pack": "base"
+          },
+          {
+            "id": "cm",
+            "name": "Chaos Mapping",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "saarbt",
           "name": "Deorbit Barrage",
@@ -2376,6 +2508,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "exo2",
+            "name": "Exotrireme II",
+            "pack": "base"
+          },
+          {
+            "id": "vpw",
+            "name": "Valkyrie Particle Weave",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -2493,6 +2637,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "so2",
+            "name": "Spec Ops II",
+            "pack": "base"
+          },
+          {
+            "id": "ac2",
+            "name": "Advanced Carrier II",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -2633,6 +2789,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "lgf",
+            "name": "Lazax Gate Folding",
+            "pack": "base"
+          },
+          {
+            "id": "htp",
+            "name": "Hegemonic Trade Policy",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "winnubt",
           "name": "Imperator",
@@ -2727,6 +2895,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "it",
+            "name": "Instinct Training",
+            "pack": "base"
+          },
+          {
+            "id": "nf",
+            "name": "Nullification Field",
+            "pack": "base"
+          }
+        ],
         "breakthrough": {
           "id": "xxchabt",
           "name": "Archon's Gift",
@@ -2815,6 +2995,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "yso",
+            "name": "Yin Spinner Omega",
+            "pack": "base"
+          },
+          {
+            "id": "ic",
+            "name": "Impulse Core",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -2907,6 +3099,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "tp",
+            "name": "Transparasteel Plating",
+            "pack": "base"
+          },
+          {
+            "id": "mi",
+            "name": "Mageon Implants",
+            "pack": "base"
           }
         ],
         "breakthrough": {
@@ -3549,10 +3753,43 @@
       "name": "Magen Defense Grid ΩΩ",
       "type": "warfare"
     },
+    "bio": {
+      "id": "bio",
+      "name": "Bioplasmosis",
+      "type": "biotic",
+      "requires": {
+        "biotic": 2
+      }
+    },
+    "lw2": {
+      "id": "lw2",
+      "name": "Letani Warrior II",
+      "type": null,
+      "requires": {
+        "biotic": 2
+      },
+      "upgrade": "infantry"
+    },
     "gd": {
       "id": "gd",
       "name": "Gravity Drive",
       "type": "propulsion"
+    },
+    "ds": {
+      "id": "ds",
+      "name": "Dimensional Splicer",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      }
+    },
+    "wg": {
+      "id": "wg",
+      "name": "Wormhole Generator",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 2
+      }
     },
     "st": {
       "id": "st",
@@ -3564,6 +3801,22 @@
       "name": "Antimass Deflectors",
       "type": "propulsion"
     },
+    "qdn": {
+      "id": "qdn",
+      "name": "Quantum Datahub Node",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 3
+      }
+    },
+    "pm": {
+      "id": "pm",
+      "name": "Production Biomes",
+      "type": "biotic",
+      "requires": {
+        "biotic": 2
+      }
+    },
     "nm": {
       "id": "nm",
       "name": "Neural Motivator",
@@ -3574,10 +3827,175 @@
       "name": "Plasma Scoring",
       "type": "warfare"
     },
+    "ers": {
+      "id": "ers",
+      "name": "E-Res Siphons",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "scc": {
+      "id": "scc",
+      "name": "Spatial Conduit Cylinder",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 2
+      }
+    },
+    "is": {
+      "id": "is",
+      "name": "Inheritance Systems",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "sdn2": {
+      "id": "sdn2",
+      "name": "Super Dreadnought II",
+      "type": null,
+      "requires": {
+        "propulsion": 2,
+        "cybernetic": 1
+      },
+      "upgrade": "dreadnought"
+    },
+    "l4": {
+      "id": "l4",
+      "name": "L4 Disruptors",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      }
+    },
+    "nes": {
+      "id": "nes",
+      "name": "Non-Euclidean Shielding",
+      "type": "warfare",
+      "requires": {
+        "warfare": 2
+      }
+    },
+    "mc": {
+      "id": "mc",
+      "name": "Mirror Computing",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 3
+      }
+    },
+    "so": {
+      "id": "so",
+      "name": "Salvage Operations",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "pws2": {
+      "id": "pws2",
+      "name": "Prototype War Sun II",
+      "type": null,
+      "requires": {
+        "warfare": 3,
+        "cybernetic": 1
+      },
+      "upgrade": "warsun"
+    },
+    "mr": {
+      "id": "mr",
+      "name": "Magmus Reactor",
+      "type": "warfare",
+      "requires": {
+        "warfare": 2
+      }
+    },
+    "ng": {
+      "id": "ng",
+      "name": "Neuroglaive",
+      "type": "biotic",
+      "requires": {
+        "biotic": 3
+      }
+    },
+    "hcf2": {
+      "id": "hcf2",
+      "name": "Hybrid Crystal Fighter II",
+      "type": null,
+      "requires": {
+        "biotic": 1,
+        "propulsion": 1
+      },
+      "upgrade": "fighter"
+    },
     "dxa": {
       "id": "dxa",
       "name": "Dacxive Animators",
       "type": "biotic"
+    },
+    "vax": {
+      "id": "vax",
+      "name": "Valefar Assimilator X",
+      "type": null
+    },
+    "vay": {
+      "id": "vay",
+      "name": "Valefar Assimilator Y",
+      "type": null
+    },
+    "ffac2": {
+      "id": "ffac2",
+      "name": "Floating Factory II",
+      "type": null,
+      "requires": {
+        "cybernetic": 2
+      },
+      "upgrade": "spacedock"
+    },
+    "cm": {
+      "id": "cm",
+      "name": "Chaos Mapping",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 1
+      }
+    },
+    "exo2": {
+      "id": "exo2",
+      "name": "Exotrireme II",
+      "type": null,
+      "requires": {
+        "propulsion": 2,
+        "cybernetic": 1
+      },
+      "upgrade": "dreadnought"
+    },
+    "vpw": {
+      "id": "vpw",
+      "name": "Valkyrie Particle Weave",
+      "type": "warfare",
+      "requires": {
+        "warfare": 2
+      }
+    },
+    "so2": {
+      "id": "so2",
+      "name": "Spec Ops II",
+      "type": null,
+      "requires": {
+        "biotic": 2
+      },
+      "upgrade": "infantry"
+    },
+    "ac2": {
+      "id": "ac2",
+      "name": "Advanced Carrier II",
+      "type": null,
+      "requires": {
+        "propulsion": 2
+      },
+      "upgrade": "carrier"
     },
     "det": {
       "id": "det",
@@ -3599,10 +4017,74 @@
       "name": "AI Development Algorithm",
       "type": "warfare"
     },
+    "lgf": {
+      "id": "lgf",
+      "name": "Lazax Gate Folding",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 2
+      }
+    },
+    "htp": {
+      "id": "htp",
+      "name": "Hegemonic Trade Policy",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
     "gls": {
       "id": "gls",
       "name": "Graviton Laser System",
       "type": "cybernetic"
+    },
+    "it": {
+      "id": "it",
+      "name": "Instinct Training",
+      "type": "biotic",
+      "requires": {
+        "biotic": 1
+      }
+    },
+    "nf": {
+      "id": "nf",
+      "name": "Nullification Field",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "yso": {
+      "id": "yso",
+      "name": "Yin Spinner Omega",
+      "type": "biotic",
+      "requires": {
+        "biotic": 2
+      }
+    },
+    "ic": {
+      "id": "ic",
+      "name": "Impulse Core",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "tp": {
+      "id": "tp",
+      "name": "Transparasteel Plating",
+      "type": "biotic",
+      "requires": {
+        "biotic": 1
+      }
+    },
+    "mi": {
+      "id": "mi",
+      "name": "Mageon Implants",
+      "type": "biotic",
+      "requires": {
+        "biotic": 3
+      }
     }
   },
   "structures": [
