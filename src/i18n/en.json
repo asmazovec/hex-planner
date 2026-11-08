@@ -523,7 +523,7 @@
       "opponentPoints": "{{name}}: +{{n}}",
       "researched": "Technologies researched: {{n}}"
     },
-    "deletePlan": "Delete plan",
+    "deletePlan": "Delete plan “{{name}}”",
     "deleteRound": "Delete round {{n}}",
     "drawers": "Drawers"
   },

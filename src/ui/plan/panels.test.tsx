@@ -333,10 +333,10 @@ function PlanTabsLive() {
 
 test('a plan and a round can be deleted, the last of each stays, and undo brings them back', async () => {
   render(<PlanTabsLive />);
-  expect(screen.getByRole('button', { name: 'Delete plan' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: /^Delete plan/ })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Delete round 1' })).toBeDisabled();
   await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Delete plan' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Delete plan/ }));
   expect(game().plans).toHaveLength(1);
   act(() => useGame.getState().undo());
   expect(game().plans).toHaveLength(2);
@@ -352,9 +352,11 @@ test('a plan and a round can be deleted, the last of each stays, and undo brings
 test('a plan tab is dragged along the row to change the order; a short press stays a tap', async () => {
   useGame.getState().copyPlan();
   useGame.getState().copyPlan();
-  render(<PlanTabsLive />);
+  const { container } = render(<PlanTabsLive />);
   const tabs = () => screen.getAllByRole('tab');
-  tabs().forEach((el, i) => {
+  // A tab moves as one piece with its cross: the selected one is wrapped together with it.
+  const cells = () => Array.from(container.querySelectorAll<HTMLElement>('[data-plan-id]'));
+  cells().forEach((el, i) => {
     el.getBoundingClientRect = () => ({ left: i * 100, width: 100, right: i * 100 + 100, top: 0, bottom: 40, height: 40, x: i * 100, y: 0, toJSON: () => undefined });
   });
   const order = () => game().plans.map(p => p.name);
@@ -364,8 +366,8 @@ test('a plan tab is dragged along the row to change the order; a short press sta
   fireEvent.pointerMove(first, { pointerId: 1, clientX: 180 });
   expect(first).toHaveClass('plan-tab-dragging');
   expect(first.style.transform).toBe('translateX(130px)');
-  expect(tabs()[1].style.transform).toBe('translateX(-100px)');
-  expect(tabs()[2].style.transform).toBe('translateX(0px)');
+  expect(cells()[1].style.transform).toBe('translateX(-100px)');
+  expect(cells()[2].style.transform).toBe('translateX(0px)');
   fireEvent.pointerUp(first, { pointerId: 1, clientX: 180 });
   expect(order()).toEqual([before[1], before[0], before[2]]);
   const active = game().activePlanId;
