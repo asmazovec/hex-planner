@@ -21,6 +21,8 @@ export interface PlanetDef {
   traits?: PlanetTrait[];
   /** English name of the legendary planet ability; absent for an ordinary planet. */
   legendary?: string;
+  /** A space station (Thunder's Edge): taken by ships alone, it holds no ground forces and no structures. */
+  station?: true;
 }
 
 export type Anomaly = 'asteroid' | 'nebula' | 'supernova' | 'rift' | 'scar';
@@ -352,6 +354,9 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'foreignPrimary', 'ownSecondary', 'secondaryRepeated', 'readyOverLimit', 'diplomacySystem', 'researchOverLimit', 'researchOwned',
   // combat-order, invasion, structures
   'shipOnPlanet', 'landingOutsideSystem', 'custodians', 'structureLimit', 'structureNotControlled', 'structureOutsideSystem',
+  // production, thunders-edge
+  'noProduction', 'productionBlockaded', 'blockaded', 'productionOver', 'reinforcementsOut', 'productionPlace', 'scarProduction',
+  'expeditionUnpaid', 'expeditionTwicePerTurn', 'stationGround', 'stationStructure',
 ] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */

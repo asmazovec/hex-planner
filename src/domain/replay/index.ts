@@ -7,7 +7,7 @@ import { placeIn } from '../rules/registry';
 import type { DataPack, Entry, Game, GameState, Plan, Projection, Warning } from '../types';
 import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
-import { applyExpedition } from './expedition';
+import { applyExpedition, expeditionLog, noteTurn, type ExpeditionLog } from './expedition';
 import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyAdjustment, initialState } from './state';
@@ -24,8 +24,9 @@ export { structureOwner, structuresOn } from './structures';
 export { productionPlaces, tacticalMeters } from './tactical';
 export { fightersFly, systemMeters } from './transport';
 
-function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: Set<string>, cards: CardRound, flow: RoundFlow): Warning[] {
+function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, taken: ExpeditionLog, cards: CardRound, flow: RoundFlow): Warning[] {
   const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? []);
+  noteTurn(taken, entry);
   switch (entry.type) {
     case 'tactical':
       applyTactical(game, state, entry, pack, warnings);
@@ -62,7 +63,7 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
   const state = initialState(game, pack);
   keepOwnStructures(state, true);
   const warningsByEntry: Record<string, Warning[]> = {};
-  const takenSlices = new Set<string>();
+  const takenSlices = expeditionLog();
   const views = new Map(game.opponents.map(o => [o.id, gameAs(game, o.id)]));
   const rivals: Record<string, GameState> = Object.fromEntries(game.opponents.map(o => [o.id, rivalState(game, views.get(o.id)!, o.id, pack)]));
   if (game.opponents.length > 0) {

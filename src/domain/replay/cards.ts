@@ -1,10 +1,11 @@
 /** Strategy cards: who may resolve which side of which card, its token, payment and distribution; each card's own effects are its handler's. */
 import { violation } from '../rules/registry';
-import { cardCost, cardsHeld, costsStrategyToken, freeTokens, heldCards, type CardEntry } from '../strategy';
+import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, heldCards, type CardEntry } from '../strategy';
+import { checkStationStructures } from '../thundersEdge';
 import type { DataPack, Game, GameState, Round, Warning } from '../types';
 import { handlerOf, type CardRound } from './cards/index';
 import { pay, readyPlanets } from './payment';
-import { placeProduction } from './production';
+import { checkProduction, placeProduction } from './production';
 import { addUpgrades } from './state';
 import { checkPoolChange, checkTokensGiven } from './status';
 import { buildStructures } from './structures';
@@ -71,8 +72,12 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   addUpgrades(state, entry.upgrades);
   warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card'));
   buildStructures(game, state, effects.structures ?? [], primary, effects.systemId, pack, warnings);
-  // TODO(P2-030) #ws:production #type:check #rule:99.3 #test:099-warfare #size:s #warfare #card-production — Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production
+  warnings.push(...checkStationStructures(effects.structures ?? [], pack));
   if (effects.production) {
+    // Warfare's secondary uses one space dock in the home system (99.3); another card, a dock of its system.
+    const source = !primary && entry.card === CARD.warfare ? 'homeDock' : 'card';
+    const { systemId, units, ground } = effects.production;
+    warnings.push(...checkProduction(game, state, systemId, units, pack, ground, source, 'card'));
     placeProduction(game, state, effects.production.systemId, effects.production.units, pack, effects.production.ground);
     warnings.push(...checkSystem(game, state, effects.production.systemId, pack));
   }

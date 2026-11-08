@@ -634,9 +634,11 @@ describe('project', () => {
     });
 
     test('secret, cards, tech: без стоимости в ресурсах', () => {
-      for (const id of ['secret', 'cards', 'tech']) {
+      for (const id of ['secret', 'cards']) {
         expect(run(gameWith([expedition(id, {})])).warningsByEntry.x).toEqual([]);
       }
+      // The technology part exhausts a planet with a specialty instead (Thunder's Edge, expedition 4.5).
+      expect(codes(run(gameWith([expedition('tech', {})])).warningsByEntry.x)).toEqual(['expeditionUnpaid']);
       expect(run(gameWith([expedition('tech', { planets: ['arc'] })])).state.exhausted).toEqual(['arc']);
     });
 

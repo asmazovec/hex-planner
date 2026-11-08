@@ -310,12 +310,11 @@ describe('build', () => {
   const ring = (container: HTMLElement, key: string) => container.querySelector(`[data-stack="${key}"] .token-ring`);
   const total = () => document.querySelector('.stage-total b')!.textContent;
 
-  test('without a tactical entry my purchases go to a merged adjustment, and a warning does not block them', async () => {
+  test('without a tactical entry my purchases go to a merged adjustment, a correction the rules do not check', async () => {
     open({ initialMode: 'build' });
-    // Nothing built yet, nothing to warn about.
-    expect(screen.queryByText('No space dock in this system.')).toBeNull();
     await tap('Carrier');
-    expect(screen.getByText('No space dock in this system.')).toBeVisible();
+    // A manual correction is not production by the rules: no unit with Production is asked for.
+    expect(screen.queryByText(/with Production/)).toBeNull();
     await tap('Carrier');
     await tap('Infantry');
     expect(entries()).toHaveLength(1);
@@ -324,10 +323,16 @@ describe('build', () => {
     expect(total()).toBe('7');
   });
 
-  test('a dock on the tile takes the warning away', () => {
+  test('a dock on the tile takes the warning away', async () => {
+    store().setPlanetControl(quann(), 'me');
+    addTactical();
+    open({ initialMode: 'build' });
+    await tap('Cruiser');
+    expect(screen.getByText(/no unit of yours with Production/)).toBeVisible();
+    cleanup();
     store().setDock(quann(), true);
     open({ initialMode: 'build' });
-    expect(screen.queryByText('No space dock in this system.')).toBeNull();
+    expect(screen.queryByText(/with Production/)).toBeNull();
   });
 
   test('with a tactical entry on the system they go to its production, with the automatic payment', async () => {

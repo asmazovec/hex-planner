@@ -3,12 +3,13 @@
  * 89.4 invasion, 89.5 production and its payment, then the system's limits. Each step checks the state it is given, then
  * changes it; the steps themselves live in their own modules.
  */
+import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { activate, checkActivation } from './activation';
 import { canFight, checkAfterCombat, checkArrival, removeGroundLosses, removeLosses } from './combat';
 import { gainControl, landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
-import { payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
+import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { unitIds, type TacticalEntry } from './state';
 import { capacity, checkGroups, checkSystem, fleetCount, isPickup } from './transport';
 
@@ -27,6 +28,7 @@ function fightAndLand(
 ): void {
   if (!lossesTaken) removeLosses(state, target, entry, warnings);
   warnings.push(...checkAfterCombat(game, state, target, entry, pack));
+  warnings.push(...checkStationLandings(entry, pack));
   const landedOn = landUnits(game, state, target, entry, pack, warnings);
   removeGroundLosses(state, entry, warnings);
   gainControl(state, landedOn, pack);
@@ -37,7 +39,9 @@ function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
 ): void {
   fightAndLand(game, state, target, entry, pack, warnings, lossesTaken);
+  warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround));
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
+  claimStations(game, state, target, pack);
 }
 
 /** A warning of the final check that the action already gave for the same system, at arrival or after the battle, is not repeated. */

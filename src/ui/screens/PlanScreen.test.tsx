@@ -893,12 +893,12 @@ test('during a tactical action a tile tap opens no big hex', async () => {
 
 test('production without a dock warns once something is built, and still works', async () => {
   await chooseSystem();
-  expect(screen.queryByText('No space dock in this system.')).toBeNull();
+  expect(screen.queryByText(/no unit of yours with Production/)).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Open the shop' }));
-  expect(screen.queryByText('No space dock in this system.')).toBeNull();
+  expect(screen.queryByText(/no unit of yours with Production/)).toBeNull();
   await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
   expect(tactical().production).toEqual({ cruiser: 1 });
-  expect(within(screen.getByRole('dialog')).getByText('No space dock in this system.')).toBeVisible();
+  expect(within(screen.getByRole('dialog')).getByText(/no unit of yours with Production/)).toBeVisible();
 });
 
 test('a merged entry names its system and opens the big hex in its own mode', async () => {

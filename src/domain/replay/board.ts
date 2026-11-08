@@ -9,10 +9,17 @@ export const tileIdOf = (game: Game, systemId: string): string => (game.map[syst
 /** Whether a slot holds a system ships can go to: a tile of the map, or of the open Fracture. */
 export const isOnMap = (game: Game, slot: string): boolean => game.map[slot] !== undefined || game.fracture.tiles?.[slot] !== undefined;
 
-/** Grid neighbours, except across the edge of the Fracture: its systems do not touch the map they stand next to. */
-// TODO(P2-049) #ws:thunders-edge #type:model #rule:fracture-5 #test:te-fracture #size:m #fracture — Входы Излома (game.fracture.ingress) не смежны с его выходами (TileDef.egress): в Излом нельзя проложить маршрут
-export const systemsAdjacent = (game: Game): Adjacency => (a, b) =>
-  areAdjacent(a, b) && Boolean(game.fracture.tiles?.[a]) === Boolean(game.fracture.tiles?.[b]);
+/** An ingress of the Fracture and one of its egress systems, either way round (Thunder's Edge, The Fracture 5). */
+const ingressToEgress = (game: Game, a: string, b: string, pack: DataPack): boolean =>
+  game.fracture.tiles?.[b] !== undefined && (game.fracture.ingress ?? []).includes(a) && tileAt(game, b, pack)?.egress === true;
+
+/**
+ * Grid neighbours, except across the edge of the Fracture: its systems do not touch the map they stand next to. With the
+ * pack, also each ingress and each egress of the open Fracture, which are not grid neighbours (so drawing, given no pack, leaves a gap).
+ */
+export const systemsAdjacent = (game: Game, pack?: DataPack): Adjacency => (a, b) =>
+  (areAdjacent(a, b) && Boolean(game.fracture.tiles?.[a]) === Boolean(game.fracture.tiles?.[b]))
+  || (pack !== undefined && (ingressToEgress(game, a, b, pack) || ingressToEgress(game, b, a, pack)));
 
 /** Every slot holding a system. */
 export const systemSlots = (game: Game): string[] => [...Object.keys(game.map), ...Object.keys(game.fracture.tiles ?? {})];
@@ -25,8 +32,10 @@ export const hasAnomaly = (game: Game, slot: string, anomaly: Anomaly, pack: Dat
   return tile?.anomaly === anomaly || tile?.secondAnomaly === anomaly;
 };
 
+/** A space station (Thunder's Edge): counted among the planets, but taken by ships and holding no ground forces or structures. */
+export const isStation = (pack: DataPack, planetId: string): boolean => pack.planets[planetId]?.station === true;
+
 /** Planets of a system; the Thunder's Edge planet belongs to the system the expedition put it in. */
-// TODO(P2-048) #ws:thunders-edge #type:model #rule:space-stations-2 #rule:space-stations-4 #test:te-space-stations #size:m #space-station — Станция — обычная планета: контроль берётся высадкой, пехота и строения ставятся на неё. Нужен признак станции и контроль присутствием кораблей
 export function planetsOf(game: Game, systemId: string, pack: DataPack): string[] {
   const planets = [...(pack.tiles[tileIdOf(game, systemId)]?.planetIds ?? [])];
   if (game.expedition.thundersEdgeSystem === systemId && pack.planets[THUNDERS_EDGE_PLANET]) {

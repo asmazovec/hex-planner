@@ -38,7 +38,7 @@ function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
   const known = routeGraphs.get(game);
   if (known) return known;
   const slots = systemSlots(game);
-  const adjacent = systemsAdjacent(game);
+  const adjacent = systemsAdjacent(game, pack);
   const holes = (slot: string) => tileAt(game, slot, pack)?.wormholes ?? [];
   const stepsOf = (slot: string): string[] => {
     if (isLane(game, slot, pack)) return systemsAlongLanes(game, slot, null, pack);
@@ -47,7 +47,7 @@ function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
       if (next === null || !isOnMap(game, next) || !adjacent(slot, next)) return [];
       return isLane(game, next, pack) ? systemsAlongLanes(game, next, oppositeEdge(edge), pack) : [next];
     });
-    return [...across, ...slots.filter(other => holes(slot).some(hole => holes(other).includes(hole)))];
+    return [...across, ...slots.filter(other => holes(slot).some(hole => holes(other).includes(hole)) || (gridDistance(slot, other) > 1 && adjacent(slot, other)))];
   };
   const graph = new Map(slots.map(slot => [slot, [...new Set(stepsOf(slot))].filter(other => other !== slot)]));
   routeGraphs.set(game, graph);

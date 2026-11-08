@@ -286,6 +286,18 @@ const CASES: Record<WarningCode, Warning['params']> = {
   structureLimit: { kind: 'pds', planetId: 'nestphar', count: 2 },
   structureNotControlled: { planetId: 'nestphar' },
   structureOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },
+  // production, thunders-edge
+  noProduction: { systemId: '1,0' },
+  productionBlockaded: { systemId: '1,0' },
+  blockaded: { systemId: '1,0' },
+  productionOver: { value: 3, count: 4 },
+  reinforcementsOut: { unit: 'dreadnought', limit: 5, have: 5 },
+  productionPlace: { planetId: 'nestphar' },
+  scarProduction: { systemId: '1,0' },
+  expeditionUnpaid: { sliceId: 'tech' },
+  expeditionTwicePerTurn: { sliceId: 'res5' },
+  stationGround: { planetId: 'nestphar' },
+  stationStructure: { planetId: 'nestphar' },
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {

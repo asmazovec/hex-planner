@@ -54,6 +54,18 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   structureLimit: { rules: ['85.4', '24.2', '24.3', '24.4', '63.3', '79.3', '85.5', '85.6'], step: 'card' },
   structureNotControlled: { rules: ['24.2', '24.3'], step: 'card' },
   structureOutsideSystem: { rules: ['24.3'], step: 'card' },
+  // production, thunders-edge
+  noProduction: { rules: ['67-/-79', '79.4', '99.3'], step: 'production' },
+  productionBlockaded: { rules: ['67.6'], step: 'production' },
+  blockaded: { rules: ['14.1'], step: 'production' },
+  productionOver: { rules: ['68.1', '79.1', '99.3'], step: 'production' },
+  reinforcementsOut: { rules: ['67.5', '72.1', '96.3'], step: 'production' },
+  productionPlace: { rules: ['68.3', '67.4.1'], step: 'production' },
+  scarProduction: { rules: ['entropic-scars-2'], step: 'production' },
+  expeditionUnpaid: { rules: ['expedition-4.5'], step: 'expedition' },
+  expeditionTwicePerTurn: { rules: ['expedition-5'], step: 'expedition' },
+  stationGround: { rules: ['space-stations-4'], step: 'invasion' },
+  stationStructure: { rules: ['space-stations-4'], step: 'card' },
 };
 
 /** The rule and step of a code, from the registry. */

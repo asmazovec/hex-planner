@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { checkCounts, readPlanetKind, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, selectShips, buildStructures, readDockProduction } from './build-data';
+import { checkCounts, readPlanetKind, readPlanetMarks, readStation, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, selectShips, buildStructures, readDockProduction } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -106,6 +106,13 @@ test('вид планеты: черты из planetType и planetTypes без п
   expect(readPlanetKind({ id: 'a', legendaryAbilityName: 'Imperial Arms Vault' })).toEqual({ legendary: 'Imperial Arms Vault' });
   expect(readPlanetKind({ id: 'a', legendaryAbilityName: null })).toEqual({});
   expect(() => readPlanetKind({ id: 'a', planetType: 'PLASMA' })).toThrow(/PLASMA/);
+});
+
+test('станция: тип SPACESTATION в planetType или planetTypes', () => {
+  expect(readStation({ planetType: 'SPACESTATION' })).toEqual({ station: true });
+  expect(readStation({ planetTypes: ['SPACESTATION', 'FAKE'] })).toEqual({ station: true });
+  expect(readStation({ planetType: 'CULTURAL' })).toEqual({});
+  expect(readStation({})).toEqual({});
 });
 
 describe('selectShips', () => {

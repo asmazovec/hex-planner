@@ -296,6 +296,11 @@ export function readPlanetKind(planet: Pick<SourcePlanet, 'id' | 'planetType' | 
   return { ...(traits.length > 0 ? { traits } : {}), ...(planet.legendaryAbilityName ? { legendary: planet.legendaryAbilityName } : {}) };
 }
 
+/** A space station (Thunder's Edge): the source gives it the planet type SPACESTATION. */
+export function readStation(planet: Pick<SourcePlanet, 'planetType' | 'planetTypes'>): Pick<PlanetDef, 'station'> {
+  return [planet.planetType, ...(planet.planetTypes ?? [])].includes('SPACESTATION') ? { station: true } : {};
+}
+
 function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, TileDef>>): Record<PackId, Record<string, PlanetDef>> {
   const planets: Record<PackId, Record<string, PlanetDef>> = { base: {}, pok: {}, te: {} };
   const byId = new Map(all.map(planet => [planet.id, planet]));
@@ -304,7 +309,7 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
     if (!planet) throw new Error(`Unknown planet ${id}`);
     if (packOfSource(planet.source) !== pack) throw new Error(`Planet ${id} of source ${planet.source} is not in pack ${pack}`);
     if (id in EXCLUDED_PLANETS) throw new Error(`Excluded planet ${id} is in use`);
-    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet) };
+    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet), ...readStation(planet) };
   };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
     for (const tile of Object.values(tiles[pack])) for (const id of tile.planetIds) place(pack, id);
