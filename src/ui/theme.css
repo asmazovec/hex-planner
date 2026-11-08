@@ -579,14 +579,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 /* What is expected of an opponent stands apart from my own: set in from the left and tinted with their colour. Its left edge says done or warned, as on every entry. */
 .entry-rival { margin-left: 16px; background: color-mix(in srgb, var(--owner) 14%, var(--surface-2)); }
 .entry-rival .order-hex { color: var(--owner); }
-/* The number of an action lights up with its name: either is the tap that shows the action. */
-.order-hex-tap { cursor: pointer; }
-.order-hex-tap polygon { transition: fill 0.15s; }
-.entry-main:has(.order-hex-tap:hover) .entry-label:not(:disabled) { background: var(--surface-3); color: var(--text-strong); }
-.entry-main:has(.entry-label:hover) .order-hex-tap polygon,
-.order-hex-tap:hover polygon { fill: var(--surface-3); }
-.entry-main:has(.entry-label:hover) .order-hex-tap,
-.order-hex-tap:hover { color: var(--text-strong); }
 .acting-as { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-left: 3px solid var(--owner); border-radius: var(--radius-s); background: color-mix(in srgb, var(--owner) 14%, var(--surface-2)); font-size: var(--font-s); font-weight: 600; }
 .link-dialog { width: min(440px, calc(100vw - 32px)); margin: auto; display: flex; flex-direction: column; gap: 10px; padding: 18px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
 .link-dialog p { margin: 0; }

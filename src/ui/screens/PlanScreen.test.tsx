@@ -1248,16 +1248,6 @@ describe('flying', () => {
     expect(badges()).toEqual(['1']);
     expect(screen.queryByRole('img', { name: 'Action 2' })).toBeNull();
   });
-
-  test('a tap on the number of an action shows it, as a tap on its name does', async () => {
-    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [{ from: HOME, units: { cruiser: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
-    render(<PlanScreen />);
-    const row = () => document.querySelector('.entry')!;
-    await userEvent.click(screen.getByRole('img', { name: 'Action 1' }));
-    expect(row()).toHaveClass('entry-shown');
-    await userEvent.click(screen.getByRole('img', { name: 'Action 1' }));
-    expect(row()).not.toHaveClass('entry-shown');
-  });
 });
 
 test('the Forecast / Now switch changes what the map shows', async () => {
