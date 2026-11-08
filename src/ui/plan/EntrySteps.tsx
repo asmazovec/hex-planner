@@ -57,14 +57,25 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
     if (target === null) return null;
     const landings = e.landings.filter(landing => hasUnits(landing.units));
     const lost = [e.losses, ...Object.values(e.groundLosses ?? {})].filter((units): units is UnitCounts => hasUnits(units));
-    // TODO(P2-346) #ws:ui-nesting #type:ui #needs:prototype — подробности тактики 7 уровней; строки «откуда → куда» с UnitTile, полная схема в поповере
+    // What happens on arrival: battle losses, landings, then what is built there.
+    const after: ReactNode[] = [];
+    if (lost.length > 0) {
+      after.push(<p key="lost" className="flight-after"><span className="flight-after-label">{t('plan.steps.losses')}</span>{lost.map((units, i) => <UnitPictures key={i} units={units} game={game} t={t} />)}</p>);
+    }
+    for (const landing of landings) {
+      after.push(<p key={`land:${landing.planetId}`} className="flight-after"><span className="flight-after-label">{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>);
+    }
+    if (hasUnits(e.production)) {
+      after.push(<p key="build" className="flight-after"><span className="flight-after-label">{t('plan.steps.build')}</span>{pictures(e.production)}{paid(e.payment) && <small>{paid(e.payment)}</small>}</p>);
+    }
+    const sources = sourcesOf(game, pack, e);
     return (
       <div className="entry-steps entry-flights">
         <p className="flight-activate">
           <span>{t('plan.steps.activate', { name: name(target) })}</span>
           <small>{e.free ? t('plan.steps.free') : t('plan.steps.token')}</small>
         </p>
-        {sourcesOf(game, pack, e).map(source => {
+        {sources.map((source, index) => {
           const { ships, board, stops } = flightOf(game, pack, before.upgrades, e, source);
           const via = viaOf(e, source);
           const { group: load } = tacticalMeters(game, e, source, before, pack);
@@ -73,41 +84,36 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
           const cargoWarnings = placer.at('cargo');
           const startWarnings = placer.rest();
           const over = cargoWarnings.length > 0;
+          // The last flight ends where the action happens: what follows on arrival stands at its end.
+          const last = index === sources.length - 1;
           return (
             <section key={source} className="flight">
               <strong>{t('plan.steps.fly', { path: [source, ...via, target].map(name).join(' → ') })}</strong>
               <ol className={`stops${over ? ' stops-over' : ''}`}>
+                {/* The start and what is taken along the way, on one line: the path is already in the heading. */}
                 <li className="stop">
                   <span className="stop-name">{name(source)}</span>
                   {hasUnits(ships) ? pictures(ships) : <span className="stop-name">{t('plan.steps.nobody')}</span>}
-                  {hasUnits(board) && <><span className="stop-name">{t('plan.steps.board', { name: name(source) })}</span>{pictures(board)}</>}
+                  {hasUnits(board) && <span className="stop-take"><span className="stop-name">{t('plan.steps.board', { name: name(source) })}</span>{pictures(board)}</span>}
+                  {via.map(slot => {
+                    const taken = stops.get(slot);
+                    return taken && hasUnits(taken)
+                      ? <span key={slot} className="stop-take"><span className="stop-name">{t('plan.steps.pickup', { name: name(slot) })}</span>{pictures(taken)}</span>
+                      : null;
+                  })}
                   <WarningList variant="row" warnings={startWarnings} game={game} pack={pack} />
                 </li>
-                {via.map(slot => {
-                  const taken = stops.get(slot);
-                  return (
-                    <li key={slot} className="stop">
-                      <span className="stop-name">{taken ? t('plan.steps.pickup', { name: name(slot) }) : name(slot)}</span>
-                      {taken && pictures(taken)}
-                    </li>
-                  );
-                })}
                 <li className="stop stop-target">
                   <span className="stop-name">{name(target)}</span>
                   {load.load > 0 && <span className="stop-name">{t('plan.steps.cargo', { load: load.load, capacity: load.capacity })}</span>}
                   <WarningList variant="row" warnings={cargoWarnings} game={game} pack={pack} />
+                  {last && after.length > 0 && <div className="stop-after">{after}</div>}
                 </li>
               </ol>
             </section>
           );
         })}
-        {lost.length > 0 && <p className="flight-after"><span>{t('plan.steps.losses')}</span>{lost.map((units, i) => <span key={i}>{pictures(units)}</span>)}</p>}
-        {landings.map(landing => (
-          <p key={landing.planetId} className="flight-after"><span>{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>
-        ))}
-        {hasUnits(e.production) && (
-          <p className="flight-after"><span>{t('plan.steps.build')}</span>{pictures(e.production)}{paid(e.payment) && <small>{paid(e.payment)}</small>}</p>
-        )}
+        {sources.length === 0 && after}
       </div>
     );
   };

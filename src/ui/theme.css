@@ -422,7 +422,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .plan-tab small { font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
 .plan-tab:active:not(:disabled) { transform: none; }
 .plan-copy { flex: none; align-self: center; margin-bottom: 4px; background: transparent; border-color: transparent; color: var(--accent); font-weight: 600; font-size: var(--font-s); padding: 4px 10px; }
-.plan-delete { color: var(--text-muted); }
+/* The selected plan holds its cross inside the tab, at its right edge. */
+.plan-tabs > .plan-tab-card { flex: none; align-self: flex-end; }
+.plan-tab-card > .plan-tab { max-width: 230px; }
 .plan-rounds-group { order: 2; flex: none; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .plan-rounds { flex: none; max-width: 280px; overflow-x: auto; scrollbar-width: none; }
 .plan-rounds button { padding: 0; font-weight: 600; flex: none; }
@@ -516,9 +518,13 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .plan-entries { display: flex; flex-direction: column; gap: 12px; }
 .phase { display: flex; flex-direction: column; gap: 5px; }
 .phase-auto { margin: 0; color: var(--text-dim); font-size: var(--font-s); }
-.phase-add { position: sticky; bottom: 0; z-index: 1; padding-top: 3px; background: var(--surface); display: flex; flex-wrap: wrap; gap: 5px; align-items: flex-start; }
-.phase-add .action-menu { flex: 1 1 0; min-width: 0; }
-.phase-add .action-menu:has(> button[aria-expanded='true']) { flex-basis: 100%; }
+/* The foot of the actions stays in view at the bottom edge of the panel; the list of action types opens under it, never over the map. */
+.phase-add { position: sticky; bottom: 0; z-index: 1; padding-top: 4px; background: var(--surface); container-type: scroll-state; }
+.plan-scroll:has(.phase-add) { margin-bottom: -10px; }
+.plan-scroll:has(.phase-add) > :last-child { padding-bottom: 10px; }
+@container scroll-state(stuck: bottom) {
+  .phase-add .action-menu { border-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+}
 .phase > button { width: 100%; }
 .token-pick { display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); }
 .token-pick > strong { font-size: var(--font-m); font-weight: 600; }
@@ -567,7 +573,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .entry-rival { margin-left: 16px; background: color-mix(in srgb, var(--owner) 14%, var(--surface-2)); }
 .entry-rival .order-hex { color: var(--owner); }
 .acting-as { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-left: 3px solid var(--owner); border-radius: var(--radius-s); background: color-mix(in srgb, var(--owner) 14%, var(--surface-2)); font-size: var(--font-s); font-weight: 600; }
-.acting-add { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .link-dialog { width: min(440px, calc(100vw - 32px)); margin: auto; display: flex; flex-direction: column; gap: 10px; padding: 18px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); }
 .link-dialog p { margin: 0; }
 .optional-note, .picker-distance { color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
@@ -606,11 +611,15 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .pay-planets { display: flex; flex-wrap: wrap; gap: 4px; }
 .pay-planets button { padding: 4px 10px; font-size: var(--font-s); }
 
-/* Add an action: the dashed button under the plan. */
-.action-menu { display: flex; flex-direction: column; gap: 4px; }
-.action-menu > button.primary { width: 100%; background: var(--accent-soft); color: var(--text-strong); border: 1px solid var(--accent); border-radius: var(--radius-s); font-weight: 400; }
-.action-menu .card-list { gap: 3px; }
-.action-menu .card-list button { text-align: left; font-size: var(--font-s); }
+/* Add an action: one frame holding whose action, «New action» right under it with a shared edge, and the list of action types under the button. */
+.action-menu { display: flex; flex-direction: column; border: 1px solid var(--border-strong); border-radius: var(--radius-s); background: var(--surface-2); overflow: hidden; }
+.action-menu > .player-choice { border-bottom: 1px solid var(--border-strong); }
+.action-menu > .player-choice > button { margin-left: 0; border: 0; border-right: 1px solid var(--border); border-radius: 0; }
+.action-menu > .player-choice > button:last-child { border-right: 0; }
+.action-menu > button.primary { width: 100%; background: var(--accent-soft); color: var(--text-strong); border: 0; border-radius: 0; font-weight: 400; }
+.action-menu-open > button.primary { border-bottom: 1px solid var(--border-strong); }
+.action-list { gap: 3px; padding: 4px; max-height: min(20rem, 42vh); overflow-y: auto; overscroll-behavior: contain; background: var(--surface); }
+.action-list button { text-align: left; font-size: var(--font-s); }
 
 .slice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .slice { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 6px; line-height: 1.2; font-size: var(--font-s); }
@@ -624,7 +633,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .ingress { fill: var(--violet); stroke: var(--bg); stroke-width: 1.5; }
 
 @media (hover: hover) {
-  .action-menu > button.primary:hover { background: var(--accent-soft-hover); border-color: var(--accent); color: var(--text-strong); }
+  .action-menu > button.primary:hover { background: var(--accent-soft-hover); color: var(--text-strong); }
   .entry-main button:hover:not(:disabled):not(.icon-button) { background: var(--surface-3); border-color: transparent; color: var(--text-strong); }
   button.hex-button:hover:not(:disabled) { background: var(--border-hover); --hex-fill: var(--surface-3); --hex-ink: var(--text-strong); color: var(--text-strong); }
   .plan-copy:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--accent); }
@@ -904,10 +913,16 @@ small.ship-row-round { color: var(--gold); }
 .flight-activate > span { color: var(--text); font-weight: 600; }
 .flight strong { display: block; margin-bottom: 4px; color: var(--text); font-weight: 600; }
 .flight .stop { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px 8px; min-height: 26px; padding-bottom: 8px; }
-.flight .stop-name:first-child { min-width: 22px; color: var(--text); font-weight: 600; }
+.flight .stop > .stop-name:first-child { min-width: 22px; color: var(--text); font-weight: 600; }
 .flight .stop-target { padding-bottom: 0; }
-.flight-after { padding-left: 22px; }
-.flight-after > span { display: block; }
+/* What is taken on board at the start or along the way stays on the start's line. */
+.stop-take { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.stop .upics, .flight-after .upics { margin-top: 0; }
+/* Losses, landings and building stand at the end of the last flight, where they happen. */
+.stop-after { flex-basis: 100%; display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.flight-after { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.flight-after > small { flex-basis: 100%; margin-top: 0; }
+.entry-flights > .flight-after { padding-left: 22px; }
 .stops-over .stop::after { background: var(--warning); }
 
 /* The hexagon stays a hexagon inside any list or head. */

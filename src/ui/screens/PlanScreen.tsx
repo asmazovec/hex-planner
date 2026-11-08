@@ -534,20 +534,22 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) flight.start(done.id, shownFilter); }}
                   strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
                   addAction={(
-                    <div className="acting-add">
-                      <PlayerChoice
-                        label={t('plan.actingLabel')}
-                        chosen={value => (value === null ? !actor : actor === value)} onPick={value => setActingAs(value)}
-                        options={[
-                          { value: null, label: t('plan.mine'), color: game.color },
-                          ...opponentsBySeat(game).map(o => {
-                            const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
-                            return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
-                          }),
-                        ]}
-                      />
-                      <ActionMenu onPick={onPick} />
-                    </div>
+                    <ActionMenu
+                      onPick={onPick}
+                      lead={(
+                        <PlayerChoice
+                          label={t('plan.actingLabel')}
+                          chosen={value => (value === null ? !actor : actor === value)} onPick={value => setActingAs(value)}
+                          options={[
+                            { value: null, label: t('plan.mine'), color: game.color },
+                            ...opponentsBySeat(game).map(o => {
+                              const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
+                              return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
+                            }),
+                          ]}
+                        />
+                      )}
+                    />
                   )}
                 />
               </>

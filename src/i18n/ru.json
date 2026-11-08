@@ -529,7 +529,7 @@
       "opponentPoints": "{{name}}: +{{n}}",
       "researched": "Изучает технологий: {{n}}"
     },
-    "deletePlan": "Удалить план",
+    "deletePlan": "Удалить план «{{name}}»",
     "deleteRound": "Удалить раунд {{n}}",
     "drawers": "Шторки"
   },
