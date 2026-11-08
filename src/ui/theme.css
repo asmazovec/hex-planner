@@ -168,7 +168,7 @@ button:disabled { opacity: 0.45; cursor: default; }
 button.primary { background: var(--accent-solid); color: var(--accent-text); border-color: var(--accent-solid); font-weight: 600; }
 /* A control that deletes: the colour of danger on the text and the frame. */
 button.danger { color: var(--danger); border-color: var(--danger); }
-/* TODO(P2-503) #ws:ui-css #type:ui #size:m #needs:decision #needs:prototype #selected-state — три цвета «выбрано» для одной роли: голубой здесь, .chip 706, .slice 646, .card-main 462; золотой .option 457, .card-cell 450, .card-abilities 472, .pic-taken 616, .token-tile-on 540, .ship-row-live 838, .upgrade-card.on 857, .entry-upgrades 871, .hex-button:has(checked) 508; зелёный .hex-button[aria-pressed] 1009, .fac-option 1018, вкладки и шторки. Решить по прототипу, какой цвет у переключателей — P2 note: needs a decision and a page prototype, left as it is */
+/* Three states only: nothing for not chosen, blue for everything chosen, green only for a done action. Gold is for values. */
 button[aria-pressed='true'], button[role='radio'][aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
 .button { display: inline-flex; align-items: center; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -427,9 +427,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .plan-header { flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 12px 0; background: var(--surface); border-bottom: 1px solid var(--border); min-height: 56px; }
 .plan-top { display: contents; }
 .plan-tabs { order: 1; flex: 1 1 0; align-self: flex-end; display: flex; align-items: flex-end; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding-top: 2px; position: relative; z-index: 1; margin-bottom: -1px; }
-.plan-tab { flex: none; max-width: 180px; min-height: 48px; padding: 5px 14px; text-align: left; white-space: nowrap; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-m); color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); border-top: 3px solid var(--accent); border-bottom-color: var(--border); border-radius: var(--radius-s) var(--radius-s) 0 0; touch-action: none; cursor: grab; }
-/* The chosen plan speaks as an open drawer's tab does: the same frame, green on the free edge, and no line between it and the map. */
-.plan-tab[aria-selected='true'] { background: var(--bg); color: var(--text-strong); font-weight: 600; box-shadow: none; border-top-color: var(--success); border-bottom-color: var(--bg); }
+.plan-tab { flex: none; max-width: 180px; min-height: 48px; padding: 5px 14px; text-align: left; white-space: nowrap; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-m); color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); border-top: 3px solid var(--border-strong); border-bottom-color: var(--border); border-radius: var(--radius-s) var(--radius-s) 0 0; touch-action: none; cursor: grab; }
+/* The chosen plan speaks as an open drawer's tab does: the same frame, blue on the free edge, and no line between it and the map. */
+.plan-tab[aria-selected='true'] { background: var(--bg); color: var(--text-strong); font-weight: 600; box-shadow: none; border-top-color: var(--accent); border-bottom-color: var(--bg); }
 .plan-tab small { font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
 .plan-tab:active:not(:disabled) { transform: none; }
 .plan-copy { flex: none; align-self: center; margin-bottom: 4px; background: transparent; border-color: transparent; color: var(--accent); font-weight: 600; font-size: var(--font-s); padding: 4px 10px; }
@@ -467,12 +467,12 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .card-cell { min-height: var(--touch); padding: 3px 2px; display: flex; flex-direction: column; align-items: center; font-size: 11px; line-height: 1.15; font-weight: 500; color: var(--text-muted); overflow-wrap: anywhere; }
 .card-cell b { font-size: 14px; color: var(--gold); }
 .card-cell small { font-size: 10px; color: var(--accent); }
-.card-cell[aria-pressed='true'] { border-color: var(--gold); background: var(--gold-soft); color: var(--text); }
+.card-cell[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); color: var(--text-strong); }
 .card-choice { margin: 4px 0 0; font-size: var(--font-s); font-weight: 600; }
 .card-details { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding: 7px 10px; font-size: var(--font-s); line-height: 1.35; }
 .strategy-editor p { margin: 0; font-size: var(--font-s); }
 .option { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; font-size: var(--font-s); }
-.option[aria-pressed='true'] { border-color: var(--gold); background: var(--gold-soft); }
+.option[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); color: var(--text-strong); }
 .strategy-foot { display: flex; gap: 8px; }
 .strategy-foot > button { flex: 1; }
 .strategy-editor .entry-upgrades { padding: 0; }
@@ -485,7 +485,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .card-ability b { font-size: var(--font-xs); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
 .card-abilities { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .card-abilities .card-ability { width: 100%; margin-top: 0; padding: 7px 10px; text-align: left; font-weight: 400; font-size: var(--font-s); line-height: 1.35; }
-.card-abilities .card-ability[aria-pressed='true'] { background: var(--gold-soft); border-color: var(--gold); border-left-width: 2px; }
+.card-abilities .card-ability[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); border-left-width: 2px; color: var(--text-strong); }
 .card-ability-cost { margin-left: 8px; text-transform: none; letter-spacing: 0; font-weight: 600; color: var(--gold); }
 .card-abilities .card-note { margin-top: 0; }
 .card-ability-primary { border-left-color: var(--gold); color: var(--text); }
@@ -508,9 +508,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .entry-main .entry-label { flex: 1; min-width: 0; text-align: left; padding: 4px 6px; color: var(--text); font-weight: 600; font-size: var(--font-s); line-height: 1.3; }
 .hex-button::before { content: ''; position: absolute; inset: 1.5px; background: var(--hex-fill); clip-path: inherit; }
 .hex-button svg { position: relative; pointer-events: none; }
-.hex-button input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.hex-button:has(input:checked) { --hex-edge: var(--gold); --hex-fill: var(--gold-fill); --hex-ink: var(--gold); }
-.hex-button:focus-visible, .hex-button:has(input:focus-visible) { --hex-edge: var(--accent); outline: none; }
+.hex-button:focus-visible { --hex-edge: var(--accent); outline: none; }
 .order-hex { position: relative; flex: none; width: 26px; height: 23px; margin-left: 4px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--route-neutral); }
 .order-hex svg { position: absolute; inset: 0; }
 .order-hex polygon { fill: var(--badge-fill); stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
@@ -539,7 +537,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .token-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
 .token-tile { min-height: 62px; padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: var(--font-s); font-weight: 500; color: var(--text-muted); }
 .token-tile b { font-size: 20px; font-weight: 700; color: var(--text); }
-.token-tile-on { border-color: var(--gold); }
+.token-tile-on { border-color: var(--accent); background: var(--accent-soft); }
 .token-cell { position: relative; display: flex; min-width: 0; }
 .token-cell > .token-tile { flex: 1 1 auto; min-width: 0; }
 .token-take { position: absolute; top: 3px; right: 3px; width: 26px; min-width: 0; height: 26px; min-height: 0; padding: 0; line-height: 1; border-radius: 50%; }
@@ -606,7 +604,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .pic-pair { display: contents; }
 /* TODO(P2-548) #ws:ui-containers #type:dup #size:m #unit-tile — плитка юнита с числом: 4 класса (.pic, .shop-item 254, .stage-loss 268, .upic 524) и 5 компонентов, размеры 62/84/62/32, бейдж числа 257, 270, 617, 525; общий UnitTile с размером, радиус var(--radius-s) вместо 10px — P2 note: UnitTile now draws .pic, .stage-loss, .upic and the landing stacks, with the sizes they had; one size, one counter badge and var(--radius-s) for all would change how each looks: needs prototype */
 .pic { position: relative; width: 62px; height: 62px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--surface-2); }
-.pic-taken { border-color: var(--gold); background: var(--gold-soft); }
+.pic-taken { border-color: var(--accent); background: var(--accent-soft); }
 .pic i { position: absolute; right: 3px; bottom: 1px; font-style: normal; font-weight: 700; font-size: 12px; color: var(--text); }
 .pips { display: flex; flex-wrap: wrap; gap: 3px; }
 .pip { fill: transparent; stroke: var(--border-hover); stroke-width: 1; }
@@ -647,9 +645,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 
 @media (hover: hover) {
   .action-menu > button.primary:hover { background: var(--accent-soft-hover); border-color: var(--accent); color: var(--text-strong); }
-  .entry-main button:hover:not(:disabled):not(.hex-button) { background: var(--surface-3); border-color: transparent; color: var(--text-strong); }
-  button.hex-button:hover:not(:disabled), label.hex-button:hover { background: var(--border-hover); --hex-fill: var(--surface-3); --hex-ink: var(--text-strong); color: var(--text-strong); }
-  label.hex-button:has(input:checked):hover { background: var(--gold); --hex-fill: var(--gold-fill-hover); --hex-ink: var(--gold); color: var(--gold); }
+  .entry-main button:hover:not(:disabled):not(.icon-button) { background: var(--surface-3); border-color: transparent; color: var(--text-strong); }
+  button.hex-button:hover:not(:disabled) { background: var(--border-hover); --hex-fill: var(--surface-3); --hex-ink: var(--text-strong); color: var(--text-strong); }
   .plan-copy:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--accent); }
   .popover-close:hover { background: var(--surface-2); border-color: transparent; color: var(--text-strong); }
 }
@@ -831,7 +828,7 @@ small.ship-row-round { color: var(--gold); }
 /* TODO(P2-563) #ws:ui-containers #type:dup #size:s #upgrade-toggle #dep:P2-562 — .upgrade-card повторяет .ship-row-live 836: перейти на общий переключатель — P2 note: waits for P2-562 and P2-264 (prototype) */
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }
 .upgrade-card:disabled { cursor: default; opacity: 1; color: var(--text-muted); }
-.upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--gold); background: var(--gold-soft); }
+.upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--accent); background: var(--accent-soft); }
 .upgrade-card .unit-icon { width: 42px; height: 42px; }
 .upgrade-body b { display: block; color: var(--text); font-size: 13.5px; }
 .ship-stat-line { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
@@ -845,9 +842,9 @@ small.ship-row-round { color: var(--gold); }
 .entry-upgrades { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 6px 6px; }
 .entry-upgrades button { width: var(--touch); height: var(--touch); padding: 0; display: grid; place-items: center; background: transparent; border-color: var(--border); }
 .entry-upgrades button .unit-icon { width: 28px; height: 28px; }
-.entry-upgrades button[aria-pressed='true'] { background: var(--gold-soft); border-color: var(--gold); }
-.entry-upgrades button[aria-pressed='true'] .unit-icon { color: var(--gold); }
-.entry-upgrades .entry-upgrade-owned:disabled { opacity: 1; border-style: dashed; border-color: var(--gold); }
+.entry-upgrades button[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); }
+.entry-upgrades button[aria-pressed='true'] .unit-icon { color: var(--text-strong); }
+.entry-upgrades .entry-upgrade-owned:disabled { opacity: 1; border-style: dashed; border-color: var(--accent); }
 .entry-upgrades .entry-upgrade-owned .unit-icon { color: var(--text-dim); }
 
 /* Drawers: the vertical tabs at the sides of the map and the sheets they pull out. */
@@ -862,12 +859,12 @@ small.ship-row-round { color: var(--gold); }
 .drawer-rail-open { transform: translateX(calc(2px - min(388px, 100cqw - 34px))); }
 .drawer-tab { pointer-events: auto; min-width: 0; min-height: 0; width: 34px; padding: 14px 0; display: grid; place-items: center; font-size: var(--font-s); font-weight: 600; color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); white-space: nowrap; }
 .drawer-tab span { writing-mode: vertical-rl; }
-.drawer-tab-left { border-left: 0; border-right: 3px solid var(--accent); border-radius: 0 var(--radius-s) var(--radius-s) 0; }
-.drawer-tab-right { border-right: 0; border-left: 3px solid var(--accent); border-radius: var(--radius-s) 0 0 var(--radius-s); }
+.drawer-tab-left { border-left: 0; border-right: 3px solid var(--border-strong); border-radius: 0 var(--radius-s) var(--radius-s) 0; }
+.drawer-tab-right { border-right: 0; border-left: 3px solid var(--border-strong); border-radius: var(--radius-s) 0 0 var(--radius-s); }
 .drawer-tab-right span { transform: rotate(180deg); }
 .drawer-tab.te-ready { color: var(--gold); }
 .drawer { position: absolute; top: 0; bottom: 0; }
-.drawer-left { left: 0; z-index: 10; border-right: 2px solid var(--success); box-shadow: var(--shadow-drawer); animation: drawer-from-left 0.26s var(--ease); transition: width 0.26s var(--ease); }
+.drawer-left { left: 0; z-index: 10; border-right: 2px solid var(--accent); box-shadow: var(--shadow-drawer); animation: drawer-from-left 0.26s var(--ease); transition: width 0.26s var(--ease); }
 .drawer-left.drawer-leaving { animation: drawer-to-left 0.26s var(--ease) forwards; }
 .drawer-players { width: min(860px, calc(100% - 34px)); }
 .drawer-legend { width: min(460px, calc(100% - 34px)); }
@@ -875,7 +872,7 @@ small.ship-row-round { color: var(--gold); }
 .drawer-scrim-leaving { animation: fade-out 0.2s linear forwards; pointer-events: none; }
 :root[data-blur='on'] .drawer-scrim { -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 /* Behind the plan's panel, flush with it: the sheet comes out from under it, and its shadow grows on the map as it moves. */
-.drawer-under { right: 0; z-index: 6; width: min(388px, calc(100% - 34px)); border-left: 2px solid var(--success); box-shadow: var(--shadow-drawer-under); animation: drawer-from-under 0.26s var(--ease); }
+.drawer-under { right: 0; z-index: 6; width: min(388px, calc(100% - 34px)); border-left: 2px solid var(--accent); box-shadow: var(--shadow-drawer-under); animation: drawer-from-under 0.26s var(--ease); }
 .drawer-under.drawer-leaving { animation: drawer-to-under 0.26s var(--ease) forwards; }
 .drawer-swap { height: 100%; animation: fade-in 0.16s linear; }
 @keyframes drawer-from-left { from { transform: translateX(-100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } to { transform: none; } }
@@ -910,7 +907,7 @@ small.ship-row-round { color: var(--gold); }
 .legend-number { color: var(--gold); font-size: 13px; white-space: nowrap; }
 .legend-word { font-size: 12px; color: var(--text); text-align: center; }
 .legend-grip { color: var(--text-dim); display: grid; place-items: center; }
-.legend-mark .hex-button { width: 36px; height: 32px; cursor: default; }
+.legend-mark .icon-button { width: 32px; height: 32px; cursor: default; }
 
 /* A tactical action being read. */
 .entry-flights { display: flex; flex-direction: column; gap: 10px; }
@@ -926,14 +923,45 @@ small.ship-row-round { color: var(--gold); }
 
 /* The hexagon stays a hexagon inside any list or head. */
 /* Late in the sheet and with the element in it, so it outweighs the button rules of any list or head. */
-.hex-button, .entry-main .hex-button, button.hex-button {
+.hex-button, button.hex-button {
   --hex-fill: var(--surface-2); --hex-ink: var(--hex-button-ink);
   flex: none; position: relative; width: 42px; min-width: 0; height: 38px; min-height: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
   color: var(--hex-ink); background: var(--hex-edge); border: 0; border-radius: 0;
   clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
 }
 button.hex-button::after { content: none; }
-button.hex-button.popover-close { position: absolute; }
+
+/* Remove, edit, done: a quiet glyph of 24 px in a place of 44 px for the finger, with no frame and no fill. */
+/* Pressed, or done, a hexagon lights up behind it: no edge, a radial glow that fades out to nothing at its sides. */
+/* Late in the sheet and with the element in it, so it outweighs the button rules of any list, card or head. */
+.icon-button, .entry-main .icon-button, button.icon-button, .saved-list button.icon-button {
+  --icon-glow: rgb(255 255 255 / 0.16);
+  flex: none; position: relative; width: var(--touch); min-width: 0; height: var(--touch); min-height: 0; padding: 0; display: grid; place-items: center; cursor: pointer;
+  color: var(--text-dim); background: transparent; border: 0; border-radius: 0;
+}
+.icon-button svg { position: relative; width: 24px; height: 24px; pointer-events: none; }
+.icon-button::before {
+  content: ''; position: absolute; inset: 3px 1px; opacity: 0; pointer-events: none;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+  background: radial-gradient(closest-side, var(--icon-glow), var(--icon-glow) 35%, transparent 125%);
+  transition: opacity var(--motion-fast);
+}
+button.icon-button::after { content: none; }
+button.icon-button.popover-close { position: absolute; }
+.icon-button input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.icon-button:focus-visible, .icon-button:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius-s); }
+button.icon-button:active:not(:disabled), label.icon-button:active { color: var(--text-strong); }
+button.icon-button:active:not(:disabled)::before, label.icon-button:active::before { opacity: 1; }
+/* The cross turns red only under the finger or the pointer. */
+button.icon-remove:active:not(:disabled) { color: var(--danger); }
+/* Done is the one place for green: the mark and its hexagon. */
+.icon-button:has(input:checked) { --icon-glow: color-mix(in srgb, var(--success) 34%, transparent); color: var(--success); }
+.icon-button:has(input:checked)::before { opacity: 1; }
+@media (hover: hover) {
+  button.icon-button:hover:not(:disabled), label.icon-button:hover { background: transparent; border-color: transparent; color: var(--text-strong); }
+  button.icon-remove:hover:not(:disabled) { color: var(--danger); }
+  label.icon-button:has(input:checked):hover { color: var(--success); }
+}
 
 /* A section heading: a line, the title in the middle of the field, the line again. The one spacing for all of them. */
 /* SectionTitle draws it; the class of its place adds only the spacing. */
@@ -953,36 +981,36 @@ button.hex-button.popover-close { position: absolute; }
 /* Plan tabs hang from the edge of the screen below them, signed like the drawers: the free edge carries the stripe. */
 .plan-tab-dragging { cursor: grabbing; }
 @media (hover: hover) {
-  button.plan-tab:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-top-color: var(--accent); border-bottom-color: var(--border); }
-  button.plan-tab[aria-selected='true']:hover:not(:disabled) { border-top-color: var(--success); border-bottom-color: var(--bg); }
+  button.plan-tab:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-top-color: var(--border-strong); border-bottom-color: var(--border); }
+  button.plan-tab[aria-selected='true']:hover:not(:disabled) { border-top-color: var(--accent); border-bottom-color: var(--bg); }
 }
 
-/* The menu: a hexagon per screen, the current one green; the export turns gold when a file is due. */
-button.hex-button[aria-current='page'] { --hex-edge: var(--success); --hex-fill: var(--success-soft); --hex-ink: var(--success-ink); }
+/* The menu: a hexagon per screen, the current one blue; the export turns gold when a file is due. */
+button.hex-button[aria-current='page'] { --hex-edge: var(--accent); --hex-fill: var(--accent-soft); --hex-ink: var(--text-strong); }
 button.hex-button.nav-export-due { --hex-edge: var(--gold); --hex-fill: var(--gold-fill); --hex-ink: var(--gold); }
 
 @media (hover: hover) {
-  button.drawer-tab.drawer-tab-left:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-right-color: var(--accent); }
-  button.drawer-tab.drawer-tab-right:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-left-color: var(--accent); }
+  button.drawer-tab.drawer-tab-left:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); }
+  button.drawer-tab.drawer-tab-right:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); }
 }
 
-/* An open drawer is edged in green, the colour of what is chosen. Its own tab lies over that line and joins the sheet; the other tab stays outside it. */
-button.drawer-tab.drawer-tab-left[aria-pressed='true'], button.drawer-tab.drawer-tab-left[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-right-color: var(--success); }
-button.drawer-tab.drawer-tab-right[aria-pressed='true'], button.drawer-tab.drawer-tab-right[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-left-color: var(--success); }
+/* An open drawer is edged in blue, the colour of what is chosen. Its own tab lies over that line and joins the sheet; the other tab stays outside it. */
+button.drawer-tab.drawer-tab-left[aria-pressed='true'], button.drawer-tab.drawer-tab-left[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-right-color: var(--accent); }
+button.drawer-tab.drawer-tab-right[aria-pressed='true'], button.drawer-tab.drawer-tab-right[aria-pressed='true']:hover:not(:disabled) { background: var(--bg); color: var(--text-strong); border-color: var(--border-strong); border-left-color: var(--accent); }
 .drawer-rail-open-players .drawer-tab[aria-pressed='false'], .drawer-rail-open-legend .drawer-tab[aria-pressed='false'] { transform: translateX(2px); }
 .drawer-rail-open .drawer-tab[aria-pressed='false'] { transform: translateX(-2px); }
 
-/* The map's own actions hang in its corners, as hexagons like every other control; the one switched on is green. */
-button.hex-button[aria-pressed='true'] { --hex-edge: var(--success); --hex-fill: var(--success-soft); --hex-ink: var(--success-ink); }
+/* The map's own actions hang in its corners, as hexagons like the menu; the one switched on is blue. */
+button.hex-button[aria-pressed='true'] { --hex-edge: var(--accent); --hex-fill: var(--accent-soft); --hex-ink: var(--text-strong); }
 
-/* The sheet of factions: every one in view, a finger's room each. Blue edge is free to choose, green is the choice. */
+/* The sheet of factions: every one in view, a finger's room each. The choice is blue, as every choice. */
 .fac-sheet { width: min(900px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; padding: 14px 18px 18px; background: var(--bg); border: 1px solid var(--border-strong); border-radius: var(--radius-l); }
 .fac-sheet .stage-head { margin-bottom: 8px; font-size: var(--font-xl); }
 .fac-group { margin: 12px 0 8px; }
 .fac-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 6px; }
-button.fac-option { min-height: 48px; padding: 6px 12px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; font-weight: 600; font-size: 14px; line-height: 1.25; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-left: 3px solid var(--accent); border-radius: var(--radius-s); }
+button.fac-option { min-height: 48px; padding: 6px 12px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; text-align: left; font-weight: 600; font-size: 14px; line-height: 1.25; color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-left: 3px solid var(--border-strong); border-radius: var(--radius-s); }
 button.fac-option small { font-weight: 400; font-size: var(--font-xs); color: var(--text-dim); }
-button.fac-option[aria-pressed='true'], button.fac-option[aria-pressed='true']:hover:not(:disabled) { color: var(--text-strong); background: var(--success-soft); border-color: var(--success); }
+button.fac-option[aria-pressed='true'], button.fac-option[aria-pressed='true']:hover:not(:disabled) { color: var(--text-strong); background: var(--accent-soft); border-color: var(--accent); }
 button.fac-option:disabled { opacity: 0.45; }
 .fac-clear { display: block; margin: 14px 0 0 auto; }
 

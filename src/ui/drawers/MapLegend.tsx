@@ -122,9 +122,9 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
       <Row mark={<b className="legend-word">{t('plan.forecast')}</b>} text={k('forecast')} />
       <Row mark={<b className="legend-word">{t('plan.now')}</b>} text={k('now')} />
       <Row mark={<span className="legend-grip"><RowIcon name="grip" /></span>} text={k('rowGrip')} />
-      <Row mark={<span className="hex-button"><RowIcon name="edit" /></span>} text={k('rowEdit')} />
-      <Row mark={<span className="hex-button"><RowIcon name="done" /></span>} text={k('rowDone')} />
-      <Row mark={<span className="hex-button"><RowIcon name="remove" /></span>} text={k('rowRemove')} />
+      <Row mark={<span className="icon-button"><RowIcon name="edit" /></span>} text={k('rowEdit')} />
+      <Row mark={<span className="icon-button"><RowIcon name="done" /></span>} text={k('rowDone')} />
+      <Row mark={<span className="icon-button"><RowIcon name="remove" /></span>} text={k('rowRemove')} />
     </DrawerSheet>
   );
 }
