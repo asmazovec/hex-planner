@@ -2,16 +2,16 @@
 
 Собрано скриптом `npm run plan:todos` из комментариев `TODO(P2-…)` в коде. Не правьте этот файл руками: правьте TODO и запустите скрипт снова.
 
-Всего: **373** TODO в **77** файлах, **25** потоков.
+Всего: **368** TODO в **88** файлах, **25** потоков.
 
 ## По типам
 
 | Тип | Значение | Количество |
 |---|---|---|
-| `bug` | Ошибка: код делает то, что правило запрещает | 29 |
+| `bug` | Ошибка: код делает то, что правило запрещает | 28 |
 | `check` | Нет проверки: правило запрещает, нарушения нет | 19 |
 | `model` | Нет модели: не хватает данных или понятия | 8 |
-| `arch` | Архитектура: ответственность не на месте | 92 |
+| `arch` | Архитектура: ответственность не на месте | 88 |
 | `dup` | Дублирование | 117 |
 | `dead` | Мёртвый код | 8 |
 | `ui` | Визуальный язык: элемент вне общего контейнера | 89 |
@@ -23,9 +23,9 @@
 
 Поток стоит на волну позже самого позднего из тех, на чей результат он опирается. Потоки одной волны независимы: их можно делать параллельно, у каждого свои файлы.
 
-**Волна 0:** [rule-engine](#ws-rule-engine) (3), [domain-purity](#ws-domain-purity) (5), [data](#ws-data) (5), [ui-structure](#ws-ui-structure) (60), [ui-css](#ws-ui-css) (65), [vocab](#ws-vocab) (2), [docs](#ws-docs) (3)
+**Волна 0:** [rule-engine](#ws-rule-engine) (1), [domain-purity](#ws-domain-purity) (4), [data](#ws-data) (5), [ui-structure](#ws-ui-structure) (60), [ui-css](#ws-ui-css) (65), [vocab](#ws-vocab) (2), [docs](#ws-docs) (3)
 
-**Волна 1:** [replay-steps](#ws-replay-steps) (2), [ui-logic-to-domain](#ws-ui-logic-to-domain) (36), [ui-warnings](#ws-ui-warnings) (14), [ui-containers](#ws-ui-containers) (91)
+**Волна 1:** [replay-steps](#ws-replay-steps) (0), [ui-logic-to-domain](#ws-ui-logic-to-domain) (36), [ui-warnings](#ws-ui-warnings) (14), [ui-containers](#ws-ui-containers) (91)
 
 **Волна 2:** [command-tokens](#ws-command-tokens) (4), [movement](#ws-movement) (7), [transport](#ws-transport) (3), [combat-order](#ws-combat-order) (3), [invasion](#ws-invasion) (4), [structures](#ws-structures) (5), [production](#ws-production) (5), [payment](#ws-payment) (3), [strategy-cards](#ws-strategy-cards) (14), [round-flow](#ws-round-flow) (1), [thunders-edge](#ws-thunders-edge) (6), [ui-nesting](#ws-ui-nesting) (12), [ui-plan-screen](#ws-ui-plan-screen) (15)
 
@@ -44,9 +44,7 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-001 | arch |  | [src/domain/types.ts:330](../../src/domain/types.ts#L330) | Предупреждение не знает правила, шага и места: добавить rule (номер LRR), step (activation, movement, transport, combat, invasion, production, payment, card, status), place (entryId, source, planetId); WarningCode свести к реестру правил | #warning-channel #violation | l |  |
-| P2-002 | arch |  | [src/domain/project.ts:577](../../src/domain/project.ts#L577) | Проверки правил пишут warnings.push вперемешку с изменением состояния: вынести каждую проверку в правило реестра (функция контекста шага → нарушения), эффект шага оставить чистым | #warning-channel #srp | l |  |
-| P2-003 | arch |  | [src/domain/rules/kit.ts:123](../../src/domain/rules/kit.ts#L123) | Контрактные тесты: каждый test() в rules/lrr ссылается на правило реестра, у каждого правила есть тест, у каждого шага есть место показа, src/ui не создаёт нарушений; codesOf перевести на номера правил | #contract-test | m |  |
+| P2-003 | arch |  | [src/domain/rules/kit.ts:123](../../src/domain/rules/kit.ts#L123) | Контрактные тесты: каждый test() в rules/lrr ссылается на правило реестра, у каждого правила есть тест, у каждого шага есть место показа, src/ui не создаёт нарушений; codesOf перевести на номера правил — P2 note: registry and contract tests done (src/domain/rules/registry.ts, contract.test.ts: every code registered and exercised, src/ui creates no warning; violations carry rule, step, place; rulesOf below); left: «у каждого шага есть место показа» needs warningPlaces by step, for the UI wave | #contract-test | m |  |
 
 <a id="ws-domain-purity"></a>
 ### Чистота домена · `domain-purity` · волна 0
@@ -63,7 +61,6 @@
 | P2-056 | arch |  | [src/domain/route.ts:4](../../src/domain/route.ts#L4) | Пиксели, кривые, время перелёта и фокус камеры — отрисовка, не правила: перенести в src/ui/map/geometry.ts, в домене оставить слоты и смежность | #purity #geometry | m |  |
 | P2-057 | arch |  | [src/domain/cards.ts:1](../../src/domain/cards.ts#L1) | Домен импортирует JSON из src/data, а src/data импортирует домен: набор карт получать через DataPack | #purity #data-cycle | s |  |
 | P2-058 | arch |  | [src/domain/mapString.test.ts:3](../../src/domain/mapString.test.ts#L3) | Доменный тест импортирует из UI | #purity #layering | s |  |
-| P2-059 | arch |  | [src/domain/project.ts:297](../../src/domain/project.ts#L297) | Стартовые жетоны 3/3/2 числами: константа START_TOKENS рядом с STATUS_TOKENS | #magic-number | s |  |
 
 <a id="ws-data"></a>
 ### Игровые данные · `data` · волна 0
@@ -262,7 +259,7 @@
 |---|---|---|---|---|---|---|---|
 | P2-062 | doc | 41-note-6 | [CLAUDE.md:46](../../CLAUDE.md#L46) | Строка противоречит примечанию 6 к LRR 41: +1 за каждый разлом и каждое прохождение | #gravity-rift | s | P2-007 |
 | P2-063 | doc | 83.3 | [CLAUDE.md:69](../../CLAUDE.md#L69) | forToken сейчас не выводится, а хранится и устаревает (P2-034) | #for-token | s | P2-034 |
-| P2-064 | doc |  | [CLAUDE.md:67](../../CLAUDE.md#L67) | Описать канал нарушений: правило, шаг, место, реестр, контрактные тесты | #warning-channel | s | P2-001 |
+| P2-064 | doc |  | [CLAUDE.md:67](../../CLAUDE.md#L67) | Описать канал нарушений: правило, шаг, место, реестр, контрактные тесты | #warning-channel | s |  |
 
 <a id="ws-replay-steps"></a>
 ### Повтор плана по шагам правил · `replay-steps` · волна 1
@@ -273,12 +270,7 @@
 
 **Файлы потока:** `src/domain/project.ts (replay, applyEntry, applyTactical)`
 
-Порядок исправления: сначала ошибки, затем проверки, модели, архитектура, остальное.
-
-| ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
-|---|---|---|---|---|---|---|---|
-| P2-005 | bug | 34.2, 40, 81.4, 81.6 | [src/domain/project.ts:640](../../src/domain/project.ts#L640) | Планеты готовятся и жетоны снимаются только в начале следующего раунда; по правилам это шаги 4 и 6 фазы статуса, до фазы политики. Перенести в фазу статуса этого раунда, у соперников тоже | #status-phase #phase-order | m |  |
-| P2-004 | arch |  | [src/domain/project.ts:627](../../src/domain/project.ts#L627) | Повтор — одна функция на фазы, соперников и остановки: разложить на фазы раунда и шаги тактического действия 89.1-89.5 и карт, каждый шаг = проверки до шага + чистый эффект | #srp #phases | l |  |
+_Нет TODO._
 
 <a id="ws-ui-logic-to-domain"></a>
 ### Логика из UI в домен · `ui-logic-to-domain` · волна 1
@@ -480,10 +472,10 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-018 | bug | 20.6 | [src/domain/project.ts:510](../../src/domain/project.ts#L510) | Второстепенное Construction в систему с моим жетоном законно (жетон уходит в снабжение), а здесь предупреждение | #construction | s |  |
-| P2-015 | check | 5.2, 89.1, 20.4 | [src/domain/project.ts:444](../../src/domain/project.ts#L444) | Активация системы со своим жетоном и тактика без жетона в тактическом резерве проходят молча: нарушения systemHasToken и poolNegative(tactic) | #activation | s |  |
-| P2-017 | check | 81.5, 37.3 | [src/domain/project.ts:591](../../src/domain/project.ts#L591) | Перераспределение не проверяет минус в резерве и флот меньше кораблей в системах (после статуса и после перестановки Warfare): poolNegative и fleetPool по всем системам | #fleet-pool #redistribute | s |  |
-| P2-016 | model | 20.3, 23.2 | [src/domain/project.ts:466](../../src/domain/project.ts#L466) | Жетонов приказа 16: сумма в резервах и на карте не ограничена. Нужна модель снабжения жетонов (решить, нужна ли) | #token-supply | m |  |
+| P2-018 | bug | 20.6 | [src/domain/replay/cards.ts:50](../../src/domain/replay/cards.ts#L50) | Второстепенное Construction в систему с моим жетоном законно (жетон уходит в снабжение), а здесь предупреждение | #construction | s |  |
+| P2-015 | check | 5.2, 89.1, 20.4 | [src/domain/replay/activation.ts:6](../../src/domain/replay/activation.ts#L6) | Активация системы со своим жетоном и тактика без жетона в тактическом резерве проходят молча: нарушения systemHasToken и poolNegative(tactic) | #activation | s |  |
+| P2-017 | check | 81.5, 37.3 | [src/domain/replay/status.ts:13](../../src/domain/replay/status.ts#L13) | Перераспределение не проверяет минус в резерве и флот меньше кораблей в системах (после статуса и после перестановки Warfare): poolNegative и fleetPool по всем системам | #fleet-pool #redistribute | s |  |
+| P2-016 | model | 20.3, 23.2 | [src/domain/replay/status.ts:7](../../src/domain/replay/status.ts#L7) | Жетонов приказа 16: сумма в резервах и на карте не ограничена. Нужна модель снабжения жетонов (решить, нужна ли) | #token-supply | m |  |
 
 <a id="ws-movement"></a>
 ### Движение и маршруты · `movement` · волна 2
@@ -498,13 +490,13 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-007 | bug | 41.3, 41-note-6 | [src/domain/project.ts:136](../../src/domain/project.ts#L136) | Разлом даёт +1 один раз на корабль; по примечанию 6 к 41 — +1 за каждый разлом и каждое прохождение. Ключ seen в routeReach тоже булев | #gravity-rift | s |  |
-| P2-008 | bug | 58.3.2 | [src/domain/project.ts:120](../../src/domain/project.ts#L120) | Шаги между отмеченными точками считаются поиском, который не видит аномалий и чужих кораблей: системы между точками не проверяются. Восстанавливать весь путь или требовать соседние точки (tapStep) | #route #skipped-stop | m |  |
-| P2-009 | bug | 58.3.5 | [src/domain/project.ts:164](../../src/domain/project.ts#L164) | Удаляет из подсветки и активную систему, если путь начался в ней: 58.3.5 разрешает вылететь и вернуться | #route-highlight | s |  |
+| P2-007 | bug | 41.3, 41-note-6 | [src/domain/replay/movement.ts:100](../../src/domain/replay/movement.ts#L100) | Разлом даёт +1 один раз на корабль; по примечанию 6 к 41 — +1 за каждый разлом и каждое прохождение. Ключ seen в routeReach тоже булев | #gravity-rift | s |  |
+| P2-008 | bug | 58.3.2 | [src/domain/replay/movement.ts:84](../../src/domain/replay/movement.ts#L84) | Шаги между отмеченными точками считаются поиском, который не видит аномалий и чужих кораблей: системы между точками не проверяются. Восстанавливать весь путь или требовать соседние точки (tapStep) | #route #skipped-stop | m |  |
+| P2-009 | bug | 58.3.5 | [src/domain/replay/movement.ts:128](../../src/domain/replay/movement.ts#L128) | Удаляет из подсветки и активную систему, если путь начался в ней: 58.3.5 разрешает вылететь и вернуться | #route-highlight | s |  |
 | P2-010 | bug | 6-note-2 | [src/domain/strategy.ts:167](../../src/domain/strategy.ts#L167) | Дом вне карты (Creuss) получает ключ тайла 51, а не слот: граф маршрутов его не знает, gridDistance даёт 1 до любой системы, подсветка пуста. Нужен слот дома вне карты, смежный только через червоточину | #Creuss #off-map-home | m |  |
 | P2-011 | bug | 6-note-2 | [src/domain/route.ts:42](../../src/domain/route.ts#L42) | Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity | #Creuss | s | P2-010 |
-| P2-012 | check | 44.2 | [src/domain/project.ts:94](../../src/domain/project.ts#L94) | Гиперпуть не система: его нельзя выбрать активной системой и в нём нельзя закончить ход — нет нарушения | #hyperlane | s |  |
-| P2-006 | arch |  | [src/domain/project.ts:38](../../src/domain/project.ts#L38) | Граф маршрутов и аномалии (180 строк) живут в модуле расчёта состояния: вынести в src/domain/movement.ts | #srp #route-graph | m |  |
+| P2-012 | check | 44.2 | [src/domain/replay/movement.ts:58](../../src/domain/replay/movement.ts#L58) | Гиперпуть не система: его нельзя выбрать активной системой и в нём нельзя закончить ход — нет нарушения | #hyperlane | s |  |
+| P2-006 | arch |  | [src/domain/replay/movement.ts:10](../../src/domain/replay/movement.ts#L10) | Граф маршрутов и аномалии (180 строк) живут в модуле расчёта состояния: вынести в src/domain/movement.ts | #srp #route-graph | m |  |
 
 <a id="ws-transport"></a>
 ### Перевозка и подбор · `transport` · волна 2
@@ -519,8 +511,8 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-013 | check | 95.1, 95.3 | [src/domain/project.ts:172](../../src/domain/project.ts#L172) | Подборы пропускаются целиком: нет проверки, что подбор из старта, пути или активной системы (95.1), и что в системе подбора нет моего жетона (95.3). Тот баг, что нашёл пользователь | #pickup #token | m |  |
-| P2-014 | check | 16.3, 16-note-4, 43.1, 55-note-1, 95-note-4 | [src/domain/project.ts:462](../../src/domain/project.ts#L462) | Места на борту проверяются только в активной системе: истребители и наземные войска, брошенные без мест на борту в системе, откуда улетели корабли, не дают нарушения | #capacity #left-behind | m |  |
+| P2-013 | check | 95.1, 95.3 | [src/domain/replay/transport.ts:8](../../src/domain/replay/transport.ts#L8) | Подборы пропускаются целиком: нет проверки, что подбор из старта, пути или активной системы (95.1), и что в системе подбора нет моего жетона (95.3). Тот баг, что нашёл пользователь | #pickup #token | m |  |
+| P2-014 | check | 16.3, 16-note-4, 43.1, 55-note-1, 95-note-4 | [src/domain/replay/transport.ts:48](../../src/domain/replay/transport.ts#L48) | Места на борту проверяются только в активной системе: истребители и наземные войска, брошенные без мест на борту в системе, откуда улетели корабли, не дают нарушения | #capacity #left-behind | m |  |
 | P2-322 | check | 95.3 | [src/ui/plan/UnitPicker.tsx:77](../../src/ui/plan/UnitPicker.tsx#L77) | подбор предлагается в любой системе пути, и со своим жетоном (кроме активной); предлагать по доменной проверке подбора. Местное имя placesOf затеняет доменное | #pickup #token | s |  |
 
 <a id="ws-combat-order"></a>
@@ -536,7 +528,7 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-019 | bug | 76.2, 89.3 | [src/domain/project.ts:410](../../src/domain/project.ts#L410) | Потери снимаются до проверки флота и до высадки: флот надо проверять при прилёте (37.3), а высадку ограничивать местами на борту после боя (16.3.3). Порядок: прилёт → флот → бой → места на борту → высадка → производство | #fleet-pool #capacity #battle | m |  |
+| P2-019 | bug | 76.2, 89.3 | [src/domain/replay/tactical.ts:26](../../src/domain/replay/tactical.ts#L26) | Потери снимаются до проверки флота и до высадки: флот надо проверять при прилёте (37.3), а высадку ограничивать местами на борту после боя (16.3.3). Порядок: прилёт → флот → бой → места на борту → высадка → производство | #fleet-pool #capacity #battle | m |  |
 | P2-206 | bug | 78.6.2 | [src/ui/map/HexStage.tsx:271](../../src/ui/map/HexStage.tsx#L271) | Возврат ошибочной потери десантника идёт через withLoss(+1) и только уменьшает losses: юнит остаётся в космосе, а не в landings; чинить в withLoss | #losses | s |  |
 | P2-300 | bug | 78.6.2 | [src/ui/plan/tactical.ts:49](../../src/ui/plan/tactical.ts#L49) | возврат (amount > 0) только уменьшает losses, а высадка, из которой десантник ушёл при потере, не восстанавливается: он остаётся в космосе. Возврат должен вернуть его в landings той планеты | #losses | s |  |
 
@@ -555,10 +547,10 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-020 | bug | 49.5, 42.4.4 | [src/domain/project.ts:369](../../src/domain/project.ts#L369) | Контроль ставится до снятия groundLosses: если все высадившиеся погибли, контроль всё равно мой. Устанавливать контроль после потерь на планете | #control | s |  |
-| P2-021 | bug | 76.1, 49.2, 89.4 | [src/domain/project.ts:349](../../src/domain/project.ts#L349) | Высаживает любой тип юнита, в том числе корабли, и на любую планету: только наземные войска и только планеты активной системы | #landing | s |  |
-| P2-022 | bug | 49.5, 25.5 | [src/domain/project.ts:658](../../src/domain/project.ts#L658) | Высадка соперника переворачивает контроль по одному списку landings: без проверки, что кто-то высадился и выжил; планета, взятая мной у соперника, остаётся его в state.rivals | #rivals #control | m |  |
-| P2-023 | model | 27.2, 27.3, 49-note-4, 54.1 | [src/domain/project.ts:406](../../src/domain/project.ts#L406) | Нет жетона custodians: высадка на Mecatol Rex без 6 влияния и без очка. Решить, моделировать ли | #custodians | m |  |
+| P2-020 | bug | 49.5, 42.4.4 | [src/domain/replay/invasion.ts:32](../../src/domain/replay/invasion.ts#L32) | Контроль ставится до снятия groundLosses: если все высадившиеся погибли, контроль всё равно мой. Устанавливать контроль после потерь на планете | #control | s |  |
+| P2-021 | bug | 76.1, 49.2, 89.4 | [src/domain/replay/invasion.ts:20](../../src/domain/replay/invasion.ts#L20) | Высаживает любой тип юнита, в том числе корабли, и на любую планету: только наземные войска и только планеты активной системы | #landing | s |  |
+| P2-022 | bug | 49.5, 25.5 | [src/domain/replay/invasion.ts:39](../../src/domain/replay/invasion.ts#L39) | Высадка соперника переворачивает контроль по одному списку landings: без проверки, что кто-то высадился и выжил; планета, взятая мной у соперника, остаётся его в state.rivals | #rivals #control | m |  |
+| P2-023 | model | 27.2, 27.3, 49-note-4, 54.1 | [src/domain/replay/tactical.ts:22](../../src/domain/replay/tactical.ts#L22) | Нет жетона custodians: высадка на Mecatol Rex без 6 влияния и без очка. Решить, моделировать ли | #custodians | m |  |
 
 <a id="ws-structures"></a>
 ### Строения и их владельцы · `structures` · волна 2
@@ -575,7 +567,7 @@
 |---|---|---|---|---|---|---|---|
 | P2-218 | bug | 49.5.1 | [src/ui/map/HexStage.tsx:311](../../src/ui/map/HexStage.tsx#L311) | Строение красится цветом держателя планеты: чужая база после захвата выглядит моей; брать владельца строения | #player-colour | s | P2-222 |
 | P2-222 | bug | 49.5.1, 63.4, 79.4 | [src/ui/map/TileView.tsx:223](../../src/ui/map/TileView.tsx#L223) | PDS и база рисуются за держателем планеты: после захвата чужие строения переходят к захватчику; рисовать по владельцу строения |  | s |  |
-| P2-026 | check | 24.2, 24.3, 24-note-1, 24-note-2, 63.3, 79.3, 85.4, 85.5, 85.6 | [src/domain/project.ts:520](../../src/domain/project.ts#L520) | Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется | #construction #limits | m |  |
+| P2-026 | check | 24.2, 24.3, 24-note-1, 24-note-2, 63.3, 79.3, 85.4, 85.5, 85.6 | [src/domain/replay/cards.ts:60](../../src/domain/replay/cards.ts#L60) | Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется | #construction #limits | m |  |
 | P2-024 | model | 49.5.1, 63.4, 79.4 | [src/domain/types.ts:288](../../src/domain/types.ts#L288) | У баз и PDS нет владельца: при захвате планеты чужие строения переходят к захватчику вместо уничтожения. Хранить владельца, уничтожать при смене контроля, миграция схемы | #structure-owner #schema | l |  |
 | P2-025 | model |  | [src/storage/schema.ts:191](../../src/storage/schema.ts#L191) | Миграция: владелец строений (P2-024) — существующие базы и PDS отдать тому, кто контролирует планету | #schema #migration | s | P2-024 |
 
@@ -594,11 +586,11 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-027 | bug | 68.3, 67.4.1 | [src/domain/project.ts:344](../../src/domain/project.ts#L344) | Пехота идёт на первую свою планету системы (в том числе только что захваченную), а не на планету с базой; productionGround принимается и на чужую планету (placesOf) | #placement | m |  |
-| P2-028 | check | 14.1, 67.6, 67-/-79 | [src/domain/project.ts:396](../../src/domain/project.ts#L396) | Производство не проверяет базу (сейчас «нет дока» считается в UI), блокаду и чужие корабли в системе: нарушения noProduction и productionBlockaded в домене | #blockade #no-dock | m |  |
-| P2-030 | check | 99.3 | [src/domain/project.ts:525](../../src/domain/project.ts#L525) | Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production | #warfare #card-production | s |  |
+| P2-027 | bug | 68.3, 67.4.1 | [src/domain/replay/production.ts:12](../../src/domain/replay/production.ts#L12) | Пехота идёт на первую свою планету системы (в том числе только что захваченную), а не на планету с базой; productionGround принимается и на чужую планету (placesOf) | #placement | m |  |
+| P2-028 | check | 14.1, 67.6, 67-/-79 | [src/domain/replay/production.ts:39](../../src/domain/replay/production.ts#L39) | Производство не проверяет базу (сейчас «нет дока» считается в UI), блокаду и чужие корабли в системе: нарушения noProduction и productionBlockaded в домене | #blockade #no-dock | m |  |
+| P2-030 | check | 99.3 | [src/domain/replay/cards.ts:65](../../src/domain/replay/cards.ts#L65) | Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production | #warfare #card-production | s |  |
 | P2-309 | check | 67-/-79, 79.4 | [src/ui/plan/TacticalEditor.tsx:47](../../src/ui/plan/TacticalEditor.tsx#L47) | «нет базы» считает UI по before.docks (чужая база тоже засчитывается); нужен код noProduction в домене, hasDock убрать | #duplicate-of-domain #warning-channel | m |  |
-| P2-029 | model | 68.1, 79.1, 67.5, 72.1, 96.3 | [src/domain/project.ts:458](../../src/domain/project.ts#L458) | Нет лимита Production и запаса отрядов: нужны данные (P2-050, P2-051), затем нарушения productionOver и reinforcementsOut. Решить, нужно ли | #production-limit #reinforcements | m | P2-050, P2-051 |
+| P2-029 | model | 68.1, 79.1, 67.5, 72.1, 96.3 | [src/domain/replay/production.ts:49](../../src/domain/replay/production.ts#L49) | Нет лимита Production и запаса отрядов: нужны данные (P2-050, P2-051), затем нарушения productionOver и reinforcementsOut. Решить, нужно ли | #production-limit #reinforcements | m | P2-050, P2-051 |
 
 <a id="ws-payment"></a>
 ### Оплата · `payment` · волна 2
@@ -613,8 +605,8 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-031 | check | 34-note-2, 64-note-5 | [src/domain/project.ts:266](../../src/domain/project.ts#L266) | Чужая планета в оплате молча истощается и стоит 0: нарушение planetNotControlled | #payment | s |  |
-| P2-032 | check | 71-note-3 | [src/domain/project.ts:501](../../src/domain/project.ts#L501) | Готовит любые перечисленные планеты, в том числе чужие | #ready | s |  |
+| P2-031 | check | 34-note-2, 64-note-5 | [src/domain/replay/payment.ts:40](../../src/domain/replay/payment.ts#L40) | Чужая планета в оплате молча истощается и стоит 0: нарушение planetNotControlled | #payment | s |  |
+| P2-032 | check | 71-note-3 | [src/domain/replay/cards.ts:41](../../src/domain/replay/cards.ts#L41) | Готовит любые перечисленные планеты, в том числе чужие | #ready | s |  |
 | P2-366 | dup |  | [src/ui/plan/ExpeditionEditor.tsx:30](../../src/ui/plan/ExpeditionEditor.tsx#L30) | «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' \| 'influence'; доменный помощник оплаты части |  | s |  |
 
 <a id="ws-strategy-cards"></a>
@@ -632,15 +624,15 @@
 |---|---|---|---|---|---|---|---|
 | P2-034 | bug | 83.3 | [src/domain/strategy.ts:49](../../src/domain/strategy.ts#L49) | Стоимость основного берётся из сохранённого forToken, который ставит редактор при выборе карты; после смены карт раунда он устаревает. Выводить из round.strategyCard/backupCard при повторе; основное чужой карты — нарушение | #for-token | m |  |
 | P2-035 | bug | 83.3 | [src/state/gameStore.ts:75](../../src/state/gameStore.ts#L75) | Меняет карты раунда, не трогая forToken записей; после P2-034 флаг не нужен | #for-token | s | P2-034 |
-| P2-037 | bug | 45.2, 45-note-3 | [src/domain/project.ts:506](../../src/domain/project.ts#L506) | Очко по флажку effects.mecatol, а не по контролю Mecatol Rex (mr/mrte) в состоянии | #imperial #mecatol | s |  |
+| P2-037 | bug | 45.2, 45-note-3 | [src/domain/replay/cards.ts:46](../../src/domain/replay/cards.ts#L46) | Очко по флажку effects.mecatol, а не по контролю Mecatol Rex (mr/mrte) в состоянии | #imperial #mecatol | s |  |
 | P2-038 | bug | 99.1, 99-note-1 | [src/domain/strategy.ts:57](../../src/domain/strategy.ts#L57) | Warfare до Thunder's Edge всегда даёт жетон, даже если снять с карты нечего: давать только при снятом жетоне | #warfare | s |  |
-| P2-039 | bug | 92.4 | [src/domain/project.ts:504](../../src/domain/project.ts#L504) | effects.freeSecondary хранится, но расчёт его не читает: выбранные соперники платят жетон за второстепенное | #trade #rivals | s |  |
-| P2-040 | bug | 32.2, 32.3, 32-note-3 | [src/domain/project.ts:493](../../src/domain/project.ts#L493) | Diplomacy: соперники не получают жетон в выбранной системе; нет нарушений «больше двух планет», «Mecatol Rex», «система без моей планеты» (лимит 2 сейчас только в UI) | #diplomacy #rivals | m |  |
+| P2-039 | bug | 92.4 | [src/domain/replay/cards.ts:44](../../src/domain/replay/cards.ts#L44) | effects.freeSecondary хранится, но расчёт его не читает: выбранные соперники платят жетон за второстепенное | #trade #rivals | s |  |
+| P2-040 | bug | 32.2, 32.3, 32-note-3 | [src/domain/replay/cards.ts:33](../../src/domain/replay/cards.ts#L33) | Diplomacy: соперники не получают жетон в выбранной системе; нет нарушений «больше двух планет», «Mecatol Rex», «система без моей планеты» (лимит 2 сейчас только в UI) | #diplomacy #rivals | m |  |
 | P2-331 | bug | 45.2, 45-note-3 | [src/ui/plan/StrategyEditor.tsx:305](../../src/ui/plan/StrategyEditor.tsx#L305) | очко Imperial по флажку, доступному и без контроля Mecatol Rex; убрать переключатель, очко считает домен по контролю |  | m |  |
-| P2-036 | check | 20.5, 82.1, 83.4, 83.7, 92.4.2 | [src/domain/project.ts:475](../../src/domain/project.ts#L475) | Нет понятия «чья карта»: второстепенное своей карты и повтор второстепенного одной карты за раунд проходят молча | #secondary | m |  |
+| P2-036 | check | 20.5, 82.1, 83.4, 83.7, 92.4.2 | [src/domain/replay/cards.ts:15](../../src/domain/replay/cards.ts#L15) | Нет понятия «чья карта»: второстепенное своей карты и повтор второстепенного одной карты за раунд проходят молча | #secondary | m |  |
 | P2-041 | check | 91.2, 91.3, 90.10 | [src/domain/strategy.ts:76](../../src/domain/strategy.ts#L76) | Число исследований не ограничено (2 на основном, 1 на второстепенном) и уже известная технология оплачивается повторно | #technology | s |  |
 | P2-326 | check | 32.2, 32.3, 71-note-3 | [src/ui/plan/StrategyEditor.tsx:140](../../src/ui/plan/StrategyEditor.tsx#L140) | какие планеты готовить и лимит READY_LIMIT решает UI (disabled), домен не предупреждает; правило и список планет в domain/strategy.ts, здесь только показ | #duplicate-of-domain | m |  |
-| P2-033 | arch |  | [src/domain/project.ts:472](../../src/domain/project.ts#L472) | Цепочка if (entry.card === CARD.x) по всей функции: обработчик на каждую карту (основное, второстепенное, стоимость, свободные жетоны, нарушения) в src/domain/cards/ | #ocp #card-handlers | l |  |
+| P2-033 | arch |  | [src/domain/replay/cards.ts:12](../../src/domain/replay/cards.ts#L12) | Цепочка if (entry.card === CARD.x) по всей функции: обработчик на каждую карту (основное, второстепенное, стоимость, свободные жетоны, нарушения) в src/domain/cards/ | #ocp #card-handlers | l |  |
 | P2-336 | arch |  | [src/ui/plan/StrategyEditor.tsx:127](../../src/ui/plan/StrategyEditor.tsx#L127) | один switch на все карты в редакторе; по компоненту на карту (plan/editors/cards/*) вслед за обработчиками карт в домене |  | m |  |
 | P2-339 | arch |  | [src/ui/plan/TokenTiles.tsx:23](../../src/ui/plan/TokenTiles.tsx#L23) | перераспределение Warfare (жетон из самого полного пула) — правило, не UI; в domain/strategy.ts | #duplicate-of-domain | m |  |
 | P2-333 | dup |  | [src/ui/plan/StrategyEditor.tsx:338](../../src/ui/plan/StrategyEditor.tsx#L338) | цена жетоном повторяет playOf и costsStrategyToken (и CARD.leadership ниже); звать costsStrategyToken({ ...entry, ...playOf(...) }) | #duplicate-of-domain | s |  |
@@ -658,7 +650,7 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-042 | check | 3.3, 3.4, 82.2, 40.2 | [src/domain/project.ts:613](../../src/domain/project.ts#L613) | Пас ничего не проверяет: пас до своих стратегических действий, действия после паса, действие не в своей фазе | #pass | m |  |
+| P2-042 | check | 3.3, 3.4, 82.2, 40.2 | [src/domain/replay/round.ts:8](../../src/domain/replay/round.ts#L8) | Пас ничего не проверяет: пас до своих стратегических действий, действия после паса, действие не в своей фазе | #pass | m |  |
 
 <a id="ws-thunders-edge"></a>
 ### Thunder's Edge · `thunders-edge` · волна 2
@@ -673,12 +665,12 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-045 | bug | expedition-4.5 | [src/domain/project.ts:553](../../src/domain/project.ts#L553) | Часть «технология» без cost: оплата без планеты считается оплаченной, нет проверки специализации и контроля планеты | #expedition | s |  |
+| P2-045 | bug | expedition-4.5 | [src/domain/replay/expedition.ts:28](../../src/domain/replay/expedition.ts#L28) | Часть «технология» без cost: оплата без планеты считается оплаченной, нет проверки специализации и контроля планеты | #expedition | s |  |
 | P2-365 | bug | expedition-4.5 | [src/ui/plan/ExpeditionEditor.tsx:34](../../src/ui/plan/ExpeditionEditor.tsx#L34) | часть технологий без cost получает пустую оплату и считается оплаченной; нужна оплата истощением своей планеты с технологической специализацией |  | m |  |
-| P2-046 | check | expedition-5 | [src/domain/project.ts:538](../../src/domain/project.ts#L538) | Часть, отмеченная в партии как моя, берётся снова; две части за один ход не дают нарушения | #expedition | s |  |
-| P2-047 | check | entropic-scars-2 | [src/domain/project.ts:374](../../src/domain/project.ts#L374) | Производство в энтропийном шраме (тактика и карты) без нарушения | #entropic-scar | s |  |
-| P2-048 | model | space-stations-2, space-stations-4 | [src/domain/project.ts:192](../../src/domain/project.ts#L192) | Станция — обычная планета: контроль берётся высадкой, пехота и строения ставятся на неё. Нужен признак станции и контроль присутствием кораблей | #space-station | m |  |
-| P2-049 | model | fracture-5 | [src/domain/project.ts:31](../../src/domain/project.ts#L31) | Входы Излома (game.fracture.ingress) не смежны с его выходами: в Излом нельзя проложить маршрут | #fracture | m | P2-054 |
+| P2-046 | check | expedition-5 | [src/domain/replay/expedition.ts:13](../../src/domain/replay/expedition.ts#L13) | Часть, отмеченная в партии как моя, берётся снова; две части за один ход не дают нарушения | #expedition | s |  |
+| P2-047 | check | entropic-scars-2 | [src/domain/replay/production.ts:16](../../src/domain/replay/production.ts#L16) | Производство в энтропийном шраме (тактика и карты) без нарушения | #entropic-scar | s |  |
+| P2-048 | model | space-stations-2, space-stations-4 | [src/domain/replay/board.ts:29](../../src/domain/replay/board.ts#L29) | Станция — обычная планета: контроль берётся высадкой, пехота и строения ставятся на неё. Нужен признак станции и контроль присутствием кораблей | #space-station | m |  |
+| P2-049 | model | fracture-5 | [src/domain/replay/board.ts:13](../../src/domain/replay/board.ts#L13) | Входы Излома (game.fracture.ingress) не смежны с его выходами: в Излом нельзя проложить маршрут | #fracture | m | P2-054 |
 
 <a id="ws-ui-nesting"></a>
 ### Вложенность экранов (нужен прототип) · `ui-nesting` · волна 2
@@ -750,7 +742,7 @@
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-043 | bug | 58.3.2 | [src/domain/project.ts:99](../../src/domain/project.ts#L99) | Блокировка берётся из game.enemyUnits (расставлено вручную), а не из состояния соперников при повторе: приведённые соперником корабли не мешают, уведённые мешают; маршруты соперника не видят моих кораблей | #rivals #route | l |  |
+| P2-043 | bug | 58.3.2 | [src/domain/replay/movement.ts:63](../../src/domain/replay/movement.ts#L63) | Блокировка берётся из game.enemyUnits (расставлено вручную), а не из состояния соперников при повторе: приведённые соперником корабли не мешают, уведённые мешают; маршруты соперника не видят моих кораблей | #rivals #route | l |  |
 | P2-044 | bug | 92.4 | [src/domain/players.ts:52](../../src/domain/players.ts#L52) | Взгляд соперника оставляет opponents как есть (в списках выбора есть он сам и нет меня) и не добавляет мои юниты в enemyUnits | #rivals #game-as | m | P2-043 |
 | P2-328 | bug | 92.4 | [src/ui/plan/StrategyEditor.tsx:85](../../src/ui/plan/StrategyEditor.tsx#L85) | на карте соперника game = gameAs: списки Trade и Politics предлагают самого соперника и не предлагают меня; нужен доменный список «другие игроки владельца записи» | #player-choice | m |  |
 | P2-420 | bug | 58.3.2 | [src/ui/screens/PlanScreen.tsx:490](../../src/ui/screens/PlanScreen.tsx#L490) | досягаемость считается по gameAs и вручную расставленным game.enemyUnits: корабли, приведённые или уведённые соперниками по плану, не учтены, соперник не видит моих (B2); блокировки брать из состояния перед записью | #rivals | m |  |
@@ -791,10 +783,8 @@
 | 32.2 | P2-040, P2-326 |
 | 32.3 | P2-040, P2-326 |
 | 32-note-3 | P2-040 |
-| 34.2 | P2-005 |
 | 34-note-2 | P2-031 |
 | 37.3 | P2-017 |
-| 40 | P2-005 |
 | 40.2 | P2-042 |
 | 41.3 | P2-007 |
 | 41-note-6 | P2-007, P2-062 |
@@ -828,9 +818,7 @@
 | 79.1 | P2-029, P2-051 |
 | 79.3 | P2-026 |
 | 79.4 | P2-024, P2-222, P2-309 |
-| 81.4 | P2-005 |
 | 81.5 | P2-017 |
-| 81.6 | P2-005 |
 | 82.1 | P2-036 |
 | 82.2 | P2-042 |
 | 83.3 | P2-034, P2-035, P2-063 |
@@ -860,6 +848,6 @@
 
 ## По слоям и тегам
 
-Слои: domain 56, storage 1, state 1, data 1, i18n 2, docs 3, ui 309.
+Слои: domain 51, storage 1, state 1, data 1, i18n 2, docs 3, ui 309.
 
-Теги: #duplicate-of-domain 21, #colour-token 21, #duplicate-selector 17, #rivals 16, #player-colour 15, #inline-style 13, #warning-channel 12, #section-title 12, #unit-tile 9, #svg 7, #preferences 7, #primitives 7, #confirm-bar 6, #names 6, #dead-css 6, #srp 5, #modal 5, #drawer-sheet 5, #player-dot 5, #route 4, #fracture 4, #purity 4, #geometry 4, #hex-stage 4, #imports 4, #section 4, #player-choice 4, #map-pick 4, #reinforcements 3, #for-token 3, #i18n 3, #route-badge 3, #motion 3, #drawer 3, #legend 3, #popover 3, #upgrade-toggle 3, #thunders-edge 3, #selected-state 3, #hover 3, #warning 3, #gravity-rift 2, #Creuss 2, #pickup 2, #token 2, #capacity 2, #fleet-pool 2, #construction 2, #control 2, #schema 2, #warfare 2, #payment 2, #expedition 2, #losses 2, #nesting 2, #command-token 2, #ingress 2, #route-draft 2, #overlays 2, #layout 2, #panel 2, #banner 2, #token-picture 2, #player-name 2, #flight 2, #new-entry 2, #valid-sources 2, #expansion-names 2, #caption-small 2, #floating-card 2, #hex-button 2, #violation 1, #contract-test 1, #phases 1, #status-phase 1, #phase-order 1, #route-graph 1, #skipped-stop 1, #route-highlight 1, #off-map-home 1, #hyperlane 1, #left-behind 1, #activation 1, #token-supply 1, #redistribute 1, #battle 1, #landing 1, #custodians 1, #structure-owner 1, #migration 1, #limits 1, #placement 1, #blockade 1, #no-dock 1, #production-limit 1, #card-production 1, #ready 1, #ocp 1, #card-handlers 1, #secondary 1, #imperial 1, #mecatol 1, #trade 1, #diplomacy 1, #technology 1, #pass 1, #game-as 1, #entropic-scar 1, #space-station 1, #production-value 1, #provenance 1, #unit-upgrade 1, #data-cycle 1, #layering 1, #magic-number 1, #comments 1, #enemy-units 1, #production 1, #structures 1, #stacks 1, #energy 1, #planet 1, #close-button 1, #expansions 1, #hyperlanes 1, #chips 1, #map-builder 1, #editor-frame 1, #state-machine 1, #highlight 1, #card-targets 1, #route-hint 1, #perf 1, #editor-head 1, #card-purchases 1, #tests 1, #danger 1, #import 1, #share-link 1, #units 1, #faction-groups 1, #hex-geometry 1, #scrollbar 1, #danger-button 1, #card-surface 1, #small-button 1, #panel-reset 1, #scrim 1, #radius-token 1, #map 1, #font-stack 1, #shadow 1.
+Теги: #duplicate-of-domain 21, #colour-token 21, #duplicate-selector 17, #rivals 16, #player-colour 15, #inline-style 13, #section-title 12, #warning-channel 10, #unit-tile 9, #svg 7, #preferences 7, #primitives 7, #confirm-bar 6, #names 6, #dead-css 6, #modal 5, #drawer-sheet 5, #player-dot 5, #route 4, #fracture 4, #purity 4, #geometry 4, #hex-stage 4, #imports 4, #section 4, #player-choice 4, #map-pick 4, #srp 3, #reinforcements 3, #for-token 3, #i18n 3, #route-badge 3, #motion 3, #drawer 3, #legend 3, #popover 3, #upgrade-toggle 3, #thunders-edge 3, #selected-state 3, #hover 3, #warning 3, #gravity-rift 2, #Creuss 2, #pickup 2, #token 2, #capacity 2, #fleet-pool 2, #construction 2, #control 2, #schema 2, #warfare 2, #payment 2, #expedition 2, #losses 2, #nesting 2, #command-token 2, #ingress 2, #route-draft 2, #overlays 2, #layout 2, #panel 2, #banner 2, #token-picture 2, #player-name 2, #flight 2, #new-entry 2, #valid-sources 2, #expansion-names 2, #caption-small 2, #floating-card 2, #hex-button 2, #contract-test 1, #route-graph 1, #skipped-stop 1, #route-highlight 1, #off-map-home 1, #hyperlane 1, #left-behind 1, #activation 1, #token-supply 1, #redistribute 1, #battle 1, #landing 1, #custodians 1, #structure-owner 1, #migration 1, #limits 1, #placement 1, #blockade 1, #no-dock 1, #production-limit 1, #card-production 1, #ready 1, #ocp 1, #card-handlers 1, #secondary 1, #imperial 1, #mecatol 1, #trade 1, #diplomacy 1, #technology 1, #pass 1, #game-as 1, #entropic-scar 1, #space-station 1, #production-value 1, #provenance 1, #unit-upgrade 1, #data-cycle 1, #layering 1, #comments 1, #enemy-units 1, #production 1, #structures 1, #stacks 1, #energy 1, #planet 1, #close-button 1, #expansions 1, #hyperlanes 1, #chips 1, #map-builder 1, #editor-frame 1, #state-machine 1, #highlight 1, #card-targets 1, #route-hint 1, #perf 1, #editor-head 1, #card-purchases 1, #tests 1, #danger 1, #import 1, #share-link 1, #units 1, #faction-groups 1, #hex-geometry 1, #scrollbar 1, #danger-button 1, #card-surface 1, #small-button 1, #panel-reset 1, #scrim 1, #radius-token 1, #map 1, #font-stack 1, #shadow 1.

@@ -101,5 +101,10 @@ describe('LRR 24 Construction', () => {
     expect(codesOf(rulesGame({ entries: [play], game: { pds: { h1: 2 } } }), pack, play)).toContain('structureLimit');
   });
 
+  test('24.3: the secondary places a structure, never units: units built through it are warned about', () => {
+    const play = secondary(CARD.construction, { structures: [{ kind: 'pds', planetId: 'h1' }], production: { systemId: HOME, units: { cruiser: 1 } } });
+    expect(codesOf(rulesGame({ entries: [play] }), pack, play)).toContain('constructionUnits');
+  });
+
   test.todo('24 note 3: no structure on a planet with Demilitarized Zone attached — not modelled: attachments are not in the data');
 });

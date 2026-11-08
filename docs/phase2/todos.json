@@ -317,44 +317,6 @@
   },
   "todos": [
     {
-      "id": "P2-001",
-      "num": 1,
-      "file": "src/domain/types.ts",
-      "line": 330,
-      "ws": "rule-engine",
-      "type": "arch",
-      "layer": "domain",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "warning-channel",
-        "violation"
-      ],
-      "text": "Предупреждение не знает правила, шага и места: добавить rule (номер LRR), step (activation, movement, transport, combat, invasion, production, payment, card, status), place (entryId, source, planetId); WarningCode свести к реестру правил"
-    },
-    {
-      "id": "P2-002",
-      "num": 2,
-      "file": "src/domain/project.ts",
-      "line": 577,
-      "ws": "rule-engine",
-      "type": "arch",
-      "layer": "domain",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "warning-channel",
-        "srp"
-      ],
-      "text": "Проверки правил пишут warnings.push вперемешку с изменением состояния: вынести каждую проверку в правило реестра (функция контекста шага → нарушения), эффект шага оставить чистым"
-    },
-    {
       "id": "P2-003",
       "num": 3,
       "file": "src/domain/rules/kit.ts",
@@ -370,60 +332,13 @@
       "tags": [
         "contract-test"
       ],
-      "text": "Контрактные тесты: каждый test() в rules/lrr ссылается на правило реестра, у каждого правила есть тест, у каждого шага есть место показа, src/ui не создаёт нарушений; codesOf перевести на номера правил"
-    },
-    {
-      "id": "P2-004",
-      "num": 4,
-      "file": "src/domain/project.ts",
-      "line": 627,
-      "ws": "replay-steps",
-      "type": "arch",
-      "layer": "domain",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "l",
-      "tags": [
-        "srp",
-        "phases"
-      ],
-      "text": "Повтор — одна функция на фазы, соперников и остановки: разложить на фазы раунда и шаги тактического действия 89.1-89.5 и карт, каждый шаг = проверки до шага + чистый эффект"
-    },
-    {
-      "id": "P2-005",
-      "num": 5,
-      "file": "src/domain/project.ts",
-      "line": 640,
-      "ws": "replay-steps",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "34.2",
-        "40",
-        "81.4",
-        "81.6"
-      ],
-      "tests": [
-        "034-exhausted",
-        "040-game-round",
-        "081-status-phase"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "status-phase",
-        "phase-order"
-      ],
-      "text": "Планеты готовятся и жетоны снимаются только в начале следующего раунда; по правилам это шаги 4 и 6 фазы статуса, до фазы политики. Перенести в фазу статуса этого раунда, у соперников тоже"
+      "text": "Контрактные тесты: каждый test() в rules/lrr ссылается на правило реестра, у каждого правила есть тест, у каждого шага есть место показа, src/ui не создаёт нарушений; codesOf перевести на номера правил — P2 note: registry and contract tests done (src/domain/rules/registry.ts, contract.test.ts: every code registered and exercised, src/ui creates no warning; violations carry rule, step, place; rulesOf below); left: «у каждого шага есть место показа» needs warningPlaces by step, for the UI wave"
     },
     {
       "id": "P2-006",
       "num": 6,
-      "file": "src/domain/project.ts",
-      "line": 38,
+      "file": "src/domain/replay/movement.ts",
+      "line": 10,
       "ws": "movement",
       "type": "arch",
       "layer": "domain",
@@ -441,8 +356,8 @@
     {
       "id": "P2-007",
       "num": 7,
-      "file": "src/domain/project.ts",
-      "line": 136,
+      "file": "src/domain/replay/movement.ts",
+      "line": 100,
       "ws": "movement",
       "type": "bug",
       "layer": "domain",
@@ -464,8 +379,8 @@
     {
       "id": "P2-008",
       "num": 8,
-      "file": "src/domain/project.ts",
-      "line": 120,
+      "file": "src/domain/replay/movement.ts",
+      "line": 84,
       "ws": "movement",
       "type": "bug",
       "layer": "domain",
@@ -487,8 +402,8 @@
     {
       "id": "P2-009",
       "num": 9,
-      "file": "src/domain/project.ts",
-      "line": 164,
+      "file": "src/domain/replay/movement.ts",
+      "line": 128,
       "ws": "movement",
       "type": "bug",
       "layer": "domain",
@@ -556,8 +471,8 @@
     {
       "id": "P2-012",
       "num": 12,
-      "file": "src/domain/project.ts",
-      "line": 94,
+      "file": "src/domain/replay/movement.ts",
+      "line": 58,
       "ws": "movement",
       "type": "check",
       "layer": "domain",
@@ -578,8 +493,8 @@
     {
       "id": "P2-013",
       "num": 13,
-      "file": "src/domain/project.ts",
-      "line": 172,
+      "file": "src/domain/replay/transport.ts",
+      "line": 8,
       "ws": "transport",
       "type": "check",
       "layer": "domain",
@@ -602,8 +517,8 @@
     {
       "id": "P2-014",
       "num": 14,
-      "file": "src/domain/project.ts",
-      "line": 462,
+      "file": "src/domain/replay/transport.ts",
+      "line": 48,
       "ws": "transport",
       "type": "check",
       "layer": "domain",
@@ -632,8 +547,8 @@
     {
       "id": "P2-015",
       "num": 15,
-      "file": "src/domain/project.ts",
-      "line": 444,
+      "file": "src/domain/replay/activation.ts",
+      "line": 6,
       "ws": "command-tokens",
       "type": "check",
       "layer": "domain",
@@ -658,8 +573,8 @@
     {
       "id": "P2-016",
       "num": 16,
-      "file": "src/domain/project.ts",
-      "line": 466,
+      "file": "src/domain/replay/status.ts",
+      "line": 7,
       "ws": "command-tokens",
       "type": "model",
       "layer": "domain",
@@ -684,8 +599,8 @@
     {
       "id": "P2-017",
       "num": 17,
-      "file": "src/domain/project.ts",
-      "line": 591,
+      "file": "src/domain/replay/status.ts",
+      "line": 13,
       "ws": "command-tokens",
       "type": "check",
       "layer": "domain",
@@ -709,8 +624,8 @@
     {
       "id": "P2-018",
       "num": 18,
-      "file": "src/domain/project.ts",
-      "line": 510,
+      "file": "src/domain/replay/cards.ts",
+      "line": 50,
       "ws": "command-tokens",
       "type": "bug",
       "layer": "domain",
@@ -731,8 +646,8 @@
     {
       "id": "P2-019",
       "num": 19,
-      "file": "src/domain/project.ts",
-      "line": 410,
+      "file": "src/domain/replay/tactical.ts",
+      "line": 26,
       "ws": "combat-order",
       "type": "bug",
       "layer": "domain",
@@ -757,8 +672,8 @@
     {
       "id": "P2-020",
       "num": 20,
-      "file": "src/domain/project.ts",
-      "line": 369,
+      "file": "src/domain/replay/invasion.ts",
+      "line": 32,
       "ws": "invasion",
       "type": "bug",
       "layer": "domain",
@@ -781,8 +696,8 @@
     {
       "id": "P2-021",
       "num": 21,
-      "file": "src/domain/project.ts",
-      "line": 349,
+      "file": "src/domain/replay/invasion.ts",
+      "line": 20,
       "ws": "invasion",
       "type": "bug",
       "layer": "domain",
@@ -807,8 +722,8 @@
     {
       "id": "P2-022",
       "num": 22,
-      "file": "src/domain/project.ts",
-      "line": 658,
+      "file": "src/domain/replay/invasion.ts",
+      "line": 39,
       "ws": "invasion",
       "type": "bug",
       "layer": "domain",
@@ -832,8 +747,8 @@
     {
       "id": "P2-023",
       "num": 23,
-      "file": "src/domain/project.ts",
-      "line": 406,
+      "file": "src/domain/replay/tactical.ts",
+      "line": 22,
       "ws": "invasion",
       "type": "model",
       "layer": "domain",
@@ -909,8 +824,8 @@
     {
       "id": "P2-026",
       "num": 26,
-      "file": "src/domain/project.ts",
-      "line": 520,
+      "file": "src/domain/replay/cards.ts",
+      "line": 60,
       "ws": "structures",
       "type": "check",
       "layer": "domain",
@@ -943,8 +858,8 @@
     {
       "id": "P2-027",
       "num": 27,
-      "file": "src/domain/project.ts",
-      "line": 344,
+      "file": "src/domain/replay/production.ts",
+      "line": 12,
       "ws": "production",
       "type": "bug",
       "layer": "domain",
@@ -967,8 +882,8 @@
     {
       "id": "P2-028",
       "num": 28,
-      "file": "src/domain/project.ts",
-      "line": 396,
+      "file": "src/domain/replay/production.ts",
+      "line": 39,
       "ws": "production",
       "type": "check",
       "layer": "domain",
@@ -994,8 +909,8 @@
     {
       "id": "P2-029",
       "num": 29,
-      "file": "src/domain/project.ts",
-      "line": 458,
+      "file": "src/domain/replay/production.ts",
+      "line": 49,
       "ws": "production",
       "type": "model",
       "layer": "domain",
@@ -1030,8 +945,8 @@
     {
       "id": "P2-030",
       "num": 30,
-      "file": "src/domain/project.ts",
-      "line": 525,
+      "file": "src/domain/replay/cards.ts",
+      "line": 65,
       "ws": "production",
       "type": "check",
       "layer": "domain",
@@ -1053,8 +968,8 @@
     {
       "id": "P2-031",
       "num": 31,
-      "file": "src/domain/project.ts",
-      "line": 266,
+      "file": "src/domain/replay/payment.ts",
+      "line": 40,
       "ws": "payment",
       "type": "check",
       "layer": "domain",
@@ -1077,8 +992,8 @@
     {
       "id": "P2-032",
       "num": 32,
-      "file": "src/domain/project.ts",
-      "line": 501,
+      "file": "src/domain/replay/cards.ts",
+      "line": 41,
       "ws": "payment",
       "type": "check",
       "layer": "domain",
@@ -1099,8 +1014,8 @@
     {
       "id": "P2-033",
       "num": 33,
-      "file": "src/domain/project.ts",
-      "line": 472,
+      "file": "src/domain/replay/cards.ts",
+      "line": 12,
       "ws": "strategy-cards",
       "type": "arch",
       "layer": "domain",
@@ -1164,8 +1079,8 @@
     {
       "id": "P2-036",
       "num": 36,
-      "file": "src/domain/project.ts",
-      "line": 475,
+      "file": "src/domain/replay/cards.ts",
+      "line": 15,
       "ws": "strategy-cards",
       "type": "check",
       "layer": "domain",
@@ -1193,8 +1108,8 @@
     {
       "id": "P2-037",
       "num": 37,
-      "file": "src/domain/project.ts",
-      "line": 506,
+      "file": "src/domain/replay/cards.ts",
+      "line": 46,
       "ws": "strategy-cards",
       "type": "bug",
       "layer": "domain",
@@ -1240,8 +1155,8 @@
     {
       "id": "P2-039",
       "num": 39,
-      "file": "src/domain/project.ts",
-      "line": 504,
+      "file": "src/domain/replay/cards.ts",
+      "line": 44,
       "ws": "strategy-cards",
       "type": "bug",
       "layer": "domain",
@@ -1263,8 +1178,8 @@
     {
       "id": "P2-040",
       "num": 40,
-      "file": "src/domain/project.ts",
-      "line": 493,
+      "file": "src/domain/replay/cards.ts",
+      "line": 33,
       "ws": "strategy-cards",
       "type": "bug",
       "layer": "domain",
@@ -1313,8 +1228,8 @@
     {
       "id": "P2-042",
       "num": 42,
-      "file": "src/domain/project.ts",
-      "line": 613,
+      "file": "src/domain/replay/round.ts",
+      "line": 8,
       "ws": "round-flow",
       "type": "check",
       "layer": "domain",
@@ -1340,8 +1255,8 @@
     {
       "id": "P2-043",
       "num": 43,
-      "file": "src/domain/project.ts",
-      "line": 99,
+      "file": "src/domain/replay/movement.ts",
+      "line": 63,
       "ws": "rivals",
       "type": "bug",
       "layer": "domain",
@@ -1388,8 +1303,8 @@
     {
       "id": "P2-045",
       "num": 45,
-      "file": "src/domain/project.ts",
-      "line": 553,
+      "file": "src/domain/replay/expedition.ts",
+      "line": 28,
       "ws": "thunders-edge",
       "type": "bug",
       "layer": "domain",
@@ -1410,8 +1325,8 @@
     {
       "id": "P2-046",
       "num": 46,
-      "file": "src/domain/project.ts",
-      "line": 538,
+      "file": "src/domain/replay/expedition.ts",
+      "line": 13,
       "ws": "thunders-edge",
       "type": "check",
       "layer": "domain",
@@ -1432,8 +1347,8 @@
     {
       "id": "P2-047",
       "num": 47,
-      "file": "src/domain/project.ts",
-      "line": 374,
+      "file": "src/domain/replay/production.ts",
+      "line": 16,
       "ws": "thunders-edge",
       "type": "check",
       "layer": "domain",
@@ -1454,8 +1369,8 @@
     {
       "id": "P2-048",
       "num": 48,
-      "file": "src/domain/project.ts",
-      "line": 192,
+      "file": "src/domain/replay/board.ts",
+      "line": 29,
       "ws": "thunders-edge",
       "type": "model",
       "layer": "domain",
@@ -1477,8 +1392,8 @@
     {
       "id": "P2-049",
       "num": 49,
-      "file": "src/domain/project.ts",
-      "line": 31,
+      "file": "src/domain/replay/board.ts",
+      "line": 13,
       "ws": "thunders-edge",
       "type": "model",
       "layer": "domain",
@@ -1686,24 +1601,6 @@
       "text": "Доменный тест импортирует из UI"
     },
     {
-      "id": "P2-059",
-      "num": 59,
-      "file": "src/domain/project.ts",
-      "line": 297,
-      "ws": "domain-purity",
-      "type": "arch",
-      "layer": "domain",
-      "rules": [],
-      "tests": [],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "magic-number"
-      ],
-      "text": "Стартовые жетоны 3/3/2 числами: константа START_TOKENS рядом с STATUS_TOKENS"
-    },
-    {
       "id": "P2-060",
       "num": 60,
       "file": ".vale/styles/TI4Ru/Terms.yml",
@@ -1796,9 +1693,7 @@
       "layer": "docs",
       "rules": [],
       "tests": [],
-      "deps": [
-        "P2-001"
-      ],
+      "deps": [],
       "needs": [],
       "size": "s",
       "tags": [
