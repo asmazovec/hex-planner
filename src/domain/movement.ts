@@ -13,7 +13,23 @@ import type { DataPack, Game, GameState, UnitCounts, UnitId } from './types';
 /** The systems holding ships of players other than the one moving: a route may end there, never pass (58.3.2). */
 export type Blockers = ReadonlySet<string>;
 
-const routeGraphs = new WeakMap<Game, Map<string, string[]>>();
+/**
+ * Route graphs by what they are made of: the map, the Fracture, the pack and the factions at the table. The game as an
+ * opponent plays it (`gameAs`) is a new object with the same map, so it shares the graph of the game.
+ */
+const routeGraphs = new WeakMap<Game['map'], WeakMap<Game['fracture'], WeakMap<DataPack, Map<string, Map<string, string[]>>>>>();
+
+function graphSlot(game: Game, pack: DataPack): Map<string, Map<string, string[]>> {
+  let byFracture = routeGraphs.get(game.map);
+  if (!byFracture) routeGraphs.set(game.map, byFracture = new WeakMap());
+  let byPack = byFracture.get(game.fracture);
+  if (!byPack) byFracture.set(game.fracture, byPack = new WeakMap());
+  let byFactions = byPack.get(pack);
+  if (!byFactions) byPack.set(pack, byFactions = new Map());
+  return byFactions;
+}
+
+const factionsKey = (game: Game): string => [game.faction, ...(game.opponents ?? []).map(o => o.faction)].sort().join(',');
 
 /** The edges a line of this hyperlane leads to from one edge, or from any with none given. A tile whose lines the data lacks joins all its sides. */
 function laneExits(game: Game, slot: string, entry: number | null, pack: DataPack): number[] {
@@ -43,7 +59,9 @@ function systemsAlongLanes(game: Game, slot: string, entry: number | null, pack:
  * wormhole with it. An off-map home (the Creuss home, 6 note 2) is a system under its tile id, joined by its wormhole alone.
  */
 function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
-  const known = routeGraphs.get(game);
+  const cache = graphSlot(game, pack);
+  const key = factionsKey(game);
+  const known = cache.get(key);
   if (known) return known;
   const slots = [...systemSlots(game), ...offMapHomes(game, pack)];
   const adjacent = systemsAdjacent(game, pack);
@@ -58,7 +76,7 @@ function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
     return [...across, ...slots.filter(other => holes(slot).some(hole => holes(other).includes(hole)) || (gridDistance(slot, other) > 1 && adjacent(slot, other)))];
   };
   const graph = new Map(slots.map(slot => [slot, [...new Set(stepsOf(slot))].filter(other => other !== slot)]));
-  routeGraphs.set(game, graph);
+  cache.set(key, graph);
   return graph;
 }
 

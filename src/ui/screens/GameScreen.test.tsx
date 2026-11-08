@@ -485,25 +485,49 @@ describe('a link to a game', () => {
   });
 });
 
-test('energy saving is off until turned on, reaches the stylesheet, is remembered and takes over the settings of motion', async () => {
-  localStorage.removeItem('ti4.energy');
-  const { unmount } = render(<GameScreen />);
-  const chip = screen.getByRole('button', { name: 'Energy saving' });
-  expect(chip).toHaveAttribute('aria-pressed', 'false');
-  expect(screen.getByRole('button', { name: 'Loop flights' })).toBeEnabled();
-  await userEvent.click(chip);
-  expect(document.documentElement.dataset.energy).toBe('on');
-  expect(localStorage.getItem('ti4.energy')).toBe('on');
-  expect(screen.getByRole('button', { name: 'Loop flights' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Background blur' })).toBeDisabled();
-  expect(screen.getByText('No flights, smooth motion or blur.')).toBeVisible();
-  unmount();
-  render(<GameScreen />);
-  const again = screen.getByRole('button', { name: 'Energy saving' });
-  expect(again).toHaveAttribute('aria-pressed', 'true');
-  await userEvent.click(again);
-  expect(document.documentElement.dataset.energy).toBe('off');
-  localStorage.removeItem('ti4.energy');
+describe('energy saving', () => {
+  const items = ['Ship flights', 'Loop flights', 'Smooth motion', 'Background blur'];
+  const pressed = () => items.map(name => screen.getByRole('button', { name }).getAttribute('aria-pressed'));
+  afterEach(() => {
+    for (const key of ['ti4.flights', 'ti4.flightLoop', 'ti4.motion', 'ti4.blur', 'ti4.energy']) localStorage.removeItem(key);
+    for (const attr of ['flights', 'motion', 'blur']) delete document.documentElement.dataset[attr];
+  });
+
+  test('every item is on until turned off, each on its own, and reaches the stylesheet', async () => {
+    render(<GameScreen />);
+    expect(screen.getByText('Energy saving')).toBeVisible();
+    expect(pressed()).toEqual(['true', 'true', 'true', 'true']);
+    await userEvent.click(screen.getByRole('button', { name: 'Smooth motion' }));
+    expect(pressed()).toEqual(['true', 'true', 'false', 'true']);
+    expect(document.documentElement.dataset.motion).toBe('off');
+    expect(localStorage.getItem('ti4.motion')).toBe('off');
+    await userEvent.click(screen.getByRole('button', { name: 'Ship flights' }));
+    expect(document.documentElement.dataset.flights).toBe('off');
+    // The loop has nothing to repeat without flights.
+    expect(screen.getByRole('button', { name: 'Loop flights' })).toBeDisabled();
+  });
+
+  test('maximum saving stands with the items, turns them all off and locks them, and gives them back as they were', async () => {
+    const { unmount } = render(<GameScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Background blur' }));
+    const max = screen.getByRole('button', { name: 'Maximum saving' });
+    expect(within(screen.getByRole('group', { name: 'Energy saving' })).getByRole('button', { name: 'Maximum saving' })).toBe(max);
+    expect(max).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(max);
+    expect(max).toHaveAttribute('aria-pressed', 'true');
+    expect(pressed()).toEqual(['false', 'false', 'false', 'false']);
+    for (const name of items) expect(screen.getByRole('button', { name })).toBeDisabled();
+    expect(document.documentElement.dataset.flights).toBe('off');
+    expect(document.documentElement.dataset.motion).toBe('off');
+    unmount();
+    render(<GameScreen />);
+    const again = screen.getByRole('button', { name: 'Maximum saving' });
+    expect(again).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(again);
+    expect(pressed()).toEqual(['true', 'true', 'true', 'false']);
+    for (const name of items) expect(screen.getByRole('button', { name })).toBeEnabled();
+    expect(document.documentElement.dataset.flights).toBe('on');
+  });
 });
 
 test('the setting that loops flights is on until turned off, and is remembered', async () => {

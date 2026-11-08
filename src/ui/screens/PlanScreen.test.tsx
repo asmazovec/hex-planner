@@ -1061,22 +1061,43 @@ describe('reading the plan', () => {
     expect(document.querySelector('.flight-layer')).toBeNull();
     act(() => { vi.advanceTimersByTime(400); });
     expect(document.querySelector('.flight-layer')).toBeInTheDocument();
+    // While its ships are in the air the tiles change at once, in a layer of its own over the map.
+    expect(document.querySelector('.hexmap-still')).toBeInTheDocument();
+    expect(document.querySelector('.hexmap-overlay .flight-layer')).toBeInTheDocument();
+    // On landing only the systems of the action move: the others are quiet, its own are not.
+    expect(tile(HOME)).not.toHaveClass('tile-quiet');
+    expect(tile(TARGET)).not.toHaveClass('tile-quiet');
+    expect(document.querySelectorAll('.tile-quiet').length).toBeGreaterThan(0);
+    // Their planets and tokens move in the layer over the map; the tiles stay on the map to take the taps.
+    expect(document.querySelectorAll('.lift-layer .tile-lifted').length).toBe(document.querySelectorAll('.tile:not(.tile-quiet):not(.tile-lifted)').length);
+    expect(tile(TARGET).querySelector('.tk')).toBeNull();
     // What flies has left its tile while the flight runs; the cargo on the way stays until the leader passes.
     expect(within(tile(HOME) as HTMLElement).queryByRole('img', { name: /Carrier/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(document.querySelector('.flight-layer')).toBeNull();
+    expect(document.querySelector('.hexmap-still')).toBeNull();
     vi.useRealTimers();
     vi.stubGlobal('matchMedia', () => ({ matches: true }));
     fireEvent.click(screen.getByRole('button', { name: label }));
     await act(async () => { await new Promise(r => setTimeout(r, 450)); });
     expect(document.querySelector('.flight-layer')).toBeNull();
     vi.unstubAllGlobals();
-    // Energy saving plays no flight either.
-    document.documentElement.dataset.energy = 'on';
+    // Flights turned off in energy saving play none either; smooth motion turned off leaves them flying.
+    // Each tap on the label opens or closes the details: the first tap here closes what the last check opened.
+    document.documentElement.dataset.flights = 'off';
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     fireEvent.click(screen.getByRole('button', { name: label }));
-    await act(async () => { await new Promise(r => setTimeout(r, 450)); });
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    act(() => { vi.advanceTimersByTime(400); });
     expect(document.querySelector('.flight-layer')).toBeNull();
-    delete document.documentElement.dataset.energy;
+    delete document.documentElement.dataset.flights;
+    document.documentElement.dataset.motion = 'off';
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    act(() => { vi.advanceTimersByTime(400); });
+    expect(document.querySelector('.flight-layer')).toBeInTheDocument();
+    vi.useRealTimers();
+    delete document.documentElement.dataset.motion;
   });
 });
 

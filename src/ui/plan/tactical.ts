@@ -5,7 +5,7 @@
 import { hexLayout } from '../../domain/hexLayout';
 import { sourceSlot, systemsAdjacent } from '../../domain/project';
 import { groupOf, poolOf, sourcesOf, viaOf, type TacticalEntry } from '../../domain/tactical';
-import { flightDuration, joinShare, type CurveSegment, type RouteShape } from '../map/geometry';
+import { flightDuration, joinShare, slotToPixel, type CurveSegment, type Point, type RouteShape } from '../map/geometry';
 import type { DataPack, Game, GameState, UnitId } from '../../domain/types';
 
 export {
@@ -13,19 +13,31 @@ export {
   type Move, type RouteArrow, type TacticalEntry,
 } from '../../domain/tactical';
 
-/** A cell of a route's formation. `joins` say when its units come on board, as a share of the route's length; 0 is the start. */
+/**
+ * A cell of a route's formation. `joins` say when its units come on board, as a share of the route's length; 0 is the
+ * start. `pickup`: they are picked up, from a planet or a system on the way, and leave it as they come on board.
+ */
 export interface FlightStack {
   kind: UnitId;
   x: number;
   y: number;
   size: number;
-  joins: { at: number; count: number; move: number }[];
+  joins: { at: number; count: number; move: number; pickup?: true }[];
 }
 export interface FlightRoute { segments: CurveSegment[]; durationMs: number; delayMs: number; stacks: FlightStack[] }
 
 const STAGGER_MS = 60;
 
 /** What flies when an action is played: only what really exists, as a rigid formation per route, laid out as on a tile with no planets. */
+/** The segments of a route with its last one carried on to `centre`. */
+export function withArrival(segments: CurveSegment[], centre: Point): CurveSegment[] {
+  const last = segments.at(-1);
+  if (!last) return segments;
+  const end = last.points.at(-1);
+  if (end && Math.hypot(end.x - centre.x, end.y - centre.y) < 0.5) return segments;
+  return [...segments.slice(0, -1), { ...last, points: [...last.points, centre] }];
+}
+
 export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, before: GameState, shapeOf: (from: string) => RouteShape | undefined): FlightRoute[] {
   const left = structuredClone({ systems: before.systems, ground: before.ground });
   const routes: FlightRoute[] = [];
@@ -33,7 +45,8 @@ export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, b
     const shape = shapeOf(from);
     if (!shape || entry.systemId === null) continue;
     const slots = [from, ...viaOf(entry, from), entry.systemId];
-    const { segments } = shape;
+    // The arrow stops short of the hex for its head; the ships fly on to the middle of the system they arrive in.
+    const segments = withArrival(shape.segments, slotToPixel(entry.systemId));
     const joins = new Map<UnitId, FlightStack['joins']>();
     entry.moves.forEach((move, index) => {
       if (!groupOf(game, pack, [move], from).length) return;
@@ -43,7 +56,7 @@ export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, b
         const count = Math.min(move.units[unit] ?? 0, pool[unit] ?? 0);
         if (count <= 0) continue;
         pool[unit] = (pool[unit] ?? 0) - count;
-        joins.set(unit, [...(joins.get(unit) ?? []), { at: stop > 0 ? joinShare(segments, stop) : 0, count, move: index }]);
+        joins.set(unit, [...(joins.get(unit) ?? []), { at: stop > 0 ? joinShare(segments, stop) : 0, count, move: index, ...(move.pickupOf === undefined ? {} : { pickup: true as const }) }]);
       }
     });
     if (joins.size === 0) continue;

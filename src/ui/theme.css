@@ -313,6 +313,10 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 
 /* The map. */
 .hexmap { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; user-select: none; display: block; cursor: grab; }
+/* A compositing layer of its own: a flight repaints its few ships, not the map under them. */
+.hexmap-overlay, .hexmap-lift, .hexmap-arrows { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+/* The moving systems and the flight are layers of their own; the arrows between them only become one while they are over a moving layer. */
+.hexmap-overlay, .hexmap-lift { will-change: transform; }
 .hexmap:active { cursor: grabbing; }
 .tile { cursor: pointer; }
 .tile:focus, .tile:focus-visible { outline: none; }
@@ -343,6 +347,10 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .tile .tile-caption { font-size: 9.5px; fill: var(--text-muted); }
 .tile-warning { font-size: 30px; font-weight: 700; fill: var(--warning) !important; }
 .tk { transition: transform 0.44s cubic-bezier(0.3, 1.22, 0.5, 1); }
+/* While ships fly the tiles change at once, each growing token would repaint the whole map; the arrival moves smoothly. */
+.hexmap-still .tk, .hexmap-still .planet-disc, .tile-quiet .tk, .tile-quiet .planet-disc { transition: none; }
+.hexmap-still .tk-in, .tile-quiet .tk-in { animation: none; }
+.hexmap-still .tk-out, .tile-quiet .tk-out { display: none; }
 .tk-in { animation: tk-in 0.44s cubic-bezier(0.3, 1.22, 0.5, 1); }
 .tk-out { animation: tk-out 0.44s ease forwards; pointer-events: none; }
 @keyframes tk-in { from { transform: scale(0); } }
@@ -529,6 +537,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .upics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
 .entry-details { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px 8px; border-top: 1px solid var(--border); }
 .plan-entries { display: flex; flex-direction: column; gap: 12px; }
+/* A long plan holds hundreds of rows: those out of sight are neither laid out nor painted, and keep the height they had. */
+.entry-list > li:not(.entry-shown):not(.entry-dragging) { content-visibility: auto; contain-intrinsic-size: auto 52px; }
 .phase { display: flex; flex-direction: column; gap: 5px; }
 .phase-auto { margin: 0; color: var(--text-dim); font-size: var(--font-s); }
 /* The foot of the actions stays in view at the bottom edge of the panel; the list of action types opens under it, never over the map. */
@@ -684,6 +694,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .side-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .side-actions button, .side-actions .button { min-height: 36px; padding: 5px 12px; font-size: 13px; color: var(--text-muted); position: relative; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* Maximum saving and the items it locks in one list; its rows a little apart, the note under them. */
+.energy-settings > .chips { row-gap: 8px; }
+.energy-settings > .side-note { margin-top: 10px; }
 .chip, button.chip { position: relative; padding: 7px 12px; min-height: 36px; min-width: 0; border-radius: 18px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-size: 13px; line-height: 1.45; display: flex; align-items: center; cursor: pointer; transition: background-color var(--motion), border-color var(--motion), color var(--motion); }
 button.chip::after, .side-actions button::after, .side-actions .button::after, .saved-list button::after, .players-aside .layout-picker .segment button::after { content: ''; position: absolute; inset: -4px 0; }
 .chip.on, button.chip[aria-pressed='true'], button.chip[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
@@ -892,10 +905,9 @@ small.ship-row-round { color: var(--gold); }
 @keyframes fade-out { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer-scrim, .drawer-rail { animation: none; transition: none; } }
 
-/* Energy saving: the same as the system's reduced motion, and no blur. */
-:root[data-energy='on'] *, :root[data-energy='on'] *::before, :root[data-energy='on'] *::after { animation: none !important; transition: none !important; }
-:root[data-energy='on'] .tk-out { display: none; }
-:root[data-energy='on'] .stage, :root[data-energy='on'] .drawer-scrim { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* Smooth motion turned off in energy saving: the same as the system's reduced motion. Blur has its own data-blur. */
+:root[data-motion='off'] *, :root[data-motion='off'] *::before, :root[data-motion='off'] *::after { animation: none !important; transition: none !important; }
+:root[data-motion='off'] .tk-out { display: none; }
 
 /* The legend. */
 .legend-row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: center; padding: 3px 0; font-size: 12.5px; line-height: 1.35; color: var(--text-muted); }

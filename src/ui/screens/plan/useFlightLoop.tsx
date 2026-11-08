@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { stateAfterEntry } from '../../../domain/project';
 import { gameAs } from '../../../domain/players';
-import { flies, stateInFlight, type TacticalEntry } from '../../../domain/tactical';
+import { entrySystems, flies, stateInFlight, type TacticalEntry } from '../../../domain/tactical';
 import type { DataPack, Entry, Game, GameState, Plan } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
-import { reducedMotion } from '../../common/motion';
+import { playsFlights } from '../../common/motion';
 import { flightLoop } from '../../common/preferences';
 import { FlightLayer } from '../../map/FlightLayer';
 import type { Arrow } from '../../map/RouteArrows';
@@ -17,13 +17,25 @@ type Filter = 'now' | 'forecast';
 
 /**
  * A flight under way: it ends when the game it started from changes. `passed` holds the moves already taken on board on
- * the way; `filter` is the replay its map stands on.
+ * the way; `filter` is the replay its map stands on. A flight goes through three phases: the units stand where they are
+ * until `departed`, then fly, and once `landed` the ships fade out over the map that shows them landed.
  */
-interface Flight { entryId: string; run: number; game: Game; passed: number[]; filter: Filter }
+interface Flight { entryId: string; run: number; game: Game; passed: number[]; filter: Filter; departed?: boolean; landed?: boolean }
 
 /** The pause before a shown action first flies, and between its flights. */
 const LOOP_START_MS = 380;
 const LOOP_PAUSE_MS = 750;
+/** How long the units stand in their systems, as before the action, before they leave: the step back plays out first. */
+const DEPART_HOLD_MS = 600;
+
+/**
+ * The state before an action with its system already activated: the command token stands there while the units wait,
+ * so the tokens of that system do not shift when they leave.
+ */
+const activated = (entry: TacticalEntry, before: GameState): GameState =>
+  (entry.free || entry.systemId === null || before.tokensOnMap.includes(entry.systemId)
+    ? before
+    : { ...before, tokensOnMap: [...before.tokensOnMap, entry.systemId] });
 
 export interface FlightLoopInput {
   game: Game | null;
@@ -51,15 +63,26 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   const flying = flight?.game === game ? flight : null;
 
   // Nothing to show in a flight, nothing to repeat: a move whose units are not at the source, for one.
-  const loops = shownEntry?.type === 'tactical' && !reducedMotion() && game !== null && plan !== undefined && flies(pack, shownEntry, boards.before(shownEntry.id));
+  const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined && flies(pack, shownEntry, boards.before(shownEntry.id));
 
   const start = useCallback((entryId: string, filter: Filter = 'forecast') => {
     const current = useGame.getState().game;
-    if (reducedMotion() || !current) return;
+    if (!playsFlights() || !current) return;
     runs.current += 1;
     setFlight({ entryId, run: runs.current, game: current, passed: [], filter });
   }, []);
   const stop = useCallback(() => setFlight(null), []);
+
+  // Between the repeats the map stands right after the action: one replay for the whole reading, not one per drawing.
+  const airborne = flying !== null && !flying.landed;
+  /** The map has stepped back to before the action and the units wait to leave. */
+  const waiting = airborne && !flying.departed;
+  const restingEntry = !airborne && shown && shownEntry && loops && shown.plays > 0 && flightLoop.read() ? shownEntry : undefined;
+  const restingId = restingEntry?.id;
+  const restingState = useMemo(
+    () => (restingId && game && plan ? stateAfterEntry(game, plan, restingId, pack) : null),
+    [restingId, game, plan, pack],
+  );
 
   useEffect(() => {
     if (!shown || !loops || flying) return undefined;
@@ -81,9 +104,11 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
     const flyingEntry = flying ? tacticals.find(item => item.id === flying.entryId) : undefined;
     if (!game || !plan) return { mapState: shownState, layer: null };
     const beforeFlight = flying && flyingEntry ? boards.before(flyingEntry.id, flying.filter) : null;
-    const inFlight = flying && flyingEntry && beforeFlight ? stateInFlight(pack, flyingEntry, beforeFlight, flying.passed) : null;
-    const resting = !flying && shown && shownEntry && loops && shown.plays > 0 && flightLoop.read() ? shownEntry : undefined;
-    const held = inFlight ?? (resting ? stateAfterEntry(game, plan, resting.id, pack) : null);
+    const inFlight = airborne && flyingEntry && beforeFlight
+      ? (waiting ? activated(flyingEntry, beforeFlight) : stateInFlight(pack, flyingEntry, beforeFlight, flying.passed))
+      : null;
+    const resting = restingEntry;
+    const held = inFlight ?? restingState;
     const owner = (flyingEntry ?? resting)?.owner;
     const mapState = !held ? shownState : owner ? { ...shownState, rivals: { ...shownState.rivals, [owner]: held } } : held;
     const flyingGame = gameAs(game, flyingEntry?.owner);
@@ -92,11 +117,26 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
         key={flying.run} colour={playerColour(flyingGame.color)} passed={flying.passed}
         routes={flightRoutes(flyingGame, pack, flyingEntry, beforeFlight, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
         onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
+        holdMs={DEPART_HOLD_MS}
+        onDepart={() => setFlight(f => f && { ...f, departed: true })}
+        onArrive={() => setFlight(f => f && { ...f, landed: true })}
         onDone={stop}
       />
     );
     return { mapState, layer };
   };
 
-  return { flying, loops, start, stop, scene };
+  /**
+   * Stepping back, leaving, pickups and landing move in the systems of the action only (`animated`, drawn in a layer of
+   * their own); every other tile changes at once, the whole map too while the units wait to leave.
+   */
+  const still = waiting;
+  /** On landing only the systems of the action move: its active system and those its ships and cargo left. */
+  const loopingEntry = shown && loops && shownEntry && game ? shownEntry : undefined;
+  const animated = useMemo(
+    () => (loopingEntry && game ? new Set(entrySystems(gameAs(game, loopingEntry.owner), pack, loopingEntry)) : null),
+    [loopingEntry, game, pack],
+  );
+
+  return { flying, loops, still, animated, start, stop, scene };
 }

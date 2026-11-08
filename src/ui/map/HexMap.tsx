@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
@@ -12,7 +12,7 @@ import { RouteArrows, RouteDraftLine, type Arrow } from './RouteArrows';
 import { TileView, type Highlight } from './TileView';
 import type { RouteDraftView } from './useArrowDrag';
 import { useFractureFlight } from './useFractureFlight';
-import { usePanZoom } from './usePanZoom';
+import { usePanZoom, type View } from './usePanZoom';
 import { capFit } from './viewLimits';
 
 export interface HexMapProps {
@@ -26,17 +26,28 @@ export interface HexMapProps {
   focusRect?: Rect | null;
   /** Each new value sends the camera to the whole map, as the reset button does. */
   resetSignal?: number;
-  /** Drawn over the arrows, in the coordinates of the map. */
+  /** Drawn over the arrows, in the coordinates of the map, in a layer of its own that takes no presses. */
   overlay?: ReactNode;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
   /** A drag from this tile draws an arrow; from any other tile it moves the map. */
   startsArrow?: (systemId: string) => boolean;
+  /** Ships come and go from the tiles without growing or sliding: a flight in the air shows their movement already. */
+  still?: boolean;
+  /**
+   * Only these systems move their tokens, drawn in the layer over the map so that their moving repaints them alone; on
+   * every other tile tokens change at once. Without it every tile moves on the map.
+   */
+  animateOnly?: ReadonlySet<string> | null;
 }
 
 /** As long as the tiles of the Fracture take to arrive. */
 const CAMERA_MS = 760;
 const easeOut = (t: number): number => 1 - (1 - t) ** 3;
+
+/** The transform of the groups that carry the view: it scales around the middle of the map. */
+const transformOf = (view: View, midX: number, midY: number): string =>
+  `translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`;
 
 /** What the frame of the map shows, moving smoothly to a new frame when the map grows or shrinks. */
 function useSmoothRect(target: Rect): Rect {
@@ -71,7 +82,7 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow,
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, animateOnly = null,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -99,7 +110,20 @@ export function HexMap({
   const mapRect = useMemo(() => mapBounds(mapSlots), [mapSlots]);
   const { fractureAt, fracture, leaving, opening, flyRun, flyStyle, leftGone } = useFractureFlight(game, pack, mapSlots);
   const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
-  const { view, handlers, reset, focus } = usePanZoom(bounds, svgRef, undefined, mapRect, startsArrow);
+  // Frames of a gesture or of the camera's approach go straight to the groups that carry the view, not through React:
+  // the map, the moving systems, the arrows and the flight each have one, in layers drawn in that order.
+  const viewGroup = useRef<SVGGElement>(null);
+  const liftGroup = useRef<SVGGElement>(null);
+  const arrowGroup = useRef<SVGGElement>(null);
+  const overlayGroup = useRef<SVGGElement>(null);
+  // The group the tokens of the moving systems are drawn into; a state, so the tiles draw again once it is there.
+  const [liftLayer, setLiftLayer] = useState<SVGGElement | null>(null);
+  const middle = useRef({ x: 0, y: 0 });
+  const drawFrame = useCallback((next: View) => {
+    const text = transformOf(next, middle.current.x, middle.current.y);
+    for (const group of [viewGroup, liftGroup, arrowGroup, overlayGroup]) group.current?.setAttribute('transform', text);
+  }, []);
+  const { view, live, handlers, reset, focus } = usePanZoom(bounds, svgRef, undefined, mapRect, startsArrow, drawFrame);
   const focusKey = focusRect ? JSON.stringify(focusRect) : null;
   useEffect(() => { focus(focusKey === null ? null : JSON.parse(focusKey) as Rect); }, [focusKey, focus]);
   useEffect(() => { if (resetSignal > 0) reset(); }, [resetSignal, reset]);
@@ -107,14 +131,22 @@ export function HexMap({
   const camera = useSmoothRect(bounds);
   const midX = camera.x + camera.width / 2;
   const midY = camera.y + camera.height / 2;
+  const transform = transformOf(view, midX, midY);
+  const viewBoxText = `${camera.x} ${camera.y} ${camera.width} ${camera.height}`;
+  // A drawing in the middle of a gesture writes the view React knows: the one on screen goes back at once.
+  useLayoutEffect(() => {
+    middle.current = { x: midX, y: midY };
+    drawFrame(live());
+  });
   // The tiles stay as they are on every frame of a movement; only the transform around them changes.
   const content = useMemo(() => slotKeys.map(key => (
     <TileView
       key={key} slotKey={key} pack={pack} game={game} state={state}
       highlight={highlights?.[key]} ingress={game.fracture.ingress.includes(key)} seat={seats.get(key)}
-      onTap={onTileTap} onPointerDown={onTilePointerDown}
+      onTap={onTileTap} onPointerDown={onTilePointerDown} quiet={animateOnly !== null && !animateOnly.has(key)}
+      liftInto={animateOnly?.has(key) ? liftLayer : null}
     />
-  )), [slotKeys, pack, game, state, seats, highlights, onTileTap, onTilePointerDown]);
+  )), [slotKeys, pack, game, state, seats, highlights, onTileTap, onTilePointerDown, animateOnly, liftLayer]);
 
   return (
     <div className="hexmap-frame">
@@ -125,8 +157,8 @@ export function HexMap({
     </div>
     <div className="hexmap-wrap">
     <svg
-      ref={svgRef} className="hexmap" role="group" aria-label={t('map.label')}
-      viewBox={`${camera.x} ${camera.y} ${camera.width} ${camera.height}`}
+      ref={svgRef} className={`hexmap${still ? ' hexmap-still' : ''}`} role="group" aria-label={t('map.label')}
+      viewBox={viewBoxText}
       {...handlers}
     >
       <defs>
@@ -138,7 +170,7 @@ export function HexMap({
           <path d="M0,0 L10,5 L0,10 Z" className="arrow-head-casing" />
         </marker>
       </defs>
-      <g transform={`translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`}>
+      <g ref={viewGroup} transform={transform}>
         {content}
         {leaving && (
           <g key={`left-${flyRun}`} className="fracture-group fracture-closing" aria-hidden="true" onAnimationEnd={e => { if (e.target === e.currentTarget) leftGone(); }}>
@@ -157,16 +189,35 @@ export function HexMap({
                 fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }}
                 highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={game.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
                 onTap={onTileTap} onPointerDown={onTilePointerDown}
+                quiet={animateOnly !== null && !animateOnly.has(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
               />
               </g>
             ))}
           </g>
         )}
-        <RouteArrows arrows={arrows ?? NO_ARROWS} bounds={bounds} />
-        {arrowPreview && <RouteDraftLine draft={arrowPreview} />}
-        {overlay}
       </g>
     </svg>
+    {animateOnly && (
+      // The systems of the action being shown, in a layer of their own: their tokens move without repainting the map.
+      <svg className="hexmap-lift" viewBox={viewBoxText}>
+        <g ref={liftGroup} transform={transform}>
+          <g ref={setLiftLayer} className="lift-layer" />
+        </g>
+      </svg>
+    )}
+    {/* Over every tile, the lifted ones too; it takes no presses. */}
+    <svg className="hexmap-arrows" viewBox={viewBoxText} aria-hidden="true">
+      <g ref={arrowGroup} transform={transform}>
+        <RouteArrows arrows={arrows ?? NO_ARROWS} bounds={bounds} />
+        {arrowPreview && <RouteDraftLine draft={arrowPreview} />}
+      </g>
+    </svg>
+    {overlay && (
+      // Its own layer over the map and the arrows: what moves here every frame leaves them unpainted.
+      <svg className="hexmap-overlay" viewBox={viewBoxText}>
+        <g ref={overlayGroup} transform={transform}>{overlay}</g>
+      </svg>
+    )}
     </div>
     </div>
   );

@@ -10,18 +10,17 @@ import { deleteGame, listGames, loadRawGame, saveGame, type GameSummary } from '
 import { errorText } from '../../storage/errorText';
 import { importGame, withFreeId } from '../../storage/transfer';
 import { Banner } from '../feedback/Banner';
-import { blur as blurSetting, energy as energySetting, flightLoop as flightLoopSetting } from '../common/preferences';
 import { shareLinkQuery } from '../../domain/shareLink';
 import { NoteField } from '../primitives/NoteField';
 import { downloadGame, downloadRaw } from '../common/download';
 import { EXPANSION_NAMES, EXPANSIONS } from '../common/expansions';
 import { gameAddress } from '../common/gameAddress';
-import { usePreference } from '../common/usePreference';
 import { MapSetup } from '../map/builder/MapSetup';
 import { HexRemove } from '../primitives/Icon';
 import { factionName } from '../players/names';
 import { PlayerList } from '../players/PlayerList';
 import { useSeatDrag } from '../players/useSeatDrag';
+import { EnergySettings } from './EnergySettings';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { ConfirmBar } from '../primitives/ConfirmBar';
 
@@ -50,9 +49,6 @@ export function GameScreen({ showMap = false }: GameScreenProps) {
   const [storageError, setStorageError] = useState<string | null>(null);
   /** The save asked about before it goes: deleting cannot be undone. */
   const [asked, setAsked] = useState<string | null>(null);
-  const [blur, setBlur] = usePreference(blurSetting);
-  const [flightLoop, setFlightLoop] = usePreference(flightLoopSetting);
-  const [energy, setEnergy] = usePreference(energySetting);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
@@ -232,15 +228,7 @@ export function GameScreen({ showMap = false }: GameScreenProps) {
             ))}
           </div>
         </div>
-        <div className="side-group">
-          <SectionTitle as="p" className="side-label">{t('game.settings')}</SectionTitle>
-          <div className="chips">
-            <button type="button" className="chip" aria-pressed={energy} onClick={() => setEnergy(!energy)}>{t('game.energy')}</button>
-            <button type="button" className="chip" aria-pressed={blur} disabled={energy} onClick={() => setBlur(!blur)}>{t('game.blur')}</button>
-            <button type="button" className="chip" aria-pressed={flightLoop} disabled={energy} onClick={() => setFlightLoop(!flightLoop)}>{t('game.flightLoop')}</button>
-          </div>
-          {energy && <p className="side-note">{t('game.energyNote')}</p>}
-        </div>
+        <EnergySettings />
         <p className="side-note">
           {t('game.iconCredit')} <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">{t('game.iconLicence')}</a>
         </p>

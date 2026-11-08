@@ -34,9 +34,16 @@ const tileAt = (target: EventTarget | null): Element | null =>
 export function usePanZoom(
   viewBox: Rect, svgRef: RefObject<SVGSVGElement | null>, onEmptyTap?: () => void, limitRect: Rect = viewBox,
   startsArrow?: (slot: string) => boolean,
+  /**
+   * Draws a frame of a gesture or of the camera's approach without React: `view` then changes only once they end.
+   * Without it every frame goes through `view`.
+   */
+  onFrame?: (view: View) => void,
 ) {
   const [view, setView] = useState<View>(IDENTITY);
   const shown = useRef<View>(IDENTITY);
+  const frameDrawer = useRef(onFrame);
+  useEffect(() => { frameDrawer.current = onFrame; });
   /** The target of the animation, or the view of a gesture before it stretches at the limit. */
   const goal = useRef<View>(IDENTITY);
   const frame = useRef<number | null>(null);
@@ -52,8 +59,11 @@ export function usePanZoom(
 
   const show = useCallback((next: View) => {
     shown.current = next;
-    setView(next);
+    if (frameDrawer.current) frameDrawer.current(next);
+    else setView(next);
   }, []);
+  /** The view comes to rest: React learns it once. */
+  const commit = useCallback(() => setView(shown.current), []);
 
   const stopAnimation = useCallback(() => {
     if (frame.current !== null) cancelAnimationFrame(frame.current);
@@ -101,6 +111,7 @@ export function usePanZoom(
     if (reducedMotion()) {
       stopAnimation();
       show(target);
+      commit();
       return;
     }
     if (frame.current !== null) return;
@@ -119,13 +130,14 @@ export function usePanZoom(
       if (Math.abs(next.x - to.x) < 0.2 && Math.abs(next.y - to.y) < 0.2 && Math.abs(next.scale - to.scale) < 0.001) {
         frame.current = null;
         show(to);
+        commit();
         return;
       }
       show(next);
       frame.current = requestAnimationFrame(tick);
     };
     frame.current = requestAnimationFrame(tick);
-  }, [show, stopAnimation]);
+  }, [show, commit, stopAnimation]);
 
   /** Applies a gesture step at once; past the limit the view gives way only partly. */
   const follow = useCallback((factor: number, at: { x: number; y: number }, move: { x: number; y: number }) => {
@@ -268,8 +280,12 @@ export function usePanZoom(
     animateTo(IDENTITY);
   }, [animateTo]);
 
+  /** The view on screen now, ahead of `view` while a gesture or an approach draws its frames through `onFrame`. */
+  const live = useCallback((): View => shown.current, []);
+
   return {
     view,
+    live,
     focus,
     reset,
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture },

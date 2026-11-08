@@ -280,3 +280,18 @@ test('when the focus ends the camera goes to the whole map, wherever it stood be
   expect(result.current.view.y).toBeCloseTo(0);
   expect(result.current.view.scale).toBeCloseTo(1);
 });
+
+test('with a frame drawer a gesture draws its frames there, and the view changes once it comes to rest', () => {
+  const drawn: { x: number; y: number; scale: number }[] = [];
+  const { result } = renderHook(() => usePanZoom(bounds, { current: null }, undefined, bounds, undefined, view => drawn.push(view)));
+  act(() => result.current.handlers.onPointerDown(ev(1, 10, 10)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 30, 25)));
+  act(() => result.current.handlers.onPointerMove(ev(1, 40, 30)));
+  expect(drawn.at(-1)).toEqual({ x: 30, y: 20, scale: 1 });
+  expect(result.current.live()).toEqual({ x: 30, y: 20, scale: 1 });
+  expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
+  act(() => result.current.handlers.onPointerUp(ev(1, 40, 30)));
+  runFrames(40);
+  expect(result.current.view).toEqual(result.current.live());
+  expect(result.current.view).toEqual(drawn.at(-1));
+});

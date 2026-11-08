@@ -136,7 +136,9 @@ test('a straight arrow is a straight line', () => {
 });
 
 test('polyline timing: about 300 ms per hex, capped at 1.6 s, a broken step three times as fast', () => {
-  expect(flightDuration(['0,0', '1,0'])).toBe(300);
+  expect(flightDuration(['0,0', '1,0'])).toBe(400);
+  // A single broken step still lasts long enough to be seen.
+  expect(flightDuration(['0,0', '3,0'])).toBe(400);
   expect(flightDuration(['0,0', '1,0', '2,0', '3,0'])).toBe(900);
   expect(flightDuration(['0,0', '1,0', '3,0'])).toBe(400);
   expect(flightDuration(['0,0', '1,0', '2,0', '3,0', '4,0', '5,0', '6,0', '7,0'])).toBe(1600);

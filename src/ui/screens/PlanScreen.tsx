@@ -552,7 +552,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <HexMap
             game={game} state={mapState} pack={pack} highlights={highlights} arrows={arrows}
             arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} onTileTap={onTileTap}
-            overlay={flightLayer}
+            overlay={flightLayer} still={flight.still} animateOnly={flight.animated}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow}
           />
           {shownArea && <button type="button" className="map-home" onClick={closeShown}>{t('map.home')}</button>}

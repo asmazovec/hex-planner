@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DataPack, Game, Warning } from '../../domain/types';
 import { systemName } from '../map/systemName';
@@ -9,8 +9,16 @@ export interface WarningTextProps {
   pack: DataPack;
 }
 
+/**
+ * The same warning over the same map: every replay makes new warning objects, and a long plan shows hundreds of them,
+ * so the text is made again only when the code, its params, the map or the pack change. A new language redraws it anyway.
+ */
+const sameWarning = (a: WarningTextProps, b: WarningTextProps): boolean =>
+  a.warning.code === b.warning.code && a.game.map === b.game.map && a.game.fracture === b.game.fracture && a.pack === b.pack
+  && JSON.stringify(a.warning.params) === JSON.stringify(b.warning.params);
+
 /** The text of one warning code; slot keys and ids in its params become the names the player knows. */
-export function WarningText({ warning, game, pack }: WarningTextProps) {
+export const WarningText = memo(function WarningText({ warning, game, pack }: WarningTextProps) {
   const { t } = useTranslation();
   const { code, params } = warning;
   const place = (id: string | number): string => pack.planets[id]?.name ?? systemName(game, pack, String(id));
@@ -28,7 +36,7 @@ export function WarningText({ warning, game, pack }: WarningTextProps) {
     slice: params.sliceId === undefined ? undefined : t(`plan.slice.${params.sliceId}`),
   });
   return <span className="warning-text">{text}</span>;
-}
+}, sameWarning);
 
 export type WarningListProps = {
   /** `block` stands in a block of an editor with the orange edge; `row` sits in a row that marks itself. */

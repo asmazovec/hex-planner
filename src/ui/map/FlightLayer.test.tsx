@@ -120,6 +120,23 @@ test('a press on the map finishes the flight at once, and its click reaches noth
   expect(onClick).not.toHaveBeenCalled();
 });
 
+test('drawn in a layer of its own over the map, a press on the map still finishes the flight', () => {
+  const onClick = vi.fn();
+  const onDone = vi.fn();
+  render(
+    <div>
+      <svg className="hexmap" role="group" aria-label="map"><rect onClick={onClick} /></svg>
+      <svg className="hexmap-overlay"><FlightLayer routes={[route()]} colour="#7fb2ff" passed={[]} onPass={vi.fn()} onDone={onDone} /></svg>
+    </div>,
+  );
+  const tile = document.querySelector('rect')!;
+  fireEvent.pointerDown(tile, { pointerId: 1 });
+  expect(onDone).toHaveBeenCalledTimes(1);
+  fireEvent.pointerUp(window, { pointerId: 1 });
+  fireEvent.click(tile);
+  expect(onClick).not.toHaveBeenCalled();
+});
+
 test('a cancelled press leaves no listener to eat a later click', async () => {
   const onClick = vi.fn();
   render(
@@ -140,4 +157,65 @@ test('nothing to fly ends at once', () => {
   const { onDone } = setup([]);
   flush(16);
   expect(onDone).toHaveBeenCalledTimes(1);
+});
+
+test('a pickup at the start leaves its planet on the first frame, the units of the source need no word', () => {
+  const { onPass } = setup([route({ stacks: [
+    { kind: 'carrier', x: 5, y: 0, size: 20, joins: [{ at: 0, count: 1, move: 0 }] },
+    { kind: 'infantry', x: -5, y: 0, size: 16, joins: [{ at: 0, count: 2, move: 1, pickup: true }] },
+  ] })]);
+  flush(16);
+  expect(onPass).toHaveBeenCalledTimes(1);
+  expect(onPass).toHaveBeenCalledWith(1);
+});
+
+test('with a word on arrival the ships fade out over the map that shows them landed, then the flight is done', () => {
+  const onArrive = vi.fn();
+  const onDone = vi.fn();
+  render(<svg role="group" aria-label="map"><FlightLayer routes={[route()]} colour="#7fb2ff" passed={[1]} onPass={vi.fn()} onArrive={onArrive} onDone={onDone} /></svg>);
+  flush(1000);
+  flush(1001);
+  expect(onArrive).toHaveBeenCalledTimes(1);
+  expect(onDone).not.toHaveBeenCalled();
+  flush(1130);
+  // Halfway through the fade, half of what it was: here a ghost on a broken step.
+  const share = Number(stack('carrier').style.opacity) / Number(stack('carrier').dataset.opacity);
+  expect(share).toBeGreaterThan(0.3);
+  expect(share).toBeLessThan(0.7);
+  flush(1300);
+  expect(onDone).toHaveBeenCalledTimes(1);
+});
+
+test('with a departure the units first stand, then the formation grows in at the start and the map is told once', () => {
+  const onDepart = vi.fn();
+  const onPass = vi.fn();
+  render(<svg role="group" aria-label="map"><FlightLayer routes={[route({ stacks: [
+    { kind: 'carrier', x: 5, y: 0, size: 20, joins: [{ at: 0, count: 1, move: 0 }] },
+    { kind: 'infantry', x: -5, y: 0, size: 16, joins: [{ at: 0, count: 2, move: 1, pickup: true }] },
+  ] })]} colour="#7fb2ff" passed={[]} onPass={onPass} holdMs={300} onDepart={onDepart} onDone={vi.fn()} /></svg>);
+  flush(200);
+  expect(stack('carrier').style.visibility).toBe('hidden');
+  expect(onDepart).not.toHaveBeenCalled();
+  expect(onPass).not.toHaveBeenCalled();
+  flush(330);
+  expect(onDepart).toHaveBeenCalledTimes(1);
+  expect(onPass).toHaveBeenCalledWith(1);
+  const scale = () => Number(/scale\(([\d.]+)\)/.exec(stack('carrier').getAttribute('transform') ?? '')![1]);
+  expect(scale()).toBeLessThan(0.2);
+  flush(700);
+  expect(scale()).toBeCloseTo(0.2);
+  expect(onDepart).toHaveBeenCalledTimes(1);
+});
+
+test('with a departure a stack picked up on the way grows in where the leader passes its hex', () => {
+  render(<svg role="group" aria-label="map"><FlightLayer routes={[route()]} colour="#7fb2ff" passed={[1]} onPass={vi.fn()} holdMs={0} onDepart={vi.fn()} onDone={vi.fn()} /></svg>);
+  const scale = (kind: string) => Number(/scale\(([\d.]+)\)/.exec(stack(kind).getAttribute('transform') ?? '')![1]);
+  flush(100);
+  expect(scale('fighter')).toBe(0);
+  flush(600);
+  flush(620);
+  expect(scale('fighter')).toBeGreaterThan(0);
+  expect(scale('fighter')).toBeLessThan(0.16);
+  flush(950);
+  expect(scale('fighter')).toBeCloseTo(0.16);
 });

@@ -284,14 +284,16 @@ export function routeShapes(routes: string[][], adjacent: Adjacency = areAdjacen
 
 const FLIGHT_HEX_MS = 300;
 const FLIGHT_MAX_MS = 1600;
+/** A single broken step, from an ingress into the Fracture for one, would be over before it is seen. */
+const FLIGHT_MIN_MS = 400;
 /** How much faster a route goes over a step between hexes that are no neighbours. */
 const GAP_SPEED = 3;
 
-/** How long a route flies: about 300 ms per hex, a third of that on a broken step, capped at 1.6 s. */
+/** How long a route flies: about 300 ms per hex, a third of that on a broken step, from 0.4 s to 1.6 s. */
 export function flightDuration(slots: string[], adjacent: Adjacency = areAdjacent): number {
   let time = 0;
   for (let i = 1; i < slots.length; i += 1) time += adjacent(slots[i - 1], slots[i]) ? FLIGHT_HEX_MS : FLIGHT_HEX_MS / GAP_SPEED;
-  return Math.min(FLIGHT_MAX_MS, time);
+  return Math.max(FLIGHT_MIN_MS, Math.min(FLIGHT_MAX_MS, time));
 }
 
 /** Where a flight is at a share of its time: constant speed along the line, faster on a broken step. `frac` is the share of the length behind it. */

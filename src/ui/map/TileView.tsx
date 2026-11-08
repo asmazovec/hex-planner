@@ -1,6 +1,7 @@
 import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { HEX_INNER, hexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
+import { HEX_INNER, hexLayout, type HexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { opponentsBySeat } from '../../domain/players';
 import { holderIn, stacksOf } from '../../domain/stacks';
@@ -31,6 +32,13 @@ export interface TileViewProps {
   seat?: { number: number; color: number };
   onTap?: (slotKey: string) => void;
   onPointerDown?: (slotKey: string, event: PointerEvent) => void;
+  /** Its tokens change at once, without growing or sliding: the action being shown does not touch this system. */
+  quiet?: boolean;
+  /**
+   * Its planets and tokens are drawn into this group of a layer of its own over the map, where they move without
+   * repainting the map; the tile itself stays on the map and takes the taps.
+   */
+  liftInto?: SVGGElement | null;
   /** Drawn as the big hex: tokens and planets take the taps, the tile itself none. */
   stage?: {
     /** The index of the planet that ground forces and structures go to. */
@@ -110,10 +118,24 @@ function nameCovered(name: string, x: number, baseline: number, items: { x: numb
 
 const placeOn = (spot: PlacedPlanet | PlacedStack, scale: number) => ({ transform: `translate(${spot.x.toFixed(2)}px,${spot.y.toFixed(2)}px) scale(${scale.toFixed(4)})` });
 
+/** Layouts already found, by their stacks: rounds, plan and fact, and the repeats of a flight come back to the same ones. */
+const layouts = new Map<string, HexLayout>();
+const LAYOUTS_KEPT = 600;
+
+function layoutOf(key: string): HexLayout {
+  const known = layouts.get(key);
+  if (known) return known;
+  const layout = hexLayout(JSON.parse(key) as HexLayoutInput);
+  // The oldest go first: a Map keeps the order things were put in.
+  if (layouts.size >= LAYOUTS_KEPT) layouts.delete(layouts.keys().next().value!);
+  layouts.set(key, layout);
+  return layout;
+}
+
 /** Every tile renders again on any change of the game, while its stacks rarely change. */
 function useHexLayout(input: HexLayoutInput) {
   const key = JSON.stringify(input);
-  return useMemo(() => hexLayout(JSON.parse(key) as HexLayoutInput), [key]);
+  return useMemo(() => layoutOf(key), [key]);
 }
 
 /** A planet as the map draws it: its disc, the numbers, the marks of its traits and technology, and the strike when exhausted. */
@@ -153,7 +175,7 @@ export function PlanetMark({ planet, control, holderColor, exhausted }: { planet
 }
 
 export function TileView({
-  slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, stage,
+  slotKey, pack, game, state, highlight, selected, fracture, ingress, seat, onTap, onPointerDown, quiet = false, liftInto = null, stage,
 }: TileViewProps) {
   const { t } = useTranslation();
   const { x, y } = fracture ?? slotToPixel(slotKey);
@@ -209,25 +231,8 @@ export function TileView({
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
   };
 
-  return (
-    <g
-      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
-      role={stage ? 'group' : 'button'} tabIndex={stage ? undefined : 0} aria-label={label}
-      data-fracture-tile={fracture ? tileId : undefined}
-      className={`tile${stage ? ' tile-stage' : ''}${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}${hasCommandToken ? ' tile-activated' : ''}`}
-      data-slot={stage ? undefined : slotKey}
-      onClick={activate}
-      onKeyDown={onKeyDown}
-      onPointerDown={e => onPointerDown?.(slotKey, e)}
-    >
-      <polygon points={hexPoints(HEX_INNER)} className={`hex ${hexKind}`} />
-      {lanes.map(lane => (
-        <path key={lane.join('-')} d={lanePath(lane)} data-lane={lane.join('-')} className="tile-lane" />
-      ))}
-      {unknown && <text x={0} y={4} className="tile-warning">!</text>}
-      {laneNote && <text x={0} y={14} className="tile-caption">{laneNote}</text>}
-      {caption && !nameCovered(caption, 0, CAPTION_Y, layout.items) && <text x={0} y={CAPTION_Y} className="tile-caption">{caption}</text>}
-
+  const movable = (
+    <>
       {planets.map((planet, i) => {
         const spot = layout.planets[i];
         const control = state.control[planet.id];
@@ -270,41 +275,78 @@ export function TileView({
       })}
 
       <TokenLayer items={layout.items} colourOf={item => colours[item.owner]} labelOf={stackLabel} onTap={stage?.onToken} ringed={stage?.ringed} />
+    </>
+  );
 
-      {tile && (
-        <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">
-          {tile.kind === 'fracture' ? `F${tile.id.replace(/\D/g, '')}` : tile.number}
-          {worm && <tspan className="tile-worm"> {worm}</tspan>}
-        </text>
-      )}
-      {unknown && <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">{tileId}</text>}
-      {tile && seat && (
-        <g
-          role="img" aria-label={t('map.seat', { n: seat.number })} className="tile-seat"
-          transform={`translate(${seatX} ${SEAT_Y})`}
-        >
-          <circle r={SEAT_RADIUS} style={playerStyle('fill', seat.color)} />
-          <text y={2.3}>{seat.number}</text>
-        </g>
-      )}
+  // Over the tokens: the number, the seat, the command tokens and the ingress.
+  const top = (
+    <>
+        {tile && (
+          <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">
+            {tile.kind === 'fracture' ? `F${tile.id.replace(/\D/g, '')}` : tile.number}
+            {worm && <tspan className="tile-worm"> {worm}</tspan>}
+          </text>
+        )}
+        {unknown && <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">{tileId}</text>}
+        {tile && seat && (
+          <g
+            role="img" aria-label={t('map.seat', { n: seat.number })} className="tile-seat"
+            transform={`translate(${seatX} ${SEAT_Y})`}
+          >
+            <circle r={SEAT_RADIUS} style={playerStyle('fill', seat.color)} />
+            <text y={2.3}>{seat.number}</text>
+          </g>
+        )}
 
-      {hasCommandToken && (
-        <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
-          <CommandTokenMark />
-        </g>
-      )}
+        {hasCommandToken && (
+          <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
+            <CommandTokenMark />
+          </g>
+        )}
 
-      {rivalTokens.map((o, i) => (
-        <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
-          <CommandTokenMark color={o.color} />
-        </g>
+        {rivalTokens.map((o, i) => (
+          <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
+            <CommandTokenMark color={o.color} />
+          </g>
+        ))}
+
+        {ingress && (
+          <g role="img" aria-label={t('map.ingress')} transform={`translate(${INGRESS_SPOT.x} ${INGRESS_SPOT.y}) scale(${INGRESS_SPOT.scale})`}>
+            <IngressMark />
+          </g>
+        )}
+    </>
+  );
+
+  const body = (
+    <g
+      transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
+      role={stage ? 'group' : 'button'} tabIndex={stage ? undefined : 0} aria-label={label}
+      data-fracture-tile={fracture ? tileId : undefined}
+      className={`tile${stage ? ' tile-stage' : ''}${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}${hasCommandToken ? ' tile-activated' : ''}${quiet ? ' tile-quiet' : ''}`}
+      data-slot={stage ? undefined : slotKey}
+      onClick={activate}
+      onKeyDown={onKeyDown}
+      onPointerDown={e => onPointerDown?.(slotKey, e)}
+    >
+      <polygon points={hexPoints(HEX_INNER)} className={`hex ${hexKind}`} />
+      {lanes.map(lane => (
+        <path key={lane.join('-')} d={lanePath(lane)} data-lane={lane.join('-')} className="tile-lane" />
       ))}
+      {unknown && <text x={0} y={4} className="tile-warning">!</text>}
+      {laneNote && <text x={0} y={14} className="tile-caption">{laneNote}</text>}
+      {caption && !nameCovered(caption, 0, CAPTION_Y, layout.items) && <text x={0} y={CAPTION_Y} className="tile-caption">{caption}</text>}
 
-      {ingress && (
-        <g role="img" aria-label={t('map.ingress')} transform={`translate(${INGRESS_SPOT.x} ${INGRESS_SPOT.y}) scale(${INGRESS_SPOT.scale})`}>
-          <IngressMark />
-        </g>
-      )}
+      {!liftInto && movable}
+
+      {!liftInto && top}
     </g>
+  );
+  if (!liftInto) return body;
+  return (
+    <>
+      {body}
+      {createPortal(<g transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`} className={`tile tile-lifted${quiet ? ' tile-quiet' : ''}`}>{movable}{top}</g>, liftInto)}
+    </>
   );
 }
