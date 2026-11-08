@@ -288,7 +288,8 @@
       "number": "fracture2",
       "planetIds": [],
       "kind": "fracture",
-      "wormholes": []
+      "wormholes": [],
+      "egress": true
     },
     "fracture3": {
       "id": "fracture3",
@@ -318,7 +319,8 @@
       "number": "fracture6",
       "planetIds": [],
       "kind": "fracture",
-      "wormholes": []
+      "wormholes": [],
+      "egress": true
     },
     "fracture7": {
       "id": "fracture7",

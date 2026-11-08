@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { checkCounts, readPlanetKind, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, selectShips } from './build-data';
+import { checkCounts, readPlanetKind, readPlanetMarks, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, selectShips, buildStructures, readDockProduction } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -189,5 +189,38 @@ describe('selectShips', () => {
 
   test('a level II without its level I fails the build', () => {
     expect(() => run([ship('c2', 'carrier', { upgradesFromUnitId: 'carrier' })])).toThrow(/c2/);
+  });
+
+  test('infantry gets levels like a ship: Infantry II, and a faction infantry of its own', () => {
+    const { generic, factions } = run([
+      ship('infantry', 'infantry', { cost: 0.5, combatHitsOn: 8 }),
+      ship('infantry2', 'infantry', { cost: 0.5, upgradesFromUnitId: 'infantry' }),
+      ship('alpha_infantry', 'infantry', { faction: 'alpha' }),
+    ]);
+    expect(generic.infantry?.one.combat).toBe(8);
+    expect(generic.infantry?.two?.combat).toBe(7);
+    expect(factions.alpha.infantry?.one.name).toBe('alpha_infantry');
+  });
+});
+
+describe('structures', () => {
+  const pds = { id: 'pds', baseType: 'pds', name: 'PDS I', source: 'base', spaceCannonHitsOn: 6, spaceCannonDieCount: 1 };
+  const pds2 = { ...pds, id: 'pds2', name: 'PDS II', upgradesFromUnitId: 'pds', spaceCannonHitsOn: 5 };
+  const dock = { id: 'spacedock', baseType: 'spacedock', name: 'Space Dock I', source: 'base', productionValue: '+2', basicProduction: 'res' };
+  const dock2 = { ...dock, id: 'spacedock2', name: 'Space Dock II', upgradesFromUnitId: 'spacedock', productionValue: '+4' };
+  const saar = { ...dock, id: 'saar_spacedock', faction: 'saar', productionValue: 5, basicProduction: undefined };
+
+  test('the common PDS and space dock at both levels, with the limits of LRR 96.2; a faction structure is not read', () => {
+    expect(buildStructures([saar, pds, pds2, dock, dock2])).toEqual([
+      { id: 'pds', limit: 6, levels: { one: { id: 'pds', name: 'PDS I', cannon: { hit: 6, dice: 1 } }, two: { id: 'pds2', name: 'PDS II', cannon: { hit: 5, dice: 1 } } } },
+      { id: 'spacedock', limit: 3, levels: { one: { id: 'spacedock', name: 'Space Dock I', production: 2 }, two: { id: 'spacedock2', name: 'Space Dock II', production: 4 } } },
+    ]);
+  });
+
+  test('a missing level, or a production that is not the planet\'s resources plus a number, fails the build', () => {
+    expect(() => buildStructures([pds, dock, dock2])).toThrow(/pds/);
+    expect(readDockProduction(dock2)).toBe(4);
+    expect(() => readDockProduction(saar)).toThrow(/saar_spacedock/);
+    expect(() => readDockProduction({ ...dock, productionValue: '3' })).toThrow(/spacedock/);
   });
 });

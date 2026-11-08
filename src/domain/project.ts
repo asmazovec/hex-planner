@@ -28,7 +28,7 @@ export const tileIdOf = (game: Game, systemId: string): string => (game.map[syst
 export const isOnMap = (game: Game, slot: string): boolean => game.map[slot] !== undefined || game.fracture.tiles?.[slot] !== undefined;
 
 /** Grid neighbours, except across the edge of the Fracture: its systems do not touch the map they stand next to. */
-// TODO(P2-049) #ws:thunders-edge #type:model #rule:fracture-5 #test:te-fracture #dep:P2-054 #size:m #fracture — Входы Излома (game.fracture.ingress) не смежны с его выходами: в Излом нельзя проложить маршрут
+// TODO(P2-049) #ws:thunders-edge #type:model #rule:fracture-5 #test:te-fracture #size:m #fracture — Входы Излома (game.fracture.ingress) не смежны с его выходами (TileDef.egress): в Излом нельзя проложить маршрут
 export const systemsAdjacent = (game: Game): Adjacency => (a, b) =>
   areAdjacent(a, b) && Boolean(game.fracture.tiles?.[a]) === Boolean(game.fracture.tiles?.[b]);
 
@@ -455,7 +455,7 @@ function applyTactical(
     }
   }
   landAndBuild(game, state, target, entry, pack, warnings);
-  // TODO(P2-029) #ws:production #type:model #rule:68.1 #rule:79.1 #rule:67.5 #rule:72.1 #rule:96.3 #test:068-production #test:079-space-dock #test:067-producing-units #test:072-reinforcements #test:096-units #dep:P2-050 #dep:P2-051 #size:m #needs:decision #production-limit #reinforcements — Нет лимита Production и запаса отрядов: нужны данные (P2-050, P2-051), затем нарушения productionOver и reinforcementsOut. Решить, нужно ли
+  // TODO(P2-029) #ws:production #type:model #rule:68.1 #rule:79.1 #rule:67.5 #rule:72.1 #rule:96.3 #test:068-production #test:079-space-dock #test:067-producing-units #test:072-reinforcements #test:096-units #size:m #needs:decision #production-limit #reinforcements — Нет лимита Production и запаса отрядов: данные есть (UnitDef.limit, structures[].limit, structures[].levels.production), нужны нарушения productionOver и reinforcementsOut. Решить, нужно ли
   const cost = productionCost(entry.production, game.faction, state.upgrades, pack);
   const paid = pay(state, entry.payment, 'resources', pack, warnings);
   if (cost > paid) warnings.push({ code: 'shortResources', params: { needed: cost, paid } });

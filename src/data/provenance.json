@@ -52,8 +52,36 @@
       "keleresa": "58"
     }
   },
-  "unconfirmed": {
-    "unitLimits": "Reinforcement limits are null: no public source confirmed them."
+  "reinforcements": {
+    "source": "https://tirules2.com/R_units",
+    "repository": "https://github.com/dangothemango/tirules",
+    "license": "GPL-3.0",
+    "section": "LRR 96.2",
+    "units": {
+      "carrier": 4,
+      "cruiser": 8,
+      "destroyer": 8,
+      "dreadnought": 5,
+      "warsun": 2,
+      "flagship": 1,
+      "mech": 4,
+      "infantry": null,
+      "fighter": null
+    },
+    "structures": {
+      "pds": 6,
+      "spacedock": 3
+    },
+    "tokenUnits": {
+      "figures": {
+        "infantry": 12,
+        "fighter": 10
+      },
+      "reason": "Fighters and infantry are not limited by their figures: tokens stand in for them (LRR 96 note 2.1), so their limit is null."
+    }
+  },
+  "production": {
+    "spacedock": "Production of a space dock is the planet's resources plus the number in its levels: source productionValue, LRR 79.1."
   },
   "verification": "docs/data-verification.md"
 }

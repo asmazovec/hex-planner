@@ -24,7 +24,6 @@ const turn = ({ q, r }: { q: number; r: number }, steps: number): { q: number; r
  * the top one without a seat; a corner whose slots touch the template is skipped, and the ring moves out if none is free.
  * Empty when the pack has no Fracture systems or there is no template.
  */
-// TODO(P2-054) #ws:data #type:data #rule:fracture-5 #size:m #fracture — У тайлов Излома нет данных о выходах (egress), поэтому нечего соединять со входами
 export function fractureSlots(
   seat: number | null, playerCount: number, pack: DataPack, layout?: MapLayout,
 ): { tileId: string; q: number; r: number }[] {

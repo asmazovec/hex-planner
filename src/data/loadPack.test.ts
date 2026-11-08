@@ -222,11 +222,20 @@ describe('faction reference data', () => {
     expect(full.factions.sol.gateTile).toBeUndefined();
   });
 
-  test('unit values come from the source and an unconfirmed limit stays null', () => {
-    expect(full.units.carrier).toMatchObject({ combat: 9, move: 1, limit: null });
+  test('unit values come from the source, limits from LRR 96.2; fighters and infantry stay unlimited', () => {
+    expect(full.units.carrier).toMatchObject({ combat: 9, move: 1, limit: 4 });
     expect(full.units.fighter).toMatchObject({ combat: 9, move: null, limit: null });
-    expect(full.structures.map(s => s.id)).toEqual(['pds', 'spacedock']);
-    expect(full.structures.every(s => s.limit === null)).toBe(true);
+    expect(full.units.infantry?.limit).toBeNull();
+    expect(full.structures.map(s => [s.id, s.limit])).toEqual([['pds', 6], ['spacedock', 3]]);
+  });
+
+  test('space docks have Production of the planet\'s resources plus 2, plus 4 at level II', () => {
+    const dock = full.structures.find(s => s.id === 'spacedock');
+    expect([dock?.levels.one.production, dock?.levels.two?.production]).toEqual([2, 4]);
+  });
+
+  test('the two egress systems of the Fracture are marked', () => {
+    expect(Object.values(full.tiles).filter(tile => tile.egress).map(tile => tile.id).sort()).toEqual(['fracture2', 'fracture6']);
   });
 });
 
