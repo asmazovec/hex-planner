@@ -123,7 +123,8 @@ export function validate(todos: Todo[]): string[] {
     if (!t.text) errors.push(`${at}: no text`);
     for (const n of t.needs) if (!['decision', 'prototype'].includes(n)) errors.push(`${at}: #needs must be decision or prototype`);
   }
-  for (const t of todos) for (const d of t.deps) if (!ids.has(d)) errors.push(`${t.id}: #dep ${d} does not exist`);
+  // A #dep on an id no longer in the code is a dependency already done: fixed TODOs are deleted.
+  for (const t of todos) for (const d of t.deps) if (!/^P2-d{3,}$/.test(d)) errors.push(`${t.id}: #dep ${d} is not a TODO id`);
   for (const w of WORKSTREAMS) for (const a of w.after) if (!known.has(a)) errors.push(`workstream ${w.id}: after unknown ${a}`);
   return errors;
 }
@@ -204,7 +205,7 @@ export function render(todos: Todo[], gaps: FailingTest[] | null): string {
     out.push('Порядок исправления: сначала ошибки, затем проверки, модели, архитектура, остальное.', '');
     out.push('| ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |', '|---|---|---|---|---|---|---|---|');
     for (const t of items) {
-      out.push(`| ${t.id} | ${t.type} | ${t.rules.join(', ')} | ${link(t)} | ${cell(t.text)} | ${t.tags.map(x => `#${x}`).join(' ')} | ${t.size} | ${t.deps.join(', ')} |`);
+      out.push(`| ${t.id} | ${t.type} | ${t.rules.join(', ')} | ${link(t)} | ${cell(t.text)} | ${t.tags.map(x => `#${x}`).join(' ')} | ${t.size} | ${t.deps.map(d => (todos.some(o => o.id === d) ? d : `~~${d}~~ ✓`)).join(', ')} |`);
     }
     out.push('');
   }

@@ -12,12 +12,17 @@ describe('todo-plan', () => {
 
   test('flags duplicate ids, unknown workstreams and types, and dangling deps', () => {
     const a = parseTodo('// TODO(P2-001) #ws:transport #type:bug x', 'src/domain/a.ts', 1)!;
-    const b = parseTodo('// TODO(P2-001) #ws:nowhere #type:odd #dep:P2-999 y', 'src/domain/b.ts', 2)!;
+    const b = parseTodo('// TODO(P2-001) #ws:nowhere #type:odd #dep:X-1 y', 'src/domain/b.ts', 2)!;
     const errors = validate([a, b]).join('\n');
     expect(errors).toMatch(/already used/);
     expect(errors).toMatch(/unknown or missing #ws "nowhere"/);
     expect(errors).toMatch(/unknown or missing #type "odd"/);
-    expect(errors).toMatch(/P2-999 does not exist/);
+    expect(errors).toMatch(/X-1 is not a TODO id/);
+  });
+
+  test('a #dep on a TODO no longer in the code is a dependency already done, not an error', () => {
+    const t = parseTodo('// TODO(P2-003) #ws:transport #type:bug #dep:P2-001 x', 'src/domain/a.ts', 1)!;
+    expect(validate([t])).toEqual([]);
   });
 
   test('a workstream comes one wave after the latest it builds on', () => {
