@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
-import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
+import { emptySlots } from '../../domain/mapBuilder';
 import { blockersOf } from '../../domain/movement';
 import { newEntryBody, tacticalBody, tacticalOwner } from '../../domain/newEntry';
 import { EXPEDITION_SLICES } from '../../domain/payment';
@@ -19,9 +19,7 @@ import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { HexMap } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/stage/HexStage';
 import { cardPurchases } from '../map/stage/purchases';
-import { MapBuilderPanel } from '../map/builder/MapBuilderPanel';
 import { MapLegend } from '../drawers/MapLegend';
-import { MapStringImport } from '../map/builder/MapStringImport';
 import { ThundersEdgePanel } from '../drawers/ThundersEdgePanel';
 import { UpgradesPanel } from '../drawers/UpgradesPanel';
 import { useArrowDrag } from '../map/useArrowDrag';
@@ -32,7 +30,6 @@ import { nameTag, playerName, shortName } from '../players/names';
 import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { EntryList } from '../plan/EntryList';
 import { PlanName, PlanTabs } from '../plan/PlanTabs';
-import { RowIcon } from '../primitives/Icon';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { StrategyEditor } from '../plan/editors/StrategyEditor';
@@ -62,8 +59,13 @@ function pruneEmptySources(entryId: string | undefined) {
 
 const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
+export interface PlanScreenProps {
+  /** Goes to the game screen, where the map is built. */
+  onFinishMap?: () => void;
+}
+
 /** Map on the left, plan on the right, tabs and totals on top. */
-export function PlanScreen() {
+export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const { t, i18n } = useTranslation();
   const game = useGame(s => s.game);
   const addEntry = useGame(s => s.addEntry);
@@ -78,15 +80,13 @@ export function PlanScreen() {
 
   const [roundNo, setRoundNo] = useState<number | null>(null);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
-  const [importing, setImporting] = useState(false);
-  const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
   /** Counts the times an entry with no place on the map was opened: the camera goes to the whole map. */
   const [viewResets, setViewResets] = useState(0);
   const [manualPayments, setManualPayments] = useState<string[]>([]);
   const [view, setView] = useState<'map' | 'plan'>('map');
   /** The opponent whose expected actions are being added; null for my own. */
   const [actingAs, setActingAs] = useState<string | null>(null);
-  /** What the panel holds, what the next tap on the map chooses, the big hex and the builder's sheet. */
+  /** What the panel holds, what the next tap on the map chooses and the big hex. */
   const [rawPick, setPick] = useState<PickState>(START);
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
@@ -94,7 +94,7 @@ export function PlanScreen() {
   // Undo can remove the entry an editor holds: the state falls back as the round now has it.
   const pick = resolvePick(rawPick, round);
   const update = (change: (state: PickState) => PickState) => setPick(previous => change(resolvePick(previous, round)));
-  const { panel, next, stage, sheet, openId } = pick;
+  const { panel, next, stage, openId } = pick;
   const tactical = panel.kind === 'tactical' ? panel : null;
   const entry = tacticalIn(round, tactical?.entryId);
   const picking = tactical?.entryId === null;
@@ -134,7 +134,6 @@ export function PlanScreen() {
   useEffect(() => { editedId.current = entry?.id; }, [entry?.id]);
   useEffect(() => () => pruneEmptySources(editedId.current), []);
 
-  const closeSheet = useCallback(() => setPick(state => ({ ...state, sheet: null })), []);
   const closeStage = useCallback(() => setPick(state => ({ ...state, stage: null })), []);
 
   if (!game || !plan || !round) {
@@ -156,12 +155,12 @@ export function PlanScreen() {
     update(state => ({ ...state, panel: state.panel.kind === 'tactical' ? backFrom(state.panel) : state.panel, next: IDLE }));
   };
 
-  /** Everything back to the list: editors, what the map chooses, the read entry and its flight, the sheet. */
+  /** Everything back to the list: editors, what the map chooses, the read entry and its flight. */
   const closePanels = () => {
     drawers.closeTe();
     flight.stop();
     pruneEmptySources(entry?.id);
-    update(state => ({ ...state, panel: LIST, next: IDLE, sheet: null, openId: null }));
+    update(state => ({ ...state, panel: LIST, next: IDLE, openId: null }));
   };
 
   /** Who the next entry belongs to, while that opponent is still in the game. */
@@ -173,8 +172,7 @@ export function PlanScreen() {
     flight.stop();
     if (type === 'tactical') {
       drawers.closeTe();
-      setBuilding(false);
-      update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null }, next: IDLE, sheet: null }));
+      update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null }, next: IDLE }));
       setView('map');
       return;
     }
@@ -263,20 +261,9 @@ export function PlanScreen() {
       if (step.route) openRoute(step.route);
       return;
     }
-    if (!building && !onMap) return;
-    // The Fracture's tiles are fixed: there is nothing to build there.
-    if (building && game.fracture.tiles?.[slot]) return;
+    if (!onMap) return;
     flight.stop();
-    update(state => ({
-      ...state, panel: state.panel.kind === 'list' ? LIST : state.panel,
-      ...(building ? { sheet: slot } : { stage: { slot, mode: 'setup' as const, for: { kind: 'map' as const } } }),
-    }));
-  };
-
-  const toggleBuilding = () => {
-    closePanels();
-    setImporting(false);
-    setBuilding(!building);
+    update(state => ({ ...state, panel: state.panel.kind === 'list' ? LIST : state.panel, stage: { slot, mode: 'setup', for: { kind: 'map' } } }));
   };
 
   const onShowEntry = (tapped: Entry) => {
@@ -289,7 +276,7 @@ export function PlanScreen() {
 
   const onOpenEntry = (opened: Entry) => {
     flight.stop();
-    const opening = (state: PickState): PickState => ({ ...state, panel: state.panel.kind === 'list' ? LIST : state.panel, next: IDLE, sheet: null });
+    const opening = (state: PickState): PickState => ({ ...state, panel: state.panel.kind === 'list' ? LIST : state.panel, next: IDLE });
     if (opened.type === 'adjustment' && opened.kind && opened.delta.units) {
       const { systemId } = opened.delta.units;
       const mode = STAGE_MODE[opened.kind];
@@ -360,12 +347,13 @@ export function PlanScreen() {
     return isValidSource(game, pack, entryBefore, slot);
   };
 
-  const duplicates = building ? duplicateTiles(game.map, pack) : [];
   const key = hintKey(pick);
-  const hint = key === 'plan.tactical.tapHint' ? [t(key), speedNote].filter(Boolean).join(' ')
-    : key ? t(key)
-    : speedNote ? speedNote
-      : duplicates.length > 0 ? t('builder.duplicates', { list: duplicates.join(', ') }) : null;
+  const choiceHint = key === 'plan.tactical.tapHint' ? [t(key), speedNote].filter(Boolean).join(' ')
+    : key ? t(key) : speedNote;
+  // The map is built on the game screen; an unfinished one says so while nothing else is asked of the map.
+  const emptyCount = emptySlots(game, pack).length;
+  const mapHint = !choiceHint && emptyCount > 0;
+  const hint = mapHint ? t('plan.mapIncomplete', { count: emptyCount }) : choiceHint;
   const manualPayment = entry !== undefined && manualPayments.includes(entry.id);
   const totalSlices = EXPEDITION_SLICES.length;
   const takenSlices = Object.keys(owners).length;
@@ -405,7 +393,7 @@ export function PlanScreen() {
           }}
           onDeleteRound={() => { closePanels(); deleteRound(round.number); }}
           onDeletePlan={() => { closePanels(); deletePlan(plan.id); setRoundNo(null); }}
-          afterRounds={!building && (
+          afterRounds={(
             <div className="map-mode" role="group" aria-label={t('plan.mapShows')}>
               {(['forecast', 'now'] as const).map(mode => (
                 <button key={mode} type="button" aria-pressed={mapMode === mode} disabled={tactical !== null || cardEntry !== undefined} onClick={() => setMapMode(mode)}>
@@ -439,31 +427,16 @@ export function PlanScreen() {
         <div className="plan-map">
           <HexMap
             game={game} state={mapState} pack={pack} highlights={highlights} arrows={arrows}
-            arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} selectedId={sheet} onTileTap={onTileTap}
+            arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} onTileTap={onTileTap}
             overlay={flightLayer}
             onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow}
-            onPopoverClose={closeSheet}
-            tools={(
-              <div className="map-tools">
-                <button type="button" className="hex-button" aria-label={t('plan.buildMap')} title={t('plan.buildMap')} aria-pressed={building} onClick={toggleBuilding}><RowIcon name="build" /></button>
-                {building && (
-                  <button type="button" className="hex-button" aria-label={t('mapImport.title')} title={t('mapImport.title')} aria-pressed={importing} onClick={() => setImporting(!importing)}><RowIcon name="paste" /></button>
-                )}
-              </div>
-            )}
-            popover={sheet !== null && (
-              <MapBuilderPanel
-                slot={sheet} game={game} pack={pack}
-                onOpenStage={() => update(state => ({ ...state, sheet: null, stage: { slot: sheet, mode: 'setup', for: { kind: 'map' } } }))}
-              />
-            )}
           />
           {shownArea && <button type="button" className="map-home" onClick={closeShown}>{t('map.home')}</button>}
-          {building && importing && <MapStringImport game={game} pack={pack} onClose={() => setImporting(false)} />}
           {hint && (
             <div className="map-hint">
               <span role="status">{hint}</span>
               {teChoosing && <button type="button" onClick={toggleTe}>{t('thundersEdge.back')}</button>}
+              {mapHint && onFinishMap && <button type="button" onClick={onFinishMap}>{t('plan.finishMap')}</button>}
             </div>
           )}
           <div className={`drawer-rail drawer-rail-right${rightOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
@@ -536,7 +509,6 @@ export function PlanScreen() {
                 onOpenShop={(slot, only) => update(state => ({ ...state, stage: { slot, mode: 'build', only, for: { kind: 'card' } } }))}
                 onStartTactical={() => {
                   update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null, fromCard: cardEntry.id, card: cardEntry.id }, next: IDLE }));
-                  setBuilding(false);
                   setView('map');
                 }}
                 onOpenTactical={id => update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: cardEntry.id }, next: IDLE }))}

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { lookUpTile, tileSuggestions } from '../../../domain/mapBuilder';
 import type { DataPack } from '../../../domain/types';
@@ -19,6 +19,9 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const field = useRef<HTMLInputElement>(null);
+  // Focused without scrolling: the page stays where the tapped slot is (autoFocus would scroll the field into view).
+  useEffect(() => { field.current?.focus({ preventScroll: true }); }, []);
   const [placedId, placedRotation] = (value ?? '').split('@');
   const placed = value ? pack.tiles[placedId] : undefined;
   const rotation = Number(placedRotation) || 0;
@@ -47,7 +50,7 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
         <label className="field">
           {t('builder.number')}
           <input
-            value={text} inputMode="text" autoCapitalize="characters" autoComplete="off" autoFocus
+            ref={field} value={text} inputMode="text" autoCapitalize="characters" autoComplete="off"
             onChange={e => { setText(e.target.value); setError(null); }}
           />
         </label>

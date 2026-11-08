@@ -19,6 +19,8 @@ type Screen = (typeof SCREENS)[number];
 export function App() {
   const { t } = useTranslation();
   const [screen, setScreen] = useState<Screen>('game');
+  /** The plan's hint about an unfinished map leads to the map block of the game screen. */
+  const [toMap, setToMap] = useState(false);
   const game = useGame(s => s.game);
   const saveError = useGame(s => s.saveError);
 
@@ -48,7 +50,7 @@ export function App() {
                 aria-label={t(`menu.${id}`)}
                 title={t(`menu.${id}`)}
                 aria-current={shown === id ? 'page' : undefined}
-                onClick={() => setScreen(id)}
+                onClick={() => { setScreen(id); setToMap(false); }}
               >
                 <RowIcon name={id} />
               </button>
@@ -57,8 +59,8 @@ export function App() {
           </nav>
         )}
         <main data-screen={shown}>
-          {shown === 'game' && <GameScreen />}
-          {shown === 'plan' && <PlanScreen />}
+          {shown === 'game' && <GameScreen showMap={toMap} />}
+          {shown === 'plan' && <PlanScreen onFinishMap={() => { setScreen('game'); setToMap(true); }} />}
         </main>
       </div>
       <ShareConflict />

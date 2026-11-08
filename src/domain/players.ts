@@ -1,4 +1,4 @@
-import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
+import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor, withPlacedTiles } from './mapBuilder';
 import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
@@ -229,7 +229,7 @@ export function countChangeEffect(game: Game, count: number, pack: DataPack): { 
 
 /**
  * A game not started yet, under another set of expansions: factions outside the set are cleared, players beyond its
- * maximum leave from the end of the list, and the seats of the rest close up in order.
+ * maximum leave from the end of the list, and the seats of the rest close up in order. Placed tiles the pack still has stay.
  */
 export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack: DataPack): Game {
   const kept = playersOf(draft).slice(0, maxPlayers(pack));
@@ -238,8 +238,10 @@ export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack
   const layout = templateFor(kept.length, draft.layout, pack) ? draft.layout : undefined;
   const blank = createGame({ expansions, playerCount: kept.length, faction: '', layout }, pack);
   const empty = withPlayers({ ...blank, id: draft.id }, seated, pack);
-  return kept.reduce<Game>(
+  const seatedGame = kept.reduce<Game>(
     (game, player, index) => (pack.factions[player.faction] ? setPlayerFaction(game, index, player.faction, pack) : game),
     empty,
   );
+  // The map is built before the start: its tiles stay, except those of an expansion turned off.
+  return withPlacedTiles(seatedGame, draft.map, pack);
 }

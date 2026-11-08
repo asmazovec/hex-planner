@@ -22,6 +22,8 @@ import type { Move } from '../plan/tactical';
 const pack = loadPack(['pok']);
 const HOME = '1,0';
 const TARGET = '0,1';
+/** The hint that asks something of the map; the note about an unfinished map is not one. */
+const choiceHint = () => screen.queryAllByRole('status').find(s => !/map is not complete/.test(s.textContent ?? '')) ?? null;
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -105,7 +107,7 @@ test('a tap on the last hex removes it, and on the source alone gives up', async
   expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
   useGame.getState().updateEntry(tactical().id, { moves: [] });
   await addRouteByTaps(HOME, HOME);
-  expect(screen.queryByRole('status')).toBeNull();
+  expect(choiceHint()).toBeNull();
   await addRouteByTaps(HOME);
   expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
 });
@@ -123,7 +125,7 @@ describe('the system and the sources, chosen from the panel', () => {
     expect(entries()).toHaveLength(1);
     expect(tactical()).toMatchObject({ id, systemId: WAY });
     expect(cell('Tactic')).toHaveTextContent('3 → 2');
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     expect(tile(WAY)).toHaveClass('tile-active');
     expect(tile(TARGET)).not.toHaveClass('tile-active');
   });
@@ -132,10 +134,10 @@ describe('the system and the sources, chosen from the panel', () => {
     await chooseSystem();
     await userEvent.click(field());
     await userEvent.click(field());
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     await userEvent.click(field());
     await userEvent.click(tile(TARGET));
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     expect(tactical().systemId).toBe(TARGET);
   });
 
@@ -223,10 +225,10 @@ describe('the system and the sources, chosen from the panel', () => {
     await chooseSystem();
     await userEvent.click(addSource());
     await userEvent.click(addSource());
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     await userEvent.click(addSource());
     await userEvent.click(tile(TARGET));
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     expect(tactical().moves).toEqual([]);
     expect(entries()).toHaveLength(1);
   });
@@ -248,7 +250,7 @@ describe('the system and the sources, chosen from the panel', () => {
     await chooseSystem();
     await userEvent.click(addSource());
     await userEvent.click(screen.getByRole('button', { name: 'Done editing' }));
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     await userEvent.click(tile(WAY));
     expect(screen.getByRole('dialog')).toBeVisible();
     expect(tactical().moves).toEqual([]);
@@ -279,7 +281,7 @@ describe('a route of drags and taps', () => {
     moveTo(TARGET);
     lift();
     expect(tactical().moves).toEqual([{ from: HOME, units: {}, via: [WAY, NEXT] }]);
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
   });
 
   test('taps first, then a drag from the last hex finishes it', async () => {
@@ -1125,7 +1127,7 @@ describe('leaving', () => {
     await userEvent.click(tile(HOME));
     expect(screen.getByRole('status')).toHaveTextContent('Tap the hexes in order');
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
     await userEvent.click(tile(WAY));
@@ -1210,7 +1212,7 @@ describe('flying', () => {
     await userEvent.click(tile(WAY));
     expect(document.querySelector('.flight-layer')).toBeNull();
     // That tap started no route.
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(choiceHint()).toBeNull();
     expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: 'Carrier ×1' })).toBeInTheDocument();
   });
 

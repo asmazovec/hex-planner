@@ -9,6 +9,15 @@ const entry = (page: Page, name: string) => page.getByRole('button', { name, exa
 /** The entries themselves: a warning inside one is a list item too. */
 const actions = (page: Page) => page.getByRole('region', { name: 'Actions' }).locator('.entry');
 
+/** The map is built on the game screen: the Milty string goes into the map block there. */
+async function pasteMap(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Paste a Milty string' }).click();
+  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
+  await page.getByRole('button', { name: 'Apply' }).click();
+  await expect(page.getByText('30 tiles placed.')).toBeVisible();
+  await page.getByRole('button', { name: 'Close' }).click();
+}
+
 /** The map glides after a tap on the active system; wait until the element stops before a drag aims at it. */
 async function centreWhenStill(target: Locator): Promise<{ x: number; y: number }> {
   let last = '';
@@ -56,20 +65,35 @@ test('a game from the first screen to an exported file, and back offline', async
     await expect(page.getByRole('button', { name: "Thunder's Edge" })).toHaveAttribute('aria-pressed', 'true');
     await page.getByRole('button', { name: 'My faction', exact: true }).click();
     await page.getByRole('button', { name: 'The Argent Flight' }).click();
-    await page.getByRole('button', { name: 'Start game' }).click();
-    await page.getByRole('button', { name: 'Plan & map' }).click();
   });
 
-  await test.step('paste the map string', async () => {
-    await page.getByRole('button', { name: 'Paste map' }).click();
+  await test.step('build the map on the game screen before the start', async () => {
+    // A tap on a slot asks for its number where the page stands: it does not scroll.
+    const aside = page.locator('.players-aside');
+    // A slot in the middle of the minimap at the upper edge of the panel, its upper rows above the fold.
+    const slot = page.locator('[data-slot="1,0"]');
+    await aside.evaluate(el => {
+      const box = el.getBoundingClientRect();
+      const hex = el.querySelector('[data-slot="1,0"]')!.getBoundingClientRect();
+      el.scrollTop += hex.top - box.top - 4;
+    });
+    const before = await aside.evaluate(el => el.scrollTop);
+    await slot.click();
+    await expect(page.getByLabel('Tile number')).toBeFocused();
+    expect(await aside.evaluate(el => el.scrollTop)).toBe(before);
+    await page.getByRole('button', { name: 'Close' }).click();
+
+    await page.getByRole('button', { name: 'Paste a Milty string' }).click();
     await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
     await page.getByRole('button', { name: 'Apply' }).click();
     await expect(page.getByText('30 tiles placed.')).toBeVisible();
     await expect(page.getByText('Home systems placed: 6.')).toBeVisible();
     await page.getByRole('button', { name: 'Close' }).click();
-    // The map starts in the builder; leave it.
-    await page.getByRole('button', { name: 'Build map' }).click();
+    await expect(page.getByText(/The map is built/)).toBeVisible();
+    await page.getByRole('button', { name: 'Start game' }).click();
+    await page.getByRole('button', { name: 'Plan & map' }).click();
     await expect(tile(page, 66)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Build map' })).toHaveCount(0);
   });
 
   await test.step('set an infantry on Horizon to pick up later', async () => {
@@ -195,12 +219,8 @@ test('the tabs of the left drawers stay beside the map through the actions, and 
   await page.getByRole('button', { name: 'My faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
+  await pasteMap(page);
   await page.getByRole('button', { name: 'Plan & map' }).click();
-  await page.getByRole('button', { name: 'Paste map' }).click();
-  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
-  await page.getByRole('button', { name: 'Apply' }).click();
-  await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Build map' }).click();
 
   const players = page.locator('.drawer-tab-left').first();
   const legend = page.locator('.drawer-tab-left').last();
@@ -251,12 +271,8 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await page.getByRole('button', { name: 'My faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
+  await pasteMap(page);
   await page.getByRole('button', { name: 'Plan & map' }).click();
-  await page.getByRole('button', { name: 'Paste map' }).click();
-  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
-  await page.getByRole('button', { name: 'Apply' }).click();
-  await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Build map' }).click();
   await page.getByRole('button', { name: 'Add action' }).click();
   await page.getByRole('button', { name: 'Tactical action' }).click();
   await tile(page, 66).click();
@@ -373,12 +389,8 @@ test('a flight loops in the details by default, and with the setting off plays o
   await page.getByRole('button', { name: 'My faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Argent Flight' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
+  await pasteMap(page);
   await page.getByRole('button', { name: 'Plan & map' }).click();
-  await page.getByRole('button', { name: 'Paste map' }).click();
-  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
-  await page.getByRole('button', { name: 'Apply' }).click();
-  await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Build map' }).click();
   await page.getByRole('button', { name: 'Add action' }).click();
   await page.getByRole('button', { name: 'Tactical action' }).click();
   await tile(page, 66).click();
@@ -437,12 +449,8 @@ test('a faction whose home is not on the pasted map starts at its seat and can s
   await page.getByRole('button', { name: 'My faction', exact: true }).click();
   await page.getByRole('button', { name: 'The Federation of Sol' }).click();
   await page.getByRole('button', { name: 'Start game' }).click();
+  await pasteMap(page);
   await page.getByRole('button', { name: 'Plan & map' }).click();
-  await page.getByRole('button', { name: 'Paste map' }).click();
-  await page.getByLabel('Milty Draft map string').fill(MAP_STRING);
-  await page.getByRole('button', { name: 'Apply' }).click();
-  await page.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Build map' }).click();
 
   // The seat keeps its number and holds the start units although tile 58 is another faction's home.
   await expect(tile(page, 58).getByRole('img', { name: 'Seat 1' })).toBeVisible();

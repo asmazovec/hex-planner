@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { playersOf } from '../../domain/players';
@@ -16,17 +16,21 @@ import { downloadGame } from '../common/download';
 import { EXPANSION_NAMES, EXPANSIONS } from '../common/expansions';
 import { gameAddress } from '../common/gameAddress';
 import { usePreference } from '../common/usePreference';
-import { LayoutPicker } from '../map/builder/LayoutPicker';
+import { MapSetup } from '../map/builder/MapSetup';
 import { HexRemove } from '../primitives/Icon';
 import { factionName } from '../players/names';
 import { PlayerList } from '../players/PlayerList';
-import { SeatMap } from '../players/SeatMap';
 import { useSeatDrag } from '../players/useSeatDrag';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { ConfirmBar } from '../primitives/ConfirmBar';
 
-/** The players on the left; expansions, the seat map and saved games on the right, language and settings last. */
-export function GameScreen() {
+export interface GameScreenProps {
+  /** Brings the map block into view on opening, e.g. from the hint of an unfinished map. */
+  showMap?: boolean;
+}
+
+/** The players on the left; expansions, the map with the seats and saved games on the right, language and settings last. */
+export function GameScreen({ showMap = false }: GameScreenProps) {
   const { t } = useTranslation();
   const open = useGame(s => s.game);
   const game = useGame(s => s.game ?? s.draft);
@@ -49,6 +53,8 @@ export function GameScreen() {
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
   const players = playersOf(game);
   const { ghostRef, ...drag } = useSeatDrag(players, swapSeats);
+  const mapBlock = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (showMap) mapBlock.current?.scrollIntoView?.({ block: 'start' }); }, [showMap]);
 
   /** The list reloads after pending saves finish whenever the open game changes (new, opened, imported). */
   useEffect(() => {
@@ -129,10 +135,7 @@ export function GameScreen() {
             })}
           </div>
         </div>
-        <div className="side-group">
-          <SectionTitle as="p" className="side-label">{t('players.seats')}</SectionTitle>
-          <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} locked={Boolean(open)} />
-          {!open && <p className="side-note">{t('players.seatsNote')}</p>}
+        <MapSetup ref={mapBlock} game={game} pack={pack} drag={drag} ghostRef={ghostRef} started={Boolean(open)}>
           {open && homeNotes(open, pack).map(note => (
             <p key={`${note.kind}-${note.seat}`} className="side-note" role="status">
               {note.kind === 'foreign'
@@ -140,8 +143,7 @@ export function GameScreen() {
                 : t('game.homeNone', { seat: note.seat })}
             </p>
           ))}
-        </div>
-        <LayoutPicker game={game} pack={pack} />
+        </MapSetup>
         <div className="side-group">
           <SectionTitle as="p" className="side-label">{t('game.saved')}</SectionTitle>
           {saved.length === 0 && <p className="side-note">{t('game.none')}</p>}
@@ -152,13 +154,9 @@ export function GameScreen() {
                   <strong>{s.name ?? factionName(s.faction)}</strong>
                   <small>{[...(s.name ? [factionName(s.faction)] : []), t('game.playersShort', { count: s.playerCount })].join(' · ')}</small>
                 </span>
-                {/* TODO(P2-436) #ws:ui-containers #type:ui #size:s #needs:prototype #confirm-bar — своя строка подтверждения удаления, ещё один вид рядом с .player-confirm и строками LayoutPicker/MapStringImport: общий ConfirmBar */}
+                {/* The card is the bar's frame: the answers stand where Open and the cross were. */}
                 {asked === s.id
-                  ? (
-                    <>
-                      <ConfirmBar danger yes={t('game.deleteYes')} no={t('players.cancel')} onYes={() => void remove(s.id)} onNo={() => setAsked(null)} />
-                    </>
-                  )
+                  ? <ConfirmBar danger yes={t('game.deleteYes')} no={t('players.cancel')} onYes={() => void remove(s.id)} onNo={() => setAsked(null)} />
                   : (
                     <>
                       <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>

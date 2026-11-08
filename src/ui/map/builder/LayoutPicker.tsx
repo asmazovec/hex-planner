@@ -3,16 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { hyperlaneSlotCount, isMiltyLanes, LAYOUT_CHOICE_COUNTS, templateFor, tilesLostByLayout } from '../../../domain/mapBuilder';
 import type { DataPack, Game, MapLayout } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
+import { ConfirmBar } from '../../primitives/ConfirmBar';
 
 const LAYOUTS: MapLayout[] = ['standard', 'hyperlanes'];
 
 export interface LayoutPickerProps {
   game: Game;
   pack: DataPack;
+  /** The game has started: the layout is shown and no longer changes. */
+  locked?: boolean;
 }
 
 /** Chooses the map layout of the game: standard or with hyperlanes. A layout the data lacks is shown as unavailable. */
-export function LayoutPicker({ game, pack }: LayoutPickerProps) {
+export function LayoutPicker({ game, pack, locked = false }: LayoutPickerProps) {
   const { t } = useTranslation();
   const setLayout = useGame(s => s.setLayout);
   const [asked, setAsked] = useState<{ layout: MapLayout; lost: number; gameId: string; playerCount: number } | null>(null);
@@ -39,23 +42,21 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
         {LAYOUTS.map(layout => (
           <button
             key={layout} type="button" role="radio" aria-checked={game.layout === layout}
-            disabled={!available(layout)} onClick={() => choose(layout)}
+            disabled={locked || !available(layout)} onClick={() => choose(layout)}
           >
             {t(`layout.${layout}`)}
           </button>
         ))}
       </div>
-      {!available('hyperlanes') && <p className="muted">{t('layout.needsPok')}</p>}
-      {available('hyperlanes') && isMiltyLanes(game.playerCount) && (
+      {!locked && !available('hyperlanes') && <p className="muted">{t('layout.needsPok')}</p>}
+      {!locked && available('hyperlanes') && isMiltyLanes(game.playerCount) && (
         <p className="muted">{t('layout.milty', { n: hyperlaneSlotCount(game.playerCount, pack) })}</p>
       )}
-      {/* TODO(P2-253) #ws:ui-containers #type:dup #dep:P2-250 #needs:prototype #size:s #confirm-bar — Строка подтверждения .row собрана руками: ConfirmBar */}
       {pending && (
-        <div className="row">
-          <span className="muted">{t('layout.confirm', { count: pending.lost })}</span>
-          <button type="button" className="primary" onClick={confirm}>{t('layout.switch')}</button>
-          <button type="button" onClick={() => setAsked(null)}>{t('layout.cancel')}</button>
-        </div>
+        <ConfirmBar
+          className="player-confirm" text={t('layout.confirm', { count: pending.lost })} yes={t('layout.switch')} no={t('layout.cancel')}
+          onYes={confirm} onNo={() => setAsked(null)}
+        />
       )}
     </div>
   );
