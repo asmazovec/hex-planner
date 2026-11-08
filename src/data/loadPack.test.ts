@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from './loadPack';
-import type { ExpansionId } from '../domain/types';
+import type { ExpansionId, MapLayout } from '../domain/types';
 
 const distinctNumbers = (expansions: ExpansionId[]) =>
   new Set(Object.values(loadPack(expansions).tiles).map(t => t.number)).size;
@@ -108,7 +108,7 @@ describe('фракции', () => {
 });
 
 describe('шаблоны карты', () => {
-  const template = (expansions: ExpansionId[], playerCount: number, layout: 'standard' | 'hyperlanes' = 'standard') =>
+  const template = (expansions: ExpansionId[], playerCount: number, layout: MapLayout = 'standard') =>
     loadPack(expansions).templates.find(t => t.playerCount === playerCount && t.layout === layout);
 
   test('на 6 игроков 37 слотов с Mecatol Rex в центре', () => {
@@ -139,20 +139,17 @@ describe('шаблоны карты', () => {
     expect(template([], 4)!.slots).toHaveLength(37);
     expect(template([], 5)!.slots).toHaveLength(37);
   });
-  test('на 7 и 8 игроков четыре кольца, по одному шаблону, гиперпути вводятся вручную', () => {
-    for (const n of [7, 8]) {
-      const slots = template(['pok'], n)!.slots;
-      expect(slots).toHaveLength(61);
-      expect(slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
-      expect(new Set(slots.map(s => `${s.q},${s.r}`)).size).toBe(61);
-    }
-    expect(loadPack(['pok']).templates.map(t => `${t.playerCount}${t.layout === 'hyperlanes' ? 'h' : ''}`))
-      .toEqual(['3', '3h', '4', '4h', '5', '5h', '6', '7', '8']);
+  test('с Prophecy of Kings шаблоны правил: Большая галактика на 6, гиперпути и альтернативные на 7, обычная и альтернативная на 8', () => {
+    expect(loadPack(['pok']).templates.map(t => `${t.playerCount}-${t.layout}`)).toEqual([
+      '3-standard', '3-hyperlanes', '4-standard', '4-hyperlanes', '5-standard', '5-hyperlanes',
+      '6-standard', '6-large', '7-hyperlanes', '7-alternate', '8-standard', '8-alternate',
+    ]);
+    expect(template(['pok'], 8)!.slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
   });
-  test('без Prophecy of Kings гиперпутевых шаблонов нет, с ней они на 3, 4 и 5 игроков', () => {
+  test('без Prophecy of Kings только обычные шаблоны, гиперпутевые с ней на 3, 4, 5 и 7 игроков', () => {
     expect(loadPack([]).templates.every(t => t.layout === 'standard')).toBe(true);
-    expect(loadPack(['te']).templates.some(t => t.layout === 'hyperlanes')).toBe(false);
-    expect(loadPack(['pok']).templates.filter(t => t.layout === 'hyperlanes').map(t => t.playerCount)).toEqual([3, 4, 5]);
+    expect(loadPack(['te']).templates.some(t => t.layout !== 'standard')).toBe(false);
+    expect(loadPack(['pok']).templates.filter(t => t.layout === 'hyperlanes').map(t => t.playerCount)).toEqual([3, 4, 5, 7]);
   });
   test('у каждого шаблона есть дома по числу игроков, места по часовой от верха', () => {
     for (const t of loadPack(['pok']).templates) expect(t.homes).toHaveLength(t.playerCount);

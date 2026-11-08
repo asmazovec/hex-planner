@@ -611,8 +611,43 @@ const MILTY_HOMES: Record<number, string[]> = {
   4: ['0,-3', '3,-3', '0,3', '-3,3'],
   5: ['0,-3', '3,-3', '3,0', '-3,3', '-3,0'],
   6: ['0,-3', '3,-3', '3,0', '0,3', '-3,3', '-3,0'],
-  7: ['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1'],
-  8: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'],
+};
+
+/**
+ * Map layouts of the Prophecy of Kings rulebook (the official PDF from the FFG product page), copied by hand from its
+ * diagrams as facts: page 9, «Game Board Setup for 5, 7, or 8 players» (seven players: four rings with the five-player
+ * hyperlane formation one ring further out; eight players: four rings, no hyperlanes), and page 12, «Map Appendix»
+ * (alternate hyperlanes for seven and eight players with their own ring shapes; the Large Galaxy for six players, four
+ * rings). The diagrams use the app's flat-top grid unturned: the five-player diagram matches the source's 5pHyperlanes.
+ * Slots are `q,r` keys; homes go seat 1 at the top, then clockwise. A lane is `<side>@<turns>` as the pack writes it; the
+ * drawn lines fix the turn. Twin sides draw the same lines up to a turn (83B, 85B, 88B; 84B, 86B; 87A, 88A; 89B, 90B), so
+ * the diagram fixes only the shape in each slot, and the ids of a shape follow the order of the rulebook's list.
+ * Checked against the diagrams in docs/phase2/after (rulebook-*.png beside layout-*.png).
+ */
+const RULEBOOK_LAYOUTS = {
+  /** Page 12, «Six-Player Large Galaxy Setup»: all four rings. */
+  large6: { homes: ['0,-4', '4,-4', '4,0', '0,4', '-4,4', '-4,0'] },
+  /** Page 9, «Seven-Player Setup»: all four rings; the formation 83A to 88A sits one ring further out than for five players. */
+  hyperlanes7: {
+    homes: ['0,-4', '3,-4', '4,-2', '3,1', '-3,4', '-4,2', '-3,-1'],
+    lanes: { '0,2': '86A@0', '1,2': '88A@0', '-1,3': '87A@0', '1,3': '83A@0', '0,4': '85A@0', '-1,4': '84A@0' },
+  },
+  /** Page 12, «Seven-Player Alternate Hyperlanes Setup»: 49 slots, the centre included. */
+  alternate7: {
+    slots: '0,-4 1,-4 -1,-3 0,-3 1,-3 -2,-2 -1,-2 0,-2 1,-2 2,-2 3,-3 -3,-1 -2,-1 -1,-1 0,-1 1,-1 2,-3 2,-1 3,-2 3,-1 '
+      + '-4,1 -4,2 -3,0 -3,1 -3,2 -3,3 -3,4 -2,0 -2,1 -2,2 -2,3 -2,4 -1,0 -1,1 -1,2 -1,3 -1,4 0,1 0,2 0,3 0,4 1,0 1,1 1,2 1,3 2,0 2,1 3,0',
+    homes: ['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1'],
+    lanes: { '1,-3': '83B@0', '0,-1': '85B@0', '-3,1': '88B@5', '0,1': '84B@0', '1,2': '86B@0', '-1,1': '90B@0' },
+  },
+  /** Page 9, «Eight-Player Setup»: all four rings, no hyperlanes. */
+  standard8: { homes: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'] },
+  /** Page 12, «Eight-Player Alternate Hyperlanes Setup»: 55 slots, the centre included. */
+  alternate8: {
+    slots: '0,-4 1,-4 2,-4 3,-4 -1,-3 0,-3 1,-3 2,-3 3,-3 -2,-2 -1,-2 0,-2 1,-2 2,-2 3,-2 4,-2 -3,-1 -2,-1 -1,-1 0,-1 1,-1 2,-1 4,-1 '
+      + '-4,1 -4,2 -3,0 -3,1 -3,2 -3,3 -3,4 -2,0 -2,1 -2,2 -2,3 -2,4 -1,0 -1,1 -1,2 -1,3 -1,4 0,1 0,2 0,3 0,4 1,0 1,1 1,2 1,3 2,0 2,1 2,2 3,-1 3,0 3,1',
+    homes: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'],
+    lanes: { '0,-1': '87A@1', '0,1': '88A@2', '-1,1': '89B@0', '1,-1': '90B@3', '-3,1': '83B@5', '3,-1': '85B@5' },
+  },
 };
 
 /**
@@ -644,17 +679,42 @@ function buildTemplate(source: SourceTemplate, playerCount: number, keepHyperlan
   return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
 }
 
-/** The full hexagon of the given radius, Mecatol Rex in the center; `lanes` are fixed tiles by slot key. */
-function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lanes: Record<string, string> = {}): MapTemplate {
-  const slots: MapTemplate['slots'] = [{ q: 0, r: 0, fixed: MECATOL_REX }];
+/** Slot keys of rings 1 to `rings`, each from the top clockwise as the source numbers them. */
+function ringKeys(rings: number): string[] {
+  const keys: string[] = [];
   for (let ring = 1; ring <= rings; ring++) {
     for (let index = 1; index <= ring * 6; index++) {
       const { q, r } = positionToAxial(`${ring}${String(index).padStart(2, '0')}`);
-      const fixed = lanes[`${q},${r}`];
-      slots.push(fixed ? { q, r, fixed } : { q, r });
+      keys.push(`${q},${r}`);
     }
   }
-  return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
+  return keys;
+}
+
+/** The full hexagon of the given radius, Mecatol Rex in the center; `lanes` are fixed tiles by slot key. */
+function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lanes: Record<string, string> = {}, homes = MILTY_HOMES[playerCount]): MapTemplate {
+  return slotTemplate(playerCount, layout, ringKeys(rings), lanes, homes);
+}
+
+/** A template of the given slots, Mecatol Rex in the center first; `lanes` are fixed tiles by slot key. */
+function slotTemplate(playerCount: number, layout: MapLayout, keys: string[], lanes: Record<string, string>, homes: string[]): MapTemplate {
+  const offSlots = Object.keys(lanes).filter(key => !keys.includes(key));
+  if (offSlots.length > 0) throw new Error(`Template of ${playerCount} players (${layout}) has lanes off its slots: ${offSlots.join(' ')}`);
+  const slots: MapTemplate['slots'] = [{ q: 0, r: 0, fixed: MECATOL_REX }];
+  for (const key of keys) {
+    const [q, r] = key.split(',').map(Number);
+    const fixed = lanes[key];
+    slots.push(fixed ? { q, r, fixed } : { q, r });
+  }
+  return { playerCount, layout, homes, slots };
+}
+
+/** The slot keys of a diagram's list in ring order, from the top of each ring clockwise. */
+function inRingOrder(list: string): string[] {
+  const listed = new Set(list.split(/\s+/));
+  const keys = ringKeys(4).filter(key => listed.has(key));
+  if (keys.length !== listed.size) throw new Error(`Slots beyond four rings in "${list}"`);
+  return keys;
 }
 
 /** Per pack, the technologies its factions name, their faction technologies too. A pack holds its own copy, so it works without the others. */
@@ -695,9 +755,12 @@ function buildTemplates(root: string): Record<PackId, MapTemplate[]> {
       ringTemplate(3, 3, 'hyperlanes', MILTY_LANES[3]),
       ringTemplate(4, 3, 'hyperlanes', MILTY_LANES[4]),
       buildTemplate(read('standardMiltyLayouts', '5pHyperlanes'), 5, true, 'hyperlanes'),
-      // Standard PoK setups fill four rings. Hyperlane places are only on a rulebook diagram, so they stay manual.
-      ringTemplate(7, 4, 'standard'),
-      ringTemplate(8, 4, 'standard'),
+      // The rest are the rulebook's diagrams, see RULEBOOK_LAYOUTS.
+      ringTemplate(6, 4, 'large', {}, RULEBOOK_LAYOUTS.large6.homes),
+      ringTemplate(7, 4, 'hyperlanes', RULEBOOK_LAYOUTS.hyperlanes7.lanes, RULEBOOK_LAYOUTS.hyperlanes7.homes),
+      slotTemplate(7, 'alternate', inRingOrder(RULEBOOK_LAYOUTS.alternate7.slots), RULEBOOK_LAYOUTS.alternate7.lanes, RULEBOOK_LAYOUTS.alternate7.homes),
+      ringTemplate(8, 4, 'standard', {}, RULEBOOK_LAYOUTS.standard8.homes),
+      slotTemplate(8, 'alternate', inRingOrder(RULEBOOK_LAYOUTS.alternate8.slots), RULEBOOK_LAYOUTS.alternate8.lanes, RULEBOOK_LAYOUTS.alternate8.homes),
     ],
     te: [],
   };
@@ -845,6 +908,13 @@ async function main(): Promise<void> {
       reason: "Executive Order is filed under keleres with source thunders_edge but listed on no faction; the Thunder's Edge rulebook gives Keleres two faction technologies and the source names the Keleres breakthrough I.I.H.Q. Modernization, so it is taken to replace that technology (inference, not confirmed by a rulebook line).",
     },
     corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
+    mapLayouts: {
+      source: 'Prophecy of Kings rulebook, official PDF from the FFG product page (ti10_rulebook_web-good.pdf)',
+      pages: { 9: 'Game Board Setup for 5, 7, or 8 players; Hyperlane Setup', 12: 'Map Appendix: Alternate Hyperlanes, Large Galaxy' },
+      fromDiagrams: RULEBOOK_LAYOUTS,
+      fromSource: 'Three to six players and the five-player hyperlanes: data/map_templates (6pStandard, 3pInPersonHyperlanes, 5pHyperlanes); homes of three to six players and the three- and four-player hyperlanes: Milty Draft (MILTY_HOMES, MILTY_LANES).',
+      reason: 'The source has no rulebook map for seven or eight players or for the Large Galaxy (its 7pHyperlanes and 8pHyperlanes are Milty Draft maps): slots, homes and lanes were copied by hand from the diagrams, twin sides assigned in the order of the rulebook list.',
+    },
     reinforcements: {
       ...LIMITS_SOURCE,
       units: UNIT_LIMITS,

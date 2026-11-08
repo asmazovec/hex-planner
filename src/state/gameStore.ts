@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
 import { changeOnBoard, type MergedChange } from '../domain/losses';
-import { changeLayout } from '../domain/mapBuilder';
+import { changeLayout, slotsFor } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
@@ -194,7 +194,7 @@ export interface GameStore {
   /** Turns an expansion on for the open game in one undo step; the draft has its own toggle. */
   addExpansion(id: ExpansionId): void;
   setTile(slotKey: string, tileId: string | null): void;
-  /** Replaces the whole map in one undo step, and the layout too if one is given; the centre tile stays. */
+  /** Replaces the whole map in one undo step, and the layout too if one is given; the centre tile stays, and so do the layout's hyperlanes where the map leaves their slots empty. */
   setMap(map: Record<string, string>, layout?: MapLayout): void;
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
@@ -457,10 +457,14 @@ export const useGame = create<GameStore>((set, get) => {
       }),
     // The map is built on the draft too, before the game starts.
     setTile: (slotKey, tileId) => commitPlayers(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
-    setMap: (map, layout) => commitPlayers(g => {
+    setMap: (map, layout) => commitPlayers((g, pack) => {
       const next = { ...map };
       delete next['0,0'];
       if (g.map['0,0']) next['0,0'] = g.map['0,0'];
+      // The hyperlanes of the layout stay where the string leaves their slots empty.
+      for (const slot of slotsFor(g.playerCount, pack, layout ?? g.layout)) {
+        if (slot.fixed && !next[slotKeyOf(slot.q, slot.r)]) next[slotKeyOf(slot.q, slot.r)] = slot.fixed;
+      }
       const same = Object.keys(next).length === Object.keys(g.map).length && Object.entries(next).every(([k, v]) => g.map[k] === v);
       const nextLayout = layout ?? g.layout;
       return same && nextLayout === g.layout ? g : { ...g, map: next, layout: nextLayout };

@@ -30,9 +30,52 @@ test.each([3, 4, 5])('%i players get a choice of two layouts', count => {
   expect(screen.getByRole('radio', { name: 'With hyperlanes' })).toBeEnabled();
 });
 
-test.each([6, 7, 8])('%i players get no picker', count => {
+test.each([
+  [6, ['Standard', 'Large Galaxy'], 'Standard'],
+  [7, ['With hyperlanes', 'Alternate hyperlanes'], 'With hyperlanes'],
+  [8, ['Standard', 'Alternate hyperlanes'], 'Standard'],
+] as const)('%i players choose among the layouts of the rules, the default one checked', (count, names, checked) => {
   open(count);
-  expect(screen.queryByRole('radio')).toBeNull();
+  expect(screen.getAllByRole('radio').map(radio => radio.textContent)).toEqual(names);
+  for (const name of names) expect(screen.getByRole('radio', { name })).toBeEnabled();
+  expect(screen.getByRole('radio', { name: checked })).toBeChecked();
+});
+
+test('without Prophecy of Kings six players see the Large Galaxy as unavailable', () => {
+  open(6, []);
+  expect(screen.getByRole('radio', { name: 'Large Galaxy' })).toBeDisabled();
+  expect(screen.getByText(/Large Galaxy uses the tiles of Prophecy of Kings/)).toBeInTheDocument();
+});
+
+test('each layout of the rulebook notes its deal: tiles per player, the speaker\'s extra tiles, the 14-point track', async () => {
+  open(7);
+  expect(screen.getByText(/4 blue and 2 red tiles; the speaker then places 5 more \(2 red, 3 blue\) next to Mecatol Rex/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole('radio', { name: 'Alternate hyperlanes' }));
+  cleanup();
+  render(<LayoutPicker game={useGame.getState().game!} pack={pok} />);
+  expect(screen.getByText(/own shape\. Each player is dealt 3 blue and 2 red tiles/)).toBeInTheDocument();
+  cleanup();
+  open(8);
+  expect(screen.getByText(/the speaker then places 4 more \(2 red, 2 blue\)/)).toBeInTheDocument();
+  cleanup();
+  open(6);
+  await userEvent.click(screen.getByRole('radio', { name: 'Large Galaxy' }));
+  cleanup();
+  render(<LayoutPicker game={useGame.getState().game!} pack={pok} />);
+  expect(screen.getByText(/6 blue and 3 red tiles; the 14-point side/)).toBeInTheDocument();
+  cleanup();
+  open(5);
+  expect(screen.getByText(/3 blue and 2 red tiles/)).toBeInTheDocument();
+});
+
+test('the Large Galaxy moves the homes to the fourth ring and back', async () => {
+  const game = open(6);
+  const home = game.map['0,-3'];
+  await userEvent.click(screen.getByRole('radio', { name: 'Large Galaxy' }));
+  const large = useGame.getState().game!;
+  expect(large.layout).toBe('large');
+  expect(large.map['0,-4']).toBe(home);
+  expect(large.map['0,-3']).toBeUndefined();
 });
 
 test('the radio of the layout in use is checked', () => {
@@ -123,4 +166,10 @@ test('the Russian labels are used in Russian', () => {
   open(3);
   expect(screen.getByRole('radio', { name: 'Обычная' })).toBeInTheDocument();
   expect(screen.getByRole('radio', { name: 'С гиперпутями' })).toBeInTheDocument();
+  cleanup();
+  open(7);
+  expect(screen.getByRole('radio', { name: 'Альтернативные гиперпути' })).toBeInTheDocument();
+  cleanup();
+  open(6);
+  expect(screen.getByRole('radio', { name: 'Большая галактика' })).toBeInTheDocument();
 });

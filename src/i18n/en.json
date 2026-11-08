@@ -584,7 +584,18 @@
     "label": "Map layout",
     "standard": "Standard",
     "hyperlanes": "With hyperlanes",
+    "alternate": "Alternate hyperlanes",
+    "large": "Large Galaxy",
     "needsPok": "Hyperlane tiles come with Prophecy of Kings.",
+    "largeNeedsPok": "The Large Galaxy uses the tiles of Prophecy of Kings too.",
+    "note": {
+      "5-hyperlanes": "Each player is dealt 3 blue and 2 red tiles.",
+      "6-large": "Four rings. Each player is dealt 6 blue and 3 red tiles; the 14-point side of the victory point track is recommended.",
+      "7-hyperlanes": "Each player is dealt 4 blue and 2 red tiles; the speaker then places 5 more (2 red, 3 blue) next to Mecatol Rex.",
+      "7-alternate": "Rings of their own shape. Each player is dealt 3 blue and 2 red tiles.",
+      "8-standard": "Each player is dealt 4 blue and 2 red tiles; the speaker then places 4 more (2 red, 2 blue) next to Mecatol Rex.",
+      "8-alternate": "Rings of their own shape. Each player is dealt 3 blue and 2 red tiles."
+    },
     "switch": "Switch layout",
     "cancel": "Cancel",
     "confirm_one": "The map has {{count}} tile that this layout removes (in slots it lacks or under hyperlanes). Switch?",
