@@ -39,7 +39,7 @@ const onClose = vi.fn();
 const open = (props: Partial<HexStageProps> = {}, usePack = pack) =>
   render(<HexStage slot={SLOT} roundNo={1} pack={usePack} onClose={onClose} {...props} />);
 const tap = (name: string | RegExp) => userEvent.click(screen.getByRole('button', { name }));
-const mode = (name: 'Setup' | 'Battle' | 'Build') => tap(name);
+const mode = (name: 'Setup' | 'Battle' | 'Build' | 'Control') => tap(name);
 const side = (name: string | RegExp) => userEvent.click(within(screen.getByRole('group', { name: 'Whose units' })).getByRole('button', { name }));
 const addMine = (units: UnitCounts, ground?: Record<string, UnitCounts>) =>
   store().addEntry(1, { type: 'adjustment', label: 'start', delta: { units: { systemId: SLOT, units }, ground } }, 'strategy');
@@ -164,37 +164,53 @@ describe('setup', () => {
     expect(screen.getByRole('button', { name: 'Infantry' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'PDS' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Carrier' })).toBeEnabled();
-    expect(screen.getByText('No planets')).toBeVisible();
   });
 
-  test('a planet tap chooses the target of ground units and structures, and shows its details', async () => {
+  test('a planet tap chooses the target of ground units and structures; setup shows no planet details', async () => {
     store().setTile(SLOT, TWO);
     const [first, second] = pack.tiles[TWO].planetIds;
     open();
-    expect(screen.getByRole('group', { name: pack.planets[first].name })).toBeVisible();
-    await tap(new RegExp(`^${pack.planets[second].name}:`));
-    expect(screen.getByRole('group', { name: pack.planets[second].name })).toBeVisible();
     expect(screen.queryByRole('group', { name: pack.planets[first].name })).toBeNull();
+    await tap(new RegExp(`^${pack.planets[second].name}:`));
     await tap('Infantry');
     await tap('PDS');
     expect(merged('setup')?.delta.ground).toEqual({ [second]: { infantry: 1 } });
     expect(game().pds).toEqual({ [second]: 1 });
   });
 
-  test('the panel carries the tile number, rotation, anomaly and wormholes', () => {
+  test('control carries the tile number, rotation, anomaly and wormholes in one line, read only', async () => {
     store().setTile(SLOT, '39@2');
     open();
+    expect(screen.queryByText(/Rotation/)).toBeNull();
+    await mode('Control');
     expect(screen.getByRole('dialog', { name: 'Tile 39' })).toBeVisible();
-    expect(screen.getByText('Rotation: 120°')).toBeVisible();
-    expect(screen.getByText(`Wormholes: ${pack.tiles['39'].wormholes.join(', ')}`)).toBeVisible();
+    expect(screen.getByText(`Rotation: 120° · Wormholes: ${pack.tiles['39'].wormholes.join(', ')}`)).toBeVisible();
+    expect(screen.getByText('No planets')).toBeVisible();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.queryByRole('button', { name: /Rotate/ })).toBeNull();
     cleanup();
     store().setTile(SLOT, '41');
-    open();
+    open({ initialMode: 'control' });
     expect(screen.getByText('Anomaly: Gravity rift')).toBeVisible();
+    cleanup();
+    store().setTile(SLOT, TWO);
+    open({ initialMode: 'control' });
+    expect(screen.getByText('No anomalies or wormholes')).toBeVisible();
+  });
+
+  test('control shows every planet of the system at once, each with its own owner choice', () => {
+    store().setTile(SLOT, TWO);
+    const [first, second] = pack.tiles[TWO].planetIds;
+    open({ initialMode: 'control' });
+    for (const id of [first, second]) {
+      const planet = within(screen.getByRole('group', { name: pack.planets[id].name }));
+      expect(planet.getByRole('group', { name: `Control of ${pack.planets[id].name}` })).toBeVisible();
+    }
+    expect(screen.queryByRole('group', { name: 'Whose units' })).toBeNull();
   });
 
   test('control lists me, each opponent and nobody', async () => {
-    open();
+    open({ initialMode: 'control' });
     const control = within(screen.getByRole('group', { name: `Control of ${pack.planets[quann()].name}` }));
     expect(control.getAllByRole('button').map(b => b.textContent)).toEqual(['Mine', 'Player 2', 'Player 3', 'Player 4', 'None']);
     await userEvent.click(control.getByRole('button', { name: 'Player 3' }));
@@ -207,7 +223,7 @@ describe('setup', () => {
 
   test('tile 66: the ability and its retelling in the current language, and the traits', () => {
     store().setTile(SLOT, '66');
-    open();
+    open({ initialMode: 'control' });
     const planet = within(screen.getByRole('group', { name: "Hope's End" }));
     expect(planet.getByText('Imperial Arms Vault')).toBeInTheDocument();
     expect(planet.getByText(/mech from reinforcements/)).toBeInTheDocument();
@@ -216,14 +232,14 @@ describe('setup', () => {
     expect(planet.queryByText(/relic/i)).toBeNull();
     cleanup();
     setLanguage('ru');
-    open();
+    open({ initialMode: 'control' });
     expect(screen.getByText(/1 меха из запаса/)).toBeInTheDocument();
   });
 
   test('two traits with swatches, specialties, and the relic of a Fracture planet', () => {
     store().newGame({ expansions: ['pok', 'te'], playerCount: 4, faction: 'sol' }, full);
     store().setTile(SLOT, '101');
-    const { container } = open({}, full);
+    const { container } = open({ initialMode: 'control' }, full);
     const planet = within(screen.getByRole('group', { name: 'Olergodt' }));
     expect(planet.getByText('Hazardous')).toBeInTheDocument();
     expect(planet.getByText('Cultural')).toBeInTheDocument();
@@ -232,7 +248,7 @@ describe('setup', () => {
     expect(planet.queryByText(/relic/i)).toBeNull();
     cleanup();
     store().setTile(SLOT, 'fracture4');
-    open({}, full);
+    open({ initialMode: 'control' }, full);
     const styx = within(screen.getByRole('group', { name: 'Styx' }));
     expect(styx.getByText(/relic/i)).toBeInTheDocument();
     expect(styx.getByText('A Song Like Marrow')).toBeInTheDocument();
@@ -244,6 +260,7 @@ describe('setup', () => {
     open();
     expect(screen.getByRole('button', { name: 'Солнце войны ×1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Расстановка' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Контроль' })).toBeInTheDocument();
     expect(screen.queryByText('War Sun')).toBeNull();
   });
 });
@@ -657,7 +674,7 @@ describe('fix round 1', () => {
 
   test('control and readiness follow the state shown, the units the forecast', () => {
     const shown = { ...forecast(), control: { [quann()]: 'enemy' as const }, exhausted: [quann()] };
-    open({ shownState: shown });
+    open({ shownState: shown, initialMode: 'control' });
     const control = within(screen.getByRole('group', { name: `Control of ${nameOf(quann())}` }));
     expect(control.getByRole('button', { name: 'Player 2' })).toHaveAttribute('aria-pressed', 'true');
     expect(within(screen.getByRole('group', { name: nameOf(quann()) })).getByText(/Exhausted/)).toBeVisible();

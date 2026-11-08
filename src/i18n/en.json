@@ -147,6 +147,7 @@
       "anomaly": "Anomaly: {{name}}",
       "wormholes": "Wormholes: {{list}}",
       "noPlanets": "No planets",
+      "plain": "No anomalies or wormholes",
       "controlLabel": "Control of {{planet}}",
       "mine": "Mine",
       "none": "None",
@@ -649,7 +650,8 @@
     "mode": {
       "setup": "Setup",
       "battle": "Battle",
-      "build": "Build"
+      "build": "Build",
+      "control": "Control"
     },
     "owner": "Whose units",
     "mine": "Mine",

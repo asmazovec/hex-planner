@@ -87,7 +87,7 @@ test('fighters with no move value and ground units are cargo, listed at their sy
   expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: { carrier: 1, fighter: 1 } }]);
   expect(screen.getByText('Cargo on board: 1 of 4')).toBeVisible();
   // Taken and available stand side by side.
-  expect(start.getByRole('button', { name: 'Return one Fighter' })).toHaveClass('pic-taken');
+  expect(start.getByRole('button', { name: 'Return one Fighter' })).toHaveClass('unit-tile-marked');
   expect(start.getByRole('button', { name: 'Take one Fighter' })).toBeVisible();
 });
 
