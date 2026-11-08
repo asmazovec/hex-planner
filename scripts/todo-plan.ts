@@ -124,7 +124,7 @@ export function validate(todos: Todo[]): string[] {
     for (const n of t.needs) if (!['decision', 'prototype'].includes(n)) errors.push(`${at}: #needs must be decision or prototype`);
   }
   // A #dep on an id no longer in the code is a dependency already done: fixed TODOs are deleted.
-  for (const t of todos) for (const d of t.deps) if (!/^P2-d{3,}$/.test(d)) errors.push(`${t.id}: #dep ${d} is not a TODO id`);
+  for (const t of todos) for (const d of t.deps) if (!/^P2-\d{3,}$/.test(d)) errors.push(`${t.id}: #dep ${d} is not a TODO id`);
   for (const w of WORKSTREAMS) for (const a of w.after) if (!known.has(a)) errors.push(`workstream ${w.id}: after unknown ${a}`);
   return errors;
 }
