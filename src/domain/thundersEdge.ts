@@ -22,11 +22,19 @@ export function validThundersEdgeSystem(tile: TileDef): boolean {
 const turn = ({ q, r }: { q: number; r: number }, steps: number): { q: number; r: number } =>
   steps === 0 ? { q, r } : turn({ q: -r, r: q + r }, steps - 1);
 
+/** The six grid neighbours of a slot. */
+const NEIGHBOURS = [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 1], [-1, 0]];
+
+/** At least this many of the seven systems against the map count as lying against its edge. */
+const FLUSH = 5;
+
 /**
- * The seven Fracture systems as a chevron against the map: the part of ring A (the map's largest ring plus one) around
- * one corner, apex in the middle and three systems on each arm. The corner is the one nearest to the seat's home slot,
- * the top one without a seat; a corner whose slots touch the template is skipped, and the ring moves out if none is free.
- * Empty when the pack has no Fracture systems or there is no template.
+ * The seven Fracture systems as a chevron against the map (TE: the Fracture is placed against the edge of the regular
+ * map): the part of a ring around one corner, apex in the middle and three systems on each arm. Corners are tried
+ * nearest to the seat's home slot first (the top one without a seat). At each corner the chevron goes on the ring where
+ * it lies against the most systems of the map without covering any, so an uneven map (the alternate hyperlanes) does not
+ * leave it hanging a ring away; the first corner where at least five of its systems touch the map wins, otherwise the
+ * best placement of all. Empty when the pack has no Fracture systems or there is no template.
  */
 export function fractureSlots(
   seat: number | null, playerCount: number, pack: DataPack, layout?: MapLayout,
@@ -43,14 +51,41 @@ export function fractureSlots(
     return Math.min(d, 2 * Math.PI - d);
   };
   const corners = [0, 1, 2, 3, 4, 5].sort((a, b) => gap(a) - gap(b) || a - b);
-  const ring = Math.max(...template.map(s => hexDistance(s.q, s.r))) + 1;
-  for (let a = ring; ; a++) {
+  const outer = Math.max(...template.map(s => hexDistance(s.q, s.r))) + 1;
+  const chevron = (a: number, corner: number) => {
     const top = [[-3, 3 - a], [-2, 2 - a], [-1, 1 - a], [0, -a], [1, -a], [2, -a], [3, -a]];
-    for (const corner of corners) {
-      const slots = tileIds.map((tileId, i) => ({ tileId, ...turn({ q: top[i][0], r: top[i][1] }, corner) }));
-      if (slots.every(s => !taken.has(slotKeyOf(s.q, s.r)))) return slots;
+    return tileIds.map((tileId, i) => ({ tileId, ...turn({ q: top[i][0], r: top[i][1] }, corner) }));
+  };
+  const touching = (slots: { q: number; r: number }[]): number =>
+    slots.filter(s => NEIGHBOURS.some(([dq, dr]) => taken.has(slotKeyOf(s.q + dq, s.r + dr)))).length;
+  /** At one corner, the free ring where the chevron touches the map most; the outer ring is always free. */
+  const bestAt = (corner: number) => {
+    let best = { slots: chevron(outer, corner), touch: touching(chevron(outer, corner)) };
+    for (let a = 3; a < outer; a++) {
+      const slots = chevron(a, corner);
+      if (slots.some(s => taken.has(slotKeyOf(s.q, s.r)))) continue;
+      const touch = touching(slots);
+      if (touch > best.touch) best = { slots, touch };
     }
-  }
+    return best;
+  };
+  const options = corners.map(bestAt);
+  return (options.find(o => o.touch >= FLUSH) ?? options.reduce((a, b) => (b.touch > a.touch ? b : a))).slots;
+}
+
+/**
+ * A saved open Fracture brought to where `fractureSlots` puts it now: its systems, and what the game says about them,
+ * move along. Nothing changes when it already stands there.
+ */
+export function withFractureRealigned(game: Game, pack: DataPack): Game {
+  if (!game.fracture.active || !game.fracture.tiles) return game;
+  const now = new Map(fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout).map(s => [s.tileId, slotKeyOf(s.q, s.r)]));
+  const moved = new Map(Object.entries(game.fracture.tiles)
+    .filter(([slot, tileId]) => now.has(tileId) && now.get(tileId) !== slot)
+    .map(([slot, tileId]) => [slot, now.get(tileId)!]));
+  if (moved.size === 0) return game;
+  const next = withSlotsMoved(game, slot => moved.get(slot) ?? slot);
+  return { ...next, fracture: { ...next.fracture, tiles: Object.fromEntries([...now].map(([tileId, slot]) => [slot, tileId])) } };
 }
 
 /**

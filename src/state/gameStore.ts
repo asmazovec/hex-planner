@@ -6,7 +6,7 @@ import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
 import { startingDocks, withForTokenOfRound } from '../domain/strategy';
-import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
+import { fractureSlots, withFractureMoved, withFractureRealigned } from '../domain/thundersEdge';
 import { toggleUpgrade } from '../domain/unitStats';
 import { slotKeyOf } from '../domain/layouts';
 import { placeStartUnits, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
@@ -368,7 +368,7 @@ export const useGame = create<GameStore>((set, get) => {
       try {
         const loaded = await loadGame(id);
         if (!loaded) return;
-        game = withFractureTiles(loaded);
+        game = withFractureTiles(withFractureRealigned(loaded, loadPack(loaded.expansions)));
       } catch (error) {
         failLoad(id, error);
         return;
