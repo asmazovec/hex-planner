@@ -32,6 +32,13 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   systemHasToken: { rules: ['5.2', '89.1'], step: 'activation' },
   constructionUnits: { rules: ['24.3'], step: 'card' },
   sliceTaken: { rules: ['expedition-5'], step: 'expedition' },
+  // command-tokens, round-flow, payment
+  noReinforcements: { rules: ['20.3', '20.3.1', '23.2'], step: 'status' },
+  actionAfterPass: { rules: ['3.3'], step: 'round' },
+  passBeforeStrategy: { rules: ['3.4', '3.4.1', '82.2', '82.2.1'], step: 'round' },
+  actionOutsidePhase: { rules: ['40.2'], step: 'round' },
+  planetNotControlled: { rules: ['34-note-2', '64-note-5'], step: 'payment' },
+  readyNotControlled: { rules: ['71-note-3'], step: 'card' },
 };
 
 /** The rule and step of a code, from the registry. */

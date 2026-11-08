@@ -545,105 +545,6 @@
       "text": "Места на борту проверяются только в активной системе: истребители и наземные войска, брошенные без мест на борту в системе, откуда улетели корабли, не дают нарушения"
     },
     {
-      "id": "P2-015",
-      "num": 15,
-      "file": "src/domain/replay/activation.ts",
-      "line": 6,
-      "ws": "command-tokens",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "5.2",
-        "89.1",
-        "20.4"
-      ],
-      "tests": [
-        "005-active-system",
-        "089-tactical-action",
-        "020-command-tokens"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "activation"
-      ],
-      "text": "Активация системы со своим жетоном и тактика без жетона в тактическом резерве проходят молча: нарушения systemHasToken и poolNegative(tactic)"
-    },
-    {
-      "id": "P2-016",
-      "num": 16,
-      "file": "src/domain/replay/status.ts",
-      "line": 7,
-      "ws": "command-tokens",
-      "type": "model",
-      "layer": "domain",
-      "rules": [
-        "20.3",
-        "23.2"
-      ],
-      "tests": [
-        "020-command-tokens",
-        "023-component-limitations"
-      ],
-      "deps": [],
-      "needs": [
-        "decision"
-      ],
-      "size": "m",
-      "tags": [
-        "token-supply"
-      ],
-      "text": "Жетонов приказа 16: сумма в резервах и на карте не ограничена. Нужна модель снабжения жетонов (решить, нужна ли)"
-    },
-    {
-      "id": "P2-017",
-      "num": 17,
-      "file": "src/domain/replay/status.ts",
-      "line": 13,
-      "ws": "command-tokens",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "81.5",
-        "37.3"
-      ],
-      "tests": [
-        "081-status-phase",
-        "037-fleet-pool"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "fleet-pool",
-        "redistribute"
-      ],
-      "text": "Перераспределение не проверяет минус в резерве и флот меньше кораблей в системах (после статуса и после перестановки Warfare): poolNegative и fleetPool по всем системам"
-    },
-    {
-      "id": "P2-018",
-      "num": 18,
-      "file": "src/domain/replay/cards.ts",
-      "line": 50,
-      "ws": "command-tokens",
-      "type": "bug",
-      "layer": "domain",
-      "rules": [
-        "20.6"
-      ],
-      "tests": [
-        "020-command-tokens"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "construction"
-      ],
-      "text": "Второстепенное Construction в систему с моим жетоном законно (жетон уходит в снабжение), а здесь предупреждение"
-    },
-    {
       "id": "P2-019",
       "num": 19,
       "file": "src/domain/replay/tactical.ts",
@@ -825,7 +726,7 @@
       "id": "P2-026",
       "num": 26,
       "file": "src/domain/replay/cards.ts",
-      "line": 60,
+      "line": 59,
       "ws": "structures",
       "type": "check",
       "layer": "domain",
@@ -943,7 +844,7 @@
       "id": "P2-030",
       "num": 30,
       "file": "src/domain/replay/cards.ts",
-      "line": 65,
+      "line": 64,
       "ws": "production",
       "type": "check",
       "layer": "domain",
@@ -961,52 +862,6 @@
         "card-production"
       ],
       "text": "Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production"
-    },
-    {
-      "id": "P2-031",
-      "num": 31,
-      "file": "src/domain/replay/payment.ts",
-      "line": 40,
-      "ws": "payment",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "34-note-2",
-        "64-note-5"
-      ],
-      "tests": [
-        "034-exhausted",
-        "064-planets"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "payment"
-      ],
-      "text": "Чужая планета в оплате молча истощается и стоит 0: нарушение planetNotControlled"
-    },
-    {
-      "id": "P2-032",
-      "num": 32,
-      "file": "src/domain/replay/cards.ts",
-      "line": 41,
-      "ws": "payment",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "71-note-3"
-      ],
-      "tests": [
-        "071-readied"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "s",
-      "tags": [
-        "ready"
-      ],
-      "text": "Готовит любые перечисленные планеты, в том числе чужие"
     },
     {
       "id": "P2-033",
@@ -1106,7 +961,7 @@
       "id": "P2-037",
       "num": 37,
       "file": "src/domain/replay/cards.ts",
-      "line": 46,
+      "line": 45,
       "ws": "strategy-cards",
       "type": "bug",
       "layer": "domain",
@@ -1153,7 +1008,7 @@
       "id": "P2-039",
       "num": 39,
       "file": "src/domain/replay/cards.ts",
-      "line": 44,
+      "line": 43,
       "ws": "strategy-cards",
       "type": "bug",
       "layer": "domain",
@@ -1221,33 +1076,6 @@
         "technology"
       ],
       "text": "Число исследований не ограничено (2 на основном, 1 на второстепенном) и уже известная технология оплачивается повторно"
-    },
-    {
-      "id": "P2-042",
-      "num": 42,
-      "file": "src/domain/replay/round.ts",
-      "line": 8,
-      "ws": "round-flow",
-      "type": "check",
-      "layer": "domain",
-      "rules": [
-        "3.3",
-        "3.4",
-        "82.2",
-        "40.2"
-      ],
-      "tests": [
-        "003-action-phase",
-        "082-strategic-action",
-        "040-game-round"
-      ],
-      "deps": [],
-      "needs": [],
-      "size": "m",
-      "tags": [
-        "pass"
-      ],
-      "text": "Пас ничего не проверяет: пас до своих стратегических действий, действия после паса, действие не в своей фазе"
     },
     {
       "id": "P2-043",
@@ -3790,7 +3618,7 @@
       "needs": [],
       "size": "s",
       "tags": [],
-      "text": "«платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части"
+      "text": "«платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части — P2 note: UI-файл вне списка файлов волны B для payment, рядом правит P2-365 (thunders-edge); оставлено, чтобы не править чужой модуль"
     },
     {
       "id": "P2-367",

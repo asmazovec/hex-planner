@@ -1033,8 +1033,10 @@ describe('Construction\'s secondary', () => {
     return project(game, game.plans[0], 'forecast', pack);
   };
 
-  test('warns before Thunder\'s Edge when its token would join one of mine, and does not forbid it', () => {
-    expect(secondaryOn(['pok'], { systemId: '1,0' }).warningsByEntry.c.map(w => w.code)).toEqual(['systemHasToken']);
+  test('before Thunder\'s Edge a token joining one of mine goes back to reinforcements, with no warning (LRR 20.6)', () => {
+    const joined = secondaryOn(['pok'], { systemId: '1,0' });
+    expect(joined.warningsByEntry.c).toEqual([]);
+    expect(joined.state.tokensOnMap.filter(id => id === '1,0')).toHaveLength(1);
     const free = secondaryOn(['pok'], { systemId: '2,0' });
     expect(free.warningsByEntry.c).toEqual([]);
     expect(free.state.tokensOnMap).toContain('2,0');

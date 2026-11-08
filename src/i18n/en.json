@@ -364,12 +364,18 @@
       "shortStrategy": "Not enough strategy tokens: {{have}} left.",
       "primaryRepeated": "The primary has already been played this round: cards held {{held}}.",
       "tokensOver": "Distributed {{given}} tokens with {{free}} free: more usually from abilities or technologies.",
-      "poolNegative": "{{pool}}: the rearrangement goes below zero ({{have}}).",
-      "systemHasToken": "{{system}} already holds your token: a second one may not be allowed, check the rules.",
+      "poolNegative": "{{pool}}: not enough tokens, the pool goes below zero ({{have}}).",
+      "systemHasToken": "{{system}} already holds your token: by the rules it cannot be activated again.",
       "constructionUnits": "The card text gives the secondary a structure only: building units here may break the rules.",
       "speedShort": "{{unit}} from {{from}} has speed {{move}}, and the route takes {{steps}} steps.",
       "sourceActivated": "{{from}} already holds your command token: by the rules ships cannot move out of it.",
-      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass."
+      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass.",
+      "noReinforcements": "Tokens in play: {{total}}, but a faction has only {{limit}}: with none left in reinforcements no token can be gained.",
+      "actionAfterPass": "You have already passed this round: by the rules no more actions follow, only other players' secondaries.",
+      "passBeforeStrategy": "The pass comes before the strategic action of your card (cards left: {{cards}}): by the rules a player passes only after it.",
+      "actionOutsidePhase": "Turns are taken only in the action phase: this action stands in another phase.",
+      "planetNotControlled": "{{planet}} is not your planet: by the rules you exhaust only planets you control.",
+      "readyNotControlled": "{{planet}} is not your planet: an effect readies only planets you control."
     },
     "phases": {
       "strategy": "Strategy",

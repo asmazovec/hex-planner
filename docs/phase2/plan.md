@@ -2,15 +2,15 @@
 
 Собрано скриптом `npm run plan:todos` из комментариев `TODO(P2-…)` в коде. Не правьте этот файл руками: правьте TODO и запустите скрипт снова.
 
-Всего: **240** TODO в **61** файлах, **25** потоков.
+Всего: **233** TODO в **57** файлах, **25** потоков.
 
 ## По типам
 
 | Тип | Значение | Количество |
 |---|---|---|
-| `bug` | Ошибка: код делает то, что правило запрещает | 28 |
-| `check` | Нет проверки: правило запрещает, нарушения нет | 19 |
-| `model` | Нет модели: не хватает данных или понятия | 8 |
+| `bug` | Ошибка: код делает то, что правило запрещает | 27 |
+| `check` | Нет проверки: правило запрещает, нарушения нет | 14 |
+| `model` | Нет модели: не хватает данных или понятия | 7 |
 | `arch` | Архитектура: ответственность не на месте | 50 |
 | `dup` | Дублирование | 61 |
 | `dead` | Мёртвый код | 2 |
@@ -26,7 +26,7 @@
 
 **Волна 1:** [replay-steps](#ws-replay-steps) (0), [ui-logic-to-domain](#ws-ui-logic-to-domain) (36), [ui-warnings](#ws-ui-warnings) (14), [ui-containers](#ws-ui-containers) (90)
 
-**Волна 2:** [command-tokens](#ws-command-tokens) (4), [movement](#ws-movement) (7), [transport](#ws-transport) (3), [combat-order](#ws-combat-order) (3), [invasion](#ws-invasion) (4), [structures](#ws-structures) (5), [production](#ws-production) (5), [payment](#ws-payment) (3), [strategy-cards](#ws-strategy-cards) (14), [round-flow](#ws-round-flow) (1), [thunders-edge](#ws-thunders-edge) (6), [ui-nesting](#ws-ui-nesting) (12), [ui-plan-screen](#ws-ui-plan-screen) (15)
+**Волна 2:** [command-tokens](#ws-command-tokens) (0), [movement](#ws-movement) (7), [transport](#ws-transport) (3), [combat-order](#ws-combat-order) (3), [invasion](#ws-invasion) (4), [structures](#ws-structures) (5), [production](#ws-production) (5), [payment](#ws-payment) (1), [strategy-cards](#ws-strategy-cards) (14), [round-flow](#ws-round-flow) (0), [thunders-edge](#ws-thunders-edge) (6), [ui-nesting](#ws-ui-nesting) (12), [ui-plan-screen](#ws-ui-plan-screen) (15)
 
 **Волна 3:** [rivals](#ws-rivals) (5)
 
@@ -328,16 +328,7 @@ _Нет TODO._
 
 **Файлы потока:** `src/domain/project.ts (activation, statusTokens)`
 
-**Нужно ваше решение или прототип:** P2-016 (decision)
-
-Порядок исправления: сначала ошибки, затем проверки, модели, архитектура, остальное.
-
-| ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
-|---|---|---|---|---|---|---|---|
-| P2-018 | bug | 20.6 | [src/domain/replay/cards.ts:50](../../src/domain/replay/cards.ts#L50) | Второстепенное Construction в систему с моим жетоном законно (жетон уходит в снабжение), а здесь предупреждение | #construction | s |  |
-| P2-015 | check | 5.2, 89.1, 20.4 | [src/domain/replay/activation.ts:6](../../src/domain/replay/activation.ts#L6) | Активация системы со своим жетоном и тактика без жетона в тактическом резерве проходят молча: нарушения systemHasToken и poolNegative(tactic) | #activation | s |  |
-| P2-017 | check | 81.5, 37.3 | [src/domain/replay/status.ts:13](../../src/domain/replay/status.ts#L13) | Перераспределение не проверяет минус в резерве и флот меньше кораблей в системах (после статуса и после перестановки Warfare): poolNegative и fleetPool по всем системам | #fleet-pool #redistribute | s |  |
-| P2-016 | model | 20.3, 23.2 | [src/domain/replay/status.ts:7](../../src/domain/replay/status.ts#L7) | Жетонов приказа 16: сумма в резервах и на карте не ограничена. Нужна модель снабжения жетонов (решить, нужна ли) | #token-supply | m |  |
+_Нет TODO._
 
 <a id="ws-movement"></a>
 ### Движение и маршруты · `movement` · волна 2
@@ -429,7 +420,7 @@ _Нет TODO._
 |---|---|---|---|---|---|---|---|
 | P2-218 | bug | 49.5.1 | [src/ui/map/stage/HexStage.tsx:294](../../src/ui/map/stage/HexStage.tsx#L294) | Строение красится цветом держателя планеты: чужая база после захвата выглядит моей; брать владельца строения | #player-colour | s | P2-222 |
 | P2-222 | bug | 49.5.1, 63.4, 79.4 | [src/ui/map/TileView.tsx:223](../../src/ui/map/TileView.tsx#L223) | PDS и база рисуются за держателем планеты: после захвата чужие строения переходят к захватчику; рисовать по владельцу строения |  | s |  |
-| P2-026 | check | 24.2, 24.3, 24-note-1, 24-note-2, 63.3, 79.3, 85.4, 85.5, 85.6 | [src/domain/replay/cards.ts:60](../../src/domain/replay/cards.ts#L60) | Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется | #construction #limits | m |  |
+| P2-026 | check | 24.2, 24.3, 24-note-1, 24-note-2, 63.3, 79.3, 85.4, 85.5, 85.6 | [src/domain/replay/cards.ts:59](../../src/domain/replay/cards.ts#L59) | Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется | #construction #limits | m |  |
 | P2-024 | model | 49.5.1, 63.4, 79.4 | [src/domain/types.ts:305](../../src/domain/types.ts#L305) | У баз и PDS нет владельца: при захвате планеты чужие строения переходят к захватчику вместо уничтожения. Хранить владельца, уничтожать при смене контроля, миграция схемы | #structure-owner #schema | l |  |
 | P2-025 | model |  | [src/storage/schema.ts:191](../../src/storage/schema.ts#L191) | Миграция: владелец строений (P2-024) — существующие базы и PDS отдать тому, кто контролирует планету | #schema #migration | s | P2-024 |
 
@@ -450,7 +441,7 @@ _Нет TODO._
 |---|---|---|---|---|---|---|---|
 | P2-027 | bug | 68.3, 67.4.1 | [src/domain/replay/production.ts:12](../../src/domain/replay/production.ts#L12) | Пехота идёт на первую свою планету системы (в том числе только что захваченную), а не на планету с базой; productionGround принимается и на чужую планету (placesOf) | #placement | m |  |
 | P2-028 | check | 14.1, 67.6, 67-/-79 | [src/domain/replay/production.ts:39](../../src/domain/replay/production.ts#L39) | Производство не проверяет базу (сейчас «нет дока» считается в UI), блокаду и чужие корабли в системе: нарушения noProduction и productionBlockaded в домене | #blockade #no-dock | m |  |
-| P2-030 | check | 99.3 | [src/domain/replay/cards.ts:65](../../src/domain/replay/cards.ts#L65) | Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production | #warfare #card-production | s |  |
+| P2-030 | check | 99.3 | [src/domain/replay/cards.ts:64](../../src/domain/replay/cards.ts#L64) | Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production | #warfare #card-production | s |  |
 | P2-309 | check | 67-/-79, 79.4 | [src/ui/plan/editors/TacticalEditor.tsx:48](../../src/ui/plan/editors/TacticalEditor.tsx#L48) | «нет базы» считает UI по before.docks (чужая база тоже засчитывается); нужен код noProduction в домене, hasDock убрать | #duplicate-of-domain #warning-channel | m |  |
 | P2-029 | model | 68.1, 79.1, 67.5, 72.1, 96.3 | [src/domain/replay/production.ts:49](../../src/domain/replay/production.ts#L49) | Нет лимита Production и запаса отрядов: данные есть (UnitDef.limit, structures[].limit, structures[].levels.production), нужны нарушения productionOver и reinforcementsOut. Решить, нужно ли | #production-limit #reinforcements | m |  |
 
@@ -467,9 +458,7 @@ _Нет TODO._
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-031 | check | 34-note-2, 64-note-5 | [src/domain/replay/payment.ts:40](../../src/domain/replay/payment.ts#L40) | Чужая планета в оплате молча истощается и стоит 0: нарушение planetNotControlled | #payment | s |  |
-| P2-032 | check | 71-note-3 | [src/domain/replay/cards.ts:41](../../src/domain/replay/cards.ts#L41) | Готовит любые перечисленные планеты, в том числе чужие | #ready | s |  |
-| P2-366 | dup |  | [src/ui/plan/editors/ExpeditionEditor.tsx:30](../../src/ui/plan/editors/ExpeditionEditor.tsx#L30) | «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' \| 'influence'; доменный помощник оплаты части |  | s |  |
+| P2-366 | dup |  | [src/ui/plan/editors/ExpeditionEditor.tsx:30](../../src/ui/plan/editors/ExpeditionEditor.tsx#L30) | «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' \| 'influence'; доменный помощник оплаты части — P2 note: UI-файл вне списка файлов волны B для payment, рядом правит P2-365 (thunders-edge); оставлено, чтобы не править чужой модуль |  | s |  |
 
 <a id="ws-strategy-cards"></a>
 ### Карты стратегии · `strategy-cards` · волна 2
@@ -486,9 +475,9 @@ _Нет TODO._
 |---|---|---|---|---|---|---|---|
 | P2-034 | bug | 83.3 | [src/domain/strategy.ts:49](../../src/domain/strategy.ts#L49) | Стоимость основного берётся из сохранённого forToken, который ставит редактор при выборе карты; после смены карт раунда он устаревает. Выводить из round.strategyCard/backupCard при повторе; основное чужой карты — нарушение | #for-token | m |  |
 | P2-035 | bug | 83.3 | [src/state/gameStore.ts:75](../../src/state/gameStore.ts#L75) | Меняет карты раунда, не трогая forToken записей; после P2-034 флаг не нужен | #for-token | s | P2-034 |
-| P2-037 | bug | 45.2, 45-note-3 | [src/domain/replay/cards.ts:46](../../src/domain/replay/cards.ts#L46) | Очко по флажку effects.mecatol, а не по контролю Mecatol Rex (mr/mrte) в состоянии | #imperial #mecatol | s |  |
+| P2-037 | bug | 45.2, 45-note-3 | [src/domain/replay/cards.ts:45](../../src/domain/replay/cards.ts#L45) | Очко по флажку effects.mecatol, а не по контролю Mecatol Rex (mr/mrte) в состоянии | #imperial #mecatol | s |  |
 | P2-038 | bug | 99.1, 99-note-1 | [src/domain/strategy.ts:57](../../src/domain/strategy.ts#L57) | Warfare до Thunder's Edge всегда даёт жетон, даже если снять с карты нечего: давать только при снятом жетоне | #warfare | s |  |
-| P2-039 | bug | 92.4 | [src/domain/replay/cards.ts:44](../../src/domain/replay/cards.ts#L44) | effects.freeSecondary хранится, но расчёт его не читает: выбранные соперники платят жетон за второстепенное | #trade #rivals | s |  |
+| P2-039 | bug | 92.4 | [src/domain/replay/cards.ts:43](../../src/domain/replay/cards.ts#L43) | effects.freeSecondary хранится, но расчёт его не читает: выбранные соперники платят жетон за второстепенное | #trade #rivals | s |  |
 | P2-040 | bug | 32.2, 32.3, 32-note-3 | [src/domain/replay/cards.ts:33](../../src/domain/replay/cards.ts#L33) | Diplomacy: соперники не получают жетон в выбранной системе; нет нарушений «больше двух планет», «Mecatol Rex», «система без моей планеты» (лимит 2 сейчас только в UI) | #diplomacy #rivals | m |  |
 | P2-331 | bug | 45.2, 45-note-3 | [src/ui/plan/editors/StrategyEditor.tsx:288](../../src/ui/plan/editors/StrategyEditor.tsx#L288) | очко Imperial по флажку, доступному и без контроля Mecatol Rex; убрать переключатель, очко считает домен по контролю |  | m |  |
 | P2-036 | check | 20.5, 82.1, 83.4, 83.7, 92.4.2 | [src/domain/replay/cards.ts:15](../../src/domain/replay/cards.ts#L15) | Нет понятия «чья карта»: второстепенное своей карты и повтор второстепенного одной карты за раунд проходят молча | #secondary | m |  |
@@ -508,11 +497,7 @@ _Нет TODO._
 
 **Файлы потока:** `src/domain/round.ts (new)`
 
-Порядок исправления: сначала ошибки, затем проверки, модели, архитектура, остальное.
-
-| ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
-|---|---|---|---|---|---|---|---|
-| P2-042 | check | 3.3, 3.4, 82.2, 40.2 | [src/domain/replay/round.ts:8](../../src/domain/replay/round.ts#L8) | Пас ничего не проверяет: пас до своих стратегических действий, действия после паса, действие не в своей фазе | #pass | m |  |
+_Нет TODO._
 
 <a id="ws-thunders-edge"></a>
 ### Thunder's Edge · `thunders-edge` · волна 2
@@ -616,22 +601,15 @@ _Нет TODO._
 |---|---|
 | entropic-scars-2 | P2-047 |
 | space-stations-2 | P2-048 |
-| 3.3 | P2-042 |
-| 3.4 | P2-042 |
 | space-stations-4 | P2-048 |
 | expedition-4.5 | P2-045, P2-365 |
 | expedition-5 | P2-046 |
 | fracture-5 | P2-049 |
-| 5.2 | P2-015 |
 | 6-note-2 | P2-010, P2-011 |
 | 14.1 | P2-028 |
 | 16.3 | P2-014 |
 | 16-note-4 | P2-014 |
-| 20.3 | P2-016 |
-| 20.4 | P2-015 |
 | 20.5 | P2-036 |
-| 20.6 | P2-018 |
-| 23.2 | P2-016 |
 | 24 | P2-416 |
 | 24-note-1 | P2-026 |
 | 24.2 | P2-026 |
@@ -644,9 +622,6 @@ _Нет TODO._
 | 32.2 | P2-040, P2-326 |
 | 32.3 | P2-040, P2-326 |
 | 32-note-3 | P2-040 |
-| 34-note-2 | P2-031 |
-| 37.3 | P2-017 |
-| 40.2 | P2-042 |
 | 41.3 | P2-007 |
 | 41-note-6 | P2-007, P2-062 |
 | 42.4.4 | P2-020 |
@@ -664,14 +639,13 @@ _Нет TODO._
 | 58.3.5 | P2-009 |
 | 63.3 | P2-026 |
 | 63.4 | P2-024, P2-222 |
-| 64-note-5 | P2-031 |
 | 67.4.1 | P2-027 |
 | 67.5 | P2-029 |
 | 67.6 | P2-028 |
 | 67-/-79 | P2-028, P2-309 |
 | 68.1 | P2-029 |
 | 68.3 | P2-027 |
-| 71-note-3 | P2-032, P2-326 |
+| 71-note-3 | P2-326 |
 | 72.1 | P2-029 |
 | 76.1 | P2-021 |
 | 76.2 | P2-019 |
@@ -679,16 +653,13 @@ _Нет TODO._
 | 79.1 | P2-029 |
 | 79.3 | P2-026 |
 | 79.4 | P2-024, P2-222, P2-309 |
-| 81.5 | P2-017 |
 | 82.1 | P2-036 |
-| 82.2 | P2-042 |
 | 83.3 | P2-034, P2-035, P2-063 |
 | 83.4 | P2-036 |
 | 83.7 | P2-036 |
 | 85.4 | P2-026 |
 | 85.5 | P2-026 |
 | 85.6 | P2-026 |
-| 89.1 | P2-015 |
 | 89.3 | P2-019 |
 | 89.4 | P2-021 |
 | 90.10 | P2-041 |
@@ -707,6 +678,6 @@ _Нет TODO._
 
 ## По слоям и тегам
 
-Слои: domain 43, storage 1, state 1, i18n 2, docs 3, ui 190.
+Слои: domain 36, storage 1, state 1, i18n 2, docs 3, ui 190.
 
-Теги: #duplicate-of-domain 21, #rivals 16, #player-colour 15, #inline-style 13, #warning-channel 10, #unit-tile 9, #svg 7, #confirm-bar 6, #modal 5, #section-title 5, #drawer-sheet 5, #player-dot 5, #hex-stage 4, #section 4, #player-choice 4, #map-pick 4, #for-token 3, #route-badge 3, #legend 3, #popover 3, #upgrade-toggle 3, #srp 2, #gravity-rift 2, #route 2, #Creuss 2, #pickup 2, #token 2, #capacity 2, #fleet-pool 2, #construction 2, #control 2, #schema 2, #warfare 2, #payment 2, #expedition 2, #i18n 2, #losses 2, #nesting 2, #command-token 2, #ingress 2, #drawer 2, #layout 2, #panel 2, #flight 2, #new-entry 2, #thunders-edge 2, #valid-sources 2, #floating-card 2, #contract-test 1, #route-graph 1, #skipped-stop 1, #route-highlight 1, #off-map-home 1, #hyperlane 1, #left-behind 1, #activation 1, #token-supply 1, #redistribute 1, #battle 1, #landing 1, #custodians 1, #structure-owner 1, #migration 1, #limits 1, #placement 1, #blockade 1, #no-dock 1, #production-limit 1, #reinforcements 1, #card-production 1, #ready 1, #ocp 1, #card-handlers 1, #secondary 1, #imperial 1, #mecatol 1, #trade 1, #diplomacy 1, #technology 1, #pass 1, #game-as 1, #entropic-scar 1, #space-station 1, #fracture 1, #comments 1, #enemy-units 1, #production 1, #structures 1, #stacks 1, #planet 1, #close-button 1, #hyperlanes 1, #banner 1, #chips 1, #map-builder 1, #overlays 1, #editor-frame 1, #state-machine 1, #highlight 1, #card-targets 1, #route-hint 1, #perf 1, #editor-head 1, #card-purchases 1, #danger 1, #import 1, #faction-groups 1, #selected-state 1, #small-button 1, #panel-reset 1.
+Теги: #duplicate-of-domain 21, #rivals 16, #player-colour 15, #inline-style 13, #warning-channel 10, #unit-tile 9, #svg 7, #confirm-bar 6, #modal 5, #section-title 5, #drawer-sheet 5, #player-dot 5, #hex-stage 4, #section 4, #player-choice 4, #map-pick 4, #for-token 3, #route-badge 3, #legend 3, #popover 3, #upgrade-toggle 3, #srp 2, #gravity-rift 2, #route 2, #Creuss 2, #pickup 2, #token 2, #capacity 2, #control 2, #schema 2, #warfare 2, #expedition 2, #i18n 2, #losses 2, #nesting 2, #command-token 2, #ingress 2, #drawer 2, #layout 2, #panel 2, #flight 2, #new-entry 2, #thunders-edge 2, #valid-sources 2, #floating-card 2, #contract-test 1, #route-graph 1, #skipped-stop 1, #route-highlight 1, #off-map-home 1, #hyperlane 1, #left-behind 1, #fleet-pool 1, #battle 1, #landing 1, #custodians 1, #structure-owner 1, #migration 1, #construction 1, #limits 1, #placement 1, #blockade 1, #no-dock 1, #production-limit 1, #reinforcements 1, #card-production 1, #ocp 1, #card-handlers 1, #secondary 1, #imperial 1, #mecatol 1, #trade 1, #diplomacy 1, #technology 1, #game-as 1, #entropic-scar 1, #space-station 1, #fracture 1, #comments 1, #enemy-units 1, #production 1, #payment 1, #structures 1, #stacks 1, #planet 1, #close-button 1, #hyperlanes 1, #banner 1, #chips 1, #map-builder 1, #overlays 1, #editor-frame 1, #state-machine 1, #highlight 1, #card-targets 1, #route-hint 1, #perf 1, #editor-head 1, #card-purchases 1, #danger 1, #import 1, #faction-groups 1, #selected-state 1, #small-button 1, #panel-reset 1.

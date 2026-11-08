@@ -2,10 +2,10 @@
 import { violation } from '../rules/registry';
 import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, type CardEntry } from '../strategy';
 import type { DataPack, Game, GameState, Warning } from '../types';
-import { pay } from './payment';
+import { pay, readyPlanets } from './payment';
 import { placeProduction } from './production';
 import { addUpgrades } from './state';
-import { checkTokensGiven } from './status';
+import { checkPoolChange, checkTokensGiven } from './status';
 import { checkSystem } from './transport';
 
 /** Applies what a strategy card can track; everything else about it is shown only. `primaries` holds the cards of this round's so far. */
@@ -38,8 +38,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     state[pool] += change;
     if (change < 0 && state[pool] < 0) warnings.push(violation('poolNegative', { pool, have: state[pool] }));
   }
-  // TODO(P2-032) #ws:payment #type:check #rule:71-note-3 #test:071-readied #size:s #ready — Готовит любые перечисленные планеты, в том числе чужие
-  state.exhausted = state.exhausted.filter(id => !effects.readied?.includes(id));
+  readyPlanets(state, effects.readied ?? [], warnings);
   addUpgrades(state, entry.upgrades);
   // TODO(P2-039) #ws:strategy-cards #type:bug #rule:92.4 #test:092-trade #size:s #trade #rivals — effects.freeSecondary хранится, но расчёт его не читает: выбранные соперники платят жетон за второстепенное
   if (primary && entry.card === CARD.trade) state.tradeGoods += 3;
@@ -47,9 +46,8 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   if (primary && entry.card === CARD.imperial && effects.mecatol) state.vp += 1;
   // The card itself says so: before Thunder's Edge this secondary leaves its token in the chosen system.
   if (!primary && entry.card === CARD.construction && effects.systemId && !game.expansions.includes('te')) {
-    // TODO(P2-018) #ws:command-tokens #type:bug #rule:20.6 #test:020-command-tokens #size:s #construction — Второстепенное Construction в систему с моим жетоном законно (жетон уходит в снабжение), а здесь предупреждение
-    if (state.tokensOnMap.includes(effects.systemId)) warnings.push(violation('systemHasToken', { systemId: effects.systemId }, 'card'));
-    else state.tokensOnMap.push(effects.systemId);
+    // A token placed where one of mine already is goes back to reinforcements (20.6): no warning, still one token.
+    if (!state.tokensOnMap.includes(effects.systemId)) state.tokensOnMap.push(effects.systemId);
   }
   // The secondary places a structure only and the editor no longer offers units; a plan saved with them keeps them, and is told.
   if (!primary && entry.card === CARD.construction && effects.production) warnings.push(violation('constructionUnits', {}));
@@ -57,6 +55,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   if (primary && entry.card === CARD.warfare && effects.systemId && !game.expansions.includes('te')) {
     state.tokensOnMap = state.tokensOnMap.filter(id => id !== effects.systemId);
   }
+  warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card'));
   // TODO(P2-026) #ws:structures #type:check #rule:24.2 #rule:24.3 #rule:24-note-1 #rule:24-note-2 #rule:63.3 #rule:79.3 #rule:85.4 #rule:85.5 #rule:85.6 #test:024-construction #test:063-pds #test:079-space-dock #test:085-structures #size:m #construction #limits — Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется
   for (const { kind, planetId } of effects.structures ?? []) {
     if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + 1;

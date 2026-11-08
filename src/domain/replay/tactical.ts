@@ -35,7 +35,7 @@ export function applyTactical(
 ): void {
   const target = entry.systemId;
   if (target === null) return;
-  warnings.push(...checkActivation());
+  warnings.push(...checkActivation(state, target, entry));
   activate(state, target, entry);
   const groups = movement(game, state, target, entry, pack, warnings);
   warnings.push(...checkGroups(game, state, groups, pack));
