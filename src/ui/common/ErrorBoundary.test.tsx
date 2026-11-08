@@ -1,21 +1,24 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { sampleGame } from '../../storage/fixture';
 import { ErrorBoundary } from './ErrorBoundary';
 
-vi.mock('./download', () => ({ downloadGame: vi.fn() }));
-import { downloadGame } from './download';
-
 function Bomb(): never {
   throw new Error('boom');
 }
 
+/** Draws like a screen of the open game: crashes while one is open, draws the game screen once it is closed. */
+function GameBomb() {
+  const game = useGame(s => s.game);
+  if (game) throw new Error('replay failed');
+  return <p>game screen</p>;
+}
+
 beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
-  useGame.setState({ game: null });
+  useGame.setState({ game: null, loadFailure: null, brokenSaves: {} });
 });
 afterEach(() => {
   cleanup();
@@ -23,14 +26,22 @@ afterEach(() => {
   setLanguage('ru');
 });
 
-test('a crash shows the error and exports the open game', async () => {
-  setLanguage('en');
+test('a crash of an open game closes it, marks it as failed and draws the app again instead of a blank page', async () => {
   const game = sampleGame();
   useGame.setState({ game });
+  render(<ErrorBoundary><GameBomb /></ErrorBoundary>);
+  expect(await screen.findByText('game screen')).toBeVisible();
+  expect(useGame.getState().game).toBeNull();
+  expect(useGame.getState().loadFailure).toEqual({ id: game.id, error: 'replay failed' });
+  expect(useGame.getState().brokenSaves).toEqual({ [game.id]: 'replay failed' });
+});
+
+test('a crash that stays with no game open shows the error, without a loop', () => {
+  setLanguage('en');
+  useGame.setState({ game: sampleGame() });
   render(<ErrorBoundary><Bomb /></ErrorBoundary>);
   expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong: boom');
-  await userEvent.click(screen.getByRole('button', { name: 'Export' }));
-  expect(downloadGame).toHaveBeenCalledWith(game);
+  expect(useGame.getState().game).toBeNull();
 });
 
 test('the message is in the chosen language, and with no open game there is nothing to export', () => {

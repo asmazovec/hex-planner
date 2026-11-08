@@ -9,6 +9,14 @@ test('экспорт и импорт туда и обратно', () => {
   expect(importGame(exportGame(game))).toEqual({ ok: true, game });
 });
 
+test('a file a migration chokes on is refused as damaged, the import does not throw', () => {
+  for (const opponents of [[null], [1, 'x'], [[]]]) {
+    const text = JSON.stringify({ ...gameOfSchema1(), opponents });
+    expect(() => importGame(text)).not.toThrow();
+    expect(importGame(text)).toEqual({ ok: false, reason: 'invalidSchema' });
+  }
+});
+
 test('отказ на повреждённом файле и файле новее схемы', () => {
   expect(importGame('{oops')).toEqual({ ok: false, reason: 'invalidJson' });
   expect(importGame('{"schemaVersion":1}')).toEqual({ ok: false, reason: 'invalidSchema' });

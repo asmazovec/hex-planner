@@ -6,13 +6,14 @@ import { homeNotes } from '../../domain/strategy';
 import type { ExpansionId } from '../../domain/types';
 import { currentLanguage, LANGUAGES, setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
-import { deleteGame, listGames, saveGame, type GameSummary } from '../../storage/db';
+import { deleteGame, listGames, loadRawGame, saveGame, type GameSummary } from '../../storage/db';
+import { errorText } from '../../storage/errorText';
 import { importGame, withFreeId } from '../../storage/transfer';
 import { Banner } from '../feedback/Banner';
 import { blur as blurSetting, energy as energySetting, flightLoop as flightLoopSetting } from '../common/preferences';
 import { shareLinkQuery } from '../../domain/shareLink';
 import { NoteField } from '../primitives/NoteField';
-import { downloadGame } from '../common/download';
+import { downloadGame, downloadRaw } from '../common/download';
 import { EXPANSION_NAMES, EXPANSIONS } from '../common/expansions';
 import { gameAddress } from '../common/gameAddress';
 import { usePreference } from '../common/usePreference';
@@ -36,9 +37,13 @@ export function GameScreen() {
   const setDraftExpansions = useGame(s => s.setDraftExpansions);
   const swapSeats = useGame(s => s.swapSeats);
   const setName = useGame(s => s.setName);
+  const loadFailure = useGame(s => s.loadFailure);
+  const brokenSaves = useGame(s => s.brokenSaves);
 
   const [saved, setSaved] = useState<GameSummary[]>([]);
   const [importError, setImportError] = useState<string | null>(null);
+  /** The saves could not be listed, or a step with one failed: the screen still works, the player is told. */
+  const [storageError, setStorageError] = useState<string | null>(null);
   /** The save asked about before it goes: deleting cannot be undone. */
   const [asked, setAsked] = useState<string | null>(null);
   const [blur, setBlur] = usePreference(blurSetting);
@@ -53,9 +58,12 @@ export function GameScreen() {
   /** The list reloads after pending saves finish whenever the open game changes (new, opened, imported). */
   useEffect(() => {
     let live = true;
-    flushSaves().then(listGames).then(list => live && setSaved(list), () => live && setSaved([]));
+    flushSaves().then(listGames).then(
+      list => { if (live) { setSaved(list); setStorageError(null); } },
+      error => { if (live) { setSaved([]); setStorageError(t('load.listFailed', { error: errorText(error) })); } },
+    );
     return () => { live = false; };
-  }, [open?.id]);
+  }, [open?.id, loadFailure, t]);
 
   const toggle = (id: ExpansionId) => {
     const on = game.expansions.includes(id);
@@ -65,11 +73,26 @@ export function GameScreen() {
   const remove = async (id: string) => {
     setAsked(null);
     if (open?.id === id) closeGame();
-    // A save still queued for this game must not bring it back.
-    await flushSaves();
-    await deleteGame(id);
-    setSaved(await listGames());
+    try {
+      // A save still queued for this game must not bring it back.
+      await flushSaves();
+      await deleteGame(id);
+      setSaved(await listGames());
+    } catch (error) {
+      setStorageError(t('load.deleteFailed', { error: errorText(error) }));
+    }
   };
+
+  /** A save that does not open goes to a file as it lies, so nothing of it is lost. */
+  const exportRaw = async (id: string) => {
+    try {
+      downloadRaw(id, await loadRawGame(id));
+    } catch (error) {
+      setStorageError(t('load.exportFailed', { error: errorText(error) }));
+    }
+  };
+
+  const failedName = loadFailure?.id ? saved.find(s => s.id === loadFailure.id)?.name : undefined;
 
   /** A link to what stands on the screen: the map, the seats and the expansions, not the plans. */
   const copyLink = async () => {
@@ -96,7 +119,7 @@ export function GameScreen() {
       await openGame(imported.id);
       setImportError(null);
     } catch (error) {
-      setImportError(error instanceof Error ? error.message : String(error));
+      setImportError(errorText(error));
     }
   };
 
@@ -104,6 +127,15 @@ export function GameScreen() {
     <div className="players-screen">
       <div className="players-main">
         {importError && <Banner kind="error" message={t('import.failed', { reason: importError })} />}
+        {loadFailure && (
+          <Banner
+            kind="error"
+            message={loadFailure.id === null
+              ? t('load.listFailed', { error: loadFailure.error })
+              : t(failedName ? 'load.failedNamed' : 'load.failedBecause', { name: failedName, error: loadFailure.error })}
+          />
+        )}
+        {storageError && <Banner kind="error" message={storageError} />}
         <PlayerList drag={drag} />
       </div>
       <aside className="players-aside">
@@ -144,13 +176,18 @@ export function GameScreen() {
         <LayoutPicker game={game} pack={pack} />
         <div className="side-group">
           <SectionTitle as="p" className="side-label">{t('game.saved')}</SectionTitle>
-          {saved.length === 0 && <p className="side-note">{t('game.none')}</p>}
+          {saved.length === 0 && !storageError && <p className="side-note">{t('game.none')}</p>}
           <ul className="saved-list">
-            {saved.map(s => (
-              <li key={s.id}>
+            {saved.map(s => {
+              /** Listed as it is, with its export and deletion: a save that does not open is never dropped on its own. */
+              const broken = s.broken || s.id in brokenSaves;
+              return (
+              <li key={s.id} className={broken ? 'saved-broken' : undefined}>
                 <span>
-                  <strong>{s.name ?? factionName(s.faction)}</strong>
-                  <small>{[...(s.name ? [factionName(s.faction)] : []), t('game.playersShort', { count: s.playerCount })].join(' · ')}</small>
+                  <strong>{s.name ?? (s.faction ? factionName(s.faction) : s.id)}</strong>
+                  {broken
+                    ? <small role="status">{t('load.failed')}</small>
+                    : <small>{[...(s.name ? [factionName(s.faction)] : []), t('game.playersShort', { count: s.playerCount })].join(' · ')}</small>}
                 </span>
                 {/* TODO(P2-436) #ws:ui-containers #type:ui #size:s #needs:prototype #confirm-bar — своя строка подтверждения удаления, ещё один вид рядом с .player-confirm и строками LayoutPicker/MapStringImport: общий ConfirmBar */}
                 {asked === s.id
@@ -161,12 +198,15 @@ export function GameScreen() {
                   )
                   : (
                     <>
-                      <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>
+                      {broken
+                        ? <button type="button" onClick={() => void exportRaw(s.id)}>{t('load.exportRaw')}</button>
+                        : <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>}
                       <HexRemove label={t('game.delete')} onClick={() => setAsked(s.id)} />
                     </>
                   )}
               </li>
-            ))}
+              );
+            })}
           </ul>
           <div className="side-actions">
             {open && <button type="button" onClick={closeGame}>{t('players.newGame')}</button>}
