@@ -487,7 +487,6 @@
       "board": "Взять на борт в {{name}}",
       "pickup": "По дороге забрать в {{name}}",
       "cargo": "Груз {{load}} из {{capacity}}",
-      "overCapacity": "Больше, чем мест",
       "losses": "Потери в бою",
       "landing": "Высадка на {{planet}}",
       "build": "Построить",

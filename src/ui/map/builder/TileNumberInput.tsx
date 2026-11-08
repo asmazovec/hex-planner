@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { resolveTile, tileSuggestions } from '../../../domain/mapBuilder';
 import type { DataPack } from '../../../domain/types';
+import { Banner } from '../../feedback/Banner';
 
 export interface TileNumberInputProps {
   pack: DataPack;
@@ -58,8 +59,7 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
         <button type="submit" className="primary">{t('builder.set')}</button>
         <button type="button" disabled={!value} onClick={() => onChange(null)}>{t('builder.clear')}</button>
       </form>
-      {/* TODO(P2-256) #ws:ui-containers #type:ui #size:s #banner — Разметка баннера руками (p.banner.banner-warning): Banner kind="warning" */}
-      {error && <p role="alert" className="banner banner-warning">{error}</p>}
+      {error && <Banner kind="warning" message={error} alert />}
       {/* TODO(P2-257) #ws:ui-css #type:ui #size:s #chips — Ряд подсказок на .row без общего класса, хотя есть .chips: перевести на .chips */}
       {suggestions.length > 0 && (
         <div className="row" role="group" aria-label={t('builder.suggestions')}>

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DataPack, Game, Warning } from '../../domain/types';
 import { systemName } from '../map/systemName';
@@ -29,19 +30,20 @@ export function WarningText({ warning, game, pack }: WarningTextProps) {
   return <span className="warning-text">{text}</span>;
 }
 
-export interface WarningListProps {
-  warnings: Warning[];
-  game: Game;
-  pack: DataPack;
-}
+export type WarningListProps = {
+  /** `block` stands in a block of an editor with the orange edge; `row` sits in a row that marks itself. */
+  variant?: 'block' | 'row';
+} & ({ warnings: Warning[]; game: Game; pack: DataPack } | { message: ReactNode });
 
-// TODO(P2-380) #ws:ui-warnings #type:ui #warning-channel — нет варианта «в строке» и произвольного текста, поэтому EntryList, HexStage, ShareConflict собирают своё; добавить variant и message
-/** The warnings of one block, inside that block and marked the same way everywhere. */
-export function WarningList({ warnings, game, pack }: WarningListProps) {
+/** The warnings of one block, inside that block and marked the same way everywhere; `message` is a free text in the same look. */
+export function WarningList(props: WarningListProps) {
   const { t } = useTranslation();
+  const edge = props.variant === 'row' ? '' : ' place-warnings';
+  if ('message' in props) return <p className={`warning-text${edge}`} role="status">{props.message}</p>;
+  const { warnings, game, pack } = props;
   if (warnings.length === 0) return null;
   return (
-    <ul className="warning-list place-warnings" aria-label={t('plan.tactical.warnings')}>
+    <ul className={`warning-list${edge}`} aria-label={props.variant === 'row' ? undefined : t('plan.tactical.warnings')}>
       {warnings.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
     </ul>
   );

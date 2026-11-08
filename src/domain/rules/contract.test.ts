@@ -1,11 +1,12 @@
 /**
  * Contract of the rule registry: every warning code has its rules and step, every registered code is exercised by a
- * rules test, and only the domain creates warnings.
+ * rules test, every step has a block to be shown in, and only the domain creates warnings.
  */
 import { describe, expect, test } from 'vitest';
 import { WARNING_CODES, type WarningCode } from '../types';
 import { forecast, HOME, NEAR, rulesGame, rulesPack, tactical } from './kit';
 import { RULES, STEPS } from './registry';
+import { allPlaces, placesOf, STEP_PLACES } from '../../ui/feedback/warningPlaces';
 
 const rulesTests = import.meta.glob<string>('./lrr/*.test.ts', { query: '?raw', import: 'default', eager: true });
 const uiSources = import.meta.glob<string>(['../../ui/**/*.{ts,tsx}', '!../../ui/**/*.test.*'], { query: '?raw', import: 'default', eager: true });
@@ -34,6 +35,17 @@ describe('rule registry', () => {
         .filter(match => codes.has(match[1]))
         .map(match => `${path}: ${match[1]}`));
     expect(offenders).toEqual([]);
+  });
+
+  test('every step has a place to be shown: a block of an editor takes the warnings of each step, and of each override', () => {
+    for (const step of STEPS) expect(STEP_PLACES[step].length, step).toBeGreaterThan(0);
+    for (const code of WARNING_CODES) expect(placesOf({ code, params: {} }).length, code).toBeGreaterThan(0);
+    // A block takes the warnings of a place by `placer.at('place')`, or the shop of the big hex by its list of places.
+    const taken = new Set(Object.values(uiSources).flatMap(text => [
+      ...[...text.matchAll(/\.at\(\s*'(\w+)'/g)].map(match => match[1]),
+      ...[...text.matchAll(/WarningPlace\[\]\s*=\s*([^;]+);/g)].flatMap(match => [...match[1].matchAll(/'(\w+)'/g)].map(m => m[1])),
+    ]));
+    expect(allPlaces().filter(place => !taken.has(place))).toEqual([]);
   });
 
   test('a warning of the replay knows its rule, step and place, and still equals its plain code and params', () => {

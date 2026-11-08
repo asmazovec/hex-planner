@@ -12,7 +12,10 @@ import type { Warning, WarningCode } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { CARD, type CardEntry } from '../../domain/strategy';
+import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
+import { EntrySteps } from '../plan/EntrySteps';
+import { WarningList } from './WarningText';
 import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
@@ -76,9 +79,19 @@ describe('where a warning goes', () => {
 
   test('a filter leaves the other warnings of the place to a later call', () => {
     const speed: Warning = { code: 'speedShort', params: { from: SOURCE, unit: 'carrier', move: 1, steps: 2 } };
-    const placer = placeWarnings([GROUP, speed]);
-    expect(placer.at('route', w => w.code === 'capacityGroup')).toEqual([GROUP]);
+    const blocked: Warning = { code: 'routeBlocked', params: { from: SOURCE, systemId: HOME } };
+    const placer = placeWarnings([blocked, speed]);
+    expect(placer.at('route', w => w.code === 'routeBlocked')).toEqual([blocked]);
     expect(placer.at('route')).toEqual([speed]);
+  });
+
+  test('the step of a warning decides its block; an override only where one step speaks to several blocks', () => {
+    expect(placesOf(GROUP)).toEqual(['cargo']);
+    expect(placesOf({ code: 'unitsMissing', params: {}, step: 'combat' })).toEqual(['battle']);
+    expect(placesOf({ code: 'unitsMissing', params: {}, step: 'round' })).toEqual(['units']);
+    expect(placesOf({ code: 'poolNegative', params: { pool: 'tactic' }, step: 'activation' })).toEqual(['system']);
+    expect(placesOf({ code: 'poolNegative', params: {} })).toEqual(['tokens']);
+    expect(placesOf({ code: 'capacitySystem', params: {}, step: 'combat' })).toEqual(['route', 'action', 'production']);
   });
 });
 
@@ -245,5 +258,62 @@ describe('the tactical editor', () => {
   test('all warnings wear the same mark of a block', () => {
     const { container } = editor([SHORT, GROUP], { production: { fighter: 2 } });
     expect(container.querySelectorAll('.place-warnings .warning-text, .warning-text.place-warnings').length).toBe(container.querySelectorAll('.warning-text').length);
+  });
+
+  test('the activation speaks in the block of the system: no token left to spend, or one already there', () => {
+    editor([{ code: 'poolNegative', params: { pool: 'tactic', have: -1 }, step: 'activation' }, { code: 'systemHasToken', params: { systemId: HOME } }]);
+    expect(blockOf(/below zero/)).toMatch(/^Active system/);
+    expect(blockOf(/already holds your token/)).toMatch(/^Active system/);
+  });
+
+  test('more lost in battle than there was stands in the battle', () => {
+    editor([{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'combat' }], { losses: { cruiser: 1 } });
+    expect(blockOf(/missing 1/)).toMatch(/^Battle/);
+  });
+});
+
+describe('the rest of an editor stands first', () => {
+  test('in the adjustment the units stand in the system, anything else above the blocks', () => {
+    const entry = { id: 'a', type: 'adjustment', status: 'planned', label: '', delta: {} } as Parameters<typeof AdjustmentEditor>[0]['entry'];
+    const { container } = render(
+      <AdjustmentEditor
+        game={game()} pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined}
+        warnings={[{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'round' }, SHORT]}
+      />,
+    );
+    expect(screen.getByRole('group', { name: 'System' })).toHaveTextContent(/Cruiser/);
+    const rest = screen.getByText(/short by 2/);
+    expect(rest.closest('.editor-section')).toBeNull();
+    expect(rest.compareDocumentPosition(container.querySelector('.editor-section')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  test('in the expedition what no block takes stands above the parts', () => {
+    const { container } = render(
+      <ExpeditionEditor game={game()} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={[LANDING]} onChange={() => undefined} />,
+    );
+    expect(screen.getByText(/^Landing needs/).compareDocumentPosition(container.querySelector('.slice-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+describe('the steps of an action', () => {
+  test('a flight says what the domain finds wrong with it: the cargo by the cargo, the rest by its start', () => {
+    const entry = {
+      id: 'e', type: 'tactical', status: 'planned', systemId: HOME, moves: [{ from: SOURCE, units: { infantry: 2 } }],
+      landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
+    } as unknown as TacticalEntry;
+    const speed: Warning = { code: 'speedShort', params: { from: SOURCE, unit: 'carrier', move: 1, steps: 2 } };
+    const { container } = render(<EntrySteps entry={entry} game={game()} pack={pack} before={before()} warnings={[GROUP, speed]} />);
+    expect(container.querySelector('.stop-target')).toHaveTextContent(/capacity/i);
+    expect(container.querySelector('.stop')).toHaveTextContent(/carrier/i);
+    expect(container.querySelector('.stops')).toHaveClass('stops-over');
+  });
+});
+
+describe('the list of warnings', () => {
+  test('a free text wears the same mark as a warning of a block; in a row it leaves the mark to the row', () => {
+    const { container } = render(<><WarningList message="Taken" /><WarningList variant="row" warnings={[SHORT]} game={game()} pack={pack} /></>);
+    expect(screen.getByRole('status')).toHaveClass('warning-text', 'place-warnings');
+    expect(container.querySelector('ul')).toHaveClass('warning-list');
+    expect(container.querySelector('ul')).not.toHaveClass('place-warnings');
   });
 });

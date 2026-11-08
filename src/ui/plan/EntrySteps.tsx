@@ -4,7 +4,9 @@ import { cardSummary } from '../../data/cardSummaries';
 import { strategyCards } from '../../data/loadPack';
 import { sourceSlot, tacticalMeters } from '../../domain/project';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
-import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId, Warning } from '../../domain/types';
+import { flightOf, placeWarnings } from '../feedback/warningPlaces';
+import { WarningList } from '../feedback/WarningText';
 import { currentLanguage } from '../../i18n';
 import { opponentName } from '../players/names';
 import { playerColour } from '../units/sprites';
@@ -39,10 +41,12 @@ export interface EntryStepsProps {
   pack: DataPack;
   /** The state just before the entry. */
   before: GameState;
+  /** The entry's warnings about its flights; each stands in the flight it speaks of. */
+  warnings?: Warning[];
 }
 
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
-export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
+export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntryStepsProps) {
   const { t } = useTranslation();
   const lang = currentLanguage();
   const name = (slot: string) => systemName(game, pack, slot);
@@ -89,16 +93,20 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
             stops.set(slot, held);
           }
           const { group: load } = tacticalMeters(game, e, source, before, pack);
-          const over = load.load > load.capacity;
+          // What rides with the ships is said by the cargo, the rest of the flight by its start.
+          const placer = placeWarnings(warnings.filter(w => flightOf(w, game, pack, e) === source));
+          const cargoWarnings = placer.at('cargo');
+          const startWarnings = placer.rest();
+          const over = cargoWarnings.length > 0;
           return (
             <section key={source} className="flight">
               <strong>{t('plan.steps.fly', { path: [source, ...via, target].map(name).join(' → ') })}</strong>
               <ol className={`stops${over ? ' stops-over' : ''}`}>
                 <li className="stop">
                   <span className="stop-name">{name(source)}</span>
-                  {/* TODO(P2-344) #ws:ui-warnings #type:ui #warning-channel — «никто не летит» и «перегруз» (ниже) — свои span.warning-text по tacticalMeters; показывать коды записи (unitsMissing, capacityGroup) через WarningList */}
-                  {hasUnits(ships) ? pictures(ships) : <span className="warning-text">{t('plan.steps.nobody')}</span>}
+                  {hasUnits(ships) ? pictures(ships) : <span className="stop-name">{t('plan.steps.nobody')}</span>}
                   {hasUnits(board) && <><span className="stop-name">{t('plan.steps.board', { name: name(source) })}</span>{pictures(board)}</>}
+                  <WarningList variant="row" warnings={startWarnings} game={game} pack={pack} />
                 </li>
                 {via.map(slot => {
                   const taken = stops.get(slot);
@@ -112,8 +120,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
                 <li className="stop stop-target">
                   <span className="stop-name">{name(target)}</span>
                   {load.load > 0 && <span className="stop-name">{t('plan.steps.cargo', { load: load.load, capacity: load.capacity })}</span>}
-                  {/* TODO(P2-345) #ws:ui-warnings #type:ui #size:s #dep:P2-344 — перегруз из tacticalMeters дублирует capacityGroup */}
-                  {over && <span className="warning-text">{t('plan.steps.overCapacity')}</span>}
+                  <WarningList variant="row" warnings={cargoWarnings} game={game} pack={pack} />
                 </li>
               </ol>
             </section>

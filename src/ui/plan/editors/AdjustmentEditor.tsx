@@ -5,6 +5,7 @@ import { NoteField } from '../../primitives/NoteField';
 import { HexRemove } from '../../primitives/Icon';
 import { Stepper } from '../../primitives/Stepper';
 import { systemName } from '../../map/systemName';
+import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
@@ -35,6 +36,9 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
     signed(delta.units?.units ?? {}),
     ...Object.entries(delta.ground ?? {}).filter(([, units]) => signed(units)).map(([planetId, units]) => `${pack.planets[planetId]?.name ?? planetId}: ${signed(units)}`),
   ].filter(Boolean);
+  // The units of the system change in its block; the rest has no block here.
+  const placer = placeWarnings(warnings);
+  const systemWarnings = [...placer.at('units'), ...placer.at('system')];
 
   // TODO(P2-362) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 #dep:P2-316 — чужой класс .tactical-editor (которого нет в CSS), своя голова и ручные блоки; общая рамка редактора и Section
   return (
@@ -43,6 +47,8 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
         <h2>{t('plan.menu.adjustment')}</h2>
         <button type="button" className="primary" onClick={onDone}>{t('plan.tactical.done')}</button>
       </div>
+      {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
+      <WarningList warnings={placer.rest()} game={game} pack={pack} />
 
       <div className="editor-section">
         <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
@@ -68,8 +74,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
             </div>
           )
           : <button type="button" aria-pressed={picking} onClick={onPickSystem}>{t('plan.entries.pickSystem')}</button>}
-        {/* TODO(P2-363) #ws:ui-warnings #type:ui #size:s — все предупреждения в блоке «Система»; placeWarnings по местам и остаток вверху редактора */}
-        <WarningList warnings={warnings} game={game} pack={pack} />
+        <WarningList warnings={systemWarnings} game={game} pack={pack} />
       </div>
     </div>
   );

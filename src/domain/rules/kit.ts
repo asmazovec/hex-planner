@@ -120,7 +120,6 @@ export function forecast(game: Game, pack: DataPack): { state: GameState; warnin
 }
 
 /** The warning codes of one entry, as plain strings: a rule may name a code the app does not have yet. */
-// TODO(P2-003) #ws:rule-engine #type:arch #size:m #contract-test — Контрактные тесты: каждый test() в rules/lrr ссылается на правило реестра, у каждого правила есть тест, у каждого шага есть место показа, src/ui не создаёт нарушений; codesOf перевести на номера правил — P2 note: registry and contract tests done (src/domain/rules/registry.ts, contract.test.ts: every code registered and exercised, src/ui creates no warning; violations carry rule, step, place; rulesOf below); left: «у каждого шага есть место показа» needs warningPlaces by step, for the UI wave
 export function codesOf(game: Game, pack: DataPack, target: Entry): string[] {
   return (forecast(game, pack).warnings[target.id] ?? []).map(w => w.code as string);
 }

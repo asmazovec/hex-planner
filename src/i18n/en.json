@@ -481,7 +481,6 @@
       "board": "Take on board in {{name}}",
       "pickup": "Pick up on the way in {{name}}",
       "cargo": "Cargo {{load}} of {{capacity}}",
-      "overCapacity": "More than there is room for",
       "losses": "Lost in battle",
       "landing": "Land on {{planet}}",
       "build": "Build",
