@@ -287,11 +287,11 @@
       "number": "Action {{n}}",
       "changeUnits": "Tap to change the units in the big hex",
       "pickSystem": "Choose on the map",
-      "clearSystem": "Clear the system"
+      "clearSystem": "Clear the system",
+      "noSlice": "No part chosen"
     },
     "tactical": {
       "title": "Tactical action",
-      "done": "Done editing",
       "cancel": "Cancel",
       "system": "Active system: {{name}}",
       "token": "Tactic tokens: {{from}} → {{to}}",
@@ -299,8 +299,6 @@
       "moves": "Sources",
       "moveHint": "Drag from a system with ships to the active one through the hexes you need, or back from the active one. Add a system with no ships by a drag back from the active system or by taps: the system, then the hexes in turn.",
       "battle": "Battle",
-      "startBattle": "Start battle",
-      "continueBattle": "Continue the battle",
       "landing": "Landing",
       "landOne": "Land one {{unit}}",
       "landingOn": "Landing on {{planet}}",
@@ -308,7 +306,6 @@
       "optional": "optional",
       "production": "Production",
       "warnings": "Warnings",
-      "openShop": "Open the shop",
       "freeToken": "Warfare: no tactic token is spent and no command token goes down.",
       "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent.",
       "noSources": "Drag the first arrow or add a source.",
@@ -322,11 +319,13 @@
       "via": "{{name}} via {{list}}",
       "noShips": "no ships",
       "cargoShort": ", cargo {{n}}",
-      "removeSource": "Remove source {{name}}"
+      "removeSource": "Remove source {{name}}",
+      "lost": "Losses: {{list}}",
+      "battleOffer": "optional · Start a battle",
+      "productionOffer": "optional · Open the shop"
     },
     "picker": {
       "title": "Flight {{from}} → {{to}}",
-      "close": "Close picker",
       "fleet": "Fleet pool: {{ships}} of {{fleet}}",
       "removeSource": "Remove route",
       "inSystem": "In system {{name}}",
@@ -440,11 +439,9 @@
       },
       "modes": "Card mode",
       "cards": "Card",
-      "locked": "A choice has been made. To change the card or the mode, cancel the action.",
+      "locked": "A choice has been made. To change the card or the mode, remove the action.",
       "chooseCard": "Choose a card.",
       "tokenCost": "−1 strategy token",
-      "cancel": "Cancel action",
-      "done": "Done",
       "tile": "tile {{name}}",
       "mapHint": "Tap a tile on the map.",
       "tokens": "Token distribution",
@@ -687,5 +684,10 @@
       "fleet": "Ships / fleet pool",
       "capacity": "Load / capacity"
     }
+  },
+  "editor": {
+    "done": "Done",
+    "back": "Back",
+    "remove": "Remove action"
   }
 }

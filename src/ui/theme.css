@@ -449,6 +449,12 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .plan-panel input[type='text'] { width: 100%; font-weight: 600; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .panel-head > button { padding: 4px 10px; font-size: var(--font-s); }
+/* The one head of every editor (EditorFrame): a step's «Назад», the title, then «Готово» and the cross at the right edge. */
+.editor-head { min-height: var(--touch); }
+.editor-head h2 { flex: 1 1 auto; min-width: 0; }
+.editor-head > .editor-back { flex: none; }
+.editor-head-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.editor-head-actions > button:not(.icon-button) { padding: 4px 10px; font-size: var(--font-s); }
 .panel-stack { display: flex; flex-direction: column; gap: 8px; }
 .plan-switch { display: none; }
 
@@ -464,8 +470,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .strategy-editor p { margin: 0; font-size: var(--font-s); }
 .option { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; font-size: var(--font-s); }
 .option[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); color: var(--text-strong); }
-.strategy-foot { display: flex; gap: 8px; }
-.strategy-foot > button { flex: 1; }
 .strategy-editor .entry-upgrades { padding: 0; }
 .card-cell:active:not(:disabled) { transform: scale(0.99); }
 .card-cell.card-main { border-color: var(--accent); background: var(--accent-soft); }
@@ -497,6 +501,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .entry-main button { padding: 0; background: transparent; border-color: transparent; color: var(--text-dim); }
 .entry-main .entry-handle { flex: none; width: 26px; min-width: 0; color: var(--text-dim); touch-action: none; cursor: grab; }
 .entry-main .entry-label { flex: 1; min-width: 0; text-align: left; padding: 4px 6px; color: var(--text); font-weight: 600; font-size: var(--font-s); line-height: 1.3; }
+/* What a closed entry holds, readable without opening it: the expedition's part and its payment. */
+.entry-label .entry-brief { display: block; font-weight: 400; font-size: var(--font-xs); color: var(--text-dim); }
 .hex-button::before { content: ''; position: absolute; inset: 1.5px; background: var(--hex-fill); clip-path: inherit; }
 .hex-button svg { position: relative; pointer-events: none; }
 .hex-button:focus-visible { --hex-edge: var(--accent); outline: none; }
@@ -606,8 +612,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stop-name { font-size: 12.5px; color: var(--text-muted); }
 .stop-place { display: flex; flex-direction: column; gap: 2px; }
 .stop-place small { font-size: var(--font-xs); color: var(--text-dim); }
-.picker-foot { display: flex; gap: 6px; }
-.picker-foot > button { flex: 1; }
 .pay-planets { display: flex; flex-wrap: wrap; gap: 4px; }
 .pay-planets button { padding: 4px 10px; font-size: var(--font-s); }
 

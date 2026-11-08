@@ -19,6 +19,7 @@ import { WarningList } from './WarningText';
 import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
+import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { placeWarnings, placesOf } from './warningPlaces';
 
 const pack = loadPack(['pok', 'te']);
@@ -46,11 +47,20 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
     id: 'e', type: 'tactical', status: 'planned', systemId: HOME,
     moves: [{ from: SOURCE, units: {} }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, ...patch,
   } as TacticalEntry;
+  // The flight of a source is a step that stands in the editor's place, with the warnings of that flight.
+  if (pickerFrom !== null) {
+    return render(
+      <UnitPicker
+        game={game()} pack={pack} before={before()} entry={entry} source={pickerFrom} warnings={flightWarnings(warnings, game(), pack, entry, pickerFrom)}
+        onChange={() => undefined} onClose={() => undefined} onFly={() => undefined}
+      />,
+    );
+  }
   return render(
     <TacticalEditor
-      game={game()} pack={pack} entry={entry} before={before()} warnings={warnings} pickerFrom={pickerFrom} manualPayment={false}
+      game={game()} pack={pack} entry={entry} before={before()} warnings={warnings} manualPayment={false}
       choosing={null} onChoose={() => undefined}
-      onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onFly={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined}
+      onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined} onRemove={() => undefined}
     />,
   );
 }
@@ -60,6 +70,8 @@ const blockOf = (text: RegExp): string => {
   const block = screen.getByText(text).closest('.editor-section, .tactical-editor')!;
   return block.classList.contains('tactical-editor') ? 'outside' : block.querySelector('strong, summary')!.textContent!;
 };
+/** The row a warning stands right under, as the battle and the production do. */
+const rowOf = (text: RegExp): string => screen.getByText(text).closest('ul')!.previousElementSibling!.textContent!;
 
 describe('where a warning goes', () => {
   test('every warning code has a place', () => {
@@ -102,7 +114,7 @@ describe('the strategy editor', () => {
     return render(
       <StrategyEditor
         game={game()} pack={pack} round={game().plans[0].rounds[0]} entry={entry} before={before()} warnings={warnings} manualPayment={false} picking={null}
-        onUpdate={noop} onManualPayment={noop} onPick={noop} onOpenShop={noop} onStartTactical={noop} onOpenTactical={noop} onCancel={noop} onDone={noop}
+        onUpdate={noop} onManualPayment={noop} onPick={noop} onOpenShop={noop} onStartTactical={noop} onOpenTactical={noop} onDone={noop} onRemove={noop}
       />,
     );
   }
@@ -140,7 +152,9 @@ describe('the strategy editor', () => {
 
 describe('the expedition editor', () => {
   const expedition = (warnings: Warning[], sliceId: string | null) => render(
-    <ExpeditionEditor game={game()} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={warnings} onChange={() => undefined} />,
+    <ExpeditionEditor game={game()} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={warnings}
+      manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+    />,
   );
 
   test('a taken part is said right under the parts', () => {
@@ -175,7 +189,7 @@ describe('the tactical editor', () => {
     expect(row.nextElementSibling).toHaveTextContent(/capacity/i);
   });
 
-  test('with the picker open the warning of its source stands in the picker, not in the list of moves', () => {
+  test('with the flight step open the warning of its source stands in the step', () => {
     const { container } = editor([GROUP, FLEET], {}, SOURCE);
     const picker = container.querySelector('.unit-picker')!;
     expect(screen.getByText(/^Group from/).closest('.unit-picker')).toBe(picker);
@@ -228,23 +242,23 @@ describe('the tactical editor', () => {
     useGame.getState().setTile(SOURCE, '25');
     const { unmount } = render(
       <TacticalEditor
-        game={game()} pack={pack} before={before()} warnings={[]} pickerFrom={null} manualPayment={false} choosing={null} onChoose={() => undefined}
+        game={game()} pack={pack} before={before()} warnings={[]} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onFly={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined}
+        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
     expect(screen.queryByText(/with Production/)).toBeNull();
     unmount();
     render(
       <TacticalEditor
-        game={game()} pack={pack} before={before()} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} pickerFrom={null} manualPayment={false} choosing={null} onChoose={() => undefined}
+        game={game()} pack={pack} before={before()} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onFly={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined}
+        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
     const warning = screen.getByText(/with Production/);
     expect(warning).toBeVisible();
-    expect(warning.closest('.editor-section')).toHaveTextContent('Production');
+    expect(rowOf(/with Production/)).toMatch(/^Production/);
   });
 
   test('a warning whose block is not shown is not lost: it stands first, above the blocks', () => {
@@ -268,7 +282,7 @@ describe('the tactical editor', () => {
 
   test('more lost in battle than there was stands in the battle', () => {
     editor([{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'combat' }], { losses: { cruiser: 1 } });
-    expect(blockOf(/missing 1/)).toMatch(/^Battle/);
+    expect(rowOf(/missing 1/)).toMatch(/^Battle/);
   });
 });
 
@@ -277,7 +291,7 @@ describe('the rest of an editor stands first', () => {
     const entry = { id: 'a', type: 'adjustment', status: 'planned', label: '', delta: {} } as Parameters<typeof AdjustmentEditor>[0]['entry'];
     const { container } = render(
       <AdjustmentEditor
-        game={game()} pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined}
+        game={game()} pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined} onRemove={() => undefined}
         warnings={[{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'round' }, SHORT]}
       />,
     );
@@ -289,7 +303,9 @@ describe('the rest of an editor stands first', () => {
 
   test('in the expedition what no block takes stands above the parts', () => {
     const { container } = render(
-      <ExpeditionEditor game={game()} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={[LANDING]} onChange={() => undefined} />,
+      <ExpeditionEditor game={game()} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={[LANDING]}
+        manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+      />,
     );
     expect(screen.getByText(/^Landing needs/).compareDocumentPosition(container.querySelector('.slice-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

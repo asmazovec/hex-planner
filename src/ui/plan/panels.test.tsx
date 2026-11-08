@@ -461,7 +461,7 @@ test('a warning about the tokens stands right below the tiles of the open status
   useGame.getState().updateEntry(id, { tactic: 4 });
   const round = plan().rounds[0];
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList game={game()} pack={pack} round={round} plan={plan()} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
+  render(<EntryList game={game()} pack={pack} round={round} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
   const details = document.querySelector('.entry-details')!;
   const warnings = screen.getAllByRole('list', { name: 'Warnings' });
   expect(warnings).toHaveLength(1);
@@ -475,7 +475,7 @@ test('a closed entry shows its warnings on its row, above what it reads out', ()
   const id = useGame.getState().addStatusEntry(1);
   useGame.getState().updateEntry(id, { tactic: 4 });
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList game={game()} pack={pack} round={plan().rounds[0]} plan={plan()} warnings={state.warningsByEntry} state={state.state} openId={null} onOpen={() => undefined} />);
+  render(<EntryList game={game()} pack={pack} round={plan().rounds[0]} warnings={state.warningsByEntry} state={state.state} openId={null} onOpen={() => undefined} />);
   expect(document.querySelector('.entry-main')!.nextElementSibling).toHaveClass('warning-list');
 });
 

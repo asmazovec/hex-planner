@@ -4,13 +4,11 @@ import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
-import type { DataPack, Entry, Game, GameState, Phase, Plan, Round, Warning } from '../../domain/types';
+import type { DataPack, Entry, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
-import { ExpeditionEditor } from './editors/ExpeditionEditor';
-import { sliceOwners } from '../../domain/thundersEdge';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
@@ -27,9 +25,7 @@ export interface EntryListProps {
   game: Game;
   pack: DataPack;
   round: Round;
-  /** The plan the round belongs to: the expedition parts held by all its entries. */
-  plan?: Plan;
-  /** The state just before an entry, for the payment of an expedition part; defaults to the forecast. */
+  /** The state just before an entry, for what its steps read out; defaults to the forecast. */
   stateBefore?: (entryId: string) => GameState;
   warnings: Record<string, Warning[]>;
   /** The forecast, for the systems a manual adjustment can change. */
@@ -86,6 +82,17 @@ function StatusFields({ entry, game, pack, state, warnings }: {
   );
 }
 
+/**
+ * What an expedition contribution gives, readable on its closed row: the part and what pays for it. The part paid in
+ * trade goods says it in its name.
+ */
+function expeditionBrief(entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack, t: (key: string, options?: Record<string, unknown>) => string): string {
+  if (!entry.sliceId) return t('plan.entries.noSlice');
+  const { planets, tradeGoods } = entry.payment;
+  const paid = [...planets.map(id => pack.planets[id]?.name ?? id), ...(tradeGoods > 0 ? [t('plan.steps.tradeGoods', { n: tradeGoods })] : [])];
+  return [t(`plan.slice.${entry.sliceId}`), ...(paid.length > 0 ? [paid.join(', ')] : [])].join(' · ');
+}
+
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
 
@@ -132,7 +139,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
+  game, pack, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -176,14 +183,18 @@ export function EntryList({
                 // The steps of a shown action say what goes wrong with a flight by that flight; the row keeps the rest.
                 const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
                 // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
-                const fieldsOpen = entry.id === openId && (entry.type === 'statusTokens' || entry.type === 'expedition');
+                const fieldsOpen = entry.id === openId && entry.type === 'statusTokens';
                 const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
                 return (
                   <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
-                      <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>{label}</button>
+                      <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
+                        {label}
+                        {/* Read without opening; the steps of a shown entry say it in full. */}
+                        {entry.type === 'expedition' && !shown && <>{' '}<small className="entry-brief">{expeditionBrief(entry, pack, t)}</small></>}
+                      </button>
                       {entry.type !== 'pass' && <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>}
                       <label className="icon-button entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
@@ -208,17 +219,6 @@ export function EntryList({
                     {entry.id === openId && entry.type === 'component' && (
                       <div className="entry-details">
                         <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={note => updateEntry(entry.id, { note })} />
-                      </div>
-                    )}
-                    {/* TODO(P2-355) #ws:ui-nesting #type:ui #needs:prototype #dep:P2-349 — экспедиция раскрывается внутри строки (5 уровней); отдельное меню, как жетоны статуса */}
-                    {entry.id === openId && entry.type === 'expedition' && (
-                      <div className="entry-details">
-                        <ExpeditionEditor
-                          game={game} pack={pack} sliceId={entry.sliceId} payment={entry.payment}
-                          owners={sliceOwners(game, plan)}
-                          before={stateBefore ? stateBefore(entry.id) : state} warnings={list}
-                          onChange={patch => updateEntry(entry.id, patch)}
-                        />
                       </div>
                     )}
                   </li>
