@@ -145,8 +145,12 @@ export interface FactionDef {
   ships?: Partial<Record<UnitId, ShipLevels>>;
 }
 
-/** `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five players). */
-export type MapLayout = 'standard' | 'hyperlanes';
+/**
+ * `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five and seven
+ * players); `alternate` is the Prophecy of Kings appendix's alternate hyperlanes for seven and eight players, with its own
+ * ring shapes; `large` is the appendix's Large Galaxy for six players, four full rings.
+ */
+export type MapLayout = 'standard' | 'hyperlanes' | 'alternate' | 'large';
 
 export interface MapTemplate {
   playerCount: number;

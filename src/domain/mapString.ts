@@ -1,8 +1,8 @@
-import { templateFor, templateOf } from './layouts';
+import { defaultLayout, templateFor, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
 import { MECATOL_PLANETS } from './mecatol';
 import { slotKeyOf } from './newGame';
-import type { DataPack, ExpansionId, MapLayout, TileDef } from './types';
+import type { DataPack, ExpansionId, MapLayout, MapTemplate, TileDef } from './types';
 
 /** Axial steps of the ring walk: east, south-east, south-west, west, north-west, north-east. */
 const STEPS: [number, number][] = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
@@ -65,6 +65,36 @@ export interface MapStringResult {
 
 const isMecatol = (def: TileDef | undefined): boolean => def !== undefined && def.planetIds.some(id => MECATOL_PLANETS.includes(id));
 
+/** The side a token names when it is a hyperlane with a turn (`83A3`), else null. */
+const laneSide = (token: string): string | null => HYPERLANE.exec(token.toUpperCase())?.[1] ?? null;
+
+/** Whether a template slot fixes a hyperlane, and so takes no other tile. */
+const fixesLane = (fixed: string | undefined, pack: DataPack): boolean =>
+  fixed !== undefined && pack.tiles[fixed.split('@')[0]]?.kind === 'hyperlane';
+
+/**
+ * The template of the player count a string fits best: the one where most of its tiles land, a hyperlane counting
+ * only on a slot that fixes a hyperlane (Milty may write a twin side, 87A for 88A) and any other tile only on a slot
+ * that does not. A tie goes to a template that has hyperlanes when the string has them and none when it has none, then
+ * to the default layout, then to the first.
+ */
+function bestTemplate(tokens: string[], slots: string[], playerCount: number, pack: DataPack): MapTemplate | undefined {
+  const candidates = pack.templates.filter(template => template.playerCount === playerCount);
+  const hasLanes = tokens.some(token => laneSide(token) !== null);
+  const fits = (template: MapTemplate): number => {
+    const fixed = new Map(template.slots.map(slot => [slotKeyOf(slot.q, slot.r), slot.fixed]));
+    return tokens.slice(0, slots.length).filter((token, index) => {
+      if (token === '0' || token === '-1' || !fixed.has(slots[index])) return false;
+      const side = laneSide(token);
+      const at = fixed.get(slots[index]);
+      return side ? fixesLane(at, pack) : !fixesLane(at, pack);
+    }).length;
+  };
+  const rank = (template: MapTemplate): number =>
+    (template.slots.some(slot => fixesLane(slot.fixed, pack)) === hasLanes ? 0 : 2) + (template.layout === defaultLayout(playerCount, pack) ? 0 : 1);
+  return [...candidates].sort((a, b) => fits(b) - fits(a) || rank(a) - rank(b))[0];
+}
+
 /** Rings of a template, from the farthest slot. */
 const radiusOf = (slots: { q: number; r: number }[]): number =>
   slots.reduce((far, { q, r }) => Math.max(far, Math.abs(q), Math.abs(r), Math.abs(q + r)), 0);
@@ -72,10 +102,10 @@ const radiusOf = (slots: { q: number; r: number }[]): number =>
 /**
  * Reads a Milty Draft map string: tiles of rings 1 to 4 in order, from the top of each ring clockwise, separated by
  * spaces. `0` is an empty slot or a home placeholder, a hyperlane is its id with a rotation digit (`83A3`), and the
- * centre is absent (a braced `{18}` is skipped). Home system ids are placed like any tile. Slots outside the template
- * of the player count are not filled and are counted in `dropped`. A string with hyperlanes is read against the
- * hyperlane layout of the player count, one without against the standard layout; the other layout is used when the
- * pack lacks the one wanted. A plain `18` (or a Mecatol `112`) is skipped like a braced one. Tiles of an expansion that is
+ * centre is absent (a braced `{18}` is skipped). Home system ids are placed like any tile. The string is read against
+ * the template of the player count it fits best (`bestTemplate`). Slots outside that template, and tiles other than
+ * hyperlanes on a slot where it fixes one, are not filled and are counted in `dropped`: the template's hyperlane stays. A plain `18`
+ * (or a Mecatol `112`) is skipped like a braced one. Tiles of an expansion that is
  * off, found through `others`, are listed in `offExpansion` instead of `unknown`. Tokens that are strictly ascending, at
  * least ten of them, are a tile set without positions (`kind: set`), which `arrangeSet` lays out.
  */
@@ -85,12 +115,12 @@ export function parseMapString(text: string, playerCount: number, pack: DataPack
   // A plain Mecatol Rex is never a ring slot, whatever its position.
   const tokens = text.split(/[\s,]+/)
     .filter(token => token !== '' && !/^\{.*\}$/.test(token) && !isMecatol(defOf(token.toUpperCase())));
-  const wanted: MapLayout = tokens.some(token => HYPERLANE.test(token.toUpperCase())) ? 'hyperlanes' : 'standard';
-  const chosen = templateFor(playerCount, wanted, pack) ?? templateOf(playerCount, pack);
-  const layout = chosen?.layout ?? 'standard';
-  const template = new Set((chosen?.slots ?? []).map(s => slotKeyOf(s.q, s.r)));
-  const seats = seatSlots(playerCount, pack, layout).filter(key => template.has(key)).length;
   const slots = Array.from({ length: RINGS }, (_, i) => ringSlots(i + 1)).flat();
+  const chosen = bestTemplate(tokens, slots, playerCount, pack);
+  const layout: MapLayout = chosen?.layout ?? 'standard';
+  const template = new Set((chosen?.slots ?? []).map(s => slotKeyOf(s.q, s.r)));
+  const fixedAt = new Map((chosen?.slots ?? []).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+  const seats = seatSlots(playerCount, pack, layout).filter(key => template.has(key)).length;
 
   const map: Record<string, string> = {};
   const unknown: string[] = [];
@@ -108,6 +138,8 @@ export function parseMapString(text: string, playerCount: number, pack: DataPack
       if (owner) offExpansion[owner] = [...(offExpansion[owner] ?? []), raw];
       else unknown.push(raw);
     } else if (!template.has(slots[index])) {
+      dropped += 1;
+    } else if (fixesLane(fixedAt.get(slots[index]), pack) && def.kind !== 'hyperlane') {
       dropped += 1;
     } else {
       map[slots[index]] = tile;

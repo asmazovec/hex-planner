@@ -1,3 +1,4 @@
+import { LAYOUT_ORDER, templateOf } from './layouts';
 import { arrangeSet, parseMapString, ringSlots } from './mapString';
 import { createGame } from './newGame';
 import { maxPlayers, MIN_PLAYERS, playersOf, setPlayerFaction, swapSeats } from './players';
@@ -41,8 +42,8 @@ export function readShareLink(search: string): ShareParams | null {
   if (name) share.name = name;
   const exp = query.get('exp');
   if (exp !== null) share.expansions = EXPANSIONS.filter(id => exp.split(',').includes(id));
-  const layout = query.get('layout');
-  if (layout === 'standard' || layout === 'hyperlanes') share.layout = layout;
+  const layout = LAYOUT_ORDER.find(id => id === query.get('layout'));
+  if (layout) share.layout = layout;
   const factions = query.get('factions');
   if (factions) share.factions = factions.split(',').map(f => (f === EMPTY_SEAT ? '' : f.trim()));
   const me = Number(query.get('me'));
@@ -86,7 +87,9 @@ export function shareDifferences(share: ShareParams, saved: Game, packOf: (expan
   const differences: ShareDifference[] = [];
   const same = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
   if (share.expansions && !same(share.expansions, saved.expansions)) differences.push('expansions');
-  if (share.layout && share.layout !== saved.layout) differences.push('layout');
+  // A layout the player count lacks (seven players without hyperlanes, retired) means the one a new game would take.
+  const layout = share.layout && (templateOf(saved.playerCount, pack, share.layout)?.layout ?? share.layout);
+  if (layout && layout !== saved.layout) differences.push('layout');
   const players = playersOf(saved);
   if (share.factions && (share.factions.length !== saved.playerCount || share.factions.some((faction, i) => factionOf(faction, pack) !== (players.find(p => p.seat === i + 1)?.faction ?? '')))) differences.push('factions');
   if (share.me && share.me !== saved.seat) differences.push('seat');

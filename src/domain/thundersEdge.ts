@@ -3,6 +3,7 @@ import { slotKeyOf } from './layouts';
 import { isOnMap, isStation, planetsOf, tileIdOf } from './replay/board';
 import { othersIn } from './replay/production';
 import { violation } from './rules/registry';
+import { withSlotsMoved } from './slotRename';
 import type { DataPack, Entry, Game, GameState, MapLayout, Plan, TileDef, Warning } from './types';
 
 /**
@@ -52,36 +53,6 @@ export function fractureSlots(
   }
 }
 
-function movedEntry(entry: Entry, to: (slot: string) => string): Entry {
-  if (entry.type === 'tactical') {
-    return {
-      ...entry,
-      systemId: entry.systemId === null ? null : to(entry.systemId),
-      moves: entry.moves.map(move => ({
-        ...move, from: to(move.from),
-        ...(move.via ? { via: move.via.map(to) } : {}),
-        ...(move.pickupOf === undefined ? {} : { pickupOf: to(move.pickupOf) }),
-      })),
-    };
-  }
-  if (entry.type === 'strategic' || entry.type === 'secondary') {
-    const { effects } = entry;
-    if (!effects) return entry;
-    return {
-      ...entry,
-      effects: {
-        ...effects,
-        ...(effects.systemId === undefined ? {} : { systemId: to(effects.systemId) }),
-        ...(effects.production ? { production: { ...effects.production, systemId: to(effects.production.systemId) } } : {}),
-      },
-    };
-  }
-  if (entry.type === 'adjustment' && entry.delta.units) {
-    return { ...entry, delta: { ...entry.delta, units: { ...entry.delta.units, systemId: to(entry.delta.units.systemId) } } };
-  }
-  return entry;
-}
-
 /**
  * The Fracture's systems take other slots when it moves, and what the game says about them follows: plans speak of a
  * system by its slot. `before` is the game as it stood; a Fracture that did not move leaves `next` as it is.
@@ -92,16 +63,7 @@ export function withFractureMoved(before: Game, next: Game, pack: DataPack): Gam
   const now = place(next);
   const moved = new Map(Object.keys(old).filter(id => now[id] && now[id] !== old[id]).map(id => [old[id], now[id]]));
   if (moved.size === 0) return next;
-  const to = (slot: string): string => moved.get(slot) ?? slot;
-  return {
-    ...next,
-    enemyUnits: Object.fromEntries(Object.entries(next.enemyUnits).map(([slot, units]) => [to(slot), units])),
-    fracture: { ...next.fracture, ingress: next.fracture.ingress.map(to) },
-    plans: next.plans.map(plan => ({
-      ...plan,
-      rounds: plan.rounds.map(round => ({ ...round, entries: round.entries.map(entry => movedEntry(entry, to)) })),
-    })),
-  };
+  return withSlotsMoved(next, slot => moved.get(slot) ?? slot);
 }
 
 /** Check: ground forces cannot land on a space station (space stations 4). The landing itself is left as written. */
