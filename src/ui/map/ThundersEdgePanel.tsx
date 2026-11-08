@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { DataPack, Game } from '../../domain/types';
+// TODO(P2-267) #ws:ui-structure #type:arch #size:s #imports #thunders-edge — ExpeditionWidget и FractureControl живут в plan/, а нужны только этой шторке: перенести в drawers/ вместе с ней
 import { ExpeditionWidget, type SliceOwners } from '../plan/ExpeditionWidget';
 import { FractureControl } from '../plan/FractureControl';
 
@@ -16,6 +17,7 @@ export interface ThundersEdgePanelProps {
 export function ThundersEdgePanel({ game, pack, owners, onPlace, onMark }: ThundersEdgePanelProps) {
   const { t } = useTranslation();
   const title = t('thundersEdge.title');
+  // TODO(P2-266) #ws:ui-containers #type:dup #dep:P2-238 #size:s #drawer-sheet — Свой aside role=dialog с h2: DrawerSheet
   return (
     <aside className="te-panel" role="dialog" aria-label={title}>
       <h2>{title}</h2>

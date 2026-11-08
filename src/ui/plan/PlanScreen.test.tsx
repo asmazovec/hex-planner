@@ -1063,6 +1063,12 @@ describe('reading the plan', () => {
     await act(async () => { await new Promise(r => setTimeout(r, 450)); });
     expect(document.querySelector('.flight-layer')).toBeNull();
     vi.unstubAllGlobals();
+    // Energy saving plays no flight either.
+    document.documentElement.dataset.energy = 'on';
+    fireEvent.click(screen.getByRole('button', { name: label }));
+    await act(async () => { await new Promise(r => setTimeout(r, 450)); });
+    expect(document.querySelector('.flight-layer')).toBeNull();
+    delete document.documentElement.dataset.energy;
   });
 });
 

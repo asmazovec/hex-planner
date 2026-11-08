@@ -6,6 +6,7 @@ import type { AdjustmentDelta, DataPack, Entry, Game, GameState, UnitCounts, Uni
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
 
+// TODO(P2-308) #ws:ui-structure #type:arch #size:s #names — systemName нужен всем (WarningText, ExpeditionWidget, редакторы), а живёт в модуле тактики; вынести в ui/names.ts, когда тактика уйдёт в домен
 /** Printed tile number of a slot, which is what the player sees on the table. */
 export function systemName(game: Game, pack: DataPack, slot: string): string {
   const tileId = tileIdOf(game, slot);
@@ -14,6 +15,7 @@ export function systemName(game: Game, pack: DataPack, slot: string): string {
   return tile?.number ?? tileId;
 }
 
+// TODO(P2-301) #ws:ui-logic-to-domain #type:arch #size:s — арифметика UnitCounts (hasUnits, withCount, addUnits, countOf) нужна и домену; перенести в src/domain вместе с остальной тактикой
 export const hasUnits = (units: UnitCounts | undefined): boolean =>
   Object.values(units ?? {}).some(n => (n ?? 0) > 0);
 
@@ -31,6 +33,7 @@ export function addUnits(target: UnitCounts, units: UnitCounts): UnitCounts {
   return sum;
 }
 
+// TODO(P2-302) #ws:ui-logic-to-domain #type:arch #dep:P2-300 — правки записи (isUntouched, lossesOf, withLoss, withAdjustedUnit) — правила записи тактики и корректировки, не UI; в src/domain/tactical.ts
 /** Nothing of the action is filled in yet, so its system can still change. */
 export const isUntouched = (entry: TacticalEntry): boolean =>
   entry.moves.length === 0 && entry.landings.length === 0 && !hasUnits(entry.production) && !hasUnits(entry.losses) && !entry.groundLosses
@@ -43,6 +46,7 @@ export function lossesOf(entry: TacticalEntry): { unit: UnitId; planetId: string
   return [...of(entry.losses ?? {}, null), ...Object.entries(entry.groundLosses ?? {}).flatMap(([planetId, units]) => of(units, planetId))];
 }
 
+// TODO(P2-300) #ws:combat-order #type:bug #rule:78.6.2 #test:078-space-combat #size:s #losses — возврат (amount > 0) только уменьшает losses, а высадка, из которой десантник ушёл при потере, не восстанавливается: он остаётся в космосе. Возврат должен вернуть его в landings той планеты
 /**
  * One more lost (-1) or given back (1), in space or on a planet; nothing left leaves no trace in the entry. A unit this
  * action lands that falls in its battle never makes the landing: it leaves the landing and counts as lost on the way.
@@ -79,6 +83,7 @@ export function withAdjustedUnit(delta: AdjustmentDelta, slot: string, unit: Uni
   return { ...delta, units: delta.units ?? { systemId: slot, units: {} }, ground: Object.keys(ground).length > 0 ? ground : undefined };
 }
 
+// TODO(P2-303) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain — sourcePools и fliesNow решают, откуда что берётся и кто летит сам (fliesNow повторяет fightersFly и ground домена); в src/domain/tactical.ts
 /** Where a system's units can come from: its space area, then its planets that hold ground units. */
 export function sourcePools(
   game: Game, pack: DataPack, before: GameState, source: string,
@@ -97,6 +102,7 @@ export function fliesNow(game: Game, pack: DataPack, upgrades: UnitId[], unit: U
   return !def.fighter || fightersFly(game, upgrades, pack);
 }
 
+// TODO(P2-304) #ws:ui-logic-to-domain #type:arch — модель ходов тактики (sourcesOf, groupOf, viaOf, withRoute, withoutSource, withUnitCount, withoutEmptySources) живёт в UI, а project.ts группирует ходы тем же sourceSlot; в src/domain/tactical.ts
 /** The source systems of an action, in the order of their moves. */
 export function sourcesOf(game: Game, pack: DataPack, entry: TacticalEntry): string[] {
   const slots = entry.moves.filter(m => m.pickupOf === undefined).map(m => sourceSlot(game, pack, m.from));
@@ -145,6 +151,7 @@ export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): 
   });
 }
 
+// TODO(P2-305) #ws:ui-logic-to-domain #type:arch #size:s — arrowsOf и entrySystems выводят из записи стрелки и системы для камеры: чистые функции записи, в src/domain/tactical.ts
 export interface RouteArrow { from: string; via: string[]; to: string; pickups: { slot: string; count: number }[] }
 
 const countOf = (units: UnitCounts): number => Object.values(units).reduce<number>((sum, n) => sum + (n ?? 0), 0);
@@ -207,6 +214,7 @@ export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, b
     const joins = new Map<UnitId, FlightStack['joins']>();
     entry.moves.forEach((move, index) => {
       if (!groupOf(game, pack, [move], from).length) return;
+      // TODO(P2-307) #ws:ui-logic-to-domain #type:dup #size:s #dep:P2-306 — выбор пула «планета или космос» по move.from повторён в flightRoutes, flies, stateInFlight и UnitPicker.available; один доменный poolOf
       const pool = (move.from in pack.planets ? left.ground : left.systems)[move.from] ?? {};
       const stop = move.pickupOf === undefined ? 0 : slots.indexOf(sourceSlot(game, pack, move.from) ?? '');
       for (const unit of Object.keys(move.units) as UnitId[]) {
@@ -227,6 +235,16 @@ export function flightRoutes(game: Game, pack: DataPack, entry: TacticalEntry, b
     });
   }
   return routes;
+}
+
+// TODO(P2-306) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain — flies и stateInFlight повторяют снятие юнитов и выставление жетона из applyTactical (project.ts); состояние в полёте должен давать домен шагом replay
+/** Whether a flight of this entry would show anything: a destination, and a unit its move really finds at the source. */
+export function flies(pack: DataPack, entry: TacticalEntry, before: GameState): boolean {
+  if (entry.systemId === null) return false;
+  return entry.moves.some(move => {
+    const pool = (move.from in pack.planets ? before.ground : before.systems)[move.from] ?? {};
+    return (Object.keys(move.units) as UnitId[]).some(unit => Math.min(move.units[unit] ?? 0, pool[unit] ?? 0) > 0);
+  });
 }
 
 /** The map during a flight: what flies has left its tile, what is picked up on the way leaves when the leader passes. It lands with the end of the flight. */

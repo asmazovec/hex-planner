@@ -17,6 +17,7 @@ export interface EntryUpgradesProps {
 export function EntryUpgrades({ upgrades, before, game, pack, onChange }: EntryUpgradesProps) {
   const { t } = useTranslation();
   const toggle = (unit: UnitId) => onChange(upgrades.includes(unit) ? upgrades.filter(id => id !== unit) : [...upgrades, unit]);
+  // TODO(P2-385) #ws:ui-containers #type:ui #size:s #dep:P2-350 — --player inline-стилем у корня; data-player / playerVar()
   return (
     <div
       className="entry-upgrades" role="group" aria-label={t('ships.entryUpgrade')}

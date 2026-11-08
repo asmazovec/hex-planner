@@ -4,6 +4,7 @@ import { factionSheet } from '../../domain/factionSheet';
 import type { ComponentPack, ExpansionId, FactionDef, SheetItem, SheetMech } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 
+// TODO(P2-375) #ws:ui-structure #type:dup #size:s — названия дополнений прописаны в четырёх местах (GameScreen, MapStringImport, FactionPicker); одно место
 const PACK_NAMES: Record<ComponentPack, string> = { base: 'Base', pok: 'Prophecy of Kings', te: "Thunder's Edge" };
 
 function Component({ item, kicker, extra }: { item: SheetItem; kicker?: string; extra?: string }) {

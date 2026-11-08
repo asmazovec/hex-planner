@@ -8,6 +8,7 @@ export interface WarningTextProps {
   pack: DataPack;
 }
 
+// TODO(P2-379) #ws:ui-structure #type:arch #size:s — WarningText, WarningList и warningPlaces нужны и map/HexStage; в ui/feedback
 /** The text of one warning code; slot keys and ids in its params become the names the player knows. */
 export function WarningText({ warning, game, pack }: WarningTextProps) {
   const { t } = useTranslation();
@@ -35,6 +36,7 @@ export interface WarningListProps {
   pack: DataPack;
 }
 
+// TODO(P2-380) #ws:ui-warnings #type:ui #warning-channel — нет варианта «в строке» и произвольного текста, поэтому EntryList, HexStage, ShareConflict собирают своё; добавить variant и message
 /** The warnings of one block, inside that block and marked the same way everywhere. */
 export function WarningList({ warnings, game, pack }: WarningListProps) {
   const { t } = useTranslation();

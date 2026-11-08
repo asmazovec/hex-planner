@@ -9,6 +9,7 @@ function Fallback({ error }: { error: Error }) {
   const game = useGame(s => s.game);
   return (
     <div className="app">
+      {/* TODO(P2-454) #ws:ui-structure #type:dup #size:s #banner — баннер ошибки с действием «Экспорт» повторяет saveError в App: общий баннер ошибки с экспортом открытой партии */}
       <Banner
         kind="error"
         message={t('banner.crash', { error: error.message })}

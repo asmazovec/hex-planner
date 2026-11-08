@@ -2,6 +2,7 @@ import type { TokenKind } from '../../domain/hexLayout';
 import type { Game } from '../../domain/types';
 import { UNIT_ART } from './unitArt';
 
+// TODO(P2-469) #ws:ui-css #type:dup #size:s #player-colour — цвета игроков повторяют --player-1..8 из темы и могут разойтись: тест на совпадение с theme.css или чтение CSS-переменных перед выпечкой спрайтов
 /** The values of `--player-1` to `--player-8` in the theme. A token needs real numbers to mix its dark disc. */
 export const PLAYER_COLOURS = ['#7fb2ff', '#e8c56a', '#ea7f76', '#74d09a', '#b89bf5', '#f0a463', '#62cdd3', '#d98bc2'];
 

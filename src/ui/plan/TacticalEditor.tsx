@@ -44,15 +44,18 @@ export function TacticalEditor({
   const { t } = useTranslation();
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
+  // TODO(P2-309) #ws:production #type:check #rule:67-/-79 #rule:79.4 #test:067-producing-units #test:079-space-dock #duplicate-of-domain #warning-channel — «нет базы» считает UI по before.docks (чужая база тоже засчитывается); нужен код noProduction в домене, hasDock убрать
   const hasDock = planets.some(p => before.docks.includes(p.id));
   const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.upgrades, pack);
   const cost = priceOf(entry.production);
   const unitsIn = (list: { units: UnitCounts }[]): UnitCounts =>
     list.reduce((sum, item) => addUnits(sum, item.units), {} as UnitCounts);
+  // TODO(P2-314) #ws:ui-containers #type:dup #size:s — строка «юнит N, …» собрана здесь, в StrategyEditor (builtUnits), AdjustmentEditor и EntrySteps (signed); один помощник unitsText в ui/units
   const unitText = (units: UnitCounts): string =>
     UNIT_ORDER.filter(u => (units[u] ?? 0) > 0).map(u => `${t(`unit.${u}`)} ${units[u]}`).join(', ');
 
   const sources = sourcesOf(game, pack, entry);
+  // TODO(P2-311) #ws:ui-logic-to-domain #type:dup #duplicate-of-domain — деление «летит / груз» источника считается здесь, в EntrySteps и в tacticalMeters; брать из одной доменной функции
   /** A source in the list: its ships, then how much rides as cargo. */
   const sourceLine = (source: string): string => {
     const units = unitsIn(groupOf(game, pack, entry.moves, source));
@@ -61,7 +64,9 @@ export function TacticalEditor({
     return `${unitText(flying) || t('plan.tactical.noShips')}${cargo > 0 ? t('plan.tactical.cargoShort', { n: cargo }) : ''}`;
   };
 
+  // TODO(P2-312) #ws:ui-logic-to-domain #type:arch #size:s — наземные юниты заданы списком; брать pack.units[u].ground
   const groundUnits = (['infantry', 'mech'] as UnitId[]).filter(u => pack.units[u]);
+  // TODO(P2-313) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-312 — что прилетело, что осталось после боя и что можно высадить считает UI; это шаг replay (после перелёта и потерь, до высадки), брать состояние после боя из домена
   const arrived = addUnits(before.systems[target ?? ''] ?? {}, unitsIn(entry.moves));
   const lost = entry.losses ?? {};
   /** What fights in the active system, by the order of the shop. */
@@ -89,6 +94,7 @@ export function TacticalEditor({
 
   const placer = placeWarnings(warnings);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
+  // TODO(P2-315) #ws:ui-warnings #type:arch — места предупреждений перелёта и боя решаются фильтрами по коду и params.where (pickerWarnings, battleWarnings); нужны шаг и место из домена (WarningPlace 'battle'), а не разбор кода в редакторе
   // The open picker is where this flight is set up: it stands in for the row of its source, and it counts the fleet too.
   const pickerWarnings = pickerFrom === null ? [] : placer.at('route', w => limitsSystem(w) || ofSource(w, game, pack, entry.moves, pickerFrom));
   const overall = placer.at('action');
@@ -97,6 +103,7 @@ export function TacticalEditor({
 
   const blocks = target !== null && (
         <>
+          {/* TODO(P2-316) #ws:ui-containers #type:ui #section — блоки редактора собраны руками (div.editor-section > strong, optional-note только здесь); Section(title, optional, action, warnings) во всех редакторах */}
           <div className="editor-section">
             {isUntouched(entry)
               ? (
@@ -134,6 +141,7 @@ export function TacticalEditor({
             <button type="button" aria-pressed={choosing === 'source'} onClick={() => onChoose(choosing === 'source' ? null : 'source')}>{t('plan.tactical.addSource')}</button>
           </div>
 
+          {/* TODO(P2-318) #ws:ui-nesting #type:ui #needs:prototype — UnitPicker раскрывается внутри редактора (6 уровней); шаги: пока открыт перелёт, показывать только его с «Назад» */}
           {pickerFrom !== null && (
             <UnitPicker
               game={game} pack={pack} before={before} entry={entry} source={pickerFrom} warnings={pickerWarnings}
@@ -141,6 +149,7 @@ export function TacticalEditor({
             />
           )}
 
+          {/* TODO(P2-317) #ws:ui-nesting #type:ui #needs:prototype #dep:P2-316 — «Бой» и «Производство» — блоки из одной кнопки; сделать строками .in-card */}
           <div className="editor-section">
             <strong>{t('plan.tactical.battle')} <small className="optional-note">{t('plan.tactical.optional')}</small></strong>
             {lostAnywhere.length > 0 && <span className="muted">{lostAnywhere}</span>}
@@ -162,6 +171,7 @@ export function TacticalEditor({
           <div className="editor-section">
             <strong>{t('plan.tactical.production')} <small className="optional-note">{t('plan.tactical.optional')}</small></strong>
             {hasUnits(entry.production) && <span className="muted">{unitText(entry.production)}</span>}
+            {/* TODO(P2-310) #ws:ui-warnings #type:ui #size:s #dep:P2-309 #warning-channel — своё span.warning-text мимо WarningList; показывать noProduction через placer.at('production') */}
             {!hasDock && hasUnits(entry.production) && <span className="warning-text place-warnings">{t('plan.tactical.noDock')}</span>}
             <button type="button" onClick={onOpenShop}>{t('plan.tactical.openShop')}</button>
           </div>
@@ -186,6 +196,7 @@ export function TacticalEditor({
 
   return (
     <div className="tactical-editor panel-stack">
+      {/* TODO(P2-319) #ws:ui-containers #type:ui #needs:prototype #editor-frame — голова и подвал редакторов четырёх видов (здесь panel-head и «Готово» вверху, у StrategyEditor h2 и подвал, у UnitPicker текстовое «Закрыть»); класса .tactical-editor в CSS нет. Одна рамка редактора */}
       <div className="panel-head">
         <h2>{t('plan.tactical.title')}</h2>
         <button type="button" className="primary" onClick={onDone}>{t('plan.tactical.done')}</button>

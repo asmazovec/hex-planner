@@ -5,7 +5,7 @@ import { createGame } from '../../domain/newGame';
 import { project } from '../../domain/project';
 import { routeShapes } from '../../domain/route';
 import type { Entry, Game, GameState } from '../../domain/types';
-import { arrowsOf, entrySystems, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
+import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
 
 const pack = loadPack(['pok']);
 const HOME = '1,0';
@@ -118,6 +118,14 @@ describe('the flight', () => {
     expect(later.ground.quann).toEqual({});
     expect(stateInFlight(pack, entry(ROUTE, { free: true }), before(), []).tokensOnMap).not.toContain(TARGET);
   });
+});
+
+test('a flight has something to show only with a destination and units really at the source', () => {
+  const before = { systems: { [HOME]: { carrier: 1 } }, ground: {} } as unknown as GameState;
+  const body = (from: string, systemId: string | null) => ({ id: 'f', phase: 'action', status: 'planned', type: 'tactical', systemId, moves: [{ from, units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }) as unknown as TacticalEntry;
+  expect(flies(pack, body(HOME, TARGET), before)).toBe(true);
+  expect(flies(pack, body(WAY, TARGET), before)).toBe(false);
+  expect(flies(pack, body(HOME, null), before)).toBe(false);
 });
 
 test('the systems an entry touches, for the camera', () => {

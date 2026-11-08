@@ -3,8 +3,10 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import type { FactionDef } from '../../domain/types';
+// TODO(P2-460) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — HexRemove из фичевой папки plan/: импортировать из primitives/
 import { HexRemove } from '../plan/RowIcon';
 
+// TODO(P2-457) #ws:ui-logic-to-domain #type:arch #size:s #faction-groups — дополнение фракции выясняется тремя loadPack и вычитанием наборов: дополнение фракции из домена (factionSheet)
 const baseFactions = loadPack([]).factions;
 const pokFactions = loadPack(['pok']).factions;
 
@@ -34,6 +36,7 @@ export function FactionPicker({ label, value, factions, taken, clearable, onPick
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // TODO(P2-458) #ws:ui-structure #type:dup #size:s #dep:P2-435 #expansion-names — названия дополнений прописаны строками: брать из общей таблицы названий
   const groups = [
     { title: t('players.base'), list: factions.filter(f => baseFactions[f.id]) },
     { title: 'Prophecy of Kings', list: factions.filter(f => !baseFactions[f.id] && pokFactions[f.id]) },
@@ -50,6 +53,7 @@ export function FactionPicker({ label, value, factions, taken, clearable, onPick
       <button type="button" className="fac fac-button" aria-label={label} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
         {shown?.name ?? t('players.choose')}
       </button>
+      {/* TODO(P2-459) #ws:ui-containers #type:ui #size:s #dep:P2-452 #modal — модал с порталом, Escape и шапкой собран руками: общий Modal */}
       {open && createPortal(
         <div className="stage" onClick={closeOutside}>
           <div className="fac-sheet" role="dialog" aria-modal="true" aria-label={t('players.chooseFor', { who: label })}>

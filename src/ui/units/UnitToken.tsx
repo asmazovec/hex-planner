@@ -13,6 +13,7 @@ export interface UnitTokenProps {
   label?: string;
 }
 
+// TODO(P2-468) #ws:ui-structure #type:dup #size:s #token-picture — TokenPicture определён дважды: здесь (px) и в map/UnitShop.tsx (size): оставить этот, UnitShop и HexStage перевести на него
 /** A token as a picture of its own, for lists and buttons outside the map. */
 export function TokenPicture({ kind, colour, px }: { kind: TokenKind; colour: string; px: number }) {
   return (

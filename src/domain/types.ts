@@ -75,6 +75,7 @@ export interface UnitDef {
   combat: number | null;
   /** Null when the unit cannot move on its own. */
   move: number | null;
+  // TODO(P2-050) #ws:data #type:data #rule:96.2 #rule:72.1 #rule:24.4 #test:096-units #test:072-reinforcements #test:024-construction #size:s #reinforcements — Лимиты null, хотя LRR 96.2 (tirules2) даёт состав набора: 4 carrier, 8 cruiser, 8 destroyer, 5 dreadnought, 2 war sun, 1 flagship, 4 mech, 3 space dock, 6 PDS
   /** Reinforcement limit; null means not confirmed or without a limit. */
   limit: number | null;
   /** Ships only: the base table's levels; a faction's `ships` entry replaces them. */
@@ -154,6 +155,7 @@ export interface DataPack {
   factions: Record<string, FactionDef>;
   templates: MapTemplate[];
   technologies: Record<string, TechDef>;
+  // TODO(P2-051) #ws:data #type:data #rule:68.1 #rule:79.1 #size:s #production-value — У базы нет значения Production (ресурсы планеты + 2 у Space Dock I, + 4 у II): без него не проверить лимит производства
   structures: { id: 'pds' | 'spacedock'; limit: number | null }[];
 }
 
@@ -283,6 +285,7 @@ export interface Game {
   planetControl: Record<string, 'me' | 'enemy'>;
   /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
   planetOwner: Record<string, string>;
+  // TODO(P2-024) #ws:structures #type:model #rule:49.5.1 #rule:63.4 #rule:79.4 #test:049-invasion #test:063-pds #test:079-space-dock #size:l #structure-owner #schema — У баз и PDS нет владельца: при захвате планеты чужие строения переходят к захватчику вместо уничтожения. Хранить владельца, уничтожать при смене контроля, миграция схемы
   /** Ids of planets that have a space dock. */
   docks: string[];
   /** Planet id to the number of PDS on it. */
@@ -324,5 +327,6 @@ export interface GameState {
 export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
   | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
   | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative' | 'systemHasToken' | 'constructionUnits' | 'speedShort' | 'routeBlocked' | 'sourceActivated';
+// TODO(P2-001) #ws:rule-engine #type:arch #size:l #warning-channel #violation — Предупреждение не знает правила, шага и места: добавить rule (номер LRR), step (activation, movement, transport, combat, invasion, production, payment, card, status), place (entryId, source, planetId); WarningCode свести к реестру правил
 export interface Warning { code: WarningCode; params: Record<string, string | number>; }
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

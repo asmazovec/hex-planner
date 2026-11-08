@@ -31,6 +31,8 @@
     "settings": "Settings",
     "blur": "Background blur",
     "flightLoop": "Loop flights",
+    "energy": "Energy saving",
+    "energyNote": "No flights, smooth motion or blur.",
     "delete": "Delete game",
     "deleteYes": "Delete for good"
   },

@@ -22,6 +22,7 @@ export type MapPick = 'system' | 'build' | 'dock';
 
 const READY_LIMIT = 2;
 
+// TODO(P2-327) #ws:ui-structure #type:arch #size:s — cardPurchases — переходник большого гекса для PlanScreen, к редактору не относится (и тянет тип из map/HexStage); вынести рядом с PurchaseTarget
 /** Routes what the big hex buys into the entry's effects. */
 export function cardPurchases(
   game: Game, pack: DataPack, entry: CardEntry, slot: string, before: GameState, apply: (effects: CardEffects) => void,
@@ -81,6 +82,7 @@ export function StrategyEditor({
   const setEffects = (patch: CardEffects) => change({ effects: { ...effects, ...patch } });
   const named = (id: string) => opponentName(game, pack, id, t);
   const tile = (slot: string) => t('plan.strategy.tile', { name: systemName(game, pack, slot) });
+  // TODO(P2-328) #ws:rivals #type:bug #rule:92.4 #test:092-trade #player-choice — на карте соперника game = gameAs: списки Trade и Politics предлагают самого соперника и не предлагают меня; нужен доменный список «другие игроки владельца записи»
   const opponents = opponentsBySeat(game);
   const toggled = (list: string[] | undefined, id: string) =>
     (list?.includes(id) ? list.filter(other => other !== id) : [...(list ?? []), id]);
@@ -93,6 +95,7 @@ export function StrategyEditor({
   const placer = placeWarnings(warnings);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
 
+  // TODO(P2-338) #ws:ui-containers #type:ui #section #dep:P2-316 — блоки (жетоны, Diplomacy, Politics, Trade, Technology, улучшения) собраны вручную из div.editor-section; Section
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
     <div className="editor-section">
       <TokenTiles
@@ -121,6 +124,7 @@ export function StrategyEditor({
     .map(u => `${t(`unit.${u}`)} ${production.units[u]}`).join(', ');
   const builtLine = builtUnits && <p className="muted">{t('plan.strategy.built', { list: `${tile(production.systemId)}: ${builtUnits}` })}</p>;
 
+  // TODO(P2-336) #ws:strategy-cards #type:arch — один switch на все карты в редакторе; по компоненту на карту (plan/editors/cards/*) вслед за обработчиками карт в домене
   const sections = () => {
     switch (entry.card) {
       case CARD.leadership: {
@@ -133,6 +137,7 @@ export function StrategyEditor({
         );
       }
       case CARD.diplomacy: {
+        // TODO(P2-326) #ws:strategy-cards #type:check #rule:32.2 #rule:32.3 #rule:71-note-3 #test:032-diplomacy #test:071-readied #duplicate-of-domain — какие планеты готовить и лимит READY_LIMIT решает UI (disabled), домен не предупреждает; правило и список планет в domain/strategy.ts, здесь только показ
         // Only the base primary's text says "that system"; the others ready any of my planets.
         const unlimited = primary && strategyCardSet(game.expansions) === 'base_game';
         const readied = effects.readied ?? [];
@@ -170,6 +175,7 @@ export function StrategyEditor({
             {primary && (
               <div className="editor-section" role="group" aria-label={t('plan.strategy.speaker')}>
                 <strong>{t('plan.strategy.speaker')}</strong>
+                {/* TODO(P2-329) #ws:ui-containers #type:ui #player-choice #needs:prototype — выбор игрока (точка цвета + имя, inline var(--player-…)) собран руками здесь, в Trade ниже, в HexStage и PlanScreen; общий PlayerChoice с PlayerDot */}
                 {opponents.map(o => (
                   <button
                     key={o.id} type="button" className="option" aria-pressed={effects.speaker === o.id}
@@ -210,6 +216,7 @@ export function StrategyEditor({
             <p className="muted">{t('plan.strategy.tradePrimary')}</p>
             <div className="editor-section" role="group" aria-label={t('plan.strategy.free')}>
               <strong>{t('plan.strategy.free')}</strong>
+              {/* TODO(P2-330) #ws:ui-containers #type:ui #size:s #player-choice #dep:P2-329 #dep:P2-328 — вторая ручная сборка выбора игрока; PlayerChoice */}
               {opponents.map(o => (
                 <button
                   key={o.id} type="button" className="option" aria-pressed={effects.freeSecondary?.includes(o.id) ?? false}
@@ -279,6 +286,7 @@ export function StrategyEditor({
                 <button type="button" className="option" aria-pressed={researched > 0} onClick={() => setResearched(researched + 1)}>
                   {t('plan.strategy.researchAdd')}{researched > 0 ? ` · ${researched}` : ''}
                 </button>
+                {/* TODO(P2-332) #ws:ui-containers #type:ui #needs:prototype #size:s — «−» на месте .in-card, где по соглашению удаление, а делает уменьшение; Stepper */}
                 {researched > 0 && <button type="button" aria-label={t('plan.strategy.researchTake')} onClick={() => setResearched(researched - 1)}>−</button>}
               </div>
               <span className="muted">{t(primary ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}</span>
@@ -294,6 +302,7 @@ export function StrategyEditor({
         if (!primary) return <p className="muted">{t('plan.strategy.imperialSecondary')}</p>;
         return (
           <>
+            {/* TODO(P2-331) #ws:strategy-cards #type:bug #rule:45.2 #rule:45-note-3 #test:045-imperial — очко Imperial по флажку, доступному и без контроля Mecatol Rex; убрать переключатель, очко считает домен по контролю */}
             <button type="button" className="option" aria-pressed={effects.mecatol ?? false} onClick={() => setEffects({ mecatol: !effects.mecatol })}>
               {t('plan.strategy.mecatol')}
             </button>
@@ -326,6 +335,7 @@ export function StrategyEditor({
     <>
       <div className="card-abilities" role="group" aria-label={t('plan.strategy.modes')}>
         {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
+        {/* TODO(P2-333) #ws:strategy-cards #type:dup #duplicate-of-domain #size:s — цена жетоном повторяет playOf и costsStrategyToken (и CARD.leadership ниже); звать costsStrategyToken({ ...entry, ...playOf(...) }) */}
         {ability(true, summary.primary, entry.forToken === true || (mine && !heldCards(round, game.playerCount).includes(card.initiative)))}
         {ability(false, summary.secondary, card.initiative !== CARD.leadership)}
         {summary.change && <span className="card-note">{summary.change}</span>}
@@ -342,9 +352,12 @@ export function StrategyEditor({
     </>
   );
 
+  // TODO(P2-337) #ws:ui-nesting #type:ui #needs:prototype — редактор длинный, 4 уровня; шаги: (1) карта и свойство, (2) параметры
   return (
     <div className="strategy-editor panel-stack">
+      {/* TODO(P2-334) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 — голый h2 и подвал .strategy-foot вместо общей рамки редактора */}
       <h2>{t('plan.menu.strategic')}</h2>
+      {/* TODO(P2-335) #ws:ui-containers #type:dup #size:s — сетка карт стратегии повторяет StrategyCards.tsx; общий CardGrid */}
       <div className="card-grid" role="group" aria-label={t('plan.strategy.cards')}>
         {cards.map(c => (
           <button

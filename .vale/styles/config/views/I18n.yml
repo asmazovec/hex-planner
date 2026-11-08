@@ -1,0 +1,6 @@
+# Every string value of an i18n file, whatever its depth.
+engine: dasel
+scopes:
+  - name: raw
+    expr: 'search(true)'
+    type: md

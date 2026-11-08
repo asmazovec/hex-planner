@@ -1,6 +1,7 @@
 import type { Entry } from './types';
 
 /** Flat-top hexes on axial coordinates: north is r - 1, north-east is q + 1, r - 1. */
+// TODO(P2-056) #ws:domain-purity #type:arch #size:m #purity #geometry — Пиксели, кривые, время перелёта и фокус камеры — отрисовка, не правила: перенести в src/ui/map/geometry.ts, в домене оставить слоты и смежность
 export const HEX_SIZE = 60;
 
 export interface Point { x: number; y: number }
@@ -38,6 +39,7 @@ export function slotAcross(slot: string, edge: number): string | null {
 export function gridDistance(a: string, b: string): number {
   const p = parseSlot(a);
   const s = parseSlot(b);
+  // TODO(P2-011) #ws:movement #type:bug #rule:6-note-2 #test:006-adjacency #dep:P2-010 #size:s #Creuss — Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity
   if (!p || !s) return 1;
   const q = p.q - s.q;
   const r = p.r - s.r;

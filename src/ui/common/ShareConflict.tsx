@@ -8,6 +8,7 @@ function ConflictDialog({ conflict }: { conflict: NonNullable<GameStore['linkCon
   const [name, setName] = useState(`${conflict.name} 2`);
   const wanted = name.trim();
   const taken = conflict.taken.includes(wanted);
+  // TODO(P2-452) #ws:ui-containers #type:ui #size:s #modal — модал собран руками (.stage + .link-dialog) без Escape и шапки с HexRemove, третья копия рядом с HexStage и FactionPicker: общий Modal (аудит 3.5)
   return (
     <div className="stage">
       <div className="link-dialog" role="dialog" aria-modal="true" aria-label={t('share.title')}>
@@ -17,6 +18,7 @@ function ConflictDialog({ conflict }: { conflict: NonNullable<GameStore['linkCon
           {t('share.newName')}
           <input type="text" value={name} onChange={e => setName(e.target.value)} />
         </label>
+        {/* TODO(P2-453) #ws:ui-warnings #type:ui #size:s #warning-channel — предупреждение собрано классами warning-text place-warnings: WarningList с произвольным текстом */}
         {taken && <p className="warning-text place-warnings">{t('share.nameTaken')}</p>}
         <button type="button" className="primary" disabled={wanted === '' || taken} onClick={() => void resolve({ newName: wanted })}>{t('share.createNew')}</button>
         <button type="button" onClick={() => void resolve({ keepSaved: true })}>{t('share.keepSaved')}</button>

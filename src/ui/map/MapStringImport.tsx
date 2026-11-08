@@ -8,6 +8,7 @@ import { useGame } from '../../state/gameStore';
 
 /** Each expansion on its own: tells a tile of an expansion that is off from a tile nobody knows. */
 const OTHER_PACKS: OtherPacks = { pok: loadPack(['pok']), te: loadPack(['te']) };
+// TODO(P2-249) #ws:ui-structure #type:dup #size:s #expansions — Названия дополнений прописаны ещё в GameScreen, FactionComponents и FactionPicker: одно место для всех
 const EXPANSION_NAMES: Record<ExpansionId, string> = { pok: 'Prophecy of Kings', te: "Thunder's Edge" };
 
 export interface MapStringImportProps {
@@ -38,10 +39,12 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
   };
   const onApply = () => (mapIsEmpty(game, pack) ? apply() : setConfirming(true));
 
+  // TODO(P2-248) #ws:ui-containers #type:dup #dep:P2-259 #size:m #popover #section — Плавающая карточка .map-import повторяет .tile-popover, а panel-head собран руками: Popover с якорем и Section
   return (
     <div className="map-import" role="group" aria-label={t('mapImport.title')}>
       <div className="panel-head">
         <strong>{t('mapImport.title')}</strong>
+        {/* TODO(P2-247) #ws:ui-containers #type:ui #needs:prototype #size:s #close-button — Текстовая кнопка «Закрыть»: HexRemove, как везде */}
         <button type="button" onClick={onClose}>{t('map.sheet.close')}</button>
       </div>
       <textarea
@@ -55,6 +58,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
         </div>
       ))}
       {isSet && <p className="muted">{t('mapImport.set', { n: parsed.set.length })}</p>}
+      {/* TODO(P2-250) #ws:ui-containers #type:dup #needs:prototype #size:s #confirm-bar — Строка подтверждения .row (текст, «Заменить», «Отмена») — четвёртый вид после player-confirm, GameScreen и LayoutPicker: ConfirmBar */}
       {confirming ? (
         <div className="row">
           <span className="muted">{t('mapImport.confirm')}</span>

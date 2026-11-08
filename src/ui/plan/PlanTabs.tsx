@@ -69,6 +69,7 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
           );
         })}
         <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
+        {/* TODO(P2-383) #ws:ui-containers #type:ui #needs:prototype — удаление плана текстовой кнопкой и раунда «−» ниже вместо HexRemove */}
         <button type="button" className="plan-copy plan-delete" disabled={game.plans.length <= 1} onClick={onDeletePlan}>{t('plan.deletePlan')}</button>
       </div>
       <div className="plan-rounds-group">

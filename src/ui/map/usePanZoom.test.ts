@@ -1,7 +1,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PointerEvent } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { usePanZoom } from './usePanZoom';
+import { reducedMotion, usePanZoom } from './usePanZoom';
 
 const bounds = { x: 0, y: 0, width: 100, height: 100 };
 const SVG = 'http://www.w3.org/2000/svg';
@@ -250,6 +250,14 @@ test('reset travels to the start through in-between frames', () => {
   expect(result.current.view.x).toBeLessThan(40);
   runFrames(200);
   expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
+});
+
+test('energy saving counts as reduced motion', () => {
+  expect(reducedMotion()).toBe(false);
+  document.documentElement.dataset.energy = 'on';
+  expect(reducedMotion()).toBe(true);
+  document.documentElement.dataset.energy = 'off';
+  expect(reducedMotion()).toBe(false);
 });
 
 test('with reduced motion the view jumps without frames', () => {

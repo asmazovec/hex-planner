@@ -1,0 +1,20 @@
+# CLAUDE.md: game names stay in English in the Russian interface.
+extends: existence
+message: "Игровое название остаётся английским: «%s»."
+level: error
+ignorecase: true
+nonword: true
+tokens:
+  - 'Мекатол\p{L}*'
+  - 'Рекс\p{L}*'
+  - 'Тандер\p{L}*'
+  - 'Пророчеств\p{L}* корол\p{L}*'
+  - 'Хакан\p{L}*'
+  - 'Летнев\p{L}*'
+  - 'Ментак\p{L}*'
+  - 'Муаат\p{L}*'
+  - 'Наалу'
+  - 'Некро'
+  - 'Ксча'
+  - 'Иссарил\p{L}*'
+  - 'Келерес\p{L}*'

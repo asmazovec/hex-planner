@@ -37,11 +37,13 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
     const tile = resolveTile(query, pack);
     if (tile) place(tile.id);
     else {
+      // TODO(P2-258) #ws:ui-logic-to-domain #type:dup #size:s #map-builder — Причину отказа (номер неоднозначен или неизвестен) UI выясняет сам, повторяя поиск: пусть resolveTile в domain/mapBuilder.ts её возвращает
       const sides = Object.values(pack.tiles).filter(tile => tile.number.toUpperCase() === query.toUpperCase());
       setError(t(sides.length > 1 ? 'builder.ambiguous' : 'builder.unknown', { query }));
     }
   };
 
+  // TODO(P2-255) #ws:ui-css #type:dead #dep:P2-254 #size:s #panel — Тот же .panel, с которого CSS снимает оформление: убрать
   return (
     <div className="panel tile-input" role="group" aria-label={t('builder.title')}>
       <h2>{t('builder.title')}</h2>
@@ -56,7 +58,9 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
         <button type="submit" className="primary">{t('builder.set')}</button>
         <button type="button" disabled={!value} onClick={() => onChange(null)}>{t('builder.clear')}</button>
       </form>
+      {/* TODO(P2-256) #ws:ui-containers #type:ui #size:s #banner — Разметка баннера руками (p.banner.banner-warning): Banner kind="warning" */}
       {error && <p role="alert" className="banner banner-warning">{error}</p>}
+      {/* TODO(P2-257) #ws:ui-css #type:ui #size:s #chips — Ряд подсказок на .row без общего класса, хотя есть .chips: перевести на .chips */}
       {suggestions.length > 0 && (
         <div className="row" role="group" aria-label={t('builder.suggestions')}>
           {suggestions.map(tile => (

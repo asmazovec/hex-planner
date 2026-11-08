@@ -5,6 +5,7 @@ import { extendPath, routeFromPath, type RouteDraft } from '../../domain/route';
  * The route being drawn: `path` holds its hexes in the order the finger passed them. `reverse` means the drag runs from
  * the active system towards a source. The screen point is where the pointer was when the path last changed.
  */
+// TODO(P2-236) #ws:ui-structure #type:dup #dep:P2-233 #size:s #route-draft — Тот же черновик, что RouteDraftView в HexMap: один тип
 export interface ArrowPreview { path: string[]; clientX: number; clientY: number; reverse: boolean }
 
 export interface ArrowDragOptions {

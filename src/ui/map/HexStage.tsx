@@ -9,6 +9,7 @@ import { startingDocks } from '../../domain/strategy';
 import { unitStats } from '../../domain/unitStats';
 import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+// TODO(P2-211) #ws:ui-structure #type:arch #size:s #imports — Большой гекс берёт HexRemove, WarningList и warningPlaces из plan/: импортировать из primitives/ и feedback/ после переноса
 import { lossesOf, systemName, withAdjustedUnit, withCount, withLoss, type TacticalEntry } from '../plan/tactical';
 import { HexRemove } from '../plan/RowIcon';
 import { placesOf, type WarningPlace } from '../plan/warningPlaces';
@@ -81,6 +82,7 @@ function bumped(record: Record<string, number>, key: string, amount: number): Re
   return current + amount > 0 ? { ...rest, [key]: current + amount } : rest;
 }
 
+// TODO(P2-200) #ws:ui-nesting #type:arch #needs:prototype #size:l #hex-stage #srp — 440 строк: модал, три режима, правка чужих юнитов, оплата производства и счётчики в одном компоненте; разделить на оболочку и панели setup/battle/build, покупки вынести в хук
 /**
  * The big hex over the map, driven by taps on pictures. Setup places and removes units of any origin, battle records
  * losses, build buys. Tile details live in the setup panel. Enemy units and structures have no entry to hold what was
@@ -104,6 +106,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** Why the last tap on a token changed nothing. */
   const [tapNote, setTapNote] = useState<'planned' | null>(null);
 
+  // TODO(P2-202) #ws:ui-containers #type:dup #dep:P2-201 #size:s #modal — Свой обработчик Escape, как в Drawer и FactionPicker: его возьмёт на себя Modal
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -127,10 +130,13 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const side = only ? mine : chosenSide ?? mine;
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, name: opponentName(game, pack, o.id, t) }));
+  // TODO(P2-271) #ws:ui-structure #type:dup #dep:P2-268 #size:s #player-name — Имя соперника собирается двумя модулями (opponentName и factionShortName) прямо здесь: одна функция имён в players/names.ts
   const shortName = (o: { name: string; faction: string }): string => (pack.factions[o.faction] ? factionShortName(o.faction, o.name) : o.name);
+  // TODO(P2-203) #ws:ui-logic-to-domain #type:dup #size:s #duplicate-of-domain #rivals — holderOf повторяет TileView: держателя планеты в состоянии (rivalHolds, затем planetHolder) считать одной функцией домена в players.ts
   const holderOf = (planetId: string): string => (state.control[planetId] === 'enemy' ? state.rivalHolds?.[planetId] ?? planetHolder(game, planetId) ?? 'me' : 'me');
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
+  // TODO(P2-204) #ws:ui-logic-to-domain #type:arch #size:m #rivals #enemy-units — Правило «наземные по планетам, числящиеся за системой снимаются первыми» решает UI: перенести в действие стора или домен
   /** Ground units go by planet; one still listed with the system comes off there. */
   const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => {
     const onPlanet = planetId === null ? {} : game.enemyGround[planetId]?.[owner] ?? {};
@@ -141,6 +147,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const units = game.enemyUnits[slot]?.[owner] ?? {};
     setEnemyUnits(slot, owner, withCount(units, unit, (units[unit] ?? 0) + amount));
   };
+  // TODO(P2-219) #ws:ui-nesting #type:dup #dep:P2-200 #size:s #hex-stage — Тактическая запись ищется дважды (fightingFor и tactical ниже) по разным правилам: одна запись, которой принадлежат бой и покупки
   /** The tactical action this hex was opened from: its battle belongs to it, and the fleet limit counts it. */
   const fightingFor = tacticalId ? round.entries.find((e): e is Entry & TacticalEntry => e.id === tacticalId && e.type === 'tactical') : undefined;
   const adjusting = adjustmentId ? round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment') : undefined;
@@ -159,6 +166,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && stateBeforeEntry(game, plan, tactical.id, pack);
   const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
+  // TODO(P2-205) #ws:ui-logic-to-domain #type:arch #size:m #production #payment #duplicate-of-domain — Сборка production/productionGround и автооплата (autoPay, если оплата не ручная) считаются в UI: функция домена рядом с withLoss, общая с редактором тактики
   const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) => {
     const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
     const cost = productionCost(production, view.faction, before.upgrades, pack);
@@ -212,10 +220,12 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     else change('setup', kind, planetId, 1);
   };
 
+  // TODO(P2-209) #ws:ui-logic-to-domain #type:arch #size:s #structures — Есть ли строение в самой партии, а не в записях (game.pds, startingDocks), решает UI: нужна функция домена
   /** Whether the game itself holds this structure, apart from what entries plan. */
   const inBaseline = (kind: StructureKind, planetId: string): boolean =>
     (kind === 'pds' ? (game.pds[planetId] ?? 0) > 0 : startingDocks(game, pack).includes(planetId));
 
+  // TODO(P2-207) #ws:ui-nesting #type:arch #dep:P2-200 #size:m #hex-stage — Один обработчик нажатия на жетон ветвится по режиму, владельцу, виду и базовому составу: разбить на обработчики режимов
   const onToken = ({ kind, owner, planet, key }: PlacedStack) => {
     const planetId = planetIdOf(planet);
     setTapNote(null);
@@ -258,6 +268,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const lossStrip = (owner: string, heading: string) => {
     const session = Object.keys(lost).filter(key => parseKey(key).owner === owner);
     const pictures = [
+      // TODO(P2-206) #ws:combat-order #type:bug #rule:78.6.2 #test:078-space-combat #size:s #losses — Возврат ошибочной потери десантника идёт через withLoss(+1) и только уменьшает losses: юнит остаётся в космосе, а не в landings; чинить в withLoss
       ...(owner === mine ? myLosses.map(c => ({
         key: `${c.unit}|${c.planetId}`, kind: c.unit as TokenKind, planetId: c.planetId, count: -c.count, back: () => change('losses', c.unit, c.planetId, 1),
       })) : []),
@@ -273,6 +284,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
         <div className="stage-losses">
           {pictures.map(({ key, kind, planetId, count, back }) => {
             const planet = planetNameOf(kind, planetId);
+            // TODO(P2-208) #ws:ui-containers #type:dup #dep:P2-261 #size:s #unit-tile — Кнопка потери .stage-loss — ещё одна плитка юнита с числом: UnitTile variant="loss"
             return (
               <button
                 key={key} type="button" className="stage-loss" onClick={back}
@@ -296,6 +308,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
     .filter(([key]) => { const k = parseKey(key); return k.kind === kind && (isStructure(kind) || k.owner === side); })
     .reduce((sum, [, n]) => sum + n, 0);
+  // TODO(P2-218) #ws:structures #type:bug #dep:P2-222 #rule:49.5.1 #size:s #player-colour — Строение красится цветом держателя планеты: чужая база после захвата выглядит моей; брать владельца строения
   const structureColour = colours[targetPlanet ? holderOf(targetPlanet.id) : 'me'];
   const shopItems: ShopItem[] = [
     ...(only === 'build' ? [] : units.map((kind): ShopItem => ({
@@ -309,6 +322,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
+  // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
   const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);
@@ -342,6 +356,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const { x, y } = slotToPixel(slot);
   const closeOutside = (e: MouseEvent) => { if (e.target === e.currentTarget) onClose(); };
 
+  // TODO(P2-201) #ws:ui-containers #type:ui #size:m #modal — Модал собран руками (.stage + .stage-dialog, без портала), третья копия после FactionPicker и ShareConflict: Modal с title, onClose и HexRemove
   return (
     <div className="stage" onClick={closeOutside}>
       <div className="stage-dialog" role="dialog" aria-modal="true" aria-label={title}>
@@ -367,6 +382,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
           )}
 
           {/* It answers a tap on the hex, so it stands at the top of the panel beside it. */}
+          {/* TODO(P2-212) #ws:ui-warnings #type:ui #size:s #warning-channel — Пояснение к нажатию свёрстано как p.warning-text: показать через WarningList с произвольным текстом (message) */}
           {tapNote && <p className="warning-text place-warnings" role="status">{t(`stage.tapNote.${tapNote}`)}</p>}
 
           {mode === 'battle' && (
@@ -379,6 +395,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
           {mode !== 'battle' && (
             <>
+              {/* TODO(P2-213) #ws:ui-containers #type:ui #size:m #player-colour #inline-style #rivals — Выбор игрока точкой и именем собран руками, цвет через var(--player-N) во style: PlayerChoice с PlayerDot */}
               {!only && mine === 'me' && (
                 <div className="segment stage-owners" role="group" aria-label={t('stage.owner')}>
                   {[{ id: 'me', name: t('stage.mine'), color: game.color, faction: '' }, ...seated].map(o => (
@@ -389,6 +406,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                   ))}
                 </div>
               )}
+              {/* TODO(P2-215) #ws:ui-containers #type:ui #size:s #section-title — Голые h3 здесь и в lossStrip, уровни заголовков произвольные: SectionTitle */}
               <h3>{t(only === 'build' ? 'stage.structures' : inBuild ? 'stage.shop' : 'stage.place')}</h3>
               <UnitShop items={shopItems} onPick={buy} />
               {inBuild && (
@@ -408,12 +426,14 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                 </div>
               )}
               {inBuild && side === mine && <WarningList warnings={entryWarnings} game={game} pack={pack} />}
+              {/* TODO(P2-216) #ws:ui-warnings #type:dup #size:s #warning-channel #duplicate-of-domain #test:067-producing-units #test:079-space-dock — «Нет базы» считает UI (вторая копия в TacticalEditor) и рисует p.warning-text: доменный код нарушения через WarningList */}
               {inBuild && only !== 'build' && boughtTotal > 0 && !planets.some(p => state.docks.includes(p.id)) && <p className="warning-text place-warnings">{t('plan.tactical.noDock')}</p>}
               <p className="muted">{t(inBuild ? 'stage.buildNote' : 'stage.setupNote')}</p>
               {planets.length > 1 && <p className="muted">{t('stage.planetNote')}</p>}
             </>
           )}
 
+          {/* TODO(P2-217) #ws:ui-nesting #type:ui #needs:prototype #size:m #nesting #hex-stage — Свойства тайла и контроль планеты лежат пятым-шестым уровнем под режимом: отдельный режим сегмента или поповер */}
           {mode === 'setup' && (
             <div className="stage-facts">
               {!tile && <p className="muted">{t('map.sheet.unknown')}</p>}
@@ -425,6 +445,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                 <div role="group" aria-label={targetPlanet.name} className="stage-planet">
                   <strong>{targetPlanet.name}</strong>
                   <PlanetDetails planet={targetPlanet} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(targetPlanet.id)} />
+                  {/* TODO(P2-214) #ws:ui-containers #type:ui #dep:P2-213 #size:s #player-colour #inline-style — Вторая ручная сборка выбора игрока (контроль планеты) с цветом во style: PlayerChoice с вариантом «Нет» */}
                   <div className="segment stage-owners" role="group" aria-label={t('map.sheet.controlLabel', { planet: targetPlanet.name })}>
                     {owners.map(o => (
                       <button key={String(o.value)} type="button" aria-pressed={planetOwner === o.value} onClick={() => setPlanetControl(targetPlanet.id, o.value)}>

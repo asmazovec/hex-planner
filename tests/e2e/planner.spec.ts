@@ -385,14 +385,27 @@ test('a flight loops in the details by default, and with the setting off plays o
   await dragRoute(page, [58, 110, 66]);
   await page.getByRole('button', { name: 'Take one Carrier' }).click();
   await page.getByRole('button', { name: 'Done editing' }).click();
+  // A later action, whose unit must not blink on the map while the first one repeats.
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action', exact: true }).click();
+  await tile(page, 110).click();
+  await dragRoute(page, [58, 110]);
+  await page.getByRole('button', { name: 'Take one Destroyer' }).click();
+  await page.getByRole('button', { name: 'Done editing' }).click();
+  const laterUnit = tile(page, 110).getByRole('img', { name: /Destroyer/ });
+  await expect(laterUnit).not.toHaveCount(0);
 
   const row = entry(page, 'Tactical action · 66');
 
   // On by default: the details keep flying.
   await row.click();
   await expect.poll(flights, { timeout: 20000 }).toBeGreaterThanOrEqual(2);
+  // Between the repeats the map stands right after this action, without what comes later.
+  await expect(page.locator('.flight-layer')).toHaveCount(0, { timeout: 15000 });
+  await expect(laterUnit).toHaveCount(0);
   await row.click();
   await expect(page.locator('.flight-layer')).toHaveCount(0);
+  await expect(laterUnit).not.toHaveCount(0);
 
   await page.getByRole('button', { name: 'Game', exact: true }).click();
   await page.getByRole('button', { name: 'Loop flights' }).click();

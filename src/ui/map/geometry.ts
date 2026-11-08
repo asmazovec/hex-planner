@@ -2,6 +2,7 @@ import { HEX_SIZE, hexToPixel, type Point, type Rect } from '../../domain/route'
 
 export { HEX_SIZE, hexToPixel, slotToPixel, type Point, type Rect } from '../../domain/route';
 
+// TODO(P2-269) #ws:ui-structure #type:dup #size:s #geometry — Один из трёх генераторов вершин гекса (ещё FactionCard.tsx и SeatMap.tsx): оставить этот, остальным импортировать
 /** Corners of a hex centred on the origin, starting at the east corner and going clockwise on screen. */
 export function hexCorners(size: number = HEX_SIZE): Point[] {
   return Array.from({ length: 6 }, (_, i) => {

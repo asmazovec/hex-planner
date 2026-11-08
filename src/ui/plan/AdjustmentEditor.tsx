@@ -29,12 +29,14 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
   const { delta } = entry;
   const setDelta = (patch: Partial<AdjustmentDelta>) => onUpdate({ delta: { ...delta, ...patch } });
   const systemId = delta.units?.systemId;
+  // TODO(P2-364) #ws:ui-containers #type:dup #size:s #dep:P2-314 — signed повторён в EntrySteps
   const signed = (units: UnitCounts) => UNIT_ORDER.filter(u => units[u]).map(u => `${t(`unit.${u}`)} ${(units[u] ?? 0) > 0 ? '+' : ''}${units[u]}`).join(', ');
   const changes = [
     signed(delta.units?.units ?? {}),
     ...Object.entries(delta.ground ?? {}).filter(([, units]) => signed(units)).map(([planetId, units]) => `${pack.planets[planetId]?.name ?? planetId}: ${signed(units)}`),
   ].filter(Boolean);
 
+  // TODO(P2-362) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 #dep:P2-316 — чужой класс .tactical-editor (которого нет в CSS), своя голова и ручные блоки; общая рамка редактора и Section
   return (
     <div className="tactical-editor panel-stack">
       <div className="panel-head">
@@ -66,6 +68,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
             </div>
           )
           : <button type="button" aria-pressed={picking} onClick={onPickSystem}>{t('plan.entries.pickSystem')}</button>}
+        {/* TODO(P2-363) #ws:ui-warnings #type:ui #size:s — все предупреждения в блоке «Система»; placeWarnings по местам и остаток вверху редактора */}
         <WarningList warnings={warnings} game={game} pack={pack} />
       </div>
     </div>

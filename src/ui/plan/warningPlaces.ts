@@ -4,6 +4,7 @@ import { groupOf, type Move } from './tactical';
 /** The block of an editor where the thing a warning speaks of is set up. */
 export type WarningPlace = 'route' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action';
 
+// TODO(P2-381) #ws:ui-warnings #type:arch — место предупреждения выводится из кода таблицей в UI; брать шаг и место из доменного нарушения, таблицу удалить
 const PLACES: Record<WarningCode, WarningPlace[]> = {
   shortResources: ['payment'],
   shortInfluence: ['payment'],

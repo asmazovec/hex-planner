@@ -1,3 +1,4 @@
+// TODO(P2-446) #ws:ui-structure #type:dup #size:s #preferences — blur, energy и flightLoop — три копии флага в localStorage с try/catch и записью на корень: одна фабрика preference(key, default, rootAttr?) в common/preferences.ts
 const STORAGE_KEY = 'ti4.blur';
 
 /** Whether windows that take over the screen blur what is behind them. On unless turned off. */

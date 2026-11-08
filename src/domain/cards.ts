@@ -1,3 +1,4 @@
+// TODO(P2-057) #ws:domain-purity #type:arch #size:s #purity #data-cycle — Домен импортирует JSON из src/data, а src/data импортирует домен: набор карт получать через DataPack
 import sets from '../data/packs/strategyCards.json';
 import type { ExpansionId } from './types';
 

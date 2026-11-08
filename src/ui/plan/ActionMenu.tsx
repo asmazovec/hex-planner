@@ -14,6 +14,7 @@ export function ActionMenu({ onPick }: ActionMenuProps) {
   return (
     <div className="action-menu">
       <button type="button" className="primary" aria-expanded={open} onClick={() => setOpen(!open)}>{t('plan.menu.add')}</button>
+      {/* TODO(P2-357) #ws:ui-nesting #type:ui #needs:prototype — список действий раскрывается в подвале списка записей (4 уровня); поповер над кнопкой */}
       {open && (
         <div className="card-list">
           {ACTION_TYPES.map(type => (

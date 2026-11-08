@@ -7,6 +7,7 @@ import { Banner } from './common/Banner';
 import { downloadGame } from './common/download';
 import { ExportReminder } from './common/ExportReminder';
 import { ShareConflict } from './common/ShareConflict';
+// TODO(P2-471) #ws:ui-structure #type:arch #size:s #primitives — RowIcon и HexRemove — общие примитивы в plan/RowIcon.tsx, их берут App, common, players, screens, map: перенести в primitives/Icon.tsx
 import { RowIcon } from './plan/RowIcon';
 import { GameScreen } from './screens/GameScreen';
 import { PlanScreen } from './screens/PlanScreen';

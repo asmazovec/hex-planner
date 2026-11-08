@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type ReactNode, type R
 import { useTranslation } from 'react-i18next';
 import type { View } from './usePanZoom';
 import { popoverPosition } from './viewLimits';
+// TODO(P2-272) #ws:ui-structure #type:arch #dep:P2-211 #size:s #imports — HexRemove из plan/RowIcon: импорт из primitives/ после переноса
 import { HexRemove } from '../plan/RowIcon';
 
 export interface TilePopoverProps {
@@ -14,6 +15,7 @@ export interface TilePopoverProps {
   children: ReactNode;
 }
 
+// TODO(P2-259) #ws:ui-containers #type:arch #size:m #popover #overlays — Поповер привязан только к гексу (ищет [data-slot] polygon): общий Popover с якорем в overlays/, его же взять для .map-import
 /** A compact window beside the selected hex. A press outside the map closes it; the map reports its own empty taps. */
 export function TilePopover({ slot, view, areaRef, onClose, children }: TilePopoverProps) {
   const { t } = useTranslation();

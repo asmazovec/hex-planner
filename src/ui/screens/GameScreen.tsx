@@ -10,26 +10,32 @@ import { deleteGame, listGames, saveGame, type GameSummary } from '../../storage
 import { importGame } from '../../storage/transfer';
 import { Banner } from '../common/Banner';
 import { blurOn, setBlur } from '../common/blur';
+import { energyOn, setEnergy } from '../common/energy';
 import { shareLinkQuery } from '../../domain/shareLink';
+// TODO(P2-441) #ws:ui-structure #type:arch #size:s #primitives — примитив NoteField берётся из списка записей plan/EntryList: вынести в primitives/NoteField.tsx
 import { NoteField } from '../plan/EntryList';
 import { downloadGame } from '../common/download';
 import { flightLoopOn, setFlightLoop } from '../common/flightLoop';
 import { LayoutPicker } from '../map/LayoutPicker';
+// TODO(P2-442) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — HexRemove из фичевой папки plan/: импортировать из primitives/
 import { HexRemove } from '../plan/RowIcon';
 import { PlayerList } from '../players/PlayerList';
 import { SeatMap } from '../players/SeatMap';
 import { useSeatDrag } from '../players/useSeatDrag';
 
+// TODO(P2-435) #ws:ui-structure #type:dup #size:s #expansion-names — названия дополнений прописаны здесь, в MapStringImport, FactionComponents и FactionPicker: одна таблица названий
 const EXPANSIONS: { id: ExpansionId; label: string }[] = [
   { id: 'pok', label: 'Prophecy of Kings' },
   { id: 'te', label: "Thunder's Edge" },
 ];
 
+// TODO(P2-444) #ws:ui-structure #type:arch #size:s #i18n — список языков с подписями живёт в экране: перенести в src/i18n рядом с setLanguage
 const LANGUAGES: { code: Language; label: string }[] = [
   { code: 'ru', label: 'Русский' },
   { code: 'en', label: 'English' },
 ];
 
+// TODO(P2-440) #ws:ui-structure #type:dup #size:s #dep:P2-456 #names — имя фракции по id через пакет со всеми дополнениями и запасным id в трёх местах экрана: функция из модуля имён
 const allFactions = loadPack(['pok', 'te']).factions;
 
 /** The players on the left; expansions, the seat map and saved games on the right, language and settings last. */
@@ -48,8 +54,10 @@ export function GameScreen() {
   const [importError, setImportError] = useState<string | null>(null);
   /** The save asked about before it goes: deleting cannot be undone. */
   const [asked, setAsked] = useState<string | null>(null);
+  // TODO(P2-438) #ws:ui-structure #type:dup #size:s #dep:P2-446 #preferences — три настройки держат копию в useState и пишутся дважды (setX и setXState): хук usePreference на общей фабрике
   const [blur, setBlurState] = useState(blurOn);
   const [flightLoop, setFlightLoopState] = useState(flightLoopOn);
+  const [energy, setEnergyState] = useState(energyOn);
   const [linkCopied, setLinkCopied] = useState(false);
 
   const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
@@ -79,6 +87,7 @@ export function GameScreen() {
 
   /** A link to what stands on the screen: the map, the seats and the expansions, not the plans. */
   const copyLink = async () => {
+    // TODO(P2-445) #ws:ui-structure #type:dup #size:s #share-link — адрес ссылки собирается из window.location здесь и в App: одна функция адреса партии
     const link = `${window.location.origin}${window.location.pathname}?${shareLinkQuery(game)}`;
     try {
       await navigator.clipboard.writeText(link);
@@ -97,6 +106,7 @@ export function GameScreen() {
         setImportError(t(`import.${result.reason}`));
         return;
       }
+      // TODO(P2-439) #ws:ui-logic-to-domain #type:arch #size:s #import — новый id при совпадении придумывается в экране через Date.now: импорт под свободным id в storage/transfer
       const taken = (await listGames()).some(g => g.id === result.game.id);
       const imported = taken ? { ...result.game, id: `${result.game.id}-${Date.now().toString(36)}` } : result.game;
       await saveGame(imported);
@@ -125,6 +135,7 @@ export function GameScreen() {
           )}
         </div>
         <div className="side-group">
+          {/* TODO(P2-443) #ws:ui-containers #type:ui #size:s #section-title — заголовки групп «Партии» — p.side-label, в других местах h2/h3/strong для того же вида: SectionTitle */}
           <p className="side-label">{t('game.expansions')}</p>
           <div className="chips">
             <span className="chip fix on">{t('players.base')}</span>
@@ -158,9 +169,11 @@ export function GameScreen() {
                   <strong>{s.name ?? allFactions[s.faction]?.name ?? s.faction}</strong>
                   <small>{[...(s.name ? [allFactions[s.faction]?.name ?? s.faction] : []), t('game.playersShort', { count: s.playerCount })].join(' · ')}</small>
                 </span>
+                {/* TODO(P2-436) #ws:ui-containers #type:ui #size:s #needs:prototype #confirm-bar — своя строка подтверждения удаления, ещё один вид рядом с .player-confirm и строками LayoutPicker/MapStringImport: общий ConfirmBar */}
                 {asked === s.id
                   ? (
                     <>
+                      {/* TODO(P2-437) #ws:ui-containers #type:ui #size:s #dep:P2-436 #confirm-bar #danger — класс .danger не описан в теме, «Удалить» выглядит обычной кнопкой: вариант danger у ConfirmBar */}
                       <button type="button" className="danger" onClick={() => void remove(s.id)}>{t('game.deleteYes')}</button>
                       <button type="button" onClick={() => setAsked(null)}>{t('players.cancel')}</button>
                     </>
@@ -203,9 +216,11 @@ export function GameScreen() {
         <div className="side-group">
           <p className="side-label">{t('game.settings')}</p>
           <div className="chips">
-            <button type="button" className="chip" aria-pressed={blur} onClick={() => { setBlur(!blur); setBlurState(!blur); }}>{t('game.blur')}</button>
-            <button type="button" className="chip" aria-pressed={flightLoop} onClick={() => { setFlightLoop(!flightLoop); setFlightLoopState(!flightLoop); }}>{t('game.flightLoop')}</button>
+            <button type="button" className="chip" aria-pressed={energy} onClick={() => { setEnergy(!energy); setEnergyState(!energy); }}>{t('game.energy')}</button>
+            <button type="button" className="chip" aria-pressed={blur} disabled={energy} onClick={() => { setBlur(!blur); setBlurState(!blur); }}>{t('game.blur')}</button>
+            <button type="button" className="chip" aria-pressed={flightLoop} disabled={energy} onClick={() => { setFlightLoop(!flightLoop); setFlightLoopState(!flightLoop); }}>{t('game.flightLoop')}</button>
           </div>
+          {energy && <p className="side-note">{t('game.energyNote')}</p>}
         </div>
         <p className="side-note">
           {t('game.iconCredit')} <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">{t('game.iconLicence')}</a>

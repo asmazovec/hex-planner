@@ -10,6 +10,7 @@ export interface FractureControlProps {
   onMark: () => void;
 }
 
+// TODO(P2-372) #ws:ui-structure #type:arch #size:s #dep:P2-370 — используется только в map/ThundersEdgePanel; в drawers/
 /** The Fracture is opened by hand; nothing about it is automated. Ingress tokens are only marks on the map. */
 export function FractureControl({ game, pack, onMark }: FractureControlProps) {
   const { t } = useTranslation();

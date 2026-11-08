@@ -58,6 +58,7 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
   return (
     <div className="plan-cards" ref={block}>
       <h4 className="phase-title">{t('plan.phases.strategy')}</h4>
+      {/* TODO(P2-384) #ws:ui-containers #type:dup #size:s #dep:P2-335 — та же сетка карт, что в StrategyEditor */}
       <div className="card-grid" role="group" aria-label={t('plan.phases.strategy')}>
         {cards.map(card => {
           const main = card.initiative === round.strategyCard;

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../domain/types';
 import { requestPersistence } from '../../storage/db';
+// TODO(P2-451) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — common зависит от фичевой папки plan/ ради RowIcon: импортировать из primitives/
 import { RowIcon } from '../plan/RowIcon';
 import { EXPORTED_EVENT, LAST_EXPORT_KEY } from './download';
 
@@ -14,6 +15,7 @@ export function shouldRemindExport(input: { persisted: boolean; lastExportAt: nu
   return input.now - input.lastExportAt >= (input.persisted ? MAX_AGE.persisted : MAX_AGE.volatile);
 }
 
+// TODO(P2-450) #ws:ui-structure #type:dup #size:s #dep:P2-446 #preferences — время последней копии читается из localStorage своим try/catch, а пишется в download.ts: та же фабрика с ключом ti4.lastExportAt
 function readLastExport(): number | null {
   try {
     const value = Number(localStorage.getItem(LAST_EXPORT_KEY));

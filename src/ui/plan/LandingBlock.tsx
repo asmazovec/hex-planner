@@ -4,6 +4,7 @@ import type { Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../domai
 import { PlanetMark } from '../map/TileView';
 import { playerColour, tokenColours } from '../units/sprites';
 import { UnitToken } from '../units/UnitToken';
+// TODO(P2-358) #ws:ui-containers #type:ui #unit-tile #dep:P2-320 — плитка юнита берётся из файла перелёта, а Stack ниже — ещё одна плитка; обе заменить UnitTile
 import { UnitButton } from './UnitPicker';
 
 export interface LandingBlockProps {
@@ -52,8 +53,10 @@ export function LandingBlock({ game, planets, before, units, arrived, lost = {},
           t(exhausted ? 'map.sheet.exhausted' : 'map.sheet.ready'),
           ...(control ? [t(`map.control.${control}`)] : []),
         ].join(' · ');
+        // TODO(P2-359) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-313 — кто остался на планете после потерь считает UI; брать состояние после боя из домена
         const left = (unit: UnitId) => (before.ground[planet.id]?.[unit] ?? 0) - (lost[planet.id]?.[unit] ?? 0);
         const standing = (Object.keys(before.ground[planet.id] ?? {}) as UnitId[]).filter(unit => left(unit) > 0);
+        // TODO(P2-360) #ws:rivals #type:check #rivals — чужие войска берутся из game.enemyGround (расстановка), а не из состояния соперников по плану (state.rivals): их высадки раньше в плане не видны
         const enemies = opponentsBySeat(game).flatMap(o => (Object.keys(game.enemyGround[planet.id]?.[o.id] ?? {}) as UnitId[])
           .filter(unit => (game.enemyGround[planet.id]?.[o.id]?.[unit] ?? 0) > 0)
           .map(unit => ({ owner: o.id, unit, count: game.enemyGround[planet.id]?.[o.id]?.[unit] ?? 0 })));

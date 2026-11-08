@@ -4,6 +4,7 @@ import type { DataPack, ExpansionId, Game, MapLayout } from './types';
 
 let counter = 0;
 /** No browser or node API: an id only has to be unique within one user's local games. */
+// TODO(P2-055) #ws:domain-purity #type:arch #size:s #purity — Date.now, Math.random и счётчик модуля в домене: генератор id передавать параметром, как newId в losses.ts
 export function makeId(prefix: string): string {
   counter += 1;
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}${counter}`;

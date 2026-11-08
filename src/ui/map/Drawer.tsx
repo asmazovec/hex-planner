@@ -1,4 +1,5 @@
 import { useEffect, useState, type AnimationEvent, type ReactNode } from 'react';
+// TODO(P2-237) #ws:ui-structure #type:arch #dep:P2-235 #size:s #drawer #overlays — Шторка и язычок — общие оверлеи, а лежат в map/ и тянут animates из хука жестов: перенести в overlays/, motion из common/motion.ts
 import { animates } from './usePanZoom';
 
 export interface DrawerProps {
@@ -27,6 +28,7 @@ export function Drawer({ open, className, onDismiss, children }: DrawerProps) {
   const onEnd = (event: AnimationEvent) => {
     if (!open && event.target === event.currentTarget) setRendered(false);
   };
+  // TODO(P2-238) #ws:ui-containers #type:ui #size:m #drawer #drawer-sheet — Шторка даёт только коробку: каждое содержимое (легенда, улучшения, Thunder's Edge, игроки) собирает свой aside с role=dialog и h2; добавить DrawerSheet с title
   return (
     <>
       {onDismiss && <div className={`drawer-scrim${open ? '' : ' drawer-scrim-leaving'}`} data-testid="drawer-scrim" onClick={open ? onDismiss : undefined} />}

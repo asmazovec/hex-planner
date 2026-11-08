@@ -72,6 +72,7 @@ function placeEntry(entries: Entry[], id: string, phase: Phase, toIndex: number)
   return next.every((e, i) => e === entries[i]) ? entries : next;
 }
 
+// TODO(P2-035) #ws:strategy-cards #type:bug #rule:83.3 #test:083-strategy-card #dep:P2-034 #size:s #for-token — Меняет карты раунда, не трогая forToken записей; после P2-034 флаг не нужен
 function cycleCard(round: Round, initiative: number): Round {
   if (round.strategyCard === initiative) return { ...round, strategyCard: null };
   if (round.backupCard === initiative) return { ...round, strategyCard: initiative, backupCard: null };

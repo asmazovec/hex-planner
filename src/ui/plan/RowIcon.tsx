@@ -21,6 +21,7 @@ export function RowIcon({ name }: { name: keyof typeof ICONS }) {
   );
 }
 
+// TODO(P2-377) #ws:ui-structure #type:arch #size:s — HexRemove и RowIcon — общие примитивы в фичевой папке, их импортируют common/, players/, map/; в ui/primitives
 /** The one control that removes or closes something, everywhere in the app. */
 export function HexRemove({ label, className, disabled, onClick }: { label: string; className?: string; disabled?: boolean; onClick: () => void }) {
   return (

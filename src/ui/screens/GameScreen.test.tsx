@@ -477,6 +477,27 @@ describe('a link to a game', () => {
   });
 });
 
+test('energy saving is off until turned on, reaches the stylesheet, is remembered and takes over the settings of motion', async () => {
+  localStorage.removeItem('ti4.energy');
+  const { unmount } = render(<GameScreen />);
+  const chip = screen.getByRole('button', { name: 'Energy saving' });
+  expect(chip).toHaveAttribute('aria-pressed', 'false');
+  expect(screen.getByRole('button', { name: 'Loop flights' })).toBeEnabled();
+  await userEvent.click(chip);
+  expect(document.documentElement.dataset.energy).toBe('on');
+  expect(localStorage.getItem('ti4.energy')).toBe('on');
+  expect(screen.getByRole('button', { name: 'Loop flights' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Background blur' })).toBeDisabled();
+  expect(screen.getByText('No flights, smooth motion or blur.')).toBeVisible();
+  unmount();
+  render(<GameScreen />);
+  const again = screen.getByRole('button', { name: 'Energy saving' });
+  expect(again).toHaveAttribute('aria-pressed', 'true');
+  await userEvent.click(again);
+  expect(document.documentElement.dataset.energy).toBe('off');
+  localStorage.removeItem('ti4.energy');
+});
+
 test('the setting that loops flights is on until turned off, and is remembered', async () => {
   localStorage.removeItem('ti4.flightLoop');
   const { unmount } = render(<GameScreen />);

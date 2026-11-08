@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { readyInfluence, readyResources } from '../../domain/project';
 import type { DataPack, GameState } from '../../domain/types';
+// TODO(P2-382) #ws:ui-structure #type:arch #size:s — animates — настройка приложения, а берётся из жеста карты; из common/motion.ts
 import { animates } from '../map/usePanZoom';
 
 export interface SummaryBarProps {

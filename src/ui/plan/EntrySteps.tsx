@@ -13,6 +13,7 @@ import { fliesNow, groupOf, hasUnits, sourcesOf, systemName, viaOf, type Tactica
 
 const PICTURE_PX = 32;
 
+// TODO(P2-341) #ws:ui-containers #type:ui #unit-tile #dep:P2-320 — своя плитка юнита (.upic); UnitTile
 function UnitPictures({ units, game, t }: { units: UnitCounts; game: Game; t: (key: string) => string }) {
   return (
     <span className="upics">
@@ -41,6 +42,7 @@ export interface EntryStepsProps {
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
 export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
   const { t, i18n } = useTranslation();
+  // TODO(P2-342) #ws:ui-structure #type:dup #size:s — язык выводится вручную; currentLanguage() из i18n, как в остальных
   const lang = i18n.language === 'en' ? 'en' : 'ru';
   const name = (slot: string) => systemName(game, pack, slot);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} game={game} t={t} />;
@@ -59,6 +61,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
     if (target === null) return null;
     const landings = e.landings.filter(landing => hasUnits(landing.units));
     const lost = [e.losses, ...Object.values(e.groundLosses ?? {})].filter((units): units is UnitCounts => hasUnits(units));
+    // TODO(P2-346) #ws:ui-nesting #type:ui #needs:prototype — подробности тактики 7 уровней; строки «откуда → куда» с UnitTile, полная схема в поповере
     return (
       <div className="entry-steps entry-flights">
         <p className="flight-activate">
@@ -67,6 +70,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
         </p>
         {sourcesOf(game, pack, e).map(source => {
           const group = groupOf(game, pack, e.moves, source);
+          // TODO(P2-343) #ws:ui-logic-to-domain #type:dup #duplicate-of-domain #dep:P2-311 — кто летит, кто на борту и где подобран пересчитаны здесь; брать из домена
           const flying = group.filter(m => m.from === source && m.pickupOf === undefined).reduce((sum, m) => ({ ...sum, ...m.units }), {} as UnitCounts);
           const ships = only(flying, u => fliesNow(game, pack, before.upgrades, u));
           const via = viaOf(e, source);
@@ -91,6 +95,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
               <ol className={`stops${over ? ' stops-over' : ''}`}>
                 <li className="stop">
                   <span className="stop-name">{name(source)}</span>
+                  {/* TODO(P2-344) #ws:ui-warnings #type:ui #warning-channel — «никто не летит» и «перегруз» (ниже) — свои span.warning-text по tacticalMeters; показывать коды записи (unitsMissing, capacityGroup) через WarningList */}
                   {hasUnits(ships) ? pictures(ships) : <span className="warning-text">{t('plan.steps.nobody')}</span>}
                   {hasUnits(board) && <><span className="stop-name">{t('plan.steps.board', { name: name(source) })}</span>{pictures(board)}</>}
                 </li>
@@ -106,6 +111,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
                 <li className="stop stop-target">
                   <span className="stop-name">{name(target)}</span>
                   {load.load > 0 && <span className="stop-name">{t('plan.steps.cargo', { load: load.load, capacity: load.capacity })}</span>}
+                  {/* TODO(P2-345) #ws:ui-warnings #type:ui #size:s #dep:P2-344 — перегруз из tacticalMeters дублирует capacityGroup */}
                   {over && <span className="warning-text">{t('plan.steps.overCapacity')}</span>}
                 </li>
               </ol>
@@ -172,6 +178,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
         const value = delta[field] ?? 0;
         if (value !== 0) steps.push(`${t(`plan.summary.${field}`)} ${value > 0 ? '+' : ''}${value}`);
       }
+      // TODO(P2-347) #ws:ui-containers #type:dup #size:s #dep:P2-314 — копия signed из AdjustmentEditor
       const signed = (units: UnitCounts) => UNIT_ORDER.filter(u => units[u]).map(u => `${t(`unit.${u}`)} ${(units[u] ?? 0) > 0 ? '+' : ''}${units[u]}`).join(', ');
       if (delta.units && signed(delta.units.units)) steps.push(`${name(delta.units.systemId)}: ${signed(delta.units.units)}`);
       for (const [planetId, units] of Object.entries(delta.ground ?? {})) if (signed(units)) steps.push(`${planetName(planetId)}: ${signed(units)}`);

@@ -12,6 +12,7 @@ export interface StepperProps {
   onChange: (value: number) => void;
 }
 
+// TODO(P2-378) #ws:ui-structure #type:arch #size:s #dep:P2-377 — общий примитив лежит в plan/; в ui/primitives
 export function Stepper({ name, value, of, note, min, onChange }: StepperProps) {
   const { t } = useTranslation();
   return (

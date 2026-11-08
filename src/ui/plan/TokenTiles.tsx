@@ -20,6 +20,7 @@ export function TokenTiles({ free, values, pools, onChange }: TokenTilesProps) {
   const { t } = useTranslation();
   const countOf = (field: Field) => values[field] ?? 0;
   const left = free - FIELDS.reduce((sum, field) => sum + countOf(field), 0);
+  // TODO(P2-339) #ws:strategy-cards #type:arch #duplicate-of-domain — перераспределение Warfare (жетон из самого полного пула) — правило, не UI; в domain/strategy.ts
   const tap = (field: Field) => {
     const next: TokenCounts = { ...values, [field]: countOf(field) + 1 };
     if (pools && left <= 0) {
@@ -44,6 +45,7 @@ export function TokenTiles({ free, values, pools, onChange }: TokenTilesProps) {
               <button type="button" className={`token-tile${count ? ' token-tile-on' : ''}`} aria-label={`${name}: ${shown}`} onClick={() => tap(field)}>
                 <b>{shown}</b>{name}
               </button>
+              {/* TODO(P2-340) #ws:ui-containers #type:ui #needs:prototype #size:s #dep:P2-332 — ещё один вид «−»; Stepper */}
               {!pools && count > 0 && <button type="button" className="token-take" aria-label={t('plan.strategy.takeToken', { name })} onClick={() => take(field)}>−</button>}
             </div>
           );

@@ -16,6 +16,7 @@ export interface ShopItem {
 /** Fighters and infantry cost half a resource. */
 const priceText = (price: number): string => (price === 0.5 ? '½' : String(price));
 
+// TODO(P2-260) #ws:ui-structure #type:dup #size:s #token-picture — Вторая копия TokenPicture (первая в units/UnitToken.tsx, там px вместо size): удалить, импортировать из units/
 /** The picture of a token, drawn as on the hex. */
 export function TokenPicture({ kind, colour, size }: { kind: TokenKind; colour: string; size: number }) {
   return (
@@ -30,6 +31,7 @@ export function UnitShop({ items, onPick }: { items: ShopItem[]; onPick: (kind: 
   return (
     <div className="shop">
       {items.map(({ kind, label, colour, price, bought, disabled }) => (
+        // TODO(P2-261) #ws:ui-containers #type:dup #needs:prototype #size:m #unit-tile — Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitButton, .stage-loss, UnitPictures, Stack): UnitTile с вариантами take/taken/loss/shop
         <button key={kind} type="button" className="shop-item" aria-label={label} disabled={disabled} onClick={() => onPick(kind)}>
           {(bought ?? 0) > 0 && <i>+{bought}</i>}
           <TokenPicture kind={kind} colour={colour} size={46} />

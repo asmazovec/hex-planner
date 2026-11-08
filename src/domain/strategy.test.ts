@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { project, stateBeforeEntry } from './project';
+import { project, stateBeforeEntry, stateAfterEntry } from './project';
 import { withTeMecatol } from './mecatol';
 import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, heldCards, homeSlot, plannedCard, playOf, startsAsPrimary, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
@@ -80,6 +80,13 @@ describe('now and forecast', () => {
   test('a cancelled entry counts nowhere', () => {
     expect(stateOf(start([primary(5, undefined, 'cancelled')])).state.tradeGoods).toBe(0);
   });
+});
+
+test('the state after an entry holds it and nothing later', () => {
+  const [first, second] = [forToken(5), forToken(5)];
+  const game = start([first, second]);
+  expect(stateAfterEntry(game, game.plans[0], first.id, pack).tradeGoods).toBe(3);
+  expect(stateAfterEntry(game, game.plans[0], second.id, pack).tradeGoods).toBe(6);
 });
 
 describe('how a card is played', () => {

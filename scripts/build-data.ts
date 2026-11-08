@@ -59,6 +59,7 @@ const TE_RULEBOOK_HYPERLANES = ['119A', '120A', '121A', '122A', '123A', '124A'];
 /** Gate tiles stand on the map, but the home planets and starting units are on another tile. */
 const HOME_PLANET_TILE: Record<string, string> = { ghost: '51', crimson: '118' };
 const KELERES_HOME_TILE: Record<string, string> = { keleresm: '2', keleresx: '14', keleresa: '58' };
+// TODO(P2-052) #ws:data #type:data #rule:96.2 #dep:P2-050 #size:s #reinforcements #provenance — Заполнить лимиты из LRR 96.2 с указанием источника в provenance.json и docs/data-verification.md
 /** Reinforcement limits stay unset: no public source confirmed them, see docs/data-verification.md. */
 const UNCONFIRMED_LIMIT = null;
 const STRUCTURES: DataPack['structures'] = [{ id: 'pds', limit: UNCONFIRMED_LIMIT }, { id: 'spacedock', limit: UNCONFIRMED_LIMIT }];

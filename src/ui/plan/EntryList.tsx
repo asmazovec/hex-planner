@@ -48,6 +48,7 @@ export interface EntryListProps {
   addAction?: ReactNode;
 }
 
+// TODO(P2-348) #ws:ui-structure #type:arch #size:s — NoteField — примитив поля, спрятан в списке записей (импорт из AdjustmentEditor, GameScreen); в ui/primitives
 /** A text field that writes to the plan when it is left, so typing leaves one undo step. */
 export function NoteField({ label, value, disabled, onCommit }: { label: string; value: string; disabled?: boolean; onCommit: (value: string) => void }) {
   const [text, setText] = useState(value);
@@ -62,6 +63,7 @@ export function NoteField({ label, value, disabled, onCommit }: { label: string;
   );
 }
 
+// TODO(P2-349) #ws:ui-nesting #type:ui #needs:prototype — жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment
 /** The status entry: the tokens taken this round, the points each player gains with their running total. */
 function StatusFields({ entry, game, pack, state, warnings }: {
   entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState; warnings: Warning[];
@@ -79,6 +81,7 @@ function StatusFields({ entry, game, pack, state, warnings }: {
       <h5 className="status-points">{t('plan.entries.roundPoints')}</h5>
       {playersOf(game).map((player, index) => {
         const faction = pack.factions[player.faction];
+        // TODO(P2-350) #ws:ui-containers #type:ui #size:s — цвет игрока inline-стилем var(--player-…) в .status-player ниже; PlayerDot / data-player / playerVar()
         const me = index === 0;
         return (
           <div key={player.id} className="status-player" style={{ '--player': `var(--player-${player.color})` } as React.CSSProperties}>
@@ -99,6 +102,7 @@ function StatusFields({ entry, game, pack, state, warnings }: {
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
 
+// TODO(P2-351) #ws:ui-structure #type:dup #size:s #names — имя соперника через factionShortName, а opponentName (map/opponentName.ts) даёт полное; два модуля имён игроков, свести в ui/names.ts
 /** An opponent's entry says whose it is before what it is. */
 function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
   const faction = pack.factions[game.opponents.find(o => o.id === entry.owner)?.faction ?? ''];
@@ -127,6 +131,7 @@ function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =>
   }
 }
 
+// TODO(P2-352) #ws:ui-containers #type:dup #size:s — бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент
 /** The number of a tactical action, in the same hexagon as on its arrows. */
 function OrderHex({ number, label }: { number: number; label: string }) {
   return (
@@ -185,6 +190,7 @@ export function EntryList({
                 // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
                 const fieldsOpen = entry.id === openId && (entry.type === 'statusTokens' || entry.type === 'expedition');
                 const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
+                // TODO(P2-353) #ws:ui-containers #type:ui #size:s #dep:P2-350 — --owner inline-стилем var(--player-…) у строки ниже; data-player / playerVar()
                 return (
                   <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), '--owner': `var(--player-${rival.color})` } as CSSProperties : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
@@ -205,6 +211,7 @@ export function EntryList({
                       </label>
                       <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
+                    {/* TODO(P2-354) #ws:ui-warnings #type:ui #size:s #warning-channel — своя ul.warning-list мимо WarningList; WarningList variant="row" */}
                     {list.length > 0 && !fieldsOpen && (
                       <ul className="warning-list">
                         {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
@@ -221,6 +228,8 @@ export function EntryList({
                         <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={note => updateEntry(entry.id, { note })} />
                       </div>
                     )}
+                    {/* TODO(P2-355) #ws:ui-nesting #type:ui #needs:prototype #dep:P2-349 — экспедиция раскрывается внутри строки (5 уровней); отдельное меню, как жетоны статуса */}
+                    {/* TODO(P2-368) #ws:ui-logic-to-domain #type:arch #size:s #dep:P2-369 — без plan владельцы частей берутся сырыми game.expedition.slices с приведением типа и без частей из плана; всегда sliceOwners (plan обязателен) */}
                     {entry.id === openId && entry.type === 'expedition' && (
                       <div className="entry-details">
                         <ExpeditionEditor

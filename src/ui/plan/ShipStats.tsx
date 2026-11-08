@@ -65,6 +65,7 @@ export interface ShipStatsProps {
   locked?: Partial<Record<UnitId, number>>;
 }
 
+// TODO(P2-376) #ws:ui-structure #type:arch #size:s #dep:P2-373 — ShipStats не относится к плану (FactionCard, map/UpgradesPanel); в players/
 /** A player's ships: cost, capacity, combat and move at the current level, then properties and the retelling. */
 export function ShipStats({ factionId, pack, upgraded = [], onToggle, locked = {} }: ShipStatsProps) {
   const { t } = useTranslation();

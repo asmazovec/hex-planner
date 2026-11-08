@@ -25,10 +25,13 @@ export interface ExpeditionEditorProps {
 /** Choice of the expedition part and its payment. A part taken by someone else cannot be chosen. */
 export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack, warnings = [], onChange }: ExpeditionEditorProps) {
   const { t } = useTranslation();
+  // TODO(P2-356) #ws:ui-containers #type:arch #size:s — флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock
   const [manual, setManual] = useState(false);
+  // TODO(P2-366) #ws:payment #type:dup #size:s — «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части
   const cost = EXPEDITION_SLICES.find(s => s.id === sliceId)?.cost;
   const paidWith = cost?.kind === 'resources' || cost?.kind === 'influence' ? cost : null;
 
+  // TODO(P2-365) #ws:thunders-edge #type:bug #rule:expedition-4.5 #test:te-expedition — часть технологий без cost получает пустую оплату и считается оплаченной; нужна оплата истощением своей планеты с технологической специализацией
   const choose = (id: string | null) => {
     const next = EXPEDITION_SLICES.find(s => s.id === id)?.cost;
     const pays = next?.kind === 'resources' || next?.kind === 'influence';
@@ -53,6 +56,7 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
           </button>
         ))}
       </div>
+      {/* TODO(P2-367) #ws:ui-warnings #type:ui #size:s — остаток предупреждений стоит у выбора части; по CLAUDE.md — вверху редактора */}
       {/* A part paid in trade goods has no payment block: its shortage stands by the choice of the part. */}
       <WarningList warnings={[...sliceWarnings, ...placer.rest()]} game={game} pack={pack} />
       {paidWith && (

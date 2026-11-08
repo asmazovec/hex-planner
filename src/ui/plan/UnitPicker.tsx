@@ -37,6 +37,7 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
   );
 }
 
+// TODO(P2-320) #ws:ui-containers #type:ui #unit-tile — плитка юнита с числом: UnitButton, Stack (LandingBlock), UnitPictures (EntrySteps), плитки HexStage и UnitShop — разные компоненты и классы; один UnitTile с вариантами take/taken/loss/shop в ui/units
 export function UnitButton({ unit, count, colour, label, taken, showOne, onClick }: { unit: UnitId; count: number; colour: string; label: string; taken?: boolean; /** Writes a count of one too. */ showOne?: boolean; onClick: () => void }) {
   return (
     <button type="button" className={`pic${taken ? ' pic-taken' : ''}`} aria-label={label} onClick={onClick}>
@@ -58,6 +59,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
 
   const picked = (from: string, unit: UnitId): number =>
     group.filter(m => m.from === from).reduce((sum, m) => sum + (m.units[unit] ?? 0), 0);
+  // TODO(P2-321) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-304 — «доступно за вычетом других маршрутов» считает UI; в домен рядом с groupOf
   /** What stands there, less what the other routes of this action take. */
   const available = (from: string, unit: UnitId): number => {
     const pool = from in pack.planets ? before.ground[from] : before.systems[from];
@@ -72,6 +74,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const flyingNow = flying.filter(u => picked(source, u) > 0);
   const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
 
+  // TODO(P2-322) #ws:transport #type:check #rule:95.3 #test:095-transport #size:s #pickup #token — подбор предлагается в любой системе пути, и со своим жетоном (кроме активной); предлагать по доменной проверке подбора. Местное имя placesOf затеняет доменное
   /** The places of a system to take cargo from: its space area and its planets. An empty source offers ground units on its first planet. */
   const placesOf = (slot: string): { from: string; name: string | null; units: UnitId[] }[] => {
     const planets = systemPlanets(game, slot, pack);
@@ -122,10 +125,12 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
     <div className="editor-section unit-picker">
       <div className="panel-head">
         <strong>{t('plan.picker.title', { from: systemName(game, pack, source), to: systemName(game, pack, target) })}</strong>
+        {/* TODO(P2-323) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 — текстовое «Закрыть» вместо HexRemove; «Удалить источник» в подвале повторяет крестик строки источника */}
         <button type="button" onClick={onClose}>{t('plan.picker.close')}</button>
       </div>
       <small className="picker-distance">{t('plan.tactical.distance', { n: routeSteps(game, [source, ...viaOf(entry, source), target], pack) })}</small>
 
+      {/* TODO(P2-325) #ws:ui-containers #type:ui #size:s — заголовки подблоков h4.picker-title вручную; SectionTitle */}
       <h4 className="picker-title">{t('plan.picker.inSystem', { name: systemName(game, pack, source) })}</h4>
       <div className="pics">
         {offered.map(unit => {
@@ -158,6 +163,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       <h4 className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</h4>
       <CargoPips load={load.load} capacity={load.capacity} />
       {Math.max(load.load, load.capacity) === 0 && <span className="muted">{t('plan.picker.noRoom')}</span>}
+      {/* TODO(P2-324) #ws:ui-warnings #type:arch #size:s #dep:P2-315 — предупреждения делятся по коду прямо в разметке (capacityGroup у груза, остальное внизу); раскладку давать placeWarnings */}
       <WarningList warnings={warnings.filter(w => w.code === 'capacityGroup')} game={game} pack={pack} />
 
       <ol className="stops">

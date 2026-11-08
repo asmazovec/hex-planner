@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { fleetSpeed, isOnMap, project, routeMove, routeReach, routeSteps, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
+import { fleetSpeed, isOnMap, project, routeMove, routeReach, routeSteps, stateAfterEntry, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
 import { focusRect, pausedPath, routeShapes, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { CARD, cardChange, plannedCard, withSystem, type CardEntry } from '../../domain/strategy';
@@ -23,6 +23,7 @@ import { ThundersEdgePanel } from '../map/ThundersEdgePanel';
 import { UpgradesPanel } from '../map/UpgradesPanel';
 import type { Highlight } from '../map/TileView';
 import { useArrowDrag } from '../map/useArrowDrag';
+// TODO(P2-412) #ws:ui-structure #type:arch #size:s #dep:P2-448 #preferences — reducedMotion берётся из жеста карты: импортировать из common/motion.ts
 import { reducedMotion } from '../map/usePanZoom';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
@@ -30,21 +31,25 @@ import { gameAs, opponentsBySeat } from '../../domain/players';
 import { factionShortName } from '../players/factionName';
 import { AdjustmentEditor } from '../plan/AdjustmentEditor';
 import { EntryList } from '../plan/EntryList';
+// TODO(P2-410) #ws:ui-logic-to-domain #type:arch #size:s #thunders-edge — владельцы частей экспедиции берутся из виджета plan/: импортировать из domain/thundersEdge.ts после переноса sliceOwners
 import { sliceOwners } from '../plan/ExpeditionWidget';
 import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
+// TODO(P2-413) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — RowIcon из фичевой папки plan/: импортировать из primitives/
 import { RowIcon } from '../plan/RowIcon';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
 import { cardPurchases, StrategyEditor, type MapPick } from '../plan/StrategyEditor';
 import { SummaryBar } from '../plan/SummaryBar';
-import { arrowsOf, entrySystems, flightRoutes, hasUnits, isUntouched, sourcePools, sourcesOf, stateInFlight, systemName, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../plan/tactical';
+import { arrowsOf, entrySystems, flies, flightRoutes, hasUnits, isUntouched, sourcePools, sourcesOf, stateInFlight, systemName, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../plan/tactical';
 import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/TacticalEditor';
 
 /** How many rivals still fit on the line of whose action with their whole names. */
+// TODO(P2-431) #ws:ui-structure #type:dup #size:s #dep:P2-456 #names — своё правило короткого имени (3 буквы) рядом с factionShortName: короткое имя из одного модуля имён
 const FULL_NAMES_UP_TO = 3;
 const SHORT_TAG = 3;
 
+// TODO(P2-402) #ws:ui-plan-screen #type:doc #size:s — комментарий про Editing стоит над DrawerName: перенести к интерфейсу Editing
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry; `fromCard` makes that one Warfare's free action. */
 type DrawerName = 'players' | 'legend' | 'upgrades' | 'te';
 
@@ -71,6 +76,7 @@ const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };
 
 const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
+// TODO(P2-406) #ws:ui-logic-to-domain #type:arch #size:s #new-entry #duplicate-of-domain — тела новых записей собраны в экране (здесь и тактическое в onTileTap): фабрика domain/newEntry.ts по типу действия
 const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical' | 'strategic'>, EntryBody> = {
   component: { type: 'component', note: '' },
   expedition: { type: 'expedition', sliceId: null, payment: EMPTY_PAYMENT },
@@ -78,6 +84,7 @@ const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical' | 'strategic'>, Entry
   adjustment: { type: 'adjustment', label: '', delta: {} },
 };
 
+// TODO(P2-433) #ws:ui-structure #type:arch #size:s — поле имени плана живёт в экране: перенести к PlanTabs в plan/
 function PlanName({ plan }: { plan: Plan }) {
   const { t } = useTranslation();
   const renamePlan = useGame(s => s.renamePlan);
@@ -100,6 +107,7 @@ function PlanName({ plan }: { plan: Plan }) {
   );
 }
 
+// TODO(P2-434) #ws:ui-structure #type:arch #size:s #tests — тест этого экрана лежит в plan/PlanScreen.test.tsx: перенести в screens/
 /** Map on the left, plan on the right, tabs and totals on top. */
 export function PlanScreen() {
   const { t, i18n } = useTranslation();
@@ -116,7 +124,9 @@ export function PlanScreen() {
 
   const [roundNo, setRoundNo] = useState<number | null>(null);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
+  // TODO(P2-400) #ws:ui-plan-screen #type:arch #size:l #map-pick #state-machine — 13 состояний режима (editing, choosing, tapPath, mapPick, systemPickFor, placing, marking, sheet, stage, adjustmentId, cardId, openId, shown) допускают невозможные сочетания и сбрасываются вручную: один автомат mapPick, размеченное объединение «что выбирает следующее нажатие» + «что открыто на панели»
   const [sheet, setSheet] = useState<string | null>(null);
+  // TODO(P2-401) #ws:ui-plan-screen #type:model #size:s #dep:P2-400 #map-pick — stage с флагами forCard/tacticalId/adjustmentId: размеченное объединение по тому, для кого открыт большой гекс, как часть автомата
   const [stage, setStage] = useState<{ slot: string; mode: StageMode; only?: 'build' | 'units'; forCard?: boolean; tacticalId?: string; adjustmentId?: string } | null>(null);
   const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(() => game !== null && mapIsEmpty(game, pack));
@@ -144,6 +154,7 @@ export function PlanScreen() {
   const [marking, setMarking] = useState(false);
   /** The opponent whose expected actions are being added; null for my own. */
   const [actingAs, setActingAs] = useState<string | null>(null);
+  // TODO(P2-423) #ws:ui-plan-screen #type:arch #size:s #drawer — drawer, rightDrawer, leftDrawer, teOpen и их догон в рендере: хук useDrawers; «шторка уступает карте» при placing/marking — состояние автомата
   /** One drawer at a time. */
   const [drawer, setDrawer] = useState<DrawerName | null>(null);
   /** What the right drawer holds, kept while it slides away. */
@@ -182,14 +193,17 @@ export function PlanScreen() {
   });
 
   const shownEntry = round?.entries.find(e => e.id === shown?.id);
+  // TODO(P2-403) #ws:ui-plan-screen #type:arch #size:s #dep:P2-400 — сброс состояний через setState во время рендера (и ниже rightDrawer/leftDrawer): выводить из game в автомате, а не догонять
   // A change of the game, undo for one, ends what depended on it.
   if (flight && flight.game !== game) setFlight(null);
   if (shown && round && !shownEntry) setShown(null);
   if (tapPath && !entry) setTapPath(null);
   if (choosing && !entry) setChoosing(null);
   const flying = flight?.game === game ? flight : null;
-  const loops = shownEntry?.type === 'tactical' && shownEntry.moves.some(m => hasUnits(m.units)) && !reducedMotion();
+  // Nothing to show in a flight, nothing to repeat: a move whose units are not at the source, for one.
+  const loops = shownEntry?.type === 'tactical' && !reducedMotion() && game !== null && plan !== undefined && flies(pack, shownEntry, stateBeforeEntry(game, plan, shownEntry.id, pack));
 
+  // TODO(P2-404) #ws:ui-plan-screen #type:arch #size:m #flight — перелёт и его повтор (startFlight, таймер повтора, loops, resting, inFlight, mapState) разбросаны по экрану: хук useFlightLoop, который отдаёт состояние карты и слой перелёта
   const startFlight = useCallback((entryId: string, filter: 'now' | 'forecast' = 'forecast') => {
     const current = useGame.getState().game;
     if (reducedMotion() || !current) return;
@@ -223,6 +237,7 @@ export function PlanScreen() {
 
   // Totals and map show the end of the chosen round: later rounds would ready planets and clear its tokens.
   const upToRound = { ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) };
+  // TODO(P2-421) #ws:ui-plan-screen #type:arch #size:s #perf — stateBeforeEntry повторяет replay около 10 раз за рендер для одной записи (loops, routeSpeed, choosing, карты, startsArrow, редакторы, HexStage): считать один раз на запись в фокусе
   const now = project(game, upToRound, 'now', pack);
   const forecast = project(game, upToRound, 'forecast', pack);
 
@@ -238,6 +253,7 @@ export function PlanScreen() {
     setChoosing(null);
   };
 
+  // TODO(P2-408) #ws:ui-plan-screen #type:arch #size:s #dep:P2-400 — closePanels, onPick, onOpenEntry, toggleUpgrades сбрасывают по 3-11 флагов вручную, и наборы расходятся: один переход автомата «закрыть всё»
   const closePanels = () => {
     setSystemPickFor(null);
     setAdjustmentId(null);
@@ -286,11 +302,13 @@ export function PlanScreen() {
   const adjustmentEntry = round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment');
   const adjustPick = round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === systemPickFor && e.type === 'adjustment');
   const owners = sliceOwners(game, plan);
+  // TODO(P2-409) #ws:ui-logic-to-domain #type:arch #size:s #thunders-edge #duplicate-of-domain — годность системы для Thunder's Edge по слоту решает экран: функция домена от game и слота (validThundersEdgeSystem берёт только тайл)
   const suitable = (slot: string): boolean => {
     const tile = isOnMap(game, slot) ? pack.tiles[tileIdOf(game, slot)] : undefined;
     return tile !== undefined && validThundersEdgeSystem(tile);
   };
 
+  // TODO(P2-411) #ws:ui-plan-screen #type:arch #size:m #dep:P2-400 #map-pick — onTileTap из 8 веток с ранним return, их порядок и есть приоритет режимов: по обработчику на состояние автомата
   const onTileTap = (slot: string) => {
     if (adjustPick) {
       if (!isOnMap(game, slot)) return;
@@ -321,6 +339,7 @@ export function PlanScreen() {
     }
     if (picking) {
       if (!isOnMap(game, slot)) return;
+      // TODO(P2-407) #ws:ui-logic-to-domain #type:dup #size:s #dep:P2-406 #new-entry — тело тактической записи и её владелец по fromCard собираются здесь: брать из domain/newEntry.ts
       const id = addEntry(round.number, {
         type: 'tactical', systemId: slot, moves: [], landings: [], production: {}, payment: EMPTY_PAYMENT,
         ...(session?.fromCard ? { free: true, fromCard: session.fromCard } : {}),
@@ -409,6 +428,7 @@ export function PlanScreen() {
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flying?.entryId;
   const numbers = tacticalNumbers(round.entries);
+  // TODO(P2-414) #ws:ui-plan-screen #type:arch #size:s #dep:P2-415 — отбор и тон стрелок плана (фокус, выполнено, режим «сейчас») перемешаны с рендером: в хук карты вместе с подсветкой
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || session || mapMode !== 'now'))
     .flatMap(item => arrowsOf(game, pack, item).map(a => ({
       ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: game.opponents.find(o => o.id === item.owner)?.color, tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
@@ -419,6 +439,7 @@ export function PlanScreen() {
   /** The action in hand, as its owner plays it. */
   const entryGame = gameAs(game, entry?.owner);
   const draft = session && entry ? arrow.preview ?? (tapPath && { path: tapPath }) : null;
+  // TODO(P2-415) #ws:ui-plan-screen #type:arch #size:m #highlight — подсветку пишут в один объект 8 мест экрана, приоритет задаёт порядок записи и проверки !highlights[slot]: хук useMapHighlights(режим) с явным приоритетом, правила из домена
   const highlights: Record<string, Highlight> = {};
   for (const slot of draft?.path ?? []) highlights[slot] = 'path';
   const focused = tacticals.find(item => item.id === focusId);
@@ -435,11 +456,16 @@ export function PlanScreen() {
     for (const slot of entrySystems(game, pack, shownEntry)) highlights[slot] = 'active';
   }
 
+  // TODO(P2-405) #ws:ui-plan-screen #type:arch #size:s #dep:P2-404 #flight — состояние карты во время перелёта и между повторами считается посреди рендера: часть useFlightLoop
   const flyingEntry = flying ? tacticals.find(item => item.id === flying.entryId) : undefined;
   const beforeFlight = flying && flyingEntry ? stateBeforeEntry(game, plan, flyingEntry.id, pack, flying.filter) : null;
   const inFlight = flying && flyingEntry && beforeFlight ? stateInFlight(pack, flyingEntry, beforeFlight, flying.passed) : null;
-  const mapState = !inFlight ? shownState
-    : flyingEntry?.owner ? { ...shownState, rivals: { ...shownState.rivals, [flyingEntry.owner]: inFlight } } : inFlight;
+  // Between the repeats the map stays right after the action: what comes later in the plan would blink in and out on every round.
+  const resting = !flying && shown && shownEntry && loops && shown.plays > 0 && flightLoopOn() ? shownEntry : undefined;
+  const heldState = inFlight ?? (resting ? stateAfterEntry(game, plan, resting.id, pack) : null);
+  const heldOwner = (flyingEntry ?? resting)?.owner;
+  const mapState = !heldState ? shownState
+    : heldOwner ? { ...shownState, rivals: { ...shownState.rivals, [heldOwner]: heldState } } : heldState;
   const flyingGame = gameAs(game, flyingEntry?.owner);
   const shownArea = shownEntry ? focusRect(entrySystems(game, pack, shownEntry)) : null;
 
@@ -452,6 +478,7 @@ export function PlanScreen() {
   }
 
   // The route under way: how far the fastest ship of its source still flies from the last hex.
+  // TODO(P2-419) #ws:ui-logic-to-domain #type:arch #size:s #route-hint — скорость, шаги и остаток хода считает экран, а IIFE ещё и пишет подсветку побочным эффектом: domain routeHint(draft, before) → {speed, steps, left, reach}
   const routeSpeed = (() => {
     if (!draft || !entry || arrow.preview?.reverse) return null;
     const before = stateBeforeEntry(game, plan, entry.id, pack);
@@ -460,6 +487,7 @@ export function PlanScreen() {
     if (fastest === null) return { speed: null, steps, left: null };
     const speed = routeMove(entryGame, draft.path, fastest, pack);
     if (activeSystem !== null) {
+      // TODO(P2-420) #ws:rivals #type:bug #size:m #rule:58.3.2 #test:058-movement #rivals — досягаемость считается по gameAs и вручную расставленным game.enemyUnits: корабли, приведённые или уведённые соперниками по плану, не учтены, соперник не видит моих (B2); блокировки брать из состояния перед записью
       for (const slot of routeReach(entryGame, draft.path, fastest, activeSystem, pack)) if (!highlights[slot]) highlights[slot] = 'valid';
     }
     return { speed, steps, left: Math.max(0, speed - steps) };
@@ -470,6 +498,7 @@ export function PlanScreen() {
     : routeSpeed.steps > 0 ? t('plan.tactical.distance', { n: routeSpeed.steps }) : null;
 
   // Any system can be chosen; for a source those with ships are the ones lit.
+  // TODO(P2-417) #ws:ui-logic-to-domain #type:dup #size:s #valid-sources — годный источник (система с доступными юнитами) считается здесь и в startsArrow одинаково: одна функция домена над состоянием перед записью
   if (choosing && entry) {
     const before = stateBeforeEntry(game, plan, entry.id, pack);
     for (const slot of systemSlots(game)) {
@@ -478,6 +507,7 @@ export function PlanScreen() {
     }
   }
 
+  // TODO(P2-416) #ws:ui-logic-to-domain #type:arch #size:m #rule:99 #rule:32 #rule:24 #card-targets #duplicate-of-domain — цели карт на карте (Warfare: системы с жетоном; Diplomacy без Mecatol; Construction без жетона до TE; база для dock) считает экран: domain/strategy.ts cardTargets(entry, состояние), здесь только раскраска
   if (cardPick && cardEntry) {
     const primaryCard = (card: number) => cardEntry.type === 'strategic' && cardEntry.card === card;
     if (primaryCard(CARD.warfare)) {
@@ -496,6 +526,7 @@ export function PlanScreen() {
   }
 
   /** In the tactical editor a drag from the active system or a system with my units draws an arrow, a route under way goes on from its last hex; any other drag moves the map. */
+  // TODO(P2-418) #ws:ui-logic-to-domain #type:dup #size:s #dep:P2-417 #valid-sources — та же проверка годного источника, что в подсветке выбора: взять функцию домена
   const startsArrow = (slot: string): boolean => {
     if (activeSystem === null || !entry || choosing !== null) return false;
     if (tapPath !== null) return slot === tapPath.at(-1);
@@ -504,6 +535,7 @@ export function PlanScreen() {
   };
 
   const duplicates = building ? duplicateTiles(game.map, pack) : [];
+  // TODO(P2-422) #ws:ui-plan-screen #type:arch #size:s #dep:P2-400 #map-pick — цепочка тернарников подсказки повторяет приоритет режимов из onTileTap: подсказка как свойство состояния автомата
   const hint = cardPick || adjustPick ? t('plan.strategy.mapHint') : marking ? t('fracture.markHint') : placing ? t('expedition.placeHint')
     : picking ? t(session?.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')
     : choosing === 'system' ? t('plan.tactical.changeSystemHint') : choosing === 'source' ? t('plan.tactical.addSourceHint')
@@ -537,6 +569,7 @@ export function PlanScreen() {
   };
 
   /** The opponent whose action stands in an editor now: the panel says so in their colour. */
+  // TODO(P2-424) #ws:ui-plan-screen #type:dup #size:s #dep:P2-400 #rivals — владелец записи в руках ищется заново тем же поиском по fromCard, что в onTileTap: брать из состояния автомата
   const inHand = game.opponents.find(o => o.id === (picking ? (session?.fromCard ? round.entries.find(e => e.id === session.fromCard)?.owner : actor) : (entry ?? cardEntry ?? adjustmentEntry)?.owner));
 
   return (
@@ -647,18 +680,22 @@ export function PlanScreen() {
         </div>
         <div className="plan-panel">
           <div className="plan-scroll">
+            {/* TODO(P2-425) #ws:ui-containers #type:ui #size:s #player-colour #inline-style — плашка «действие за» красит край и точку inline-стилем var(--player-N): PlayerDot и playerVar()/data-player (аудит 3.7) */}
+            {/* TODO(P2-426) #ws:ui-structure #type:dup #size:s #dep:P2-456 #names — имя соперника «фракция или Игрок N» собрано здесь по seat, а в map/opponentName по index+2: одна функция имени */}
             {inHand && (
               <div className="acting-as" style={{ '--owner': `var(--player-${inHand.color})` } as CSSProperties}>
                 <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${inHand.color})` }} />
                 {t('plan.actingFor', { name: pack.factions[inHand.faction]?.name ?? t('players.player', { n: inHand.seat }) })}
               </div>
             )}
+            {/* TODO(P2-427) #ws:ui-containers #type:ui #size:s #needs:prototype #editor-head — своя голова редактора с текстовой «Отмена» вместо общей головы редактора и HexRemove (аудит 3.3, 3.4) */}
             {picking && (
               <div className="panel-head">
                 <h2>{t('plan.tactical.title')}</h2>
                 <button type="button" onClick={() => setEditing(null)}>{t('plan.tactical.cancel')}</button>
               </div>
             )}
+            {/* TODO(P2-428) #ws:ui-nesting #type:arch #size:l #needs:prototype #dep:P2-400 #nesting — редакторы и список взаимоисключаются цепочкой !session && !cardEntry && ..., редактор вложен в панель, UnitPicker и HexStage ещё глубже: один слот панели по состоянию автомата, шаги или отдельное меню по прототипу */}
             {session && entry && (
               <TacticalEditor
                 game={entryGame} pack={pack} entry={entry} before={stateBeforeEntry(game, plan, entry.id, pack)}
@@ -678,6 +715,7 @@ export function PlanScreen() {
                 onDone={leaveEditor}
               />
             )}
+            {/* TODO(P2-429) #ws:ui-plan-screen #type:dup #size:s — переключатель ручной оплаты по id записи написан дважды (тактика и карта): одна функция toggleManualPayment(id) */}
             {!session && cardEntry && (
               <StrategyEditor
                 game={gameAs(game, cardEntry.owner)} pack={pack} round={round} entry={cardEntry} before={stateBeforeEntry(game, plan, cardEntry.id, pack)}
@@ -713,6 +751,7 @@ export function PlanScreen() {
                   strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
                   addAction={(
                     <div className="acting-add">
+                      {/* TODO(P2-430) #ws:ui-containers #type:ui #size:s #dep:P2-425 #player-colour #player-choice — выбор «за кого» занимает класс большого гекса stage-owners и красит кнопки inline-стилем: PlayerChoice (аудит 3.6) */}
                       <div className="segment stage-owners acting-for" role="group" aria-label={t('plan.actingLabel')}>
                         <button type="button" aria-pressed={!actor} style={{ '--owner': `var(--player-${game.color})` } as CSSProperties} onClick={() => setActingAs(null)}>
                           {t('plan.mine')}
@@ -741,6 +780,7 @@ export function PlanScreen() {
           </div>
         </div>
       </div>
+      {/* TODO(P2-432) #ws:ui-logic-to-domain #type:arch #size:s #card-purchases — покупки карты для большого гекса собираются прямо в JSX: cardPurchases из StrategyEditor, cardChange и два одинаковых stateBeforeEntry; обработчик карты в домене или хуке */}
       {stage && (
         <HexStage
           key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}

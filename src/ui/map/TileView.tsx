@@ -126,6 +126,7 @@ function useHexLayout(input: HexLayoutInput) {
 
 /** A planet as the map draws it: its disc, the numbers, the marks of its traits and technology, and the strike when exhausted. */
 export function PlanetMark({ planet, control, holderColor, exhausted }: { planet: PlanetDef; control?: 'me' | 'enemy'; holderColor?: number; exhausted: boolean }) {
+  // TODO(P2-223) #ws:ui-containers #type:ui #size:m #player-colour #inline-style — Цвет игрока через var(--player-N) во style (здесь, у места, у жетонов, в HexMap, UpgradesPanel): playerVar() или data-player с правилом в теме
   return (
     <>
       <circle
@@ -196,8 +197,10 @@ export function TileView({
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game);
   /** The opponent a planet belongs to in the state shown; undefined when it is mine or free. */
+  // TODO(P2-220) #ws:ui-logic-to-domain #type:dup #dep:P2-203 #size:s #duplicate-of-domain #rivals — Копия holderOf из HexStage: держатель планеты из функции домена
   const holderOf = (planetId: string) => (state.control[planetId] === 'enemy' ? state.rivalHolds?.[planetId] ?? planetHolder(game, planetId) : undefined);
 
+  // TODO(P2-221) #ws:ui-logic-to-domain #type:arch #size:m #duplicate-of-domain #rivals #stacks — Стеки тайла (мои, соперников по replay или по game.enemyUnits, наземные на первой планете, строения) собираются в UI: функция домена stacksOf
   const space: SpaceStack[] = [];
   const ground: GroundStack[] = [];
   for (const { unit, count } of unitsOf(state.systems[slotKey])) space.push({ kind: unit, owner: 'me', count });
@@ -217,6 +220,7 @@ export function TileView({
   }
   planets.forEach((planet, i) => {
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
+    // TODO(P2-222) #ws:structures #type:bug #rule:49.5.1 #rule:63.4 #rule:79.4 #test:049-invasion #test:063-pds #test:079-space-dock #size:s — PDS и база рисуются за держателем планеты: после захвата чужие строения переходят к захватчику; рисовать по владельцу строения
     const pds = state.pds[planet.id] ?? 0;
     if (pds > 0) ground.push({ kind: 'pds', owner: holderOf(planet.id) ?? 'me', count: pds, planet: i });
     if (state.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
@@ -309,6 +313,7 @@ export function TileView({
         </text>
       )}
       {unknown && <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">{tileId}</text>}
+      {/* TODO(P2-224) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style — Значок места красится style fill var(--player-N): playerVar() или data-player; тот же значок нужен легенде */}
       {tile && seat && (
         <g
           role="img" aria-label={t('map.seat', { n: seat.number })} className="tile-seat"
@@ -319,6 +324,7 @@ export function TileView({
         </g>
       )}
 
+      {/* TODO(P2-226) #ws:ui-containers #type:dup #size:s #command-token #svg — SVG жетона приказа повторён здесь, у жетонов соперников ниже и в MapLegend: один компонент CommandTokenMark с цветом игрока */}
       {hasCommandToken && (
         <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
           <circle r={7} className="token" />
@@ -326,6 +332,7 @@ export function TileView({
         </g>
       )}
 
+      {/* TODO(P2-225) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style #rivals — Жетон соперника красится style fill var(--player-N): playerVar() или data-player */}
       {rivalTokens.map((o, i) => (
         <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
           <circle r={7} className="token" style={{ fill: `var(--player-${o.color})` }} />
@@ -333,6 +340,7 @@ export function TileView({
         </g>
       ))}
 
+      {/* TODO(P2-227) #ws:ui-containers #type:dup #size:s #ingress #svg — Метка ingress нарисована здесь и в MapLegend отдельно: один компонент IngressMark */}
       {ingress && (
         <g role="img" aria-label={t('map.ingress')} transform={`translate(${INGRESS_SPOT.x} ${INGRESS_SPOT.y}) scale(${INGRESS_SPOT.scale})`}>
           <path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" />

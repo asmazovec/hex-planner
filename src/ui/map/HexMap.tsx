@@ -13,12 +13,14 @@ import { HEX_SIZE, hexToPixel, mapBounds, slotToPixel, type Rect } from './geome
 import { TilePopover } from './TilePopover';
 import { TileView, type Highlight } from './TileView';
 import { capFit } from './viewLimits';
+// TODO(P2-234) #ws:ui-structure #type:arch #dep:P2-235 #size:s #motion — animates берётся из хука жестов: импортировать из common/motion.ts
 import { animates, usePanZoom } from './usePanZoom';
 
 /** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
 export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape;
   /** The colour of the opponent whose action this is. */ player?: number }
 
+// TODO(P2-233) #ws:ui-structure #type:dup #size:s #route-draft — RouteDraftView почти совпадает с ArrowPreview из useArrowDrag: один тип черновика маршрута
 /** The route under way, in the order it was drawn. The screen point is given while a finger pulls it. */
 export interface RouteDraftView { path: string[]; reverse?: boolean; clientX?: number; clientY?: number }
 
@@ -47,6 +49,7 @@ export interface HexMapProps {
   onPopoverClose?: () => void;
 }
 
+// TODO(P2-231) #ws:ui-structure #type:arch #size:s #fracture #geometry — Геометрия группы Излома (fractureFrame, LABEL_*) лежит в файле компонента и импортируется тестом: перенести в geometry.ts
 /**
  * Where the Fracture group is drawn: its systems at the given slots, one label outside the apex, and the rectangle
  * holding map and group. The label stands beyond the middle system, away from the map centre.
@@ -133,6 +136,7 @@ function PreviewLine({ start, clientX, clientY, reverse, outline }: { start: Poi
 
 const svgPath = (points: Point[]): string => `M${points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`;
 
+// TODO(P2-230) #ws:ui-containers #type:dup #size:s #route-badge #svg — Вершины бейджа и выреза заданы строками, хотя это hexPoints(10.5) и hexPoints(15); бейдж номера и метка «+N» повторены в MapLegend и OrderHex в EntryList: общий компонент RouteBadge
 const BADGE_HEX = '10.5,0 5.25,9.1 -5.25,9.1 -10.5,0 -5.25,-9.1 5.25,-9.1';
 /** The gap in the arrows around a badge: the same hexagon, 1.4 times its size. */
 const BADGE_CUT = '15,0 7.5,13 -7.5,13 -15,0 -7.5,-13 7.5,-13';
@@ -168,6 +172,7 @@ const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrows: Arro
         </mask>
       )}
       <g mask="url(#route-gaps)">
+        {/* TODO(P2-228) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style #rivals — Цвет стрелки соперника через style --route: var(--player-N): data-player или playerVar() */}
         {arrows.map(a => (
           <g key={a.key} className={`route route-${a.tone}`} style={a.player ? { '--route': `var(--player-${a.player})` } as CSSProperties : undefined} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
             <g className="route-casings">
@@ -180,6 +185,7 @@ const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrows: Arro
           </g>
         ))}
       </g>
+      {/* TODO(P2-229) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style #rivals — Бейдж повторяет style --route стрелки: data-player или playerVar() */}
       {arrows.map(a => (
         <g key={a.key} className={`route route-badge route-${a.tone}`} style={a.player ? { '--route': `var(--player-${a.player})` } as CSSProperties : undefined} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
           <polygon points={BADGE_HEX} className="route-badge-casing" />
@@ -250,6 +256,7 @@ export function HexMap({
   const mapRect = useMemo(() => mapBounds(slotKeys.map(parseKey)), [slotKeys]);
   const fractureAt = useMemo(() => (game.fracture.active ? fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout) : []), [pack, game.fracture.active, game.fracture.seat, game.playerCount, game.layout]);
   const fracture = useMemo(() => (fractureAt.length === 0 ? null : fractureFrame(slotKeys.map(parseKey), fractureAt)), [fractureAt, slotKeys]);
+  // TODO(P2-232) #ws:ui-structure #type:arch #size:m #fracture #srp — HexMap держит и камеру, и полоску инструментов, и автомат прилёта Излома (seenPlace, opening, flyRun, leftSeat, flyStyle): вынести хук useFractureFlight, RouteArrows в свой файл
   // Only opening it or moving it plays: coming back to a map where it stands open does not. A new run starts the animation anew.
   const [seenPlace, setSeenPlace] = useState({ active: game.fracture.active, seat: game.fracture.seat });
   const [opening, setOpening] = useState(false);

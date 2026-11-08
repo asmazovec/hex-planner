@@ -46,6 +46,7 @@ export function plannedCard(round: Round, playerCount: number): number | undefin
 }
 
 /** A secondary or a primary for a token, except Leadership's secondary, which the card makes free of tokens. */
+// TODO(P2-034) #ws:strategy-cards #type:bug #rule:83.3 #test:083-strategy-card #size:m #for-token — Стоимость основного берётся из сохранённого forToken, который ставит редактор при выборе карты; после смены карт раунда он устаревает. Выводить из round.strategyCard/backupCard при повторе; основное чужой карты — нарушение
 export const costsStrategyToken = (entry: CardEntry): boolean =>
   entry.type === 'secondary' ? entry.card !== CARD.leadership : entry.forToken === true;
 
@@ -53,6 +54,7 @@ export const costsStrategyToken = (entry: CardEntry): boolean =>
 export function freeTokens(entry: CardEntry, expansions: ExpansionId[]): number {
   const primary = entry.type === 'strategic';
   if (entry.card === CARD.leadership) return (primary ? 3 : 0) + (entry.effects?.boughtTokens ?? 0);
+  // TODO(P2-038) #ws:strategy-cards #type:bug #rule:99.1 #rule:99-note-1 #test:099-warfare #size:s #warfare — Warfare до Thunder's Edge всегда даёт жетон, даже если снять с карты нечего: давать только при снятом жетоне
   return primary && entry.card === CARD.warfare && !expansions.includes('te') ? 1 : 0;
 }
 
@@ -71,6 +73,7 @@ export function withLeadershipTokens(effects: CardEffects, tokens: CardEffects['
 /** The technologies an entry researches: ship upgrades and those only counted. */
 export const researchCount = (entry: CardEntry): number => (entry.upgrades?.length ?? 0) + (entry.effects?.researched ?? 0);
 
+// TODO(P2-041) #ws:strategy-cards #type:check #rule:91.2 #rule:91.3 #rule:90.10 #test:091-technology-sc #test:090-technology #size:s #technology — Число исследований не ограничено (2 на основном, 1 на второстепенном) и уже известная технология оплачивается повторно
 const techCost = (entry: CardEntry): number => {
   const count = researchCount(entry);
   return entry.type === 'strategic' ? Math.max(0, count - 1) * SECOND_RESEARCH : count * SECONDARY_RESEARCH;
@@ -161,6 +164,7 @@ export function homeOf(game: Game, pack: DataPack): Home {
   const faction = pack.factions[game.faction];
   if (!faction) return { slot: null, fallback: false };
   const onMap = (tile: string | undefined) => Object.keys(game.map).find(slot => game.map[slot].split('@')[0] === tile);
+  // TODO(P2-010) #ws:movement #type:bug #rule:6-note-2 #test:006-adjacency #size:m #Creuss #off-map-home — Дом вне карты (Creuss) получает ключ тайла 51, а не слот: граф маршрутов его не знает, gridDistance даёт 1 до любой системы, подсветка пуста. Нужен слот дома вне карты, смежный только через червоточину
   const own = onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : undefined);
   if (own) return { slot: own, fallback: false };
   const seat = seatSlots(game.playerCount, pack, game.layout)[game.seat - 1];

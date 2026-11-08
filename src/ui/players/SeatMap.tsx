@@ -19,6 +19,7 @@ const parseSlot = (key: string): [number, number] => {
   const [q, r] = key.split(',').map(Number);
   return position(q, r);
 };
+// TODO(P2-466) #ws:ui-structure #type:dup #size:s #hex-geometry — третий генератор вершин гекса (есть map/geometry.ts и FactionCard): общая функция геометрии
 const hexPoints = (x: number, y: number): string => Array.from({ length: 6 }, (_, i) => {
   const angle = (Math.PI / 3) * i;
   return `${(x + HEX_RADIUS * Math.cos(angle)).toFixed(1)},${(y + HEX_RADIUS * Math.sin(angle)).toFixed(1)}`;
@@ -96,6 +97,7 @@ export function SeatMap({ game, pack, drag, ghostRef, locked = false }: SeatMapP
                   },
                 })}
               >
+                {/* TODO(P2-467) #ws:ui-containers #type:ui #size:s #dep:P2-425 #player-colour #inline-style — цвет игрока inline-стилем здесь и у значка призрака: data-player/playerVar() */}
                 <circle r="17" className="seat-disc" style={{ fill: `var(--player-${player.color})` }} />
                 <circle r={hitRadius} className="seat-hit" />
                 <text y="6">{index + 1}</text>

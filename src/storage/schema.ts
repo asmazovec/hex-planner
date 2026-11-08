@@ -188,6 +188,7 @@ export function migrate(raw: unknown): unknown {
   if (doc.schemaVersion === 0) doc = { ...doc, schemaVersion: 1 };
   if (!Array.isArray(doc.opponents)) return doc;
   doc = withPlayerCount(withValidSeats(withSeats(doc)));
+  // TODO(P2-025) #ws:structures #type:model #dep:P2-024 #size:s #schema #migration — Миграция: владелец строений (P2-024) — существующие базы и PDS отдать тому, кто контролирует планету
   if (doc.schemaVersion === 1) doc = withOwners(doc);
   if (doc.schemaVersion === 2) doc = { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } };
   if (doc.schemaVersion === 3) doc = { ...doc, schemaVersion: 4, pds: {} };

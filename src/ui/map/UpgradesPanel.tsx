@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
 import type { DataPack, Game, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+// TODO(P2-265) #ws:ui-structure #type:arch #size:s #imports — UnitIcon из players/ и ShipStats из plan/: место в units/ и players/ по новой структуре каталогов
 import { UnitIcon } from '../players/UnitIcon';
 import { ShipNotes, StatLine } from '../plan/ShipStats';
 
@@ -19,6 +20,8 @@ export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelPro
   const { t } = useTranslation();
   const toggleUpgrade = useGame(s => s.toggleUpgrade);
   const title = t('ships.upgrades');
+  // TODO(P2-262) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style — style --player: var(--player-N): data-player или playerVar()
+  // TODO(P2-263) #ws:ui-containers #type:dup #dep:P2-238 #size:s #drawer-sheet — Свой aside role=dialog с h2: DrawerSheet
   return (
     <aside
       className="upgrades-panel" role="dialog" aria-label={title}
@@ -32,6 +35,7 @@ export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelPro
         const hasTwo = hasLevelTwo(game.faction, kind, pack);
         const on = current !== base;
         const round = locked[kind];
+        // TODO(P2-264) #ws:ui-containers #type:dup #needs:prototype #size:s #upgrade-toggle — Переключатель улучшения .upgrade-card повторяет .ship-row-live из ShipStats: один вид
         return (
           <button
             key={kind} type="button" className={`upgrade-card${on ? ' on' : ''}`} data-testid={`upgrade-${kind}`} aria-pressed={on}

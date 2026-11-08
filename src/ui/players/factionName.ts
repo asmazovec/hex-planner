@@ -1,3 +1,4 @@
+// TODO(P2-456) #ws:ui-structure #type:dup #size:s #names — два модуля имён игроков: этот и map/opponentName.ts (там номер index+2, в PlanScreen seat): один players/names.ts с полным и коротким именем
 /** Where the rule below would pick the wrong word. */
 const SHORT_NAMES: Record<string, string> = {
   bastion: 'Bastion', ralnel: 'Ral Nel', titans: 'Titans', keleresm: 'Keleres', keleresx: 'Keleres', keleresa: 'Keleres',

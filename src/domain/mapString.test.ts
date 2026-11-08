@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
+// TODO(P2-058) #ws:domain-purity #type:arch #size:s #purity #layering — Доменный тест импортирует из UI
 import { hexToPixel } from '../ui/map/geometry';
 import { arrangeSet, parseMapString, ringSlots } from './mapString';
 import { seatSlots } from './mapBuilder';

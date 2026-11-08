@@ -6,6 +6,7 @@ import { systemName } from './tactical';
 
 export type SliceOwners = Record<string, 'me' | 'other'>;
 
+// TODO(P2-369) #ws:ui-logic-to-domain #type:arch #size:s — sliceOwners — правило владения частями экспедиции; в domain/thundersEdge.ts
 /** Who holds each expedition part: mine come from the plan's expedition entries, the others' are tapped in. */
 export function sliceOwners(game: Game, plan: Plan): SliceOwners {
   const owners: SliceOwners = {};
@@ -18,6 +19,7 @@ export function sliceOwners(game: Game, plan: Plan): SliceOwners {
   return owners;
 }
 
+// TODO(P2-370) #ws:ui-structure #type:arch #size:s — виджет нужен только map/ThundersEdgePanel; место в drawers/, не в plan/
 export interface ExpeditionWidgetProps {
   game: Game;
   pack: DataPack;
@@ -61,6 +63,7 @@ export function ExpeditionWidget({ game, pack, owners, onPlace }: ExpeditionWidg
         <div className="row">
           {placed !== null && <span>{t('expedition.placedAt', { system: systemName(game, pack, placed) })}</span>}
           <button type="button" onClick={onPlace}>{t('expedition.choose')}</button>
+          {/* TODO(P2-371) #ws:ui-containers #type:ui #needs:prototype #dep:P2-323 — текстовое «Убрать» вместо HexRemove */}
           {placed !== null && (
             <button type="button" onClick={() => setThundersEdge(null)}>{t('expedition.remove')}</button>
           )}

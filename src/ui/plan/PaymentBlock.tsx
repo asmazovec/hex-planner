@@ -37,6 +37,7 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
     ...(payment.tradeGoods > 0 ? [t('plan.payment.tradeGoods', { n: payment.tradeGoods })] : []),
   ];
 
+  // TODO(P2-361) #ws:ui-containers #type:ui #section #dep:P2-316 — блок собран вручную (editor-section + panel-head); Section с action
   return (
     <div className="editor-section" role="group" aria-label={t('plan.payment.title')}>
       <div className="panel-head">

@@ -7,6 +7,7 @@ import { UnitIcon } from '../players/UnitIcon';
 import { FactionComponents } from './FactionComponents';
 import { ShipStats, type ShipStatsProps } from './ShipStats';
 
+// TODO(P2-374) #ws:ui-containers #type:dup #size:s — третий генератор вершин гекса (map/geometry.ts, SeatMap.tsx); брать из map/geometry
 const HEX_POINTS = Array.from({ length: 6 }, (_, i) => {
   const angle = (Math.PI / 3) * i;
   return `${(75 + 64 * Math.cos(angle)).toFixed(1)},${(66 + 64 * Math.sin(angle)).toFixed(1)}`;
@@ -80,6 +81,7 @@ export interface FactionCardProps {
   live?: Pick<ShipStatsProps, 'upgraded' | 'onToggle' | 'locked'>;
 }
 
+// TODO(P2-373) #ws:ui-structure #type:arch #size:s — FactionCard и FactionComponents нужны только players/PlayerList; перенести в players/
 /** What a faction starts with, all visible at once. Colours come from `--player` of the surrounding card. */
 export function FactionCard({ faction, pack, expansions, live }: FactionCardProps) {
   const { t } = useTranslation();

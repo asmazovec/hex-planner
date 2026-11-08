@@ -5,6 +5,7 @@ import type { DataPack, Game, MapLayout } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 
 const LAYOUTS: MapLayout[] = ['standard', 'hyperlanes'];
+// TODO(P2-251) #ws:ui-logic-to-domain #type:arch #size:s #layout — Какие числа игроков выбирают раскладку и где гиперпути от Milty, решает UI: перенести в domain/mapBuilder.ts
 /** Player counts whose map has a choice of layouts. */
 const CHOICE_COUNTS = [3, 4, 5];
 /** Player counts whose hyperlane layout is Milty Draft's own, not a layout of the rules. */
@@ -35,9 +36,11 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
     if (pending) setLayout(pending.layout);
     setAsked(null);
   };
+  // TODO(P2-252) #ws:ui-logic-to-domain #type:arch #dep:P2-251 #size:s #layout #hyperlanes — Число мест с гиперпутями считается по шаблону в UI: функция в domain/mapBuilder.ts
   const laneSlots = (templateFor(game.playerCount, 'hyperlanes', pack)?.slots ?? [])
     .filter(slot => slot.fixed && pack.tiles[slot.fixed.split('@')[0]]?.kind === 'hyperlane').length;
 
+  // TODO(P2-254) #ws:ui-css #type:dead #size:s #panel — Берёт .panel, а CSS потом снимает с неё всё оформление: убрать класс panel и снимающие правила
   return (
     <div className="panel layout-picker">
       <strong id="layout-picker-label">{t('layout.label')}</strong>
@@ -55,6 +58,7 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
       {available('hyperlanes') && MILTY_COUNTS.includes(game.playerCount) && (
         <p className="muted">{t('layout.milty', { n: laneSlots })}</p>
       )}
+      {/* TODO(P2-253) #ws:ui-containers #type:dup #dep:P2-250 #needs:prototype #size:s #confirm-bar — Строка подтверждения .row собрана руками: ConfirmBar */}
       {pending && (
         <div className="row">
           <span className="muted">{t('layout.confirm', { count: pending.lost })}</span>
