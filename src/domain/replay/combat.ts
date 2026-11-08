@@ -3,7 +3,7 @@ import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, Warning } from '../types';
 import { planetsOf } from './board';
 import { take, unitIds, type TacticalEntry } from './state';
-import { capacity, fleetCount } from './transport';
+import { capacity, dockFighterRoom, fleetCount } from './transport';
 
 /**
  * Whether anything can destroy ships in the active system once they arrived: another player's ships (a space combat),
@@ -26,7 +26,7 @@ export function checkArrival(game: Game, state: GameState, target: string, entry
   for (const { units } of entry.landings) {
     for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
   }
-  const ships = fleetCount(game, here, state.upgrades, pack);
+  const ships = fleetCount(game, here, state.upgrades, pack, dockFighterRoom(game, state, target, pack));
   return ships > state.fleet ? [violation('fleetPool', { systemId: target, ships, fleet: state.fleet })] : [];
 }
 
@@ -43,7 +43,7 @@ export function removeLosses(state: GameState, target: string, entry: TacticalEn
  */
 export function checkAfterCombat(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
   if (unitIds(entry.losses ?? {}).length === 0) return [];
-  const left = capacity(game, state.systems[target] ?? {}, state.upgrades, pack);
+  const left = capacity(game, state.systems[target] ?? {}, state.upgrades, pack, dockFighterRoom(game, state, target, pack));
   return left.load > left.capacity ? [violation('capacitySystem', { systemId: target, load: left.load, capacity: left.capacity }, 'combat')] : [];
 }
 
