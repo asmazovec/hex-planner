@@ -21,10 +21,10 @@ export function RowIcon({ name }: { name: keyof typeof ICONS }) {
   );
 }
 
-/** The one control that removes or closes something, everywhere in the app. */
+/** The one control that removes or closes something, everywhere in the app: a quiet cross (`.icon-button`) that turns red only under the finger. */
 export function HexRemove({ label, className, disabled, onClick }: { label: string; className?: string; disabled?: boolean; onClick: () => void }) {
   return (
-    <button type="button" className={`hex-button${className ? ` ${className}` : ''}`} aria-label={label} title={label} disabled={disabled} onClick={onClick}>
+    <button type="button" className={`icon-button icon-remove${className ? ` ${className}` : ''}`} aria-label={label} title={label} disabled={disabled} onClick={onClick}>
       <RowIcon name="remove" />
     </button>
   );
