@@ -19,7 +19,14 @@ export function importGame(text: string): ImportResult {
   }
   const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
   if (typeof version === 'number' && version > CURRENT_SCHEMA) return { ok: false, reason: 'newerVersion' };
-  const parsed = gameSchema.safeParse(migrate(raw));
+  // A migration expects the shape of some older game; a file of any other shape may make it throw.
+  let migrated: unknown;
+  try {
+    migrated = migrate(raw);
+  } catch {
+    return { ok: false, reason: 'invalidSchema' };
+  }
+  const parsed = gameSchema.safeParse(migrated);
   return parsed.success ? { ok: true, game: parsed.data } : { ok: false, reason: 'invalidSchema' };
 }
 

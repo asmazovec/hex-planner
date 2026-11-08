@@ -42,6 +42,15 @@
     "invalidSchema": "the file is not a game or is damaged",
     "newerVersion": "the file was made by a newer version of the app"
   },
+  "load": {
+    "failed": "The save could not be loaded",
+    "failedBecause": "The save could not be loaded: {{error}}",
+    "failedNamed": "The save “{{name}}” could not be loaded: {{error}}",
+    "listFailed": "Saved games could not be loaded: {{error}}",
+    "exportRaw": "Export data",
+    "exportFailed": "The save's data could not be exported: {{error}}",
+    "deleteFailed": "The save could not be deleted: {{error}}"
+  },
   "banner": {
     "saveError": "Could not save the game: {{error}}",
     "export": "Export",

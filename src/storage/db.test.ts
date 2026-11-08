@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
-import { deleteGame, listGames, loadGame, requestPersistence, saveGame } from './db';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { BrokenSaveError, deleteGame, listGames, loadGame, loadRawGame, requestPersistence, saveGame } from './db';
 import type { Game } from '../domain/types';
 import { CURRENT_SCHEMA, exportGame, importGame } from './transfer';
-import { gameOfSchema1, sampleGame } from './fixture';
+import { brokenSave, gameOfSchema1, putRawSave, sampleGame } from './fixture';
 
 beforeEach(async () => {
   for (const g of await listGames()) await deleteGame(g.id);
@@ -118,4 +118,74 @@ test('a game saved at the current schema opens unchanged, owners included', asyn
   await saveGame(owned);
   expect(await loadGame(game.id)).toEqual(owned);
   await deleteGame(game.id);
+});
+
+describe('a save that does not load', () => {
+  test('it is listed as broken beside the good ones, never dropped, and goes only when deleted', async () => {
+    const good = sampleGame();
+    await saveGame(good);
+    await putRawSave(brokenSave());
+    const list = await listGames();
+    expect(list.find(g => g.id === good.id)?.broken).toBeUndefined();
+    expect(list.find(g => g.id === 'broken')).toMatchObject({ name: 'Damaged', faction: 'sol', broken: true });
+    await expect(loadGame('broken')).rejects.toBeInstanceOf(BrokenSaveError);
+    await expect(loadGame('broken')).rejects.toThrow(/plans/);
+    expect(await loadGame(good.id)).toEqual(good);
+    expect((await listGames()).map(g => g.id)).toContain('broken');
+    await deleteGame('broken');
+    expect((await listGames()).map(g => g.id)).toEqual([good.id]);
+  });
+
+  test('its raw data can still be read for a file copy', async () => {
+    const record = brokenSave();
+    await putRawSave(record);
+    expect(await loadRawGame('broken')).toEqual(record);
+    expect(await loadRawGame('missing')).toBeUndefined();
+  });
+
+  test('a save with no game, no summary, or a game a migration chokes on is broken, not a crash', async () => {
+    await putRawSave({ id: 'empty' });
+    await putRawSave({ id: 'odd', name: 42, game: 'text' });
+    // An opponent that is no object makes the seat migration throw.
+    await putRawSave({ id: 'chokes', game: { ...gameOfSchema1(), id: 'chokes', opponents: [null] } });
+    const list = await listGames();
+    for (const id of ['empty', 'odd', 'chokes']) {
+      expect(list.find(g => g.id === id)).toMatchObject({ id, faction: '', playerCount: 0, broken: true });
+      await expect(loadGame(id)).rejects.toBeInstanceOf(BrokenSaveError);
+    }
+    expect(list.find(g => g.id === 'odd')?.name).toBeUndefined();
+  });
+
+  test('a save the database fails to read is listed as broken, and the others still are listed', async () => {
+    const good = sampleGame();
+    await saveGame(good);
+    await putRawSave(brokenSave('unreadable'));
+    const real = IDBObjectStore.prototype.get;
+    const spy = vi.spyOn(IDBObjectStore.prototype, 'get').mockImplementation(function (this: IDBObjectStore, key) {
+      if (key === 'unreadable') throw new DOMException('read failed', 'UnknownError');
+      return real.call(this, key);
+    });
+    try {
+      const list = await listGames();
+      expect(list.find(g => g.id === 'unreadable')).toMatchObject({ broken: true });
+      expect(list.find(g => g.id === good.id)?.broken).toBeUndefined();
+      await expect(loadGame('unreadable')).rejects.toThrow(BrokenSaveError);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+});
+
+test('without IndexedDB every call fails as a promise the caller can catch, nothing throws on import', async () => {
+  vi.resetModules();
+  vi.stubGlobal('indexedDB', undefined);
+  try {
+    const fresh = await import('./db');
+    await expect(fresh.listGames()).rejects.toThrow();
+    await expect(fresh.loadGame('x')).rejects.toThrow();
+    await expect(fresh.saveGame(sampleGame())).rejects.toThrow();
+    await expect(fresh.deleteGame('x')).rejects.toThrow();
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

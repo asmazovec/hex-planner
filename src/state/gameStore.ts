@@ -14,6 +14,7 @@ import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
 } from '../domain/types';
 import { loadGame, saveGame, listGames } from '../storage/db';
+import { errorText } from '../storage/errorText';
 
 const HISTORY_LIMIT = 50;
 
@@ -140,6 +141,15 @@ export interface GameStore {
   /** The list being set up before a game starts. Edits of the players and the layout go here while no game is open. */
   draft: Game;
   saveError: string | null;
+  /**
+   * The last save that could not be opened, or crashed once open, with why; `id` is null when the saves could not even be
+   * listed. Cleared when a game opens or starts.
+   */
+  loadFailure: { id: string | null; error: string } | null;
+  /** Saves that failed this session: the list offers only their export and deletion, never opens them on its own. */
+  brokenSaves: Record<string, string>;
+  /** The open game crashed while drawn: it closes, stays saved as it was, and is marked as failed. */
+  crashGame(error: string): void;
   canUndo: boolean;
   newGame(input: { expansions: ExpansionId[]; playerCount: number; faction: string }, pack: DataPack): void;
   /** A link names a save and disagrees with it; nothing changes until the player chooses. */
@@ -253,6 +263,15 @@ export const useGame = create<GameStore>((set, get) => {
     else set(state => ({ draft: edit(state.draft, loadPack(state.draft.expansions)) }));
   };
 
+  /** A save that would not open: the player is told, the save stays as it is. */
+  const failLoad = (id: string | null, error: unknown): void => {
+    const text = errorText(error);
+    set(state => ({
+      loadFailure: { id, error: text },
+      brokenSaves: id === null ? state.brokenSaves : { ...state.brokenSaves, [id]: text },
+    }));
+  };
+
   const startFromShare = (share: ShareParams): void => {
     const game = draftFromShare(share, get().draft, loadPack);
     if (game.faction) {
@@ -268,6 +287,8 @@ export const useGame = create<GameStore>((set, get) => {
     game: null,
     draft: newDraft(),
     saveError: null,
+    loadFailure: null,
+    brokenSaves: {},
     canUndo: false,
     linkConflict: null,
 
@@ -283,14 +304,30 @@ export const useGame = create<GameStore>((set, get) => {
         set(state => ({ draft: draftFromShare(share, state.draft, loadPack) }));
         return;
       }
-      const saves = await listGames();
+      let saves: Awaited<ReturnType<typeof listGames>>;
+      try {
+        saves = await listGames();
+      } catch (error) {
+        // Without the saves it is unknown whether the named one exists: the link only fills the draft.
+        failLoad(null, error);
+        set(state => ({ draft: draftFromShare(share, state.draft, loadPack) }));
+        return;
+      }
       const found = saves.find(save => save.name === share.name);
-      const saved = found ? await loadGame(found.id) : null;
+      let saved: Game | null;
+      let differences: ShareDifference[];
+      try {
+        saved = found ? await loadGame(found.id) : null;
+        differences = saved ? shareDifferences(share, saved, loadPack) : [];
+      } catch (error) {
+        // The named save is broken: a new game under its name would hide it, so nothing starts.
+        failLoad(found?.id ?? null, error);
+        return;
+      }
       if (!saved) {
         startFromShare(share);
         return;
       }
-      const differences = shareDifferences(share, saved, loadPack);
       if (differences.length === 0) await get().openGame(saved.id);
       else set({ linkConflict: { share, savedId: saved.id, name: share.name, differences, taken: saves.flatMap(save => save.name ?? []) } });
     },
@@ -313,7 +350,7 @@ export const useGame = create<GameStore>((set, get) => {
       if (!draft.faction) return;
       history = [];
       replace(placeStartUnits(draft, loadPack(draft.expansions)));
-      set({ draft: newDraft(draft.expansions) });
+      set({ draft: newDraft(draft.expansions), loadFailure: null });
     },
     closeGame: () => {
       history = [];
@@ -327,10 +364,32 @@ export const useGame = create<GameStore>((set, get) => {
     // The seats are settled when the game starts: its units and plans stand on them.
     swapSeats: (a, b) => { if (!get().game) commitPlayers((g, pack) => swapSeats(g, a, b, pack)); },
     openGame: async id => {
-      const loaded = await loadGame(id);
-      if (!loaded) return;
+      let game: Game;
+      try {
+        const loaded = await loadGame(id);
+        if (!loaded) return;
+        game = withFractureTiles(loaded);
+      } catch (error) {
+        failLoad(id, error);
+        return;
+      }
       history = [];
-      set({ game: withFractureTiles(loaded), canUndo: false, saveError: null });
+      set(state => {
+        const { [id]: fixed, ...brokenSaves } = state.brokenSaves;
+        void fixed;
+        return { game, canUndo: false, saveError: null, loadFailure: null, brokenSaves };
+      });
+    },
+    crashGame: error => {
+      const { game } = get();
+      if (!game) return;
+      history = [];
+      set(state => ({
+        game: null,
+        canUndo: false,
+        loadFailure: { id: game.id, error },
+        brokenSaves: { ...state.brokenSaves, [game.id]: error },
+      }));
     },
 
     addEntry: (roundNo, body, phase, owner) => {
