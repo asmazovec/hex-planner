@@ -4,50 +4,50 @@ import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
 import { EXPEDITION_SLICES } from '../../domain/payment';
 import { fleetSpeed, isOnMap, project, routeMove, routeReach, routeSteps, stateAfterEntry, stateBeforeEntry, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from '../../domain/project';
-import { focusRect, pausedPath, routeShapes, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
+import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
+import { focusRect, routeShapes } from '../map/geometry';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { CARD, cardChange, plannedCard, withSystem, type CardEntry } from '../../domain/strategy';
 import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
-import type { AdjustmentKind, Entry, EntryBody, Game, Plan } from '../../domain/types';
+import type { AdjustmentKind, Entry, EntryBody, Game } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { flightLoopOn } from '../common/flightLoop';
-import { Drawer, DrawerTab } from '../map/Drawer';
+import { flightLoop } from '../common/preferences';
+import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { FlightLayer } from '../map/FlightLayer';
-import { HexMap, type Arrow } from '../map/HexMap';
-import { HexStage, type StageMode } from '../map/HexStage';
-import { MapBuilderPanel } from '../map/MapBuilderPanel';
-import { MapLegend } from '../map/MapLegend';
-import { MapStringImport } from '../map/MapStringImport';
-import { ThundersEdgePanel } from '../map/ThundersEdgePanel';
-import { UpgradesPanel } from '../map/UpgradesPanel';
+import { HexMap } from '../map/HexMap';
+import type { Arrow } from '../map/RouteArrows';
+import { HexStage, type StageMode } from '../map/stage/HexStage';
+import { cardPurchases } from '../map/stage/purchases';
+import { MapBuilderPanel } from '../map/builder/MapBuilderPanel';
+import { MapLegend } from '../drawers/MapLegend';
+import { MapStringImport } from '../map/builder/MapStringImport';
+import { ThundersEdgePanel } from '../drawers/ThundersEdgePanel';
+import { UpgradesPanel } from '../drawers/UpgradesPanel';
 import type { Highlight } from '../map/TileView';
 import { useArrowDrag } from '../map/useArrowDrag';
-// TODO(P2-412) #ws:ui-structure #type:arch #size:s #dep:P2-448 #preferences — reducedMotion берётся из жеста карты: импортировать из common/motion.ts
-import { reducedMotion } from '../map/usePanZoom';
+import { reducedMotion } from '../common/motion';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
 import { gameAs, opponentsBySeat } from '../../domain/players';
-import { factionShortName } from '../players/factionName';
-import { AdjustmentEditor } from '../plan/AdjustmentEditor';
+import { nameTag, playerName, shortName } from '../players/names';
+import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { EntryList } from '../plan/EntryList';
 // TODO(P2-410) #ws:ui-logic-to-domain #type:arch #size:s #thunders-edge — владельцы частей экспедиции берутся из виджета plan/: импортировать из domain/thundersEdge.ts после переноса sliceOwners
-import { sliceOwners } from '../plan/ExpeditionWidget';
-import { PlanTabs, planDisplayName } from '../plan/PlanTabs';
-// TODO(P2-413) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — RowIcon из фичевой папки plan/: импортировать из primitives/
-import { RowIcon } from '../plan/RowIcon';
+import { sliceOwners } from '../drawers/ExpeditionWidget';
+import { PlanName, PlanTabs } from '../plan/PlanTabs';
+import { RowIcon } from '../primitives/Icon';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
-import { cardPurchases, StrategyEditor, type MapPick } from '../plan/StrategyEditor';
+import { StrategyEditor, type MapPick } from '../plan/editors/StrategyEditor';
 import { SummaryBar } from '../plan/SummaryBar';
-import { arrowsOf, entrySystems, flies, flightRoutes, hasUnits, isUntouched, sourcePools, sourcesOf, stateInFlight, systemName, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../plan/tactical';
+import { arrowsOf, entrySystems, flies, flightRoutes, hasUnits, isUntouched, sourcePools, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../plan/tactical';
+import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
-import { TacticalEditor } from '../plan/TacticalEditor';
+import { TacticalEditor } from '../plan/editors/TacticalEditor';
 
 /** How many rivals still fit on the line of whose action with their whole names. */
-// TODO(P2-431) #ws:ui-structure #type:dup #size:s #dep:P2-456 #names — своё правило короткого имени (3 буквы) рядом с factionShortName: короткое имя из одного модуля имён
 const FULL_NAMES_UP_TO = 3;
-const SHORT_TAG = 3;
 
 // TODO(P2-402) #ws:ui-plan-screen #type:doc #size:s — комментарий про Editing стоит над DrawerName: перенести к интерфейсу Editing
 /** `entryId` is null while a new action waits for its system: the next tile tap creates the entry; `fromCard` makes that one Warfare's free action. */
@@ -84,30 +84,6 @@ const SIMPLE_BODIES: Record<Exclude<ActionType, 'tactical' | 'strategic'>, Entry
   adjustment: { type: 'adjustment', label: '', delta: {} },
 };
 
-// TODO(P2-433) #ws:ui-structure #type:arch #size:s — поле имени плана живёт в экране: перенести к PlanTabs в plan/
-function PlanName({ plan }: { plan: Plan }) {
-  const { t } = useTranslation();
-  const renamePlan = useGame(s => s.renamePlan);
-  const shown = planDisplayName(plan.name, t);
-  const [text, setText] = useState(shown);
-  const commit = () => {
-    if (text.trim() === '') {
-      // The store falls back to the default name; the field must show a name again even if that changes nothing.
-      renamePlan('');
-      setText(shown);
-    } else if (text !== shown) {
-      renamePlan(text);
-    }
-  };
-  return (
-    <input
-      type="text" aria-label={t('plan.name')} value={text} onChange={e => setText(e.target.value)} onBlur={commit}
-      onKeyDown={e => { if (e.key === 'Enter') commit(); }}
-    />
-  );
-}
-
-// TODO(P2-434) #ws:ui-structure #type:arch #size:s #tests — тест этого экрана лежит в plan/PlanScreen.test.tsx: перенести в screens/
 /** Map on the left, plan on the right, tabs and totals on top. */
 export function PlanScreen() {
   const { t, i18n } = useTranslation();
@@ -219,7 +195,7 @@ export function PlanScreen() {
   useEffect(() => {
     if (!shown || !loops || flying) return undefined;
     // With the loop turned off the details play the flight once.
-    if (shown.plays > 0 && !flightLoopOn()) return undefined;
+    if (shown.plays > 0 && !flightLoop.read()) return undefined;
     const timer = setTimeout(() => {
       setShown(s => s && { ...s, plays: s.plays + 1 });
       startFlight(shown.id);
@@ -461,7 +437,7 @@ export function PlanScreen() {
   const beforeFlight = flying && flyingEntry ? stateBeforeEntry(game, plan, flyingEntry.id, pack, flying.filter) : null;
   const inFlight = flying && flyingEntry && beforeFlight ? stateInFlight(pack, flyingEntry, beforeFlight, flying.passed) : null;
   // Between the repeats the map stays right after the action: what comes later in the plan would blink in and out on every round.
-  const resting = !flying && shown && shownEntry && loops && shown.plays > 0 && flightLoopOn() ? shownEntry : undefined;
+  const resting = !flying && shown && shownEntry && loops && shown.plays > 0 && flightLoop.read() ? shownEntry : undefined;
   const heldState = inFlight ?? (resting ? stateAfterEntry(game, plan, resting.id, pack) : null);
   const heldOwner = (flyingEntry ?? resting)?.owner;
   const mapState = !heldState ? shownState
@@ -681,11 +657,10 @@ export function PlanScreen() {
         <div className="plan-panel">
           <div className="plan-scroll">
             {/* TODO(P2-425) #ws:ui-containers #type:ui #size:s #player-colour #inline-style — плашка «действие за» красит край и точку inline-стилем var(--player-N): PlayerDot и playerVar()/data-player (аудит 3.7) */}
-            {/* TODO(P2-426) #ws:ui-structure #type:dup #size:s #dep:P2-456 #names — имя соперника «фракция или Игрок N» собрано здесь по seat, а в map/opponentName по index+2: одна функция имени */}
             {inHand && (
               <div className="acting-as" style={{ '--owner': `var(--player-${inHand.color})` } as CSSProperties}>
                 <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${inHand.color})` }} />
-                {t('plan.actingFor', { name: pack.factions[inHand.faction]?.name ?? t('players.player', { n: inHand.seat }) })}
+                {t('plan.actingFor', { name: playerName(pack, inHand.faction, inHand.seat, t) })}
               </div>
             )}
             {/* TODO(P2-427) #ws:ui-containers #type:ui #size:s #needs:prototype #editor-head — своя голова редактора с текстовой «Отмена» вместо общей головы редактора и HexRemove (аудит 3.3, 3.4) */}
@@ -758,9 +733,9 @@ export function PlanScreen() {
                         </button>
                         {opponentsBySeat(game).map(o => {
                           const faction = pack.factions[o.faction];
-                          const name = faction ? factionShortName(faction.id, faction.name) : t('players.player', { n: o.seat });
+                          const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
                           // All the players stay on one line: with many of them the colour and three letters tell them apart.
-                          const tag = faction ? name.slice(0, SHORT_TAG) : String(o.seat);
+                          const tag = faction ? nameTag(name) : String(o.seat);
                           return (
                             <button
                               key={o.id} type="button" aria-pressed={actor === o.id} aria-label={name}

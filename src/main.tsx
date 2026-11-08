@@ -7,11 +7,10 @@ import { readShareLink } from './domain/shareLink';
 import { useGame } from './state/gameStore';
 import { App } from './ui/App';
 import { ErrorBoundary } from './ui/common/ErrorBoundary';
-import { applyBlur } from './ui/common/blur';
-import { applyEnergy } from './ui/common/energy';
+import { blur, energy } from './ui/common/preferences';
 
-applyBlur();
-applyEnergy();
+blur.apply();
+energy.apply();
 // While a game is open the address tells about it (see App); until then what is read is not kept there.
 const link = window.location.search;
 if (readShareLink(link)) window.history.replaceState(null, '', window.location.pathname);

@@ -1,19 +1,10 @@
 import { hexLayout } from '../../domain/hexLayout';
-import { fightersFly, isOnMap, sourceSlot, systemPlanets, systemsAdjacent, tileIdOf } from '../../domain/project';
-import { flightDuration, joinShare, type CurveSegment, type RouteShape } from '../../domain/route';
+import { fightersFly, isOnMap, sourceSlot, systemPlanets, systemsAdjacent } from '../../domain/project';
+import { flightDuration, joinShare, type CurveSegment, type RouteShape } from '../map/geometry';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, UnitCounts, UnitId } from '../../domain/types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
-
-// TODO(P2-308) #ws:ui-structure #type:arch #size:s #names — systemName нужен всем (WarningText, ExpeditionWidget, редакторы), а живёт в модуле тактики; вынести в ui/names.ts, когда тактика уйдёт в домен
-/** Printed tile number of a slot, which is what the player sees on the table. */
-export function systemName(game: Game, pack: DataPack, slot: string): string {
-  const tileId = tileIdOf(game, slot);
-  const tile = pack.tiles[tileId];
-  if (tile?.kind === 'fracture') return `F${tileId.replace(/\D/g, '')}`;
-  return tile?.number ?? tileId;
-}
 
 // TODO(P2-301) #ws:ui-logic-to-domain #type:arch #size:s — арифметика UnitCounts (hasUnits, withCount, addUnits, countOf) нужна и домену; перенести в src/domain вместе с остальной тактикой
 export const hasUnits = (units: UnitCounts | undefined): boolean =>

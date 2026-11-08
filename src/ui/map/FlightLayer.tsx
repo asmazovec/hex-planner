@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { flightAt } from '../../domain/route';
+import { flightAt } from './geometry';
 import type { FlightRoute } from '../plan/tactical';
 import { UnitToken } from '../units/UnitToken';
 

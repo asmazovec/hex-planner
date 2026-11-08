@@ -1,7 +1,7 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
-import type { Game } from '../../domain/types';
+import type { Game, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 
@@ -9,6 +9,29 @@ import { useReorderDrag } from '../common/useReorderDrag';
 export function planDisplayName(name: string, t: (key: string, options: { n: number }) => string): string {
   const match = /^Plan (\d+)$/.exec(name);
   return match ? t('plan.defaultName', { n: Number(match[1]) }) : name;
+}
+
+/** The name of the active plan, renamed when the field is left. */
+export function PlanName({ plan }: { plan: Plan }) {
+  const { t } = useTranslation();
+  const renamePlan = useGame(s => s.renamePlan);
+  const shown = planDisplayName(plan.name, t);
+  const [text, setText] = useState(shown);
+  const commit = () => {
+    if (text.trim() === '') {
+      // The store falls back to the default name; the field must show a name again even if that changes nothing.
+      renamePlan('');
+      setText(shown);
+    } else if (text !== shown) {
+      renamePlan(text);
+    }
+  };
+  return (
+    <input
+      type="text" aria-label={t('plan.name')} value={text} onChange={e => setText(e.target.value)} onBlur={commit}
+      onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+    />
+  );
 }
 
 export interface PlanTabsProps {

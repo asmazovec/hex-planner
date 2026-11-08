@@ -3,8 +3,8 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import type { FactionDef } from '../../domain/types';
-// TODO(P2-460) #ws:ui-structure #type:arch #size:s #dep:P2-471 #primitives — HexRemove из фичевой папки plan/: импортировать из primitives/
-import { HexRemove } from '../plan/RowIcon';
+import { EXPANSION_NAMES } from '../common/expansions';
+import { HexRemove } from '../primitives/Icon';
 
 // TODO(P2-457) #ws:ui-logic-to-domain #type:arch #size:s #faction-groups — дополнение фракции выясняется тремя loadPack и вычитанием наборов: дополнение фракции из домена (factionSheet)
 const baseFactions = loadPack([]).factions;
@@ -36,11 +36,10 @@ export function FactionPicker({ label, value, factions, taken, clearable, onPick
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // TODO(P2-458) #ws:ui-structure #type:dup #size:s #dep:P2-435 #expansion-names — названия дополнений прописаны строками: брать из общей таблицы названий
   const groups = [
     { title: t('players.base'), list: factions.filter(f => baseFactions[f.id]) },
-    { title: 'Prophecy of Kings', list: factions.filter(f => !baseFactions[f.id] && pokFactions[f.id]) },
-    { title: "Thunder's Edge", list: factions.filter(f => !baseFactions[f.id] && !pokFactions[f.id]) },
+    { title: EXPANSION_NAMES.pok, list: factions.filter(f => !baseFactions[f.id] && pokFactions[f.id]) },
+    { title: EXPANSION_NAMES.te, list: factions.filter(f => !baseFactions[f.id] && !pokFactions[f.id]) },
   ].filter(group => group.list.length > 0);
   const choose = (id: string) => {
     onPick(id);

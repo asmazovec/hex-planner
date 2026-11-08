@@ -2,11 +2,14 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { extendPath, routeFromPath, type RouteDraft } from '../../domain/route';
 
 /**
- * The route being drawn: `path` holds its hexes in the order the finger passed them. `reverse` means the drag runs from
- * the active system towards a source. The screen point is where the pointer was when the path last changed.
+ * The route under way: `path` holds its hexes in the order they were drawn. `reverse` means the drag runs from the
+ * active system towards a source. The screen point is given while a finger pulls it: where the pointer was when the
+ * path last changed. A route laid by taps has neither.
  */
-// TODO(P2-236) #ws:ui-structure #type:dup #dep:P2-233 #size:s #route-draft — Тот же черновик, что RouteDraftView в HexMap: один тип
-export interface ArrowPreview { path: string[]; clientX: number; clientY: number; reverse: boolean }
+export interface RouteDraftView { path: string[]; reverse?: boolean; clientX?: number; clientY?: number }
+
+/** The route a finger is pulling: it always has its screen point and direction. */
+export type ArrowPreview = Required<RouteDraftView>;
 
 export interface ArrowDragOptions {
   activeSystem: string | null;

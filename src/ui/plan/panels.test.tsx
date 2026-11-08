@@ -15,11 +15,11 @@ import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { ActionMenu, ACTION_TYPES } from './ActionMenu';
 import { EntryList } from './EntryList';
-import { PaymentBlock } from './PaymentBlock';
+import { PaymentBlock } from './blocks/PaymentBlock';
 import { PlanTabs, planDisplayName } from './PlanTabs';
 import { StrategyCards } from './StrategyCards';
 import { SummaryBar } from './SummaryBar';
-import { WarningText } from './WarningText';
+import { WarningText } from '../feedback/WarningText';
 
 const pack = loadPack(['pok', 'te']);
 

@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useRef, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
@@ -7,15 +7,16 @@ import { gameAs, playersOf } from '../../domain/players';
 import type { DataPack, Entry, Game, GameState, Phase, Plan, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
-import { factionShortName } from '../players/factionName';
+import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
-import { ExpeditionEditor } from './ExpeditionEditor';
-import { sliceOwners } from './ExpeditionWidget';
-import { HexRemove, RowIcon } from './RowIcon';
-import { Stepper } from './Stepper';
-import { systemName } from './tactical';
-import { TokenTiles } from './TokenTiles';
-import { WarningList, WarningText } from './WarningText';
+import { ExpeditionEditor } from './editors/ExpeditionEditor';
+import { sliceOwners } from '../drawers/ExpeditionWidget';
+import { HexRemove, RowIcon } from '../primitives/Icon';
+import { NoteField } from '../primitives/NoteField';
+import { Stepper } from '../primitives/Stepper';
+import { systemName } from '../map/systemName';
+import { TokenTiles } from './blocks/TokenTiles';
+import { WarningList, WarningText } from '../feedback/WarningText';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 
@@ -48,21 +49,6 @@ export interface EntryListProps {
   addAction?: ReactNode;
 }
 
-// TODO(P2-348) #ws:ui-structure #type:arch #size:s — NoteField — примитив поля, спрятан в списке записей (импорт из AdjustmentEditor, GameScreen); в ui/primitives
-/** A text field that writes to the plan when it is left, so typing leaves one undo step. */
-export function NoteField({ label, value, disabled, onCommit }: { label: string; value: string; disabled?: boolean; onCommit: (value: string) => void }) {
-  const [text, setText] = useState(value);
-  return (
-    <label className="field">
-      {label}
-      <input
-        type="text" value={text} disabled={disabled} onChange={e => setText(e.target.value)} onBlur={() => onCommit(text)}
-        onKeyDown={e => { if (e.key === 'Enter') onCommit(text); }}
-      />
-    </label>
-  );
-}
-
 // TODO(P2-349) #ws:ui-nesting #type:ui #needs:prototype — жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment
 /** The status entry: the tokens taken this round, the points each player gains with their running total. */
 function StatusFields({ entry, game, pack, state, warnings }: {
@@ -80,13 +66,12 @@ function StatusFields({ entry, game, pack, state, warnings }: {
       <WarningList warnings={warnings} game={game} pack={pack} />
       <h5 className="status-points">{t('plan.entries.roundPoints')}</h5>
       {playersOf(game).map((player, index) => {
-        const faction = pack.factions[player.faction];
         // TODO(P2-350) #ws:ui-containers #type:ui #size:s — цвет игрока inline-стилем var(--player-…) в .status-player ниже; PlayerDot / data-player / playerVar()
         const me = index === 0;
         return (
           <div key={player.id} className="status-player" style={{ '--player': `var(--player-${player.color})` } as React.CSSProperties}>
             <Stepper
-              name={faction ? factionShortName(faction.id, faction.name) : t('players.player', { n: index + 1 })}
+              name={shortName(pack, player.faction, t('players.player', { n: index + 1 }))}
               note={t('plan.entries.pointsTotal', { n: me ? state.vp : state.opponentVp[player.id] ?? player.vp })}
               value={me ? entry.vp ?? 0 : gains[player.id] ?? 0} min={0}
               onChange={value => updateEntry(entry.id, me ? { vp: value } : { opponentVp: { ...gains, [player.id]: value } })}
@@ -102,12 +87,11 @@ function StatusFields({ entry, game, pack, state, warnings }: {
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
 
-// TODO(P2-351) #ws:ui-structure #type:dup #size:s #names — имя соперника через factionShortName, а opponentName (map/opponentName.ts) даёт полное; два модуля имён игроков, свести в ui/names.ts
 /** An opponent's entry says whose it is before what it is. */
 function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
-  const faction = pack.factions[game.opponents.find(o => o.id === entry.owner)?.faction ?? ''];
+  const faction = game.opponents.find(o => o.id === entry.owner)?.faction ?? '';
   const name = bareLabel(entry, game, pack, t);
-  return faction ? `${factionShortName(faction.id, faction.name)}: ${name}` : name;
+  return pack.factions[faction] ? `${shortName(pack, faction, '')}: ${name}` : name;
 }
 
 function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {

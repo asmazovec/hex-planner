@@ -1,20 +1,12 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useGame } from '../../state/gameStore';
-import { Banner } from './Banner';
-import { downloadGame } from './download';
+import { ErrorBanner } from './ErrorBanner';
 
 function Fallback({ error }: { error: Error }) {
   const { t } = useTranslation();
-  const game = useGame(s => s.game);
   return (
     <div className="app">
-      {/* TODO(P2-454) #ws:ui-structure #type:dup #size:s #banner — баннер ошибки с действием «Экспорт» повторяет saveError в App: общий баннер ошибки с экспортом открытой партии */}
-      <Banner
-        kind="error"
-        message={t('banner.crash', { error: error.message })}
-        action={game ? { label: t('banner.export'), onClick: () => downloadGame(game) } : undefined}
-      />
+      <ErrorBanner message={t('banner.crash', { error: error.message })} />
     </div>
   );
 }
