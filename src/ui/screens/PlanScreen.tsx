@@ -108,6 +108,19 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const choosing = next.kind === 'choose' ? next.what : null;
   const shown = panel.kind === 'list' ? panel.shown : null;
   const shownEntry = round?.entries.find(e => e.id === shown?.id);
+  // A tap in the plan panel away from the actions folds the open one back to its compact row.
+  const unfolded = panel.kind === 'list' && (shown !== null || openId !== null);
+  useEffect(() => {
+    if (!unfolded) return undefined;
+    const away = (e: PointerEvent) => {
+      const target = e.target as Element | null;
+      if (!target?.closest('.plan-panel') || target.closest('.entry')) return;
+      update(state => (state.panel.kind === 'list' ? { ...state, panel: LIST, openId: null } : state));
+    };
+    window.addEventListener('pointerdown', away);
+    return () => window.removeEventListener('pointerdown', away);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `update` is a fresh closure each render over the same setter.
+  }, [unfolded]);
   const hasTe = game?.expansions.includes('te') ?? false;
   const drawers = useDrawers(hasTe, choosesForTe(next));
   const boards = useBoards(game, plan, pack);
@@ -270,8 +283,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const onShowEntry = (tapped: Entry) => {
     if (tapped.type === 'pass') return;
     flight.stop();
-    const opening = shown?.id !== tapped.id;
-    update(state => ({ ...state, panel: { kind: 'list', shown: opening ? { id: tapped.id, plays: 0 } : null } }));
+    // A second tap folds the row whole: the steps and the fields open in it (the status tokens, a note).
+    const opening = shown?.id !== tapped.id && openId !== tapped.id;
+    update(state => ({
+      ...state,
+      openId: state.openId === tapped.id ? null : state.openId,
+      panel: { kind: 'list', shown: opening ? { id: tapped.id, plays: 0 } : null },
+    }));
     if (opening && entrySystems(game, pack, tapped).length === 0) setViewResets(n => n + 1);
   };
 
