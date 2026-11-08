@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { productionCost, productionPlaces, project, readyResources, stateBeforeEntry, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { dockFighterRoom, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, GameState, StructureKind, UnitCounts, UnitId, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -237,7 +237,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
   const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);
   const spendable = readyResources(payer, pack) + payer.tradeGoods;
-  const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.upgrades, pack);
+  const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.upgrades, pack, dockFighterRoom(view, acting, slot, pack));
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
   const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
   /** Over the limit is what the domain says of the entry. */

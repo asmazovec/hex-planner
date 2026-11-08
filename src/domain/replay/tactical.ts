@@ -11,7 +11,7 @@ import { gainControl, landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
 import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { unitIds, type TacticalEntry } from './state';
-import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, fleetCount, isPickup, overflowLeft } from './transport';
+import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, isPickup, overflowLeft } from './transport';
 import type { Blockers } from '../movement';
 
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
@@ -81,7 +81,8 @@ export function tacticalMeters(
   if (target !== null) landAndBuild(game, state, target, entry, pack, []);
   return {
     group: capacity(game, groups[source] ?? {}, before.upgrades, pack),
-    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.upgrades, pack),
+    // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
+    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.upgrades, pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
     fleet: before.fleet,
   };
 }

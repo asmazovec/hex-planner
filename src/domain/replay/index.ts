@@ -23,7 +23,7 @@ export { placesOf, productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
 export { structureOwner, structuresOn } from './structures';
 export { productionPlaces, tacticalMeters } from './tactical';
-export { fightersFly, pickupAllowed, systemMeters } from './transport';
+export { dockFighterRoom, fightersFly, pickupAllowed, systemMeters } from './transport';
 
 function applyEntry(
   game: Game, state: GameState, entry: Entry, pack: DataPack, taken: ExpeditionLog, cards: CardRound, flow: RoundFlow, blockers?: Blockers,

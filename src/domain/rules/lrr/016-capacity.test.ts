@@ -21,7 +21,8 @@ describe('LRR 16 Capacity', () => {
   });
 
   test('16.2 / 16.3: fighters and ground forces in a space area beyond the ships\' capacity there are warned about', () => {
-    const build = tactical(HOME, { production: { fighter: 2 } });
+    // The dock that produces them keeps 3 fighters apart from the ships' capacity (Space Dock card, LRR 79): the 4th is over.
+    const build = tactical(HOME, { production: { fighter: 4 } });
     const game = rulesGame({ units: { [HOME]: { cruiser: 1 } }, entries: [build], game: { docks: ['h1'] } });
     expect(codesOf(game, pack, build)).toContain('capacitySystem');
   });
