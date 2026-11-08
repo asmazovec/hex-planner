@@ -1,7 +1,5 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-// TODO(P2-058) #ws:domain-purity #type:arch #size:s #purity #layering — Доменный тест импортирует из UI
-import { hexToPixel } from '../ui/map/geometry';
 import { arrangeSet, parseMapString, ringSlots } from './mapString';
 import { seatSlots } from './mapBuilder';
 
@@ -10,6 +8,8 @@ const full = loadPack(['pok', 'te']);
 const base = loadPack([]);
 /** What a caller passes to tell a tile of a switched-off expansion from a truly unknown one. */
 const OTHERS = { pok: loadPack(['pok']), te: loadPack(['te']) };
+/** Screen direction of an axial slot on the flat-topped grid, in hex units, y pointing down. */
+const slotDirection = (q: number, r: number) => ({ x: 1.5 * q, y: Math.sqrt(3) * (q / 2 + r) });
 
 /**
  * Output of the Milty Draft algorithm (js/generate-map.js, `#tts-string`) for the finished six-player draft fixture
@@ -24,7 +24,7 @@ test('ring order starts at the top and runs clockwise, like the map geometry', (
   expect(ringSlots(2).slice(0, 4)).toEqual(['0,-2', '1,-2', '2,-2', '2,-1']);
   const bearings = ringSlots(2).map(key => {
     const [q, r] = key.split(',').map(Number);
-    const { x, y } = hexToPixel(q, r);
+    const { x, y } = slotDirection(q, r);
     return (Math.atan2(x, -y) * 180) / Math.PI;
   });
   expect(bearings[0]).toBeCloseTo(0);

@@ -2,12 +2,18 @@ import { defaultLayout, slotKeyOf, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
 import type { DataPack, ExpansionId, Game, MapLayout } from './types';
 
+/** Makes an id with a prefix; it only has to be unique within one user's local games. */
+export type IdMaker = (prefix: string) => string;
+
 let counter = 0;
-/** No browser or node API: an id only has to be unique within one user's local games. */
-// TODO(P2-055) #ws:domain-purity #type:arch #size:s #purity — Date.now, Math.random и счётчик модуля в домене: генератор id передавать параметром, как newId в losses.ts
-export function makeId(prefix: string): string {
+/** The default maker, for callers that pass none: time, a random part and a counter, no browser or node API. */
+export const timeIdMaker: IdMaker = prefix => {
   counter += 1;
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}${counter}`;
+};
+
+export function makeId(prefix: string, make: IdMaker = timeIdMaker): string {
+  return make(prefix);
 }
 
 export { slotKeyOf };
@@ -15,6 +21,7 @@ export { slotKeyOf };
 export function createGame(
   input: { expansions: ExpansionId[]; playerCount: number; faction: string; layout?: MapLayout },
   pack: DataPack,
+  newId: IdMaker = timeIdMaker,
 ): Game {
   const faction = pack.factions[input.faction];
   const layout = input.layout ?? defaultLayout(input.playerCount, pack);
@@ -25,9 +32,9 @@ export function createGame(
   if (faction && firstSeat && !map[firstSeat]) map[firstSeat] = faction.gateTile ?? faction.homeTile;
   const planetControl: Game['planetControl'] = {};
   for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) planetControl[planetId] = 'me';
-  const planId = makeId('plan');
+  const planId = makeId('plan', newId);
   return {
-    id: makeId('game'),
+    id: makeId('game', newId),
     schemaVersion: 4,
     dataVersion: pack.version,
     expansions: [...input.expansions],
@@ -38,7 +45,7 @@ export function createGame(
     color: 1,
     vp: 0,
     map,
-    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent'), faction: '', vp: 0, seat: i + 2, color: i + 2 })),
+    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent', newId), faction: '', vp: 0, seat: i + 2, color: i + 2 })),
     upgrades: { me: [], opponents: {} },
     enemyUnits: {},
     enemyGround: {},

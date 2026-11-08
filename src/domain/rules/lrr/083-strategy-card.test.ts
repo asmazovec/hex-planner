@@ -1,6 +1,6 @@
 /** LRR 83 Strategy Card. Source: tirules2 rules-reference/strategy-card.md. */
 import { describe, expect, test } from 'vitest';
-import { strategyCards } from '../../cards';
+import { strategyCards } from '../../../data/loadPack';
 import { cardsHeld, CARD, costsStrategyToken, heldCards } from '../../strategy';
 import type { Entry } from '../../types';
 import { codesOf, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';

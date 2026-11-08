@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../data/cardSummaries';
-import { strategyCardSet, strategyCards } from '../../domain/cards';
+import { strategyCards } from '../../data/loadPack';
+import { strategyCardSet } from '../../domain/cards';
 import { autoPay } from '../../domain/payment';
 import { opponentsBySeat } from '../../domain/players';
 import { placesOf, systemPlanets } from '../../domain/project';

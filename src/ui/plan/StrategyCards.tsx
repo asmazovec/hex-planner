@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../data/cardSummaries';
-import { strategyCards } from '../../domain/cards';
+import { strategyCards } from '../../data/loadPack';
 import { cardsHeld } from '../../domain/strategy';
 import type { ExpansionId, Round } from '../../domain/types';
 import { currentLanguage } from '../../i18n';

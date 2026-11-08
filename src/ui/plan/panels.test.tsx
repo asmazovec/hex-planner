@@ -7,9 +7,8 @@ vi.mock('../../storage/db', () => ({
   loadGame: vi.fn(async () => null),
 }));
 
-import { loadPack } from '../../data/loadPack';
+import { loadPack, strategyCards } from '../../data/loadPack';
 import { cardSummary } from '../../data/cardSummaries';
-import { strategyCards } from '../../domain/cards';
 import { project } from '../../domain/project';
 import type { Warning, WarningCode } from '../../domain/types';
 import { setLanguage } from '../../i18n';

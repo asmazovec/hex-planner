@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../data/cardSummaries';
-import { strategyCards } from '../../domain/cards';
+import { strategyCards } from '../../data/loadPack';
 import { sourceSlot, tacticalMeters } from '../../domain/project';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId } from '../../domain/types';
