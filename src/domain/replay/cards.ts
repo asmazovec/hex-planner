@@ -7,6 +7,7 @@ import { pay, readyPlanets } from './payment';
 import { placeProduction } from './production';
 import { addUpgrades } from './state';
 import { checkPoolChange, checkTokensGiven } from './status';
+import { buildStructures } from './structures';
 import { checkSystem } from './transport';
 
 /** A round's cards before its entries: only my own cards are planned; `states` holds every player's state by id (`me` and the opponents). */
@@ -69,11 +70,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   handlerOf(entry.card).apply?.({ game, state, entry, pack, round, player, primary, warnings });
   addUpgrades(state, entry.upgrades);
   warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card'));
-  // TODO(P2-026) #ws:structures #type:check #rule:24.2 #rule:24.3 #rule:24-note-1 #rule:24-note-2 #rule:63.3 #rule:79.3 #rule:85.4 #rule:85.5 #rule:85.6 #test:024-construction #test:063-pds #test:079-space-dock #test:085-structures #size:m #construction #limits — Строения ставятся без проверок: 1 база и 2 PDS на планету, не больше двух на основное и одно на второстепенное Construction, только своя планета и планета системы второстепенного; второй док молча теряется
-  for (const { kind, planetId } of effects.structures ?? []) {
-    if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + 1;
-    else if (!state.docks.includes(planetId)) state.docks.push(planetId);
-  }
+  buildStructures(game, state, effects.structures ?? [], primary, effects.systemId, pack, warnings);
   // TODO(P2-030) #ws:production #type:check #rule:99.3 #test:099-warfare #size:s #warfare #card-production — Производство карты (второстепенное Warfare) не проверяет домашнюю систему, базу и её Production
   if (effects.production) {
     placeProduction(game, state, effects.production.systemId, effects.production.units, pack, effects.production.ground);

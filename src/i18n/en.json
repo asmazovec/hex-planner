@@ -382,7 +382,13 @@
       "readyOverLimit": "{{readied}} planets readied, and the card allows at most {{limit}}.",
       "diplomacySystem": "{{system}}: Diplomacy picks a system with your planet, other than the Mecatol Rex system.",
       "researchOverLimit": "{{count}} technologies researched, and this ability gives at most {{limit}}.",
-      "researchOwned": "{{unit}}: the upgrade is already researched and is not researched again."
+      "researchOwned": "{{unit}}: the upgrade is already researched and is not researched again.",
+      "shipOnPlanet": "{{unit}} is a ship and cannot land on {{planet}}: only ground forces land.",
+      "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
+      "custodians": "The custodians token is still on {{planet}}: removing it costs 6 influence, which the plan does not record; the first to land gains 1 victory point.",
+      "structureLimit": "Too many structures: a planet holds one space dock and two PDS; Construction places up to two (one dock at most), its secondary one; the reinforcements hold 3 docks and 6 PDS.",
+      "structureNotControlled": "{{planet}} is not your planet: structures go only on planets you control.",
+      "structureOutsideSystem": "{{planet}} is not in {{system}}, where the secondary placed its token."
     },
     "phases": {
       "strategy": "Strategy",

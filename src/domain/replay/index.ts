@@ -12,6 +12,7 @@ import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, clearBoard } from './status';
+import { keepOwnStructures } from './structures';
 import { applyTactical } from './tactical';
 
 export { isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from './board';
@@ -19,6 +20,7 @@ export { fleetSpeed, routeDistances, routeMove, routeReach, routeSteps, shipSpee
 export { readyInfluence, readyResources } from './payment';
 export { placesOf, productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
+export { structureOwner, structuresOn } from './structures';
 export { productionPlaces, tacticalMeters } from './tactical';
 export { fightersFly, systemMeters } from './transport';
 
@@ -51,11 +53,14 @@ function applyEntry(game: Game, state: GameState, entry: Entry, pack: DataPack, 
 /** An opponent counted like me: what stands on the map for them is where they begin. */
 function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameState {
   const pick = (record: Game['enemyUnits']) => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => (byOwner[id] ? [[place, { ...byOwner[id] }]] : [])));
-  return { ...initialState(view, pack), systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
+  const state: GameState = { ...initialState(view, pack), systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
+  keepOwnStructures(state, false);
+  return state;
 }
 
 function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPack, stopBefore?: string, stopAfter?: string): Projection {
   const state = initialState(game, pack);
+  keepOwnStructures(state, true);
   const warningsByEntry: Record<string, Warning[]> = {};
   const takenSlices = new Set<string>();
   const views = new Map(game.opponents.map(o => [o.id, gameAs(game, o.id)]));
@@ -87,7 +92,7 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
         const rival = entry.owner ? rivals[entry.owner] : undefined;
         if (rival && entry.owner) {
           warningsByEntry[entry.id] = applyEntry(views.get(entry.owner)!, rival, entry, pack, takenSlices, cards, flow);
-          if (entry.type === 'tactical') rivalLandings(state, entry, entry.owner);
+          if (entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack);
         } else {
           warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, cards, flow);
         }

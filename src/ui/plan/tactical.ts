@@ -37,19 +37,28 @@ export function lossesOf(entry: TacticalEntry): { unit: UnitId; planetId: string
   return [...of(entry.losses ?? {}, null), ...Object.entries(entry.groundLosses ?? {}).flatMap(([planetId, units]) => of(units, planetId))];
 }
 
-// TODO(P2-300) #ws:combat-order #type:bug #rule:78.6.2 #test:078-space-combat #size:s #losses — возврат (amount > 0) только уменьшает losses, а высадка, из которой десантник ушёл при потере, не восстанавливается: он остаётся в космосе. Возврат должен вернуть его в landings той планеты
+/** Units that land, so a ground force lost in space can only have been on its way to a landing. */
+const LANDERS: UnitId[] = ['infantry', 'mech'];
+
 /**
  * One more lost (-1) or given back (1), in space or on a planet; nothing left leaves no trace in the entry. A unit this
  * action lands that falls in its battle never makes the landing: it leaves the landing and counts as lost on the way.
+ * Its landing stays, empty if need be, so that giving the unit back (78.6.2) lands it there again.
  */
 export function withLoss(entry: TacticalEntry, unit: UnitId, planetId: string | null, amount: number): Partial<TacticalEntry> {
   const landing = entry.landings.find(l => l.planetId === planetId);
   if (planetId !== null && amount < 0 && landing && (landing.units[unit] ?? 0) > 0) {
     const units = withCount(landing.units, unit, (landing.units[unit] ?? 0) + amount);
     return {
-      landings: hasUnits(units) ? entry.landings.map(l => (l === landing ? { ...l, units } : l)) : entry.landings.filter(l => l !== landing),
+      landings: entry.landings.map(l => (l === landing ? { ...l, units } : l)),
       losses: withCount(entry.losses ?? {}, unit, (entry.losses?.[unit] ?? 0) - amount),
     };
+  }
+  const back = entry.landings[0];
+  if (planetId === null && amount > 0 && back && LANDERS.includes(unit) && (entry.losses?.[unit] ?? 0) > 0) {
+    const losses = withCount(entry.losses ?? {}, unit, (entry.losses?.[unit] ?? 0) - amount);
+    const units = withCount(back.units, unit, (back.units[unit] ?? 0) + amount);
+    return { landings: entry.landings.map(l => (l === back ? { ...l, units } : l)), losses: hasUnits(losses) ? losses : undefined };
   }
   if (planetId === null) {
     const units = withCount(entry.losses ?? {}, unit, (entry.losses?.[unit] ?? 0) - amount);

@@ -279,6 +279,13 @@ const CASES: Record<WarningCode, Warning['params']> = {
   diplomacySystem: { systemId: '1,0' },
   researchOverLimit: { limit: 1, count: 2 },
   researchOwned: { unit: 'carrier' },
+  // combat-order, invasion, structures
+  shipOnPlanet: { planetId: 'nestphar', unit: 'cruiser' },
+  landingOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },
+  custodians: { planetId: 'nestphar' },
+  structureLimit: { kind: 'pds', planetId: 'nestphar', count: 2 },
+  structureNotControlled: { planetId: 'nestphar' },
+  structureOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {

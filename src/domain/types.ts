@@ -302,10 +302,9 @@ export interface Game {
   planetControl: Record<string, 'me' | 'enemy'>;
   /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
   planetOwner: Record<string, string>;
-  // TODO(P2-024) #ws:structures #type:model #rule:49.5.1 #rule:63.4 #rule:79.4 #test:049-invasion #test:063-pds #test:079-space-dock #size:l #structure-owner #schema — У баз и PDS нет владельца: при захвате планеты чужие строения переходят к захватчику вместо уничтожения. Хранить владельца, уничтожать при смене контроля, миграция схемы
-  /** Ids of planets that have a space dock. */
+  /** Ids of planets that have a space dock. A structure belongs to whoever controls its planet, or to me on a planet no one controls. */
   docks: string[];
-  /** Planet id to the number of PDS on it. */
+  /** Planet id to the number of PDS on it, owned as the docks are. */
   pds: Record<string, number>;
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
   fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null;
@@ -331,10 +330,12 @@ export interface GameState {
   opponentVp: Record<string, number>;
   /** The baseline plus the upgrades of the entries replayed so far. */
   upgrades: UnitId[];
-  /** The game's space docks plus those built by the entries replayed so far. */
+  /** This player's space docks: the game's on their planets, plus those built by the entries replayed so far, less those lost with a planet. */
   docks: string[];
-  /** Planet id to PDS count, the same way. */
+  /** Planet id to this player's PDS count, the same way. */
   pds: Record<string, number>;
+  /** Someone landed on Mecatol Rex in the entries replayed so far, so the custodians token is gone. */
+  custodiansRemoved?: boolean;
   /** Each opponent counted the same way, from what stands on the map for them and their entries replayed so far. */
   rivals?: Record<string, GameState>;
   /** Planet id to the opponent whose entries landed there, ahead of the owner set by hand. */
@@ -349,6 +350,8 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'noReinforcements', 'actionAfterPass', 'passBeforeStrategy', 'actionOutsidePhase', 'planetNotControlled', 'readyNotControlled',
   // strategy-cards
   'foreignPrimary', 'ownSecondary', 'secondaryRepeated', 'readyOverLimit', 'diplomacySystem', 'researchOverLimit', 'researchOwned',
+  // combat-order, invasion, structures
+  'shipOnPlanet', 'landingOutsideSystem', 'custodians', 'structureLimit', 'structureNotControlled', 'structureOutsideSystem',
 ] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */

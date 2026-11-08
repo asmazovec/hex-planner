@@ -4,7 +4,7 @@ import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type Layou
 import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { opponentsBySeat, planetHolder } from '../../domain/players';
 import { rotateLanes } from '../../domain/lanes';
-import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
+import { isOnMap, structuresOn, systemPlanets, tileIdOf } from '../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
@@ -220,10 +220,7 @@ export function TileView({
   }
   planets.forEach((planet, i) => {
     for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
-    // TODO(P2-222) #ws:structures #type:bug #rule:49.5.1 #rule:63.4 #rule:79.4 #test:049-invasion #test:063-pds #test:079-space-dock #size:s — PDS и база рисуются за держателем планеты: после захвата чужие строения переходят к захватчику; рисовать по владельцу строения
-    const pds = state.pds[planet.id] ?? 0;
-    if (pds > 0) ground.push({ kind: 'pds', owner: holderOf(planet.id) ?? 'me', count: pds, planet: i });
-    if (state.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
+    for (const { kind, owner, count } of structuresOn(state, planet.id)) ground.push({ kind, owner, count, planet: i });
   });
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;

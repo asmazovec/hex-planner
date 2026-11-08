@@ -4,7 +4,7 @@ import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { autoPay } from '../../../domain/payment';
 import { gameAs, opponentsBySeat, planetHolder } from '../../../domain/players';
-import { isOnMap, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, systemMeters, systemPlanets, tileIdOf } from '../../../domain/project';
+import { isOnMap, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, structureOwner, systemMeters, systemPlanets, tileIdOf } from '../../../domain/project';
 import { startingDocks } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
 import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../../domain/types';
@@ -186,7 +186,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const buy = (kind: TokenKind) => {
     setTapNote(null);
     if (isStructure(kind)) {
-      if (!targetPlanet || (kind === 'spacedock' && state.docks.includes(targetPlanet.id))) return;
+      if (!targetPlanet || (kind === 'spacedock' && structureOwner(state, 'spacedock', targetPlanet.id) !== undefined)) return;
       if (purchases.changeStructure) {
         purchases.changeStructure(kind, targetPlanet.id, 1);
         return;
@@ -251,7 +251,6 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const lossStrip = (owner: string, heading: string) => {
     const session = Object.keys(lost).filter(key => parseKey(key).owner === owner);
     const pictures = [
-      // TODO(P2-206) #ws:combat-order #type:bug #rule:78.6.2 #test:078-space-combat #size:s #losses — Возврат ошибочной потери десантника идёт через withLoss(+1) и только уменьшает losses: юнит остаётся в космосе, а не в landings; чинить в withLoss
       ...(owner === mine ? myLosses.map(c => ({
         key: `${c.unit}|${c.planetId}`, kind: c.unit as TokenKind, planetId: c.planetId, count: -c.count, back: () => change('losses', c.unit, c.planetId, 1),
       })) : []),
@@ -291,8 +290,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
     .filter(([key]) => { const k = parseKey(key); return k.kind === kind && (isStructure(kind) || k.owner === side); })
     .reduce((sum, [, n]) => sum + n, 0);
-  // TODO(P2-218) #ws:structures #type:bug #dep:P2-222 #rule:49.5.1 #size:s #player-colour — Строение красится цветом держателя планеты: чужая база после захвата выглядит моей; брать владельца строения
-  const structureColour = colours[targetPlanet ? holderOf(targetPlanet.id) : 'me'];
+  /** A structure is its owner's; a new one goes to whoever holds the planet. */
+  const structureColour = colours[targetPlanet ? structureOwner(state, 'spacedock', targetPlanet.id) ?? structureOwner(state, 'pds', targetPlanet.id) ?? holderOf(targetPlanet.id) : 'me'];
   const shopItems: ShopItem[] = [
     ...(only === 'build' ? [] : units.map((kind): ShopItem => ({
       kind, label: kindName(kind), colour: colours[side], disabled: pack.units[kind]?.ground && planets.length === 0,

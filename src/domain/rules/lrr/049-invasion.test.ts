@@ -44,6 +44,13 @@ describe('LRR 49 Invasion', () => {
     expect(forecast(game, pack).state.control.h1).not.toBe('me');
   });
 
+  test('49.2: a landing on a planet outside the active system is named as such, and its ground forces stay in space', () => {
+    const land = invasion({ landings: [{ planetId: 'h1', units: { infantry: 2 } }] });
+    const game = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [land] });
+    expect(codesOf(game, pack, land)).toContain('landingOutsideSystem');
+    expect(forecast(game, pack).state.systems[TARGET]).toEqual({ carrier: 1, infantry: 2 });
+  });
+
   test('49.2: ground forces may be committed to several planets of the system', () => {
     const land = invasion({ landings: [{ planetId: 't1', units: { infantry: 1 } }, { planetId: 't2', units: { infantry: 1 } }] });
     const game = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [land] });

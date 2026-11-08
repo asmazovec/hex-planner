@@ -280,8 +280,8 @@ describe('project', () => {
 
   test('наземные юниты можно забрать с планеты', () => {
     const g = gameWith([
-      setup('B', { infantry: 2 }),
-      withId('l', entry(tactical({ landings: [{ planetId: 'jord', units: { infantry: 2 } }] }))),
+      setup('H', { infantry: 2 }),
+      withId('l', entry(tactical({ systemId: 'H', landings: [{ planetId: 'jord', units: { infantry: 2 } }] }))),
       withId('m', entry(tactical({ moves: [{ from: 'jord', units: { infantry: 1 } }] }))),
     ]);
     const r = run(g);

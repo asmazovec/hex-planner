@@ -41,6 +41,13 @@ const PLACES: Record<WarningCode, WarningPlace[]> = {
   diplomacySystem: ['system'],
   researchOverLimit: ['research'],
   researchOwned: ['research'],
+  // combat-order, invasion, structures
+  shipOnPlanet: ['landing'],
+  landingOutsideSystem: ['landing'],
+  custodians: ['landing'],
+  structureLimit: ['card'],
+  structureNotControlled: ['card'],
+  structureOutsideSystem: ['card'],
 };
 
 export const placesOf = (warning: Warning): WarningPlace[] => PLACES[warning.code];
