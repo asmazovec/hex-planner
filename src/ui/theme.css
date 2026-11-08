@@ -1,4 +1,6 @@
 :root {
+  /* The width of a thin scrollbar, measured at start (src/ui/common/scrollbar.ts); 0 until then and on a tablet. */
+  --scrollbar: 0px;
   /* Surfaces, from the page up. */
   --bg: #0d1016;
   --surface: #151a23;
@@ -142,7 +144,9 @@ body {
 /* The frame: content, then the menu. */
 .app { display: flex; flex-direction: column; height: 100%; }
 /* Every block that scrolls: a thin bar in the colour of a strong border. */
-.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .upgrades-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; scrollbar-gutter: stable; }
+.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .upgrades-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+/* These columns keep room for the scrollbar, so nothing shrinks when it appears; the room comes out of their right padding (--scrollbar, measured at start: 0 on a tablet). */
+.plan-scroll, .players-aside, .upgrades-panel, .te-panel, .legend-panel { scrollbar-gutter: stable; }
 .app-body > main { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 20px 22px; }
 .app-body { flex: 1; min-height: 0; display: flex; }
 .app-rail { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; background: var(--surface); border-right: 1px solid var(--border); }
@@ -444,7 +448,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .map-hint button { flex: none; padding: 2px 10px; pointer-events: auto; }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 .plan-panel { position: relative; z-index: 8; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; background: var(--surface); border-left: 1px solid var(--border); }
-.plan-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding-right: 2px; }
+.plan-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-right: -12px; padding-right: calc(12px - var(--scrollbar)); }
 .plan-panel h2, .plan-panel h3 { margin: 0; font-size: var(--font-m); font-weight: 650; }
 .plan-panel input[type='text'] { width: 100%; font-weight: 600; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -619,7 +623,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .action-menu > .player-choice > button:last-child { border-right: 0; }
 .action-menu > button.primary { margin: 6px; background: var(--accent-soft); color: var(--text-strong); border: 1px solid var(--accent); border-radius: var(--radius-s); font-weight: 500; }
 .action-menu > button.primary[aria-expanded='true'] { background: var(--accent-soft-hover); box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.35); }
-.action-list { gap: 3px; padding: 6px; max-height: min(20rem, 42vh); overflow-y: auto; overscroll-behavior: contain; background: var(--bg); border-top: 1px solid var(--border-strong); scrollbar-gutter: stable; }
+.action-list { gap: 3px; padding: 6px; max-height: min(20rem, 42vh); overflow-y: auto; overscroll-behavior: contain; background: var(--bg); border-top: 1px solid var(--border-strong); }
 .action-list button { text-align: left; font-size: var(--font-s); }
 
 .slice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
@@ -671,7 +675,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .players-head h1, .players-head h2 { font-size: var(--font-xl); font-weight: 650; margin: 0; letter-spacing: -0.01em; }
 .players-head > span { color: var(--text-dim); font-size: 13px; }
 .players-hint { color: var(--text-dim); font-size: 13px; }
-.players-aside { border-left: 1px solid var(--border); background: var(--surface); padding: 18px; overflow-y: auto; min-height: 0; }
+.players-aside { border-left: 1px solid var(--border); background: var(--surface); padding: 18px calc(18px - var(--scrollbar)) 18px 18px; overflow-y: auto; min-height: 0; }
 .side-group { margin-bottom: 18px; }
 .side-note { font-size: 12px; color: var(--text-dim); line-height: 1.4; margin: 0; }
 .side-actions { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -821,7 +825,7 @@ small.ship-row-round { color: var(--gold); }
 .ship-notes small { flex-basis: 100%; font-size: var(--font-xs); color: var(--text-dim); line-height: 1.3; }
 
 /* My ship upgrades: a panel sliding in over the right of the map. */
-.upgrades-panel, .te-panel, .legend-panel { height: 100%; overflow-y: auto; padding: 14px 16px; background: var(--bg); }
+.upgrades-panel, .te-panel, .legend-panel { height: 100%; overflow-y: auto; padding: 14px calc(16px - var(--scrollbar)) 14px 16px; background: var(--bg); }
 .upgrades-panel h2, .te-panel h2, .legend-panel h2 { margin: 0 0 12px; font-size: var(--font-xl); font-weight: 650; letter-spacing: -0.01em; }
 .te-panel .editor-section { margin-bottom: 8px; }
 .te-panel .row[role='group'] { gap: 4px; }
