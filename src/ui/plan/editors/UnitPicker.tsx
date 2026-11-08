@@ -64,7 +64,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
 
   /**
-   * The places of a system to take cargo from: its space area and its planets. An empty source offers ground units on its
+   * The places of a system to take cargo from: its space area and its planets. An empty source offers ground forces on its
    * first planet. Where my command token lies nothing is offered, only what is already taken can be put back (95.3).
    */
   const placesIn = (slot: string): { from: string; name: string | null; units: UnitId[] }[] => {

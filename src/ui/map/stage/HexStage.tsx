@@ -113,7 +113,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const holderOf = (planetId: string): string => holderIn(game, state, planetId) ?? 'me';
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
-  /** Ground units go by planet; one still listed with the system comes off there. */
+  /** Ground forces go by planet; one still listed with the system comes off there. */
   const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => {
     const next = enemyChange(game, slot, owner, unit, planetId, amount);
     if ('planetId' in next) setEnemyGround(next.planetId, owner, next.units);
@@ -276,7 +276,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
-  // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
+  // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
   const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);

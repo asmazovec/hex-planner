@@ -46,7 +46,7 @@ export function checkPickups(game: Game, state: GameState, target: string, moves
 export const fightersFly = (game: Game, upgrades: UnitId[], pack: DataPack): boolean =>
   (unitStats(game.faction, 'fighter', upgrades.includes('fighter'), pack)?.move ?? null) !== null;
 
-/** Cargo against the capacity of my ships at my current levels: only ground units and fighters that do not fly count as load. */
+/** Cargo against the capacity of my ships at my current levels: only ground forces and fighters that do not fly count as load. */
 export function capacity(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack): { load: number; capacity: number } {
   const flying = fightersFly(game, upgrades, pack);
   let load = 0;
@@ -61,7 +61,7 @@ export function capacity(game: Game, units: UnitCounts, upgrades: UnitId[], pack
   return { load, capacity: cap };
 }
 
-/** Ships for the fleet pool: flying fighters beyond the capacity left after the ground units count as ships. */
+/** Ships for the fleet pool: flying fighters beyond the capacity left after the ground forces count as ships. */
 export function fleetCount(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack): number {
   const ships = unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];

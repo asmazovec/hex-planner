@@ -127,7 +127,7 @@ export function withAdjustedUnit(delta: AdjustmentDelta, slot: string, unit: Uni
 export const poolOf = (state: Pick<GameState, 'systems' | 'ground'>, pack: DataPack, from: string): UnitCounts | undefined =>
   (from in pack.planets ? state.ground : state.systems)[from];
 
-/** Where a system's units can come from: its space area, then its planets that hold ground units. */
+/** Where a system's units can come from: its space area, then its planets that hold ground forces. */
 export function sourcePools(
   game: Game, pack: DataPack, before: GameState, source: string,
 ): { from: string; name: string | null; available: UnitCounts }[] {

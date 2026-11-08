@@ -33,7 +33,7 @@ export interface TileViewProps {
   onPointerDown?: (slotKey: string, event: PointerEvent) => void;
   /** Drawn as the big hex: tokens and planets take the taps, the tile itself none. */
   stage?: {
-    /** The index of the planet that ground units and structures go to. */
+    /** The index of the planet that ground forces and structures go to. */
     target: number;
     onPlanet: (index: number) => void;
     onToken: (item: PlacedStack) => void;

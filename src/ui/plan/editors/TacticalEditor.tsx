@@ -63,7 +63,7 @@ export function TacticalEditor({
   };
 
   const lost = entry.losses ?? {};
-  /** What the battle leaves, and the ground unit types that arrived or are already assigned: only these can land. */
+  /** What the battle leaves, and the ground force types that arrived or are already assigned: only these can land. */
   const { left: here, landable } = afterBattle(pack, entry, before, UNIT_ORDER);
   const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0);
 

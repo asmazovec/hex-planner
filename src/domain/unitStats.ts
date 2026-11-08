@@ -12,7 +12,7 @@ export function productionCost(units: UnitCounts, factionId: string, upgrades: U
 /** The unit types that have stats and upgrades, in display order: the ships, then infantry (Infantry II). */
 export const SHIP_KINDS: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter', 'infantry'];
 
-/** A faction's own entry replaces the base entry whole; ground units and packs without levels read the unit table. */
+/** A faction's own entry replaces the base entry whole; ground forces and packs without levels read the unit table. */
 function levelsOf(factionId: string, kind: UnitId, pack: DataPack): ShipLevels | undefined {
   const own = pack.factions[factionId]?.ships?.[kind];
   if (own) return own;
