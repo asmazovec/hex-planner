@@ -272,7 +272,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 /* The big hex over the map. */
 .stage { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgb(var(--scrim) / 0.72); }
 /* TODO(P2-517) #ws:ui-containers #type:dup #size:m #modal — коробка модала трижды: .stage-dialog, .link-dialog 603, .fac-sheet 1012, скругления 14px и var(--radius) вперемешку; общий Modal — P2 note: the three boxes now come from one Modal (overlays/Modal.tsx); their sizes, padding, background (the sheet of factions sits on --bg) and corners still differ, and one box would change two of them: needs prototype */
-.stage-dialog { display: grid; grid-template-columns: minmax(0, 490px) 320px; max-width: 100vw; max-height: 100dvh; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-l); overflow: hidden; }
+.stage-dialog { display: grid; grid-template-columns: minmax(0, 490px) 350px; max-width: 100vw; max-height: 100dvh; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-l); overflow: hidden; }
 .stage-hex { padding: 10px; display: flex; align-items: center; justify-content: center; min-width: 0; }
 .stage-hex svg { width: 470px; max-width: 100%; height: auto; overflow: visible; touch-action: manipulation; user-select: none; }
 .stage-panel { display: flex; flex-direction: column; gap: 6px; padding: 12px; max-height: min(780px, 100dvh); overflow-y: auto; border-left: 1px solid var(--border); }
@@ -280,16 +280,12 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stage-panel p { margin: 0; font-size: var(--font-s); }
 .stage-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .stage-head button { padding: 0; width: 44px; }
+.stage-modes > button { min-width: 0; padding: 8px 6px; font-size: var(--font-s); }
 /* One player choice everywhere: one line of joined cells, each underlined in its player's colour; the chosen one is tinted with it. */
 .player-choice { flex-wrap: nowrap; }
 .player-choice > button { flex: 1 1 0; min-width: 0; padding: 4px 2px; font-size: var(--font-s); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; box-shadow: inset 0 -3px 0 var(--owner, transparent); }
 .player-choice > button[aria-pressed='true'] { background: color-mix(in srgb, var(--owner, var(--accent)) 30%, var(--surface-2)); border-color: var(--owner, var(--accent)); color: var(--text); }
 .shop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
-/* TODO(P2-520) #ws:ui-containers #type:dup #size:s #unit-tile #dep:P2-548 — .shop-item (84px) ещё одна плитка юнита с числом: перейти на общий UnitTile — P2 note: the shop cell is P2-261, which needs prototype; UnitTile (units/UnitTile.tsx) has no shop variant yet */
-.shop-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; min-height: 84px; padding: 4px 2px; background: var(--surface-2); font-size: var(--font-xs); font-weight: 400; color: var(--text-muted); line-height: 1.25; }
-.shop-item svg, .stage-loss svg { pointer-events: none; overflow: visible; }
-.shop-item b { color: var(--gold); font-size: 13px; }
-.shop-item i { position: absolute; top: 3px; right: 5px; font-style: normal; font-weight: 700; color: var(--text); }
 .stage-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: var(--font-s); }
 .stage-total b { font-size: var(--font-xl); color: var(--gold); }
 .stage-meters { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); color: var(--text-muted); }
@@ -298,11 +294,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stage-meter-over, .stage-meter-over b { color: var(--warning); }
 :root[data-blur='on'] .stage { background: rgb(var(--scrim) / 0.5); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
 .stage-losses { display: flex; flex-wrap: wrap; gap: 5px; }
-.stage-loss { position: relative; display: flex; flex-direction: column; align-items: center; width: 62px; min-height: 62px; padding: 0 0 2px; background: var(--surface-2); }
-.stage-loss small { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 400; color: var(--text-muted); }
-.stage-loss i { position: absolute; right: 3px; bottom: 1px; font-style: normal; font-weight: 700; font-size: 12px; color: var(--text); }
-.stage-facts { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border); }
-.stage-planet { display: flex; flex-direction: column; gap: 4px; }
+.stage-planet { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid var(--border); }
 .stage-planet .muted { font-size: var(--font-s); }
 .tile-stage { cursor: default; }
 .tile-stage .planet { cursor: pointer; outline: none; }
@@ -525,8 +517,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .entry-steps .warning-text { display: block; margin-top: 3px; }
 .entry-steps .warning-list { flex-basis: 100%; padding: 0; }
 .upics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
-.upic { position: relative; width: 32px; height: 32px; }
-.upic i { position: absolute; right: -2px; bottom: -2px; font-style: normal; font-weight: 700; font-size: 10.5px; background: var(--bg); border: 1px solid var(--counter-stroke); border-radius: 8px; padding: 0 3px; color: var(--text); }
 .entry-details { display: flex; flex-direction: column; gap: 4px; padding: 6px 10px 8px; border-top: 1px solid var(--border); }
 .plan-entries { display: flex; flex-direction: column; gap: 12px; }
 .phase { display: flex; flex-direction: column; gap: 5px; }
@@ -591,10 +581,16 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .picker-note, .picker-fleet { margin: 0; font-size: var(--font-s); }
 .pics { display: flex; flex-wrap: wrap; gap: 5px; }
 .pic-pair { display: contents; }
-/* TODO(P2-548) #ws:ui-containers #type:dup #size:m #unit-tile — плитка юнита с числом: 4 класса (.pic, .shop-item 254, .stage-loss 268, .upic 524) и 5 компонентов, размеры 62/84/62/32, бейдж числа 257, 270, 617, 525; общий UnitTile с размером, радиус var(--radius-s) вместо 10px — P2 note: UnitTile now draws .pic, .stage-loss, .upic and the landing stacks, with the sizes they had; one size, one counter badge and var(--radius-s) for all would change how each looks: needs prototype */
-.pic { position: relative; width: 62px; height: 62px; padding: 2px; border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--surface-2); }
-.pic-taken { border-color: var(--accent); background: var(--accent-soft); }
-.pic i { position: absolute; right: 3px; bottom: 1px; font-style: normal; font-weight: 700; font-size: 12px; color: var(--text); }
+/* The one unit tile (UnitTile): one box, one counter badge under the picture on the right; a variant changes only the edge and the lines under it. */
+.unit-tile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; width: 62px; min-width: 0; min-height: 62px; padding: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-s); font-size: var(--font-xs); font-weight: 400; line-height: 1.25; color: var(--text-muted); }
+.unit-tile svg { pointer-events: none; overflow: visible; }
+.unit-tile > i { position: absolute; right: 2px; top: 34px; font-style: normal; font-weight: 700; font-size: 10.5px; line-height: 1.3; background: var(--bg); border: 1px solid var(--counter-stroke); border-radius: 8px; padding: 0 3px; color: var(--text); }
+.unit-tile > small { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-xs); text-align: center; }
+.unit-tile > b { color: var(--gold); font-size: 13px; }
+.unit-tile-marked { border-color: var(--accent); background: var(--accent-soft); }
+.unit-tile-shop { width: auto; }
+.unit-tile-mini { width: 32px; min-height: 32px; padding: 0; background: transparent; border: 0; }
+.unit-tile-mini > i { top: auto; bottom: -2px; right: -2px; }
 .pips { display: flex; flex-wrap: wrap; gap: 3px; }
 .pip { fill: transparent; stroke: var(--border-hover); stroke-width: 1; }
 .pip-full { fill: var(--accent); }

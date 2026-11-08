@@ -1,5 +1,5 @@
 import type { TokenKind } from '../../../domain/hexLayout';
-import { TokenPicture } from '../../units/UnitToken';
+import { UnitTile } from '../../units/UnitTile';
 
 export interface ShopItem {
   kind: TokenKind;
@@ -16,18 +16,15 @@ export interface ShopItem {
 /** Fighters and infantry cost half a resource. */
 const priceText = (price: number): string => (price === 0.5 ? '½' : String(price));
 
-/** One picture per unit or structure: a tap takes one. */
+/** One picture per unit or structure, its name under it: a tap takes one. */
 export function UnitShop({ items, onPick }: { items: ShopItem[]; onPick: (kind: TokenKind) => void }) {
   return (
     <div className="shop">
       {items.map(({ kind, label, colour, price, bought, disabled }) => (
-        // TODO(P2-261) #ws:ui-containers #type:dup #needs:prototype #size:m #unit-tile — Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitTile take/taken/loss/mini/stack in ui/units): UnitTile с вариантами take/taken/loss/shop
-        <button key={kind} type="button" className="shop-item" aria-label={label} disabled={disabled} onClick={() => onPick(kind)}>
-          {(bought ?? 0) > 0 && <i>+{bought}</i>}
-          <TokenPicture kind={kind} colour={colour} px={46} />
-          <span>{label}</span>
-          {price !== undefined && <b>{priceText(price)}</b>}
-        </button>
+        <UnitTile
+          key={kind} variant="shop" kind={kind} colour={colour} count={bought ?? 0} label={label} caption={label} disabled={disabled}
+          price={price === undefined ? undefined : priceText(price)} onClick={() => onPick(kind)}
+        />
       ))}
     </div>
   );
