@@ -81,8 +81,8 @@ const SUMMARIES: Record<string, Record<Lang, CardSummary>> = {
   },
   pok5trade: {
     ru: {
-      primary: 'Получите 3 товара, пополните свои commodities и выберите игроков, которые бесплатно используют дополнительное действие этой карты.',
-      secondary: 'Жетон из стратегического пула: пополните свои commodities.',
+      primary: 'Получите 3 товара, пополните свою продукцию и выберите игроков, которые бесплатно используют дополнительное действие этой карты.',
+      secondary: 'Жетон из стратегического пула: пополните свою продукцию.',
     },
     en: {
       primary: 'Gain 3 trade goods, replenish commodities, and choose players who use this secondary for free.',

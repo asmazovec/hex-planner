@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from './loadPack';
-import type { ExpansionId } from '../domain/types';
+import type { ExpansionId, MapLayout } from '../domain/types';
 
 const distinctNumbers = (expansions: ExpansionId[]) =>
   new Set(Object.values(loadPack(expansions).tiles).map(t => t.number)).size;
@@ -108,7 +108,7 @@ describe('фракции', () => {
 });
 
 describe('шаблоны карты', () => {
-  const template = (expansions: ExpansionId[], playerCount: number, layout: 'standard' | 'hyperlanes' = 'standard') =>
+  const template = (expansions: ExpansionId[], playerCount: number, layout: MapLayout = 'standard') =>
     loadPack(expansions).templates.find(t => t.playerCount === playerCount && t.layout === layout);
 
   test('на 6 игроков 37 слотов с Mecatol Rex в центре', () => {
@@ -139,20 +139,17 @@ describe('шаблоны карты', () => {
     expect(template([], 4)!.slots).toHaveLength(37);
     expect(template([], 5)!.slots).toHaveLength(37);
   });
-  test('на 7 и 8 игроков четыре кольца, по одному шаблону, гиперпути вводятся вручную', () => {
-    for (const n of [7, 8]) {
-      const slots = template(['pok'], n)!.slots;
-      expect(slots).toHaveLength(61);
-      expect(slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
-      expect(new Set(slots.map(s => `${s.q},${s.r}`)).size).toBe(61);
-    }
-    expect(loadPack(['pok']).templates.map(t => `${t.playerCount}${t.layout === 'hyperlanes' ? 'h' : ''}`))
-      .toEqual(['3', '3h', '4', '4h', '5', '5h', '6', '7', '8']);
+  test('с Prophecy of Kings шаблоны правил: Большая галактика на 6, гиперпути и альтернативные на 7, обычная и альтернативная на 8', () => {
+    expect(loadPack(['pok']).templates.map(t => `${t.playerCount}-${t.layout}`)).toEqual([
+      '3-standard', '3-hyperlanes', '4-standard', '4-hyperlanes', '5-standard', '5-hyperlanes',
+      '6-standard', '6-large', '7-hyperlanes', '7-alternate', '8-standard', '8-alternate',
+    ]);
+    expect(template(['pok'], 8)!.slots.flatMap(s => s.fixed ?? [])).toEqual(['18']);
   });
-  test('без Prophecy of Kings гиперпутевых шаблонов нет, с ней они на 3, 4 и 5 игроков', () => {
+  test('без Prophecy of Kings только обычные шаблоны, гиперпутевые с ней на 3, 4, 5 и 7 игроков', () => {
     expect(loadPack([]).templates.every(t => t.layout === 'standard')).toBe(true);
-    expect(loadPack(['te']).templates.some(t => t.layout === 'hyperlanes')).toBe(false);
-    expect(loadPack(['pok']).templates.filter(t => t.layout === 'hyperlanes').map(t => t.playerCount)).toEqual([3, 4, 5]);
+    expect(loadPack(['te']).templates.some(t => t.layout !== 'standard')).toBe(false);
+    expect(loadPack(['pok']).templates.filter(t => t.layout === 'hyperlanes').map(t => t.playerCount)).toEqual([3, 4, 5, 7]);
   });
   test('у каждого шаблона есть дома по числу игроков, места по часовой от верха', () => {
     for (const t of loadPack(['pok']).templates) expect(t.homes).toHaveLength(t.playerCount);
@@ -216,17 +213,62 @@ describe('faction reference data', () => {
     }
   });
 
+  test('every official faction has its faction technologies in its own pack, each with a type or a unit it upgrades', () => {
+    for (const expansions of [[], ['pok'], ['te'], ['pok', 'te']] as ExpansionId[][]) {
+      const pack = loadPack(expansions);
+      for (const faction of Object.values(pack.factions)) {
+        const techs = faction.sheet!.techs;
+        expect(techs.length, faction.id).toBeGreaterThanOrEqual(2);
+        for (const { id } of techs) {
+          const tech = pack.technologies[id];
+          expect(tech?.name, `${faction.id}: ${id}`).toBeTruthy();
+          expect(tech.type !== null || tech.upgrade !== undefined || ['vax', 'vay'].includes(id), `${faction.id}: ${id}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  test('faction technologies per pack: 34 of the base game, 17 with Prophecy of Kings and Codex, 12 of Thunder\'s Edge', () => {
+    const count = (expansions: ExpansionId[], only: (id: string) => boolean) =>
+      new Set(Object.values(loadPack(expansions).factions).filter(f => only(f.id)).flatMap(f => f.sheet!.techs.map(t => t.id))).size;
+    const base = loadPack([]).factions;
+    const pok = loadPack(['pok']).factions;
+    expect(count([], () => true)).toBe(34);
+    expect(count(['pok'], id => !base[id])).toBe(17);
+    expect(count(['te'], id => !base[id] && !pok[id])).toBe(12);
+  });
+
+  test('prerequisites are read per colour and unit upgrades are marked with the unit', () => {
+    expect(full.technologies.pws2).toMatchObject({ name: 'Prototype War Sun II', type: null, upgrade: 'warsun', requires: { warfare: 3, cybernetic: 1 } });
+    expect(full.technologies.lw2).toMatchObject({ type: null, upgrade: 'infantry', requires: { biotic: 2 } });
+    expect(full.technologies.m2).toMatchObject({ upgrade: 'flagship', requires: { biotic: 1, propulsion: 1, cybernetic: 1 } });
+    expect(full.technologies.ffac2.upgrade).toBe('spacedock');
+    expect(full.technologies.ht2.upgrade).toBe('pds');
+    expect(full.technologies.l4).toEqual({ id: 'l4', name: 'L4 Disruptors', type: 'cybernetic', requires: { cybernetic: 1 } });
+    expect(full.technologies.mc.upgrade).toBeUndefined();
+    expect(full.technologies['parasite-obs'].requires).toBeUndefined();
+  });
+
   test('a gate faction stands on its gate tile, its planets stay on the off-map tile', () => {
     expect(full.factions.ghost.gateTile).toBe('17');
     expect(full.factions.crimson.gateTile).toBe('94');
     expect(full.factions.sol.gateTile).toBeUndefined();
   });
 
-  test('unit values come from the source and an unconfirmed limit stays null', () => {
-    expect(full.units.carrier).toMatchObject({ combat: 9, move: 1, limit: null });
+  test('unit values come from the source, limits from LRR 96.2; fighters and infantry stay unlimited', () => {
+    expect(full.units.carrier).toMatchObject({ combat: 9, move: 1, limit: 4 });
     expect(full.units.fighter).toMatchObject({ combat: 9, move: null, limit: null });
-    expect(full.structures.map(s => s.id)).toEqual(['pds', 'spacedock']);
-    expect(full.structures.every(s => s.limit === null)).toBe(true);
+    expect(full.units.infantry?.limit).toBeNull();
+    expect(full.structures.map(s => [s.id, s.limit])).toEqual([['pds', 6], ['spacedock', 3]]);
+  });
+
+  test('space docks have Production of the planet\'s resources plus 2, plus 4 at level II', () => {
+    const dock = full.structures.find(s => s.id === 'spacedock');
+    expect([dock?.levels.one.production, dock?.levels.two?.production]).toEqual([2, 4]);
+  });
+
+  test('the two egress systems of the Fracture are marked', () => {
+    expect(Object.values(full.tiles).filter(tile => tile.egress).map(tile => tile.id).sort()).toEqual(['fracture2', 'fracture6']);
   });
 });
 

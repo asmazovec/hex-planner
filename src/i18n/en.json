@@ -1,4 +1,13 @@
 {
+  "share": {
+    "title": "This link differs from your save",
+    "differs": "You already have a game \"{{name}}\", and the link says otherwise about: {{list}}. Your save stays as it is either way.",
+    "newName": "Name of the new game",
+    "nameTaken": "A game with this name already exists.",
+    "createNew": "Create a new game",
+    "keepSaved": "Ignore the link, open the save",
+    "diff": { "expansions": "expansions", "layout": "map layout", "factions": "factions and their seats", "seat": "your seat", "map": "map tiles" }
+  },
   "menu": {
     "game": "Game",
     "plan": "Plan & map"
@@ -11,13 +20,19 @@
     "none": "No saved games",
     "playersShort": "{{count}} players",
     "open": "Open",
+    "name": "Game name",
     "export": "Export to file",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
     "import": "Import game",
     "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original.",
     "homeForeign": "Seat {{seat}} holds the home system of {{other}}, and your faction is {{mine}}. Start units stand there; nothing is blocked.",
     "homeNone": "Seat {{seat}} holds no tile, so the start units stand on the first tile found. Place a home system there.",
     "settings": "Settings",
     "blur": "Background blur",
+    "flightLoop": "Loop flights",
+    "energy": "Energy saving",
+    "energyNote": "No flights, smooth motion or blur.",
     "delete": "Delete game",
     "deleteYes": "Delete for good"
   },
@@ -26,6 +41,15 @@
     "invalidJson": "the file is not valid JSON",
     "invalidSchema": "the file is not a game or is damaged",
     "newerVersion": "the file was made by a newer version of the app"
+  },
+  "load": {
+    "failed": "The save could not be loaded",
+    "failedBecause": "The save could not be loaded: {{error}}",
+    "failedNamed": "The save “{{name}}” could not be loaded: {{error}}",
+    "listFailed": "Saved games could not be loaded: {{error}}",
+    "exportRaw": "Export data",
+    "exportFailed": "The save's data could not be exported: {{error}}",
+    "deleteFailed": "The save could not be deleted: {{error}}"
   },
   "banner": {
     "saveError": "Could not save the game: {{error}}",
@@ -61,6 +85,7 @@
       "nonUnit": "Technology skip"
     },
     "exhausted": "exhausted",
+    "commandTokenOf": "Command token of {{name}}",
     "commandToken": "Command token",
     "spaceDock": "Space dock",
     "pds": "PDS",
@@ -91,13 +116,13 @@
       "units": "Units",
       "marks": "Marks on a tile",
       "command": "Your command token: the system was already activated this round.",
+      "activated": "Activated system: your command token lies in it, ships cannot leave it.",
       "ingress": "An ingress token of the Fracture.",
       "seat": "A player's seat number at their home system.",
       "routes": "Routes",
       "routeActive": "The route of the action you are editing or reading.",
       "routePlanned": "A planned route.",
       "routeDone": "A route already done.",
-      "routeWarn": "This flight has a warning.",
       "routeGap": "Dashed: a jump between hexes that do not touch, through a wormhole for one.",
       "routeNumber": "The tactical action's number in the round, the same as in the plan.",
       "routePickup": "How many units the flight picks up in this system on the way.",
@@ -118,7 +143,7 @@
         "destroyer": ": a cheap ship that hits fighters before combat.",
         "fighter": ": cheap support, usually on board.",
         "infantry": ": takes and holds planets.",
-        "mech": ": the faction's stronger ground unit.",
+        "mech": ": the faction's stronger ground force.",
         "pds": ": fires at ships in its system.",
         "spacedock": ": produces units at a planet."
       }
@@ -131,6 +156,7 @@
       "anomaly": "Anomaly: {{name}}",
       "wormholes": "Wormholes: {{list}}",
       "noPlanets": "No planets",
+      "plain": "No anomalies or wormholes",
       "controlLabel": "Control of {{planet}}",
       "mine": "Mine",
       "none": "None",
@@ -167,7 +193,14 @@
     "rotate": "Rotate 60°",
     "unknown": "No tile \"{{query}}\" in the game data.",
     "ambiguous": "\"{{query}}\" has two sides: pick one, for example {{query}}A.",
-    "duplicates": "Tile placed more than once: {{list}}. This is allowed."
+    "duplicates": "Tile placed more than once: {{list}}. This is allowed.",
+    "block": "Map and seats",
+    "minimap": "Minimap",
+    "slotTile": "Slot with tile {{number}}",
+    "empty": "Empty slots: {{count}}. Tap a slot and type the number, or paste a Milty string.",
+    "complete": "The map is built: every slot is filled ({{count}}).",
+    "note": "Tap a slot to set its tile number. Mecatol Rex, the home systems and the hyperlanes are placed by themselves. Drag a player's number to another seat, or tap one number and then another: the players swap seats. Player 1 is your faction, marked with a white ring.",
+    "noteStarted": "Tap a slot to set its tile number. Once the game has started, the layout and the seats stay."
   },
   "unit": {
     "flagship": "Flagship",
@@ -190,10 +223,14 @@
     "round": "Round {{n}}",
     "addRound": "Add round",
     "rounds": "Rounds",
+    "actingLabel": "Whose action",
+    "mine": "Mine",
+    "actingFor": "Expected of {{name}}",
     "forecast": "Forecast",
     "now": "Now",
     "mapShows": "The map shows",
-    "buildMap": "Build map",
+    "mapIncomplete": "The map is not complete: {{count}} empty slots.",
+    "finishMap": "Finish the map",
     "mobileMap": "Map",
     "mobilePlan": "Plan",
     "views": "Map or plan",
@@ -211,22 +248,20 @@
       "main": "Main",
       "backup": "Backup",
       "changed": "Changed in TE",
-      "primary": "Primary:",
-      "secondary": "Secondary:",
-      "hint": "Tap once for backup, again for main, again to clear. The card is played in the action phase.",
+      "primary": "Primary",
+      "secondary": "Secondary",
+      "hint": "Tap once for the details, again for backup, a third time for main, once more to clear. A tap outside this block goes back to the main card. The card is played in the action phase.",
       "second": "Second",
-      "hintTwo": "With 3 or 4 players two cards are held. Tap once for the second card, again for main, again to clear. Cards are played in the action phase."
+      "hintTwo": "With 3 or 4 players two cards are held. Tap once for the details, again for the second card, a third time for main, once more to clear. A tap outside this block goes back to the main card. Cards are played in the action phase."
     },
     "menu": {
       "add": "Add action",
       "tactical": "Tactical action",
-      "strategic": "Strategic action",
-      "secondary": "Secondary ability, any number of times",
+      "strategic": "Strategy",
       "component": "Component action",
       "expedition": "Expedition contribution, end of turn",
       "pass": "Pass",
-      "adjustment": "Manual adjustment",
-      "strategicPlayed": "Strategic action · primary already played"
+      "adjustment": "Manual adjustment"
     },
     "entries": {
       "statusTokens": "Tokens and points",
@@ -250,38 +285,47 @@
       "forToken": "primary for a token",
       "edit": "Edit: {{name}}",
       "number": "Action {{n}}",
+      "changeUnits": "Tap to change the units in the big hex",
       "pickSystem": "Choose on the map",
-      "clearSystem": "Clear the system"
+      "clearSystem": "Clear the system",
+      "noSlice": "No part chosen"
     },
     "tactical": {
       "title": "Tactical action",
-      "done": "Done editing",
       "cancel": "Cancel",
       "system": "Active system: {{name}}",
       "token": "Tactic tokens: {{from}} → {{to}}",
       "pickHint": "Tap the system to activate: it spends a tactic token.",
       "moves": "Sources",
       "moveHint": "Drag from a system with ships to the active one through the hexes you need, or back from the active one. Add a system with no ships by a drag back from the active system or by taps: the system, then the hexes in turn.",
-      "landing": "Landing (optional)",
+      "battle": "Battle",
+      "landing": "Landing",
+      "landOne": "Land one {{unit}}",
       "landingOn": "Landing on {{planet}}",
-      "landingCount": "{{unit}}: {{available}}, assigned {{assigned}}",
-      "production": "Build (optional)",
-      "noDock": "No space dock in this system.",
+      "result": "Action result",
+      "optional": "optional",
+      "production": "Production",
       "warnings": "Warnings",
-      "openShop": "Open the shop",
       "freeToken": "Warfare: no tactic token is spent and no command token goes down.",
       "freePickHint": "Tap the system for the Warfare tactical action: no tactic token is spent.",
-      "noSources": "Drag the first arrow.",
-      "wrongSystem": "Wrong system? Tap it again.",
-      "tapHint": "Tap the hexes in order and finish on the active system. A tap on the last hex removes it.",
+      "noSources": "Drag the first arrow or add a source.",
+      "wrongSystem": "Wrong system? Tap this field to choose another, or tap the system again.",
+      "changeSystemHint": "Tap the new active system.",
+      "addSource": "Add source",
+      "addSourceHint": "Tap the system the ships come from.",
+      "speedHint": "Speed {{speed}}: {{steps}} made, {{left}} left.",
+      "distance": "Distance: {{n}}",
+      "tapHint": "Tap the hexes in order or drag on from the last one, and finish on the active system. A tap on the last hex removes it.",
       "via": "{{name}} via {{list}}",
       "noShips": "no ships",
       "cargoShort": ", cargo {{n}}",
-      "removeSource": "Remove source {{name}}"
+      "removeSource": "Remove source {{name}}",
+      "lost": "Losses: {{list}}",
+      "battleOffer": "optional · Start a battle",
+      "productionOffer": "optional · Open the shop"
     },
     "picker": {
       "title": "Flight {{from}} → {{to}}",
-      "close": "Close picker",
       "fleet": "Fleet pool: {{ships}} of {{fleet}}",
       "removeSource": "Remove route",
       "inSystem": "In system {{name}}",
@@ -295,6 +339,7 @@
       "transit": "on the way",
       "target": "target",
       "nothing": "Nothing to take",
+      "tokenHere": "Your command token is here: by the rules nothing can be picked up",
       "take": "Take one {{unit}}",
       "put": "Return one {{unit}}",
       "fly": "Fly"
@@ -336,9 +381,45 @@
       "shortStrategy": "Not enough strategy tokens: {{have}} left.",
       "primaryRepeated": "The primary has already been played this round: cards held {{held}}.",
       "tokensOver": "Distributed {{given}} tokens with {{free}} free: more usually from abilities or technologies.",
-      "poolNegative": "{{pool}}: the rearrangement goes below zero ({{have}}).",
-      "systemHasToken": "{{system}} already holds your token: a second one may not be allowed, check the rules.",
-      "constructionUnits": "The card text gives the secondary a structure only: building units here may break the rules."
+      "poolNegative": "{{pool}}: not enough tokens, the pool goes below zero ({{have}}).",
+      "systemHasToken": "{{system}} already holds your token: by the rules it cannot be activated again.",
+      "constructionUnits": "The card text gives the secondary a structure only: building units here may break the rules.",
+      "speedShort": "{{unit}} from {{from}} has speed {{move}}, and the route takes {{steps}} steps.",
+      "sourceActivated": "{{from}} already holds your command token: by the rules ships cannot move out of it.",
+      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass.",
+      "noReinforcements": "Tokens in play: {{total}}, but a faction has only {{limit}}: with none left in reinforcements no token can be gained.",
+      "actionAfterPass": "You have already passed this round: by the rules no more actions follow, only other players' secondaries.",
+      "passBeforeStrategy": "The pass comes before the strategic action of your card (cards left: {{cards}}): by the rules a player passes only after it.",
+      "actionOutsidePhase": "Turns are taken only in the action phase: this action stands in another phase.",
+      "planetNotControlled": "{{planet}} is not your planet: by the rules you exhaust only planets you control.",
+      "readyNotControlled": "{{planet}} is not your planet: an effect readies only planets you control.",
+      "foreignPrimary": "This strategy card is not yours this round: its holder resolves the primary ability.",
+      "ownSecondary": "This strategy card is yours: only the other players resolve its secondary ability.",
+      "secondaryRepeated": "The secondary ability of this card has already been resolved this round.",
+      "readyOverLimit": "{{readied}} planets readied, and the card allows at most {{limit}}.",
+      "diplomacySystem": "{{system}}: Diplomacy picks a system with your planet, other than the Mecatol Rex system.",
+      "researchOverLimit": "{{count}} technologies researched, and this ability gives at most {{limit}}.",
+      "researchOwned": "{{unit}}: the upgrade is already researched and is not researched again.",
+      "shipOnPlanet": "{{unit}} is a ship and cannot land on {{planet}}: only ground forces land.",
+      "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
+      "custodians": "The custodians token is still on {{planet}}: removing it costs 6 influence, which the plan does not record; the first to land gains 1 victory point.",
+      "structureLimit": "Too many structures: a planet holds one space dock and two PDS; Construction places up to two (one dock at most), its secondary one; the reinforcements hold 3 docks and 6 PDS.",
+      "structureNotControlled": "{{planet}} is not your planet: structures go only on planets you control.",
+      "structureOutsideSystem": "{{planet}} is not in {{system}}, where the secondary placed its token.",
+      "noProduction": "{{system}} has no unit of yours with Production for this: an opponent's space dock does not count, and a card may need the one in your home system.",
+      "productionBlockaded": "{{system}} holds other players' ships: by the rules ships cannot be produced there, ground forces can.",
+      "blockaded": "Your space dock in {{system}} is blockaded: other players' ships and none of yours, so it produces no ships.",
+      "productionOver": "Production {{value}}, and {{count}} units are built: each fighter and infantry counts.",
+      "reinforcementsOut": "{{unit}}: {{have}} of {{limit}} are already on the board, the reinforcements hold no more.",
+      "productionPlace": "{{planet}} has no space dock of yours that produces: ground forces go to the planet with the dock.",
+      "scarProduction": "{{system}} is an entropic scar: units in it cannot use Production.",
+      "expeditionUnpaid": "The technology part is paid by exhausting a ready planet of yours with a technology specialty.",
+      "expeditionTwicePerTurn": "One expedition part per turn: this is the second one since your last action.",
+      "stationGround": "{{planet}} is a space station: ground forces cannot land on it.",
+      "stationStructure": "{{planet}} is a space station: structures cannot be placed on it.",
+      "routeBlocked_hyperlane": "The route from {{from}} ends on the hyperlane {{system}}: by the rules a hyperlane is no system, it cannot be the active system and no move ends there.",
+      "sourceActivated_pickup": "{{system}} holds your command token: by the rules units cannot be picked up there, only in the active system.",
+      "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move."
     },
     "phases": {
       "strategy": "Strategy",
@@ -351,11 +432,6 @@
       "agendaEmpty": "A vote, if Mecatol Rex is held. No entries here yet."
     },
     "strategy": {
-      "title": {
-        "primary": "Strategic action",
-        "secondary": "Secondary action",
-        "forToken": "Primary for a token"
-      },
       "mode": {
         "primary": "Primary",
         "secondary": "Secondary",
@@ -363,12 +439,9 @@
       },
       "modes": "Card mode",
       "cards": "Card",
-      "locked": "A choice has been made. To change the card or the mode, cancel the action.",
+      "locked": "A choice has been made. To change the card or the mode, remove the action.",
       "chooseCard": "Choose a card.",
-      "tokenCost": "A secondary costs 1 strategy token.",
-      "forTokenNote": "Costs 1 strategy token. For faction abilities, such as Jol-Nar's Brilliant on Technology.",
-      "cancel": "Cancel action",
-      "done": "Done",
+      "tokenCost": "−1 strategy token",
       "tile": "tile {{name}}",
       "mapHint": "Tap a tile on the map.",
       "tokens": "Token distribution",
@@ -384,7 +457,7 @@
       "buildPrimary": "Build a structure",
       "buildSecondary": "Place a structure",
       "built": "Built: {{list}}",
-      "dock": "Production in a space dock, the Thunder's Edge primary",
+      "dock": "Production in a space dock instead of the first build",
       "tradePrimary": "+3 trade goods, commodities replenish.",
       "tradeSecondary": "Commodities replenish.",
       "free": "Who uses the secondary for free",
@@ -398,20 +471,17 @@
       "techPrimary": "The first is free, the second costs 6 resources. To pay: {{n}}.",
       "techSecondary": "4 resources per technology. To pay: {{n}}.",
       "mecatol": "I control Mecatol Rex: +1 point",
+      "mecatolNone": "Mecatol Rex is not under your control: no point.",
       "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",
       "imperialSecondary": "Draw a secret objective.",
-      "tokenNote": "A tap adds a token.",
       "liftToken": "Take a command token off a system",
-      "rearrangeNote": "A tap adds a token taken from the fullest pool.",
+      "rearrangeNote": "With nothing left to distribute, «+» takes the token from the fullest pool.",
       "rearrange": "Rearrange tokens",
-      "reset": "Reset",
       "noExhausted": "No planets of yours are exhausted at this point.",
       "boughtNonePrimary": "Three tokens are free, each further one costs 3 influence.",
       "boughtNoneSecondary": "Each token costs 3 influence.",
-      "takeToken": "Take a token back: {{name}}",
       "research": "Technologies researched: {{n}}",
-      "researchAdd": "Research a technology",
-      "researchTake": "Take a technology back"
+      "researched": "Researched"
     },
     "steps": {
       "activate": "Activate {{name}}",
@@ -422,7 +492,7 @@
       "board": "Take on board in {{name}}",
       "pickup": "Pick up on the way in {{name}}",
       "cargo": "Cargo {{load}} of {{capacity}}",
-      "overCapacity": "More than there is room for",
+      "losses": "Lost in battle",
       "landing": "Land on {{planet}}",
       "build": "Build",
       "buildIn": "Build in {{name}}",
@@ -450,7 +520,7 @@
       "opponentPoints": "{{name}}: +{{n}}",
       "researched": "Technologies researched: {{n}}"
     },
-    "deletePlan": "Delete plan",
+    "deletePlan": "Delete plan “{{name}}”",
     "deleteRound": "Delete round {{n}}",
     "drawers": "Drawers"
   },
@@ -464,10 +534,13 @@
     },
     "complete": "All six parts are taken. Choose a system for Thunder's Edge.",
     "choose": "Choose system",
-    "remove": "Remove",
+    "remove": "Remove Thunder's Edge",
+    "repick": "Tap to choose another system",
     "placedAt": "Thunder's Edge in system {{system}}",
     "placeHint": "Tap a highlighted system to place Thunder's Edge.",
-    "part": "Expedition part"
+    "part": "Expedition part",
+    "techPlanet": "Planet to exhaust: one of yours with a technology specialty",
+    "noTechPlanet": "No ready planet of yours has a technology specialty."
   },
   "thundersEdge": {
     "title": "Thunder's Edge",
@@ -486,7 +559,7 @@
     "note": "Not an action: the Fracture comes in with a die roll on gaining a breakthrough, or from an effect."
   },
   "mapImport": {
-    "title": "Paste map",
+    "title": "Paste a Milty string",
     "field": "Milty Draft map string",
     "placeholder": "Paste the map string from Milty Draft",
     "apply": "Apply",
@@ -504,13 +577,25 @@
     "offExpansion": "Tiles {{list}} belong to {{name}}, which is off in this game.",
     "turnOn": "Turn on {{name}}",
     "set": "This list holds {{n}} tiles and no positions. Home systems go to the seats in seat order, other tiles fill the free slots in ring order, Mecatol Rex stays in the centre.",
-    "arrange": "Place the set"
+    "arrange": "Place the set",
+    "layoutLocked": "The string sets the layout \"{{name}}\", and the layout of a started game stays."
   },
   "layout": {
     "label": "Map layout",
     "standard": "Standard",
     "hyperlanes": "With hyperlanes",
+    "alternate": "Alternate hyperlanes",
+    "large": "Large Galaxy",
     "needsPok": "Hyperlane tiles come with Prophecy of Kings.",
+    "largeNeedsPok": "The Large Galaxy uses the tiles of Prophecy of Kings too.",
+    "note": {
+      "5-hyperlanes": "Each player is dealt 3 blue and 2 red tiles.",
+      "6-large": "Four rings. Each player is dealt 6 blue and 3 red tiles; the 14-point side of the victory point track is recommended.",
+      "7-hyperlanes": "Each player is dealt 4 blue and 2 red tiles; the speaker then places 5 more (2 red, 3 blue) next to Mecatol Rex.",
+      "7-alternate": "Rings of their own shape. Each player is dealt 3 blue and 2 red tiles.",
+      "8-standard": "Each player is dealt 4 blue and 2 red tiles; the speaker then places 4 more (2 red, 2 blue) next to Mecatol Rex.",
+      "8-alternate": "Rings of their own shape. Each player is dealt 3 blue and 2 red tiles."
+    },
     "switch": "Switch layout",
     "cancel": "Cancel",
     "confirm_one": "The map has {{count}} tile that this layout removes (in slots it lacks or under hyperlanes). Switch?",
@@ -550,9 +635,6 @@
     "techChoice": "Chosen at setup: {{amount}} of these",
     "techChoiceAny": "Chosen at setup: any ({{amount}})",
     "techNone": "Not listed",
-    "seats": "Who sits where",
-    "seatsMap": "Seat map",
-    "seatsNote": "Every player has a number. Move the numbers on the map: on a taken seat the players swap. You can also tap one number, then another. Player 1 is your faction, marked with a white ring.",
     "token": "Player {{n}}, {{name}}, seat {{seat}}",
     "noFaction": "No faction",
     "begin": "Start game",
@@ -567,6 +649,10 @@
     "base": "Base game",
     "language": "Language",
     "abilities": "Faction abilities",
+    "factionTechs": "Faction technologies",
+    "unitUpgrade": "Unit upgrade: {{unit}}",
+    "upgradeInTable": "Numbers are in the ship table",
+    "requires": "Prerequisites: {{list}}",
     "leaders": "Leaders",
     "mech": "Mech",
     "breakthrough": "Breakthrough",
@@ -581,13 +667,14 @@
     "taken": "Already taken"
   },
   "stage": {
+    "battleNote": "Tap a token to record a loss. Tap a picture here to give the unit back.",
     "hex": "Big hex",
-    "open": "Open the big hex",
     "modes": "Mode",
     "mode": {
       "setup": "Setup",
       "battle": "Battle",
-      "build": "Build"
+      "build": "Build",
+      "control": "Control"
     },
     "owner": "Whose units",
     "mine": "Mine",
@@ -600,10 +687,9 @@
     "noLosses": "No losses",
     "giveBack": "Give back {{unit}}",
     "giveBackOn": "Give back {{unit}}, {{planet}}",
-    "battleNote": "Tap a token to record a loss. Tap a picture here to give the unit back.",
     "buildNote": "Tap a token with a gold ring to take a purchase back.",
     "setupNote": "Tap a token on the hex to remove one.",
-    "planetNote": "Tap a planet: ground units and structures go there.",
+    "planetNote": "Tap a planet: ground forces and structures go there.",
     "tapNote": {
       "planned": "This structure is planned in an entry of the plan: change it there."
     },
@@ -613,5 +699,10 @@
       "fleet": "Ships / fleet pool",
       "capacity": "Load / capacity"
     }
+  },
+  "editor": {
+    "done": "Done",
+    "back": "Back",
+    "remove": "Remove action"
   }
 }

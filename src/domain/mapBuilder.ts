@@ -1,7 +1,7 @@
-import { defaultLayout, slotKeyOf, templateFor, templateOf } from './layouts';
+import { defaultLayout, LAYOUT_CHOICES, slotKeyOf, templateFor, templateOf } from './layouts';
 import type { DataPack, Game, MapLayout, MapTemplate, TileDef } from './types';
 
-export { defaultLayout, templateFor };
+export { defaultLayout, LAYOUT_CHOICES, templateFor };
 
 /** Slots of the map template for a player count and layout; empty when there is none. */
 export const slotsFor = (playerCount: number, pack: DataPack, layout?: MapLayout): MapTemplate['slots'] =>
@@ -24,13 +24,19 @@ export function tileSuggestions(query: string, pack: DataPack): TileDef[] {
  * A number shared by two sides (83) is ambiguous and gives null.
  */
 export function resolveTile(input: string, pack: DataPack): TileDef | null {
+  const found = lookUpTile(input, pack);
+  return typeof found === 'string' ? null : found;
+}
+
+/** Like `resolveTile`, but says why nothing was found: a number two sides share, or no such tile (empty input too). */
+export function lookUpTile(input: string, pack: DataPack): TileDef | 'ambiguous' | 'unknown' {
   const q = input.trim().toUpperCase();
-  if (q === '') return null;
+  if (q === '') return 'unknown';
   const tiles = Object.values(pack.tiles);
   const exact = tiles.find(tile => tile.id.toUpperCase() === q);
   if (exact) return exact;
   const sameNumber = tiles.filter(tile => tile.number.toUpperCase() === q);
-  return sameNumber.length === 1 ? sameNumber[0] : null;
+  return sameNumber.length === 1 ? sameNumber[0] : sameNumber.length > 1 ? 'ambiguous' : 'unknown';
 }
 
 /** The hyperlane sides that Milty Draft's 3 and 4 player maps use in several slots. */
@@ -123,18 +129,69 @@ export function moveToTemplate(from: Game['map'], oldSlots: MapTemplate['slots']
   return map;
 }
 
-/** The game with another layout of its player count; a layout the pack lacks, or the one in use, returns the same game. */
+/**
+ * The game with another layout of its player count; a layout the pack lacks, or the one in use, returns the same game.
+ * The map moves as `moveToTemplate` moves it, and each player's own home tile goes to that player's seat slot in the new
+ * layout, displacing what stands there, since layouts can put the homes elsewhere (the Large Galaxy, seven players).
+ */
 export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Game {
   const next = templateFor(game.playerCount, layout, pack);
   if (!next || game.layout === layout) return game;
-  return { ...game, layout, map: moveToTemplate(game.map, slotsFor(game.playerCount, pack, game.layout), next, pack) };
+  const own = ownHomeSlots(game, pack);
+  const lifted = Object.fromEntries(Object.entries(game.map).filter(([slot]) => !own.has(slot)));
+  const map = moveToTemplate(lifted, slotsFor(game.playerCount, pack, game.layout), next, pack);
+  const seats = seatSlots(game.playerCount, pack, layout);
+  for (const { faction, seat } of [game, ...game.opponents]) {
+    const def = pack.factions[faction];
+    const slot = seats[seat - 1];
+    if (def && slot) map[slot] = def.gateTile ?? def.homeTile;
+  }
+  return { ...game, layout, map };
 }
 
-/** How many tiles of the player a switch to `layout` removes: those in slots it lacks and those under its hyperlanes. */
+/**
+ * How many tiles of the player a switch to `layout` removes: those in slots it lacks, those under its hyperlanes and
+ * those on its seats. The players' own home tiles move with their seats and are not counted.
+ */
 export function tilesLostByLayout(game: Game, layout: MapLayout, pack: DataPack): number {
   const next = templateFor(game.playerCount, layout, pack);
   if (!next || game.layout === layout) return 0;
   const kept = changeLayout(game, layout, pack).map;
+  const own = ownHomeSlots(game, pack);
   const oldFixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
-  return Object.entries(game.map).filter(([slot, tile]) => oldFixed.get(slot) !== tile && kept[slot] !== tile).length;
+  return Object.entries(game.map).filter(([slot, tile]) => !own.has(slot) && oldFixed.get(slot) !== tile && kept[slot] !== tile).length;
+}
+
+// ui-logic-to-domain (P2-251, P2-252)
+/** The layouts a player count can choose from; empty when it has only one. */
+export const layoutChoices = (playerCount: number): MapLayout[] => LAYOUT_CHOICES[playerCount] ?? [];
+
+/** Whether a layout is Milty Draft's own, not a layout of the rules: the hyperlanes of three and four players. */
+export const isMiltyLanes = (playerCount: number, layout: MapLayout = 'hyperlanes'): boolean =>
+  layout === 'hyperlanes' && (playerCount === 3 || playerCount === 4);
+
+/** How many slots of a player count's layout hold a fixed hyperlane. */
+export const hyperlaneSlotCount = (playerCount: number, pack: DataPack, layout: MapLayout = 'hyperlanes'): number =>
+  (templateFor(playerCount, layout, pack)?.slots ?? []).filter(slot => slot.fixed && pack.tiles[slot.fixed.split('@')[0]]?.kind === 'hyperlane').length;
+
+/**
+ * Slots the player fills by hand, in template order: neither a tile the template fixes (the centre, hyperlanes) nor a
+ * seat's home, which the app places itself.
+ */
+export function freeSlots(game: Game, pack: DataPack): string[] {
+  const seats = new Set(seatSlots(game.playerCount, pack, game.layout));
+  return slotsFor(game.playerCount, pack, game.layout)
+    .filter(slot => !slot.fixed)
+    .map(slot => slotKeyOf(slot.q, slot.r))
+    .filter(key => !seats.has(key));
+}
+
+/** Free slots that still hold no tile: the map is not built while there are any. */
+export const emptySlots = (game: Game, pack: DataPack): string[] => freeSlots(game, pack).filter(key => !game.map[key]);
+
+/** The game with the tiles of `from` put back in its free slots that are empty, when the pack still has them. */
+export function withPlacedTiles(game: Game, from: Game['map'], pack: DataPack): Game {
+  const back = freeSlots(game, pack).filter(key => !game.map[key] && from[key] && pack.tiles[from[key].split('@')[0]]);
+  if (back.length === 0) return game;
+  return { ...game, map: { ...game.map, ...Object.fromEntries(back.map(key => [key, from[key]])) } };
 }

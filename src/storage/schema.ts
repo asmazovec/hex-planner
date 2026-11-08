@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { loadPack } from '../data/loadPack';
+import { withoutRetiredLayout } from '../domain/retiredLayouts';
 import type { Game } from '../domain/types';
 
-export const CURRENT_SCHEMA = 4;
+export const CURRENT_SCHEMA = 5;
 
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
@@ -13,7 +14,7 @@ const payment = z.object({ planets: z.array(z.string()), tradeGoods: count });
 const status = z.enum(['planned', 'done', 'cancelled']);
 const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 
-const base = { id: z.string(), phase, status };
+const base = { id: z.string(), phase, status, owner: z.string().optional() };
 const cardPlay = {
   upgrades: z.array(unitId).optional(),
   card: z.number().int().optional(),
@@ -37,7 +38,7 @@ const entrySchema = z.discriminatedUnion('type', [
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
     moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional() })),
     landings: z.array(z.object({ planetId: z.string(), units: unitCounts })),
-    production: unitCounts, productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(),
+    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(),
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic') }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
@@ -62,12 +63,13 @@ const entrySchema = z.discriminatedUnion('type', [
 const control = z.enum(['me', 'enemy']);
 
 export const gameSchema = z.object({
+  name: z.string().optional(),
   id: z.string(),
   schemaVersion: z.number().int().min(1).max(CURRENT_SCHEMA),
   dataVersion: z.string(),
   expansions: z.array(z.enum(['pok', 'te'])),
   playerCount: z.number().int(),
-  layout: z.enum(['standard', 'hyperlanes']).default('standard'),
+  layout: z.enum(['standard', 'hyperlanes', 'alternate', 'large']).default('standard'),
   faction: z.string(),
   seat: z.number().int(),
   color: z.number().int(),
@@ -179,6 +181,18 @@ function withEnemyGround(doc: Record<string, unknown>): Record<string, unknown> 
   return { ...doc, enemyUnits: space, enemyGround };
 }
 
+/**
+ * Version 5 dropped the seven-player map without hyperlanes, which the rules do not have: such a game moves to the
+ * rulebook's seven-player map (`withoutRetiredLayout`). A file the schema would refuse is left for it to refuse.
+ */
+function withRulebookLayout(doc: Record<string, unknown>): Record<string, unknown> {
+  const next = { ...doc, schemaVersion: 5 };
+  if (doc.playerCount !== 7 || (doc.layout !== undefined && doc.layout !== 'standard')) return next;
+  const parsed = gameSchema.safeParse(next);
+  if (!parsed.success) return next;
+  return withoutRetiredLayout(parsed.data, loadPack(parsed.data.expansions)) as unknown as Record<string, unknown>;
+}
+
 /** Brings a parsed file of an older schema up to CURRENT_SCHEMA, one version at a time. */
 export function migrate(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
@@ -191,5 +205,7 @@ export function migrate(raw: unknown): unknown {
   if (doc.schemaVersion === 2) doc = { ...doc, schemaVersion: 3, upgrades: { me: [], opponents: {} } };
   if (doc.schemaVersion === 3) doc = { ...doc, schemaVersion: 4, pds: {} };
   // Version 4 was saved for a while without this field.
-  return doc.schemaVersion === 4 && doc.enemyGround === undefined ? withEnemyGround(doc) : doc;
+  if (doc.schemaVersion === 4 && doc.enemyGround === undefined) doc = withEnemyGround(doc);
+  if (doc.schemaVersion === 4) doc = withRulebookLayout(doc);
+  return doc;
 }

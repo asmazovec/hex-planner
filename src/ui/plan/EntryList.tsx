@@ -1,33 +1,31 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { strategyCards } from '../../domain/cards';
+import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
-import { playersOf } from '../../domain/players';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Phase, Plan, Round, UnitId, Warning } from '../../domain/types';
+import { gameAs, playersOf } from '../../domain/players';
+import type { DataPack, Entry, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
-import { factionShortName } from '../players/factionName';
-import { UNIT_ORDER } from '../units/unitOrder';
+import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
-import { ExpeditionEditor } from './ExpeditionEditor';
-import { sliceOwners } from './ExpeditionWidget';
-import { HexRemove, RowIcon } from './RowIcon';
-import { Stepper } from './Stepper';
-import { systemName } from './tactical';
-import { TokenTiles } from './TokenTiles';
-import { WarningText } from './WarningText';
+import { HexRemove, RowIcon } from '../primitives/Icon';
+import { NoteField } from '../primitives/NoteField';
+import { Stepper } from '../primitives/Stepper';
+import { systemName } from '../map/systemName';
+import { TokenTiles } from './blocks/TokenTiles';
+import { flightOf } from '../feedback/warningPlaces';
+import { WarningList } from '../feedback/WarningText';
+import { SectionTitle } from '../primitives/SectionTitle';
+import { playerStyle } from '../primitives/player';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
-const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
 
 export interface EntryListProps {
   game: Game;
   pack: DataPack;
   round: Round;
-  /** The plan the round belongs to: the expedition parts held by all its entries. */
-  plan?: Plan;
-  /** The state just before an entry, for the payment of an expedition part; defaults to the forecast. */
+  /** The state just before an entry, for what its steps read out; defaults to the forecast. */
   stateBefore?: (entryId: string) => GameState;
   warnings: Record<string, Warning[]>;
   /** The forecast, for the systems a manual adjustment can change. */
@@ -46,71 +44,14 @@ export interface EntryListProps {
   onStatusAdded?: (id: string) => void;
   /** Stands in the strategy section in place of its title and line. */
   strategy?: ReactNode;
-  /** The adjustment whose system the next tap on the map chooses. */
-  pickingSystemFor?: string | null;
-  /** Starts or stops that choice. */
-  onPickSystem?: (id: string) => void;
   /** The add button of the action section, kept in view while its list is long. */
   addAction?: ReactNode;
 }
 
-/** A text field that writes to the plan when it is left, so typing leaves one undo step. */
-function NoteField({ label, value, onCommit }: { label: string; value: string; onCommit: (value: string) => void }) {
-  const [text, setText] = useState(value);
-  return (
-    <label className="field">
-      {label}
-      <input
-        type="text" value={text} onChange={e => setText(e.target.value)} onBlur={() => onCommit(text)}
-        onKeyDown={e => { if (e.key === 'Enter') onCommit(text); }}
-      />
-    </label>
-  );
-}
-
-function AdjustmentFields({ entry, game, pack, state, picking, onPickSystem }: {
-  entry: Extract<Entry, { type: 'adjustment' }>; game: Game; pack: DataPack; state: GameState;
-  /** The next tap on the map chooses this adjustment's system. */
-  picking: boolean;
-  onPickSystem: () => void;
-}) {
-  const { t } = useTranslation();
-  const updateEntry = useGame(s => s.updateEntry);
-  const { delta } = entry;
-  const setDelta = (patch: Partial<AdjustmentDelta>) => updateEntry(entry.id, { delta: { ...delta, ...patch } });
-  const systemId = delta.units?.systemId ?? '';
-  const changes = delta.units?.units ?? {};
-  const held = state.systems[systemId] ?? {};
-  const unitIds: UnitId[] = UNIT_ORDER.filter(u => pack.units[u]);
-  return (
-    <>
-      <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => updateEntry(entry.id, { label })} />
-      {DELTA_FIELDS.map(field => (
-        <Stepper
-          key={field} name={t(`plan.summary.${field}`)} value={delta[field] ?? 0}
-          onChange={value => setDelta({ [field]: value })}
-        />
-      ))}
-      <div className="adjust-system" role="group" aria-label={t('plan.entries.system')}>
-        <span>{t('plan.entries.system')}</span>
-        <button type="button" aria-pressed={picking} onClick={onPickSystem}>
-          {systemId ? systemName(game, pack, systemId) : t('plan.entries.pickSystem')}
-        </button>
-        {systemId && <HexRemove label={t('plan.entries.clearSystem')} onClick={() => setDelta({ units: undefined })} />}
-      </div>
-      {systemId && unitIds.map(unit => (
-        <Stepper
-          key={unit} name={t(`unit.${unit}`)} value={changes[unit] ?? 0} of={held[unit] ?? 0}
-          onChange={value => setDelta({ units: { systemId, units: { ...changes, [unit]: value } } })}
-        />
-      ))}
-    </>
-  );
-}
-
+// TODO(P2-349) #ws:ui-nesting #type:ui #needs:prototype — жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment
 /** The status entry: the tokens taken this round, the points each player gains with their running total. */
-function StatusFields({ entry, game, pack, state }: {
-  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState;
+function StatusFields({ entry, game, pack, state, warnings }: {
+  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState; warnings: Warning[];
 }) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -121,14 +62,14 @@ function StatusFields({ entry, game, pack, state }: {
         free={STATUS_TOKENS} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
         onChange={values => updateEntry(entry.id, values)}
       />
-      <h5 className="status-points">{t('plan.entries.roundPoints')}</h5>
+      <WarningList warnings={warnings} game={game} pack={pack} />
+      <SectionTitle as="h5" className="status-points">{t('plan.entries.roundPoints')}</SectionTitle>
       {playersOf(game).map((player, index) => {
-        const faction = pack.factions[player.faction];
         const me = index === 0;
         return (
-          <div key={player.id} className="status-player" style={{ '--player': `var(--player-${player.color})` } as React.CSSProperties}>
+          <div key={player.id} className="status-player" style={playerStyle('--player', player.color)}>
             <Stepper
-              name={faction ? factionShortName(faction.id, faction.name) : t('players.player', { n: index + 1 })}
+              name={shortName(pack, player.faction, t('players.player', { n: index + 1 }))}
               note={t('plan.entries.pointsTotal', { n: me ? state.vp : state.opponentVp[player.id] ?? player.vp })}
               value={me ? entry.vp ?? 0 : gains[player.id] ?? 0} min={0}
               onChange={value => updateEntry(entry.id, me ? { vp: value } : { opponentVp: { ...gains, [player.id]: value } })}
@@ -141,10 +82,28 @@ function StatusFields({ entry, game, pack, state }: {
   );
 }
 
+/**
+ * What an expedition contribution gives, readable on its closed row: the part and what pays for it. The part paid in
+ * trade goods says it in its name.
+ */
+function expeditionBrief(entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack, t: (key: string, options?: Record<string, unknown>) => string): string {
+  if (!entry.sliceId) return t('plan.entries.noSlice');
+  const { planets, tradeGoods } = entry.payment;
+  const paid = [...planets.map(id => pack.planets[id]?.name ?? id), ...(tradeGoods > 0 ? [t('plan.steps.tradeGoods', { n: tradeGoods })] : [])];
+  return [t(`plan.slice.${entry.sliceId}`), ...(paid.length > 0 ? [paid.join(', ')] : [])].join(' · ');
+}
+
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
 
+/** An opponent's entry says whose it is before what it is. */
 function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
+  const faction = game.opponents.find(o => o.id === entry.owner)?.faction ?? '';
+  const name = bareLabel(entry, game, pack, t);
+  return pack.factions[faction] ? `${shortName(pack, faction, '')}: ${name}` : name;
+}
+
+function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
   switch (entry.type) {
     case 'tactical':
       return `${entry.free ? `${cardName(game, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
@@ -165,6 +124,7 @@ function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =
   }
 }
 
+// TODO(P2-352) #ws:ui-containers #type:dup #size:s — бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент — P2 note: the map and the legend now share RouteBadge; this one is an HTML number over a 12-wide hexagon in the row's own colours, and drawing the map's SVG badge here changes how the row looks: needs prototype
 /** The number of a tactical action, in the same hexagon as on its arrows. */
 function OrderHex({ number, label }: { number: number; label: string }) {
   return (
@@ -179,7 +139,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, plan, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, pickingSystemFor = null, onPickSystem, strategy, addAction,
+  game, pack, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -210,24 +170,33 @@ export function EntryList({
         const entries = round.entries.filter(e => e.phase === phase);
         return (
           <section key={phase} className="phase" aria-label={t(`plan.phases.${phase}`)}>
-            {phase === 'strategy' && strategy ? strategy : <h4 className="phase-title">{t(`plan.phases.${phase}`)}</h4>}
+            {phase === 'strategy' && strategy ? strategy : <SectionTitle as="h4" className="phase-title">{t(`plan.phases.${phase}`)}</SectionTitle>}
             {entries.length === 0 && !(phase === 'strategy' && strategy) && <p className="muted phase-auto">{t(`plan.phases.${phase}Empty`)}</p>}
             <ul className="entry-list">
               {entries.map(entry => {
                 const label = entryLabel(entry, game, pack, t);
                 // The round has one status entry, so there is nothing to move it past.
                 const movable = entry.type !== 'statusTokens';
+                const rival = game.opponents.find(o => o.id === entry.owner);
                 const list = warnings[entry.id] ?? [];
                 const shown = entry.id === shownId;
-                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
+                // The steps of a shown action say what goes wrong with a flight by that flight; the row keeps the rest.
+                const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
+                // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
+                const fieldsOpen = entry.id === openId && entry.type === 'statusTokens';
+                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
                 return (
-                  <li key={entry.id} className={cls} style={drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
+                  <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
-                      <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>{label}</button>
-                      {entry.type !== 'pass' && <button type="button" className="hex-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>}
-                      <label className="hex-button entry-check">
+                      <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
+                        {label}
+                        {/* Read without opening; the steps of a shown entry say it in full. */}
+                        {entry.type === 'expedition' && !shown && <>{' '}<small className="entry-brief">{expeditionBrief(entry, pack, t)}</small></>}
+                      </button>
+                      {entry.type !== 'pass' && <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>}
+                      <label className="icon-button entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
                         <input
                           type="checkbox" checked={entry.status === 'done'}
@@ -240,36 +209,17 @@ export function EntryList({
                       </label>
                       <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
-                    {shown && <EntrySteps entry={entry} game={game} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
+                    {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} game={game} pack={pack} />}
+                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
-                        <StatusFields entry={entry} game={game} pack={pack} state={state} />
+                        <StatusFields entry={entry} game={game} pack={pack} state={state} warnings={list} />
                       </div>
                     )}
                     {entry.id === openId && entry.type === 'component' && (
                       <div className="entry-details">
                         <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={note => updateEntry(entry.id, { note })} />
                       </div>
-                    )}
-                    {entry.id === openId && entry.type === 'expedition' && (
-                      <div className="entry-details">
-                        <ExpeditionEditor
-                          game={game} pack={pack} sliceId={entry.sliceId} payment={entry.payment}
-                          owners={plan ? sliceOwners(game, plan) : game.expedition.slices as Record<string, 'me' | 'other'>}
-                          before={stateBefore ? stateBefore(entry.id) : state}
-                          onChange={patch => updateEntry(entry.id, patch)}
-                        />
-                      </div>
-                    )}
-                    {entry.id === openId && entry.type === 'adjustment' && !entry.kind && (
-                      <div className="entry-details">
-                        <AdjustmentFields entry={entry} game={game} pack={pack} state={state} picking={pickingSystemFor === entry.id} onPickSystem={() => onPickSystem?.(entry.id)} />
-                      </div>
-                    )}
-                    {list.length > 0 && (
-                      <ul className="warning-list">
-                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
-                      </ul>
                     )}
                   </li>
                 );

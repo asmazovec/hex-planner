@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
 import type { UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { FactionCard } from '../plan/FactionCard';
-import { HexRemove } from '../plan/RowIcon';
+import { FactionCard } from './FactionCard';
+import { HexRemove } from '../primitives/Icon';
 import { FactionPicker } from './FactionPicker';
+import { ConfirmBar } from '../primitives/ConfirmBar';
+import { playerStyle } from '../primitives/player';
 import type { SeatDrag } from './useSeatDrag';
 
 type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
@@ -14,14 +16,12 @@ type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
 export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
-  /** Stands at the end of the heading. */
-  action?: ReactNode;
   /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
   live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
-export function PlayerList({ drag, action, live }: PlayerListProps) {
+export function PlayerList({ drag, live }: PlayerListProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game ?? s.draft);
   const setFaction = useGame(s => s.setFaction);
@@ -71,20 +71,19 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
     if (held.units > 0 || held.planets > 0) texts.push(t('players.confirmHoldings', held));
     if (filled > 0) texts.push(t('players.confirm', { filled, lost }));
     return (
-      <div className="player-confirm">
-        <span>{texts.join(' ')}</span>
-        <button type="button" className="primary" onClick={() => (next.kind === 'add' ? add() : remove(next.opponent))}>{t('players.confirmYes')}</button>
-        <button type="button" onClick={() => setAsked(null)}>{t('players.cancel')}</button>
-      </div>
+      <ConfirmBar
+        className="player-confirm" text={texts.join(' ')} yes={t('players.confirmYes')} no={t('players.cancel')}
+        onYes={() => (next.kind === 'add' ? add() : remove(next.opponent))} onNo={() => setAsked(null)}
+      />
     );
   };
 
   return (
     <section ref={listRef} className="players-list">
       <div className="players-head">
-        <h1>{t('players.title')}</h1>
+        {/* The page's own heading on the game screen; in a drawer it is the sheet's title, as in the other drawers. */}
+        {live ? <h2>{t('players.title')}</h2> : <h1>{t('players.title')}</h1>}
         <span>{t('players.count', { n: count, max })}</span>
-        {action && <div className="players-action">{action}</div>}
       </div>
       {players.map((player, index) => {
         const faction = pack.factions[player.faction];
@@ -100,7 +99,7 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
         return (
           <article
             key={player.color} role="group" aria-label={t('players.player', { n: index + 1 })} className={classes.join(' ')}
-            style={{ '--player': `var(--player-${player.color})` } as React.CSSProperties}
+            style={playerStyle('--player', player.color)}
           >
             <div className="player-row">
               <div className={badge.join(' ')} onAnimationEnd={drag?.clearBump}>{index + 1}</div>
@@ -114,7 +113,8 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
                 )}
               </div>
               {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
-              {index === 0 || live ? <span /> : (
+              {/* The question stands in for the cross that asked it. */}
+              {index === 0 || live || (asked?.kind === 'remove' && asked.opponent === opponent) ? <span /> : (
                 <HexRemove label={t('players.remove')} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })} />
               )}
             </div>
@@ -132,7 +132,7 @@ export function PlayerList({ drag, action, live }: PlayerListProps) {
         );
       })}
       {asked?.kind === 'add' && confirmBar(asked)}
-      {count < max && !live && (
+      {count < max && !live && !started && asked?.kind !== 'add' && (
         <button type="button" className="add-opponent" onClick={() => ask({ kind: 'add' })}>{t('players.add')}</button>
       )}
     </section>

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { project, stateBeforeEntry } from './project';
+import { project, stateBeforeEntry, stateAfterEntry } from './project';
 import { withTeMecatol } from './mecatol';
-import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, homeSlot, plannedCard, primaryPlayed, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
+import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, heldCards, homeSlot, plannedCard, playOf, startsAsPrimary, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -38,9 +38,10 @@ describe('the three modes', () => {
     expect(stateOf(start([forToken(3)])).state.strategy).toBe(1);
   });
 
-  test('a secondary can be played any number of times, and warns once the tokens run out', () => {
-    const third = secondary(3);
-    const game = start([secondary(3), secondary(3), third]);
+  test('secondaries of other cards can be played one after another, and warn once the tokens run out', () => {
+    // One card's secondary is resolved once a round (83.7), so each one here is of another card.
+    const third = secondary(5);
+    const game = start([secondary(3), secondary(8), third]);
     expect(stateOf(game).state.strategy).toBe(-1);
     expect(stateOf(game).warningsByEntry[third.id]).toEqual([{ code: 'shortStrategy', params: { have: 0 } }]);
   });
@@ -79,6 +80,49 @@ describe('now and forecast', () => {
 
   test('a cancelled entry counts nowhere', () => {
     expect(stateOf(start([primary(5, undefined, 'cancelled')])).state.tradeGoods).toBe(0);
+  });
+});
+
+test('the state after an entry holds it and nothing later', () => {
+  const [first, second] = [forToken(5), forToken(5)];
+  const game = start([first, second]);
+  expect(stateAfterEntry(game, game.plans[0], first.id, pack).tradeGoods).toBe(3);
+  expect(stateAfterEntry(game, game.plans[0], second.id, pack).tradeGoods).toBe(6);
+});
+
+describe('how a card is played', () => {
+  test('my cards depend on the number of players: the backup counts only when two are held', () => {
+    expect(heldCards(emptyRound([], 5, 2), 6)).toEqual([5]);
+    expect(heldCards(emptyRound([], 5, 2), 4)).toEqual([5, 2]);
+    expect(heldCards(emptyRound([], null, 2), 3)).toEqual([2]);
+  });
+
+  test('the primary is free on my card and costs a token on another, the secondary is just the secondary', () => {
+    const round = emptyRound([], 5, 2);
+    expect(playOf(round, 6, 5, true, true)).toEqual({ type: 'strategic', forToken: undefined });
+    expect(playOf(round, 6, 2, true, true)).toEqual({ type: 'strategic', forToken: true });
+    expect(playOf(round, 4, 2, true, true)).toEqual({ type: 'strategic', forToken: undefined });
+    expect(playOf(round, 6, 5, false, true)).toEqual({ type: 'secondary', forToken: undefined });
+  });
+
+  test('a rival is not charged for the primary: their cards are not planned', () => {
+    expect(playOf(emptyRound([], 5), 6, 2, true, false)).toEqual({ type: 'strategic', forToken: undefined });
+  });
+
+  test('a card starts as the primary only while it is mine and not played yet', () => {
+    const entry = play({ type: 'strategic' });
+    expect(startsAsPrimary(emptyRound([entry], 5), 6, 5, entry)).toBe(true);
+    expect(startsAsPrimary(emptyRound([entry], 5), 6, 2, entry)).toBe(false);
+    expect(startsAsPrimary(emptyRound([primary(5), entry], 5), 6, 5, entry)).toBe(false);
+    expect(startsAsPrimary(emptyRound([primary(5, undefined, 'cancelled'), entry], 5), 6, 5, entry)).toBe(true);
+    expect(startsAsPrimary(emptyRound([{ ...primary(5), owner: 'r' }, entry], 5), 6, 5, entry)).toBe(true);
+  });
+
+  test('an action with no card yet costs nothing and repeats nothing', () => {
+    const bare = play({ type: 'strategic' });
+    const game = start([primary(1), bare]);
+    expect(warningsOf(game, bare)).toEqual([]);
+    expect(stateOf(game).state.strategy).toBe(2);
   });
 });
 
@@ -123,11 +167,6 @@ describe('the second primary', () => {
   });
 
   test('the menu knows when the held primaries are played', () => {
-    expect(primaryPlayed(emptyRound([primary(1)]), 6)).toBe(true);
-    expect(primaryPlayed(emptyRound([forToken(1)]), 6)).toBe(false);
-    expect(primaryPlayed(emptyRound([primary(1, undefined, 'cancelled')]), 6)).toBe(false);
-    expect(primaryPlayed(emptyRound([primary(1)]), 3)).toBe(false);
-    expect(primaryPlayed(emptyRound([primary(1), primary(2)]), 3)).toBe(true);
   });
 });
 
@@ -329,8 +368,9 @@ describe('Technology', () => {
 
 describe('Imperial', () => {
   test('Mecatol Rex gives a point on the primary; otherwise a secret objective, shown only', () => {
-    expect(stateOf(start([primary(8, { mecatol: true })])).state.vp).toBe(1);
-    expect(stateOf(start([primary(8)])).state.vp).toBe(0);
+    // The point follows control of Mecatol Rex, not the flag (45.2, 45 note 3).
+    expect(stateOf(start([primary(8)], { extra: { planetControl: { mr: 'me' } } })).state.vp).toBe(1);
+    expect(stateOf(start([primary(8, { mecatol: true })])).state.vp).toBe(0);
     expect(stateOf(start([secondary(8)])).state.vp).toBe(0);
   });
 });

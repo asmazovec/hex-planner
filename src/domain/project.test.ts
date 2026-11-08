@@ -3,10 +3,166 @@ import { CARD } from './strategy';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
-import { productionCost, productionPlaces, project, readyInfluence, readyResources, stateBeforeEntry, tacticalMeters, systemsAdjacent } from './project';
+import { slotAcross } from './route';
+import { fleetSpeed, productionCost, productionPlaces, project, readyInfluence, readyResources, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, tacticalMeters, systemsAdjacent } from './project';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
+
+describe('how far a route goes', () => {
+  const plain = { number: '1', planetIds: [], kind: 'system', wormholes: [] };
+  const lane = (id: string, lanes?: [number, number][]) => ({ id, number: id, planetIds: [], kind: 'hyperlane', wormholes: [], lanes });
+  const routePack = {
+    tiles: {
+      a: { ...plain, id: 'a' },
+      alpha: { ...plain, id: 'alpha', wormholes: ['alpha'] },
+      // The lane joins the north-west edge (5) and the south-east edge (2).
+      straight: lane('straight', [[2, 5]]),
+      // Two lanes, north-west to north (5 and 0), and south to south-east (3 and 2).
+      bends: lane('bends', [[0, 5], [2, 3]]),
+      // The tiles 119 to 124 have no known lanes.
+      unknown: lane('unknown'),
+      nebula: { ...plain, id: 'nebula', anomaly: 'nebula' },
+      nova: { ...plain, id: 'nova', anomaly: 'supernova' },
+      rocks: { ...plain, id: 'rocks', anomaly: 'asteroid' },
+      rift: { ...plain, id: 'rift', anomaly: 'rift' },
+      scar: { ...plain, id: 'scar', anomaly: 'scar' },
+      tower: { ...plain, id: 'tower', anomaly: 'rift', secondAnomaly: 'asteroid' },
+    },
+    planets: {},
+    units: { cruiser: { id: 'cruiser', name: 'cruiser', cost: 2, capacity: 0, capacityUsed: 1, ground: false, fighter: false, combat: null, move: 2, limit: null } },
+    factions: {},
+  } as unknown as DataPack;
+  const line = (map: Record<string, string>, enemyUnits: Game['enemyUnits'] = {}) =>
+    ({ map, enemyUnits, faction: 'sol', fracture: { tiles: {} } }) as unknown as Game;
+  /** A line running south-east, each slot the next across edge 2. */
+  const row = { '0,0': 'a', '1,0': 'a', '2,0': 'a', '3,0': 'a', '4,0': 'a' };
+  const reach = (map: Record<string, string>, speed: number, active = '4,0', enemy: Game['enemyUnits'] = {}, path = ['0,0']) =>
+    [...routeReach(line(map, enemy), path, speed, active, routePack)].sort();
+
+  describe('distance', () => {
+    test('each neighbour is a step', () => {
+      const steps = routeDistances(line(row), '0,0', routePack);
+      expect([steps.get('1,0'), steps.get('2,0'), steps.get('3,0')]).toEqual([1, 2, 3]);
+    });
+
+    test('a wormhole joins two far systems in one step', () => {
+      expect(routeDistances(line({ ...row, '0,0': 'alpha', '3,0': 'alpha' }), '0,0', routePack).get('3,0')).toBe(1);
+    });
+
+    test('a lane joins the systems at its two ends in one step, and is no system itself', () => {
+      const steps = routeDistances(line({ ...row, '1,0': 'straight' }), '0,0', routePack);
+      expect(steps.get('2,0')).toBe(1);
+      expect(steps.has('1,0')).toBe(false);
+    });
+
+    test('only along its lines: a system beside a lane that does not end there is not joined by it', () => {
+      // North of the hyperlane: edge 0 has no line, so the way to the south-east is around it.
+      const map = { '1,-1': 'a', '1,0': 'straight', '2,0': 'a', '2,-1': 'a' };
+      const steps = routeDistances(line(map), '1,-1', routePack);
+      expect(steps.get('2,0')).toBe(2);
+    });
+
+    test('a turned tile turns its lines: at one step the line runs north-east to south-west', () => {
+      // Edges 2 and 5 move up by two to 4 and 1: from the south-west to the north-east.
+      const map = { '0,1': 'a', '1,0': 'straight@2', '2,-1': 'a' };
+      expect(routeDistances(line(map), '0,1', routePack).get('2,-1')).toBe(1);
+      const straight = { '0,1': 'a', '1,0': 'straight', '2,-1': 'a' };
+      expect(routeDistances(line(straight), '0,1', routePack).has('2,-1')).toBe(false);
+    });
+
+    test('two lines of one tile do not cross: each joins its own pair of edges', () => {
+      const map = { '0,0': 'a', '1,0': 'bends', '1,-1': 'a', '2,0': 'a', '1,1': 'a' };
+      const steps = routeDistances(line(map), '0,0', routePack);
+      expect(steps.get('1,-1')).toBe(1);
+      expect(steps.has('2,0')).toBe(false);
+    });
+
+    test('lines run on through a chain of hyperlanes for one step', () => {
+      expect(routeDistances(line({ ...row, '1,0': 'straight', '2,0': 'straight' }), '0,0', routePack).get('3,0')).toBe(1);
+    });
+
+    test('a hyperlane with unknown lines joins all its sides', () => {
+      const map = { '0,0': 'a', '1,0': 'unknown', '1,-1': 'a', '2,0': 'a' };
+      const steps = routeDistances(line(map), '0,0', routePack);
+      expect([steps.get('1,-1'), steps.get('2,0')]).toEqual([1, 1]);
+    });
+
+    test('a real hyperlane tile joins the systems at the ends of its printed lines, turned as it lies', () => {
+      const real = loadPack(['pok']);
+      const [a, b] = real.tiles['83A'].lanes![0];
+      for (const turns of [0, 1, 4]) {
+        const [from, to] = [slotAcross('0,0', (a + turns) % 6)!, slotAcross('0,0', (b + turns) % 6)!];
+        const game = { map: { '0,0': `83A@${turns}`, [from]: '25', [to]: '26' }, enemyUnits: {}, faction: 'sol', fracture: { tiles: {} } } as unknown as Game;
+        expect(routeDistances(game, from, real).get(to)).toBe(1);
+      }
+    });
+
+    test('a drawn route is measured as drawn, and a hyperlane hex on it costs nothing', () => {
+      const game = line({ ...row, '1,0': 'nebula' });
+      expect(routeSteps(game, ['0,0', '1,0', '2,0'], routePack)).toBe(2);
+      expect(routeSteps(game, ['0,0', '3,0'], routePack)).toBe(3);
+      // A map with holes in it has no way across them: the grid measures it, so a far flight is not called near.
+      expect(routeSteps(line({ '0,0': 'a', '3,0': 'a' }), ['0,0', '3,0'], routePack)).toBe(3);
+      expect(routeSteps(line({ '0,0': 'a', 'off': 'a' }), ['0,0', 'off'], routePack)).toBe(1);
+      expect(routeSteps(line({ ...row, '1,0': 'straight' }), ['0,0', '1,0', '2,0'], routePack)).toBe(1);
+    });
+  });
+
+  describe('what a ship reaches', () => {
+    test('as far as its speed', () => {
+      expect(reach(row, 2)).toEqual(['1,0', '2,0']);
+    });
+
+    test('asteroids and a supernova let nothing in, the rift of two anomalies neither', () => {
+      for (const tile of ['rocks', 'nova', 'tower']) expect(reach({ ...row, '1,0': tile }, 3)).toEqual([]);
+    });
+
+    test('a nebula: only as the active system, and never through', () => {
+      expect(reach({ ...row, '1,0': 'nebula' }, 3, '4,0')).toEqual([]);
+      expect(reach({ ...row, '1,0': 'nebula' }, 3, '1,0')).toEqual(['1,0']);
+    });
+
+    test('a ship starting in a nebula flies at speed 1', () => {
+      expect(reach({ ...row, '0,0': 'nebula' }, 3)).toEqual(['1,0']);
+    });
+
+    test('a rift adds one on the way out or through, each rift its own (LRR 41 note 6)', () => {
+      expect(reach({ ...row, '0,0': 'rift' }, 1)).toEqual(['1,0', '2,0']);
+      expect(reach({ ...row, '1,0': 'rift' }, 1)).toEqual(['1,0', '2,0']);
+      expect(reach({ ...row, '1,0': 'rift', '2,0': 'rift' }, 1)).toEqual(['1,0', '2,0', '3,0']);
+    });
+
+    test('a rift already behind on the path keeps its bonus', () => {
+      expect(reach({ ...row, '0,0': 'rift' }, 1, '4,0', {}, ['0,0', '1,0'])).toEqual(['2,0']);
+    });
+
+    test('an entropic scar does not touch the movement', () => {
+      expect(reach({ ...row, '1,0': 'scar' }, 2)).toEqual(['1,0', '2,0']);
+    });
+
+    test('enemy ships: only as the active system, and never through', () => {
+      const enemy = { '1,0': { o1: { cruiser: 1 } } };
+      expect(reach(row, 3, '4,0', enemy)).toEqual([]);
+      expect(reach(row, 3, '1,0', enemy)).toEqual(['1,0']);
+    });
+
+    test('a route ends on the active system', () => {
+      expect(reach(row, 3, '1,0')).toEqual(['1,0']);
+    });
+  });
+
+  test('the speed of a route counts a nebula at the start and a rift on the way', () => {
+    const game = line({ ...row, '0,0': 'nebula', '1,0': 'rift' });
+    expect(routeMove(game, ['0,0'], 3, routePack)).toBe(1);
+    expect(routeMove(game, ['0,0', '1,0'], 3, routePack)).toBe(2);
+    expect(routeMove(line(row), ['0,0', '1,0'], 3, routePack)).toBe(3);
+  });
+
+  test('the speed of a fleet is its fastest ship that flies', () => {
+    expect(fleetSpeed(line(row), {}, [], routePack)).toBeNull();
+  });
+});
 
 const unit = (id: UnitId, o: Partial<UnitDef>): UnitDef =>
   ({ id, name: id, cost: 1, capacity: 0, capacityUsed: 1, ground: false, fighter: false, combat: null, move: null, limit: null, ...o });
@@ -124,8 +280,8 @@ describe('project', () => {
 
   test('наземные юниты можно забрать с планеты', () => {
     const g = gameWith([
-      setup('B', { infantry: 2 }),
-      withId('l', entry(tactical({ landings: [{ planetId: 'jord', units: { infantry: 2 } }] }))),
+      setup('H', { infantry: 2 }),
+      withId('l', entry(tactical({ systemId: 'H', landings: [{ planetId: 'jord', units: { infantry: 2 } }] }))),
       withId('m', entry(tactical({ moves: [{ from: 'jord', units: { infantry: 1 } }] }))),
     ]);
     const r = run(g);
@@ -478,9 +634,11 @@ describe('project', () => {
     });
 
     test('secret, cards, tech: без стоимости в ресурсах', () => {
-      for (const id of ['secret', 'cards', 'tech']) {
+      for (const id of ['secret', 'cards']) {
         expect(run(gameWith([expedition(id, {})])).warningsByEntry.x).toEqual([]);
       }
+      // The technology part exhausts a planet with a specialty instead (Thunder's Edge, expedition 4.5).
+      expect(codes(run(gameWith([expedition('tech', {})])).warningsByEntry.x)).toEqual(['expeditionUnpaid']);
       expect(run(gameWith([expedition('tech', { planets: ['arc'] })])).state.exhausted).toEqual(['arc']);
     });
 
@@ -549,7 +707,9 @@ describe('ship upgrades in the replay', () => {
     ]);
     const { warningsByEntry } = go(g);
     expect(codes(warningsByEntry.first)).toEqual(['capacityGroup', 'capacitySystem']);
-    expect(codes(warningsByEntry.second)).toEqual([]);
+    // The cargo is fine now; the source holds the first action's token, which is its own warning.
+    expect(codes(warningsByEntry.second)).not.toContain('capacityGroup');
+    expect(codes(warningsByEntry.second)).not.toContain('capacitySystem');
   });
 
   test('moving the upgrade before the flight removes the warning', () => {
@@ -875,8 +1035,10 @@ describe('Construction\'s secondary', () => {
     return project(game, game.plans[0], 'forecast', pack);
   };
 
-  test('warns before Thunder\'s Edge when its token would join one of mine, and does not forbid it', () => {
-    expect(secondaryOn(['pok'], { systemId: '1,0' }).warningsByEntry.c.map(w => w.code)).toEqual(['systemHasToken']);
+  test('before Thunder\'s Edge a token joining one of mine goes back to reinforcements, with no warning (LRR 20.6)', () => {
+    const joined = secondaryOn(['pok'], { systemId: '1,0' });
+    expect(joined.warningsByEntry.c).toEqual([]);
+    expect(joined.state.tokensOnMap.filter(id => id === '1,0')).toHaveLength(1);
     const free = secondaryOn(['pok'], { systemId: '2,0' });
     expect(free.warningsByEntry.c).toEqual([]);
     expect(free.state.tokensOnMap).toContain('2,0');

@@ -1,16 +1,19 @@
+import { strategyCardSet, type StrategyCard, type StrategyCardSetId } from '../domain/cards';
+import { LAYOUT_ORDER } from '../domain/layouts';
 import { MECATOL_TILE, MECATOL_TILE_TE } from '../domain/mecatol';
 import type { DataPack, ExpansionId, MapTemplate } from '../domain/types';
 import base from './packs/base.json';
 import pok from './packs/pok.json';
+import strategyCardSets from './packs/strategyCards.json';
 import te from './packs/te.json';
 
 const PACKS: Record<ExpansionId, unknown> = { pok, te };
 
-/** A later pack's template for a player count and layout replaces an earlier one; the standard layout comes first. */
+/** A later pack's template for a player count and layout replaces an earlier one; layouts go in `LAYOUT_ORDER`. */
 function mergeTemplates(packs: DataPack[]): MapTemplate[] {
   const byKey = new Map<string, MapTemplate>();
   for (const pack of packs) for (const template of pack.templates) byKey.set(`${template.playerCount}-${template.layout}`, template);
-  return [...byKey.values()].sort((a, b) => a.playerCount - b.playerCount || Number(a.layout !== 'standard') - Number(b.layout !== 'standard'));
+  return [...byKey.values()].sort((a, b) => a.playerCount - b.playerCount || LAYOUT_ORDER.indexOf(a.layout) - LAYOUT_ORDER.indexOf(b.layout));
 }
 
 /** Thunder's Edge replaces the base Mecatol Rex tile with its own. */
@@ -35,4 +38,9 @@ export function loadPack(expansions: ExpansionId[]): DataPack {
     technologies: Object.assign({}, ...packs.map(pack => pack.technologies)),
     structures: packs.flatMap(pack => pack.structures),
   };
+}
+
+/** The strategy cards of the set the expansions choose, in initiative order. */
+export function strategyCards(expansions: ExpansionId[]): StrategyCard[] {
+  return (strategyCardSets as Record<StrategyCardSetId, StrategyCard[]>)[strategyCardSet(expansions)];
 }

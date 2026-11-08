@@ -1,5 +1,1 @@
-import type { UnitId } from '../../domain/types';
-
-export const UNIT_ORDER: UnitId[] = [
-  'flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter', 'infantry', 'mech',
-];
+export { UNIT_ORDER } from '../../domain/hexLayout';

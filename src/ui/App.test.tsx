@@ -2,6 +2,8 @@ import 'fake-indexeddb/auto';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, test, expect } from 'vitest';
+import { loadPack } from '../data/loadPack';
+import { factionCode } from '../domain/shareLink';
 import { useGame } from '../state/gameStore';
 import { App } from './App';
 import { setLanguage, currentLanguage } from '../i18n';
@@ -30,6 +32,25 @@ test('a game with a different data version shows a warning on every screen', asy
   expect(await screen.findByText(/different data version/)).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
   expect(screen.getByText(/different data version/)).toBeVisible();
+});
+
+test('the address of an open game is its link, it follows the game, and it clears on leaving', () => {
+  const pack = loadPack(['pok']);
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
+  useGame.getState().setName('Friday');
+  const entries = window.history.length;
+  render(<App />);
+  const params = () => new URLSearchParams(window.location.search);
+  expect(params().get('name')).toBe('Friday');
+  expect(params().get('exp')).toBe('pok');
+  expect(params().get('factions')).toBe(`${factionCode('sol')},-,-`);
+  act(() => useGame.getState().setTile('0,-1', '25'));
+  expect(params().get('map')?.split(' ')[0]).toBe('25');
+  act(() => useGame.getState().setOpponent(0, { faction: 'hacan' }));
+  expect(params().get('factions')).toBe(`${factionCode('sol')},${factionCode('hacan')},-`);
+  expect(window.history.length).toBe(entries);
+  act(() => useGame.getState().closeGame());
+  expect(window.location.search).toBe('');
 });
 
 test('without a game there is no menu and no way to the plan; leaving a game comes back to the game screen', async () => {

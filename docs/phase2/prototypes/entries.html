@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Список записей</title>
+<link rel="stylesheet" href="/src/ui/theme.css">
+<link rel="stylesheet" href="./proto.css">
+<style>
+  .proto [hidden] { display: none !important; }
+  /* The panel at the height of the tablet's plan column, so the pinned footer behaves as in the app. */
+  .proto .screen.tall { height: 640px; min-height: 0; }
+  .proto .screen.mid { height: 560px; min-height: 0; }
+  .proto .plan-scroll { padding: 0; }
+
+  /* P2-357: the action list as a popover above its button; the footer keeps its height. */
+  .proto .action-menu.pop-host { position: relative; }
+  .proto .action-menu.pop-host .tile-popover { top: auto; bottom: calc(100% + 6px); left: 0; width: 100%; max-height: none; }
+  .proto .action-menu.pop-host .tile-popover .card-list button { width: 100%; }
+
+  /* P2-346: an action reads as rows "from → to" with the unit tiles beside the text. */
+  .proto .flat-rows { display: flex; flex-direction: column; gap: 7px; }
+  .proto .flat-row { display: grid; grid-template-columns: minmax(0, 8.5em) minmax(0, 1fr); gap: 2px 8px; align-items: center; margin: 0; }
+  .proto .flat-row > span:first-child { color: var(--text); font-weight: 600; }
+  .proto .flat-row > .upics { margin-top: 0; }
+  .proto .flat-row > small, .proto .flat-row > .warning-list { grid-column: 1 / -1; margin: 0; }
+  .proto .flat-row.flat-first > span:first-child { grid-column: 1 / -1; }
+  .proto .flat-foot { display: flex; justify-content: flex-end; }
+  .proto .flat-foot > button { min-height: 36px; padding: 4px 12px; font-size: var(--font-s); }
+  .proto .scheme-pop { z-index: 9; top: 150px; left: 8px; width: calc(100% - 16px); padding: 8px 0; }
+  .proto .scheme-pop .entry-steps { border-top: 0; padding-top: 0; }
+  .proto .scheme-pop h2 { margin: 0 0 6px; padding: 4px 48px 0 10px; font-size: var(--font-m); font-weight: 650; }
+
+  /* P2-383: the header at the width of the app. */
+  .proto .screen.head { width: 1180px; min-height: 0; }
+  .proto .plan-tabs > .in-card { flex: none; }
+  .proto .plan-rounds-group > .hex-button { margin-left: -2px; }
+</style>
+</head>
+<body class="proto">
+<nav class="back"><a href="./index.html">← Все прототипы</a></nav>
+<h1>Список записей плана</h1>
+<p class="lead">Правая панель «План и карта»: список записей раунда по фазам, его подвал с кнопкой «Новое действие» и вкладки планов над ним. Сейчас поля жетонов, экспедиции и список действий раскрываются прямо в строке или в подвале, а подробности тактики уходят на семь уровней. Предлагаю: правка открывается на месте списка, как у стратегии и ручной правки; список действий выпадает поповером; подробности читаются строками «откуда → куда»; удаление плана и раунда — тем же крестиком, что и везде.</p>
+<div class="todos"><span>P2-357</span><span>P2-349</span><span>P2-355</span><span>P2-346</span><span>P2-383</span></div>
+
+<!-- ============================================================ P2-357 -->
+<section class="change">
+  <h2>Список действий: поповер над кнопкой</h2>
+  <p>«Новое действие» раскрывает список из шести пунктов внутри закреплённого подвала: подвал вырастает и закрывает записи, а сам список стоит на четвёртом уровне. Нажмите кнопку в обеих панелях.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">№ 26 · Сейчас</span>
+      <div class="screen tall">
+        <div class="plan-panel"><div class="plan-scroll">
+          <input type="text" aria-label="Название плана" value="План 1">
+          <div class="plan-entries">
+            <section class="phase">
+              <h4 class="section-title phase-title">Стратегия</h4>
+              <ul class="entry-list">
+                <li class="entry entry-done"><div class="entry-main">
+                  <button type="button" class="entry-handle"><svg data-i="grip"></svg></button>
+                  <button type="button" class="entry-label">Стратегия: Leadership</button>
+                  <button type="button" class="hex-button"><svg data-i="edit"></svg></button>
+                  <label class="hex-button entry-check"><input type="checkbox" checked><svg data-i="done"></svg></label>
+                  <button type="button" class="hex-button"><svg data-i="remove"></svg></button>
+                </div></li>
+              </ul>
+            </section>
+            <section class="phase">
+              <h4 class="section-title phase-title">Действия</h4>
+              <ul class="entry-list" data-entries="actions"></ul>
+              <div class="phase-add">
+                <div class="acting-add">
+                  <div class="segment player-choice acting-for" role="group" aria-label="Чьё действие" data-acting></div>
+                  <div class="action-menu">
+                    <button type="button" class="primary" aria-expanded="true" data-toggle="now-menu">Новое действие</button>
+                    <div class="card-list" id="now-menu">
+                      <button type="button">Тактическое действие</button>
+                      <button type="button">Стратегия</button>
+                      <button type="button">Действие компонента</button>
+                      <button type="button">Пас</button>
+                      <button type="button">Вклад в экспедицию, конец хода</button>
+                      <button type="button">Ручная правка</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="phase">
+              <h4 class="section-title phase-title">Статус</h4>
+              <p class="muted phase-auto">Новые жетоны и очки всех игроков за раунд.</p>
+              <ul class="entry-list"></ul>
+              <button type="button">Жетоны и очки</button>
+            </section>
+          </div>
+        </div></div>
+      </div>
+      <p class="note">Открытый список закрывает три записи из четырёх; выбрать пункт можно, только не видя, после чего он встанет.</p>
+    </div>
+    <div class="pane after">
+      <span class="tag">№ 27</span>
+      <div class="screen tall">
+        <div class="plan-panel"><div class="plan-scroll">
+          <input type="text" aria-label="Название плана" value="План 1">
+          <div class="plan-entries">
+            <section class="phase">
+              <h4 class="section-title phase-title">Стратегия</h4>
+              <ul class="entry-list">
+                <li class="entry entry-done"><div class="entry-main">
+                  <button type="button" class="entry-handle"><svg data-i="grip"></svg></button>
+                  <button type="button" class="entry-label">Стратегия: Leadership</button>
+                  <button type="button" class="hex-button"><svg data-i="edit"></svg></button>
+                  <label class="hex-button entry-check"><input type="checkbox" checked><svg data-i="done"></svg></label>
+                  <button type="button" class="hex-button"><svg data-i="remove"></svg></button>
+                </div></li>
+              </ul>
+            </section>
+            <section class="phase">
+              <h4 class="section-title phase-title">Действия</h4>
+              <ul class="entry-list" data-entries="actions"></ul>
+              <div class="phase-add">
+                <div class="acting-add">
+                  <div class="segment player-choice acting-for" role="group" aria-label="Чьё действие" data-acting></div>
+                  <div class="action-menu pop-host">
+                    <button type="button" class="primary" aria-expanded="true" data-pop="after-menu">Новое действие</button>
+                    <div class="tile-popover" id="after-menu" role="menu">
+                      <button type="button" class="hex-button popover-close" aria-label="Закрыть" data-close="after-menu"><svg data-i="remove"></svg></button>
+                      <div class="tile-input">
+                        <h2>Новое действие</h2>
+                        <div class="card-list">
+                          <button type="button">Тактическое действие</button>
+                          <button type="button">Стратегия</button>
+                          <button type="button">Действие компонента</button>
+                          <button type="button">Пас</button>
+                          <button type="button">Вклад в экспедицию, конец хода</button>
+                          <button type="button">Ручная правка</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="phase">
+              <h4 class="section-title phase-title">Статус</h4>
+              <p class="muted phase-auto">Новые жетоны и очки всех игроков за раунд.</p>
+              <ul class="entry-list"></ul>
+              <button type="button">Жетоны и очки</button>
+            </section>
+          </div>
+        </div></div>
+      </div>
+      <p class="note">Поповер — общий <code>Popover</code> (карточка <code>.tile-popover</code>, крестик в углу), растёт вверх от кнопки. Подвал не меняет высоту. Закрывается выбором пункта, крестиком или нажатием вне него. Уровни: панель → поповер → пункт.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ P2-349 -->
+<section class="change">
+  <h2>Жетоны и очки: правка на месте списка</h2>
+  <p>Карандаш у записи «Жетоны и очки» раскрывает под строкой плитки жетонов и очки всех игроков — пять уровней внутри списка, а строка растягивается на полэкрана.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">№ 28 · Сейчас</span>
+      <div class="screen tall">
+        <div class="plan-panel"><div class="plan-scroll">
+          <div class="plan-entries">
+            <section class="phase">
+              <h4 class="section-title phase-title">Действия</h4>
+              <ul class="entry-list" data-entries="short"></ul>
+            </section>
+            <section class="phase">
+              <h4 class="section-title phase-title">Статус</h4>
+              <ul class="entry-list">
+                <li class="entry">
+                  <div class="entry-main">
+                    <button type="button" class="entry-label">Жетоны и очки</button>
+                    <button type="button" class="hex-button"><svg data-i="edit"></svg></button>
+                    <label class="hex-button entry-check"><input type="checkbox"><svg data-i="done"></svg></label>
+                    <button type="button" class="hex-button"><svg data-i="remove"></svg></button>
+                  </div>
+                  <div class="entry-details" data-status-fields></div>
+                </li>
+              </ul>
+            </section>
+            <section class="phase">
+              <h4 class="section-title phase-title">Повестка</h4>
+              <p class="muted phase-auto">Голосование, если Mecatol Rex занят. Записей здесь пока нет.</p>
+              <ul class="entry-list"></ul>
+            </section>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pane after">
+      <span class="tag">№ 29</span>
+      <div class="screen tall" id="status-after">
+        <div class="plan-panel"><div class="plan-scroll">
+          <div data-view="list" class="panel-stack">
+            <input type="text" aria-label="Название плана" value="План 1">
+            <div class="plan-entries">
+              <section class="phase">
+                <h4 class="section-title phase-title">Действия</h4>
+                <ul class="entry-list" data-entries="short"></ul>
+              </section>
+              <section class="phase">
+                <h4 class="section-title phase-title">Статус</h4>
+                <ul class="entry-list">
+                  <li class="entry">
+                    <div class="entry-main">
+                      <button type="button" class="entry-label">Жетоны и очки</button>
+                      <button type="button" class="hex-button" aria-label="Изменить: Жетоны и очки" data-open="editor"><svg data-i="edit"></svg></button>
+                      <label class="hex-button entry-check"><input type="checkbox"><svg data-i="done"></svg></label>
+                      <button type="button" class="hex-button"><svg data-i="remove"></svg></button>
+                    </div>
+                  </li>
+                </ul>
+              </section>
+              <section class="phase">
+                <h4 class="section-title phase-title">Повестка</h4>
+                <p class="muted phase-auto">Голосование, если Mecatol Rex занят. Записей здесь пока нет.</p>
+                <ul class="entry-list"></ul>
+              </section>
+            </div>
+          </div>
+          <div data-view="editor" class="panel-stack" hidden>
+            <div class="panel-head">
+              <h2>Жетоны и очки</h2>
+              <button type="button" class="primary" data-open="list">Завершить правку</button>
+            </div>
+            <div class="editor-section" role="group" aria-label="Жетоны">
+              <div data-token-pick></div>
+            </div>
+            <div class="editor-section" role="group" aria-label="Очки за раунд">
+              <strong>Очки за раунд</strong>
+              <div data-points></div>
+            </div>
+            <p class="muted status-reminder">Планеты обновятся в начале следующего раунда.</p>
+          </div>
+        </div></div>
+      </div>
+      <p class="note">Нажмите карандаш, затем «Завершить правку». Голова и подвал те же, что у ручной правки: заголовок и «Завершить правку». Уровни: панель → блок → строка. Предупреждения о жетонах стоят в блоке «Жетоны».</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ P2-355 -->
+<section class="change">
+  <h2>Вклад в экспедицию: правка на месте списка</h2>
+  <p>То же с экспедицией: выбор части и оплата раскрываются внутри строки записи, пять уровней, предупреждения без своего места.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">№ 30 · Сейчас</span>
+      <div class="screen tall">
+        <div class="plan-panel"><div class="plan-scroll">
+          <div class="plan-entries">
+            <section class="phase">
+              <h4 class="section-title phase-title">Действия</h4>
+              <ul class="entry-list">
+                <li class="entry entry-done" data-entry="t1"></li>
+                <li class="entry entry-warned">
+                  <div class="entry-main">
+                    <button type="button" class="entry-handle"><svg data-i="grip"></svg></button>
+                    <button type="button" class="entry-label">Вклад в экспедицию, конец хода</button>
+                    <button type="button" class="hex-button"><svg data-i="edit"></svg></button>
+                    <label class="hex-button entry-check"><input type="checkbox"><svg data-i="done"></svg></label>
+                    <button type="button" class="hex-button"><svg data-i="remove"></svg></button>
+                  </div>
+                  <div class="entry-details">
+                    <div class="panel-stack" data-expedition="now"></div>
+                  </div>
+                </li>
+                <li class="entry" data-entry="pass"></li>
+              </ul>
+            </section>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pane after">
+      <span class="tag">№ 31</span>
+      <div class="screen tall" id="exp-after">
+        <div class="plan-panel"><div class="plan-scroll">
+          <div data-view="list" class="panel-stack">
+            <input type="text" aria-label="Название плана" value="План 1">
+            <div class="plan-entries">
+              <section class="phase">
+                <h4 class="section-title phase-title">Действия</h4>
+                <ul class="entry-list">
+                  <li class="entry entry-done" data-entry="t1"></li>
+                  <li class="entry entry-warned">
+                    <div class="entry-main">
+                      <button type="button" class="entry-handle"><svg data-i="grip"></svg></button>
+                      <button type="button" class="entry-label">Вклад в экспедицию, конец хода</button>
+                      <button type="button" class="hex-button" aria-label="Изменить" data-open="editor"><svg data-i="edit"></svg></button>
+                      <label class="hex-button entry-check"><input type="checkbox"><svg data-i="done"></svg></label>
+                      <button type="button" class="hex-button"><svg data-i="remove"></svg></button>
+                    </div>
+                    <ul class="warning-list"><li><span class="warning-text">Не хватает ресурсов: нужно 5, оплачено 4, остаток 1.</span></li></ul>
+                  </li>
+                  <li class="entry" data-entry="pass"></li>
+                </ul>
+              </section>
+            </div>
+          </div>
+          <div data-view="editor" class="panel-stack" hidden>
+            <div class="panel-head">
+              <h2>Экспедиция</h2>
+              <button type="button" class="primary" data-open="list">Завершить правку</button>
+            </div>
+            <div class="editor-section" role="group" aria-label="Часть экспедиции">
+              <strong>Часть экспедиции</strong>
+              <div class="slice-grid" data-slices></div>
+            </div>
+            <div class="editor-section" role="group" aria-label="Оплата">
+              <div class="panel-head"><strong>Стоимость 5, оплачено 4</strong><button type="button">Выбрать вручную</button></div>
+              <span class="muted">Arc Prime 4</span>
+              <ul class="warning-list place-warnings"><li><span class="warning-text">Не хватает ресурсов: нужно 5, оплачено 4, остаток 1.</span></li></ul>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <p class="note">Нажмите карандаш у экспедиции. Блоки «Часть экспедиции» и «Оплата» — общий <code>Section</code>; предупреждение об оплате стоит в блоке оплаты, остальные — вверху редактора.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ P2-346 -->
+<section class="change">
+  <h2>Подробности тактики: строки «откуда → куда»</h2>
+  <p>Нажатие на тактическое действие раскрывает под ним схему: каждый перелёт с остановками, бортом и грузом — до семи уровней вложенности, и одно действие занимает весь экран.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">№ 32 · Сейчас</span>
+      <div class="screen tall">
+        <div class="plan-panel"><div class="plan-scroll">
+          <div class="plan-entries">
+            <section class="phase">
+              <h4 class="section-title phase-title">Действия</h4>
+              <ul class="entry-list">
+                <li class="entry entry-shown entry-warned">
+                  <div data-main="t1" data-expanded></div>
+                  <div data-full-steps></div>
+                </li>
+                <li class="entry" data-entry="t2"></li>
+                <li class="entry" data-entry="pass"></li>
+              </ul>
+            </section>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="pane after">
+      <span class="tag">№ 33</span>
+      <div class="screen tall" id="steps-after">
+        <div class="plan-panel"><div class="plan-scroll">
+          <div class="plan-entries">
+            <section class="phase">
+              <h4 class="section-title phase-title">Действия</h4>
+              <ul class="entry-list">
+                <li class="entry entry-shown entry-warned">
+                  <div data-main="t1" data-expanded></div>
+                  <div class="entry-steps">
+                    <div class="flat-rows">
+                      <p class="flat-row flat-first"><span>Активировать 18</span><small>Жетон из тактического резерва в систему.</small></p>
+                      <div class="flat-row">
+                        <span>10 → 18</span>
+                        <span class="upics"><span class="upic" data-u="dreadnought"><i>2</i></span><span class="upic" data-u="carrier"></span><span class="upic" data-u="infantry"><i>3</i></span></span>
+                        <ul class="warning-list"><li><span class="warning-text">Группе из 10 не хватает мест на борту: 5 из 4.</span></li></ul>
+                      </div>
+                      <div class="flat-row">
+                        <span>26 → 18</span>
+                        <span class="upics"><span class="upic" data-u="cruiser"></span></span>
+                      </div>
+                      <p class="flat-row"><span>Потери в бою</span><span class="upics"><span class="upic" data-u="cruiser"></span></span></p>
+                      <p class="flat-row"><span>Высадка на Mecatol Rex</span><span class="upics"><span class="upic" data-u="infantry"><i>3</i></span></span></p>
+                      <p class="flat-row"><span>Построить</span><span class="upics"><span class="upic" data-u="fighter"><i>2</i></span></span><small>Оплата: Arc Prime</small></p>
+                      <div class="flat-foot"><button type="button" data-pop="scheme">Схема перелёта</button></div>
+                    </div>
+                  </div>
+                </li>
+                <li class="entry" data-entry="t2"></li>
+                <li class="entry" data-entry="pass"></li>
+              </ul>
+            </section>
+          </div>
+        </div></div>
+        <div class="tile-popover scheme-pop" id="scheme" hidden>
+          <button type="button" class="hex-button popover-close" aria-label="Закрыть" data-close="scheme"><svg data-i="remove"></svg></button>
+          <h2>Схема: 1 · 18</h2>
+          <div data-full-steps></div>
+        </div>
+      </div>
+      <p class="note">Строка — откуда и куда, справа плитки юнитов (<code>UnitTile mini</code>); всё, что взято по дороге, уже в плитках. Предупреждение стоит в строке того перелёта, о котором говорит. Остановки, борт и груз — в поповере «Схема перелёта» (нажмите), это прежняя разметка. Уровни: запись → строка → плитка.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ P2-383 -->
+<section class="change">
+  <h2>Удаление плана и раунда: крестик</h2>
+  <p>План удаляется текстовой кнопкой «Удалить план» рядом с «Копия», а раунд — кнопкой «−» в ряду номеров; обе выглядят иначе, чем крестик, который удаляет всё остальное.</p>
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">№ 36 · Сейчас</span>
+      <div class="screen head">
+        <header class="plan-header" data-header="now"></header>
+      </div>
+    </div>
+  </div>
+  <div class="compare" style="margin-top:14px">
+    <div class="pane after">
+      <span class="tag">№ 37</span>
+      <div class="screen head">
+        <header class="plan-header" data-header="after"></header>
+      </div>
+      <p class="note" style="max-width:900px">Крестик стоит внутри выбранной вкладки, у её правого края, и удаляет этот план (нажмите другую вкладку — крестик перейдёт). Крестик после номеров удаляет выбранный раунд, подпись «Удалить раунд 2». Последний план и последний раунд крестик не удаляет: он неактивен. «Копия» остаётся текстом: это не удаление.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  const ICONS = {
+    grip: '<path d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01" stroke-width="2.6"/>',
+    edit: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16zM13.5 6.5l4 4"/>',
+    done: '<path d="M5 12.5l5 5L19.5 7"/>',
+    remove: '<path d="M6 6l12 12M18 6L6 18"/>',
+  };
+  const ABBR = { dreadnought: 'Др', carrier: 'Тр', cruiser: 'Кр', destroyer: 'Эс', fighter: 'Ис', infantry: 'Пх', mech: 'Мх' };
+  const NAMES = { dreadnought: 'Дредноут', carrier: 'Транспортник', cruiser: 'Крейсер', fighter: 'Истребитель', infantry: 'Пехота' };
+  const icon = name => `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name]}</svg>`;
+  const tokenSvg = (kind, px, colour = 1) => `<svg class="token-picture" viewBox="-68 -68 136 136" width="${px}" height="${px}" aria-hidden="true"><circle r="50" style="fill:var(--token-fill);stroke:var(--player-${colour});stroke-width:7"/><text y="15" text-anchor="middle" font-size="42" font-weight="700" style="fill:var(--player-${colour})">${ABBR[kind] ?? '?'}</text></svg>`;
+  const orderHex = n => `<span class="order-hex" role="img" aria-label="Действие ${n}"><svg viewBox="-13 -11.5 26 23" width="26" height="23" aria-hidden="true"><polygon points="12,0 6,10.4 -6,10.4 -12,0 -6,-10.4 6,-10.4"/></svg><b aria-hidden="true">${n}</b></span>`;
+  const main = (label, { n, handle = true, pass = false, checked = false, expanded = false } = {}) => `<div class="entry-main">
+    ${handle ? `<button type="button" class="entry-handle" aria-label="Перетащить">${icon('grip')}</button>` : ''}
+    ${n ? orderHex(n) : ''}
+    <button type="button" class="entry-label"${pass ? '' : ` aria-expanded="${expanded}"`}>${label}</button>
+    ${pass ? '' : `<button type="button" class="hex-button" aria-label="Изменить">${icon('edit')}</button>`}
+    <label class="hex-button entry-check"><span class="visually-hidden">Выполнено</span><input type="checkbox"${checked ? ' checked' : ''}>${icon('done')}</label>
+    <button type="button" class="hex-button" aria-label="Удалить" title="Удалить">${icon('remove')}</button>
+  </div>`;
+  const ENTRY = {
+    t1: ['Тактическое действие · 18', { n: 1 }],
+    t2: ['Тактическое действие · 26', { n: 2 }],
+    pass: ['Пас', { pass: true }],
+  };
+
+  // Entries by key.
+  document.querySelectorAll('[data-entry]').forEach(li => {
+    const [label, o] = ENTRY[li.dataset.entry];
+    li.insertAdjacentHTML('afterbegin', main(label, { ...o, checked: li.classList.contains('entry-done') }));
+    li.setAttribute('aria-label', label);
+  });
+  document.querySelectorAll('[data-main]').forEach(el => {
+    const [label, o] = ENTRY[el.dataset.main];
+    el.outerHTML = main(label, { ...o, expanded: el.hasAttribute('data-expanded') });
+  });
+  const lists = {
+    actions: [['done', 't1'], ['', 't2'], ['rival', 'rival'], ['', 'pass']],
+    short: [['done', 't1'], ['', 'pass']],
+  };
+  document.querySelectorAll('[data-entries]').forEach(ul => {
+    ul.innerHTML = lists[ul.dataset.entries].map(([state, key]) => {
+      if (key === 'rival') return `<li class="entry entry-rival" style="--owner:var(--player-3)" aria-label="Hacan: Тактическое действие · 25">${main('Hacan: Тактическое действие · 25', { n: 1 })}</li>`;
+      const [label, o] = ENTRY[key];
+      return `<li class="entry${state === 'done' ? ' entry-done' : ''}" aria-label="${label}">${main(label, { ...o, checked: state === 'done' })}</li>`;
+    }).join('');
+  });
+
+  // Who acts.
+  const players = [['Моё', 1, true], ['Hacan', 3], ['Sol', 4], ['Jol-Nar', 5]];
+  document.querySelectorAll('[data-acting]').forEach(el => {
+    el.innerHTML = players.map(([n, c, on]) => `<button type="button" aria-pressed="${!!on}" style="--owner:var(--player-${c})">${n}</button>`).join('');
+  });
+
+  // Status fields: tokens and points.
+  const tokenPick = `<div class="token-pick" role="group" aria-label="Жетоны">
+    <strong>Распределить жетоны: осталось 1</strong>
+    <div class="token-tiles">
+      <div class="token-cell"><button type="button" class="token-tile token-tile-on"><b>1</b>Тактика</button><button type="button" class="token-take" aria-label="Убрать жетон: Тактика">−</button></div>
+      <div class="token-cell"><button type="button" class="token-tile"><b>0</b>Флот</button></div>
+      <div class="token-cell"><button type="button" class="token-tile"><b>0</b>Стратегия</button></div>
+    </div>
+    <div class="token-foot"><p class="muted token-note">Нажатие добавляет жетон.</p><button type="button">Сбросить</button></div>
+  </div>`;
+  const points = [['Letnev', 1, 4, 1], ['Hacan', 3, 3, 1], ['Sol', 4, 5, 0], ['Jol-Nar', 5, 2, 0]].map(([n, c, total, v]) =>
+    `<div class="status-player" style="--player:var(--player-${c})"><div class="stepper" role="group" aria-label="${n}"><span class="stepper-name">${n}<small class="muted"> всего ${total}</small></span><button type="button">−</button><output>${v}</output><button type="button">+</button></div></div>`).join('');
+  document.querySelectorAll('[data-status-fields]').forEach(el => {
+    el.innerHTML = `${tokenPick}<h5 class="section-title status-points">Очки за раунд</h5>${points}<p class="muted status-reminder">Планеты обновятся в начале следующего раунда.</p>`;
+  });
+  document.querySelectorAll('[data-token-pick]').forEach(el => { el.outerHTML = tokenPick; });
+  document.querySelectorAll('[data-points]').forEach(el => { el.outerHTML = points; });
+
+  // Expedition.
+  const slices = [['5 ресурсов', true], ['5 влияния'], ['3 товара', false, true], ['Секретная цель'], ['Карты действий', false, true], ['Технология']];
+  const sliceGrid = slices.map(([n, on, taken]) => `<button type="button" class="slice" aria-pressed="${!!on}"${taken ? ' disabled' : ''}>${n}</button>`).join('');
+  document.querySelectorAll('[data-slices]').forEach(el => { el.innerHTML = sliceGrid; });
+  document.querySelectorAll('[data-expedition]').forEach(el => {
+    el.innerHTML = `<div class="slice-grid" role="group" aria-label="Часть экспедиции">${sliceGrid}</div>
+      <div class="editor-section" role="group" aria-label="Оплата">
+        <div class="panel-head"><strong>Стоимость 5, оплачено 4</strong><button type="button">Выбрать вручную</button></div>
+        <span class="muted">Arc Prime 4</span>
+        <ul class="warning-list place-warnings"><li><span class="warning-text">Не хватает ресурсов: нужно 5, оплачено 4, остаток 1.</span></li></ul>
+      </div>`;
+  });
+
+  // The tactical scheme as it is today.
+  const upics = list => `<span class="upics">${list.map(([u, n]) => `<span class="upic" data-u="${u}">${n > 1 ? `<i>${n}</i>` : ''}</span>`).join('')}</span>`;
+  const fullSteps = `<div class="entry-steps entry-flights">
+    <p class="flight-activate"><span>Активировать 18</span><small>Жетон из тактического резерва в систему.</small></p>
+    <section class="flight"><strong>Лететь 10 → 26 → 18</strong>
+      <ol class="stops stops-over">
+        <li class="stop"><span class="stop-name">10</span>${upics([['dreadnought', 2], ['carrier', 1]])}<span class="stop-name">Взять на борт в 10</span>${upics([['infantry', 2]])}</li>
+        <li class="stop"><span class="stop-name">По дороге забрать в 26</span>${upics([['infantry', 1]])}</li>
+        <li class="stop stop-target"><span class="stop-name">18</span><span class="stop-name">Груз 5 из 4</span><ul class="warning-list"><li><span class="warning-text">Группе из 10 не хватает мест на борту: 5 из 4.</span></li></ul></li>
+      </ol>
+    </section>
+    <section class="flight"><strong>Лететь 26 → 18</strong>
+      <ol class="stops">
+        <li class="stop"><span class="stop-name">26</span>${upics([['cruiser', 1]])}</li>
+        <li class="stop stop-target"><span class="stop-name">18</span></li>
+      </ol>
+    </section>
+    <p class="flight-after"><span>Потери в бою</span><span>${upics([['cruiser', 1]])}</span></p>
+    <p class="flight-after"><span>Высадка на Mecatol Rex</span>${upics([['infantry', 3]])}</p>
+    <p class="flight-after"><span>Построить</span>${upics([['fighter', 2]])}<small>Оплата: Arc Prime</small></p>
+  </div>`;
+  document.querySelectorAll('[data-full-steps]').forEach(el => { el.outerHTML = fullSteps; });
+
+  // The header of the plan.
+  const summary = `<div class="summary-bar" role="group" aria-label="Итоги, факт и план">${[['Ресурсы', 6, 2], ['Влияние', 3, 3], ['Товары', 2, 0], ['Тактика', 3, 1], ['Флот', 3, 3], ['Стратегия', 2, 2], ['Очки', 4, 5]].map(([n, a, b]) =>
+    `<div class="summary-cell" role="group" aria-label="${n}"><span>${n}</span><b>${a}${a !== b ? `<span class="summary-forecast"> → <span>${b}</span></span>` : ''}</b></div>`).join('')}</div>`;
+  const plans = [['План 1', 'Leadership'], ['Через Lodor', 'Politics']];
+  const mapMode = `<div class="map-mode" role="group" aria-label="Карта показывает"><button type="button" aria-pressed="true">План</button><button type="button" aria-pressed="false">Факт</button></div>`;
+  const renderHeader = (el, after, active = 0) => {
+    const tabs = plans.map(([n, c], i) => {
+      const tab = `<button type="button" role="tab" class="plan-tab" aria-selected="${i === active}" data-tab="${i}">${n}<small>${c}</small></button>`;
+      return after && i === active ? `<div class="in-card">${tab}<button type="button" class="hex-button" aria-label="Удалить план «${n}»" title="Удалить план «${n}»">${icon('remove')}</button></div>` : tab;
+    }).join('');
+    const rounds = [1, 2].map(r => `<button type="button" aria-pressed="${r === 2}" aria-label="Раунд ${r}">${r}</button>`).join('');
+    el.innerHTML = `<div class="plan-top">
+      <div class="plan-tabs" role="tablist" aria-label="Планы">${tabs}
+        <button type="button" class="plan-copy">Копия</button>
+        ${after ? '' : '<button type="button" class="plan-copy plan-delete">Удалить план</button>'}
+      </div>
+      <div class="plan-rounds-group">
+        <div class="plan-rounds" role="group" aria-label="Раунды">${rounds}<button type="button" aria-label="Добавить раунд">+</button>${after ? '' : '<button type="button" aria-label="Удалить раунд 2" title="Удалить раунд 2">−</button>'}</div>
+        ${after ? `<button type="button" class="hex-button" aria-label="Удалить раунд 2" title="Удалить раунд 2">${icon('remove')}</button>` : ''}
+        ${mapMode}
+      </div>
+      <button type="button" class="plan-undo">Отменить</button>
+    </div>${summary}`;
+    if (after) el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => renderHeader(el, true, Number(b.dataset.tab))));
+  };
+  renderHeader(document.querySelector('[data-header="now"]'), false);
+  renderHeader(document.querySelector('[data-header="after"]'), true);
+
+  // Pictures and icons.
+  document.querySelectorAll('[data-u]').forEach(el => {
+    el.insertAdjacentHTML('afterbegin', tokenSvg(el.dataset.u, 32));
+    el.title = NAMES[el.dataset.u] ?? '';
+  });
+  document.querySelectorAll('svg[data-i]').forEach(svg => { svg.outerHTML = icon(svg.dataset.i); });
+
+  // Today's menu: the list opens inside the pinned footer.
+  document.querySelectorAll('[data-toggle]').forEach(button => {
+    const list = document.getElementById(button.dataset.toggle);
+    button.addEventListener('click', () => {
+      const open = list.hidden;
+      list.hidden = !open;
+      button.setAttribute('aria-expanded', String(open));
+    });
+  });
+
+  // Popovers: open from a button, close by the cross, a choice inside or a press outside.
+  const popovers = [];
+  document.querySelectorAll('[data-pop]').forEach(button => {
+    const pop = document.getElementById(button.dataset.pop);
+    const set = open => { pop.hidden = !open; button.setAttribute('aria-expanded', String(open)); };
+    popovers.push({ button, pop, set });
+    button.addEventListener('click', () => set(pop.hidden));
+    pop.querySelectorAll('.card-list button').forEach(b => b.addEventListener('click', () => set(false)));
+    document.querySelector(`[data-close="${pop.id}"]`)?.addEventListener('click', () => set(false));
+  });
+  document.addEventListener('pointerdown', e => {
+    popovers.forEach(({ button, pop, set }) => { if (!pop.hidden && !pop.contains(e.target) && !button.contains(e.target)) set(false); });
+  });
+
+  // An editor in place of the list, and back.
+  ['status-after', 'exp-after'].forEach(id => {
+    const screen = document.getElementById(id);
+    const show = view => screen.querySelectorAll('[data-view]').forEach(el => { el.hidden = el.dataset.view !== view; });
+    screen.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => show(b.dataset.open)));
+  });
+})();
+</script>
+</body>
+</html>

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, StructureDef, StructureKind, StructureStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
@@ -59,9 +59,17 @@ const TE_RULEBOOK_HYPERLANES = ['119A', '120A', '121A', '122A', '123A', '124A'];
 /** Gate tiles stand on the map, but the home planets and starting units are on another tile. */
 const HOME_PLANET_TILE: Record<string, string> = { ghost: '51', crimson: '118' };
 const KELERES_HOME_TILE: Record<string, string> = { keleresm: '2', keleresx: '14', keleresa: '58' };
-/** Reinforcement limits stay unset: no public source confirmed them, see docs/data-verification.md. */
-const UNCONFIRMED_LIMIT = null;
-const STRUCTURES: DataPack['structures'] = [{ id: 'pds', limit: UNCONFIRMED_LIMIT }, { id: 'spacedock', limit: UNCONFIRMED_LIMIT }];
+/** Where the reinforcement limits come from: LRR 96.2 in the tirules2 copy of the Rules Reference. */
+const LIMITS_SOURCE = { source: 'https://tirules2.com/R_units', repository: 'https://github.com/dangothemango/tirules', license: 'GPL-3.0', section: 'LRR 96.2' };
+/**
+ * Figures of each unit in one colour, LRR 96.2. The 12 infantry and 10 fighter figures are no limit: tokens stand in
+ * for them (LRR 96 note 2.1), so theirs stay null.
+ */
+const UNIT_LIMITS: Record<UnitId, number | null> = {
+  carrier: 4, cruiser: 8, destroyer: 8, dreadnought: 5, warsun: 2, flagship: 1, mech: 4, infantry: null, fighter: null,
+};
+const TOKEN_UNITS = { infantry: 12, fighter: 10 };
+const STRUCTURE_LIMITS: Record<StructureKind, number> = { pds: 6, spacedock: 3 };
 const TECH_TYPES: Record<string, TechType> = { PROPULSION: 'propulsion', BIOTIC: 'biotic', CYBERNETIC: 'cybernetic', WARFARE: 'warfare' };
 const SKIPS: Record<string, NonNullable<PlanetDef['skip']>> = { UNITSKIP: 'unit', NONUNITSKIP: 'nonUnit' };
 const UNIT_NAMES: Record<UnitId, string> = {
@@ -166,7 +174,7 @@ const tileNumber = (id: string) => id.replace(/[AB]$/, '');
 // Source shapes: only the fields read here, checked against the files at COMMIT.
 interface SourceSystem {
   id: string; source: string; planets?: string[]; wormholes?: string[]; tileBack?: string;
-  isHyperlane?: boolean; isFracture?: boolean; [flag: string]: unknown;
+  isHyperlane?: boolean; isFracture?: boolean; hasEgress?: boolean; [flag: string]: unknown;
 }
 interface SourcePlanet {
   id: string; name: string; resources: number; influence: number; source: string; techSpecialties?: string[] | null;
@@ -177,15 +185,16 @@ interface SourceUnit {
   combatHitsOn?: number; moveValue?: number; baseType?: string; name?: string; faction?: string; upgradesFromUnitId?: string;
   homebrewReplacesID?: string; combatDieCount?: number; sustainDamage?: boolean; afbHitsOn?: number; afbDieCount?: number;
   bombardHitsOn?: number; bombardDieCount?: number; spaceCannonHitsOn?: number; spaceCannonDieCount?: number;
+  productionValue?: string | number; basicProduction?: string; requiredTechId?: string;
 }
 interface SourceFaction {
   alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
   abilities: string[]; startingTech?: string[]; startingTechOptions?: string[]; startingTechAmount?: number;
-  leaders?: string[]; units?: string[];
+  leaders?: string[]; units?: string[]; factionTech?: string[];
 }
 interface SourceLeader { id: string; type: string; name: string; title?: string; source: string; }
 interface SourceBreakthrough { alias: string; name: string; faction: string; source: string; }
-interface SourceTech { alias: string; name: string; types: string[]; source: string; }
+interface SourceTech { alias: string; name: string; types: string[]; source: string; requirements?: string | null; faction?: string; }
 interface SourceAbility { id: string; name: string; source: string; }
 interface SourceTemplate { alias: string; playerCount: number; templateTiles: { pos: string; staticTileId?: string }[]; }
 interface SourceCard { id: string; initiative: number; name: string; source: string; }
@@ -237,6 +246,7 @@ function buildTile(system: SourceSystem, pack: PackId): TileDef {
   };
   if (anomalies[0]) tile.anomaly = anomalies[0];
   if (anomalies[1]) tile.secondAnomaly = anomalies[1];
+  if (system.hasEgress === true) tile.egress = true;
   if (!TILE_IDS[pack].test(system.id)) throw new Error(`Tile ${system.id} is not expected in pack ${pack}`);
   return tile;
 }
@@ -286,6 +296,11 @@ export function readPlanetKind(planet: Pick<SourcePlanet, 'id' | 'planetType' | 
   return { ...(traits.length > 0 ? { traits } : {}), ...(planet.legendaryAbilityName ? { legendary: planet.legendaryAbilityName } : {}) };
 }
 
+/** A space station (Thunder's Edge): the source gives it the planet type SPACESTATION. */
+export function readStation(planet: Pick<SourcePlanet, 'planetType' | 'planetTypes'>): Pick<PlanetDef, 'station'> {
+  return [planet.planetType, ...(planet.planetTypes ?? [])].includes('SPACESTATION') ? { station: true } : {};
+}
+
 function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, TileDef>>): Record<PackId, Record<string, PlanetDef>> {
   const planets: Record<PackId, Record<string, PlanetDef>> = { base: {}, pok: {}, te: {} };
   const byId = new Map(all.map(planet => [planet.id, planet]));
@@ -294,7 +309,7 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
     if (!planet) throw new Error(`Unknown planet ${id}`);
     if (packOfSource(planet.source) !== pack) throw new Error(`Planet ${id} of source ${planet.source} is not in pack ${pack}`);
     if (id in EXCLUDED_PLANETS) throw new Error(`Excluded planet ${id} is in use`);
-    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet) };
+    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet), ...readStation(planet) };
   };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
     for (const tile of Object.values(tiles[pack])) for (const id of tile.planetIds) place(pack, id);
@@ -310,6 +325,8 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
 }
 
 const SHIP_TYPES: UnitId[] = ['flagship', 'warsun', 'dreadnought', 'carrier', 'cruiser', 'destroyer', 'fighter'];
+/** Unit types read with levels: the ships, and infantry for Infantry II. */
+const LEVEL_TYPES: UnitId[] = [...SHIP_TYPES, 'infantry'];
 /** The official units; the other files of `data/units` are homebrew, and `ds.json` marks its Ghemina carriers as `base`. */
 const SHIP_FILES = ['baseUnits', 'pok', 'te_units', 'keleres'];
 /** Beyond levels I and II, which is all the app has; anything else unexpected fails the build. */
@@ -362,7 +379,7 @@ export function selectShips(units: SourceUnit[], factionIds: string[]): ShipSele
   const excluded: ShipSelection['excluded'] = { homebrew: 0, nowarsun: 0, cavalry: 0, otherSource: 0, thirdLevel: 0 };
   const groups = new Map<string, SourceUnit[]>();
   for (const unit of units) {
-    if (!SHIP_TYPES.includes(unit.baseType as UnitId)) continue;
+    if (!LEVEL_TYPES.includes(unit.baseType as UnitId)) continue;
     if (!packOfSource(unit.source)) excluded.otherSource += 1;
     else if (unit.homebrewReplacesID) excluded.homebrew += 1;
     else if (unit.id === 'nowarsun') excluded.nowarsun += 1;
@@ -399,16 +416,43 @@ function buildUnits(root: string, ships: ShipTable): Record<PackId, Partial<Reco
     // The generic War Sun has no capacityUsed in the source; its only faction variant says 1.
     const capacityUsed = unit.capacityUsed ?? (id === 'warsun' ? find('muaat_warsun').capacityUsed : undefined);
     if (unit.cost === undefined || capacityUsed === undefined) throw new Error(`Unit ${id} lacks cost or capacityUsed`);
-    if (SHIP_TYPES.includes(id) && !ships[id]) throw new Error(`Ship type ${id} has no base entry`);
+    if (LEVEL_TYPES.includes(id) && !ships[id]) throw new Error(`Unit type ${id} has no base entry`);
     return {
       id, name: UNIT_NAMES[id], cost: unit.cost, capacity: unit.capacityValue ?? 0, capacityUsed,
       ground: unit.isGroundForce === true, fighter: id === 'fighter',
-      combat: unit.combatHitsOn ?? null, move: unit.moveValue ?? null, limit: UNCONFIRMED_LIMIT,
+      combat: unit.combatHitsOn ?? null, move: unit.moveValue ?? null, limit: UNIT_LIMITS[id],
       ...(ships[id] ? { levels: ships[id] } : {}),
     };
   };
   const base = ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry'] as UnitId[];
   return { base: Object.fromEntries(base.map(id => [id, make(id)])), pok: { mech: make('mech') }, te: {} };
+}
+
+/** "+2" with basicProduction "res": the planet's resources plus 2. Anything else fails the build. */
+export function readDockProduction(unit: Pick<SourceUnit, 'id' | 'productionValue' | 'basicProduction'>): number {
+  const match = typeof unit.productionValue === 'string' ? unit.productionValue.match(/^\+(\d+)$/) : null;
+  if (!match || unit.basicProduction !== 'res') throw new Error(`Space dock ${unit.id} has no production of resources plus a number`);
+  return Number(match[1]);
+}
+
+function readStructure(unit: SourceUnit): StructureStats {
+  if (!unit.name) throw new Error(`Structure ${unit.id} lacks a name`);
+  const cannon = readRoll(unit.spaceCannonHitsOn, unit.spaceCannonDieCount);
+  return {
+    id: unit.id, name: unit.name.trim(),
+    ...(unit.baseType === 'spacedock' ? { production: readDockProduction(unit) } : {}),
+    ...(cannon ? { cannon } : {}),
+  };
+}
+
+/** The common PDS and space dock at both levels; faction structures (Hel-Titan, Floating Factory, Dimensional Tear) are not read. */
+export function buildStructures(units: SourceUnit[]): StructureDef[] {
+  return (['pds', 'spacedock'] as StructureKind[]).map(id => {
+    const one = units.find(unit => unit.id === id && !unit.faction);
+    const two = units.find(unit => unit.upgradesFromUnitId === id && !unit.faction);
+    if (!one || !two) throw new Error(`Structure ${id} lacks a level in the source`);
+    return { id, limit: STRUCTURE_LIMITS[id], levels: { one: readStructure(one), two: readStructure(two) } };
+  });
 }
 
 /**
@@ -430,6 +474,40 @@ export function readTech(tech: SourceTech): TechDef {
   return { id: tech.alias, name: tech.name, type };
 }
 
+/** Letters of the source's `requirements`: "GG" is two biotic. */
+const PREREQUISITES: Record<string, TechType> = { B: 'propulsion', G: 'biotic', Y: 'cybernetic', R: 'warfare' };
+
+/** Prerequisites per colour. No field, or the text "null" (a card that cannot be researched), means none; another letter fails the build. */
+export function readPrerequisites(tech: Pick<SourceTech, 'alias' | 'requirements'>): Partial<Record<TechType, number>> {
+  const counts: Partial<Record<TechType, number>> = {};
+  if (!tech.requirements || tech.requirements === 'null') return counts;
+  for (const letter of tech.requirements) {
+    const type = PREREQUISITES[letter];
+    if (!type) throw new Error(`Technology ${tech.alias} has unknown prerequisite ${letter}`);
+    counts[type] = (counts[type] ?? 0) + 1;
+  }
+  return counts;
+}
+
+const UPGRADE_KINDS: (UnitId | StructureKind)[] = [...LEVEL_TYPES, 'pds', 'spacedock'];
+
+/**
+ * A faction technology: a colour, or a unit upgrade (`UNITUPGRADE`), or none (`NONE`, the Valefar Assimilators); its
+ * prerequisites. What a unit upgrade upgrades is the unit whose `requiredTechId` names it. No card text is read.
+ */
+export function readFactionTech(tech: SourceTech, upgradedBy: Map<string, string>): TechDef {
+  if (tech.types.length !== 1) throw new Error(`Technology ${tech.alias} has ${tech.types.length} types`);
+  const counts = readPrerequisites(tech);
+  const requires = Object.keys(counts).length > 0 ? { requires: counts } : {};
+  if (tech.types[0] === 'UNITUPGRADE') {
+    const upgrade = upgradedBy.get(tech.alias) as UnitId | StructureKind | undefined;
+    if (!upgrade || !UPGRADE_KINDS.includes(upgrade)) throw new Error(`Unit upgrade ${tech.alias} upgrades no known unit (${upgrade})`);
+    return { id: tech.alias, name: tech.name, type: null, ...requires, upgrade };
+  }
+  if (tech.types[0] === 'NONE') return { id: tech.alias, name: tech.name, type: null, ...requires };
+  return { ...readTech(tech), ...requires };
+}
+
 const LEADER_TYPES: Record<string, LeaderType> = { agent: 'agent', commander: 'commander', hero: 'hero' };
 /** Files of the official leaders; the others of `data/leaders` are homebrew. */
 const LEADER_FILES = ['pok', 'te_leaders', 'other', 'generic'];
@@ -438,7 +516,14 @@ const BREAKTHROUGH_FILE = 'data/breakthroughs/te_breakthroughs.json';
 const JOLNAR_OLD_COMMANDER = { id: 'jolnarcommander-pok', type: 'commander' as const, name: 'Ta Zern', pack: 'pok' as const };
 const REPLACED_BY_TE: Record<string, string> = {
   jolnarcommander: JOLNAR_OLD_COMMANDER.id, 'xxchahero-te': 'xxchahero', 'naaluagent-te': 'naaluagent', naalu_mech_te: 'naalu_mech_omega',
+  executiveorder: 'iihq',
 };
+/**
+ * Executive Order is filed under `keleres` as a Thunder's Edge technology, but no faction entry lists it. The rulebook gives
+ * Keleres two faction technologies, and the source's Thunder's Edge breakthrough of Keleres is named I.I.H.Q. Modernization,
+ * so Executive Order takes the place of that technology: an inference recorded in docs/data-verification.md.
+ */
+const EXTRA_FACTION_TECH: Record<string, string[]> = { keleresa: ['executiveorder'], keleresm: ['executiveorder'], keleresx: ['executiveorder'] };
 /** Leaders and mechs a faction's source entry no longer lists: the printed cards of an earlier expansion, and Eidolon Maximum of the Naaz-Rokha. */
 const EXTRA_LEADERS: Record<string, string[]> = { naalu: ['naaluagent'], xxcha: ['xxchahero-te'] };
 const EXTRA_MECHS: Record<string, string[]> = { naalu: ['naalu_mech_omega'], naaz: ['naaz_voltron'] };
@@ -451,7 +536,8 @@ const componentPack = (source: string, what: string): ComponentPack => {
 
 /** Names, origins and numbers only: the card text is retold in `sheetSummaries`. */
 export function buildSheet(
-  faction: Pick<SourceFaction, 'alias' | 'abilities' | 'leaders' | 'units'>, abilities: Map<string, SourceAbility>, leaders: Map<string, SourceLeader>, units: Map<string, SourceUnit>, breakthrough?: SourceBreakthrough,
+  faction: Pick<SourceFaction, 'alias' | 'abilities' | 'leaders' | 'units' | 'factionTech'>, abilities: Map<string, SourceAbility>, leaders: Map<string, SourceLeader>, units: Map<string, SourceUnit>, breakthrough?: SourceBreakthrough,
+  technologies: Map<string, SourceTech> = new Map(),
 ): FactionSheet {
   const owner = faction.alias;
   const replaces = (id: string) => (REPLACED_BY_TE[id] ? { replaces: REPLACED_BY_TE[id] } : {});
@@ -480,6 +566,11 @@ export function buildSheet(
         id, name: unit.name?.trim() ?? id, pack: componentPack(unit.source, id), cost: unit.cost ?? null, combat: unit.combatHitsOn ?? null,
         dice: unit.combatDieCount ?? 1, ...(unit.sustainDamage ? { sustain: true as const } : {}), ...replaces(id),
       };
+    }),
+    techs: [...new Set([...(faction.factionTech ?? []), ...(EXTRA_FACTION_TECH[owner] ?? [])])].map(id => {
+      const found = technologies.get(id);
+      if (!found) throw new Error(`Faction ${owner} has unknown faction technology ${id}`);
+      return { id, name: found.name, pack: componentPack(found.source, id), ...replaces(id) };
     }),
     ...(breakthrough ? { breakthrough: { id: breakthrough.alias, name: breakthrough.name, pack: componentPack(breakthrough.source, breakthrough.alias) } } : {}),
   };
@@ -520,8 +611,43 @@ const MILTY_HOMES: Record<number, string[]> = {
   4: ['0,-3', '3,-3', '0,3', '-3,3'],
   5: ['0,-3', '3,-3', '3,0', '-3,3', '-3,0'],
   6: ['0,-3', '3,-3', '3,0', '0,3', '-3,3', '-3,0'],
-  7: ['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1'],
-  8: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'],
+};
+
+/**
+ * Map layouts of the Prophecy of Kings rulebook (the official PDF from the FFG product page), copied by hand from its
+ * diagrams as facts: page 9, «Game Board Setup for 5, 7, or 8 players» (seven players: four rings with the five-player
+ * hyperlane formation one ring further out; eight players: four rings, no hyperlanes), and page 12, «Map Appendix»
+ * (alternate hyperlanes for seven and eight players with their own ring shapes; the Large Galaxy for six players, four
+ * rings). The diagrams use the app's flat-top grid unturned: the five-player diagram matches the source's 5pHyperlanes.
+ * Slots are `q,r` keys; homes go seat 1 at the top, then clockwise. A lane is `<side>@<turns>` as the pack writes it; the
+ * drawn lines fix the turn. Twin sides draw the same lines up to a turn (83B, 85B, 88B; 84B, 86B; 87A, 88A; 89B, 90B), so
+ * the diagram fixes only the shape in each slot, and the ids of a shape follow the order of the rulebook's list.
+ * Checked against the diagrams in docs/phase2/after (rulebook-*.png beside layout-*.png).
+ */
+const RULEBOOK_LAYOUTS = {
+  /** Page 12, «Six-Player Large Galaxy Setup»: all four rings. */
+  large6: { homes: ['0,-4', '4,-4', '4,0', '0,4', '-4,4', '-4,0'] },
+  /** Page 9, «Seven-Player Setup»: all four rings; the formation 83A to 88A sits one ring further out than for five players. */
+  hyperlanes7: {
+    homes: ['0,-4', '3,-4', '4,-2', '3,1', '-3,4', '-4,2', '-3,-1'],
+    lanes: { '0,2': '86A@0', '1,2': '88A@0', '-1,3': '87A@0', '1,3': '83A@0', '0,4': '85A@0', '-1,4': '84A@0' },
+  },
+  /** Page 12, «Seven-Player Alternate Hyperlanes Setup»: 49 slots, the centre included. */
+  alternate7: {
+    slots: '0,-4 1,-4 -1,-3 0,-3 1,-3 -2,-2 -1,-2 0,-2 1,-2 2,-2 3,-3 -3,-1 -2,-1 -1,-1 0,-1 1,-1 2,-3 2,-1 3,-2 3,-1 '
+      + '-4,1 -4,2 -3,0 -3,1 -3,2 -3,3 -3,4 -2,0 -2,1 -2,2 -2,3 -2,4 -1,0 -1,1 -1,2 -1,3 -1,4 0,1 0,2 0,3 0,4 1,0 1,1 1,2 1,3 2,0 2,1 3,0',
+    homes: ['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1'],
+    lanes: { '1,-3': '83B@0', '0,-1': '85B@0', '-3,1': '88B@5', '0,1': '84B@0', '1,2': '86B@0', '-1,1': '90B@0' },
+  },
+  /** Page 9, «Eight-Player Setup»: all four rings, no hyperlanes. */
+  standard8: { homes: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'] },
+  /** Page 12, «Eight-Player Alternate Hyperlanes Setup»: 55 slots, the centre included. */
+  alternate8: {
+    slots: '0,-4 1,-4 2,-4 3,-4 -1,-3 0,-3 1,-3 2,-3 3,-3 -2,-2 -1,-2 0,-2 1,-2 2,-2 3,-2 4,-2 -3,-1 -2,-1 -1,-1 0,-1 1,-1 2,-1 4,-1 '
+      + '-4,1 -4,2 -3,0 -3,1 -3,2 -3,3 -3,4 -2,0 -2,1 -2,2 -2,3 -2,4 -1,0 -1,1 -1,2 -1,3 -1,4 0,1 0,2 0,3 0,4 1,0 1,1 1,2 1,3 2,0 2,1 2,2 3,-1 3,0 3,1',
+    homes: ['0,-4', '3,-4', '4,-2', '3,1', '0,4', '-3,4', '-4,2', '-3,-1'],
+    lanes: { '0,-1': '87A@1', '0,1': '88A@2', '-1,1': '89B@0', '1,-1': '90B@3', '-3,1': '83B@5', '3,-1': '85B@5' },
+  },
 };
 
 /**
@@ -553,21 +679,46 @@ function buildTemplate(source: SourceTemplate, playerCount: number, keepHyperlan
   return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
 }
 
-/** The full hexagon of the given radius, Mecatol Rex in the center; `lanes` are fixed tiles by slot key. */
-function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lanes: Record<string, string> = {}): MapTemplate {
-  const slots: MapTemplate['slots'] = [{ q: 0, r: 0, fixed: MECATOL_REX }];
+/** Slot keys of rings 1 to `rings`, each from the top clockwise as the source numbers them. */
+function ringKeys(rings: number): string[] {
+  const keys: string[] = [];
   for (let ring = 1; ring <= rings; ring++) {
     for (let index = 1; index <= ring * 6; index++) {
       const { q, r } = positionToAxial(`${ring}${String(index).padStart(2, '0')}`);
-      const fixed = lanes[`${q},${r}`];
-      slots.push(fixed ? { q, r, fixed } : { q, r });
+      keys.push(`${q},${r}`);
     }
   }
-  return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
+  return keys;
 }
 
-/** Per pack, the technologies its factions name. A pack holds its own copy, so it works without the others. */
-function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<string, FactionDef>>): Record<PackId, Record<string, TechDef>> {
+/** The full hexagon of the given radius, Mecatol Rex in the center; `lanes` are fixed tiles by slot key. */
+function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lanes: Record<string, string> = {}, homes = MILTY_HOMES[playerCount]): MapTemplate {
+  return slotTemplate(playerCount, layout, ringKeys(rings), lanes, homes);
+}
+
+/** A template of the given slots, Mecatol Rex in the center first; `lanes` are fixed tiles by slot key. */
+function slotTemplate(playerCount: number, layout: MapLayout, keys: string[], lanes: Record<string, string>, homes: string[]): MapTemplate {
+  const offSlots = Object.keys(lanes).filter(key => !keys.includes(key));
+  if (offSlots.length > 0) throw new Error(`Template of ${playerCount} players (${layout}) has lanes off its slots: ${offSlots.join(' ')}`);
+  const slots: MapTemplate['slots'] = [{ q: 0, r: 0, fixed: MECATOL_REX }];
+  for (const key of keys) {
+    const [q, r] = key.split(',').map(Number);
+    const fixed = lanes[key];
+    slots.push(fixed ? { q, r, fixed } : { q, r });
+  }
+  return { playerCount, layout, homes, slots };
+}
+
+/** The slot keys of a diagram's list in ring order, from the top of each ring clockwise. */
+function inRingOrder(list: string): string[] {
+  const listed = new Set(list.split(/\s+/));
+  const keys = ringKeys(4).filter(key => listed.has(key));
+  if (keys.length !== listed.size) throw new Error(`Slots beyond four rings in "${list}"`);
+  return keys;
+}
+
+/** Per pack, the technologies its factions name, their faction technologies too. A pack holds its own copy, so it works without the others. */
+function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<string, FactionDef>>, upgradedBy: Map<string, string>): Record<PackId, Record<string, TechDef>> {
   const known = new Map(all.filter(tech => packOfSource(tech.source)).map(tech => [tech.alias, tech]));
   const result: Record<PackId, Record<string, TechDef>> = { base: {}, pok: {}, te: {} };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
@@ -577,6 +728,7 @@ function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<st
         if (!tech) throw new Error(`Faction ${faction.id} names unknown technology ${id}`);
         result[pack][id] = readTech(tech);
       }
+      for (const { id } of faction.sheet?.techs ?? []) result[pack][id] = readFactionTech(known.get(id)!, upgradedBy);
     }
   }
   return result;
@@ -603,9 +755,12 @@ function buildTemplates(root: string): Record<PackId, MapTemplate[]> {
       ringTemplate(3, 3, 'hyperlanes', MILTY_LANES[3]),
       ringTemplate(4, 3, 'hyperlanes', MILTY_LANES[4]),
       buildTemplate(read('standardMiltyLayouts', '5pHyperlanes'), 5, true, 'hyperlanes'),
-      // Standard PoK setups fill four rings. Hyperlane places are only on a rulebook diagram, so they stay manual.
-      ringTemplate(7, 4, 'standard'),
-      ringTemplate(8, 4, 'standard'),
+      // The rest are the rulebook's diagrams, see RULEBOOK_LAYOUTS.
+      ringTemplate(6, 4, 'large', {}, RULEBOOK_LAYOUTS.large6.homes),
+      ringTemplate(7, 4, 'hyperlanes', RULEBOOK_LAYOUTS.hyperlanes7.lanes, RULEBOOK_LAYOUTS.hyperlanes7.homes),
+      slotTemplate(7, 'alternate', inRingOrder(RULEBOOK_LAYOUTS.alternate7.slots), RULEBOOK_LAYOUTS.alternate7.lanes, RULEBOOK_LAYOUTS.alternate7.homes),
+      ringTemplate(8, 4, 'standard', {}, RULEBOOK_LAYOUTS.standard8.homes),
+      slotTemplate(8, 'alternate', inRingOrder(RULEBOOK_LAYOUTS.alternate8.slots), RULEBOOK_LAYOUTS.alternate8.lanes, RULEBOOK_LAYOUTS.alternate8.homes),
     ],
     te: [],
   };
@@ -646,6 +801,10 @@ function assertSchema(pack: DataPack, name: string): void {
     if (!Array.isArray(faction.startingTech) || !Array.isArray(faction.abilities)) throw new Error(`${name}: bad faction ${faction.id}`);
     for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) {
       if (!pack.technologies[id]) throw new Error(`${name}: faction ${faction.id} names unknown technology ${id}`);
+    }
+    if (!faction.sheet?.techs.length) throw new Error(`${name}: faction ${faction.id} has no faction technologies`);
+    for (const { id } of faction.sheet.techs) {
+      if (!pack.technologies[id]) throw new Error(`${name}: faction ${faction.id} names unknown faction technology ${id}`);
     }
   }
   for (const template of pack.templates) {
@@ -688,18 +847,23 @@ async function main(): Promise<void> {
   const officialLeaders = new Map(LEADER_FILES.flatMap(file => readJson<SourceLeader[]>(root, `data/leaders/${file}.json`)).map(l => [l.id, l]));
   const unitsById = new Map(unitSource.map(unit => [unit.id, unit]));
   const breakthroughs = readJson<SourceBreakthrough[]>(root, BREAKTHROUGH_FILE);
+  const techSource = readDir<SourceTech[]>(root, 'data/technologies').flat();
+  const officialTechs = new Map(techSource.filter(tech => packOfSource(tech.source)).map(tech => [tech.alias, tech]));
+  const upgradedBy = new Map(unitSource.filter(unit => unit.requiredTechId && unit.baseType && packOfSource(unit.source))
+    .map(unit => [unit.requiredTechId!, unit.baseType!]));
   for (const pack of Object.values(factions)) {
     for (const faction of Object.values(pack)) {
       const source = factionSource.find(f => f.alias === faction.id && packOfSource(f.source));
       if (!source) throw new Error(`Faction ${faction.id} has no source entry`);
       const owner = faction.id.startsWith('keleres') ? 'keleres' : faction.id;
-      faction.sheet = buildSheet(source, officialAbilities, officialLeaders, unitsById, breakthroughs.find(b => b.faction === owner));
+      faction.sheet = buildSheet(source, officialAbilities, officialLeaders, unitsById, breakthroughs.find(b => b.faction === owner), officialTechs);
     }
   }
   for (const pack of Object.values(factions)) for (const faction of Object.values(pack)) faction.ships = ships.factions[faction.id];
   const units = buildUnits(root, ships.generic);
+  const structures = buildStructures(readJson<SourceUnit[]>(root, 'data/units/baseUnits.json'));
   console.log('Ships excluded:', ships.excluded);
-  const technologies = buildTechnologies(readDir<SourceTech[]>(root, 'data/technologies').flat(), factions);
+  const technologies = buildTechnologies(techSource, factions, upgradedBy);
   const templates = buildTemplates(root);
   const cards = buildCards(root);
 
@@ -721,7 +885,7 @@ async function main(): Promise<void> {
     const pack = {
       version: DATA_VERSION, tiles: tiles[name], planets: planets[name], units: units[name],
       factions: factions[name], templates: templates[name], technologies: technologies[name],
-      structures: name === 'base' ? STRUCTURES : [],
+      structures: name === 'base' ? structures : [],
     };
     assertSchema(pack, name);
     writeFileSync(join(outDir, `${name}.json`), `${JSON.stringify(pack, null, 2)}\n`);
@@ -737,8 +901,27 @@ async function main(): Promise<void> {
     excludedSystems: EXCLUDED_SYSTEMS,
     excludedPlanets: EXCLUDED_PLANETS,
     notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, leaders: [JOLNAR_OLD_COMMANDER.name], reason: "Thunder's Edge rulebook; absent from the source at this commit" },
+    factionTechnologies: {
+      fields: 'data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades. Card text is not read.',
+      added: EXTRA_FACTION_TECH.keleresm,
+      replaces: { executiveorder: REPLACED_BY_TE.executiveorder },
+      reason: "Executive Order is filed under keleres with source thunders_edge but listed on no faction; the Thunder's Edge rulebook gives Keleres two faction technologies and the source names the Keleres breakthrough I.I.H.Q. Modernization, so it is taken to replace that technology (inference, not confirmed by a rulebook line).",
+    },
     corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
-    unconfirmed: { unitLimits: 'Reinforcement limits are null: no public source confirmed them.' },
+    mapLayouts: {
+      source: 'Prophecy of Kings rulebook, official PDF from the FFG product page (ti10_rulebook_web-good.pdf)',
+      pages: { 9: 'Game Board Setup for 5, 7, or 8 players; Hyperlane Setup', 12: 'Map Appendix: Alternate Hyperlanes, Large Galaxy' },
+      fromDiagrams: RULEBOOK_LAYOUTS,
+      fromSource: 'Three to six players and the five-player hyperlanes: data/map_templates (6pStandard, 3pInPersonHyperlanes, 5pHyperlanes); homes of three to six players and the three- and four-player hyperlanes: Milty Draft (MILTY_HOMES, MILTY_LANES).',
+      reason: 'The source has no rulebook map for seven or eight players or for the Large Galaxy (its 7pHyperlanes and 8pHyperlanes are Milty Draft maps): slots, homes and lanes were copied by hand from the diagrams, twin sides assigned in the order of the rulebook list.',
+    },
+    reinforcements: {
+      ...LIMITS_SOURCE,
+      units: UNIT_LIMITS,
+      structures: STRUCTURE_LIMITS,
+      tokenUnits: { figures: TOKEN_UNITS, reason: 'Fighters and infantry are not limited by their figures: tokens stand in for them (LRR 96 note 2.1), so their limit is null.' },
+    },
+    production: { spacedock: "Production of a space dock is the planet's resources plus the number in its levels: source productionValue, LRR 79.1." },
     verification: 'docs/data-verification.md',
   }, null, 2)}\n`);
   console.log(`Built data ${DATA_VERSION}`);

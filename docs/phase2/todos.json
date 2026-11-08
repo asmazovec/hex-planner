@@ -1,0 +1,571 @@
+{
+  "workstreams": [
+    {
+      "id": "rule-engine",
+      "title": "Нарушения правил как отдельный канал",
+      "after": [],
+      "goal": "Тип нарушения с номером правила, шагом действия и местом возникновения; реестр проверок по шагам; контрактные тесты: у каждого правила есть тест, у каждого шага есть место показа, UI не создаёт нарушений.",
+      "owns": [
+        "src/domain/types.ts (Warning)",
+        "src/domain/rules/registry.ts (new)",
+        "src/domain/rules/contract.test.ts (new)"
+      ]
+    },
+    {
+      "id": "replay-steps",
+      "title": "Повтор плана по шагам правил",
+      "after": [
+        "rule-engine"
+      ],
+      "goal": "replay разложен на фазы раунда и шаги тактического действия (89.1-89.5) и карт; каждый шаг: проверки над состоянием до шага, затем чистый эффект. Фаза статуса применяется в своей фазе.",
+      "owns": [
+        "src/domain/project.ts (replay, applyEntry, applyTactical)"
+      ]
+    },
+    {
+      "id": "domain-purity",
+      "title": "Чистота домена",
+      "after": [],
+      "goal": "Домен без случайностей и часов, без геометрии отрисовки, без импорта из UI и без цикла с data.",
+      "owns": [
+        "src/domain/newGame.ts",
+        "src/domain/route.ts",
+        "src/domain/cards.ts",
+        "src/domain/mapString.test.ts"
+      ]
+    },
+    {
+      "id": "data",
+      "title": "Игровые данные",
+      "after": [],
+      "goal": "В пакетах есть то, что требуют правила: состав набора (96.2), Production базы, уровни Infantry II, War Sun, PDS II, Space Dock II, выходы Излома; с указанием источника.",
+      "owns": [
+        "scripts/build-data.ts",
+        "src/data/packs/*.json",
+        "src/data/provenance.json"
+      ]
+    },
+    {
+      "id": "command-tokens",
+      "title": "Жетоны приказа и активация",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Активация (89.1), тактический резерв (20.4), 16 жетонов (20.3), жетон в систему со своим жетоном (20.6), сжатие резерва флота (37.3, 81.5.1).",
+      "owns": [
+        "src/domain/project.ts (activation, statusTokens)"
+      ]
+    },
+    {
+      "id": "movement",
+      "title": "Движение и маршруты",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Граф маршрутов в своём модуле; проверка всего пути, а не только отмеченных точек; разлом +1 за каждый; дом вне карты (Creuss); гиперпуть не система; подсветка возврата в активную систему.",
+      "owns": [
+        "src/domain/movement.ts (new, from project.ts)",
+        "src/domain/route.ts (graph part)"
+      ]
+    },
+    {
+      "id": "transport",
+      "title": "Перевозка и подбор",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Подбор только из старта, пути и активной системы, не из системы со своим жетоном (95.1, 95.3); брошенные без мест на борту юниты в системах, откуда улетели (16.3, 43.1, 95 примечание 4).",
+      "owns": [
+        "src/domain/transport.ts (new)",
+        "src/ui/plan/UnitPicker.tsx (offer)"
+      ]
+    },
+    {
+      "id": "combat-order",
+      "title": "Порядок проверок вокруг боя",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Флот проверяется при прилёте, до боя (37.3); высадка не больше мест на борту после боя (16.3.3); возврат ошибочной потери возвращает высадку.",
+      "owns": [
+        "src/domain/project.ts (landAndBuild order)",
+        "src/ui/plan/tactical.ts (withLoss)"
+      ]
+    },
+    {
+      "id": "invasion",
+      "title": "Вторжение и контроль",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Контроль только при выживших войсках (49.5), у меня и у соперника; высадка только наземных войск и только в активной системе; планета, взятая у соперника, уходит из его счёта.",
+      "owns": [
+        "src/domain/project.ts (landUnits, rival landings)"
+      ]
+    },
+    {
+      "id": "structures",
+      "title": "Строения и их владельцы",
+      "after": [
+        "replay-steps",
+        "data"
+      ],
+      "goal": "У базы и PDS есть владелец; они уничтожаются при захвате планеты (49.5.1, 63.4, 79.4); лимиты на планете (85.4-85.6).",
+      "owns": [
+        "src/domain/types.ts (docks, pds)",
+        "src/storage/schema.ts (migration)"
+      ]
+    },
+    {
+      "id": "production",
+      "title": "Производство",
+      "after": [
+        "replay-steps",
+        "data"
+      ],
+      "goal": "Место производства (68.3, 67.4.1); блокада и чужие корабли (14.1, 67.6); нет базы как нарушение домена; лимит Production (68.1); запас отрядов (67.5).",
+      "owns": [
+        "src/domain/production.ts (new, from project.ts)"
+      ]
+    },
+    {
+      "id": "payment",
+      "title": "Оплата",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Оплата и подготовка только своими планетами (34 примечание 2, 64 примечание 5, 71 примечание 3).",
+      "owns": [
+        "src/domain/payment.ts",
+        "src/domain/project.ts (pay)"
+      ]
+    },
+    {
+      "id": "strategy-cards",
+      "title": "Карты стратегии",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Обработчик на каждую карту вместо цепочки if; кто какое свойство какой карты может применить (83.3, 83.4, 82); forToken выводится из карт раунда; Imperial, Warfare, Trade, Diplomacy, Construction, Technology по правилам.",
+      "owns": [
+        "src/domain/strategy.ts",
+        "src/domain/cards/*.ts (new)",
+        "src/ui/plan/StrategyEditor.tsx (logic only)"
+      ]
+    },
+    {
+      "id": "round-flow",
+      "title": "Ход раунда",
+      "after": [
+        "replay-steps"
+      ],
+      "goal": "Пас и действия после паса (3.3, 3.4, 82.2); действие не в своей фазе (40.2).",
+      "owns": [
+        "src/domain/round.ts (new)"
+      ]
+    },
+    {
+      "id": "rivals",
+      "title": "Соперники в общей картине",
+      "after": [
+        "replay-steps",
+        "movement"
+      ],
+      "goal": "Маршруты и блокировки видят действия соперников по плану; взгляд соперника видит мои корабли; списки выбора на картах соперника верны.",
+      "owns": [
+        "src/domain/players.ts (gameAs)",
+        "src/domain/project.ts (rival replay)"
+      ]
+    },
+    {
+      "id": "thunders-edge",
+      "title": "Thunder's Edge",
+      "after": [
+        "replay-steps",
+        "data"
+      ],
+      "goal": "Экспедиция (часть технологий, повтор, одна за ход), энтропийный шрам, станции, входы и выходы Излома.",
+      "owns": [
+        "src/domain/thundersEdge.ts",
+        "src/domain/payment.ts (EXPEDITION_SLICES)"
+      ]
+    },
+    {
+      "id": "ui-logic-to-domain",
+      "title": "Логика из UI в домен",
+      "after": [
+        "rule-engine"
+      ],
+      "goal": "Правила, посчитанные в UI, живут в домене: tactical.ts, цели карт, доступные к подбору, перегруз, нет базы, перераспределение жетонов, стеки тайла.",
+      "owns": [
+        "src/ui/plan/tactical.ts → src/domain/tactical.ts",
+        "src/ui/screens/PlanScreen.tsx (highlight logic)"
+      ]
+    },
+    {
+      "id": "ui-warnings",
+      "title": "Показ нарушений",
+      "after": [
+        "rule-engine"
+      ],
+      "goal": "Все нарушения показывает WarningList; раскладка по шагу и месту из домена, не по коду; остаток вверху редактора.",
+      "owns": [
+        "src/ui/plan/WarningText.tsx",
+        "src/ui/plan/warningPlaces.ts"
+      ]
+    },
+    {
+      "id": "ui-structure",
+      "title": "Каталоги UI",
+      "after": [],
+      "goal": "Однородные элементы в тематических каталогах (primitives, feedback, overlays, drawers, plan/editors, plan/blocks); общие примитивы не в фичевых папках.",
+      "owns": [
+        "src/ui/** (moves only)"
+      ]
+    },
+    {
+      "id": "ui-containers",
+      "title": "Контейнеры визуального языка",
+      "after": [
+        "ui-structure"
+      ],
+      "goal": "Section, SectionTitle, PlayerDot, PlayerChoice, UnitTile, ConfirmBar, Modal, DrawerSheet, Popover, MapPickButton вместо ручных сборок.",
+      "owns": [
+        "src/ui/primitives/*",
+        "src/ui/overlays/*"
+      ]
+    },
+    {
+      "id": "ui-css",
+      "title": "Тема",
+      "after": [],
+      "goal": "Цвета только переменными, без дублей селекторов и мёртвых правил; общие утилиты.",
+      "owns": [
+        "src/ui/theme.css"
+      ]
+    },
+    {
+      "id": "ui-nesting",
+      "title": "Вложенность экранов (нужен прототип)",
+      "after": [
+        "ui-containers"
+      ],
+      "goal": "Не больше трёх уровней: шаги, отдельное меню, модал или шторка там, где глубже. Каждое изменение раскладки сначала прототипом на утверждение.",
+      "owns": [
+        "src/ui/plan/*Editor.tsx",
+        "src/ui/map/HexStage.tsx",
+        "src/ui/plan/EntryList.tsx"
+      ]
+    },
+    {
+      "id": "ui-plan-screen",
+      "title": "Экран плана",
+      "after": [
+        "ui-logic-to-domain"
+      ],
+      "goal": "Один автомат выбора на карте вместо 13 состояний; подсветка и перелёт в отдельных хуках.",
+      "owns": [
+        "src/ui/screens/PlanScreen.tsx"
+      ]
+    },
+    {
+      "id": "vocab",
+      "title": "Термины игры",
+      "after": [],
+      "goal": "npm run lint:terms без ошибок и предупреждений: термины Rules Reference и Hobby World, названия по-английски.",
+      "owns": [
+        "src/i18n/*.json",
+        "comments"
+      ]
+    },
+    {
+      "id": "docs",
+      "title": "Документация",
+      "after": [],
+      "goal": "CLAUDE.md не противоречит правилам (разлом, forToken) и описывает новый канал нарушений.",
+      "owns": [
+        "CLAUDE.md"
+      ]
+    }
+  ],
+  "waves": {
+    "rule-engine": 0,
+    "replay-steps": 1,
+    "domain-purity": 0,
+    "data": 0,
+    "command-tokens": 2,
+    "movement": 2,
+    "transport": 2,
+    "combat-order": 2,
+    "invasion": 2,
+    "structures": 2,
+    "production": 2,
+    "payment": 2,
+    "strategy-cards": 2,
+    "round-flow": 2,
+    "rivals": 3,
+    "thunders-edge": 2,
+    "ui-logic-to-domain": 1,
+    "ui-warnings": 1,
+    "ui-structure": 0,
+    "ui-containers": 1,
+    "ui-css": 0,
+    "ui-nesting": 2,
+    "ui-plan-screen": 2,
+    "vocab": 0,
+    "docs": 0
+  },
+  "todos": [
+    {
+      "id": "P2-011",
+      "num": 11,
+      "file": "src/domain/route.ts",
+      "line": 26,
+      "ws": "movement",
+      "type": "bug",
+      "layer": "domain",
+      "rules": [
+        "6-note-2"
+      ],
+      "tests": [
+        "006-adjacency"
+      ],
+      "deps": [
+        "P2-010"
+      ],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "Creuss"
+      ],
+      "text": "Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity — P2 note: after P2-010 the off-map home is a node of the route graph, so no real system key reaches this fallback; Infinity breaks about 20 unit and screen tests whose fixtures use letter slot keys ('A', 'B', 'H') one step apart, so the fallback stays until those fixtures move to q,r keys"
+    },
+    {
+      "id": "P2-210",
+      "num": 210,
+      "file": "src/ui/map/stage/useStage.ts",
+      "line": 235,
+      "ws": "ui-warnings",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [],
+      "size": "m",
+      "tags": [
+        "warning-channel",
+        "duplicate-of-domain"
+      ],
+      "text": "Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build"
+    },
+    {
+      "id": "P2-240",
+      "num": 240,
+      "file": "src/ui/drawers/MapLegend.tsx",
+      "line": 104,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [
+        "P2-224"
+      ],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "player-colour",
+        "inline-style",
+        "legend"
+      ],
+      "text": "Значок места свёрстан заново с жёстким var(--player-2) во style: тот же значок, что на тайле — P2 note: the colour now comes through playerStyle; the tile's own SVG seat mark is smaller and drawn in the tile's scale, so putting it here changes how the legend looks: needs prototype"
+    },
+    {
+      "id": "P2-349",
+      "num": 349,
+      "file": "src/ui/plan/EntryList.tsx",
+      "line": 51,
+      "ws": "ui-nesting",
+      "type": "ui",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [
+        "prototype"
+      ],
+      "size": "m",
+      "tags": [],
+      "text": "жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment"
+    },
+    {
+      "id": "P2-352",
+      "num": 352,
+      "file": "src/ui/plan/EntryList.tsx",
+      "line": 127,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [],
+      "size": "s",
+      "tags": [],
+      "text": "бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент — P2 note: the map and the legend now share RouteBadge; this one is an HTML number over a 12-wide hexagon in the row's own colours, and drawing the map's SVG badge here changes how the row looks: needs prototype"
+    },
+    {
+      "id": "P2-452",
+      "num": 452,
+      "file": "src/ui/common/ShareConflict.tsx",
+      "line": 13,
+      "ws": "ui-containers",
+      "type": "ui",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "modal"
+      ],
+      "text": "модал собран руками (.stage + .link-dialog) без Escape и шапки с HexRemove, третья копия рядом с HexStage и FactionPicker: общий Modal (аудит 3.5) — P2 note: now the shared Modal; a head with HexRemove (and Escape closing it) would add a third way out of the choice and a new head row: needs prototype"
+    },
+    {
+      "id": "P2-512",
+      "num": 512,
+      "file": "src/ui/theme.css",
+      "line": 214,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [],
+      "size": "m",
+      "tags": [
+        "small-button"
+      ],
+      "text": "маленькая кнопка: 14 контекстных переопределений padding/min-height/font-size: 180, 226, 251, 398, 401, 418, 433, 440, 547, 576, 636, 701, 712, 739; модификатор .small или проп у кнопки — P2 note: the fourteen overrides differ (padding 4/5 px by 8/10/14 px, heights 32/36 px, 12/13 px text), so one .small modifier changes most of them: needs prototype"
+    },
+    {
+      "id": "P2-515",
+      "num": 515,
+      "file": "src/ui/theme.css",
+      "line": 263,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [],
+      "size": "m",
+      "tags": [
+        "player-dot"
+      ],
+      "text": "кружок игрока собран в 6 классах: .owner-dot, .status-player ::before 554, .player-badge 723, .seat-ghost-badge 805, .legend-dot 932, .legend-seat 933; компонент PlayerDot с размером — P2 note: PlayerDot (primitives/player.tsx) now draws .owner-dot everywhere and the ghost badge; the others keep their own look and notes: the stepper dot P2-542, the card badge P2-554, the legend P2-568"
+    },
+    {
+      "id": "P2-517",
+      "num": 517,
+      "file": "src/ui/theme.css",
+      "line": 271,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [],
+      "needs": [],
+      "size": "m",
+      "tags": [
+        "modal"
+      ],
+      "text": "коробка модала трижды: .stage-dialog, .link-dialog 603, .fac-sheet 1012, скругления 14px и var(--radius) вперемешку; общий Modal — P2 note: the three boxes now come from one Modal (overlays/Modal.tsx); their sizes, padding, background (the sheet of factions sits on --bg) and corners still differ, and one box would change two of them: needs prototype"
+    },
+    {
+      "id": "P2-542",
+      "num": 542,
+      "file": "src/ui/theme.css",
+      "line": 540,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [
+        "P2-515"
+      ],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "player-dot"
+      ],
+      "text": "кружок игрока через ::before: перейти на PlayerDot — P2 note: the dot stands inside the name of a Stepper, whose name is also the accessible name of the group: an element there needs a slot in Stepper and changes nothing visible, so it waits for the Stepper rework"
+    },
+    {
+      "id": "P2-552",
+      "num": 552,
+      "file": "src/ui/theme.css",
+      "line": 689,
+      "ws": "ui-css",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [
+        "P2-570"
+      ],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "section-title"
+      ],
+      "text": "заголовок LayoutPicker собран своим правилом, а не общим заголовком раздела 959: перейти на общий — P2 note: the common heading draws lines on both sides, so moving the LayoutPicker title to it changes the page; it also needs the markup (P2-570, ui-containers)"
+    },
+    {
+      "id": "P2-554",
+      "num": 554,
+      "file": "src/ui/theme.css",
+      "line": 700,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [
+        "P2-515"
+      ],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "player-dot"
+      ],
+      "text": ".player-badge: кружок игрока большого размера, перейти на PlayerDot — P2 note: the card badge takes its colour from the card (--player), animates when a seat is bumped and stays a block of 38 px with the seat number: moving it to PlayerDot changes no look and adds an inline colour, left as is"
+    },
+    {
+      "id": "P2-568",
+      "num": 568,
+      "file": "src/ui/theme.css",
+      "line": 898,
+      "ws": "ui-containers",
+      "type": "dup",
+      "layer": "ui",
+      "rules": [],
+      "tests": [],
+      "deps": [
+        "P2-515"
+      ],
+      "needs": [],
+      "size": "s",
+      "tags": [
+        "player-dot"
+      ],
+      "text": ".legend-dot и .legend-seat 933: кружок игрока, перейти на PlayerDot — P2 note: the legend dots are technology and trait colours, not players (they use modifier classes now, P2-245); the seat mark is P2-240: needs prototype"
+    }
+  ]
+}

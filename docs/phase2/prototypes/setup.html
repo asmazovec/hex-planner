@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сборка карты на «Партии»</title>
+<link rel="stylesheet" href="/src/ui/theme.css">
+<link rel="stylesheet" href="./proto.css">
+<style>
+  .proto [hidden] { display: none !important; }
+  /* The app frame inside the 1180×820 screen. */
+  .proto .screen.wide { background: var(--bg); }
+  .proto .screen.wide > .app { height: 820px; }
+  .proto .screen.wide > .players-screen { height: 820px; }
+  .proto .screen .stage { position: absolute; }
+  .proto .screen .stage-dialog { max-height: 780px; }
+
+  /* 9А: the side column grows to hold the tile minimap. */
+  .proto .v9a.players-screen { grid-template-columns: minmax(0, 1fr) 480px; }
+  /* 9Б: the switch above the list, the map step in the main column. */
+  .proto .step-bar { padding: 14px 22px 0; }
+  .proto .step-bar .segment { max-width: 320px; }
+  .proto .step-bar .segment button { min-height: 40px; }
+  .proto .map-step { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 22px 20px; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .proto .map-side { display: flex; flex-direction: column; gap: 10px; }
+  .proto .map-side .players-head { margin-bottom: 0; }
+  .proto .map-side .warning-list { padding: 6px 10px; }
+  .proto .map-step .layout-picker { display: flex; flex-direction: column; gap: 8px; }
+  .proto .map-step .layout-picker strong { font-size: var(--font-xs); letter-spacing: .07em; text-transform: uppercase; color: var(--text-dim); font-weight: 600; }
+  .proto .map-step .layout-picker .segment button { min-height: 36px; padding: 5px 8px; font-size: 13px; }
+  .proto .map-step .layout-picker p { margin: 0; font-size: 12px; }
+  .proto .map-step .mini-wrap { width: 100%; max-width: 620px; justify-self: center; }
+
+  /* The tile minimap: the app's tile classes in the map's own units, scaled by the viewBox. */
+  .proto .mini-wrap { position: relative; }
+  .proto .tile-mini { display: block; width: 100%; user-select: none; }
+  .proto .tile-mini .mini-num { font-weight: 700; fill: var(--tile-number-ink); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+  .proto .tile-mini .mini-empty { fill: var(--text-dim); font-weight: 400; }
+  .proto .tile-mini .mini-dup .mini-num { fill: var(--warning); }
+  .proto .tile-mini .mini-fixed { cursor: default; }
+  .proto .tile-mini .mini-fixed:hover .hex { stroke: var(--hex-stroke); }
+  .proto .tile-mini .mini-cap { font-size: 13px; font-weight: 600; fill: var(--text-soft); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+  .proto .tile-mini .seat-token { pointer-events: auto; }
+  .proto .tile-mini .seat-token text { pointer-events: none; }
+  .proto .tile-mini .tile-lane { stroke-width: 6; }
+  .proto .mini-pop { width: 300px; }
+  .proto .map-import.inline { position: static; width: auto; animation: none; }
+  .proto .players-aside .map-block > button { width: 100%; min-height: 40px; font-size: 13px; }
+  .proto .players-aside .map-block .warning-list { padding: 6px 10px 6px; margin-top: 8px; }
+  .proto .map-ok { font-size: 12px; color: var(--success-ink); margin: 6px 0 0; }
+
+  /* The plan screen: a still map under the real tools. */
+  .proto .plan-screen { height: 100%; }
+  .proto .hexmap { cursor: default; }
+  .proto .now-pop { left: 300px; top: 70px; }
+  .proto .players-aside .map-block .mini-wrap { margin: 8px 0 4px; }
+  .proto .flash { outline: 3px solid var(--gold); outline-offset: 4px; transition: outline-color .6s; }
+</style>
+</head>
+<body class="proto">
+<nav class="back"><a href="./index.html">← Все прототипы</a></nav>
+<h1>Сборка карты на «Партии»</h1>
+<p class="lead">Сейчас карту собирают уже в открытой партии, на экране «План и карта»: кнопка «Собрать карту» включает режим сборки, номер тайла вводится в поповере над гексом, строка Milty вставляется в отдельной панели. Предлагаю собирать карту при подготовке, на «Партии»: схема мест становится мини-картой, где у каждой клетки виден номер тайла, Mecatol, домашние системы и гиперпути ставятся сами. В игре на «Плане и карте» инструментов сборки нет.</p>
+<div class="todos"><span>9. Сборка карты на «Партии»</span><span>P2-247</span><span>P2-248</span></div>
+
+<section class="change">
+  <h2>Сборка карты на «Партии»</h2>
+  <p>На «Партии» видно только, кто где сидит: пустые гексы без номеров. Сами тайлы ставятся позже и в другом месте, поверх игровой карты, и инструменты сборки остаются там на всю партию.</p>
+
+  <div class="compare">
+    <div class="pane">
+      <span class="tag">№ 59 · Сейчас · «Партия», подготовка</span>
+      <div class="screen wide" data-mock="now-game"></div>
+    </div>
+    <div class="pane">
+      <span class="tag">№ 59 · Сейчас · «План и карта», режим сборки</span>
+      <div class="screen wide" data-mock="now-plan"></div>
+      <p class="note" style="max-width:900px">Кнопки внизу справа: «Собрать карту» и «Вставить карту». Нажатие на гекс открывает поповер с номером и кнопкой «Открыть большой гекс»; повтор тайла видно только в подсказке над картой. Карта на макетах упрощена: номера вместо планет.</p>
+    </div>
+  </div>
+
+  <div class="compare" style="margin-top:20px">
+    <div class="pane option recommended" id="opt-9a">
+      <span class="tag">№ 60 · блок «Карта» рядом с игроками</span>
+      <div class="screen wide" data-mock="a"></div>
+      <p class="note" style="max-width:900px">Один экран. Правая колонка шире (480 вместо 330 px), блок «Кто где сидит» становится блоком «Карта»: раскладка, мини-карта, «Вставить строку Milty» и предупреждения. Нажмите пустую клетку или клетку с номером: откроется ввод номера (введите, например, 4 и выберите подсказку). Нажмите номер игрока, затем другой: игроки поменяются местами, их домашние системы тоже. Переключите раскладку: гиперпути встанут сами.</p>
+    </div>
+  </div>
+
+  <div class="compare" style="margin-top:20px">
+    <div class="pane option">
+      <span class="tag">№ 61 · переключатель «Игроки | Карта»</span>
+      <div class="screen wide" data-mock="b"></div>
+      <p class="note" style="max-width:900px">Над списком игроков переключатель. На шаге «Карта» мини-карта во всю левую часть, номера крупнее. Правая колонка как сейчас, но без схемы мест: места двигаются на шаге «Карта», а карточки фракций — на шаге «Игроки», поэтому перетащить номер с карточки на схему больше нельзя.</p>
+    </div>
+  </div>
+
+  <div class="compare" style="margin-top:20px">
+    <div class="pane after">
+      <span class="tag">Предлагаю · «План и карта» в игре</span>
+      <div class="screen wide" data-mock="game"></div>
+      <p class="note" style="max-width:900px">Над картой только «Сбросить вид»: кнопок «Собрать карту» и «Вставить карту» нет. Нажатие на гекс сразу открывает большой гекс (нажмите любой) с режимами «Расстановка», «Бой», «Строительство»: расстановка, бой и покупки остаются как есть. Если карта не собрана, подсказка над картой ведёт на «Партию».</p>
+    </div>
+  </div>
+</section>
+
+<script>
+(() => {
+  /* ---------- icons and small pieces, as the app draws them ---------- */
+  const PATHS = {
+    game: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9',
+    plan: 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3zM9 4v13M15 7v13',
+    export: 'M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14',
+    build: 'M12 3l4 2.3v4.5L12 12 8 9.8V5.3zM8 12l4 2.2v4.5L8 21l-4-2.3v-4.5zM16 12l4 2.2v4.5L16 21l-4-2.3v-4.5z',
+    paste: 'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2',
+    remove: 'M6 6l12 12M18 6L6 18',
+    reset: 'M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4',
+    edit: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
+    done: 'M5 12l5 5 9-10',
+    grip: 'M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01',
+  };
+  const icon = n => `<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${PATHS[n]}"/></svg>`;
+  const hexButton = (n, label, extra = '', cls = '') => `<button type="button" class="hex-button${cls ? ` ${cls}` : ''}" aria-label="${label}" title="${label}" ${extra}>${icon(n)}</button>`;
+  const sectionTitle = (text, tag = 'p', cls = 'side-label') => `<${tag} class="section-title ${cls}">${text}</${tag}>`;
+  const rail = current => `<nav class="app-rail">
+    ${hexButton('game', 'Партия', current === 'game' ? 'aria-current="page"' : '')}
+    ${hexButton('plan', 'План и карта', current === 'plan' ? 'aria-current="page"' : '')}
+    ${hexButton('export', 'Экспорт в файл', '', 'nav-export')}
+  </nav>`;
+  const app = (current, main) => `<div class="app"><div class="app-body">${rail(current)}<main data-screen="${current}">${main}</main></div></div>`;
+
+  /* ---------- game data: the real 5-player templates of the packs ---------- */
+  const TEMPLATES = {
+    standard: [[0,0,'18'],[0,-1],[1,-1],[1,0],[0,1],[-1,1],[-1,0],[0,-2],[1,-2],[2,-2],[2,-1],[2,0],[1,1],[0,2],[-1,2],[-2,2],[-2,1],[-2,0],[-1,-1],[0,-3],[1,-3],[2,-3],[3,-3],[3,-2],[3,-1],[3,0],[2,1],[1,2],[0,3],[-1,3],[-2,3],[-3,3],[-3,2],[-3,1],[-3,0],[-2,-1],[-1,-2]],
+    hyperlanes: [[0,0,'18'],[0,-1],[1,-1],[1,0],[0,1,'86A@0'],[-1,1],[-1,0],[0,-2],[1,-2],[2,-2],[2,-1],[2,0],[1,1,'88A@0'],[0,2],[-1,2,'87A@0'],[-2,2],[-2,1],[-2,0],[-1,-1],[0,-3],[1,-3],[2,-3],[3,-3],[3,-2],[3,-1],[3,0],[2,1],[1,2,'83A@0'],[0,3,'85A@0'],[-1,3,'84A@0'],[-2,3],[-3,3],[-3,2],[-3,1],[-3,0],[-2,-1],[-1,-2]],
+  };
+  const HOMES = ['0,-3', '3,-3', '3,0', '-3,3', '-3,0'];
+  const LANES = { '86A': [[1,5]], '88A': [[0,4],[1,4],[2,4]], '87A': [[0,2],[2,4],[2,5]], '83A': [[1,4]], '85A': [[1,5]], '84A': [[2,5]] };
+  const KIND = {};
+  for (let n = 19; n <= 50; n++) KIND[n] = 's';
+  for (let n = 59; n <= 80; n++) KIND[n] = 's';
+  [25, 26, 39, 40, 64].forEach(n => { KIND[n] = 'w'; });
+  [41, 42, 43, 44, 45, 67, 68, 79, 80].forEach(n => { KIND[n] = 'a'; });
+  const KNOWN = Object.keys(KIND);
+  const PLAYERS = [
+    { color: 1, name: 'Jol-Nar', home: '12' },
+    { color: 3, name: 'Hacan', home: '16' },
+    { color: 4, name: 'Sol', home: '1' },
+    { color: 2, name: 'Letnev', home: '10' },
+    { color: 5, name: 'Xxcha', home: '14' },
+  ];
+  /** A Milty map string: the tiles of the free slots, ring by ring. */
+  const MILTY = ['26', '40', '30', '47', '21', '64', '36', '44', '19', '31', '25', '67', '34', '22', '48', '27', '41', '38', '62', '29', '33', '45', '20', '59', '35', '39', '28', '43', '23', '37', '65'];
+  const MILTY_TEXT = `18 ${MILTY.slice(0, 6).join(' ')} ${MILTY.slice(6, 18).join(' ')} 0 ${MILTY.slice(18).join(' ')} 0 0 0 0`;
+
+  const key = (q, r) => `${q},${r}`;
+  const slotsOf = layout => TEMPLATES[layout].map(([q, r, fixed]) => ({ q, r, key: key(q, r), fixed }));
+  const editable = layout => slotsOf(layout).filter(s => !s.fixed && !HOMES.includes(s.key));
+
+  /* ---------- geometry: flat-top hexes, edge 0 to the north ---------- */
+  const H = 60, INNER = 58, EDGE = INNER * Math.sqrt(3) / 2;
+  const px = (q, r) => ({ x: H * 1.5 * q, y: H * Math.sqrt(3) * (q / 2 + r) });
+  const hexPts = () => Array.from({ length: 6 }, (_, i) => { const a = Math.PI / 3 * i; return `${(INNER * Math.cos(a)).toFixed(1)},${(INNER * Math.sin(a)).toFixed(1)}`; }).join(' ');
+  const lanePath = ([a, b]) => {
+    const p = e => ({ x: EDGE * Math.sin(e * Math.PI / 3), y: -EDGE * Math.cos(e * Math.PI / 3) });
+    const f = p(a), t = p(b);
+    return `M${f.x.toFixed(1)},${f.y.toFixed(1)} Q${((f.x + t.x) * .15).toFixed(1)},${((f.y + t.y) * .15).toFixed(1)} ${t.x.toFixed(1)},${t.y.toFixed(1)}`;
+  };
+  const rotate = (lanes, steps) => lanes.map(([a, b]) => [(a + steps) % 6, (b + steps) % 6]);
+
+  const duplicatesOf = st => {
+    const seen = {}, dups = new Set();
+    editable(st.layout).forEach(s => { const t = st.tiles[s.key]; if (!t) return; if (seen[t]) dups.add(t); seen[t] = true; });
+    return dups;
+  };
+  const emptiesOf = st => editable(st.layout).filter(s => !st.tiles[s.key]).length;
+
+  /** One minimap: every slot shows its number; homes carry the player's token; hyperlanes their lanes. */
+  const miniMap = (st, { font = 26, tokens = true, real = false } = {}) => {
+    const slots = slotsOf(st.layout);
+    const dups = duplicatesOf(st);
+    const xs = slots.map(s => px(s.q, s.r).x), ys = slots.map(s => px(s.q, s.r).y);
+    const half = H * Math.sqrt(3) / 2;
+    const vb = [Math.min(...xs) - H - 4, Math.min(...ys) - half - 4, Math.max(...xs) - Math.min(...xs) + 2 * H + 8, Math.max(...ys) - Math.min(...ys) + 2 * half + 8];
+    const cells = slots.map(s => {
+      const { x, y } = px(s.q, s.r);
+      const seat = HOMES.indexOf(s.key);
+      const selected = st.sel === s.key ? ' tile-selected' : '';
+      const num = (text, dy = 0, size = font, cls = '') => `<text class="mini-num${cls}" y="${dy + size * .36}" font-size="${size}">${text}</text>`;
+      let body, cls = '', role = 'role="button" tabindex="0"';
+      if (s.fixed === '18') {
+        body = `<polygon class="hex hex-mecatol" points="${hexPts()}"/>${num('18')}`;
+        cls = ' mini-fixed'; role = 'role="img"';
+      } else if (s.fixed) {
+        const [id, rot] = s.fixed.split('@');
+        body = `<polygon class="hex hex-hyperlane" points="${hexPts()}"/>${rotate(LANES[id], Number(rot)).map(l => `<path class="tile-lane" d="${lanePath(l)}"/>`).join('')}${num(id, -32, font * .62)}`;
+        cls = ' mini-fixed'; role = 'role="img"';
+      } else if (seat >= 0) {
+        const index = st.seatOf[seat];
+        const p = PLAYERS[index];
+        const token = tokens
+          ? `<g class="seat-token${index === 0 ? ' seat-token-me' : ''}${st.picked === seat ? ' picked' : ''}" data-seat="${seat}" role="button" aria-label="Игрок ${index + 1}, ${p.name}, место ${seat + 1}"><circle r="19" class="seat-disc" style="fill:var(--player-${p.color})"/><text y="6">${index + 1}</text></g><text class="mini-cap" y="45">${p.name}</text>`
+          : `<circle r="9" style="fill:var(--player-${p.color})"/>`;
+        body = `<polygon class="hex hex-home" points="${hexPts()}"/>${num(p.home, -33, font * .7)}${token}`;
+        cls = ' mini-fixed'; role = 'role="group"';
+      } else {
+        const t = st.tiles[s.key];
+        const kind = !t ? 'hex-free' : KIND[t] === 'w' ? 'hex-wormhole' : KIND[t] === 'a' ? 'hex-anomaly' : 'hex-system';
+        if (t && dups.has(t) && !real) cls = ' mini-dup';
+        body = `<polygon class="hex ${kind}" points="${hexPts()}"/>${t ? num(t, real ? -30 : 0, real ? font * .7 : font) : num('—', 0, font, ' mini-empty')}`;
+      }
+      return `<g class="tile${cls}${selected}" data-slot="${s.key}" transform="translate(${x.toFixed(1)} ${y.toFixed(1)})" ${role} aria-label="Клетка ${s.key}">${body}</g>`;
+    }).join('');
+    return { svg: `<svg class="tile-mini" viewBox="${vb.map(v => v.toFixed(1)).join(' ')}" role="group" aria-label="Мини-карта">${cells}</svg>`, vb };
+  };
+
+  /** The TileNumberInput look, in a popover beside the tapped slot. */
+  const popover = st => `<div class="tile-popover mini-pop" data-pop>
+    ${hexButton('remove', 'Закрыть', 'data-close', 'popover-close')}
+    <div class="tile-input" role="group" aria-label="Задать тайл">
+      <h2>Задать тайл</h2>
+      <form class="row" data-form>
+        <label class="field">Номер тайла<input data-num value="" inputmode="text" autocomplete="off"></label>
+        <button type="submit" class="primary">Поставить</button>
+        <button type="button" data-clear ${st.tiles[st.sel] ? '' : 'disabled'}>Очистить слот</button>
+      </form>
+      ${st.error ? `<div class="banner banner-warning" role="alert"><span class="banner-text">${st.error}</span></div>` : ''}
+      <div class="chips" role="group" aria-label="Подсказки" data-sugg></div>
+    </div>
+  </div>`;
+
+  const layoutPicker = st => `<div class="layout-picker">
+    <strong>Раскладка карты</strong>
+    <div class="segment" role="radiogroup" aria-label="Раскладка карты">
+      ${['standard', 'hyperlanes'].map(l => `<button type="button" role="radio" aria-checked="${st.layout === l}" data-layout="${l}">${l === 'standard' ? 'Обычная' : 'С гиперпутями'}</button>`).join('')}
+    </div>
+    ${st.layout === 'hyperlanes' ? '<p class="muted">Шесть тайлов гиперпутей встают сами по шаблону, с поворотом.</p>' : ''}
+  </div>`;
+
+  const miltyPanel = () => `<div class="map-import inline" role="group" aria-label="Вставить строку Milty">
+    <div class="panel-head"><strong>Вставить строку Milty</strong>${hexButton('remove', 'Закрыть', 'data-milty-close')}</div>
+    <textarea aria-label="Строка карты Milty Draft" rows="3" data-milty-text>${MILTY_TEXT}</textarea>
+    <div class="row"><button type="button" class="primary" data-milty-apply>Применить</button></div>
+  </div>`;
+
+  const warnings = st => {
+    const empty = emptiesOf(st), dups = [...duplicatesOf(st)];
+    const items = [];
+    if (empty > 0) items.push(`Пустых клеток: ${empty}. Нажмите клетку и введите номер или вставьте строку Milty.`);
+    if (dups.length) items.push(`Тайл стоит больше одного раза: ${dups.join(', ')}. Это разрешено.`);
+    if (!items.length) return `<p class="map-ok">Карта собрана: все ${editable(st.layout).length} клеток заполнены.</p>`;
+    return `<ul class="warning-list place-warnings" aria-label="Предупреждения">${items.map(t => `<li><span class="warning-text">${t}</span></li>`).join('')}</ul>`;
+  };
+
+  /* ---------- the Партия screen pieces ---------- */
+  const playerCards = () => `<section class="players-list">
+    <div class="players-head"><h1>Игроки</h1><span>5 из 8</span></div>
+    ${PLAYERS.map((p, i) => `<article class="player-card${i === 0 ? ' me' : ''}" role="group" aria-label="Игрок ${i + 1}" style="--player:var(--player-${p.color})">
+      <div class="player-row">
+        <div class="player-badge">${i + 1}</div>
+        <div class="player-name"><div class="player-role">${i === 0 ? 'Моя фракция' : 'Соперник'}</div><button type="button" class="fac fac-button">${({ 'Jol-Nar': 'The Universities of Jol-Nar', Hacan: 'The Emirates of Hacan', Sol: 'The Federation of Sol', Letnev: 'The Barony of Letnev', Xxcha: 'The Xxcha Kingdom' })[p.name]}</button></div>
+        ${i === 0 ? '<span></span>' : hexButton('remove', 'Убрать соперника')}
+      </div>
+    </article>`).join('')}
+    <button type="button" class="add-opponent">＋ Добавить соперника</button>
+    <p class="note">Карточки фракций под строками свёрнуты для краткости.</p>
+  </section>`;
+
+  const asideTop = () => `<div class="side-group">
+      <label class="field">Имя партии<input type="text" value="Пятница у Миши"></label>
+      <div class="start-game"><button type="button" class="primary">Начать партию</button></div>
+    </div>
+    <div class="side-group">
+      ${sectionTitle('Дополнения')}
+      <div class="chips"><span class="chip fix on">Базовая игра</span><button type="button" class="chip" aria-pressed="true">Prophecy of Kings</button><button type="button" class="chip" aria-pressed="false">Thunder's Edge</button></div>
+    </div>`;
+  const asideBottom = () => `<div class="side-group">
+      ${sectionTitle('Сохранённые партии')}
+      <ul class="saved-list">
+        <li><span><strong>Среда, турнир</strong><small>The Barony of Letnev · 6 игр.</small></span><button type="button">Открыть</button>${hexButton('remove', 'Удалить')}</li>
+      </ul>
+      <div class="side-actions"><button type="button" disabled>Экспорт в файл</button><button type="button">Скопировать ссылку</button><label class="button">Импорт из файла</label></div>
+    </div>
+    <div class="side-group">
+      ${sectionTitle('Язык')}
+      <div class="chips"><button type="button" class="chip" role="radio" aria-checked="true">Русский</button><button type="button" class="chip" role="radio" aria-checked="false">English</button></div>
+    </div>
+    <div class="side-group">
+      ${sectionTitle('Настройки')}
+      <div class="chips"><button type="button" class="chip" aria-pressed="false">Энергосбережение</button><button type="button" class="chip" aria-pressed="true">Размытие фона</button><button type="button" class="chip" aria-pressed="true">Повтор перелётов</button></div>
+    </div>`;
+
+  /** Today's seat map: SeatMap.tsx, slots without numbers and a token per player. */
+  const seatMap = () => {
+    const pos = (q, r) => [39 * q, 45 * (r + q / 2)];
+    const hp = (x, y) => Array.from({ length: 6 }, (_, i) => { const a = Math.PI / 3 * i; return `${(x + 25 * Math.cos(a)).toFixed(1)},${(y + 25 * Math.sin(a)).toFixed(1)}`; }).join(' ');
+    const slots = slotsOf('hyperlanes');
+    const cells = slots.map(s => { const [x, y] = pos(s.q, s.r); return `<polygon points="${hp(x, y)}" class="seat-cell"/>`; }).join('');
+    const spots = HOMES.map((k, i) => { const [q, r] = k.split(',').map(Number); const [x, y] = pos(q, r); return `<polygon points="${hp(x, y)}" class="seat-spot" data-seat="${i + 1}"/>`; }).join('');
+    const tokens = HOMES.map((k, i) => {
+      const [q, r] = k.split(',').map(Number); const [x, y] = pos(q, r); const p = PLAYERS[i];
+      return `<g class="seat-move" style="transform:translate(${x}px, ${y}px)"><g class="seat-token${i === 0 ? ' seat-token-me' : ''}" role="button"><circle r="17" class="seat-disc" style="fill:var(--player-${p.color})"/><text y="6">${i + 1}</text></g><text y="29" class="seat-caption" style="font-size:10px">${p.name}</text></g>`;
+    }).join('');
+    const hw = 39 * 3 + 43, hh = 45 * 3 + 35;
+    return `<svg class="seat-map" role="group" aria-label="Схема мест" viewBox="${-hw} ${-hh} ${hw * 2} ${hh * 2}" width="100%">${cells}${spots}${tokens}</svg>`;
+  };
+
+  /* ---------- «Сейчас»: the Партия screen ---------- */
+  document.querySelector('[data-mock="now-game"]').innerHTML = `<div class="players-screen">
+    <div class="players-main">${playerCards()}</div>
+    <aside class="players-aside">
+      ${asideTop()}
+      <div class="side-group">
+        ${sectionTitle('Кто где сидит')}
+        ${seatMap()}
+        <p class="side-note">У каждого игрока свой номер. Двигайте номера на схеме: при занятом месте игроки меняются. Можно и нажать один номер, а затем другой. Игрок 1 — ваша фракция, отмечен белым кольцом.</p>
+      </div>
+      <div class="layout-picker">
+        <strong>Раскладка карты</strong>
+        <div class="segment" role="radiogroup"><button type="button" role="radio" aria-checked="false">Обычная</button><button type="button" role="radio" aria-checked="true">С гиперпутями</button></div>
+      </div>
+      ${asideBottom()}
+    </aside>
+  </div>`;
+
+  /* ---------- the plan screen frame ---------- */
+  const planHeader = (modeSwitch) => `<header class="plan-header">
+    <div class="plan-top">
+      <div class="plan-tabs" role="tablist"><button type="button" role="tab" class="plan-tab" aria-selected="true">План 1<small>Leadership</small></button><button type="button" class="plan-copy">Копия</button><button type="button" class="plan-copy plan-delete" disabled>Удалить план</button></div>
+      <div class="plan-rounds-group">
+        <div class="plan-rounds" role="group" aria-label="Раунды"><button type="button" aria-pressed="true">1</button><button type="button" aria-pressed="false">2</button><button type="button">+</button><button type="button">−</button></div>
+        ${modeSwitch ? '<div class="map-mode" role="group"><button type="button" aria-pressed="true">План</button><button type="button" aria-pressed="false">Факт</button></div>' : ''}
+      </div>
+      <button type="button" class="plan-undo" disabled>Отменить</button>
+    </div>
+    <div class="summary-bar" role="group">${[['Ресурсы', 7], ['Влияние', 5], ['Товары', 2], ['Тактика', 3], ['Флот', 3], ['Стратегия', 2], ['Очки', 0]].map(([n, v]) => `<div class="summary-cell"><span>${n}</span><b>${v}</b></div>`).join('')}</div>
+  </header>`;
+  const planPanel = () => `<div class="plan-panel"><div class="plan-scroll">
+    <div class="plan-entries">
+      <section class="phase"><h4 class="section-title phase-title">Стратегия</h4>
+        <ul class="entry-list"><li class="entry entry-done"><div class="entry-main"><button type="button" class="entry-handle">${icon('grip')}</button><button type="button" class="entry-label">Стратегия: Leadership</button>${hexButton('edit', 'Изменить')}<label class="hex-button entry-check"><input type="checkbox" checked>${icon('done')}</label></div></li></ul>
+      </section>
+      <section class="phase"><h4 class="section-title phase-title">Действия</h4>
+        <ul class="entry-list"><li class="entry"><div class="entry-main"><button type="button" class="entry-handle">${icon('grip')}</button><button type="button" class="entry-label">1. Тактическое: 37 → 26</button>${hexButton('edit', 'Изменить')}<label class="hex-button entry-check"><input type="checkbox">${icon('done')}</label></div></li></ul>
+        <div class="phase-add"><button type="button" class="primary">Новое действие</button></div>
+      </section>
+      <section class="phase"><h4 class="section-title phase-title">Статус</h4><p class="muted phase-auto">Новые жетоны и очки всех игроков за раунд.</p></section>
+    </div>
+  </div></div>`;
+  const drawerTabs = () => `<div class="drawer-rail drawer-rail-left" role="group"><button type="button" class="drawer-tab drawer-tab-left" aria-pressed="false">Игроки</button><button type="button" class="drawer-tab drawer-tab-left" aria-pressed="false">Легенда</button></div>`;
+  const rightTabs = () => `<div class="drawer-rail drawer-rail-right" role="group"><button type="button" class="drawer-tab drawer-tab-right" aria-pressed="false">Улучшения</button></div>`;
+  const bigMap = (st, extra = '') => `<div class="hexmap-frame">
+    <div class="map-strip"><div class="map-strip-start">${hexButton('reset', 'Сбросить вид')}</div>${extra}</div>
+    <div class="hexmap-wrap" data-bigmap><div style="position:absolute;inset:16px 60px 60px">${miniMap(st, { font: 26, tokens: false, real: true }).svg}</div></div>
+  </div>`;
+
+  /* ---------- «Сейчас»: the plan screen in building mode ---------- */
+  const nowState = { layout: 'hyperlanes', tiles: {}, seatOf: [0, 1, 2, 3, 4], sel: '1,-2' };
+  editable('hyperlanes').forEach((s, i) => { if (i !== 4 && i !== 13) nowState.tiles[s.key] = MILTY[i]; });
+  nowState.tiles['2,0'] = '26';
+  document.querySelector('[data-mock="now-plan"]').innerHTML = app('plan', `<section class="plan-screen" data-view="both">
+    ${planHeader(false)}
+    <div class="plan-body">
+      ${drawerTabs()}
+      <div class="plan-map">
+        ${bigMap(nowState, `<div class="map-tools">${hexButton('build', 'Собрать карту', 'aria-pressed="true"')}${hexButton('paste', 'Вставить карту', 'aria-pressed="true"')}</div>`)}
+        <div class="tile-popover now-pop">
+          ${hexButton('remove', 'Закрыть', '', 'popover-close')}
+          <div class="tile-input" role="group" aria-label="Задать тайл"><h2>Задать тайл</h2>
+            <form class="row"><label class="field">Номер тайла<input value="2"></label><button type="submit" class="primary">Поставить</button><button type="button">Очистить слот</button></form>
+            <div class="chips" role="group" aria-label="Подсказки">${['2', '20', '21', '22', '23', '24', '25', '26'].map(n => `<button type="button">${n}</button>`).join('')}</div>
+          </div>
+          <button type="button" class="tile-open-stage">Открыть большой гекс</button>
+        </div>
+        <div class="map-import" role="group" aria-label="Вставить карту">
+          <div class="panel-head"><strong>Вставить карту</strong><button type="button">Закрыть</button></div>
+          <textarea rows="3" placeholder="Вставьте строку карты из Milty Draft"></textarea>
+          <div class="row"><button type="button" class="primary" disabled>Применить</button></div>
+        </div>
+        <div class="map-hint"><span role="status">Тайл стоит больше одного раза: 26. Это разрешено.</span></div>
+        ${rightTabs()}
+      </div>
+      ${planPanel()}
+    </div>
+  </section>`);
+
+  /* ---------- the live minimap of 9А and 9Б ---------- */
+  const startState = () => {
+    const st = { layout: 'hyperlanes', tiles: {}, seatOf: [0, 1, 2, 3, 4], sel: null, picked: null, importing: false, error: null };
+    editable('hyperlanes').forEach((s, i) => { if (![4, 13, 20].includes(i)) st.tiles[s.key] = MILTY[i]; });
+    st.tiles['2,-3'] = '26';
+    return st;
+  };
+
+  const mount = (root, variant) => {
+    const st = startState();
+    let step = 'map';
+    const font = variant === 'b' ? 24 : 26;
+
+    const mapBlock = () => {
+      const { svg } = miniMap(st, { font });
+      const wrap = `<div class="mini-wrap" data-wrap>${svg}${st.sel ? popover(st) : ''}</div>`;
+      const milty = st.importing ? miltyPanel() : `<button type="button" data-milty>Вставить строку Milty</button>`;
+      const note = '<p class="side-note">Нажмите клетку, чтобы задать номер. Mecatol, домашние системы и гиперпути ставятся сами. Номера игроков двигайте, как сейчас: перетащите или нажмите один, затем другой.</p>';
+      if (variant === 'a') {
+        return `<div class="side-group map-block">${sectionTitle('Карта и места')}${layoutPicker(st)}${milty}${wrap}${warnings(st)}${note}</div>`;
+      }
+      return `<div class="map-step">
+        <div class="map-side">
+          <div class="players-head"><h1>Карта</h1><span>${editable(st.layout).length} клеток</span></div>
+          ${layoutPicker(st)}
+          ${milty}
+          ${warnings(st)}
+          ${note}
+        </div>
+        ${wrap}
+      </div>`;
+    };
+
+    const render = () => {
+      if (variant === 'a') {
+        root.innerHTML = `<div class="players-screen v9a">
+          <div class="players-main">${playerCards()}</div>
+          <aside class="players-aside">${asideTop()}${mapBlock()}${asideBottom()}</aside>
+        </div>`;
+      } else {
+        root.innerHTML = `<div class="players-screen">
+          <div class="players-main">
+            <div class="step-bar"><div class="segment" role="radiogroup" aria-label="Шаг подготовки">
+              <button type="button" role="radio" aria-checked="${step === 'players'}" data-step="players">Игроки</button>
+              <button type="button" role="radio" aria-checked="${step === 'map'}" data-step="map">Карта</button>
+            </div></div>
+            ${step === 'players' ? playerCards() : mapBlock()}
+          </div>
+          <aside class="players-aside">${asideTop()}${asideBottom()}</aside>
+        </div>`;
+      }
+      placePopover();
+      suggest('');
+    };
+
+    /** The popover stands beside the tapped hex, inside the block. */
+    const placePopover = () => {
+      const pop = root.querySelector('[data-pop]');
+      const wrap = root.querySelector('[data-wrap]');
+      const cell = st.sel && root.querySelector(`[data-slot="${st.sel}"]`);
+      if (!pop || !wrap || !cell) return;
+      const w = wrap.getBoundingClientRect(), c = cell.getBoundingClientRect();
+      // Beside the hex when the block is wide enough (9Б), otherwise under it or above it, kept inside the block.
+      const beside = c.right - w.left + 6 + pop.offsetWidth <= w.width;
+      const x = beside ? c.right - w.left + 6 : Math.max(0, Math.min(w.width - pop.offsetWidth, c.left - w.left + c.width / 2 - pop.offsetWidth / 2));
+      const below = c.bottom - w.top + 4;
+      const y = beside ? Math.max(0, Math.min(c.top - w.top - 20, w.height - pop.offsetHeight))
+        : below + pop.offsetHeight <= w.height ? below : Math.max(0, c.top - w.top - pop.offsetHeight - 4);
+      pop.style.left = `${x}px`; pop.style.top = `${y}px`;
+      pop.querySelector('[data-num]')?.focus({ preventScroll: true });
+    };
+
+    const suggest = text => {
+      const box = root.querySelector('[data-sugg]');
+      if (!box) return;
+      const q = text.trim();
+      box.innerHTML = q ? KNOWN.filter(n => n.startsWith(q)).slice(0, 8).map(n => `<button type="button" data-pick="${n}">${n}</button>`).join('') : '';
+    };
+
+    const place = n => { st.tiles[st.sel] = n; st.sel = null; st.error = null; render(); };
+
+    root.addEventListener('click', e => {
+      const t = e.target.closest('button, [data-slot], [data-seat]');
+      if (!t || !root.contains(t)) return;
+      if (t.dataset.step) { step = t.dataset.step; st.sel = null; render(); return; }
+      if (t.dataset.layout) { st.layout = t.dataset.layout; st.sel = null; render(); return; }
+      if (t.hasAttribute('data-milty')) { st.importing = true; st.sel = null; render(); return; }
+      if (t.hasAttribute('data-milty-close')) { st.importing = false; render(); return; }
+      if (t.hasAttribute('data-milty-apply')) { editable(st.layout).forEach((s, i) => { st.tiles[s.key] = MILTY[i]; }); st.importing = false; render(); return; }
+      if (t.hasAttribute('data-close')) { st.sel = null; st.error = null; render(); return; }
+      if (t.hasAttribute('data-clear')) { delete st.tiles[st.sel]; st.sel = null; render(); return; }
+      if (t.dataset.pick) { place(t.dataset.pick); return; }
+      if (t.dataset.seat !== undefined) {
+        const seat = Number(t.dataset.seat);
+        if (st.picked === null) st.picked = seat;
+        else if (st.picked === seat) st.picked = null;
+        else { const a = st.seatOf[st.picked]; st.seatOf[st.picked] = st.seatOf[seat]; st.seatOf[seat] = a; st.picked = null; }
+        st.sel = null; render(); return;
+      }
+      if (t.dataset.slot !== undefined) {
+        if (t.classList.contains('mini-fixed')) return;
+        st.sel = st.sel === t.dataset.slot ? null : t.dataset.slot; st.error = null; st.picked = null; render();
+      }
+    });
+    root.addEventListener('input', e => { if (e.target.matches('[data-num]')) suggest(e.target.value); });
+    root.addEventListener('submit', e => {
+      e.preventDefault();
+      const q = root.querySelector('[data-num]').value.trim().toUpperCase();
+      if (!q) return;
+      if (KIND[q]) place(q);
+      else { st.error = `Тайла «${q}» нет в данных игры.`; render(); }
+    });
+    render();
+  };
+  mount(document.querySelector('[data-mock="a"]'), 'a');
+  mount(document.querySelector('[data-mock="b"]'), 'b');
+
+  /* ---------- «Игра»: the plan screen with no building tools ---------- */
+  const gameRoot = document.querySelector('[data-mock="game"]');
+  const gameState = startState();
+  const shopItem = (name, abbr) => `<button type="button" class="shop-item" aria-label="${name}"><svg viewBox="-68 -68 136 136" width="46" height="46" aria-hidden="true"><circle r="50" style="fill:var(--token-fill);stroke:var(--player-1);stroke-width:7"/><text y="15" text-anchor="middle" font-size="42" font-weight="700" style="fill:var(--player-1)">${abbr}</text></svg><span>${name}</span></button>`;
+  const MODES = { setup: 'Расстановка', battle: 'Бой', build: 'Строительство' };
+  const stageBody = mode => mode === 'battle'
+    ? `<h3 class="section-title">Потери, мои</h3><p class="muted">Потерь нет</p><p class="muted">Нажмите жетон, чтобы записать потерю. Нажмите картинку здесь, чтобы вернуть юнита.</p>`
+    : `<div class="segment player-choice" role="group" aria-label="Чьи юниты"><button type="button" aria-pressed="true"><span class="owner-dot" style="background:var(--player-1)"></span>Мои</button><button type="button" aria-pressed="false"><span class="owner-dot" style="background:var(--player-3)"></span>Hacan</button></div>
+       <h3 class="section-title">${mode === 'build' ? 'Магазин' : 'Поставить на гекс'}</h3>
+       <div class="shop">${shopItem('Дредноут', 'Др')}${shopItem('Транспортник', 'Тр')}${shopItem('Крейсер', 'Кр')}${shopItem('Эсминец', 'Эс')}${shopItem('Истребитель', 'Ис')}${shopItem('Пехота', 'Пх')}</div>
+       <p class="muted">${mode === 'build' ? 'Нажмите жетон с золотым кольцом, чтобы отменить покупку.' : 'Нажмите жетон на гексе, чтобы убрать одного.'}</p>
+       ${mode === 'setup' ? '<div class="stage-facts"><p class="muted">Поворот: 0°</p></div>' : ''}`;
+  const renderGame = (stage, mode = 'setup') => {
+    gameRoot.innerHTML = app('plan', `<section class="plan-screen" data-view="both">
+      ${planHeader(true)}
+      <div class="plan-body">
+        ${drawerTabs()}
+        <div class="plan-map">
+          ${bigMap(gameState)}
+          <div class="map-hint" style="bottom:64px"><span role="status">Карта собрана не полностью: пустых клеток ${emptiesOf(gameState)}.</span><button type="button" data-finish>Достроить карту</button></div>
+          ${rightTabs()}
+        </div>
+        ${planPanel()}
+      </div>
+    </section>`) + (stage ? `<div class="stage"><div class="stage-dialog" role="dialog" aria-label="Тайл ${stage}">
+      <div class="stage-hex" style="display:grid;place-items:center;padding:20px"><svg viewBox="-68 -62 136 124" width="420" aria-hidden="true"><polygon points="64,0 32,55.4 -32,55.4 -64,0 -32,-55.4 32,-55.4" style="fill:var(--hex-system);stroke:var(--hex-stroke);stroke-width:1.2"/><text x="0" y="-44" text-anchor="middle" font-size="8" style="fill:var(--tile-number-ink)">${stage}</text></svg></div>
+      <div class="stage-panel">
+        <div class="stage-head"><strong>Тайл ${stage}</strong>${hexButton('remove', 'Закрыть', 'data-stage-close')}</div>
+        <div class="segment" role="group" aria-label="Режим">${Object.entries(MODES).map(([m, n]) => `<button type="button" aria-pressed="${m === mode}" data-mode="${m}">${n}</button>`).join('')}</div>
+        ${stageBody(mode)}
+      </div>
+    </div></div>` : '');
+    let current = mode;
+    gameRoot.querySelectorAll('[data-bigmap] [data-slot]').forEach(g => g.addEventListener('click', () => {
+      const t = gameState.tiles[g.dataset.slot] || (g.dataset.slot === '0,0' ? '18' : null);
+      if (t) renderGame(t);
+    }));
+    gameRoot.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { current = b.dataset.mode; renderGame(stage, current); }));
+    gameRoot.querySelector('[data-stage-close]')?.addEventListener('click', () => renderGame(null));
+    gameRoot.querySelector('[data-finish]')?.addEventListener('click', () => {
+      const target = document.getElementById('opt-9a');
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      target.classList.add('flash');
+      setTimeout(() => target.classList.remove('flash'), 1400);
+    });
+  };
+  renderGame(null);
+})();
+</script>
+</body>
+</html>

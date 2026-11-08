@@ -16,6 +16,7 @@ function migrateEntry(entry: Entry): Entry {
       moves: entry.moves.map(move => ({ ...move, from: toTe(move.from) })),
       landings: entry.landings.map(landing => ({ ...landing, planetId: toTe(landing.planetId) })),
       payment: { ...entry.payment, planets: entry.payment.planets.map(toTe) },
+      ...(entry.groundLosses ? { groundLosses: Object.fromEntries(Object.entries(entry.groundLosses).map(([id, units]) => [toTe(id), units])) } : {}),
       ...(entry.productionGround ? { productionGround: Object.fromEntries(Object.entries(entry.productionGround).map(([id, units]) => [toTe(id), units])) } : {}),
     };
   }
@@ -41,7 +42,7 @@ function migrateEntry(entry: Entry): Entry {
 
 /**
  * Thunder's Edge replaces the Mecatol Rex tile in the centre. For a game in progress, the centre tile changes and
- * everything recorded on the planet `mr` (control, owner, docks, PDS, enemy ground units, and the planets named by entries of every plan) moves to
+ * everything recorded on the planet `mr` (control, owner, docks, PDS, enemy ground forces, and the planets named by entries of every plan) moves to
  * `mrte`, so that it is still drawn.
  */
 export function withTeMecatol(game: Game): Game {

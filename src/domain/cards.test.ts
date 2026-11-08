@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
-import { strategyCards, strategyCardSet } from './cards';
+import { strategyCards } from '../data/loadPack';
+import { strategyCardSet } from './cards';
 import { cardSummary } from '../data/cardSummaries';
 import type { ExpansionId } from './types';
 

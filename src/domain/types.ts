@@ -21,6 +21,8 @@ export interface PlanetDef {
   traits?: PlanetTrait[];
   /** English name of the legendary planet ability; absent for an ordinary planet. */
   legendary?: string;
+  /** A space station (Thunder's Edge): taken by ships alone, it holds no ground forces and no structures. */
+  station?: true;
 }
 
 export type Anomaly = 'asteroid' | 'nebula' | 'supernova' | 'rift' | 'scar';
@@ -37,6 +39,8 @@ export interface TileDef {
   wormholes: string[];
   /** Hyperlanes only: pairs of tile edges the lanes join, edge 0 at the top and numbered clockwise, before any rotation. */
   lanes?: [number, number][];
+  /** Fracture systems only: a printed egress, adjacent to each ingress (Thunder's Edge, The Fracture 5). */
+  egress?: true;
 }
 
 /** A roll of a unit ability: hits on `hit`, with `dice` dice. */
@@ -75,13 +79,22 @@ export interface UnitDef {
   combat: number | null;
   /** Null when the unit cannot move on its own. */
   move: number | null;
-  /** Reinforcement limit; null means not confirmed or without a limit. */
+  /** Reinforcement limit, the figures of one colour (LRR 96.2); null for fighters and infantry, which tokens make unlimited. */
   limit: number | null;
-  /** Ships only: the base table's levels; a faction's `ships` entry replaces them. */
+  /** Ships and infantry: the base table's levels; a faction's `ships` entry replaces them. */
   levels?: ShipLevels;
 }
 
-export interface TechDef { id: string; name: string; type: TechType; }
+export interface TechDef {
+  id: string;
+  name: string;
+  /** Null for a unit upgrade and for a faction card with no colour (Valefar Assimilator). */
+  type: TechType | null;
+  /** Prerequisites, how many of each colour; absent when there are none. Read for faction technologies only. */
+  requires?: Partial<Record<TechType, number>>;
+  /** A unit upgrade: the unit or structure it upgrades. Its numbers are in the ship table, not here. */
+  upgrade?: UnitId | StructureKind;
+}
 
 /** Where a component comes from; shown on it. */
 export type ComponentPack = 'base' | 'pok' | 'te';
@@ -106,11 +119,13 @@ export interface FactionSheet {
   abilities: SheetItem[];
   leaders: SheetLeader[];
   mechs: SheetMech[];
+  /** Faction technologies; the details are in the pack's `technologies` under the same id. */
+  techs: SheetItem[];
   breakthrough?: SheetItem;
 }
 
 export interface FactionDef {
-  /** Abilities, leaders, mechs and the breakthrough, before the expansions choose among them. */
+  /** Abilities, leaders, mechs, faction technologies and the breakthrough, before the expansions choose among them. */
   sheet?: FactionSheet;
   id: string;
   name: string;
@@ -130,8 +145,12 @@ export interface FactionDef {
   ships?: Partial<Record<UnitId, ShipLevels>>;
 }
 
-/** `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five players). */
-export type MapLayout = 'standard' | 'hyperlanes';
+/**
+ * `standard` has no hyperlane tiles; `hyperlanes` has them at fixed slots (the rules' own layout for five and seven
+ * players); `alternate` is the Prophecy of Kings appendix's alternate hyperlanes for seven and eight players, with its own
+ * ring shapes; `large` is the appendix's Large Galaxy for six players, four full rings.
+ */
+export type MapLayout = 'standard' | 'hyperlanes' | 'alternate' | 'large';
 
 export interface MapTemplate {
   playerCount: number;
@@ -154,7 +173,24 @@ export interface DataPack {
   factions: Record<string, FactionDef>;
   templates: MapTemplate[];
   technologies: Record<string, TechDef>;
-  structures: { id: 'pds' | 'spacedock'; limit: number | null }[];
+  structures: StructureDef[];
+}
+
+/** A structure's numbers at one level, from the source. */
+export interface StructureStats {
+  /** Source id. */
+  id: string;
+  name: string;
+  /** Space docks: the Production value is the planet's resources plus this (LRR 79.1). */
+  production?: number;
+  cannon?: UnitRoll;
+}
+
+export interface StructureDef {
+  id: StructureKind;
+  /** Reinforcement limit, the figures of one colour (LRR 96.2). */
+  limit: number | null;
+  levels: { one: StructureStats; two?: StructureStats };
 }
 
 export type EntryStatus = 'planned' | 'done' | 'cancelled';
@@ -173,7 +209,7 @@ export interface AdjustmentDelta {
   vp?: number;
   /** Signed. */
   units?: { systemId: string; units: UnitCounts };
-  /** Ground units by planet id; signed. */
+  /** Ground forces by planet id; signed. */
   ground?: Record<string, UnitCounts>;
 }
 
@@ -197,7 +233,7 @@ export interface CardEffects {
   /** Opponent ids. */
   freeSecondary?: string[];
   mecatol?: boolean;
-  /** `ground` holds where ground units of `units` were bought, by planet id; what is not listed goes to the first planet I control. */
+  /** `ground` holds where ground forces of `units` were bought, by planet id; what is not listed goes to the first planet I control. */
   production?: { systemId: string; units: UnitCounts; ground?: Record<string, UnitCounts> };
   /** One item per structure. */
   structures?: { kind: StructureKind; planetId: string }[];
@@ -217,14 +253,16 @@ export interface CardPlay {
 
 /**
  * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
- * (a slot key, or a planet id to pick ground units up) into `systemId`. The route of a source is held by the move
+ * (a slot key, or a planet id to pick ground forces up) into `systemId`. The route of a source is held by the move
  * whose `from` is that source: `via` lists the slots on the way, in flight order. A move with `pickupOf` takes units
  * on board on the way: it joins the group of that source slot.
  */
 export type EntryBody =
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
-      /** Where the ground units of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
+      /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
+      /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
+      /** Where the ground forces of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
   | ({ type: 'strategic' } & CardPlay)
@@ -237,7 +275,8 @@ export type EntryBody =
       /** My points gained this round. */ vp?: number;
       /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number> };
 
-export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus };
+export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
+  /** The opponent this is expected of; without it the entry is mine. */ owner?: string };
 
 export interface Round { number: number; strategyCard: number | null; backupCard: number | null; entries: Entry[]; }
 export interface Plan { id: string; name: string; rounds: Round[]; }
@@ -253,6 +292,8 @@ export interface Opponent {
 
 export interface Game {
   id: string;
+  /** What the player calls this game; a link finds its save by this. */
+  name?: string;
   schemaVersion: number;
   dataVersion: string;
   expansions: ExpansionId[];
@@ -271,16 +312,16 @@ export interface Game {
   opponents: Opponent[];
   /** Set by hand. `me` is the baseline, such as starting technology; entries of a plan add to it. Opponents have no plan. */
   upgrades: { me: UnitId[]; opponents: Record<string, UnitId[]> };
-  /** Slot key to opponent id to that opponent's units in space; ground units only in a system without planets. */
+  /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
   enemyUnits: Record<string, Record<string, UnitCounts>>;
-  /** Planet id to opponent id to that opponent's ground units there. */
+  /** Planet id to opponent id to that opponent's ground forces there. */
   enemyGround: Record<string, Record<string, UnitCounts>>;
   planetControl: Record<string, 'me' | 'enemy'>;
   /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
   planetOwner: Record<string, string>;
-  /** Ids of planets that have a space dock. */
+  /** Ids of planets that have a space dock. A structure belongs to whoever controls its planet, or to me on a planet no one controls. */
   docks: string[];
-  /** Planet id to the number of PDS on it. */
+  /** Planet id to the number of PDS on it, owned as the docks are. */
   pds: Record<string, number>;
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
   fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null;
@@ -292,7 +333,7 @@ export interface Game {
 export interface GameState {
   /** The player's units in each system's space, by slot key. */
   systems: Record<string, UnitCounts>;
-  /** The player's ground units on each planet, by planet id. */
+  /** The player's ground forces on each planet, by planet id. */
   ground: Record<string, UnitCounts>;
   exhausted: string[];
   control: Record<string, 'me' | 'enemy'>;
@@ -306,14 +347,48 @@ export interface GameState {
   opponentVp: Record<string, number>;
   /** The baseline plus the upgrades of the entries replayed so far. */
   upgrades: UnitId[];
-  /** The game's space docks plus those built by the entries replayed so far. */
+  /** This player's space docks: the game's on their planets, plus those built by the entries replayed so far, less those lost with a planet. */
   docks: string[];
-  /** Planet id to PDS count, the same way. */
+  /** Planet id to this player's PDS count, the same way. */
   pds: Record<string, number>;
+  /** Someone landed on Mecatol Rex in the entries replayed so far, so the custodians token is gone. */
+  custodiansRemoved?: boolean;
+  /** Each opponent counted the same way, from what stands on the map for them and their entries replayed so far. */
+  rivals?: Record<string, GameState>;
+  /** Planet id to the opponent whose entries landed there, ahead of the owner set by hand. */
+  rivalHolds?: Record<string, string>;
 }
 
-export type WarningCode = 'shortResources' | 'shortInfluence' | 'shortTradeGoods' | 'planetExhausted'
-  | 'capacityGroup' | 'capacitySystem' | 'fleetPool' | 'unitsMissing' | 'landingOverLimit'
-  | 'sliceTaken' | 'shortStrategy' | 'primaryRepeated' | 'tokensOver' | 'poolNegative' | 'systemHasToken' | 'constructionUnits';
-export interface Warning { code: WarningCode; params: Record<string, string | number>; }
+/** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */
+export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoods', 'planetExhausted',
+  'capacityGroup', 'capacitySystem', 'fleetPool', 'unitsMissing', 'landingOverLimit',
+  'sliceTaken', 'shortStrategy', 'primaryRepeated', 'tokensOver', 'poolNegative', 'systemHasToken', 'constructionUnits', 'speedShort', 'routeBlocked', 'sourceActivated',
+  // command-tokens, round-flow, payment
+  'noReinforcements', 'actionAfterPass', 'passBeforeStrategy', 'actionOutsidePhase', 'planetNotControlled', 'readyNotControlled',
+  // strategy-cards
+  'foreignPrimary', 'ownSecondary', 'secondaryRepeated', 'readyOverLimit', 'diplomacySystem', 'researchOverLimit', 'researchOwned',
+  // combat-order, invasion, structures
+  'shipOnPlanet', 'landingOutsideSystem', 'custodians', 'structureLimit', 'structureNotControlled', 'structureOutsideSystem',
+  // production, thunders-edge
+  'noProduction', 'productionBlockaded', 'blockaded', 'productionOver', 'reinforcementsOut', 'productionPlace', 'scarProduction',
+  'expeditionUnpaid', 'expeditionTwicePerTurn', 'stationGround', 'stationStructure',
+  // transport
+  'pickupOffRoute',
+] as const;
+export type WarningCode = (typeof WARNING_CODES)[number];
+/** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
+export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition';
+/** Where a violation arose: the entry, and within it the source system or the planet when there is one. */
+export interface ViolationPlace { entryId: string; source?: string; planetId?: string }
+/**
+ * A rule the plan breaks; it forbids nothing. The replay gives `rule` (LRR number as in the rules tests' names), `step` and `place`;
+ * a warning written by hand (tests) may lack them.
+ */
+export interface Warning {
+  code: WarningCode;
+  params: Record<string, string | number>;
+  readonly rule?: string;
+  readonly step?: RuleStep;
+  readonly place?: ViolationPlace;
+}
 export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

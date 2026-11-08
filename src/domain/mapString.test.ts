@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { hexToPixel } from '../ui/map/geometry';
 import { arrangeSet, parseMapString, ringSlots } from './mapString';
 import { seatSlots } from './mapBuilder';
 
@@ -9,6 +8,8 @@ const full = loadPack(['pok', 'te']);
 const base = loadPack([]);
 /** What a caller passes to tell a tile of a switched-off expansion from a truly unknown one. */
 const OTHERS = { pok: loadPack(['pok']), te: loadPack(['te']) };
+/** Screen direction of an axial slot on the flat-topped grid, in hex units, y pointing down. */
+const slotDirection = (q: number, r: number) => ({ x: 1.5 * q, y: Math.sqrt(3) * (q / 2 + r) });
 
 /**
  * Output of the Milty Draft algorithm (js/generate-map.js, `#tts-string`) for the finished six-player draft fixture
@@ -23,7 +24,7 @@ test('ring order starts at the top and runs clockwise, like the map geometry', (
   expect(ringSlots(2).slice(0, 4)).toEqual(['0,-2', '1,-2', '2,-2', '2,-1']);
   const bearings = ringSlots(2).map(key => {
     const [q, r] = key.split(',').map(Number);
-    const { x, y } = hexToPixel(q, r);
+    const { x, y } = slotDirection(q, r);
     return (Math.atan2(x, -y) * 180) / Math.PI;
   });
   expect(bearings[0]).toBeCloseTo(0);
@@ -72,7 +73,23 @@ test('empty input places nothing', () => {
 
 test('tiles beyond the template are not placed', () => {
   const tokens = Array.from({ length: 60 }, (_, i) => (i === 59 ? '25' : '0')).join(' ');
-  expect(parseMapString(tokens, 6, pok).map).toEqual({});
+  expect(parseMapString(tokens, 5, pok).map).toEqual({});
+});
+
+test('a six-player string with tiles in the fourth ring is read against the Large Galaxy, one without against three rings', () => {
+  const tokens = Array.from({ length: 60 }, (_, i) => (i === 59 ? '25' : i === 0 ? '26' : '0')).join(' ');
+  const large = parseMapString(tokens, 6, pok);
+  expect(large.layout).toBe('large');
+  expect(large.map).toEqual({ '0,-1': '26', '-1,-3': '25' });
+  expect(parseMapString('26', 6, pok).layout).toBe('standard');
+});
+
+test('a system tile on a slot where the template fixes a hyperlane is dropped, the lane stays', () => {
+  // An old seven-player string of four full rings: 0,4 is the 85A of the rulebook formation.
+  const result = parseMapString(milty({ '0,4': '25', '1,0': '26', '4,-4': '27', '2,2': '28' }), 7, pok);
+  expect(result.layout).toBe('hyperlanes');
+  expect(result.map).toEqual({ '1,0': '26', '4,-4': '27', '2,2': '28' });
+  expect(result.dropped).toBe(1);
 });
 
 /** A 60-token Milty string with the given tokens at their slots. */
@@ -117,9 +134,10 @@ test('Milty MAP_5 hyperlanes land on the template slots with their rotation', ()
   expect(result.unknown).toEqual([]);
 });
 
-test('Milty MAP_7 and MAP_8 hyperlanes fit the 61-slot templates', () => {
+test('Milty MAP_7 and MAP_8 hyperlanes are the alternate hyperlanes of the rulebook and choose that layout', () => {
   for (const [players, lanes] of [[7, LANES_7], [8, LANES_8]] as const) {
     const result = parseMapString(milty(lanes), players, pok);
+    expect(result.layout).toBe('alternate');
     expect(Object.keys(result.map).sort()).toEqual(Object.keys(lanes).sort());
     expect(result.dropped).toBe(0);
     expect(result.unknown).toEqual([]);

@@ -1,14 +1,38 @@
-import { useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { strategyCards } from '../../domain/cards';
-import type { Game } from '../../domain/types';
+import { strategyCards } from '../../data/loadPack';
+import type { Game, Plan } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
+import { HexRemove } from '../primitives/Icon';
 
 /** The store names new plans "Plan N"; those show in the interface language, names the player gave stay as they are. */
 export function planDisplayName(name: string, t: (key: string, options: { n: number }) => string): string {
   const match = /^Plan (\d+)$/.exec(name);
   return match ? t('plan.defaultName', { n: Number(match[1]) }) : name;
+}
+
+/** The name of the active plan, renamed when the field is left. */
+export function PlanName({ plan }: { plan: Plan }) {
+  const { t } = useTranslation();
+  const renamePlan = useGame(s => s.renamePlan);
+  const shown = planDisplayName(plan.name, t);
+  const [text, setText] = useState(shown);
+  const commit = () => {
+    if (text.trim() === '') {
+      // The store falls back to the default name; the field must show a name again even if that changes nothing.
+      renamePlan('');
+      setText(shown);
+    } else if (text !== shown) {
+      renamePlan(text);
+    }
+  };
+  return (
+    <input
+      type="text" aria-label={t('plan.name')} value={text} onChange={e => setText(e.target.value)} onBlur={commit}
+      onKeyDown={e => { if (e.key === 'Enter') commit(); }}
+    />
+  );
 }
 
 export interface PlanTabsProps {
@@ -53,23 +77,33 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
       <div ref={row} className="plan-tabs" role="tablist" aria-label={t('plan.tabs')}>
         {game.plans.map(plan => {
           const card = plan.rounds.find(r => r.number === roundNo)?.strategyCard;
-          return (
+          const selected = plan.id === game.activePlanId;
+          const name = planDisplayName(plan.name, t);
+          const dragging = drag.draggingId === plan.id ? ' plan-tab-dragging' : '';
+          const tab = (
             <button
-              key={plan.id} type="button" role="tab" className={`plan-tab${drag.draggingId === plan.id ? ' plan-tab-dragging' : ''}`} data-plan-id={plan.id} aria-selected={plan.id === game.activePlanId}
-              style={drag.styleOf(plan.id)} {...drag.handlers(plan.id)}
+              key={plan.id} type="button" role="tab" className={`plan-tab${selected ? '' : dragging}`} aria-selected={selected}
+              {...(selected ? {} : { 'data-plan-id': plan.id, style: drag.styleOf(plan.id) })} {...drag.handlers(plan.id)}
               onClick={() => {
                 if (drag.wasDrag()) return;
                 onSelectPlan();
                 setActivePlan(plan.id);
               }}
             >
-              {planDisplayName(plan.name, t)}
+              {name}
               {card != null && <small>{cards.find(c => c.initiative === card)?.name}</small>}
             </button>
           );
+          if (!selected) return tab;
+          // The selected tab holds its own cross at its right edge, and the two move together when it is dragged.
+          return (
+            <div key={plan.id} className={`in-card plan-tab-card${dragging}`} data-plan-id={plan.id} style={drag.styleOf(plan.id)}>
+              {tab}
+              <HexRemove label={t('plan.deletePlan', { name })} disabled={game.plans.length <= 1} onClick={onDeletePlan} />
+            </div>
+          );
         })}
         <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
-        <button type="button" className="plan-copy plan-delete" disabled={game.plans.length <= 1} onClick={onDeletePlan}>{t('plan.deletePlan')}</button>
       </div>
       <div className="plan-rounds-group">
       <div className="plan-rounds" role="group" aria-label={t('plan.rounds')}>
@@ -82,8 +116,8 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
           </button>
         ))}
         <button type="button" aria-label={t('plan.addRound')} onClick={onAddRound}>+</button>
-        <button type="button" aria-label={t('plan.deleteRound', { n: roundNo })} title={t('plan.deleteRound', { n: roundNo })} disabled={(active?.rounds.length ?? 0) <= 1} onClick={onDeleteRound}>−</button>
       </div>
+      <HexRemove label={t('plan.deleteRound', { n: roundNo })} className="plan-round-remove" disabled={(active?.rounds.length ?? 0) <= 1} onClick={onDeleteRound} />
       {afterRounds}
       </div>
       <button type="button" className="plan-undo" disabled={!canUndo} onClick={undo}>{t('plan.undo')}</button>

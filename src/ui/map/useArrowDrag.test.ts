@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { useArrowDrag } from './useArrowDrag';
 
 const onComplete = vi.fn();
@@ -136,6 +136,85 @@ test('a release that does not join a tile and the active system cancels', () => 
   fire('pointerup');
   expect(onComplete).not.toHaveBeenCalled();
   expect(onCancel).toHaveBeenCalledTimes(3);
+});
+
+describe('a route in strokes', () => {
+  const onPause = vi.fn();
+  beforeEach(() => onPause.mockClear());
+
+  function strokes() {
+    const { result } = renderHook(() => useArrowDrag({ activeSystem: 'X', onComplete, onCancel, onPause }));
+    const press = (slot: string, from?: string[]) => act(() => {
+      result.current.onTilePointerDown(slot, { pointerId: 1, clientX: 0, clientY: 0, isPrimary: true, button: 0 } as ReactPointerEvent, from);
+    });
+    const fire = (type: string, pointerId = 1) => act(() => { window.dispatchEvent(new PointerEvent(type, { pointerId })); });
+    return { press, fire, preview: () => result.current.preview };
+  }
+
+  test('a finger lifted before the active system keeps the path', () => {
+    const { press, fire, preview } = strokes();
+    press('A');
+    under = 'B';
+    fire('pointermove');
+    fire('pointerup');
+    expect(onPause).toHaveBeenCalledWith(['A', 'B']);
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(preview()).toBeNull();
+  });
+
+  test('a stroke goes on from the path given and finishes the route', () => {
+    const { press, fire, preview } = strokes();
+    press('C', ['A', 'B', 'C']);
+    expect(preview()?.path).toEqual(['A', 'B', 'C']);
+    under = 'X';
+    fire('pointermove');
+    fire('pointerup');
+    expect(onComplete).toHaveBeenCalledWith({ from: 'A', via: ['B', 'C'] });
+  });
+
+  test('stepping back in a later stroke shortens the path', () => {
+    const { press, fire } = strokes();
+    press('C', ['A', 'B', 'C']);
+    under = 'B';
+    fire('pointermove');
+    fire('pointerup');
+    expect(onPause).toHaveBeenCalledWith(['A', 'B']);
+  });
+
+  test('a press that goes nowhere is a tap: no pause, the tap decides', () => {
+    const { press, fire } = strokes();
+    press('C', ['A', 'B', 'C']);
+    under = 'C';
+    fire('pointerup');
+    expect(onPause).not.toHaveBeenCalled();
+    press('A');
+    under = 'A';
+    fire('pointerup');
+    expect(onPause).not.toHaveBeenCalled();
+  });
+
+  test('a second finger drops the stroke only: nothing is paused or finished', () => {
+    const { press, fire, preview } = strokes();
+    press('C', ['A', 'B', 'C']);
+    under = 'D';
+    fire('pointermove');
+    fire('pointerdown', 2);
+    expect(preview()).toBeNull();
+    expect(onPause).not.toHaveBeenCalled();
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  test('a reverse stroke still finishes on release', () => {
+    const { press, fire } = strokes();
+    press('X');
+    under = 'A';
+    fire('pointermove');
+    fire('pointerup');
+    expect(onComplete).toHaveBeenCalledWith({ from: 'A', via: [] });
+    expect(onPause).not.toHaveBeenCalled();
+  });
 });
 
 test('without an active system nothing starts', () => {

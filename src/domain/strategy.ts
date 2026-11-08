@@ -1,50 +1,95 @@
 import { strategyCardSet } from './cards';
 import { seatSlots } from './mapBuilder';
 import { autoPay, type PaymentKind } from './payment';
+import { CARD, handlerOf } from './replay/cards/index';
+import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
 import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Round, StructureKind, UnitCounts, UnitId } from './types';
+
+export { diplomacySystemAllowed, readyChoices, readyLimit } from './replay/cards/diplomacy';
+export { controlsMecatol } from './replay/cards/imperial';
+export { researchCount, researchLimit } from './replay/cards/technology';
+export { CARD };
 
 export type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
 export type CardPatch = CardPlay & { type?: CardEntry['type'] };
 
-/** Initiative numbers, the same in every card set. */
-export const CARD = { leadership: 1, diplomacy: 2, politics: 3, construction: 4, trade: 5, warfare: 6, technology: 7, imperial: 8 } as const;
-
 /** The tokens a player takes in the status phase; abilities may give more, which only warns. */
 export const STATUS_TOKENS = 2;
-const INFLUENCE_PER_TOKEN = 3;
-const SECOND_RESEARCH = 6;
-const SECONDARY_RESEARCH = 4;
 
 /** Strategy cards a player takes in a round. */
 export const cardsHeld = (playerCount: number): number => (playerCount <= 4 ? 2 : 1);
 
-const isMainPrimary = (entry: Entry): boolean =>
-  entry.type === 'strategic' && !entry.forToken && entry.status !== 'cancelled';
+/** The cards that are mine this round: the main one, and with 3 or 4 players the second one too. */
+export const heldCards = (round: Round, playerCount: number): number[] =>
+  (cardsHeld(playerCount) > 1 ? [round.strategyCard, round.backupCard] : [round.strategyCard]).filter((card): card is number => card !== null);
 
-/** Whether the round's plan already holds as many primaries as cards are held. */
-export const primaryPlayed = (round: Round, playerCount: number): boolean =>
-  round.entries.filter(isMainPrimary).length >= cardsHeld(playerCount);
+/**
+ * Whether a primary is played for a token: the cards held this round decide (83.3); the entry's own flag, set when it was
+ * planned, counts only while no card of the round is chosen.
+ */
+export const primaryForToken = (entry: CardEntry, held: number[]): boolean =>
+  (held.length > 0 ? entry.card !== undefined && !held.includes(entry.card) : entry.forToken === true);
 
-/** The planned card a new primary starts with: the first not played yet. The other card counts only when two are held. */
+/**
+ * The round with the `forToken` of my primaries following its cards, so that a saved entry agrees with the replay even
+ * once no card is chosen again. With no card chosen the flags stay as they are; entries that agree stay the same objects.
+ */
+export function withForTokenOfRound(round: Round, playerCount: number): Round {
+  const held = heldCards(round, playerCount);
+  if (held.length === 0) return round;
+  let changed = false;
+  const entries = round.entries.map(entry => {
+    if (entry.type !== 'strategic' || entry.owner) return entry;
+    const forToken = primaryForToken(entry, held) || undefined;
+    if (entry.forToken === forToken) return entry;
+    changed = true;
+    const next = { ...entry, forToken };
+    if (forToken === undefined) delete next.forToken;
+    return next;
+  });
+  return changed ? { ...round, entries } : round;
+}
+
+const isMainPrimary = (entry: Entry, held: number[]): boolean =>
+  entry.type === 'strategic' && !primaryForToken(entry, held) && entry.status !== 'cancelled';
+
+/** How a card is played: its primary is free on a card of mine and on a rival's, whose cards are not planned, and costs a token otherwise. */
+export function playOf(round: Round, playerCount: number, card: number, primary: boolean, mine: boolean): Pick<CardPatch, 'type' | 'forToken'> {
+  if (!primary) return { type: 'secondary', forToken: undefined };
+  return { type: 'strategic', forToken: mine && !heldCards(round, playerCount).includes(card) ? true : undefined };
+}
+
+/** What a tapped card starts as: the primary of a card of mine not played yet this round, the secondary otherwise. A rival's cards are not planned: the primary. */
+export function startsAsPrimary(round: Round, playerCount: number, card: number, entry: CardEntry): boolean {
+  if (entry.owner) return true;
+  const held = heldCards(round, playerCount);
+  const played = round.entries.some(other => other.id !== entry.id && !other.owner && isMainPrimary(other, held) && (other as CardEntry).card === card);
+  return held.includes(card) && !played;
+}
+
+/** The planned card a new strategic action starts with: the first of mine not played yet. */
 export function plannedCard(round: Round, playerCount: number): number | undefined {
-  const played = round.entries.filter(isMainPrimary).map(e => (e as CardEntry).card);
-  const planned = cardsHeld(playerCount) > 1 ? [round.strategyCard, round.backupCard] : [round.strategyCard];
-  return planned.find((card): card is number => card !== null && !played.includes(card));
+  const held = heldCards(round, playerCount);
+  const played = round.entries.filter(e => !e.owner && isMainPrimary(e, held)).map(e => (e as CardEntry).card);
+  return held.find(card => !played.includes(card));
 }
 
-/** A secondary or a primary for a token, except Leadership's secondary, which the card makes free of tokens. */
-export const costsStrategyToken = (entry: CardEntry): boolean =>
-  entry.type === 'secondary' ? entry.card !== CARD.leadership : entry.forToken === true;
-
-/** What a card gives to distribute: Leadership's own and bought tokens, the token Warfare's primary gains before Thunder's Edge. */
-export function freeTokens(entry: CardEntry, expansions: ExpansionId[]): number {
-  const primary = entry.type === 'strategic';
-  if (entry.card === CARD.leadership) return (primary ? 3 : 0) + (entry.effects?.boughtTokens ?? 0);
-  return primary && entry.card === CARD.warfare && !expansions.includes('te') ? 1 : 0;
+/**
+ * A secondary or a primary for a token, except Leadership's secondary, which the card makes free of tokens, and a
+ * secondary Trade's primary made free. `held`: the cards of the round, which decide what a primary costs once chosen.
+ */
+export function costsStrategyToken(entry: CardEntry, play: { held?: number[]; free?: boolean } = {}): boolean {
+  if (entry.type === 'secondary') return !handlerOf(entry.card).freeSecondary && !play.free;
+  return primaryForToken(entry, play.held ?? []);
 }
 
-const LEADERSHIP_FREE = 3;
+/**
+ * What a card gives to distribute: Leadership's own and bought tokens, the token Warfare's primary gains before
+ * Thunder's Edge. `before`, the state before the entry: Warfare gains a token only when the chosen system held one of mine (99 note 1).
+ */
+export const freeTokens = (entry: CardEntry, expansions: ExpansionId[], before?: GameState): number =>
+  handlerOf(entry.card).freeTokens?.(entry, expansions, before) ?? 0;
 
 /** Leadership's tokens as tapped: what goes beyond the free ones is bought. */
 export function withLeadershipTokens(effects: CardEffects, tokens: CardEffects['tokens'], primary: boolean): CardEffects {
@@ -56,20 +101,29 @@ export function withLeadershipTokens(effects: CardEffects, tokens: CardEffects['
   return next;
 }
 
-/** The technologies an entry researches: ship upgrades and those only counted. */
-export const researchCount = (entry: CardEntry): number => (entry.upgrades?.length ?? 0) + (entry.effects?.researched ?? 0);
+export type TokenPool = 'tactic' | 'fleet' | 'strategy';
+const POOLS: TokenPool[] = ['tactic', 'fleet', 'strategy'];
 
-const techCost = (entry: CardEntry): number => {
-  const count = researchCount(entry);
-  return entry.type === 'strategic' ? Math.max(0, count - 1) * SECOND_RESEARCH : count * SECONDARY_RESEARCH;
-};
+/**
+ * One tap on a pool of a token distribution: it always adds a token. When rearranging (99.2: `pools`, the pools before
+ * the entry, given) with nothing free left, the token comes from the fullest other pool.
+ */
+export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: TokenPool, free: number, pools?: Record<TokenPool, number>): Partial<Record<TokenPool, number>> {
+  const count = (p: TokenPool) => values[p] ?? 0;
+  const next = { ...values, [pool]: count(pool) + 1 };
+  const left = free - POOLS.reduce((sum, p) => sum + count(p), 0);
+  if (pools && left <= 0) {
+    const after = (p: TokenPool) => pools[p] + count(p);
+    const source = POOLS.filter(p => p !== pool).reduce((best, p) => (after(p) > after(best) ? p : best));
+    next[source] = count(source) - 1;
+  }
+  return next;
+}
 
-/** What the entry owes in resources or influence: only these three cards ask for a countable amount. */
+/** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
 export function cardCost(entry: CardEntry, factionId: string, upgrades: UnitId[], pack: DataPack): { kind: PaymentKind; amount: number } {
-  const { card, effects } = entry;
-  if (card === CARD.leadership) return { kind: 'influence', amount: (effects?.boughtTokens ?? 0) * INFLUENCE_PER_TOKEN };
-  if (card === CARD.technology) return { kind: 'resources', amount: techCost(entry) };
-  return { kind: 'resources', amount: productionCost(effects?.production?.units ?? {}, factionId, upgrades, pack) };
+  return handlerOf(entry.card).cost?.(entry, upgrades)
+    ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, upgrades, pack) };
 }
 
 /** Whether something was chosen, which locks the mode and the card. A payment only follows a choice. */
@@ -100,7 +154,7 @@ const counted = (units: UnitCounts, unit: UnitId, amount: number): UnitCounts =>
   return next;
 };
 
-/** One tap of the shop: a card produces in one system, ground units by planet, and taking the last unit back drops the production. */
+/** One tap of the shop: a card produces in one system, ground forces by planet, and taking the last unit back drops the production. */
 export function withProduction(effects: CardEffects, systemId: string, unit: UnitId, planetId: string | null, amount: 1 | -1): CardEffects {
   const units = counted(effects.production?.units ?? {}, unit, amount);
   const next: CardEffects = { ...effects };
@@ -141,8 +195,8 @@ export interface Home {
 }
 
 /**
- * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id,
- * which is where the projection keeps its units); otherwise the slot of my seat, whatever tile stands there; with an
+ * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id:
+ * the projection keeps its units there and the route graph knows it, see `offMapHomes`); otherwise the slot of my seat, whatever tile stands there; with an
  * empty seat, the first slot with a tile.
  */
 export function homeOf(game: Game, pack: DataPack): Home {
@@ -158,6 +212,19 @@ export function homeOf(game: Game, pack: DataPack): Home {
 }
 
 export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(game, pack).slot;
+
+/**
+ * The off-map homes of the players whose gate stands on the map (the Creuss home, LRR 6 note 2): each is a system of its
+ * own under its tile id, which the route graph joins to the board by its wormhole alone.
+ */
+export function offMapHomes(game: Game, pack: DataPack): string[] {
+  const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
+  const factions = [game.faction, ...(game.opponents ?? []).map(o => o.faction)];
+  return [...new Set(factions.flatMap(id => {
+    const def = pack.factions[id];
+    return def?.gateTile && onMap(def.gateTile) && !onMap(def.homeTile) ? [def.homeTile] : [];
+  }))];
+}
 
 /** The planets of my faction's own home tile, on the map or not. */
 const ownHomePlanets = (game: Game, pack: DataPack): string[] =>

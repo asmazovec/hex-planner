@@ -7,19 +7,19 @@ vi.mock('../../storage/db', () => ({
   loadGame: vi.fn(async () => null),
 }));
 
-import { loadPack } from '../../data/loadPack';
-import { strategyCards } from '../../domain/cards';
+import { loadPack, strategyCards } from '../../data/loadPack';
+import { cardSummary } from '../../data/cardSummaries';
 import { project } from '../../domain/project';
 import type { Warning, WarningCode } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { ActionMenu, ACTION_TYPES } from './ActionMenu';
 import { EntryList } from './EntryList';
-import { PaymentBlock } from './PaymentBlock';
+import { PaymentBlock } from './blocks/PaymentBlock';
 import { PlanTabs, planDisplayName } from './PlanTabs';
 import { StrategyCards } from './StrategyCards';
 import { SummaryBar } from './SummaryBar';
-import { WarningText } from './WarningText';
+import { WarningText } from '../feedback/WarningText';
 
 const pack = loadPack(['pok', 'te']);
 
@@ -51,22 +51,34 @@ test('the summary shows now and forecast for every value', () => {
   expect(cell('VP')).toHaveTextContent('0 → 1');
 });
 
+test('the fact shows what is, without the arrows of the plan', () => {
+  const store = useGame.getState();
+  store.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, fleet: -1 } }, 'action');
+  render(<SummaryBar now={project(game(), plan(), 'now', pack).state} forecast={project(game(), plan(), 'forecast', pack).state} pack={pack} factOnly />);
+  const cell = (name: string) => screen.getByRole('group', { name });
+  expect(cell('Trade goods')).toHaveTextContent(/^Trade goods0$/);
+  expect(cell('Fleet')).toHaveTextContent(/^Fleet3$/);
+  expect(screen.getByRole('group', { name: 'Totals, now and forecast' })).not.toHaveTextContent('→');
+});
+
 const grid = () => within(screen.getByRole('group', { name: 'Strategy' })).getAllByRole('button');
 
-test('all eight cards stay in the grid, a tap opens its details and cycles backup, main, none', async () => {
+test('all eight cards stay in the grid, a tap opens the details and takes nothing, then backup, main, none', async () => {
   render(<StrategyCardsLive />);
   expect(grid()).toHaveLength(strategyCards(game().expansions).length);
-  expect(screen.getByText(/^Tap once for backup, again for main, again to clear\./)).toBeVisible();
+  expect(screen.getByText(/^Tap once for the details, again for backup, a third time for main, once more to clear\./)).toBeVisible();
   expect(screen.queryByText('Changed in TE')).toBeNull();
+
+  await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
+  expect(screen.getByRole('button', { name: /Warfare/ })).toHaveAttribute('aria-current', 'true');
+  const details = within(screen.getByRole('group', { name: 'Warfare' }));
+  expect(details.getByText('Changed in TE')).toBeVisible();
+  expect(details.getByText(/tactical action without a token/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: 6 });
   expect(screen.getByRole('button', { name: /Warfare/ })).toHaveTextContent('Backup');
-  const details = within(screen.getByRole('group', { name: 'Warfare' }));
-  expect(details.getByText('Changed in TE')).toBeVisible();
-  expect(details.getByText(/tactical action without a token/)).toBeVisible();
-  expect(details.getByText('Primary:')).toBeVisible();
-  expect(details.getByText('Secondary:')).toBeVisible();
 
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: 6, backupCard: null });
@@ -77,6 +89,77 @@ test('all eight cards stay in the grid, a tap opens its details and cycles backu
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
   expect(screen.queryByRole('group', { name: 'Warfare' })).toBeNull();
+});
+
+test('the primary and the secondary ability stand as separate blocks, each with its own label', async () => {
+  render(<StrategyCardsLive />);
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  const details = screen.getByRole('group', { name: 'Trade' });
+  const summary = cardSummary(strategyCards(game().expansions).find(c => c.name === 'Trade')!.summaryKey, 'en');
+  const primary = details.querySelector('.card-ability-primary')!;
+  const secondary = details.querySelector('.card-ability-secondary')!;
+  expect(within(primary as HTMLElement).getByText('Primary')).toBeVisible();
+  expect(primary).toHaveTextContent(summary.primary);
+  expect(within(secondary as HTMLElement).getByText('Secondary')).toBeVisible();
+  expect(secondary).toHaveTextContent(summary.secondary);
+});
+
+test('a held card tapped after looking at another only shows its details again', async () => {
+  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 5);
+  render(<StrategyCardsLive />);
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
+});
+
+test('without a look at another card the details are of the main card, and the first tap on it changes nothing', async () => {
+  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 5);
+  render(<StrategyCardsLive />);
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+  expect(screen.getByRole('button', { name: /Trade/ })).not.toHaveAttribute('aria-current');
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+  expect(screen.getByRole('button', { name: /Trade/ })).toHaveAttribute('aria-current', 'true');
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: null });
+});
+
+test('a tap outside the strategy block closes the look at a card, back to the main one, and the count starts over', async () => {
+  useGame.getState().setStrategyCard(1, 5);
+  useGame.getState().setStrategyCard(1, 5);
+  render(<><StrategyCardsLive /><button type="button">Elsewhere</button></>);
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  expect(screen.getByRole('group', { name: 'Imperial' })).toBeVisible();
+  expect(screen.queryByRole('group', { name: 'Trade' })).toBeNull();
+
+  // Within the block the look stays: the details can be read and touched.
+  await userEvent.click(screen.getByRole('group', { name: 'Imperial' }));
+  expect(screen.getByRole('group', { name: 'Imperial' })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }));
+  expect(screen.queryByRole('group', { name: 'Imperial' })).toBeNull();
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+
+  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+  await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }));
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: null });
+});
+
+test('with no main card there is nothing to show until a card is tapped, and a tap outside hides it again', async () => {
+  useGame.getState().setStrategyCard(1, 2);
+  render(<><StrategyCardsLive /><button type="button">Elsewhere</button></>);
+  expect(document.querySelector('.card-details')).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
+  expect(screen.getByRole('group', { name: 'Trade' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Elsewhere' }));
+  expect(document.querySelector('.card-details')).toBeNull();
 });
 
 test('another card shows its own details; a card without a change has no mark', async () => {
@@ -100,9 +183,8 @@ test('the choice of the round is in view without opening anything', () => {
 test('with 3 or 4 players the backup is the second card', async () => {
   render(<StrategyCardsLive playerCount={4} />);
   expect(screen.getByText(/^With 3 or 4 players two cards are held/)).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
-  await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
-  await userEvent.click(screen.getByRole('button', { name: /Imperial/ }));
+  await userEvent.tripleClick(screen.getByRole('button', { name: /Trade/ }));
+  await userEvent.dblClick(screen.getByRole('button', { name: /Imperial/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: 5, backupCard: 8 });
   expect(screen.getByRole('button', { name: /Imperial/ })).toHaveTextContent('Second');
   expect(screen.getByText('Main: 5 Trade · Second: 8 Imperial')).toBeVisible();
@@ -114,14 +196,14 @@ function StrategyCardsLive({ playerCount = 6 }: { playerCount?: number }) {
   return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round} />;
 }
 
-test('the menu holds all seven items', async () => {
+test('the menu holds one item for a strategy card', async () => {
   const onPick = vi.fn();
   render(<ActionMenu onPick={onPick} />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  const names = ['Tactical action', 'Strategic action', 'Secondary ability, any number of times', 'Component action', 'Pass', 'Expedition contribution, end of turn', 'Manual adjustment'];
+  const names = ['Tactical action', 'Strategy', 'Component action', 'Pass', 'Expedition contribution, end of turn', 'Manual adjustment'];
   const menu = screen.getAllByRole('button').slice(1);
   expect(menu.map(b => b.textContent)).toEqual(names);
-  expect(ACTION_TYPES).toHaveLength(7);
+  expect(ACTION_TYPES).toHaveLength(6);
   await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
   expect(onPick).toHaveBeenCalledWith('pass');
   expect(screen.queryByRole('button', { name: 'Pass' })).toBeNull();
@@ -179,6 +261,45 @@ const CASES: Record<WarningCode, Warning['params']> = {
   sliceTaken: { sliceId: 'res5' },
   systemHasToken: { systemId: '1,0' },
   constructionUnits: {},
+  speedShort: { from: '1,0', unit: 'carrier', move: 1, steps: 2 },
+  routeBlocked: { from: '1,0', systemId: '0,1' },
+  sourceActivated: { from: '1,0' },
+  // command-tokens, round-flow, payment
+  noReinforcements: { total: 17, limit: 16 },
+  actionAfterPass: {},
+  passBeforeStrategy: { cards: 1 },
+  actionOutsidePhase: {},
+  planetNotControlled: { planetId: 'nestphar' },
+  readyNotControlled: { planetId: 'nestphar' },
+  // strategy-cards
+  foreignPrimary: {},
+  ownSecondary: {},
+  secondaryRepeated: {},
+  readyOverLimit: { limit: 2, readied: 3 },
+  diplomacySystem: { systemId: '1,0' },
+  researchOverLimit: { limit: 1, count: 2 },
+  researchOwned: { unit: 'carrier' },
+  // combat-order, invasion, structures
+  shipOnPlanet: { planetId: 'nestphar', unit: 'cruiser' },
+  landingOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },
+  custodians: { planetId: 'nestphar' },
+  structureLimit: { kind: 'pds', planetId: 'nestphar', count: 2 },
+  structureNotControlled: { planetId: 'nestphar' },
+  structureOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },
+  // production, thunders-edge
+  noProduction: { systemId: '1,0' },
+  productionBlockaded: { systemId: '1,0' },
+  blockaded: { systemId: '1,0' },
+  productionOver: { value: 3, count: 4 },
+  reinforcementsOut: { unit: 'dreadnought', limit: 5, have: 5 },
+  productionPlace: { planetId: 'nestphar' },
+  scarProduction: { systemId: '1,0' },
+  expeditionUnpaid: { sliceId: 'tech' },
+  expeditionTwicePerTurn: { sliceId: 'res5' },
+  stationGround: { planetId: 'nestphar' },
+  stationStructure: { planetId: 'nestphar' },
+  // transport
+  pickupOffRoute: { from: '1,0', systemId: '0,1' },
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {
@@ -212,10 +333,10 @@ function PlanTabsLive() {
 
 test('a plan and a round can be deleted, the last of each stays, and undo brings them back', async () => {
   render(<PlanTabsLive />);
-  expect(screen.getByRole('button', { name: 'Delete plan' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: /^Delete plan/ })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Delete round 1' })).toBeDisabled();
   await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Delete plan' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Delete plan/ }));
   expect(game().plans).toHaveLength(1);
   act(() => useGame.getState().undo());
   expect(game().plans).toHaveLength(2);
@@ -231,9 +352,11 @@ test('a plan and a round can be deleted, the last of each stays, and undo brings
 test('a plan tab is dragged along the row to change the order; a short press stays a tap', async () => {
   useGame.getState().copyPlan();
   useGame.getState().copyPlan();
-  render(<PlanTabsLive />);
+  const { container } = render(<PlanTabsLive />);
   const tabs = () => screen.getAllByRole('tab');
-  tabs().forEach((el, i) => {
+  // A tab moves as one piece with its cross: the selected one is wrapped together with it.
+  const cells = () => Array.from(container.querySelectorAll<HTMLElement>('[data-plan-id]'));
+  cells().forEach((el, i) => {
     el.getBoundingClientRect = () => ({ left: i * 100, width: 100, right: i * 100 + 100, top: 0, bottom: 40, height: 40, x: i * 100, y: 0, toJSON: () => undefined });
   });
   const order = () => game().plans.map(p => p.name);
@@ -243,8 +366,8 @@ test('a plan tab is dragged along the row to change the order; a short press sta
   fireEvent.pointerMove(first, { pointerId: 1, clientX: 180 });
   expect(first).toHaveClass('plan-tab-dragging');
   expect(first.style.transform).toBe('translateX(130px)');
-  expect(tabs()[1].style.transform).toBe('translateX(-100px)');
-  expect(tabs()[2].style.transform).toBe('translateX(0px)');
+  expect(cells()[1].style.transform).toBe('translateX(-100px)');
+  expect(cells()[2].style.transform).toBe('translateX(0px)');
   fireEvent.pointerUp(first, { pointerId: 1, clientX: 180 });
   expect(order()).toEqual([before[1], before[0], before[2]]);
   const active = game().activePlanId;
@@ -333,15 +456,27 @@ test('a drag does not wedge when its entry disappears meanwhile', () => {
   expect(order()).toEqual(['secondary', 'strategic']);
 });
 
-test('a warning stands below the open status fields, so the tiles do not move', async () => {
+test('a warning about the tokens stands right below the tiles of the open status fields, so the tiles do not move', async () => {
   const id = useGame.getState().addStatusEntry(1);
-  useGame.getState().updateEntry(id, { tactic: 3 });
+  useGame.getState().updateEntry(id, { tactic: 4 });
   const round = plan().rounds[0];
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList game={game()} pack={pack} round={round} plan={plan()} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
+  render(<EntryList game={game()} pack={pack} round={round} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
   const details = document.querySelector('.entry-details')!;
-  const warnings = document.querySelector('.warning-list')!;
-  expect(details.compareDocumentPosition(warnings) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  const warnings = screen.getAllByRole('list', { name: 'Warnings' });
+  expect(warnings).toHaveLength(1);
+  expect(details).toContainElement(warnings[0]);
+  // Above the points, and only once: the row does not repeat it.
+  expect(warnings[0].nextElementSibling).toHaveClass('status-points');
+  expect(document.querySelectorAll('.warning-text')).toHaveLength(1);
+});
+
+test('a closed entry shows its warnings on its row, above what it reads out', () => {
+  const id = useGame.getState().addStatusEntry(1);
+  useGame.getState().updateEntry(id, { tactic: 4 });
+  const state = project(game(), plan(), 'forecast', pack);
+  render(<EntryList game={game()} pack={pack} round={plan().rounds[0]} warnings={state.warningsByEntry} state={state.state} openId={null} onOpen={() => undefined} />);
+  expect(document.querySelector('.entry-main')!.nextElementSibling).toHaveClass('warning-list');
 });
 
 test('an entry can be marked done and deleted, and shows its warnings', async () => {

@@ -1,0 +1,28 @@
+# English game terms as the Rules Reference names them (LRR section in the comment).
+extends: substitution
+message: "Game term: use '%s' instead of '%s'."
+link: https://tirules2.com
+level: warning
+ignorecase: true
+swap:
+  command counters?: command token            # 20
+  tactics pool: tactic pool                   # 20.1
+  strategic pool: strategy pool               # 20.1
+  fleet supply: fleet pool                    # 37
+  strategy actions?: strategic action         # 82
+  strategic cards?: strategy card             # 83
+  tactics actions?: tactical action           # 89
+  spacedocks?: space dock                          # 79
+  war-suns?|warsuns?: war sun                          # 96.2
+  ground (?:units?|troops): ground forces     # 43
+  hyper-lanes?|hyper lanes?: hyperlane        # 44
+  worm-holes?|worm holes?: wormhole                      # 101
+  gravity wells?: gravity rift                # 41
+  asteroid belts?: asteroid field             # 11
+  reinforcement pool|unit pool: reinforcements # 72
+  unexhaust(?:ed)?: ready                     # 71
+  anti fighter barrage: anti-fighter barrage  # 9
+  infantries: infantry                        # 96.2
+  tradegoods?|trade-goods?: trade goods       # 93
+  status step: status phase                   # 81
+  agenda step: agenda phase                   # 8

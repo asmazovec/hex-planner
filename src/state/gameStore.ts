@@ -1,18 +1,20 @@
 import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
 import { changeOnBoard, type MergedChange } from '../domain/losses';
-import { changeLayout } from '../domain/mapBuilder';
+import { changeLayout, slotsFor } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
+import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
-import { startingDocks } from '../domain/strategy';
-import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
+import { startingDocks, withForTokenOfRound } from '../domain/strategy';
+import { fractureSlots, withFractureMoved, withFractureRealigned } from '../domain/thundersEdge';
 import { toggleUpgrade } from '../domain/unitStats';
 import { slotKeyOf } from '../domain/layouts';
-import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
+import { placeStartUnits, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
 } from '../domain/types';
-import { loadGame, saveGame } from '../storage/db';
+import { loadGame, saveGame, listGames } from '../storage/db';
+import { errorText } from '../storage/errorText';
 
 const HISTORY_LIMIT = 50;
 
@@ -71,10 +73,12 @@ function placeEntry(entries: Entry[], id: string, phase: Phase, toIndex: number)
   return next.every((e, i) => e === entries[i]) ? entries : next;
 }
 
-function cycleCard(round: Round, initiative: number): Round {
-  if (round.strategyCard === initiative) return { ...round, strategyCard: null };
-  if (round.backupCard === initiative) return { ...round, strategyCard: initiative, backupCard: null };
-  return { ...round, backupCard: initiative };
+/** The round's cards change; the replay derives what a primary costs from them (83.3), and my primaries' saved flags follow. */
+function cycleCard(round: Round, initiative: number, playerCount: number): Round {
+  const next = round.strategyCard === initiative ? { ...round, strategyCard: null }
+    : round.backupCard === initiative ? { ...round, strategyCard: initiative, backupCard: null }
+      : { ...round, backupCard: initiative };
+  return withForTokenOfRound(next, playerCount);
 }
 
 function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
@@ -137,8 +141,24 @@ export interface GameStore {
   /** The list being set up before a game starts. Edits of the players and the layout go here while no game is open. */
   draft: Game;
   saveError: string | null;
+  /**
+   * The last save that could not be opened, or crashed once open, with why; `id` is null when the saves could not even be
+   * listed. Cleared when a game opens or starts.
+   */
+  loadFailure: { id: string | null; error: string } | null;
+  /** Saves that failed this session: the list offers only their export and deletion, never opens them on its own. */
+  brokenSaves: Record<string, string>;
+  /** The open game crashed while drawn: it closes, stays saved as it was, and is marked as failed. */
+  crashGame(error: string): void;
   canUndo: boolean;
   newGame(input: { expansions: ExpansionId[]; playerCount: number; faction: string }, pack: DataPack): void;
+  /** A link names a save and disagrees with it; nothing changes until the player chooses. */
+  linkConflict: { share: ShareParams; savedId: string; name: string; differences: ShareDifference[]; taken: string[] } | null;
+  /** Follows a link: finds the save it names, opens it, makes it, or asks. Without a name it only fills the draft. */
+  openShareLink(search: string): Promise<void>;
+  resolveLinkConflict(choice: { keepSaved: true } | { newName: string }): Promise<void>;
+  /** Names the open game, or the draft while none is open. */
+  setName(name: string): void;
   /** Turns the draft into the open game. */
   startGame(): void;
   /** Leaves the open game, which stays saved, for a new draft. */
@@ -152,7 +172,8 @@ export interface GameStore {
   swapSeats(a: number, b: number): void;
   /** Loads a saved game by id; an unknown id leaves the current game alone. */
   openGame(id: string): Promise<void>;
-  addEntry(roundNo: number, body: EntryBody, phase: Phase): string;
+  /** `owner` is the opponent it is expected of; without it the entry is mine. */
+  addEntry(roundNo: number, body: EntryBody, phase: Phase, owner?: string): string;
   /** The round's one status entry: created on first use, its id afterwards. */
   addStatusEntry(roundNo: number): string;
   updateEntry(id: string, patch: Partial<EntryBody>): void;
@@ -173,7 +194,7 @@ export interface GameStore {
   /** Turns an expansion on for the open game in one undo step; the draft has its own toggle. */
   addExpansion(id: ExpansionId): void;
   setTile(slotKey: string, tileId: string | null): void;
-  /** Replaces the whole map in one undo step, and the layout too if one is given; the centre tile stays. */
+  /** Replaces the whole map in one undo step, and the layout too if one is given; the centre tile stays, and so do the layout's hyperlanes where the map leaves their slots empty. */
   setMap(map: Record<string, string>, layout?: MapLayout): void;
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
@@ -242,22 +263,94 @@ export const useGame = create<GameStore>((set, get) => {
     else set(state => ({ draft: edit(state.draft, loadPack(state.draft.expansions)) }));
   };
 
+  /** A save that would not open: the player is told, the save stays as it is. */
+  const failLoad = (id: string | null, error: unknown): void => {
+    const text = errorText(error);
+    set(state => ({
+      loadFailure: { id, error: text },
+      brokenSaves: id === null ? state.brokenSaves : { ...state.brokenSaves, [id]: text },
+    }));
+  };
+
+  const startFromShare = (share: ShareParams): void => {
+    const game = draftFromShare(share, get().draft, loadPack);
+    if (game.faction) {
+      history = [];
+      replace(placeStartUnits(game, loadPack(game.expansions)));
+      set({ draft: newDraft(game.expansions) });
+    } else {
+      set({ draft: game });
+    }
+  };
+
   return {
     game: null,
     draft: newDraft(),
     saveError: null,
+    loadFailure: null,
+    brokenSaves: {},
     canUndo: false,
+    linkConflict: null,
 
     newGame: (input, pack) => {
       history = [];
       replace(createGame(input, pack));
     },
+    openShareLink: async search => {
+      const share = readShareLink(search);
+      if (!share || get().game) return;
+      /** A game whose player is known starts at once; otherwise it waits in the draft for the choice of a faction. */
+      if (!share.name) {
+        set(state => ({ draft: draftFromShare(share, state.draft, loadPack) }));
+        return;
+      }
+      let saves: Awaited<ReturnType<typeof listGames>>;
+      try {
+        saves = await listGames();
+      } catch (error) {
+        // Without the saves it is unknown whether the named one exists: the link only fills the draft.
+        failLoad(null, error);
+        set(state => ({ draft: draftFromShare(share, state.draft, loadPack) }));
+        return;
+      }
+      const found = saves.find(save => save.name === share.name);
+      let saved: Game | null;
+      let differences: ShareDifference[];
+      try {
+        saved = found ? await loadGame(found.id) : null;
+        differences = saved ? shareDifferences(share, saved, loadPack) : [];
+      } catch (error) {
+        // The named save is broken: a new game under its name would hide it, so nothing starts.
+        failLoad(found?.id ?? null, error);
+        return;
+      }
+      if (!saved) {
+        startFromShare(share);
+        return;
+      }
+      if (differences.length === 0) await get().openGame(saved.id);
+      else set({ linkConflict: { share, savedId: saved.id, name: share.name, differences, taken: saves.flatMap(save => save.name ?? []) } });
+    },
+    resolveLinkConflict: async choice => {
+      const conflict = get().linkConflict;
+      if (!conflict) return;
+      set({ linkConflict: null });
+      if ('keepSaved' in choice) await get().openGame(conflict.savedId);
+      else startFromShare({ ...conflict.share, name: choice.newName });
+    },
+    setName: name => commitPlayers(g => {
+      const next = name.trim();
+      if (next === (g.name ?? '')) return g;
+      const { name: old, ...rest } = g;
+      void old;
+      return next ? { ...rest, name: next } : rest;
+    }),
     startGame: () => {
       const { draft } = get();
       if (!draft.faction) return;
       history = [];
-      replace(draft);
-      set({ draft: newDraft(draft.expansions) });
+      replace(placeStartUnits(draft, loadPack(draft.expansions)));
+      set({ draft: newDraft(draft.expansions), loadFailure: null });
     },
     closeGame: () => {
       history = [];
@@ -268,17 +361,40 @@ export const useGame = create<GameStore>((set, get) => {
     addOpponent: () => commitPlayers(addPlayer),
     removeOpponent: index => commitPlayers((g, pack) => removePlayer(g, index + 1, pack)),
     setFaction: faction => commitPlayers((g, pack) => setPlayerFaction(g, 0, faction, pack)),
-    swapSeats: (a, b) => commitPlayers((g, pack) => swapSeats(g, a, b, pack)),
+    // The seats are settled when the game starts: its units and plans stand on them.
+    swapSeats: (a, b) => { if (!get().game) commitPlayers((g, pack) => swapSeats(g, a, b, pack)); },
     openGame: async id => {
-      const loaded = await loadGame(id);
-      if (!loaded) return;
+      let game: Game;
+      try {
+        const loaded = await loadGame(id);
+        if (!loaded) return;
+        game = withFractureTiles(withFractureRealigned(loaded, loadPack(loaded.expansions)));
+      } catch (error) {
+        failLoad(id, error);
+        return;
+      }
       history = [];
-      set({ game: withFractureTiles(loaded), canUndo: false, saveError: null });
+      set(state => {
+        const { [id]: fixed, ...brokenSaves } = state.brokenSaves;
+        void fixed;
+        return { game, canUndo: false, saveError: null, loadFailure: null, brokenSaves };
+      });
+    },
+    crashGame: error => {
+      const { game } = get();
+      if (!game) return;
+      history = [];
+      set(state => ({
+        game: null,
+        canUndo: false,
+        loadFailure: { id: game.id, error },
+        brokenSaves: { ...state.brokenSaves, [game.id]: error },
+      }));
     },
 
-    addEntry: (roundNo, body, phase) => {
+    addEntry: (roundNo, body, phase, owner) => {
       const id = newId();
-      const entry = { ...body, id, phase, status: 'planned' } as Entry;
+      const entry = { ...body, id, phase, status: 'planned', ...(owner ? { owner } : {}) } as Entry;
       commit(g => editRound(g, roundNo, r => ({ ...r, entries: [...r.entries, entry] })));
       return id;
     },
@@ -299,7 +415,7 @@ export const useGame = create<GameStore>((set, get) => {
     setEntryStatus: (id, status) =>
       commit(g => editEntryRound(g, id, r => editEntries(r, es =>
         mapEntry(es, id, e => (e.status === status ? e : { ...e, status }))))),
-    setStrategyCard: (roundNo, initiative) => commit(g => editRound(g, roundNo, r => cycleCard(r, initiative))),
+    setStrategyCard: (roundNo, initiative) => commit(g => editRound(g, roundNo, r => cycleCard(r, initiative, g.playerCount))),
     addRound: () =>
       commit(g => editPlan(g, plan => ({
         ...plan,
@@ -339,11 +455,16 @@ export const useGame = create<GameStore>((set, get) => {
         const next = { ...g, expansions };
         return id === 'te' ? withTeMecatol(next) : next;
       }),
-    setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
-    setMap: (map, layout) => commit(g => {
+    // The map is built on the draft too, before the game starts.
+    setTile: (slotKey, tileId) => commitPlayers(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
+    setMap: (map, layout) => commitPlayers((g, pack) => {
       const next = { ...map };
       delete next['0,0'];
       if (g.map['0,0']) next['0,0'] = g.map['0,0'];
+      // The hyperlanes of the layout stay where the string leaves their slots empty.
+      for (const slot of slotsFor(g.playerCount, pack, layout ?? g.layout)) {
+        if (slot.fixed && !next[slotKeyOf(slot.q, slot.r)]) next[slotKeyOf(slot.q, slot.r)] = slot.fixed;
+      }
       const same = Object.keys(next).length === Object.keys(g.map).length && Object.entries(next).every(([k, v]) => g.map[k] === v);
       const nextLayout = layout ?? g.layout;
       return same && nextLayout === g.layout ? g : { ...g, map: next, layout: nextLayout };

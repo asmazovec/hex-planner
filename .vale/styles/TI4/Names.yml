@@ -1,0 +1,9 @@
+# Names of the game and its expansions are written in full and in their own spelling.
+extends: substitution
+message: "Name: use '%s' instead of '%s'."
+level: error
+ignorecase: false
+swap:
+  '[Tt]hunders [Ee]dge|[Tt]hunder [Ee]dge|thunder''s edge': Thunder's Edge
+  'Prophecy Of Kings|prophecy of kings': Prophecy of Kings
+  'mecatol rex|Mecatol rex|Mecatol-Rex': Mecatol Rex

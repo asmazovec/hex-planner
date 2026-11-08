@@ -1,34 +1,30 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../data/cardSummaries';
-import { strategyCards } from '../../domain/cards';
-import { sourceSlot, tacticalMeters } from '../../domain/project';
+import { strategyCards } from '../../data/loadPack';
+import { tacticalMeters } from '../../domain/project';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
-import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId } from '../../domain/types';
-import { opponentName } from '../map/opponentName';
+import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
+import { flightOf as warningFlightOf, placeWarnings } from '../feedback/warningPlaces';
+import { WarningList } from '../feedback/WarningText';
+import { currentLanguage } from '../../i18n';
+import { opponentName } from '../players/names';
 import { playerColour } from '../units/sprites';
-import { TokenPicture } from '../units/UnitToken';
+import { UnitTile } from '../units/UnitTile';
+import { unitsText } from '../units/unitsText';
 import { UNIT_ORDER } from '../units/unitOrder';
-import { fliesNow, groupOf, hasUnits, sourcesOf, systemName, viaOf, type TacticalEntry } from './tactical';
-
-const PICTURE_PX = 32;
+import { flightOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from '../../domain/tactical';
+import { systemName } from '../map/systemName';
 
 function UnitPictures({ units, game, t }: { units: UnitCounts; game: Game; t: (key: string) => string }) {
   return (
     <span className="upics">
       {UNIT_ORDER.filter(u => (units[u] ?? 0) > 0).map(unit => (
-        <span key={unit} className="upic" title={t(`unit.${unit}`)}>
-          <TokenPicture kind={unit} colour={playerColour(game.color)} px={PICTURE_PX} />
-          <span className="visually-hidden">{t(`unit.${unit}`)}</span>
-          {(units[unit] ?? 0) > 1 && <i>{units[unit]}</i>}
-        </span>
+        <UnitTile key={unit} variant="mini" kind={unit} colour={playerColour(game.color)} count={units[unit] ?? 0} label={t(`unit.${unit}`)} />
       ))}
     </span>
   );
 }
-
-const only = (units: UnitCounts, keep: (unit: UnitId) => boolean): UnitCounts =>
-  Object.fromEntries((Object.keys(units) as UnitId[]).filter(keep).map(u => [u, units[u]]));
 
 export interface EntryStepsProps {
   entry: Entry;
@@ -36,12 +32,14 @@ export interface EntryStepsProps {
   pack: DataPack;
   /** The state just before the entry. */
   before: GameState;
+  /** The entry's warnings about its flights; each stands in the flight it speaks of. */
+  warnings?: Warning[];
 }
 
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
-export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
-  const { t, i18n } = useTranslation();
-  const lang = i18n.language === 'en' ? 'en' : 'ru';
+export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntryStepsProps) {
+  const { t } = useTranslation();
+  const lang = currentLanguage();
   const name = (slot: string) => systemName(game, pack, slot);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} game={game} t={t} />;
   const planetName = (id: string) => pack.planets[id]?.name ?? id;
@@ -58,65 +56,64 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
     const target = e.systemId;
     if (target === null) return null;
     const landings = e.landings.filter(landing => hasUnits(landing.units));
+    const lost = [e.losses, ...Object.values(e.groundLosses ?? {})].filter((units): units is UnitCounts => hasUnits(units));
+    // What happens on arrival: battle losses, landings, then what is built there.
+    const after: ReactNode[] = [];
+    if (lost.length > 0) {
+      after.push(<p key="lost" className="flight-after"><span className="flight-after-label">{t('plan.steps.losses')}</span>{lost.map((units, i) => <UnitPictures key={i} units={units} game={game} t={t} />)}</p>);
+    }
+    for (const landing of landings) {
+      after.push(<p key={`land:${landing.planetId}`} className="flight-after"><span className="flight-after-label">{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>);
+    }
+    if (hasUnits(e.production)) {
+      after.push(<p key="build" className="flight-after"><span className="flight-after-label">{t('plan.steps.build')}</span>{pictures(e.production)}{paid(e.payment) && <small>{paid(e.payment)}</small>}</p>);
+    }
+    const sources = sourcesOf(game, pack, e);
     return (
       <div className="entry-steps entry-flights">
         <p className="flight-activate">
           <span>{t('plan.steps.activate', { name: name(target) })}</span>
           <small>{e.free ? t('plan.steps.free') : t('plan.steps.token')}</small>
         </p>
-        {sourcesOf(game, pack, e).map(source => {
-          const group = groupOf(game, pack, e.moves, source);
-          const flying = group.filter(m => m.from === source && m.pickupOf === undefined).reduce((sum, m) => ({ ...sum, ...m.units }), {} as UnitCounts);
-          const ships = only(flying, u => fliesNow(game, pack, before.upgrades, u));
+        {sources.map((source, index) => {
+          const { ships, board, stops } = flightOf(game, pack, before.upgrades, e, source);
           const via = viaOf(e, source);
-          const board = group.filter(m => m.pickupOf === undefined).reduce<UnitCounts>((sum, m) => {
-            const next = { ...sum };
-            for (const unit of Object.keys(m.units) as UnitId[]) if (!fliesNow(game, pack, before.upgrades, unit)) next[unit] = (next[unit] ?? 0) + (m.units[unit] ?? 0);
-            return next;
-          }, {});
-          const stops = new Map<string, UnitCounts>();
-          for (const move of group) {
-            const slot = move.pickupOf === undefined ? null : sourceSlot(game, pack, move.from);
-            if (slot === null) continue;
-            const held = { ...stops.get(slot) };
-            for (const unit of Object.keys(move.units) as UnitId[]) held[unit] = (held[unit] ?? 0) + (move.units[unit] ?? 0);
-            stops.set(slot, held);
-          }
           const { group: load } = tacticalMeters(game, e, source, before, pack);
-          const over = load.load > load.capacity;
+          // What rides with the ships is said by the cargo, the rest of the flight by its start.
+          const placer = placeWarnings(warnings.filter(w => warningFlightOf(w, game, pack, e) === source));
+          const cargoWarnings = placer.at('cargo');
+          const startWarnings = placer.rest();
+          const over = cargoWarnings.length > 0;
+          // The last flight ends where the action happens: what follows on arrival stands at its end.
+          const last = index === sources.length - 1;
           return (
             <section key={source} className="flight">
               <strong>{t('plan.steps.fly', { path: [source, ...via, target].map(name).join(' → ') })}</strong>
               <ol className={`stops${over ? ' stops-over' : ''}`}>
+                {/* The start and what is taken along the way, on one line: the path is already in the heading. */}
                 <li className="stop">
                   <span className="stop-name">{name(source)}</span>
-                  {hasUnits(ships) ? pictures(ships) : <span className="warning-text">{t('plan.steps.nobody')}</span>}
-                  {hasUnits(board) && <><span className="stop-name">{t('plan.steps.board', { name: name(source) })}</span>{pictures(board)}</>}
+                  {hasUnits(ships) ? pictures(ships) : <span className="stop-name">{t('plan.steps.nobody')}</span>}
+                  {hasUnits(board) && <span className="stop-take"><span className="stop-name">{t('plan.steps.board', { name: name(source) })}</span>{pictures(board)}</span>}
+                  {via.map(slot => {
+                    const taken = stops.get(slot);
+                    return taken && hasUnits(taken)
+                      ? <span key={slot} className="stop-take"><span className="stop-name">{t('plan.steps.pickup', { name: name(slot) })}</span>{pictures(taken)}</span>
+                      : null;
+                  })}
+                  <WarningList variant="row" warnings={startWarnings} game={game} pack={pack} />
                 </li>
-                {via.map(slot => {
-                  const taken = stops.get(slot);
-                  return (
-                    <li key={slot} className="stop">
-                      <span className="stop-name">{taken ? t('plan.steps.pickup', { name: name(slot) }) : name(slot)}</span>
-                      {taken && pictures(taken)}
-                    </li>
-                  );
-                })}
                 <li className="stop stop-target">
                   <span className="stop-name">{name(target)}</span>
                   {load.load > 0 && <span className="stop-name">{t('plan.steps.cargo', { load: load.load, capacity: load.capacity })}</span>}
-                  {over && <span className="warning-text">{t('plan.steps.overCapacity')}</span>}
+                  <WarningList variant="row" warnings={cargoWarnings} game={game} pack={pack} />
+                  {last && after.length > 0 && <div className="stop-after">{after}</div>}
                 </li>
               </ol>
             </section>
           );
         })}
-        {landings.map(landing => (
-          <p key={landing.planetId} className="flight-after"><span>{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>
-        ))}
-        {hasUnits(e.production) && (
-          <p className="flight-after"><span>{t('plan.steps.build')}</span>{pictures(e.production)}{paid(e.payment) && <small>{paid(e.payment)}</small>}</p>
-        )}
+        {sources.length === 0 && after}
       </div>
     );
   };
@@ -170,7 +167,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
         const value = delta[field] ?? 0;
         if (value !== 0) steps.push(`${t(`plan.summary.${field}`)} ${value > 0 ? '+' : ''}${value}`);
       }
-      const signed = (units: UnitCounts) => UNIT_ORDER.filter(u => units[u]).map(u => `${t(`unit.${u}`)} ${(units[u] ?? 0) > 0 ? '+' : ''}${units[u]}`).join(', ');
+      const signed = (units: UnitCounts) => unitsText(units, t, true);
       if (delta.units && signed(delta.units.units)) steps.push(`${name(delta.units.systemId)}: ${signed(delta.units.units)}`);
       for (const [planetId, units] of Object.entries(delta.ground ?? {})) if (signed(units)) steps.push(`${planetName(planetId)}: ${signed(units)}`);
       if (steps.length === 0) steps.push(t('plan.steps.noChanges'));

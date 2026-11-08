@@ -37,12 +37,13 @@ test('mapIsEmpty ignores the tiles the template places by itself', () => {
   expect(mapIsEmpty({ ...game, map: { ...game.map, '1,0': '25' } }, pack)).toBe(false);
 });
 
-test('3, 4 and 5 players have both layouts with Prophecy of Kings; the others have one', () => {
+test('3, 4 and 5 players have both layouts with Prophecy of Kings; 6 and 8 have no hyperlanes, 7 no standard map', () => {
   for (const count of [3, 4, 5]) {
     expect(templateFor(count, 'standard', pok)?.layout).toBe('standard');
     expect(templateFor(count, 'hyperlanes', pok)?.layout).toBe('hyperlanes');
   }
-  for (const count of [6, 7, 8]) expect(templateFor(count, 'hyperlanes', pok)).toBeUndefined();
+  for (const count of [6, 8]) expect(templateFor(count, 'hyperlanes', pok)).toBeUndefined();
+  expect(templateFor(7, 'standard', pok)).toBeUndefined();
   expect(templateFor(6, 'standard', pok)?.playerCount).toBe(6);
 });
 
@@ -70,7 +71,9 @@ test('seatSlots is the home list of the template of the layout', () => {
   expect(seatSlots(4, pok, 'standard')).toEqual(['0,-3', '3,-3', '0,3', '-3,3']);
   expect(seatSlots(3, pok, 'hyperlanes')).toEqual(['0,-3', '3,0', '-3,3']);
   expect(seatSlots(5, pok, 'hyperlanes')).toEqual(['0,-3', '3,-3', '3,0', '-3,3', '-3,0']);
-  expect(seatSlots(7, pok, 'standard')).toEqual(['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1']);
+  expect(seatSlots(7, pok, 'alternate')).toEqual(['0,-4', '3,-3', '3,0', '0,4', '-3,4', '-4,2', '-3,-1']);
+  // A layout the count lacks gives the default one's seats.
+  expect(seatSlots(7, pok, 'standard')).toEqual(seatSlots(7, pok, 'hyperlanes'));
   expect(seatSlots(8, pok, 'standard')).toHaveLength(8);
 });
 

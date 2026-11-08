@@ -2,7 +2,7 @@ import type { TokenKind } from '../../domain/hexLayout';
 import type { Game } from '../../domain/types';
 import { UNIT_ART } from './unitArt';
 
-/** The values of `--player-1` to `--player-8` in the theme. A token needs real numbers to mix its dark disc. */
+/** The values of `--player-1` to `--player-8` in the theme, kept equal by scripts/player-colours.test.ts. A token needs real numbers to mix its dark disc. */
 export const PLAYER_COLOURS = ['#7fb2ff', '#e8c56a', '#ea7f76', '#74d09a', '#b89bf5', '#f0a463', '#62cdd3', '#d98bc2'];
 
 export const playerColour = (color: number): string => PLAYER_COLOURS[(color - 1 + PLAYER_COLOURS.length) % PLAYER_COLOURS.length];
@@ -24,7 +24,7 @@ const TRIANGLE_DROP = 10;
 const ART_RADIUS: Record<TokenKind, number> = {
   flagship: 74, dreadnought: 74, carrier: 74, cruiser: 74, destroyer: 74, warsun: 59, fighter: 50, infantry: 36, mech: 42, pds: 40, spacedock: 50,
 };
-/** The shape that says a unit takes a fleet pool slot, in a box of 100. Fighters and ground units have none. */
+/** The shape that says a unit takes a fleet pool slot, in a box of 100. Fighters and ground forces have none. */
 const BADGES: Partial<Record<TokenKind, string>> = {
   warsun: '<path d="M50 2a48 48 0 1 0 .01 0Z M50 30a20 20 0 1 1 -.01 0Z"/>',
   flagship: '<polygon points="50,0 63,34 100,36 71,58 81,96 50,75 19,96 29,58 0,36 37,34"/>',

@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Game } from '../../domain/types';
 import { requestPersistence } from '../../storage/db';
-import { RowIcon } from '../plan/RowIcon';
-import { EXPORTED_EVENT, LAST_EXPORT_KEY } from './download';
+import { RowIcon } from '../primitives/Icon';
+import { EXPORTED_EVENT } from './download';
+import { lastExport } from './preferences';
 
 const DAY = 24 * 60 * 60 * 1000;
 /** With persistent storage the browser keeps the games, so a week between exports is fine. Without it a day is. */
@@ -14,20 +15,11 @@ export function shouldRemindExport(input: { persisted: boolean; lastExportAt: nu
   return input.now - input.lastExportAt >= (input.persisted ? MAX_AGE.persisted : MAX_AGE.volatile);
 }
 
-function readLastExport(): number | null {
-  try {
-    const value = Number(localStorage.getItem(LAST_EXPORT_KEY));
-    return value > 0 ? value : null;
-  } catch {
-    return null;
-  }
-}
-
 /** The export button of the menu. It asks the browser to keep the data, and is marked when a new file is due, with the reason in its name. */
 export function ExportReminder({ game, onExport }: { game: Game | null; onExport: () => void }) {
   const { t } = useTranslation();
   const [persisted, setPersisted] = useState<boolean | null>(null);
-  const [lastExportAt, setLastExportAt] = useState(readLastExport);
+  const [lastExportAt, setLastExportAt] = useState(lastExport.read);
   /** The time the app was opened: a long session does not need a fresher reading. */
   const [now] = useState(Date.now);
   const hasGame = game !== null;
@@ -40,7 +32,7 @@ export function ExportReminder({ game, onExport }: { game: Game | null; onExport
   }, [hasGame]);
 
   useEffect(() => {
-    const update = () => setLastExportAt(readLastExport());
+    const update = () => setLastExportAt(lastExport.read());
     window.addEventListener(EXPORTED_EVENT, update);
     return () => window.removeEventListener(EXPORTED_EVENT, update);
   }, []);

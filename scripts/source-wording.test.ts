@@ -4,6 +4,7 @@ import { expect, test } from 'vitest';
 import { legendarySummary } from '../src/data/legendarySummaries';
 import { sheetSummary } from '../src/data/sheetSummaries';
 import { shipSummary } from '../src/data/shipSummaries';
+import { techSummary } from '../src/data/techSummaries';
 import { loadPack } from '../src/data/loadPack';
 import { SOURCE_CACHE } from './build-data';
 
@@ -94,4 +95,23 @@ test.skipIf(!existsSync(LEADERS))('every ability, leader, mech and breakthrough 
   }
   expect(missing).toEqual([]);
   expect(shared).toEqual([]);
+});
+
+const TECHNOLOGIES = join(SOURCE_DATA, 'technologies');
+
+test.skipIf(!existsSync(TECHNOLOGIES))('no faction technology retelling shares a run of 6 words with the source', () => {
+  const texts = new Map<string, string>();
+  for (const file of readdirSync(TECHNOLOGIES)) {
+    for (const tech of JSON.parse(readFileSync(join(TECHNOLOGIES, file), 'utf8')) as { alias: string; source: string; text?: string }[]) {
+      if (/^(base|pok|thunders_edge|codex\d*)$/.test(tech.source) && tech.text) texts.set(tech.alias, tech.text);
+    }
+  }
+  const ids = new Set(Object.values(loadPack(['pok', 'te']).factions).flatMap(faction => faction.sheet!.techs.map(tech => tech.id)));
+  const shared: string[] = [];
+  for (const id of ids) {
+    expect(texts.has(id), id).toBe(true);
+    shared.push(...sharedRuns(techSummary(id, 'en') ?? '', texts.get(id) ?? '').map(run => `${id}: ${run}`));
+  }
+  expect(shared).toEqual([]);
+  expect(ids.size).toBeGreaterThanOrEqual(60);
 });

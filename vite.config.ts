@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Relative paths: GitHub Pages serves the app from /<repository>/, not from the site root.
+  base: './',
   plugins: [
     react(),
     VitePWA({
@@ -32,6 +34,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
-    exclude: ['node_modules', 'dist', 'tests/e2e/**'],
+    exclude: ['**/node_modules/**', 'dist', 'tests/e2e/**', '.claude/**'],
   },
 });

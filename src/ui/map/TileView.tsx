@@ -1,16 +1,18 @@
 import { useMemo, type KeyboardEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HEX_INNER, hexLayout, type GroundStack, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack, type SpaceStack } from '../../domain/hexLayout';
+import { HEX_INNER, hexLayout, type HexLayoutInput, type LayoutObstacle, type PlacedPlanet, type PlacedStack } from '../../domain/hexLayout';
 import { MECATOL_PLANETS } from '../../domain/mecatol';
-import { opponentsBySeat, planetHolder } from '../../domain/players';
+import { opponentsBySeat } from '../../domain/players';
+import { holderIn, stacksOf } from '../../domain/stacks';
 import { rotateLanes } from '../../domain/lanes';
 import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
-import type { DataPack, Game, GameState, PlanetDef, TechType, UnitCounts, UnitId } from '../../domain/types';
+import type { DataPack, Game, GameState, PlanetDef } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
-import { UNIT_ORDER } from '../units/unitOrder';
 import { hexPoints, slotToPixel } from './geometry';
-import { opponentName } from './opponentName';
+import { CommandTokenMark, IngressMark, TECH_SHAPES } from './marks';
+import { playerStyle } from '../primitives/player';
+import { opponentName } from '../players/names';
 
 export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
 
@@ -31,7 +33,7 @@ export interface TileViewProps {
   onPointerDown?: (slotKey: string, event: PointerEvent) => void;
   /** Drawn as the big hex: tokens and planets take the taps, the tile itself none. */
   stage?: {
-    /** The index of the planet that ground units and structures go to. */
+    /** The index of the planet that ground forces and structures go to. */
     target: number;
     onPlanet: (index: number) => void;
     onToken: (item: PlacedStack) => void;
@@ -51,6 +53,8 @@ const SEAT_RADIUS = 4.6;
 const SEAT_Y = NUMBER_BASELINE - 2.6;
 /** Top-right corner: the command token against the top edge, the ingress below it along the side. */
 const COMMAND_SPOT = { x: 26, y: -41, r: 6 };
+/** The tokens of opponents stand in a row before mine. */
+const RIVAL_TOKEN_STEP = 13;
 const INGRESS_SPOT = { x: 36, y: -28, scale: 0.75 };
 const INGRESS_RADIUS = 8 * INGRESS_SPOT.scale;
 const NAME_LENGTH = 11;
@@ -66,13 +70,6 @@ const TECH_RADIUS = 12.4;
 const techMarkAt = (n: number): { x: number; y: number } => {
   const angle = ((45 - 35 * n) * Math.PI) / 180;
   return { x: TECH_RADIUS * Math.sin(angle), y: -TECH_RADIUS * Math.cos(angle) };
-};
-/** One simple shape per type, so the colour is not the only sign. */
-const TECH_SHAPES: Record<TechType, string> = {
-  propulsion: 'M0,-3.9 L3.6,2.6 L-3.6,2.6 Z',
-  biotic: 'M0,-3.6 A3.6,3.6 0 1 1 0,3.6 A3.6,3.6 0 1 1 0,-3.6 Z',
-  cybernetic: 'M0,-4 L4,0 L0,4 L-4,0 Z',
-  warfare: 'M-3.2,-3.2 L3.2,-3.2 L3.2,3.2 L-3.2,3.2 Z',
 };
 /** The legendary mark mirrors the first technology mark, on the upper left; a four-point star of its own. */
 const LEGENDARY_SHAPE = 'M0,-4.2 L1.2,-1.2 L4.2,0 L1.2,1.2 L0,4.2 L-1.2,1.2 L-4.2,0 L-1.2,-1.2 Z';
@@ -91,7 +88,7 @@ const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma:
 const EDGE_MIDDLE = HEX_INNER * Math.sqrt(3) / 2;
 
 /** A lane from the middle of one edge to the middle of another, bent toward the centre; opposite edges give a straight line. */
-function lanePath([a, b]: [number, number]): string {
+export function lanePath([a, b]: [number, number]): string {
   const point = (edge: number) => ({ x: EDGE_MIDDLE * Math.sin((edge * Math.PI) / 3), y: -EDGE_MIDDLE * Math.cos((edge * Math.PI) / 3) });
   const from = point(a);
   const to = point(b);
@@ -100,9 +97,6 @@ function lanePath([a, b]: [number, number]): string {
 }
 
 const shortName = (name: string): string => (name.length > NAME_LENGTH ? `${name.slice(0, NAME_LENGTH - 1)}…` : name);
-
-const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
-  UNIT_ORDER.filter(u => (counts?.[u] ?? 0) > 0).map(unit => ({ unit, count: counts?.[unit] ?? 0 }));
 
 /** A name or caption goes when a token or another planet covers its box; both are taken as round. */
 function nameCovered(name: string, x: number, baseline: number, items: { x: number; y: number; size: number }[]): boolean {
@@ -120,6 +114,42 @@ const placeOn = (spot: PlacedPlanet | PlacedStack, scale: number) => ({ transfor
 function useHexLayout(input: HexLayoutInput) {
   const key = JSON.stringify(input);
   return useMemo(() => hexLayout(JSON.parse(key) as HexLayoutInput), [key]);
+}
+
+/** A planet as the map draws it: its disc, the numbers, the marks of its traits and technology, and the strike when exhausted. */
+export function PlanetMark({ planet, control, holderColor, exhausted }: { planet: PlanetDef; control?: 'me' | 'enemy'; holderColor?: number; exhausted: boolean }) {
+  return (
+    <>
+      <circle
+        r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`}
+        style={holderColor ? playerStyle('stroke', holderColor) : undefined}
+      />
+      {(planet.traits ?? []).slice(0, 2).map((trait, n, shown) => (
+        <path
+          key={trait} d={shown.length === 1 ? TINT_PATHS.whole : n === 0 ? TINT_PATHS.left : TINT_PATHS.right}
+          className={`planet-trait planet-trait-${trait}`}
+        />
+      ))}
+      <text y={3.2} className="planet-values">
+        <tspan className="value-resources">{planet.resources}</tspan>
+        <tspan className="value-slash">/</tspan>
+        <tspan className="value-influence">{planet.influence}</tspan>
+      </text>
+      {(planet.tech ?? []).map((tech, n) => (
+        <path
+          key={tech} d={TECH_SHAPES[tech]} className={`planet-tech planet-tech-${tech}`}
+          transform={`translate(${techMarkAt(n).x.toFixed(2)} ${techMarkAt(n).y.toFixed(2)})`}
+        />
+      ))}
+      {planet.legendary && (
+        <path
+          d={LEGENDARY_SHAPE} className="planet-legendary"
+          transform={`translate(${legendaryMarkAt().x.toFixed(2)} ${legendaryMarkAt().y.toFixed(2)})`}
+        />
+      )}
+      {exhausted && <line x1={-PLANET_BASE * 0.7} y1={PLANET_BASE * 0.7} x2={PLANET_BASE * 0.7} y2={-PLANET_BASE * 0.7} className="planet-strike" />}
+    </>
+  );
 }
 
 export function TileView({
@@ -158,32 +188,13 @@ export function TileView({
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game);
   /** The opponent a planet belongs to in the state shown; undefined when it is mine or free. */
-  const holderOf = (planetId: string) => (state.control[planetId] === 'enemy' ? planetHolder(game, planetId) : undefined);
-
-  const space: SpaceStack[] = [];
-  const ground: GroundStack[] = [];
-  for (const { unit, count } of unitsOf(state.systems[slotKey])) space.push({ kind: unit, owner: 'me', count });
-  for (const { id: owner } of seated) {
-    const left = game.enemyUnits[slotKey]?.[owner] ?? {};
-    for (const { unit, count } of unitsOf(left)) if (unit !== 'infantry' && unit !== 'mech') space.push({ kind: unit, owner, count });
-    for (const unit of ['infantry', 'mech'] as const) {
-      // Ground units still listed with the system stand on its first planet, or on the comb without planets.
-      if (planets.length === 0 && left[unit]) ground.push({ kind: unit, owner, count: left[unit], planet: 0 });
-      planets.forEach((planet, i) => {
-        const count = (game.enemyGround[planet.id]?.[owner]?.[unit] ?? 0) + (i === 0 ? left[unit] ?? 0 : 0);
-        if (count > 0) ground.push({ kind: unit, owner, count, planet: i });
-      });
-    }
-  }
-  planets.forEach((planet, i) => {
-    for (const { unit, count } of unitsOf(state.ground[planet.id])) ground.push({ kind: unit, owner: 'me', count, planet: i });
-    const pds = state.pds[planet.id] ?? 0;
-    if (pds > 0) ground.push({ kind: 'pds', owner: holderOf(planet.id) ?? 'me', count: pds, planet: i });
-    if (state.docks.includes(planet.id)) ground.push({ kind: 'spacedock', owner: holderOf(planet.id) ?? 'me', count: 1, planet: i });
-  });
+  const holderOf = (planetId: string) => holderIn(game, state, planetId);
+  const { space, ground } = stacksOf(game, state, slotKey, planets, pack);
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
-  const obstacles: LayoutObstacle[] = [];
+  const rivalTokens = seated.filter(o => state.rivals?.[o.id]?.tokensOnMap.includes(slotKey));
+  const rivalTokenAt = (i: number) => ({ x: COMMAND_SPOT.x - (i + (hasCommandToken ? 1 : 0)) * RIVAL_TOKEN_STEP, y: COMMAND_SPOT.y, r: COMMAND_SPOT.r });
+  const obstacles: LayoutObstacle[] = rivalTokens.map((_, i) => rivalTokenAt(i));
   if (hasCommandToken) obstacles.push(COMMAND_SPOT);
   if (ingress) obstacles.push({ x: INGRESS_SPOT.x, y: INGRESS_SPOT.y, r: INGRESS_RADIUS });
   if (tile && seat) obstacles.push({ x: seatX, y: SEAT_Y, r: SEAT_RADIUS });
@@ -203,7 +214,7 @@ export function TileView({
       transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}
       role={stage ? 'group' : 'button'} tabIndex={stage ? undefined : 0} aria-label={label}
       data-fracture-tile={fracture ? tileId : undefined}
-      className={`tile${stage ? ' tile-stage' : ''}${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}`}
+      className={`tile${stage ? ' tile-stage' : ''}${fracture ? ' tile-fracture' : ''}${highlight ? ` tile-${highlight}` : ''}${selected ? ' tile-selected' : ''}${hasCommandToken ? ' tile-activated' : ''}`}
       data-slot={stage ? undefined : slotKey}
       onClick={activate}
       onKeyDown={onKeyDown}
@@ -239,34 +250,7 @@ export function TileView({
             } : { role: 'group' })}
           >
             {stage && planets.length > 1 && stage.target === i && <circle r={PLANET_BASE + 1.4} className="planet-target" />}
-            <circle
-              r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`}
-              style={holderColor ? { stroke: `var(--player-${holderColor})` } : undefined}
-            />
-            {(planet.traits ?? []).slice(0, 2).map((trait, n, shown) => (
-              <path
-                key={trait} d={shown.length === 1 ? TINT_PATHS.whole : n === 0 ? TINT_PATHS.left : TINT_PATHS.right}
-                className={`planet-trait planet-trait-${trait}`}
-              />
-            ))}
-            <text y={3.2} className="planet-values">
-              <tspan className="value-resources">{planet.resources}</tspan>
-              <tspan className="value-slash">/</tspan>
-              <tspan className="value-influence">{planet.influence}</tspan>
-            </text>
-            {(planet.tech ?? []).map((tech, n) => (
-              <path
-                key={tech} d={TECH_SHAPES[tech]} className={`planet-tech planet-tech-${tech}`}
-                transform={`translate(${techMarkAt(n).x.toFixed(2)} ${techMarkAt(n).y.toFixed(2)})`}
-              />
-            ))}
-            {planet.legendary && (
-              <path
-                d={LEGENDARY_SHAPE} className="planet-legendary"
-                transform={`translate(${legendaryMarkAt().x.toFixed(2)} ${legendaryMarkAt().y.toFixed(2)})`}
-              />
-            )}
-            {exhausted && <line x1={-PLANET_BASE * 0.7} y1={PLANET_BASE * 0.7} x2={PLANET_BASE * 0.7} y2={-PLANET_BASE * 0.7} className="planet-strike" />}
+            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} />
           </g>
         );
       })}
@@ -299,21 +283,26 @@ export function TileView({
           role="img" aria-label={t('map.seat', { n: seat.number })} className="tile-seat"
           transform={`translate(${seatX} ${SEAT_Y})`}
         >
-          <circle r={SEAT_RADIUS} style={{ fill: `var(--player-${seat.color})` }} />
+          <circle r={SEAT_RADIUS} style={playerStyle('fill', seat.color)} />
           <text y={2.3}>{seat.number}</text>
         </g>
       )}
 
       {hasCommandToken && (
         <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
-          <circle r={7} className="token" />
-          <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />
+          <CommandTokenMark />
         </g>
       )}
 
+      {rivalTokens.map((o, i) => (
+        <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
+          <CommandTokenMark color={o.color} />
+        </g>
+      ))}
+
       {ingress && (
         <g role="img" aria-label={t('map.ingress')} transform={`translate(${INGRESS_SPOT.x} ${INGRESS_SPOT.y}) scale(${INGRESS_SPOT.scale})`}>
-          <path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" />
+          <IngressMark />
         </g>
       )}
     </g>

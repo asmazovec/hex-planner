@@ -43,6 +43,16 @@
     ],
     "reason": "Thunder's Edge rulebook; absent from the source at this commit"
   },
+  "factionTechnologies": {
+    "fields": "data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades. Card text is not read.",
+    "added": [
+      "executiveorder"
+    ],
+    "replaces": {
+      "executiveorder": "iihq"
+    },
+    "reason": "Executive Order is filed under keleres with source thunders_edge but listed on no faction; the Thunder's Edge rulebook gives Keleres two faction technologies and the source names the Keleres breakthrough I.I.H.Q. Modernization, so it is taken to replace that technology (inference, not confirmed by a rulebook line)."
+  },
   "corrections": {
     "homeTiles": {
       "ghost": "51",
@@ -52,8 +62,129 @@
       "keleresa": "58"
     }
   },
-  "unconfirmed": {
-    "unitLimits": "Reinforcement limits are null: no public source confirmed them."
+  "mapLayouts": {
+    "source": "Prophecy of Kings rulebook, official PDF from the FFG product page (ti10_rulebook_web-good.pdf)",
+    "pages": {
+      "9": "Game Board Setup for 5, 7, or 8 players; Hyperlane Setup",
+      "12": "Map Appendix: Alternate Hyperlanes, Large Galaxy"
+    },
+    "fromDiagrams": {
+      "large6": {
+        "homes": [
+          "0,-4",
+          "4,-4",
+          "4,0",
+          "0,4",
+          "-4,4",
+          "-4,0"
+        ]
+      },
+      "hyperlanes7": {
+        "homes": [
+          "0,-4",
+          "3,-4",
+          "4,-2",
+          "3,1",
+          "-3,4",
+          "-4,2",
+          "-3,-1"
+        ],
+        "lanes": {
+          "0,2": "86A@0",
+          "1,2": "88A@0",
+          "-1,3": "87A@0",
+          "1,3": "83A@0",
+          "0,4": "85A@0",
+          "-1,4": "84A@0"
+        }
+      },
+      "alternate7": {
+        "slots": "0,-4 1,-4 -1,-3 0,-3 1,-3 -2,-2 -1,-2 0,-2 1,-2 2,-2 3,-3 -3,-1 -2,-1 -1,-1 0,-1 1,-1 2,-3 2,-1 3,-2 3,-1 -4,1 -4,2 -3,0 -3,1 -3,2 -3,3 -3,4 -2,0 -2,1 -2,2 -2,3 -2,4 -1,0 -1,1 -1,2 -1,3 -1,4 0,1 0,2 0,3 0,4 1,0 1,1 1,2 1,3 2,0 2,1 3,0",
+        "homes": [
+          "0,-4",
+          "3,-3",
+          "3,0",
+          "0,4",
+          "-3,4",
+          "-4,2",
+          "-3,-1"
+        ],
+        "lanes": {
+          "1,-3": "83B@0",
+          "0,-1": "85B@0",
+          "-3,1": "88B@5",
+          "0,1": "84B@0",
+          "1,2": "86B@0",
+          "-1,1": "90B@0"
+        }
+      },
+      "standard8": {
+        "homes": [
+          "0,-4",
+          "3,-4",
+          "4,-2",
+          "3,1",
+          "0,4",
+          "-3,4",
+          "-4,2",
+          "-3,-1"
+        ]
+      },
+      "alternate8": {
+        "slots": "0,-4 1,-4 2,-4 3,-4 -1,-3 0,-3 1,-3 2,-3 3,-3 -2,-2 -1,-2 0,-2 1,-2 2,-2 3,-2 4,-2 -3,-1 -2,-1 -1,-1 0,-1 1,-1 2,-1 4,-1 -4,1 -4,2 -3,0 -3,1 -3,2 -3,3 -3,4 -2,0 -2,1 -2,2 -2,3 -2,4 -1,0 -1,1 -1,2 -1,3 -1,4 0,1 0,2 0,3 0,4 1,0 1,1 1,2 1,3 2,0 2,1 2,2 3,-1 3,0 3,1",
+        "homes": [
+          "0,-4",
+          "3,-4",
+          "4,-2",
+          "3,1",
+          "0,4",
+          "-3,4",
+          "-4,2",
+          "-3,-1"
+        ],
+        "lanes": {
+          "0,-1": "87A@1",
+          "0,1": "88A@2",
+          "-1,1": "89B@0",
+          "1,-1": "90B@3",
+          "-3,1": "83B@5",
+          "3,-1": "85B@5"
+        }
+      }
+    },
+    "fromSource": "Three to six players and the five-player hyperlanes: data/map_templates (6pStandard, 3pInPersonHyperlanes, 5pHyperlanes); homes of three to six players and the three- and four-player hyperlanes: Milty Draft (MILTY_HOMES, MILTY_LANES).",
+    "reason": "The source has no rulebook map for seven or eight players or for the Large Galaxy (its 7pHyperlanes and 8pHyperlanes are Milty Draft maps): slots, homes and lanes were copied by hand from the diagrams, twin sides assigned in the order of the rulebook list."
+  },
+  "reinforcements": {
+    "source": "https://tirules2.com/R_units",
+    "repository": "https://github.com/dangothemango/tirules",
+    "license": "GPL-3.0",
+    "section": "LRR 96.2",
+    "units": {
+      "carrier": 4,
+      "cruiser": 8,
+      "destroyer": 8,
+      "dreadnought": 5,
+      "warsun": 2,
+      "flagship": 1,
+      "mech": 4,
+      "infantry": null,
+      "fighter": null
+    },
+    "structures": {
+      "pds": 6,
+      "spacedock": 3
+    },
+    "tokenUnits": {
+      "figures": {
+        "infantry": 12,
+        "fighter": 10
+      },
+      "reason": "Fighters and infantry are not limited by their figures: tokens stand in for them (LRR 96 note 2.1), so their limit is null."
+    }
+  },
+  "production": {
+    "spacedock": "Production of a space dock is the planet's resources plus the number in its levels: source productionValue, LRR 79.1."
   },
   "verification": "docs/data-verification.md"
 }

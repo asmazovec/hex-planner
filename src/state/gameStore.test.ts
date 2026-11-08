@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 vi.mock('../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
   loadGame: vi.fn(async () => null),
+  listGames: vi.fn(async () => []),
 }));
 
 import { loadPack } from '../data/loadPack';
@@ -10,7 +11,7 @@ import { seatSlots } from '../domain/mapBuilder';
 import { opponentHoldings } from '../domain/players';
 import { project } from '../domain/project';
 import type { Game } from '../domain/types';
-import { loadGame, saveGame } from '../storage/db';
+import { listGames, loadGame, saveGame } from '../storage/db';
 import { flushSaves, useGame } from './gameStore';
 
 const pack = loadPack(['pok']);
@@ -181,6 +182,69 @@ describe('gameStore', () => {
   });
 });
 
+describe('a save that does not load', () => {
+  beforeEach(() => {
+    vi.mocked(listGames).mockReset().mockResolvedValue([]);
+    useGame.setState({ loadFailure: null, brokenSaves: {} });
+  });
+
+  test('openGame of a broken save tells why, marks it, and leaves the open game alone', async () => {
+    const before = game();
+    vi.mocked(loadGame).mockRejectedValue(new Error('plans: expected array'));
+    await expect(act().openGame('broken')).resolves.toBeUndefined();
+    expect(game()).toBe(before);
+    expect(act().loadFailure).toEqual({ id: 'broken', error: 'plans: expected array' });
+    expect(act().brokenSaves).toEqual({ broken: 'plans: expected array' });
+  });
+
+  test('a save that opens after all clears the failure and its mark', async () => {
+    vi.mocked(loadGame).mockRejectedValueOnce(new Error('busy'));
+    await act().openGame('x');
+    vi.mocked(loadGame).mockResolvedValue(structuredClone(game()));
+    await act().openGame('x');
+    expect(act().loadFailure).toBeNull();
+    expect(act().brokenSaves).toEqual({});
+  });
+
+  test('a crash of the open game closes it without saving, and marks it as failed', async () => {
+    await flushSaves();
+    vi.mocked(saveGame).mockClear();
+    const { id } = game();
+    act().crashGame('replay failed');
+    expect(act().game).toBeNull();
+    expect(act().canUndo).toBe(false);
+    expect(act().loadFailure).toEqual({ id, error: 'replay failed' });
+    expect(act().brokenSaves[id]).toBe('replay failed');
+    await flushSaves();
+    expect(saveGame).not.toHaveBeenCalled();
+    act().crashGame('again');
+    expect(act().loadFailure?.error).toBe('replay failed');
+  });
+
+  test('a link to a broken save tells so and starts nothing under its name', async () => {
+    act().closeGame();
+    await flushSaves();
+    vi.mocked(saveGame).mockClear();
+    vi.mocked(listGames).mockResolvedValue([{ id: 'friday', name: 'Friday', faction: 'sol', playerCount: 4, updatedAt: 1, broken: true }]);
+    vi.mocked(loadGame).mockRejectedValue(new Error('damaged'));
+    await act().openShareLink('?name=Friday&me=1');
+    expect(act().game).toBeNull();
+    expect(act().loadFailure).toEqual({ id: 'friday', error: 'damaged' });
+    await flushSaves();
+    expect(saveGame).not.toHaveBeenCalled();
+  });
+
+  test('a link while the saves cannot be listed only fills the draft and tells so', async () => {
+    act().closeGame();
+    vi.mocked(listGames).mockRejectedValue(new Error('no IndexedDB'));
+    await act().openShareLink('?name=Friday&exp=pok');
+    expect(act().game).toBeNull();
+    expect(act().draft.expansions).toEqual(['pok']);
+    expect(act().loadFailure).toEqual({ id: null, error: 'no IndexedDB' });
+    expect(act().brokenSaves).toEqual({});
+  });
+});
+
 describe('действия без изменений', () => {
   test('неизвестный id и то же значение не создают шаг отмены и не сохраняют', async () => {
     const id = act().addEntry(1, { type: 'pass' }, 'action');
@@ -342,14 +406,14 @@ describe('players', () => {
     expect(project(game, game.plans[0], 'now', pok).state.vp).toBe(3);
   });
 
-  test('an opponent faction goes through the home tile rule, a seat swap moves the tile', () => {
+  test('an opponent faction goes through the home tile rule, and in a started game the seats stay', () => {
     open();
     useGame.getState().setOpponent(0, { faction: 'hacan' });
     const slots = seatSlots(4, pok, useGame.getState().game!.layout);
     expect(useGame.getState().game!.map[slots[1]]).toBe('16');
+    const before = useGame.getState().game;
     useGame.getState().swapSeats(1, 2);
-    expect(useGame.getState().game!.map[slots[2]]).toBe('16');
-    expect(useGame.getState().game!.map[slots[1]]).toBeUndefined();
+    expect(useGame.getState().game).toBe(before);
   });
 });
 

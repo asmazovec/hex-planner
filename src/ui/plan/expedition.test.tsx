@@ -29,7 +29,7 @@ const game = () => useGame.getState().game!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const tile = (slot: string) => document.querySelector(`[data-slot="${slot}"]`)!;
 const widget = () => screen.getByRole('group', { name: 'Expedition' });
-const part = (name: string) => within(widget()).getByRole('button', { name });
+const part = (name: string | RegExp) => within(widget()).getByRole('button', { name });
 const fracture = () => screen.getByRole('group', { name: 'Fracture' });
 const teButton = () => screen.getByRole('button', { name: /^Thunder's Edge · / });
 
@@ -141,12 +141,18 @@ test('suitable systems light up only while choosing, and Thunder\'s Edge can be 
   expect(within(tile(ok) as HTMLElement).getByRole('group', { name: /Thunder's Edge/ })).toBeTruthy();
   expect(document.querySelector('.tile-valid')).toBeNull();
 
-  // Placing returns to the panel, where the system can be moved; the hint's button leaves the choice.
-  await userEvent.click(part('Choose system'));
+  // Placing returns to the panel, where the card moves the system; the hint's button leaves the choice.
+  expect(within(widget()).queryByRole('button', { name: 'Choose system' })).toBeNull();
+  await userEvent.click(part(/^Thunder's Edge in system .*Tap to choose another system$/));
   expect(tile(ok).classList.contains('tile-valid')).toBe(true);
   await userEvent.click(screen.getByRole('button', { name: 'Back to the panel' }));
   expect(document.querySelector('.tile-valid')).toBeNull();
   expect(widget()).toBeVisible();
+
+  // The cross inside the card removes it, and the choice comes back.
+  await userEvent.click(part("Remove Thunder's Edge"));
+  expect(game().expedition.thundersEdgeSystem).toBeNull();
+  expect(part('Choose system')).toBeVisible();
 });
 
 test('the Fracture button adds its systems beside the map', async () => {

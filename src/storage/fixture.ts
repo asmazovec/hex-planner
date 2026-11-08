@@ -1,6 +1,20 @@
+import { openDB } from 'idb';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import type { Entry, Game } from '../domain/types';
+
+/** Writes a record straight into the saves, past `saveGame`, as a damaged or foreign save would lie there. */
+export async function putRawSave(record: Record<string, unknown>): Promise<void> {
+  const d = await openDB('ti4-planner', 1, { upgrade: u => void u.createObjectStore('games', { keyPath: 'id' }) });
+  await d.put('games', record);
+  d.close();
+}
+
+/** A save whose game the schema refuses: its summary reads, its plans are not plans. */
+export const brokenSave = (id = 'broken', name = 'Damaged'): Record<string, unknown> => ({
+  id, name, faction: 'sol', playerCount: 4, updatedAt: 1,
+  game: { ...sampleGame(), id, name, plans: 'not a list' },
+});
 
 const pay = { planets: ['a', 'b'], tradeGoods: 1 };
 

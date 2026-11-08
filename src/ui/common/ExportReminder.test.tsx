@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../../i18n';
 import { sampleGame } from '../../storage/fixture';
-import { EXPORTED_EVENT, LAST_EXPORT_KEY } from './download';
+import { EXPORTED_EVENT } from './download';
+import { LAST_EXPORT_KEY } from './preferences';
 import { ExportReminder, shouldRemindExport } from './ExportReminder';
 
 const DAY = 24 * 60 * 60 * 1000;

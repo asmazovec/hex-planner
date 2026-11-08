@@ -119,12 +119,15 @@ test('a space dock is a token on the arc of its planet, in my colour', () => {
   expect(dock.querySelector('rect')).toHaveAttribute('stroke', '#74d09a');
 });
 
-test('a space dock takes the colour of the planet owner, and is mine on a free planet', () => {
+test('a space dock takes the colour of its owner, and is mine on a free planet', () => {
   const id = pack.tiles['25'].planetIds[0];
   const dockOn = (control: 'me' | 'enemy' | undefined) => {
     cleanup();
     setup('25', (g, s) => {
-      g.color = 1; g.opponents[0].color = 3; s.docks.push(id);
+      g.color = 1; g.opponents[0].color = 3;
+      // An opponent's structures are in their own count, mine in mine.
+      if (control === 'enemy') s.rivals = { [g.opponents[0].id]: { ...emptyState(), docks: [id] } };
+      else s.docks.push(id);
       if (control) s.control[id] = control;
     });
   };
@@ -136,10 +139,10 @@ test('a space dock takes the colour of the planet owner, and is mine on a free p
   expect(stackOf('Space dock').querySelector('rect')).toHaveAttribute('stroke', '#7fb2ff');
 });
 
-test('a space dock on an enemy planet takes the colour of the planet\'s owner and names the faction', () => {
+test('a space dock on an enemy planet takes the colour of its owner and names the faction', () => {
   const id = pack.tiles['25'].planetIds[0];
   setup('25', (g, s) => {
-    g.opponents[2].faction = 'hacan'; g.opponents[2].color = 6; s.docks.push(id);
+    g.opponents[2].faction = 'hacan'; g.opponents[2].color = 6; s.rivals = { [g.opponents[2].id]: { ...emptyState(), docks: [id] } };
     s.control[id] = 'enemy'; g.planetOwner[id] = g.opponents[2].id;
   });
   expect(stackOf(`Space dock (${pack.factions.hacan.name})`).querySelector('rect')).toHaveAttribute('stroke', '#f0a463');
@@ -330,9 +333,9 @@ test('the map draws every slot of a six-player template, even with no tiles plac
   expect(document.querySelectorAll('.tile')).toHaveLength(37);
 });
 
-test('a PDS stands on its planet with its count, in the colour of the planet\'s holder', () => {
+test('a PDS stands on its planet with its count, in the colour of its owner', () => {
   const id = pack.tiles['25'].planetIds[0];
-  setup('25', (g, s) => { s.pds[id] = 2; g.planetOwner[id] = g.opponents[1].id; s.control[id] = 'enemy'; });
+  setup('25', (g, s) => { s.rivals = { [g.opponents[1].id]: { ...emptyState(), pds: { [id]: 2 } } }; g.planetOwner[id] = g.opponents[1].id; s.control[id] = 'enemy'; });
   expect(screen.getByRole('img', { name: 'PDS ×2 (Player 3)' })).toBeInTheDocument();
 });
 

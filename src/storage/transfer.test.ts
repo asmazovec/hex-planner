@@ -9,6 +9,14 @@ test('экспорт и импорт туда и обратно', () => {
   expect(importGame(exportGame(game))).toEqual({ ok: true, game });
 });
 
+test('a file a migration chokes on is refused as damaged, the import does not throw', () => {
+  for (const opponents of [[null], [1, 'x'], [[]]]) {
+    const text = JSON.stringify({ ...gameOfSchema1(), opponents });
+    expect(() => importGame(text)).not.toThrow();
+    expect(importGame(text)).toEqual({ ok: false, reason: 'invalidSchema' });
+  }
+});
+
 test('отказ на повреждённом файле и файле новее схемы', () => {
   expect(importGame('{oops')).toEqual({ ok: false, reason: 'invalidJson' });
   expect(importGame('{"schemaVersion":1}')).toEqual({ ok: false, reason: 'invalidSchema' });
@@ -179,7 +187,7 @@ describe('PDS in saved games', () => {
   };
 
   test('a version 3 file gets no PDS and comes up to the current schema', () => {
-    expect(CURRENT_SCHEMA).toBe(4);
+    expect(CURRENT_SCHEMA).toBe(5);
     expect(importGame(JSON.stringify(version3()))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, pds: {} } });
   });
 
@@ -327,5 +335,35 @@ describe('player count of an imported file', () => {
   test('a count that is no number stays invalid', () => {
     const doc = { ...structuredClone(sampleGame()), playerCount: 'four' };
     expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
+  });
+});
+
+describe('the seven-player map without hyperlanes, gone in version 5', () => {
+  const pok = loadPack(['pok']);
+  /** A version 4 file of a seven-player game on the retired four-ring map, with a tile where 85A now lies. */
+  const version4 = () => {
+    const opponents = ['hacan', 'arborec', 'jolnar', 'naalu', 'xxcha', 'yin']
+      .map((faction, i) => ({ id: `o${i + 2}`, faction, vp: 0, seat: i + 2, color: i + 2 }));
+    return {
+      ...sampleGame(), schemaVersion: 4, expansions: ['pok'], playerCount: 7, layout: 'standard', faction: 'sol', seat: 1, opponents,
+      map: { '0,0': '18', '0,-4': pok.factions.sol.homeTile, '3,-3': pok.factions.hacan.homeTile, '0,4': '25', '1,0': '26' },
+      enemyUnits: {}, enemyGround: {}, planetControl: {}, planetOwner: {}, upgrades: { me: [], opponents: {} },
+    };
+  };
+
+  test('such a file opens on the rulebook map: hyperlanes placed, homes at the new seats, the tile under a lane gone', () => {
+    const result = importGame(JSON.stringify(version4()));
+    if (!result.ok) throw new Error(result.reason);
+    expect(result.game.schemaVersion).toBe(5);
+    expect(result.game.layout).toBe('hyperlanes');
+    expect(result.game.map['0,4']).toBe('85A@0');
+    expect(result.game.map['3,-4']).toBe(pok.factions.hacan.homeTile);
+    expect(result.game.map['1,0']).toBe('26');
+    expect(Object.values(result.game.map)).not.toContain('25');
+  });
+
+  test('other layouts keep their value', () => {
+    const eight = { ...version4(), playerCount: 8, opponents: [...version4().opponents, { id: 'o8', faction: 'winnu', vp: 0, seat: 8, color: 8 }] };
+    expect(migrate(eight)).toMatchObject({ schemaVersion: 5, layout: 'standard' });
   });
 });

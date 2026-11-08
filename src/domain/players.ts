@@ -1,5 +1,5 @@
-import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor } from './mapBuilder';
-import { createGame, makeId, slotKeyOf } from './newGame';
+import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor, withPlacedTiles } from './mapBuilder';
+import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
 /** An opponent, or me under the id `me`. */
@@ -46,6 +46,53 @@ function withoutHoldings(game: Game, opponentId: string): Game {
     docks: game.docks.filter(id => !planets.includes(id)),
     pds: Object.fromEntries(Object.entries(game.pds).filter(([id]) => !planets.includes(id))),
   };
+}
+
+/**
+ * The game as an opponent plays it: they are the player, what they hold is theirs, what I hold is an enemy's, and their
+ * opponents are the others, me among them under the id `me`. My units are not in the game: the replay gives their routes
+ * my ships (`blockersOf`). For me, or for someone gone, it is the game itself.
+ */
+export function gameAs(game: Game, owner: string | undefined): Game {
+  const rival = game.opponents.find(o => o.id === owner);
+  if (!rival) return game;
+  const without = (record: Game['enemyUnits']): Game['enemyUnits'] => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => {
+    const { [rival.id]: mine, ...others } = byOwner;
+    void mine;
+    return Object.keys(others).length > 0 ? [[place, others]] : [];
+  }));
+  const holderOf = (id: string): string => (game.planetControl[id] === 'enemy' ? planetHolder(game, id) ?? 'me' : 'me');
+  const enemyPlanets = Object.keys(game.planetControl).filter(id => holderOf(id) !== rival.id);
+  return {
+    ...game,
+    faction: rival.faction, seat: rival.seat, color: rival.color, vp: rival.vp,
+    opponents: playersOf(game).filter(p => p.id !== rival.id),
+    upgrades: { ...game.upgrades, me: game.upgrades.opponents[rival.id] ?? [] },
+    planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, enemyPlanets.includes(id) ? 'enemy' as const : 'me' as const])),
+    planetOwner: { ...game.planetOwner, ...Object.fromEntries(enemyPlanets.map(id => [id, holderOf(id)])) },
+    enemyUnits: without(game.enemyUnits),
+    enemyGround: without(game.enemyGround),
+  };
+}
+
+/** A game begins: every opponent stands at their seat with their faction's start units, and their home planets are theirs. */
+export function placeStartUnits(game: Game, pack: DataPack): Game {
+  const slots = seatSlots(game.playerCount, pack, game.layout);
+  return game.opponents.reduce<Game>((next, { id, faction, seat }) => {
+    const def = pack.factions[faction];
+    const slot = slots[seat - 1];
+    if (!def || !slot) return next;
+    const homes = pack.tiles[def.homeTile]?.planetIds ?? [];
+    const onMap = [def.homeTile, def.gateTile].includes(next.map[slot]?.split('@')[0]);
+    return {
+      ...next,
+      enemyUnits: { ...next.enemyUnits, [slot]: { ...next.enemyUnits[slot], [id]: def.startUnits } },
+      ...(onMap ? {
+        planetControl: { ...next.planetControl, ...Object.fromEntries(homes.map(planet => [planet, 'enemy' as const])) },
+        planetOwner: { ...next.planetOwner, ...Object.fromEntries(homes.map(planet => [planet, id])) },
+      } : {}),
+    };
+  }, game);
 }
 
 /** The most players the map templates of the pack allow. */
@@ -98,12 +145,12 @@ function withPlayers(game: Game, players: Player[], pack: DataPack): Game {
 }
 
 /** A new opponent takes the last seat and the first free colour. The maximum of the pack stops it. */
-export function addPlayer(game: Game, pack: DataPack): Game {
+export function addPlayer(game: Game, pack: DataPack, newId: IdMaker = timeIdMaker): Game {
   const players = playersOf(game);
   if (players.length >= maxPlayers(pack)) return game;
   const used = players.map(p => p.color);
   const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
-  return withPlayers(game, [...players, { id: makeId('opponent'), faction: '', vp: 0, seat: players.length + 1, color }], pack);
+  return withPlayers(game, [...players, { id: makeId('opponent', newId), faction: '', vp: 0, seat: players.length + 1, color }], pack);
 }
 
 /** Entries forget an opponent who left: their points and their place in card effects. */
@@ -111,7 +158,7 @@ const withoutPoints = (plans: Plan[], opponentId: string): Plan[] => plans.map(p
   ...plan,
   rounds: plan.rounds.map(round => ({
     ...round,
-    entries: round.entries.map((entry): Entry => {
+    entries: round.entries.filter(entry => entry.owner !== opponentId).map((entry): Entry => {
       if (entry.type === 'statusTokens' && entry.opponentVp) {
         const { [opponentId]: gone, ...opponentVp } = entry.opponentVp;
         void gone;
@@ -182,7 +229,7 @@ export function countChangeEffect(game: Game, count: number, pack: DataPack): { 
 
 /**
  * A game not started yet, under another set of expansions: factions outside the set are cleared, players beyond its
- * maximum leave from the end of the list, and the seats of the rest close up in order.
+ * maximum leave from the end of the list, and the seats of the rest close up in order. Placed tiles the pack still has stay.
  */
 export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack: DataPack): Game {
   const kept = playersOf(draft).slice(0, maxPlayers(pack));
@@ -191,8 +238,10 @@ export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack
   const layout = templateFor(kept.length, draft.layout, pack) ? draft.layout : undefined;
   const blank = createGame({ expansions, playerCount: kept.length, faction: '', layout }, pack);
   const empty = withPlayers({ ...blank, id: draft.id }, seated, pack);
-  return kept.reduce<Game>(
+  const seatedGame = kept.reduce<Game>(
     (game, player, index) => (pack.factions[player.faction] ? setPlayerFaction(game, index, player.faction, pack) : game),
     empty,
   );
+  // The map is built before the start: its tiles stay, except those of an expansion turned off.
+  return withPlacedTiles(seatedGame, draft.map, pack);
 }

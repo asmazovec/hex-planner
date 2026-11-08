@@ -32,7 +32,7 @@ const SUMMARIES: Record<string, Record<Lang, string>> = {
     en: 'When you pass, exhaust to place from reinforcements 1 ship of a type whose unit upgrade you own, in a system with your ships.',
   },
   'Exterrix Headquarters': {
-    ru: 'В конце своего хода истощите, чтобы получить 2 товара или обменять все свои товары первой необходимости на торговые.',
+    ru: 'В конце своего хода истощите, чтобы получить 2 товара или обменять всю свою продукцию на товары.',
     en: 'As your turn ends, exhaust for 2 trade goods, or swap every commodity you hold for trade goods.',
   },
   'Mirage Flight Academy': {
