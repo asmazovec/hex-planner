@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { RowIcon } from '../primitives/Icon';
 import { UnitToken } from '../units/UnitToken';
 import type { TokenKind } from '../../domain/hexLayout';
-import type { DataPack } from '../../domain/types';
+import type { DataPack, PlanetDef } from '../../domain/types';
+import { PlanetMark } from '../map/TileView';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { BADGE_CUT, CommandTokenMark, IngressMark, PickupTag, RouteBadge } from '../map/marks';
 import { DrawerSheet } from '../overlays/Drawer';
@@ -28,16 +29,14 @@ function Route({ tone = 'planned', gap }: { tone?: string; gap?: boolean }) {
   );
 }
 
-// TODO(P2-243) #ws:ui-containers #type:dup #needs:prototype #size:s #legend #planet — Своя планета легенды вместо PlanetMark из TileView: легенда расходится с картой; рисовать PlanetMark
-function Planet({ exhausted, control = 'me' }: { exhausted?: boolean; control?: 'me' | 'enemy' }) {
+/** A real planet as the map draws it; the numbers take their size from the tile they stand on. */
+function Planet({ planet, exhausted = false, control = 'me' }: { planet: PlanetDef; exhausted?: boolean; control?: 'me' | 'enemy' }) {
   return (
-    <svg viewBox="-16 -16 32 32" className="legend-svg" aria-hidden="true">
-      <g className={exhausted ? 'planet-exhausted' : undefined}>
-        <circle r={13} className={`planet-disc planet-${control}`} />
-        <text y={4} className="planet-values legend-values">
-          <tspan className="value-resources">2</tspan><tspan>/</tspan><tspan className="value-influence">3</tspan>
-        </text>
-        {exhausted && <line x1={-9} y1={9} x2={9} y2={-9} className="planet-strike" />}
+    <svg viewBox="-14 -14 28 28" className="legend-svg" aria-hidden="true">
+      <g className="tile">
+        <g className={`planet${exhausted ? ' planet-exhausted' : ''}`}>
+          <PlanetMark planet={planet} control={control} exhausted={exhausted} />
+        </g>
       </g>
     </svg>
   );
@@ -57,6 +56,8 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
   const { t } = useTranslation();
   const k = (key: string) => t(`map.legend.${key}`);
   const title = (key: string) => <SectionTitle>{k(key)}</SectionTitle>;
+  // Planets of the base game: one with a trait and a technology, one with a trait only.
+  const { wellon, lodor } = pack.planets as Partial<Record<string, PlanetDef>>;
   return (
     <DrawerSheet className="legend-panel" title={k('title')}>
 
@@ -76,9 +77,9 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
       <Row mark={<Hex fill="system" state="valid" />} text={k('valid')} />
 
       {title('planets')}
-      <Row mark={<Planet />} text={k('values')} />
-      <Row mark={<Planet control="enemy" />} text={k('control')} />
-      <Row mark={<Planet exhausted />} text={k('exhausted')} />
+      {wellon && <Row mark={<Planet planet={wellon} />} text={k('values')} />}
+      {lodor && <Row mark={<Planet planet={lodor} control="enemy" />} text={k('control')} />}
+      {wellon && <Row mark={<Planet planet={wellon} exhausted />} text={k('exhausted')} />}
       <Row mark={<Dots colours={['tech-propulsion', 'tech-biotic', 'tech-cybernetic', 'tech-warfare']} />} text={k('tech')} />
       <Row mark={<Dots colours={['trait-cultural', 'trait-hazardous', 'trait-industrial']} />} text={k('trait')} />
       <Row mark={<Dots colours={['gold']} />} text={k('legendary')} />

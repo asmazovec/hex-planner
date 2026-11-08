@@ -1558,6 +1558,9 @@ describe('the drawers', () => {
     expect(legend).toHaveTextContent('Dashed');
     expect(legend).toHaveTextContent('now → forecast');
     expect(legend.querySelectorAll('[data-unit]')).toHaveLength(11);
+    // The planets are drawn as the map draws them, with their trait and technology.
+    expect(legend.querySelectorAll('.tile .planet .planet-disc')).toHaveLength(3);
+    expect(legend.querySelector('.planet-tech-cybernetic')).not.toBeNull();
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog', { name: 'Legend' })).toBeNull();
   });

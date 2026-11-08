@@ -809,11 +809,8 @@ body.seat-dragging, body.seat-dragging * { cursor: grabbing !important; user-sel
 .ship-table-head, .ship-row { display: grid; grid-template-columns: 26px minmax(0, 1fr) repeat(4, 74px); column-gap: 7px; align-items: center; }
 .ship-table-head { font-size: var(--font-xs); color: var(--text-dim); text-align: center; }
 .ship-table-head > span:first-child { grid-column: 1 / span 2; }
-.ship-row { width: 100%; padding: 3px 6px; color: var(--text-muted); text-align: left; font: inherit; border: 1px solid transparent; border-radius: var(--radius-s); background: transparent; }
-/* TODO(P2-562) #ws:ui-containers #type:dup #size:m #upgrade-toggle — переключатель улучшения дважды: .ship-row-live и .upgrade-card 855 (рамка, gold при выборе, disabled без затухания); один компонент — P2 note: one toggle for both needs the look of P2-264, which needs prototype */
-.ship-row-live { min-height: var(--touch); cursor: pointer; border-color: var(--border); background: var(--surface-2); }
-.ship-row-live:disabled { cursor: default; opacity: 1; background: transparent; }
-.ship-row-live[aria-pressed='true'], .ship-row-live[aria-pressed='true']:disabled { color: var(--text-muted); border-color: var(--gold); background: var(--gold-soft); }
+/* Read only: the one upgrade toggle is the card of the upgrades panel. */
+.ship-row { padding: 4px 7px; color: var(--text-muted); }
 .ship-row-name b { display: block; color: var(--text); font-weight: 600; }
 small.ship-row-round { color: var(--gold); }
 .ship-row-value { text-align: center; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -828,7 +825,6 @@ small.ship-row-round { color: var(--gold); }
 .te-panel .editor-section { margin-bottom: 8px; }
 .te-panel .row[role='group'] { gap: 4px; }
 .te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
-/* TODO(P2-563) #ws:ui-containers #type:dup #size:s #upgrade-toggle #dep:P2-562 — .upgrade-card повторяет .ship-row-live 836: перейти на общий переключатель — P2 note: waits for P2-562 and P2-264 (prototype) */
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }
 .upgrade-card:disabled { cursor: default; opacity: 1; color: var(--text-muted); }
 .upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--gold); background: var(--gold-soft); }
@@ -895,7 +891,6 @@ small.ship-row-round { color: var(--gold); }
 .legend-mark { display: flex; align-items: center; justify-content: center; gap: 3px; min-height: 30px; }
 .legend-svg { width: 34px; height: 30px; display: block; overflow: visible; }
 .legend-route { width: 58px; height: 16px; }
-.legend-values { font-size: 10px; text-anchor: middle; fill: var(--text-muted); }
 /* TODO(P2-568) #ws:ui-containers #type:dup #size:s #player-dot #dep:P2-515 — .legend-dot и .legend-seat 933: кружок игрока, перейти на PlayerDot — P2 note: the legend dots are technology and trait colours, not players (they use modifier classes now, P2-245); the seat mark is P2-240: needs prototype */
 .legend-dot { width: 11px; height: 11px; border-radius: 50%; display: block; }
 .legend-dot-tech-propulsion { background: var(--tech-propulsion); }
