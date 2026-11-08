@@ -6,12 +6,15 @@ import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { LandingBlock } from '../blocks/LandingBlock';
 import { PaymentBlock } from '../blocks/PaymentBlock';
-import { HexRemove, RowIcon } from '../../primitives/Icon';
+import { HexRemove } from '../../primitives/Icon';
+import { Section } from '../../primitives/Section';
+import { unitsText } from '../../units/unitsText';
 import { addUnits, fliesNow, groupOf, hasUnits, isUntouched, sourcesOf, viaOf, withCount, withoutSource, type TacticalEntry } from '../tactical';
 import { systemName } from '../../map/systemName';
 import { UnitPicker } from './UnitPicker';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { MapPickButton } from '../../primitives/MapPickButton';
 
 export interface TacticalEditorProps {
   game: Game;
@@ -49,9 +52,7 @@ export function TacticalEditor({
   const cost = priceOf(entry.production);
   const unitsIn = (list: { units: UnitCounts }[]): UnitCounts =>
     list.reduce((sum, item) => addUnits(sum, item.units), {} as UnitCounts);
-  // TODO(P2-314) #ws:ui-containers #type:dup #size:s — строка «юнит N, …» собрана здесь, в StrategyEditor (builtUnits), AdjustmentEditor и EntrySteps (signed); один помощник unitsText в ui/units
-  const unitText = (units: UnitCounts): string =>
-    UNIT_ORDER.filter(u => (units[u] ?? 0) > 0).map(u => `${t(`unit.${u}`)} ${units[u]}`).join(', ');
+  const unitText = (units: UnitCounts): string => unitsText(units, t);
 
   const sources = sourcesOf(game, pack, entry);
   // TODO(P2-311) #ws:ui-logic-to-domain #type:dup #duplicate-of-domain — деление «летит / груз» источника считается здесь, в EntrySteps и в tacticalMeters; брать из одной доменной функции
@@ -102,21 +103,23 @@ export function TacticalEditor({
 
   const blocks = target !== null && (
         <>
-          {/* TODO(P2-316) #ws:ui-containers #type:ui #section — блоки редактора собраны руками (div.editor-section > strong, optional-note только здесь); Section(title, optional, action, warnings) во всех редакторах */}
-          <div className="editor-section">
+          <Section>
             {isUntouched(entry)
               ? (
-                <button type="button" className="source-button" aria-pressed={choosing === 'system'} onClick={() => onChoose(choosing === 'system' ? null : 'system')}>
+                <MapPickButton className="source-button" active={choosing === 'system'} onToggle={() => onChoose(choosing === 'system' ? null : 'system')}>
                   <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>
-                </button>
+                </MapPickButton>
               )
               : <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>}
             <span className="muted">{entry.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
             {isUntouched(entry) && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
-          </div>
+          </Section>
 
-          <div className="editor-section">
-            <strong>{t('plan.tactical.moves')}</strong>
+          {/* The rows take the warnings of their sources first: the rest of the route's warnings is placed after them, among the children. */}
+          <Section
+            title={t('plan.tactical.moves')}
+            action={<MapPickButton active={choosing === 'source'} onToggle={() => onChoose(choosing === 'source' ? null : 'source')}>{t('plan.tactical.addSource')}</MapPickButton>}
+          >
             <span className="muted">{t('plan.tactical.moveHint')}</span>
             {sources.length === 0 && <span className="muted">{t('plan.tactical.noSources')}</span>}
             {sources.filter(s => s !== pickerFrom).map(source => {
@@ -137,8 +140,7 @@ export function TacticalEditor({
               );
             })}
             {list(placer.at('route', w => entry.moves.length > 0 || !limitsSystem(w)))}
-            <button type="button" aria-pressed={choosing === 'source'} onClick={() => onChoose(choosing === 'source' ? null : 'source')}>{t('plan.tactical.addSource')}</button>
-          </div>
+          </Section>
 
           {/* TODO(P2-318) #ws:ui-nesting #type:ui #needs:prototype — UnitPicker раскрывается внутри редактора (6 уровней); шаги: пока открыт перелёт, показывать только его с «Назад» */}
           {pickerFrom !== null && (
@@ -149,31 +151,29 @@ export function TacticalEditor({
           )}
 
           {/* TODO(P2-317) #ws:ui-nesting #type:ui #needs:prototype #dep:P2-316 — «Бой» и «Производство» — блоки из одной кнопки; сделать строками .in-card */}
-          <div className="editor-section">
-            <strong>{t('plan.tactical.battle')} <small className="optional-note">{t('plan.tactical.optional')}</small></strong>
+          <Section
+            title={t('plan.tactical.battle')} optional warnings={list(battleWarnings)}
+            action={<button type="button" onClick={onOpenBattle}>{t(lostAnywhere.length > 0 ? 'plan.tactical.continueBattle' : 'plan.tactical.startBattle')}</button>}
+          >
             {lostAnywhere.length > 0 && <span className="muted">{lostAnywhere}</span>}
-            {list(battleWarnings)}
-            <button type="button" onClick={onOpenBattle}>{t(lostAnywhere.length > 0 ? 'plan.tactical.continueBattle' : 'plan.tactical.startBattle')}</button>
-          </div>
+          </Section>
 
           {showLanding && (
-            <details className="editor-section" open>
-              <summary><span>{t('plan.tactical.landing')} <small className="optional-note">{t('plan.tactical.optional')}</small></span><RowIcon name="chevron" /></summary>
+            <Section title={t('plan.tactical.landing')} optional collapsible warnings={list(placer.at('landing'))}>
               <LandingBlock
                 game={game} planets={planets} before={before} units={landable} arrived={here} lost={entry.groundLosses}
                 landedOn={landedOn} onLand={setLanding}
               />
-              {list(placer.at('landing'))}
-            </details>
+            </Section>
           )}
 
-          <div className="editor-section">
-            <strong>{t('plan.tactical.production')} <small className="optional-note">{t('plan.tactical.optional')}</small></strong>
+          {/* The limits of the system stand in the action's result; here only what the production itself breaks. */}
+          <Section
+            title={t('plan.tactical.production')} optional warnings={list(placer.at('production', w => !limitsSystem(w)))}
+            action={<button type="button" onClick={onOpenShop}>{t('plan.tactical.openShop')}</button>}
+          >
             {hasUnits(entry.production) && <span className="muted">{unitText(entry.production)}</span>}
-            {/* The limits of the system stand in the action's result; here only what the production itself breaks. */}
-            {list(placer.at('production', w => !limitsSystem(w)))}
-            <button type="button" onClick={onOpenShop}>{t('plan.tactical.openShop')}</button>
-          </div>
+          </Section>
 
           {(cost > 0 || entry.payment.planets.length > 0 || entry.payment.tradeGoods > 0) && (
             <PaymentBlock
@@ -185,10 +185,7 @@ export function TacticalEditor({
           )}
 
           {overall.length > 0 && (
-            <div className="editor-section" role="group" aria-label={t('plan.tactical.result')}>
-              <strong>{t('plan.tactical.result')}</strong>
-              {list(overall)}
-            </div>
+            <Section label={t('plan.tactical.result')} title={t('plan.tactical.result')} warnings={list(overall)} />
           )}
         </>
   );

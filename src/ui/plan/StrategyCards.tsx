@@ -6,6 +6,8 @@ import { cardsHeld } from '../../domain/strategy';
 import type { ExpansionId, Round } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
+import { SectionTitle } from '../primitives/SectionTitle';
+import { CardGrid } from './blocks/CardGrid';
 
 export interface StrategyCardsProps {
   expansions: ExpansionId[];
@@ -57,24 +59,20 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
 
   return (
     <div className="plan-cards" ref={block}>
-      <h4 className="phase-title">{t('plan.phases.strategy')}</h4>
-      {/* TODO(P2-384) #ws:ui-containers #type:dup #size:s #dep:P2-335 — та же сетка карт, что в StrategyEditor */}
-      <div className="card-grid" role="group" aria-label={t('plan.phases.strategy')}>
-        {cards.map(card => {
+      <SectionTitle as="h4" className="phase-title">{t('plan.phases.strategy')}</SectionTitle>
+      <CardGrid
+        label={t('plan.phases.strategy')} cards={cards}
+        cellOf={card => {
           const main = card.initiative === round.strategyCard;
           const backup = card.initiative === round.backupCard;
-          return (
-            <button
-              key={card.initiative} type="button" onClick={() => tap(card.initiative)} aria-current={card.initiative === shown ? 'true' : undefined}
-              className={`card-cell${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}${card.initiative === shown ? ' card-shown' : ''}`}
-            >
-              <b>{card.initiative}</b>{card.name}
-              {main && <small>{t('plan.cards.main')}</small>}
-              {backup && <small>{backupName}</small>}
-            </button>
-          );
-        })}
-      </div>
+          return {
+            className: `${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}${card.initiative === shown ? ' card-shown' : ''}`,
+            current: card.initiative === shown,
+            onClick: () => tap(card.initiative),
+            extra: <>{main && <small>{t('plan.cards.main')}</small>}{backup && <small>{backupName}</small>}</>,
+          };
+        }}
+      />
       {choice ? <p className="card-choice">{choice}</p> : <p className="muted card-hint">{t('plan.phases.strategyEmpty')}</p>}
       <p className="muted card-hint">{t(cardsHeld(playerCount) > 1 ? 'plan.cards.hintTwo' : 'plan.cards.hint')}</p>
       {details && summary && (

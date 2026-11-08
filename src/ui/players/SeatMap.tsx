@@ -7,6 +7,7 @@ import type { DataPack, Game } from '../../domain/types';
 import { hexPoints } from '../map/geometry';
 import { factionShortName } from './names';
 import type { SeatDrag } from './useSeatDrag';
+import { PlayerDot, playerStyle } from '../primitives/player';
 
 const STEP_X = 39;
 const STEP_Y = 45;
@@ -93,8 +94,7 @@ export function SeatMap({ game, pack, drag, ghostRef, locked = false }: SeatMapP
                   },
                 })}
               >
-                {/* TODO(P2-467) #ws:ui-containers #type:ui #size:s #dep:P2-425 #player-colour #inline-style — цвет игрока inline-стилем здесь и у значка призрака: data-player/playerVar() */}
-                <circle r="17" className="seat-disc" style={{ fill: `var(--player-${player.color})` }} />
+                <circle r="17" className="seat-disc" style={playerStyle('fill', player.color)} />
                 <circle r={hitRadius} className="seat-hit" />
                 <text y="6">{index + 1}</text>
               </g>
@@ -107,7 +107,7 @@ export function SeatMap({ game, pack, drag, ghostRef, locked = false }: SeatMapP
         <div ref={ghostRef} className="seat-ghost">
           {dragged && drag.lifted !== null && (
             <>
-              <span className="seat-ghost-badge" style={{ background: `var(--player-${dragged.color})` }}>{drag.lifted + 1}</span>
+              <PlayerDot color={dragged.color} className="seat-ghost-badge">{drag.lifted + 1}</PlayerDot>
               <span>
                 <small>{t(drag.lifted === 0 ? 'players.me' : 'players.opponent')}</small>
                 <b>{nameOf(dragged.faction)}</b>

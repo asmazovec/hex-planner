@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { paymentValue, readyPlanetIds, type PaymentKind } from '../../../domain/payment';
 import type { DataPack, GameState, Payment } from '../../../domain/types';
+import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
 
 export interface PaymentBlockProps {
@@ -37,13 +38,11 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
     ...(payment.tradeGoods > 0 ? [t('plan.payment.tradeGoods', { n: payment.tradeGoods })] : []),
   ];
 
-  // TODO(P2-361) #ws:ui-containers #type:ui #section #dep:P2-316 — блок собран вручную (editor-section + panel-head); Section с action
   return (
-    <div className="editor-section" role="group" aria-label={t('plan.payment.title')}>
-      <div className="panel-head">
-        <strong>{t('plan.payment.summary', { need, paid })}</strong>
-        <button type="button" onClick={() => onManual(!manual)}>{manual ? t('plan.payment.auto') : t('plan.payment.manual')}</button>
-      </div>
+    <Section
+      label={t('plan.payment.title')} title={t('plan.payment.summary', { need, paid })} warnings={children}
+      headAction={<button type="button" onClick={() => onManual(!manual)}>{manual ? t('plan.payment.auto') : t('plan.payment.manual')}</button>}
+    >
       {!manual && <span className="muted">{parts.join(', ') || t('plan.payment.nothing')}</span>}
       {paid > need && <span className="muted">{t('plan.payment.surplus', { n: paid - need })}</span>}
       {manual && (
@@ -61,7 +60,6 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
           />
         </>
       )}
-      {children}
-    </div>
+    </Section>
   );
 }

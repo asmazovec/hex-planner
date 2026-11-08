@@ -7,6 +7,8 @@ import { useGame } from '../../state/gameStore';
 import { FactionCard } from './FactionCard';
 import { HexRemove } from '../primitives/Icon';
 import { FactionPicker } from './FactionPicker';
+import { ConfirmBar } from '../primitives/ConfirmBar';
+import { playerStyle } from '../primitives/player';
 import type { SeatDrag } from './useSeatDrag';
 
 type Asked = { kind: 'add' } | { kind: 'remove'; opponent: number };
@@ -63,26 +65,24 @@ export function PlayerList({ drag, live }: PlayerListProps) {
     else if (next.kind === 'add') add();
     else remove(next.opponent);
   };
-  // TODO(P2-461) #ws:ui-containers #type:ui #size:s #dep:P2-436 #confirm-bar — своя строка подтверждения .player-confirm: общий ConfirmBar
   const confirmBar = (next: Asked) => {
     const { filled, lost, held } = effectOf(next);
     const texts = [];
     if (held.units > 0 || held.planets > 0) texts.push(t('players.confirmHoldings', held));
     if (filled > 0) texts.push(t('players.confirm', { filled, lost }));
     return (
-      <div className="player-confirm">
-        <span>{texts.join(' ')}</span>
-        <button type="button" className="primary" onClick={() => (next.kind === 'add' ? add() : remove(next.opponent))}>{t('players.confirmYes')}</button>
-        <button type="button" onClick={() => setAsked(null)}>{t('players.cancel')}</button>
-      </div>
+      <ConfirmBar
+        className="player-confirm" text={texts.join(' ')} yes={t('players.confirmYes')} no={t('players.cancel')}
+        onYes={() => (next.kind === 'add' ? add() : remove(next.opponent))} onNo={() => setAsked(null)}
+      />
     );
   };
 
   return (
     <section ref={listRef} className="players-list">
       <div className="players-head">
-        {/* TODO(P2-463) #ws:ui-containers #type:ui #size:s #section-title #drawer-sheet — h1 в списке, который стоит и в шторке, рядом с h2 других шторок: заголовок от DrawerSheet/SectionTitle */}
-        <h1>{t('players.title')}</h1>
+        {/* The page's own heading on the game screen; in a drawer it is the sheet's title, as in the other drawers. */}
+        {live ? <h2>{t('players.title')}</h2> : <h1>{t('players.title')}</h1>}
         <span>{t('players.count', { n: count, max })}</span>
       </div>
       {players.map((player, index) => {
@@ -96,11 +96,10 @@ export function PlayerList({ drag, live }: PlayerListProps) {
         if (drag?.picked === index) badge.push('picked');
         if (drag?.bumped.includes(player.color)) badge.push('bump');
         const opponent = index - 1;
-        // TODO(P2-462) #ws:ui-containers #type:ui #size:s #dep:P2-425 #player-colour #inline-style — цвет игрока --player задаётся inline-стилем: data-player/playerVar()
         return (
           <article
             key={player.color} role="group" aria-label={t('players.player', { n: index + 1 })} className={classes.join(' ')}
-            style={{ '--player': `var(--player-${player.color})` } as React.CSSProperties}
+            style={playerStyle('--player', player.color)}
           >
             <div className="player-row">
               <div className={badge.join(' ')} onAnimationEnd={drag?.clearBump}>{index + 1}</div>

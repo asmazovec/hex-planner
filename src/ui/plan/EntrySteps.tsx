@@ -8,23 +8,17 @@ import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, UnitId } fr
 import { currentLanguage } from '../../i18n';
 import { opponentName } from '../players/names';
 import { playerColour } from '../units/sprites';
-import { TokenPicture } from '../units/UnitToken';
+import { UnitTile } from '../units/UnitTile';
+import { unitsText } from '../units/unitsText';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { fliesNow, groupOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from './tactical';
 import { systemName } from '../map/systemName';
 
-const PICTURE_PX = 32;
-
-// TODO(P2-341) #ws:ui-containers #type:ui #unit-tile #dep:P2-320 — своя плитка юнита (.upic); UnitTile
 function UnitPictures({ units, game, t }: { units: UnitCounts; game: Game; t: (key: string) => string }) {
   return (
     <span className="upics">
       {UNIT_ORDER.filter(u => (units[u] ?? 0) > 0).map(unit => (
-        <span key={unit} className="upic" title={t(`unit.${unit}`)}>
-          <TokenPicture kind={unit} colour={playerColour(game.color)} px={PICTURE_PX} />
-          <span className="visually-hidden">{t(`unit.${unit}`)}</span>
-          {(units[unit] ?? 0) > 1 && <i>{units[unit]}</i>}
-        </span>
+        <UnitTile key={unit} variant="mini" kind={unit} colour={playerColour(game.color)} count={units[unit] ?? 0} label={t(`unit.${unit}`)} />
       ))}
     </span>
   );
@@ -179,8 +173,7 @@ export function EntrySteps({ entry, game, pack, before }: EntryStepsProps) {
         const value = delta[field] ?? 0;
         if (value !== 0) steps.push(`${t(`plan.summary.${field}`)} ${value > 0 ? '+' : ''}${value}`);
       }
-      // TODO(P2-347) #ws:ui-containers #type:dup #size:s #dep:P2-314 — копия signed из AdjustmentEditor
-      const signed = (units: UnitCounts) => UNIT_ORDER.filter(u => units[u]).map(u => `${t(`unit.${u}`)} ${(units[u] ?? 0) > 0 ? '+' : ''}${units[u]}`).join(', ');
+      const signed = (units: UnitCounts) => unitsText(units, t, true);
       if (delta.units && signed(delta.units.units)) steps.push(`${name(delta.units.systemId)}: ${signed(delta.units.units)}`);
       for (const [planetId, units] of Object.entries(delta.ground ?? {})) if (signed(units)) steps.push(`${planetName(planetId)}: ${signed(units)}`);
       if (steps.length === 0) steps.push(t('plan.steps.noChanges'));

@@ -43,9 +43,8 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
     }
   };
 
-  // TODO(P2-255) #ws:ui-css #type:dead #dep:P2-254 #size:s #panel — Тот же .panel, с которого CSS снимает оформление: убрать
   return (
-    <div className="panel tile-input" role="group" aria-label={t('builder.title')}>
+    <div className="tile-input" role="group" aria-label={t('builder.title')}>
       <h2>{t('builder.title')}</h2>
       <form className="row" onSubmit={submit}>
         <label className="field">
@@ -58,11 +57,10 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
         <button type="submit" className="primary">{t('builder.set')}</button>
         <button type="button" disabled={!value} onClick={() => onChange(null)}>{t('builder.clear')}</button>
       </form>
-      {/* TODO(P2-256) #ws:ui-containers #type:ui #size:s #banner — Разметка баннера руками (p.banner.banner-warning): Banner kind="warning" */}
+      {/* TODO(P2-256) #ws:ui-containers #type:ui #size:s #banner — Разметка баннера руками (p.banner.banner-warning): Banner kind="warning" — P2 note: Banner puts the warning sign before the text and reads as a status, not an alert (the builder tests and screen readers rely on the alert), so it changes both the look and the role: needs prototype, and Banner belongs to ui-warnings */}
       {error && <p role="alert" className="banner banner-warning">{error}</p>}
-      {/* TODO(P2-257) #ws:ui-css #type:ui #size:s #chips — Ряд подсказок на .row без общего класса, хотя есть .chips: перевести на .chips */}
       {suggestions.length > 0 && (
-        <div className="row" role="group" aria-label={t('builder.suggestions')}>
+        <div className="chips" role="group" aria-label={t('builder.suggestions')}>
           {suggestions.map(tile => (
             <button key={tile.id} type="button" onClick={() => place(tile.id)}>{tile.id}</button>
           ))}

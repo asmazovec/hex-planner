@@ -3,9 +3,7 @@ import { opponentsBySeat } from '../../../domain/players';
 import type { Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../../domain/types';
 import { PlanetMark } from '../../map/TileView';
 import { playerColour, tokenColours } from '../../units/sprites';
-import { UnitToken } from '../../units/UnitToken';
-// TODO(P2-358) #ws:ui-containers #type:ui #unit-tile #dep:P2-320 — плитка юнита берётся из файла перелёта, а Stack ниже — ещё одна плитка; обе заменить UnitTile
-import { UnitButton } from '../editors/UnitPicker';
+import { UnitTile } from '../../units/UnitTile';
 
 export interface LandingBlockProps {
   game: Game;
@@ -21,17 +19,7 @@ export interface LandingBlockProps {
   onLand: (planetId: string, unit: UnitId, count: number) => void;
 }
 
-const STACK_PX = 40;
 const PLANET_PX = 52;
-
-/** Who already stands on a planet: one picture with its count. */
-function Stack({ kind, colour, count, label }: { kind: UnitId; colour: string; count: number; label: string }) {
-  return (
-    <svg viewBox="-68 -68 136 136" width={STACK_PX} height={STACK_PX}>
-      <UnitToken kind={kind} colour={colour} count={count} size={100} label={label} />
-    </svg>
-  );
-}
 
 /**
  * The landing goes like the cargo of a flight, planet by planet: beside each planet the units free to land, and after a
@@ -81,13 +69,13 @@ export function LandingBlock({ game, planets, before, units, arrived, lost = {},
                 const got = landedOn(planet.id, unit);
                 return (
                   <span key={unit} className="pic-pair">
-                    <UnitButton
-                      unit={unit} count={Math.max(0, (arrived[unit] ?? 0) - landedInAll(unit))} colour={colour} showOne
+                    <UnitTile
+                      variant="take" kind={unit} count={Math.max(0, (arrived[unit] ?? 0) - landedInAll(unit))} colour={colour} showOne
                       label={t('plan.tactical.landOne', { unit: unitName(unit) })} onClick={() => onLand(planet.id, unit, got + 1)}
                     />
                     {got > 0 && (
-                      <UnitButton
-                        unit={unit} count={got} colour={colour} taken showOne
+                      <UnitTile
+                        variant="taken" kind={unit} count={got} colour={colour} showOne
                         label={t('stage.giveBack', { unit: unitName(unit) })} onClick={() => onLand(planet.id, unit, got - 1)}
                       />
                     )}
@@ -97,8 +85,8 @@ export function LandingBlock({ game, planets, before, units, arrived, lost = {},
             </div>
             {(standing.length > 0 || enemies.length > 0) && (
               <div className="landing-stacks">
-                {standing.map(unit => <Stack key={unit} kind={unit} colour={colour} count={left(unit)} label={`${unitName(unit)} ×${left(unit)}`} />)}
-                {enemies.map(({ owner, unit, count }) => <Stack key={`${owner}:${unit}`} kind={unit} colour={colours[owner]} count={count} label={`${unitName(unit)} ×${count}`} />)}
+                {standing.map(unit => <UnitTile key={unit} variant="stack" kind={unit} colour={colour} count={left(unit)} label={`${unitName(unit)} ×${left(unit)}`} />)}
+                {enemies.map(({ owner, unit, count }) => <UnitTile key={`${owner}:${unit}`} variant="stack" kind={unit} colour={colours[owner]} count={count} label={`${unitName(unit)} ×${count}`} />)}
               </div>
             )}
           </div>

@@ -40,9 +40,8 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
   const laneSlots = (templateFor(game.playerCount, 'hyperlanes', pack)?.slots ?? [])
     .filter(slot => slot.fixed && pack.tiles[slot.fixed.split('@')[0]]?.kind === 'hyperlane').length;
 
-  // TODO(P2-254) #ws:ui-css #type:dead #size:s #panel — Берёт .panel, а CSS потом снимает с неё всё оформление: убрать класс panel и снимающие правила
   return (
-    <div className="panel layout-picker">
+    <div className="layout-picker">
       <strong id="layout-picker-label">{t('layout.label')}</strong>
       <div className="segment" role="radiogroup" aria-labelledby="layout-picker-label">
         {LAYOUTS.map(layout => (

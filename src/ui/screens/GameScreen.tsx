@@ -22,6 +22,8 @@ import { factionName } from '../players/names';
 import { PlayerList } from '../players/PlayerList';
 import { SeatMap } from '../players/SeatMap';
 import { useSeatDrag } from '../players/useSeatDrag';
+import { SectionTitle } from '../primitives/SectionTitle';
+import { ConfirmBar } from '../primitives/ConfirmBar';
 
 /** The players on the left; expansions, the seat map and saved games on the right, language and settings last. */
 export function GameScreen() {
@@ -118,8 +120,7 @@ export function GameScreen() {
           )}
         </div>
         <div className="side-group">
-          {/* TODO(P2-443) #ws:ui-containers #type:ui #size:s #section-title — заголовки групп «Партии» — p.side-label, в других местах h2/h3/strong для того же вида: SectionTitle */}
-          <p className="side-label">{t('game.expansions')}</p>
+          <SectionTitle as="p" className="side-label">{t('game.expansions')}</SectionTitle>
           <div className="chips">
             <span className="chip fix on">{t('players.base')}</span>
             {EXPANSIONS.map(id => {
@@ -131,7 +132,7 @@ export function GameScreen() {
           </div>
         </div>
         <div className="side-group">
-          <p className="side-label">{t('players.seats')}</p>
+          <SectionTitle as="p" className="side-label">{t('players.seats')}</SectionTitle>
           <SeatMap game={game} pack={pack} drag={drag} ghostRef={ghostRef} locked={Boolean(open)} />
           {!open && <p className="side-note">{t('players.seatsNote')}</p>}
           {open && homeNotes(open, pack).map(note => (
@@ -144,7 +145,7 @@ export function GameScreen() {
         </div>
         <LayoutPicker game={game} pack={pack} />
         <div className="side-group">
-          <p className="side-label">{t('game.saved')}</p>
+          <SectionTitle as="p" className="side-label">{t('game.saved')}</SectionTitle>
           {saved.length === 0 && <p className="side-note">{t('game.none')}</p>}
           <ul className="saved-list">
             {saved.map(s => (
@@ -157,9 +158,7 @@ export function GameScreen() {
                 {asked === s.id
                   ? (
                     <>
-                      {/* TODO(P2-437) #ws:ui-containers #type:ui #size:s #dep:P2-436 #confirm-bar #danger — класс .danger не описан в теме, «Удалить» выглядит обычной кнопкой: вариант danger у ConfirmBar */}
-                      <button type="button" className="danger" onClick={() => void remove(s.id)}>{t('game.deleteYes')}</button>
-                      <button type="button" onClick={() => setAsked(null)}>{t('players.cancel')}</button>
+                      <ConfirmBar danger yes={t('game.deleteYes')} no={t('players.cancel')} onYes={() => void remove(s.id)} onNo={() => setAsked(null)} />
                     </>
                   )
                   : (
@@ -187,7 +186,7 @@ export function GameScreen() {
           </div>
         </div>
         <div className="side-group">
-          <p className="side-label" id="language-label">{t('players.language')}</p>
+          <SectionTitle as="p" className="side-label" id="language-label">{t('players.language')}</SectionTitle>
           <div className="chips" role="radiogroup" aria-labelledby="language-label">
             {LANGUAGES.map(({ code, label }) => (
               <button
@@ -198,7 +197,7 @@ export function GameScreen() {
           </div>
         </div>
         <div className="side-group">
-          <p className="side-label">{t('game.settings')}</p>
+          <SectionTitle as="p" className="side-label">{t('game.settings')}</SectionTitle>
           <div className="chips">
             <button type="button" className="chip" aria-pressed={energy} onClick={() => setEnergy(!energy)}>{t('game.energy')}</button>
             <button type="button" className="chip" aria-pressed={blur} disabled={energy} onClick={() => setBlur(!blur)}>{t('game.blur')}</button>

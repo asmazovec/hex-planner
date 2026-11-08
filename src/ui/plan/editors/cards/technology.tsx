@@ -1,5 +1,6 @@
 import { researchCount } from '../../../../domain/strategy';
 import type { CardBlocks } from './kit';
+import { Section } from '../../../primitives/Section';
 
 export const technologyBlocks: CardBlocks = ({ t, entry, effects, primary, cost, change, placer, list, upgradeRow }) => {
   const count = researchCount(entry);
@@ -12,8 +13,7 @@ export const technologyBlocks: CardBlocks = ({ t, entry, effects, primary, cost,
   };
   return (
     <>
-      <div className="editor-section">
-        <strong>{t('plan.strategy.research', { n: count })}</strong>
+      <Section title={t('plan.strategy.research', { n: count })}>
         <div className="research-row in-card">
           <button type="button" className="option" aria-pressed={researched > 0} onClick={() => setResearched(researched + 1)}>
             {t('plan.strategy.researchAdd')}{researched > 0 ? ` · ${researched}` : ''}
@@ -22,12 +22,10 @@ export const technologyBlocks: CardBlocks = ({ t, entry, effects, primary, cost,
           {researched > 0 && <button type="button" aria-label={t('plan.strategy.researchTake')} onClick={() => setResearched(researched - 1)}>−</button>}
         </div>
         <span className="muted">{t(primary ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}</span>
-      </div>
-      <div className="editor-section">
-        <strong>{t('plan.strategy.upgrades')}</strong>
+      </Section>
+      <Section title={t('plan.strategy.upgrades')} warnings={list(placer.at('research'))}>
         {upgradeRow}
-        {list(placer.at('research'))}
-      </div>
+      </Section>
     </>
   );
 };

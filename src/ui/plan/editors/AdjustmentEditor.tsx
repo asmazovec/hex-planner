@@ -1,11 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import type { AdjustmentDelta, DataPack, Entry, Game, UnitCounts, Warning } from '../../../domain/types';
-import { UNIT_ORDER } from '../../units/unitOrder';
 import { NoteField } from '../../primitives/NoteField';
 import { HexRemove } from '../../primitives/Icon';
 import { Stepper } from '../../primitives/Stepper';
 import { systemName } from '../../map/systemName';
 import { WarningList } from '../../feedback/WarningText';
+import { unitsText } from '../../units/unitsText';
+import { MapPickButton } from '../../primitives/MapPickButton';
 
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
 
@@ -29,8 +30,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
   const { delta } = entry;
   const setDelta = (patch: Partial<AdjustmentDelta>) => onUpdate({ delta: { ...delta, ...patch } });
   const systemId = delta.units?.systemId;
-  // TODO(P2-364) #ws:ui-containers #type:dup #size:s #dep:P2-314 — signed повторён в EntrySteps
-  const signed = (units: UnitCounts) => UNIT_ORDER.filter(u => units[u]).map(u => `${t(`unit.${u}`)} ${(units[u] ?? 0) > 0 ? '+' : ''}${units[u]}`).join(', ');
+  const signed = (units: UnitCounts) => unitsText(units, t, true);
   const changes = [
     signed(delta.units?.units ?? {}),
     ...Object.entries(delta.ground ?? {}).filter(([, units]) => signed(units)).map(([planetId, units]) => `${pack.planets[planetId]?.name ?? planetId}: ${signed(units)}`),
@@ -67,7 +67,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
               <HexRemove label={t('plan.entries.clearSystem')} onClick={() => setDelta({ units: undefined, ground: undefined })} />
             </div>
           )
-          : <button type="button" aria-pressed={picking} onClick={onPickSystem}>{t('plan.entries.pickSystem')}</button>}
+          : <MapPickButton active={picking} onToggle={onPickSystem}>{t('plan.entries.pickSystem')}</MapPickButton>}
         {/* TODO(P2-363) #ws:ui-warnings #type:ui #size:s — все предупреждения в блоке «Система»; placeWarnings по местам и остаток вверху редактора */}
         <WarningList warnings={warnings} game={game} pack={pack} />
       </div>
