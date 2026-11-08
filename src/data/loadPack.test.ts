@@ -216,6 +216,42 @@ describe('faction reference data', () => {
     }
   });
 
+  test('every official faction has its faction technologies in its own pack, each with a type or a unit it upgrades', () => {
+    for (const expansions of [[], ['pok'], ['te'], ['pok', 'te']] as ExpansionId[][]) {
+      const pack = loadPack(expansions);
+      for (const faction of Object.values(pack.factions)) {
+        const techs = faction.sheet!.techs;
+        expect(techs.length, faction.id).toBeGreaterThanOrEqual(2);
+        for (const { id } of techs) {
+          const tech = pack.technologies[id];
+          expect(tech?.name, `${faction.id}: ${id}`).toBeTruthy();
+          expect(tech.type !== null || tech.upgrade !== undefined || ['vax', 'vay'].includes(id), `${faction.id}: ${id}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  test('faction technologies per pack: 34 of the base game, 17 with Prophecy of Kings and Codex, 12 of Thunder\'s Edge', () => {
+    const count = (expansions: ExpansionId[], only: (id: string) => boolean) =>
+      new Set(Object.values(loadPack(expansions).factions).filter(f => only(f.id)).flatMap(f => f.sheet!.techs.map(t => t.id))).size;
+    const base = loadPack([]).factions;
+    const pok = loadPack(['pok']).factions;
+    expect(count([], () => true)).toBe(34);
+    expect(count(['pok'], id => !base[id])).toBe(17);
+    expect(count(['te'], id => !base[id] && !pok[id])).toBe(12);
+  });
+
+  test('prerequisites are read per colour and unit upgrades are marked with the unit', () => {
+    expect(full.technologies.pws2).toMatchObject({ name: 'Prototype War Sun II', type: null, upgrade: 'warsun', requires: { warfare: 3, cybernetic: 1 } });
+    expect(full.technologies.lw2).toMatchObject({ type: null, upgrade: 'infantry', requires: { biotic: 2 } });
+    expect(full.technologies.m2).toMatchObject({ upgrade: 'flagship', requires: { biotic: 1, propulsion: 1, cybernetic: 1 } });
+    expect(full.technologies.ffac2.upgrade).toBe('spacedock');
+    expect(full.technologies.ht2.upgrade).toBe('pds');
+    expect(full.technologies.l4).toEqual({ id: 'l4', name: 'L4 Disruptors', type: 'cybernetic', requires: { cybernetic: 1 } });
+    expect(full.technologies.mc.upgrade).toBeUndefined();
+    expect(full.technologies['parasite-obs'].requires).toBeUndefined();
+  });
+
   test('a gate faction stands on its gate tile, its planets stay on the off-map tile', () => {
     expect(full.factions.ghost.gateTile).toBe('17');
     expect(full.factions.crimson.gateTile).toBe('94');

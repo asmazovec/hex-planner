@@ -43,6 +43,13 @@ describe('factionSheet', () => {
     expect(ids('xxcha', ['pok', 'te'])).not.toContain('xxchahero');
   });
 
+  it('gives faction technologies in every game; Thunder\'s Edge swaps Executive Order in for I.I.H.Q. Modernization of Keleres', () => {
+    expect(names(sheetOf('sol', []).techs)).toEqual(['Spec Ops II', 'Advanced Carrier II']);
+    expect(sheetOf('keleresa', ['pok']).techs.map(t => t.id)).toEqual(['iihq', 'asn']);
+    expect(sheetOf('keleresa', ['pok', 'te']).techs.map(t => t.id)).toEqual(['asn', 'executiveorder']);
+    expect(sheetOf('keleresa', ['pok', 'te']).techs.find(t => t.id === 'executiveorder')?.pack).toBe('te');
+  });
+
   it('lists leaders as agent, commander, hero; every faction with both expansions has at least one of each and a mech', () => {
     const expansions: ExpansionId[] = ['pok', 'te'];
     const { factions } = loadPack(expansions);

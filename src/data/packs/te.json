@@ -869,6 +869,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "proxima",
+            "name": "Proxima Targeting VI",
+            "pack": "te"
+          },
+          {
+            "id": "helios2",
+            "name": "4X41C \"Helios\" V2",
+            "pack": "te"
+          }
+        ],
         "breakthrough": {
           "id": "bastionbt",
           "name": "The Icon",
@@ -955,6 +967,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "hydrothermal",
+            "name": "Hydrothermal Mining",
+            "pack": "te"
+          },
+          {
+            "id": "radical",
+            "name": "Radical Advancement",
+            "pack": "te"
           }
         ],
         "breakthrough": {
@@ -1051,6 +1075,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "planesplitter-firm",
+            "name": "Planesplitter (Firmament)",
+            "pack": "te"
+          },
+          {
+            "id": "parasite-firm",
+            "name": "Neural Parasite (Firmament)",
+            "pack": "te"
+          }
+        ],
         "breakthrough": {
           "id": "firmamentbt",
           "name": "The Sowing",
@@ -1140,6 +1176,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "planesplitter-obs",
+            "name": "Planesplitter (Obsidian)",
+            "pack": "te"
+          },
+          {
+            "id": "parasite-obs",
+            "name": "Neural Parasite (Obsidian)",
+            "pack": "te"
           }
         ],
         "breakthrough": {
@@ -1240,6 +1288,18 @@
             "combat": 6,
             "dice": 1,
             "sustain": true
+          }
+        ],
+        "techs": [
+          {
+            "id": "subatomic",
+            "name": "Subatomic Splicer",
+            "pack": "te"
+          },
+          {
+            "id": "exile2",
+            "name": "Exile II",
+            "pack": "te"
           }
         ],
         "breakthrough": {
@@ -1364,6 +1424,18 @@
             "sustain": true
           }
         ],
+        "techs": [
+          {
+            "id": "nanomachines",
+            "name": "Nanomachines",
+            "pack": "te"
+          },
+          {
+            "id": "linkship2",
+            "name": "Linkship II",
+            "pack": "te"
+          }
+        ],
         "breakthrough": {
           "id": "ralnelbt",
           "name": "Data Skimmer",
@@ -1436,6 +1508,39 @@
       "name": "Scanlink Drone Network",
       "type": "cybernetic"
     },
+    "proxima": {
+      "id": "proxima",
+      "name": "Proxima Targeting VI",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      }
+    },
+    "helios2": {
+      "id": "helios2",
+      "name": "4X41C \"Helios\" V2",
+      "type": null,
+      "requires": {
+        "cybernetic": 2
+      },
+      "upgrade": "spacedock"
+    },
+    "hydrothermal": {
+      "id": "hydrothermal",
+      "name": "Hydrothermal Mining",
+      "type": "biotic",
+      "requires": {
+        "biotic": 1
+      }
+    },
+    "radical": {
+      "id": "radical",
+      "name": "Radical Advancement",
+      "type": "biotic",
+      "requires": {
+        "biotic": 1
+      }
+    },
     "nm": {
       "id": "nm",
       "name": "Neural Motivator",
@@ -1444,6 +1549,32 @@
     "pa": {
       "id": "pa",
       "name": "Psychoarchaeology",
+      "type": "biotic"
+    },
+    "planesplitter-firm": {
+      "id": "planesplitter-firm",
+      "name": "Planesplitter (Firmament)",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      }
+    },
+    "parasite-firm": {
+      "id": "parasite-firm",
+      "name": "Neural Parasite (Firmament)",
+      "type": "biotic",
+      "requires": {
+        "biotic": 2
+      }
+    },
+    "planesplitter-obs": {
+      "id": "planesplitter-obs",
+      "name": "Planesplitter (Obsidian)",
+      "type": "cybernetic"
+    },
+    "parasite-obs": {
+      "id": "parasite-obs",
+      "name": "Neural Parasite (Obsidian)",
       "type": "biotic"
     },
     "ps": {
@@ -1455,6 +1586,40 @@
       "id": "aida",
       "name": "AI Development Algorithm",
       "type": "warfare"
+    },
+    "subatomic": {
+      "id": "subatomic",
+      "name": "Subatomic Splicer",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      }
+    },
+    "exile2": {
+      "id": "exile2",
+      "name": "Exile II",
+      "type": null,
+      "requires": {
+        "warfare": 2
+      },
+      "upgrade": "destroyer"
+    },
+    "nanomachines": {
+      "id": "nanomachines",
+      "name": "Nanomachines",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      }
+    },
+    "linkship2": {
+      "id": "linkship2",
+      "name": "Linkship II",
+      "type": null,
+      "requires": {
+        "warfare": 2
+      },
+      "upgrade": "destroyer"
     }
   },
   "structures": []

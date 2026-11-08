@@ -185,16 +185,16 @@ interface SourceUnit {
   combatHitsOn?: number; moveValue?: number; baseType?: string; name?: string; faction?: string; upgradesFromUnitId?: string;
   homebrewReplacesID?: string; combatDieCount?: number; sustainDamage?: boolean; afbHitsOn?: number; afbDieCount?: number;
   bombardHitsOn?: number; bombardDieCount?: number; spaceCannonHitsOn?: number; spaceCannonDieCount?: number;
-  productionValue?: string | number; basicProduction?: string;
+  productionValue?: string | number; basicProduction?: string; requiredTechId?: string;
 }
 interface SourceFaction {
   alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
   abilities: string[]; startingTech?: string[]; startingTechOptions?: string[]; startingTechAmount?: number;
-  leaders?: string[]; units?: string[];
+  leaders?: string[]; units?: string[]; factionTech?: string[];
 }
 interface SourceLeader { id: string; type: string; name: string; title?: string; source: string; }
 interface SourceBreakthrough { alias: string; name: string; faction: string; source: string; }
-interface SourceTech { alias: string; name: string; types: string[]; source: string; }
+interface SourceTech { alias: string; name: string; types: string[]; source: string; requirements?: string | null; faction?: string; }
 interface SourceAbility { id: string; name: string; source: string; }
 interface SourceTemplate { alias: string; playerCount: number; templateTiles: { pos: string; staticTileId?: string }[]; }
 interface SourceCard { id: string; initiative: number; name: string; source: string; }
@@ -474,6 +474,40 @@ export function readTech(tech: SourceTech): TechDef {
   return { id: tech.alias, name: tech.name, type };
 }
 
+/** Letters of the source's `requirements`: "GG" is two biotic. */
+const PREREQUISITES: Record<string, TechType> = { B: 'propulsion', G: 'biotic', Y: 'cybernetic', R: 'warfare' };
+
+/** Prerequisites per colour. No field, or the text "null" (a card that cannot be researched), means none; another letter fails the build. */
+export function readPrerequisites(tech: Pick<SourceTech, 'alias' | 'requirements'>): Partial<Record<TechType, number>> {
+  const counts: Partial<Record<TechType, number>> = {};
+  if (!tech.requirements || tech.requirements === 'null') return counts;
+  for (const letter of tech.requirements) {
+    const type = PREREQUISITES[letter];
+    if (!type) throw new Error(`Technology ${tech.alias} has unknown prerequisite ${letter}`);
+    counts[type] = (counts[type] ?? 0) + 1;
+  }
+  return counts;
+}
+
+const UPGRADE_KINDS: (UnitId | StructureKind)[] = [...LEVEL_TYPES, 'pds', 'spacedock'];
+
+/**
+ * A faction technology: a colour, or a unit upgrade (`UNITUPGRADE`), or none (`NONE`, the Valefar Assimilators); its
+ * prerequisites. What a unit upgrade upgrades is the unit whose `requiredTechId` names it. No card text is read.
+ */
+export function readFactionTech(tech: SourceTech, upgradedBy: Map<string, string>): TechDef {
+  if (tech.types.length !== 1) throw new Error(`Technology ${tech.alias} has ${tech.types.length} types`);
+  const counts = readPrerequisites(tech);
+  const requires = Object.keys(counts).length > 0 ? { requires: counts } : {};
+  if (tech.types[0] === 'UNITUPGRADE') {
+    const upgrade = upgradedBy.get(tech.alias) as UnitId | StructureKind | undefined;
+    if (!upgrade || !UPGRADE_KINDS.includes(upgrade)) throw new Error(`Unit upgrade ${tech.alias} upgrades no known unit (${upgrade})`);
+    return { id: tech.alias, name: tech.name, type: null, ...requires, upgrade };
+  }
+  if (tech.types[0] === 'NONE') return { id: tech.alias, name: tech.name, type: null, ...requires };
+  return { ...readTech(tech), ...requires };
+}
+
 const LEADER_TYPES: Record<string, LeaderType> = { agent: 'agent', commander: 'commander', hero: 'hero' };
 /** Files of the official leaders; the others of `data/leaders` are homebrew. */
 const LEADER_FILES = ['pok', 'te_leaders', 'other', 'generic'];
@@ -482,7 +516,14 @@ const BREAKTHROUGH_FILE = 'data/breakthroughs/te_breakthroughs.json';
 const JOLNAR_OLD_COMMANDER = { id: 'jolnarcommander-pok', type: 'commander' as const, name: 'Ta Zern', pack: 'pok' as const };
 const REPLACED_BY_TE: Record<string, string> = {
   jolnarcommander: JOLNAR_OLD_COMMANDER.id, 'xxchahero-te': 'xxchahero', 'naaluagent-te': 'naaluagent', naalu_mech_te: 'naalu_mech_omega',
+  executiveorder: 'iihq',
 };
+/**
+ * Executive Order is filed under `keleres` as a Thunder's Edge technology, but no faction entry lists it. The rulebook gives
+ * Keleres two faction technologies, and the source's Thunder's Edge breakthrough of Keleres is named I.I.H.Q. Modernization,
+ * so Executive Order takes the place of that technology: an inference recorded in docs/data-verification.md.
+ */
+const EXTRA_FACTION_TECH: Record<string, string[]> = { keleresa: ['executiveorder'], keleresm: ['executiveorder'], keleresx: ['executiveorder'] };
 /** Leaders and mechs a faction's source entry no longer lists: the printed cards of an earlier expansion, and Eidolon Maximum of the Naaz-Rokha. */
 const EXTRA_LEADERS: Record<string, string[]> = { naalu: ['naaluagent'], xxcha: ['xxchahero-te'] };
 const EXTRA_MECHS: Record<string, string[]> = { naalu: ['naalu_mech_omega'], naaz: ['naaz_voltron'] };
@@ -495,7 +536,8 @@ const componentPack = (source: string, what: string): ComponentPack => {
 
 /** Names, origins and numbers only: the card text is retold in `sheetSummaries`. */
 export function buildSheet(
-  faction: Pick<SourceFaction, 'alias' | 'abilities' | 'leaders' | 'units'>, abilities: Map<string, SourceAbility>, leaders: Map<string, SourceLeader>, units: Map<string, SourceUnit>, breakthrough?: SourceBreakthrough,
+  faction: Pick<SourceFaction, 'alias' | 'abilities' | 'leaders' | 'units' | 'factionTech'>, abilities: Map<string, SourceAbility>, leaders: Map<string, SourceLeader>, units: Map<string, SourceUnit>, breakthrough?: SourceBreakthrough,
+  technologies: Map<string, SourceTech> = new Map(),
 ): FactionSheet {
   const owner = faction.alias;
   const replaces = (id: string) => (REPLACED_BY_TE[id] ? { replaces: REPLACED_BY_TE[id] } : {});
@@ -524,6 +566,11 @@ export function buildSheet(
         id, name: unit.name?.trim() ?? id, pack: componentPack(unit.source, id), cost: unit.cost ?? null, combat: unit.combatHitsOn ?? null,
         dice: unit.combatDieCount ?? 1, ...(unit.sustainDamage ? { sustain: true as const } : {}), ...replaces(id),
       };
+    }),
+    techs: [...new Set([...(faction.factionTech ?? []), ...(EXTRA_FACTION_TECH[owner] ?? [])])].map(id => {
+      const found = technologies.get(id);
+      if (!found) throw new Error(`Faction ${owner} has unknown faction technology ${id}`);
+      return { id, name: found.name, pack: componentPack(found.source, id), ...replaces(id) };
     }),
     ...(breakthrough ? { breakthrough: { id: breakthrough.alias, name: breakthrough.name, pack: componentPack(breakthrough.source, breakthrough.alias) } } : {}),
   };
@@ -610,8 +657,8 @@ function ringTemplate(playerCount: number, rings: number, layout: MapLayout, lan
   return { playerCount, layout, homes: MILTY_HOMES[playerCount], slots };
 }
 
-/** Per pack, the technologies its factions name. A pack holds its own copy, so it works without the others. */
-function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<string, FactionDef>>): Record<PackId, Record<string, TechDef>> {
+/** Per pack, the technologies its factions name, their faction technologies too. A pack holds its own copy, so it works without the others. */
+function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<string, FactionDef>>, upgradedBy: Map<string, string>): Record<PackId, Record<string, TechDef>> {
   const known = new Map(all.filter(tech => packOfSource(tech.source)).map(tech => [tech.alias, tech]));
   const result: Record<PackId, Record<string, TechDef>> = { base: {}, pok: {}, te: {} };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
@@ -621,6 +668,7 @@ function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<st
         if (!tech) throw new Error(`Faction ${faction.id} names unknown technology ${id}`);
         result[pack][id] = readTech(tech);
       }
+      for (const { id } of faction.sheet?.techs ?? []) result[pack][id] = readFactionTech(known.get(id)!, upgradedBy);
     }
   }
   return result;
@@ -691,6 +739,10 @@ function assertSchema(pack: DataPack, name: string): void {
     for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) {
       if (!pack.technologies[id]) throw new Error(`${name}: faction ${faction.id} names unknown technology ${id}`);
     }
+    if (!faction.sheet?.techs.length) throw new Error(`${name}: faction ${faction.id} has no faction technologies`);
+    for (const { id } of faction.sheet.techs) {
+      if (!pack.technologies[id]) throw new Error(`${name}: faction ${faction.id} names unknown faction technology ${id}`);
+    }
   }
   for (const template of pack.templates) {
     const where = `${name}: template of ${template.playerCount} players (${template.layout})`;
@@ -732,19 +784,23 @@ async function main(): Promise<void> {
   const officialLeaders = new Map(LEADER_FILES.flatMap(file => readJson<SourceLeader[]>(root, `data/leaders/${file}.json`)).map(l => [l.id, l]));
   const unitsById = new Map(unitSource.map(unit => [unit.id, unit]));
   const breakthroughs = readJson<SourceBreakthrough[]>(root, BREAKTHROUGH_FILE);
+  const techSource = readDir<SourceTech[]>(root, 'data/technologies').flat();
+  const officialTechs = new Map(techSource.filter(tech => packOfSource(tech.source)).map(tech => [tech.alias, tech]));
+  const upgradedBy = new Map(unitSource.filter(unit => unit.requiredTechId && unit.baseType && packOfSource(unit.source))
+    .map(unit => [unit.requiredTechId!, unit.baseType!]));
   for (const pack of Object.values(factions)) {
     for (const faction of Object.values(pack)) {
       const source = factionSource.find(f => f.alias === faction.id && packOfSource(f.source));
       if (!source) throw new Error(`Faction ${faction.id} has no source entry`);
       const owner = faction.id.startsWith('keleres') ? 'keleres' : faction.id;
-      faction.sheet = buildSheet(source, officialAbilities, officialLeaders, unitsById, breakthroughs.find(b => b.faction === owner));
+      faction.sheet = buildSheet(source, officialAbilities, officialLeaders, unitsById, breakthroughs.find(b => b.faction === owner), officialTechs);
     }
   }
   for (const pack of Object.values(factions)) for (const faction of Object.values(pack)) faction.ships = ships.factions[faction.id];
   const units = buildUnits(root, ships.generic);
   const structures = buildStructures(readJson<SourceUnit[]>(root, 'data/units/baseUnits.json'));
   console.log('Ships excluded:', ships.excluded);
-  const technologies = buildTechnologies(readDir<SourceTech[]>(root, 'data/technologies').flat(), factions);
+  const technologies = buildTechnologies(techSource, factions, upgradedBy);
   const templates = buildTemplates(root);
   const cards = buildCards(root);
 
@@ -782,6 +838,12 @@ async function main(): Promise<void> {
     excludedSystems: EXCLUDED_SYSTEMS,
     excludedPlanets: EXCLUDED_PLANETS,
     notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, leaders: [JOLNAR_OLD_COMMANDER.name], reason: "Thunder's Edge rulebook; absent from the source at this commit" },
+    factionTechnologies: {
+      fields: 'data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades. Card text is not read.',
+      added: EXTRA_FACTION_TECH.keleresm,
+      replaces: { executiveorder: REPLACED_BY_TE.executiveorder },
+      reason: "Executive Order is filed under keleres with source thunders_edge but listed on no faction; the Thunder's Edge rulebook gives Keleres two faction technologies and the source names the Keleres breakthrough I.I.H.Q. Modernization, so it is taken to replace that technology (inference, not confirmed by a rulebook line).",
+    },
     corrections: { homeTiles: { ...HOME_PLANET_TILE, ...KELERES_HOME_TILE } },
     reinforcements: {
       ...LIMITS_SOURCE,

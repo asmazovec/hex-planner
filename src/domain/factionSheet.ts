@@ -13,17 +13,19 @@ function current<T extends SheetItem>(items: T[], expansions: ExpansionId[]): T[
 
 /**
  * What a faction has with these expansions. Leaders and mechs exist only with Prophecy of Kings: the Thunder's Edge
- * rulebook removes them without it, those of its own factions too. A breakthrough needs Thunder's Edge.
+ * rulebook removes them without it, those of its own factions too. A breakthrough needs Thunder's Edge. Faction technologies
+ * are there in every game; Thunder's Edge swaps Executive Order in for I.I.H.Q. Modernization of Keleres.
  */
 export function factionSheet(faction: FactionDef, expansions: ExpansionId[]): FactionSheet {
   const sheet = faction.sheet;
-  if (!sheet) return { abilities: [], leaders: [], mechs: [] };
+  if (!sheet) return { abilities: [], leaders: [], mechs: [], techs: [] };
   const pok = expansions.includes('pok');
   const breakthrough = sheet.breakthrough && inPlay(sheet.breakthrough, expansions) ? sheet.breakthrough : undefined;
   return {
     abilities: sheet.abilities,
     leaders: pok ? current(sheet.leaders, expansions).sort((a, b) => LEADER_ORDER[a.type] - LEADER_ORDER[b.type]) : [],
     mechs: pok ? current(sheet.mechs, expansions) : [],
+    techs: current(sheet.techs ?? [], expansions),
     ...(breakthrough ? { breakthrough } : {}),
   };
 }

@@ -43,6 +43,16 @@
     ],
     "reason": "Thunder's Edge rulebook; absent from the source at this commit"
   },
+  "factionTechnologies": {
+    "fields": "data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades. Card text is not read.",
+    "added": [
+      "executiveorder"
+    ],
+    "replaces": {
+      "executiveorder": "iihq"
+    },
+    "reason": "Executive Order is filed under keleres with source thunders_edge but listed on no faction; the Thunder's Edge rulebook gives Keleres two faction technologies and the source names the Keleres breakthrough I.I.H.Q. Modernization, so it is taken to replace that technology (inference, not confirmed by a rulebook line)."
+  },
   "corrections": {
     "homeTiles": {
       "ghost": "51",

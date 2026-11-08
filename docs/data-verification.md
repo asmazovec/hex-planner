@@ -285,3 +285,20 @@ Names, origins and numbers come from the source (`data/abilities`, `data/leaders
 - The Thunder's Edge rulebook (Expansion Integration) replaces Jol-Nar's Ta Zern with Agnlan Oln, and removes all leaders and mechs when playing without Prophecy of Kings.
 - Ta Zern is not in the source at this commit. Its text is assumed to be that of Agnlan Oln, filed under the same source id; this is not confirmed by a public source.
 - Xxcha's hero (`xxchahero-te`), Naalu's agent (`naaluagent-te`) and Naalu's mech (`naalu_mech_te`) are marked as Thunder's Edge cards by the source; the rulebook does not list them one by one, it only counts replacement leaders and a mech.
+
+## Технологии фракций
+
+Источник тот же коммит AsyncTI4. Из `data/factions` берётся список `factionTech`, из `data/technologies` название, `types`, `requirements` и `source` (текст карты не читается), из `data/units` поле `requiredTechId`: юнит, у которого оно называет технологию, и есть то, что она улучшает. Берутся только официальные источники (`base`, `pok`, `codex*`, `thunders_edge`), домашние наборы отброшены. Пересказы лежат в `src/data/techSummaries.ts`, их проверяют `src/data/techSummaries.test.ts` (есть у каждой технологии на обоих языках) и `scripts/source-wording.test.ts` (ни одного общего с источником отрезка из 6 слов).
+
+- `FactionSheet.techs` у каждой фракции: id, английское название, дополнение и `replaces`. Тип, требования и улучшаемый юнит лежат в `technologies` пакета этой фракции.
+- `type`: цвет из `types`; у `UNITUPGRADE` и `NONE` он `null`. `upgrade`: улучшаемый юнит или сооружение (`spacedock`, `pds`). Числа улучшений кораблей и пехоты показывает таблица кораблей, у сооружений их в приложении нет.
+- `requires`: буквы `requirements` по цветам (B propulsion, G biotic, Y cybernetic, R warfare). Строка `"null"` у технологий Obsidian значит, что изучить их нельзя; требований у них нет. Чужая буква ломает сборку.
+
+Количество (уникальных технологий фракций по пакету фракции): `base` 34 (17 фракций по 2), `pok` 17 (7 фракций по 2, Keleres 2 и Executive Order), `te` 12 (6 фракций по 2). Улучшений юнитов 17: 13 кораблей и пехоты, 4 сооружения (Floating Factory II, Dimensional Tear II, Hel-Titan II, Helios V2).
+
+Особые случаи:
+
+- **Executive Order у Keleres.** В источнике он записан на `keleres` с источником `thunders_edge`, но ни одна запись фракции его не называет. Правила Thunder's Edge (Expansion Integration) дают Keleres две технологии фракции и заменяют три технологии фракций, не называя их. Прорыв Keleres в источнике называется I.I.H.Q. Modernization. Отсюда вывод: в Thunder's Edge Executive Order заменяет I.I.H.Q. Modernization (`replaces: iihq`), Agency Supply Network остаётся. **Не подтверждено** строкой правил, это вывод. Две другие заменённые технологии правила не называют, а источник замен не отмечает (полей замены у официальных технологий нет), поэтому других замен нет.
+- **Nekro.** `factionTech` это Valefar Assimilator X и Y с типом `NONE` и без требований; они показаны без цвета. Две записи `nekroc4y` и `nekroc4r` (источник `pok`) не названы ни одной фракцией и не взяты.
+- **Firmament и Obsidian.** У каждой стороны свои две карты (Planesplitter, Neural Parasite); у Obsidian требований нет.
+- **Memoria II** в источнике без `baseUpgrade`, улучшаемый юнит (флагман) найден по `requiredTechId`.

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { checkCounts, readPlanetKind, readPlanetMarks, readStation, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, selectShips, buildStructures, readDockProduction } from './build-data';
+import { checkCounts, readPlanetKind, readPlanetMarks, readStation, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, readPrerequisites, readFactionTech, buildSheet, selectShips, buildStructures, readDockProduction } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -80,6 +80,40 @@ test('технология берётся без текста, неизвест�
   const tech = { alias: 'amd', name: 'Antimass Deflectors', types: ['PROPULSION'], source: 'base', text: 'card text' };
   expect(readTech(tech)).toEqual({ id: 'amd', name: 'Antimass Deflectors', type: 'propulsion' });
   expect(() => readTech({ ...tech, types: ['NONE'] })).toThrow(/amd/);
+});
+
+test('требования технологии считаются по цветам, "null" и пустое поле значат «нет», чужая буква ломает сборку', () => {
+  expect(readPrerequisites({ alias: 'pws2', requirements: 'RRRY' })).toEqual({ warfare: 3, cybernetic: 1 });
+  expect(readPrerequisites({ alias: 'hcf2', requirements: 'GB' })).toEqual({ biotic: 1, propulsion: 1 });
+  expect(readPrerequisites({ alias: 'parasite-obs', requirements: 'null' })).toEqual({});
+  expect(readPrerequisites({ alias: 'vax' })).toEqual({});
+  expect(() => readPrerequisites({ alias: 'odd', requirements: 'GX' })).toThrow(/odd/);
+});
+
+test('фракционная технология: цвет, улучшение юнита по requiredTechId, карта без цвета; текст не читается', () => {
+  const upgradedBy = new Map([['lw2', 'infantry'], ['ffac2', 'spacedock']]);
+  const tech = (alias: string, types: string[], requirements?: string) => ({ alias, name: alias.toUpperCase(), types, source: 'base', requirements, text: 'card text' });
+  expect(readFactionTech(tech('bio', ['BIOTIC'], 'GG'), upgradedBy)).toEqual({ id: 'bio', name: 'BIO', type: 'biotic', requires: { biotic: 2 } });
+  expect(readFactionTech(tech('lw2', ['UNITUPGRADE'], 'GG'), upgradedBy)).toEqual({ id: 'lw2', name: 'LW2', type: null, requires: { biotic: 2 }, upgrade: 'infantry' });
+  expect(readFactionTech(tech('ffac2', ['UNITUPGRADE'], 'YY'), upgradedBy).upgrade).toBe('spacedock');
+  expect(readFactionTech(tech('vax', ['NONE']), upgradedBy)).toEqual({ id: 'vax', name: 'VAX', type: null });
+  expect(() => readFactionTech(tech('nope2', ['UNITUPGRADE'], 'G'), upgradedBy)).toThrow(/nope2/);
+  expect(() => readFactionTech(tech('two', ['BIOTIC', 'WARFARE'], 'G'), upgradedBy)).toThrow(/two/);
+});
+
+test("лист фракции: фракционные технологии из factionTech с дополнением; Executive Order заменяет I.I.H.Q. у Keleres в Thunder's Edge", () => {
+  const techs = new Map([
+    ['iihq', { alias: 'iihq', name: 'I.I.H.Q. Modernization', types: ['CYBERNETIC'], source: 'pok' }],
+    ['asn', { alias: 'asn', name: 'Agency Supply Network', types: ['CYBERNETIC'], source: 'pok' }],
+    ['executiveorder', { alias: 'executiveorder', name: 'Executive Order', types: ['CYBERNETIC'], source: 'thunders_edge' }],
+  ]);
+  const sheet = buildSheet({ alias: 'keleresm', abilities: [], factionTech: ['iihq', 'asn'] }, new Map(), new Map(), new Map(), undefined, techs);
+  expect(sheet.techs).toEqual([
+    { id: 'iihq', name: 'I.I.H.Q. Modernization', pack: 'pok' },
+    { id: 'asn', name: 'Agency Supply Network', pack: 'pok' },
+    { id: 'executiveorder', name: 'Executive Order', pack: 'te', replaces: 'iihq' },
+  ]);
+  expect(() => buildSheet({ alias: 'sol', abilities: [], factionTech: ['missing'] }, new Map(), new Map(), new Map(), undefined, techs)).toThrow(/missing/);
 });
 
 test('отметки планеты: технологии и пропуски из techSpecialties', () => {
