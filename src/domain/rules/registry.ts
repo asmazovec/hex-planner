@@ -32,6 +32,14 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   systemHasToken: { rules: ['5.2', '89.1'], step: 'activation' },
   constructionUnits: { rules: ['24.3'], step: 'card' },
   sliceTaken: { rules: ['expedition-5'], step: 'expedition' },
+  // strategy-cards
+  foreignPrimary: { rules: ['83.3', '82.1'], step: 'card' },
+  ownSecondary: { rules: ['83.4', '82.1', '20.5'], step: 'card' },
+  secondaryRepeated: { rules: ['83.7', '92.4.2'], step: 'card' },
+  readyOverLimit: { rules: ['32.2', '32.3'], step: 'card' },
+  diplomacySystem: { rules: ['32.2'], step: 'card' },
+  researchOverLimit: { rules: ['91.2', '91.3'], step: 'card' },
+  researchOwned: { rules: ['90.10'], step: 'card' },
 };
 
 /** The rule and step of a code, from the registry. */

@@ -61,6 +61,12 @@ describe('LRR 90 Technology', () => {
     expect(codesOf(game, pack, again)).not.toEqual([]);
   });
 
+  test('90.10: an upgrade researched again is a researchOwned and costs nothing more', () => {
+    const again = primary(CARD.technology, { researched: 1 }, { upgrades: ['carrier'] });
+    const game = holding(rulesGame({ rounds: [[primary(CARD.technology, {}, { upgrades: ['carrier'] })], [again]] }), CARD.technology);
+    expect(codesOf(game, pack, again)).toEqual(['researchOwned']);
+  });
+
   test('90.10.1: a researched unit upgrade applies to the actions after it: a carrier II then moves two systems', () => {
     const move = tactical(TARGET, { moves: [{ from: HOME, units: { carrier: 1 }, via: [NEAR] }] });
     const research = primary(CARD.technology, {}, { upgrades: ['carrier'] });

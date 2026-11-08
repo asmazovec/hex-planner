@@ -106,7 +106,8 @@ describe('opening', () => {
     await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
     expect((entries()[1] as CardEntry)).toMatchObject({ type: 'secondary', card: 5 });
     expect(ability('Primary')).not.toHaveTextContent('strategy token');
-    expect(screen.queryByRole('list', { name: 'Warnings' })).toBeNull();
+    // The secondary of my own card is the other players' (83.4).
+    expect(warningsShown().getByText(/only the other players resolve its secondary/)).toBeVisible();
     await userEvent.click(ability('Primary'));
     expect((entries()[1] as CardEntry).forToken).toBeUndefined();
     expect(warningsShown().getByText(/primary has already been played/)).toBeVisible();
@@ -147,7 +148,8 @@ describe('opening', () => {
     const id = store().addEntry(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Strategy: Imperial' }));
-    expect(button(/^I control Mecatol Rex/)).toHaveAttribute('aria-pressed', 'true');
+    // The old flag gives no point: control of Mecatol Rex does (45.2).
+    expect(screen.getByText('Mecatol Rex is not under your control: no point.')).toBeVisible();
   });
 
   test('card text follows the expansions', async () => {
@@ -177,11 +179,11 @@ describe('opening', () => {
 
 describe('modes and the lock', () => {
   test('the lock note has its place before a choice, empty, so the controls do not move', async () => {
-    await primary('Imperial');
+    await primary('Technology');
     const place = document.querySelector('.strategy-lock');
     expect(place).not.toBeNull();
     expect(place).toHaveTextContent('');
-    await click(/^I control Mecatol Rex/);
+    await click(/^Research a technology/);
     expect(document.querySelector('.strategy-lock')).toBe(place);
     expect(place).toHaveTextContent(/A choice has been made/);
   });
@@ -200,13 +202,13 @@ describe('modes and the lock', () => {
   });
 
   test('a choice locks the mode and the other cards, with the note; undoing it frees them', async () => {
-    await primary('Imperial');
+    await primary('Technology');
     expect(screen.queryByText(/A choice has been made/)).toBeNull();
-    await click(/^I control Mecatol Rex/);
+    await click(/^Research a technology/);
     expect(screen.getByText(/A choice has been made/)).toBeVisible();
     for (const name of ['Primary', 'Secondary'] as const) expect(ability(name)).toBeDisabled();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
-    expect(cards().getByRole('button', { name: /Imperial/ })).toBeEnabled();
+    expect(cards().getByRole('button', { name: /Technology/ })).toBeEnabled();
     act(() => store().undo());
     expect(ability('Secondary')).toBeEnabled();
   });
@@ -306,7 +308,9 @@ describe('Diplomacy', () => {
     await userEvent.click(readyList().getByRole('button', { name: name(home[0]) }));
     await userEvent.click(readyList().getByRole('button', { name: name(far) }));
     expect(cardEntry().effects?.readied).toEqual([home[0], far]);
-    expect(readyList().getByRole('button', { name: name(home[1]) })).toBeDisabled();
+    // A third can be tapped: the domain warns, in this block (32.3).
+    await userEvent.click(readyList().getByRole('button', { name: name(home[1]) }));
+    expect(readyList().getByText(/the card allows at most 2/)).toBeVisible();
   });
 
   test('a planet that is not exhausted is not listed', async () => {
@@ -672,12 +676,15 @@ describe('entries saved before cards', () => {
 });
 
 describe('Imperial', () => {
-  test('Mecatol Rex on the primary is a point, and toggles off', async () => {
+  test('the primary gives a point by control of Mecatol Rex, with no switch to tap', async () => {
+    store().setTile('0,0', '112');
     await primary('Imperial');
-    await click(/^I control Mecatol Rex/);
-    expect(cell('VP')).toHaveTextContent('0 → 1');
-    await click(/^I control Mecatol Rex/);
+    expect(screen.getByText('Mecatol Rex is not under your control: no point.')).toBeVisible();
     expect(cell('VP')).toHaveTextContent(/^VP0$/);
+    act(() => store().setPlanetControl('mrte', 'me'));
+    expect(screen.getByText('I control Mecatol Rex: +1 point')).toBeVisible();
+    expect(cell('VP')).toHaveTextContent('0 → 1');
+    expect(screen.queryByRole('button', { name: /^I control Mecatol Rex/ })).toBeNull();
     expect(screen.getByText(/Otherwise draw a secret objective/)).toBeVisible();
   });
 

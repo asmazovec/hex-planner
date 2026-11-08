@@ -264,6 +264,14 @@ const CASES: Record<WarningCode, Warning['params']> = {
   speedShort: { from: '1,0', unit: 'carrier', move: 1, steps: 2 },
   routeBlocked: { from: '1,0', systemId: '0,1' },
   sourceActivated: { from: '1,0' },
+  // strategy-cards
+  foreignPrimary: {},
+  ownSecondary: {},
+  secondaryRepeated: {},
+  readyOverLimit: { limit: 2, readied: 3 },
+  diplomacySystem: { systemId: '1,0' },
+  researchOverLimit: { limit: 1, count: 2 },
+  researchOwned: { unit: 'carrier' },
 };
 
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {

@@ -5,7 +5,7 @@ import { changeLayout } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
-import { startingDocks } from '../domain/strategy';
+import { startingDocks, withForTokenOfRound } from '../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
 import { toggleUpgrade } from '../domain/unitStats';
 import { slotKeyOf } from '../domain/layouts';
@@ -72,11 +72,12 @@ function placeEntry(entries: Entry[], id: string, phase: Phase, toIndex: number)
   return next.every((e, i) => e === entries[i]) ? entries : next;
 }
 
-// TODO(P2-035) #ws:strategy-cards #type:bug #rule:83.3 #test:083-strategy-card #dep:P2-034 #size:s #for-token — Меняет карты раунда, не трогая forToken записей; после P2-034 флаг не нужен
-function cycleCard(round: Round, initiative: number): Round {
-  if (round.strategyCard === initiative) return { ...round, strategyCard: null };
-  if (round.backupCard === initiative) return { ...round, strategyCard: initiative, backupCard: null };
-  return { ...round, backupCard: initiative };
+/** The round's cards change; the replay derives what a primary costs from them (83.3), and my primaries' saved flags follow. */
+function cycleCard(round: Round, initiative: number, playerCount: number): Round {
+  const next = round.strategyCard === initiative ? { ...round, strategyCard: null }
+    : round.backupCard === initiative ? { ...round, strategyCard: initiative, backupCard: null }
+      : { ...round, backupCard: initiative };
+  return withForTokenOfRound(next, playerCount);
 }
 
 function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
@@ -355,7 +356,7 @@ export const useGame = create<GameStore>((set, get) => {
     setEntryStatus: (id, status) =>
       commit(g => editEntryRound(g, id, r => editEntries(r, es =>
         mapEntry(es, id, e => (e.status === status ? e : { ...e, status }))))),
-    setStrategyCard: (roundNo, initiative) => commit(g => editRound(g, roundNo, r => cycleCard(r, initiative))),
+    setStrategyCard: (roundNo, initiative) => commit(g => editRound(g, roundNo, r => cycleCard(r, initiative, g.playerCount))),
     addRound: () =>
       commit(g => editPlan(g, plan => ({
         ...plan,

@@ -38,9 +38,10 @@ describe('the three modes', () => {
     expect(stateOf(start([forToken(3)])).state.strategy).toBe(1);
   });
 
-  test('a secondary can be played any number of times, and warns once the tokens run out', () => {
-    const third = secondary(3);
-    const game = start([secondary(3), secondary(3), third]);
+  test('secondaries of other cards can be played one after another, and warn once the tokens run out', () => {
+    // One card's secondary is resolved once a round (83.7), so each one here is of another card.
+    const third = secondary(5);
+    const game = start([secondary(3), secondary(8), third]);
     expect(stateOf(game).state.strategy).toBe(-1);
     expect(stateOf(game).warningsByEntry[third.id]).toEqual([{ code: 'shortStrategy', params: { have: 0 } }]);
   });
@@ -367,8 +368,9 @@ describe('Technology', () => {
 
 describe('Imperial', () => {
   test('Mecatol Rex gives a point on the primary; otherwise a secret objective, shown only', () => {
-    expect(stateOf(start([primary(8, { mecatol: true })])).state.vp).toBe(1);
-    expect(stateOf(start([primary(8)])).state.vp).toBe(0);
+    // The point follows control of Mecatol Rex, not the flag (45.2, 45 note 3).
+    expect(stateOf(start([primary(8)], { extra: { planetControl: { mr: 'me' } } })).state.vp).toBe(1);
+    expect(stateOf(start([primary(8, { mecatol: true })])).state.vp).toBe(0);
     expect(stateOf(start([secondary(8)])).state.vp).toBe(0);
   });
 });
