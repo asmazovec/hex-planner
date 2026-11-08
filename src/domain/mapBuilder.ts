@@ -155,3 +155,25 @@ export const isMiltyLanes = (playerCount: number): boolean => playerCount === 3 
 /** How many slots of a player count's hyperlane layout hold a fixed hyperlane. */
 export const hyperlaneSlotCount = (playerCount: number, pack: DataPack): number =>
   (templateFor(playerCount, 'hyperlanes', pack)?.slots ?? []).filter(slot => slot.fixed && pack.tiles[slot.fixed.split('@')[0]]?.kind === 'hyperlane').length;
+
+/**
+ * Slots the player fills by hand, in template order: neither a tile the template fixes (the centre, hyperlanes) nor a
+ * seat's home, which the app places itself.
+ */
+export function freeSlots(game: Game, pack: DataPack): string[] {
+  const seats = new Set(seatSlots(game.playerCount, pack, game.layout));
+  return slotsFor(game.playerCount, pack, game.layout)
+    .filter(slot => !slot.fixed)
+    .map(slot => slotKeyOf(slot.q, slot.r))
+    .filter(key => !seats.has(key));
+}
+
+/** Free slots that still hold no tile: the map is not built while there are any. */
+export const emptySlots = (game: Game, pack: DataPack): string[] => freeSlots(game, pack).filter(key => !game.map[key]);
+
+/** The game with the tiles of `from` put back in its free slots that are empty, when the pack still has them. */
+export function withPlacedTiles(game: Game, from: Game['map'], pack: DataPack): Game {
+  const back = freeSlots(game, pack).filter(key => !game.map[key] && from[key] && pack.tiles[from[key].split('@')[0]]);
+  if (back.length === 0) return game;
+  return { ...game, map: { ...game.map, ...Object.fromEntries(back.map(key => [key, from[key]])) } };
+}

@@ -193,7 +193,14 @@
     "rotate": "Rotate 60°",
     "unknown": "No tile \"{{query}}\" in the game data.",
     "ambiguous": "\"{{query}}\" has two sides: pick one, for example {{query}}A.",
-    "duplicates": "Tile placed more than once: {{list}}. This is allowed."
+    "duplicates": "Tile placed more than once: {{list}}. This is allowed.",
+    "block": "Map and seats",
+    "minimap": "Minimap",
+    "slotTile": "Slot with tile {{number}}",
+    "empty": "Empty slots: {{count}}. Tap a slot and type the number, or paste a Milty string.",
+    "complete": "The map is built: every slot is filled ({{count}}).",
+    "note": "Tap a slot to set its tile number. Mecatol Rex, the home systems and the hyperlanes are placed by themselves. Drag a player's number to another seat, or tap one number and then another: the players swap seats. Player 1 is your faction, marked with a white ring.",
+    "noteStarted": "Tap a slot to set its tile number. Once the game has started, the layout and the seats stay."
   },
   "unit": {
     "flagship": "Flagship",
@@ -222,7 +229,8 @@
     "forecast": "Forecast",
     "now": "Now",
     "mapShows": "The map shows",
-    "buildMap": "Build map",
+    "mapIncomplete": "The map is not complete: {{count}} empty slots.",
+    "finishMap": "Finish the map",
     "mobileMap": "Map",
     "mobilePlan": "Plan",
     "views": "Map or plan",
@@ -554,7 +562,7 @@
     "note": "Not an action: the Fracture comes in with a die roll on gaining a breakthrough, or from an effect."
   },
   "mapImport": {
-    "title": "Paste map",
+    "title": "Paste a Milty string",
     "field": "Milty Draft map string",
     "placeholder": "Paste the map string from Milty Draft",
     "apply": "Apply",
@@ -572,7 +580,8 @@
     "offExpansion": "Tiles {{list}} belong to {{name}}, which is off in this game.",
     "turnOn": "Turn on {{name}}",
     "set": "This list holds {{n}} tiles and no positions. Home systems go to the seats in seat order, other tiles fill the free slots in ring order, Mecatol Rex stays in the centre.",
-    "arrange": "Place the set"
+    "arrange": "Place the set",
+    "layoutLocked": "The string sets the layout \"{{name}}\", and the layout of a started game stays."
   },
   "layout": {
     "label": "Map layout",
@@ -618,9 +627,6 @@
     "techChoice": "Chosen at setup: {{amount}} of these",
     "techChoiceAny": "Chosen at setup: any ({{amount}})",
     "techNone": "Not listed",
-    "seats": "Who sits where",
-    "seatsMap": "Seat map",
-    "seatsNote": "Every player has a number. Move the numbers on the map: on a taken seat the players swap. You can also tap one number, then another. Player 1 is your faction, marked with a white ring.",
     "token": "Player {{n}}, {{name}}, seat {{seat}}",
     "noFaction": "No faction",
     "begin": "Start game",
@@ -651,7 +657,6 @@
   "stage": {
     "battleNote": "Tap a token to record a loss. Tap a picture here to give the unit back.",
     "hex": "Big hex",
-    "open": "Open the big hex",
     "modes": "Mode",
     "mode": {
       "setup": "Setup",

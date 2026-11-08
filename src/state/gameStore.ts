@@ -455,8 +455,9 @@ export const useGame = create<GameStore>((set, get) => {
         const next = { ...g, expansions };
         return id === 'te' ? withTeMecatol(next) : next;
       }),
-    setTile: (slotKey, tileId) => commit(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
-    setMap: (map, layout) => commit(g => {
+    // The map is built on the draft too, before the game starts.
+    setTile: (slotKey, tileId) => commitPlayers(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
+    setMap: (map, layout) => commitPlayers(g => {
       const next = { ...map };
       delete next['0,0'];
       if (g.map['0,0']) next['0,0'] = g.map['0,0'];

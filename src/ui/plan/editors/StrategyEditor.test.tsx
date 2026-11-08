@@ -333,7 +333,7 @@ describe('Diplomacy', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Tap a tile on the map.');
     await userEvent.click(tile(HOME));
     expect(cardEntry().effects?.systemId).toBe(HOME);
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByText('Tap a tile on the map.')).toBeNull();
     await userEvent.click(readyList().getByRole('button', { name: name(far) }));
     await click(/^Choose a system with your planet/);
     await userEvent.click(tile(OTHER));

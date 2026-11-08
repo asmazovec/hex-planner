@@ -95,7 +95,7 @@ const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma:
 const EDGE_MIDDLE = HEX_INNER * Math.sqrt(3) / 2;
 
 /** A lane from the middle of one edge to the middle of another, bent toward the centre; opposite edges give a straight line. */
-function lanePath([a, b]: [number, number]): string {
+export function lanePath([a, b]: [number, number]): string {
   const point = (edge: number) => ({ x: EDGE_MIDDLE * Math.sin((edge * Math.PI) / 3), y: -EDGE_MIDDLE * Math.cos((edge * Math.PI) / 3) });
   const from = point(a);
   const to = point(b);

@@ -98,8 +98,6 @@
   --counter-stroke: #6a7589;
   --route-neutral: #d7deea;
   --badge-fill: #12171f;
-  --seat-spot: #222b39;
-  --seat-spot-stroke: #465268;
   --token-fill: #26303f;
   --token-spent: #12161e;
   --token-stroke: #566078;
@@ -231,7 +229,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .banner-warning { border-color: var(--warning); }
 .banner-error { border-color: var(--danger); }
 
-/* A floating card over the map: the Popover beside a hex, and the map string panel. */
+/* A floating card: the Popover beside a hex of the minimap, and the map string panel. */
 .tile-popover, .map-import {
   background: var(--surface-3);
   border: 1px solid var(--border-strong);
@@ -239,7 +237,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
   box-shadow: var(--shadow);
   animation: pop-in var(--motion) var(--ease);
 }
-/* The window beside a selected hex. */
+/* The window beside a selected hex of the minimap. */
 .tile-popover {
   position: absolute;
   z-index: 5;
@@ -267,7 +265,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .planet-details { display: flex; flex-direction: column; gap: 2px; }
 .planet-legend { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); }
 .planet-legend strong { color: var(--gold); }
-.tile-open-stage { display: block; margin: 8px 12px; width: calc(100% - 24px); }
 
 /* The big hex over the map. */
 .stage { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgb(var(--scrim) / 0.72); }
@@ -412,8 +409,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .map-strip { position: absolute; bottom: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; padding: 10px; pointer-events: none; }
 .map-strip button { pointer-events: auto; font-size: var(--font-s); padding: 4px 12px; white-space: nowrap; }
 .map-strip-start { display: flex; align-items: center; gap: 6px; }
-.map-tools { display: flex; flex-wrap: nowrap; justify-content: flex-end; gap: 8px; }
-.map-tools button { padding: 4px 10px; }
 
 /* Plan and map: one row of tabs, rounds and totals, the map, the plan. */
 .app-body > main[data-screen='plan'] { padding: 0; overflow: hidden; }
@@ -650,16 +645,16 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Pasting a Milty Draft map string: a card over the top right of the map. */
-/* TODO(P2-549) #ws:ui-containers #type:dup #size:s #floating-card #dep:P2-513 — .map-import повторяет .tile-popover: перейти на общий Popover — P2 note: the look of the card is shared now (one rule with .tile-popover); the Popover itself would anchor the panel beside the paste button and close it on a press outside, a change of place and behaviour: needs prototype, with P2-248 */
-.map-import { position: absolute; bottom: 56px; right: 8px; z-index: 6; width: min(360px, calc(100% - 16px)); display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+/* Pasting a Milty Draft map string: a card in the map block, in place of its button. */
+.map-import { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.map-import .panel-head strong { font-size: var(--font-s); font-weight: 600; }
 .map-import textarea { width: 100%; padding: 8px 10px; resize: vertical; font: var(--font-s)/1.4 var(--font-family); color: var(--text); background: var(--surface-2); border: 1px solid var(--border-strong); border-radius: var(--radius-s); }
 .map-import textarea:focus { border-color: var(--accent); outline: none; }
 .map-import p { margin: 0; font-size: var(--font-s); }
 
 /* The Game screen: the list of players, and the side panel. */
 .app-body > main[data-screen='game'] { padding: 0; overflow: hidden; }
-.players-screen { display: grid; grid-template-columns: minmax(0, 1fr) 330px; height: 100%; min-height: 0; }
+.players-screen { display: grid; grid-template-columns: minmax(0, 1fr) 480px; height: 100%; min-height: 0; }
 .players-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .players-list { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 22px 28px; }
 .players-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; min-height: 30px; }
@@ -700,9 +695,10 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .player-card button.fac-button { display: block; width: 100%; min-width: 0; min-height: 0; height: 44px; margin: -18px 0 -1px; padding: 18px 22px 2px 0; border: 0; border-radius: 0; font: 600 16px var(--font-family); text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); cursor: pointer; outline-offset: 3px; background-color: transparent; background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%); background-size: 5px 5px; background-position: calc(100% - 9px) 72%, calc(100% - 4px) 72%; background-repeat: no-repeat; }
 .player-vp { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
 .player-vp b { font-size: var(--font-l); color: var(--text); min-width: 20px; text-align: center; }
-/* TODO(P2-556) #ws:ui-containers #type:dup #size:m #confirm-bar — строка подтверждения: .player-confirm, строка сохранения GameScreen:163, .row в LayoutPicker и MapStringImport; общий ConfirmBar — P2 note: ConfirmBar (primitives/ConfirmBar.tsx) now draws .player-confirm and the save row of GameScreen; the rows of LayoutPicker and MapStringImport are P2-253 and P2-250, which need prototype */
+/* ConfirmBar, the one question before a step: in its own row the bar is the frame, in a saved game's card the card is. */
 .player-confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 13px; color: var(--text-muted); }
 .players-list > .player-confirm { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; }
+.layout-picker > .player-confirm, .map-import > .player-confirm { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 10px; font-size: 12px; }
 .player-confirm span { flex: 1 1 260px; }
 .player-confirm button { min-height: 36px; padding: 5px 14px; font-size: 13px; }
 .player-body { display: grid; grid-template-columns: 150px 200px minmax(0, 1fr); gap: 18px; padding: 12px 14px 15px; border-top: 1px solid var(--border); }
@@ -743,23 +739,36 @@ button.chip::after, .side-actions button::after, .side-actions .button::after, .
 .add-opponent { width: 100%; border: 1px dashed var(--border-strong); background: transparent; border-radius: var(--radius); color: var(--accent); font: 600 14px var(--font-family); padding: 14px; transition: background-color var(--motion), border-color var(--motion); }
 .add-opponent:active:not(:disabled) { transform: none; }
 
-/* Who sits where. */
-.seat-map { display: block; user-select: none; }
-.seat-map text { font-family: var(--font-family); text-anchor: middle; }
-.seat-cell { fill: var(--surface-2); stroke: var(--border); stroke-width: 1; }
-.seat-spot { fill: var(--seat-spot); stroke: var(--seat-spot-stroke); stroke-width: 1.5; cursor: grab; touch-action: none; }
+/* The block Map and seats: the minimap with every tile number and a token per player on the homes. */
+.map-block { display: flex; flex-direction: column; gap: 8px; }
+.players-aside .map-block .layout-picker { margin-bottom: 0; }
+.map-paste { width: 100%; min-height: 40px; font-size: 13px; }
+.map-block .place-warnings { font-size: 12px; }
+.map-ok { margin: 0; font-size: 12px; color: var(--text-muted); }
+.mini-wrap { position: relative; margin: 4px 0; }
+.tile-mini { display: block; width: 100%; user-select: none; }
+.tile-mini text { font-family: var(--font-family); text-anchor: middle; }
+.tile-mini .tile { cursor: pointer; outline: none; }
+.tile-mini .tile:focus-visible .hex { stroke: var(--text-strong); stroke-width: 3; }
+.tile-mini .mini-fixed { cursor: default; }
+.tile-mini .hex-home[data-seat] { cursor: grab; touch-action: none; }
+.tile-mini .mini-num { font-weight: 700; fill: var(--tile-number-ink); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.tile-mini .mini-empty { fill: var(--text-dim); font-weight: 400; }
+.tile-mini .mini-dup .mini-num { fill: var(--warning); }
+.tile-mini .tile-lane { stroke-width: 6; }
+.tile-mini .seat-caption { font-size: 15px; }
 .seat-move { transition: transform 0.28s var(--ease); }
 .seat-token { cursor: grab; touch-action: none; transition: transform 0.16s; outline: none; }
 .seat-token-locked { cursor: default; touch-action: auto; }
 .seat-token .seat-disc { stroke-width: 0; transition: stroke-width 0.15s; }
 .seat-hit { fill: transparent; }
-.seat-token text { font-size: 17px; font-weight: 700; fill: var(--bg); pointer-events: none; }
+.seat-token text { font-size: 19px; font-weight: 700; fill: var(--bg); pointer-events: none; }
 .seat-token-me .seat-disc { stroke: var(--text); stroke-width: 3; }
 .seat-token.target .seat-disc { stroke: var(--text); stroke-width: 2; }
 .seat-token.hover { transform: scale(1.18); }
 .seat-token.picked .seat-disc, .seat-token:focus-visible .seat-disc { stroke: var(--text); stroke-width: 3; }
 .seat-token.picked { transform: scale(1.12); }
-.seat-map .seat-caption { font-weight: 600; fill: var(--text-soft); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+.tile-mini .seat-caption { font-weight: 600; fill: var(--text-soft); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
 .seat-ghost { position: fixed; left: 0; top: 0; z-index: 9; display: none; gap: 10px; align-items: center; padding: 9px 14px 9px 9px; border-radius: var(--radius); background: var(--surface-ghost); border: 1px solid var(--border-strong); pointer-events: none; box-shadow: var(--shadow-lift); opacity: 0; transition: transform 0.09s linear, opacity 0.16s; }
 .seat-ghost.up { opacity: 1; }
 .seat-ghost.land { transition: transform 0.22s var(--ease), opacity 0.22s; opacity: 0; }

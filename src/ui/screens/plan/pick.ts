@@ -1,6 +1,6 @@
 /**
- * What the plan screen is doing, as one state: what stands in the panel, what the next tap on the map chooses, the big
- * hex and the builder's sheet over the map. Impossible mixes cannot be written: a route belongs to a tactical action in
+ * What the plan screen is doing, as one state: what stands in the panel, what the next tap on the map chooses and the big
+ * hex over the map. Impossible mixes cannot be written: a route belongs to a tactical action in
  * the panel, a card's pick to its card, and a state that undo left without its entry falls back on its own (`resolvePick`).
  */
 import type { CardMapPick } from '../../../domain/replay/cards/targets';
@@ -23,8 +23,8 @@ export type Panel =
   | { kind: 'adjustment'; entryId: string };
 
 /**
- * What the next tap on the map chooses. `idle` does what the panel does by default: opens the big hex or the builder's
- * sheet, creates a waiting tactical action, or takes a step of a route.
+ * What the next tap on the map chooses. `idle` does what the panel does by default: opens the big hex, creates a waiting
+ * tactical action, or takes a step of a route.
  */
 export type NextTap =
   | { kind: 'idle' }
@@ -44,15 +44,13 @@ export interface PickState {
   panel: Panel;
   next: NextTap;
   stage: Stage | null;
-  /** The builder's sheet of a slot. */
-  sheet: string | null;
   /** The row open in the list; it stays while an editor stands in its place. */
   openId: string | null;
 }
 
 export const IDLE: NextTap = { kind: 'idle' };
 export const LIST: Panel = { kind: 'list', shown: null };
-export const START: PickState = { panel: LIST, next: IDLE, stage: null, sheet: null, openId: null };
+export const START: PickState = { panel: LIST, next: IDLE, stage: null, openId: null };
 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;

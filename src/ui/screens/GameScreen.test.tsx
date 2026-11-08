@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { seatSlots } from '../../domain/mapBuilder';
+import { hexToPixel } from '../map/geometry';
 import { createGame } from '../../domain/newGame';
 import { setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
@@ -162,15 +163,19 @@ test('a started game shows its expansions but does not change them', () => {
   expect(screen.queryByRole('button', { name: 'Prophecy of Kings' })).toBeNull();
 });
 
-test('the seat map has one token per player on the home positions, seat 1 at the top', () => {
+test('the minimap has one token per player on the home positions, seat 1 at the top', () => {
   render(<GameScreen />);
   const pack = loadPack(['pok', 'te']);
   const slots = seatSlots(6, pack, 'standard');
   expect(slots[0]).toBe('0,-3');
-  const y = (el: Element) => (el as HTMLElement).style.transform;
+  const at = (el: Element) => (el as HTMLElement).style.transform.match(/translate\((.+)px, (.+)px\)/)!.slice(1).map(Number);
   // Seat 1 at the top: x is 0 and y is the most negative; seat 2 is to its right.
-  expect(y(token(1).parentElement!)).toBe(`translate(0px, ${45 * (-3)}px)`);
-  expect(y(token(2).parentElement!)).toBe(`translate(${39 * 3}px, ${45 * (-3 + 3 / 2)}px)`);
+  const [x1, y1] = at(token(1).parentElement!);
+  const [x2, y2] = at(token(2).parentElement!);
+  expect(x1).toBe(0);
+  expect(y1).toBeCloseTo(hexToPixel(0, -3).y + 6);
+  expect(x2).toBeCloseTo(hexToPixel(3, -3).x);
+  expect(y2).toBeGreaterThan(y1);
 });
 
 test('player 1 has the white ring, the others do not', () => {
@@ -179,18 +184,18 @@ test('player 1 has the white ring, the others do not', () => {
   expect(token(2)).not.toHaveClass('seat-token-me');
 });
 
-test('in a started game the seat map only shows: nothing to press, nothing moves, no instruction', () => {
+test('in a started game the seats only show: no token to press, nothing moves, no instruction', () => {
   startOpen();
   render(<GameScreen />);
-  const map = screen.getByRole('group', { name: 'Seat map' });
-  expect(within(map).queryAllByRole('button')).toEqual([]);
+  const map = screen.getByRole('group', { name: 'Minimap' });
+  expect(within(map).queryAllByRole('button', { name: /^Player/ })).toEqual([]);
   expect(within(map).getAllByRole('img', { name: /^Player \d,/ })).toHaveLength(4);
   const before = seats();
   fireEvent.pointerDown(within(map).getAllByRole('img', { name: /^Player \d,/ })[0], { button: 0, isPrimary: true, clientX: 10, clientY: 10 });
   act(() => { window.dispatchEvent(new PointerEvent('pointerup', { clientX: 60, clientY: 60 })); });
   expect(seats()).toEqual(before);
   expect(document.querySelector('.seat-token.picked')).toBeNull();
-  expect(screen.queryByText(/Every player has a number/)).toBeNull();
+  expect(screen.queryByText(/the players swap seats/)).toBeNull();
 });
 
 test('dragging a token onto another swaps the two players', () => {
@@ -252,7 +257,7 @@ test('cards are not draggable: a badge starts nothing', () => {
 
 test('the faction stands next to its token', async () => {
   render(<GameScreen />);
-  const map = screen.getByRole('group', { name: 'Seat map' });
+  const map = screen.getByRole('group', { name: 'Minimap' });
   await pick(2, 'hacan');
   expect(within(map).getByText('Hacan')).toBeInTheDocument();
 });
@@ -330,11 +335,11 @@ test('the map layout picker shows for 3 to 5 players only', () => {
   }
 });
 
-test('choosing the hyperlane layout changes the open game', async () => {
+test('the layout of a started game is shown and no longer changes', () => {
   startOpen(4);
   render(<GameScreen />);
-  await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
-  expect(useGame.getState().game!.layout).toBe('hyperlanes');
+  expect(screen.getByRole('radio', { name: 'Standard' })).toBeChecked();
+  expect(screen.getByRole('radio', { name: 'With hyperlanes' })).toBeDisabled();
 });
 
 test('the layout can be chosen before the start as well', async () => {

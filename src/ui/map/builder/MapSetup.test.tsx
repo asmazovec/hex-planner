@@ -1,19 +1,30 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
   loadGame: vi.fn(async () => null),
+  listGames: vi.fn(async () => []),
+  deleteGame: vi.fn(async () => undefined),
 }));
 
 import { loadPack } from '../../../data/loadPack';
+import { emptySlots } from '../../../domain/mapBuilder';
+import { createGame } from '../../../domain/newGame';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
+import { GameScreen } from '../../screens/GameScreen';
 import { PlanScreen } from '../../screens/PlanScreen';
 
 const pack = loadPack(['pok']);
 const map = () => useGame.getState().game!.map;
+const slot = (key: string) => document.querySelector<SVGGElement>(`[data-slot="${key}"]`)!;
+const minimap = () => screen.getByRole('group', { name: 'Minimap' });
+const toDraft = (playerCount = 6) => {
+  useGame.getState().closeGame();
+  useGame.setState({ draft: createGame({ expansions: ['pok'], playerCount, faction: '' }, pack) });
+};
 
 afterEach(cleanup);
 
@@ -24,63 +35,94 @@ beforeEach(() => {
   useGame.getState().setTile('1,0', null);
 });
 
-/** The build mode is on by itself on an empty map, and is turned on otherwise. */
-function renderBuilding() {
-  render(<PlanScreen />);
-  const toggle = screen.getByRole('button', { name: 'Build map' });
-  if (toggle.getAttribute('aria-pressed') !== 'true') fireEvent.click(toggle);
-}
-
 async function tapEmptySlot(): Promise<string> {
-  const slot = '1,0';
-  renderBuilding();
-  await userEvent.click(document.querySelector(`[data-slot="${slot}"]`)!);
-  return slot;
+  render(<GameScreen />);
+  await userEvent.click(slot('1,0'));
+  return '1,0';
 }
 
-test('a typed number is placed in the tapped slot', async () => {
-  const slot = await tapEmptySlot();
+test('a typed number is placed in the tapped slot, and the slot shows it', async () => {
+  const key = await tapEmptySlot();
   await userEvent.type(screen.getByLabelText('Tile number'), '25');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(map()[slot]).toBe('25');
+  expect(map()[key]).toBe('25');
+  expect(slot(key)).toHaveAccessibleName('Slot with tile 25');
+  expect(screen.queryByLabelText('Tile number')).toBeNull();
 });
 
-test('a repeated tile shows a warning and is still placed', async () => {
+test('the number field takes the focus without scrolling the page to it', async () => {
+  const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+  await tapEmptySlot();
+  expect(document.activeElement).toBe(screen.getByLabelText('Tile number'));
+  expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+  expect(focus.mock.calls.every(([options]) => options?.preventScroll === true)).toBe(true);
+  focus.mockRestore();
+});
+
+test('every slot shows its tile number; the centre, the homes and the hyperlanes take no taps', () => {
   useGame.getState().setTile('2,0', '25');
-  const slot = await tapEmptySlot();
+  render(<GameScreen />);
+  expect(within(minimap()).getByText('25')).toBeInTheDocument();
+  expect(within(minimap()).getByText('18')).toBeInTheDocument();
+  expect(slot('0,0')).toHaveAttribute('role', 'img');
+  expect(slot('0,-3')).not.toHaveAttribute('role', 'button');
+  expect(slot('1,0')).toHaveAccessibleName('Empty slot');
+});
+
+test('the hyperlanes of the template stand in their slots with their lanes', () => {
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 5, faction: 'arborec' }, pack);
+  useGame.getState().setLayout('hyperlanes');
+  render(<GameScreen />);
+  expect(minimap().querySelectorAll('.mini-fixed .tile-lane').length).toBeGreaterThan(5);
+  expect(within(minimap()).getAllByRole('img', { name: /^Tile 8\dA$/ })).toHaveLength(6);
+});
+
+test('a repeated tile is warned in the block and is still placed', async () => {
+  useGame.getState().setTile('2,0', '25');
+  const key = await tapEmptySlot();
   await userEvent.type(screen.getByLabelText('Tile number'), '25');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(map()[slot]).toBe('25');
+  expect(map()[key]).toBe('25');
   expect(screen.getByText(/placed more than once: 25/)).toBeVisible();
+  expect(slot(key)).toHaveClass('mini-dup');
+});
+
+test('the block counts the empty slots until the map is built', () => {
+  render(<GameScreen />);
+  const empty = emptySlots(useGame.getState().game!, pack);
+  expect(screen.getByText(new RegExp(`Empty slots: ${empty.length}\\.`))).toBeVisible();
+  act(() => { for (const key of empty) useGame.getState().setTile(key, '25'); });
+  expect(screen.queryByText(/Empty slots/)).toBeNull();
+  expect(screen.getByText(/The map is built/)).toBeVisible();
 });
 
 test('an unknown number is rejected with a message', async () => {
-  const slot = await tapEmptySlot();
+  const key = await tapEmptySlot();
   await userEvent.type(screen.getByLabelText('Tile number'), '999');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(map()[slot]).toBeUndefined();
+  expect(map()[key]).toBeUndefined();
   expect(screen.getByRole('alert')).toHaveTextContent('999');
 });
 
 test('a hyperlane keeps its side and turns 60 degrees per press', async () => {
-  const slot = await tapEmptySlot();
+  const key = await tapEmptySlot();
   expect(screen.queryByRole('button', { name: 'Rotate 60°' })).toBeNull();
   await userEvent.type(screen.getByLabelText('Tile number'), '83B');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(map()[slot]).toBe('83B@0');
+  expect(map()[key]).toBe('83B@0');
   await userEvent.click(screen.getByRole('button', { name: 'Rotate 60°' }));
   await userEvent.click(screen.getByRole('button', { name: 'Rotate 60°' }));
-  expect(map()[slot]).toBe('83B@2');
+  expect(map()[key]).toBe('83B@2');
 });
 
 test('a bare number shared by two sides asks for the side', async () => {
-  const slot = await tapEmptySlot();
+  const key = await tapEmptySlot();
   await userEvent.type(screen.getByLabelText('Tile number'), '83');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(map()[slot]).toBeUndefined();
+  expect(map()[key]).toBeUndefined();
   expect(screen.getByRole('alert')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: '83A' }));
-  expect(map()[slot]).toBe('83A@0');
+  expect(map()[key]).toBe('83A@0');
 });
 
 test('a prefix that is not a number says unknown, not two sides', async () => {
@@ -90,118 +132,99 @@ test('a prefix that is not a number says unknown, not two sides', async () => {
   expect(screen.getByRole('alert')).toHaveTextContent('No tile');
 });
 
-test('a fixed template slot can be replaced and cleared, and Game.map overrides the template', async () => {
-  renderBuilding();
-  expect(map()['0,0']).toBe('18');
-  const hex = () => document.querySelector('[data-slot="0,0"]')!;
-  expect(hex()).toHaveAccessibleName('Tile 18');
-  await userEvent.click(hex());
-  await userEvent.type(screen.getByLabelText('Tile number'), '25');
-  await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(map()['0,0']).toBe('25');
-  expect(hex()).toHaveAccessibleName('Tile 25');
+test('a placed tile can be cleared', async () => {
+  useGame.getState().setTile('2,0', '25');
+  render(<GameScreen />);
+  await userEvent.click(slot('2,0'));
   await userEvent.click(screen.getByRole('button', { name: 'Clear slot' }));
-  expect(map()['0,0']).toBeUndefined();
-  expect(hex()).toHaveAccessibleName('Empty slot');
+  expect(map()['2,0']).toBeUndefined();
+  expect(slot('2,0')).toHaveAccessibleName('Empty slot');
 });
 
-test('the popover has one Close button, and the big hex opens from it only once the slot has a tile', async () => {
+test('the popover has one Close button; a press outside closes it, a press inside or on the minimap does not', async () => {
   await tapEmptySlot();
   expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
-  expect(screen.queryByRole('button', { name: 'Open the big hex' })).toBeNull();
+  const input = () => screen.queryByLabelText('Tile number');
+  fireEvent.pointerDown(input()!, { pointerId: 1, button: 0 });
+  expect(input()).not.toBeNull();
+  fireEvent.pointerDown(minimap(), { pointerId: 1, button: 0 });
+  expect(input()).not.toBeNull();
+  fireEvent.pointerDown(document.body, { pointerId: 1, button: 0 });
+  expect(input()).toBeNull();
+  await userEvent.click(slot('1,0'));
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(input()).toBeNull();
+});
+
+test('a tap on another slot moves the popover there, a second tap on the same one closes it', async () => {
+  useGame.getState().setTile('2,0', '25');
+  await tapEmptySlot();
+  expect(screen.getByRole('button', { name: 'Clear slot' })).toBeDisabled();
+  await userEvent.click(slot('2,0'));
+  expect(screen.getByRole('button', { name: 'Clear slot' })).toBeEnabled();
+  await userEvent.click(slot('2,0'));
+  expect(screen.queryByLabelText('Tile number')).toBeNull();
+});
+
+test('the map is built before the start too, and the tiles stay through a change of expansions', async () => {
+  toDraft();
+  render(<GameScreen />);
+  await userEvent.click(slot('1,0'));
   await userEvent.type(screen.getByLabelText('Tile number'), '25');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(screen.getAllByRole('button', { name: 'Close' })).toHaveLength(1);
-  await userEvent.click(screen.getByRole('button', { name: 'Open the big hex' }));
+  expect(useGame.getState().draft.map['1,0']).toBe('25');
+  await userEvent.click(screen.getByRole('button', { name: "Thunder's Edge" }));
+  expect(useGame.getState().draft.expansions).toContain('te');
+  expect(useGame.getState().draft.map['1,0']).toBe('25');
+});
+
+test('in a started game the tiles still change, the layout and the seats do not', async () => {
+  useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
+  render(<GameScreen />);
+  expect(screen.getByRole('radio', { name: 'With hyperlanes' })).toBeDisabled();
+  expect(within(minimap()).queryAllByRole('button', { name: /^Player/ })).toEqual([]);
+  expect(within(minimap()).getAllByRole('img', { name: /^Player \d,/ })).toHaveLength(4);
+  expect(screen.getByText(/the layout and the seats stay/)).toBeVisible();
+  await userEvent.click(slot('1,0'));
+  await userEvent.type(screen.getByLabelText('Tile number'), '25');
+  await userEvent.click(screen.getByRole('button', { name: 'Place' }));
+  expect(map()['1,0']).toBe('25');
+});
+
+test('the plan screen has no building tools: a tap opens the big hex, and an unfinished map leads to the game screen', async () => {
+  useGame.getState().setTile('2,0', '25');
+  const finish = vi.fn();
+  render(<PlanScreen onFinishMap={finish} />);
+  expect(screen.queryByRole('button', { name: 'Build map' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Paste a Milty string' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Forecast' })).toBeVisible();
+  const empty = emptySlots(useGame.getState().game!, pack).length;
+  expect(screen.getByRole('status')).toHaveTextContent(`The map is not complete: ${empty} empty slots.`);
+  await userEvent.click(screen.getByRole('button', { name: 'Finish the map' }));
+  expect(finish).toHaveBeenCalled();
+  await userEvent.click(slot('2,0'));
   expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
   expect(screen.queryByLabelText('Tile number')).toBeNull();
 });
 
-test('a new game with an empty map opens in build mode; a map with tiles does not', async () => {
-  render(<PlanScreen />);
-  expect(screen.getByRole('button', { name: 'Build map' })).toHaveAttribute('aria-pressed', 'true');
-  cleanup();
-  useGame.getState().setTile('2,0', '25');
-  render(<PlanScreen />);
-  const toggle = screen.getByRole('button', { name: 'Build map' });
-  expect(toggle).toHaveAttribute('aria-pressed', 'false');
-  await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
-  expect(screen.queryByLabelText('Tile number')).toBeNull();
-});
-
-test('the plan stays beside the map while the tile popover is open, and Close closes it', async () => {
-  renderBuilding();
-  await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
-  expect(screen.getByLabelText('Tile number')).toBeVisible();
-  expect(screen.getByRole('button', { name: 'Add action' })).toBeVisible();
-  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
-  expect(screen.queryByLabelText('Tile number')).toBeNull();
-});
-
-test('a tap beside the popover closes it: empty map space and outside the map, not a pan or a press inside', async () => {
-  renderBuilding();
-  const input = () => screen.queryByLabelText('Tile number');
-  const svg = screen.getByRole('group', { name: 'Map' });
-  const open = () => userEvent.click(document.querySelector('[data-slot="1,0"]')!);
-
-  await open();
-  fireEvent.pointerDown(input()!, { pointerId: 1, button: 0 });
-  expect(input()).not.toBeNull();
-
-  fireEvent.pointerDown(svg, { pointerId: 1, button: 0, clientX: 5, clientY: 5 });
-  fireEvent.pointerMove(svg, { pointerId: 1, clientX: 60, clientY: 40 });
-  fireEvent.pointerUp(svg, { pointerId: 1, clientX: 60, clientY: 40 });
-  expect(input()).not.toBeNull();
-
-  fireEvent.pointerDown(svg, { pointerId: 1, button: 0, clientX: 5, clientY: 5 });
-  fireEvent.pointerUp(svg, { pointerId: 1, clientX: 5, clientY: 5 });
-  expect(input()).toBeNull();
-
-  await open();
-  expect(input()).not.toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  expect(input()).toBeNull();
-});
-
-test('the map controls stand above the map, not on it', () => {
-  renderBuilding();
-  const strip = document.querySelector('.map-strip')!;
-  const area = document.querySelector('.hexmap-wrap')!;
-  for (const name of ['Build map', 'Reset view']) {
-    const button = screen.getByRole('button', { name });
-    expect(strip.contains(button), name).toBe(true);
-    expect(area.contains(button), name).toBe(false);
-  }
-});
-
-test('the forecast switch leaves the tools while the map is being built, which keeps them on one line', async () => {
-  renderBuilding();
-  expect(screen.queryByRole('button', { name: 'Forecast' })).toBeNull();
-  await userEvent.click(screen.getByRole('button', { name: 'Build map' }));
-  expect(screen.getByRole('button', { name: 'Forecast' })).toBeVisible();
-});
-
-test('a tap on another tile moves the popover there', async () => {
-  useGame.getState().setTile('2,0', '25');
-  renderBuilding();
-  await userEvent.click(document.querySelector('[data-slot="1,0"]')!);
-  expect(screen.queryByRole('button', { name: 'Open the big hex' })).toBeNull();
-  await userEvent.click(document.querySelector('[data-slot="2,0"]')!);
-  expect(screen.getByRole('button', { name: 'Open the big hex' })).toBeVisible();
-});
-
-test('starting a tactical action leaves build mode', async () => {
-  renderBuilding();
-  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
-  expect(screen.getByRole('button', { name: 'Build map' })).toHaveAttribute('aria-pressed', 'false');
+test('a built map raises no hint on the plan screen', () => {
+  for (const key of emptySlots(useGame.getState().game!, pack)) useGame.getState().setTile(key, '25');
+  render(<PlanScreen onFinishMap={() => undefined} />);
+  expect(screen.queryByRole('button', { name: 'Finish the map' })).toBeNull();
 });
 
 async function openImport() {
-  renderBuilding();
-  await userEvent.click(screen.getByRole('button', { name: 'Paste map' }));
+  render(<GameScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Paste a Milty string' }));
   return screen.getByLabelText('Milty Draft map string');
 }
+
+test('the paste panel closes with the cross and gives its button back', async () => {
+  await openImport();
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(screen.queryByLabelText('Milty Draft map string')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Paste a Milty string' })).toBeVisible();
+});
 
 test('a pasted map string fills the map and reports the count', async () => {
   const field = await openImport();
@@ -212,6 +235,16 @@ test('a pasted map string fills the map and reports the count', async () => {
   expect(map()['1,0']).toBe('26');
   expect(screen.getByText(/2 tiles placed/)).toBeTruthy();
   expect(screen.getByText(/Unknown numbers: 999/)).toBeTruthy();
+});
+
+test('a string pasted before the start fills the draft', async () => {
+  toDraft();
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25 999 26');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(useGame.getState().draft.map['0,-1']).toBe('25');
+  expect(useGame.getState().draft.map['1,0']).toBe('26');
 });
 
 test('an empty field cannot be applied', async () => {
@@ -226,6 +259,7 @@ test('replacing a map that has tiles asks first', async () => {
   await userEvent.paste('25');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(map()['2,0']).toBe('27');
+  expect(screen.queryByRole('button', { name: 'Apply' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Replace map' }));
   expect(map()['2,0']).toBeUndefined();
   expect(map()['0,-1']).toBe('25');
@@ -260,19 +294,30 @@ test('a home system in the string is reported as placed', async () => {
   expect(screen.queryByText(/Home systems stay empty/)).toBeNull();
 });
 
-test('a string with hyperlanes switches a four-player game to the hyperlane layout', async () => {
+/** A four-player string with one hyperlane, which makes it a hyperlane layout. */
+const laneString = () => {
+  const tokens: string[] = Array.from({ length: 60 }, (_, i) => (i === 0 ? '25' : '0'));
+  tokens[6 + 8] = '83A0';
+  return tokens.join(' ');
+};
+
+test('before the start a string with hyperlanes switches a four-player map to the hyperlane layout', async () => {
+  toDraft(4);
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste(laneString());
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(useGame.getState().draft.layout).toBe('hyperlanes');
+  expect(screen.getByText(/Map layout: With hyperlanes/)).toBeTruthy();
+});
+
+test('in a started game a string of another layout cannot be applied', async () => {
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pack);
   const field = await openImport();
   await userEvent.click(field);
-  // One hyperlane anywhere makes the string a hyperlane layout.
-  const tokens: string[] = Array.from({ length: 60 }, (_, i) => (i === 0 ? '25' : '0'));
-  tokens[6 + 8] = '83A0';
-  await userEvent.paste(tokens.join(' '));
-  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(useGame.getState().game!.layout).toBe('hyperlanes');
-  expect(screen.getByText(/Map layout: With hyperlanes/)).toBeTruthy();
-  useGame.getState().undo();
-  expect(useGame.getState().game!.layout).toBe('standard');
+  await userEvent.paste(laneString());
+  expect(screen.getByText(/layout of a started game stays/)).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
 });
 
 test('a string without hyperlanes keeps a standard layout', async () => {
@@ -302,6 +347,15 @@ test('tiles of an expansion that is off are named while typing, and one button t
   useGame.getState().undo();
   useGame.getState().undo();
   expect(useGame.getState().game!.expansions).toEqual(['pok']);
+});
+
+test('before the start the button turns the expansion on for the draft', async () => {
+  toDraft();
+  const field = await openImport();
+  await userEvent.click(field);
+  await userEvent.paste('25 102 106');
+  await userEvent.click(screen.getByRole('button', { name: "Turn on Thunder's Edge" }));
+  expect(useGame.getState().draft.expansions).toEqual(['pok', 'te']);
 });
 
 test('a sorted list of tiles is a set: the panel says so and places it by seats and ring order', async () => {
@@ -336,7 +390,7 @@ test('tiles of an expansion that is off stay listed after Apply', async () => {
   await userEvent.click(field);
   await userEvent.paste('25 102');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(screen.getByRole('status')).toHaveTextContent(/102 belong to Thunder's Edge/);
+  expect(screen.getByText(/102 belong to Thunder's Edge/)).toBeVisible();
 });
 
 test('a set that would place nothing cannot be placed', async () => {

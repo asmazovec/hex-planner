@@ -5,7 +5,6 @@ import { slotKeyOf } from '../../domain/newGame';
 import { playersOf } from '../../domain/players';
 import type { DataPack, Game, GameState } from '../../domain/types';
 import { animates } from '../common/motion';
-import { TilePopover } from '../overlays/TilePopover';
 import { RowIcon } from '../primitives/Icon';
 import { prepareSprites, tokenColours } from '../units/sprites';
 import { mapBounds, type Rect } from './geometry';
@@ -29,16 +28,10 @@ export interface HexMapProps {
   resetSignal?: number;
   /** Drawn over the arrows, in the coordinates of the map. */
   overlay?: ReactNode;
-  selectedId?: string | null;
   onTileTap?: (systemId: string) => void;
   onTilePointerDown?: (systemId: string, event: PointerEvent) => void;
   /** A drag from this tile draws an arrow; from any other tile it moves the map. */
   startsArrow?: (systemId: string) => boolean;
-  /** More controls in the strip above the map. */
-  tools?: ReactNode;
-  /** Shown in a window beside the selected tile. */
-  popover?: ReactNode;
-  onPopoverClose?: () => void;
 }
 
 /** As long as the tiles of the Fracture take to arrive. */
@@ -78,11 +71,10 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, selectedId, onTileTap, onTilePointerDown, startsArrow, tools, popover, onPopoverClose,
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
-  const areaRef = useRef<HTMLDivElement>(null);
 
   const slotKeys = useMemo(() => {
     const keys = new Set(slotsFor(game.playerCount, pack, game.layout).map(s => slotKeyOf(s.q, s.r)));
@@ -107,7 +99,7 @@ export function HexMap({
   const mapRect = useMemo(() => mapBounds(mapSlots), [mapSlots]);
   const { fractureAt, fracture, leaving, opening, flyRun, flyStyle, leftGone } = useFractureFlight(game, pack, mapSlots);
   const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
-  const { view, handlers, reset, focus } = usePanZoom(bounds, svgRef, onPopoverClose, mapRect, startsArrow);
+  const { view, handlers, reset, focus } = usePanZoom(bounds, svgRef, undefined, mapRect, startsArrow);
   const focusKey = focusRect ? JSON.stringify(focusRect) : null;
   useEffect(() => { focus(focusKey === null ? null : JSON.parse(focusKey) as Rect); }, [focusKey, focus]);
   useEffect(() => { if (resetSignal > 0) reset(); }, [resetSignal, reset]);
@@ -119,10 +111,10 @@ export function HexMap({
   const content = useMemo(() => slotKeys.map(key => (
     <TileView
       key={key} slotKey={key} pack={pack} game={game} state={state}
-      highlight={highlights?.[key]} selected={selectedId === key} ingress={game.fracture.ingress.includes(key)} seat={seats.get(key)}
+      highlight={highlights?.[key]} ingress={game.fracture.ingress.includes(key)} seat={seats.get(key)}
       onTap={onTileTap} onPointerDown={onTilePointerDown}
     />
-  )), [slotKeys, pack, game, state, seats, highlights, selectedId, onTileTap, onTilePointerDown]);
+  )), [slotKeys, pack, game, state, seats, highlights, onTileTap, onTilePointerDown]);
 
   return (
     <div className="hexmap-frame">
@@ -130,9 +122,8 @@ export function HexMap({
       <div className="map-strip-start">
         <button type="button" className="hex-button" aria-label={t('map.resetView')} title={t('map.resetView')} onClick={reset}><RowIcon name="reset" /></button>
       </div>
-      {tools}
     </div>
-    <div className="hexmap-wrap" ref={areaRef}>
+    <div className="hexmap-wrap">
     <svg
       ref={svgRef} className="hexmap" role="group" aria-label={t('map.label')}
       viewBox={`${camera.x} ${camera.y} ${camera.width} ${camera.height}`}
@@ -176,9 +167,6 @@ export function HexMap({
         {overlay}
       </g>
     </svg>
-    {selectedId && popover && onPopoverClose && (
-      <TilePopover slot={selectedId} view={view} areaRef={areaRef} onClose={onPopoverClose}>{popover}</TilePopover>
-    )}
     </div>
     </div>
   );
