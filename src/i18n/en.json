@@ -323,6 +323,7 @@
       "transit": "on the way",
       "target": "target",
       "nothing": "Nothing to take",
+      "tokenHere": "Your command token is here: by the rules nothing can be picked up",
       "take": "Take one {{unit}}",
       "put": "Return one {{unit}}",
       "fly": "Fly"
@@ -369,7 +370,10 @@
       "constructionUnits": "The card text gives the secondary a structure only: building units here may break the rules.",
       "speedShort": "{{unit}} from {{from}} has speed {{move}}, and the route takes {{steps}} steps.",
       "sourceActivated": "{{from}} already holds your command token: by the rules ships cannot move out of it.",
-      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass."
+      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass.",
+      "routeBlocked_hyperlane": "The route from {{from}} ends on the hyperlane {{system}}: by the rules a hyperlane is no system, it cannot be the active system and no move ends there.",
+      "sourceActivated_pickup": "{{system}} holds your command token: by the rules units cannot be picked up there, only in the active system.",
+      "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move."
     },
     "phases": {
       "strategy": "Strategy",

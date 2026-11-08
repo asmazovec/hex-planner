@@ -37,6 +37,12 @@ describe('LRR 95 Transport', () => {
     expect(codesOf(game, pack, action)).not.toEqual([]);
   });
 
+  test('95.1: a pickup off the way of its ship is warned about by its own code', () => {
+    const action = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1 } }, { from: 'h1', units: { infantry: 1 }, pickupOf: NEAR }] });
+    const game = rulesGame({ units: { [NEAR]: { carrier: 1 } }, entries: [adjust({ ground: { h1: { infantry: 1 } } }, 'strategy'), action] });
+    expect(codesOf(game, pack, action)).toContain('pickupOffRoute');
+  });
+
   test('95.1.1: carried units stay with the ship to the end of its move: they arrive in the active system', () => {
     const action = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, infantry: 2 } }] });
     expect(forecast(rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [action] }), pack).state.systems[TARGET]).toEqual({ carrier: 1, infantry: 2 });

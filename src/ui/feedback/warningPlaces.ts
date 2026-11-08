@@ -26,6 +26,8 @@ const PLACES: Record<WarningCode, WarningPlace[]> = {
   poolNegative: ['tokens'],
   systemHasToken: ['system'],
   constructionUnits: ['production'],
+  // transport
+  pickupOffRoute: ['route'],
 };
 
 export const placesOf = (warning: Warning): WarningPlace[] => PLACES[warning.code];

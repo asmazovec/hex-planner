@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
+import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
 import type { DataPack, Game, GameState, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
 import { TokenPicture } from '../../units/UnitToken';
@@ -75,12 +75,15 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const flyingNow = flying.filter(u => picked(source, u) > 0);
   const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
 
-  // TODO(P2-322) #ws:transport #type:check #rule:95.3 #test:095-transport #size:s #pickup #token — подбор предлагается в любой системе пути, и со своим жетоном (кроме активной); предлагать по доменной проверке подбора. Местное имя placesOf затеняет доменное
-  /** The places of a system to take cargo from: its space area and its planets. An empty source offers ground units on its first planet. */
-  const placesOf = (slot: string): { from: string; name: string | null; units: UnitId[] }[] => {
+  /**
+   * The places of a system to take cargo from: its space area and its planets. An empty source offers ground units on its
+   * first planet. Where my command token lies nothing is offered, only what is already taken can be put back (95.3).
+   */
+  const placesIn = (slot: string): { from: string; name: string | null; units: UnitId[] }[] => {
     const planets = systemPlanets(game, slot, pack);
     const ahead = slot === source && noShipsHere;
-    const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => available(from, u) > 0 || picked(from, u) > 0);
+    const allowed = pickupAllowed(before, target, slot);
+    const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => (allowed && available(from, u) > 0) || picked(from, u) > 0);
     const groundAhead = known.filter(u => pack.units[u]?.ground);
     const places = [
       { from: slot, name: null, units: ahead ? (planets.length > 0 ? cargo.filter(u => !groundAhead.includes(u)) : cargo) : offeredAt(slot, cargo) },
@@ -92,11 +95,12 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   };
 
   const line = (slot: string, role: 'start' | 'transit') => {
-    const places = placesOf(slot);
+    const places = placesIn(slot);
     return (
       <li key={slot} className="stop">
         <span className="stop-name">{systemName(game, pack, slot)} · {t(`plan.picker.${role}`)}</span>
-        {places.length === 0 && <span className="muted">{t('plan.picker.nothing')}</span>}
+        {!pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
+        {places.length === 0 && pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.nothing')}</span>}
         {places.map(place => (
           <div key={place.from} className="stop-place" role="group" aria-label={place.name ?? systemName(game, pack, slot)}>
             {place.name && <small>{place.name}</small>}

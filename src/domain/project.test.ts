@@ -127,10 +127,10 @@ describe('how far a route goes', () => {
       expect(reach({ ...row, '0,0': 'nebula' }, 3)).toEqual(['1,0']);
     });
 
-    test('a rift adds one on the way out or through, only once a ship', () => {
+    test('a rift adds one on the way out or through, each rift its own (LRR 41 note 6)', () => {
       expect(reach({ ...row, '0,0': 'rift' }, 1)).toEqual(['1,0', '2,0']);
       expect(reach({ ...row, '1,0': 'rift' }, 1)).toEqual(['1,0', '2,0']);
-      expect(reach({ ...row, '1,0': 'rift', '2,0': 'rift' }, 1)).toEqual(['1,0', '2,0']);
+      expect(reach({ ...row, '1,0': 'rift', '2,0': 'rift' }, 1)).toEqual(['1,0', '2,0', '3,0']);
     });
 
     test('a rift already behind on the path keeps its bonus', () => {

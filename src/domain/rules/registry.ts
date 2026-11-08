@@ -32,6 +32,8 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   systemHasToken: { rules: ['5.2', '89.1'], step: 'activation' },
   constructionUnits: { rules: ['24.3'], step: 'card' },
   sliceTaken: { rules: ['expedition-5'], step: 'expedition' },
+  // transport
+  pickupOffRoute: { rules: ['95.1'], step: 'transport' },
 };
 
 /** The rule and step of a code, from the registry. */

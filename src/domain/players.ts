@@ -48,8 +48,11 @@ function withoutHoldings(game: Game, opponentId: string): Game {
   };
 }
 
-/** The game as an opponent plays it: they are the player, what they hold is theirs, what I hold is an enemy's. For me, or for someone gone, it is the game itself. */
-// TODO(P2-044) #ws:rivals #type:bug #rule:92.4 #test:092-trade #dep:P2-043 #size:m #rivals #game-as — Взгляд соперника оставляет opponents как есть (в списках выбора есть он сам и нет меня) и не добавляет мои юниты в enemyUnits
+/**
+ * The game as an opponent plays it: they are the player, what they hold is theirs, what I hold is an enemy's, and their
+ * opponents are the others, me among them under the id `me`. My units are not in the game: the replay gives their routes
+ * my ships (`blockersOf`). For me, or for someone gone, it is the game itself.
+ */
 export function gameAs(game: Game, owner: string | undefined): Game {
   const rival = game.opponents.find(o => o.id === owner);
   if (!rival) return game;
@@ -58,11 +61,15 @@ export function gameAs(game: Game, owner: string | undefined): Game {
     void mine;
     return Object.keys(others).length > 0 ? [[place, others]] : [];
   }));
+  const holderOf = (id: string): string => (game.planetControl[id] === 'enemy' ? planetHolder(game, id) ?? 'me' : 'me');
+  const enemyPlanets = Object.keys(game.planetControl).filter(id => holderOf(id) !== rival.id);
   return {
     ...game,
     faction: rival.faction, seat: rival.seat, color: rival.color, vp: rival.vp,
+    opponents: playersOf(game).filter(p => p.id !== rival.id),
     upgrades: { ...game.upgrades, me: game.upgrades.opponents[rival.id] ?? [] },
-    planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, game.planetControl[id] === 'enemy' && planetHolder(game, id) === rival.id ? 'me' as const : 'enemy' as const])),
+    planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, enemyPlanets.includes(id) ? 'enemy' as const : 'me' as const])),
+    planetOwner: { ...game.planetOwner, ...Object.fromEntries(enemyPlanets.map(id => [id, holderOf(id)])) },
     enemyUnits: without(game.enemyUnits),
     enemyGround: without(game.enemyGround),
   };

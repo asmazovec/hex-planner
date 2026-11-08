@@ -156,15 +156,14 @@ export interface Home {
 }
 
 /**
- * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id,
- * which is where the projection keeps its units); otherwise the slot of my seat, whatever tile stands there; with an
+ * My home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id:
+ * the projection keeps its units there and the route graph knows it, see `offMapHomes`); otherwise the slot of my seat, whatever tile stands there; with an
  * empty seat, the first slot with a tile.
  */
 export function homeOf(game: Game, pack: DataPack): Home {
   const faction = pack.factions[game.faction];
   if (!faction) return { slot: null, fallback: false };
   const onMap = (tile: string | undefined) => Object.keys(game.map).find(slot => game.map[slot].split('@')[0] === tile);
-  // TODO(P2-010) #ws:movement #type:bug #rule:6-note-2 #test:006-adjacency #size:m #Creuss #off-map-home — Дом вне карты (Creuss) получает ключ тайла 51, а не слот: граф маршрутов его не знает, gridDistance даёт 1 до любой системы, подсветка пуста. Нужен слот дома вне карты, смежный только через червоточину
   const own = onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : undefined);
   if (own) return { slot: own, fallback: false };
   const seat = seatSlots(game.playerCount, pack, game.layout)[game.seat - 1];
@@ -174,6 +173,19 @@ export function homeOf(game: Game, pack: DataPack): Home {
 }
 
 export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(game, pack).slot;
+
+/**
+ * The off-map homes of the players whose gate stands on the map (the Creuss home, LRR 6 note 2): each is a system of its
+ * own under its tile id, which the route graph joins to the board by its wormhole alone.
+ */
+export function offMapHomes(game: Game, pack: DataPack): string[] {
+  const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
+  const factions = [game.faction, ...(game.opponents ?? []).map(o => o.faction)];
+  return [...new Set(factions.flatMap(id => {
+    const def = pack.factions[id];
+    return def?.gateTile && onMap(def.gateTile) && !onMap(def.homeTile) ? [def.homeTile] : [];
+  }))];
+}
 
 /** The planets of my faction's own home tile, on the map or not. */
 const ownHomePlanets = (game: Game, pack: DataPack): string[] =>

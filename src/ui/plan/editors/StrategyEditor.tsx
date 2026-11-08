@@ -65,7 +65,6 @@ export function StrategyEditor({
   const setEffects = (patch: CardEffects) => change({ effects: { ...effects, ...patch } });
   const named = (id: string) => opponentName(game, pack, id, t);
   const tile = (slot: string) => t('plan.strategy.tile', { name: systemName(game, pack, slot) });
-  // TODO(P2-328) #ws:rivals #type:bug #rule:92.4 #test:092-trade #player-choice — на карте соперника game = gameAs: списки Trade и Politics предлагают самого соперника и не предлагают меня; нужен доменный список «другие игроки владельца записи»
   const opponents = opponentsBySeat(game);
   const toggled = (list: string[] | undefined, id: string) =>
     (list?.includes(id) ? list.filter(other => other !== id) : [...(list ?? []), id]);

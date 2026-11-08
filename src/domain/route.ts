@@ -23,7 +23,7 @@ export function slotAcross(slot: string, edge: number): string | null {
 export function gridDistance(a: string, b: string): number {
   const p = parseSlot(a);
   const s = parseSlot(b);
-  // TODO(P2-011) #ws:movement #type:bug #rule:6-note-2 #test:006-adjacency #dep:P2-010 #size:s #Creuss — Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity
+  // TODO(P2-011) #ws:movement #type:bug #rule:6-note-2 #test:006-adjacency #dep:P2-010 #size:s #Creuss — Ключ не вида q,r считается в одном шаге от всего: после P2-010 бросать ошибку или возвращать Infinity — P2 note: after P2-010 the off-map home is a node of the route graph, so no real system key reaches this fallback; Infinity breaks about 20 unit and screen tests whose fixtures use letter slot keys ('A', 'B', 'H') one step apart, so the fallback stays until those fixtures move to q,r keys
   if (!p || !s) return 1;
   const q = p.q - s.q;
   const r = p.r - s.r;

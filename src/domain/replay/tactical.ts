@@ -10,12 +10,17 @@ import { landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
 import { payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { unitIds, type TacticalEntry } from './state';
-import { capacity, checkGroups, checkSystem, fleetCount, isPickup } from './transport';
+import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, fleetCount, isPickup, overflowLeft } from './transport';
+import type { Blockers } from '../movement';
 
-/** Step 89.2: the routes are checked over the state before the move, then the units are carried; returns each source's group. */
-function movement(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): Record<string, UnitCounts> {
-  warnings.push(...checkRoutes(game, state, target, entry.moves.filter(move => !isPickup(move, target, pack)), pack));
-  return moveUnits(game, state, target, entry.moves, pack, warnings);
+/** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
+function movement(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers): Record<string, UnitCounts> {
+  warnings.push(...checkRoutes(game, state, target, entry.moves.filter(move => !isPickup(move, target, pack)), pack, blockers));
+  warnings.push(...checkPickups(game, state, target, entry.moves, pack, blockers));
+  const over = overflowLeft(game, state, target, entry.moves, pack);
+  const groups = moveUnits(game, state, target, entry.moves, pack, warnings);
+  warnings.push(...checkLeftBehind(game, state, over, target, entry.moves, pack));
+  return groups;
 }
 
 /** What happens in the target after the moves: losses, the landing, then what was built is placed. */
@@ -31,13 +36,13 @@ function landAndBuild(
 }
 
 export function applyTactical(
-  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
+  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers,
 ): void {
   const target = entry.systemId;
   if (target === null) return;
   warnings.push(...checkActivation());
   activate(state, target, entry);
-  const groups = movement(game, state, target, entry, pack, warnings);
+  const groups = movement(game, state, target, entry, pack, warnings, blockers);
   warnings.push(...checkGroups(game, state, groups, pack));
   landAndBuild(game, state, target, entry, pack, warnings);
   payProduction(game, state, entry, pack, warnings);
