@@ -4,6 +4,8 @@ import type { DataPack, Game, UnitId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UnitIcon } from '../units/UnitIcon';
 import { ShipNotes, StatLine } from '../players/ShipStats';
+import { DrawerSheet } from '../overlays/Drawer';
+import { playerStyle } from '../primitives/player';
 
 export interface UpgradesPanelProps {
   game: Game;
@@ -18,15 +20,8 @@ export interface UpgradesPanelProps {
 export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelProps) {
   const { t } = useTranslation();
   const toggleUpgrade = useGame(s => s.toggleUpgrade);
-  const title = t('ships.upgrades');
-  // TODO(P2-262) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style — style --player: var(--player-N): data-player или playerVar()
-  // TODO(P2-263) #ws:ui-containers #type:dup #dep:P2-238 #size:s #drawer-sheet — Свой aside role=dialog с h2: DrawerSheet
   return (
-    <aside
-      className="upgrades-panel" role="dialog" aria-label={title}
-      style={{ '--player': `var(--player-${game.color})` } as React.CSSProperties}
-    >
-      <h2>{title}</h2>
+    <DrawerSheet className="upgrades-panel" title={t('ships.upgrades')} style={playerStyle('--player', game.color)}>
       {SHIP_KINDS.map(kind => {
         const base = unitStats(game.faction, kind, false, pack);
         const current = unitStats(game.faction, kind, upgraded.includes(kind), pack);
@@ -52,6 +47,6 @@ export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelPro
           </button>
         );
       })}
-    </aside>
+    </DrawerSheet>
   );
 }

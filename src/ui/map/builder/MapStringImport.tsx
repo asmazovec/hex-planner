@@ -38,7 +38,7 @@ export function MapStringImport({ game, pack, onClose }: MapStringImportProps) {
   };
   const onApply = () => (mapIsEmpty(game, pack) ? apply() : setConfirming(true));
 
-  // TODO(P2-248) #ws:ui-containers #type:dup #dep:P2-259 #size:m #popover #section — Плавающая карточка .map-import повторяет .tile-popover, а panel-head собран руками: Popover с якорем и Section
+  // TODO(P2-248) #ws:ui-containers #type:dup #dep:P2-259 #size:m #popover #section — Плавающая карточка .map-import повторяет .tile-popover, а panel-head собран руками: Popover с якорем и Section — P2 note: Popover exists (overlays/Popover.tsx, TilePopover uses it) and the card's look is one rule with .tile-popover; anchoring this panel would move it beside the paste button and close it on an outside press, and its head holds the text Close of P2-247: needs prototype
   return (
     <div className="map-import" role="group" aria-label={t('mapImport.title')}>
       <div className="panel-head">

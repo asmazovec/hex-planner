@@ -1,4 +1,4 @@
-import { useEffect, useState, type MouseEvent } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
@@ -10,11 +10,14 @@ import { useGame } from '../../../state/gameStore';
 import { lossesOf, withAdjustedUnit, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
 import { enemyChange, holderIn, structureInGame } from '../../../domain/stacks';
 import { HexRemove } from '../../primitives/Icon';
+import { PlayerChoice } from '../../primitives/player';
+import { Modal } from '../../overlays/Modal';
+import { SectionTitle } from '../../primitives/SectionTitle';
+import { UnitTile } from '../../units/UnitTile';
 import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { tokenColours } from '../../units/sprites';
 import { UNIT_ORDER } from '../../units/unitOrder';
-import { TokenPicture } from '../../units/UnitToken';
 import { slotToPixel } from '../geometry';
 import { systemName } from '../systemName';
 import { opponentName, shortName } from '../../players/names';
@@ -89,13 +92,6 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** Why the last tap on a token changed nothing. */
   const [tapNote, setTapNote] = useState<'planned' | null>(null);
 
-  // TODO(P2-202) #ws:ui-containers #type:dup #dep:P2-201 #size:s #modal — Свой обработчик Escape, как в Drawer и FactionPicker: его возьмёт на себя Modal
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
-
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo);
   if (!game || !plan || !round) return null;
@@ -123,8 +119,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     if ('planetId' in next) setEnemyGround(next.planetId, owner, next.units);
     else setEnemyUnits(next.slot, owner, next.units);
   };
-  // TODO(P2-219) #ws:ui-nesting #type:dup #dep:P2-200 #size:s #hex-stage — Тактическая запись ищется дважды (fightingFor и tactical ниже) по разным правилам: одна запись, которой принадлежат бой и покупки
-  /** The tactical action this hex was opened from: its battle belongs to it, and the fleet limit counts it. */
+  /** The tactical action this hex was opened from: its battle belongs to it, its purchases too while it stands on this system, and the fleet limit counts it. */
   const fightingFor = tacticalId ? round.entries.find((e): e is Entry & TacticalEntry => e.id === tacticalId && e.type === 'tactical') : undefined;
   const adjusting = adjustmentId ? round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment') : undefined;
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {
@@ -138,7 +133,8 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
 
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical' && e.systemId === slot && e.status !== 'cancelled');
-  const tactical = onPurchase ? undefined : tacticals.find(e => e.id === tacticalId) ?? tacticals.filter(e => !e.owner).at(-1);
+  /** The action that takes the purchases: the one this hex was opened from, otherwise the round's last one of mine here. */
+  const tactical = onPurchase ? undefined : (fightingFor && tacticals.includes(fightingFor) ? fightingFor : tacticals.filter(e => !e.owner).at(-1));
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && stateBeforeEntry(game, plan, tactical.id, pack);
   const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
@@ -187,27 +183,23 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** Whether the game itself holds this structure, apart from what entries plan. */
   const inBaseline = (kind: StructureKind, planetId: string): boolean => structureInGame(game, pack, kind, planetId);
 
-  // TODO(P2-207) #ws:ui-nesting #type:arch #dep:P2-200 #size:m #hex-stage — Один обработчик нажатия на жетон ветвится по режиму, владельцу, виду и базовому составу: разбить на обработчики режимов
-  const onToken = ({ kind, owner, planet, key }: PlacedStack) => {
-    const planetId = planetIdOf(planet);
-    setTapNote(null);
-    // In an opponent's expected action only their own units are theirs to touch.
-    if (mine !== 'me' && owner !== mine) return;
-    if (mode === 'build') {
-      if ((bought[key] ?? 0) === 0) return;
-      if (isStructure(kind) && purchases.changeStructure) {
-        purchases.changeStructure(kind, planetId ?? '', -1);
-        return;
-      }
-      if (owner === mine && !isStructure(kind)) {
-        purchases.change(kind, planetId, -1);
-        return;
-      }
-      if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
-      else changeEnemy(owner, kind, planetId, -1);
-      setNews(bumped(news, key, -1));
+  /** Build: a tap takes back one bought here. */
+  const unbuy = ({ kind, owner, key }: PlacedStack, planetId: string | null) => {
+    if ((bought[key] ?? 0) === 0) return;
+    if (isStructure(kind) && purchases.changeStructure) {
+      purchases.changeStructure(kind, planetId ?? '', -1);
       return;
     }
+    if (owner === mine && !isStructure(kind)) {
+      purchases.change(kind, planetId, -1);
+      return;
+    }
+    if (isStructure(kind)) changeStructure(kind, planetId ?? '', -1);
+    else changeEnemy(owner, kind, planetId, -1);
+    setNews(bumped(news, key, -1));
+  };
+  /** Setup and battle: a tap takes one off the hex, and in battle it counts as lost. */
+  const takeOff = ({ kind, owner, key }: PlacedStack, planetId: string | null) => {
     // A stack can hold planned structures too: the baseline ones go first, and one only planned belongs to its entry, so it takes no tap.
     if (isStructure(kind) && !inBaseline(kind, planetId ?? '')) {
       setTapNote('planned');
@@ -217,6 +209,12 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     else if (owner === mine) change(mode === 'battle' ? 'losses' : 'setup', kind, planetId, -1);
     else changeEnemy(owner, kind, planetId, -1);
     if (mode === 'battle' && (owner !== mine || isStructure(kind))) setLost(bumped(lost, key, 1));
+  };
+  const onToken = (stack: PlacedStack) => {
+    setTapNote(null);
+    // In an opponent's expected action only their own units are theirs to touch.
+    if (mine !== 'me' && stack.owner !== mine) return;
+    (mode === 'build' ? unbuy : takeOff)(stack, planetIdOf(stack.planet));
   };
 
   const giveBack = (key: string) => {
@@ -240,21 +238,16 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       (new Set(pictures.filter(p => p.kind === kind).map(p => p.planetId)).size > 1 ? planets.find(p => p.id === planetId)?.name : undefined);
     return (
       <div key={owner} role="group" aria-label={heading}>
-        <h3>{heading}</h3>
+        <SectionTitle>{heading}</SectionTitle>
         {pictures.length === 0 && <p className="muted">{t('stage.noLosses')}</p>}
         <div className="stage-losses">
           {pictures.map(({ key, kind, planetId, count, back }) => {
             const planet = planetNameOf(kind, planetId);
-            // TODO(P2-208) #ws:ui-containers #type:dup #dep:P2-261 #size:s #unit-tile — Кнопка потери .stage-loss — ещё одна плитка юнита с числом: UnitTile variant="loss"
             return (
-              <button
-                key={key} type="button" className="stage-loss" onClick={back}
-                aria-label={planet ? t('stage.giveBackOn', { unit: kindName(kind), planet }) : t('stage.giveBack', { unit: kindName(kind) })}
-              >
-                <TokenPicture kind={kind} colour={colours[owner]} px={52} />
-                {count > 1 && <i>{count}</i>}
-                {planet && <small>{planet}</small>}
-              </button>
+              <UnitTile
+                key={key} variant="loss" kind={kind} colour={colours[owner]} count={count} caption={planet} onClick={back}
+                label={planet ? t('stage.giveBackOn', { unit: kindName(kind), planet }) : t('stage.giveBack', { unit: kindName(kind) })}
+              />
             );
           })}
         </div>
@@ -317,12 +310,9 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     { value: null, label: t('map.sheet.none') },
   ];
   const { x, y } = slotToPixel(slot);
-  const closeOutside = (e: MouseEvent) => { if (e.target === e.currentTarget) onClose(); };
 
-  // TODO(P2-201) #ws:ui-containers #type:ui #size:m #modal — Модал собран руками (.stage + .stage-dialog, без портала), третья копия после FactionPicker и ShareConflict: Modal с title, onClose и HexRemove
   return (
-    <div className="stage" onClick={closeOutside}>
-      <div className="stage-dialog" role="dialog" aria-modal="true" aria-label={title}>
+    <Modal label={title} className="stage-dialog" onClose={onClose}>
         <div className="stage-hex">
           <svg viewBox="-68 -62 136 124" role="group" aria-label={t('stage.hex')}>
             <g transform={`translate(${-x} ${-y})`}>
@@ -357,19 +347,13 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
           {mode !== 'battle' && (
             <>
-              {/* TODO(P2-213) #ws:ui-containers #type:ui #size:m #player-colour #inline-style #rivals — Выбор игрока точкой и именем собран руками, цвет через var(--player-N) во style: PlayerChoice с PlayerDot */}
               {!only && mine === 'me' && (
-                <div className="segment stage-owners" role="group" aria-label={t('stage.owner')}>
-                  {[{ id: 'me', name: t('stage.mine'), color: game.color, faction: '' }, ...seated].map(o => (
-                    <button key={o.id} type="button" aria-pressed={side === o.id} onClick={() => setSide(o.id)}>
-                      <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${o.color})` }} />
-                      {seatName(o)}
-                    </button>
-                  ))}
-                </div>
+                <PlayerChoice
+                  label={t('stage.owner')} chosen={value => side === value} onPick={value => setSide(value)}
+                  options={[{ id: 'me', name: t('stage.mine'), color: game.color, faction: '' }, ...seated].map(o => ({ value: o.id, label: seatName(o), color: o.color }))}
+                />
               )}
-              {/* TODO(P2-215) #ws:ui-containers #type:ui #size:s #section-title — Голые h3 здесь и в lossStrip, уровни заголовков произвольные: SectionTitle */}
-              <h3>{t(only === 'build' ? 'stage.structures' : inBuild ? 'stage.shop' : 'stage.place')}</h3>
+              <SectionTitle>{t(only === 'build' ? 'stage.structures' : inBuild ? 'stage.shop' : 'stage.place')}</SectionTitle>
               <UnitShop items={shopItems} onPick={buy} />
               {inBuild && (
                 <div className="stage-total">
@@ -405,21 +389,15 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
                 <div role="group" aria-label={targetPlanet.name} className="stage-planet">
                   <strong>{targetPlanet.name}</strong>
                   <PlanetDetails planet={targetPlanet} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(targetPlanet.id)} />
-                  {/* TODO(P2-214) #ws:ui-containers #type:ui #dep:P2-213 #size:s #player-colour #inline-style — Вторая ручная сборка выбора игрока (контроль планеты) с цветом во style: PlayerChoice с вариантом «Нет» */}
-                  <div className="segment stage-owners" role="group" aria-label={t('map.sheet.controlLabel', { planet: targetPlanet.name })}>
-                    {owners.map(o => (
-                      <button key={String(o.value)} type="button" aria-pressed={planetOwner === o.value} onClick={() => setPlanetControl(targetPlanet.id, o.value)}>
-                        {o.color !== undefined && <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${o.color})` }} />}
-                        {o.label}
-                      </button>
-                    ))}
-                  </div>
+                  <PlayerChoice
+                    label={t('map.sheet.controlLabel', { planet: targetPlanet.name })} options={owners}
+                    chosen={value => planetOwner === value} onPick={value => setPlanetControl(targetPlanet.id, value)}
+                  />
                 </div>
               )}
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

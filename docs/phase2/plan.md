@@ -2,17 +2,16 @@
 
 Собрано скриптом `npm run plan:todos` из комментариев `TODO(P2-…)` в коде. Не правьте этот файл руками: правьте TODO и запустите скрипт снова.
 
-Всего: **114** TODO в **42** файлах, **25** потоков.
+Всего: **52** TODO в **27** файлах, **25** потоков.
 
 ## По типам
 
 | Тип | Значение | Количество |
 |---|---|---|
 | `bug` | Ошибка: код делает то, что правило запрещает | 1 |
-| `arch` | Архитектура: ответственность не на месте | 5 |
-| `dup` | Дублирование | 46 |
-| `dead` | Мёртвый код | 2 |
-| `ui` | Визуальный язык: элемент вне общего контейнера | 56 |
+| `arch` | Архитектура: ответственность не на месте | 3 |
+| `dup` | Дублирование | 22 |
+| `ui` | Визуальный язык: элемент вне общего контейнера | 22 |
 | `vocab` | Термины игры | 2 |
 | `doc` | Документация | 2 |
 
@@ -20,11 +19,11 @@
 
 Поток стоит на волну позже самого позднего из тех, на чей результат он опирается. Потоки одной волны независимы: их можно делать параллельно, у каждого свои файлы.
 
-**Волна 0:** [rule-engine](#ws-rule-engine) (0), [domain-purity](#ws-domain-purity) (0), [data](#ws-data) (0), [ui-structure](#ws-ui-structure) (0), [ui-css](#ws-ui-css) (7), [vocab](#ws-vocab) (2), [docs](#ws-docs) (2)
+**Волна 0:** [rule-engine](#ws-rule-engine) (0), [domain-purity](#ws-domain-purity) (0), [data](#ws-data) (0), [ui-structure](#ws-ui-structure) (0), [ui-css](#ws-ui-css) (2), [vocab](#ws-vocab) (2), [docs](#ws-docs) (2)
 
-**Волна 1:** [replay-steps](#ws-replay-steps) (0), [ui-logic-to-domain](#ws-ui-logic-to-domain) (0), [ui-warnings](#ws-ui-warnings) (1), [ui-containers](#ws-ui-containers) (89)
+**Волна 1:** [replay-steps](#ws-replay-steps) (0), [ui-logic-to-domain](#ws-ui-logic-to-domain) (0), [ui-warnings](#ws-ui-warnings) (1), [ui-containers](#ws-ui-containers) (34)
 
-**Волна 2:** [command-tokens](#ws-command-tokens) (0), [movement](#ws-movement) (1), [transport](#ws-transport) (0), [combat-order](#ws-combat-order) (0), [invasion](#ws-invasion) (0), [structures](#ws-structures) (0), [production](#ws-production) (0), [payment](#ws-payment) (0), [strategy-cards](#ws-strategy-cards) (0), [round-flow](#ws-round-flow) (0), [thunders-edge](#ws-thunders-edge) (0), [ui-nesting](#ws-ui-nesting) (12), [ui-plan-screen](#ws-ui-plan-screen) (0)
+**Волна 2:** [command-tokens](#ws-command-tokens) (0), [movement](#ws-movement) (1), [transport](#ws-transport) (0), [combat-order](#ws-combat-order) (0), [invasion](#ws-invasion) (0), [structures](#ws-structures) (0), [production](#ws-production) (0), [payment](#ws-payment) (0), [strategy-cards](#ws-strategy-cards) (0), [round-flow](#ws-round-flow) (0), [thunders-edge](#ws-thunders-edge) (0), [ui-nesting](#ws-ui-nesting) (10), [ui-plan-screen](#ws-ui-plan-screen) (0)
 
 **Волна 3:** [rivals](#ws-rivals) (0)
 
@@ -79,12 +78,7 @@ _Нет TODO._
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-469 | dup |  | [src/ui/units/sprites.ts:5](../../src/ui/units/sprites.ts#L5) | цвета игроков повторяют --player-1..8 из темы и могут разойтись: тест на совпадение с theme.css или чтение CSS-переменных перед выпечкой спрайтов | #player-colour | s |  |
-| P2-552 | dup |  | [src/ui/theme.css:699](../../src/ui/theme.css#L699) | заголовок LayoutPicker собран своим правилом, а не общим заголовком раздела 959: перейти на общий — P2 note: the common heading draws lines on both sides, so moving the LayoutPicker title to it changes the page; it also needs the markup (P2-570, ui-containers) | #section-title | s | P2-570 |
-| P2-254 | dead |  | [src/ui/map/builder/LayoutPicker.tsx:35](../../src/ui/map/builder/LayoutPicker.tsx#L35) | Берёт .panel, а CSS потом снимает с неё всё оформление: убрать класс panel и снимающие правила | #panel | s |  |
-| P2-255 | dead |  | [src/ui/map/builder/TileNumberInput.tsx:43](../../src/ui/map/builder/TileNumberInput.tsx#L43) | Тот же .panel, с которого CSS снимает оформление: убрать | #panel | s | P2-254 |
-| P2-245 | ui |  | [src/ui/drawers/MapLegend.tsx:44](../../src/ui/drawers/MapLegend.tsx#L44) | Цвет точки передаётся style background var(--…): модификатор класса legend-dot-<цвет> в теме | #inline-style #legend | s |  |
-| P2-257 | ui |  | [src/ui/map/builder/TileNumberInput.tsx:59](../../src/ui/map/builder/TileNumberInput.tsx#L59) | Ряд подсказок на .row без общего класса, хотя есть .chips: перевести на .chips | #chips | s |  |
+| P2-552 | dup |  | [src/ui/theme.css:699](../../src/ui/theme.css#L699) | заголовок LayoutPicker собран своим правилом, а не общим заголовком раздела 959: перейти на общий — P2 note: the common heading draws lines on both sides, so moving the LayoutPicker title to it changes the page; it also needs the markup (P2-570, ui-containers) | #section-title | s | ~~P2-570~~ ✓ |
 | P2-503 | ui |  | [src/ui/theme.css:171](../../src/ui/theme.css#L171) | три цвета «выбрано» для одной роли: голубой здесь, .chip 706, .slice 646, .card-main 462; золотой .option 457, .card-cell 450, .card-abilities 472, .pic-taken 616, .token-tile-on 540, .ship-row-live 838, .upgrade-card.on 857, .entry-upgrades 871, .hex-button:has(checked) 508; зелёный .hex-button[aria-pressed] 1009, .fac-option 1018, вкладки и шторки. Решить по прототипу, какой цвет у переключателей — P2 note: needs a decision and a page prototype, left as it is | #selected-state | m |  |
 
 <a id="ws-vocab"></a>
@@ -152,7 +146,7 @@ _Нет TODO._
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-210 | dup |  | [src/ui/map/stage/HexStage.tsx:286](../../src/ui/map/stage/HexStage.tsx#L286) | Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build | #warning-channel #duplicate-of-domain | m |  |
+| P2-210 | dup |  | [src/ui/map/stage/HexStage.tsx:279](../../src/ui/map/stage/HexStage.tsx#L279) | Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build | #warning-channel #duplicate-of-domain | m |  |
 
 <a id="ws-ui-containers"></a>
 ### Контейнеры визуального языка · `ui-containers` · волна 1
@@ -169,95 +163,40 @@ _Нет TODO._
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-259 | arch |  | [src/ui/overlays/TilePopover.tsx:17](../../src/ui/overlays/TilePopover.tsx#L17) | Поповер привязан только к гексу (ищет [data-slot] polygon): общий Popover с якорем в overlays/, его же взять для .map-import | #popover #overlays | m |  |
-| P2-356 | arch |  | [src/ui/plan/editors/ExpeditionEditor.tsx:28](../../src/ui/plan/editors/ExpeditionEditor.tsx#L28) | флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock |  | s |  |
-| P2-202 | dup |  | [src/ui/map/stage/HexStage.tsx:92](../../src/ui/map/stage/HexStage.tsx#L92) | Свой обработчик Escape, как в Drawer и FactionPicker: его возьмёт на себя Modal | #modal | s | P2-201 |
-| P2-208 | dup |  | [src/ui/map/stage/HexStage.tsx:248](../../src/ui/map/stage/HexStage.tsx#L248) | Кнопка потери .stage-loss — ещё одна плитка юнита с числом: UnitTile variant="loss" | #unit-tile | s | P2-261 |
-| P2-226 | dup |  | [src/ui/map/TileView.tsx:298](../../src/ui/map/TileView.tsx#L298) | SVG жетона приказа повторён здесь, у жетонов соперников ниже и в MapLegend: один компонент CommandTokenMark с цветом игрока | #command-token #svg | s |  |
-| P2-227 | dup |  | [src/ui/map/TileView.tsx:314](../../src/ui/map/TileView.tsx#L314) | Метка ingress нарисована здесь и в MapLegend отдельно: один компонент IngressMark | #ingress #svg | s |  |
-| P2-230 | dup |  | [src/ui/map/RouteArrows.tsx:33](../../src/ui/map/RouteArrows.tsx#L33) | Вершины бейджа и выреза заданы строками, хотя это hexPoints(10.5) и hexPoints(15); бейдж номера и метка «+N» повторены в MapLegend и OrderHex в EntryList: общий компонент RouteBadge | #route-badge #svg | s |  |
-| P2-239 | dup |  | [src/ui/drawers/MapLegend.tsx:58](../../src/ui/drawers/MapLegend.tsx#L58) | Свой aside role=dialog с h2: DrawerSheet | #drawer-sheet | s | P2-238 |
-| P2-240 | dup |  | [src/ui/drawers/MapLegend.tsx:105](../../src/ui/drawers/MapLegend.tsx#L105) | Значок места свёрстан заново с жёстким var(--player-2) во style: тот же значок, что на тайле | #player-colour #inline-style #legend | s | P2-224 |
-| P2-241 | dup |  | [src/ui/drawers/MapLegend.tsx:101](../../src/ui/drawers/MapLegend.tsx#L101) | Копия SVG жетона приказа из TileView: CommandTokenMark | #command-token #svg | s | P2-226 |
-| P2-242 | dup |  | [src/ui/drawers/MapLegend.tsx:103](../../src/ui/drawers/MapLegend.tsx#L103) | Копия метки ingress из TileView: IngressMark | #ingress #svg | s | P2-227 |
-| P2-243 | dup |  | [src/ui/drawers/MapLegend.tsx:29](../../src/ui/drawers/MapLegend.tsx#L29) | Своя планета легенды вместо PlanetMark из TileView: легенда расходится с картой; рисовать PlanetMark | #legend #planet | s |  |
-| P2-244 | dup |  | [src/ui/drawers/MapLegend.tsx:9](../../src/ui/drawers/MapLegend.tsx#L9) | Копии вершин гекса и бейджа из HexMap: брать hexPoints и RouteBadge | #route-badge #svg | s | P2-230 |
-| P2-246 | dup |  | [src/ui/drawers/MapLegend.tsx:117](../../src/ui/drawers/MapLegend.tsx#L117) | Метка подбора «+N» свёрстана заново, как в RouteArrows: общий компонент | #route-badge #svg | s | P2-230 |
-| P2-248 | dup |  | [src/ui/map/builder/MapStringImport.tsx:41](../../src/ui/map/builder/MapStringImport.tsx#L41) | Плавающая карточка .map-import повторяет .tile-popover, а panel-head собран руками: Popover с якорем и Section | #popover #section | m | P2-259 |
+| P2-356 | arch |  | [src/ui/plan/editors/ExpeditionEditor.tsx:28](../../src/ui/plan/editors/ExpeditionEditor.tsx#L28) | флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock — P2 note: the one place is PlanScreen's manualPayments, which the big hex reads too; the expedition editor sits inside the entry row (EntryList), so the flag would travel through EntryList and PlanScreen state, both edited by ui-plan-screen now (P2-429 merges the two toggles there): left for that wave |  | s |  |
+| P2-240 | dup |  | [src/ui/drawers/MapLegend.tsx:103](../../src/ui/drawers/MapLegend.tsx#L103) | Значок места свёрстан заново с жёстким var(--player-2) во style: тот же значок, что на тайле — P2 note: the colour now comes through playerStyle; the tile's own SVG seat mark is smaller and drawn in the tile's scale, so putting it here changes how the legend looks: needs prototype | #player-colour #inline-style #legend | s | ~~P2-224~~ ✓ |
+| P2-243 | dup |  | [src/ui/drawers/MapLegend.tsx:31](../../src/ui/drawers/MapLegend.tsx#L31) | Своя планета легенды вместо PlanetMark из TileView: легенда расходится с картой; рисовать PlanetMark | #legend #planet | s |  |
+| P2-248 | dup |  | [src/ui/map/builder/MapStringImport.tsx:41](../../src/ui/map/builder/MapStringImport.tsx#L41) | Плавающая карточка .map-import повторяет .tile-popover, а panel-head собран руками: Popover с якорем и Section — P2 note: Popover exists (overlays/Popover.tsx, TilePopover uses it) and the card's look is one rule with .tile-popover; anchoring this panel would move it beside the paste button and close it on an outside press, and its head holds the text Close of P2-247: needs prototype | #popover #section | m | ~~P2-259~~ ✓ |
 | P2-250 | dup |  | [src/ui/map/builder/MapStringImport.tsx:60](../../src/ui/map/builder/MapStringImport.tsx#L60) | Строка подтверждения .row (текст, «Заменить», «Отмена») — четвёртый вид после player-confirm, GameScreen и LayoutPicker: ConfirmBar | #confirm-bar | s |  |
-| P2-253 | dup |  | [src/ui/map/builder/LayoutPicker.tsx:53](../../src/ui/map/builder/LayoutPicker.tsx#L53) | Строка подтверждения .row собрана руками: ConfirmBar | #confirm-bar | s | P2-250 |
-| P2-261 | dup |  | [src/ui/map/stage/UnitShop.tsx:24](../../src/ui/map/stage/UnitShop.tsx#L24) | Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitButton, .stage-loss, UnitPictures, Stack): UnitTile с вариантами take/taken/loss/shop | #unit-tile | m |  |
-| P2-263 | dup |  | [src/ui/drawers/UpgradesPanel.tsx:23](../../src/ui/drawers/UpgradesPanel.tsx#L23) | Свой aside role=dialog с h2: DrawerSheet | #drawer-sheet | s | P2-238 |
-| P2-264 | dup |  | [src/ui/drawers/UpgradesPanel.tsx:37](../../src/ui/drawers/UpgradesPanel.tsx#L37) | Переключатель улучшения .upgrade-card повторяет .ship-row-live из ShipStats: один вид | #upgrade-toggle | s |  |
-| P2-266 | dup |  | [src/ui/drawers/ThundersEdgePanel.tsx:19](../../src/ui/drawers/ThundersEdgePanel.tsx#L19) | Свой aside role=dialog с h2: DrawerSheet | #drawer-sheet | s | P2-238 |
-| P2-314 | dup |  | [src/ui/plan/editors/TacticalEditor.tsx:52](../../src/ui/plan/editors/TacticalEditor.tsx#L52) | строка «юнит N, …» собрана здесь, в StrategyEditor (builtUnits), AdjustmentEditor и EntrySteps (signed); один помощник unitsText в ui/units |  | s |  |
-| P2-335 | dup |  | [src/ui/plan/editors/StrategyEditor.tsx:160](../../src/ui/plan/editors/StrategyEditor.tsx#L160) | сетка карт стратегии повторяет StrategyCards.tsx; общий CardGrid |  | s |  |
-| P2-347 | dup |  | [src/ui/plan/EntrySteps.tsx:170](../../src/ui/plan/EntrySteps.tsx#L170) | копия signed из AdjustmentEditor |  | s | P2-314 |
-| P2-352 | dup |  | [src/ui/plan/EntryList.tsx:119](../../src/ui/plan/EntryList.tsx#L119) | бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент |  | s |  |
-| P2-364 | dup |  | [src/ui/plan/editors/AdjustmentEditor.tsx:33](../../src/ui/plan/editors/AdjustmentEditor.tsx#L33) | signed повторён в EntrySteps |  | s | P2-314 |
-| P2-384 | dup |  | [src/ui/plan/StrategyCards.tsx:61](../../src/ui/plan/StrategyCards.tsx#L61) | та же сетка карт, что в StrategyEditor |  | s | P2-335 |
-| P2-512 | dup |  | [src/ui/theme.css:216](../../src/ui/theme.css#L216) | маленькая кнопка: 14 контекстных переопределений padding/min-height/font-size: 180, 226, 251, 398, 401, 418, 433, 440, 547, 576, 636, 701, 712, 739; модификатор .small или проп у кнопки | #small-button | m |  |
-| P2-513 | dup |  | [src/ui/theme.css:235](../../src/ui/theme.css#L235) | плавающая карточка: .tile-popover и .map-import 680 одинаковы (surface-3, border-strong, radius, shadow, pop-in); общий Popover | #floating-card #popover | m |  |
-| P2-515 | dup |  | [src/ui/theme.css:263](../../src/ui/theme.css#L263) | кружок игрока собран в 6 классах: .owner-dot, .status-player ::before 554, .player-badge 723, .seat-ghost-badge 805, .legend-dot 932, .legend-seat 933; компонент PlayerDot с размером | #player-dot | m |  |
-| P2-517 | dup |  | [src/ui/theme.css:272](../../src/ui/theme.css#L272) | коробка модала трижды: .stage-dialog, .link-dialog 603, .fac-sheet 1012, скругления 14px и var(--radius) вперемешку; общий Modal | #modal | m |  |
-| P2-520 | dup |  | [src/ui/theme.css:284](../../src/ui/theme.css#L284) | .shop-item (84px) ещё одна плитка юнита с числом: перейти на общий UnitTile | #unit-tile | s | P2-548 |
-| P2-522 | dup |  | [src/ui/theme.css:297](../../src/ui/theme.css#L297) | .stage-loss (62px) ещё одна плитка юнита с числом: перейти на общий UnitTile | #unit-tile | s | P2-548 |
-| P2-539 | dup |  | [src/ui/theme.css:527](../../src/ui/theme.css#L527) | .upic (32px) ещё одна плитка юнита с числом, бейдж i повторяет .pic i: перейти на общий UnitTile | #unit-tile | s | P2-548 |
-| P2-542 | dup |  | [src/ui/theme.css:553](../../src/ui/theme.css#L553) | кружок игрока через ::before: перейти на PlayerDot | #player-dot | s | P2-515 |
-| P2-548 | dup |  | [src/ui/theme.css:607](../../src/ui/theme.css#L607) | плитка юнита с числом: 4 класса (.pic, .shop-item 254, .stage-loss 268, .upic 524) и 5 компонентов, размеры 62/84/62/32, бейдж числа 257, 270, 617, 525; общий UnitTile с размером, радиус var(--radius-s) вместо 10px | #unit-tile | m |  |
-| P2-549 | dup |  | [src/ui/theme.css:672](../../src/ui/theme.css#L672) | .map-import повторяет .tile-popover: перейти на общий Popover | #floating-card | s | P2-513 |
-| P2-554 | dup |  | [src/ui/theme.css:710](../../src/ui/theme.css#L710) | .player-badge: кружок игрока большого размера, перейти на PlayerDot | #player-dot | s | P2-515 |
-| P2-556 | dup |  | [src/ui/theme.css:721](../../src/ui/theme.css#L721) | строка подтверждения: .player-confirm, строка сохранения GameScreen:163, .row в LayoutPicker и MapStringImport; общий ConfirmBar | #confirm-bar | m |  |
-| P2-560 | dup |  | [src/ui/theme.css:786](../../src/ui/theme.css#L786) | .seat-ghost-badge: кружок игрока, перейти на PlayerDot | #player-dot | s | P2-515 |
-| P2-562 | dup |  | [src/ui/theme.css:814](../../src/ui/theme.css#L814) | переключатель улучшения дважды: .ship-row-live и .upgrade-card 855 (рамка, gold при выборе, disabled без затухания); один компонент | #upgrade-toggle | m |  |
-| P2-563 | dup |  | [src/ui/theme.css:832](../../src/ui/theme.css#L832) | .upgrade-card повторяет .ship-row-live 836: перейти на общий переключатель | #upgrade-toggle | s | P2-562 |
-| P2-568 | dup |  | [src/ui/theme.css:900](../../src/ui/theme.css#L900) | .legend-dot и .legend-seat 933: кружок игрока, перейти на PlayerDot | #player-dot | s | P2-515 |
-| P2-570 | dup |  | [src/ui/theme.css:932](../../src/ui/theme.css#L932) | заголовок раздела: общее правило для 8 классов, а ранние определения 247, 530, 552, 610, 698, 742, 925 перебиты и мертвы, LayoutPicker 711 сам по себе; компонент SectionTitle с одним классом | #section-title | m |  |
-| P2-201 | ui |  | [src/ui/map/stage/HexStage.tsx:322](../../src/ui/map/stage/HexStage.tsx#L322) | Модал собран руками (.stage + .stage-dialog, без портала), третья копия после FactionPicker и ShareConflict: Modal с title, onClose и HexRemove | #modal | m |  |
-| P2-213 | ui |  | [src/ui/map/stage/HexStage.tsx:360](../../src/ui/map/stage/HexStage.tsx#L360) | Выбор игрока точкой и именем собран руками, цвет через var(--player-N) во style: PlayerChoice с PlayerDot | #player-colour #inline-style #rivals | m |  |
-| P2-214 | ui |  | [src/ui/map/stage/HexStage.tsx:408](../../src/ui/map/stage/HexStage.tsx#L408) | Вторая ручная сборка выбора игрока (контроль планеты) с цветом во style: PlayerChoice с вариантом «Нет» | #player-colour #inline-style | s | P2-213 |
-| P2-215 | ui |  | [src/ui/map/stage/HexStage.tsx:371](../../src/ui/map/stage/HexStage.tsx#L371) | Голые h3 здесь и в lossStrip, уровни заголовков произвольные: SectionTitle | #section-title | s |  |
-| P2-223 | ui |  | [src/ui/map/TileView.tsx:126](../../src/ui/map/TileView.tsx#L126) | Цвет игрока через var(--player-N) во style (здесь, у места, у жетонов, в HexMap, UpgradesPanel): playerVar() или data-player с правилом в теме | #player-colour #inline-style | m |  |
-| P2-224 | ui |  | [src/ui/map/TileView.tsx:287](../../src/ui/map/TileView.tsx#L287) | Значок места красится style fill var(--player-N): playerVar() или data-player; тот же значок нужен легенде | #player-colour #inline-style | s | P2-223 |
-| P2-225 | ui |  | [src/ui/map/TileView.tsx:306](../../src/ui/map/TileView.tsx#L306) | Жетон соперника красится style fill var(--player-N): playerVar() или data-player | #player-colour #inline-style #rivals | s | P2-223 |
-| P2-228 | ui |  | [src/ui/map/RouteArrows.tsx:69](../../src/ui/map/RouteArrows.tsx#L69) | Цвет стрелки соперника через style --route: var(--player-N): data-player или playerVar() | #player-colour #inline-style #rivals | s | P2-223 |
-| P2-229 | ui |  | [src/ui/map/RouteArrows.tsx:82](../../src/ui/map/RouteArrows.tsx#L82) | Бейдж повторяет style --route стрелки: data-player или playerVar() | #player-colour #inline-style #rivals | s | P2-223 |
-| P2-238 | ui |  | [src/ui/overlays/Drawer.tsx:30](../../src/ui/overlays/Drawer.tsx#L30) | Шторка даёт только коробку: каждое содержимое (легенда, улучшения, Thunder's Edge, игроки) собирает свой aside с role=dialog и h2; добавить DrawerSheet с title | #drawer #drawer-sheet | m |  |
+| P2-253 | dup |  | [src/ui/map/builder/LayoutPicker.tsx:52](../../src/ui/map/builder/LayoutPicker.tsx#L52) | Строка подтверждения .row собрана руками: ConfirmBar | #confirm-bar | s | P2-250 |
+| P2-261 | dup |  | [src/ui/map/stage/UnitShop.tsx:24](../../src/ui/map/stage/UnitShop.tsx#L24) | Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitTile take/taken/loss/mini/stack in ui/units): UnitTile с вариантами take/taken/loss/shop | #unit-tile | m |  |
+| P2-264 | dup |  | [src/ui/drawers/UpgradesPanel.tsx:32](../../src/ui/drawers/UpgradesPanel.tsx#L32) | Переключатель улучшения .upgrade-card повторяет .ship-row-live из ShipStats: один вид | #upgrade-toggle | s |  |
+| P2-352 | dup |  | [src/ui/plan/EntryList.tsx:120](../../src/ui/plan/EntryList.tsx#L120) | бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент — P2 note: the map and the legend now share RouteBadge; this one is an HTML number over a 12-wide hexagon in the row's own colours, and drawing the map's SVG badge here changes how the row looks: needs prototype |  | s |  |
+| P2-512 | dup |  | [src/ui/theme.css:216](../../src/ui/theme.css#L216) | маленькая кнопка: 14 контекстных переопределений padding/min-height/font-size: 180, 226, 251, 398, 401, 418, 433, 440, 547, 576, 636, 701, 712, 739; модификатор .small или проп у кнопки — P2 note: the fourteen overrides differ (padding 4/5 px by 8/10/14 px, heights 32/36 px, 12/13 px text), so one .small modifier changes most of them: needs prototype | #small-button | m |  |
+| P2-515 | dup |  | [src/ui/theme.css:265](../../src/ui/theme.css#L265) | кружок игрока собран в 6 классах: .owner-dot, .status-player ::before 554, .player-badge 723, .seat-ghost-badge 805, .legend-dot 932, .legend-seat 933; компонент PlayerDot с размером — P2 note: PlayerDot (primitives/player.tsx) now draws .owner-dot everywhere and the ghost badge; the others keep their own look and notes: the stepper dot P2-542, the card badge P2-554, the legend P2-568 | #player-dot | m |  |
+| P2-517 | dup |  | [src/ui/theme.css:274](../../src/ui/theme.css#L274) | коробка модала трижды: .stage-dialog, .link-dialog 603, .fac-sheet 1012, скругления 14px и var(--radius) вперемешку; общий Modal — P2 note: the three boxes now come from one Modal (overlays/Modal.tsx); their sizes, padding, background (the sheet of factions sits on --bg) and corners still differ, and one box would change two of them: needs prototype | #modal | m |  |
+| P2-520 | dup |  | [src/ui/theme.css:286](../../src/ui/theme.css#L286) | .shop-item (84px) ещё одна плитка юнита с числом: перейти на общий UnitTile — P2 note: the shop cell is P2-261, which needs prototype; UnitTile (units/UnitTile.tsx) has no shop variant yet | #unit-tile | s | P2-548 |
+| P2-542 | dup |  | [src/ui/theme.css:553](../../src/ui/theme.css#L553) | кружок игрока через ::before: перейти на PlayerDot — P2 note: the dot stands inside the name of a Stepper, whose name is also the accessible name of the group: an element there needs a slot in Stepper and changes nothing visible, so it waits for the Stepper rework | #player-dot | s | P2-515 |
+| P2-548 | dup |  | [src/ui/theme.css:607](../../src/ui/theme.css#L607) | плитка юнита с числом: 4 класса (.pic, .shop-item 254, .stage-loss 268, .upic 524) и 5 компонентов, размеры 62/84/62/32, бейдж числа 257, 270, 617, 525; общий UnitTile с размером, радиус var(--radius-s) вместо 10px — P2 note: UnitTile now draws .pic, .stage-loss, .upic and the landing stacks, with the sizes they had; one size, one counter badge and var(--radius-s) for all would change how each looks: needs prototype | #unit-tile | m |  |
+| P2-549 | dup |  | [src/ui/theme.css:672](../../src/ui/theme.css#L672) | .map-import повторяет .tile-popover: перейти на общий Popover — P2 note: the look of the card is shared now (one rule with .tile-popover); the Popover itself would anchor the panel beside the paste button and close it on a press outside, a change of place and behaviour: needs prototype, with P2-248 | #floating-card | s | ~~P2-513~~ ✓ |
+| P2-554 | dup |  | [src/ui/theme.css:710](../../src/ui/theme.css#L710) | .player-badge: кружок игрока большого размера, перейти на PlayerDot — P2 note: the card badge takes its colour from the card (--player), animates when a seat is bumped and stays a block of 38 px with the seat number: moving it to PlayerDot changes no look and adds an inline colour, left as is | #player-dot | s | P2-515 |
+| P2-556 | dup |  | [src/ui/theme.css:721](../../src/ui/theme.css#L721) | строка подтверждения: .player-confirm, строка сохранения GameScreen:163, .row в LayoutPicker и MapStringImport; общий ConfirmBar — P2 note: ConfirmBar (primitives/ConfirmBar.tsx) now draws .player-confirm and the save row of GameScreen; the rows of LayoutPicker and MapStringImport are P2-253 and P2-250, which need prototype | #confirm-bar | m |  |
+| P2-562 | dup |  | [src/ui/theme.css:813](../../src/ui/theme.css#L813) | переключатель улучшения дважды: .ship-row-live и .upgrade-card 855 (рамка, gold при выборе, disabled без затухания); один компонент — P2 note: one toggle for both needs the look of P2-264, which needs prototype | #upgrade-toggle | m |  |
+| P2-563 | dup |  | [src/ui/theme.css:831](../../src/ui/theme.css#L831) | .upgrade-card повторяет .ship-row-live 836: перейти на общий переключатель — P2 note: waits for P2-562 and P2-264 (prototype) | #upgrade-toggle | s | P2-562 |
+| P2-568 | dup |  | [src/ui/theme.css:899](../../src/ui/theme.css#L899) | .legend-dot и .legend-seat 933: кружок игрока, перейти на PlayerDot — P2 note: the legend dots are technology and trait colours, not players (they use modifier classes now, P2-245); the seat mark is P2-240: needs prototype | #player-dot | s | P2-515 |
 | P2-247 | ui |  | [src/ui/map/builder/MapStringImport.tsx:46](../../src/ui/map/builder/MapStringImport.tsx#L46) | Текстовая кнопка «Закрыть»: HexRemove, как везде | #close-button | s |  |
-| P2-262 | ui |  | [src/ui/drawers/UpgradesPanel.tsx:22](../../src/ui/drawers/UpgradesPanel.tsx#L22) | style --player: var(--player-N): data-player или playerVar() | #player-colour #inline-style | s | P2-223 |
-| P2-316 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:92](../../src/ui/plan/editors/TacticalEditor.tsx#L92) | блоки редактора собраны руками (div.editor-section > strong, optional-note только здесь); Section(title, optional, action, warnings) во всех редакторах | #section | m |  |
-| P2-319 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:187](../../src/ui/plan/editors/TacticalEditor.tsx#L187) | голова и подвал редакторов четырёх видов (здесь panel-head и «Готово» вверху, у StrategyEditor h2 и подвал, у UnitPicker текстовое «Закрыть»); класса .tactical-editor в CSS нет. Одна рамка редактора | #editor-frame | m |  |
-| P2-320 | ui |  | [src/ui/plan/editors/UnitPicker.tsx:42](../../src/ui/plan/editors/UnitPicker.tsx#L42) | плитка юнита с числом: UnitButton, Stack (LandingBlock), UnitPictures (EntrySteps), плитки HexStage и UnitShop — разные компоненты и классы; один UnitTile с вариантами take/taken/loss/shop в ui/units | #unit-tile | m |  |
-| P2-323 | ui |  | [src/ui/plan/editors/UnitPicker.tsx:131](../../src/ui/plan/editors/UnitPicker.tsx#L131) | текстовое «Закрыть» вместо HexRemove; «Удалить источник» в подвале повторяет крестик строки источника |  | m | P2-319 |
-| P2-325 | ui |  | [src/ui/plan/editors/UnitPicker.tsx:136](../../src/ui/plan/editors/UnitPicker.tsx#L136) | заголовки подблоков h4.picker-title вручную; SectionTitle |  | s |  |
+| P2-319 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:184](../../src/ui/plan/editors/TacticalEditor.tsx#L184) | голова и подвал редакторов четырёх видов (здесь panel-head и «Готово» вверху, у StrategyEditor h2 и подвал, у UnitPicker текстовое «Закрыть»); класса .tactical-editor в CSS нет. Одна рамка редактора | #editor-frame | m |  |
+| P2-323 | ui |  | [src/ui/plan/editors/UnitPicker.tsx:117](../../src/ui/plan/editors/UnitPicker.tsx#L117) | текстовое «Закрыть» вместо HexRemove; «Удалить источник» в подвале повторяет крестик строки источника |  | m | P2-319 |
 | P2-329 | ui |  | [src/ui/plan/editors/cards/politics.tsx:8](../../src/ui/plan/editors/cards/politics.tsx#L8) | выбор игрока (точка цвета + имя, inline var(--player-…)) собран руками здесь, в Trade ниже, в HexStage и PlanScreen; общий PlayerChoice с PlayerDot | #player-choice | m |  |
-| P2-330 | ui |  | [src/ui/plan/editors/cards/trade.tsx:10](../../src/ui/plan/editors/cards/trade.tsx#L10) | вторая ручная сборка выбора игрока; PlayerChoice | #player-choice | s | P2-329, ~~P2-328~~ ✓ |
 | P2-332 | ui |  | [src/ui/plan/editors/cards/technology.tsx:21](../../src/ui/plan/editors/cards/technology.tsx#L21) | «−» на месте .in-card, где по соглашению удаление, а делает уменьшение; Stepper |  | s |  |
 | P2-334 | ui |  | [src/ui/plan/editors/StrategyEditor.tsx:158](../../src/ui/plan/editors/StrategyEditor.tsx#L158) | голый h2 и подвал .strategy-foot вместо общей рамки редактора |  | m | P2-319 |
-| P2-338 | ui |  | [src/ui/plan/editors/StrategyEditor.tsx:76](../../src/ui/plan/editors/StrategyEditor.tsx#L76) | блоки (жетоны, Diplomacy, Politics, Trade, Technology, улучшения) собраны вручную из div.editor-section; Section | #section | m | P2-316 |
 | P2-340 | ui |  | [src/ui/plan/blocks/TokenTiles.tsx:40](../../src/ui/plan/blocks/TokenTiles.tsx#L40) | ещё один вид «−»; Stepper |  | s | P2-332 |
-| P2-341 | ui |  | [src/ui/plan/EntrySteps.tsx:20](../../src/ui/plan/EntrySteps.tsx#L20) | своя плитка юнита (.upic); UnitTile | #unit-tile | m | P2-320 |
-| P2-350 | ui |  | [src/ui/plan/EntryList.tsx:70](../../src/ui/plan/EntryList.tsx#L70) | цвет игрока inline-стилем var(--player-…) в .status-player ниже; PlayerDot / data-player / playerVar() |  | s |  |
-| P2-353 | ui |  | [src/ui/plan/EntryList.tsx:180](../../src/ui/plan/EntryList.tsx#L180) | --owner inline-стилем var(--player-…) у строки ниже; data-player / playerVar() |  | s | P2-350 |
-| P2-358 | ui |  | [src/ui/plan/blocks/LandingBlock.tsx:8](../../src/ui/plan/blocks/LandingBlock.tsx#L8) | плитка юнита берётся из файла перелёта, а Stack ниже — ещё одна плитка; обе заменить UnitTile | #unit-tile | m | P2-320 |
-| P2-361 | ui |  | [src/ui/plan/blocks/PaymentBlock.tsx:40](../../src/ui/plan/blocks/PaymentBlock.tsx#L40) | блок собран вручную (editor-section + panel-head); Section с action | #section | m | P2-316 |
-| P2-362 | ui |  | [src/ui/plan/editors/AdjustmentEditor.tsx:43](../../src/ui/plan/editors/AdjustmentEditor.tsx#L43) | чужой класс .tactical-editor (которого нет в CSS), своя голова и ручные блоки; общая рамка редактора и Section |  | m | P2-319, P2-316 |
+| P2-362 | ui |  | [src/ui/plan/editors/AdjustmentEditor.tsx:43](../../src/ui/plan/editors/AdjustmentEditor.tsx#L43) | чужой класс .tactical-editor (которого нет в CSS), своя голова и ручные блоки; общая рамка редактора и Section |  | m | P2-319, ~~P2-316~~ ✓ |
 | P2-371 | ui |  | [src/ui/drawers/ExpeditionWidget.tsx:53](../../src/ui/drawers/ExpeditionWidget.tsx#L53) | текстовое «Убрать» вместо HexRemove |  | m | P2-323 |
 | P2-383 | ui |  | [src/ui/plan/PlanTabs.tsx:95](../../src/ui/plan/PlanTabs.tsx#L95) | удаление плана текстовой кнопкой и раунда «−» ниже вместо HexRemove |  | m |  |
-| P2-385 | ui |  | [src/ui/plan/blocks/EntryUpgrades.tsx:20](../../src/ui/plan/blocks/EntryUpgrades.tsx#L20) | --player inline-стилем у корня; data-player / playerVar() |  | s | P2-350 |
-| P2-425 | ui |  | [src/ui/screens/PlanScreen.tsx:495](../../src/ui/screens/PlanScreen.tsx#L495) | плашка «действие за» красит край и точку inline-стилем var(--player-N): PlayerDot и playerVar()/data-player (аудит 3.7) | #player-colour #inline-style | s |  |
 | P2-427 | ui |  | [src/ui/screens/PlanScreen.tsx:502](../../src/ui/screens/PlanScreen.tsx#L502) | своя голова редактора с текстовой «Отмена» вместо общей головы редактора и HexRemove (аудит 3.3, 3.4) | #editor-head | s |  |
-| P2-430 | ui |  | [src/ui/screens/PlanScreen.tsx:569](../../src/ui/screens/PlanScreen.tsx#L569) | выбор «за кого» занимает класс большого гекса stage-owners и красит кнопки inline-стилем: PlayerChoice (аудит 3.6) | #player-colour #player-choice | s | P2-425 |
-| P2-436 | ui |  | [src/ui/screens/GameScreen.tsx:154](../../src/ui/screens/GameScreen.tsx#L154) | своя строка подтверждения удаления, ещё один вид рядом с .player-confirm и строками LayoutPicker/MapStringImport: общий ConfirmBar | #confirm-bar | s |  |
-| P2-437 | ui |  | [src/ui/screens/GameScreen.tsx:158](../../src/ui/screens/GameScreen.tsx#L158) | класс .danger не описан в теме, «Удалить» выглядит обычной кнопкой: вариант danger у ConfirmBar | #confirm-bar #danger | s | P2-436 |
-| P2-443 | ui |  | [src/ui/screens/GameScreen.tsx:119](../../src/ui/screens/GameScreen.tsx#L119) | заголовки групп «Партии» — p.side-label, в других местах h2/h3/strong для того же вида: SectionTitle | #section-title | s |  |
-| P2-452 | ui |  | [src/ui/common/ShareConflict.tsx:12](../../src/ui/common/ShareConflict.tsx#L12) | модал собран руками (.stage + .link-dialog) без Escape и шапки с HexRemove, третья копия рядом с HexStage и FactionPicker: общий Modal (аудит 3.5) | #modal | s |  |
-| P2-459 | ui |  | [src/ui/players/FactionPicker.tsx:52](../../src/ui/players/FactionPicker.tsx#L52) | модал с порталом, Escape и шапкой собран руками: общий Modal | #modal | s | P2-452 |
-| P2-461 | ui |  | [src/ui/players/PlayerList.tsx:66](../../src/ui/players/PlayerList.tsx#L66) | своя строка подтверждения .player-confirm: общий ConfirmBar | #confirm-bar | s | P2-436 |
-| P2-462 | ui |  | [src/ui/players/PlayerList.tsx:99](../../src/ui/players/PlayerList.tsx#L99) | цвет игрока --player задаётся inline-стилем: data-player/playerVar() | #player-colour #inline-style | s | P2-425 |
-| P2-463 | ui |  | [src/ui/players/PlayerList.tsx:84](../../src/ui/players/PlayerList.tsx#L84) | h1 в списке, который стоит и в шторке, рядом с h2 других шторок: заголовок от DrawerSheet/SectionTitle | #section-title #drawer-sheet | s |  |
-| P2-467 | ui |  | [src/ui/players/SeatMap.tsx:96](../../src/ui/players/SeatMap.tsx#L96) | цвет игрока inline-стилем здесь и у значка призрака: data-player/playerVar() | #player-colour #inline-style | s | P2-425 |
-| P2-514 | ui |  | [src/ui/theme.css:253](../../src/ui/theme.css#L253) | .panel берут и тут же снимают с неё всё оформление (ещё .players-aside .layout-picker 709): LayoutPicker и TileNumberInput без .panel или с вариантом | #panel-reset | s |  |
+| P2-436 | ui |  | [src/ui/screens/GameScreen.tsx:155](../../src/ui/screens/GameScreen.tsx#L155) | своя строка подтверждения удаления, ещё один вид рядом с .player-confirm и строками LayoutPicker/MapStringImport: общий ConfirmBar | #confirm-bar | s |  |
+| P2-452 | ui |  | [src/ui/common/ShareConflict.tsx:13](../../src/ui/common/ShareConflict.tsx#L13) | модал собран руками (.stage + .link-dialog) без Escape и шапки с HexRemove, третья копия рядом с HexStage и FactionPicker: общий Modal (аудит 3.5) — P2 note: now the shared Modal; a head with HexRemove (and Escape closing it) would add a third way out of the choice and a new head row: needs prototype | #modal | s |  |
 
 <a id="ws-command-tokens"></a>
 ### Жетоны приказа и активация · `command-tokens` · волна 2
@@ -399,16 +338,14 @@ _Нет TODO._
 
 | ID | Тип | Правила | Где | Что | Теги | Разм. | Зависит |
 |---|---|---|---|---|---|---|---|
-| P2-200 | arch |  | [src/ui/map/stage/HexStage.tsx:68](../../src/ui/map/stage/HexStage.tsx#L68) | 440 строк: модал, три режима, правка чужих юнитов, оплата производства и счётчики в одном компоненте; разделить на оболочку и панели setup/battle/build, покупки вынести в хук | #hex-stage #srp | l |  |
-| P2-207 | arch |  | [src/ui/map/stage/HexStage.tsx:190](../../src/ui/map/stage/HexStage.tsx#L190) | Один обработчик нажатия на жетон ветвится по режиму, владельцу, виду и базовому составу: разбить на обработчики режимов | #hex-stage | m | P2-200 |
+| P2-200 | arch |  | [src/ui/map/stage/HexStage.tsx:71](../../src/ui/map/stage/HexStage.tsx#L71) | 440 строк: модал, три режима, правка чужих юнитов, оплата производства и счётчики в одном компоненте; разделить на оболочку и панели setup/battle/build, покупки вынести в хук | #hex-stage #srp | l |  |
 | P2-428 | arch |  | [src/ui/screens/PlanScreen.tsx:509](../../src/ui/screens/PlanScreen.tsx#L509) | редакторы и список взаимоисключаются цепочкой !session && !cardEntry && ..., редактор вложен в панель, UnitPicker и HexStage ещё глубже: один слот панели по состоянию автомата, шаги или отдельное меню по прототипу | #nesting | l | ~~P2-400~~ ✓ |
-| P2-219 | dup |  | [src/ui/map/stage/HexStage.tsx:126](../../src/ui/map/stage/HexStage.tsx#L126) | Тактическая запись ищется дважды (fightingFor и tactical ниже) по разным правилам: одна запись, которой принадлежат бой и покупки | #hex-stage | s | P2-200 |
-| P2-217 | ui |  | [src/ui/map/stage/HexStage.tsx:396](../../src/ui/map/stage/HexStage.tsx#L396) | Свойства тайла и контроль планеты лежат пятым-шестым уровнем под режимом: отдельный режим сегмента или поповер | #nesting #hex-stage | m |  |
-| P2-317 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:140](../../src/ui/plan/editors/TacticalEditor.tsx#L140) | «Бой» и «Производство» — блоки из одной кнопки; сделать строками .in-card |  | m | P2-316 |
-| P2-318 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:132](../../src/ui/plan/editors/TacticalEditor.tsx#L132) | UnitPicker раскрывается внутри редактора (6 уровней); шаги: пока открыт перелёт, показывать только его с «Назад» |  | m |  |
+| P2-217 | ui |  | [src/ui/map/stage/HexStage.tsx:380](../../src/ui/map/stage/HexStage.tsx#L380) | Свойства тайла и контроль планеты лежат пятым-шестым уровнем под режимом: отдельный режим сегмента или поповер | #nesting #hex-stage | m |  |
+| P2-317 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:142](../../src/ui/plan/editors/TacticalEditor.tsx#L142) | «Бой» и «Производство» — блоки из одной кнопки; сделать строками .in-card |  | m | ~~P2-316~~ ✓ |
+| P2-318 | ui |  | [src/ui/plan/editors/TacticalEditor.tsx:134](../../src/ui/plan/editors/TacticalEditor.tsx#L134) | UnitPicker раскрывается внутри редактора (6 уровней); шаги: пока открыт перелёт, показывать только его с «Назад» |  | m |  |
 | P2-337 | ui |  | [src/ui/plan/editors/StrategyEditor.tsx:155](../../src/ui/plan/editors/StrategyEditor.tsx#L155) | редактор длинный, 4 уровня; шаги: (1) карта и свойство, (2) параметры |  | m |  |
-| P2-346 | ui |  | [src/ui/plan/EntrySteps.tsx:66](../../src/ui/plan/EntrySteps.tsx#L66) | подробности тактики 7 уровней; строки «откуда → куда» с UnitTile, полная схема в поповере |  | m |  |
-| P2-349 | ui |  | [src/ui/plan/EntryList.tsx:53](../../src/ui/plan/EntryList.tsx#L53) | жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment |  | m |  |
+| P2-346 | ui |  | [src/ui/plan/EntrySteps.tsx:60](../../src/ui/plan/EntrySteps.tsx#L60) | подробности тактики 7 уровней; строки «откуда → куда» с UnitTile, полная схема в поповере |  | m |  |
+| P2-349 | ui |  | [src/ui/plan/EntryList.tsx:55](../../src/ui/plan/EntryList.tsx#L55) | жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment |  | m |  |
 | P2-355 | ui |  | [src/ui/plan/EntryList.tsx:213](../../src/ui/plan/EntryList.tsx#L213) | экспедиция раскрывается внутри строки (5 уровней); отдельное меню, как жетоны статуса |  | m | P2-349 |
 | P2-357 | ui |  | [src/ui/plan/ActionMenu.tsx:17](../../src/ui/plan/ActionMenu.tsx#L17) | список действий раскрывается в подвале списка записей (4 уровня); поповер над кнопкой |  | m |  |
 
@@ -443,6 +380,6 @@ _Нет TODO._
 
 ## По слоям и тегам
 
-Слои: domain 1, i18n 2, docs 2, ui 109.
+Слои: domain 1, i18n 2, docs 2, ui 47.
 
-Теги: #player-colour 14, #inline-style 13, #unit-tile 9, #svg 7, #confirm-bar 6, #modal 5, #section-title 5, #drawer-sheet 5, #player-dot 5, #hex-stage 4, #rivals 4, #section 4, #route-badge 3, #legend 3, #popover 3, #upgrade-toggle 3, #player-choice 3, #i18n 2, #warning-channel 2, #nesting 2, #command-token 2, #ingress 2, #panel 2, #floating-card 2, #Creuss 1, #comments 1, #for-token 1, #srp 1, #duplicate-of-domain 1, #drawer 1, #planet 1, #close-button 1, #chips 1, #overlays 1, #editor-frame 1, #editor-head 1, #danger 1, #selected-state 1, #small-button 1, #panel-reset 1.
+Теги: #confirm-bar 4, #player-dot 4, #unit-tile 3, #upgrade-toggle 3, #i18n 2, #warning-channel 2, #hex-stage 2, #nesting 2, #legend 2, #modal 2, #Creuss 1, #comments 1, #for-token 1, #srp 1, #duplicate-of-domain 1, #player-colour 1, #inline-style 1, #planet 1, #close-button 1, #popover 1, #section 1, #editor-frame 1, #player-choice 1, #editor-head 1, #selected-state 1, #small-button 1, #floating-card 1, #section-title 1.

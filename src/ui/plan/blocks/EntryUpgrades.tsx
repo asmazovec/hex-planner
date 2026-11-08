@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { hasLevelTwo, SHIP_KINDS } from '../../../domain/unitStats';
 import type { DataPack, Game, UnitId } from '../../../domain/types';
 import { UnitIcon } from '../../units/UnitIcon';
+import { playerStyle } from '../../primitives/player';
 
 export interface EntryUpgradesProps {
   /** What this entry upgrades. */
@@ -17,11 +18,10 @@ export interface EntryUpgradesProps {
 export function EntryUpgrades({ upgrades, before, game, pack, onChange }: EntryUpgradesProps) {
   const { t } = useTranslation();
   const toggle = (unit: UnitId) => onChange(upgrades.includes(unit) ? upgrades.filter(id => id !== unit) : [...upgrades, unit]);
-  // TODO(P2-385) #ws:ui-containers #type:ui #size:s #dep:P2-350 — --player inline-стилем у корня; data-player / playerVar()
   return (
     <div
       className="entry-upgrades" role="group" aria-label={t('ships.entryUpgrade')}
-      style={{ '--player': `var(--player-${game.color})` } as React.CSSProperties}
+      style={playerStyle('--player', game.color)}
     >
       {SHIP_KINDS.filter(kind => hasLevelTwo(game.faction, kind, pack)).map(kind => {
         const marked = upgrades.includes(kind);

@@ -1,4 +1,4 @@
-import { useEffect, useState, type AnimationEvent, type ReactNode } from 'react';
+import { useEffect, useState, type AnimationEvent, type CSSProperties, type ReactNode } from 'react';
 import { animates } from '../common/motion';
 
 export interface DrawerProps {
@@ -27,12 +27,29 @@ export function Drawer({ open, className, onDismiss, children }: DrawerProps) {
   const onEnd = (event: AnimationEvent) => {
     if (!open && event.target === event.currentTarget) setRendered(false);
   };
-  // TODO(P2-238) #ws:ui-containers #type:ui #size:m #drawer #drawer-sheet — Шторка даёт только коробку: каждое содержимое (легенда, улучшения, Thunder's Edge, игроки) собирает свой aside с role=dialog и h2; добавить DrawerSheet с title
   return (
     <>
       {onDismiss && <div className={`drawer-scrim${open ? '' : ' drawer-scrim-leaving'}`} data-testid="drawer-scrim" onClick={open ? onDismiss : undefined} />}
       <div className={`drawer ${className}${open ? '' : ' drawer-leaving'}`} onAnimationEnd={onEnd}>{children}</div>
     </>
+  );
+}
+
+export interface DrawerSheetProps {
+  title: string;
+  /** The sheet's own layout: `legend-panel`, `upgrades-panel`, `te-panel`. */
+  className: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}
+
+/** What a drawer holds: a sheet with its title, read as a dialog. */
+export function DrawerSheet({ title, className, style, children }: DrawerSheetProps) {
+  return (
+    <aside className={className} role="dialog" aria-label={title} style={style}>
+      <h2>{title}</h2>
+      {children}
+    </aside>
   );
 }
 

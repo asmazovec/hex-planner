@@ -10,6 +10,8 @@ import type { DataPack, Game, GameState, PlanetDef, TechType } from '../../domai
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { hexPoints, slotToPixel } from './geometry';
+import { CommandTokenMark, IngressMark } from './marks';
+import { playerStyle } from '../primitives/player';
 import { opponentName } from '../players/names';
 
 export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
@@ -123,12 +125,11 @@ function useHexLayout(input: HexLayoutInput) {
 
 /** A planet as the map draws it: its disc, the numbers, the marks of its traits and technology, and the strike when exhausted. */
 export function PlanetMark({ planet, control, holderColor, exhausted }: { planet: PlanetDef; control?: 'me' | 'enemy'; holderColor?: number; exhausted: boolean }) {
-  // TODO(P2-223) #ws:ui-containers #type:ui #size:m #player-colour #inline-style — Цвет игрока через var(--player-N) во style (здесь, у места, у жетонов, в HexMap, UpgradesPanel): playerVar() или data-player с правилом в теме
   return (
     <>
       <circle
         r={PLANET_BASE} className={`planet-disc planet-${control ?? 'free'}`}
-        style={holderColor ? { stroke: `var(--player-${holderColor})` } : undefined}
+        style={holderColor ? playerStyle('stroke', holderColor) : undefined}
       />
       {(planet.traits ?? []).slice(0, 2).map((trait, n, shown) => (
         <path
@@ -284,37 +285,31 @@ export function TileView({
         </text>
       )}
       {unknown && <text x={NUMBER_X} y={NUMBER_BASELINE} fontSize={NUMBER_FONT} className="tile-number">{tileId}</text>}
-      {/* TODO(P2-224) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style — Значок места красится style fill var(--player-N): playerVar() или data-player; тот же значок нужен легенде */}
       {tile && seat && (
         <g
           role="img" aria-label={t('map.seat', { n: seat.number })} className="tile-seat"
           transform={`translate(${seatX} ${SEAT_Y})`}
         >
-          <circle r={SEAT_RADIUS} style={{ fill: `var(--player-${seat.color})` }} />
+          <circle r={SEAT_RADIUS} style={playerStyle('fill', seat.color)} />
           <text y={2.3}>{seat.number}</text>
         </g>
       )}
 
-      {/* TODO(P2-226) #ws:ui-containers #type:dup #size:s #command-token #svg — SVG жетона приказа повторён здесь, у жетонов соперников ниже и в MapLegend: один компонент CommandTokenMark с цветом игрока */}
       {hasCommandToken && (
         <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
-          <circle r={7} className="token" />
-          <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />
+          <CommandTokenMark />
         </g>
       )}
 
-      {/* TODO(P2-225) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style #rivals — Жетон соперника красится style fill var(--player-N): playerVar() или data-player */}
       {rivalTokens.map((o, i) => (
         <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
-          <circle r={7} className="token" style={{ fill: `var(--player-${o.color})` }} />
-          <path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" />
+          <CommandTokenMark color={o.color} />
         </g>
       ))}
 
-      {/* TODO(P2-227) #ws:ui-containers #type:dup #size:s #ingress #svg — Метка ingress нарисована здесь и в MapLegend отдельно: один компонент IngressMark */}
       {ingress && (
         <g role="img" aria-label={t('map.ingress')} transform={`translate(${INGRESS_SPOT.x} ${INGRESS_SPOT.y}) scale(${INGRESS_SPOT.scale})`}>
-          <path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" />
+          <IngressMark />
         </g>
       )}
     </g>

@@ -1,5 +1,6 @@
 import { readyChoices, readyLimit } from '../../../../domain/strategy';
 import type { CardBlocks } from './kit';
+import { Section } from '../../../primitives/Section';
 
 /** The planets to ready and their limit come from the domain; the replay warns past the limit, so a button is never disabled. */
 export const diplomacyBlocks: CardBlocks = ({ t, game, pack, entry, before, effects, primary, setEffects, placer, list, pickButton, toggled }) => {
@@ -12,8 +13,7 @@ export const diplomacyBlocks: CardBlocks = ({ t, game, pack, entry, before, effe
       {primary && list(placer.at('system'))}
       {limit !== null && here.length === 0 && <p className="muted">{t('plan.strategy.noExhausted')}</p>}
       {here.length > 0 && (
-        <div className="editor-section" role="group" aria-label={t('plan.strategy.ready')}>
-          <strong>{t(limit === null ? 'plan.strategy.ready' : 'plan.strategy.readyTwo')}</strong>
+        <Section label={t('plan.strategy.ready')} title={t(limit === null ? 'plan.strategy.ready' : 'plan.strategy.readyTwo')} warnings={list(placer.at('ready'))}>
           <div className="pay-planets">
             {here.map(planet => (
               <button
@@ -24,8 +24,7 @@ export const diplomacyBlocks: CardBlocks = ({ t, game, pack, entry, before, effe
               </button>
             ))}
           </div>
-          {list(placer.at('ready'))}
-        </div>
+        </Section>
       )}
     </>
   );

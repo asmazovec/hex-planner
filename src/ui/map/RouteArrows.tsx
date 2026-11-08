@@ -1,8 +1,10 @@
-import { memo, useLayoutEffect, useRef, type CSSProperties } from 'react';
+import { memo, useLayoutEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { RouteArrow } from '../plan/tactical';
 import { curveThrough, slotToPixel, type Point, type Rect, type RouteShape } from './geometry';
 import type { RouteDraftView } from './useArrowDrag';
+import { BADGE_CUT, PickupTag, RouteBadge } from './marks';
+import { playerStyle } from '../primitives/player';
 
 /** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
 export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape;
@@ -30,10 +32,6 @@ function PreviewLine({ start, clientX, clientY, reverse, outline }: { start: Poi
 
 const svgPath = (points: Point[]): string => `M${points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`;
 
-// TODO(P2-230) #ws:ui-containers #type:dup #size:s #route-badge #svg — Вершины бейджа и выреза заданы строками, хотя это hexPoints(10.5) и hexPoints(15); бейдж номера и метка «+N» повторены в MapLegend и OrderHex в EntryList: общий компонент RouteBadge
-const BADGE_HEX = '10.5,0 5.25,9.1 -5.25,9.1 -10.5,0 -5.25,-9.1 5.25,-9.1';
-/** The gap in the arrows around a badge: the same hexagon, 1.4 times its size. */
-const BADGE_CUT = '15,0 7.5,13 -7.5,13 -15,0 -7.5,-13 7.5,-13';
 const CUT_MARGIN = 300;
 const HEAD_FORWARD = 5.6;
 const HEAD_BACK = 14.4;
@@ -66,9 +64,8 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
         </mask>
       )}
       <g mask="url(#route-gaps)">
-        {/* TODO(P2-228) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style #rivals — Цвет стрелки соперника через style --route: var(--player-N): data-player или playerVar() */}
         {arrows.map(a => (
-          <g key={a.key} className={`route route-${a.tone}`} style={a.player ? { '--route': `var(--player-${a.player})` } as CSSProperties : undefined} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
+          <g key={a.key} className={`route route-${a.tone}`} style={playerStyle('--route', a.player || undefined)} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
             <g className="route-casings">
               {a.shape.segments.map((segment, i) => <path key={i} d={svgPath(segment.points)} className={`route-casing${segment.gap ? ' route-gap' : ''}`} />)}
               <polygon points={arrowHead(a.shape.curve)} className="route-head-casing" />
@@ -79,12 +76,9 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
           </g>
         ))}
       </g>
-      {/* TODO(P2-229) #ws:ui-containers #type:ui #dep:P2-223 #size:s #player-colour #inline-style #rivals — Бейдж повторяет style --route стрелки: data-player или playerVar() */}
       {arrows.map(a => (
-        <g key={a.key} className={`route route-badge route-${a.tone}`} style={a.player ? { '--route': `var(--player-${a.player})` } as CSSProperties : undefined} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
-          <polygon points={BADGE_HEX} className="route-badge-casing" />
-          <polygon points={BADGE_HEX} className="route-badge-hex" />
-          <text y={4} className="route-badge-number">{a.number}</text>
+        <g key={a.key} className={`route route-badge route-${a.tone}`} style={playerStyle('--route', a.player || undefined)} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
+          <RouteBadge number={a.number} casing />
         </g>
       ))}
       {arrows.flatMap(a => a.pickups.map(({ slot, count }) => {
@@ -93,8 +87,7 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
         tagged.set(slot, row + 1);
         return (
           <g key={`${a.key}:${slot}`} className={`route route-tag route-${a.tone}`} transform={`translate(${at.x + TAG_OFFSET} ${at.y - TAG_OFFSET + row * TAG_STEP})`}>
-            <rect x={-14} y={-9} width={28} height={18} rx={9} />
-            <text y={4}>+{count}</text>
+            <PickupTag count={count} />
           </g>
         );
       }))}

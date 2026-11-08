@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { DataPack, Game } from '../../domain/types';
 import { ExpeditionWidget, type SliceOwners } from './ExpeditionWidget';
 import { FractureControl } from './FractureControl';
+import { DrawerSheet } from '../overlays/Drawer';
 
 export interface ThundersEdgePanelProps {
   game: Game;
@@ -15,13 +16,10 @@ export interface ThundersEdgePanelProps {
 /** The expedition and the Fracture, which are not plan entries, except for a contribution of mine. */
 export function ThundersEdgePanel({ game, pack, owners, onPlace, onMark }: ThundersEdgePanelProps) {
   const { t } = useTranslation();
-  const title = t('thundersEdge.title');
-  // TODO(P2-266) #ws:ui-containers #type:dup #dep:P2-238 #size:s #drawer-sheet — Свой aside role=dialog с h2: DrawerSheet
   return (
-    <aside className="te-panel" role="dialog" aria-label={title}>
-      <h2>{title}</h2>
+    <DrawerSheet className="te-panel" title={t('thundersEdge.title')}>
       <ExpeditionWidget game={game} pack={pack} owners={owners} onPlace={onPlace} />
       <FractureControl game={game} pack={pack} onMark={onMark} />
-    </aside>
+    </DrawerSheet>
   );
 }

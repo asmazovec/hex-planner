@@ -7,6 +7,7 @@ import { UNIT_ORDER } from '../units/unitOrder';
 import { UnitIcon } from '../units/UnitIcon';
 import { FactionComponents } from './FactionComponents';
 import { ShipStats, type ShipStatsProps } from './ShipStats';
+import { SectionTitle } from '../primitives/SectionTitle';
 
 /** The home tile: a hex of radius 64 around the middle of the picture. */
 const HEX_POINTS = hexPoints(64, { x: 75, y: 66 }, 1);
@@ -87,11 +88,11 @@ export function FactionCard({ faction, pack, expansions, live }: FactionCardProp
   return (
     <div className="player-body">
       <div>
-        <div className="player-sec">{t('players.home')}</div>
+        <SectionTitle as="div" className="player-sec">{t('players.home')}</SectionTitle>
         <HomeHex faction={faction} pack={pack} />
       </div>
       <div>
-        <div className="player-sec">{t('players.start')}</div>
+        <SectionTitle as="div" className="player-sec">{t('players.start')}</SectionTitle>
         <div className="ship-list">
           {ships.map(unit => (
             <div key={unit} className="ship" data-testid="ship">
@@ -104,7 +105,7 @@ export function FactionCard({ faction, pack, expansions, live }: FactionCardProp
         <div className="player-stat"><span>{t('players.commodities')}</span><b>{faction.commodities}</b></div>
       </div>
       <div>
-        <div className="player-sec">{t('players.tech')}</div>
+        <SectionTitle as="div" className="player-sec">{t('players.tech')}</SectionTitle>
         {faction.startingTech.map(id => <Tech key={id} id={id} pack={pack} />)}
         {choice && (
           <p className="tech-choice">
@@ -120,7 +121,7 @@ export function FactionCard({ faction, pack, expansions, live }: FactionCardProp
         <FactionComponents faction={faction} expansions={expansions} />
       </div>
       <div className="player-ships">
-        <div className="player-sec">{t('ships.title')}</div>
+        <SectionTitle as="div" className="player-sec">{t('ships.title')}</SectionTitle>
         <ShipStats factionId={faction.id} pack={pack} {...live} />
       </div>
     </div>

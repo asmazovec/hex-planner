@@ -1,4 +1,4 @@
-import { useRef, type CSSProperties, type ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
@@ -18,6 +18,8 @@ import { systemName } from '../map/systemName';
 import { TokenTiles } from './blocks/TokenTiles';
 import { flightOf } from '../feedback/warningPlaces';
 import { WarningList } from '../feedback/WarningText';
+import { SectionTitle } from '../primitives/SectionTitle';
+import { playerStyle } from '../primitives/player';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 
@@ -65,12 +67,11 @@ function StatusFields({ entry, game, pack, state, warnings }: {
         onChange={values => updateEntry(entry.id, values)}
       />
       <WarningList warnings={warnings} game={game} pack={pack} />
-      <h5 className="status-points">{t('plan.entries.roundPoints')}</h5>
+      <SectionTitle as="h5" className="status-points">{t('plan.entries.roundPoints')}</SectionTitle>
       {playersOf(game).map((player, index) => {
-        // TODO(P2-350) #ws:ui-containers #type:ui #size:s — цвет игрока inline-стилем var(--player-…) в .status-player ниже; PlayerDot / data-player / playerVar()
         const me = index === 0;
         return (
-          <div key={player.id} className="status-player" style={{ '--player': `var(--player-${player.color})` } as React.CSSProperties}>
+          <div key={player.id} className="status-player" style={playerStyle('--player', player.color)}>
             <Stepper
               name={shortName(pack, player.faction, t('players.player', { n: index + 1 }))}
               note={t('plan.entries.pointsTotal', { n: me ? state.vp : state.opponentVp[player.id] ?? player.vp })}
@@ -116,7 +117,7 @@ function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =>
   }
 }
 
-// TODO(P2-352) #ws:ui-containers #type:dup #size:s — бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент
+// TODO(P2-352) #ws:ui-containers #type:dup #size:s — бейдж номера нарисован третий раз (HexMap, MapLegend); один компонент — P2 note: the map and the legend now share RouteBadge; this one is an HTML number over a 12-wide hexagon in the row's own colours, and drawing the map's SVG badge here changes how the row looks: needs prototype
 /** The number of a tactical action, in the same hexagon as on its arrows. */
 function OrderHex({ number, label }: { number: number; label: string }) {
   return (
@@ -162,7 +163,7 @@ export function EntryList({
         const entries = round.entries.filter(e => e.phase === phase);
         return (
           <section key={phase} className="phase" aria-label={t(`plan.phases.${phase}`)}>
-            {phase === 'strategy' && strategy ? strategy : <h4 className="phase-title">{t(`plan.phases.${phase}`)}</h4>}
+            {phase === 'strategy' && strategy ? strategy : <SectionTitle as="h4" className="phase-title">{t(`plan.phases.${phase}`)}</SectionTitle>}
             {entries.length === 0 && !(phase === 'strategy' && strategy) && <p className="muted phase-auto">{t(`plan.phases.${phase}Empty`)}</p>}
             <ul className="entry-list">
               {entries.map(entry => {
@@ -177,9 +178,8 @@ export function EntryList({
                 // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
                 const fieldsOpen = entry.id === openId && (entry.type === 'statusTokens' || entry.type === 'expedition');
                 const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
-                // TODO(P2-353) #ws:ui-containers #type:ui #size:s #dep:P2-350 — --owner inline-стилем var(--player-…) у строки ниже; data-player / playerVar()
                 return (
-                  <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), '--owner': `var(--player-${rival.color})` } as CSSProperties : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
+                  <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}

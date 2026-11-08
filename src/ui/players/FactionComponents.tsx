@@ -4,6 +4,7 @@ import { factionSheet } from '../../domain/factionSheet';
 import type { ComponentPack, ExpansionId, FactionDef, SheetItem, SheetMech } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import { EXPANSION_NAMES } from '../common/expansions';
+import { SectionTitle } from '../primitives/SectionTitle';
 
 const PACK_NAMES: Record<ComponentPack, string> = { base: 'Base', ...EXPANSION_NAMES };
 
@@ -36,22 +37,22 @@ export function FactionComponents({ faction, expansions }: { faction: FactionDef
   return (
     <div className="player-sheet">
       <div>
-        <div className="player-sec">{t('players.abilities')}</div>
+        <SectionTitle as="div" className="player-sec">{t('players.abilities')}</SectionTitle>
         {abilities.map(item => <Component key={item.id} item={item} />)}
       </div>
       {leaders.length > 0 && (
         <div>
-          <div className="player-sec">{t('players.leaders')}</div>
+          <SectionTitle as="div" className="player-sec">{t('players.leaders')}</SectionTitle>
           {leaders.map(item => <Component key={item.id} item={item} kicker={t(`players.leader.${item.type}`)} />)}
         </div>
       )}
       {(mechs.length > 0 || breakthrough) && (
         <div>
-          {mechs.length > 0 && <div className="player-sec">{t('players.mech')}</div>}
+          {mechs.length > 0 && <SectionTitle as="div" className="player-sec">{t('players.mech')}</SectionTitle>}
           {mechs.map(item => <Component key={item.id} item={item} extra={mechStats(item)} />)}
           {breakthrough && (
             <>
-              <div className="player-sec">{t('players.breakthrough')}</div>
+              <SectionTitle as="div" className="player-sec">{t('players.breakthrough')}</SectionTitle>
               <Component item={breakthrough} />
             </>
           )}

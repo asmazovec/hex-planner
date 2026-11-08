@@ -21,7 +21,7 @@ export function UnitShop({ items, onPick }: { items: ShopItem[]; onPick: (kind: 
   return (
     <div className="shop">
       {items.map(({ kind, label, colour, price, bought, disabled }) => (
-        // TODO(P2-261) #ws:ui-containers #type:dup #needs:prototype #size:m #unit-tile — Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitButton, .stage-loss, UnitPictures, Stack): UnitTile с вариантами take/taken/loss/shop
+        // TODO(P2-261) #ws:ui-containers #type:dup #needs:prototype #size:m #unit-tile — Ячейка .shop-item — одна из пяти плиток юнита с числом (UnitTile take/taken/loss/mini/stack in ui/units): UnitTile с вариантами take/taken/loss/shop
         <button key={kind} type="button" className="shop-item" aria-label={label} disabled={disabled} onClick={() => onPick(kind)}>
           {(bought ?? 0) > 0 && <i>+{bought}</i>}
           <TokenPicture kind={kind} colour={colour} px={46} />

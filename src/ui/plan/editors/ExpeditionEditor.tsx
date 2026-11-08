@@ -25,7 +25,7 @@ export interface ExpeditionEditorProps {
 /** Choice of the expedition part and its payment. A part taken by someone else cannot be chosen. */
 export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack, warnings = [], onChange }: ExpeditionEditorProps) {
   const { t } = useTranslation();
-  // TODO(P2-356) #ws:ui-containers #type:arch #size:s — флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock
+  // TODO(P2-356) #ws:ui-containers #type:arch #size:s — флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock — P2 note: the one place is PlanScreen's manualPayments, which the big hex reads too; the expedition editor sits inside the entry row (EntryList), so the flag would travel through EntryList and PlanScreen state, both edited by ui-plan-screen now (P2-429 merges the two toggles there): left for that wave
   const [manual, setManual] = useState(false);
   const paidWith = slicePlanetCost(sliceId);
 

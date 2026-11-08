@@ -7,7 +7,6 @@ import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices,
 import type { CardEffects, DataPack, Game, GameState, Round, Warning } from '../../../domain/types';
 import { currentLanguage } from '../../../i18n';
 import { opponentName } from '../../players/names';
-import { UNIT_ORDER } from '../../units/unitOrder';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { systemName } from '../../map/systemName';
@@ -15,6 +14,10 @@ import { TokenTiles } from '../blocks/TokenTiles';
 import { limitsSystem, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { CARD_BLOCKS, type CardKit } from './cards';
+import { unitsText } from '../../units/unitsText';
+import { Section } from '../../primitives/Section';
+import { CardGrid } from '../blocks/CardGrid';
+import { MapPickButton } from '../../primitives/MapPickButton';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
@@ -73,15 +76,13 @@ export function StrategyEditor({
   const placer = placeWarnings(warnings);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
 
-  // TODO(P2-338) #ws:ui-containers #type:ui #section #dep:P2-316 — блоки (жетоны, Diplomacy, Politics, Trade, Technology, улучшения) собраны вручную из div.editor-section; Section
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
-    <div className="editor-section">
+    <Section warnings={list(placer.at('tokens'))}>
       <TokenTiles
         free={freeTokens(entry, game.expansions, before)} values={effects.tokens ?? {}} onChange={onTokens}
         pools={rearrange ? { tactic: before.tactic, fleet: before.fleet, strategy: before.strategy } : undefined}
       />
-      {list(placer.at('tokens'))}
-    </div>
+    </Section>
   );
 
   const upgradeRow = (
@@ -92,14 +93,13 @@ export function StrategyEditor({
   );
 
   const pickButton = (pick: MapPick, label: string, slot?: string) => (
-    <button type="button" className="option" aria-pressed={picking === pick} onClick={() => onPick(picking === pick ? null : pick)}>
+    <MapPickButton className="option" active={picking === pick} onToggle={() => onPick(picking === pick ? null : pick)}>
       {label}{slot ? ` · ${tile(slot)}` : ''}
-    </button>
+    </MapPickButton>
   );
 
   const production = effects.production;
-  const builtUnits = production && UNIT_ORDER.filter(u => (production.units[u] ?? 0) > 0)
-    .map(u => `${t(`unit.${u}`)} ${production.units[u]}`).join(', ');
+  const builtUnits = production && unitsText(production.units, t);
   const builtLine = builtUnits && <p className="muted">{t('plan.strategy.built', { list: `${tile(production.systemId)}: ${builtUnits}` })}</p>;
 
   const kit: CardKit = {
@@ -157,27 +157,17 @@ export function StrategyEditor({
     <div className="strategy-editor panel-stack">
       {/* TODO(P2-334) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 — голый h2 и подвал .strategy-foot вместо общей рамки редактора */}
       <h2>{t('plan.menu.strategic')}</h2>
-      {/* TODO(P2-335) #ws:ui-containers #type:dup #size:s — сетка карт стратегии повторяет StrategyCards.tsx; общий CardGrid */}
-      <div className="card-grid" role="group" aria-label={t('plan.strategy.cards')}>
-        {cards.map(c => (
-          <button
-            key={c.initiative} type="button" className="card-cell" aria-pressed={c.initiative === entry.card}
-            disabled={locked && c.initiative !== entry.card} onClick={() => pickCard(c.initiative)}
-          >
-            <b>{c.initiative}</b>{c.name}
-          </button>
-        ))}
-      </div>
+      <CardGrid
+        label={t('plan.strategy.cards')} cards={cards}
+        cellOf={c => ({ pressed: c.initiative === entry.card, disabled: locked && c.initiative !== entry.card, onClick: () => pickCard(c.initiative) })}
+      />
       <p className="muted strategy-lock">{locked && t('plan.strategy.locked')}</p>
       {/* The mode and the card decide these; a warning whose block is not on the screen stands here too, where it cannot be missed. */}
       {list([...cardWarnings, ...placer.rest()])}
       {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
       {cardBlocks}
       {entry.card !== CARD.technology && (entry.upgrades?.length ?? 0) > 0 && (
-        <div className="editor-section">
-          <strong>{t('plan.strategy.upgrades')}</strong>
-          {upgradeRow}
-        </div>
+        <Section title={t('plan.strategy.upgrades')}>{upgradeRow}</Section>
       )}
       <div className="strategy-foot">
         <button type="button" onClick={onCancel}>{t('plan.strategy.cancel')}</button>

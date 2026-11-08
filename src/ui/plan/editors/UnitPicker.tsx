@@ -2,12 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
 import type { DataPack, Game, GameState, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
-import { TokenPicture } from '../../units/UnitToken';
+import { UnitTile } from '../../units/UnitTile';
+import { Section } from '../../primitives/Section';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { availableFor, fliesNow, groupOf, hasUnits, pickedFrom, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
 import { systemName } from '../../map/systemName';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { SectionTitle } from '../../primitives/SectionTitle';
 
 export interface UnitPickerProps {
   game: Game;
@@ -24,8 +26,6 @@ export interface UnitPickerProps {
   onFly: () => void;
 }
 
-const PICTURE_PX = 58;
-
 /** A hexagon per place on board, filled for load, red past capacity. */
 function CargoPips({ load, capacity }: { load: number; capacity: number }) {
   return (
@@ -36,16 +36,6 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
         </svg>
       ))}
     </div>
-  );
-}
-
-// TODO(P2-320) #ws:ui-containers #type:ui #unit-tile — плитка юнита с числом: UnitButton, Stack (LandingBlock), UnitPictures (EntrySteps), плитки HexStage и UnitShop — разные компоненты и классы; один UnitTile с вариантами take/taken/loss/shop в ui/units
-export function UnitButton({ unit, count, colour, label, taken, showOne, onClick }: { unit: UnitId; count: number; colour: string; label: string; taken?: boolean; /** Writes a count of one too. */ showOne?: boolean; onClick: () => void }) {
-  return (
-    <button type="button" className={`pic${taken ? ' pic-taken' : ''}`} aria-label={label} onClick={onClick}>
-      <TokenPicture kind={unit} colour={colour} px={PICTURE_PX} />
-      {(showOne || count !== 1) && <i>{count}</i>}
-    </button>
   );
 }
 
@@ -109,10 +99,10 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
                 return (
                   <span key={unit} className="pic-pair">
                     {(left > 0 || (got === 0 && left === 0)) && (
-                      <UnitButton unit={unit} count={left} colour={colour} label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got + 1)} />
+                      <UnitTile variant="take" kind={unit} count={left} colour={colour} label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got + 1)} />
                     )}
                     {got > 0 && (
-                      <UnitButton unit={unit} count={got} colour={colour} taken label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got - 1)} />
+                      <UnitTile variant="taken" kind={unit} count={got} colour={colour} label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got - 1)} />
                     )}
                   </span>
                 );
@@ -124,23 +114,21 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
     );
   };
 
+  // TODO(P2-323) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 — текстовое «Закрыть» вместо HexRemove; «Удалить источник» в подвале повторяет крестик строки источника
   return (
-    <div className="editor-section unit-picker">
-      <div className="panel-head">
-        <strong>{t('plan.picker.title', { from: systemName(game, pack, source), to: systemName(game, pack, target) })}</strong>
-        {/* TODO(P2-323) #ws:ui-containers #type:ui #needs:prototype #dep:P2-319 — текстовое «Закрыть» вместо HexRemove; «Удалить источник» в подвале повторяет крестик строки источника */}
-        <button type="button" onClick={onClose}>{t('plan.picker.close')}</button>
-      </div>
+    <Section
+      className="unit-picker" title={t('plan.picker.title', { from: systemName(game, pack, source), to: systemName(game, pack, target) })}
+      headAction={<button type="button" onClick={onClose}>{t('plan.picker.close')}</button>}
+    >
       <small className="picker-distance">{t('plan.tactical.distance', { n: routeSteps(game, [source, ...viaOf(entry, source), target], pack) })}</small>
 
-      {/* TODO(P2-325) #ws:ui-containers #type:ui #size:s — заголовки подблоков h4.picker-title вручную; SectionTitle */}
-      <h4 className="picker-title">{t('plan.picker.inSystem', { name: systemName(game, pack, source) })}</h4>
+      <SectionTitle as="h4" className="picker-title">{t('plan.picker.inSystem', { name: systemName(game, pack, source) })}</SectionTitle>
       <div className="pics">
         {offered.map(unit => {
           const got = picked(source, unit);
           return (
-            <UnitButton
-              key={unit} unit={unit} count={Math.max(0, available(source, unit) - got)} colour={colour}
+            <UnitTile
+              key={unit} variant="take" kind={unit} count={Math.max(0, available(source, unit) - got)} colour={colour}
               label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(source, unit, got + 1)}
             />
           );
@@ -149,13 +137,13 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       </div>
       {noShipsHere && <p className="muted picker-note">{t('plan.picker.emptySource')}</p>}
 
-      <h4 className="picker-title">{t('plan.picker.flying')}</h4>
+      <SectionTitle as="h4" className="picker-title">{t('plan.picker.flying')}</SectionTitle>
       <div className="pics">
         {flyingNow.map(unit => {
           const got = picked(source, unit);
           return (
-            <UnitButton
-              key={unit} unit={unit} count={got} colour={colour} taken
+            <UnitTile
+              key={unit} variant="taken" kind={unit} count={got} colour={colour}
               label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(source, unit, got - 1)}
             />
           );
@@ -163,7 +151,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
         {flyingNow.length === 0 && <span className="muted">{t('plan.picker.nobody')}</span>}
       </div>
 
-      <h4 className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</h4>
+      <SectionTitle as="h4" className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</SectionTitle>
       <CargoPips load={load.load} capacity={load.capacity} />
       {Math.max(load.load, load.capacity) === 0 && <span className="muted">{t('plan.picker.noRoom')}</span>}
       <WarningList warnings={cargoWarnings} game={game} pack={pack} />
@@ -182,6 +170,6 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
         <button type="button" onClick={() => { onChange(withoutSource(game, pack, entry.moves, source)); onClose(); }}>{t('plan.picker.removeSource')}</button>
         <button type="button" className="primary" disabled={!group.some(m => hasUnits(m.units))} onClick={onFly}>{t('plan.picker.fly')}</button>
       </div>
-    </div>
+    </Section>
   );
 }

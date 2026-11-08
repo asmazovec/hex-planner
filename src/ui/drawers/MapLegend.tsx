@@ -5,10 +5,12 @@ import { UnitToken } from '../units/UnitToken';
 import type { TokenKind } from '../../domain/hexLayout';
 import type { DataPack } from '../../domain/types';
 import { UNIT_ORDER } from '../units/unitOrder';
+import { BADGE_CUT, CommandTokenMark, IngressMark, PickupTag, RouteBadge } from '../map/marks';
+import { DrawerSheet } from '../overlays/Drawer';
+import { SectionTitle } from '../primitives/SectionTitle';
+import { playerStyle } from '../primitives/player';
 
-// TODO(P2-244) #ws:ui-containers #type:dup #dep:P2-230 #size:s #route-badge #svg — Копии вершин гекса и бейджа из HexMap: брать hexPoints и RouteBadge
-const HEX = '15,0 7.5,13 -7.5,13 -15,0 -7.5,-13 7.5,-13';
-const BADGE = '10.5,0 5.25,9.1 -5.25,9.1 -10.5,0 -5.25,-9.1 5.25,-9.1';
+const HEX = BADGE_CUT;
 
 function Hex({ fill, state }: { fill: string; state?: string }) {
   return (
@@ -41,9 +43,9 @@ function Planet({ exhausted, control = 'me' }: { exhausted?: boolean; control?: 
   );
 }
 
-// TODO(P2-245) #ws:ui-css #type:ui #size:s #inline-style #legend — Цвет точки передаётся style background var(--…): модификатор класса legend-dot-<цвет> в теме
+/** Each colour has its modifier in the theme: `legend-dot-tech-biotic` and so on. */
 const Dots = ({ colours }: { colours: string[] }) => (
-  <>{colours.map(colour => <i key={colour} className="legend-dot" style={{ background: `var(--${colour})` }} />)}</>
+  <>{colours.map(colour => <i key={colour} className={`legend-dot legend-dot-${colour}`} />)}</>
 );
 
 function Row({ mark, text }: { mark: ReactNode; text: ReactNode }) {
@@ -54,11 +56,9 @@ function Row({ mark, text }: { mark: ReactNode; text: ReactNode }) {
 export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) {
   const { t } = useTranslation();
   const k = (key: string) => t(`map.legend.${key}`);
-  const title = (key: string) => <h3>{k(key)}</h3>;
-  // TODO(P2-239) #ws:ui-containers #type:dup #dep:P2-238 #size:s #drawer-sheet — Свой aside role=dialog с h2: DrawerSheet
+  const title = (key: string) => <SectionTitle>{k(key)}</SectionTitle>;
   return (
-    <aside className="legend-panel" role="dialog" aria-label={k('title')}>
-      <h2>{k('title')}</h2>
+    <DrawerSheet className="legend-panel" title={k('title')}>
 
       {title('systems')}
       <Row mark={<Hex fill="home" />} text={k('home')} />
@@ -98,12 +98,10 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
 
       {title('marks')}
       <Row mark={<Hex fill="system" state="activated" />} text={k('activated')} />
-      {/* TODO(P2-241) #ws:ui-containers #type:dup #dep:P2-226 #size:s #command-token #svg — Копия SVG жетона приказа из TileView: CommandTokenMark */}
-      <Row mark={<svg viewBox="-9 -9 18 18" className="legend-svg" aria-hidden="true"><circle r={7} className="token" /><path d="M-3,2 L0,-4 L3,2 Z" className="token-mark" /></svg>} text={k('command')} />
-      {/* TODO(P2-242) #ws:ui-containers #type:dup #dep:P2-227 #size:s #ingress #svg — Копия метки ingress из TileView: IngressMark */}
-      <Row mark={<svg viewBox="-9 -9 18 18" className="legend-svg" aria-hidden="true"><path d="M0,-8 L8,0 L0,8 L-8,0 Z" className="ingress" /></svg>} text={k('ingress')} />
-      {/* TODO(P2-240) #ws:ui-containers #type:dup #dep:P2-224 #size:s #player-colour #inline-style #legend — Значок места свёрстан заново с жёстким var(--player-2) во style: тот же значок, что на тайле */}
-      <Row mark={<i className="legend-seat" style={{ background: 'var(--player-2)' }}>2</i>} text={k('seat')} />
+      <Row mark={<svg viewBox="-9 -9 18 18" className="legend-svg" aria-hidden="true"><CommandTokenMark /></svg>} text={k('command')} />
+      <Row mark={<svg viewBox="-9 -9 18 18" className="legend-svg" aria-hidden="true"><IngressMark /></svg>} text={k('ingress')} />
+      {/* TODO(P2-240) #ws:ui-containers #type:dup #dep:P2-224 #size:s #player-colour #inline-style #legend — Значок места свёрстан заново с жёстким var(--player-2) во style: тот же значок, что на тайле — P2 note: the colour now comes through playerStyle; the tile's own SVG seat mark is smaller and drawn in the tile's scale, so putting it here changes how the legend looks: needs prototype */}
+      <Row mark={<i className="legend-seat" style={playerStyle('background', 2)}>2</i>} text={k('seat')} />
 
       {title('routes')}
       <Row mark={<Route tone="active" />} text={k('routeActive')} />
@@ -111,12 +109,11 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
       <Row mark={<Route tone="done" />} text={k('routeDone')} />
       <Row mark={<Route gap />} text={k('routeGap')} />
       <Row
-        mark={<svg viewBox="-13 -12 26 24" className="legend-svg" aria-hidden="true"><g className="route route-badge route-planned"><polygon points={BADGE} className="route-badge-hex" /><text y={4} className="route-badge-number">1</text></g></svg>}
+        mark={<svg viewBox="-13 -12 26 24" className="legend-svg" aria-hidden="true"><g className="route route-badge route-planned"><RouteBadge number={1} /></g></svg>}
         text={k('routeNumber')}
       />
-      {/* TODO(P2-246) #ws:ui-containers #type:dup #dep:P2-230 #size:s #route-badge #svg — Метка подбора «+N» свёрстана заново, как в RouteArrows: общий компонент */}
       <Row
-        mark={<svg viewBox="-16 -11 32 22" className="legend-svg" aria-hidden="true"><g className="route route-tag route-planned"><rect x={-14} y={-9} width={28} height={18} rx={9} /><text y={4}>+2</text></g></svg>}
+        mark={<svg viewBox="-16 -11 32 22" className="legend-svg" aria-hidden="true"><g className="route route-tag route-planned"><PickupTag count={2} /></g></svg>}
         text={k('routePickup')}
       />
 
@@ -128,6 +125,6 @@ export function MapLegend({ colour, pack }: { colour: string; pack: DataPack }) 
       <Row mark={<span className="hex-button"><RowIcon name="edit" /></span>} text={k('rowEdit')} />
       <Row mark={<span className="hex-button"><RowIcon name="done" /></span>} text={k('rowDone')} />
       <Row mark={<span className="hex-button"><RowIcon name="remove" /></span>} text={k('rowRemove')} />
-    </aside>
+    </DrawerSheet>
   );
 }

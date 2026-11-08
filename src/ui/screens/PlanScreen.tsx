@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState , type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { duplicateTiles, mapIsEmpty } from '../../domain/mapBuilder';
@@ -45,6 +45,7 @@ import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, reso
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
+import { PlayerChoice, PlayerDot, playerStyle } from '../primitives/player';
 
 /** How many rivals still fit on the line of whose action with their whole names. */
 const FULL_NAMES_UP_TO = 3;
@@ -492,10 +493,9 @@ export function PlanScreen() {
         </div>
         <div className="plan-panel">
           <div className="plan-scroll">
-            {/* TODO(P2-425) #ws:ui-containers #type:ui #size:s #player-colour #inline-style — плашка «действие за» красит край и точку inline-стилем var(--player-N): PlayerDot и playerVar()/data-player (аудит 3.7) */}
             {inHand && (
-              <div className="acting-as" style={{ '--owner': `var(--player-${inHand.color})` } as CSSProperties}>
-                <span className="owner-dot" aria-hidden="true" style={{ background: `var(--player-${inHand.color})` }} />
+              <div className="acting-as" style={playerStyle('--owner', inHand.color)}>
+                <PlayerDot color={inHand.color} />
                 {t('plan.actingFor', { name: playerName(pack, inHand.faction, inHand.seat, t) })}
               </div>
             )}
@@ -566,26 +566,20 @@ export function PlanScreen() {
                   strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
                   addAction={(
                     <div className="acting-add">
-                      {/* TODO(P2-430) #ws:ui-containers #type:ui #size:s #dep:P2-425 #player-colour #player-choice — выбор «за кого» занимает класс большого гекса stage-owners и красит кнопки inline-стилем: PlayerChoice (аудит 3.6) */}
-                      <div className="segment stage-owners acting-for" role="group" aria-label={t('plan.actingLabel')}>
-                        <button type="button" aria-pressed={!actor} style={{ '--owner': `var(--player-${game.color})` } as CSSProperties} onClick={() => setActingAs(null)}>
-                          {t('plan.mine')}
-                        </button>
-                        {opponentsBySeat(game).map(o => {
-                          const faction = pack.factions[o.faction];
-                          const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
-                          // All the players stay on one line: with many of them the colour and three letters tell them apart.
-                          const tag = faction ? nameTag(name) : String(o.seat);
-                          return (
-                            <button
-                              key={o.id} type="button" aria-pressed={actor === o.id} aria-label={name}
-                              style={{ '--owner': `var(--player-${o.color})` } as CSSProperties} onClick={() => setActingAs(o.id)}
-                            >
-                              {game.opponents.length > FULL_NAMES_UP_TO ? tag : name}
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <PlayerChoice
+                        label={t('plan.actingLabel')} className="acting-for" colour="owner"
+                        chosen={value => (value === null ? !actor : actor === value)} onPick={value => setActingAs(value)}
+                        options={[
+                          { value: null, label: t('plan.mine'), color: game.color },
+                          ...opponentsBySeat(game).map(o => {
+                            const faction = pack.factions[o.faction];
+                            const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
+                            // All the players stay on one line: with many of them the colour and three letters tell them apart.
+                            const tag = faction ? nameTag(name) : String(o.seat);
+                            return { value: o.id, label: game.opponents.length > FULL_NAMES_UP_TO ? tag : name, color: o.color, ariaLabel: name };
+                          }),
+                        ]}
+                      />
                       <ActionMenu onPick={onPick} />
                     </div>
                   )}
