@@ -504,13 +504,16 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .entry-main { display: flex; align-items: center; gap: 4px; }
 .entry-main button { padding: 0; background: transparent; border-color: transparent; color: var(--text-dim); }
 .entry-main .entry-handle { flex: none; width: 26px; min-width: 0; color: var(--text-dim); touch-action: none; cursor: grab; }
-.entry-main .entry-label { flex: 1; min-width: 0; text-align: left; padding: 4px 6px; color: var(--text); font-weight: 600; font-size: var(--font-s); line-height: 1.3; }
+.entry-main .entry-label { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; text-align: left; padding: 4px 6px; color: var(--text); font-weight: 600; font-size: var(--font-s); line-height: 1.3; }
+/* The number and the name keep to one line; a long name ends in an ellipsis. */
+.entry-label .entry-name { flex: 1; min-width: 0; }
+.entry-label .entry-title { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 /* What a closed entry holds, readable without opening it: the expedition's part and its payment. */
 .entry-label .entry-brief { display: block; font-weight: 400; font-size: var(--font-xs); color: var(--text-dim); }
 .hex-button::before { content: ''; position: absolute; inset: 1.5px; background: var(--hex-fill); clip-path: inherit; }
 .hex-button svg { position: relative; pointer-events: none; }
 .hex-button:focus-visible { --hex-edge: var(--accent); outline: none; }
-.order-hex { position: relative; flex: none; width: 26px; height: 23px; margin-left: 4px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--route-neutral); }
+.order-hex { position: relative; flex: none; width: 26px; height: 23px; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: var(--route-neutral); }
 .order-hex svg { position: absolute; inset: 0; }
 .order-hex polygon { fill: var(--badge-fill); stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
 .order-hex b { position: relative; font-weight: 700; }

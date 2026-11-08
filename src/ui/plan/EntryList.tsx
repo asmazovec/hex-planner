@@ -189,11 +189,14 @@ export function EntryList({
                   <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
-                      {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
-                      <button type="button" className="entry-label" aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
-                        {label}
-                        {/* Read without opening; the steps of a shown entry say it in full. */}
-                        {entry.type === 'expedition' && !shown && <>{' '}<small className="entry-brief">{expeditionBrief(entry, pack, t)}</small></>}
+                      {/* The number is part of the name: one button, one background under the pointer. */}
+                      <button type="button" className="entry-label" aria-label={label} aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
+                        {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
+                        <span className="entry-name">
+                          <span className="entry-title">{label}</span>
+                          {/* Read without opening; the steps of a shown entry say it in full. */}
+                          {entry.type === 'expedition' && !shown && <small className="entry-brief">{expeditionBrief(entry, pack, t)}</small>}
+                        </span>
                       </button>
                       {entry.type !== 'pass' && <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>}
                       <label className="icon-button entry-check">
