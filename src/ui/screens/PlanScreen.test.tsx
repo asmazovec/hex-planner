@@ -702,14 +702,15 @@ describe('the battle of a tactical action', () => {
     expect(dialog().getByText(/^Tap a token to record a loss/)).toBeVisible();
   });
 
-  test('a loss in that battle belongs to the action, and the fleet limit follows it', async () => {
+  test('a loss in that battle belongs to the action, and the fleet limit was already broken on arrival', async () => {
     await fourCruisersArrive();
     expect(screen.getByRole('group', { name: 'Action result' })).toHaveTextContent(/fleet pool/);
     await startBattle();
     await userEvent.click(dialog().getByRole('button', { name: /^Cruiser ×4/ }));
     expect(action().losses).toEqual({ cruiser: 1 });
     expect(entries().filter(e => e.type === 'adjustment')).toHaveLength(1);
-    expect(screen.queryByRole('group', { name: 'Action result' })).toBeNull();
+    // 37.3: the fleet pool holds the moment the ships arrive, so the battle does not undo it.
+    expect(screen.getByRole('group', { name: 'Action result' })).toHaveTextContent(/fleet pool/);
     await userEvent.click(within(dialog().getByRole('group', { name: 'Losses, mine' })).getByRole('button', { name: /Give back Cruiser/ }));
     expect(action().losses).toBeUndefined();
     expect(screen.getByRole('group', { name: 'Action result' })).toHaveTextContent(/fleet pool/);
@@ -761,7 +762,7 @@ describe('the battle of a tactical action', () => {
     expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
   });
 
-  test('a unit of the landing lost in the battle leaves the landing, and giving it back makes it free to land again', async () => {
+  test('a unit of the landing lost in the battle leaves the landing, and giving it back lands it again (78.6.2)', async () => {
     await chooseSystem();
     await addRouteByTaps(HOME, TARGET);
     await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
@@ -782,9 +783,9 @@ describe('the battle of a tactical action', () => {
 
     await userEvent.click(within(dialog().getByRole('group', { name: 'Losses, mine' })).getByRole('button', { name: /Give back Infantry/ }));
     expect(action().losses).toBeUndefined();
-    expect(action().landings).toEqual([{ planetId: 'quann', units: { infantry: 1 } }]);
+    expect(action().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
     await userEvent.click(dialog().getByRole('button', { name: 'Close' }));
-    expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
+    expect(screen.getByRole('button', { name: 'Give back Infantry' })).toHaveTextContent('2');
   });
 
   test('the last unit of a landing lost in the battle takes the planet with it', async () => {
@@ -796,7 +797,8 @@ describe('the battle of a tactical action', () => {
     expect(project(game(), plan(), 'forecast', pack).state.control.quann).toBe('me');
     await startBattle();
     await userEvent.click(dialog().getByRole('button', { name: /^Infantry ×1/ }));
-    expect(action().landings).toEqual([]);
+    // The landing stays, empty, so that giving the unit back lands it there again.
+    expect(action().landings).toEqual([{ planetId: 'quann', units: {} }]);
     expect(project(game(), plan(), 'forecast', pack).state.control.quann).toBeUndefined();
   });
 

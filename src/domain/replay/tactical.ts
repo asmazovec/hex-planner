@@ -5,8 +5,8 @@
  */
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { activate, checkActivation } from './activation';
-import { removeGroundLosses, removeLosses } from './combat';
-import { landUnits } from './invasion';
+import { canFight, checkAfterCombat, checkArrival, removeGroundLosses, removeLosses } from './combat';
+import { gainControl, landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
 import { payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { unitIds, type TacticalEntry } from './state';
@@ -18,17 +18,31 @@ function movement(game: Game, state: GameState, target: string, entry: TacticalE
   return moveUnits(game, state, target, entry.moves, pack, warnings);
 }
 
-/** What happens in the target after the moves: losses, the landing, then what was built is placed. */
-// TODO(P2-023) #ws:invasion #type:model #rule:27.2 #rule:27.3 #rule:49-note-4 #rule:54.1 #test:027-custodians-token #test:049-invasion #test:054-mecatol-rex #size:m #needs:decision #custodians — Нет жетона custodians: высадка на Mecatol Rex без 6 влияния и без очка. Решить, моделировать ли
-function landAndBuild(
-  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
+/**
+ * Steps 89.3 and 89.4 in the target after the moves: the battle's losses, the landing, the losses on the planets, then
+ * control of the planets still held. What the surviving ships cannot carry is checked between the two (16.3.3).
+ */
+function fightAndLand(
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
 ): void {
-  // TODO(P2-019) #ws:combat-order #type:bug #rule:76.2 #rule:89.3 #test:076-ships #test:089-tactical-action #size:m #fleet-pool #capacity #battle — Потери снимаются до проверки флота и до высадки: флот надо проверять при прилёте (37.3), а высадку ограничивать местами на борту после боя (16.3.3). Порядок: прилёт → флот → бой → места на борту → высадка → производство
-  removeLosses(state, target, entry, warnings);
-  landUnits(state, target, entry, warnings);
+  if (!lossesTaken) removeLosses(state, target, entry, warnings);
+  warnings.push(...checkAfterCombat(game, state, target, entry, pack));
+  const landedOn = landUnits(game, state, target, entry, pack, warnings);
   removeGroundLosses(state, entry, warnings);
+  gainControl(state, landedOn, pack);
+}
+
+/** What happens in the target after the moves: the battle and the landing, then what was built is placed. */
+function landAndBuild(
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
+): void {
+  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken);
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
 }
+
+/** A warning of the final check that the action already gave for the same system, at arrival or after the battle, is not repeated. */
+const fresh = (found: Warning[], given: Warning[]): Warning[] =>
+  found.filter(w => !given.some(g => g.code === w.code && g.params.systemId === w.params.systemId));
 
 export function applyTactical(
   game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[],
@@ -39,9 +53,13 @@ export function applyTactical(
   activate(state, target, entry);
   const groups = movement(game, state, target, entry, pack, warnings);
   warnings.push(...checkGroups(game, state, groups, pack));
-  landAndBuild(game, state, target, entry, pack, warnings);
+  // Ships lost where nothing could fight them were lost on the way, before the fleet pool counts the arrival.
+  const onTheWay = !canFight(game, state, target, pack);
+  if (onTheWay) removeLosses(state, target, entry, warnings);
+  if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
+  landAndBuild(game, state, target, entry, pack, warnings, onTheWay);
   payProduction(game, state, entry, pack, warnings);
-  if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...checkSystem(game, state, target, pack));
+  if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));
 }
 
 /** The numbers behind `capacityGroup` and `fleetPool`, for the source being edited. */
@@ -65,7 +83,6 @@ export function productionPlaces(game: Game, entry: TacticalEntry, before: GameS
   if (target === null) return [];
   const state = structuredClone(before);
   moveUnits(game, state, target, entry.moves, pack, []);
-  removeLosses(state, target, entry, []);
-  landUnits(state, target, entry, []);
+  fightAndLand(game, state, target, entry, pack, []);
   return placesOf(game, state, target, entry.production, pack, entry.productionGround);
 }

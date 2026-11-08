@@ -369,7 +369,13 @@
       "constructionUnits": "The card text gives the secondary a structure only: building units here may break the rules.",
       "speedShort": "{{unit}} from {{from}} has speed {{move}}, and the route takes {{steps}} steps.",
       "sourceActivated": "{{from}} already holds your command token: by the rules ships cannot move out of it.",
-      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass."
+      "routeBlocked": "The route from {{from}} runs into {{system}}: by the rules asteroids, a supernova, a nebula and other players' ships do not let it pass.",
+      "shipOnPlanet": "{{unit}} is a ship and cannot land on {{planet}}: only ground forces land.",
+      "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
+      "custodians": "The custodians token is still on {{planet}}: removing it costs 6 influence, which the plan does not record; the first to land gains 1 victory point.",
+      "structureLimit": "Too many structures: a planet holds one space dock and two PDS; Construction places up to two (one dock at most), its secondary one; the reinforcements hold 3 docks and 6 PDS.",
+      "structureNotControlled": "{{planet}} is not your planet: structures go only on planets you control.",
+      "structureOutsideSystem": "{{planet}} is not in {{system}}, where the secondary placed its token."
     },
     "phases": {
       "strategy": "Strategy",

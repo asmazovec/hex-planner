@@ -32,6 +32,13 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   systemHasToken: { rules: ['5.2', '89.1'], step: 'activation' },
   constructionUnits: { rules: ['24.3'], step: 'card' },
   sliceTaken: { rules: ['expedition-5'], step: 'expedition' },
+  // combat-order, invasion, structures
+  shipOnPlanet: { rules: ['76.1'], step: 'invasion' },
+  landingOutsideSystem: { rules: ['49.2', '89.4'], step: 'invasion' },
+  custodians: { rules: ['54.1', '27.2', '49-note-4'], step: 'invasion' },
+  structureLimit: { rules: ['85.4', '24.2', '24.3', '24.4', '63.3', '79.3', '85.5', '85.6'], step: 'card' },
+  structureNotControlled: { rules: ['24.2', '24.3'], step: 'card' },
+  structureOutsideSystem: { rules: ['24.3'], step: 'card' },
 };
 
 /** The rule and step of a code, from the registry. */

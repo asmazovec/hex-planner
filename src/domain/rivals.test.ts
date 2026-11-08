@@ -105,7 +105,8 @@ describe('an opponent\'s action in my plan', () => {
   test('a landing takes the planet for them on my map', () => {
     const base = started();
     const id = rivalId(base);
-    const planet = 'mr';
+    // The pack has Thunder's Edge, so its Mecatol Rex stands in the active system.
+    const planet = 'mrte';
     const game = withEntries(base, [{ type: 'tactical', owner: id, systemId: '0,0', moves: [{ from: slotOf(base, base.opponents[0].seat), units: { infantry: 1 } }], landings: [{ planetId: planet, units: { infantry: 1 } }], production: {}, payment: noPay }]);
     const { state } = project(game, planOf(game), 'forecast', pack);
     expect(state.control[planet]).toBe('enemy');
