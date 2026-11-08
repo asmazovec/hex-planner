@@ -12,7 +12,7 @@ import { EntryUpgrades } from '../blocks/EntryUpgrades';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { systemName } from '../../map/systemName';
 import { TokenTiles } from '../blocks/TokenTiles';
-import { placeWarnings } from '../../feedback/warningPlaces';
+import { limitsSystem, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { CARD_BLOCKS, type CardKit } from './cards';
 
@@ -116,7 +116,8 @@ export function StrategyEditor({
     if (!open) onUpdate({ effects: { ...effects, payment: autoPay(before, cost.amount, cost.kind, pack) } });
   };
 
-  const cardWarnings = placer.at('card');
+  // The card and the turn it is played in; a limit of the system stands with what the card builds.
+  const cardWarnings = [...placer.at('card'), ...placer.at('action', w => !limitsSystem(w))];
   /** Whether that side of this card spends a strategy token: the domain decides, from the round's cards for my primary. */
   const costsOf = (asPrimary: boolean) => card !== undefined && costsStrategyToken(
     { ...entry, card: card.initiative, ...playOf(round, game.playerCount, card.initiative, asPrimary, mine) } as CardEntry,

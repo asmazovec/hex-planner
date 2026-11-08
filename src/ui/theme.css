@@ -522,6 +522,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .entry-steps b { color: var(--text); font-weight: 600; }
 .entry-steps small { display: block; margin-top: 2px; font-size: inherit; }
 .entry-steps .warning-text { display: block; margin-top: 3px; }
+.entry-steps .warning-list { flex-basis: 100%; padding: 0; }
 .upics { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
 /* TODO(P2-539) #ws:ui-containers #type:dup #size:s #unit-tile #dep:P2-548 — .upic (32px) ещё одна плитка юнита с числом, бейдж i повторяет .pic i: перейти на общий UnitTile */
 .upic { position: relative; width: 32px; height: 32px; }

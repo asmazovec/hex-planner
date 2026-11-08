@@ -16,7 +16,8 @@ import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
 import { systemName } from '../map/systemName';
 import { TokenTiles } from './blocks/TokenTiles';
-import { WarningList, WarningText } from '../feedback/WarningText';
+import { flightOf } from '../feedback/warningPlaces';
+import { WarningList } from '../feedback/WarningText';
 
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 
@@ -171,6 +172,8 @@ export function EntryList({
                 const rival = game.opponents.find(o => o.id === entry.owner);
                 const list = warnings[entry.id] ?? [];
                 const shown = entry.id === shownId;
+                // The steps of a shown action say what goes wrong with a flight by that flight; the row keeps the rest.
+                const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
                 // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
                 const fieldsOpen = entry.id === openId && (entry.type === 'statusTokens' || entry.type === 'expedition');
                 const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
@@ -195,13 +198,8 @@ export function EntryList({
                       </label>
                       <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
-                    {/* TODO(P2-354) #ws:ui-warnings #type:ui #size:s #warning-channel — своя ul.warning-list мимо WarningList; WarningList variant="row" */}
-                    {list.length > 0 && !fieldsOpen && (
-                      <ul className="warning-list">
-                        {list.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
-                      </ul>
-                    )}
-                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} />}
+                    {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} game={game} pack={pack} />}
+                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
                         <StatusFields entry={entry} game={game} pack={pack} state={state} warnings={list} />

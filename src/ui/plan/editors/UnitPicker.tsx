@@ -6,6 +6,7 @@ import { TokenPicture } from '../../units/UnitToken';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { fliesNow, groupOf, hasUnits, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../tactical';
 import { systemName } from '../../map/systemName';
+import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 
 export interface UnitPickerProps {
@@ -57,6 +58,9 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const known = UNIT_ORDER.filter(u => pack.units[u]);
   const flying = known.filter(u => fliesNow(game, pack, before.upgrades, u));
   const cargo = known.filter(u => !flying.includes(u));
+  // What rides with the ships stands by the cargo, the rest of the flight under its line.
+  const placer = placeWarnings(warnings);
+  const cargoWarnings = placer.at('cargo');
 
   const picked = (from: string, unit: UnitId): number =>
     group.filter(m => m.from === from).reduce((sum, m) => sum + (m.units[unit] ?? 0), 0);
@@ -168,8 +172,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       <h4 className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</h4>
       <CargoPips load={load.load} capacity={load.capacity} />
       {Math.max(load.load, load.capacity) === 0 && <span className="muted">{t('plan.picker.noRoom')}</span>}
-      {/* TODO(P2-324) #ws:ui-warnings #type:arch #size:s #dep:P2-315 — предупреждения делятся по коду прямо в разметке (capacityGroup у груза, остальное внизу); раскладку давать placeWarnings */}
-      <WarningList warnings={warnings.filter(w => w.code === 'capacityGroup')} game={game} pack={pack} />
+      <WarningList warnings={cargoWarnings} game={game} pack={pack} />
 
       <ol className="stops">
         {line(source, 'start')}
@@ -179,7 +182,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
 
       {/* Over the limit the warning below says it, in the look of every warning. */}
       {ships <= fleet && <p className="picker-fleet muted">{t('plan.picker.fleet', { ships, fleet })}</p>}
-      <WarningList warnings={warnings.filter(w => w.code !== 'capacityGroup')} game={game} pack={pack} />
+      <WarningList warnings={placer.rest()} game={game} pack={pack} />
 
       <div className="picker-foot">
         <button type="button" onClick={() => { onChange(withoutSource(game, pack, entry.moves, source)); onClose(); }}>{t('plan.picker.removeSource')}</button>

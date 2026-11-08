@@ -7,7 +7,7 @@ import { gameAs, opponentsBySeat, planetHolder } from '../../../domain/players';
 import { isOnMap, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, structureOwner, systemMeters, systemPlanets, tileIdOf } from '../../../domain/project';
 import { startingDocks } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
-import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId } from '../../../domain/types';
+import type { DataPack, Entry, GameState, StructureKind, UnitCounts, UnitId, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { lossesOf, withAdjustedUnit, withCount, withLoss, type TacticalEntry } from '../../plan/tactical';
 import { HexRemove } from '../../primitives/Icon';
@@ -304,22 +304,24 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
-  // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи
+  // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и вместимости решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
   const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);
   const spendable = readyResources(payer, pack) + payer.tradeGoods;
   const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.upgrades, pack);
-  const meterRows = [
-    { key: 'resources', now: spent, of: spendable, over: spent > spendable },
-    { key: 'fleet', now: meters.ships, of: acting.fleet, over: meters.ships > acting.fleet },
-    { key: 'capacity', now: meters.load, of: meters.capacity, over: meters.load > meters.capacity },
-  ];
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
+  const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
+  /** Over the limit is what the domain says of the entry. */
+  const breaks = (code: WarningCode, counted: boolean) => (warningEntry ? ownWarnings.some(w => w.code === code) : counted);
+  const meterRows = [
+    { key: 'resources', now: spent, of: spendable, over: breaks('shortResources', spent > spendable) },
+    { key: 'fleet', now: meters.ships, of: acting.fleet, over: breaks('fleetPool', meters.ships > acting.fleet) },
+    { key: 'capacity', now: meters.load, of: meters.capacity, over: breaks('capacitySystem', meters.load > meters.capacity) },
+  ];
   // The shop answers for what is bought and how it is paid; a route or a landing has its own block in the editor.
   const shopPlaces: WarningPlace[] = onPurchase ? ['production', 'payment', 'units'] : ['production', 'payment'];
-  const entryWarnings = (warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [])
-    .filter(w => placesOf(w).some(place => shopPlaces.includes(place)));
+  const entryWarnings = ownWarnings.filter(w => placesOf(w).some(place => shopPlaces.includes(place)));
 
   const mapValue = game.map[slot];
   const tileId = isOnMap(game, slot) ? tileIdOf(game, slot) : pack.tiles[slot] ? slot : '';
@@ -364,8 +366,7 @@ export function HexStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
           )}
 
           {/* It answers a tap on the hex, so it stands at the top of the panel beside it. */}
-          {/* TODO(P2-212) #ws:ui-warnings #type:ui #size:s #warning-channel — Пояснение к нажатию свёрстано как p.warning-text: показать через WarningList с произвольным текстом (message) */}
-          {tapNote && <p className="warning-text place-warnings" role="status">{t(`stage.tapNote.${tapNote}`)}</p>}
+          {tapNote && <WarningList message={t(`stage.tapNote.${tapNote}`)} />}
 
           {mode === 'battle' && (
             <>

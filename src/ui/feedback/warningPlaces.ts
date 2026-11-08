@@ -1,78 +1,68 @@
-import type { DataPack, Game, Warning, WarningCode } from '../../domain/types';
-import { groupOf, type Move } from '../plan/tactical';
+import { RULES } from '../../domain/rules/registry';
+import type { DataPack, Entry, Game, RuleStep, Warning, WarningCode } from '../../domain/types';
+import { groupOf, sourcesOf, type Move } from '../plan/tactical';
 
 /** The block of an editor where the thing a warning speaks of is set up. */
-export type WarningPlace = 'route' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action' | 'ready' | 'research';
+export type WarningPlace =
+  | 'route' | 'cargo' | 'battle' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action' | 'ready' | 'research';
 
-// TODO(P2-381) #ws:ui-warnings #type:arch — место предупреждения выводится из кода таблицей в UI; брать шаг и место из доменного нарушения, таблицу удалить
-const PLACES: Record<WarningCode, WarningPlace[]> = {
-  shortResources: ['payment'],
-  shortInfluence: ['payment'],
-  shortTradeGoods: ['payment'],
-  planetExhausted: ['payment'],
-  capacityGroup: ['route'],
-  speedShort: ['route'],
-  routeBlocked: ['route'],
-  sourceActivated: ['route'],
-  // The result of the whole action, and said where the ships are chosen too. A card has only its production.
+/** Where the warnings of a step stand: the step of the domain decides the block, so a new rule needs no edit here. */
+export const STEP_PLACES: Record<RuleStep, WarningPlace[]> = {
+  round: ['action'],
+  card: ['card'],
+  activation: ['system'],
+  movement: ['route'],
+  transport: ['cargo'],
+  combat: ['battle'],
+  invasion: ['landing'],
+  production: ['production'],
+  payment: ['payment'],
+  status: ['tokens'],
+  expedition: ['slice'],
+};
+
+/**
+ * Overrides of the step, only where one step speaks to more than one block: `code` at any step, `code@step` at that step.
+ * The limits of the system are the result of the whole action, and are said where the ships are chosen too; a card has only its production.
+ */
+const PLACES: Partial<Record<WarningCode | `${WarningCode}@${RuleStep}`, WarningPlace[]>> = {
   capacitySystem: ['route', 'action', 'production'],
   fleetPool: ['route', 'action', 'production'],
-  unitsMissing: ['route', 'units'],
-  landingOverLimit: ['landing'],
-  sliceTaken: ['slice'],
-  shortStrategy: ['card'],
-  primaryRepeated: ['card'],
-  tokensOver: ['tokens'],
-  poolNegative: ['tokens'],
-  systemHasToken: ['system'],
+  // A manual change of the units of a system.
+  'unitsMissing@round': ['units'],
+  'poolNegative@card': ['tokens'],
   constructionUnits: ['production'],
-  // command-tokens, round-flow, payment
-  noReinforcements: ['tokens'],
-  actionAfterPass: ['action'],
-  passBeforeStrategy: ['action'],
-  actionOutsidePhase: ['action'],
-  planetNotControlled: ['payment'],
-  readyNotControlled: ['card'],
-  // strategy-cards
-  foreignPrimary: ['card'],
-  ownSecondary: ['card'],
-  secondaryRepeated: ['card'],
   readyOverLimit: ['ready'],
   diplomacySystem: ['system'],
   researchOverLimit: ['research'],
   researchOwned: ['research'],
-  // combat-order, invasion, structures
-  shipOnPlanet: ['landing'],
-  landingOutsideSystem: ['landing'],
-  custodians: ['landing'],
-  structureLimit: ['card'],
-  structureNotControlled: ['card'],
-  structureOutsideSystem: ['card'],
-  // production, thunders-edge
-  noProduction: ['production'],
-  productionBlockaded: ['production'],
-  blockaded: ['production'],
-  productionOver: ['production'],
-  reinforcementsOut: ['production'],
-  productionPlace: ['production'],
-  scarProduction: ['production'],
   expeditionUnpaid: ['payment'],
-  expeditionTwicePerTurn: ['slice'],
-  stationGround: ['landing'],
   stationStructure: ['system'],
-  // transport
-  pickupOffRoute: ['route'],
 };
 
-export const placesOf = (warning: Warning): WarningPlace[] => PLACES[warning.code];
+/** The step of a warning: its own, or that of its rule when it was written by hand. */
+export const stepOf = (warning: Warning): RuleStep => warning.step ?? RULES[warning.code].step;
 
-export const limitsSystem = (warning: Warning): boolean => warning.code === 'capacitySystem' || warning.code === 'fleetPool';
+export const placesOf = (warning: Warning): WarningPlace[] =>
+  PLACES[`${warning.code}@${stepOf(warning)}`] ?? PLACES[warning.code] ?? STEP_PLACES[stepOf(warning)];
+
+/** Every place a warning can be given to, for the contract that each of them has a block. */
+export const allPlaces = (): WarningPlace[] => [...new Set([...Object.values(STEP_PLACES), ...Object.values(PLACES)].flat())];
+
+/** A limit of the whole system: it stands in the result of the action. */
+export const limitsSystem = (warning: Warning): boolean => placesOf(warning).includes('action') && placesOf(warning).includes('route');
 
 /** Whether a warning speaks of the ships or the cargo of one source of a tactical action. */
 export function ofSource(warning: Warning, game: Game, pack: DataPack, moves: Move[], source: string): boolean {
-  if (warning.code === 'capacityGroup' || warning.code === 'speedShort' || warning.code === 'routeBlocked' || warning.code === 'sourceActivated') return warning.params.from === source;
   if (warning.code === 'unitsMissing') return groupOf(game, pack, moves, source).some(m => m.from === warning.params.where);
-  return false;
+  const from = warning.place?.source ?? warning.params.from;
+  return (stepOf(warning) === 'movement' || stepOf(warning) === 'transport') && !limitsSystem(warning) && from === source;
+}
+
+/** The source of a tactical action whose flight a warning speaks of, if it speaks of one. */
+export function flightOf(warning: Warning, game: Game, pack: DataPack, entry: Entry): string | undefined {
+  if (entry.type !== 'tactical') return undefined;
+  return sourcesOf(game, pack, entry).find(source => ofSource(warning, game, pack, entry.moves, source));
 }
 
 export interface WarningPlacer {

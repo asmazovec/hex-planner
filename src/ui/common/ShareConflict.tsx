@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGame, type GameStore } from '../../state/gameStore';
+import { WarningList } from '../feedback/WarningText';
 
 function ConflictDialog({ conflict }: { conflict: NonNullable<GameStore['linkConflict']> }) {
   const { t } = useTranslation();
@@ -18,8 +19,7 @@ function ConflictDialog({ conflict }: { conflict: NonNullable<GameStore['linkCon
           {t('share.newName')}
           <input type="text" value={name} onChange={e => setName(e.target.value)} />
         </label>
-        {/* TODO(P2-453) #ws:ui-warnings #type:ui #size:s #warning-channel — предупреждение собрано классами warning-text place-warnings: WarningList с произвольным текстом */}
-        {taken && <p className="warning-text place-warnings">{t('share.nameTaken')}</p>}
+        {taken && <WarningList message={t('share.nameTaken')} />}
         <button type="button" className="primary" disabled={wanted === '' || taken} onClick={() => void resolve({ newName: wanted })}>{t('share.createNew')}</button>
         <button type="button" onClick={() => void resolve({ keepSaved: true })}>{t('share.keepSaved')}</button>
       </div>

@@ -93,12 +93,15 @@ export function TacticalEditor({
 
   const placer = placeWarnings(warnings);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
-  // TODO(P2-315) #ws:ui-warnings #type:arch — места предупреждений перелёта и боя решаются фильтрами по коду и params.where (pickerWarnings, battleWarnings); нужны шаг и место из домена (WarningPlace 'battle'), а не разбор кода в редакторе
+  /** The warnings of the flight from one source: its route and its cargo. */
+  const flight = (source: string, also: (w: Warning) => boolean = () => false) => {
+    const mine = (w: Warning) => also(w) || ofSource(w, game, pack, entry.moves, source);
+    return [...placer.at('route', mine), ...placer.at('cargo', mine)];
+  };
   // The open picker is where this flight is set up: it stands in for the row of its source, and it counts the fleet too.
-  const pickerWarnings = pickerFrom === null ? [] : placer.at('route', w => limitsSystem(w) || ofSource(w, game, pack, entry.moves, pickerFrom));
+  const pickerWarnings = pickerFrom === null ? [] : flight(pickerFrom, limitsSystem);
   const overall = placer.at('action');
-  // More lost than the system holds is a matter of the battle, not of a route.
-  const battleWarnings = placer.at('route', w => w.code === 'unitsMissing' && (w.params.where === target || String(w.params.where) in (entry.groundLosses ?? {})));
+  const battleWarnings = placer.at('battle');
 
   const blocks = target !== null && (
         <>
@@ -113,6 +116,8 @@ export function TacticalEditor({
               : <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>}
             <span className="muted">{entry.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
             {isUntouched(entry) && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
+            {/* The activation: a token already there, or none left to spend. */}
+            {list(placer.at('system'))}
           </div>
 
           <div className="editor-section">
@@ -132,11 +137,11 @@ export function TacticalEditor({
                     </button>
                     <HexRemove label={t('plan.tactical.removeSource', { name })} onClick={() => onUpdate({ moves: withoutSource(game, pack, entry.moves, source) })} />
                   </div>
-                  {list(placer.at('route', w => ofSource(w, game, pack, entry.moves, source)))}
+                  {list(flight(source))}
                 </Fragment>
               );
             })}
-            {list(placer.at('route', w => entry.moves.length > 0 || !limitsSystem(w)))}
+            {list([...placer.at('route', w => entry.moves.length > 0 || !limitsSystem(w)), ...placer.at('cargo')])}
             <button type="button" aria-pressed={choosing === 'source'} onClick={() => onChoose(choosing === 'source' ? null : 'source')}>{t('plan.tactical.addSource')}</button>
           </div>
 

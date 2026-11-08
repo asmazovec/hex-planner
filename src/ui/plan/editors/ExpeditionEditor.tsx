@@ -45,11 +45,14 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
   };
 
   const placer = placeWarnings(warnings);
-  const sliceWarnings = placer.at('slice');
   const paymentWarnings = paidWith || techPlanet ? placer.at('payment') : [];
+  // A part paid in trade goods has no payment block: its shortage stands by the choice of the part, as does the turn it is taken in.
+  const sliceWarnings = [...placer.at('slice'), ...placer.at('payment'), ...placer.at('action')];
 
   return (
     <div className="panel-stack">
+      {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
+      <WarningList warnings={placer.rest()} game={game} pack={pack} />
       <div className="slice-grid" role="group" aria-label={t('expedition.part')}>
         {EXPEDITION_SLICES.map(({ id }) => (
           <button
@@ -61,9 +64,7 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
           </button>
         ))}
       </div>
-      {/* TODO(P2-367) #ws:ui-warnings #type:ui #size:s — остаток предупреждений стоит у выбора части; по CLAUDE.md — вверху редактора */}
-      {/* A part paid in trade goods has no payment block: its shortage stands by the choice of the part. */}
-      <WarningList warnings={[...sliceWarnings, ...placer.rest()]} game={game} pack={pack} />
+      <WarningList warnings={sliceWarnings} game={game} pack={pack} />
       {paidWith && (
         <PaymentBlock
           need={paidWith.amount} kind={paidWith.kind as 'resources' | 'influence'} payment={payment} state={before} pack={pack}
