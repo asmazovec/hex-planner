@@ -12,6 +12,8 @@ body.proto { margin: 0; padding: 20px 24px 60px; background: var(--bg); color: v
 .proto .pane { display: flex; flex-direction: column; gap: 6px; }
 .proto .pane > .tag { font-size: var(--font-xs); letter-spacing: .07em; text-transform: uppercase; font-weight: 650; color: var(--text-dim); }
 .proto .pane.after > .tag { color: var(--success); }
+/* `.option` is also an app class (theme.css, full width): a variant pane keeps its own width. */
+.proto .pane.option { width: auto; align-items: stretch; padding: 0; border: 0; background: none; min-height: 0; text-align: left; }
 .proto .pane.option > .tag { color: var(--accent); }
 .proto .pane.option.recommended > .tag::after { content: ' · рекомендую'; color: var(--gold); }
 /* `.screen` is also an app class (theme.css): its grid placement is reset here. */
