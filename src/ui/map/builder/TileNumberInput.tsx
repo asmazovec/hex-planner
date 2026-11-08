@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { resolveTile, tileSuggestions } from '../../../domain/mapBuilder';
+import { lookUpTile, tileSuggestions } from '../../../domain/mapBuilder';
 import type { DataPack } from '../../../domain/types';
 import { Banner } from '../../feedback/Banner';
 
@@ -35,13 +35,9 @@ export function TileNumberInput({ pack, value, onChange }: TileNumberInputProps)
     event.preventDefault();
     const query = text.trim();
     if (query === '') return;
-    const tile = resolveTile(query, pack);
-    if (tile) place(tile.id);
-    else {
-      // TODO(P2-258) #ws:ui-logic-to-domain #type:dup #size:s #map-builder — Причину отказа (номер неоднозначен или неизвестен) UI выясняет сам, повторяя поиск: пусть resolveTile в domain/mapBuilder.ts её возвращает
-      const sides = Object.values(pack.tiles).filter(tile => tile.number.toUpperCase() === query.toUpperCase());
-      setError(t(sides.length > 1 ? 'builder.ambiguous' : 'builder.unknown', { query }));
-    }
+    const tile = lookUpTile(query, pack);
+    if (typeof tile !== 'string') place(tile.id);
+    else setError(t(`builder.${tile}`, { query }));
   };
 
   // TODO(P2-255) #ws:ui-css #type:dead #dep:P2-254 #size:s #panel — Тот же .panel, с которого CSS снимает оформление: убрать

@@ -1,15 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { templateFor, tilesLostByLayout } from '../../../domain/mapBuilder';
+import { hyperlaneSlotCount, isMiltyLanes, LAYOUT_CHOICE_COUNTS, templateFor, tilesLostByLayout } from '../../../domain/mapBuilder';
 import type { DataPack, Game, MapLayout } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 
 const LAYOUTS: MapLayout[] = ['standard', 'hyperlanes'];
-// TODO(P2-251) #ws:ui-logic-to-domain #type:arch #size:s #layout — Какие числа игроков выбирают раскладку и где гиперпути от Milty, решает UI: перенести в domain/mapBuilder.ts
-/** Player counts whose map has a choice of layouts. */
-const CHOICE_COUNTS = [3, 4, 5];
-/** Player counts whose hyperlane layout is Milty Draft's own, not a layout of the rules. */
-const MILTY_COUNTS = [3, 4];
 
 export interface LayoutPickerProps {
   game: Game;
@@ -21,7 +16,7 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
   const { t } = useTranslation();
   const setLayout = useGame(s => s.setLayout);
   const [asked, setAsked] = useState<{ layout: MapLayout; lost: number; gameId: string; playerCount: number } | null>(null);
-  if (!CHOICE_COUNTS.includes(game.playerCount)) return null;
+  if (!LAYOUT_CHOICE_COUNTS.includes(game.playerCount)) return null;
   // A question about another game or player count, or one already answered by the layout in use, is stale.
   const pending = asked && asked.gameId === game.id && asked.playerCount === game.playerCount && asked.layout !== game.layout ? asked : null;
 
@@ -36,9 +31,6 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
     if (pending) setLayout(pending.layout);
     setAsked(null);
   };
-  // TODO(P2-252) #ws:ui-logic-to-domain #type:arch #dep:P2-251 #size:s #layout #hyperlanes — Число мест с гиперпутями считается по шаблону в UI: функция в domain/mapBuilder.ts
-  const laneSlots = (templateFor(game.playerCount, 'hyperlanes', pack)?.slots ?? [])
-    .filter(slot => slot.fixed && pack.tiles[slot.fixed.split('@')[0]]?.kind === 'hyperlane').length;
 
   // TODO(P2-254) #ws:ui-css #type:dead #size:s #panel — Берёт .panel, а CSS потом снимает с неё всё оформление: убрать класс panel и снимающие правила
   return (
@@ -55,8 +47,8 @@ export function LayoutPicker({ game, pack }: LayoutPickerProps) {
         ))}
       </div>
       {!available('hyperlanes') && <p className="muted">{t('layout.needsPok')}</p>}
-      {available('hyperlanes') && MILTY_COUNTS.includes(game.playerCount) && (
-        <p className="muted">{t('layout.milty', { n: laneSlots })}</p>
+      {available('hyperlanes') && isMiltyLanes(game.playerCount) && (
+        <p className="muted">{t('layout.milty', { n: hyperlaneSlotCount(game.playerCount, pack) })}</p>
       )}
       {/* TODO(P2-253) #ws:ui-containers #type:dup #dep:P2-250 #needs:prototype #size:s #confirm-bar — Строка подтверждения .row собрана руками: ConfirmBar */}
       {pending && (

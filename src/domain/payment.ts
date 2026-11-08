@@ -71,3 +71,18 @@ export function autoPay(state: GameState, need: number, kind: PaymentKind, pack:
   }
   return { planets: order(winner?.ids ?? []), tradeGoods: winner?.goods ?? 0 };
 }
+
+// ui-logic-to-domain (P2-366)
+/** What an expedition part costs in resources or influence; null for a part paid otherwise or not at all. */
+export function slicePlanetCost(sliceId: string | null): { kind: PaymentKind; amount: number } | null {
+  const cost = EXPEDITION_SLICES.find(s => s.id === sliceId)?.cost;
+  return cost && cost.kind !== 'tradeGoods' ? { kind: cost.kind, amount: cost.amount } : null;
+}
+
+/** The payment a newly chosen expedition part starts with: its resources or influence from the ready planets, or the first planet with a technology specialty for the technology part. */
+export function sliceAutoPayment(state: GameState, sliceId: string | null, pack: DataPack): Payment {
+  const cost = slicePlanetCost(sliceId);
+  if (cost) return autoPay(state, cost.amount, cost.kind, pack);
+  const techPlanets = techSlicePlanets(state, pack);
+  return EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet && techPlanets.length > 0 ? { planets: [techPlanets[0]], tradeGoods: 0 } : { planets: [], tradeGoods: 0 };
+}

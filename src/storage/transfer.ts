@@ -22,3 +22,7 @@ export function importGame(text: string): ImportResult {
   const parsed = gameSchema.safeParse(migrate(raw));
   return parsed.success ? { ok: true, game: parsed.data } : { ok: false, reason: 'invalidSchema' };
 }
+
+/** An imported game under an id no saved game has: its own when free, else the same with a time stamp after it. */
+export const withFreeId = (game: Game, taken: string[], now: number = Date.now()): Game =>
+  (taken.includes(game.id) ? { ...game, id: `${game.id}-${now.toString(36)}` } : game);

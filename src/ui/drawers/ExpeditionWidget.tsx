@@ -1,23 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import type { DataPack, Game, Plan } from '../../domain/types';
+import type { SliceOwners } from '../../domain/thundersEdge';
+import type { DataPack, Game } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { systemName } from '../map/systemName';
 
-export type SliceOwners = Record<string, 'me' | 'other'>;
-
-// TODO(P2-369) #ws:ui-logic-to-domain #type:arch #size:s — sliceOwners — правило владения частями экспедиции; в domain/thundersEdge.ts
-/** Who holds each expedition part: mine come from the plan's expedition entries, the others' are tapped in. */
-export function sliceOwners(game: Game, plan: Plan): SliceOwners {
-  const owners: SliceOwners = {};
-  for (const [id, owner] of Object.entries(game.expedition.slices)) if (owner) owners[id] = owner;
-  for (const round of plan.rounds) {
-    for (const entry of round.entries) {
-      if (entry.type === 'expedition' && entry.sliceId && entry.status !== 'cancelled') owners[entry.sliceId] = 'me';
-    }
-  }
-  return owners;
-}
+export type { SliceOwners } from '../../domain/thundersEdge';
 
 export interface ExpeditionWidgetProps {
   game: Game;

@@ -1,9 +1,9 @@
 import { clockwiseAngle, hexDistance, seatSlots, slotsFor } from './mapBuilder';
 import { slotKeyOf } from './layouts';
-import { isStation, planetsOf } from './replay/board';
+import { isOnMap, isStation, planetsOf, tileIdOf } from './replay/board';
 import { othersIn } from './replay/production';
 import { violation } from './rules/registry';
-import type { DataPack, Entry, Game, GameState, MapLayout, TileDef, Warning } from './types';
+import type { DataPack, Entry, Game, GameState, MapLayout, Plan, TileDef, Warning } from './types';
 
 /**
  * Thunder's Edge goes into a system with no planet, no supernova and no printed wormhole (TE rules).
@@ -123,4 +123,26 @@ export function claimStations(game: Game, state: GameState, systemId: string, pa
   const mine = [state.systems[systemId], ...planetsOf(game, systemId, pack).map(id => state.ground[id])]
     .some(units => Object.values(units ?? {}).some(n => (n ?? 0) > 0));
   if (mine) for (const id of stations) state.control[id] = 'me';
+}
+
+// ui-logic-to-domain
+/** Who holds each expedition part. */
+export type SliceOwners = Record<string, 'me' | 'other'>;
+
+/** Who holds each expedition part: mine come from the plan's expedition entries, the others' are tapped in. */
+export function sliceOwners(game: Game, plan?: Plan): SliceOwners {
+  const owners: SliceOwners = {};
+  for (const [id, owner] of Object.entries(game.expedition.slices)) if (owner) owners[id] = owner;
+  for (const round of plan?.rounds ?? []) {
+    for (const entry of round.entries) {
+      if (entry.type === 'expedition' && entry.sliceId && entry.status !== 'cancelled') owners[entry.sliceId] = 'me';
+    }
+  }
+  return owners;
+}
+
+/** Whether Thunder's Edge can go into the system of a map slot (see `validThundersEdgeSystem`). */
+export function validThundersEdgeSlot(game: Game, slot: string, pack: DataPack): boolean {
+  const tile = isOnMap(game, slot) ? pack.tiles[tileIdOf(game, slot)] : undefined;
+  return tile !== undefined && validThundersEdgeSystem(tile);
 }

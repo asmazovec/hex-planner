@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { opponentsBySeat } from '../../../domain/players';
+import { othersOnPlanet } from '../../../domain/stacks';
+import { standingAfterBattle } from '../../../domain/tactical';
 import type { Game, GameState, PlanetDef, UnitCounts, UnitId } from '../../../domain/types';
 import { PlanetMark } from '../../map/TileView';
 import { playerColour, tokenColours } from '../../units/sprites';
@@ -12,6 +13,8 @@ export interface LandingBlockProps {
   planets: PlanetDef[];
   /** The state just before the action: who stands on the planets and how they are now. */
   before: GameState;
+  /** The whole board just before the action, the opponents in `rivals`: the others' ground forces come from it. */
+  board?: GameState;
   /** Ground units that reach the landing, by type, and how many of each. */
   units: UnitId[];
   arrived: UnitCounts;
@@ -37,7 +40,7 @@ function Stack({ kind, colour, count, label }: { kind: UnitId; colour: string; c
  * The landing goes like the cargo of a flight, planet by planet: beside each planet the units free to land, and after a
  * tap the taken picture with its count; a tap on that takes one back. Nothing forbids landing more than arrived.
  */
-export function LandingBlock({ game, planets, before, units, arrived, lost = {}, landedOn, onLand }: LandingBlockProps) {
+export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, landedOn, onLand }: LandingBlockProps) {
   const { t } = useTranslation();
   const colours = tokenColours(game);
   const colour = playerColour(game.color);
@@ -53,13 +56,10 @@ export function LandingBlock({ game, planets, before, units, arrived, lost = {},
           t(exhausted ? 'map.sheet.exhausted' : 'map.sheet.ready'),
           ...(control ? [t(`map.control.${control}`)] : []),
         ].join(' · ');
-        // TODO(P2-359) #ws:ui-logic-to-domain #type:arch #duplicate-of-domain #dep:P2-313 — кто остался на планете после потерь считает UI; брать состояние после боя из домена
-        const left = (unit: UnitId) => (before.ground[planet.id]?.[unit] ?? 0) - (lost[planet.id]?.[unit] ?? 0);
-        const standing = (Object.keys(before.ground[planet.id] ?? {}) as UnitId[]).filter(unit => left(unit) > 0);
-        // TODO(P2-360) #ws:rivals #type:check #rivals — чужие войска берутся из game.enemyGround (расстановка), а не из состояния соперников по плану (state.rivals): их высадки раньше в плане не видны — P2 note: rivals wave did the domain side (route blockers from the replay, gameAs opponents); this block gets only the owner's `before`, which lacks the other players' ground (for a rival's entry mine is nowhere in it), so it needs the full replay state passed in — a props change of a ui-containers file, left to the UI wave
-        const enemies = opponentsBySeat(game).flatMap(o => (Object.keys(game.enemyGround[planet.id]?.[o.id] ?? {}) as UnitId[])
-          .filter(unit => (game.enemyGround[planet.id]?.[o.id]?.[unit] ?? 0) > 0)
-          .map(unit => ({ owner: o.id, unit, count: game.enemyGround[planet.id]?.[o.id]?.[unit] ?? 0 })));
+        const after = standingAfterBattle(before, planet.id, lost);
+        const left = (unit: UnitId) => after[unit] ?? 0;
+        const standing = Object.keys(after) as UnitId[];
+        const enemies = othersOnPlanet(game, board, planet.id);
         return (
           <div key={planet.id} className="landing-planet" role="group" aria-label={t('plan.tactical.landingOn', { planet: planet.name })}>
             <div className="landing-target">

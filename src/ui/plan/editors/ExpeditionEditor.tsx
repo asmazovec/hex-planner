@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { autoPay, EXPEDITION_SLICES, techSlicePlanets } from '../../../domain/payment';
+import { autoPay, EXPEDITION_SLICES, sliceAutoPayment, slicePlanetCost, techSlicePlanets } from '../../../domain/payment';
 import type { DataPack, Game, GameState, Payment, Warning } from '../../../domain/types';
 import { PaymentBlock } from '../blocks/PaymentBlock';
-import type { SliceOwners } from '../../drawers/ExpeditionWidget';
+import type { SliceOwners } from '../../../domain/thundersEdge';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 
@@ -27,21 +27,14 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
   const { t } = useTranslation();
   // TODO(P2-356) #ws:ui-containers #type:arch #size:s — флаг ручной оплаты хранится здесь, а TacticalEditor и StrategyEditor получают его от PlanScreen; одно место для всех PaymentBlock
   const [manual, setManual] = useState(false);
-  // TODO(P2-366) #ws:payment #type:dup #size:s — «платится ресурсами или влиянием» проверяется дважды и трижды приводится as 'resources' | 'influence'; доменный помощник оплаты части — P2 note: UI-файл вне списка файлов волны B для payment, рядом правит P2-365 (thunders-edge); оставлено, чтобы не править чужой модуль
-  const cost = EXPEDITION_SLICES.find(s => s.id === sliceId)?.cost;
-  const paidWith = cost?.kind === 'resources' || cost?.kind === 'influence' ? cost : null;
+  const paidWith = slicePlanetCost(sliceId);
 
   // The technology part is paid by exhausting one planet of mine with a technology specialty.
   const techPlanet = EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet === true;
   const techPlanets = techSlicePlanets(before, pack);
   const choose = (id: string | null) => {
-    const slice = EXPEDITION_SLICES.find(s => s.id === id);
-    const next = slice?.cost;
-    const pays = next?.kind === 'resources' || next?.kind === 'influence';
     setManual(false);
-    const payment = pays ? autoPay(before, next.amount, next.kind as 'resources' | 'influence', pack)
-      : slice?.techPlanet && techPlanets.length > 0 ? { planets: [techPlanets[0]], tradeGoods: 0 } : NO_PAYMENT;
-    onChange({ sliceId: id, payment });
+    onChange({ sliceId: id, payment: sliceAutoPayment(before, id, pack) });
   };
 
   const placer = placeWarnings(warnings);
@@ -67,11 +60,11 @@ export function ExpeditionEditor({ game, sliceId, payment, owners, before, pack,
       <WarningList warnings={sliceWarnings} game={game} pack={pack} />
       {paidWith && (
         <PaymentBlock
-          need={paidWith.amount} kind={paidWith.kind as 'resources' | 'influence'} payment={payment} state={before} pack={pack}
+          need={paidWith.amount} kind={paidWith.kind} payment={payment} state={before} pack={pack}
           manual={manual}
           onManual={open => {
             setManual(open);
-            if (!open) onChange({ payment: autoPay(before, paidWith.amount, paidWith.kind as 'resources' | 'influence', pack) });
+            if (!open) onChange({ payment: autoPay(before, paidWith.amount, paidWith.kind, pack) });
           }}
           onChange={next => onChange({ payment: next })}
         >
