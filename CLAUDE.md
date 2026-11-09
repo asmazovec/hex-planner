@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Все тесты: `npm test` (то же, что `npx vitest run`)
 - Один тест: `npx vitest run src/ui/App.test.tsx` (или `npx vitest run -t "часть названия"`)
 - Сквозные тесты: `npm run e2e` (Playwright, установленный Chrome, 1180×820). Сам собирает приложение и запускает `vite preview` на порту 5301: у каждого порта своя база браузера, партии на 5199 не затрагиваются. Сервис-воркер есть только в сборке, не в `npm run dev`.
-- Публикация на планшет: `npm run deploy`. Собирает приложение и принудительно отправляет только сборку в репозиторий из git remote `pages` (GitHub Pages, сайт открытый). Исходники туда не попадают.
+- Публикация на планшет: `npm run deploy`. Собирает приложение и принудительно отправляет только сборку в ветку `gh-pages` репозитория из git remote `pages` (GitHub Pages, сайт открытый). Исходники лежат в `main` того же репозитория, код под лицензией MIT.
 
 В `src/test-setup.ts` подменяется `localStorage`: глобальный `localStorage` в Node 25 затеняет jsdom и без флага не работает.
 

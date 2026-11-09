@@ -1,5 +1,6 @@
-// Publishes the build, and only the build, to the repository behind the `pages` git remote.
-// Its history is thrown away on every deploy: the sources and their commits stay on this computer.
+// Publishes the build, and only the build, to the `gh-pages` branch of the repository behind the `pages` git remote,
+// which GitHub Pages serves. The sources live in `main` of the same repository; the build branch keeps no history.
+const BRANCH = 'gh-pages';
 import { execSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -28,8 +29,8 @@ try {
   run(`${git} init --quiet --initial-branch=main`);
   run(`${git} add --all`);
   run(`${git} commit --quiet -m "Build"`);
-  run(`${git} push --force "${remote}" main`);
-  console.log(`Опубликовано в ${remote}`);
+  run(`${git} push --force "${remote}" main:${BRANCH}`);
+  console.log(`Опубликовано в ${remote}, ветка ${BRANCH}`);
 } finally {
   rmSync(gitDir, { recursive: true, force: true });
 }
