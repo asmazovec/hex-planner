@@ -9,6 +9,9 @@ export const TECH_SHAPES: Record<TechType, string> = {
   warfare: 'M-3.2,-3.2 L3.2,-3.2 L3.2,3.2 L-3.2,3.2 Z',
 };
 
+/** The legendary mark of a planet: a four-point star in the same box as the technology shapes. */
+export const LEGENDARY_SHAPE = 'M0,-4.2 L1.2,-1.2 L4.2,0 L1.2,1.2 L0,4.2 L-1.2,1.2 L-4.2,0 L-1.2,-1.2 Z';
+
 /** A technology type as the planets on the map show it, standing alone in the text. */
 export function TechMark({ type, size = 12 }: { type: TechType; size?: number }) {
   return (

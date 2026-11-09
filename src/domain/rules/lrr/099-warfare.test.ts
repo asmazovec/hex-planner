@@ -1,7 +1,9 @@
 /** LRR 99 Warfare (Strategy Card). Source: tirules2 rules-reference/warfare.md. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import { codesOf, forecast, HOME, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
+import { project } from '../../project';
+import type { Entry } from '../../types';
+import { adjust, codesOf, forecast, HOME, NEAR, NO_PAYMENT, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 import { holding } from './kit-83-101';
 
 const pack = rulesPack();
@@ -80,5 +82,33 @@ describe('LRR 99 Warfare (Strategy Card)', () => {
     const play = primary(CARD.warfare, { tokens: { tactic: 1 } });
     const game = holding(rulesGame({ entries: [play] }), CARD.warfare);
     expect(codesOf(game, pack, play)).toContain('tokensOver');
+  });
+});
+
+describe("LRR 99 Warfare in Thunder's Edge: the free tactical action is part of the card's strategic action", () => {
+  test('it is replayed right after its card, wherever it is stored in the round', () => {
+    const play = primary(CARD.warfare);
+    const free = { ...tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }], free: true, fromCard: play.id }) };
+    const after = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1 } }] });
+    const game = rulesGame({ units: { [HOME]: { carrier: 1 } }, entries: [play, after, free], game: { expansions: ['pok', 'te'] } });
+    expect(codesOf(game, pack, after)).not.toContain('unitsMissing');
+    expect(forecast(game, pack).state.systems[TARGET]).toEqual({ carrier: 1 });
+  });
+});
+
+describe("LRR 99 Warfare in Thunder's Edge: the free action shares the turn of its card", () => {
+  test('it counts as done with its card: the present holds its movement once the card is done', () => {
+    const play = { ...primary(CARD.warfare), status: 'done' as const };
+    const free = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }], free: true, fromCard: play.id });
+    const game = rulesGame({ units: { [HOME]: { carrier: 1 } }, entries: [play, free], game: { expansions: ['pok', 'te'] } });
+    expect(project(game, game.plans[0], 'now', pack).state.systems[NEAR]).toEqual({ carrier: 1 });
+  });
+
+  test('the acts of the card come after its free action: an expedition does not take what the free action pays with', () => {
+    const play = { ...primary(CARD.warfare), acts: [{ kind: 'expedition' as const, sliceId: 'tg3', payment: NO_PAYMENT }] } as Entry;
+    const free = tactical(HOME, { production: { fighter: 2 }, payment: { planets: [], tradeGoods: 1 }, free: true, fromCard: play.id });
+    const game = rulesGame({ entries: [adjust({ tradeGoods: 3 }, 'strategy'), play, free], game: { expansions: ['pok', 'te'], docks: ['h1'] } });
+    expect(codesOf(game, pack, free)).not.toContain('shortTradeGoods');
+    expect(codesOf(game, pack, play)).toContain('shortTradeGoods');
   });
 });

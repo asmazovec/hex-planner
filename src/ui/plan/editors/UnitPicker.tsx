@@ -69,26 +69,22 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const setCount = (from: string, unit: UnitId, count: number) => onChange(withUnitCount(game, pack, entry.moves, source, from, unit, count));
   const unitName = (unit: UnitId) => t(`unit.${unit}`);
 
-  const noShipsHere = flying.every(u => available(source, u) <= 0);
-  const offered = noShipsHere ? flying : flying.filter(u => available(source, u) - picked(source, u) > 0);
+  const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
+  const offered = flying.filter(u => available(source, u) - picked(source, u) > 0);
   const flyingNow = flying.filter(u => picked(source, u) > 0);
   const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
 
   /**
-   * The places of a system to take cargo from: its space area and its planets. An empty source offers ground forces on its
-   * first planet. Where my command token lies nothing is offered, only what is already taken can be put back (95.3).
+   * The places of a system to take cargo from: its space area and its planets, only what stands there. Where my command
+   * token lies the units are still offered: the rules warn (95.3), and an ability may allow it.
    */
   const placesIn = (slot: string): { from: string; name: string | null; units: UnitId[] }[] => {
     const planets = systemPlanets(game, slot, pack);
-    const ahead = slot === source && noShipsHere;
-    const allowed = pickupAllowed(before, target, slot);
-    const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => (allowed && available(from, u) > 0) || picked(from, u) > 0);
-    const groundAhead = known.filter(u => pack.units[u]?.ground);
+    const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => available(from, u) > 0 || picked(from, u) > 0);
+    const ground = known.filter(u => pack.units[u]?.ground);
     const places = [
-      { from: slot, name: null, units: ahead ? (planets.length > 0 ? cargo.filter(u => !groundAhead.includes(u)) : cargo) : offeredAt(slot, cargo) },
-      ...planets.map((planet, i) => ({
-        from: planet.id, name: planet.name, units: ahead && i === 0 ? groundAhead : offeredAt(planet.id, groundAhead),
-      })),
+      { from: slot, name: null, units: offeredAt(slot, cargo) },
+      ...planets.map(planet => ({ from: planet.id, name: planet.name, units: offeredAt(planet.id, ground) })),
     ];
     return places.filter(place => place.units.length > 0);
   };
@@ -99,7 +95,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       <li key={slot} className="stop">
         <span className="stop-name">{systemName(game, pack, slot)} · {t(`plan.picker.${role}`)}</span>
         {!pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
-        {places.length === 0 && pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.nothing')}</span>}
+        {places.length === 0 && <span className="muted">{t('plan.picker.nothing')}</span>}
         {places.map(place => (
           <div key={place.from} className="stop-place" role="group" aria-label={place.name ?? systemName(game, pack, slot)}>
             {place.name && <small>{place.name}</small>}
@@ -109,7 +105,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
                 const left = available(place.from, unit) - got;
                 return (
                   <span key={unit} className="pic-pair">
-                    {(left > 0 || (got === 0 && left === 0)) && (
+                    {left > 0 && (
                       <UnitTile variant="take" kind={unit} count={left} colour={colour} label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got + 1)} />
                     )}
                     {got > 0 && (

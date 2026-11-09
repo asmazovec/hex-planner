@@ -35,7 +35,7 @@ export function createGame(
   const planId = makeId('plan', newId);
   return {
     id: makeId('game', newId),
-    schemaVersion: 5,
+    schemaVersion: 6,
     dataVersion: pack.version,
     expansions: [...input.expansions],
     playerCount: input.playerCount,

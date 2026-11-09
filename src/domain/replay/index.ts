@@ -8,7 +8,8 @@ import { placeIn } from '../rules/registry';
 import type { DataPack, Entry, Game, GameState, Plan, Projection, Warning } from '../types';
 import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
-import { applyExpedition, expeditionLog, noteTurn, type ExpeditionLog } from './expedition';
+import { applyActs, type ActContext } from './acts';
+import { applyDetachedExpedition } from './expedition';
 import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyAdjustment, initialState } from './state';
@@ -21,15 +22,15 @@ export { fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed } from '..
 export { readyInfluence, readyResources } from './payment';
 export { placesOf, productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
-export { structureOwner, structuresOn } from './structures';
+export { planetStructureWarnings, structureOwner, structuresOn } from './structures';
 export { productionPlaces, tacticalMeters } from './tactical';
-export { dockFighterRoom, fightersFly, pickupAllowed, systemMeters } from './transport';
+export { boardSystemWarnings, dockFighterRoom, fightersFly, pickupAllowed, systemMeters } from './transport';
 
 function applyEntry(
-  game: Game, state: GameState, entry: Entry, pack: DataPack, taken: ExpeditionLog, cards: CardRound, flow: RoundFlow, blockers?: Blockers,
+  game: Game, state: GameState, entry: Entry, pack: DataPack, acts: ActContext, cards: CardRound, flow: RoundFlow, blockers?: Blockers,
+  withActs = true,
 ): Warning[] {
   const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? []);
-  noteTurn(taken, entry);
   switch (entry.type) {
     case 'tactical':
       applyTactical(game, state, entry, pack, warnings, blockers);
@@ -39,7 +40,7 @@ function applyEntry(
       applyCard(game, state, entry, pack, cards, warnings);
       break;
     case 'expedition':
-      applyExpedition(game, state, entry, pack, taken, warnings);
+      applyDetachedExpedition(game, state, entry, pack, acts.taken, warnings);
       break;
     case 'statusTokens':
       applyStatusTokens(game, state, entry, pack, warnings);
@@ -51,6 +52,8 @@ function applyEntry(
     case 'pass':
       break;
   }
+  // The acts of a turn come after its action: transactions, then the expedition at its end.
+  if (withActs) applyActs(game, state, entry, pack, acts, warnings);
   return placeIn(warnings, entry.id);
 }
 
@@ -66,7 +69,6 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
   const state = initialState(game, pack);
   keepOwnStructures(state, true);
   const warningsByEntry: Record<string, Warning[]> = {};
-  const takenSlices = expeditionLog();
   const views = new Map(game.opponents.map(o => [o.id, gameAs(game, o.id)]));
   const rivals: Record<string, GameState> = Object.fromEntries(game.opponents.map(o => [o.id, rivalState(game, views.get(o.id)!, o.id, pack)]));
   if (game.opponents.length > 0) {
@@ -74,6 +76,7 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
     state.rivalHolds = {};
   }
   const everyone = [state, ...Object.values(rivals)];
+  const acts: ActContext = { taken: new Set<string>(), states: { me: state, ...rivals } };
   const rounds = [...plan.rounds].sort((a, b) => a.number - b.number);
   for (const round of rounds) {
     // The agenda phase ends by readying the planets (LRR 8), so a round begins with them ready and the board clear.
@@ -86,24 +89,37 @@ function replay(game: Game, plan: Plan, filter: 'now' | 'forecast', pack: DataPa
     };
     const cards = cardRound(round, game.playerCount, { me: state, ...rivals });
     const flow = roundFlow(round);
+    /** Warfare's free tactical action is part of its card: it comes right after the card, not where it is stored. */
+    const linked = (card: Entry) => round.entries.find(e => e.type === 'tactical' && e.fromCard === card.id);
+    /** Replays one entry; true once the replay reached where it was asked to stop. */
+    /** Replays one entry, `status` being its card's for Warfare's free action; true once the replay reached where it was asked to stop. */
+    const step = (entry: Entry, phase: string, status = entry.status): boolean => {
+      const skipped = status === 'cancelled' || (filter === 'now' && status !== 'done');
+      if (phase === 'agenda' && (!skipped || entry.id === stopBefore)) finishStatus();
+      if (entry.id === stopBefore) return true;
+      if (skipped) return false;
+      const rival = entry.owner ? rivals[entry.owner] : undefined;
+      const view = rival && entry.owner ? views.get(entry.owner)! : game;
+      const own = rival ?? state;
+      // The ships of everyone else as the replay has them now end the routes of this entry's owner (58.3.2).
+      const blockers = entry.type === 'tactical' ? blockersOf(game, state, rival ? entry.owner : undefined, pack) : undefined;
+      // A card with Warfare's free action plays it before the acts of its turn.
+      const free = entry.type === 'strategic' ? linked(entry) : undefined;
+      warningsByEntry[entry.id] = applyEntry(view, own, entry, pack, acts, cards, flow, blockers, free === undefined);
+      if (rival && entry.owner && entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack);
+      if (entry.type === 'statusTokens') finishStatus();
+      if (free !== undefined) {
+        if (step(free, phase, status)) return true;
+        const late: Warning[] = [];
+        applyActs(view, own, entry, pack, acts, late);
+        warningsByEntry[entry.id] = [...warningsByEntry[entry.id], ...placeIn(late, entry.id)];
+      }
+      return entry.id === stopAfter;
+    };
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {
-        if (entry.phase !== phase) continue;
-        const skipped = entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done');
-        if (phase === 'agenda' && (!skipped || entry.id === stopBefore)) finishStatus();
-        if (entry.id === stopBefore) return { state, warningsByEntry };
-        if (skipped) continue;
-        const rival = entry.owner ? rivals[entry.owner] : undefined;
-        // The ships of everyone else as the replay has them now end the routes of this entry's owner (58.3.2).
-        const blockers = entry.type === 'tactical' ? blockersOf(game, state, rival ? entry.owner : undefined, pack) : undefined;
-        if (rival && entry.owner) {
-          warningsByEntry[entry.id] = applyEntry(views.get(entry.owner)!, rival, entry, pack, takenSlices, cards, flow, blockers);
-          if (entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack);
-        } else {
-          warningsByEntry[entry.id] = applyEntry(game, state, entry, pack, takenSlices, cards, flow, blockers);
-        }
-        if (entry.type === 'statusTokens') finishStatus();
-        if (entry.id === stopAfter) return { state, warningsByEntry };
+        if (entry.phase !== phase || (entry.type === 'tactical' && entry.fromCard && round.entries.some(e => e.id === entry.fromCard))) continue;
+        if (step(entry, phase)) return { state, warningsByEntry };
       }
     }
   }

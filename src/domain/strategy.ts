@@ -4,7 +4,7 @@ import { autoPay, type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
-import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Round, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
 
 export { diplomacySystemAllowed, readyChoices, readyLimit } from './replay/cards/diplomacy';
 export { controlsMecatol } from './replay/cards/imperial';
@@ -121,19 +121,17 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 }
 
 /** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
-export function cardCost(entry: CardEntry, factionId: string, upgrades: UnitId[], pack: DataPack): { kind: PaymentKind; amount: number } {
+export function cardCost(entry: CardEntry, factionId: string, upgrades: UpgradeId[], pack: DataPack): { kind: PaymentKind; amount: number } {
   return handlerOf(entry.card).cost?.(entry, upgrades)
     ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, upgrades, pack) };
 }
 
-/** Whether something was chosen, which locks the mode and the card. A payment only follows a choice. */
-export function hasChoices(entry: CardEntry, round: Round): boolean {
-  const e = entry.effects ?? {};
-  return Object.values(e.tokens ?? {}).some(Boolean) || Boolean(e.boughtTokens) || Boolean(e.systemId) || Boolean(e.speaker) || Boolean(e.mecatol)
-    || Boolean(e.researched) || Boolean(e.readied?.length) || Boolean(e.freeSecondary?.length) || Boolean(e.structures?.length) || e.production !== undefined
-    || Boolean(entry.upgrades?.length)
-    || round.entries.some(other => other.type === 'tactical' && other.fromCard === entry.id);
-}
+/**
+ * A switch of the card or of its side starts the play over: what the old one chose (effects, payment, upgrades) goes,
+ * and the store drops the free tactical action it started.
+ */
+export const freshPlay = (patch: CardPatch): CardPatch =>
+  ({ ...patch, effects: undefined, upgrades: undefined, ...(patch.type === 'secondary' ? { acts: undefined } : {}) } as CardPatch);
 
 /** The patch for a change to the entry: a new cost pays automatically unless the payment was chosen by hand. */
 export function cardChange(

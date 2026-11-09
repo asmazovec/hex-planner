@@ -13,6 +13,9 @@ export interface ShopItem {
   disabled?: boolean;
 }
 
+/** A space dock or a PDS: built, not produced. */
+export const isStructure = (kind: TokenKind): kind is 'pds' | 'spacedock' => kind === 'pds' || kind === 'spacedock';
+
 /** Fighters and infantry cost half a resource. */
 const priceText = (price: number): string => (price === 0.5 ? '½' : String(price));
 

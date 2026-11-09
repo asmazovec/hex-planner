@@ -6,7 +6,7 @@
 import { fleetSpeed, routeMove, routeReach, type Blockers } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, UnitCounts, UnitId } from './types';
+import type { AdjustmentDelta, DataPack, Entry, Game, GameState, UnitCounts, UnitId, UpgradeId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -82,6 +82,12 @@ export function withLoss(entry: TacticalEntry, unit: UnitId, planetId: string | 
   return { groundLosses: Object.keys(groundLosses).length > 0 ? groundLosses : undefined };
 }
 
+/** One more (or fewer) ship of a type removed beyond the fleet pool (37.3); nothing left removes the field. */
+export function withFleetRemoval(entry: TacticalEntry, unit: UnitId, amount: number): Partial<TacticalEntry> {
+  const units = withCount(entry.fleetRemovals ?? {}, unit, (entry.fleetRemovals?.[unit] ?? 0) + amount);
+  return { fleetRemovals: hasUnits(units) ? units : undefined };
+}
+
 /** Sets how many of a unit land on a planet; a planet with nothing left to land leaves the landing. */
 export function withLanding(entry: TacticalEntry, planetId: string, unit: UnitId, count: number): Partial<TacticalEntry> {
   const current = entry.landings.find(l => l.planetId === planetId)?.units ?? {};
@@ -143,14 +149,14 @@ export const isValidSource = (game: Game, pack: DataPack, before: GameState, slo
   sourcePools(game, pack, before, slot).some(pool => hasUnits(pool.available));
 
 /** Whether a unit flies by itself at this point of the replay; everything else rides as cargo. */
-export function fliesNow(game: Game, pack: DataPack, upgrades: UnitId[], unit: UnitId): boolean {
+export function fliesNow(game: Game, pack: DataPack, upgrades: UpgradeId[], unit: UnitId): boolean {
   const def = pack.units[unit];
   if (!def || def.ground) return false;
   return !def.fighter || fightersFly(game, upgrades, pack);
 }
 
 /** Splits units into the ships that fly by themselves and what rides on board. */
-export function splitFlight(game: Game, pack: DataPack, upgrades: UnitId[], units: UnitCounts): { ships: UnitCounts; cargo: UnitCounts } {
+export function splitFlight(game: Game, pack: DataPack, upgrades: UpgradeId[], units: UnitCounts): { ships: UnitCounts; cargo: UnitCounts } {
   const ships: UnitCounts = {};
   const cargo: UnitCounts = {};
   for (const unit of Object.keys(units) as UnitId[]) (fliesNow(game, pack, upgrades, unit) ? ships : cargo)[unit] = units[unit];
@@ -177,7 +183,7 @@ export const viaOf = (entry: Pick<TacticalEntry, 'moves'>, source: string): stri
  * A source's flight as it reads: the ships that leave it, what rides on board from the source itself, and what is picked
  * up in each system on the way.
  */
-export function flightOf(game: Game, pack: DataPack, upgrades: UnitId[], entry: TacticalEntry, source: string): { ships: UnitCounts; board: UnitCounts; stops: Map<string, UnitCounts> } {
+export function flightOf(game: Game, pack: DataPack, upgrades: UpgradeId[], entry: TacticalEntry, source: string): { ships: UnitCounts; board: UnitCounts; stops: Map<string, UnitCounts> } {
   const group = groupOf(game, pack, entry.moves, source);
   const own = group.filter(m => m.pickupOf === undefined);
   const leaving = own.filter(m => m.from === source).reduce((sum, m) => ({ ...sum, ...m.units }), {} as UnitCounts);

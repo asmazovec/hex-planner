@@ -21,16 +21,19 @@ import { factionName } from '../players/names';
 import { PlayerList } from '../players/PlayerList';
 import { useSeatDrag } from '../players/useSeatDrag';
 import { EnergySettings } from './EnergySettings';
+import { LegalNotice } from './LegalNotice';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { ConfirmBar } from '../primitives/ConfirmBar';
 
 export interface GameScreenProps {
   /** Brings the map block into view on opening, e.g. from the hint of an unfinished map. */
   showMap?: boolean;
+  /** After the Open button of a save has opened it. */
+  onOpened?: () => void;
 }
 
 /** The players on the left; expansions, the map with the seats and saved games on the right, language and settings last. */
-export function GameScreen({ showMap = false }: GameScreenProps) {
+export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const { t } = useTranslation();
   const open = useGame(s => s.game);
   const game = useGame(s => s.game ?? s.draft);
@@ -194,7 +197,7 @@ export function GameScreen({ showMap = false }: GameScreenProps) {
                     <>
                       {broken
                         ? <button type="button" onClick={() => void exportRaw(s.id)}>{t('load.exportRaw')}</button>
-                        : <button type="button" onClick={() => void openGame(s.id)}>{t('game.open')}</button>}
+                        : <button type="button" onClick={() => void openGame(s.id).then(() => onOpened?.())}>{t('game.open')}</button>}
                       <HexRemove label={t('game.delete')} onClick={() => setAsked(s.id)} />
                     </>
                   )}
@@ -229,9 +232,7 @@ export function GameScreen({ showMap = false }: GameScreenProps) {
           </div>
         </div>
         <EnergySettings />
-        <p className="side-note">
-          {t('game.iconCredit')} <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">{t('game.iconLicence')}</a>
-        </p>
+        <LegalNotice />
       </aside>
     </div>
   );

@@ -9,7 +9,7 @@ export interface RuleEntry { rules: string[]; step: RuleStep }
 
 /** Steps in the order the replay goes through them. */
 export const STEPS: readonly RuleStep[] = [
-  'round', 'card', 'activation', 'movement', 'transport', 'combat', 'invasion', 'production', 'payment', 'status', 'expedition',
+  'round', 'card', 'activation', 'movement', 'transport', 'combat', 'invasion', 'production', 'payment', 'status', 'expedition', 'transaction',
 ];
 
 export const RULES: Record<WarningCode, RuleEntry> = {
@@ -64,6 +64,10 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   scarProduction: { rules: ['entropic-scars-2'], step: 'production' },
   expeditionUnpaid: { rules: ['expedition-4.5'], step: 'expedition' },
   expeditionTwicePerTurn: { rules: ['expedition-5'], step: 'expedition' },
+  expeditionDetached: { rules: ['expedition-2'], step: 'expedition' },
+  transactionRepeated: { rules: ['94.1'], step: 'transaction' },
+  notNeighbor: { rules: ['94.1', '60.1'], step: 'transaction' },
+  shortCommodities: { rules: ['94.2'], step: 'transaction' },
   stationGround: { rules: ['space-stations-4'], step: 'invasion' },
   stationStructure: { rules: ['space-stations-4'], step: 'card' },
   // transport

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
-import type { DataPack, Game, UnitId } from '../../domain/types';
+import type { DataPack, Game, UnitId, UpgradeId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { UnitIcon } from '../units/UnitIcon';
 import { ShipNotes, StatLine } from '../players/ShipStats';
@@ -11,7 +11,7 @@ export interface UpgradesPanelProps {
   game: Game;
   pack: DataPack;
   /** My upgraded types in the state the map shows. */
-  upgraded: UnitId[];
+  upgraded: UpgradeId[];
   /** Types an entry of the plan upgraded, not to toggle here, with the round. */
   locked: Partial<Record<UnitId, number>>;
 }

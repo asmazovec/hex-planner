@@ -597,8 +597,9 @@ describe('project', () => {
   });
 
   describe('экспедиция: части и стоимость', () => {
+    // An expedition is an act at the end of a turn: here the turn is a component action.
     const expedition = (sliceId: string | null, payment: Partial<Payment>, id = 'x') =>
-      withId(id, entry({ type: 'expedition', sliceId, payment: { planets: [], tradeGoods: 0, ...payment } }));
+      withId(id, entry({ type: 'component', note: '', acts: [{ kind: 'expedition', sliceId, payment: { planets: [], tradeGoods: 0, ...payment } }] }));
     const giveTg = (amount: number) =>
       entry({ type: 'adjustment', label: 'card', delta: { tradeGoods: amount } }, 'strategy');
 
@@ -649,7 +650,7 @@ describe('project', () => {
       const other = run(gameWith([expedition('secret', {})], { expedition: { slices: { secret: 'other' }, thundersEdgeSystem: null } }));
       expect(codes(other.warningsByEntry.x)).toContain('sliceTaken');
       const cancelled = run(gameWith([
-        entry({ type: 'expedition', sliceId: 'secret', payment: noPay }, 'action', 'cancelled'), expedition('secret', {}),
+        entry({ type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: 'secret', payment: noPay }] }, 'action', 'cancelled'), expedition('secret', {}),
       ]));
       expect(codes(cancelled.warningsByEntry.x)).toEqual([]);
     });

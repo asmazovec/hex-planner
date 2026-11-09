@@ -195,3 +195,7 @@ export function withPlacedTiles(game: Game, from: Game['map'], pack: DataPack): 
   if (back.length === 0) return game;
   return { ...game, map: { ...game.map, ...Object.fromEntries(back.map(key => [key, from[key]])) } };
 }
+
+/** Whether the game is set up to play: every opponent has a faction and every free slot holds a tile. */
+export const readyToPlay = (game: Game, pack: DataPack): boolean =>
+  game.opponents.every(opponent => opponent.faction !== '') && emptySlots(game, pack).length === 0;

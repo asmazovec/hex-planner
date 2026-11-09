@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { planetHolder } from '../../../domain/players';
 import type { Game, GameState, PlanetDef, TileDef } from '../../../domain/types';
@@ -16,14 +17,22 @@ export interface ControlPanelProps {
   shown: GameState;
   /** Each opponent as the control choice names them. */
   seated: PlayerOption[];
+  /** The planet tapped on the hex: marked here and brought into view. */
+  chosen?: string;
+  /** A tap on a planet's card chooses it, on the hex too. */
+  onChoose?: (index: number) => void;
 }
 
 /**
  * Control: the facts of the tile in one line, then every planet of the system with its printed values and who holds
  * it. The tile itself is read here only: the map is built on the game screen.
  */
-export function ControlPanel({ game, tile, rotation, planets, shown, seated }: ControlPanelProps) {
+export function ControlPanel({ game, tile, rotation, planets, shown, seated, chosen, onChoose }: ControlPanelProps) {
   const { t } = useTranslation();
+  // A lone planet needs no mark: there is nothing to tell it from.
+  const marked = planets.length > 1 ? chosen : undefined;
+  const chosenRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { chosenRef.current?.scrollIntoView?.({ block: 'nearest' }); }, [marked]);
   const setPlanetControl = useGame(s => s.setPlanetControl);
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(Boolean).map(name => t(`map.anomaly.${name}`)).join(', ');
   const facts = [
@@ -42,12 +51,16 @@ export function ControlPanel({ game, tile, rotation, planets, shown, seated }: C
       {!tile && <p className="muted">{t('map.sheet.unknown')}</p>}
       {facts.length > 0 && <p className="muted">{facts.join(' · ')}</p>}
       {tile && planets.length === 0 && <p className="muted">{t('map.sheet.noPlanets')}</p>}
-      {planets.map(planet => {
+      {planets.map((planet, index) => {
         const control = shown.control[planet.id];
         const holder = control === 'enemy' ? planetHolder(game, planet.id) ?? null : control ?? null;
         return (
-          <div key={planet.id} role="group" aria-label={planet.name} className="stage-planet">
-            <strong>{planet.name}</strong>
+          <div
+            key={planet.id} role="group" aria-label={planet.name} ref={planet.id === marked ? chosenRef : undefined}
+            className={planet.id === marked ? 'stage-planet stage-planet-chosen' : 'stage-planet'} aria-current={planet.id === marked ? 'true' : undefined}
+            // The whole card answers a tap, its control buttons too, so the planet it speaks of is the one ringed on the hex.
+            onClick={planets.length > 1 ? () => onChoose?.(index) : undefined}
+          >
             <PlanetDetails planet={planet} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)} />
             <PlayerChoice
               label={t('map.sheet.controlLabel', { planet: planet.name })} options={owners}

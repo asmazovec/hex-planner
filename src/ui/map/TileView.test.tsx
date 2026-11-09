@@ -27,7 +27,7 @@ beforeEach(() => setLanguage('en'));
 
 const emptyState = (): GameState => ({
   systems: {}, ground: {}, exhausted: [], control: {}, tokensOnMap: [],
-  tradeGoods: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {},
+  tradeGoods: 0, commodities: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {},
 });
 
 function setup(
@@ -599,4 +599,21 @@ test('a new reset signal sends the camera back to the whole map, as the reset bu
   rerender(<HexMap game={game} state={emptyState()} pack={pack} resetSignal={1} />);
   expect(camera()).toBe(start);
   vi.unstubAllGlobals();
+});
+
+test('many command tokens pile up with overlap at the top right, clear of the tile number and the seat badge; mine lies on top', () => {
+  setup('25', (g, s) => {
+    s.tokensOnMap.push('1,0');
+    s.rivals = Object.fromEntries(g.opponents.map(o => [o.id, { ...emptyState(), tokensOnMap: ['1,0'] }]));
+  }, { seat: { number: 2, color: 2 } });
+  const xOf = (el: Element) => Number(/translate\(([-\d.]+)/.exec(el.getAttribute('transform') ?? '')![1]);
+  const tokens = [screen.getByRole('img', { name: 'Command token' }), ...screen.getAllByRole('img', { name: /^Command token of/ })];
+  expect(tokens).toHaveLength(6);
+  const seat = screen.getByRole('img', { name: /seat/i });
+  const RADIUS = 6;
+  const SEAT_RADIUS = 4.6;
+  expect(Math.min(...tokens.map(xOf)) - RADIUS).toBeGreaterThanOrEqual(xOf(seat) + SEAT_RADIUS);
+  // Mine is drawn last, so it lies on the pile.
+  const all = [...document.querySelectorAll('[aria-label^="Command token"]')];
+  expect(all.at(-1)).toBe(tokens[0]);
 });

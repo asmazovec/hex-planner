@@ -1,7 +1,8 @@
 import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export const ACTION_TYPES = ['tactical', 'strategic', 'component', 'pass', 'expedition', 'adjustment'] as const;
+/** An expedition is not an action: it is added to a turn, in the action's own editor. */
+export const ACTION_TYPES = ['tactical', 'strategic', 'component', 'pass', 'adjustment'] as const;
 export type ActionType = (typeof ACTION_TYPES)[number];
 
 export interface ActionMenuProps {

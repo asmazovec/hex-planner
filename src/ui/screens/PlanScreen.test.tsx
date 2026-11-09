@@ -483,11 +483,10 @@ test('every arrow adds a source and keeps the earlier ones, also a source with n
   await addRouteByTaps(WAY, TARGET);
   expect(tactical().moves.map(m => m.from)).toEqual([HOME, WAY]);
   expect(document.querySelectorAll('.route-line')).toHaveLength(2);
-  // The picker of an empty source offers everything: choosing ahead warns and blocks nothing.
-  await userEvent.click(screen.getByRole('button', { name: 'Take one Dreadnought' }));
-  expect(tactical().moves[1]).toEqual({ from: WAY, units: { dreadnought: 1 } });
-  expect(within(screen.getByRole('list', { name: 'Warnings' })).getAllByRole('listitem').length).toBeGreaterThan(0);
-  expect(screen.getByRole('button', { name: 'Fly' })).toBeEnabled();
+  // The picker of an empty source offers no ships it does not have (#1).
+  expect(screen.getByText('No ships here.')).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Take one Dreadnought' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Fly' })).toBeDisabled();
 });
 
 test('the outline of an arrow goes round its head too, as one shape with the line', async () => {
@@ -596,7 +595,7 @@ test('outside the editor a tile tap opens the big hex and drags do nothing', asy
   expect(entries()).toHaveLength(0);
   await userEvent.click(tile(TARGET));
   expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
-  expect(screen.getByRole('button', { name: 'Setup' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Control' })).toHaveAttribute('aria-pressed', 'true');
   await userEvent.click(screen.getByRole('button', { name: 'Close' }));
   expect(screen.queryByRole('dialog')).toBeNull();
 });
@@ -700,11 +699,31 @@ describe('the battle of a tactical action', () => {
   const startBattle = () => userEvent.click(screen.getByRole('button', { name: /^Battle / }));
   const dialog = () => within(screen.getByRole('dialog'));
 
+  test('over the fleet pool the result offers to remove the excess in the big hex, and the warning goes once enough are removed (#3)', async () => {
+    const result = () => screen.getByRole('group', { name: 'Action result' });
+    const excess = () => within(result()).queryByRole('button', { name: /^Excess ships/ });
+    await fourCruisersArrive();
+    expect(result()).toHaveTextContent(/fleet pool/);
+    await userEvent.click(excess()!);
+    expect(dialog().queryByRole('group', { name: 'Mode' })).toBeNull();
+    expect(dialog().getByRole('group', { name: 'Removed beyond the fleet pool' })).toBeVisible();
+    await userEvent.click(dialog().getByRole('button', { name: /^Cruiser ×4/ }));
+    expect(action().fleetRemovals).toEqual({ cruiser: 1 });
+    expect(action().losses).toBeUndefined();
+    await userEvent.keyboard('{Escape}');
+    expect(result()).not.toHaveTextContent(/fleet pool/);
+    // The removal stays editable from the result while it holds anything.
+    expect(excess()).toHaveTextContent('Cruiser 1');
+    await userEvent.click(excess()!);
+    await userEvent.click(dialog().getByRole('button', { name: 'Give back Cruiser' }));
+    expect(action().fleetRemovals).toBeUndefined();
+  });
+
   test('the button opens the big hex in its battle, and no units are chosen in the panel', async () => {
     await fourCruisersArrive();
     expect(screen.queryByRole('group', { name: 'Battle' })).toBeNull();
     await startBattle();
-    expect(dialog().getByRole('button', { name: 'Battle' })).toHaveAttribute('aria-pressed', 'true');
+    expect(dialog().queryByRole('group', { name: 'Mode' })).toBeNull();
     expect(dialog().getByText(/^Tap a token to record a loss/)).toBeVisible();
   });
 
@@ -920,6 +939,7 @@ test('units placed on the big hex reach the map, also when it shows the present'
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Now' }));
   await userEvent.click(tile(TARGET));
+  await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Setup' }));
   await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' }));
   await userEvent.click(screen.getByRole('button', { name: 'Close' }));
   expect(within(tile(TARGET) as HTMLElement).getByRole('img', { name: 'Cruiser ×1' })).toBeInTheDocument();
@@ -1040,7 +1060,8 @@ describe('reading the plan', () => {
     await read(/^Secondary: Technology/, /Costs 1 strategy token/);
     await read(/^Tokens and points/, /tactic 1, fleet 1, strategy 0/);
     await userEvent.click(rowOf('Pass').getByRole('button', { name: 'Pass' }));
-    expect(rowOf('Pass').queryByRole('button', { name: /^Edit/ })).toBeNull();
+    // A pass is a turn too: its pencil opens the turn's acts; its name opens no reading.
+    expect(rowOf('Pass').getByRole('button', { name: /^Edit/ })).toBeVisible();
     expect(screen.getByRole('listitem', { name: 'Pass' })).not.toHaveClass('entry-shown');
   });
 
@@ -1548,7 +1569,8 @@ test('the shop opens on the active system and shows the price of each unit', asy
   await chooseSystem(HOME);
   await userEvent.click(screen.getByRole('button', { name: /^Production / }));
   const shop = within(screen.getByRole('dialog'));
-  expect(shop.getByRole('button', { name: 'Build' })).toHaveAttribute('aria-pressed', 'true');
+  expect(shop.getByRole('heading', { level: 2, name: 'Production' })).toBeVisible();
+  expect(shop.queryByRole('group', { name: 'Mode' })).toBeNull();
   expect(shop.getByRole('button', { name: 'Cruiser' })).toHaveTextContent('2');
   expect(shop.getByRole('button', { name: 'Fighter' })).toHaveTextContent('½');
 });
@@ -1688,6 +1710,9 @@ describe('one slot of the panel, one head for every editor', () => {
     expect(screen.getByRole('button', { name: 'Battle optional · Start a battle' })).toHaveClass('source-button');
     await userEvent.click(screen.getByRole('button', { name: 'Production optional · Open the shop' }));
     expect(screen.getByRole('dialog')).toBeVisible();
+    // Production of a tactical action places units only, and the hex offers nothing else (#5).
+    expect(screen.queryByRole('group', { name: 'Mode' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'PDS' })).toBeNull();
   });
 
   test('the cross of the adjustment removes it', async () => {
@@ -1714,10 +1739,79 @@ describe('one slot of the panel, one head for every editor', () => {
     expect(entries()).toEqual([]);
   });
 
-  test('a new expedition contribution opens its editor at once', async () => {
+});
+
+test('the Diplomacy primary puts every other player\'s command token on the chosen system of the map (#7)', () => {
+  useGame.getState().setStrategyCard(1, 2);
+  useGame.getState().setStrategyCard(1, 2);
+  useGame.getState().addEntry(1, { type: 'strategic', card: 2, effects: { systemId: HOME } }, 'action');
+  render(<PlanScreen />);
+  expect(within(tile(HOME) as HTMLElement).getAllByRole('img', { name: /Command token of/ })).toHaveLength(game().opponents.length);
+});
+
+test('the totals count commodities beside the trade goods (#7)', () => {
+  useGame.getState().addEntry(1, { type: 'strategic', card: 5 }, 'action');
+  render(<PlanScreen />);
+  expect(cell('Commodities')).toHaveTextContent(`0 → ${pack.factions.arborec.commodities}`);
+});
+
+describe('acts inside an action in the plan list', () => {
+  test('a turn shows its acts as lines under its name, without rows of their own', () => {
+    const rival = game().opponents[0].id;
+    useGame.getState().addEntry(1, {
+      type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
+      acts: [{ kind: 'transaction', with: rival, give: { tradeGoods: 2 }, get: {} }, { kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }],
+    }, 'action');
     render(<PlanScreen />);
-    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Expedition contribution, end of turn' }));
-    expect(screen.getByRole('group', { name: 'Expedition part' })).toBeVisible();
+    const row = screen.getByRole('listitem', { name: /^Tactical action/ });
+    expect(row).toHaveTextContent('+ Transaction with Player 2: give trade goods 2; get nothing');
+    expect(row).toHaveTextContent('+ Expedition: 3 trade goods');
+    expect(screen.getAllByRole('listitem').filter(li => li.matches('.entry'))).toHaveLength(1);
   });
+
+  test('Warfare\'s free tactical action shows under its card, with no row or number of its own', () => {
+    const card = useGame.getState().addEntry(1, { type: 'strategic', card: 6 }, 'action');
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
+    useGame.getState().addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    render(<PlanScreen />);
+    const rows = screen.getAllByRole('listitem').filter(li => li.matches('.entry'));
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent('+ Tactical action without a token · 25');
+    expect(within(rows[1]).getByText('1')).toBeInTheDocument();
+  });
+});
+
+describe('the acts of a turn in its editor', () => {
+  test('a pass opens a turn editor with «In this turn»; a transaction opens its step and comes back', async () => {
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
+    const block = () => within(screen.getByRole('group', { name: 'In this turn' }));
+    await userEvent.click(block().getByRole('button', { name: '+ Transaction' }));
+    expect(screen.getByRole('heading', { name: 'Transaction' })).toBeVisible();
+    await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: 'Add one Trade goods' }));
+    expect(entries()[0]).toMatchObject({ acts: [{ kind: 'transaction', give: { tradeGoods: 1 } }] });
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(block().getByRole('button', { name: /^\+ Transaction with Player 2: give trade goods 1/ })).toBeVisible();
+  });
+
+  test('the tactical editor ends with «In this turn»', async () => {
+    await chooseSystem();
+    expect(screen.getByRole('group', { name: 'In this turn' })).toBeVisible();
+  });
+
+  test('the pencil of a component action opens the turn editor, with its note', async () => {
+    useGame.getState().addEntry(1, { type: 'component', note: 'Plague' }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Component action/ }));
+    expect(screen.getByRole('textbox', { name: 'Note' })).toHaveValue('Plague');
+    expect(screen.getByRole('group', { name: 'In this turn' })).toBeVisible();
+  });
+});
+
+test('the turn editor of a pass shows what its expedition lacks, so no warning of the turn is lost', async () => {
+  useGame.getState().addEntry(1, { type: 'pass', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }] }, 'action');
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
+  expect(within(document.querySelector('.editor-frame') as HTMLElement).getByText(/trade goods/i, { selector: '.warning-text' })).toBeVisible();
 });

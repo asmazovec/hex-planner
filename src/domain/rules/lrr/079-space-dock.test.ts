@@ -20,6 +20,14 @@ describe('LRR 79 Space Dock', () => {
     expect(codesOf(rulesGame({ entries: [build], game: { docks: ['h2'] } }), pack, build)).toContain('productionOver');
   });
 
+  test('79.1 (Space Dock II): an upgraded dock produces its planet’s resources + 4: the dock on h2 makes 5, not 6', () => {
+    const fits = tactical(HOME, { production: { destroyer: 5 } });
+    const over = tactical(HOME, { production: { destroyer: 6 } });
+    const game = (entry: typeof fits) => rulesGame({ entries: [entry], game: { docks: ['h2'], upgrades: { me: ['spacedock'], opponents: {} } } });
+    expect(codesOf(game(fits), pack, fits)).not.toContain('productionOver');
+    expect(codesOf(game(over), pack, over)).toContain('productionOver');
+  });
+
   test('79.2: the Construction primary places a space dock', () => {
     const play = primary(CARD.construction, { structures: [{ kind: 'spacedock', planetId: 'h2' }] });
     expect(forecast(rulesGame({ entries: [play] }), pack).state.docks).toContain('h2');

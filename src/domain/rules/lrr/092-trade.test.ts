@@ -20,8 +20,17 @@ describe('LRR 92 Trade (Strategy Card)', () => {
     expect(forecast(rulesGame({ entries: [primary(CARD.trade)] }), pack).state.tradeGoods).toBe(3);
   });
 
-  test.todo('92.3: the primary replenishes commodities up to the faction\'s value — not modelled: commodities are not kept in the state');
-  test.todo('92.3.1: commodities never exceed the faction\'s value — not modelled: commodities are not kept in the state');
+  test('92.3: the primary replenishes commodities up to the faction\'s value', () => {
+    expect(forecast(rulesGame({ entries: [primary(CARD.trade)] }), pack).state.commodities).toBe(3);
+  });
+
+  test('92.3.1: commodities never exceed the faction\'s value, however often they are replenished', () => {
+    expect(forecast(rulesGame({ entries: [primary(CARD.trade), secondary(CARD.trade)] }), pack).state.commodities).toBe(3);
+  });
+
+  test('92.5: the secondary replenishes commodities', () => {
+    expect(forecast(rulesGame({ entries: [secondary(CARD.trade)] }), pack).state.commodities).toBe(3);
+  });
 
   test('92.4: a player chosen by the primary resolves the secondary without spending a token', () => {
     // The opponent's free secondary is recorded on my primary; my own state is what the test can see.

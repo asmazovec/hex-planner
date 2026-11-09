@@ -10,8 +10,8 @@ import { canFight, checkAfterCombat, checkArrival, removeGroundLosses, removeLos
 import { gainControl, landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
 import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
-import { unitIds, type TacticalEntry } from './state';
-import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, isPickup, overflowLeft } from './transport';
+import { take, unitIds, type TacticalEntry } from './state';
+import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, isPickup, overflowLeft, removeFleetExcess } from './transport';
 import type { Blockers } from '../movement';
 
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
@@ -39,13 +39,18 @@ function fightAndLand(
   gainControl(state, landedOn, pack);
 }
 
-/** What happens in the target after the moves: the battle and the landing, then what was built is placed. */
+/**
+ * What happens in the target after the moves: the battle and the landing, then what was built is placed. `removeLater`
+ * is what the player removes beyond the fleet pool of what the production builds (37 note 2).
+ */
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
+  removeLater: UnitCounts = {},
 ): void {
   fightAndLand(game, state, target, entry, pack, warnings, lossesTaken);
   warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround));
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
+  take(state.systems, target, removeLater, warnings, 'production');
   claimStations(game, state, target, pack);
 }
 
@@ -65,8 +70,10 @@ export function applyTactical(
   // Ships lost where nothing could fight them were lost on the way, before the fleet pool counts the arrival.
   const onTheWay = !canFight(game, state, target, pack);
   if (onTheWay) removeLosses(state, target, entry, warnings);
+  // The excess beyond the fleet pool goes at once (37.3), so the arrival counts what is left.
+  const removeLater = removeFleetExcess(state, target, entry.fleetRemovals ?? {});
   if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
-  landAndBuild(game, state, target, entry, pack, warnings, onTheWay);
+  landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater);
   payProduction(game, state, entry, pack, warnings);
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));
 }
@@ -78,7 +85,7 @@ export function tacticalMeters(
   const state = structuredClone(before);
   const target = entry.systemId;
   const groups = target === null ? {} : moveUnits(game, state, target, entry.moves, pack, []);
-  if (target !== null) landAndBuild(game, state, target, entry, pack, []);
+  if (target !== null) landAndBuild(game, state, target, entry, pack, [], false, removeFleetExcess(state, target, entry.fleetRemovals ?? {}));
   return {
     group: capacity(game, groups[source] ?? {}, before.upgrades, pack),
     // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.

@@ -16,6 +16,7 @@ const VALUES: { key: string; read: (state: GameState, pack: DataPack) => number 
   { key: 'resources', read: readyResources },
   { key: 'influence', read: readyInfluence },
   { key: 'tradeGoods', read: s => s.tradeGoods },
+  { key: 'commodities', read: s => s.commodities },
   { key: 'tactic', read: s => s.tactic },
   { key: 'fleet', read: s => s.fleet },
   { key: 'strategy', read: s => s.strategy },

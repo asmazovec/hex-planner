@@ -405,9 +405,15 @@ export const useGame = create<GameStore>((set, get) => {
         ?? get().addEntry(roundNo, { type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0 }, 'status');
     },
     updateEntry: (id, patch) =>
-      commit(g => editEntryRound(g, id, r => editEntries(r, es =>
-        mapEntry(es, id, e => (Object.entries(patch).every(([k, v]) => (e as Record<string, unknown>)[k] === v)
-          ? e : ({ ...e, ...patch } as Entry)))))),
+      commit(g => editEntryRound(g, id, r => editEntries(r, es => {
+        const was = es.find(e => e.id === id);
+        // Another card or side starts the play over: the free tactical action the old one started goes with it.
+        const replayed = was && (was.type === 'strategic' || was.type === 'secondary')
+          && (('card' in patch && patch.card !== was.card) || ('type' in patch && patch.type !== was.type));
+        const kept = replayed ? es.filter(e => !(e.type === 'tactical' && e.fromCard === id)) : es;
+        return mapEntry(kept, id, e => (Object.entries(patch).every(([k, v]) => (e as Record<string, unknown>)[k] === v)
+          ? e : ({ ...e, ...patch } as Entry)));
+      }))),
     moveEntry: (id, toPhase, toIndex) =>
       commit(g => editEntryRound(g, id, r => editEntries(r, es => placeEntry(es, id, toPhase, toIndex)))),
     removeEntry: id =>

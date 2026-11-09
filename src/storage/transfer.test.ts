@@ -187,7 +187,6 @@ describe('PDS in saved games', () => {
   };
 
   test('a version 3 file gets no PDS and comes up to the current schema', () => {
-    expect(CURRENT_SCHEMA).toBe(5);
     expect(importGame(JSON.stringify(version3()))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, pds: {} } });
   });
 
@@ -354,7 +353,7 @@ describe('the seven-player map without hyperlanes, gone in version 5', () => {
   test('such a file opens on the rulebook map: hyperlanes placed, homes at the new seats, the tile under a lane gone', () => {
     const result = importGame(JSON.stringify(version4()));
     if (!result.ok) throw new Error(result.reason);
-    expect(result.game.schemaVersion).toBe(5);
+    expect(result.game.schemaVersion).toBe(CURRENT_SCHEMA);
     expect(result.game.layout).toBe('hyperlanes');
     expect(result.game.map['0,4']).toBe('85A@0');
     expect(result.game.map['3,-4']).toBe(pok.factions.hacan.homeTile);
@@ -364,6 +363,86 @@ describe('the seven-player map without hyperlanes, gone in version 5', () => {
 
   test('other layouts keep their value', () => {
     const eight = { ...version4(), playerCount: 8, opponents: [...version4().opponents, { id: 'o8', faction: 'winnu', vp: 0, seat: 8, color: 8 }] };
-    expect(migrate(eight)).toMatchObject({ schemaVersion: 5, layout: 'standard' });
+    expect(migrate(eight)).toMatchObject({ schemaVersion: CURRENT_SCHEMA, layout: 'standard' });
   });
+});
+
+describe('schema 6: an expedition becomes an act of a turn', () => {
+  const version5 = (entries: import('../domain/types').Entry[]) => {
+    const g = sampleGame();
+    g.plans[0].rounds[0].entries = entries;
+    return { ...g, schemaVersion: 5 };
+  };
+  const pay = { planets: [], tradeGoods: 3 };
+  const tactical = (id: string, owner?: string) => ({ id, phase: 'action' as const, status: 'planned' as const, type: 'tactical' as const, systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, ...(owner ? { owner } : {}) });
+  const expedition = (id: string, owner?: string) => ({ id, phase: 'action' as const, status: 'done' as const, type: 'expedition' as const, sliceId: 'tg3', payment: pay, ...(owner ? { owner } : {}) });
+  const entriesOf = (doc: unknown) => {
+    const result = importGame(JSON.stringify(doc));
+    if (!result.ok) throw new Error(result.reason);
+    return result.game.plans[0].rounds[0].entries;
+  };
+
+  test('it joins the turn of its owner right before it', () => {
+    const entries = entriesOf(version5([tactical('t1'), expedition('e1'), tactical('r1', 'o1')]));
+    expect(entries.map(e => e.id)).toEqual(['t1', 'r1']);
+    expect(entries[0]).toMatchObject({ acts: [{ kind: 'expedition', sliceId: 'tg3', payment: pay }] });
+    expect(entries[1]).not.toHaveProperty('acts');
+    // An opponent's entry between may change what I can pay with: the expedition stays an entry.
+    expect(entriesOf(version5([tactical('t1'), tactical('r1', 'o1'), expedition('e1')])).map(e => e.id)).toEqual(['t1', 'r1', 'e1']);
+  });
+
+  test('with no turn of its owner right before it, it stays an entry: joining a later turn would change the order of play', () => {
+    const entries = entriesOf(version5([expedition('e1', 'o1'), tactical('t1'), tactical('r1', 'o1')]));
+    expect(entries.map(e => e.id)).toEqual(['e1', 't1', 'r1']);
+  });
+
+  test('only expeditions may stand between the turn and its expedition; anything else keeps it an entry', () => {
+    const give = { id: 'g', phase: 'action' as const, status: 'planned' as const, type: 'adjustment' as const, label: '', delta: { tradeGoods: 3 } };
+    expect(entriesOf(version5([tactical('t1'), give, expedition('e1')])).map(e => e.id)).toEqual(['t1', 'g', 'e1']);
+    const two = entriesOf(version5([tactical('t1'), expedition('e1'), expedition('e2')]));
+    expect(two.map(e => e.id)).toEqual(['t1']);
+    expect(two[0]).toMatchObject({ acts: [{ kind: 'expedition' }, { kind: 'expedition' }] });
+  });
+
+  test('a cancelled expedition stays an entry, and a cancelled turn is no host', () => {
+    const cancelledExpedition = { ...expedition('e1'), status: 'cancelled' as const };
+    expect(entriesOf(version5([tactical('t1'), cancelledExpedition])).map(e => e.id)).toEqual(['t1', 'e1']);
+    const cancelledTurn = { ...tactical('t1'), status: 'cancelled' as const };
+    expect(entriesOf(version5([cancelledTurn, expedition('e1')])).map(e => e.id)).toEqual(['t1', 'e1']);
+  });
+
+  test('after the free tactical action of Warfare the expedition joins its card, never the hidden tactical', () => {
+    const card = { id: 'w', phase: 'action' as const, status: 'planned' as const, type: 'strategic' as const, card: 6 };
+    const free = { ...tactical('f'), free: true, fromCard: 'w' };
+    const entries = entriesOf(version5([card, free, expedition('e1')]));
+    expect(entries.find(e => e.id === 'w')).toMatchObject({ acts: [{ kind: 'expedition' }] });
+    expect(entries.find(e => e.id === 'f')).not.toHaveProperty('acts');
+  });
+
+  test('with no turn entry of its owner in the round it stays an entry', () => {
+    const entries = entriesOf(version5([tactical('r1', 'o1'), expedition('e1')]));
+    expect(entries.map(e => e.type)).toEqual(['tactical', 'expedition']);
+  });
+
+  test('the version becomes 6', () => {
+    expect(CURRENT_SCHEMA).toBe(6);
+    expect(migrate(version5([]))).toMatchObject({ schemaVersion: 6 });
+  });
+});
+
+test('schema 6: the forecast stays what it was: the joined expedition still pays and holds its slice', async () => {
+  const { project } = await import('../domain/project');
+  const { sliceOwners } = await import('../domain/thundersEdge');
+  const g = sampleGame();
+  const give = { id: 'g', phase: 'strategy' as const, status: 'done' as const, type: 'adjustment' as const, label: '', delta: { tradeGoods: 3 } };
+  const turn = { id: 't1', phase: 'action' as const, status: 'planned' as const, type: 'pass' as const };
+  const old = { id: 'e1', phase: 'action' as const, status: 'planned' as const, type: 'expedition' as const, sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } };
+  g.plans[0].rounds[0].entries = [give, turn, old];
+  const before = project({ ...g }, g.plans[0], 'forecast', loadPack(g.expansions)).state.tradeGoods;
+  const result = importGame(JSON.stringify({ ...g, schemaVersion: 5 }));
+  if (!result.ok) throw new Error(result.reason);
+  const plan = result.game.plans[0];
+  expect(project(result.game, plan, 'forecast', loadPack(result.game.expansions)).state.tradeGoods).toBe(before);
+  expect(before).toBe(0);
+  expect(sliceOwners(result.game, plan).tg3).toBe('me');
 });

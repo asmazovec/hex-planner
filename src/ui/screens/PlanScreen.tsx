@@ -13,7 +13,7 @@ import { cardChange, withSystem } from '../../domain/strategy';
 import { entrySystems, hasUnits, isUntouched, isValidSource, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
-import type { AdjustmentKind, CardEffects, Entry } from '../../domain/types';
+import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { HexMap } from '../map/HexMap';
@@ -29,6 +29,9 @@ import { gameAs, opponentsBySeat } from '../../domain/players';
 import { playerName, shortName } from '../players/names';
 import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
+import { TransactionStep } from '../plan/editors/TransactionStep';
+import { TurnEditor } from '../plan/editors/TurnEditor';
+import { TurnActs } from '../plan/blocks/TurnActs';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { EditorFrame } from '../primitives/EditorFrame';
 import { EntryList } from '../plan/EntryList';
@@ -195,7 +198,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       drawers.closeTe();
       update(state => ({ ...state, panel: { kind: 'card', entryId: id }, next: IDLE }));
       setView('plan');
-    } else if (type === 'adjustment' || type === 'expedition') {
+    } else if (type === 'adjustment') {
       update(state => ({ ...state, panel: { kind: type, entryId: id }, next: IDLE }));
     } else {
       update(state => ({ ...state, panel: LIST, next: IDLE, openId: id }));
@@ -277,7 +280,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     }
     if (!onMap) return;
     flight.stop();
-    update(state => ({ ...state, panel: state.panel.kind === 'list' ? LIST : state.panel, stage: { slot, mode: 'setup', for: { kind: 'map' } } }));
+    update(state => ({ ...state, panel: state.panel.kind === 'list' ? LIST : state.panel, stage: { slot, mode: 'control', for: { kind: 'map' } } }));
   };
 
   const onShowEntry = (tapped: Entry) => {
@@ -310,6 +313,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       update(state => ({ ...opening(state), panel: { kind: 'card', entryId: opened.id } }));
     } else if (opened.type === 'expedition') {
       update(state => ({ ...opening(state), panel: { kind: 'expedition', entryId: opened.id } }));
+    } else if (opened.type === 'component' || opened.type === 'pass') {
+      update(state => ({ ...opening(state), panel: { kind: 'turn', entryId: opened.id } }));
     } else {
       update(state => ({ ...opening(state), openId: state.openId === opened.id ? null : opened.id }));
     }
@@ -410,6 +415,17 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   };
   const toPicker = (source: string | null) => update(state => (state.panel.kind === 'tactical' ? { ...state, panel: { ...state.panel, pickerFrom: source } } : state));
 
+  /** The acts of a turn entry, written back without an empty list. */
+  const setActs = (entry: Entry, acts: Act[]) => updateEntry(entry.id, { acts: acts.length > 0 ? acts : undefined } as Partial<EntryBody>);
+  /** «В этом ходу» of a turn: each act opens as a step of this editor, and Back returns here. */
+  const turnActsOf = (entry: Entry) => (
+    <TurnActs
+      game={gameAs(game, entry.owner)} pack={pack} entry={entry} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
+      onChange={acts => setActs(entry, acts)}
+      onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel }, next: IDLE }))}
+    />
+  );
+
   /** The one slot of the panel: an editor, a step of one, or the choice of a system; the list stands there otherwise. */
   const editorIn = (slot: Exclude<Slot, { kind: 'list' }>) => {
     switch (slot.kind) {
@@ -446,10 +462,12 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onUpdate={patch => updateEntry(edited.id, patch)}
             onOpenPicker={toPicker}
             onManualPayment={open => toggleManualPayment(edited.id, open)}
-            onOpenShop={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'build', for: { kind: 'tactical', id: edited.id } } })); }}
+            onOpenShop={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'build', only: 'units', for: { kind: 'tactical', id: edited.id } } })); }}
             onOpenBattle={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'battle', for: { kind: 'tactical', id: edited.id } } })); }}
+            onOpenFleet={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'fleet', for: { kind: 'tactical', id: edited.id } } })); }}
             onDone={leaveEditor}
             onRemove={() => removeEdited(edited.id)}
+            turnActs={edited.fromCard ? undefined : turnActsOf(edited)}
           />
         );
       }
@@ -470,6 +488,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onOpenTactical={id => update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: played.id }, next: IDLE }))}
             onDone={toList}
             onRemove={() => removeEdited(played.id)}
+            turnActs={turnActsOf(played)}
           />
         );
       }
@@ -497,6 +516,47 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onChange={patch => updateEntry(given.id, patch)}
             onDone={toList}
             onRemove={() => removeEdited(given.id)}
+          />
+        );
+      }
+      case 'turn': {
+        const turn = slot.entry;
+        return (
+          <TurnEditor
+            key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} warnings={forecast.warningsByEntry[turn.id] ?? []} turnActs={turnActsOf(turn)}
+            onNote={note => updateEntry(turn.id, { note })} onDone={toList} onRemove={() => removeEdited(turn.id)}
+          />
+        );
+      }
+      case 'act': {
+        const { entry: host, index, act, back } = slot;
+        const acts = 'acts' in host && host.acts ? host.acts : [];
+        const backTo = () => update(state => ({ ...state, panel: back, next: IDLE }));
+        const replace = (next: Act) => setActs(host, acts.map((a, i) => (i === index ? next : a)));
+        const drop = () => { setActs(host, acts.filter((_, i) => i !== index)); backTo(); };
+        const hostGame = gameAs(game, host.owner);
+        const all = forecast.warningsByEntry[host.id] ?? [];
+        if (act.kind === 'transaction') {
+          return (
+            <TransactionStep
+              key={`${host.id}-${index}`} game={hostGame} pack={pack} act={act} owner={host.owner ?? 'me'}
+              warnings={all.filter(w => w.step === 'transaction')} onChange={replace} onBack={backTo} onRemove={drop}
+            />
+          );
+        }
+        // Its own part is not counted against it, as for an expedition entry.
+        const { [act.sliceId ?? '']: own, ...othersOwners } = owners;
+        void own;
+        const paymentKey = `${host.id}#${index}`;
+        return (
+          <ExpeditionEditor
+            key={paymentKey} game={hostGame} pack={pack} sliceId={act.sliceId} payment={act.payment}
+            owners={act.sliceId && !game.expedition.slices[act.sliceId] ? othersOwners : owners} before={boards.before(host.id)}
+            warnings={all.filter(w => w.step === 'expedition')}
+            manualPayment={manualPayments.includes(paymentKey)} onManualPayment={open => toggleManualPayment(paymentKey, open)}
+            onChange={patch => replace({ ...act, ...patch })}
+            onDone={backTo}
+            onRemove={drop}
           />
         );
       }

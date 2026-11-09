@@ -43,10 +43,10 @@ describe('LRR 93 Trade Goods', () => {
   test.todo('93.4.2: trade goods cannot cast votes — not modelled: the agenda phase is not planned');
 
   test('93.4.3: an effect that asks for trade goods is paid in trade goods only', () => {
-    const slice = { id: 'x1', phase: 'action', status: 'planned', type: 'expedition', sliceId: 'tg3', payment: { planets: ['h1'], tradeGoods: 0 } } as Entry;
+    const slice = { id: 'x1', phase: 'action', status: 'planned', type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: ['h1'], tradeGoods: 0 } }] } as Entry;
     const game = rulesGame({ entries: [slice], game: { expansions: ['te'] } });
     expect(codesOf(game, pack, slice)).toContain('shortTradeGoods');
-    const paid = { ...slice, id: 'x2', payment: NO_PAYMENT } as Entry;
+    const paid = { ...slice, id: 'x2', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: NO_PAYMENT }] } as Entry;
     const rich = rulesGame({ entries: [adjust({ tradeGoods: 3 }, 'strategy'), paid], game: { expansions: ['te'] } });
     expect(codesOf(rich, pack, paid)).toEqual([]);
     expect(forecast(rich, pack).state.tradeGoods).toBe(0);

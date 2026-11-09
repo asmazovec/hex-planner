@@ -11,7 +11,7 @@ import type { DataPack, Game, GameState, PlanetDef } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
 import { hexPoints, slotToPixel } from './geometry';
-import { CommandTokenMark, IngressMark, TECH_SHAPES } from './marks';
+import { CommandTokenMark, IngressMark, LEGENDARY_SHAPE, TECH_SHAPES } from './marks';
 import { playerStyle } from '../primitives/player';
 import { opponentName } from '../players/names';
 
@@ -61,8 +61,8 @@ const SEAT_RADIUS = 4.6;
 const SEAT_Y = NUMBER_BASELINE - 2.6;
 /** Top-right corner: the command token against the top edge, the ingress below it along the side. */
 const COMMAND_SPOT = { x: 26, y: -41, r: 6 };
-/** The tokens of opponents stand in a row before mine. */
-const RIVAL_TOKEN_STEP = 13;
+/** The tokens of opponents pile up before mine, each over the one before by about two fifths; closer when the corner is crowded. */
+const RIVAL_TOKEN_STEP = 7;
 const INGRESS_SPOT = { x: 36, y: -28, scale: 0.75 };
 const INGRESS_RADIUS = 8 * INGRESS_SPOT.scale;
 const NAME_LENGTH = 11;
@@ -80,7 +80,6 @@ const techMarkAt = (n: number): { x: number; y: number } => {
   return { x: TECH_RADIUS * Math.sin(angle), y: -TECH_RADIUS * Math.cos(angle) };
 };
 /** The legendary mark mirrors the first technology mark, on the upper left; a four-point star of its own. */
-const LEGENDARY_SHAPE = 'M0,-4.2 L1.2,-1.2 L4.2,0 L1.2,1.2 L0,4.2 L-1.2,1.2 L-4.2,0 L-1.2,-1.2 Z';
 const legendaryMarkAt = (): { x: number; y: number } => ({ x: -techMarkAt(0).x, y: techMarkAt(0).y });
 /** The trait tint sits just inside the rim, which keeps showing the control. One trait fills the disc, two take a half each. */
 const TINT_RADIUS = PLANET_BASE - 1;
@@ -215,7 +214,14 @@ export function TileView({
   const hasCommandToken = state.tokensOnMap.includes(slotKey);
   const seatX = tile && seat ? NUMBER_X + (String(tile.number).length + (worm ? worm.length + 1 : 0)) * NUMBER_CHAR + SEAT_RADIUS + 1.5 : 0;
   const rivalTokens = seated.filter(o => state.rivals?.[o.id]?.tokensOnMap.includes(slotKey));
-  const rivalTokenAt = (i: number) => ({ x: COMMAND_SPOT.x - (i + (hasCommandToken ? 1 : 0)) * RIVAL_TOKEN_STEP, y: COMMAND_SPOT.y, r: COMMAND_SPOT.r });
+  // The tokens form a pile leftwards from the corner: apart while they fit, overlapping more as they crowd, never over
+  // the tile number or its seat badge.
+  const numberText = tile ? `${tile.kind === 'fracture' ? `F${tile.id.replace(/\D/g, '')}` : tile.number}${worm ? ` ${worm}` : ''}` : unknown ? tileId : '';
+  const numberEnd = tile && seat ? seatX + SEAT_RADIUS : NUMBER_X + numberText.length * NUMBER_CHAR;
+  const tokenCount = rivalTokens.length + (hasCommandToken ? 1 : 0);
+  const tokenRoom = COMMAND_SPOT.x - (numberEnd + 1 + COMMAND_SPOT.r);
+  const tokenStep = tokenCount > 1 ? Math.min(RIVAL_TOKEN_STEP, tokenRoom / (tokenCount - 1)) : RIVAL_TOKEN_STEP;
+  const rivalTokenAt = (i: number) => ({ x: COMMAND_SPOT.x - (i + (hasCommandToken ? 1 : 0)) * tokenStep, y: COMMAND_SPOT.y, r: COMMAND_SPOT.r });
   const obstacles: LayoutObstacle[] = rivalTokens.map((_, i) => rivalTokenAt(i));
   if (hasCommandToken) obstacles.push(COMMAND_SPOT);
   if (ingress) obstacles.push({ x: INGRESS_SPOT.x, y: INGRESS_SPOT.y, r: INGRESS_RADIUS });
@@ -298,17 +304,18 @@ export function TileView({
           </g>
         )}
 
+        {/* A pile: the leftmost token at the bottom, each next one over it, mine on top in the corner. */}
+        {rivalTokens.map((o, i) => ({ o, i })).reverse().map(({ o, i }) => (
+          <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
+            <CommandTokenMark color={o.color} />
+          </g>
+        ))}
+
         {hasCommandToken && (
           <g role="img" aria-label={t('map.commandToken')} transform={`translate(${COMMAND_SPOT.x} ${COMMAND_SPOT.y}) scale(${COMMAND_SPOT.r / 7})`}>
             <CommandTokenMark />
           </g>
         )}
-
-        {rivalTokens.map((o, i) => (
-          <g key={o.id} role="img" aria-label={t('map.commandTokenOf', { name: opponentName(game, pack, o.id, t) })} transform={`translate(${rivalTokenAt(i).x} ${rivalTokenAt(i).y}) scale(${COMMAND_SPOT.r / 7})`}>
-            <CommandTokenMark color={o.color} />
-          </g>
-        ))}
 
         {ingress && (
           <g role="img" aria-label={t('map.ingress')} transform={`translate(${INGRESS_SPOT.x} ${INGRESS_SPOT.y}) scale(${INGRESS_SPOT.scale})`}>

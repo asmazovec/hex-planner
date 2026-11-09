@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from './newGame';
 import { project, stateBeforeEntry, stateAfterEntry } from './project';
 import { withTeMecatol } from './mecatol';
-import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, hasChoices, heldCards, homeSlot, plannedCard, playOf, startsAsPrimary, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
+import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, freshPlay, heldCards, homeSlot, plannedCard, playOf, startsAsPrimary, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -376,24 +376,13 @@ describe('Imperial', () => {
 });
 
 describe('choices and changes', () => {
-  test('a choice is anything recorded except an empty value', () => {
-    const empty = primary(1, { tokens: { tactic: 0 }, boughtTokens: 0, readied: [], freeSecondary: [], structures: [], mecatol: false, payment: pay([]) });
-    expect(hasChoices(empty, emptyRound([empty]))).toBe(false);
-    for (const effects of [
-      { tokens: { fleet: 1 } }, { boughtTokens: 1 }, { systemId: HOME }, { readied: [JOL] }, { speaker: 'a' }, { freeSecondary: ['a'] }, { mecatol: true },
-      { production: { systemId: HOME, units: { carrier: 1 } } }, { structures: [{ kind: 'pds' as const, planetId: JOL }] },
-    ]) {
-      const entry = primary(1, effects);
-      expect(hasChoices(entry, emptyRound([entry]))).toBe(true);
-    }
-    const upgraded = { ...primary(7), upgrades: ['carrier'] } as CardEntry;
-    expect(hasChoices(upgraded, emptyRound([upgraded]))).toBe(true);
+  test('a switch to a secondary also drops the acts: a secondary is played in the turn of another player', () => {
+    expect(freshPlay({ type: 'secondary', card: 7 })).toMatchObject({ acts: undefined });
+    expect(freshPlay({ type: 'strategic', card: 7 })).not.toHaveProperty('acts');
   });
 
-  test('the free tactical it started is a choice', () => {
-    const entry = primary(6);
-    const free: Entry = { id: 'f', phase: 'action', status: 'planned', type: 'tactical', systemId: OTHER, moves: [], landings: [], production: {}, payment: pay([]), free: true, fromCard: entry.id };
-    expect(hasChoices(entry, emptyRound([entry, free]))).toBe(true);
+  test('a switch of card or side starts the play over: effects, payment and upgrades go', () => {
+    expect(freshPlay({ card: 7, type: 'secondary' })).toEqual({ card: 7, type: 'secondary', effects: undefined, upgrades: undefined });
   });
 
   test('a change of cost pays automatically; a manual payment is left alone', () => {

@@ -60,7 +60,7 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
     <TacticalEditor
       game={game()} pack={pack} entry={entry} before={before()} warnings={warnings} manualPayment={false}
       choosing={null} onChoose={() => undefined}
-      onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+      onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
     />,
   );
 }
@@ -244,7 +244,7 @@ describe('the tactical editor', () => {
       <TacticalEditor
         game={game()} pack={pack} before={before()} warnings={[]} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
     expect(screen.queryByText(/with Production/)).toBeNull();
@@ -253,7 +253,7 @@ describe('the tactical editor', () => {
       <TacticalEditor
         game={game()} pack={pack} before={before()} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
-        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onDone={() => undefined} onRemove={() => undefined}
+        onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
     const warning = screen.getByText(/with Production/);

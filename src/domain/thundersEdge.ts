@@ -132,7 +132,9 @@ export function sliceOwners(game: Game, plan?: Plan): SliceOwners {
   for (const [id, owner] of Object.entries(game.expedition.slices)) if (owner) owners[id] = owner;
   for (const round of plan?.rounds ?? []) {
     for (const entry of round.entries) {
-      if (entry.type === 'expedition' && entry.sliceId && entry.status !== 'cancelled') owners[entry.sliceId] = 'me';
+      if (entry.status === 'cancelled') continue;
+      if (entry.type === 'expedition' && entry.sliceId) owners[entry.sliceId] = 'me';
+      for (const act of 'acts' in entry ? entry.acts ?? [] : []) if (act.kind === 'expedition' && act.sliceId) owners[act.sliceId] = 'me';
     }
   }
   return owners;

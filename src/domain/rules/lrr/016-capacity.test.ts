@@ -3,6 +3,7 @@
  * Base pack: a carrier I has capacity 4 and moves 1; a cruiser I has capacity 0; a dreadnought I has capacity 1.
  */
 import { describe, expect, test } from 'vitest';
+import { boardSystemWarnings } from '../../replay';
 import { codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
@@ -94,6 +95,13 @@ describe('LRR 16 Capacity', () => {
     const warnings = forecast(game, pack).warnings[move.id] ?? [];
     expect(warnings.map(w => w.code)).not.toContain('capacityGroup');
     expect(warnings.some(w => w.code === 'capacitySystem' && w.params.systemId === HOME)).toBe(true);
+  });
+
+  test('16.3 / 16.3.1: ground forces placed by hand in a system’s space beyond the ships’ capacity are warned about, for each player', () => {
+    const over = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 5 } } });
+    expect(boardSystemWarnings(over, forecast(over, pack).state, NEAR, pack).map(w => w.code)).toEqual(['capacitySystem']);
+    const fits = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 4 } } });
+    expect(boardSystemWarnings(fits, forecast(fits, pack).state, NEAR, pack)).toEqual([]);
   });
 
   test.todo('16 note 4.1, 4.4, 4.5: the rest of the example — the same two checks as notes 4.2 and 4.3');

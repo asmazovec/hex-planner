@@ -4,7 +4,7 @@
  * the panel, a card's pick to its card, and a state that undo left without its entry falls back on its own (`resolvePick`).
  */
 import type { CardMapPick } from '../../../domain/replay/cards/targets';
-import type { Entry, Round } from '../../../domain/types';
+import type { Act, Entry, Round } from '../../../domain/types';
 import type { StageMode } from '../../map/stage/HexStage';
 
 /** The entry being read in the list, and how many of its flights have started. */
@@ -22,7 +22,11 @@ export type Panel =
   | { kind: 'tactical'; entryId: string | null; pickerFrom: string | null; fromCard?: string; card?: string }
   | { kind: 'card'; entryId: string }
   | { kind: 'adjustment'; entryId: string }
-  | { kind: 'expedition'; entryId: string };
+  | { kind: 'expedition'; entryId: string }
+  /** A component action or a pass: the turn's acts, and the note of a component action. */
+  | { kind: 'turn'; entryId: string }
+  /** One act of a turn as a step of its editor; Back returns to `back`. */
+  | { kind: 'act'; entryId: string; index: number; back: Panel };
 
 /**
  * What the next tap on the map chooses. `idle` does what the panel does by default: opens the big hex, creates a waiting
@@ -91,6 +95,13 @@ export function resolvePick(state: PickState, round: Round | undefined): PickSta
   if (panel.kind === 'card' && !cardIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'adjustment' && !adjustmentIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'expedition' && !expeditionIn(round, panel.entryId)) panel = LIST;
+  if (panel.kind === 'turn' && !['component', 'pass'].includes(find(round, panel.entryId)?.type ?? '')) panel = LIST;
+  if (panel.kind === 'act') {
+    const host = find(round, panel.entryId);
+    // An act undo took away returns to where it was opened from; with its turn gone, to the list.
+    if (!host) panel = LIST;
+    else if (!('acts' in host && host.acts?.[panel.index])) panel = panel.back;
+  }
   if (panel.kind === 'list' && panel.shown && round && !find(round, panel.shown.id)) panel = LIST;
   const { next } = state;
   const fits = next.kind === 'route' || next.kind === 'choose' ? panel.kind === 'tactical' && panel.entryId !== null
@@ -135,7 +146,9 @@ export type Slot =
   | { kind: 'flight'; entry: TacticalEntry; source: string }
   | { kind: 'card'; entry: CardEntry }
   | { kind: 'adjustment'; entry: AdjustmentEntry }
-  | { kind: 'expedition'; entry: ExpeditionEntry };
+  | { kind: 'expedition'; entry: ExpeditionEntry }
+  | { kind: 'turn'; entry: Extract<Entry, { type: 'component' | 'pass' }> }
+  | { kind: 'act'; entry: Entry; index: number; act: Act; back: Panel };
 
 /** The slot of a resolved state: an editor whose entry is gone shows the list. */
 export function slotOf({ panel }: PickState, round: Round | undefined): Slot {
@@ -159,6 +172,15 @@ export function slotOf({ panel }: PickState, round: Round | undefined): Slot {
     case 'expedition': {
       const entry = expeditionIn(round, panel.entryId);
       return entry ? { kind: 'expedition', entry } : { kind: 'list' };
+    }
+    case 'turn': {
+      const entry = find(round, panel.entryId);
+      return entry?.type === 'component' || entry?.type === 'pass' ? { kind: 'turn', entry } : { kind: 'list' };
+    }
+    case 'act': {
+      const entry = find(round, panel.entryId);
+      const act = entry && 'acts' in entry ? entry.acts?.[panel.index] : undefined;
+      return entry && act ? { kind: 'act', entry, index: panel.index, act, back: panel.back } : { kind: 'list' };
     }
   }
 }

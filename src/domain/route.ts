@@ -69,12 +69,15 @@ export function tapStep(path: string[] | null, slot: string, active: string): { 
   return { path: path.includes(slot) ? path : [...path, slot] };
 }
 
-/** The order number of each tactical action of a round, in entry order. A cancelled one keeps no number. */
+/**
+ * The order number of each tactical action of a round, in entry order. A cancelled one keeps no number, and neither
+ * does Warfare's free one: it is part of its card's strategic action.
+ */
 export function tacticalNumbers(entries: Entry[]): Record<string, number> {
   const numbers: Record<string, number> = {};
   const counted = new Map<string | undefined, number>();
   for (const entry of entries) {
-    if (entry.type === 'tactical' && entry.status !== 'cancelled') {
+    if (entry.type === 'tactical' && entry.status !== 'cancelled' && !entry.fromCard) {
       const next = (counted.get(entry.owner) ?? 0) + 1;
       counted.set(entry.owner, next);
       numbers[entry.id] = next;

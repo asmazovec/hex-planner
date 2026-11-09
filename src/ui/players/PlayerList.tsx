@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
-import type { UnitId } from '../../domain/types';
+import type { UnitId, UpgradeId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { FactionCard } from './FactionCard';
 import { HexRemove } from '../primitives/Icon';
@@ -17,7 +17,7 @@ export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
   /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
-  live?: { upgraded: UnitId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
+  live?: { upgraded: UpgradeId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */

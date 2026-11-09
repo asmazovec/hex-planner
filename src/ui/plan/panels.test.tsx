@@ -200,10 +200,10 @@ test('the menu holds one item for a strategy card', async () => {
   const onPick = vi.fn();
   render(<ActionMenu onPick={onPick} />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
-  const names = ['Tactical action', 'Strategy', 'Component action', 'Pass', 'Expedition contribution, end of turn', 'Manual adjustment'];
+  const names = ['Tactical action', 'Strategy', 'Component action', 'Pass', 'Manual adjustment'];
   const menu = screen.getAllByRole('button').slice(1);
   expect(menu.map(b => b.textContent)).toEqual(names);
-  expect(ACTION_TYPES).toHaveLength(6);
+  expect(ACTION_TYPES).toHaveLength(5);
   await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
   expect(onPick).toHaveBeenCalledWith('pass');
   expect(screen.queryByRole('button', { name: 'Pass' })).toBeNull();
@@ -296,6 +296,10 @@ const CASES: Record<WarningCode, Warning['params']> = {
   scarProduction: { systemId: '1,0' },
   expeditionUnpaid: { sliceId: 'tech' },
   expeditionTwicePerTurn: { sliceId: 'res5' },
+  expeditionDetached: { sliceId: 'tg3' },
+  transactionRepeated: { player: 'o1' },
+  notNeighbor: { player: 'o1' },
+  shortCommodities: { needed: 2, have: 0 },
   stationGround: { planetId: 'nestphar' },
   stationStructure: { planetId: 'nestphar' },
   // transport

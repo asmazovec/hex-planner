@@ -24,3 +24,13 @@ describe('the one slot of the panel', () => {
     expect(slotOf(gone, round)).toEqual({ kind: 'list' });
   });
 });
+
+test('a turn editor or an act step whose entry or act undo took away falls back: the act to where it came from, the turn to the list', () => {
+  const withAct = { ...card, acts: [{ kind: 'transaction', with: 'o1', give: {}, get: {} }] } as unknown as Entry;
+  const turnRound = { number: 1, entries: [withAct] } as unknown as Round;
+  const back: Panel = { kind: 'card', entryId: 'c' };
+  expect(resolvePick(at({ kind: 'act', entryId: 'c', index: 0, back }), turnRound).panel).toMatchObject({ kind: 'act' });
+  expect(resolvePick(at({ kind: 'act', entryId: 'c', index: 1, back }), turnRound).panel).toEqual(back);
+  expect(resolvePick(at({ kind: 'act', entryId: 'gone', index: 0, back }), turnRound).panel).toEqual(LIST);
+  expect(resolvePick(at({ kind: 'turn', entryId: 'gone' }), turnRound).panel).toEqual(LIST);
+});

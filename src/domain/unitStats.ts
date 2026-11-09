@@ -1,7 +1,7 @@
-import type { DataPack, Game, Plan, ShipLevels, ShipStats, UnitCounts, UnitId } from './types';
+import type { DataPack, Game, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
 
 /** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
-export function productionCost(units: UnitCounts, factionId: string, upgrades: UnitId[], pack: DataPack): number {
+export function productionCost(units: UnitCounts, factionId: string, upgrades: UpgradeId[], pack: DataPack): number {
   let total = 0;
   for (const id of Object.keys(units) as UnitId[]) {
     if ((units[id] ?? 0) > 0) total += Math.ceil((units[id] ?? 0) * (unitStats(factionId, id, upgrades.includes(id), pack)?.cost ?? 0));
@@ -30,15 +30,19 @@ export function unitStats(factionId: string, kind: UnitId, upgraded: boolean, pa
 export const hasLevelTwo = (factionId: string, kind: UnitId, pack: DataPack): boolean =>
   levelsOf(factionId, kind, pack)?.two !== undefined;
 
+/** The structures with a second level in the pack: PDS II and Space Dock II. */
+export const upgradableStructures = (pack: DataPack): StructureKind[] =>
+  (['pds', 'spacedock'] as const).filter(kind => pack.structures.find(s => s.id === kind)?.levels.two !== undefined);
+
 /** A ship of the faction's own: its name stays English, while a common type's name is translated. */
 export const isUniqueShip = (factionId: string, kind: UnitId, pack: DataPack): boolean =>
   pack.factions[factionId]?.ships?.[kind] !== undefined;
 
-const toggled = (list: UnitId[], unit: UnitId): UnitId[] =>
+const toggled = (list: UpgradeId[], unit: UpgradeId): UpgradeId[] =>
   (list.includes(unit) ? list.filter(id => id !== unit) : [...list, unit]);
 
 /** Switches a mark set by hand: my baseline for `me`, an opponent's list by id. An opponent's empty list is dropped. */
-export function toggleUpgrade(game: Game, player: string, unit: UnitId): Game {
+export function toggleUpgrade(game: Game, player: string, unit: UpgradeId): Game {
   if (player === 'me') return { ...game, upgrades: { ...game.upgrades, me: toggled(game.upgrades.me, unit) } };
   const { [player]: current = [], ...rest } = game.upgrades.opponents;
   const next = toggled(current, unit);
@@ -46,8 +50,8 @@ export function toggleUpgrade(game: Game, player: string, unit: UnitId): Game {
 }
 
 /** The first round whose entries give each upgrade: done ones for `now`, planned ones too for `forecast`. */
-export function entryUpgradeRounds(plan: Plan, filter: 'now' | 'forecast'): Partial<Record<UnitId, number>> {
-  const rounds: Partial<Record<UnitId, number>> = {};
+export function entryUpgradeRounds(plan: Plan, filter: 'now' | 'forecast'): Partial<Record<UpgradeId, number>> {
+  const rounds: Partial<Record<UpgradeId, number>> = {};
   for (const round of [...plan.rounds].sort((a, b) => a.number - b.number)) {
     for (const entry of round.entries) {
       if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;

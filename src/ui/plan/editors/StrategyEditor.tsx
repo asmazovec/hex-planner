@@ -1,9 +1,10 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cardSummary } from '../../../data/cardSummaries';
 import { strategyCards } from '../../../data/loadPack';
 import { autoPay } from '../../../domain/payment';
 import { opponentsBySeat } from '../../../domain/players';
-import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, hasChoices, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
+import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, Warning } from '../../../domain/types';
 import { currentLanguage } from '../../../i18n';
 import { opponentName } from '../../players/names';
@@ -45,12 +46,14 @@ export interface StrategyEditorProps {
   onDone: () => void;
   /** The cross of the head: the card goes, with what it holds. */
   onRemove: () => void;
+  /** The «В этом ходу» block: what the turn holds beside its action, last in the editor. */
+  turnActs?: ReactNode;
 }
 
-/** A strategy card played: first the card, then its primary or secondary, both free to change until something is chosen, then removing it is the way back. */
+/** A strategy card played: first the card, then its primary or secondary; either stays open, and a switch starts the play over. */
 export function StrategyEditor({
   game, pack, round, entry, before, warnings, manualPayment, picking,
-  onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove,
+  onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, turnActs,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
   const lang = currentLanguage();
@@ -58,7 +61,6 @@ export function StrategyEditor({
   const card = cards.find(c => c.initiative === entry.card);
   const primary = entry.type === 'strategic';
   const effects = entry.effects ?? {};
-  const locked = card !== undefined && hasChoices(entry, round);
   const mine = !entry.owner;
   const te = game.expansions.includes('te');
   const cost = cardCost(entry, game.faction, before.upgrades, pack);
@@ -72,7 +74,9 @@ export function StrategyEditor({
 
   const pickCard = (initiative: number) => {
     if (initiative === entry.card) return;
-    change({ card: initiative, ...playOf(round, game.playerCount, initiative, startsAsPrimary(round, game.playerCount, initiative, entry), mine) });
+    const play = { card: initiative, ...playOf(round, game.playerCount, initiative, startsAsPrimary(round, game.playerCount, initiative, entry), mine) };
+    // An entry saved before cards keeps what it holds when it gets its first card.
+    change(entry.card === undefined ? play : freshPlay(play));
   };
 
   const placer = placeWarnings(warnings);
@@ -127,8 +131,8 @@ export function StrategyEditor({
   );
   const ability = (asPrimary: boolean, text: string, costsToken: boolean) => (
     <button
-      type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary} disabled={locked}
-      onClick={() => { if (card) change(playOf(round, game.playerCount, card.initiative, asPrimary, mine)); }}
+      type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary}
+      onClick={() => { if (card && primary !== asPrimary) change(freshPlay(playOf(round, game.playerCount, card.initiative, asPrimary, mine))); }}
     >
       <b>{t(asPrimary ? 'plan.cards.primary' : 'plan.cards.secondary')}{costsToken && <span className="card-ability-cost">{t('plan.strategy.tokenCost')}</span>}</b>
       <span>{text}</span>
@@ -158,9 +162,8 @@ export function StrategyEditor({
     <EditorFrame className="strategy-editor" title={t('plan.menu.strategic')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       <CardGrid
         label={t('plan.strategy.cards')} cards={cards}
-        cellOf={c => ({ pressed: c.initiative === entry.card, disabled: locked && c.initiative !== entry.card, onClick: () => pickCard(c.initiative) })}
+        cellOf={c => ({ pressed: c.initiative === entry.card, onClick: () => pickCard(c.initiative) })}
       />
-      <p className="muted strategy-lock">{locked && t('plan.strategy.locked')}</p>
       {/* The mode and the card decide these; a warning whose block is not on the screen stands here too, where it cannot be missed. */}
       {list([...cardWarnings, ...placer.rest()])}
       {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
@@ -168,6 +171,8 @@ export function StrategyEditor({
       {entry.card !== CARD.technology && (entry.upgrades?.length ?? 0) > 0 && (
         <Section title={t('plan.strategy.upgrades')}>{upgradeRow}</Section>
       )}
+      {/* A secondary is played in another player's turn: it holds no acts. */}
+      {primary && turnActs}
     </EditorFrame>
   );
 }

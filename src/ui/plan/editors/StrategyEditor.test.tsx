@@ -10,7 +10,7 @@ vi.mock('../../../storage/db', () => ({
 import { loadPack, strategyCards } from '../../../data/loadPack';
 import { autoPay } from '../../../domain/payment';
 import { stateBeforeEntry } from '../../../domain/project';
-import type { CardEntry } from '../../../domain/strategy';
+import { CARD, type CardEntry } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, ExpansionId } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
@@ -182,16 +182,6 @@ describe('opening', () => {
 });
 
 describe('modes and the lock', () => {
-  test('the lock note has its place before a choice, empty, so the controls do not move', async () => {
-    await primary('Technology');
-    const place = document.querySelector('.strategy-lock');
-    expect(place).not.toBeNull();
-    expect(place).toHaveTextContent('');
-    await click('Add one Researched');
-    expect(document.querySelector('.strategy-lock')).toBe(place);
-    expect(place).toHaveTextContent(/A choice has been made/);
-  });
-
   test('the abilities are free until a choice, and a secondary costs a strategy token', async () => {
     await primary('Trade');
     expect(cell('Strategy')).toHaveTextContent(/^Strategy2$/);
@@ -205,21 +195,36 @@ describe('modes and the lock', () => {
     expect(cardEntry().card).toBe(8);
   });
 
-  test('a choice locks the mode and the other cards, with the note; undoing it frees them', async () => {
+  test('after a choice the cards and modes stay open: another one resets everything the card held (#7)', async () => {
     await primary('Technology');
-    expect(screen.queryByText(/A choice has been made/)).toBeNull();
     await click('Add one Researched');
-    expect(screen.getByText(/A choice has been made/)).toBeVisible();
-    for (const name of ['Primary', 'Secondary'] as const) expect(ability(name)).toBeDisabled();
-    expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
-    expect(cards().getByRole('button', { name: /Technology/ })).toBeEnabled();
-    act(() => store().undo());
+    await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
+    expect(screen.queryByText(/A choice has been made/)).toBeNull();
     expect(ability('Secondary')).toBeEnabled();
+    await userEvent.click(ability('Secondary'));
+    expect(cardEntry()).toMatchObject({ type: 'secondary', card: CARD.technology });
+    expect(cardEntry().effects?.researched).toBeUndefined();
+    expect(cardEntry().upgrades).toBeUndefined();
+    await click('Add one Researched');
+    expect(cards().getByRole('button', { name: /Trade/ })).toBeEnabled();
+    await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
+    expect(cardEntry().card).toBe(CARD.trade);
+    expect(cardEntry().effects?.researched).toBeUndefined();
+  });
+
+  test('switching away from Warfare removes the free tactical it started (#7)', async () => {
+    await primary('Warfare');
+    await click('Start a tactical action without a token');
+    await userEvent.click(tile(OTHER));
+    expect(entries().some(e => e.type === 'tactical')).toBe(true);
+    const id = cardEntry().id;
+    act(() => store().updateEntry(id, { type: 'secondary' }));
+    expect(entries().some(e => e.type === 'tactical')).toBe(false);
   });
 
   test('cancel removes the entry and all it holds in one undo step', async () => {
     await primary('Construction');
-    await click('Build a structure');
+    await click('Construction');
     await userEvent.click(tile(HOME));
     await click('PDS');
     await click('PDS');
@@ -410,7 +415,7 @@ describe('Construction', () => {
   test('opens the shop limited to structures; they stay in the entry, off the game, and can be taken back', async () => {
     const docks = [...game().docks];
     await primary('Construction');
-    await click('Build a structure');
+    await click('Construction');
     await userEvent.click(tile(HOME));
     const shop = within(screen.getByRole('dialog'));
     expect(shop.queryByRole('button', { name: 'Carrier' })).toBeNull();
@@ -445,7 +450,7 @@ describe('Construction', () => {
     expect(screen.getByRole('button', { name: 'Production in a space dock instead of the first build' })).toBeVisible();
     await userEvent.click(ability('Secondary'));
     expect(screen.queryByRole('button', { name: /^Production in a space dock/ })).toBeNull();
-    expect(button('Place a structure')).toBeVisible();
+    expect(button('Construction')).toBeVisible();
   });
 
   test('the primary of a card that is not mine offers dock production too, for a token', async () => {
@@ -502,7 +507,7 @@ describe('Warfare', () => {
     expect(within(tile(OTHER) as HTMLElement).queryByRole('img', { name: 'Command token' })).toBeNull();
     await click('Done');
     expect(button(/^Tactical action without a token/)).toBeVisible();
-    expect(ability('Secondary')).toBeDisabled();
+    expect(ability('Secondary')).toBeEnabled();
     await click(/^Tactical action without a token/);
     expect(button('Done')).toBeVisible();
   });
@@ -655,22 +660,22 @@ describe('Technology', () => {
     await primary('Technology');
     await click('Add one Researched');
     expect(cardEntry().effects?.researched).toBe(1);
-    expect(screen.getByText('Technologies researched: 1')).toBeVisible();
+    expect(screen.getByText('Technology: 1')).toBeVisible();
     expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
     await click('Add one Researched');
     expect(cardEntry().effects?.researched).toBe(2);
     expect(screen.getByText(/To pay: 6/)).toBeVisible();
-    expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
+    expect(cards().getByRole('button', { name: /Trade/ })).toBeEnabled();
     await click('Remove one Researched');
     await click('Remove one Researched');
     expect(cardEntry().effects?.researched).toBeUndefined();
   });
 
-  test('the secondary costs 4 each, and the mark locks the card', async () => {
+  test('the secondary costs 4 each, and the card stays open to switch', async () => {
     await secondary('Technology');
     await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
     expect(screen.getByText(/To pay: 4/)).toBeVisible();
-    expect(cards().getByRole('button', { name: /Trade/ })).toBeDisabled();
+    expect(cards().getByRole('button', { name: /Trade/ })).toBeEnabled();
   });
 });
 
@@ -712,4 +717,40 @@ describe('Imperial', () => {
     expect(screen.queryByRole('button', { name: /^I control Mecatol Rex/ })).toBeNull();
     expect(screen.getByText('Draw a secret objective.')).toBeVisible();
   });
+});
+
+test('while the Diplomacy primary is being edited, the chosen system shows the other players\' command tokens on the map (#7)', async () => {
+  await primary('Diplomacy');
+  await click('Choose a system with your planet');
+  await userEvent.click(tile(HOME));
+  expect(within(tile(HOME) as HTMLElement).getAllByRole('img', { name: /Command token of/ }).length).toBeGreaterThan(0);
+});
+
+describe('strategy wording and structure upgrades (#7)', () => {
+  test('Technology: the count is titled with the term, the upgrades are one block that holds structures too', async () => {
+    await primary('Technology');
+    expect(screen.getByText('Technology: 0')).toBeVisible();
+    expect(screen.getAllByText('Upgrades').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Ship upgrades|researched:/)).toBeNull();
+    const row = within(screen.getByRole('group', { name: 'Upgrade' }));
+    await userEvent.click(row.getByRole('button', { name: 'PDS' }));
+    await userEvent.click(row.getByRole('button', { name: 'Space dock' }));
+    expect(cardEntry().upgrades).toEqual(['pds', 'spacedock']);
+  });
+
+  test('Construction: both abilities are named by the term', async () => {
+    await primary('Construction');
+    expect(screen.getByRole('button', { name: 'Construction' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Build a structure|Place a structure/ })).toBeNull();
+  });
+});
+
+test('the upgrades stand in three rows by kind: ships, ground forces, structures', async () => {
+  await primary('Technology');
+  const all = within(screen.getByRole('group', { name: 'Upgrade' }));
+  const row = (name: string) => within(all.getByRole('group', { name })).getAllByRole('button').map(b => b.getAttribute('aria-label'));
+  expect(row('Ships')).toEqual(expect.arrayContaining(['Carrier', 'Cruiser', 'Destroyer', 'Dreadnought', 'Fighter']));
+  expect(row('Ships')).not.toContain('Infantry');
+  expect(row('Ground forces')).toEqual(['Infantry']);
+  expect(row('Structures')).toEqual(['PDS', 'Space dock']);
 });

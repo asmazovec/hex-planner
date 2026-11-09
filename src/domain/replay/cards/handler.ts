@@ -1,7 +1,7 @@
 /** What one strategy card does: its cost, the tokens it gives, its own effects and checks. The replay calls these; so does the editor. */
 import type { PaymentKind } from '../../payment';
 import type { CardEntry } from '../../strategy';
-import type { DataPack, ExpansionId, Game, GameState, UnitId, Warning } from '../../types';
+import type { DataPack, ExpansionId, Game, GameState, UpgradeId, Warning } from '../../types';
 
 /** What the round knows of the cards while it is replayed. Players are `me` and the opponents' ids. */
 export interface CardRound {
@@ -36,7 +36,7 @@ export interface CardHandler {
   /** Its secondary spends no strategy token (Leadership, 20.5.1). */
   freeSecondary?: boolean;
   /** What it owes in resources or influence, given the upgrades already owned; without it, what its production costs. */
-  cost?: (entry: CardEntry, owned: UnitId[]) => CardCost;
+  cost?: (entry: CardEntry, owned: UpgradeId[]) => CardCost;
   /** The tokens it gives to distribute; `before`, the state before the entry, when the board is known. */
   freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: GameState) => number;
   /** Its own effects and checks, after the common steps (token, payment, distribution, readying, upgrades). */

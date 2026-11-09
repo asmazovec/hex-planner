@@ -98,6 +98,8 @@ test('a game from the first screen to an exported file, and back offline', async
 
   await test.step('set an infantry on Horizon to pick up later', async () => {
     await tile(page, 110).click();
+    // A tap on the map opens the hex on Control; units are placed in Setup.
+    await page.getByRole('button', { name: 'Setup', exact: true }).click();
     await page.getByRole('button', { name: 'Infantry' }).click();
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(entry(page, 'Setup · 110')).toBeVisible();
@@ -148,7 +150,7 @@ test('a game from the first screen to an exported file, and back offline', async
 
   await test.step('open the stage and buy a unit', async () => {
     await tile(page, 58).click();
-    await page.getByRole('button', { name: 'Build', exact: true }).click();
+    await page.getByRole('button', { name: 'Create', exact: true }).click();
     await page.getByRole('button', { name: 'Destroyer', exact: true }).click();
     await expect(page.getByText('Bought: 1')).toBeVisible();
     await page.getByRole('button', { name: 'Close' }).click();

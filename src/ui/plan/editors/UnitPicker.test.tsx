@@ -130,17 +130,26 @@ test('a pip per place: filled for load, red past capacity, and the warning block
   expect(screen.getByRole('button', { name: 'Fly' })).toBeEnabled();
 });
 
-test('a source with no ships offers all ship types and ground units, and choosing warns nothing here', async () => {
-  const { onChange } = setup([{ from: SOURCE, units: {} }], { systems: {}, ground: {} });
-  expect(screen.getByText(/No ships here/)).toBeVisible();
-  for (const unit of ['Carrier', 'Cruiser', 'Destroyer', 'Dreadnought', 'War Sun', 'Flagship']) expect(take(unit)).toBeVisible();
-  await userEvent.click(take('Destroyer'));
-  await userEvent.click(take('Destroyer'));
-  expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: { destroyer: 2 } }]);
-  const start = lineOf(/· start/);
-  expect(start.getByRole('button', { name: 'Take one Fighter' })).toBeVisible();
-  await userEvent.click(start.getByRole('button', { name: 'Take one Mech' }));
-  expect(onChange.mock.lastCall?.[0]).toContainEqual({ from: 'nestphar', units: { mech: 1 } });
+test('a source with no ships offers no ship or cargo it does not have (#1)', () => {
+  setup([{ from: SOURCE, units: {} }], { systems: {}, ground: {} });
+  expect(screen.getByText('No ships here.')).toBeVisible();
+  for (const unit of ['Carrier', 'Cruiser', 'Destroyer', 'Dreadnought', 'War Sun', 'Flagship', 'Fighter', 'Mech', 'Infantry']) {
+    expect(screen.queryByRole('button', { name: `Take one ${unit}` })).toBeNull();
+  }
+  expect(screen.getByRole('button', { name: 'Fly' })).toBeDisabled();
+});
+
+test('a system with my command token on the way still offers its units, and says the rules warn (#2)', async () => {
+  const { onChange } = setup([{ from: SOURCE, units: { carrier: 1 }, via: [TRANSIT] }], {
+    systems: { [SOURCE]: { carrier: 1 }, [TRANSIT]: { fighter: 2 } }, ground: {}, tokensOnMap: [TRANSIT],
+  });
+  const transit = lineOf(/on the way/);
+  expect(transit.getByText(/Your command token is here/)).toBeVisible();
+  await userEvent.click(transit.getByRole('button', { name: 'Take one Fighter' }));
+  expect(onChange).toHaveBeenLastCalledWith([
+    { from: SOURCE, units: { carrier: 1 }, via: [TRANSIT] },
+    { from: TRANSIT, units: { fighter: 1 }, pickupOf: SOURCE },
+  ]);
 });
 
 test('what another route of the action takes is not offered twice', () => {

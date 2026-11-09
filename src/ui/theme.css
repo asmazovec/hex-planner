@@ -267,8 +267,14 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 /* TODO(P2-515) #ws:ui-containers #type:dup #size:m #player-dot — кружок игрока собран в 6 классах: .owner-dot, .status-player ::before 554, .player-badge 723, .seat-ghost-badge 805, .legend-dot 932, .legend-seat 933; компонент PlayerDot с размером — P2 note: PlayerDot (primitives/player.tsx) now draws .owner-dot everywhere and the ghost badge; the others keep their own look and notes: the stepper dot P2-542, the card badge P2-554, the legend P2-568 */
 .owner-dot { display: inline-block; width: 10px; height: 10px; margin-right: 5px; border-radius: 50%; }
 .planet-details { display: flex; flex-direction: column; gap: 2px; }
-.planet-legend { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); }
-.planet-legend strong { color: var(--gold); }
+/* The planet's line: name, resources/influence, its marks; whether it is ready stands quiet at the end. */
+.planet-head { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; }
+.planet-values { font-size: var(--font-m); font-weight: 600; color: var(--text-dim); }
+.planet-marks { display: inline-flex; align-items: center; gap: 4px; }
+.planet-marks .trait-swatch { margin: 0; }
+.planet-mark { width: 14px; height: 14px; display: block; overflow: visible; }
+.planet-state { margin-left: auto; }
+.planet-details .planet-legend { margin-top: 6px; font-size: var(--font-s); line-height: 1.35; }
 
 /* The big hex over the map. */
 .stage { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgb(var(--scrim) / 0.72); }
@@ -279,7 +285,10 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stage-panel { display: flex; flex-direction: column; gap: 6px; padding: 12px; max-height: min(780px, 100dvh); overflow-y: auto; border-left: 1px solid var(--border); }
 .stage-panel > * { flex: none; }
 .stage-panel p { margin: 0; font-size: var(--font-s); }
+/* The head of the big hex: what it is opened for, in the look of an editor's head, and its cross. */
 .stage-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.stage-panel > .stage-head { min-height: var(--touch); margin: -4px 0 2px; }
+.stage-head h2 { flex: 1 1 auto; min-width: 0; margin: 0; font-size: var(--font-l); font-weight: 650; letter-spacing: -0.005em; color: var(--text-strong); }
 .stage-head button { padding: 0; width: 44px; }
 .stage-modes > button { min-width: 0; padding: 8px 6px; font-size: var(--font-s); }
 /* One player choice everywhere: one line of joined cells, each underlined in its player's colour; the chosen one is tinted with it. */
@@ -287,6 +296,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .player-choice > button { flex: 1 1 0; min-width: 0; padding: 4px 2px; font-size: var(--font-s); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; box-shadow: inset 0 -3px 0 var(--owner, transparent); }
 .player-choice > button[aria-pressed='true'] { background: color-mix(in srgb, var(--owner, var(--accent)) 30%, var(--surface-2)); border-color: var(--owner, var(--accent)); color: var(--text); }
 .shop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+/* A warning about what the shop above places: apart from the shop, and from what follows it. */
+.stage-panel .shop + .place-warnings { margin: 6px 0 8px; }
 .stage-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: var(--font-s); }
 .stage-total b { font-size: var(--font-xl); color: var(--gold); }
 .stage-meters { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); color: var(--text-muted); }
@@ -295,7 +306,11 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stage-meter-over, .stage-meter-over b { color: var(--warning); }
 :root[data-blur='on'] .stage { background: rgb(var(--scrim) / 0.5); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
 .stage-losses { display: flex; flex-wrap: wrap; gap: 5px; }
-.stage-planet { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; border-top: 1px solid var(--border); }
+/* A planet: a card of its own, its details, then a clear gap before the choice of who holds it. No rules between planets: the cards part them. */
+.stage-planet { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-m); background: var(--surface-2); transition: background-color var(--motion), border-color var(--motion); }
+.stage-planet > .planet-details + * { margin-top: 8px; }
+/* The planet tapped on the hex: chosen, so blue, as every choice. */
+.stage-planet-chosen { border-color: var(--accent); background: var(--accent-faint); }
 .stage-planet .muted { font-size: var(--font-s); }
 .tile-stage { cursor: default; }
 .tile-stage .planet { cursor: pointer; outline: none; }
@@ -549,8 +564,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .token-pick { display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); }
 .token-pick > strong { font-size: var(--font-m); font-weight: 600; }
 .token-note { margin: 0; font-size: var(--font-xs); }
-.strategy-editor .strategy-lock { min-height: calc(2 * 1.35em); line-height: 1.35; }
-@media (max-width: 420px) { .strategy-editor .strategy-lock { min-height: calc(3 * 1.35em); } }
 /* TODO(P2-542) #ws:ui-containers #type:dup #size:s #player-dot #dep:P2-515 — кружок игрока через ::before: перейти на PlayerDot — P2 note: the dot stands inside the name of a Stepper, whose name is also the accessible name of the group: an element there needs a slot in Stepper and changes nothing visible, so it waits for the Stepper rework */
 .status-player .stepper-name::before { content: ''; display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--player); }
 .status-reminder { margin: 4px 0 0; font-size: var(--font-s); }
@@ -697,6 +710,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 /* Maximum saving and the items it locks in one list; its rows a little apart, the note under them. */
 .energy-settings > .chips { row-gap: 8px; }
 .energy-settings > .side-note { margin-top: 10px; }
+/* Legal notices: each kind under its own heading, a little apart. */
+.legal-part + .legal-part { margin-top: 14px; }
 .chip, button.chip { position: relative; padding: 7px 12px; min-height: 36px; min-width: 0; border-radius: 18px; border: 1px solid var(--border-strong); background: transparent; color: var(--text-muted); font-size: 13px; line-height: 1.45; display: flex; align-items: center; cursor: pointer; transition: background-color var(--motion), border-color var(--motion), color var(--motion); }
 button.chip::after, .side-actions button::after, .side-actions .button::after, .saved-list button::after, .players-aside .layout-picker .segment button::after { content: ''; position: absolute; inset: -4px 0; }
 .chip.on, button.chip[aria-pressed='true'], button.chip[aria-checked='true'] { background: var(--accent-soft); border-color: var(--accent); color: var(--text-strong); }
@@ -862,7 +877,11 @@ small.ship-row-round { color: var(--gold); }
 .upgrade-card.on .upgrade-level { color: var(--gold); }
 
 /* Ships an entry upgrades. */
-.entry-upgrades { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 6px 6px; }
+/* A row per kind (ships, ground forces, structures), its name small above the buttons. */
+.entry-upgrades { display: flex; flex-direction: column; gap: 8px; padding: 0 6px 6px; }
+.entry-upgrade-row { display: flex; flex-direction: column; gap: 3px; }
+.entry-upgrade-label { font-size: var(--font-xs); color: var(--text-dim); }
+.entry-upgrade-buttons { display: flex; flex-wrap: wrap; gap: 4px; }
 .entry-upgrades button { width: var(--touch); height: var(--touch); padding: 0; display: grid; place-items: center; background: transparent; border-color: var(--border); }
 .entry-upgrades button .unit-icon { width: 28px; height: 28px; }
 .entry-upgrades button[aria-pressed='true'] { background: var(--accent-soft); border-color: var(--accent); }

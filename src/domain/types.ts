@@ -200,6 +200,8 @@ export type Phase = 'strategy' | 'action' | 'status' | 'agenda';
 export interface Payment { planets: string[]; tradeGoods: number; }
 
 export type StructureKind = 'pds' | 'spacedock';
+/** What a unit upgrade technology improves: a ship or ground force, or a structure (PDS II, Space Dock II). */
+export type UpgradeId = UnitId | StructureKind;
 
 export interface AdjustmentDelta {
   tradeGoods?: number;
@@ -243,13 +245,24 @@ export interface CardEffects {
 /** A strategy card played: all optional, so entries saved before need no migration. */
 export interface CardPlay {
   /** Ships upgraded by this entry, as with research. */
-  upgrades?: UnitId[];
+  upgrades?: UpgradeId[];
   /** Initiative number. */
   card?: number;
   /** A primary played for a strategy token, as some faction abilities allow. */
   forToken?: boolean;
   effects?: CardEffects;
 }
+
+/** What changes hands in a transaction (94.2): trade goods, commodities and up to one promissory note, unnamed. */
+export interface Goods { tradeGoods?: number; commodities?: number; note?: boolean }
+
+/** A part of a turn beside its action, done with it: a transaction with a neighbour (94) or an expedition at its end. */
+export type Act =
+  | { kind: 'expedition'; sliceId: string | null; payment: Payment }
+  | { kind: 'transaction'; with: string; give: Goods; get: Goods };
+
+/** The entries that make a player's turn and so can hold acts; a secondary is played in another player's turn. */
+export const TURN_TYPES = ['tactical', 'strategic', 'component', 'pass'] as const;
 
 /**
  * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
@@ -262,13 +275,15 @@ export type EntryBody =
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
       /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
       /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
+      /** Ships I remove from the active system beyond my fleet pool (37.3): gone on arrival, or after the production if built then. */ fleetRemovals?: UnitCounts;
       /** Where the ground forces of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
       /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
-      /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string }
-  | ({ type: 'strategic' } & CardPlay)
+      /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string; acts?: Act[] }
+  | ({ type: 'strategic'; acts?: Act[] } & CardPlay)
   | ({ type: 'secondary' } & CardPlay)
-  | { type: 'component'; note: string }
-  | { type: 'pass' }
+  | { type: 'component'; note: string; acts?: Act[] }
+  | { type: 'pass'; acts?: Act[] }
+  /** Read from saves only: an expedition schema 6 found no turn of its owner to join. */
   | { type: 'expedition'; sliceId: string | null; payment: Payment }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
@@ -311,7 +326,7 @@ export interface Game {
   map: Record<string, string>;
   opponents: Opponent[];
   /** Set by hand. `me` is the baseline, such as starting technology; entries of a plan add to it. Opponents have no plan. */
-  upgrades: { me: UnitId[]; opponents: Record<string, UnitId[]> };
+  upgrades: { me: UpgradeId[]; opponents: Record<string, UpgradeId[]> };
   /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
   enemyUnits: Record<string, Record<string, UnitCounts>>;
   /** Planet id to opponent id to that opponent's ground forces there. */
@@ -339,6 +354,8 @@ export interface GameState {
   control: Record<string, 'me' | 'enemy'>;
   tokensOnMap: string[];
   tradeGoods: number;
+  /** Commodities on the faction sheet: none at the start, a replenish fills them up to the faction's value (21.2, 21.3). */
+  commodities: number;
   tactic: number;
   fleet: number;
   strategy: number;
@@ -346,7 +363,7 @@ export interface GameState {
   /** Each opponent's starting points plus their gains in the status entries replayed so far, by opponent id. */
   opponentVp: Record<string, number>;
   /** The baseline plus the upgrades of the entries replayed so far. */
-  upgrades: UnitId[];
+  upgrades: UpgradeId[];
   /** This player's space docks: the game's on their planets, plus those built by the entries replayed so far, less those lost with a planet. */
   docks: string[];
   /** Planet id to this player's PDS count, the same way. */
@@ -371,13 +388,15 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'shipOnPlanet', 'landingOutsideSystem', 'custodians', 'structureLimit', 'structureNotControlled', 'structureOutsideSystem',
   // production, thunders-edge
   'noProduction', 'productionBlockaded', 'blockaded', 'productionOver', 'reinforcementsOut', 'productionPlace', 'scarProduction',
-  'expeditionUnpaid', 'expeditionTwicePerTurn', 'stationGround', 'stationStructure',
+  'expeditionUnpaid', 'expeditionTwicePerTurn', 'expeditionDetached', 'stationGround', 'stationStructure',
+  // transactions
+  'transactionRepeated', 'notNeighbor', 'shortCommodities',
   // transport
   'pickupOffRoute',
 ] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
-export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition';
+export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition' | 'transaction';
 /** Where a violation arose: the entry, and within it the source system or the planet when there is one. */
 export interface ViolationPlace { entryId: string; source?: string; planetId?: string }
 /**

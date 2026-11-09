@@ -2,9 +2,10 @@
 import { blockersOf, fullPath, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
-import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../types';
+import type { DataPack, Game, GameState, UnitCounts, UpgradeId, Warning } from '../types';
 import { planetsOf, sourceSlot } from './board';
-import { unitIds, type Move } from './state';
+import { gameAs } from '../players';
+import { take, unitIds, type Move } from './state';
 
 /** A move that only picks units up, so no route to check: from a planet, from the active system itself, or marked as a pickup. */
 export const isPickup = (move: Move, target: string, pack: DataPack): boolean =>
@@ -43,7 +44,7 @@ export function checkPickups(game: Game, state: GameState, target: string, moves
 }
 
 /** Whether my fighters move by themselves at this point of the replay: their current stat has a move value. */
-export const fightersFly = (game: Game, upgrades: UnitId[], pack: DataPack): boolean =>
+export const fightersFly = (game: Game, upgrades: UpgradeId[], pack: DataPack): boolean =>
   (unitStats(game.faction, 'fighter', upgrades.includes('fighter'), pack)?.move ?? null) !== null;
 
 /** Fighters each space dock keeps in its system apart from the ships' capacity (Space Dock I and II). */
@@ -63,7 +64,7 @@ const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.mi
  * Cargo against the capacity of my ships at my current levels: only ground forces and fighters that do not fly count as
  * load. `fighterRoom` is what the system's space docks keep (`dockFighterRoom`): up to that many fighters are no load.
  */
-export function capacity(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
+export function capacity(game: Game, units: UnitCounts, upgrades: UpgradeId[], pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
   const flying = fightersFly(game, upgrades, pack);
   let load = 0;
   let cap = 0;
@@ -81,7 +82,7 @@ export function capacity(game: Game, units: UnitCounts, upgrades: UnitId[], pack
  * Ships for the fleet pool: flying fighters beyond the capacity left after the ground forces count as ships; those the
  * system's space docks keep (`fighterRoom`) do not.
  */
-export function fleetCount(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack, fighterRoom = 0): number {
+export function fleetCount(game: Game, units: UnitCounts, upgrades: UpgradeId[], pack: DataPack, fighterRoom = 0): number {
   const ships = unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
@@ -92,7 +93,7 @@ export function fleetCount(game: Game, units: UnitCounts, upgrades: UnitId[], pa
 }
 
 /** What a system's stack holds against the fleet pool and its own capacity, with the fighters its space docks keep. */
-export function systemMeters(game: Game, units: UnitCounts, upgrades: UnitId[], pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
+export function systemMeters(game: Game, units: UnitCounts, upgrades: UpgradeId[], pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
   return { ...capacity(game, units, upgrades, pack, fighterRoom), ships: fleetCount(game, units, upgrades, pack, fighterRoom) };
 }
 
@@ -124,6 +125,33 @@ export function checkLeftBehind(game: Game, state: GameState, before: Map<string
     const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, state.upgrades, pack, dockFighterRoom(game, state, slot, pack));
     return [violation('capacitySystem', { systemId: slot, load, capacity: room })];
   });
+}
+
+/**
+ * Effect (37.3, note 2): the ships the player chose to remove beyond the fleet pool leave the active system, as many of
+ * each type as stand there now; the rest is returned, to be removed after the production that builds them.
+ */
+export function removeFleetExcess(state: GameState, target: string, removals: UnitCounts): UnitCounts {
+  const here = state.systems[target] ?? {};
+  const now: UnitCounts = {};
+  const later: UnitCounts = {};
+  for (const id of unitIds(removals)) {
+    const wanted = removals[id] ?? 0;
+    const taken = Math.min(wanted, here[id] ?? 0);
+    if (taken > 0) now[id] = taken;
+    if (wanted > taken) later[id] = wanted - taken;
+  }
+  take(state.systems, target, now, []);
+  return later;
+}
+
+/**
+ * What the board itself breaks in a system, apart from any entry: each player's capacity and fleet pool there (16.3,
+ * 37.1), as units placed by hand leave them. A big hex placing by hand checks this; it forbids nothing.
+ */
+export function boardSystemWarnings(game: Game, state: GameState, slot: string, pack: DataPack): Warning[] {
+  const players: [Game, GameState][] = [[game, state], ...Object.entries(state.rivals ?? {}).map(([id, held]): [Game, GameState] => [gameAs(game, id), held])];
+  return players.flatMap(([view, held]) => checkSystem(view, held, slot, pack));
 }
 
 /** Check: the capacity and the fleet pool of a system after units arrived or were built there. */

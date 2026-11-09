@@ -9,6 +9,7 @@ import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
+import { actLines, expeditionText, insideCard } from './actLines';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
@@ -86,12 +87,7 @@ function StatusFields({ entry, game, pack, state, warnings }: {
  * What an expedition contribution gives, readable on its closed row: the part and what pays for it. The part paid in
  * trade goods says it in its name.
  */
-function expeditionBrief(entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack, t: (key: string, options?: Record<string, unknown>) => string): string {
-  if (!entry.sliceId) return t('plan.entries.noSlice');
-  const { planets, tradeGoods } = entry.payment;
-  const paid = [...planets.map(id => pack.planets[id]?.name ?? id), ...(tradeGoods > 0 ? [t('plan.steps.tradeGoods', { n: tradeGoods })] : [])];
-  return [t(`plan.slice.${entry.sliceId}`), ...(paid.length > 0 ? [paid.join(', ')] : [])].join(' · ');
-}
+
 
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
@@ -167,7 +163,8 @@ export function EntryList({
   return (
     <div className="plan-entries" ref={listRef}>
       {PHASES.map(phase => {
-        const entries = round.entries.filter(e => e.phase === phase);
+        // Warfare's free tactical action is drawn inside its card's row.
+        const entries = round.entries.filter(e => e.phase === phase && !insideCard(e, round));
         return (
           <section key={phase} className="phase" aria-label={t(`plan.phases.${phase}`)}>
             {phase === 'strategy' && strategy ? strategy : <SectionTitle as="h4" className="phase-title">{t(`plan.phases.${phase}`)}</SectionTitle>}
@@ -178,7 +175,9 @@ export function EntryList({
                 // The round has one status entry, so there is nothing to move it past.
                 const movable = entry.type !== 'statusTokens';
                 const rival = game.opponents.find(o => o.id === entry.owner);
-                const list = warnings[entry.id] ?? [];
+                // A card speaks for Warfare's free action too: its warnings mark the card's row.
+                const free = entry.type === 'strategic' ? round.entries.find(e => e.type === 'tactical' && e.fromCard === entry.id) : undefined;
+                const list = [...(warnings[entry.id] ?? []), ...(free ? warnings[free.id] ?? [] : [])];
                 const shown = entry.id === shownId;
                 // The steps of a shown action say what goes wrong with a flight by that flight; the row keeps the rest.
                 const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
@@ -195,10 +194,12 @@ export function EntryList({
                         <span className="entry-name">
                           <span className="entry-title">{label}</span>
                           {/* Read without opening; the steps of a shown entry say it in full. */}
-                          {entry.type === 'expedition' && !shown && <small className="entry-brief">{expeditionBrief(entry, pack, t)}</small>}
+                          {entry.type === 'expedition' && !shown && <small className="entry-brief">{expeditionText(entry, pack, t)}</small>}
+                          {/* What the turn holds beside its action, each a line of its own. */}
+                          {actLines(entry, round, game, pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
                         </span>
                       </button>
-                      {entry.type !== 'pass' && <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>}
+                      <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>
                       <label className="icon-button entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
                         <input

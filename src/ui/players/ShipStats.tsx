@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { shipSummary } from '../../data/shipSummaries';
 import { isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
-import type { DataPack, ShipStats as Stats, UnitId, UnitRoll } from '../../domain/types';
+import type { DataPack, ShipStats as Stats, UnitId, UpgradeId, UnitRoll } from '../../domain/types';
 import { currentLanguage } from '../../i18n';
 import { UnitIcon } from '../units/UnitIcon';
 
@@ -58,7 +58,7 @@ export interface ShipStatsProps {
   factionId: string;
   pack: DataPack;
   /** The player's upgraded types; none means base values. */
-  upgraded?: UnitId[];
+  upgraded?: UpgradeId[];
   /** Types an entry of the plan upgraded, with the round. */
   locked?: Partial<Record<UnitId, number>>;
 }

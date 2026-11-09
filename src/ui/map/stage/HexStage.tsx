@@ -16,7 +16,8 @@ import { BattlePanel } from './BattlePanel';
 import { BuildPanel } from './BuildPanel';
 import { ControlPanel } from './ControlPanel';
 
-export type StageMode = 'setup' | 'battle' | 'build' | 'control';
+/** `fleet` removes ships beyond the fleet pool for a tactical action; it is only opened from that action, never chosen. */
+export type StageMode = 'setup' | 'battle' | 'build' | 'control' | 'fleet';
 
 export interface HexStageProps {
   slot: string;
@@ -41,7 +42,19 @@ export interface HexStageProps {
   onClose: () => void;
 }
 
-const MODES: StageMode[] = ['setup', 'battle', 'build', 'control'];
+const MODES: StageMode[] = ['control', 'setup', 'battle', 'build'];
+
+/**
+ * What the head calls the hex: the step it is opened for, never the tile number the hex itself shows. A tap on the map
+ * opens a quick edit with no action behind it.
+ */
+type StageHeading = 'quick' | 'production' | 'construction' | 'battle' | 'fleet' | 'adjustment';
+function headingOf({ tacticalId, adjustmentId, onPurchase, only }: HexStageProps, mode: StageMode): StageHeading {
+  if (adjustmentId) return 'adjustment';
+  if (onPurchase) return only === 'build' ? 'construction' : 'production';
+  if (tacticalId) return mode === 'battle' ? 'battle' : mode === 'fleet' ? 'fleet' : 'production';
+  return 'quick';
+}
 
 /**
  * The big hex over the map, driven by taps on pictures, with one panel per mode: setup places and removes units of
@@ -83,10 +96,11 @@ export function HexStage(props: HexStageProps) {
         </div>
         <div className="stage-panel">
           <div className="stage-head">
-            <strong>{title}</strong>
+            <h2>{t(`stage.heading.${headingOf(props, mode)}`)}</h2>
             <HexRemove label={t('map.sheet.close')} onClick={onClose} />
           </div>
-          {!onPurchase?.changeStructure && !stage.adjusting && (
+          {/* A hex opened for an entry's step does only that step. */}
+          {!onPurchase && !props.tacticalId && !stage.adjusting && (
             <div className="segment stage-modes" role="group" aria-label={t('stage.modes')}>
               {MODES.map(m => <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}>{t(`stage.mode.${m}`)}</button>)}
             </div>
@@ -102,23 +116,35 @@ export function HexStage(props: HexStageProps) {
             />
           )}
 
-          {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} />}
+          {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} game={game} pack={pack} boardWarnings={stage.boardWarnings} />}
           {mode === 'build' && (
             <BuildPanel
               game={game} pack={pack} items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets}
-              boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings}
+              boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
             />
+          )}
+          {(mode === 'setup' || mode === 'build') && stage.handover && (
+            <p className="muted">{t('stage.handover', {
+              planet: stage.handover.planet,
+              player: stage.handover.player === 'me' ? t('stage.you') : seatName(seated.find(o => o.id === stage.handover?.player) ?? { name: '', faction: '' }),
+            })}</p>
           )}
           {mode === 'battle' && (
             <BattlePanel
-              players={[{ id: 'me', heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: o.name }) }))]}
+              players={[{ id: 'me', heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: o.name }) }))].filter(p => stage.fights(p.id))}
               colours={colours} lossesFor={stage.lossesFor} planets={planets} kindName={stage.kindName}
+            />
+          )}
+          {mode === 'fleet' && (
+            <BattlePanel
+              players={[{ id: mine, heading: t('stage.fleetRemoved') }]} note={t('stage.fleetNote')}
+              colours={colours} lossesFor={stage.removalsFor} planets={planets} kindName={stage.kindName}
             />
           )}
           {mode === 'control' && (
             <ControlPanel
               game={game} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
-              seated={seated.map(seatOption)}
+              seated={seated.map(seatOption)} chosen={planets[target]?.id} onChoose={setPlanet}
             />
           )}
         </div>

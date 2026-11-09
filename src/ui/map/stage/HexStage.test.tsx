@@ -39,7 +39,7 @@ const onClose = vi.fn();
 const open = (props: Partial<HexStageProps> = {}, usePack = pack) =>
   render(<HexStage slot={SLOT} roundNo={1} pack={usePack} onClose={onClose} {...props} />);
 const tap = (name: string | RegExp) => userEvent.click(screen.getByRole('button', { name }));
-const mode = (name: 'Setup' | 'Battle' | 'Build' | 'Control') => tap(name);
+const mode = (name: 'Setup' | 'Battle' | 'Create' | 'Control') => tap(name);
 const side = (name: string | RegExp) => userEvent.click(within(screen.getByRole('group', { name: 'Whose units' })).getByRole('button', { name }));
 const addMine = (units: UnitCounts, ground?: Record<string, UnitCounts>) =>
   store().addEntry(1, { type: 'adjustment', label: 'start', delta: { units: { systemId: SLOT, units }, ground } }, 'strategy');
@@ -54,6 +54,82 @@ describe('the stage as a window', () => {
     expect(screen.getByRole('button', { name: 'Setup' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  describe('the head names what the hex is opened for, not the tile number', () => {
+    const heading = () => screen.getByRole('heading', { level: 2 });
+    const tactical = () => store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+
+    test('a tap on the map: a manual edit without an action; the tile number stays only on the hex and in the dialog name', () => {
+      open();
+      expect(heading()).toHaveTextContent('Manual edit');
+      expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
+      expect(within(document.querySelector('.stage-panel') as HTMLElement).queryByText('Tile 25')).toBeNull();
+      cleanup();
+      setLanguage('ru');
+      open();
+      expect(heading()).toHaveTextContent('Ручная правка');
+      setLanguage('en');
+    });
+
+    test('a tactical action: production, battle, excess ships', () => {
+      const id = tactical();
+      open({ initialMode: 'build', only: 'units', tacticalId: id });
+      expect(heading()).toHaveTextContent('Production');
+      cleanup();
+      open({ initialMode: 'battle', tacticalId: id });
+      expect(heading()).toHaveTextContent('Battle');
+      cleanup();
+      open({ initialMode: 'fleet', tacticalId: id });
+      expect(heading()).toHaveTextContent('Excess ships');
+    });
+
+    test('a card builds structures or produces units; a manual adjustment says so', () => {
+      const card = { bought: [], change: vi.fn(), changeStructure: vi.fn() };
+      open({ initialMode: 'build', only: 'build', onPurchase: card });
+      expect(heading()).toHaveTextContent('Construction');
+      cleanup();
+      open({ initialMode: 'build', only: 'units', onPurchase: card });
+      expect(heading()).toHaveTextContent('Production');
+      cleanup();
+      const adjustment = store().addEntry(1, { type: 'adjustment', label: '', delta: {} }, 'action');
+      open({ initialMode: 'setup', only: 'units', adjustmentId: adjustment });
+      expect(heading()).toHaveTextContent('Manual adjustment');
+    });
+  });
+
+  test('the modes go Control, Setup, Battle, Create', () => {
+    open();
+    const modes = within(screen.getByRole('group', { name: 'Mode' }));
+    expect(modes.getAllByRole('button').map(b => b.textContent)).toEqual(['Control', 'Setup', 'Battle', 'Create']);
+  });
+
+  test('Create splits the shop under Production and Construction headings (#5)', () => {
+    open({ initialMode: 'build' });
+    const production = screen.getByRole('heading', { name: 'Production' });
+    const construction = screen.getByRole('heading', { name: 'Construction' });
+    expect(production.compareDocumentPosition(construction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(production.nextElementSibling as HTMLElement).getByRole('button', { name: 'Carrier' })).toBeVisible();
+    expect(within(construction.nextElementSibling as HTMLElement).getByRole('button', { name: 'PDS' })).toBeVisible();
+  });
+
+  test('opened for a tactical action, it shows only Production: no other modes, no owner choice, no structures (#5)', () => {
+    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    open({ initialMode: 'build', only: 'units', tacticalId: id });
+    expect(screen.queryByRole('group', { name: 'Mode' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Whose units' })).toBeNull();
+    expect(screen.getByRole('heading', { level: 3, name: 'Production' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Construction' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'PDS' })).toBeNull();
+  });
+
+  test('a third PDS on a planet warns in Create and in Setup (#5, 63.3)', async () => {
+    open({ initialMode: 'build' });
+    for (let i = 0; i < 3; i++) await tap('PDS');
+    expect(screen.getByText('Quann holds more than two PDS: a planet holds at most two.')).toBeVisible();
+    expect(screen.queryByText(/Too many structures/)).toBeNull();
+    await mode('Setup');
+    expect(screen.getByText('Quann holds more than two PDS: a planet holds at most two.')).toBeVisible();
   });
 
   test('a tap outside closes it, a tap inside does not', async () => {
@@ -76,7 +152,7 @@ describe('the stage as a window', () => {
 
   test('a mode can be given, the shop limited, and the toggle goes with a limit', () => {
     open({ initialMode: 'build', only: 'units' });
-    expect(screen.getByRole('button', { name: 'Build' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Create' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('group', { name: 'Whose units' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Carrier' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'PDS' })).toBeNull();
@@ -151,20 +227,42 @@ describe('setup', () => {
     expect(game().docks).not.toContain(quann());
   });
 
-  test('a structure takes the colour of the planet, whatever the owner toggle says', async () => {
+  test('a structure follows the owner toggle: placed for a player who does not hold the planet, it hands them the planet, and says so first', async () => {
     store().setPlanetControl(quann(), opponent(1));
     open();
+    expect(screen.getByText('A structure gives control of the planet: Quann → you.')).toBeVisible();
+    await side('Player 3');
+    expect(screen.queryByText(/gives control of the planet/)).toBeNull();
     await side('Player 2');
+    expect(screen.getByText('A structure gives control of the planet: Quann → Player 2.')).toBeVisible();
     await tap('PDS');
-    expect(screen.getByRole('button', { name: 'PDS ×1 (Player 3)' })).toBeVisible();
+    expect(game().planetOwner[quann()]).toBe(opponent(0));
+    expect(screen.getByRole('button', { name: 'PDS ×1 (Player 2)' })).toBeVisible();
+    expect(screen.queryByText(/gives control of the planet/)).toBeNull();
   });
 
-  test('ground units and structures need a planet', () => {
+  test('the shop draws structures in the chosen player\'s colour, as it draws their units', async () => {
+    open();
+    const ink = (name: string) => screen.getByRole('button', { name }).innerHTML.match(/stroke="(#[0-9a-f]+)"/i)?.[1];
+    expect(ink('PDS')).toBe(ink('Carrier'));
+    const mine = ink('PDS');
+    await side('Player 2');
+    expect(ink('PDS')).toBe(ink('Carrier'));
+    expect(ink('PDS')).not.toBe(mine);
+  });
+
+  test('without planets, ground units go into space as cargo and only the capacity warns; structures still need a planet', async () => {
     store().setTile(SLOT, '39');
     open();
-    expect(screen.getByRole('button', { name: 'Infantry' })).toBeDisabled();
+    await mode('Setup');
+    expect(screen.getByRole('button', { name: 'Infantry' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'PDS' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Carrier' })).toBeEnabled();
+    // A destroyer carries nothing, whatever the faction: the first infantry is over capacity.
+    await tap('Destroyer');
+    expect(screen.queryByText(/over capacity/)).toBeNull();
+    await tap('Infantry');
+    expect(merged('setup')?.delta.units).toEqual({ systemId: SLOT, units: { destroyer: 1, infantry: 1 } });
+    expect(screen.getByText(/over capacity: 1 of 0/)).toBeVisible();
   });
 
   test('a planet tap chooses the target of ground units and structures; setup shows no planet details', async () => {
@@ -177,6 +275,35 @@ describe('setup', () => {
     await tap('PDS');
     expect(merged('setup')?.delta.ground).toEqual({ [second]: { infantry: 1 } });
     expect(game().pds).toEqual({ [second]: 1 });
+  });
+
+  test('in control, the planet tapped on the hex is the one marked in the panel; a lone planet needs no mark', async () => {
+    store().setTile(SLOT, TWO);
+    const [first, second] = pack.tiles[TWO].planetIds;
+    open({ initialMode: 'control' });
+    const block = (id: string) => screen.getByRole('group', { name: pack.planets[id].name });
+    expect(block(first)).toHaveAttribute('aria-current', 'true');
+    expect(block(second)).not.toHaveAttribute('aria-current');
+    await tap(new RegExp(`^${pack.planets[second].name}:`));
+    expect(block(second)).toHaveAttribute('aria-current', 'true');
+    expect(block(second)).toHaveClass('stage-planet-chosen');
+    expect(block(first)).not.toHaveAttribute('aria-current');
+    cleanup();
+    store().setTile(SLOT, ONE);
+    open({ initialMode: 'control' });
+    expect(block(quann())).not.toHaveAttribute('aria-current');
+  });
+
+  test('in control, a tap on a planet\'s card chooses it on the hex too', async () => {
+    store().setTile(SLOT, TWO);
+    const [first, second] = pack.tiles[TWO].planetIds;
+    open({ initialMode: 'control' });
+    const onHex = (id: string) => screen.getByRole('button', { name: new RegExp(`^${pack.planets[id].name}:`) });
+    expect(onHex(first)).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(within(screen.getByRole('group', { name: pack.planets[second].name })).getByText(pack.planets[second].name));
+    expect(onHex(second)).toHaveAttribute('aria-pressed', 'true');
+    expect(onHex(first)).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('group', { name: pack.planets[second].name })).toHaveAttribute('aria-current', 'true');
   });
 
   test('control carries the tile number, rotation, anomaly and wormholes in one line, read only', async () => {
@@ -228,7 +355,7 @@ describe('setup', () => {
     const planet = within(screen.getByRole('group', { name: "Hope's End" }));
     expect(planet.getByText('Imperial Arms Vault')).toBeInTheDocument();
     expect(planet.getByText(/mech from reinforcements/)).toBeInTheDocument();
-    expect(planet.getByText('Hazardous')).toBeInTheDocument();
+    expect(planet.getByRole('img', { name: 'Hazardous' })).toBeInTheDocument();
     expect(planet.getByText(/Ready/)).toBeInTheDocument();
     expect(planet.queryByText(/relic/i)).toBeNull();
     cleanup();
@@ -237,15 +364,48 @@ describe('setup', () => {
     expect(screen.getByText(/1 меха из запаса/)).toBeInTheDocument();
   });
 
+  test('a planet heads with its name, then resources/influence, then its marks as named icons; its text follows', () => {
+    store().newGame({ expansions: ['pok', 'te'], playerCount: 4, faction: 'sol' }, full);
+    store().setTile(SLOT, '101');
+    open({ initialMode: 'control' }, full);
+    const planet = screen.getByRole('group', { name: 'Olergodt' });
+    const head = planet.querySelector('.planet-head') as HTMLElement;
+    const def = Object.values(full.planets).find(p => p.name === 'Olergodt')!;
+    expect(head.firstElementChild).toHaveTextContent('Olergodt');
+    expect(head).toHaveTextContent(`Olergodt${def.resources}/${def.influence}`);
+    const marks = within(head).getAllByRole('img').map(m => m.getAttribute('aria-label'));
+    expect(marks).toEqual(['Hazardous', 'Cultural', ...(def.tech ?? []).map(tech => ({ propulsion: 'Propulsion', biotic: 'Biotic', cybernetic: 'Cybernetic', warfare: 'Warfare' })[tech])]);
+    cleanup();
+    store().newGame({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, pack);
+    store().setTile(SLOT, '66');
+    open({ initialMode: 'control' });
+    const hope = screen.getByRole('group', { name: "Hope's End" });
+    expect(within(hope.querySelector('.planet-head') as HTMLElement).getByRole('img', { name: 'Legendary planet' })).toBeInTheDocument();
+    expect(hope.querySelector('.planet-head')!.compareDocumentPosition(hope.querySelector('.card-ability')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  test('a legendary ability and a relic note are dressed like a strategy card ability, the legend in gold (#6)', () => {
+    store().setTile(SLOT, '66');
+    open({ initialMode: 'control' });
+    const ability = screen.getByText('Imperial Arms Vault').closest('.card-ability');
+    expect(ability).toHaveClass('card-ability-primary');
+    expect(ability).toHaveTextContent(/mech from reinforcements/);
+    cleanup();
+    store().newGame({ expansions: ['pok', 'te'], playerCount: 4, faction: 'sol' }, full);
+    store().setTile(SLOT, 'fracture4');
+    open({ initialMode: 'control' }, full);
+    expect(within(screen.getByRole('group', { name: 'Styx' })).getByText(/relic/i).closest('.card-ability')).not.toBeNull();
+  });
+
   test('two traits with swatches, specialties, and the relic of a Fracture planet', () => {
     store().newGame({ expansions: ['pok', 'te'], playerCount: 4, faction: 'sol' }, full);
     store().setTile(SLOT, '101');
     const { container } = open({ initialMode: 'control' }, full);
     const planet = within(screen.getByRole('group', { name: 'Olergodt' }));
-    expect(planet.getByText('Hazardous')).toBeInTheDocument();
-    expect(planet.getByText('Cultural')).toBeInTheDocument();
+    expect(planet.getByRole('img', { name: 'Hazardous' })).toBeInTheDocument();
+    expect(planet.getByRole('img', { name: 'Cultural' })).toBeInTheDocument();
     expect(container.querySelectorAll('.trait-swatch')).toHaveLength(2);
-    expect(planet.getByText(/Warfare/)).toBeInTheDocument();
+    expect(planet.getByRole('img', { name: 'Warfare' })).toBeInTheDocument();
     expect(planet.queryByText(/relic/i)).toBeNull();
     cleanup();
     store().setTile(SLOT, 'fracture4');
@@ -267,12 +427,27 @@ describe('setup', () => {
 });
 
 describe('battle', () => {
-  test('there are no steppers and one strip per player', async () => {
+  test('there are no steppers, and an empty system has no strips, only a note', async () => {
     open({ initialMode: 'battle' });
     expect(screen.queryByRole('button', { name: /^(\+|−)$/ })).toBeNull();
-    for (const name of ['Losses, mine', 'Losses, Player 2', 'Losses, Player 3', 'Losses, Player 4']) expect(screen.getByRole('group', { name })).toBeVisible();
+    expect(screen.queryByRole('group', { name: /^Losses,/ })).toBeNull();
+    expect(screen.getByText('Nobody has units in this system.')).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Carrier' })).toBeNull();
-    expect(screen.getAllByText('No losses')).toHaveLength(4);
+  });
+
+  test('only the players with units or structures in the system get a strip; one whose units were all lost keeps it', async () => {
+    addMine({ carrier: 1 });
+    store().setEnemyUnits(SLOT, opponent(1), { cruiser: 1 });
+    open({ initialMode: 'battle' });
+    const strips = () => screen.getAllByRole('group', { name: /^Losses,/ }).map(g => g.getAttribute('aria-label'));
+    expect(strips()).toEqual(['Losses, mine', 'Losses, Player 3']);
+    await tap('Cruiser ×1 (Player 3)');
+    expect(strips()).toEqual(['Losses, mine', 'Losses, Player 3']);
+    cleanup();
+    store().setPds(quann(), 1);
+    store().setPlanetControl(quann(), opponent(2));
+    open({ initialMode: 'battle' });
+    expect(strips()).toContain('Losses, Player 4');
   });
 
   test('a tap on my token records a loss in one merged entry, by planet too; the strip gives it back', async () => {

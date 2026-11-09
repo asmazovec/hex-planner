@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../data/loadPack';
+import { readyToPlay } from '../domain/mapBuilder';
 import { shareLinkQuery } from '../domain/shareLink';
 import { useGame } from '../state/gameStore';
 import { Banner } from './feedback/Banner';
@@ -33,7 +34,13 @@ export function App() {
     window.history.replaceState(null, '', gameAddress(query));
   }, [query]);
 
-  const dataMismatch = game !== null && game.dataVersion !== loadPack(game.expansions).version;
+  /** A save set up to play opens on its plan and map; an unfinished one stays here to be finished. */
+  const openedSave = () => {
+    const opened = useGame.getState().game;
+    if (opened && readyToPlay(opened, loadPack(opened.expansions))) { setScreen('plan'); setToMap(false); }
+  };
+
+  const dataMismatch =game !== null && game.dataVersion !== loadPack(game.expansions).version;
 
   return (
     <div className="app">
@@ -59,7 +66,7 @@ export function App() {
           </nav>
         )}
         <main data-screen={shown}>
-          {shown === 'game' && <GameScreen showMap={toMap} />}
+          {shown === 'game' && <GameScreen showMap={toMap} onOpened={openedSave} />}
           {shown === 'plan' && <PlanScreen onFinishMap={() => { setScreen('game'); setToMap(true); }} />}
         </main>
       </div>

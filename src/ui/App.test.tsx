@@ -3,6 +3,7 @@ import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, test, expect } from 'vitest';
 import { loadPack } from '../data/loadPack';
+import { emptySlots } from '../domain/mapBuilder';
 import { factionCode } from '../domain/shareLink';
 import { useGame } from '../state/gameStore';
 import { App } from './App';
@@ -75,4 +76,25 @@ test('the menu holds the game and the plan with its map, without a language swit
   expect(names).toEqual(['Game', 'Plan & map']);
   expect(screen.queryByRole('button', { name: 'EN' })).toBeNull();
   setLanguage('ru');
+});
+
+test('opening a save with every seat and tile set goes to the plan and map; an unfinished one stays on the game screen (#8)', async () => {
+  setLanguage('en');
+  const pack = loadPack(['pok']);
+  const unfinished = { ...sampleGame(), id: 'unfinished', name: 'Unfinished' };
+  await saveGame(unfinished);
+  render(<App />);
+  await userEvent.click(within((await screen.findByText('Unfinished')).closest('li')!).getByRole('button', { name: 'Open' }));
+  expect(screen.getByRole('button', { name: 'Game' })).toHaveAttribute('aria-current', 'page');
+  act(() => useGame.getState().closeGame());
+  cleanup();
+
+  const tiles = Object.keys(pack.tiles).filter(id => /^\d+$/.test(id) && Number(id) >= 19 && Number(id) <= 80);
+  const ready = { ...sampleGame(), id: 'ready', name: 'Ready' };
+  ready.map = { ...ready.map, ...Object.fromEntries(emptySlots(ready, pack).map((key, i) => [key, tiles[i]])) };
+  ready.opponents = ready.opponents.map((o, i) => ({ ...o, faction: ['hacan', 'jolnar', 'naalu'][i] }));
+  await saveGame(ready);
+  render(<App />);
+  await userEvent.click(within((await screen.findByText('Ready')).closest('li')!).getByRole('button', { name: 'Open' }));
+  expect(screen.getByRole('button', { name: 'Plan & map' })).toHaveAttribute('aria-current', 'page');
 });

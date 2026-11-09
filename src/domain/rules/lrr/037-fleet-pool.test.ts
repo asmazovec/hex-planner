@@ -68,6 +68,26 @@ describe('LRR 37 Fleet Pool', () => {
     expect(codesOf(game, pack, build)).toContain('fleetPool');
   });
 
+  test('37.3 / note 2: the excess ships chosen to be removed leave the system on arrival, and the pool no longer warns', () => {
+    const move = tactical(NEAR, { moves: [{ from: HOME, units: { destroyer: 4 } }], fleetRemovals: { destroyer: 1 } });
+    const game = rulesGame({ units: { [HOME]: { destroyer: 4 } }, entries: [move] });
+    expect(codesOf(game, pack, move)).not.toContain('fleetPool');
+    expect(forecast(game, pack).state.systems[NEAR]).toEqual({ destroyer: 3 });
+  });
+
+  test('37.3 / note 2: a ship produced beyond the pool can be removed too, after the production', () => {
+    const build = tactical(HOME, { production: { cruiser: 1 }, fleetRemovals: { cruiser: 1 } });
+    const game = rulesGame({ units: { [HOME]: { destroyer: 3 } }, entries: [build] });
+    expect(codesOf(game, pack, build)).not.toContain('fleetPool');
+    expect(forecast(game, pack).state.systems[HOME]).toEqual({ destroyer: 3 });
+  });
+
+  test('37.3: removing too few still warns', () => {
+    const move = tactical(NEAR, { moves: [{ from: HOME, units: { destroyer: 5 } }], fleetRemovals: { destroyer: 1 } });
+    const game = rulesGame({ units: { [HOME]: { destroyer: 5 } }, entries: [move] });
+    expect(codesOf(game, pack, move)).toContain('fleetPool');
+  });
+
   test('37.4: a tactical action spends a tactic token, never a fleet token', () => {
     const game = rulesGame({ entries: [tactical(NEAR)] });
     const { state } = forecast(game, pack);

@@ -1,59 +1,56 @@
-/** Thunder's Edge expedition: a slice is taken and paid for. */
+/** Thunder's Edge expedition: a slice is taken and paid for, as an act at the end of a turn. */
 import { EXPEDITION_SLICES, techSlicePlanets } from '../payment';
 import { violation } from '../rules/registry';
-import type { DataPack, Entry, Game, GameState, Warning } from '../types';
+import type { DataPack, Entry, Game, GameState, Payment, Warning } from '../types';
 import { applyPayment, checkPayment, pay } from './payment';
 
-/** What the replay remembers of the expeditions: the slices taken in the plan, and who made one this turn. */
-export interface ExpeditionLog {
-  taken: Set<string>;
-  /** The owner ('me' or an opponent's id) of the expedition made since the last action, or null. */
-  turn: string | null;
-}
+/** One expedition: the slice and how it is paid, from an act or from an old entry. */
+export interface ExpeditionPart { sliceId: string | null; payment: Payment }
 
-export const expeditionLog = (): ExpeditionLog => ({ taken: new Set<string>(), turn: null });
-
-/** Any entry but an expedition or a manual correction ends the turn the expeditions belong to. */
-export function noteTurn(log: ExpeditionLog, entry: Entry): void {
-  if (entry.type !== 'expedition' && entry.type !== 'adjustment') log.turn = null;
-}
-
-export function applyExpedition(
-  game: Game, state: GameState, entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack,
-  log: ExpeditionLog, warnings: Warning[],
+/** The slice is taken once, whoever holds it (expedition 2, 5); then its cost is paid (expedition 4). */
+export function applyExpeditionPart(
+  game: Game, state: GameState, part: ExpeditionPart, pack: DataPack, taken: Set<string>, warnings: Warning[],
 ): void {
-  const slice = EXPEDITION_SLICES.find(s => s.id === entry.sliceId);
+  // Its payment speaks for the expedition, apart from the payment of the action it ends.
+  const own: Warning[] = [];
+  payPart(game, state, part, pack, taken, own);
+  warnings.push(...own.map(w => violation(w.code, w.params, 'expedition')));
+}
+
+function payPart(
+  game: Game, state: GameState, part: ExpeditionPart, pack: DataPack, taken: Set<string>, warnings: Warning[],
+): void {
+  const slice = EXPEDITION_SLICES.find(s => s.id === part.sliceId);
   if (slice) {
-    // A slice is taken once, whoever holds it: in this plan, or as the game records it (expedition 2, 5).
-    if (log.taken.has(slice.id) || game.expedition.slices[slice.id]) {
-      warnings.push(violation('sliceTaken', { sliceId: slice.id }));
-    }
-    log.taken.add(slice.id);
-    // No more than one slice per turn (expedition 5).
-    const owner = entry.owner ?? 'me';
-    if (log.turn === owner) warnings.push(violation('expeditionTwicePerTurn', { sliceId: slice.id }));
-    log.turn = owner;
+    if (taken.has(slice.id) || game.expedition.slices[slice.id]) warnings.push(violation('sliceTaken', { sliceId: slice.id }));
+    taken.add(slice.id);
   }
   if (slice?.techPlanet) {
     // One of my ready planets with a technology specialty is exhausted (expedition 4.5); the value does not matter.
     const payable = techSlicePlanets(state, pack);
-    if (!entry.payment.planets.some(id => payable.includes(id))) warnings.push(violation('expeditionUnpaid', { sliceId: slice.id }));
-    warnings.push(...checkPayment(state, { planets: entry.payment.planets, tradeGoods: 0 }));
-    applyPayment(state, { planets: entry.payment.planets, tradeGoods: 0 }, 'resources', pack);
+    if (!part.payment.planets.some(id => payable.includes(id))) warnings.push(violation('expeditionUnpaid', { sliceId: slice.id }));
+    warnings.push(...checkPayment(state, { planets: part.payment.planets, tradeGoods: 0 }));
+    applyPayment(state, { planets: part.payment.planets, tradeGoods: 0 }, 'resources', pack);
     return;
   }
   const cost = slice?.cost;
   if (cost?.kind === 'tradeGoods') {
     // The cost is paid in trade goods only; the payment's planets are not used.
-    if (state.tradeGoods < cost.amount) {
-      warnings.push(violation('shortTradeGoods', { needed: cost.amount, have: state.tradeGoods }));
-    }
+    if (state.tradeGoods < cost.amount) warnings.push(violation('shortTradeGoods', { needed: cost.amount, have: state.tradeGoods }));
     state.tradeGoods -= Math.min(cost.amount, state.tradeGoods);
     return;
   }
   const kind = cost?.kind ?? 'resources';
-  const paid = pay(state, entry.payment, kind, pack, warnings);
+  const paid = pay(state, part.payment, kind, pack, warnings);
   if (cost && paid < cost.amount) {
     warnings.push(violation(kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
   }
+}
+
+/** An expedition saved before schema 6 that joined no turn: it still counts, and asks to be put in a turn. */
+export function applyDetachedExpedition(
+  game: Game, state: GameState, entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack, taken: Set<string>, warnings: Warning[],
+): void {
+  warnings.push(violation('expeditionDetached', { sliceId: entry.sliceId ?? '' }));
+  applyExpeditionPart(game, state, entry, pack, taken, warnings);
 }

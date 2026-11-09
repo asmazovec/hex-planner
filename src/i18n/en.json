@@ -6,7 +6,13 @@
     "nameTaken": "A game with this name already exists.",
     "createNew": "Create a new game",
     "keepSaved": "Ignore the link, open the save",
-    "diff": { "expansions": "expansions", "layout": "map layout", "factions": "factions and their seats", "seat": "your seat", "map": "map tiles" }
+    "diff": {
+      "expansions": "expansions",
+      "layout": "map layout",
+      "factions": "factions and their seats",
+      "seat": "your seat",
+      "map": "map tiles"
+    }
   },
   "menu": {
     "game": "Game",
@@ -168,7 +174,8 @@
       "relic": "Relic icon",
       "traits": "Traits",
       "specialties": "Specialties",
-      "close": "Close"
+      "close": "Close",
+      "legendaryMark": "Legendary planet"
     },
     "resetView": "Reset view",
     "fractureTile": "Fracture system {{n}}",
@@ -242,6 +249,7 @@
       "resources": "Resources",
       "influence": "Influence",
       "tradeGoods": "Trade goods",
+      "commodities": "Commodities",
       "tactic": "Tactic",
       "fleet": "Fleet",
       "strategy": "Strategy",
@@ -325,7 +333,9 @@
       "removeSource": "Remove source {{name}}",
       "lost": "Losses: {{list}}",
       "battleOffer": "optional · Start a battle",
-      "productionOffer": "optional · Open the shop"
+      "productionOffer": "optional · Open the shop",
+      "excess": "Excess ships",
+      "excessOffer": "Choose which to remove"
     },
     "picker": {
       "title": "Flight {{from}} → {{to}}",
@@ -335,14 +345,14 @@
       "flying": "Flying",
       "nobody": "Nobody yet",
       "allFlying": "All the ships are flying already.",
-      "emptySource": "No ships here. You can choose ahead: the app will warn.",
+      "emptySource": "No ships here.",
       "cargo": "Cargo on board: {{load}} of {{capacity}}",
       "noRoom": "No room for cargo: the ships have nothing to carry it in.",
       "start": "start",
       "transit": "on the way",
       "target": "target",
       "nothing": "Nothing to take",
-      "tokenHere": "Your command token is here: by the rules nothing can be picked up",
+      "tokenHere": "Your command token is here: by the rules nothing can be picked up, the app will warn",
       "take": "Take one {{unit}}",
       "put": "Return one {{unit}}",
       "fly": "Fly"
@@ -407,6 +417,7 @@
       "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
       "custodians": "The custodians token is still on {{planet}}: removing it costs 6 influence, which the plan does not record; the first to land gains 1 victory point.",
       "structureLimit": "Too many structures: a planet holds one space dock and two PDS; Construction places up to two (one dock at most), its secondary one; the reinforcements hold 3 docks and 6 PDS.",
+      "structureLimit_planet": "{{planet}} holds more than two PDS: a planet holds at most two.",
       "structureNotControlled": "{{planet}} is not your planet: structures go only on planets you control.",
       "structureOutsideSystem": "{{planet}} is not in {{system}}, where the secondary placed its token.",
       "noProduction": "{{system}} has no unit of yours with Production for this: an opponent's space dock does not count, and a card may need the one in your home system.",
@@ -422,7 +433,11 @@
       "stationStructure": "{{planet}} is a space station: structures cannot be placed on it.",
       "routeBlocked_hyperlane": "The route from {{from}} ends on the hyperlane {{system}}: by the rules a hyperlane is no system, it cannot be the active system and no move ends there.",
       "sourceActivated_pickup": "{{system}} holds your command token: by the rules units cannot be picked up there, only in the active system.",
-      "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move."
+      "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move.",
+      "expeditionDetached": "This expedition part is saved as a separate entry: put it in the action it ends.",
+      "transactionRepeated": "No more than one transaction with a player in a turn.",
+      "notNeighbor": "A transaction is only with a neighbour: you need units or planets in the same or adjacent systems.",
+      "shortCommodities": "Not enough commodities: {{needed}} needed, {{have}} held."
     },
     "phases": {
       "strategy": "Strategy",
@@ -442,7 +457,6 @@
       },
       "modes": "Card mode",
       "cards": "Card",
-      "locked": "A choice has been made. To change the card or the mode, remove the action.",
       "chooseCard": "Choose a card.",
       "tokenCost": "−1 strategy token",
       "tile": "tile {{name}}",
@@ -457,8 +471,8 @@
       "speaker": "The speaker passes to",
       "politicsPrimary": "+2 action cards, 2 agendas to the top or bottom of the deck.",
       "politicsSecondary": "+2 action cards.",
-      "buildPrimary": "Build a structure",
-      "buildSecondary": "Place a structure",
+      "buildPrimary": "Construction",
+      "buildSecondary": "Construction",
       "built": "Built: {{list}}",
       "dock": "Production in a space dock instead of the first build",
       "tradePrimary": "+3 trade goods, commodities replenish.",
@@ -470,7 +484,7 @@
       "homeProduction": "Production in the home system",
       "shopNote": "Opens the shop on the big hex.",
       "noHome": "The home system is not on the map.",
-      "upgrades": "Ship upgrades",
+      "upgrades": "Upgrades",
       "techPrimary": "The first is free, the second costs 6 resources. To pay: {{n}}.",
       "techSecondary": "4 resources per technology. To pay: {{n}}.",
       "mecatol": "I control Mecatol Rex: +1 point",
@@ -483,7 +497,7 @@
       "noExhausted": "No planets of yours are exhausted at this point.",
       "boughtNonePrimary": "Three tokens are free, each further one costs 3 influence.",
       "boughtNoneSecondary": "Each token costs 3 influence.",
-      "research": "Technologies researched: {{n}}",
+      "research": "Technology: {{n}}",
       "researched": "Researched"
     },
     "steps": {
@@ -525,7 +539,28 @@
     },
     "deletePlan": "Delete plan “{{name}}”",
     "deleteRound": "Delete round {{n}}",
-    "drawers": "Drawers"
+    "drawers": "Drawers",
+    "acts": {
+      "transaction": "+ Transaction with {{name}}: give {{give}}; get {{get}}",
+      "expedition": "+ Expedition: {{brief}}",
+      "commodities": "commodities {{n}}",
+      "note": "a promissory note",
+      "nothing": "nothing",
+      "me": "you",
+      "title": "In this turn",
+      "addTransaction": "+ Transaction",
+      "addExpedition": "+ Expedition",
+      "remove": "Remove: {{name}}",
+      "kind": {
+        "transaction": "transaction",
+        "expedition": "expedition"
+      },
+      "transactionTitle": "Transaction",
+      "withWhom": "With whom",
+      "give": "Give",
+      "get": "Get",
+      "noteToggle": "Promissory note"
+    }
   },
   "expedition": {
     "title": "Expedition",
@@ -619,7 +654,12 @@
     "barrage": "Anti-Fighter Barrage {{value}}",
     "bombard": "Bombardment {{value}}",
     "cannon": "Space Cannon {{value}}",
-    "upgradesShort": "Upgrades"
+    "upgradesShort": "Upgrades",
+    "upgradeRow": {
+      "ships": "Ships",
+      "ground": "Ground forces",
+      "structures": "Structures"
+    }
   },
   "players": {
     "title": "Players",
@@ -676,14 +716,13 @@
     "mode": {
       "setup": "Setup",
       "battle": "Battle",
-      "build": "Build",
-      "control": "Control"
+      "build": "Create",
+      "control": "Control",
+      "fleet": "Excess ships"
     },
     "owner": "Whose units",
     "mine": "Mine",
     "place": "Place on the hex",
-    "shop": "Shop",
-    "structures": "Structures",
     "bought": "Bought: {{n}}",
     "lossesMine": "Losses, mine",
     "lossesOf": "Losses, {{name}}",
@@ -701,11 +740,44 @@
       "resources": "Cost / resources available",
       "fleet": "Ships / fleet pool",
       "capacity": "Load / capacity"
-    }
+    },
+    "production": "Production",
+    "construction": "Construction",
+    "fleetRemoved": "Removed beyond the fleet pool",
+    "fleetNote": "Tap a ship token to return it to the reinforcements. Tap a picture here to give it back.",
+    "heading": {
+      "quick": "Manual edit",
+      "production": "Production",
+      "construction": "Construction",
+      "battle": "Battle",
+      "fleet": "Excess ships",
+      "adjustment": "Manual adjustment"
+    },
+    "handover": "A structure gives control of the planet: {{planet}} → {{player}}.",
+    "you": "you",
+    "nobodyHere": "Nobody has units in this system."
   },
   "editor": {
     "done": "Done",
     "back": "Back",
     "remove": "Remove action"
+  },
+  "legal": {
+    "unofficial": {
+      "title": "Unofficial project",
+      "text": "This is a fan-made tool for planning a game, not official material. It is not affiliated with, endorsed by or supported by Fantasy Flight Games, Asmodee or Hobby World. Twilight Imperium and related names are trademarks of their respective owners. No game art or components are included."
+    },
+    "data": {
+      "title": "Game data",
+      "text": "Systems, planets, units and card sets are built from the public repository",
+      "wording": "Card, technology and ability descriptions are paraphrased in our own words. Terms follow the English Rules Reference and the Russian edition by Hobby World. The data may contain mistakes; where it differs, the official rules win."
+    },
+    "icons": {
+      "title": "Icons"
+    },
+    "code": {
+      "title": "Source code",
+      "text": "The app is open source:"
+    }
   }
 }

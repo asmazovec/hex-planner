@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import type { Game } from '../../types';
 import { codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { planetStructureWarnings } from '../../replay/structures';
 
 const pack = rulesPack();
 
@@ -26,6 +27,13 @@ describe('LRR 63 PDS', () => {
   test('63.3 / 85.5: a planet holds at most two PDS', () => {
     const play = primary(CARD.construction, { structures: [{ kind: 'pds', planetId: 'h1' }] });
     expect(codesOf(rulesGame({ entries: [play], game: { pds: { h1: 2 } } }), pack, play)).toContain('structureLimit');
+  });
+
+  test('63.3: the board itself warns about a third PDS on a planet, mine or an opponent’s, and allows two', () => {
+    const state = forecast(rulesGame({ game: { pds: { h1: 3 } } }), pack).state;
+    expect(planetStructureWarnings(state, ['h1']).map(w => w.code)).toEqual(['structureLimit']);
+    expect(planetStructureWarnings({ ...state, pds: { h1: 2 } }, ['h1'])).toEqual([]);
+    expect(planetStructureWarnings({ ...state, pds: {}, rivals: { [RIVAL]: { ...state, pds: { h1: 3 } } } }, ['h1'])).toHaveLength(1);
   });
 
   test('63.3: two PDS on one planet are allowed', () => {

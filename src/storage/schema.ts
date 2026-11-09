@@ -3,10 +3,12 @@ import { loadPack } from '../data/loadPack';
 import { withoutRetiredLayout } from '../domain/retiredLayouts';
 import type { Game } from '../domain/types';
 
-export const CURRENT_SCHEMA = 5;
+export const CURRENT_SCHEMA = 6;
 
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
+/** What an upgrade improves: a unit, or a structure (PDS II, Space Dock II). */
+const upgradeId = z.enum([...unitId.options, 'pds', 'spacedock']);
 const unitCounts = z.partialRecord(unitId, count);
 /** An adjustment's change of units. */
 const signedCounts = z.partialRecord(unitId, z.number().int());
@@ -16,7 +18,7 @@ const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 
 const base = { id: z.string(), phase, status, owner: z.string().optional() };
 const cardPlay = {
-  upgrades: z.array(unitId).optional(),
+  upgrades: z.array(upgradeId).optional(),
   card: z.number().int().optional(),
   forToken: z.boolean().optional(),
   effects: z.object({
@@ -33,17 +35,23 @@ const cardPlay = {
     payment: payment.optional(),
   }).optional(),
 };
+const goods = z.object({ tradeGoods: count.optional(), commodities: count.optional(), note: z.boolean().optional() });
+const act = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
+  z.object({ kind: z.literal('transaction'), with: z.string(), give: goods, get: goods }),
+]);
+const acts = z.array(act).optional();
 const entrySchema = z.discriminatedUnion('type', [
   z.object({
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
     moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional() })),
     landings: z.array(z.object({ planetId: z.string(), units: unitCounts })),
-    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(),
+    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(), acts,
   }),
-  z.object({ ...base, ...cardPlay, type: z.literal('strategic') }),
+  z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
-  z.object({ ...base, type: z.literal('component'), note: z.string() }),
-  z.object({ ...base, type: z.literal('pass') }),
+  z.object({ ...base, type: z.literal('component'), note: z.string(), acts }),
+  z.object({ ...base, type: z.literal('pass'), acts }),
   z.object({ ...base, type: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
   z.object({
     ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),
@@ -76,7 +84,7 @@ export const gameSchema = z.object({
   vp: count,
   map: z.record(z.string(), z.string()),
   opponents: z.array(z.object({ id: z.string(), faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
-  upgrades: z.object({ me: z.array(unitId), opponents: z.record(z.string(), z.array(unitId)) }),
+  upgrades: z.object({ me: z.array(upgradeId), opponents: z.record(z.string(), z.array(upgradeId)) }),
   enemyUnits: z.record(z.string(), z.record(z.string(), unitCounts)),
   enemyGround: z.record(z.string(), z.record(z.string(), unitCounts)),
   planetControl: z.record(z.string(), control),
@@ -193,6 +201,38 @@ function withRulebookLayout(doc: Record<string, unknown>): Record<string, unknow
   return withoutRetiredLayout(parsed.data, loadPack(parsed.data.expansions)) as unknown as Record<string, unknown>;
 }
 
+/**
+ * Version 6 makes an expedition an act of a turn: an expedition entry joins the turn of its owner right before it, with
+ * nothing but other expeditions between, so the order of play stays what it was; Warfare's free tactical action belongs
+ * to its card, so an expedition after it joins the card. A cancelled expedition, or one with no such turn, stays an entry.
+ */
+function withActs(doc: Record<string, unknown>): Record<string, unknown> {
+  const turns = ['tactical', 'strategic', 'component', 'pass'];
+  type Raw = Record<string, unknown>;
+  const ownerOf = (e: Raw) => (typeof e.owner === 'string' ? e.owner : 'me');
+  const plans = Array.isArray(doc.plans) ? doc.plans : [];
+  return {
+    ...doc, schemaVersion: 6,
+    plans: plans.map((plan: Raw) => ({
+      ...plan,
+      rounds: (Array.isArray(plan.rounds) ? plan.rounds : []).map((round: Raw) => {
+        const entries: Raw[] = (Array.isArray(round.entries) ? round.entries : []).map((e: Raw) => ({ ...e }));
+        const partOfCard = (o: Raw) => o.type === 'tactical' && typeof o.fromCard === 'string';
+        const kept = entries.filter((e, i) => {
+          if (e.type !== 'expedition' || e.status === 'cancelled') return true;
+          const host = entries.slice(0, i).reverse().find(o => o.type !== 'expedition' && !partOfCard(o));
+          const joins = host !== undefined && turns.includes(host.type as string) && ownerOf(host) === ownerOf(e) && host.status !== 'cancelled'
+            && entries.slice(entries.indexOf(host) + 1, i).every(o => o.type === 'expedition' || partOfCard(o));
+          if (!host || !joins) return true;
+          host.acts = [...(Array.isArray(host.acts) ? host.acts : []), { kind: 'expedition', sliceId: e.sliceId ?? null, payment: e.payment }];
+          return false;
+        });
+        return { ...round, entries: kept };
+      }),
+    })),
+  };
+}
+
 /** Brings a parsed file of an older schema up to CURRENT_SCHEMA, one version at a time. */
 export function migrate(raw: unknown): unknown {
   if (typeof raw !== 'object' || raw === null) return raw;
@@ -207,5 +247,6 @@ export function migrate(raw: unknown): unknown {
   // Version 4 was saved for a while without this field.
   if (doc.schemaVersion === 4 && doc.enemyGround === undefined) doc = withEnemyGround(doc);
   if (doc.schemaVersion === 4) doc = withRulebookLayout(doc);
+  if (doc.schemaVersion === 5) doc = withActs(doc);
   return doc;
 }

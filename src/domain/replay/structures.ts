@@ -72,3 +72,14 @@ export function buildStructures(
     else if (!state.docks.includes(planetId)) state.docks.push(planetId);
   }
 }
+
+/**
+ * What the board itself breaks on these planets, apart from any entry: more PDS on a planet than it holds (63.3, 85.5),
+ * counting each player's. A placement by hand in the big hex is checked by this.
+ */
+export function planetStructureWarnings(state: GameState, planetIds: string[]): Warning[] {
+  const holders = [state, ...Object.values(state.rivals ?? {})];
+  return planetIds.flatMap(planetId => holders.some(held => countOn(held, 'pds', planetId) > PER_PLANET.pds)
+    ? [violation('structureLimit', { kind: 'pds', planetId, count: PER_PLANET.pds, context: 'planet' }, 'production')]
+    : []);
+}

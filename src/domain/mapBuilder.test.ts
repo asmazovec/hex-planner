@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { changeLayout, defaultLayout, duplicateTiles, mapIsEmpty, resolveTile, seatSlots, slotsFor, templateFor, tileSuggestions, tilesLostByLayout } from './mapBuilder';
+import { changeLayout, defaultLayout, duplicateTiles, emptySlots, readyToPlay, mapIsEmpty, resolveTile, seatSlots, slotsFor, templateFor, tileSuggestions, tilesLostByLayout } from './mapBuilder';
 import { createGame } from './newGame';
 
 const base = loadPack([]);
@@ -169,4 +169,15 @@ test('a template without home slots gives each seat the outer slot nearest its i
   const template = { ...pok.templates.find(t => t.playerCount === 6)!, homes: undefined };
   const bare = { ...pok, templates: [template] };
   expect(seatSlots(6, bare)).toEqual(['0,-3', '3,-3', '3,0', '0,3', '-3,3', '-3,0']);
+});
+
+test('readyToPlay: every opponent seated with a faction and every free slot holding a tile (#8)', () => {
+  const pack = loadPack(['pok']);
+  const game = createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
+  expect(readyToPlay(game, pack)).toBe(false);
+  const tiles = Object.keys(pack.tiles).filter(id => /^\d+$/.test(id) && Number(id) >= 19 && Number(id) <= 80);
+  const built = { ...game, map: { ...game.map, ...Object.fromEntries(emptySlots(game, pack).map((key, i) => [key, tiles[i]])) } };
+  expect(readyToPlay(built, pack)).toBe(false);
+  const seated = { ...built, opponents: built.opponents.map((o, i) => ({ ...o, faction: ['hacan', 'jolnar'][i] })) };
+  expect(readyToPlay(seated, pack)).toBe(true);
 });

@@ -4,7 +4,7 @@
  */
 import { violation } from '../../rules/registry';
 import type { CardEntry } from '../../strategy';
-import type { UnitId } from '../../types';
+import type { UpgradeId } from '../../types';
 import type { CardHandler } from './handler';
 
 const SECOND_RESEARCH = 6;
@@ -14,7 +14,7 @@ const SECONDARY_RESEARCH = 4;
 export const researchCount = (entry: CardEntry): number => (entry.upgrades?.length ?? 0) + (entry.effects?.researched ?? 0);
 
 /** What is researched anew: upgrades already owned are not. */
-const newResearch = (entry: CardEntry, owned: UnitId[]): number =>
+const newResearch = (entry: CardEntry, owned: UpgradeId[]): number =>
   (entry.upgrades ?? []).filter(id => !owned.includes(id)).length + (entry.effects?.researched ?? 0);
 
 /** How many technologies the side researches. */

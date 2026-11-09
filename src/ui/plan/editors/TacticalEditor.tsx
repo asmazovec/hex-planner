@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../../domain/payment';
@@ -37,9 +38,13 @@ export interface TacticalEditorProps {
   onOpenShop: () => void;
   /** Opens the battle of the big hex on the active system. */
   onOpenBattle: () => void;
+  /** Opens the big hex on the active system to remove ships beyond the fleet pool. */
+  onOpenFleet: () => void;
   onDone: () => void;
   /** The cross of the head: the action goes. */
   onRemove: () => void;
+  /** The «В этом ходу» block: what the turn holds beside its action, last in the editor. */
+  turnActs?: ReactNode;
 }
 
 /**
@@ -48,7 +53,7 @@ export interface TacticalEditorProps {
  */
 export function TacticalEditor({
   game, pack, entry, before, board, warnings, manualPayment, choosing, onChoose,
-  onUpdate, onOpenPicker, onManualPayment, onOpenShop, onOpenBattle, onDone, onRemove,
+  onUpdate, onOpenPicker, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, turnActs,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
@@ -87,6 +92,8 @@ export function TacticalEditor({
     return [...placer.at('route', mine), ...placer.at('cargo', mine)];
   };
   const overall = placer.at('action');
+  const removed = entry.fleetRemovals ?? {};
+  const overFleet = warnings.some(w => w.code === 'fleetPool' && w.params.systemId === target);
   const battleWarnings = placer.at('battle');
 
   const blocks = target !== null && (
@@ -168,8 +175,18 @@ export function TacticalEditor({
             </PaymentBlock>
           )}
 
-          {overall.length > 0 && (
-            <Section label={t('plan.tactical.result')} title={t('plan.tactical.result')} warnings={list(overall)} />
+          {(overall.length > 0 || overFleet || hasUnits(removed)) && (
+            <Section label={t('plan.tactical.result')} title={t('plan.tactical.result')} warnings={list(overall)}>
+              {/* Over the fleet pool the excess is chosen in the big hex (37.3); the row stays while it removes anything. */}
+              {(overFleet || hasUnits(removed)) && (
+                <div className="source-row in-card">
+                  <button type="button" className="source-button" onClick={onOpenFleet}>
+                    <span>{t('plan.tactical.excess')}</span>{' '}
+                    <small>{hasUnits(removed) ? unitText(removed) : t('plan.tactical.excessOffer')}</small>
+                  </button>
+                </div>
+              )}
+            </Section>
           )}
         </>
   );
@@ -179,6 +196,7 @@ export function TacticalEditor({
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
       {list(placer.rest())}
       {blocks}
+      {turnActs}
     </EditorFrame>
   );
 }

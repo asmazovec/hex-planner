@@ -65,3 +65,9 @@ test('each player counts their own turns: the first action of everyone is 1, whe
   expect(tacticalNumbers(list)).toEqual({ a: 1, b: 1, c: 1, d: 2, e: 2, g: 3 });
   expect(tacticalNumbers([list[3], list[0], list[1]])).toEqual({ d: 1, a: 1, b: 2 });
 });
+
+test('Warfare\'s free tactical is an act of its card: it takes no number, and the next tactical action is still the first', () => {
+  const card: Entry = { id: 'w', status: 'planned', phase: 'action', type: 'strategic', card: 6 };
+  const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
+  expect(tacticalNumbers([card, free, tacticalEntry('t')])).toEqual({ t: 1 });
+});

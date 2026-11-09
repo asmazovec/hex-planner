@@ -18,9 +18,12 @@ export function producers(game: Game, state: GameState, systemId: string, pack: 
   return planetsOf(game, systemId, pack).filter(p => state.docks.includes(p) && state.control[p] === 'me');
 }
 
-/** A dock's Production: its planet's resources plus the dock's value (79.1). Space Dock II is not tracked, so level I counts. */
-const dockValue = (planetId: string, pack: DataPack): number =>
-  (pack.planets[planetId]?.resources ?? 0) + (pack.structures.find(s => s.id === 'spacedock')?.levels.one.production ?? 0);
+/** A dock's Production: its planet's resources plus the dock's value (79.1), that of Space Dock II once it is upgraded. */
+const dockValue = (state: GameState, planetId: string, pack: DataPack): number => {
+  const levels = pack.structures.find(s => s.id === 'spacedock')?.levels;
+  const level = state.upgrades.includes('spacedock') ? levels?.two ?? levels?.one : levels?.one;
+  return (pack.planets[planetId]?.resources ?? 0) + (level?.production ?? 0);
+};
 
 /** Where my ground forces may stand: a planet I control, and not a space station (space stations 4). */
 const holdsGround = (state: GameState, planetId: string, pack: DataPack): boolean =>
@@ -103,7 +106,7 @@ export function checkProduction(
   if (hasAnomaly(game, target, 'scar', pack)) warn('scarProduction', { systemId: target });
   else if (docks.length === 0) warn('noProduction', { systemId: target });
   else if (source !== 'card') {
-    const values = docks.map(p => dockValue(p, pack));
+    const values = docks.map(p => dockValue(state, p, pack));
     const value = source === 'homeDock' ? Math.max(...values) : values.reduce((sum, v) => sum + v, 0);
     // Each fighter or infantry counts, though two cost one (68.1.2).
     const count = built.reduce((sum, id) => sum + (units[id] ?? 0), 0);
