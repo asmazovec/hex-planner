@@ -132,7 +132,7 @@
       "routeActive": "The route of the action you are editing or reading.",
       "routePlanned": "A planned route.",
       "routeDone": "A route already done.",
-      "routeGap": "Dashed: a jump between hexes that do not touch, through a wormhole for one.",
+      "routeGap": "Dashed: a jump between hexes that do not touch (the Fracture, a portal, an ability), one step.",
       "routeNumber": "The tactical action's number in the round, the same as in the plan.",
       "routePickup": "How many units the flight picks up in this system on the way.",
       "plan": "Plan and totals",

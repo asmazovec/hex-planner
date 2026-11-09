@@ -1,6 +1,6 @@
 /** LRR 58 Movement. Source: tirules2 rules-reference/movement.md. */
 import { describe, expect, test } from 'vitest';
-import { routeReach } from '../../project';
+import { routeReach, routeSteps } from '../../project';
 import { CARD } from '../../strategy';
 import type { Opponent } from '../../types';
 import { codesOf, FACTION, FAR, FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
@@ -70,11 +70,18 @@ describe('LRR 58 Movement', () => {
     expect(codesOf(game, pack, action)).toEqual([]);
   });
 
-  test('58.3.2: a drawn route that skips the system in between still passes through it, and is blocked by ships there', () => {
-    // The only way from HOME to TARGET is through NEAR, whether the route names it or not.
-    const action = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
+  test('58.3.2: a route through the system in between is blocked by ships there', () => {
+    const action = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }] });
     const game = rulesGame({ units: { [HOME]: { cruiser: 1 } }, entries: [action], game: { enemyUnits: { [NEAR]: { o1: { destroyer: 1 } } } } });
     expect(codesOf(game, pack, action)).toContain('routeBlocked');
+  });
+
+  test('a step between two marked systems that are not adjacent is a jump (a wormhole, the Fracture, an ability): one step, nothing in between is entered', () => {
+    const action = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
+    const game = rulesGame({ units: { [HOME]: { cruiser: 1 } }, entries: [action], game: { enemyUnits: { [NEAR]: { o1: { destroyer: 1 } } } } });
+    expect(routeSteps(game, [HOME, TARGET], pack)).toBe(1);
+    expect(codesOf(game, pack, action)).not.toContain('routeBlocked');
+    expect(codesOf(game, pack, action)).not.toContain('speedShort');
   });
 
   test('58.3.2: ships an opponent\'s earlier action moved in block my route', () => {

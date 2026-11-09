@@ -98,12 +98,13 @@ describe('how far a route goes', () => {
       }
     });
 
-    test('a drawn route is measured as drawn, and a hyperlane hex on it costs nothing', () => {
+    test('a drawn route is measured as drawn, a jump between marks that are not joined is one step, and a hyperlane hex costs nothing', () => {
       const game = line({ ...row, '1,0': 'nebula' });
       expect(routeSteps(game, ['0,0', '1,0', '2,0'], routePack)).toBe(2);
-      expect(routeSteps(game, ['0,0', '3,0'], routePack)).toBe(3);
-      // A map with holes in it has no way across them: the grid measures it, so a far flight is not called near.
-      expect(routeSteps(line({ '0,0': 'a', '3,0': 'a' }), ['0,0', '3,0'], routePack)).toBe(3);
+      // Marked systems that are not joined are a jump the player marks (a portal, an ability): one step.
+      expect(routeSteps(game, ['0,0', '3,0'], routePack)).toBe(1);
+      expect(routeSteps(line({ '0,0': 'a', '3,0': 'a' }), ['0,0', '3,0'], routePack)).toBe(1);
+      expect(routeDistances(game, '0,0', routePack).get('3,0')).toBe(3);
       expect(routeSteps(line({ '0,0': 'a', 'off': 'a' }), ['0,0', 'off'], routePack)).toBe(1);
       expect(routeSteps(line({ ...row, '1,0': 'straight' }), ['0,0', '1,0', '2,0'], routePack)).toBe(1);
     });

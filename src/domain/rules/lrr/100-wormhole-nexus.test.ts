@@ -1,7 +1,7 @@
 /** LRR 100 Wormhole Nexus. Source: tirules2 rules-reference/wormhole-nexus.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeSteps } from '../../project';
+import { routeDistances, routeSteps } from '../../project';
 import { FARTHER, HOME, rulesGame, rulesPack } from '../kit';
 import { row } from './kit-83-101';
 
@@ -21,7 +21,7 @@ describe('LRR 100 Wormhole Nexus', () => {
   });
 
   test('100.1.1: the inactive nexus does not join alpha wormholes, the active one does', () => {
-    expect(routeSteps(rulesGame({ map: row({ [HOME]: '82A', [FARTHER]: 'r-alpha' }) }), [HOME, FARTHER], pack)).toBe(4);
+    expect(routeDistances(rulesGame({ map: row({ [HOME]: '82A', [FARTHER]: 'r-alpha' }) }), HOME, pack).get(FARTHER)).toBe(4);
     expect(routeSteps(rulesGame({ map: row({ [HOME]: '82B', [FARTHER]: 'r-alpha' }) }), [HOME, FARTHER], pack)).toBe(1);
   });
 

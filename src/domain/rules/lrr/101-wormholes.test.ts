@@ -1,7 +1,7 @@
 /** LRR 101 Wormholes. Source: tirules2 rules-reference/wormholes.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeReach, routeSteps } from '../../project';
+import { routeDistances, routeReach, routeSteps } from '../../project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 import { row } from './kit-83-101';
 
@@ -15,7 +15,7 @@ const pack = rulesPack(p => {
 describe('LRR 101 Wormholes', () => {
   test('101.1: alpha and beta wormholes do not join each other', () => {
     const game = rulesGame({ map: row({ [HOME]: 'r-alpha', [FARTHER]: 'r-beta' }) });
-    expect(routeSteps(game, [HOME, FARTHER], pack)).toBe(4);
+    expect(routeDistances(game, HOME, pack).get(FARTHER)).toBe(4);
   });
 
   test('101.1: beta joins beta as alpha joins alpha', () => {

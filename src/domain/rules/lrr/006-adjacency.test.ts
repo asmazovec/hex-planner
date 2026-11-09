@@ -1,6 +1,6 @@
 /** LRR 6 Adjacency. Source: tirules2 rules-reference/adjacency.md. Speeds from the base pack: a destroyer I moves 2. */
 import { describe, expect, test } from 'vitest';
-import { routeReach, routeSteps } from '../../project';
+import { routeDistances, routeReach, routeSteps } from '../../project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack(p => {
@@ -46,10 +46,9 @@ describe('LRR 6 Adjacency', () => {
     const toGate = tactical(NEAR, { moves: [{ from: '51', units: { destroyer: 1 } }] });
     const gate = rulesGame({ map, entries: [toGate], game: { faction: 'ghost' } });
     expect(codesOf(gate, pack, toGate)).not.toContain('speedShort');
-    // FARTHER has no delta wormhole: from the home it is the gate and three more systems away, beyond a destroyer's two.
-    const away = tactical(FARTHER, { moves: [{ from: '51', units: { destroyer: 1 } }] });
-    const far = rulesGame({ map, entries: [away], game: { faction: 'ghost' } });
-    expect(codesOf(far, pack, away)).toContain('speedShort');
+    // FARTHER has no delta wormhole: from the home it is the gate and three more systems away.
+    const far = rulesGame({ map, game: { faction: 'ghost' } });
+    expect(routeDistances(far, '51', pack).get(FARTHER)).toBe(4);
     expect([...routeReach(far, ['51'], 1, FARTHER, pack)]).toEqual([NEAR]);
   });
 });

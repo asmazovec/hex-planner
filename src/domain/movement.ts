@@ -126,54 +126,23 @@ export function routeDistances(game: Game, from: string, pack: DataPack): Map<st
   return steps;
 }
 
-/** The shortest way between two systems through those `open` lets a ship pass, both ends included; null with none. */
-function shortestWay(graph: Map<string, string[]>, from: string, to: string, open: (slot: string) => boolean): string[] | null {
-  const back = new Map<string, string>([[from, from]]);
-  const queue = [from];
-  for (let i = 0; i < queue.length; i += 1) {
-    for (const next of graph.get(queue[i]) ?? []) {
-      if (back.has(next) || (next !== to && !open(next))) continue;
-      back.set(next, queue[i]);
-      if (next === to) {
-        const way = [to];
-        while (way[0] !== from) way.unshift(back.get(way[0])!);
-        return way;
-      }
-      queue.push(next);
-    }
-  }
-  return null;
-}
-
 /**
- * The systems a drawn route enters, in order (58.3.2): a hyperlane is no system and drops out, and between two marked
- * systems that are not joined the way a ship would take is filled in, round anomalies and other players' ships when it
- * can be, otherwise straight through them. Two systems no way joins, over holes of a map not finished, stay as they are.
+ * The systems a drawn route enters, in order (58.3.2): a hyperlane is no system and drops out. Two marked systems that
+ * are not joined (neighbours, a wormhole, a hyperlane's line) are a jump: the player marks a move the board does not
+ * give, through the Fracture, a portal or an ability the rules here do not count, so nothing in between is entered.
  */
-export function fullPath(game: Game, path: string[], pack: DataPack, blockers: Blockers = new Set()): string[] {
-  const graph = routeGraph(game, pack);
-  const stops = path.filter(slot => !isLane(game, slot, pack));
-  const open = (slot: string) => !closedToRoute(game, slot, pack) && !endsRoute(game, slot, pack, blockers);
-  const full = stops.slice(0, 1);
-  for (const to of stops.slice(1)) {
-    const from = full.at(-1)!;
-    if (from === to || (graph.get(from) ?? []).includes(to)) {
-      full.push(to);
-      continue;
-    }
-    const way = shortestWay(graph, from, to, open) ?? shortestWay(graph, from, to, () => true);
-    full.push(...(way ? way.slice(1) : [to]));
-  }
-  return full;
+export function fullPath(game: Game, path: string[], pack: DataPack, _blockers: Blockers = new Set()): string[] {
+  void _blockers;
+  return path.filter(slot => !isLane(game, slot, pack));
 }
 
-/** How many systems a whole path enters: one a step, by the grid where no way joins two systems. */
+/** How many systems a whole path enters: one a step, a jump between systems that are not joined included. */
 function stepsAlong(game: Game, full: string[], pack: DataPack): number {
-  const graph = routeGraph(game, pack);
-  return full.slice(1).reduce((sum, slot, i) => sum + ((graph.get(full[i]) ?? []).includes(slot) ? 1 : gridDistance(full[i], slot)), 0);
+  void game; void pack;
+  return Math.max(0, full.length - 1);
 }
 
-/** The length of a drawn route: every system it enters, those between the marked ones too; a hyperlane takes no step. */
+/** The length of a drawn route: one step a marked system it enters, a jump included; a hyperlane takes no step. */
 export function routeSteps(game: Game, path: string[], pack: DataPack, blockers: Blockers = new Set()): number {
   return stepsAlong(game, fullPath(game, path, pack, blockers), pack);
 }
