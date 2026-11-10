@@ -1,4 +1,4 @@
-/** The one way a step of the count asks for a value: the base, then every ready component of the player in registry order. */
+/** The one way a step of the count asks for a value: the base, then every component of the player in registry order. */
 import type { DataPack, Holdings } from '../types';
 import { passivesOf } from './registry';
 import type { ComponentEffect, ModifierContext, Modifiers } from './types';
@@ -23,8 +23,9 @@ export function stacked<K extends keyof Modifiers>(
 }
 
 /**
- * The value of a point of the count for a player: `base` changed by each component they hold ready, in registry
- * order. An exhausted component does not take part, and neither does one the pack does not know.
+ * The value of a point of the count for a player: `base` changed by each component they hold, in registry order.
+ * An exhausted component takes part as a ready one does: its passive abilities stay in effect (LRR 34.4.1). One the
+ * pack does not know does not.
  */
 export function applied<K extends keyof Modifiers>(
   pack: DataPack, holdings: Holdings, point: K, base: number, ctx: ModifierContext[K],

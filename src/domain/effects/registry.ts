@@ -70,7 +70,8 @@ export const orderOf = (pack: DataPack, id: string): number => registryOf(pack).
 
 /**
  * The components a player has ready: technologies, relics, promissory notes, action cards in hand and unlocked
- * leaders, less what is exhausted. Each id once, in registry order; ids the pack does not know are left out.
+ * leaders, less what is exhausted. Each id once, in registry order; ids the pack does not know are left out. This is
+ * what can still be used, so what the hints show; a passive effect does not ask it (`passivesOf`).
  */
 export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
   const { effects, order } = registryOf(pack);
@@ -82,19 +83,19 @@ export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
 
 /**
  * The passive effects a player has in force, in registry order: of the technologies, relics, promissory notes and
- * unlocked leaders they hold, less what is exhausted.
+ * unlocked leaders they hold. An exhausted card keeps its passive abilities (LRR 34.4.1); only a purged leader is gone.
  */
 export function passivesOf(pack: DataPack, holdings: Holdings): [string, ComponentEffect][] {
   const { effects, order } = registryOf(pack);
   const found: [string, ComponentEffect][] = [];
   const ask = (id: string): void => {
     const effect = effects.get(id);
-    if (effect?.tier === 'passive' && !holdings.exhausted.includes(id) && !found.some(([known]) => known === id)) found.push([id, effect]);
+    if (effect?.tier === 'passive' && !found.some(([known]) => known === id)) found.push([id, effect]);
   };
   for (const id of holdings.technologies) ask(id);
   for (const id of holdings.relics) ask(id);
   for (const id of holdings.promissory) ask(id);
-  for (const id in holdings.leaders) if (holdings.leaders[id] === 'unlocked') ask(id);
+  for (const id in holdings.leaders) if (holdings.leaders[id] !== 'purged') ask(id);
   return found.length > 1 ? found.sort((a, b) => order.get(a[0])! - order.get(b[0])!) : found;
 }
 

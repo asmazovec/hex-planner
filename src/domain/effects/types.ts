@@ -1,12 +1,13 @@
 /**
  * The contract of a component's effect (design §5.1). A step of the count never names a component: it asks a named
- * point for its value through `applied`, and the ready components of the player answer.
+ * point for its value through `applied`, and the components of the player answer.
  */
 import type { DataPack, Entry, Game, GameState, RuleStep, StructureKind, UnitId, Warning } from '../types';
 
 /**
- * `passive` applies by itself while the component is held and ready; `play` applies when an entry plays the component
- * with its choices; `hint` computes nothing: the app shows the component's text in the block of its step.
+ * `passive` applies by itself while the component is held, exhausted or not (LRR 34.4.1); `play` applies when an
+ * entry plays the component with its choices; `hint` computes nothing: the app shows the component's text in the
+ * block of its step.
  */
 export type EffectTier = 'passive' | 'play' | 'hint';
 
@@ -54,7 +55,7 @@ export interface ComponentEffect {
   tier: EffectTier;
   /** The LRR rule the effect stands on, numbered as in the rules tests; for a hint, the id of the component whose text is shown. */
   rule: string;
-  /** passive: the changes to the points of the count, while the component is held and ready. */
+  /** passive: the changes to the points of the count, while the component is held. */
   modify?: Partial<Modifiers>;
   /** play: what happens when an entry plays the component with its choices. */
   play?: (turn: EffectTurn) => void;
