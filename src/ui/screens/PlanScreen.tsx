@@ -13,8 +13,8 @@ import { focusRect } from '../map/geometry';
 import { cardChange, withSystem } from '../../domain/strategy';
 import { entrySystems, hasUnits, isUntouched, isValidSource, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
-import { upgradesOf } from '../../domain/holdings';
-import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
+import { holdingCount, holdingRounds, upgradesOf } from '../../domain/holdings';
+import { entryUpgradeRounds } from '../../domain/unitStats';
 import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { Drawer, DrawerTab } from '../overlays/Drawer';
@@ -23,7 +23,7 @@ import { HexStage, type StageMode } from '../map/stage/HexStage';
 import { cardPurchases } from '../map/stage/purchases';
 import { MapLegend } from '../drawers/MapLegend';
 import { ThundersEdgePanel } from '../drawers/ThundersEdgePanel';
-import { UpgradesPanel } from '../drawers/UpgradesPanel';
+import { ComponentsPanel } from '../drawers/ComponentsPanel';
 import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
@@ -33,6 +33,7 @@ import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
 import { TransactionStep } from '../plan/editors/TransactionStep';
 import { TurnEditor } from '../plan/editors/TurnEditor';
+import { GainsBlock } from '../plan/blocks/GainsBlock';
 import { TurnActs } from '../plan/blocks/TurnActs';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { EditorFrame } from '../primitives/EditorFrame';
@@ -188,7 +189,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const onPick = (type: ActionType) => {
     flight.stop();
     if (type === 'tactical') {
-      drawers.closeTe();
+      drawers.closeRight();
       update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null }, next: IDLE }));
       setView('map');
       return;
@@ -306,7 +307,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     } else if (opened.type === 'adjustment') {
       update(state => ({ ...opening(state), panel: { kind: 'adjustment', entryId: opened.id } }));
     } else if (opened.type === 'tactical') {
-      drawers.closeTe();
+      drawers.closeRight();
       update(state => ({ ...opening(state), panel: { kind: 'tactical', entryId: opened.id, pickerFrom: null } }));
     } else if (opened.type === 'strategic' || opened.type === 'secondary') {
       drawers.closeTe();
@@ -323,10 +324,12 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
   const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
-  const lockedUpgrades = entryUpgradeRounds({ ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) }, shownFilter, pack);
+  const planSoFar = { ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) };
+  const lockedUpgrades = entryUpgradeRounds(planSoFar, shownFilter, pack);
+  const holdingSources = holdingRounds(planSoFar, shownFilter);
   const shownUpgrades = upgradesOf(shownState.holdings, pack);
   const rivalUpgraded = Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, upgradesOf(rival.holdings, pack)]));
-  const upgradeCount = SHIP_KINDS.filter(kind => shownUpgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
+  const heldCount = holdingCount(shownState.holdings);
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
@@ -388,9 +391,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const teChoosing = choosesForTe(next);
   const { leftOpen, rightOpen, left: leftDrawer, right: rightDrawer, toggle: toggleDrawer, close: closeDrawer } = drawers;
   const stopTeChoice = () => update(state => (choosesForTe(state.next) ? { ...state, next: IDLE } : state));
-  const toggleUpgrades = () => {
+  const toggleComponents = () => {
     stopTeChoice();
-    toggleDrawer('upgrades');
+    toggleDrawer('components');
   };
   const toggleTe = () => {
     // While the panel stands aside for the map, the button brings it back.
@@ -419,11 +422,15 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const setActs = (entry: Entry, acts: Act[]) => updateEntry(entry.id, { acts: acts.length > 0 ? acts : undefined } as Partial<EntryBody>);
   /** «В этом ходу» of a turn: each act opens as a step of this editor, and Back returns here. */
   const turnActsOf = (entry: Entry) => (
-    <TurnActs
-      game={gameAs(game, entry.owner)} pack={pack} entry={entry} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
-      onChange={acts => setActs(entry, acts)}
-      onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel }, next: IDLE }))}
-    />
+    <>
+      <TurnActs
+        game={gameAs(game, entry.owner)} pack={pack} entry={entry} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
+        onChange={acts => setActs(entry, acts)}
+        onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel }, next: IDLE }))}
+      />
+      {/* What the turn gained and gave stands with what else it holds. */}
+      <GainsBlock entry={entry} pack={pack} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+    </>
   );
 
   /** The one slot of the panel: an editor, a step of one, or the choice of a system; the list stands there otherwise. */
@@ -458,7 +465,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             game={entryGame} pack={pack} entry={edited} before={boards.before(edited.id)} board={boards.board(edited.id)}
             warnings={forecast.warningsByEntry[edited.id] ?? []}
             manualPayment={manualPayment} choosing={choosing}
-            onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) setView('map'); }}
+            onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
             onUpdate={patch => updateEntry(edited.id, patch)}
             onOpenPicker={toPicker}
             onManualPayment={open => toggleManualPayment(edited.id, open)}
@@ -479,13 +486,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             warnings={forecast.warningsByEntry[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
             onUpdate={patch => updateEntry(played.id, patch)}
             onManualPayment={open => toggleManualPayment(played.id, open)}
-            onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) setView('map'); }}
+            onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) { drawers.closeRight(); setView('map'); } }}
             onOpenShop={(at, only) => update(state => ({ ...state, stage: { slot: at, mode: 'build', only, for: { kind: 'card' } } }))}
             onStartTactical={() => {
+              drawers.closeRight();
               update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null, fromCard: played.id, card: played.id }, next: IDLE }));
               setView('map');
             }}
-            onOpenTactical={id => update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: played.id }, next: IDLE }))}
+            onOpenTactical={id => { drawers.closeRight(); update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: played.id }, next: IDLE })); }}
             onDone={toList}
             onRemove={() => removeEdited(played.id)}
             turnActs={turnActsOf(played)}
@@ -498,7 +506,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <AdjustmentEditor
             key={adjusted.id} game={gameAs(game, adjusted.owner)} pack={pack} entry={adjusted} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
             picking={adjustPick !== undefined}
-            onPickSystem={() => { update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
+            onPickSystem={() => { if (!adjustPick) drawers.closeRight(); update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
             onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
             onUpdate={patch => updateEntry(adjusted.id, patch)}
             onDone={toList}
@@ -511,7 +519,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <TurnEditor
             key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} warnings={forecast.warningsByEntry[turn.id] ?? []} turnActs={turnActsOf(turn)}
-            onNote={note => updateEntry(turn.id, { note })} onDone={toList} onRemove={() => removeEdited(turn.id)}
+            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId })} onDone={toList} onRemove={() => removeEdited(turn.id)}
           />
         );
       }
@@ -611,8 +619,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             </div>
           )}
           <div className={`drawer-rail drawer-rail-right${rightOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
-            <DrawerTab side="right" open={drawers.open === 'upgrades'} onClick={toggleUpgrades} label={upgradeCount > 0 ? `${t('ships.upgrades')} · ${upgradeCount}` : t('ships.upgrades')}>
-              {upgradeCount > 0 ? `${t('ships.upgradesShort')} · ${upgradeCount}` : t('ships.upgradesShort')}
+            <DrawerTab side="right" open={drawers.open === 'components'} onClick={toggleComponents}>
+              {heldCount > 0 ? `${t('components.title')} · ${heldCount}` : t('components.title')}
             </DrawerTab>
             {hasTe && (
               <DrawerTab side="right" open={showTe} onClick={toggleTe} className={takenSlices === totalSlices && placedTe === null ? 'te-ready' : undefined}>
@@ -624,8 +632,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           </div>
           <Drawer open={rightOpen} className="drawer-under">
             <div key={rightDrawer} className="drawer-swap">
-              {rightDrawer === 'upgrades'
-                ? <UpgradesPanel game={game} pack={pack} upgraded={shownUpgrades} locked={lockedUpgrades} />
+              {rightDrawer === 'components'
+                ? <ComponentsPanel game={game} pack={pack} state={shownState} rounds={holdingSources} />
                 : (
                   <ThundersEdgePanel
                     game={game} pack={pack} owners={owners}

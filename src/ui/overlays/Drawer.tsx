@@ -37,7 +37,7 @@ export function Drawer({ open, className, onDismiss, children }: DrawerProps) {
 
 export interface DrawerSheetProps {
   title: string;
-  /** The sheet's own layout: `legend-panel`, `upgrades-panel`, `te-panel`. */
+  /** The sheet's own layout: `legend-panel`, `components-panel`, `te-panel`. */
   className: string;
   style?: CSSProperties;
   children: ReactNode;

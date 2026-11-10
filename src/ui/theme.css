@@ -144,9 +144,9 @@ body {
 /* The frame: content, then the menu. */
 .app { display: flex; flex-direction: column; height: 100%; }
 /* Every block that scrolls: a thin bar in the colour of a strong border. */
-.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .upgrades-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .components-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 /* These columns keep room for the scrollbar, so nothing shrinks when it appears; the room comes out of their right padding (--scrollbar, measured at start: 0 on a tablet). */
-.plan-scroll, .players-aside, .upgrades-panel, .te-panel, .legend-panel { scrollbar-gutter: stable; }
+.plan-scroll, .players-aside, .components-panel, .te-panel, .legend-panel { scrollbar-gutter: stable; }
 .app-body > main { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 20px 22px; }
 .app-body { flex: 1; min-height: 0; display: flex; }
 .app-rail { flex: none; width: 56px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 0; background: var(--surface); border-right: 1px solid var(--border); }
@@ -859,9 +859,23 @@ small.ship-row-round { color: var(--gold); }
 .ship-notes small { flex-basis: 100%; font-size: var(--font-xs); color: var(--text-dim); line-height: 1.3; }
 
 /* My ship upgrades: a panel sliding in over the right of the map. */
-.upgrades-panel, .te-panel, .legend-panel { height: 100%; overflow-y: auto; padding: 14px calc(16px - var(--scrollbar)) 14px 16px; background: var(--bg); }
-.upgrades-panel h2, .te-panel h2, .legend-panel h2 { margin: 0 0 12px; font-size: var(--font-xl); font-weight: 650; letter-spacing: -0.01em; }
+.components-panel, .te-panel, .legend-panel { height: 100%; overflow-y: auto; padding: 14px calc(16px - var(--scrollbar)) 14px 16px; background: var(--bg); }
+.components-panel h2, .te-panel h2, .legend-panel h2 { margin: 0 0 12px; font-size: var(--font-xl); font-weight: 650; letter-spacing: -0.01em; }
 .te-panel .editor-section { margin-bottom: 8px; }
+/* The components of a player: the choice of the player, the search, then a block per kind. */
+.components-panel > .player-choice, .components-panel > .component-search, .components-panel > .editor-section { margin-bottom: 8px; }
+.components-panel .editor-section .upgrade-card { margin-bottom: 0; }
+.component-search { position: relative; display: flex; }
+.component-search > input { flex: 1 1 auto; min-width: 0; min-height: var(--touch); padding-right: 48px; }
+.component-search > .icon-button { position: absolute; right: 2px; top: 0; }
+.component-list, .component-card { display: flex; flex-direction: column; gap: 6px; }
+.component-card .source-button { min-height: var(--touch); }
+.component-card .source-button b { color: var(--text); font-weight: 600; }
+.component-card.on .source-button { border-color: var(--accent); background: var(--accent-soft); }
+.component-card.dim { opacity: 0.6; }
+.component-count { color: var(--gold); font-weight: 700; }
+.component-text { margin: 0; padding: 0 4px 2px; font-size: 12.5px; line-height: 1.35; color: var(--text-muted); white-space: pre-line; }
+.component-picker { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
 .te-panel .row[role='group'] { gap: 4px; }
 .te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }

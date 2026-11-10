@@ -644,7 +644,6 @@
   },
   "ships": {
     "title": "Ships",
-    "upgrades": "Ship upgrades",
     "entryUpgrade": "Upgrade",
     "owned": "Upgraded earlier",
     "fromRound": "round {{n}}",
@@ -656,7 +655,6 @@
     "barrage": "Anti-Fighter Barrage {{value}}",
     "bombard": "Bombardment {{value}}",
     "cannon": "Space Cannon {{value}}",
-    "upgradesShort": "Upgrades",
     "upgradeRow": {
       "ships": "Ships",
       "ground": "Ground forces",
@@ -780,6 +778,67 @@
     "code": {
       "title": "Source code",
       "text": "The app is open source:"
+    }
+  },
+  "components": {
+    "title": "Components",
+    "whose": "Whose components",
+    "search": "Search components",
+    "clear": "Clear the search",
+    "results": "Search results",
+    "nothing": "Nothing found.",
+    "none": "none",
+    "add": "Add {{name}}",
+    "remove": "Remove {{name}}",
+    "choose": "Choose {{name}}",
+    "pick": "Choose a component",
+    "typeToSearch": "Type a name or words of the text.",
+    "noText": "No printed text.",
+    "fromRound": "from round {{n}}",
+    "inHand": "In hand",
+    "scored": "scored",
+    "leaderCycle": "{{name}}: {{state}}. Change the state",
+    "research": "Research a technology",
+    "researched": "Researched",
+    "played": "Component",
+    "pickPlayed": "Choose the component",
+    "gains": {
+      "title": "Gained and given",
+      "gain": "+ Gained",
+      "spend": "+ Gave",
+      "gained": "gained",
+      "spent": "given away"
+    },
+    "state": {
+      "locked": "locked",
+      "unlocked": "unlocked",
+      "exhausted": "exhausted",
+      "purged": "purged"
+    },
+    "section": {
+      "technologies": "Technologies",
+      "actionCards": "Action cards",
+      "relics": "Relics",
+      "promissory": "Promissory notes",
+      "leaders": "Leaders",
+      "breakthrough": "Breakthrough",
+      "objectives": "Objectives",
+      "laws": "Laws"
+    },
+    "kind": {
+      "technology": "Technology",
+      "actionCard": "Action card",
+      "relic": "Relic",
+      "publicObjective": "Public objective",
+      "secretObjective": "Secret objective",
+      "agenda": "Agenda",
+      "exploration": "Exploration card",
+      "promissory": "Promissory note",
+      "leader": "Leader",
+      "ability": "Faction ability",
+      "breakthrough": "Breakthrough",
+      "mech": "Mech",
+      "legendary": "Legendary planet"
     }
   }
 }

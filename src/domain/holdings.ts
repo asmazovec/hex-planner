@@ -18,6 +18,11 @@ export function holdingsOf(start: StartHoldings = {}): Holdings {
   };
 }
 
+/** How many components a player holds: every list with its repeats, the leaders that are not locked, the breakthrough. */
+export const holdingCount = (holdings: Holdings): number =>
+  holdings.technologies.length + holdings.hand.length + holdings.relics.length + holdings.promissory.length
+  + Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0) + holdings.scored.length + holdings.secrets.length;
+
 /** The kind an id names: ids are `<kind>:<source id>`. */
 export const kindOf = (id: string): string => id.slice(0, Math.max(0, id.indexOf(':')));
 

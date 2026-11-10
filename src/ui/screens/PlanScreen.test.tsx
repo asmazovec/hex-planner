@@ -1634,30 +1634,30 @@ describe('the drawers', () => {
 
   test('a right drawer leaves the map and the plan at hand, and only its tab closes it', async () => {
     render(<PlanScreen />);
-    const tab = () => screen.getByRole('button', { name: /Ship upgrades/ });
+    const tab = () => screen.getByRole('button', { name: /Components/ });
     await userEvent.click(tab());
     expect(screen.queryByTestId('drawer-scrim')).toBeNull();
     await userEvent.click(tile(TARGET));
-    expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Components' })).toBeVisible();
     expect(screen.getByRole('dialog', { name: 'Tile 25' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
     expect(screen.getByRole('button', { name: 'Tactical action' })).toBeVisible();
-    expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Components' })).toBeVisible();
     await userEvent.keyboard('{Escape}');
-    expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Components' })).toBeVisible();
     await userEvent.click(tab());
-    expect(screen.queryByRole('dialog', { name: 'Ship upgrades' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Components' })).toBeNull();
   });
 
   test('the strip over the map keeps only what acts on the map', () => {
     render(<PlanScreen />);
     const strip = document.querySelector('.map-strip') as HTMLElement;
     expect(within(strip).queryByRole('button', { name: 'Players' })).toBeNull();
-    expect(within(strip).queryByRole('button', { name: /Ship upgrades/ })).toBeNull();
+    expect(within(strip).queryByRole('button', { name: /Components/ })).toBeNull();
     expect(within(strip).queryByRole('button', { name: 'Forecast' })).toBeNull();
     expect(within(screen.getByRole('group', { name: 'Rounds' }).parentElement!).getByRole('button', { name: 'Forecast' })).toBeVisible();
-    expect(within(document.querySelector('.drawer-rail-right') as HTMLElement).getByRole('button', { name: /Ship upgrades/ })).toBeVisible();
+    expect(within(document.querySelector('.drawer-rail-right') as HTMLElement).getByRole('button', { name: /Components/ })).toBeVisible();
   });
 });
 

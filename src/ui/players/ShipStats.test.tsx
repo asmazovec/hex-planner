@@ -119,11 +119,11 @@ describe('the players panel of the plan screen', () => {
   });
 });
 
-describe('the upgrades panel', () => {
+describe('the unit cards of the components drawer', () => {
   const open = async () => {
     render(<PlanScreen />);
-    await userEvent.click(screen.getByRole('button', { name: /Улучшения кораблей/ }));
-    return screen.getByRole('dialog', { name: 'Улучшения кораблей' });
+    await userEvent.click(screen.getByRole('button', { name: /Компоненты/ }));
+    return screen.getByRole('dialog', { name: 'Компоненты' });
   };
   const card = (panel: HTMLElement, kind: string) => within(panel).getByTestId(`upgrade-${kind}`);
 
@@ -139,10 +139,10 @@ describe('the upgrades panel', () => {
     expect(carrier).toHaveAttribute('aria-pressed', 'true');
     expect(carrier.querySelector('.upgrade-level')).toHaveTextContent('II');
     expect(carrier).toHaveTextContent('4 → 6');
-    expect(screen.getByRole('button', { name: 'Улучшения кораблей · 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Компоненты · 2' })).toBeInTheDocument();
     await userEvent.click(carrier);
     expect(baseline()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Улучшения кораблей' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Компоненты · 1' })).toBeInTheDocument();
   });
 
   test('a type with no level II shows a dash and does not react', async () => {
@@ -160,7 +160,7 @@ describe('the upgrades panel', () => {
     addEntry({ type: 'secondary', effects: { researched: ['technology:cv2'] } });
     const panel = await open();
     expect(card(panel, 'carrier')).toBeDisabled();
-    expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
+    expect(card(panel, 'carrier')).toHaveTextContent('с раунда 1');
     expect(card(panel, 'carrier')).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(screen.getByRole('button', { name: 'Факт' }));
     expect(card(panel, 'carrier')).toBeEnabled();
@@ -176,14 +176,14 @@ describe('the upgrades panel', () => {
     addEntry({ type: 'strategic', effects: { researched: ['technology:cv2'] } });
     const panel = await open();
     expect(card(panel, 'carrier')).toBeDisabled();
-    expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
+    expect(card(panel, 'carrier')).toHaveTextContent('с раунда 1');
     expect(baseline()).toEqual(['carrier']);
   });
 
   test('closes on a second tap on its tab', async () => {
     startPlan();
     await open();
-    await userEvent.click(screen.getByRole('button', { name: /Улучшения кораблей/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Компоненты/ }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

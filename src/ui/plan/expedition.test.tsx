@@ -67,14 +67,14 @@ test('the widgets live in a panel the map tools open and close, and are not in t
   expect(screen.queryByRole('dialog', { name: "Thunder's Edge" })).toBeNull();
 });
 
-test('this panel and the upgrades panel replace each other', async () => {
+test('this panel and the components panel replace each other', async () => {
   await openPanel();
-  await userEvent.click(screen.getByRole('button', { name: 'Ship upgrades' }));
+  await userEvent.click(screen.getByRole('button', { name: /^Components/ }));
   expect(screen.queryByRole('dialog', { name: "Thunder's Edge" })).toBeNull();
-  expect(screen.getByRole('dialog', { name: 'Ship upgrades' })).toBeVisible();
+  expect(screen.getByRole('dialog', { name: 'Components' })).toBeVisible();
   await userEvent.click(teButton());
   expect(screen.getByRole('dialog', { name: "Thunder's Edge" })).toBeVisible();
-  expect(screen.queryByRole('dialog', { name: 'Ship upgrades' })).toBeNull();
+  expect(screen.queryByRole('dialog', { name: 'Components' })).toBeNull();
 });
 
 test('the button shows the expedition count, asks for the system at six, then shows the system', async () => {

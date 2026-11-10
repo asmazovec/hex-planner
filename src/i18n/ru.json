@@ -646,7 +646,6 @@
   },
   "ships": {
     "title": "Корабли",
-    "upgrades": "Улучшения кораблей",
     "entryUpgrade": "Улучшение",
     "owned": "Уже улучшен раньше",
     "fromRound": "раунд {{n}}",
@@ -658,7 +657,6 @@
     "barrage": "Заградительный огонь {{value}}",
     "bombard": "Бомбардировка {{value}}",
     "cannon": "Космическая пушка {{value}}",
-    "upgradesShort": "Улучшения",
     "upgradeRow": {
       "ships": "Корабли",
       "ground": "Наземные войска",
@@ -782,6 +780,67 @@
     "code": {
       "title": "Исходный код",
       "text": "Код приложения открыт:"
+    }
+  },
+  "components": {
+    "title": "Компоненты",
+    "whose": "Чьи компоненты",
+    "search": "Поиск компонентов",
+    "clear": "Очистить поиск",
+    "results": "Найдено",
+    "nothing": "Ничего не найдено.",
+    "none": "нет",
+    "add": "Добавить: {{name}}",
+    "remove": "Убрать: {{name}}",
+    "choose": "Выбрать: {{name}}",
+    "pick": "Выбор компонента",
+    "typeToSearch": "Введите название или слова из текста.",
+    "noText": "Текста нет.",
+    "fromRound": "с раунда {{n}}",
+    "inHand": "На руке",
+    "scored": "выполнена",
+    "leaderCycle": "{{name}}: {{state}}. Сменить состояние",
+    "research": "Исследовать технологию",
+    "researched": "Исследовано",
+    "played": "Компонент",
+    "pickPlayed": "Выбрать компонент",
+    "gains": {
+      "title": "Получено и отдано",
+      "gain": "+ Получил",
+      "spend": "+ Отдал",
+      "gained": "получено",
+      "spent": "отдано"
+    },
+    "state": {
+      "locked": "закрыт",
+      "unlocked": "открыт",
+      "exhausted": "истощён",
+      "purged": "убран"
+    },
+    "section": {
+      "technologies": "Технологии",
+      "actionCards": "Карты действий",
+      "relics": "Реликвии",
+      "promissory": "Обязательства",
+      "leaders": "Лидеры",
+      "breakthrough": "Прорыв",
+      "objectives": "Цели",
+      "laws": "Законы"
+    },
+    "kind": {
+      "technology": "Технология",
+      "actionCard": "Карта действия",
+      "relic": "Реликвия",
+      "publicObjective": "Общая цель",
+      "secretObjective": "Секретная цель",
+      "agenda": "Карта политики",
+      "exploration": "Карта исследования",
+      "promissory": "Обязательство",
+      "leader": "Лидер",
+      "ability": "Способность фракции",
+      "breakthrough": "Прорыв",
+      "mech": "Мех",
+      "legendary": "Легендарная планета"
     }
   }
 }

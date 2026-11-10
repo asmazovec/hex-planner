@@ -10,6 +10,8 @@ const ICONS = {
   plan: <path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3zM9 4v13M15 7v13" />,
   export: <path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14" />,
   chevron: <path d="M6 9l6 6 6-6" />,
+  add: <path d="M12 5v14M5 12h14" />,
+  cycle: <path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4" />,
 };
 
 /** The icons of a plan row. */
