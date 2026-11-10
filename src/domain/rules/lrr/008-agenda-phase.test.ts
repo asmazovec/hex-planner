@@ -5,9 +5,9 @@ import { codesOf, rulesGame, rulesPack } from '../kit';
 
 const pack = rulesPack();
 
-/** An expedition with no slice: a plain spending of planets, in any phase. */
+/** A turn whose expedition names no slice: a plain spending of planets, in any phase. */
 const spend = (id: string, phase: Entry['phase'], planets: string[]): Entry =>
-  ({ id, phase, status: 'planned', type: 'expedition', sliceId: null, payment: { planets, tradeGoods: 0 } });
+  ({ id, phase, status: 'planned', type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets, tradeGoods: 0 } }] });
 
 describe('LRR 8 Agenda Phase', () => {
   test.todo('8.1: the agenda phase is skipped until the custodians token leaves Mecatol Rex — not modelled: every round has an agenda phase to plan in');

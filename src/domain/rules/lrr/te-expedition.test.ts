@@ -10,9 +10,6 @@ let next = 0;
 /** A turn (a component action) that ends with an expedition: the expedition is an act of the turn (expedition 2). */
 const expedition = (sliceId: string, payment: Payment = NO_PAYMENT, extra: Partial<Entry> = {}): Entry =>
   ({ id: `x${(next += 1)}`, phase: 'action', status: 'planned', type: 'component', note: '', acts: [{ kind: 'expedition', sliceId, payment }], ...extra } as Entry);
-/** An expedition saved before schema 6 that found no turn of its owner to join. */
-const detached = (sliceId: string, payment: Payment = NO_PAYMENT): Entry =>
-  ({ id: `d${(next += 1)}`, phase: 'action', status: 'planned', type: 'expedition', sliceId, payment } as Entry);
 
 const RIVAL = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
 const te = loadPack(['pok', 'te']);
@@ -149,14 +146,6 @@ describe("Thunder's Edge: Expeditions", () => {
     const second = expedition('res5', { planets: ['h1', 'h2'], tradeGoods: 1 });
     const game = rulesGame({ entries: [adjust({ tradeGoods: 4 }), expedition('tg3'), second] });
     expect(codesOf(game, pack, second)).not.toContain('expeditionTwicePerTurn');
-  });
-
-  test('expedition 2: an old expedition entry that joined no turn still pays and holds its slice, and asks to be put in a turn', () => {
-    const pack = rulesPack();
-    const old = detached('tg3');
-    const game = rulesGame({ entries: [adjust({ tradeGoods: 3 }), old] });
-    expect(codesOf(game, pack, old)).toEqual(['expeditionDetached']);
-    expect(forecast(game, pack).state.tradeGoods).toBe(0);
   });
 
   test('expedition 4: what an expedition act fails to pay is said by the expedition, not by the payment of the action', () => {

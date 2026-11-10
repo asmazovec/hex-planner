@@ -34,25 +34,25 @@ test('commodities are shown under their Russian name', () => {
   expect(screen.getByText('Продукция').parentElement).toHaveTextContent(String(pack.factions.hacan.commodities));
 });
 
-test('starting technologies show name, own description and the colour of their type', () => {
+test('starting technologies show name, printed text and the colour of their type', () => {
   show('sol');
   const amd = screen.getByText('Antimass Deflectors').closest('.tech')!;
   expect(amd).toHaveClass('tech-propulsion');
-  expect(amd.textContent).toMatch(/астероид/);
+  expect(amd.textContent).toMatch(/Your ships can move into and through asteroid fields\./);
   expect(screen.getByText('Neural Motivator').closest('.tech')).toHaveClass('tech-biotic');
 });
 
-test('descriptions follow the language', () => {
+test('the printed text is English in either language, the interface follows the language', () => {
   setLanguage('en');
   show('sol');
-  expect(screen.getByText('Antimass Deflectors').closest('.tech')!.textContent).toMatch(/asteroid/);
+  expect(screen.getByText('Antimass Deflectors').closest('.tech')!.textContent).toMatch(/Your ships can move into and through asteroid fields\./);
   expect(within(screen.getAllByTestId('ship')[0]).getByText('Carrier')).toBeInTheDocument();
 });
 
-test('a faction that chooses says so and lists the options with descriptions', () => {
+test('a faction that chooses says so and lists the options with their texts', () => {
   show('argent');
   expect(screen.getByText('Выбор при подготовке: 2 из этих')).toBeInTheDocument();
-  expect(screen.getByText('Sarween Tools').closest('.tech')!.textContent).toMatch(/дешевле/);
+  expect(screen.getByText('Sarween Tools').closest('.tech')!.textContent).toMatch(/reduce the combined cost of the produced units by 1/);
 });
 
 test('a free choice and an empty list read honestly, not as zero', () => {
@@ -91,12 +91,15 @@ test('a long planet name beside another planet takes two lines, whole in the tex
 
 const itemOf = (name: string) => screen.getAllByTestId('sheet-item').find(item => item.textContent?.includes(name));
 
-test('abilities, leaders, the mech and the breakthrough are signed with their expansion, and told in own words', () => {
+test('abilities, leaders, the mech and the breakthrough are signed with their expansion, with their printed text', () => {
   show('jolnar');
   expect(screen.getByText('Особенности фракции')).toBeInTheDocument();
   expect(itemOf('Brilliant')).toHaveTextContent('Base');
   expect(itemOf('Doctor Sucaban')).toHaveTextContent('Prophecy of Kings');
   expect(itemOf('Doctor Sucaban')).toHaveTextContent('Агент');
+  expect(itemOf('Doctor Sucaban')).toHaveTextContent(/When a player spends resources to research: You may exhaust this card/);
+  expect(itemOf('Doctor Sucaban')).not.toHaveTextContent('Открытие');
+  expect(itemOf('Brilliant')).toHaveTextContent(/"Technology" strategy card: You may resolve the primary ability instead\./);
   const mech = pack.factions.jolnar.sheet!.mechs[0].name;
   expect(itemOf(mech)).toHaveTextContent('Цена 2');
   expect(itemOf(pack.factions.jolnar.sheet!.breakthrough!.name)).toHaveTextContent("Thunder's Edge");
@@ -110,7 +113,7 @@ test('Thunder\'s Edge puts Agnlan Oln in the place of Ta Zern, with the conditio
   show('jolnar', ['pok', 'te']);
   expect(itemOf('Ta Zern')).toBeUndefined();
   expect(itemOf('Agnlan Oln')).toHaveTextContent("Thunder's Edge");
-  expect(itemOf('Agnlan Oln')).toHaveTextContent('Открытие: Владейте 8 технологиями.');
+  expect(itemOf('Agnlan Oln')).toHaveTextContent('Открытие: Own 8 technologies.');
 });
 
 test('without the expansions only the abilities stay', () => {
@@ -121,13 +124,13 @@ test('without the expansions only the abilities stay', () => {
   expect(itemOf('Brilliant')).toBeDefined();
 });
 
-test('faction technologies: name, type mark, prerequisites as marks, pack, own retelling; a unit upgrade points to the ship table', () => {
+test('faction technologies: name, type mark, prerequisites as marks, pack, printed text; a unit upgrade points to the ship table', () => {
   show('muaat');
   const group = screen.getByText('Технологии фракции').parentElement!;
   const reactor = within(group).getByText('Magmus Reactor').closest('.sheet-item')!;
   expect(within(reactor as HTMLElement).getByRole('img', { name: 'Военные' })).toBeInTheDocument();
   expect(within(reactor as HTMLElement).getByRole('img', { name: 'Требования: Военные, Военные' })).toBeInTheDocument();
-  expect(reactor.textContent).toMatch(/сверхнов/);
+  expect(reactor.textContent).toMatch(/Your ships can move into supernovas\./);
   expect(reactor.textContent).toContain('Base');
   const warSun = within(group).getByText('Prototype War Sun II').closest('.sheet-item')!;
   expect(warSun.textContent).toContain('Улучшение юнита: Солнце войны. Числа в таблице кораблей');

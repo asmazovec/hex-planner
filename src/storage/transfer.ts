@@ -1,11 +1,10 @@
 import type { Game } from '../domain/types';
-import { CURRENT_SCHEMA, gameSchema, migrate } from './schema';
-
-export { CURRENT_SCHEMA, migrate };
+import { parseGame } from './schema';
 
 export type ImportResult =
   | { ok: true; game: Game }
-  | { ok: false; reason: 'invalidJson' | 'invalidSchema' | 'newerVersion' };
+  /** `oldFormat`: the file was saved by an earlier version of the app, which this one does not read. */
+  | { ok: false; reason: 'invalidJson' | 'invalidSchema' | 'newerVersion' | 'oldFormat' };
 
 export const exportGame = (game: Game): string => JSON.stringify(game, null, 2);
 
@@ -17,17 +16,9 @@ export function importGame(text: string): ImportResult {
   } catch {
     return { ok: false, reason: 'invalidJson' };
   }
-  const version = (raw as { schemaVersion?: unknown } | null)?.schemaVersion;
-  if (typeof version === 'number' && version > CURRENT_SCHEMA) return { ok: false, reason: 'newerVersion' };
-  // A migration expects the shape of some older game; a file of any other shape may make it throw.
-  let migrated: unknown;
-  try {
-    migrated = migrate(raw);
-  } catch {
-    return { ok: false, reason: 'invalidSchema' };
-  }
-  const parsed = gameSchema.safeParse(migrated);
-  return parsed.success ? { ok: true, game: parsed.data } : { ok: false, reason: 'invalidSchema' };
+  const parsed = parseGame(raw);
+  if (parsed.ok) return parsed;
+  return { ok: false, reason: parsed.kind === 'damaged' ? 'invalidSchema' : parsed.kind };
 }
 
 /** An imported game under an id no saved game has: its own when free, else the same with a time stamp after it. */

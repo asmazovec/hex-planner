@@ -349,19 +349,19 @@ describe('setup', () => {
     expect(game().planetControl[quann()]).toBeUndefined();
   });
 
-  test('tile 66: the ability and its retelling in the current language, and the traits', () => {
+  test('tile 66: the ability and its printed text, English in either language, and the traits', () => {
     store().setTile(SLOT, '66');
     open({ initialMode: 'control' });
     const planet = within(screen.getByRole('group', { name: "Hope's End" }));
     expect(planet.getByText('Imperial Arms Vault')).toBeInTheDocument();
-    expect(planet.getByText(/mech from reinforcements/)).toBeInTheDocument();
+    expect(planet.getByText(/place 1 mech from your reinforcements/)).toBeInTheDocument();
     expect(planet.getByRole('img', { name: 'Hazardous' })).toBeInTheDocument();
     expect(planet.getByText(/Ready/)).toBeInTheDocument();
     expect(planet.queryByText(/relic/i)).toBeNull();
     cleanup();
     setLanguage('ru');
     open({ initialMode: 'control' });
-    expect(screen.getByText(/1 меха из запаса/)).toBeInTheDocument();
+    expect(screen.getByText(/place 1 mech from your reinforcements/)).toBeInTheDocument();
   });
 
   test('a planet heads with its name, then resources/influence, then its marks as named icons; its text follows', () => {
@@ -389,7 +389,7 @@ describe('setup', () => {
     open({ initialMode: 'control' });
     const ability = screen.getByText('Imperial Arms Vault').closest('.card-ability');
     expect(ability).toHaveClass('card-ability-primary');
-    expect(ability).toHaveTextContent(/mech from reinforcements/);
+    expect(ability).toHaveTextContent(/place 1 mech from your reinforcements/);
     cleanup();
     store().newGame({ expansions: ['pok', 'te'], playerCount: 4, faction: 'sol' }, full);
     store().setTile(SLOT, 'fracture4');

@@ -1,10 +1,10 @@
 /** Thunder's Edge expedition: a slice is taken and paid for, as an act at the end of a turn. */
 import { EXPEDITION_SLICES, techSlicePlanets } from '../payment';
 import { violation } from '../rules/registry';
-import type { DataPack, Entry, Game, GameState, Payment, Warning } from '../types';
+import type { DataPack, Game, GameState, Payment, Warning } from '../types';
 import { applyPayment, checkPayment, pay } from './payment';
 
-/** One expedition: the slice and how it is paid, from an act or from an old entry. */
+/** One expedition: the slice and how it is paid. */
 export interface ExpeditionPart { sliceId: string | null; payment: Payment }
 
 /** The slice is taken once, whoever holds it (expedition 2, 5); then its cost is paid (expedition 4). */
@@ -45,12 +45,4 @@ function payPart(
   if (cost && paid < cost.amount) {
     warnings.push(violation(kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
   }
-}
-
-/** An expedition saved before schema 6 that joined no turn: it still counts, and asks to be put in a turn. */
-export function applyDetachedExpedition(
-  game: Game, state: GameState, entry: Extract<Entry, { type: 'expedition' }>, pack: DataPack, taken: Set<string>, warnings: Warning[],
-): void {
-  warnings.push(violation('expeditionDetached', { sliceId: entry.sliceId ?? '' }));
-  applyExpeditionPart(game, state, entry, pack, taken, warnings);
 }

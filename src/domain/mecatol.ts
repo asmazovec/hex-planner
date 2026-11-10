@@ -33,7 +33,6 @@ function migrateEntry(entry: Entry): Entry {
       },
     };
   }
-  if (entry.type === 'expedition') return { ...entry, payment: { ...entry.payment, planets: entry.payment.planets.map(toTe) } };
   if (entry.type === 'adjustment' && entry.delta.ground) {
     return { ...entry, delta: { ...entry.delta, ground: Object.fromEntries(Object.entries(entry.delta.ground).map(([id, units]) => [toTe(id), units])) } };
   }

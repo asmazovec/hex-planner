@@ -105,7 +105,7 @@
 
 ### Характеристики кораблей (Task 26)
 
-Источник: `data/units/baseUnits.json`, `pok.json`, `te_units.json`, `keleres.json`. Только корабли: флагман, War Sun, дредноут, авианосец, крейсер, эсминец, истребитель. На уровень записаны английское имя, цена, места на борту, значение и кубики боя, значение полёта, а также устойчивость, заградительный огонь, бомбардировка и космическая пушка. Текст `ability` не копируется: пересказы лежат в `src/data/shipSummaries.ts`, их проверяет `scripts/source-wording.test.ts`. Свойства и пересказы только показываются и в расчёт не входят. Проверка формулировок игроком остаётся открытой.
+Источник: `data/units/baseUnits.json`, `pok.json`, `te_units.json`, `keleres.json`. Только корабли: флагман, War Sun, дредноут, авианосец, крейсер, эсминец, истребитель. На уровень записаны английское имя, цена, места на борту, значение и кубики боя, значение полёта, а также устойчивость, заградительный огонь, бомбардировка и космическая пушка. Текст `ability` берётся дословно и лежит в `src/data/texts` под id `unit:<id юнита>` (см. «Каталог компонентов»). Свойства и текст только показываются и в расчёт не входят.
 
 | Счётчик | Значение |
 | --- | --- |
@@ -121,8 +121,8 @@
 - **Все остальные файлы `data/units/` не читаются**, это домашние наборы. `ds.json` помечает авианосцы `ghemina_*` как `base`, поэтому отбор только по `source` дал бы чужую фракцию.
 - **Keleres.** В источнике флагман Artemiris записан только на `keleresm`. Он отдан всем трём фракциям Keleres: они отличаются только домашней системой. Это вывод, а не запись источника.
 - **`mentak_cruiser3` (Corsair) исключён.** Он улучшается из общего `cruiser2`, то есть это третий уровень, а в приложении уровней два. В прототипе он по ошибке становился уровнем I. Новый случай такого рода ломает сборку.
-- **`winnu_flagship` имеет `combatDieCount: 0`:** число кубиков зависит от боя. В данных 0, на экране только значение боя 7, остальное в пересказе.
-- **Истребители со своей скоростью** не занимают места и сверх свободных мест на борту считаются в резерве флота, решает значение `move`. По тексту `naalu_fighter2` такой истребитель считается за половину корабля, но по решению пользователя способности не считаются: расчёт для него общий, половина видна только в пересказе.
+- **`winnu_flagship` имеет `combatDieCount: 0`:** число кубиков зависит от боя. В данных 0, на экране только значение боя 7, остальное в тексте способности.
+- **Истребители со своей скоростью** не занимают места и сверх свободных мест на борту считаются в резерве флота, решает значение `move`. По тексту `naalu_fighter2` такой истребитель считается за половину корабля, но по решению пользователя способности не считаются: расчёт для него общий, половина видна только в тексте способности.
 
 Сверка с KW (`factionData.js`, `unitData.js`, файлы прочитаны как текст, сопоставление по имени корабля): совпали 257 значений цены, мест на борту, значения полёта, боя и кубиков. Расхождений в значениях нет, цена истребителя Naalu записана у KW как `1x2` вместо `1 (x2)`, это то же значение. В KW нет трёх записей, для них статус **один источник**: обобщённый `flagship`, `nomad_flagship2` (Memoria II) и `obsidian_flagship` (Heaven's Hollow).
 
@@ -176,7 +176,7 @@ Thunder's Edge заменяет Mecatol Rex на тайл с символом л
 - `pok`: то же, но `pok2diplomacy` и `pok4construction`.
 - `te`: как `pok`, но `te4construction` и `te6warfare`.
 
-TE подтверждает, что заменяются именно Construction и Warfare. Текст новых карт правила не приводят. Источник и KW совпали по Warfare и по основному выбору и дополнительному действию Construction. Второй пункт основного действия Construction («поставить ещё одно сооружение») есть только в источнике: **один источник**. Пересказ в `src/data/cardSummaries.ts` написан по текстам источника своими словами.
+TE подтверждает, что заменяются именно Construction и Warfare. Текст новых карт правила не приводят. Источник и KW совпали по Warfare и по основному выбору и дополнительному действию Construction. Второй пункт основного действия Construction («поставить ещё одно сооружение») есть только в источнике: **один источник**. Тексты карт берутся из источника дословно (`primaryTexts`, `secondaryTexts`), см. «Каталог компонентов».
 
 ## Состав пакета `te`
 
@@ -245,7 +245,7 @@ TE подтверждает, что заменяются именно Constructi
 Из того же коммита источника берутся только числа и названия, тексты карт не читаются:
 
 - `data/factions`: `startingTech`, `startingTechOptions` и `startingTechAmount`, `commodities`, `abilities`; названия способностей из `data/abilities`.
-- `data/technologies`: название и первый элемент `types`. В пакет попадают только технологии, которые называют фракции этого пакета, включая варианты выбора. Описания в `src/data/techSummaries.ts` написаны своими словами.
+- `data/technologies`: название и первый элемент `types`. В пакет попадают только технологии, которые называют фракции этого пакета, включая варианты выбора. Сверх них в пакет своего источника попадает каждая общая технология официальных источников (см. «Каталог компонентов»). Тексты берутся дословно.
 - `data/units`: `combatHitsOn` как `combat`, `moveValue` как `move`, значения базового юнита. Если поля нет, значение `null`.
 
 Особые случаи источника:
@@ -291,9 +291,9 @@ TE подтверждает, что заменяются именно Constructi
 
 ## Легендарные планеты и черты (Task 25)
 
-Из `planets/*.json` источника берутся поля `legendaryAbilityName` (в `PlanetDef.legendary`, английское название способности), `planetType` и `planetTypes` (в `PlanetDef.traits`, без повторов). `CULTURAL`, `HAZARDOUS` и `INDUSTRIAL` дают черты; `FACTION`, `NONE`, `MR`, `SPACESTATION` и `LIGHTNING` черт не дают; неизвестное значение ломает сборку. Источник также ставит `FAKE` (признак подставной записи) у планеты The Triad из Thunder's Edge, она в составе приложения, поэтому `FAKE` тоже не даёт черты. Текст способности (`legendaryAbilityText`) в пакеты не попадает; пересказы лежат в `src/data/legendarySummaries.ts`, ключ у них название способности (у Mallice и Locked Mallice способность общая). Пересказы ждут проверки игроком, как и пересказы технологий.
+Из `planets/*.json` источника берутся поля `legendaryAbilityName` (в `PlanetDef.legendary`, английское название способности), `planetType` и `planetTypes` (в `PlanetDef.traits`, без повторов). `CULTURAL`, `HAZARDOUS` и `INDUSTRIAL` дают черты; `FACTION`, `NONE`, `MR`, `SPACESTATION` и `LIGHTNING` черт не дают; неизвестное значение ломает сборку. Источник также ставит `FAKE` (признак подставной записи) у планеты The Triad из Thunder's Edge, она в составе приложения, поэтому `FAKE` тоже не даёт черты. Текст способности (`legendaryAbilityText`) берётся дословно и лежит в `src/data/texts` под id `legendary:<id планеты>` (у Mallice и Locked Mallice текст общий, записей две); у легендарной планеты в пакете записано её дополнение (`pack`).
 
-Количество в пакетах: легендарных планет 16 (`pok` 6, `te` 10, в `base` нет). Черты (планет с чертой, из них с двумя): `base` 32 (0), `pok` 31 (0), `te` 24 (6: Olergodt, Virapic III, Lesab, Tinnes, Lazul Rex, Tarana). Все 16 названий способностей имеют ru и en пересказ.
+Количество в пакетах: легендарных планет 16 (`pok` 6, `te` 10, в `base` нет). Черты (планет с чертой, из них с двумя): `base` 32 (0), `pok` 31 (0), `te` 24 (6: Olergodt, Virapic III, Lesab, Tinnes, Lazul Rex, Tarana). У всех 16 есть текст.
 
 Сверка с KW (`tileData.js`, поля `trait` и `specialty`): по имени сопоставились 129 планет. Черты совпали у 124; у 4 расхождение только в порядке двух черт, у Lisis KW даёт cultural, источник industrial (известная путаница имён Cealdri и Lisis). Легендарность совпала у всех, кроме Mecatol Rex: KW отмечает его легендарным, а в источнике у него нет `legendaryAbilityName` (способность Custodian's Favour у Custodia Vigilia). Mecatol Rex отметки не получает.
 
@@ -301,15 +301,15 @@ TE подтверждает, что заменяются именно Constructi
 
 ## Faction sheets: abilities, leaders, mechs, breakthroughs
 
-Names, origins and numbers come from the source (`data/abilities`, `data/leaders`, `data/units`, `data/breakthroughs`); the texts in `src/data/sheetSummaries.json` are own retellings, checked against the source by `scripts/source-wording.test.ts`.
+Names, origins and numbers come from the source (`data/abilities`, `data/leaders`, `data/units`, `data/breakthroughs`); the texts are copied verbatim into `src/data/texts` (see «Каталог компонентов»).
 
 - The Thunder's Edge rulebook (Expansion Integration) replaces Jol-Nar's Ta Zern with Agnlan Oln, and removes all leaders and mechs when playing without Prophecy of Kings.
-- Ta Zern is not in the source at this commit. Its text is assumed to be that of Agnlan Oln, filed under the same source id; this is not confirmed by a public source.
+- Ta Zern is not in the source at this commit. Its text is assumed to be that of Agnlan Oln: the build writes the same source text under `leader:jolnarcommander-pok`; this is not confirmed by a public source.
 - Xxcha's hero (`xxchahero-te`), Naalu's agent (`naaluagent-te`) and Naalu's mech (`naalu_mech_te`) are marked as Thunder's Edge cards by the source; the rulebook does not list them one by one, it only counts replacement leaders and a mech.
 
 ## Технологии фракций
 
-Источник тот же коммит AsyncTI4. Из `data/factions` берётся список `factionTech`, из `data/technologies` название, `types`, `requirements` и `source` (текст карты не читается), из `data/units` поле `requiredTechId`: юнит, у которого оно называет технологию, и есть то, что она улучшает. Берутся только официальные источники (`base`, `pok`, `codex*`, `thunders_edge`), домашние наборы отброшены. Пересказы лежат в `src/data/techSummaries.ts`, их проверяют `src/data/techSummaries.test.ts` (есть у каждой технологии на обоих языках) и `scripts/source-wording.test.ts` (ни одного общего с источником отрезка из 6 слов).
+Источник тот же коммит AsyncTI4. Из `data/factions` берётся список `factionTech`, из `data/technologies` название, `types`, `requirements` и `source`, из `data/units` поле `requiredTechId`: юнит, у которого оно называет технологию, и есть то, что она улучшает. Берутся только официальные источники (`base`, `pok`, `codex*`, `thunders_edge`), домашние наборы отброшены. Текст карты (`text`) берётся дословно, см. «Каталог компонентов».
 
 - `FactionSheet.techs` у каждой фракции: id, английское название, дополнение и `replaces`. Тип, требования и улучшаемый юнит лежат в `technologies` пакета этой фракции.
 - `type`: цвет из `types`; у `UNITUPGRADE` и `NONE` он `null`. `upgrade`: улучшаемый юнит или сооружение (`spacedock`, `pds`). Числа улучшений кораблей и пехоты показывает таблица кораблей, у сооружений их в приложении нет.
@@ -323,3 +323,61 @@ Names, origins and numbers come from the source (`data/abilities`, `data/leaders
 - **Nekro.** `factionTech` это Valefar Assimilator X и Y с типом `NONE` и без требований; они показаны без цвета. Две записи `nekroc4y` и `nekroc4r` (источник `pok`) не названы ни одной фракцией и не взяты.
 - **Firmament и Obsidian.** У каждой стороны свои две карты (Planesplitter, Neural Parasite); у Obsidian требований нет.
 - **Memoria II** в источнике без `baseUpgrade`, улучшаемый юнит (флагман) найден по `requiredTechId`.
+
+## Каталог компонентов
+
+Решение владельца проекта: тексты компонентов хранятся дословно, как в источнике; прежнее правило о пересказе своими словами для текстов карт отменено. Арт по-прежнему не копируется. Тексты лежат отдельно от чисел, в `src/data/texts/{base,pok,te}.json` (id компонента → текст): они принадлежат издателю игры, лицензия проекта на них не распространяется (`src/data/texts/NOTICE.md`). Тексты пишет только сборщик `scripts/build-data.ts`; от источника они отличаются лишь единым переводом строки и обрезанными краями. Русских дословных текстов в источнике нет, поэтому текст показывается на английском при любом языке интерфейса.
+
+Источник тот же коммит AsyncTI4. Каталоги `data/action_cards`, `agendas`, `relics`, `explores`, `attachments`, `promissory_notes`, `public_objectives`, `secret_objectives`. Берутся только записи с источником `base`, `pok`, `codex*` (идёт в `pok`) и `thunders_edge` из официальных файлов каталога (`CATALOG_FILES` в сборщике); всё остальное отброшено и посчитано по источникам в `provenance.json` (`components.excludedSources`). Id компонента: `<вид>:<id источника>`.
+
+Число компонентов при обоих дополнениях: разных карт, в скобках с учётом копий в колоде. Сверяет `scripts/build-catalog.test.ts`.
+
+| Вид | `base` | `pok` (с Codex) | `te` |
+| --- | --- | --- | --- |
+| `technology` | 59 (59) | 27 (27) | 13 (13) |
+| `actionCard` | 59 (82) | 34 (40) | 14 (20) |
+| `relic` | 0 (0) | 16 (16) | 7 (7) |
+| `publicObjective` | 20 (20) | 20 (20) | 0 (0) |
+| `secretObjective` | 20 (20) | 20 (20) | 0 (0) |
+| `agenda` | 50 (50) | 13 (13) | 0 (0) |
+| `exploration` | 0 (0) | 36 (80) | 0 (0) |
+| `promissory` | 21 (21) | 12 (12) | 6 (6) |
+| `leader` | 0 (0) | 76 (76) | 21 (21) |
+| `ability` | 37 (37) | 21 (21) | 15 (15) |
+| `breakthrough` | 0 (0) | 0 (0) | 31 (31) |
+| `mech` | 0 (0) | 25 (25) | 8 (8) |
+| `legendary` | 0 (0) | 6 (6) | 10 (10) |
+
+Всего 697 компонентов. Только базовая игра: 271; с Prophecy of Kings: 577; только с Thunder's Edge: 358.
+
+Что куда легло:
+
+- **Карты действий** (`action_cards.json`, `te_actioncards.json`): `alias`, `name`, `text`; в `detail` фаза (`phase`: action, agenda, status, strategy, any) и окно розыгрыша (`window`, дословно). Источник держит каждую копию отдельной записью (`sabo1`…`sabo4`); карты с одним названием и текстом сложены в одну под id первой, число в `copies`.
+- **Законы** (`base.json`, `pok.json`): текст из `text1` и `text2` абзацами; в `detail` вид (`type`: law или directive) и на что голосуют (`target`, дословно). У Covert Legislation оба текста пусты, текст карты источник держит в `target`: он и взят.
+- **Реликвии** (`pok.json`, `codexii.json`, `codexiv.json`, `te_relics.json`): `alias`, `name`, `text`.
+- **Исследование** (`explores.json`, `codex3.json`): `id`, `name`, `text`; в `detail` черта (`trait`: cultural, hazardous, industrial, frontier) и `resolution`; копии сложены так же, как у карт действий. У карты с прикреплением из `data/attachments` взяты его id и числа (`resources`, `influence`, `techSpecialty`); само прикрепление отдельным компонентом не является. По чертам в `pok`: по 20 карт каждой.
+- **Обязательства** (`color.json`, `promissory_notes.json`, `thunders_edge.json`): `alias`, `name`, `text`, фракция в `faction`. У пяти общих обязательств источник пишет `<color>` в id и в тексте; так и оставлено.
+- **Цели** (`public_objectives.json`, `secret_objectives.json`): `alias`, `name`, `text`; у публичных в `detail` этап (`stage`, равен очкам), очки и фаза; у секретных фаза и очки.
+- **Технологии** (`pok.json`, `te_techs.json`): текст из `text`. В пакет своего источника теперь попадает каждая общая технология; технологии фракций, как и раньше, только названные фракцией. У каждой записано дополнение (`pack`). Текст стартовой технологии лежит и в пакете фракции, которая с неё начинает: Magen Defense Grid (`md`) источник относит к Codex, а базовая фракция должна читать её и без Prophecy of Kings.
+- **Способности фракций**: `permanentEffect` отдельным абзацем, затем `window` и `windowEffect` через двоеточие.
+- **Лидеры**: `abilityWindow` и `abilityText` через двоеточие (у `ACTION:` оно уже есть). Условие открытия (`unlockCondition`) лежит отдельным текстом под id `leader:<id>#unlock`; у агентов источник пишет «Always Unlocked», это не условие, и текста для него нет. Тип и титул в `detail`.
+- **Мехи и корабли**: `ability` юнита; у меха под `mech:<id>`, у корабля под `unit:<id>` (корабль компонентом каталога не является).
+- **Прорывы**: `text`. **Легендарные планеты**: `legendaryAbilityText` под `legendary:<id планеты>`.
+- **Стратегические карты**: `primaryTexts` и `secondaryTexts`, пункты через перевод строки, под `strategy:<id>` и `strategy:<id>#secondary`; тексты лежат в пакете набора (базовая игра, `pok`, `te`), который держит карту, а не её источника: Diplomacy набора `te` источник относит к Codex.
+
+Не читаются: `flavorText`, `notes` (пояснения самого источника, не текст карты), поля картинок и автоматизации.
+
+Отброшено из официальных файлов:
+
+- `promissory:rider`: Keleres Rider записан под `keleres`, такой фракции в пакетах нет; та же карта есть у каждой из трёх фракций Keleres (`ridera`, `riderm`, `riderx`).
+- `enigmaticdevice` в `relics/fake_relics.json` (`isFakeRelic`): это карта исследования Enigmatic Device, а не реликвия.
+- `war_machinell` в `action_cards/theodisi.json` с источником `codex1`: пятая копия War Machine в файле домашнего набора.
+- `nekroc4y`, `nekroc4r`: технологии Nekro с источником `pok`, которые не называет ни одна фракция (как и раньше).
+
+Открытые вопросы:
+
+- **Копии Veto.** Источник даёт три записи Veto с источником `base` (`veto`, `veto3`, `veto4`; `veto2` относится к другому набору), и базовая колода выходит в 82 карты. Число взято из источника как есть и с физической колодой **не сверено**.
+- **Варианты Codex.** Источник держит рядом `x89_base`, `x89` (Codex 1), `x89c4` (Codex 4) и `md_base`, `md_c1`, `md`; какая карта заменяет какую, в данных не отмечено, все они в каталоге.
+- **Ta Zern.** Текста в источнике нет, записан текст Agnlan Oln (`components.sameTextAs` в `provenance.json`); не подтверждено.
+- **Thunder's Edge.** Законов, целей и карт исследования с источником `thunders_edge` в источнике на этом коммите нет.
+- **Общие компоненты Keleres** (лидеры, способности, мех, технологии) в каталоге стоят один раз, под первой из трёх фракций.

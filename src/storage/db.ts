@@ -1,17 +1,23 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Game } from '../domain/types';
 import { errorText } from './errorText';
-import { gameSchema, migrate } from './schema';
+import { parseGame } from './schema';
 
-/** `broken`: the save is there but does not read as a game. It is listed so it can be exported or deleted, never dropped. */
-export interface GameSummary { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; broken?: true; }
+/**
+ * `broken`: the save is there but does not read as a game. It is listed so it can be exported or deleted, never dropped.
+ * `oldFormat`: it is broken because an earlier version of the app saved it.
+ */
+export interface GameSummary { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; broken?: true; oldFormat?: true; }
 
 interface StoredGame { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; game: Game; }
 interface Ti4DB extends DBSchema { games: { key: string; value: StoredGame }; }
 
-/** A save that is in the database but cannot be opened: it failed to read, to migrate or to pass the schema. */
+/** Why a save does not open: an earlier version of the app saved it, or it does not read as a game at all. */
+export type BrokenKind = 'oldFormat' | 'damaged';
+
+/** A save that is in the database but cannot be opened: it failed to read or to pass the schema. It is never rewritten. */
 export class BrokenSaveError extends Error {
-  constructor(readonly id: string, readonly reason: string) {
+  constructor(readonly id: string, readonly reason: string, readonly kind: BrokenKind = 'damaged') {
     super(reason);
     this.name = 'BrokenSaveError';
   }
@@ -32,17 +38,16 @@ function db(): Promise<IDBPDatabase<Ti4DB>> {
 }
 
 
-/** The stored game brought up to the current schema, or why it cannot be. Never throws. */
-function readGame(stored: unknown): { ok: true; game: Game } | { ok: false; reason: string } {
+/** The stored game, or why it does not read: its kind and the words for it. Never throws. */
+function readGame(stored: unknown): { ok: true; game: Game } | { ok: false; kind: BrokenKind; reason: string } {
   const raw = typeof stored === 'object' && stored !== null ? (stored as { game?: unknown }).game : undefined;
-  if (raw === undefined) return { ok: false, reason: 'no game in the save' };
+  if (raw === undefined) return { ok: false, kind: 'damaged', reason: 'no game in the save' };
   try {
-    const parsed = gameSchema.safeParse(migrate(raw));
-    if (parsed.success) return { ok: true, game: parsed.data };
-    const issue = parsed.error.issues[0];
-    return { ok: false, reason: issue ? `${issue.path.join('.') || 'game'}: ${issue.message}` : 'invalid save' };
+    const parsed = parseGame(raw);
+    if (parsed.ok) return parsed;
+    return { ok: false, kind: parsed.kind === 'oldFormat' ? 'oldFormat' : 'damaged', reason: parsed.reason };
   } catch (error) {
-    return { ok: false, reason: errorText(error) };
+    return { ok: false, kind: 'damaged', reason: errorText(error) };
   }
 }
 
@@ -62,7 +67,7 @@ export async function loadGame(id: string): Promise<Game | null> {
   }
   if (stored === undefined) return null;
   const read = readGame(stored);
-  if (!read.ok) throw new BrokenSaveError(id, read.reason);
+  if (!read.ok) throw new BrokenSaveError(id, read.reason, read.kind);
   return read.game;
 }
 
@@ -80,7 +85,9 @@ function summaryOf(id: string, stored: unknown): GameSummary {
     playerCount: typeof s.playerCount === 'number' ? s.playerCount : 0,
     updatedAt: typeof s.updatedAt === 'number' ? s.updatedAt : 0,
   };
-  return readGame(stored).ok ? summary : { ...summary, broken: true };
+  const read = readGame(stored);
+  if (read.ok) return summary;
+  return read.kind === 'oldFormat' ? { ...summary, broken: true, oldFormat: true } : { ...summary, broken: true };
 }
 
 /** Most recently saved first. Each save is read on its own: one that fails is listed as broken and the rest still are. */

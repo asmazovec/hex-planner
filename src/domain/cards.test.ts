@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
-import { strategyCards } from '../data/loadPack';
+import { loadPack, strategyCards } from '../data/loadPack';
 import { strategyCardSet } from './cards';
-import { cardSummary } from '../data/cardSummaries';
+import { textOf } from './components';
 import type { ExpansionId } from './types';
 
 test('набор карт зависит от дополнений', () => {
@@ -18,26 +18,20 @@ test('каждый набор содержит восемь карт по пор
     expect(strategyCards(set).map(c => c.initiative)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 });
 
-test('у каждой карты есть пересказ на обоих языках', () => {
-  for (const set of [[], ['pok'], ['te']] as ExpansionId[][])
-    for (const c of strategyCards(set))
-      expect(cardSummary(c.summaryKey, 'ru').primary && cardSummary(c.summaryKey, 'en').secondary).toBeTruthy();
+test('у каждой карты есть текст основной и второстепенной способности при любом наборе дополнений', () => {
+  for (const set of [[], ['pok'], ['te'], ['pok', 'te']] as ExpansionId[][]) {
+    const pack = loadPack(set);
+    for (const c of strategyCards(set)) {
+      expect(textOf(pack, `strategy:${c.id}`), `${set} ${c.id}`).toMatch(/\w/);
+      expect(textOf(pack, `strategy:${c.id}#secondary`), `${set} ${c.id}`).toMatch(/\w/);
+    }
+  }
 });
 
 test('наборы различают версии Diplomacy и Construction', () => {
-  const key = (set: ExpansionId[], name: string) => strategyCards(set).find(c => c.name === name)!.summaryKey;
+  const key = (set: ExpansionId[], name: string) => strategyCards(set).find(c => c.name === name)!.id;
   expect(key([], 'Diplomacy')).not.toBe(key(['pok'], 'Diplomacy'));
   expect(key([], 'Construction')).not.toBe(key(['pok'], 'Construction'));
   expect(key(['te'], 'Construction')).not.toBe(key(['pok'], 'Construction'));
   expect(key(['te'], 'Diplomacy')).toBe(key(['pok'], 'Diplomacy'));
-});
-
-test("текст изменения есть только у карт, изменённых в Thunder's Edge", () => {
-  for (const c of strategyCards(['te'])) {
-    for (const lang of ['ru', 'en'] as const) {
-      const { change } = cardSummary(c.summaryKey, lang);
-      if (c.changedIn) expect(change).toBeTruthy();
-      else expect(change).toBeUndefined();
-    }
-  }
 });

@@ -23,7 +23,7 @@ test('a corrupt save is listed with its message, can be exported and deleted, an
         const tx = open.result.transaction('games', 'readwrite');
         tx.objectStore('games').put({
           id: 'broken', name: 'Damaged', faction: 'sol', playerCount: 4, updatedAt: Date.now() + 1000,
-          game: { id: 'broken', schemaVersion: 4, plans: 'not a list' },
+          game: { id: 'broken', format: 'ti4-planner/2', schemaVersion: 1, plans: 'not a list' },
         });
         tx.oncomplete = () => { open.result.close(); resolve(); };
         tx.onerror = () => reject(tx.error);

@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { shipSummary } from '../../data/shipSummaries';
+import { textOf } from '../../domain/components';
 import { isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
 import type { DataPack, ShipStats as Stats, UnitId, UpgradeId, UnitRoll } from '../../domain/types';
-import { currentLanguage } from '../../i18n';
 import { UnitIcon } from '../units/UnitIcon';
 
 const NONE = '—';
@@ -35,10 +34,10 @@ export function StatLine({ base, current }: { base: Stats; current: Stats }) {
   );
 }
 
-/** Properties and the retelling of a ship at a level. Shown only: nothing here is calculated. */
-export function ShipNotes({ stat }: { stat: Stats }) {
+/** Properties and the printed ability of a ship at a level. Shown only: nothing here is calculated. */
+export function ShipNotes({ stat, pack }: { stat: Stats; pack: DataPack }) {
   const { t } = useTranslation();
-  const summary = shipSummary(stat.id, currentLanguage());
+  const summary = textOf(pack, `unit:${stat.id}`);
   const labels = [
     stat.sustain && t('ships.sustain'),
     stat.barrage && t('ships.barrage', { value: rollText(stat.barrage) }),
@@ -91,7 +90,7 @@ export function ShipStats({ factionId, pack, upgraded = [], locked = {} }: ShipS
             {STAT_KEYS.map(name => (
               <span key={name} className="ship-row-value"><StatValue name={name} base={base} current={current} /></span>
             ))}
-            <ShipNotes stat={current} />
+            <ShipNotes stat={current} pack={pack} />
           </div>
         );
       })}

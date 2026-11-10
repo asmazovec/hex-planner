@@ -1,12 +1,11 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cardSummary } from '../../../data/cardSummaries';
 import { strategyCards } from '../../../data/loadPack';
+import { textOf } from '../../../domain/components';
 import { autoPay } from '../../../domain/payment';
 import { opponentsBySeat } from '../../../domain/players';
-import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
+import { cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, Warning } from '../../../domain/types';
-import { currentLanguage } from '../../../i18n';
 import { opponentName } from '../../players/names';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
 import { PaymentBlock } from '../blocks/PaymentBlock';
@@ -56,7 +55,6 @@ export function StrategyEditor({
   onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, turnActs,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
-  const lang = currentLanguage();
   const cards = strategyCards(game.expansions);
   const card = cards.find(c => c.initiative === entry.card);
   const primary = entry.type === 'strategic';
@@ -75,8 +73,7 @@ export function StrategyEditor({
   const pickCard = (initiative: number) => {
     if (initiative === entry.card) return;
     const play = { card: initiative, ...playOf(round, game.playerCount, initiative, startsAsPrimary(round, game.playerCount, initiative, entry), mine) };
-    // An entry saved before cards keeps what it holds when it gets its first card.
-    change(entry.card === undefined ? play : freshPlay(play));
+    change(freshPlay(play));
   };
 
   const placer = placeWarnings(warnings);
@@ -115,7 +112,6 @@ export function StrategyEditor({
   // Called here, not rendered as a component, so the blocks take their warnings before the rest is shown.
   const sections = () => (entry.card === undefined ? null : CARD_BLOCKS[entry.card]?.(kit) ?? null);
 
-  const summary = card && cardSummary(card.summaryKey, lang);
   const payment = effects.payment ?? { planets: [], tradeGoods: 0 };
   const toggleManual = (open: boolean) => {
     onManualPayment(open);
@@ -138,13 +134,12 @@ export function StrategyEditor({
       <span>{text}</span>
     </button>
   );
-  const cardBlocks = card && summary && (
+  const cardBlocks = card && (
     <>
       <div className="card-abilities" role="group" aria-label={t('plan.strategy.modes')}>
         {card.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
-        {ability(true, summary.primary, costsOf(true))}
-        {ability(false, summary.secondary, costsOf(false))}
-        {summary.change && <span className="card-note">{summary.change}</span>}
+        {ability(true, textOf(pack, `strategy:${card.id}`), costsOf(true))}
+        {ability(false, textOf(pack, `strategy:${card.id}#secondary`), costsOf(false))}
       </div>
       {sections()}
       {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
@@ -168,9 +163,6 @@ export function StrategyEditor({
       {list([...cardWarnings, ...placer.rest()])}
       {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
       {cardBlocks}
-      {entry.card !== CARD.technology && (entry.upgrades?.length ?? 0) > 0 && (
-        <Section title={t('plan.strategy.upgrades')}>{upgradeRow}</Section>
-      )}
       {/* A secondary is played in another player's turn: it holds no acts. */}
       {primary && turnActs}
     </EditorFrame>

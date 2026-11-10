@@ -8,7 +8,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack, strategyCards } from '../../data/loadPack';
-import { cardSummary } from '../../data/cardSummaries';
+import { textOf } from '../../domain/components';
 import { project } from '../../domain/project';
 import type { Warning, WarningCode } from '../../domain/types';
 import { setLanguage } from '../../i18n';
@@ -74,7 +74,7 @@ test('all eight cards stay in the grid, a tap opens the details and takes nothin
   expect(screen.getByRole('button', { name: /Warfare/ })).toHaveAttribute('aria-current', 'true');
   const details = within(screen.getByRole('group', { name: 'Warfare' }));
   expect(details.getByText('Changed in TE')).toBeVisible();
-  expect(details.getByText(/tactical action without a token/)).toBeVisible();
+  expect(details.getByText(/^Perform a tactical action in any system without placing a command token/)).toBeVisible();
 
   await userEvent.click(screen.getByRole('button', { name: /Warfare/ }));
   expect(plan().rounds[0]).toMatchObject({ strategyCard: null, backupCard: 6 });
@@ -95,13 +95,15 @@ test('the primary and the secondary ability stand as separate blocks, each with 
   render(<StrategyCardsLive />);
   await userEvent.click(screen.getByRole('button', { name: /Trade/ }));
   const details = screen.getByRole('group', { name: 'Trade' });
-  const summary = cardSummary(strategyCards(game().expansions).find(c => c.name === 'Trade')!.summaryKey, 'en');
+  const id = strategyCards(game().expansions).find(c => c.name === 'Trade')!.id;
+  const pack = loadPack(game().expansions);
   const primary = details.querySelector('.card-ability-primary')!;
   const secondary = details.querySelector('.card-ability-secondary')!;
   expect(within(primary as HTMLElement).getByText('Primary')).toBeVisible();
-  expect(primary).toHaveTextContent(summary.primary);
+  expect(primary).toHaveTextContent('Gain 3 trade goods.');
+  expect(primary.querySelector('span')!.textContent).toBe(textOf(pack, `strategy:${id}`));
   expect(within(secondary as HTMLElement).getByText('Secondary')).toBeVisible();
-  expect(secondary).toHaveTextContent(summary.secondary);
+  expect(secondary.querySelector('span')!.textContent).toBe(textOf(pack, `strategy:${id}#secondary`));
 });
 
 test('a held card tapped after looking at another only shows its details again', async () => {
@@ -296,7 +298,6 @@ const CASES: Record<WarningCode, Warning['params']> = {
   scarProduction: { systemId: '1,0' },
   expeditionUnpaid: { sliceId: 'tech' },
   expeditionTwicePerTurn: { sliceId: 'res5' },
-  expeditionDetached: { sliceId: 'tg3' },
   transactionRepeated: { player: 'o1' },
   notNeighbor: { player: 'o1' },
   shortCommodities: { needed: 2, have: 0 },

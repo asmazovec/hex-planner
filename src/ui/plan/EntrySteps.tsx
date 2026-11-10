@@ -1,13 +1,12 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cardSummary } from '../../data/cardSummaries';
 import { strategyCards } from '../../data/loadPack';
+import { textOf } from '../../domain/components';
 import { tacticalMeters } from '../../domain/project';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
 import { flightOf as warningFlightOf, placeWarnings } from '../feedback/warningPlaces';
 import { WarningList } from '../feedback/WarningText';
-import { currentLanguage } from '../../i18n';
 import { opponentName } from '../players/names';
 import { playerColour } from '../units/sprites';
 import { UnitTile } from '../units/UnitTile';
@@ -39,7 +38,6 @@ export interface EntryStepsProps {
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
 export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntryStepsProps) {
   const { t } = useTranslation();
-  const lang = currentLanguage();
   const name = (slot: string) => systemName(game, pack, slot);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} game={game} t={t} />;
   const planetName = (id: string) => pack.planets[id]?.name ?? id;
@@ -126,8 +124,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
     }
     const primary = e.type === 'strategic';
     const mode = e.forToken ? 'forToken' : primary ? 'primary' : 'secondary';
-    const summary = cardSummary(card.summaryKey, lang);
-    steps.push(<><b>{card.name}</b>, {t(`plan.strategy.mode.${mode}`).toLowerCase()}{costsStrategyToken(e) && <small>{t('plan.steps.strategyToken')}</small>}<small>{primary ? summary.primary : summary.secondary}</small></>);
+    steps.push(<><b>{card.name}</b>, {t(`plan.strategy.mode.${mode}`).toLowerCase()}{costsStrategyToken(e) && <small>{t('plan.steps.strategyToken')}</small>}<small>{textOf(pack, primary ? `strategy:${card.id}` : `strategy:${card.id}#secondary`)}</small></>);
     const effects = e.effects ?? {};
     const cost = cardCost(e, game.faction, before.upgrades, pack);
     if (cost.amount > 0) steps.push(<>{t(`plan.steps.cost.${cost.kind}`, { n: cost.amount })}{paid(effects.payment) && <small>{paid(effects.payment)}</small>}</>);
@@ -154,11 +151,6 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
       break;
     case 'component':
       steps.push(entry.note || t('plan.steps.noNote'));
-      break;
-    case 'expedition':
-      steps.push(entry.sliceId
-        ? <>{t(`plan.slice.${entry.sliceId}`)}{paid(entry.payment) && <small>{paid(entry.payment)}</small>}</>
-        : t('plan.steps.noSlice'));
       break;
     case 'adjustment': {
       const { delta } = entry;

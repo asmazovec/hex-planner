@@ -40,7 +40,7 @@ export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelPro
               {isUniqueShip(game.faction, kind, pack) && <small>{current.name}</small>}
               {round !== undefined && <small className="ship-row-round">{t('ships.fromRound', { n: round })}</small>}
               <StatLine base={base} current={current} />
-              <ShipNotes stat={current} />
+              <ShipNotes stat={current} pack={pack} />
             </span>
             <span className="upgrade-level">{hasTwo ? (on ? 'II' : 'I') : '—'}</span>
           </button>

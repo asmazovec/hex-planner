@@ -2,7 +2,7 @@
 import { plannedCard } from './strategy';
 import type { EntryBody, Round } from './types';
 
-export type NewAction = 'tactical' | 'strategic' | 'component' | 'expedition' | 'pass' | 'adjustment';
+export type NewAction = 'tactical' | 'strategic' | 'component' | 'pass' | 'adjustment';
 
 const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };
 
@@ -26,8 +26,6 @@ export function newEntryBody(type: Exclude<NewAction, 'tactical'>, round: Round,
     }
     case 'component':
       return { type: 'component', note: '' };
-    case 'expedition':
-      return { type: 'expedition', sliceId: null, payment: EMPTY_PAYMENT };
     case 'pass':
       return { type: 'pass' };
     case 'adjustment':

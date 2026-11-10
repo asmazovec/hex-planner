@@ -29,8 +29,8 @@ export function sampleGame(): Game {
     { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic' },
     { id: 'e3', phase: 'action', status: 'cancelled', type: 'secondary' },
     { id: 'e4', phase: 'action', status: 'planned', type: 'component', note: 'note' },
-    { id: 'e5', phase: 'action', status: 'planned', type: 'pass' },
-    { id: 'e6', phase: 'action', status: 'planned', type: 'expedition', sliceId: null, payment: pay },
+    { id: 'e5', phase: 'action', status: 'planned', type: 'pass',
+      acts: [{ kind: 'transaction', with: game.opponents[0].id, give: { tradeGoods: 1 }, get: { commodities: 1, note: true } }, { kind: 'expedition', sliceId: null, payment: pay }] },
     { id: 'e7', phase: 'status', status: 'done', type: 'adjustment', label: 'ability',
       delta: { tradeGoods: -1, vp: 1, units: { systemId: '1,0', units: { mech: 1 } } } },
     { id: 'e8', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 3, fleet: 2, strategy: 1 },
@@ -42,17 +42,9 @@ export function sampleGame(): Game {
   return game;
 }
 
-/** The same game as schema version 1 saved it: opponents without ids, enemy units and enemy planets without an owner. */
-export function gameOfSchema1(): Record<string, unknown> {
-  const { planetOwner, opponents, upgrades, enemyGround, ...rest } = sampleGame();
-  void planetOwner;
-  void upgrades;
-  void enemyGround;
-  return {
-    ...rest,
-    schemaVersion: 1,
-    opponents: opponents.map(({ faction, vp, seat, color }) => ({ faction, vp, seat, color })),
-    enemyUnits: { '1,0': { dreadnought: 2 }, '0,1': { fighter: 3 } },
-    planetControl: { jord: 'me', arc: 'enemy', lazar: 'enemy' },
-  };
+/** A save as an earlier version of the app left it: a whole game, without the format mark. */
+export function oldFormatSave(id = 'old', name = 'Earlier'): Record<string, unknown> {
+  const { format, ...game } = sampleGame();
+  void format;
+  return { id, name, faction: game.faction, playerCount: game.playerCount, updatedAt: 1, game: { ...game, id, name, schemaVersion: 6 } };
 }

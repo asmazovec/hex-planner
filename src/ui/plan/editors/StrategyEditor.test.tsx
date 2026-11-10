@@ -141,11 +141,11 @@ describe('opening', () => {
     expect(ability('Secondary')).not.toHaveTextContent('strategy token');
   });
 
-  test('both abilities are in view as in the details, with what Thunder\'s Edge changed', async () => {
+  test('both abilities are in view as in the details, in the printed words, with the mark of what Thunder\'s Edge changed', async () => {
     await primary('Warfare');
     expect(ability('Primary')).toHaveTextContent(/tactical action in any system/);
-    expect(ability('Secondary')).toHaveTextContent(/PRODUCTION of your units/);
-    expect(screen.getByText(/In Thunder's Edge the primary gives a tactical action/)).toBeVisible();
+    expect(ability('Secondary')).toHaveTextContent(/Production abilities of the units in your home system/);
+    expect(screen.getByText('Changed in TE')).toBeVisible();
   });
 
   test('an entry opens the editor again from the list', async () => {
@@ -158,12 +158,12 @@ describe('opening', () => {
 
   test('card text follows the expansions', async () => {
     await primary('Warfare');
-    expect(screen.getByText(/tactical action in any system without placing a token/)).toBeVisible();
+    expect(screen.getByText(/tactical action in any system without placing a command token/)).toBeVisible();
     expect(screen.getByText('Changed in TE')).toBeVisible();
     cleanup();
     start({ expansions: ['pok'] });
     await primary('Warfare');
-    expect(screen.getByText(/off the board/)).toBeVisible();
+    expect(screen.getByText(/^Remove 1 of your command tokens from the game board/)).toBeVisible();
     expect(screen.queryByText('Changed in TE')).toBeNull();
   });
 
@@ -307,7 +307,7 @@ describe('Diplomacy', () => {
     const home = data.tiles[data.factions.hacan.homeTile].planetIds;
     const far = data.tiles['25'].planetIds[0];
     store().setPlanetControl(far, 'me');
-    store().addEntry(1, { type: 'expedition', sliceId: null, payment: { planets: [...home, far], tradeGoods: 0 } }, 'action');
+    store().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [...home, far], tradeGoods: 0 } }] }, 'action');
     return { home, far, name: (id: string) => new RegExp(data.planets[id].name) };
   };
   const readyList = () => within(screen.getByRole('group', { name: 'Ready planets' }));
@@ -676,26 +676,6 @@ describe('Technology', () => {
     await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
     expect(screen.getByText(/To pay: 4/)).toBeVisible();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeEnabled();
-  });
-});
-
-describe('entries saved before cards', () => {
-  test('their upgrades stay visible on any card and can be taken off', async () => {
-    const id = store().addEntry(1, { type: 'secondary', upgrades: ['carrier'] }, 'action');
-    render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary' }));
-    const row = () => within(screen.getByRole('group', { name: 'Upgrade' }));
-    expect(row().getByRole('button', { name: 'Carrier' })).toHaveAttribute('aria-pressed', 'true');
-    await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
-    expect(row().getByRole('button', { name: 'Carrier' })).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  test('picking Technology on an old secondary seeds the payment for its upgrades', async () => {
-    const id = store().addEntry(1, { type: 'secondary', upgrades: ['carrier'] }, 'action');
-    render(<PlanScreen />);
-    await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary' }));
-    await userEvent.click(cards().getByRole('button', { name: /Technology/ }));
-    expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
   });
 });
 

@@ -102,22 +102,23 @@ test('the counter shows taken parts, mine from the plan and others by tapping', 
   expect(game().expedition.slices.secret ?? null).toBeNull();
   expect(within(widget()).getByText('0 of 6')).toBeVisible();
 
-  act(() => { useGame.getState().addEntry(1, { type: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }, 'action'); });
+  act(() => { useGame.getState().addEntry(1, { type: 'pass', acts: [{ kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }] }, 'action'); });
   expect(await within(widget()).findByText('1 of 6')).toBeVisible();
   // My own part comes from the plan, not from tapping.
   expect(part('3 trade goods')).toBeDisabled();
 });
 
-test('a part taken by another player cannot be chosen in the expedition entry', async () => {
+test('a part taken by another player cannot be chosen in the expedition of a turn', async () => {
   useGame.getState().setSlice('inf5', 'other');
   render(<PlanScreen />);
-  const id = useGame.getState().addEntry(1, { type: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } }, 'action');
-  await userEvent.click(await screen.findByRole('button', { name: 'Edit: Expedition contribution, end of turn' }));
+  const id = useGame.getState().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } }] }, 'action');
+  await userEvent.click(await screen.findByRole('button', { name: 'Edit: Component action' }));
+  await userEvent.click(within(screen.getByRole('group', { name: 'In this turn' })).getByRole('button', { name: /^\+ Expedition:/ }));
   const editor = screen.getByRole('group', { name: 'Expedition part' });
   expect(within(editor).getByRole('button', { name: '5 influence' })).toBeDisabled();
   await userEvent.click(within(editor).getByRole('button', { name: '5 resources' }));
   const entry = plan().rounds[0].entries.find(e => e.id === id)!;
-  expect(entry).toMatchObject({ type: 'expedition', sliceId: 'res5' });
+  expect(entry).toMatchObject({ type: 'component', acts: [{ kind: 'expedition', sliceId: 'res5' }] });
 });
 
 test('suitable systems light up only while choosing, and Thunder\'s Edge can be placed', async () => {

@@ -770,7 +770,8 @@
       "traits": [
         "cultural"
       ],
-      "legendary": "The Atrament"
+      "legendary": "The Atrament",
+      "pack": "pok"
     },
     "hopesend": {
       "id": "hopesend",
@@ -780,7 +781,8 @@
       "traits": [
         "hazardous"
       ],
-      "legendary": "Imperial Arms Vault"
+      "legendary": "Imperial Arms Vault",
+      "pack": "pok"
     },
     "cormund": {
       "id": "cormund",
@@ -982,7 +984,8 @@
       "traits": [
         "cultural"
       ],
-      "legendary": "Exterrix Headquarters"
+      "legendary": "Exterrix Headquarters",
+      "pack": "pok"
     },
     "mallice": {
       "id": "mallice",
@@ -992,7 +995,8 @@
       "traits": [
         "cultural"
       ],
-      "legendary": "Exterrix Headquarters"
+      "legendary": "Exterrix Headquarters",
+      "pack": "pok"
     },
     "mirage": {
       "id": "mirage",
@@ -1002,14 +1006,16 @@
       "traits": [
         "cultural"
       ],
-      "legendary": "Mirage Flight Academy"
+      "legendary": "Mirage Flight Academy",
+      "pack": "pok"
     },
     "custodiavigilia": {
       "id": "custodiavigilia",
       "name": "Custodia Vigilia",
       "resources": 2,
       "influence": 3,
-      "legendary": "Custodian's Favour"
+      "legendary": "Custodian's Favour",
+      "pack": "pok"
     }
   },
   "units": {
@@ -3972,7 +3978,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 1
-      }
+      },
+      "pack": "pok"
     },
     "asn": {
       "id": "asn",
@@ -3980,7 +3987,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "pok"
     },
     "executiveorder": {
       "id": "executiveorder",
@@ -3988,22 +3996,26 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 1
-      }
+      },
+      "pack": "te"
     },
     "nm": {
       "id": "nm",
       "name": "Neural Motivator",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "base"
     },
     "st": {
       "id": "st",
       "name": "Sarween Tools",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "base"
     },
     "ps": {
       "id": "ps",
       "name": "Plasma Scoring",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "base"
     },
     "ah": {
       "id": "ah",
@@ -4011,7 +4023,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 1
-      }
+      },
+      "pack": "pok"
     },
     "swa2": {
       "id": "swa2",
@@ -4020,12 +4033,14 @@
       "requires": {
         "warfare": 2
       },
-      "upgrade": "destroyer"
+      "upgrade": "destroyer",
+      "pack": "pok"
     },
     "sar": {
       "id": "sar",
       "name": "Self-Assembly Routines",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "pok"
     },
     "dt2": {
       "id": "dt2",
@@ -4034,7 +4049,8 @@
       "requires": {
         "cybernetic": 2
       },
-      "upgrade": "spacedock"
+      "upgrade": "spacedock",
+      "pack": "pok"
     },
     "vtx": {
       "id": "vtx",
@@ -4042,12 +4058,14 @@
       "type": "warfare",
       "requires": {
         "warfare": 1
-      }
+      },
+      "pack": "pok"
     },
     "det": {
       "id": "det",
       "name": "Dark Energy Tap",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "pok"
     },
     "vw": {
       "id": "vw",
@@ -4055,7 +4073,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 1
-      }
+      },
+      "pack": "pok"
     },
     "as": {
       "id": "as",
@@ -4063,17 +4082,20 @@
       "type": "propulsion",
       "requires": {
         "propulsion": 2
-      }
+      },
+      "pack": "pok"
     },
     "pi": {
       "id": "pi",
       "name": "Predictive Intelligence",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "pok"
     },
     "bs": {
       "id": "bs",
       "name": "Bio-Stims",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "pok"
     },
     "cl2": {
       "id": "cl2",
@@ -4082,7 +4104,8 @@
       "requires": {
         "biotic": 2
       },
-      "upgrade": "infantry"
+      "upgrade": "infantry",
+      "pack": "pok"
     },
     "gr": {
       "id": "gr",
@@ -4090,12 +4113,14 @@
       "type": "biotic",
       "requires": {
         "biotic": 1
-      }
+      },
+      "pack": "pok"
     },
     "sr": {
       "id": "sr",
       "name": "Sling Relay",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "pok"
     },
     "m2": {
       "id": "m2",
@@ -4106,7 +4131,8 @@
         "propulsion": 1,
         "cybernetic": 1
       },
-      "upgrade": "flagship"
+      "upgrade": "flagship",
+      "pack": "pok"
     },
     "tcs": {
       "id": "tcs",
@@ -4114,17 +4140,20 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 1
-      }
+      },
+      "pack": "pok"
     },
     "pa": {
       "id": "pa",
       "name": "Psychoarchaeology",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "pok"
     },
     "aida": {
       "id": "aida",
       "name": "AI Development Algorithm",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "pok"
     },
     "pfa": {
       "id": "pfa",
@@ -4132,7 +4161,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 3
-      }
+      },
+      "pack": "pok"
     },
     "sc": {
       "id": "sc",
@@ -4140,17 +4170,20 @@
       "type": "warfare",
       "requires": {
         "warfare": 1
-      }
+      },
+      "pack": "pok"
     },
     "amd": {
       "id": "amd",
       "name": "Antimass Deflectors",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "base"
     },
     "sdn": {
       "id": "sdn",
       "name": "Scanlink Drone Network",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "pok"
     },
     "ht2": {
       "id": "ht2",
@@ -4160,7 +4193,8 @@
         "cybernetic": 1,
         "warfare": 1
       },
-      "upgrade": "pds"
+      "upgrade": "pds",
+      "pack": "pok"
     },
     "se2": {
       "id": "se2",
@@ -4171,8 +4205,1569 @@
         "cybernetic": 1,
         "warfare": 1
       },
-      "upgrade": "cruiser"
+      "upgrade": "cruiser",
+      "pack": "pok"
+    },
+    "x89": {
+      "id": "x89",
+      "name": "X-89 Bacterial Weapon Ω",
+      "type": "biotic",
+      "requires": {
+        "biotic": 3
+      },
+      "pack": "pok"
+    },
+    "x89c4": {
+      "id": "x89c4",
+      "name": "X-89 Bacterial Weapon ΩΩ",
+      "type": "biotic",
+      "requires": {
+        "biotic": 3
+      },
+      "pack": "pok"
+    },
+    "md_c1": {
+      "id": "md_c1",
+      "name": "Magen Defense Grid Ω",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      },
+      "pack": "pok"
+    },
+    "md": {
+      "id": "md",
+      "name": "Magen Defense Grid ΩΩ",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      },
+      "pack": "pok"
     }
   },
-  "structures": []
+  "structures": [],
+  "components": [
+    {
+      "id": "actionCard:blitz",
+      "kind": "actionCard",
+      "name": "Blitz",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of an invasion"
+      }
+    },
+    {
+      "id": "actionCard:counterstroke",
+      "kind": "actionCard",
+      "name": "Counterstroke",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player activates a system that contains 1 of your command tokens"
+      }
+    },
+    {
+      "id": "actionCard:f_conscription",
+      "kind": "actionCard",
+      "name": "Fighter Conscription",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:fsb",
+      "kind": "actionCard",
+      "name": "Forward Supply Base",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player activates a system that contains your units"
+      }
+    },
+    {
+      "id": "actionCard:ghost_squad",
+      "kind": "actionCard",
+      "name": "Ghost Squad",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player commits units to land on a planet you control"
+      }
+    },
+    {
+      "id": "actionCard:hack",
+      "kind": "actionCard",
+      "name": "Hack Election",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:harness",
+      "kind": "actionCard",
+      "name": "Harness Energy",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate an anomaly"
+      }
+    },
+    {
+      "id": "actionCard:impersonation",
+      "kind": "actionCard",
+      "name": "Impersonation",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:insider",
+      "kind": "actionCard",
+      "name": "Insider Information",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:master_plan",
+      "kind": "actionCard",
+      "name": "Master Plan",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you perform an action"
+      }
+    },
+    {
+      "id": "actionCard:plagiarize",
+      "kind": "actionCard",
+      "name": "Plagiarize",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:rally",
+      "kind": "actionCard",
+      "name": "Rally",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system that contains another player's ships"
+      }
+    },
+    {
+      "id": "actionCard:reflective",
+      "kind": "actionCard",
+      "name": "Reflective Shielding",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "When one of your ships uses SUSTAIN DAMAGE during combat"
+      }
+    },
+    {
+      "id": "actionCard:sanction",
+      "kind": "actionCard",
+      "name": "Sanction",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:scramble",
+      "kind": "actionCard",
+      "name": "Scramble Frequency",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player makes a BOMBARDMENT, SPACE CANNON, or ANTI-FIGHTER BARRAGE roll"
+      }
+    },
+    {
+      "id": "actionCard:solar_flare",
+      "kind": "actionCard",
+      "name": "Solar Flare",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system"
+      }
+    },
+    {
+      "id": "actionCard:war_machine1",
+      "kind": "actionCard",
+      "name": "War Machine",
+      "pack": "pok",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "When 1 or more of your units use PRODUCTION"
+      }
+    },
+    {
+      "id": "actionCard:arch_expedition",
+      "kind": "actionCard",
+      "name": "Archaeological Expedition",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:confounding",
+      "kind": "actionCard",
+      "name": "Confounding Legal Text",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "When another player is elected as the outcome of an agenda"
+      }
+    },
+    {
+      "id": "actionCard:coup",
+      "kind": "actionCard",
+      "name": "Coup d'Etat",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "When another player would perform a strategic action"
+      }
+    },
+    {
+      "id": "actionCard:deadly_plot",
+      "kind": "actionCard",
+      "name": "Deadly Plot",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "During the agenda phase when an outcome would be resolved"
+      }
+    },
+    {
+      "id": "actionCard:decoy",
+      "kind": "actionCard",
+      "name": "Decoy Operation",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player activates a system that contains 1 or more of your structures"
+      }
+    },
+    {
+      "id": "actionCard:dp1",
+      "kind": "actionCard",
+      "name": "Diplomatic Pressure",
+      "pack": "pok",
+      "copies": 4,
+      "detail": {
+        "phase": "agenda",
+        "window": "When an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:divert_funding",
+      "kind": "actionCard",
+      "name": "Divert Funding",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:probe",
+      "kind": "actionCard",
+      "name": "Exploration Probe",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:investments",
+      "kind": "actionCard",
+      "name": "Manipulate Investments",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "strategy",
+        "window": "At the start of the strategy phase"
+      }
+    },
+    {
+      "id": "actionCard:nav_suite",
+      "kind": "actionCard",
+      "name": "Nav Suite",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system"
+      }
+    },
+    {
+      "id": "actionCard:refit",
+      "kind": "actionCard",
+      "name": "Refit Troops",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:reveal_prototype",
+      "kind": "actionCard",
+      "name": "Reveal Prototype",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of a combat"
+      }
+    },
+    {
+      "id": "actionCard:reverse_engineer",
+      "kind": "actionCard",
+      "name": "Reverse Engineer",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "any",
+        "window": "After another player discards an action card that has a component action"
+      }
+    },
+    {
+      "id": "actionCard:rout",
+      "kind": "actionCard",
+      "name": "Rout",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of the 'Announce Retreats' step of space combat, if you are the defender"
+      }
+    },
+    {
+      "id": "actionCard:scuttle",
+      "kind": "actionCard",
+      "name": "Scuttle",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:seize",
+      "kind": "actionCard",
+      "name": "Seize Artifact",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:waylay",
+      "kind": "actionCard",
+      "name": "Waylay",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Before you roll dice for ANTI-FIGHTER BARRAGE"
+      }
+    },
+    {
+      "id": "agenda:standardization",
+      "kind": "agenda",
+      "name": "Armed Forces Standardization",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:articles_war",
+      "kind": "agenda",
+      "name": "Articles of War",
+      "pack": "pok",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:checks",
+      "kind": "agenda",
+      "name": "Checks and Balances",
+      "pack": "pok",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:cladenstine",
+      "kind": "agenda",
+      "name": "Clandestine Operations",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:covert",
+      "kind": "agenda",
+      "name": "Covert Legislation",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "When this agenda is revealed, the speaker draws the next card in the agenda deck but does not reveal it to the other players. Instead, the speaker reads the eligible outcomes aloud (for, against, elect Elect Player, etc.). The other Players vote for these outcomes as if they were outcomes of this agenda, without knowing their effects."
+      }
+    },
+    {
+      "id": "agenda:crisis",
+      "kind": "agenda",
+      "name": "Galactic Crisis Pact",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Strategy Card"
+      }
+    },
+    {
+      "id": "agenda:minister_antiquities",
+      "kind": "agenda",
+      "name": "Minister of Antiquities",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:nexus",
+      "kind": "agenda",
+      "name": "Nexus Sovereignty",
+      "pack": "pok",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:censure",
+      "kind": "agenda",
+      "name": "Political Censure",
+      "pack": "pok",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:rearmament",
+      "kind": "agenda",
+      "name": "Rearmament Agreement",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:rep_govt",
+      "kind": "agenda",
+      "name": "Representative Government",
+      "pack": "pok",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:grant_reallocation",
+      "kind": "agenda",
+      "name": "Research Grant Reallocation",
+      "pack": "pok",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:warrant",
+      "kind": "agenda",
+      "name": "Search Warrant",
+      "pack": "pok",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "relic:dynamiscore",
+      "kind": "relic",
+      "name": "Dynamis Core",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:titanprototype",
+      "kind": "relic",
+      "name": "JR-XS455-O",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:nanoforge",
+      "kind": "relic",
+      "name": "Nano-Forge",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:neuraloop",
+      "kind": "relic",
+      "name": "Neuraloop",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:circletofthevoid",
+      "kind": "relic",
+      "name": "Circlet of the Void",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:bookoflatvinia",
+      "kind": "relic",
+      "name": "Book of Latvinia",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:dominusorb",
+      "kind": "relic",
+      "name": "Dominus Orb",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:mawofworlds",
+      "kind": "relic",
+      "name": "Maw of Worlds",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:emelpar",
+      "kind": "relic",
+      "name": "Scepter of Emelpar",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:shard",
+      "kind": "relic",
+      "name": "Shard of the Throne",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:stellarconverter",
+      "kind": "relic",
+      "name": "Stellar Converter",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:codex",
+      "kind": "relic",
+      "name": "The Codex",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:emphidia",
+      "kind": "relic",
+      "name": "The Crown of Emphidia",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:thalnos",
+      "kind": "relic",
+      "name": "The Crown of Thalnos",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:obsidian",
+      "kind": "relic",
+      "name": "The Obsidian",
+      "pack": "pok"
+    },
+    {
+      "id": "relic:prophetstears",
+      "kind": "relic",
+      "name": "The Prophet's Tears",
+      "pack": "pok"
+    },
+    {
+      "id": "exploration:minent",
+      "kind": "exploration",
+      "name": "Minor Entropic Field",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:ent",
+      "kind": "exploration",
+      "name": "Entropic Field",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:majent",
+      "kind": "exploration",
+      "name": "Major Entropic Field",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:kel1",
+      "kind": "exploration",
+      "name": "Keleres Ship",
+      "pack": "pok",
+      "copies": 2,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:dw",
+      "kind": "exploration",
+      "name": "Dead World",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:frln1",
+      "kind": "exploration",
+      "name": "Freelancers",
+      "pack": "pok",
+      "copies": 3,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:mo1",
+      "kind": "exploration",
+      "name": "Mercenary Outfit",
+      "pack": "pok",
+      "copies": 3,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:gw",
+      "kind": "exploration",
+      "name": "Gamma Wormhole",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "token"
+      }
+    },
+    {
+      "id": "exploration:dmz",
+      "kind": "exploration",
+      "name": "Demilitarized Zone",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "attach",
+        "attachment": "dmz"
+      }
+    },
+    {
+      "id": "exploration:ds",
+      "kind": "exploration",
+      "name": "Dyson Sphere",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "attach",
+        "attachment": "dysonsphere",
+        "resources": 2,
+        "influence": 1
+      }
+    },
+    {
+      "id": "exploration:pw",
+      "kind": "exploration",
+      "name": "Paradise World",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "attach",
+        "attachment": "paradiseworld",
+        "influence": 2
+      }
+    },
+    {
+      "id": "exploration:toe",
+      "kind": "exploration",
+      "name": "Tomb of Emphidia",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "attach",
+        "attachment": "tombofemphidia",
+        "influence": 1
+      }
+    },
+    {
+      "id": "exploration:crf1",
+      "kind": "exploration",
+      "name": "Cultural Relic Fragment",
+      "pack": "pok",
+      "copies": 9,
+      "detail": {
+        "trait": "cultural",
+        "resolution": "fragment"
+      }
+    },
+    {
+      "id": "exploration:vfs1",
+      "kind": "exploration",
+      "name": "Volatile Fuel Source",
+      "pack": "pok",
+      "copies": 3,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:exp1",
+      "kind": "exploration",
+      "name": "Expedition",
+      "pack": "pok",
+      "copies": 3,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:cm1",
+      "kind": "exploration",
+      "name": "Core Mine",
+      "pack": "pok",
+      "copies": 3,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:ls",
+      "kind": "exploration",
+      "name": "Lazax Survivors",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "attach",
+        "attachment": "lazaxsurvivors",
+        "resources": 1,
+        "influence": 2
+      }
+    },
+    {
+      "id": "exploration:mw",
+      "kind": "exploration",
+      "name": "Mining World",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "attach",
+        "attachment": "miningworld",
+        "resources": 2
+      }
+    },
+    {
+      "id": "exploration:rw",
+      "kind": "exploration",
+      "name": "Rich World",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "attach",
+        "attachment": "richworld",
+        "resources": 1
+      }
+    },
+    {
+      "id": "exploration:warfare",
+      "kind": "exploration",
+      "name": "Warfare Research Facility",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "attach",
+        "attachment": "warfare",
+        "techSpecialty": "warfare"
+      }
+    },
+    {
+      "id": "exploration:hrf1",
+      "kind": "exploration",
+      "name": "Hazardous Relic Fragment",
+      "pack": "pok",
+      "copies": 7,
+      "detail": {
+        "trait": "hazardous",
+        "resolution": "fragment"
+      }
+    },
+    {
+      "id": "exploration:aw1",
+      "kind": "exploration",
+      "name": "Abandoned Warehouses",
+      "pack": "pok",
+      "copies": 4,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:fb1",
+      "kind": "exploration",
+      "name": "Functioning Base",
+      "pack": "pok",
+      "copies": 4,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:lf1",
+      "kind": "exploration",
+      "name": "Local Fabricators",
+      "pack": "pok",
+      "copies": 4,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:biotic",
+      "kind": "exploration",
+      "name": "Biotic Research Facility",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "attach",
+        "attachment": "biotic",
+        "techSpecialty": "biotic"
+      }
+    },
+    {
+      "id": "exploration:cybernetic",
+      "kind": "exploration",
+      "name": "Cybernetic Research Facility",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "attach",
+        "attachment": "cybernetic",
+        "techSpecialty": "cybernetic"
+      }
+    },
+    {
+      "id": "exploration:propulsion",
+      "kind": "exploration",
+      "name": "Propulsion Research Facility",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "attach",
+        "attachment": "propulsion",
+        "techSpecialty": "propulsion"
+      }
+    },
+    {
+      "id": "exploration:irf1",
+      "kind": "exploration",
+      "name": "Industrial Relic Fragment",
+      "pack": "pok",
+      "copies": 5,
+      "detail": {
+        "trait": "industrial",
+        "resolution": "fragment"
+      }
+    },
+    {
+      "id": "exploration:dv1",
+      "kind": "exploration",
+      "name": "Derelict Vessel",
+      "pack": "pok",
+      "copies": 2,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:ed1",
+      "kind": "exploration",
+      "name": "Enigmatic Device",
+      "pack": "pok",
+      "copies": 2,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:gamma",
+      "kind": "exploration",
+      "name": "Gamma Relay",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "token"
+      }
+    },
+    {
+      "id": "exploration:ion",
+      "kind": "exploration",
+      "name": "Ion Storm",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "token"
+      }
+    },
+    {
+      "id": "exploration:lc1",
+      "kind": "exploration",
+      "name": "Lost Crew",
+      "pack": "pok",
+      "copies": 2,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:ms1",
+      "kind": "exploration",
+      "name": "Merchant Station",
+      "pack": "pok",
+      "copies": 2,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "instant"
+      }
+    },
+    {
+      "id": "exploration:mirage",
+      "kind": "exploration",
+      "name": "Mirage",
+      "pack": "pok",
+      "copies": 1,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "token"
+      }
+    },
+    {
+      "id": "exploration:urf1",
+      "kind": "exploration",
+      "name": "Unknown Relic Fragment",
+      "pack": "pok",
+      "copies": 3,
+      "detail": {
+        "trait": "frontier",
+        "resolution": "fragment"
+      }
+    },
+    {
+      "id": "promissory:<color>_an",
+      "kind": "promissory",
+      "name": "Alliance",
+      "pack": "pok"
+    },
+    {
+      "id": "promissory:ambuscade",
+      "kind": "promissory",
+      "name": "Strike Wing Ambuscade",
+      "pack": "pok",
+      "faction": "argent"
+    },
+    {
+      "id": "promissory:blood_pact",
+      "kind": "promissory",
+      "name": "Blood Pact",
+      "pack": "pok",
+      "faction": "empyrean"
+    },
+    {
+      "id": "promissory:scepter",
+      "kind": "promissory",
+      "name": "Scepter of Dominion",
+      "pack": "pok",
+      "faction": "mahact"
+    },
+    {
+      "id": "promissory:bmf",
+      "kind": "promissory",
+      "name": "Black Market Forgery",
+      "pack": "pok",
+      "faction": "naaz"
+    },
+    {
+      "id": "promissory:cavalry",
+      "kind": "promissory",
+      "name": "The Cavalry",
+      "pack": "pok",
+      "faction": "nomad"
+    },
+    {
+      "id": "promissory:terraform",
+      "kind": "promissory",
+      "name": "Terraform",
+      "pack": "pok",
+      "faction": "titans"
+    },
+    {
+      "id": "promissory:crucible",
+      "kind": "promissory",
+      "name": "Crucible",
+      "pack": "pok",
+      "faction": "cabal"
+    },
+    {
+      "id": "promissory:dark_pact",
+      "kind": "promissory",
+      "name": "Dark Pact",
+      "pack": "pok",
+      "faction": "empyrean"
+    },
+    {
+      "id": "promissory:ridera",
+      "kind": "promissory",
+      "name": "Keleres Rider",
+      "pack": "pok",
+      "faction": "keleresa"
+    },
+    {
+      "id": "promissory:riderm",
+      "kind": "promissory",
+      "name": "Keleres Rider",
+      "pack": "pok",
+      "faction": "keleresm"
+    },
+    {
+      "id": "promissory:riderx",
+      "kind": "promissory",
+      "name": "Keleres Rider",
+      "pack": "pok",
+      "faction": "keleresx"
+    },
+    {
+      "id": "publicObjective:amass_wealth",
+      "kind": "publicObjective",
+      "name": "Amass Wealth",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:build_defenses",
+      "kind": "publicObjective",
+      "name": "Build Defenses",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:lost_outposts",
+      "kind": "publicObjective",
+      "name": "Discover Lost Outposts",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:engineer_marvel",
+      "kind": "publicObjective",
+      "name": "Engineer a Marvel",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:deep_space",
+      "kind": "publicObjective",
+      "name": "Explore Deep Space",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:infrastructure",
+      "kind": "publicObjective",
+      "name": "Improve Infrastructure",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:make_history",
+      "kind": "publicObjective",
+      "name": "Make History",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:outer_rim",
+      "kind": "publicObjective",
+      "name": "Populate the Outer Rim",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:push_boundaries",
+      "kind": "publicObjective",
+      "name": "Push Boundaries",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:raise_fleet",
+      "kind": "publicObjective",
+      "name": "Raise a Fleet",
+      "pack": "pok",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:supremacy",
+      "kind": "publicObjective",
+      "name": "Achieve Supremacy",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:become_legend",
+      "kind": "publicObjective",
+      "name": "Become a Legend",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:command_armada",
+      "kind": "publicObjective",
+      "name": "Command an Armada",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:massive_cities",
+      "kind": "publicObjective",
+      "name": "Construct Massive Cities",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:control_borderlands",
+      "kind": "publicObjective",
+      "name": "Control the Borderlands",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:vast_reserves",
+      "kind": "publicObjective",
+      "name": "Hold Vast Reserves",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:vast_territories",
+      "kind": "publicObjective",
+      "name": "Patrol Vast Territories",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:protect_border",
+      "kind": "publicObjective",
+      "name": "Protect the Border",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:ancient_monuments",
+      "kind": "publicObjective",
+      "name": "Reclaim Ancient Monuments",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:distant_lands",
+      "kind": "publicObjective",
+      "name": "Rule Distant Lands",
+      "pack": "pok",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "secretObjective:bam",
+      "kind": "secretObjective",
+      "name": "Become a Martyr",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:baf",
+      "kind": "secretObjective",
+      "name": "Betray a Friend",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:btv",
+      "kind": "secretObjective",
+      "name": "Brave the Void",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dts",
+      "kind": "secretObjective",
+      "name": "Darken the Skies",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dfat",
+      "kind": "secretObjective",
+      "name": "Defy Space and Time",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dyp",
+      "kind": "secretObjective",
+      "name": "Demonstrate Your Power",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dhw",
+      "kind": "secretObjective",
+      "name": "Destroy Heretical Works",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dp",
+      "kind": "secretObjective",
+      "name": "Dictate Policy",
+      "pack": "pok",
+      "detail": {
+        "phase": "agenda",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dtd",
+      "kind": "secretObjective",
+      "name": "Drive the Debate",
+      "pack": "pok",
+      "detail": {
+        "phase": "agenda",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:eh",
+      "kind": "secretObjective",
+      "name": "Establish Hegemony",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:fwp",
+      "kind": "secretObjective",
+      "name": "Fight with Precision",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:fc",
+      "kind": "secretObjective",
+      "name": "Foster Cohesion",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:hrm",
+      "kind": "secretObjective",
+      "name": "Hoard Raw Materials",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:mtm",
+      "kind": "secretObjective",
+      "name": "Mechanize the Military",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:otf",
+      "kind": "secretObjective",
+      "name": "Occupy the Fringe",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:pem",
+      "kind": "secretObjective",
+      "name": "Produce en Masse",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:pe",
+      "kind": "secretObjective",
+      "name": "Prove Endurance",
+      "pack": "pok",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:sai",
+      "kind": "secretObjective",
+      "name": "Seize an Icon",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:syc",
+      "kind": "secretObjective",
+      "name": "Stake Your Claim",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:sb",
+      "kind": "secretObjective",
+      "name": "Strengthen Bonds",
+      "pack": "pok",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    }
+  ]
 }

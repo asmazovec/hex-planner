@@ -27,7 +27,7 @@ const stateOf = (game: Game, filter: 'now' | 'forecast' = 'forecast') => project
 const codes = (list: Warning[] | undefined) => (list ?? []).map(w => w.code);
 const warningsOf = (game: Game, entry: Entry) => codes(stateOf(game).warningsByEntry[entry.id]);
 const pay = (planets: string[], tradeGoods = 0) => ({ planets, tradeGoods });
-const spendAll = (): Entry => ({ id: `s${++n}`, phase: 'action', status: 'planned', type: 'expedition', sliceId: null, payment: pay([JOL, NAR]) });
+const spendAll = (): Entry => ({ id: `s${++n}`, phase: 'action', status: 'planned', type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: pay([JOL, NAR]) }] });
 const emptyRound = (entries: Entry[], strategyCard: number | null = null, backupCard: number | null = null) =>
   ({ number: 1, strategyCard, backupCard, entries });
 
@@ -358,7 +358,7 @@ describe('Technology', () => {
     expect(warningsByEntry[entry.id]).toEqual([{ code: 'shortResources', params: { needed: 4, paid: 0 } }]);
   });
 
-  test('without a card an entry\'s upgrades still apply and cost nothing, as saved before', () => {
+  test('without a card an entry\'s upgrades still apply and cost nothing', () => {
     const entry = play({ type: 'strategic', upgrades: ['carrier'] });
     const { state, warningsByEntry } = stateOf(start([entry]));
     expect(state.upgrades).toEqual(['carrier']);

@@ -10,7 +10,6 @@ import type { DataPack, Entry, Game, GameState, Plan, Round, Warning } from '../
 import { applyActs, type ActContext } from './acts';
 import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
-import { applyDetachedExpedition } from './expedition';
 import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyAdjustment, initialState } from './state';
@@ -81,9 +80,6 @@ function applyEntry(
     case 'strategic':
     case 'secondary':
       applyCard(game, state, entry, pack, cards, warnings);
-      break;
-    case 'expedition':
-      applyDetachedExpedition(game, state, entry, pack, acts.taken, warnings);
       break;
     case 'statusTokens':
       applyStatusTokens(game, state, entry, pack, warnings);

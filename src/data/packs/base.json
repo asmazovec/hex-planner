@@ -3751,7 +3751,8 @@
     "md": {
       "id": "md",
       "name": "Magen Defense Grid ΩΩ",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "pok"
     },
     "bio": {
       "id": "bio",
@@ -3759,7 +3760,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 2
-      }
+      },
+      "pack": "base"
     },
     "lw2": {
       "id": "lw2",
@@ -3768,12 +3770,14 @@
       "requires": {
         "biotic": 2
       },
-      "upgrade": "infantry"
+      "upgrade": "infantry",
+      "pack": "base"
     },
     "gd": {
       "id": "gd",
       "name": "Gravity Drive",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "base"
     },
     "ds": {
       "id": "ds",
@@ -3781,7 +3785,8 @@
       "type": "warfare",
       "requires": {
         "warfare": 1
-      }
+      },
+      "pack": "base"
     },
     "wg": {
       "id": "wg",
@@ -3789,17 +3794,20 @@
       "type": "propulsion",
       "requires": {
         "propulsion": 2
-      }
+      },
+      "pack": "base"
     },
     "st": {
       "id": "st",
       "name": "Sarween Tools",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "base"
     },
     "amd": {
       "id": "amd",
       "name": "Antimass Deflectors",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "base"
     },
     "qdn": {
       "id": "qdn",
@@ -3807,7 +3815,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 3
-      }
+      },
+      "pack": "base"
     },
     "pm": {
       "id": "pm",
@@ -3815,17 +3824,20 @@
       "type": "biotic",
       "requires": {
         "biotic": 2
-      }
+      },
+      "pack": "base"
     },
     "nm": {
       "id": "nm",
       "name": "Neural Motivator",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "base"
     },
     "ps": {
       "id": "ps",
       "name": "Plasma Scoring",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "base"
     },
     "ers": {
       "id": "ers",
@@ -3833,7 +3845,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "base"
     },
     "scc": {
       "id": "scc",
@@ -3841,7 +3854,8 @@
       "type": "propulsion",
       "requires": {
         "propulsion": 2
-      }
+      },
+      "pack": "base"
     },
     "is": {
       "id": "is",
@@ -3849,7 +3863,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "base"
     },
     "sdn2": {
       "id": "sdn2",
@@ -3859,7 +3874,8 @@
         "propulsion": 2,
         "cybernetic": 1
       },
-      "upgrade": "dreadnought"
+      "upgrade": "dreadnought",
+      "pack": "base"
     },
     "l4": {
       "id": "l4",
@@ -3867,7 +3883,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 1
-      }
+      },
+      "pack": "base"
     },
     "nes": {
       "id": "nes",
@@ -3875,7 +3892,8 @@
       "type": "warfare",
       "requires": {
         "warfare": 2
-      }
+      },
+      "pack": "base"
     },
     "mc": {
       "id": "mc",
@@ -3883,7 +3901,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 3
-      }
+      },
+      "pack": "base"
     },
     "so": {
       "id": "so",
@@ -3891,7 +3910,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "base"
     },
     "pws2": {
       "id": "pws2",
@@ -3901,7 +3921,8 @@
         "warfare": 3,
         "cybernetic": 1
       },
-      "upgrade": "warsun"
+      "upgrade": "warsun",
+      "pack": "base"
     },
     "mr": {
       "id": "mr",
@@ -3909,7 +3930,8 @@
       "type": "warfare",
       "requires": {
         "warfare": 2
-      }
+      },
+      "pack": "base"
     },
     "ng": {
       "id": "ng",
@@ -3917,7 +3939,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 3
-      }
+      },
+      "pack": "base"
     },
     "hcf2": {
       "id": "hcf2",
@@ -3927,22 +3950,26 @@
         "biotic": 1,
         "propulsion": 1
       },
-      "upgrade": "fighter"
+      "upgrade": "fighter",
+      "pack": "base"
     },
     "dxa": {
       "id": "dxa",
       "name": "Dacxive Animators",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "base"
     },
     "vax": {
       "id": "vax",
       "name": "Valefar Assimilator X",
-      "type": null
+      "type": null,
+      "pack": "base"
     },
     "vay": {
       "id": "vay",
       "name": "Valefar Assimilator Y",
-      "type": null
+      "type": null,
+      "pack": "base"
     },
     "ffac2": {
       "id": "ffac2",
@@ -3951,7 +3978,8 @@
       "requires": {
         "cybernetic": 2
       },
-      "upgrade": "spacedock"
+      "upgrade": "spacedock",
+      "pack": "base"
     },
     "cm": {
       "id": "cm",
@@ -3959,7 +3987,8 @@
       "type": "propulsion",
       "requires": {
         "propulsion": 1
-      }
+      },
+      "pack": "base"
     },
     "exo2": {
       "id": "exo2",
@@ -3969,7 +3998,8 @@
         "propulsion": 2,
         "cybernetic": 1
       },
-      "upgrade": "dreadnought"
+      "upgrade": "dreadnought",
+      "pack": "base"
     },
     "vpw": {
       "id": "vpw",
@@ -3977,7 +4007,8 @@
       "type": "warfare",
       "requires": {
         "warfare": 2
-      }
+      },
+      "pack": "base"
     },
     "so2": {
       "id": "so2",
@@ -3986,7 +4017,8 @@
       "requires": {
         "biotic": 2
       },
-      "upgrade": "infantry"
+      "upgrade": "infantry",
+      "pack": "base"
     },
     "ac2": {
       "id": "ac2",
@@ -3995,27 +4027,32 @@
       "requires": {
         "propulsion": 2
       },
-      "upgrade": "carrier"
+      "upgrade": "carrier",
+      "pack": "base"
     },
     "det": {
       "id": "det",
       "name": "Dark Energy Tap",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "pok"
     },
     "pa": {
       "id": "pa",
       "name": "Psychoarchaeology",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "pok"
     },
     "sdn": {
       "id": "sdn",
       "name": "Scanlink Drone Network",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "pok"
     },
     "aida": {
       "id": "aida",
       "name": "AI Development Algorithm",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "pok"
     },
     "lgf": {
       "id": "lgf",
@@ -4023,7 +4060,8 @@
       "type": "propulsion",
       "requires": {
         "propulsion": 2
-      }
+      },
+      "pack": "base"
     },
     "htp": {
       "id": "htp",
@@ -4031,12 +4069,14 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "base"
     },
     "gls": {
       "id": "gls",
       "name": "Graviton Laser System",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "base"
     },
     "it": {
       "id": "it",
@@ -4044,7 +4084,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 1
-      }
+      },
+      "pack": "base"
     },
     "nf": {
       "id": "nf",
@@ -4052,7 +4093,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "base"
     },
     "yso": {
       "id": "yso",
@@ -4060,7 +4102,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 2
-      }
+      },
+      "pack": "base"
     },
     "ic": {
       "id": "ic",
@@ -4068,7 +4111,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "base"
     },
     "tp": {
       "id": "tp",
@@ -4076,7 +4120,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 1
-      }
+      },
+      "pack": "base"
     },
     "mi": {
       "id": "mi",
@@ -4084,7 +4129,185 @@
       "type": "biotic",
       "requires": {
         "biotic": 3
-      }
+      },
+      "pack": "base"
+    },
+    "fl": {
+      "id": "fl",
+      "name": "Fleet Logistics",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 2
+      },
+      "pack": "base"
+    },
+    "lwd": {
+      "id": "lwd",
+      "name": "Light/Wave Deflector",
+      "type": "propulsion",
+      "requires": {
+        "propulsion": 3
+      },
+      "pack": "base"
+    },
+    "hm": {
+      "id": "hm",
+      "name": "Hyper Metabolism",
+      "type": "biotic",
+      "requires": {
+        "biotic": 2
+      },
+      "pack": "base"
+    },
+    "x89_base": {
+      "id": "x89_base",
+      "name": "X-89 Bacterial Weapon",
+      "type": "biotic",
+      "requires": {
+        "biotic": 3
+      },
+      "pack": "base"
+    },
+    "md_base": {
+      "id": "md_base",
+      "name": "Magen Defense Grid",
+      "type": "warfare",
+      "requires": {
+        "warfare": 1
+      },
+      "pack": "base"
+    },
+    "da": {
+      "id": "da",
+      "name": "Duranium Armor",
+      "type": "warfare",
+      "requires": {
+        "warfare": 2
+      },
+      "pack": "base"
+    },
+    "asc": {
+      "id": "asc",
+      "name": "Assault Cannon",
+      "type": "warfare",
+      "requires": {
+        "warfare": 3
+      },
+      "pack": "base"
+    },
+    "td": {
+      "id": "td",
+      "name": "Transit Diodes",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 2
+      },
+      "pack": "base"
+    },
+    "ie": {
+      "id": "ie",
+      "name": "Integrated Economy",
+      "type": "cybernetic",
+      "requires": {
+        "cybernetic": 3
+      },
+      "pack": "base"
+    },
+    "ws": {
+      "id": "ws",
+      "name": "War Sun",
+      "type": null,
+      "requires": {
+        "warfare": 3,
+        "cybernetic": 1
+      },
+      "upgrade": "warsun",
+      "pack": "base"
+    },
+    "sd2": {
+      "id": "sd2",
+      "name": "Space Dock II",
+      "type": null,
+      "requires": {
+        "cybernetic": 2
+      },
+      "upgrade": "spacedock",
+      "pack": "base"
+    },
+    "cr2": {
+      "id": "cr2",
+      "name": "Cruiser II",
+      "type": null,
+      "requires": {
+        "biotic": 1,
+        "cybernetic": 1,
+        "warfare": 1
+      },
+      "upgrade": "cruiser",
+      "pack": "base"
+    },
+    "dn2": {
+      "id": "dn2",
+      "name": "Dreadnought II",
+      "type": null,
+      "requires": {
+        "propulsion": 2,
+        "cybernetic": 1
+      },
+      "upgrade": "dreadnought",
+      "pack": "base"
+    },
+    "dd2": {
+      "id": "dd2",
+      "name": "Destroyer II",
+      "type": null,
+      "requires": {
+        "warfare": 2
+      },
+      "upgrade": "destroyer",
+      "pack": "base"
+    },
+    "pds2": {
+      "id": "pds2",
+      "name": "PDS II",
+      "type": null,
+      "requires": {
+        "warfare": 1,
+        "cybernetic": 1
+      },
+      "upgrade": "pds",
+      "pack": "base"
+    },
+    "cv2": {
+      "id": "cv2",
+      "name": "Carrier II",
+      "type": null,
+      "requires": {
+        "propulsion": 2
+      },
+      "upgrade": "carrier",
+      "pack": "base"
+    },
+    "ff2": {
+      "id": "ff2",
+      "name": "Fighter II",
+      "type": null,
+      "requires": {
+        "biotic": 1,
+        "propulsion": 1
+      },
+      "upgrade": "fighter",
+      "pack": "base"
+    },
+    "inf2": {
+      "id": "inf2",
+      "name": "Infantry II",
+      "type": null,
+      "requires": {
+        "biotic": 2
+      },
+      "upgrade": "infantry",
+      "pack": "base"
     }
   },
   "structures": [
@@ -4124,6 +4347,1720 @@
           "name": "Space Dock II",
           "production": 4
         }
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "actionCard:abs",
+      "kind": "actionCard",
+      "name": "Ancient Burial Sites",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "At the start of the agenda phase"
+      }
+    },
+    {
+      "id": "actionCard:assassin",
+      "kind": "actionCard",
+      "name": "Assassinate Representative",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:bribery",
+      "kind": "actionCard",
+      "name": "Bribery",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After the speaker votes on an agenda"
+      }
+    },
+    {
+      "id": "actionCard:bunker",
+      "kind": "actionCard",
+      "name": "Bunker",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of an invasion"
+      }
+    },
+    {
+      "id": "actionCard:confusing",
+      "kind": "actionCard",
+      "name": "Confusing Legal Text",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "When you are elected as the outcome of an agenda"
+      }
+    },
+    {
+      "id": "actionCard:const_rider",
+      "kind": "actionCard",
+      "name": "Construction Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:courageous",
+      "kind": "actionCard",
+      "name": "Courageous to the End",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After 1 of your ships is destroyed during a space combat"
+      }
+    },
+    {
+      "id": "actionCard:cripple",
+      "kind": "actionCard",
+      "name": "Cripple Defenses",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:diplo_rider",
+      "kind": "actionCard",
+      "name": "Diplomacy Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:dh1",
+      "kind": "actionCard",
+      "name": "Direct Hit",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "After another player's ship uses SUSTAIN DAMAGE to cancel a hit produced by your units or abilities"
+      }
+    },
+    {
+      "id": "actionCard:disable",
+      "kind": "actionCard",
+      "name": "Disable",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of an invasion in a system that contains 1 or more of your opponents' PDS units"
+      }
+    },
+    {
+      "id": "actionCard:distinguished",
+      "kind": "actionCard",
+      "name": "Distinguished Councilor",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After you cast votes on an outcome of an agenda"
+      }
+    },
+    {
+      "id": "actionCard:economic_initiative",
+      "kind": "actionCard",
+      "name": "Economic Initiative",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:emergency",
+      "kind": "actionCard",
+      "name": "Emergency Repairs",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start or end of a combat round"
+      }
+    },
+    {
+      "id": "actionCard:experimental",
+      "kind": "actionCard",
+      "name": "Experimental Battlestation",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After the active player moves ships into the active system during a tactical action"
+      }
+    },
+    {
+      "id": "actionCard:f_prototype",
+      "kind": "actionCard",
+      "name": "Fighter Prototype",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of the first round of a space combat"
+      }
+    },
+    {
+      "id": "actionCard:fire_team",
+      "kind": "actionCard",
+      "name": "Fire Team",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After your ground forces make combat rolls during a round of ground combat"
+      }
+    },
+    {
+      "id": "actionCard:fs1",
+      "kind": "actionCard",
+      "name": "Flank Speed",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system"
+      }
+    },
+    {
+      "id": "actionCard:f_researched",
+      "kind": "actionCard",
+      "name": "Focused Research",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:f_deployment",
+      "kind": "actionCard",
+      "name": "Frontline Deployment",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:ghost_ship",
+      "kind": "actionCard",
+      "name": "Ghost Ship",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:imp_rider",
+      "kind": "actionCard",
+      "name": "Imperial Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:silence_space",
+      "kind": "actionCard",
+      "name": "In The Silence Of Space",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system"
+      }
+    },
+    {
+      "id": "actionCard:industrial_initiative",
+      "kind": "actionCard",
+      "name": "Industrial Initiative",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:infiltrate",
+      "kind": "actionCard",
+      "name": "Infiltrate",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "When you gain control of a planet"
+      }
+    },
+    {
+      "id": "actionCard:insub",
+      "kind": "actionCard",
+      "name": "Insubordination",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:intercept",
+      "kind": "actionCard",
+      "name": "Intercept",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After your opponent declares a retreat during a space combat"
+      }
+    },
+    {
+      "id": "actionCard:lead_rider",
+      "kind": "actionCard",
+      "name": "Leadership Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:lost_star",
+      "kind": "actionCard",
+      "name": "Lost Star Chart",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system"
+      }
+    },
+    {
+      "id": "actionCard:lucky",
+      "kind": "actionCard",
+      "name": "Lucky Shot",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:mjets1",
+      "kind": "actionCard",
+      "name": "Maneuvering Jets",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "Before you assign hits produced by another player's SPACE CANNON roll"
+      }
+    },
+    {
+      "id": "actionCard:mining_initiative",
+      "kind": "actionCard",
+      "name": "Mining Initiative",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:mb1",
+      "kind": "actionCard",
+      "name": "Morale Boost",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of a combat round"
+      }
+    },
+    {
+      "id": "actionCard:parley",
+      "kind": "actionCard",
+      "name": "Parley",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player commits units to land on a planet you control"
+      }
+    },
+    {
+      "id": "actionCard:plague",
+      "kind": "actionCard",
+      "name": "Plague",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:stability",
+      "kind": "actionCard",
+      "name": "Political Stability",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "status",
+        "window": "When you would return your strategy card(s) during the status phase"
+      }
+    },
+    {
+      "id": "actionCard:politic_rider",
+      "kind": "actionCard",
+      "name": "Politics Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:disgrace",
+      "kind": "actionCard",
+      "name": "Public Disgrace",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "strategy",
+        "window": "When another player chooses a strategy card during the strategy phase"
+      }
+    },
+    {
+      "id": "actionCard:meltdown",
+      "kind": "actionCard",
+      "name": "Reactor Meltdown",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:reparations",
+      "kind": "actionCard",
+      "name": "Reparations",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player gains control of a planet you control"
+      }
+    },
+    {
+      "id": "actionCard:repeal",
+      "kind": "actionCard",
+      "name": "Repeal Law",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:messiah",
+      "kind": "actionCard",
+      "name": "Rise of a Messiah",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:sabo1",
+      "kind": "actionCard",
+      "name": "Sabotage",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "any",
+        "window": "When another player plays an action card other than 'Sabotage'"
+      }
+    },
+    {
+      "id": "actionCard:salvage",
+      "kind": "actionCard",
+      "name": "Salvage",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you win a space combat"
+      }
+    },
+    {
+      "id": "actionCard:sh1",
+      "kind": "actionCard",
+      "name": "Shields Holding",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "Before you assign hits to your ships during a space combat"
+      }
+    },
+    {
+      "id": "actionCard:jamming",
+      "kind": "actionCard",
+      "name": "Signal Jamming",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:s_retreat1",
+      "kind": "actionCard",
+      "name": "Skilled Retreat",
+      "pack": "base",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of a combat round"
+      }
+    },
+    {
+      "id": "actionCard:spy",
+      "kind": "actionCard",
+      "name": "Spy",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:summit",
+      "kind": "actionCard",
+      "name": "Summit",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "strategy",
+        "window": "At the start of the strategy phase"
+      }
+    },
+    {
+      "id": "actionCard:tactical",
+      "kind": "actionCard",
+      "name": "Tactical Bombardment",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:tech_rider",
+      "kind": "actionCard",
+      "name": "Technology Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:trade_rider",
+      "kind": "actionCard",
+      "name": "Trade Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:unexpected",
+      "kind": "actionCard",
+      "name": "Unexpected Action",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:unstable",
+      "kind": "actionCard",
+      "name": "Unstable Planet",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:upgrade",
+      "kind": "actionCard",
+      "name": "Upgrade",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After you activate a system that contains 1 or more of your ships"
+      }
+    },
+    {
+      "id": "actionCard:uprising",
+      "kind": "actionCard",
+      "name": "Uprising",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:veto",
+      "kind": "actionCard",
+      "name": "Veto",
+      "pack": "base",
+      "copies": 3,
+      "detail": {
+        "phase": "agenda",
+        "window": "When an agenda is revealed"
+      }
+    },
+    {
+      "id": "actionCard:war_effort",
+      "kind": "actionCard",
+      "name": "War Effort",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:war_rider",
+      "kind": "actionCard",
+      "name": "Warfare Rider",
+      "pack": "base",
+      "copies": 1,
+      "detail": {
+        "phase": "agenda",
+        "window": "After an agenda is revealed"
+      }
+    },
+    {
+      "id": "agenda:revolution",
+      "kind": "agenda",
+      "name": "Anti-Intellectual Revolution",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:secret",
+      "kind": "agenda",
+      "name": "Archived Secret",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:arms_reduction",
+      "kind": "agenda",
+      "name": "Arms Reduction",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:classified",
+      "kind": "agenda",
+      "name": "Classified Document Leaks",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Scored Secret Objective (When this agenda is revealed, if there are no scored secret objectives, discard this card and reveal another agenda from the top of the deck.)"
+      }
+    },
+    {
+      "id": "agenda:redistribution",
+      "kind": "agenda",
+      "name": "Colonial Redistribution",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Non-Home Planet Other Than Mecatol Rex"
+      }
+    },
+    {
+      "id": "agenda:committee",
+      "kind": "agenda",
+      "name": "Committee Formation",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:disarmament",
+      "kind": "agenda",
+      "name": "Compensated Disarmament",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:conventions",
+      "kind": "agenda",
+      "name": "Conventions of War",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:economic_equality",
+      "kind": "agenda",
+      "name": "Economic Equality",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:travel_ban",
+      "kind": "agenda",
+      "name": "Enforced Travel Ban",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:sanctions",
+      "kind": "agenda",
+      "name": "Executive Sanctions",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:regulations",
+      "kind": "agenda",
+      "name": "Fleet Regulations",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:defense_act",
+      "kind": "agenda",
+      "name": "Homeland Defense Act",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:arbiter",
+      "kind": "agenda",
+      "name": "Imperial Arbiter",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:incentive",
+      "kind": "agenda",
+      "name": "Incentive Program",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:artifact",
+      "kind": "agenda",
+      "name": "Ixthian Artifact",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:abolishment",
+      "kind": "agenda",
+      "name": "Judicial Abolishment",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Law (When this agenda is revealed, if there are no laws in play, discard this card and reveal another agenda from the top of the deck.)"
+      }
+    },
+    {
+      "id": "agenda:minister_commerce",
+      "kind": "agenda",
+      "name": "Minister of Commerce",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:minister_exploration",
+      "kind": "agenda",
+      "name": "Minister of Exploration",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:minister_industry",
+      "kind": "agenda",
+      "name": "Minister of Industry",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:minister_peace",
+      "kind": "agenda",
+      "name": "Minister of Peace",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:minister_policy",
+      "kind": "agenda",
+      "name": "Minister of Policy",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:minister_sciences",
+      "kind": "agenda",
+      "name": "Minister of Sciences",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:minister_war",
+      "kind": "agenda",
+      "name": "Minister of War",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:miscount",
+      "kind": "agenda",
+      "name": "Miscount Disclosed",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Law"
+      }
+    },
+    {
+      "id": "agenda:mutiny",
+      "kind": "agenda",
+      "name": "Mutiny",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:constitution",
+      "kind": "agenda",
+      "name": "New Constitution",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:prophecy",
+      "kind": "agenda",
+      "name": "Prophecy of Ixth",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:execution",
+      "kind": "agenda",
+      "name": "Public Execution",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:schematics",
+      "kind": "agenda",
+      "name": "Publicize Weapon Schematics",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:conscription",
+      "kind": "agenda",
+      "name": "Regulated Conscription",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:seed_empire",
+      "kind": "agenda",
+      "name": "Seed of an Empire",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:shared_research",
+      "kind": "agenda",
+      "name": "Shared Research",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:plowshares",
+      "kind": "agenda",
+      "name": "Swords to Plowshares",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:unconventional",
+      "kind": "agenda",
+      "name": "Unconventional Measures",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:wormhole_recon",
+      "kind": "agenda",
+      "name": "Wormhole Reconstruction",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:wormhole_research",
+      "kind": "agenda",
+      "name": "Wormhole Research",
+      "pack": "base",
+      "detail": {
+        "type": "directive",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:core_mining",
+      "kind": "agenda",
+      "name": "Core Mining",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:demilitarized_zone",
+      "kind": "agenda",
+      "name": "Demilitarized Zone",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:holy_planet_of_ixth",
+      "kind": "agenda",
+      "name": "Holy Planet of Ixth",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:representative_government",
+      "kind": "agenda",
+      "name": "Representative Government (Base Game)",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "For/Against"
+      }
+    },
+    {
+      "id": "agenda:rt_biotic",
+      "kind": "agenda",
+      "name": "Research Team: Biotic",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:rt_cybernetic",
+      "kind": "agenda",
+      "name": "Research Team: Cybernetic",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:rt_propulsion",
+      "kind": "agenda",
+      "name": "Research Team: Propulsion",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:rt_warfare",
+      "kind": "agenda",
+      "name": "Research Team: Warfare",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:senate_sanctuary",
+      "kind": "agenda",
+      "name": "Senate Sanctuary",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:shard_of_the_throne",
+      "kind": "agenda",
+      "name": "Shard of the Throne",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:terraforming_initiative",
+      "kind": "agenda",
+      "name": "Terraforming Initiative",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Planet"
+      }
+    },
+    {
+      "id": "agenda:crown_of_emphidia",
+      "kind": "agenda",
+      "name": "The Crown of Emphidia",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "agenda:crown_of_thalnos",
+      "kind": "agenda",
+      "name": "The Crown of Thalnos",
+      "pack": "base",
+      "detail": {
+        "type": "law",
+        "target": "Elect Player"
+      }
+    },
+    {
+      "id": "promissory:<color>_cf",
+      "kind": "promissory",
+      "name": "Ceasefire",
+      "pack": "base"
+    },
+    {
+      "id": "promissory:<color>_ps",
+      "kind": "promissory",
+      "name": "Political Secret",
+      "pack": "base"
+    },
+    {
+      "id": "promissory:<color>_sftt",
+      "kind": "promissory",
+      "name": "Support for the Throne",
+      "pack": "base"
+    },
+    {
+      "id": "promissory:<color>_ta",
+      "kind": "promissory",
+      "name": "Trade Agreement",
+      "pack": "base"
+    },
+    {
+      "id": "promissory:war_funding",
+      "kind": "promissory",
+      "name": "War Funding",
+      "pack": "base",
+      "faction": "letnev"
+    },
+    {
+      "id": "promissory:ragh",
+      "kind": "promissory",
+      "name": "Raghs Call",
+      "pack": "base",
+      "faction": "saar"
+    },
+    {
+      "id": "promissory:fires",
+      "kind": "promissory",
+      "name": "Fires of the Gashlai",
+      "pack": "base",
+      "faction": "muaat"
+    },
+    {
+      "id": "promissory:convoys",
+      "kind": "promissory",
+      "name": "Trade Convoys",
+      "pack": "base",
+      "faction": "hacan"
+    },
+    {
+      "id": "promissory:ms",
+      "kind": "promissory",
+      "name": "Military Support",
+      "pack": "base",
+      "faction": "sol"
+    },
+    {
+      "id": "promissory:iff",
+      "kind": "promissory",
+      "name": "Creuss Iff",
+      "pack": "base",
+      "faction": "ghost"
+    },
+    {
+      "id": "promissory:ce",
+      "kind": "promissory",
+      "name": "Cybernetic Enhancements",
+      "pack": "base",
+      "faction": "l1z1x"
+    },
+    {
+      "id": "promissory:pop",
+      "kind": "promissory",
+      "name": "Promise of Protection",
+      "pack": "base",
+      "faction": "mentak"
+    },
+    {
+      "id": "promissory:gift",
+      "kind": "promissory",
+      "name": "Gift of Prescience",
+      "pack": "base",
+      "faction": "naalu"
+    },
+    {
+      "id": "promissory:antivirus",
+      "kind": "promissory",
+      "name": "Antivirus",
+      "pack": "base",
+      "faction": "nekro"
+    },
+    {
+      "id": "promissory:tekklar",
+      "kind": "promissory",
+      "name": "Tekklar Legion",
+      "pack": "base",
+      "faction": "sardakk"
+    },
+    {
+      "id": "promissory:ra",
+      "kind": "promissory",
+      "name": "Research Agreement",
+      "pack": "base",
+      "faction": "jolnar"
+    },
+    {
+      "id": "promissory:acq",
+      "kind": "promissory",
+      "name": "Acquiescence",
+      "pack": "base",
+      "faction": "winnu"
+    },
+    {
+      "id": "promissory:favor",
+      "kind": "promissory",
+      "name": "Political Favor",
+      "pack": "base",
+      "faction": "xxcha"
+    },
+    {
+      "id": "promissory:greyfire",
+      "kind": "promissory",
+      "name": "Greyfire Mutagen",
+      "pack": "base",
+      "faction": "yin"
+    },
+    {
+      "id": "promissory:spynet",
+      "kind": "promissory",
+      "name": "Spy Net",
+      "pack": "base",
+      "faction": "yssaril"
+    },
+    {
+      "id": "promissory:stymie",
+      "kind": "promissory",
+      "name": "Stymie",
+      "pack": "base",
+      "faction": "arborec"
+    },
+    {
+      "id": "publicObjective:corner",
+      "kind": "publicObjective",
+      "name": "Corner the Market",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:develop",
+      "kind": "publicObjective",
+      "name": "Develop Weaponry",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:diversify",
+      "kind": "publicObjective",
+      "name": "Diversify Research",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:monument",
+      "kind": "publicObjective",
+      "name": "Erect a Monument",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:expand_borders",
+      "kind": "publicObjective",
+      "name": "Expand Borders",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:research_outposts",
+      "kind": "publicObjective",
+      "name": "Found Research Outposts",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:intimidate",
+      "kind": "publicObjective",
+      "name": "Intimidate Council",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:lead",
+      "kind": "publicObjective",
+      "name": "Lead From the Front",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:trade_routes",
+      "kind": "publicObjective",
+      "name": "Negotiate Trade Routes",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:sway_council",
+      "kind": "publicObjective",
+      "name": "Sway the Council",
+      "pack": "base",
+      "detail": {
+        "stage": 1,
+        "points": 1,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:centralize_trade",
+      "kind": "publicObjective",
+      "name": "Centralize Galactic Trade",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:conquer",
+      "kind": "publicObjective",
+      "name": "Conquer the Weak",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:brain_trust",
+      "kind": "publicObjective",
+      "name": "Form Galactic Brain Trust",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:golden_age",
+      "kind": "publicObjective",
+      "name": "Found a Golden Age",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:galvanize",
+      "kind": "publicObjective",
+      "name": "Galvanize the People",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:manipulate_law",
+      "kind": "publicObjective",
+      "name": "Manipulate Galactic Law",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:master_science",
+      "kind": "publicObjective",
+      "name": "Master the Sciences",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:revolutionize",
+      "kind": "publicObjective",
+      "name": "Revolutionize Warfare",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:subdue",
+      "kind": "publicObjective",
+      "name": "Subdue the Galaxy",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "publicObjective:unify_colonies",
+      "kind": "publicObjective",
+      "name": "Unify the Colonies",
+      "pack": "base",
+      "detail": {
+        "stage": 2,
+        "points": 2,
+        "phase": "status"
+      }
+    },
+    {
+      "id": "secretObjective:ans",
+      "kind": "secretObjective",
+      "name": "Adapt New Strategies",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:btgk",
+      "kind": "secretObjective",
+      "name": "Become the Gatekeeper",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:ctr",
+      "kind": "secretObjective",
+      "name": "Control the Region",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:csl",
+      "kind": "secretObjective",
+      "name": "Cut Supply Lines",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:dtgs",
+      "kind": "secretObjective",
+      "name": "Destroy Their Greatest Ship",
+      "pack": "base",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:eap",
+      "kind": "secretObjective",
+      "name": "Establish a Perimeter",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:faa",
+      "kind": "secretObjective",
+      "name": "Forge an Alliance",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:fsn",
+      "kind": "secretObjective",
+      "name": "Form a Spy Network",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:fwm",
+      "kind": "secretObjective",
+      "name": "Fuel the War Machine",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:gamf",
+      "kind": "secretObjective",
+      "name": "Gather a Mighty Fleet",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:lsc",
+      "kind": "secretObjective",
+      "name": "Learn the Secrets of the Cosmos",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:mew",
+      "kind": "secretObjective",
+      "name": "Make an Example of Their World",
+      "pack": "base",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:mlp",
+      "kind": "secretObjective",
+      "name": "Master the Laws of Physics",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:mrm",
+      "kind": "secretObjective",
+      "name": "Mine Rare Metals",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:mp",
+      "kind": "secretObjective",
+      "name": "Monopolize Production",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:ose",
+      "kind": "secretObjective",
+      "name": "Occupy the Seat of the Empire",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:sar",
+      "kind": "secretObjective",
+      "name": "Spark a Rebellion",
+      "pack": "base",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:te",
+      "kind": "secretObjective",
+      "name": "Threaten Enemies",
+      "pack": "base",
+      "detail": {
+        "phase": "status",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:ttfd",
+      "kind": "secretObjective",
+      "name": "Turn Their Fleets to Dust",
+      "pack": "base",
+      "detail": {
+        "phase": "action",
+        "points": 1
+      }
+    },
+    {
+      "id": "secretObjective:uf",
+      "kind": "secretObjective",
+      "name": "Unveil Flagship",
+      "pack": "base",
+      "detail": {
+        "phase": "action",
+        "points": 1
       }
     }
   ]

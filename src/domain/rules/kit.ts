@@ -8,7 +8,7 @@
  */
 import { loadPack } from '../../data/loadPack';
 import { project, stateBeforeEntry } from '../project';
-import type { CardEffects, CardPlay, DataPack, Entry, EntryBody, Game, GameState, Phase, TileDef, UnitCounts, Warning } from '../types';
+import { SAVE_FORMAT, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type Warning } from '../types';
 
 export const HOME = '0,0';
 export const NEAR = '1,0';
@@ -74,7 +74,7 @@ export function rulesGame(options: {
     delta: { units: { systemId, units } },
   }));
   return {
-    id: 'rules', schemaVersion: 1, dataVersion: 'rules', expansions: [], playerCount: options.playerCount ?? 6, layout: 'standard',
+    id: 'rules', format: SAVE_FORMAT, schemaVersion: 1, dataVersion: 'rules', expansions: [], playerCount: options.playerCount ?? 6, layout: 'standard',
     faction: FACTION, seat: 1, color: 1, vp: 0,
     map: { ...(options.map ?? DEFAULT_MAP) },
     opponents: [], upgrades: { me: [], opponents: {} }, enemyUnits: {}, enemyGround: {}, planetControl: {}, planetOwner: {},

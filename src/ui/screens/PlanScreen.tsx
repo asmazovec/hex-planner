@@ -45,7 +45,7 @@ import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { mapHighlights, planArrows, shownSystemsOf } from './plan/mapMarks';
-import { adjustmentIn, backFrom, cardIn, choosesForTe, expeditionIn, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, type PickState, type Slot } from './plan/pick';
+import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, type PickState, type Slot } from './plan/pick';
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
@@ -107,7 +107,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const cardPick = panel.kind === 'card' && next.kind === 'card' ? next.pick : null;
   const adjustmentEntry = panel.kind === 'adjustment' ? adjustmentIn(round, panel.entryId) : undefined;
   const adjustPick = next.kind === 'adjustmentSystem' ? adjustmentEntry : undefined;
-  const expeditionEntry = panel.kind === 'expedition' ? expeditionIn(round, panel.entryId) : undefined;
   const tapPath = next.kind === 'route' ? next.path : null;
   const choosing = next.kind === 'choose' ? next.what : null;
   const shown = panel.kind === 'list' ? panel.shown : null;
@@ -183,7 +182,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** Who the next entry belongs to, while that opponent is still in the game. */
   const actor = game.opponents.some(o => o.id === actingAs) ? actingAs ?? undefined : undefined;
   /** Whose action stands in an editor now; a new tactical action is the card's owner's or the one it is added for. */
-  const handOwner = picking ? tacticalOwner(round, tactical?.fromCard, actor) : (entry ?? cardEntry ?? adjustmentEntry ?? expeditionEntry)?.owner;
+  const handOwner = picking ? tacticalOwner(round, tactical?.fromCard, actor) : (entry ?? cardEntry ?? adjustmentEntry)?.owner;
 
   const onPick = (type: ActionType) => {
     flight.stop();
@@ -311,8 +310,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     } else if (opened.type === 'strategic' || opened.type === 'secondary') {
       drawers.closeTe();
       update(state => ({ ...opening(state), panel: { kind: 'card', entryId: opened.id } }));
-    } else if (opened.type === 'expedition') {
-      update(state => ({ ...opening(state), panel: { kind: 'expedition', entryId: opened.id } }));
     } else if (opened.type === 'component' || opened.type === 'pass') {
       update(state => ({ ...opening(state), panel: { kind: 'turn', entryId: opened.id } }));
     } else {
@@ -506,19 +503,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           />
         );
       }
-      case 'expedition': {
-        const given = slot.entry;
-        return (
-          <ExpeditionEditor
-            key={given.id} game={gameAs(game, given.owner)} pack={pack} sliceId={given.sliceId} payment={given.payment}
-            owners={owners} before={boards.before(given.id)} warnings={forecast.warningsByEntry[given.id] ?? []}
-            manualPayment={manualPayments.includes(given.id)} onManualPayment={open => toggleManualPayment(given.id, open)}
-            onChange={patch => updateEntry(given.id, patch)}
-            onDone={toList}
-            onRemove={() => removeEdited(given.id)}
-          />
-        );
-      }
       case 'turn': {
         const turn = slot.entry;
         return (
@@ -544,7 +528,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             />
           );
         }
-        // Its own part is not counted against it, as for an expedition entry.
+        // Its own part is not counted against it.
         const { [act.sliceId ?? '']: own, ...othersOwners } = owners;
         void own;
         const paymentKey = `${host.id}#${index}`;

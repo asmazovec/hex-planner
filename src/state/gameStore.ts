@@ -6,17 +6,20 @@ import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
 import { startingDocks, withForTokenOfRound } from '../domain/strategy';
-import { fractureSlots, withFractureMoved, withFractureRealigned } from '../domain/thundersEdge';
+import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
 import { toggleUpgrade } from '../domain/unitStats';
 import { slotKeyOf } from '../domain/layouts';
 import { placeStartUnits, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
 } from '../domain/types';
-import { loadGame, saveGame, listGames } from '../storage/db';
+import { loadGame, listGames } from '../storage/db';
 import { errorText } from '../storage/errorText';
+import { flushSaves, queueSave } from './autosave';
+import * as history from './history';
+import { forgetTimelines } from './projection';
 
-const HISTORY_LIMIT = 50;
+export { flushSaves };
 
 const newId = (): string => globalThis.crypto.randomUUID();
 const defaultPlanName = (position: number): string => `Plan ${position}`;
@@ -143,9 +146,10 @@ export interface GameStore {
   saveError: string | null;
   /**
    * The last save that could not be opened, or crashed once open, with why; `id` is null when the saves could not even be
-   * listed. Cleared when a game opens or starts.
+   * listed. `oldFormat`: an earlier version of the app saved it, which this one does not read. Cleared when a game opens
+   * or starts.
    */
-  loadFailure: { id: string | null; error: string } | null;
+  loadFailure: { id: string | null; error: string; oldFormat?: true } | null;
   /** Saves that failed this session: the list offers only their export and deletion, never opens them on its own. */
   brokenSaves: Record<string, string>;
   /** The open game crashed while drawn: it closes, stays saved as it was, and is marked as failed. */
@@ -223,28 +227,10 @@ const DRAFT_EXPANSIONS: ExpansionId[] = ['pok', 'te'];
 const newDraft = (expansions: ExpansionId[] = DRAFT_EXPANSIONS): Game =>
   createGame({ expansions, playerCount: 6, faction: '' }, loadPack(expansions));
 
-let history: Game[] = [];
-/** Writes run one after another so an older state can never overwrite a newer one. */
-let pendingSave: Promise<void> = Promise.resolve();
-
-/** Resolves once every save queued so far has finished. */
-export const flushSaves = (): Promise<void> => pendingSave;
-
 export const useGame = create<GameStore>((set, get) => {
-  const autosave = (game: Game): void => {
-    pendingSave = pendingSave.then(async () => {
-      try {
-        await saveGame(game);
-        set({ saveError: null });
-      } catch (error) {
-        set({ saveError: error instanceof Error ? error.message : String(error) });
-      }
-    });
-  };
-
   const replace = (game: Game): void => {
-    set({ game, canUndo: history.length > 0 });
-    autosave(game);
+    set({ game, canUndo: history.size() > 0 });
+    queueSave(game, saveError => set({ saveError }));
   };
 
   /** Applies an edit to the current game; an edit that changes nothing leaves no undo step and no save. */
@@ -253,7 +239,7 @@ export const useGame = create<GameStore>((set, get) => {
     if (!current) return;
     const next = withFractureTiles(withFractureMoved(current, edit(current), loadPack(current.expansions)));
     if (next === current) return;
-    history = [...history.slice(-(HISTORY_LIMIT - 1)), current];
+    history.push(current);
     replace(next);
   };
 
@@ -266,8 +252,9 @@ export const useGame = create<GameStore>((set, get) => {
   /** A save that would not open: the player is told, the save stays as it is. */
   const failLoad = (id: string | null, error: unknown): void => {
     const text = errorText(error);
+    const oldFormat = typeof error === 'object' && error !== null && (error as { kind?: unknown }).kind === 'oldFormat';
     set(state => ({
-      loadFailure: { id, error: text },
+      loadFailure: { id, error: text, ...(oldFormat ? { oldFormat: true as const } : {}) },
       brokenSaves: id === null ? state.brokenSaves : { ...state.brokenSaves, [id]: text },
     }));
   };
@@ -275,7 +262,7 @@ export const useGame = create<GameStore>((set, get) => {
   const startFromShare = (share: ShareParams): void => {
     const game = draftFromShare(share, get().draft, loadPack);
     if (game.faction) {
-      history = [];
+      history.clear();
       replace(placeStartUnits(game, loadPack(game.expansions)));
       set({ draft: newDraft(game.expansions) });
     } else {
@@ -293,7 +280,7 @@ export const useGame = create<GameStore>((set, get) => {
     linkConflict: null,
 
     newGame: (input, pack) => {
-      history = [];
+      history.clear();
       replace(createGame(input, pack));
     },
     openShareLink: async search => {
@@ -348,12 +335,13 @@ export const useGame = create<GameStore>((set, get) => {
     startGame: () => {
       const { draft } = get();
       if (!draft.faction) return;
-      history = [];
+      history.clear();
       replace(placeStartUnits(draft, loadPack(draft.expansions)));
       set({ draft: newDraft(draft.expansions), loadFailure: null });
     },
     closeGame: () => {
-      history = [];
+      history.clear();
+      forgetTimelines();
       set({ game: null, canUndo: false });
     },
     setDraftExpansions: expansions =>
@@ -368,12 +356,12 @@ export const useGame = create<GameStore>((set, get) => {
       try {
         const loaded = await loadGame(id);
         if (!loaded) return;
-        game = withFractureTiles(withFractureRealigned(loaded, loadPack(loaded.expansions)));
+        game = withFractureTiles(loaded);
       } catch (error) {
         failLoad(id, error);
         return;
       }
-      history = [];
+      history.clear();
       set(state => {
         const { [id]: fixed, ...brokenSaves } = state.brokenSaves;
         void fixed;
@@ -383,7 +371,8 @@ export const useGame = create<GameStore>((set, get) => {
     crashGame: error => {
       const { game } = get();
       if (!game) return;
-      history = [];
+      history.clear();
+      forgetTimelines();
       set(state => ({
         game: null,
         canUndo: false,
@@ -533,10 +522,8 @@ export const useGame = create<GameStore>((set, get) => {
       })),
 
     undo: () => {
-      const previous = history.at(-1);
-      if (!previous) return;
-      history = history.slice(0, -1);
-      replace(previous);
+      const previous = history.pop();
+      if (previous) replace(previous);
     },
   };
 });

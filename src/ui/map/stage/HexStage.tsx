@@ -143,7 +143,7 @@ export function HexStage(props: HexStageProps) {
           )}
           {mode === 'control' && (
             <ControlPanel
-              game={game} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
+              game={game} pack={pack} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
               seated={seated.map(seatOption)} chosen={planets[target]?.id} onChoose={setPlanet}
             />
           )}

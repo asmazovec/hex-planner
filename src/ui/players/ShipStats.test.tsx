@@ -52,7 +52,7 @@ describe('the table', () => {
     expect(within(row('carrier')).queryByText(/Carrier/)).toBeNull();
   });
 
-  test('a changed value is gold with old and new; the name, properties and retelling follow the level', () => {
+  test('a changed value is gold with old and new; the name, properties and printed ability follow the level', () => {
     const { rerender } = render(<ShipStats factionId="argent" pack={pack} upgraded={[]} />);
     expect(row('destroyer')).toHaveTextContent('Заградительный огонь 9×2');
     rerender(<ShipStats factionId="argent" pack={pack} upgraded={['destroyer']} />);
@@ -62,14 +62,14 @@ describe('the table', () => {
     expect(combat.querySelector('em')).toHaveTextContent('7');
     expect(row('destroyer').querySelectorAll('.ship-row-value')[0].querySelector('em')).toBeNull();
     expect(row('destroyer')).toHaveTextContent('Заградительный огонь 6×3');
-    expect(row('destroyer').textContent).toMatch(/пехоту/);
+    expect(row('destroyer').textContent).toMatch(/each result of 9 or 10 also destroys 1 of your opponent's infantry/);
   });
 
-  test('properties and retelling: war sun and a space cannon, in the chosen language', () => {
+  test('properties in the chosen language, the printed ability in English: war sun and a space cannon', () => {
     render(<ShipStats factionId="xxcha" pack={pack} />);
     expect(row('flagship')).toHaveTextContent('Устойчивость');
     expect(row('flagship')).toHaveTextContent('Космическая пушка 5×3');
-    expect(row('flagship').textContent).toMatch(/соседних системах/);
+    expect(row('flagship').textContent).toMatch(/adjacent systems/);
     expect(row('warsun')).toHaveTextContent('Бомбардировка 3×3');
     cleanup();
     setLanguage('en');

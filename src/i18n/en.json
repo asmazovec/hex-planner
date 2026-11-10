@@ -49,12 +49,16 @@
     "failed": "Could not import the file: {{reason}}",
     "invalidJson": "the file is not valid JSON",
     "invalidSchema": "the file is not a game or is damaged",
-    "newerVersion": "the file was made by a newer version of the app"
+    "newerVersion": "the file was made by a newer version of the app",
+    "oldFormat": "the file was saved by an earlier version of the app"
   },
   "load": {
     "failed": "The save could not be loaded",
     "failedBecause": "The save could not be loaded: {{error}}",
     "failedNamed": "The save “{{name}}” could not be loaded: {{error}}",
+    "oldFormat": "Saved by an earlier version of the app",
+    "oldFormatBecause": "The save cannot be opened: it was saved by an earlier version of the app",
+    "oldFormatNamed": "The save “{{name}}” cannot be opened: it was saved by an earlier version of the app",
     "listFailed": "Saved games could not be loaded: {{error}}",
     "exportRaw": "Export data",
     "exportFailed": "The save's data could not be exported: {{error}}",
@@ -270,7 +274,6 @@
       "tactical": "Tactical action",
       "strategic": "Strategy",
       "component": "Component action",
-      "expedition": "Expedition contribution, end of turn",
       "pass": "Pass",
       "adjustment": "Manual adjustment"
     },
@@ -434,7 +437,6 @@
       "routeBlocked_hyperlane": "The route from {{from}} ends on the hyperlane {{system}}: by the rules a hyperlane is no system, it cannot be the active system and no move ends there.",
       "sourceActivated_pickup": "{{system}} holds your command token: by the rules units cannot be picked up there, only in the active system.",
       "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move.",
-      "expeditionDetached": "This expedition part is saved as a separate entry: put it in the action it ends.",
       "transactionRepeated": "No more than one transaction with a player in a turn.",
       "notNeighbor": "A transaction is only with a neighbour: you need units or planets in the same or adjacent systems.",
       "shortCommodities": "Not enough commodities: {{needed}} needed, {{have}} held."
@@ -531,7 +533,6 @@
       "structure": "{{what}} on {{planet}}",
       "upgrades": "Upgrade",
       "noNote": "No note.",
-      "noSlice": "No part chosen.",
       "noChanges": "No changes.",
       "points": "My points: +{{n}}",
       "opponentPoints": "{{name}}: +{{n}}",
@@ -770,7 +771,7 @@
     "data": {
       "title": "Game data",
       "text": "Systems, planets, units and card sets are built from the public repository",
-      "wording": "Card, technology and ability descriptions are paraphrased in our own words. Terms follow the English Rules Reference and the Russian edition by Hobby World. The data may contain mistakes; where it differs, the official rules win."
+      "wording": "Card, technology and ability texts are quoted verbatim in English and belong to the publisher of the game. Terms follow the English Rules Reference and the Russian edition by Hobby World. The data may contain mistakes; where it differs, the official rules win."
     },
     "icons": {
       "title": "Icons"

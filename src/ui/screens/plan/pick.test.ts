@@ -4,8 +4,8 @@ import { LIST, resolvePick, slotOf, START, type Panel, type PickState } from './
 
 const tactical = { id: 't', type: 'tactical', status: 'planned', phase: 'action', systemId: '0,1', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } } as unknown as Entry;
 const card = { id: 'c', type: 'strategic', status: 'planned', phase: 'action', card: 1 } as unknown as Entry;
-const expedition = { id: 'x', type: 'expedition', status: 'planned', phase: 'action', sliceId: null, payment: { planets: [], tradeGoods: 0 } } as unknown as Entry;
-const round = { number: 1, entries: [tactical, card, expedition] } as unknown as Round;
+const adjustment = { id: 'x', type: 'adjustment', status: 'planned', phase: 'action', label: '', delta: {} } as unknown as Entry;
+const round = { number: 1, entries: [tactical, card, adjustment] } as unknown as Round;
 const at = (panel: Panel): PickState => ({ ...START, panel });
 
 describe('the one slot of the panel', () => {
@@ -15,11 +15,11 @@ describe('the one slot of the panel', () => {
     expect(slotOf(at({ kind: 'tactical', entryId: 't', pickerFrom: null }), round)).toMatchObject({ kind: 'tactical', entry: { id: 't' } });
     expect(slotOf(at({ kind: 'tactical', entryId: 't', pickerFrom: '1,0' }), round)).toMatchObject({ kind: 'flight', source: '1,0', entry: { id: 't' } });
     expect(slotOf(at({ kind: 'card', entryId: 'c' }), round)).toMatchObject({ kind: 'card', entry: { id: 'c' } });
-    expect(slotOf(at({ kind: 'expedition', entryId: 'x' }), round)).toMatchObject({ kind: 'expedition', entry: { id: 'x' } });
+    expect(slotOf(at({ kind: 'adjustment', entryId: 'x' }), round)).toMatchObject({ kind: 'adjustment', entry: { id: 'x' } });
   });
 
   test('an editor whose entry undo took away falls back to the list', () => {
-    const gone = at({ kind: 'expedition', entryId: 'missing' });
+    const gone = at({ kind: 'adjustment', entryId: 'missing' });
     expect(resolvePick(gone, round).panel).toEqual(LIST);
     expect(slotOf(gone, round)).toEqual({ kind: 'list' });
   });

@@ -8,7 +8,7 @@ import { currentLanguage, LANGUAGES, setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { deleteGame, listGames, loadRawGame, saveGame, type GameSummary } from '../../storage/db';
 import { errorText } from '../../storage/errorText';
-import { importGame, withFreeId } from '../../storage/transfer';
+import { importGame, withFreeId, type ImportResult } from '../../storage/transfer';
 import { Banner } from '../feedback/Banner';
 import { shareLinkQuery } from '../../domain/shareLink';
 import { NoteField } from '../primitives/NoteField';
@@ -24,6 +24,15 @@ import { EnergySettings } from './EnergySettings';
 import { LegalNotice } from './LegalNotice';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { ConfirmBar } from '../primitives/ConfirmBar';
+
+type Refusal = Extract<ImportResult, { ok: false }>['reason'];
+/** Why a file was not imported, in words: each reason by its own key, so no text is left without one. */
+const IMPORT_REFUSALS: Record<Refusal, (t: (key: string) => string) => string> = {
+  invalidJson: t => t('import.invalidJson'),
+  invalidSchema: t => t('import.invalidSchema'),
+  newerVersion: t => t('import.newerVersion'),
+  oldFormat: t => t('import.oldFormat'),
+};
 
 export interface GameScreenProps {
   /** Brings the map block into view on opening, e.g. from the hint of an unfinished map. */
@@ -116,7 +125,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
     try {
       const result = importGame(await file.text());
       if (!result.ok) {
-        setImportError(t(`import.${result.reason}`));
+        setImportError(IMPORT_REFUSALS[result.reason](t));
         return;
       }
       const imported = withFreeId(result.game, (await listGames()).map(g => g.id));
@@ -137,7 +146,9 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
             kind="error"
             message={loadFailure.id === null
               ? t('load.listFailed', { error: loadFailure.error })
-              : t(failedName ? 'load.failedNamed' : 'load.failedBecause', { name: failedName, error: loadFailure.error })}
+              : loadFailure.oldFormat
+                ? (failedName ? t('load.oldFormatNamed', { name: failedName }) : t('load.oldFormatBecause'))
+                : t(failedName ? 'load.failedNamed' : 'load.failedBecause', { name: failedName, error: loadFailure.error })}
           />
         )}
         {storageError && <Banner kind="error" message={storageError} />}
@@ -187,7 +198,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
                 <span>
                   <strong>{s.name ?? (s.faction ? factionName(s.faction) : s.id)}</strong>
                   {broken
-                    ? <small role="status">{t('load.failed')}</small>
+                    ? <small role="status">{s.oldFormat ? t('load.oldFormat') : t('load.failed')}</small>
                     : <small>{[...(s.name ? [factionName(s.faction)] : []), t('game.playersShort', { count: s.playerCount })].join(' · ')}</small>}
                 </span>
                 {/* The card is the bar's frame: the answers stand where Open and the cross were. */}

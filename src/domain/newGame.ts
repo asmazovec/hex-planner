@@ -1,6 +1,6 @@
 import { defaultLayout, slotKeyOf, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
-import type { DataPack, ExpansionId, Game, MapLayout } from './types';
+import { SAVE_FORMAT, type DataPack, type ExpansionId, type Game, type MapLayout } from './types';
 
 /** Makes an id with a prefix; it only has to be unique within one user's local games. */
 export type IdMaker = (prefix: string) => string;
@@ -35,7 +35,8 @@ export function createGame(
   const planId = makeId('plan', newId);
   return {
     id: makeId('game', newId),
-    schemaVersion: 6,
+    format: SAVE_FORMAT,
+    schemaVersion: 1,
     dataVersion: pack.version,
     expansions: [...input.expansions],
     playerCount: input.playerCount,

@@ -193,6 +193,8 @@ const pack: DataPack = {
   templates: [{ playerCount: 3, layout: 'standard', slots: [{ q: 0, r: 0, fixed: '18' }, { q: 1, r: 0 }] }],
   technologies: {},
   structures: [],
+  components: [],
+  texts: {},
 };
 
 type TacticalBody = Extract<Entry, { type: 'tactical' }>;
@@ -530,7 +532,7 @@ describe('project', () => {
   });
 
   test('экспедиция без части: оплата расходует планеты', () => {
-    const g = gameWith([entry({ type: 'expedition', sliceId: null, payment: { planets: ['jord'], tradeGoods: 0 } })]);
+    const g = gameWith([entry({ type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: null, payment: { planets: ['jord'], tradeGoods: 0 } }] })]);
     expect(run(g).state.exhausted).toEqual(['jord']);
   });
 

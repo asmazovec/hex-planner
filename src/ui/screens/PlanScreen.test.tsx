@@ -1040,7 +1040,6 @@ describe('reading the plan', () => {
   test('every entry type has a pencil and read-only steps; pass only its label', async () => {
     const add = useGame.getState().addEntry;
     add(1, { type: 'component', note: 'Plague' }, 'action');
-    add(1, { type: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 0 } }, 'action');
     add(1, { type: 'adjustment', label: 'Card', delta: { tradeGoods: 2 } }, 'action');
     add(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
     add(1, { type: 'secondary', card: 7, upgrades: ['carrier'] }, 'action');
@@ -1054,7 +1053,6 @@ describe('reading the plan', () => {
       expect(rowOf(row).queryByRole('textbox')).toBeNull();
     };
     await read(/^Component action/, /^Plague$/);
-    await read(/^Expedition/, /5 resources/);
     await read(/^Manual adjustment/, /Trade goods \+2/);
     await read(/^Strategy: Imperial/, /Mecatol Rex under control/);
     await read(/^Secondary: Technology/, /Costs 1 strategy token/);
@@ -1723,20 +1721,21 @@ describe('one slot of the panel, one head for every editor', () => {
     expect(entries()).toEqual([]);
   });
 
-  test('the expedition opens in its own editor in the panel; its closed row reads out the part and the payment', async () => {
-    useGame.getState().addEntry(1, { type: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 1 } }, 'action');
+  test('the expedition of a turn opens as a step of its editor; the closed row reads out the part and the payment', async () => {
+    useGame.getState().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 1 } }] }, 'action');
     render(<PlanScreen />);
-    const row = () => screen.getByRole('listitem', { name: /^Expedition/ });
-    expect(row()).toHaveTextContent('5 resources · Nestphar, trade goods 1');
+    const row = () => screen.getByRole('listitem', { name: /^Component action/ });
+    expect(row()).toHaveTextContent('+ Expedition: 5 resources · Nestphar, trade goods 1');
     await userEvent.click(within(row()).getByRole('button', { name: /^Edit: / }));
-    expect(screen.queryByRole('listitem', { name: /^Expedition/ })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: /^\+ Expedition:/ }));
     expect(within(panel()).getByRole('heading', { name: 'Expedition' })).toBeVisible();
     expect(screen.getByRole('group', { name: 'Expedition part' })).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: 'Done' }));
-    expect(row()).toBeVisible();
-    await userEvent.click(within(row()).getByRole('button', { name: /^Edit: / }));
+    expect(screen.getByRole('group', { name: 'In this turn' })).toBeVisible();
+    await userEvent.click(screen.getByRole('button', { name: /^\+ Expedition:/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Remove action' }));
-    expect(entries()).toEqual([]);
+    expect(JSON.stringify(entries())).not.toContain('expedition');
+    expect(entries()).toHaveLength(1);
   });
 
 });

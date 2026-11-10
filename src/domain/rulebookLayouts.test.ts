@@ -4,8 +4,7 @@ import { rotateLanes } from './lanes';
 import { defaultLayout, layoutChoices, seatSlots, slotsFor, templateFor } from './mapBuilder';
 import { createGame } from './newGame';
 import { routeDistances } from './project';
-import { RETIRED_SEVEN_HOMES, withoutRetiredLayout } from './retiredLayouts';
-import type { DataPack, Game, MapLayout } from './types';
+import type { Game, MapLayout } from './types';
 
 // The maps of the Prophecy of Kings rulebook: page 9 (five, seven and eight players) and page 12, the Map Appendix
 // (alternate hyperlanes for seven and eight players, the Large Galaxy for six).
@@ -136,52 +135,5 @@ describe('the default layout is the rules one', () => {
     for (const [players, choices] of [3, 4, 5, 6, 7, 8].map(n => [n, layoutChoices(n)] as const)) {
       for (const layout of choices) expect(templateFor(players, layout, pok)).toBeDefined();
     }
-  });
-});
-
-describe('the retired seven-player map without hyperlanes', () => {
-  /** A seven-player game as the app saved it before: four full rings, Milty's homes. */
-  const retired = (pack: DataPack = pok): Game => {
-    const game = createGame({ expansions: ['pok'], playerCount: 7, faction: 'sol' }, pack);
-    const factions = ['sol', 'hacan', 'arborec', 'jolnar', 'naalu', 'xxcha', 'yin'];
-    const map: Game['map'] = { '0,0': '18' };
-    RETIRED_SEVEN_HOMES.forEach((slot, i) => { map[slot] = pack.factions[factions[i]].homeTile; });
-    return {
-      ...game, layout: 'standard', map: { ...map, '1,0': '25', '3,-4': '26', '1,3': '27' },
-      opponents: factions.slice(1).map((faction, i) => ({ id: `o${i + 2}`, faction, vp: 0, seat: i + 2, color: i + 2 })),
-      enemyUnits: { '3,-3': { o2: { carrier: 1 } } },
-    };
-  };
-
-  test('moves to the rulebook map: homes to the new seats with their units, lanes over what stood under them', () => {
-    const game = retired();
-    const next = withoutRetiredLayout(game, pok);
-    expect(next.layout).toBe('hyperlanes');
-    const homes = seatSlots(7, pok, 'hyperlanes');
-    homes.forEach((slot, i) => expect(next.map[slot]).toBe(game.map[RETIRED_SEVEN_HOMES[i]]));
-    // Hacan's home went from 3,-3 to 3,-4, with its carrier; the tile there took the old home slot.
-    expect(next.enemyUnits).toEqual({ '3,-4': { o2: { carrier: 1 } } });
-    expect(next.map['3,-3']).toBe('26');
-    expect(next.map['1,0']).toBe('25');
-    // 1,3 lies under 83A now.
-    expect(next.map['1,3']).toBe('83A@0');
-    expect(next.map['0,4']).toBe('85A@0');
-    expect(Object.values(next.map)).not.toContain('27');
-  });
-
-  test('a plan follows the home that moved', () => {
-    const game = retired();
-    const plan = game.plans[0];
-    const entry = { id: 'e1', phase: 'action' as const, status: 'planned' as const, type: 'tactical' as const, systemId: '3,0', moves: [{ from: '3,-3', units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } };
-    const withPlan = { ...game, plans: [{ ...plan, rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [entry] }] }] };
-    const moved = withoutRetiredLayout(withPlan, pok).plans[0].rounds[0].entries[0];
-    expect(moved).toMatchObject({ systemId: '4,-2', moves: [{ from: '3,-4' }] });
-  });
-
-  test('other games are left alone', () => {
-    const eight = createGame({ expansions: ['pok'], playerCount: 8, faction: 'sol' }, pok);
-    expect(withoutRetiredLayout(eight, pok)).toBe(eight);
-    const seven = createGame({ expansions: ['pok'], playerCount: 7, faction: 'sol' }, pok);
-    expect(withoutRetiredLayout(seven, pok)).toBe(seven);
   });
 });

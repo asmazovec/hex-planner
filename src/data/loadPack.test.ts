@@ -244,7 +244,7 @@ describe('faction reference data', () => {
     expect(full.technologies.m2).toMatchObject({ upgrade: 'flagship', requires: { biotic: 1, propulsion: 1, cybernetic: 1 } });
     expect(full.technologies.ffac2.upgrade).toBe('spacedock');
     expect(full.technologies.ht2.upgrade).toBe('pds');
-    expect(full.technologies.l4).toEqual({ id: 'l4', name: 'L4 Disruptors', type: 'cybernetic', requires: { cybernetic: 1 } });
+    expect(full.technologies.l4).toEqual({ id: 'l4', name: 'L4 Disruptors', type: 'cybernetic', requires: { cybernetic: 1 }, pack: 'base' });
     expect(full.technologies.mc.upgrade).toBeUndefined();
     expect(full.technologies['parasite-obs'].requires).toBeUndefined();
   });

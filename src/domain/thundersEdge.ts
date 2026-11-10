@@ -74,21 +74,6 @@ export function fractureSlots(
 }
 
 /**
- * A saved open Fracture brought to where `fractureSlots` puts it now: its systems, and what the game says about them,
- * move along. Nothing changes when it already stands there.
- */
-export function withFractureRealigned(game: Game, pack: DataPack): Game {
-  if (!game.fracture.active || !game.fracture.tiles) return game;
-  const now = new Map(fractureSlots(game.fracture.seat, game.playerCount, pack, game.layout).map(s => [s.tileId, slotKeyOf(s.q, s.r)]));
-  const moved = new Map(Object.entries(game.fracture.tiles)
-    .filter(([slot, tileId]) => now.has(tileId) && now.get(tileId) !== slot)
-    .map(([slot, tileId]) => [slot, now.get(tileId)!]));
-  if (moved.size === 0) return game;
-  const next = withSlotsMoved(game, slot => moved.get(slot) ?? slot);
-  return { ...next, fracture: { ...next.fracture, tiles: Object.fromEntries([...now].map(([tileId, slot]) => [slot, tileId])) } };
-}
-
-/**
  * The Fracture's systems take other slots when it moves, and what the game says about them follows: plans speak of a
  * system by its slot. `before` is the game as it stood; a Fracture that did not move leaves `next` as it is.
  */
@@ -126,14 +111,13 @@ export function claimStations(game: Game, state: GameState, systemId: string, pa
 /** Who holds each expedition part. */
 export type SliceOwners = Record<string, 'me' | 'other'>;
 
-/** Who holds each expedition part: mine come from the plan's expedition entries, the others' are tapped in. */
+/** Who holds each expedition part: mine come from the expeditions of the plan's turns, the others' are tapped in. */
 export function sliceOwners(game: Game, plan?: Plan): SliceOwners {
   const owners: SliceOwners = {};
   for (const [id, owner] of Object.entries(game.expedition.slices)) if (owner) owners[id] = owner;
   for (const round of plan?.rounds ?? []) {
     for (const entry of round.entries) {
       if (entry.status === 'cancelled') continue;
-      if (entry.type === 'expedition' && entry.sliceId) owners[entry.sliceId] = 'me';
       for (const act of 'acts' in entry ? entry.acts ?? [] : []) if (act.kind === 'expedition' && act.sliceId) owners[act.sliceId] = 'me';
     }
   }

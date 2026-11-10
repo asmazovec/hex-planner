@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import { legendarySummary } from '../../../data/legendarySummaries';
-import type { PlanetDef } from '../../../domain/types';
+import { textOf } from '../../../domain/components';
+import type { DataPack, PlanetDef } from '../../../domain/types';
 import { LEGENDARY_SHAPE, TECH_SHAPES } from '../marks';
 
 export interface PlanetDetailsProps {
   planet: PlanetDef;
+  /** Gives the printed text of a legendary ability. */
+  pack: DataPack;
   /** The planet stands on a Fracture tile, and the rulebook gives each of those a relic icon. */
   relic: boolean;
   exhausted: boolean;
@@ -24,9 +26,9 @@ function Mark({ d, className, label }: { d: string; className: string; label: st
  * All printed parameters of one planet: one line with its name, resources/influence and the marks the map draws
  * (traits, technology specialties, legendary), then what its card says in words. Control is chosen beside it.
  */
-export function PlanetDetails({ planet, relic, exhausted }: PlanetDetailsProps) {
-  const { t, i18n } = useTranslation();
-  const summary = planet.legendary ? legendarySummary(planet.legendary, i18n.language === 'en' ? 'en' : 'ru') : null;
+export function PlanetDetails({ planet, pack, relic, exhausted }: PlanetDetailsProps) {
+  const { t } = useTranslation();
+  const summary = planet.legendary ? textOf(pack, `legendary:${planet.id}`) : '';
   return (
     <div className="planet-details">
       <div className="planet-head">

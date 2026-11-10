@@ -15,14 +15,13 @@ export interface Shown { id: string; plays: number }
  * - `tactical`: the tactical editor. `entryId` is null while a new action waits for its system: the next tap creates the
  *   entry; `fromCard` makes that one Warfare's free action. `card` is the card editor it was opened from and returns to.
  *   `pickerFrom` is the source whose flight step stands in the editor's place.
- * - `card`, `adjustment`, `expedition`: their editors.
+ * - `card`, `adjustment`: their editors.
  */
 export type Panel =
   | { kind: 'list'; shown: Shown | null }
   | { kind: 'tactical'; entryId: string | null; pickerFrom: string | null; fromCard?: string; card?: string }
   | { kind: 'card'; entryId: string }
   | { kind: 'adjustment'; entryId: string }
-  | { kind: 'expedition'; entryId: string }
   /** A component action or a pass: the turn's acts, and the note of a component action. */
   | { kind: 'turn'; entryId: string }
   /** One act of a turn as a step of its editor; Back returns to `back`. */
@@ -61,7 +60,6 @@ export const START: PickState = { panel: LIST, next: IDLE, stage: null, openId: 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
 type AdjustmentEntry = Extract<Entry, { type: 'adjustment' }>;
-type ExpeditionEntry = Extract<Entry, { type: 'expedition' }>;
 
 const find = (round: Round | undefined, id: string | null | undefined) => (id ? round?.entries.find(e => e.id === id) : undefined);
 export const tacticalIn = (round: Round | undefined, id: string | null | undefined) => {
@@ -77,11 +75,6 @@ export const adjustmentIn = (round: Round | undefined, id: string | null | undef
   return found?.type === 'adjustment' ? found as AdjustmentEntry : undefined;
 };
 
-export const expeditionIn = (round: Round | undefined, id: string | null | undefined) => {
-  const found = find(round, id);
-  return found?.type === 'expedition' ? found as ExpeditionEntry : undefined;
-};
-
 /** Where an editor goes back to: the card it was opened from, or the list. */
 export const backFrom = (panel: Panel): Panel => (panel.kind === 'tactical' && panel.card ? { kind: 'card', entryId: panel.card } : LIST);
 
@@ -94,7 +87,6 @@ export function resolvePick(state: PickState, round: Round | undefined): PickSta
   if (panel.kind === 'tactical' && panel.entryId !== null && !tacticalIn(round, panel.entryId)) panel = backFrom(panel);
   if (panel.kind === 'card' && !cardIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'adjustment' && !adjustmentIn(round, panel.entryId)) panel = LIST;
-  if (panel.kind === 'expedition' && !expeditionIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'turn' && !['component', 'pass'].includes(find(round, panel.entryId)?.type ?? '')) panel = LIST;
   if (panel.kind === 'act') {
     const host = find(round, panel.entryId);
@@ -136,8 +128,8 @@ export function hintKey(state: PickState): string | null {
 }
 
 /**
- * What the one slot of the panel shows, one of seven states: the list; the choice of a system for a new tactical action;
- * the tactical editor or, in its place, the flight step of one source; the strategy, adjustment or expedition editor.
+ * What the one slot of the panel shows: the list; the choice of a system for a new tactical action; the tactical editor
+ * or, in its place, the flight step of one source; the strategy or adjustment editor; a turn and one act of it.
  */
 export type Slot =
   | { kind: 'list' }
@@ -146,7 +138,6 @@ export type Slot =
   | { kind: 'flight'; entry: TacticalEntry; source: string }
   | { kind: 'card'; entry: CardEntry }
   | { kind: 'adjustment'; entry: AdjustmentEntry }
-  | { kind: 'expedition'; entry: ExpeditionEntry }
   | { kind: 'turn'; entry: Extract<Entry, { type: 'component' | 'pass' }> }
   | { kind: 'act'; entry: Entry; index: number; act: Act; back: Panel };
 
@@ -168,10 +159,6 @@ export function slotOf({ panel }: PickState, round: Round | undefined): Slot {
     case 'adjustment': {
       const entry = adjustmentIn(round, panel.entryId);
       return entry ? { kind: 'adjustment', entry } : { kind: 'list' };
-    }
-    case 'expedition': {
-      const entry = expeditionIn(round, panel.entryId);
-      return entry ? { kind: 'expedition', entry } : { kind: 'list' };
     }
     case 'turn': {
       const entry = find(round, panel.entryId);

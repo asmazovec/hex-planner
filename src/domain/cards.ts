@@ -6,7 +6,8 @@ export interface StrategyCard {
   initiative: number;
   name: string;
   changedIn?: 'te';
-  summaryKey: string;
+  /** Source id: the printed abilities are the texts `strategy:<id>` and `strategy:<id>#secondary`. */
+  id: string;
 }
 
 export function strategyCardSet(expansions: ExpansionId[]): StrategyCardSetId {

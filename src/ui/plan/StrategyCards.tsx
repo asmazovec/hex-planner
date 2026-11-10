@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cardSummary } from '../../data/cardSummaries';
-import { strategyCards } from '../../data/loadPack';
+import { loadPack, strategyCards } from '../../data/loadPack';
+import { textOf } from '../../domain/components';
 import { cardsHeld } from '../../domain/strategy';
 import type { ExpansionId, Round } from '../../domain/types';
-import { currentLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { CardGrid } from './blocks/CardGrid';
@@ -35,7 +34,7 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
     window.addEventListener('pointerdown', away);
     return () => window.removeEventListener('pointerdown', away);
   }, [shown]);
-  const lang = currentLanguage();
+  const pack = useMemo(() => loadPack(expansions), [expansions]);
   const cards = strategyCards(expansions);
   const backupName = t(cardsHeld(playerCount) > 1 ? 'plan.cards.second' : 'plan.cards.backup');
   const tap = (initiative: number) => {
@@ -55,7 +54,6 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
     round.backupCard !== null && `${backupName}: ${named(round.backupCard)}`,
   ].filter(Boolean).join(' · ');
   const details = cards.find(c => c.initiative === (shown ?? round.strategyCard));
-  const summary = details && cardSummary(details.summaryKey, lang);
 
   return (
     <div className="plan-cards" ref={block}>
@@ -75,15 +73,14 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
       />
       {choice ? <p className="card-choice">{choice}</p> : <p className="muted card-hint">{t('plan.phases.strategyEmpty')}</p>}
       <p className="muted card-hint">{t(cardsHeld(playerCount) > 1 ? 'plan.cards.hintTwo' : 'plan.cards.hint')}</p>
-      {details && summary && (
+      {details && (
         <div className="card-details" role="group" aria-label={details.name}>
           <span className="card-title">
             {details.name}
             {details.changedIn === 'te' && <span className="pill pill-change">{t('plan.cards.changed')}</span>}
           </span>
-          <div className="card-ability card-ability-primary"><b>{t('plan.cards.primary')}</b><span>{summary.primary}</span></div>
-          <div className="card-ability card-ability-secondary"><b>{t('plan.cards.secondary')}</b><span>{summary.secondary}</span></div>
-          {summary.change && <span className="card-note">{summary.change}</span>}
+          <div className="card-ability card-ability-primary"><b>{t('plan.cards.primary')}</b><span>{textOf(pack, `strategy:${details.id}`)}</span></div>
+          <div className="card-ability card-ability-secondary"><b>{t('plan.cards.secondary')}</b><span>{textOf(pack, `strategy:${details.id}#secondary`)}</span></div>
         </div>
       )}
     </div>

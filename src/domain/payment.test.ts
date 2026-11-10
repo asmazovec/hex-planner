@@ -11,7 +11,7 @@ function build(values: number[], tradeGoods: number, extra: Partial<GameState> =
     planets[id] = { id, name: id, resources: v, influence: 10 - v };
     control[id] = 'me';
   });
-  const pack: DataPack = { version: 't', tiles: {}, planets, units: {}, factions: {}, templates: [], technologies: {}, structures: [] };
+  const pack: DataPack = { version: 't', tiles: {}, planets, units: {}, factions: {}, templates: [], technologies: {}, structures: [], components: [], texts: {} };
   const state: GameState = {
     systems: {}, ground: {}, exhausted: [], control, tokensOnMap: [],
     tradeGoods, commodities: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {}, ...extra,

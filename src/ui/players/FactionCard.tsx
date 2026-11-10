@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { techSummary } from '../../data/techSummaries';
+import { textOf } from '../../domain/components';
 import type { DataPack, ExpansionId, FactionDef, UnitId } from '../../domain/types';
-import { currentLanguage } from '../../i18n';
 import { hexPoints } from '../map/geometry';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { UnitIcon } from '../units/UnitIcon';
@@ -66,7 +65,7 @@ function Tech({ id, pack }: { id: string; pack: DataPack }) {
   return (
     <div className={`tech tech-${tech.type}`}>
       <b>{tech.name}</b>
-      <p>{techSummary(id, currentLanguage())}</p>
+      <p>{textOf(pack, `technology:${id}`)}</p>
     </div>
   );
 }
@@ -118,7 +117,7 @@ export function FactionCard({ faction, pack, expansions, live }: FactionCardProp
         {faction.startingTech.length === 0 && !choice && <p className="tech-choice">{t('players.techNone')}</p>}
       </div>
       <div className="player-ships">
-        <FactionComponents faction={faction} expansions={expansions} technologies={pack.technologies} />
+        <FactionComponents faction={faction} expansions={expansions} pack={pack} />
       </div>
       <div className="player-ships">
         <SectionTitle as="div" className="player-sec">{t('ships.title')}</SectionTitle>

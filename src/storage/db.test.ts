@@ -1,9 +1,9 @@
 import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BrokenSaveError, deleteGame, listGames, loadGame, loadRawGame, requestPersistence, saveGame } from './db';
-import type { Game } from '../domain/types';
-import { CURRENT_SCHEMA, exportGame, importGame } from './transfer';
-import { brokenSave, gameOfSchema1, putRawSave, sampleGame } from './fixture';
+import { CURRENT_SCHEMA, SAVE_FORMAT } from './schema';
+import { exportGame, importGame } from './transfer';
+import { brokenSave, oldFormatSave, putRawSave, sampleGame } from './fixture';
 
 beforeEach(async () => {
   for (const g of await listGames()) await deleteGame(g.id);
@@ -89,27 +89,44 @@ test('после закрытия соединения браузером баз
   expect(await fresh.loadGame(game.id)).toEqual(game);
 });
 
-test('a game saved before seats opens with seats in list order', async () => {
-  const v1 = gameOfSchema1();
-  const old: Record<string, unknown> = { ...v1, id: 'before-seats', opponents: (v1.opponents as { faction: string; vp: number }[]).map(({ faction, vp }) => ({ faction, vp })) };
-  for (const field of ['seat', 'color', 'vp']) delete old[field];
-  await saveGame(old as unknown as Game);
-  const loaded = await loadGame('before-seats');
-  expect([loaded!.seat, loaded!.color, loaded!.vp]).toEqual([1, 1, 0]);
-  expect(loaded!.opponents.map(o => o.seat)).toEqual([2, 3, 4]);
-  await deleteGame('before-seats');
+test('a new game is saved with the format mark and the current schema', async () => {
+  const game = sampleGame();
+  await saveGame(game);
+  const raw = await loadRawGame(game.id) as { game: Record<string, unknown> };
+  expect(raw.game.format).toBe(SAVE_FORMAT);
+  expect(raw.game.format).toBe('ti4-planner/2');
+  expect(raw.game.schemaVersion).toBe(CURRENT_SCHEMA);
+  expect(CURRENT_SCHEMA).toBe(1);
 });
 
-test('a game saved at schema 1 opens with owners: its units and enemy planets belong to the first opponent', async () => {
-  await saveGame({ ...gameOfSchema1(), id: 'before-owners' } as unknown as Game);
-  const first = await loadGame('before-owners');
-  const again = await loadGame('before-owners');
-  expect(first!.schemaVersion).toBe(CURRENT_SCHEMA);
-  const id = first!.opponents[0].id;
-  expect(first!.enemyUnits).toEqual({ '1,0': { [id]: { dreadnought: 2 } }, '0,1': { [id]: { fighter: 3 } } });
-  expect(first!.planetOwner).toEqual({ arc: id, lazar: id });
-  expect(again!.opponents.map(o => o.id)).toEqual(first!.opponents.map(o => o.id));
-  await deleteGame('before-owners');
+describe('a save of an earlier version of the app', () => {
+  test('it is listed as broken and of the old format, does not open, and lies in the database as it lay', async () => {
+    const good = sampleGame();
+    await saveGame(good);
+    const record = oldFormatSave();
+    await putRawSave(record);
+    const bytes = JSON.stringify(record);
+    const list = await listGames();
+    expect(list.find(g => g.id === 'old')).toMatchObject({ name: 'Earlier', broken: true, oldFormat: true });
+    expect(list.find(g => g.id === good.id)?.broken).toBeUndefined();
+    const failure = await loadGame('old').catch((error: unknown) => error);
+    expect(failure).toBeInstanceOf(BrokenSaveError);
+    expect((failure as BrokenSaveError).kind).toBe('oldFormat');
+    expect(JSON.stringify(await loadRawGame('old'))).toBe(bytes);
+    await deleteGame('old');
+    expect((await listGames()).map(g => g.id)).toEqual([good.id]);
+  });
+
+  test('a save with another format mark is of the old format too; a damaged one is not', async () => {
+    const other = oldFormatSave('other');
+    await putRawSave({ ...other, game: { ...(other.game as object), format: 'ti4-planner/1' } });
+    await putRawSave(brokenSave());
+    await expect(loadGame('other')).rejects.toMatchObject({ kind: 'oldFormat' });
+    await expect(loadGame('broken')).rejects.toMatchObject({ kind: 'damaged' });
+    const list = await listGames();
+    expect(list.find(g => g.id === 'other')).toMatchObject({ broken: true, oldFormat: true });
+    expect(list.find(g => g.id === 'broken')?.oldFormat).toBeUndefined();
+  });
 });
 
 test('a game saved at the current schema opens unchanged, owners included', async () => {
@@ -143,11 +160,10 @@ describe('a save that does not load', () => {
     expect(await loadRawGame('missing')).toBeUndefined();
   });
 
-  test('a save with no game, no summary, or a game a migration chokes on is broken, not a crash', async () => {
+  test('a save with no game, no summary, or a game that is no game is broken, not a crash', async () => {
     await putRawSave({ id: 'empty' });
     await putRawSave({ id: 'odd', name: 42, game: 'text' });
-    // An opponent that is no object makes the seat migration throw.
-    await putRawSave({ id: 'chokes', game: { ...gameOfSchema1(), id: 'chokes', opponents: [null] } });
+    await putRawSave({ id: 'chokes', game: { ...sampleGame(), id: 'chokes', opponents: [null] } });
     const list = await listGames();
     for (const id of ['empty', 'odd', 'chokes']) {
       expect(list.find(g => g.id === id)).toMatchObject({ id, faction: '', playerCount: 0, broken: true });

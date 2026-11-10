@@ -1,7 +1,7 @@
 import { createGame } from './newGame';
 import { describe, expect, test, it } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { fractureSlots, validThundersEdgeSystem, withFractureMoved, withFractureRealigned } from './thundersEdge';
+import { fractureSlots, validThundersEdgeSystem, withFractureMoved } from './thundersEdge';
 import { seatSlots } from './mapBuilder';
 import type { TileDef } from './types';
 
@@ -109,22 +109,5 @@ describe('moving the Fracture', () => {
     expect(moved.fracture.ingress).toEqual([a2, '0,-1']);
     expect(Object.keys(moved.enemyUnits).sort()).toEqual(['0,-1', a2].sort());
     expect(withFractureMoved(game, game, data)).toBe(game);
-  });
-
-  it('a saved Fracture standing where an older placement put it moves to the current one, with what the plans say', () => {
-    const game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, data);
-    const now = Object.fromEntries(fractureSlots(1, 6, data, 'standard').map(s => [s.tileId, `${s.q},${s.r}`]));
-    const old = Object.fromEntries(fractureSlots(3, 6, data, 'standard').map(s => [s.tileId, `${s.q},${s.r}`]));
-    const saved = {
-      ...game,
-      fracture: { ...game.fracture, active: true, seat: 1, tiles: Object.fromEntries(Object.entries(old).map(([id, slot]) => [slot, id])) },
-    };
-    saved.plans[0].rounds[0].entries.push(
-      { id: 't', phase: 'action', status: 'planned', type: 'tactical', systemId: old.fracture1, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } },
-    );
-    const realigned = withFractureRealigned(saved, data);
-    expect(realigned.fracture.tiles).toEqual(Object.fromEntries(Object.entries(now).map(([id, slot]) => [slot, id])));
-    expect(realigned.plans[0].rounds[0].entries.at(-1)).toMatchObject({ systemId: now.fracture1 });
-    expect(withFractureRealigned(realigned, data)).toBe(realigned);
   });
 });

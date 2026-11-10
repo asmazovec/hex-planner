@@ -21,6 +21,8 @@ export interface PlanetDef {
   traits?: PlanetTrait[];
   /** English name of the legendary planet ability; absent for an ordinary planet. */
   legendary?: string;
+  /** Legendary planets only: the expansion the planet comes from. The ability's text is that of `legendary:<id>`. */
+  pack?: ComponentPack;
   /** A space station (Thunder's Edge): taken by ships alone, it holds no ground forces and no structures. */
   station?: true;
 }
@@ -48,7 +50,7 @@ export interface UnitRoll { hit: number; dice: number; }
 
 /** A ship's numbers at one level, from the source. The properties are shown only and never calculated. */
 export interface ShipStats {
-  /** Source id: the key of the retelling in `shipSummaries`. */
+  /** Source id; the printed ability, when the ship has one, is the text `unit:<id>`. */
   id: string;
   name: string;
   cost: number;
@@ -90,17 +92,19 @@ export interface TechDef {
   name: string;
   /** Null for a unit upgrade and for a faction card with no colour (Valefar Assimilator). */
   type: TechType | null;
-  /** Prerequisites, how many of each colour; absent when there are none. Read for faction technologies only. */
+  /** Prerequisites, how many of each colour; absent when there are none. */
   requires?: Partial<Record<TechType, number>>;
   /** A unit upgrade: the unit or structure it upgrades. Its numbers are in the ship table, not here. */
   upgrade?: UnitId | StructureKind;
+  /** The expansion the card comes from; a pack built by hand may leave it out, which reads as the base game. */
+  pack?: ComponentPack;
 }
 
 /** Where a component comes from; shown on it. */
 export type ComponentPack = 'base' | 'pok' | 'te';
 export type LeaderType = 'agent' | 'commander' | 'hero';
 export interface SheetItem {
-  /** Source id: the key of the retelling in `sheetSummaries`. */
+  /** Source id; the printed text is that of the component `<kind>:<id>`. */
   id: string;
   name: string;
   pack: ComponentPack;
@@ -174,6 +178,32 @@ export interface DataPack {
   templates: MapTemplate[];
   technologies: Record<string, TechDef>;
   structures: StructureDef[];
+  /** The cards with no home elsewhere in the pack: action cards, agendas, relics, objectives, exploration, promissory notes. */
+  components: ComponentDef[];
+  /** Printed texts by component id, verbatim from the source (src/data/texts): of `components`, and of technologies, sheet items, legendary planets, ships (`unit:<id>`) and strategy cards (`strategy:<id>`, `strategy:<id>#secondary`). */
+  texts: Record<string, string>;
+}
+
+export type ComponentKind = 'technology' | 'actionCard' | 'relic' | 'publicObjective' | 'secretObjective' | 'agenda'
+  | 'exploration' | 'promissory' | 'leader' | 'ability' | 'breakthrough' | 'mech' | 'legendary';
+
+/** One game component of any kind, as the catalog of `componentsOf` lists it. */
+export interface ComponentDef {
+  /** Unique among all kinds: `<kind>:<source id>`. */
+  id: string;
+  kind: ComponentKind;
+  /** English name. */
+  name: string;
+  pack: ComponentPack;
+  /** Verbatim from the card, paragraphs split by `
+`. */
+  text: string;
+  /** How many such cards the deck holds; 1 for everything else. */
+  copies?: number;
+  /** The owning faction: a faction technology, leader, ability, breakthrough, mech, promissory note. */
+  faction?: string;
+  /** Fields of the kind: an action card's phase and window, an objective's stage and points, an agenda's type and target, an exploration card's trait, a leader's type. */
+  detail?: Record<string, string | number>;
 }
 
 /** A structure's numbers at one level, from the source. */
@@ -242,7 +272,7 @@ export interface CardEffects {
   payment?: Payment;
 }
 
-/** A strategy card played: all optional, so entries saved before need no migration. */
+/** A strategy card played: all optional, an entry starts without a card and takes its parts as they are chosen. */
 export interface CardPlay {
   /** Ships upgraded by this entry, as with research. */
   upgrades?: UpgradeId[];
@@ -283,8 +313,6 @@ export type EntryBody =
   | ({ type: 'secondary' } & CardPlay)
   | { type: 'component'; note: string; acts?: Act[] }
   | { type: 'pass'; acts?: Act[] }
-  /** Read from saves only: an expedition schema 6 found no turn of its owner to join. */
-  | { type: 'expedition'; sliceId: string | null; payment: Payment }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
       /** My points gained this round. */ vp?: number;
@@ -305,10 +333,15 @@ export interface Opponent {
   color: number;
 }
 
+/** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
+export const SAVE_FORMAT = 'ti4-planner/2';
+
 export interface Game {
   id: string;
   /** What the player calls this game; a link finds its save by this. */
   name?: string;
+  format: typeof SAVE_FORMAT;
+  /** Counts the changes of the save within the format, from 1. */
   schemaVersion: number;
   dataVersion: string;
   expansions: ExpansionId[];
@@ -340,7 +373,7 @@ export interface Game {
   pds: Record<string, number>;
   expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
   fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null;
-    /** While open: slot key beside the map to its Fracture tile, so ships fly there like to any system. Absent in games saved earlier, until their next opening. */ tiles?: Record<string, string> };
+    /** While open: slot key beside the map to its Fracture tile, so ships fly there like to any system. Absent until the Fracture first opens. */ tiles?: Record<string, string> };
   plans: Plan[];
   activePlanId: string;
 }
@@ -388,7 +421,7 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'shipOnPlanet', 'landingOutsideSystem', 'custodians', 'structureLimit', 'structureNotControlled', 'structureOutsideSystem',
   // production, thunders-edge
   'noProduction', 'productionBlockaded', 'blockaded', 'productionOver', 'reinforcementsOut', 'productionPlace', 'scarProduction',
-  'expeditionUnpaid', 'expeditionTwicePerTurn', 'expeditionDetached', 'stationGround', 'stationStructure',
+  'expeditionUnpaid', 'expeditionTwicePerTurn', 'stationGround', 'stationStructure',
   // transactions
   'transactionRepeated', 'notNeighbor', 'shortCommodities',
   // transport

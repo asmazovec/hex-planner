@@ -381,7 +381,8 @@
       "name": "Ordinian",
       "resources": 0,
       "influence": 0,
-      "legendary": "4X41D \"Hyperion\" VI"
+      "legendary": "4X41D \"Hyperion\" VI",
+      "pack": "te"
     },
     "revelation": {
       "id": "revelation",
@@ -419,7 +420,8 @@
       "traits": [
         "industrial"
       ],
-      "legendary": "Maxis Central Control"
+      "legendary": "Maxis Central Control",
+      "pack": "te"
     },
     "garbozia": {
       "id": "garbozia",
@@ -429,7 +431,8 @@
       "traits": [
         "hazardous"
       ],
-      "legendary": "Dok 'N Pic's Salvage Yard"
+      "legendary": "Dok 'N Pic's Salvage Yard",
+      "pack": "te"
     },
     "emelpar": {
       "id": "emelpar",
@@ -439,7 +442,8 @@
       "traits": [
         "cultural"
       ],
-      "legendary": "The Acropolis"
+      "legendary": "The Acropolis",
+      "pack": "te"
     },
     "tempesta": {
       "id": "tempesta",
@@ -452,7 +456,8 @@
       "traits": [
         "hazardous"
       ],
-      "legendary": "Ionian Fuel Refinery"
+      "legendary": "Ionian Fuel Refinery",
+      "pack": "te"
     },
     "olergodt": {
       "id": "olergodt",
@@ -648,7 +653,8 @@
       "name": "Mecatol Rex",
       "resources": 1,
       "influence": 6,
-      "legendary": "The Galactic Council"
+      "legendary": "The Galactic Council",
+      "pack": "te"
     },
     "industrex": {
       "id": "industrex",
@@ -661,7 +667,8 @@
       "traits": [
         "industrial"
       ],
-      "legendary": "Aeurex Mechanica"
+      "legendary": "Aeurex Mechanica",
+      "pack": "te"
     },
     "lemox": {
       "id": "lemox",
@@ -720,7 +727,8 @@
       "name": "Styx",
       "resources": 4,
       "influence": 0,
-      "legendary": "A Song Like Marrow"
+      "legendary": "A Song Like Marrow",
+      "pack": "te"
     },
     "lethe": {
       "id": "lethe",
@@ -739,7 +747,8 @@
       "name": "Thunder's Edge",
       "resources": 5,
       "influence": 1,
-      "legendary": "Jupiter Brain"
+      "legendary": "Jupiter Brain",
+      "pack": "te"
     },
     "avernus": {
       "id": "avernus",
@@ -749,7 +758,8 @@
       "traits": [
         "hazardous"
       ],
-      "legendary": "The Nucleus"
+      "legendary": "The Nucleus",
+      "pack": "te"
     },
     "triad": {
       "id": "triad",
@@ -1491,22 +1501,26 @@
     "amd": {
       "id": "amd",
       "name": "Antimass Deflectors",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "base"
     },
     "det": {
       "id": "det",
       "name": "Dark Energy Tap",
-      "type": "propulsion"
+      "type": "propulsion",
+      "pack": "pok"
     },
     "st": {
       "id": "st",
       "name": "Sarween Tools",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "base"
     },
     "sdn": {
       "id": "sdn",
       "name": "Scanlink Drone Network",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "pok"
     },
     "proxima": {
       "id": "proxima",
@@ -1514,7 +1528,8 @@
       "type": "warfare",
       "requires": {
         "warfare": 1
-      }
+      },
+      "pack": "te"
     },
     "helios2": {
       "id": "helios2",
@@ -1523,7 +1538,8 @@
       "requires": {
         "cybernetic": 2
       },
-      "upgrade": "spacedock"
+      "upgrade": "spacedock",
+      "pack": "te"
     },
     "hydrothermal": {
       "id": "hydrothermal",
@@ -1531,7 +1547,8 @@
       "type": "biotic",
       "requires": {
         "biotic": 1
-      }
+      },
+      "pack": "te"
     },
     "radical": {
       "id": "radical",
@@ -1539,17 +1556,20 @@
       "type": "biotic",
       "requires": {
         "biotic": 1
-      }
+      },
+      "pack": "te"
     },
     "nm": {
       "id": "nm",
       "name": "Neural Motivator",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "base"
     },
     "pa": {
       "id": "pa",
       "name": "Psychoarchaeology",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "pok"
     },
     "planesplitter-firm": {
       "id": "planesplitter-firm",
@@ -1557,7 +1577,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 2
-      }
+      },
+      "pack": "te"
     },
     "parasite-firm": {
       "id": "parasite-firm",
@@ -1565,27 +1586,32 @@
       "type": "biotic",
       "requires": {
         "biotic": 2
-      }
+      },
+      "pack": "te"
     },
     "planesplitter-obs": {
       "id": "planesplitter-obs",
       "name": "Planesplitter (Obsidian)",
-      "type": "cybernetic"
+      "type": "cybernetic",
+      "pack": "te"
     },
     "parasite-obs": {
       "id": "parasite-obs",
       "name": "Neural Parasite (Obsidian)",
-      "type": "biotic"
+      "type": "biotic",
+      "pack": "te"
     },
     "ps": {
       "id": "ps",
       "name": "Plasma Scoring",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "base"
     },
     "aida": {
       "id": "aida",
       "name": "AI Development Algorithm",
-      "type": "warfare"
+      "type": "warfare",
+      "pack": "pok"
     },
     "subatomic": {
       "id": "subatomic",
@@ -1593,7 +1619,8 @@
       "type": "cybernetic",
       "requires": {
         "cybernetic": 1
-      }
+      },
+      "pack": "te"
     },
     "exile2": {
       "id": "exile2",
@@ -1602,7 +1629,8 @@
       "requires": {
         "warfare": 2
       },
-      "upgrade": "destroyer"
+      "upgrade": "destroyer",
+      "pack": "te"
     },
     "nanomachines": {
       "id": "nanomachines",
@@ -1610,7 +1638,8 @@
       "type": "warfare",
       "requires": {
         "warfare": 1
-      }
+      },
+      "pack": "te"
     },
     "linkship2": {
       "id": "linkship2",
@@ -1619,8 +1648,249 @@
       "requires": {
         "warfare": 2
       },
-      "upgrade": "destroyer"
+      "upgrade": "destroyer",
+      "pack": "te"
     }
   },
-  "structures": []
+  "structures": [],
+  "components": [
+    {
+      "id": "actionCard:lieinwait",
+      "kind": "actionCard",
+      "name": "Lie in Wait",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "any",
+        "window": "After 2 of your neighbors resolve a transaction"
+      }
+    },
+    {
+      "id": "actionCard:exchangeprogram",
+      "kind": "actionCard",
+      "name": "Exchange Program",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:puppetsonastring",
+      "kind": "actionCard",
+      "name": "Puppets on a String",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the end of a player's turn, if you have passed"
+      }
+    },
+    {
+      "id": "actionCard:extremeduress",
+      "kind": "actionCard",
+      "name": "Extreme Duress",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the start of another player's turn, if they have a readied strategy card"
+      }
+    },
+    {
+      "id": "actionCard:mercenarycontract",
+      "kind": "actionCard",
+      "name": "Mercenary Contract",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:strategize1",
+      "kind": "actionCard",
+      "name": "Strategize",
+      "pack": "te",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:rescue",
+      "kind": "actionCard",
+      "name": "Rescue",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "After another player moves ships into a system that contains your ships"
+      }
+    },
+    {
+      "id": "actionCard:piratefleet",
+      "kind": "actionCard",
+      "name": "Pirate Fleet",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:brilliance",
+      "kind": "actionCard",
+      "name": "Brilliance",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:blackmarketdealing",
+      "kind": "actionCard",
+      "name": "Black Market Dealings",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "any",
+        "window": "When you are negotiating a transaction"
+      }
+    },
+    {
+      "id": "actionCard:piratecontract1",
+      "kind": "actionCard",
+      "name": "Pirate Contract",
+      "pack": "te",
+      "copies": 4,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "actionCard:crashlanding",
+      "kind": "actionCard",
+      "name": "Crash Landing",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "When your last ship in the active system is destroyed"
+      }
+    },
+    {
+      "id": "actionCard:crisis",
+      "kind": "actionCard",
+      "name": "Crisis",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "At the end of any players turn, if there are at least 2 players who have not passed"
+      }
+    },
+    {
+      "id": "actionCard:overrule",
+      "kind": "actionCard",
+      "name": "Overrule",
+      "pack": "te",
+      "copies": 1,
+      "detail": {
+        "phase": "action",
+        "window": "Action"
+      }
+    },
+    {
+      "id": "relic:heartofixth",
+      "kind": "relic",
+      "name": "Heart of Ixth",
+      "pack": "te"
+    },
+    {
+      "id": "relic:lightrailordnance",
+      "kind": "relic",
+      "name": "Lightrail Ordnance",
+      "pack": "te"
+    },
+    {
+      "id": "relic:metalivoidarmaments",
+      "kind": "relic",
+      "name": "Metali Void Armaments",
+      "pack": "te"
+    },
+    {
+      "id": "relic:metalivoidshielding",
+      "kind": "relic",
+      "name": "Metali Void Shielding",
+      "pack": "te"
+    },
+    {
+      "id": "relic:quantumcore",
+      "kind": "relic",
+      "name": "The Quantumcore",
+      "pack": "te"
+    },
+    {
+      "id": "relic:thesilverflame",
+      "kind": "relic",
+      "name": "The Silver Flame",
+      "pack": "te"
+    },
+    {
+      "id": "relic:thetriad",
+      "kind": "relic",
+      "name": "The Triad",
+      "pack": "te"
+    },
+    {
+      "id": "promissory:shareknowledge",
+      "kind": "promissory",
+      "name": "Share Knowledge",
+      "pack": "te",
+      "faction": "deepwrought"
+    },
+    {
+      "id": "promissory:blackops",
+      "kind": "promissory",
+      "name": "Black Ops",
+      "pack": "te",
+      "faction": "firmament"
+    },
+    {
+      "id": "promissory:malevolency",
+      "kind": "promissory",
+      "name": "Malevolency",
+      "pack": "te",
+      "faction": "obsidian"
+    },
+    {
+      "id": "promissory:nanolink",
+      "kind": "promissory",
+      "name": "Nano-Link Permit",
+      "pack": "te",
+      "faction": "ralnel"
+    },
+    {
+      "id": "promissory:sever",
+      "kind": "promissory",
+      "name": "Sever",
+      "pack": "te",
+      "faction": "crimson"
+    },
+    {
+      "id": "promissory:raisethestandard",
+      "kind": "promissory",
+      "name": "Raise the Standard",
+      "pack": "te",
+      "faction": "bastion"
+    }
+  ]
 }

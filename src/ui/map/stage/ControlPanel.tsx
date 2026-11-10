@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { planetHolder } from '../../../domain/players';
-import type { Game, GameState, PlanetDef, TileDef } from '../../../domain/types';
+import type { DataPack, Game, GameState, PlanetDef, TileDef } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { PlayerChoice, type PlayerOption } from '../../primitives/player';
 import { PlanetDetails } from './PlanetDetails';
 
 export interface ControlPanelProps {
   game: Game;
+  pack: DataPack;
   /** The tile on this slot, when the data know its number. */
   tile: TileDef | undefined;
   /** Sixths of a turn the tile stands rotated by, when the map gives one. */
@@ -27,7 +28,7 @@ export interface ControlPanelProps {
  * Control: the facts of the tile in one line, then every planet of the system with its printed values and who holds
  * it. The tile itself is read here only: the map is built on the game screen.
  */
-export function ControlPanel({ game, tile, rotation, planets, shown, seated, chosen, onChoose }: ControlPanelProps) {
+export function ControlPanel({ game, pack, tile, rotation, planets, shown, seated, chosen, onChoose }: ControlPanelProps) {
   const { t } = useTranslation();
   // A lone planet needs no mark: there is nothing to tell it from.
   const marked = planets.length > 1 ? chosen : undefined;
@@ -61,7 +62,7 @@ export function ControlPanel({ game, tile, rotation, planets, shown, seated, cho
             // The whole card answers a tap, its control buttons too, so the planet it speaks of is the one ringed on the hex.
             onClick={planets.length > 1 ? () => onChoose?.(index) : undefined}
           >
-            <PlanetDetails planet={planet} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)} />
+            <PlanetDetails planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)} />
             <PlayerChoice
               label={t('map.sheet.controlLabel', { planet: planet.name })} options={owners}
               chosen={value => holder === value} onPick={value => setPlanetControl(planet.id, value)}

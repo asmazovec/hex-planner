@@ -9,7 +9,7 @@ import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
-import { actLines, expeditionText, insideCard } from './actLines';
+import { actLines, insideCard } from './actLines';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
@@ -82,12 +82,6 @@ function StatusFields({ entry, game, pack, state, warnings }: {
     </>
   );
 }
-
-/**
- * What an expedition contribution gives, readable on its closed row: the part and what pays for it. The part paid in
- * trade goods says it in its name.
- */
-
 
 const cardName = (game: Game, card: number | undefined): string | undefined =>
   strategyCards(game.expansions).find(c => c.initiative === card)?.name;
@@ -193,8 +187,6 @@ export function EntryList({
                         {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
                         <span className="entry-name">
                           <span className="entry-title">{label}</span>
-                          {/* Read without opening; the steps of a shown entry say it in full. */}
-                          {entry.type === 'expedition' && !shown && <small className="entry-brief">{expeditionText(entry, pack, t)}</small>}
                           {/* What the turn holds beside its action, each a line of its own. */}
                           {actLines(entry, round, game, pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
                         </span>

@@ -1,4 +1,5 @@
-// Builds src/data/packs/*.json and src/data/provenance.json from a fixed commit of the source.
+// Builds src/data/packs/*.json, src/data/texts/*.json and src/data/provenance.json from a fixed commit of the source.
+// Card texts are copied verbatim into src/data/texts, apart from the numbers: they are the publisher's (src/data/texts/NOTICE.md).
 // Downloads go to a temp directory outside the repo and are only ever parsed as data.
 // What each exclusion and correction rests on is recorded in docs/data-verification.md.
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -6,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { rotateLanes } from '../src/domain/lanes';
-import type { Anomaly, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, StructureDef, StructureKind, StructureStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
+import type { Anomaly, ComponentDef, ComponentKind, ComponentPack, DataPack, FactionDef, FactionSheet, LeaderType, MapLayout, MapTemplate, PlanetDef, PlanetTrait, ShipLevels, ShipStats, StructureDef, StructureKind, StructureStats, TechDef, TechType, TileDef, UnitCounts, UnitDef, UnitId } from '../src/domain/types';
 
 const REPO = 'AsyncTI4/TI4_map_generator_bot';
 const COMMIT = '9eee64a3b13fc698b3ee174590dde40e005c0dfe';
@@ -15,7 +16,7 @@ export const SOURCE_CACHE = join(tmpdir(), `ti4-source-${COMMIT}`);
 const COMMIT_DATE = '2026-11-05';
 const RESOURCES = 'src/main/resources/';
 const DATA_VERSION = `${COMMIT_DATE}-${COMMIT.slice(0, 7)}`;
-const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|technologies|abilities|map_templates|strategy_card_sets|strategy_cards|leaders|breakthroughs)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
+const WANTED = /^(planets|systems)\/[^/]+\.json$|^data\/(units|factions|technologies|abilities|map_templates|strategy_card_sets|strategy_cards|leaders|breakthroughs|action_cards|agendas|relics|explores|attachments|promissory_notes|public_objectives|secret_objectives)\/[^/]+\.json$|^data\/hyperlanes\.properties$/;
 
 type PackId = 'base' | 'pok' | 'te';
 const PACK_OF_SOURCE: Record<string, PackId> = { base: 'base', pok: 'pok', thunders_edge: 'te' };
@@ -178,31 +179,40 @@ interface SourceSystem {
 }
 interface SourcePlanet {
   id: string; name: string; resources: number; influence: number; source: string; techSpecialties?: string[] | null;
-  planetType?: string | null; planetTypes?: string[] | null; legendaryAbilityName?: string | null;
+  planetType?: string | null; planetTypes?: string[] | null; legendaryAbilityName?: string | null; legendaryAbilityText?: string | null;
 }
 interface SourceUnit {
   id: string; source: string; cost?: number; capacityValue?: number; capacityUsed?: number; isGroundForce?: boolean;
   combatHitsOn?: number; moveValue?: number; baseType?: string; name?: string; faction?: string; upgradesFromUnitId?: string;
   homebrewReplacesID?: string; combatDieCount?: number; sustainDamage?: boolean; afbHitsOn?: number; afbDieCount?: number;
   bombardHitsOn?: number; bombardDieCount?: number; spaceCannonHitsOn?: number; spaceCannonDieCount?: number;
-  productionValue?: string | number; basicProduction?: string; requiredTechId?: string;
+  productionValue?: string | number; basicProduction?: string; requiredTechId?: string; ability?: string;
 }
 interface SourceFaction {
   alias: string; factionName: string; homeSystem: string; startingFleet: string; source: string; commodities: number;
   abilities: string[]; startingTech?: string[]; startingTechOptions?: string[]; startingTechAmount?: number;
   leaders?: string[]; units?: string[]; factionTech?: string[];
 }
-interface SourceLeader { id: string; type: string; name: string; title?: string; source: string; }
-interface SourceBreakthrough { alias: string; name: string; faction: string; source: string; }
-interface SourceTech { alias: string; name: string; types: string[]; source: string; requirements?: string | null; faction?: string; }
-interface SourceAbility { id: string; name: string; source: string; }
+interface SourceLeader { id: string; type: string; name: string; title?: string; source: string; abilityWindow?: string; abilityText?: string; unlockCondition?: string; }
+interface SourceBreakthrough { alias: string; name: string; faction: string; source: string; text?: string; }
+interface SourceTech { alias: string; name: string; types: string[]; source: string; requirements?: string | null; faction?: string; text?: string; }
+interface SourceAbility { id: string; name: string; source: string; permanentEffect?: string; window?: string; windowEffect?: string; }
 interface SourceTemplate { alias: string; playerCount: number; templateTiles: { pos: string; staticTileId?: string }[]; }
-interface SourceCard { id: string; initiative: number; name: string; source: string; }
+interface SourceCard { id: string; initiative: number; name: string; source: string; primaryTexts?: string[]; secondaryTexts?: string[]; }
+// The card directories of the catalog, one shape per directory. `flavorText`, `notes` (the source's own rulings), image
+// fields and the bot's automation fields are not read.
+interface SourceActionCard { alias: string; name: string; phase: string; window: string; text: string; source: string; }
+interface SourceAgenda { alias: string; name: string; type: string; target: string; text1: string; text2?: string; source: string; }
+interface SourceRelic { alias: string; name: string; text: string; source: string; isFakeRelic?: boolean; }
+interface SourceExplore { id: string; name: string; type: string; resolution: string; text: string; source: string; attachmentId?: string; }
+interface SourceAttachment { id: string; name?: string; source: string; resourcesModifier?: number; influenceModifier?: number; techSpeciality?: string[]; }
+interface SourcePromissory { alias: string; name: string; text: string; source: string; faction?: string; color?: string; }
+interface SourceObjective { alias: string; name: string; phase: string; text: string; points: number; source: string; }
 interface SourceCardSet { alias: string; scIDs: string[]; }
 
 async function download(): Promise<string> {
   const root = SOURCE_CACHE;
-  const listPath = join(root, 'files-v3.json');
+  const listPath = join(root, 'files-v4.json');
   if (!existsSync(listPath)) {
     const response = await fetch(`https://api.github.com/repos/${REPO}/git/trees/${COMMIT}?recursive=1`);
     if (!response.ok) throw new Error(`Tree request failed: ${response.status}`);
@@ -309,7 +319,7 @@ function buildPlanets(all: SourcePlanet[], tiles: Record<PackId, Record<string, 
     if (!planet) throw new Error(`Unknown planet ${id}`);
     if (packOfSource(planet.source) !== pack) throw new Error(`Planet ${id} of source ${planet.source} is not in pack ${pack}`);
     if (id in EXCLUDED_PLANETS) throw new Error(`Excluded planet ${id} is in use`);
-    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet), ...readStation(planet) };
+    planets[pack][id] = { id, name: planet.name, resources: planet.resources, influence: planet.influence, ...readPlanetMarks(planet), ...readPlanetKind(planet), ...(planet.legendaryAbilityName ? { pack } : {}), ...readStation(planet) };
   };
   for (const pack of ['base', 'pok', 'te'] as PackId[]) {
     for (const tile of Object.values(tiles[pack])) for (const id of tile.planetIds) place(pack, id);
@@ -467,7 +477,7 @@ export function readStartingTech(faction: Pick<SourceFaction, 'startingTech' | '
   };
 }
 
-/** Names and types only: the source's card text is not read. */
+/** Name and type; the card text goes to the texts, see `sheetTexts`. */
 export function readTech(tech: SourceTech): TechDef {
   const type = TECH_TYPES[tech.types[0]];
   if (!type) throw new Error(`Technology ${tech.alias} has unknown type ${tech.types[0]}`);
@@ -493,7 +503,7 @@ const UPGRADE_KINDS: (UnitId | StructureKind)[] = [...LEVEL_TYPES, 'pds', 'space
 
 /**
  * A faction technology: a colour, or a unit upgrade (`UNITUPGRADE`), or none (`NONE`, the Valefar Assimilators); its
- * prerequisites. What a unit upgrade upgrades is the unit whose `requiredTechId` names it. No card text is read.
+ * prerequisites. What a unit upgrade upgrades is the unit whose `requiredTechId` names it.
  */
 export function readFactionTech(tech: SourceTech, upgradedBy: Map<string, string>): TechDef {
   if (tech.types.length !== 1) throw new Error(`Technology ${tech.alias} has ${tech.types.length} types`);
@@ -534,7 +544,7 @@ const componentPack = (source: string, what: string): ComponentPack => {
   return pack;
 };
 
-/** Names, origins and numbers only: the card text is retold in `sheetSummaries`. */
+/** Names, origins and numbers; the card texts go to the texts, see `sheetTexts`. */
 export function buildSheet(
   faction: Pick<SourceFaction, 'alias' | 'abilities' | 'leaders' | 'units' | 'factionTech'>, abilities: Map<string, SourceAbility>, leaders: Map<string, SourceLeader>, units: Map<string, SourceUnit>, breakthrough?: SourceBreakthrough,
   technologies: Map<string, SourceTech> = new Map(),
@@ -731,6 +741,13 @@ function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<st
       for (const { id } of faction.sheet?.techs ?? []) result[pack][id] = readFactionTech(known.get(id)!, upgradedBy);
     }
   }
+  // Every common technology, in the pack of its source: a faction names only those it starts with.
+  for (const tech of known.values()) {
+    if (!tech.faction) result[packOfSource(tech.source)!][tech.alias] ??= readFactionTech(tech, upgradedBy);
+  }
+  for (const pack of Object.values(result)) {
+    for (const def of Object.values(pack)) def.pack = packOfSource(known.get(def.id)!.source)!;
+  }
   return result;
 }
 
@@ -777,15 +794,224 @@ function buildCards(root: string) {
       const card = cards.get(id);
       if (!card) throw new Error(`Strategy card ${id} is missing from the source`);
       return {
-        initiative: card.initiative, name: card.name, summaryKey: card.id,
+        initiative: card.initiative, name: card.name, id: card.id,
         ...(card.source === 'thunders_edge' ? { changedIn: 'te' as const } : {}),
       };
     }).sort((a, b) => a.initiative - b.initiative);
   };
-  return { base_game: cardsOf('base_game'), pok: cardsOf('pok'), te: cardsOf('te') };
+  return { sets: { base_game: cardsOf('base_game'), pok: cardsOf('pok'), te: cardsOf('te') }, source: cards };
 }
 
-function assertSchema(pack: DataPack, name: string): void {
+/** A stored component: its printed text lies apart, in src/data/texts. */
+type StoredComponent = Omit<ComponentDef, 'text'>;
+/** A record with the source file it was read from, without `.json`. */
+export type Filed<T> = T & { file: string };
+/** The official files of each card directory; every other file there is homebrew, whatever source its records name. */
+export const CATALOG_FILES = {
+  action_cards: ['action_cards', 'te_actioncards'],
+  agendas: ['base', 'pok'],
+  relics: ['pok', 'codexii', 'codexiv', 'te_relics'],
+  explores: ['explores', 'codex3'],
+  attachments: ['attachments', 'thundersEdge'],
+  promissory_notes: ['color', 'promissory_notes', 'thunders_edge'],
+  public_objectives: ['public_objectives'],
+  secret_objectives: ['secret_objectives'],
+};
+type CatalogDir = keyof typeof CATALOG_FILES;
+export interface CatalogSource {
+  actionCards?: Filed<SourceActionCard>[]; agendas?: Filed<SourceAgenda>[]; relics?: Filed<SourceRelic>[]; explores?: Filed<SourceExplore>[];
+  attachments?: Filed<SourceAttachment>[]; promissory?: Filed<SourcePromissory>[];
+  publicObjectives?: Filed<SourceObjective>[]; secretObjectives?: Filed<SourceObjective>[];
+}
+export interface Catalog {
+  components: Record<PackId, StoredComponent[]>;
+  texts: Record<PackId, Record<string, string>>;
+  /** Per directory, how many records were left out, by source; an official source in a homebrew file is `<source> in <file>.json`. */
+  excludedSources: Record<string, Record<string, number>>;
+  /** Single records of official files that are left out, each with its reason. */
+  excluded: Record<string, string>;
+}
+
+/** The source files Keleres under `keleres` and again under each of its three factions. */
+const SHARED_FACTION = 'keleres';
+
+/** A text as the source has it: only the line ends are unified and the ends trimmed. An empty one fails the build. */
+function putText(texts: Catalog['texts'], pack: PackId, id: string, text: string | null | undefined): void {
+  const clean = (text ?? '').replace(/\r\n/g, '\n').trim();
+  if (!clean) throw new Error(`Component ${id} has no text in the source`);
+  const known = texts[pack][id];
+  if (known !== undefined && known !== clean) throw new Error(`Component ${id} has two different texts`);
+  texts[pack][id] = clean;
+}
+
+/** "ACTION:" and what follows it, or a timing window and its effect, as one line. */
+export function windowText(window: string, effect: string): string {
+  return `${window.trim()}${window.trim().endsWith(':') ? '' : ':'} ${effect.trim()}`;
+}
+
+/** A faction ability: the permanent effect, then the window with its effect, each a paragraph. */
+export function abilityText(ability: Pick<SourceAbility, 'permanentEffect' | 'window' | 'windowEffect'>): string {
+  const timed = ability.window && ability.windowEffect ? windowText(ability.window, ability.windowEffect) : ability.window ?? ability.windowEffect;
+  return [ability.permanentEffect, timed].filter(Boolean).join('\n');
+}
+
+/**
+ * The cards with no home elsewhere in the packs: action cards, agendas, relics, exploration cards, promissory notes and
+ * objectives of the official sources, each in the pack of its source, with its text apart. Identical cards of a deck
+ * (same name and text) are one component under the id of the first, with `copies`.
+ */
+export function buildCatalog(source: CatalogSource, factionIds: string[]): Catalog {
+  const catalog: Catalog = {
+    components: { base: [], pok: [], te: [] }, texts: { base: {}, pok: {}, te: {} }, excludedSources: {}, excluded: {},
+  };
+  const ids = new Set<string>();
+  const official = <T extends { source: string }>(dir: CatalogDir, records: Filed<T>[] = []): (Filed<T> & { pack: PackId })[] => {
+    const kept: (Filed<T> & { pack: PackId })[] = [];
+    const out: Record<string, number> = {};
+    for (const record of records) {
+      const pack = packOfSource(record.source);
+      const inFile = (CATALOG_FILES[dir] as string[]).includes(record.file);
+      if (pack && inFile) kept.push({ ...record, pack });
+      else {
+        const key = pack ? `${record.source} in ${record.file}.json` : record.source;
+        out[key] = (out[key] ?? 0) + 1;
+      }
+    }
+    if (records.length > 0) catalog.excludedSources[dir] = out;
+    return kept;
+  };
+  const add = (kind: ComponentKind, sourceId: string, pack: PackId, name: string, text: string, rest: Partial<StoredComponent> = {}) => {
+    const id = `${kind}:${sourceId}`;
+    if (ids.has(id)) throw new Error(`Component ${id} is in the source twice`);
+    ids.add(id);
+    putText(catalog.texts, pack, id, text);
+    catalog.components[pack].push({ id, kind, name: name.trim(), pack, ...rest });
+  };
+  /** The cards of a deck with the same name and text, as the first of them and their number. */
+  const copies = <T extends { name: string; text: string; pack: PackId }>(cards: T[], extra: (card: T) => string = () => ''): { card: T; copies: number }[] => {
+    const groups = new Map<string, { card: T; copies: number }>();
+    for (const card of cards) {
+      const key = [card.pack, card.name, card.text, extra(card)].join('|');
+      const group = groups.get(key);
+      if (group) group.copies += 1;
+      else groups.set(key, { card, copies: 1 });
+    }
+    return [...groups.values()];
+  };
+
+  for (const { card, copies: count } of copies(official('action_cards', source.actionCards))) {
+    add('actionCard', card.alias, card.pack, card.name, card.text, { copies: count, detail: { phase: card.phase.toLowerCase(), window: card.window } });
+  }
+  for (const agenda of official('agendas', source.agendas)) {
+    // Covert Legislation has neither text: the source files what its card says under `target`.
+    add('agenda', agenda.alias, agenda.pack, agenda.name, [agenda.text1, agenda.text2].filter(Boolean).join('\n') || agenda.target, { detail: { type: agenda.type.toLowerCase(), target: agenda.target } });
+  }
+  for (const relic of official('relics', source.relics)) {
+    if (relic.isFakeRelic) catalog.excluded[`relic:${relic.alias}`] = 'marked isFakeRelic in the source: not a card of the relic deck';
+    else add('relic', relic.alias, relic.pack, relic.name, relic.text);
+  }
+  const attachments = new Map(official('attachments', source.attachments).map(attachment => [attachment.id, attachment]));
+  for (const { card, copies: count } of copies(official('explores', source.explores), card => card.type)) {
+    const attachment = card.attachmentId ? attachments.get(card.attachmentId) : undefined;
+    add('exploration', card.id, card.pack, card.name, card.text, {
+      copies: count,
+      detail: {
+        trait: card.type.toLowerCase(), resolution: card.resolution.toLowerCase(),
+        ...(attachment ? {
+          attachment: attachment.id,
+          ...(attachment.resourcesModifier ? { resources: attachment.resourcesModifier } : {}),
+          ...(attachment.influenceModifier ? { influence: attachment.influenceModifier } : {}),
+          ...(attachment.techSpeciality?.length ? { techSpecialty: attachment.techSpeciality.join(',') } : {}),
+        } : {}),
+      },
+    });
+  }
+  for (const note of official('promissory_notes', source.promissory)) {
+    if (note.faction === SHARED_FACTION) {
+      catalog.excluded[`promissory:${note.alias}`] = `filed under "${SHARED_FACTION}", which is no faction of the packs; the same card is there for each of its three factions`;
+      continue;
+    }
+    if (note.faction && !factionIds.includes(note.faction)) throw new Error(`Promissory note ${note.alias} names unknown faction ${note.faction}`);
+    add('promissory', note.alias, note.pack, note.name, note.text, note.faction ? { faction: note.faction } : {});
+  }
+  for (const objective of official('public_objectives', source.publicObjectives)) {
+    add('publicObjective', objective.alias, objective.pack, objective.name, objective.text, { detail: { stage: objective.points, points: objective.points, phase: objective.phase.toLowerCase() } });
+  }
+  for (const objective of official('secret_objectives', source.secretObjectives)) {
+    add('secretObjective', objective.alias, objective.pack, objective.name, objective.text, { detail: { phase: objective.phase.toLowerCase(), points: objective.points } });
+  }
+  return catalog;
+}
+
+/** The old Jol-Nar commander is not in the source; its text is taken to be that of the card that replaces it. */
+const SAME_TEXT: Record<string, string> = { [JOLNAR_OLD_COMMANDER.id]: 'jolnarcommander' };
+/** Printed on every agent; it is no condition, so no unlock text is written for it. */
+const ALWAYS_UNLOCKED = 'Always Unlocked';
+
+interface SheetSources {
+  abilities: Map<string, SourceAbility>; leaders: Map<string, SourceLeader>; units: Map<string, SourceUnit>;
+  breakthroughs: SourceBreakthrough[]; technologies: Map<string, SourceTech>; planets: SourcePlanet[]; cards: Map<string, SourceCard>;
+}
+
+/**
+ * Texts of what already has a home in the packs, under the id of its component: abilities, leaders (the unlock condition
+ * under `leader:<id>#unlock`), mechs, breakthroughs, technologies and legendary planets. Two more that are no components:
+ * a ship's printed ability under `unit:<id>`, and a strategy card under `strategy:<id>` and `strategy:<id>#secondary`.
+ */
+function sheetTexts(
+  texts: Catalog['texts'], sources: SheetSources, factions: Record<PackId, Record<string, FactionDef>>, technologies: Record<PackId, Record<string, TechDef>>,
+  planets: Record<PackId, Record<string, PlanetDef>>, ships: ShipSelection, cardSets: Record<PackId, string[]>,
+): void {
+  for (const pack of Object.values(factions)) {
+    for (const faction of Object.values(pack)) {
+      const sheet = faction.sheet!;
+      for (const item of sheet.abilities) putText(texts, item.pack, `ability:${item.id}`, abilityText(sources.abilities.get(item.id)!));
+      for (const item of sheet.leaders) {
+        const leader = sources.leaders.get(SAME_TEXT[item.id] ?? item.id);
+        if (!leader?.abilityWindow || !leader.abilityText) throw new Error(`Leader ${item.id} has no text in the source`);
+        putText(texts, item.pack, `leader:${item.id}`, windowText(leader.abilityWindow, leader.abilityText));
+        if (leader.unlockCondition && leader.unlockCondition !== ALWAYS_UNLOCKED) putText(texts, item.pack, `leader:${item.id}#unlock`, leader.unlockCondition);
+      }
+      for (const item of sheet.mechs) putText(texts, item.pack, `mech:${item.id}`, sources.units.get(item.id)?.ability);
+      if (sheet.breakthrough) putText(texts, sheet.breakthrough.pack, `breakthrough:${sheet.breakthrough.id}`, sources.breakthroughs.find(b => b.alias === sheet.breakthrough!.id)?.text);
+    }
+  }
+  for (const pack of Object.values(technologies)) {
+    for (const tech of Object.values(pack)) putText(texts, tech.pack!, `technology:${tech.id}`, sources.technologies.get(tech.id)?.text);
+  }
+  // A pack also holds the text of what its factions start with: Magen Defense Grid of a base faction is filed under a
+  // Codex, and has to read without Prophecy of Kings.
+  for (const [holder, pack] of Object.entries(factions) as [PackId, Record<string, FactionDef>][]) {
+    for (const faction of Object.values(pack)) {
+      for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) putText(texts, holder, `technology:${id}`, sources.technologies.get(id)?.text);
+    }
+  }
+  for (const pack of ['base', 'pok', 'te'] as PackId[]) {
+    for (const planet of Object.values(planets[pack])) {
+      if (planet.legendary) putText(texts, pack, `legendary:${planet.id}`, sources.planets.find(p => p.id === planet.id)?.legendaryAbilityText);
+    }
+  }
+  const tables = [ships.generic, ...Object.values(ships.factions)];
+  for (const stat of tables.flatMap(table => Object.values(table)).flatMap(levels => [levels.one, ...(levels.two ? [levels.two] : [])])) {
+    const unit = sources.units.get(stat.id)!;
+    if (unit.ability) putText(texts, packOfSource(unit.source)!, `unit:${stat.id}`, unit.ability);
+  }
+  // A set of strategy cards goes with one expansion whatever the sources of its cards, so its texts go there whole.
+  for (const [pack, ids] of Object.entries(cardSets) as [PackId, string[]][]) {
+    for (const id of ids) {
+      const card = sources.cards.get(id)!;
+      if (!packOfSource(card.source)) throw new Error(`Strategy card ${id} has source ${card.source}, which is not in scope`);
+      putText(texts, pack, `strategy:${id}`, card.primaryTexts?.join('\n'));
+      putText(texts, pack, `strategy:${id}#secondary`, card.secondaryTexts?.join('\n'));
+    }
+  }
+}
+
+const readFiled = <T>(root: string, dir: CatalogDir): Filed<T>[] =>
+  readdirSync(join(root, 'data', dir)).filter(name => name.endsWith('.json'))
+    .flatMap(name => readJson<T[]>(root, `data/${dir}/${name}`).map(record => ({ ...record, file: name.replace(/\.json$/, '') })));
+
+function assertSchema(pack: Omit<DataPack, 'components' | 'texts'> & { components: StoredComponent[] }, name: string): void {
   const isCount = (value: unknown) => typeof value === 'number' && Number.isFinite(value) && value >= 0;
   for (const planet of Object.values(pack.planets)) {
     if (!planet.name || !isCount(planet.resources) || !isCount(planet.influence)) throw new Error(`${name}: bad planet ${planet.id}`);
@@ -834,7 +1060,8 @@ async function main(): Promise<void> {
   const laneText = readFileSync(join(root, 'data/hyperlanes.properties'), 'utf8');
   checkLaneRotations(laneText);
   const tiles = buildTiles(systems, parseHyperlanes(laneText));
-  const planets = buildPlanets(readDir<SourcePlanet>(root, 'planets'), tiles);
+  const planetSource = readDir<SourcePlanet>(root, 'planets');
+  const planets = buildPlanets(planetSource, tiles);
   const abilitySource = readDir<SourceAbility[]>(root, 'data/abilities').flat();
   const abilityNames = new Map(abilitySource.map(ability => [ability.id, ability.name]));
   const factionSource = readdirSync(join(root, 'data/factions'))
@@ -865,7 +1092,16 @@ async function main(): Promise<void> {
   console.log('Ships excluded:', ships.excluded);
   const technologies = buildTechnologies(techSource, factions, upgradedBy);
   const templates = buildTemplates(root);
-  const cards = buildCards(root);
+  const { sets: cards, source: cardSource } = buildCards(root);
+  const catalog = buildCatalog({
+    actionCards: readFiled(root, 'action_cards'), agendas: readFiled(root, 'agendas'), relics: readFiled(root, 'relics'),
+    explores: readFiled(root, 'explores'), attachments: readFiled(root, 'attachments'), promissory: readFiled(root, 'promissory_notes'),
+    publicObjectives: readFiled(root, 'public_objectives'), secretObjectives: readFiled(root, 'secret_objectives'),
+  }, factionIds);
+  sheetTexts(catalog.texts, {
+    abilities: officialAbilities, leaders: officialLeaders, units: unitsById, breakthroughs, technologies: officialTechs, planets: planetSource, cards: cardSource,
+  }, factions, technologies, planets, ships, { base: cards.base_game.map(card => card.id), pok: cards.pok.map(card => card.id), te: cards.te.map(card => card.id) });
+  const unnamedFactionTechs = [...officialTechs.values()].filter(tech => tech.faction && !Object.values(technologies).some(pack => pack[tech.alias])).map(tech => tech.alias);
 
   const physical = (pack: PackId) => new Set(Object.values(tiles[pack])
     .filter(tile => tile.kind !== 'fracture').map(tile => tile.number)).size;
@@ -886,10 +1122,26 @@ async function main(): Promise<void> {
       version: DATA_VERSION, tiles: tiles[name], planets: planets[name], units: units[name],
       factions: factions[name], templates: templates[name], technologies: technologies[name],
       structures: name === 'base' ? structures : [],
+      components: catalog.components[name],
     };
     assertSchema(pack, name);
     writeFileSync(join(outDir, `${name}.json`), `${JSON.stringify(pack, null, 2)}\n`);
   }
+  const textDir = join(repoRoot, 'src/data/texts');
+  mkdirSync(textDir, { recursive: true });
+  for (const name of ['base', 'pok', 'te'] as PackId[]) {
+    const sorted = Object.fromEntries(Object.entries(catalog.texts[name]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+    if (/https?:|\.(png|jpe?g|webp)\b/i.test(JSON.stringify(sorted))) throw new Error(`${name}: texts contain an image or a link`);
+    writeFileSync(join(textDir, `${name}.json`), `${JSON.stringify(sorted, null, 2)}\n`);
+  }
+  const counts: Record<string, string> = {};
+  for (const name of ['base', 'pok', 'te'] as PackId[]) {
+    for (const id of Object.keys(catalog.texts[name])) {
+      const kind = id.includes('#') ? 'extra' : id.split(':')[0];
+      counts[`${kind} ${name}`] = String(Number(counts[`${kind} ${name}`] ?? 0) + 1);
+    }
+  }
+  console.log('Texts written:', counts);
   writeFileSync(join(outDir, 'strategyCards.json'), `${JSON.stringify(cards, null, 2)}\n`);
   writeFileSync(join(repoRoot, 'src/data/provenance.json'), `${JSON.stringify({
     source: `https://github.com/${REPO}`,
@@ -902,7 +1154,7 @@ async function main(): Promise<void> {
     excludedPlanets: EXCLUDED_PLANETS,
     notFromSource: { tiles: TE_RULEBOOK_HYPERLANES, leaders: [JOLNAR_OLD_COMMANDER.name], reason: "Thunder's Edge rulebook; absent from the source at this commit" },
     factionTechnologies: {
-      fields: 'data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades. Card text is not read.',
+      fields: 'data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades.',
       added: EXTRA_FACTION_TECH.keleresm,
       replaces: { executiveorder: REPLACED_BY_TE.executiveorder },
       reason: "Executive Order is filed under keleres with source thunders_edge but listed on no faction; the Thunder's Edge rulebook gives Keleres two faction technologies and the source names the Keleres breakthrough I.I.H.Q. Modernization, so it is taken to replace that technology (inference, not confirmed by a rulebook line).",
@@ -920,6 +1172,33 @@ async function main(): Promise<void> {
       units: UNIT_LIMITS,
       structures: STRUCTURE_LIMITS,
       tokenUnits: { figures: TOKEN_UNITS, reason: 'Fighters and infantry are not limited by their figures: tokens stand in for them (LRR 96 note 2.1), so their limit is null.' },
+    },
+    components: {
+      texts: 'Card texts are copied verbatim into src/data/texts/<pack>.json (component id to text); they belong to the publisher, see src/data/texts/NOTICE.md. Only line ends are unified and the ends trimmed.',
+      files: CATALOG_FILES,
+      fields: {
+        action_cards: 'alias, name, text, source; phase and window in detail; identical cards (name and text) are one component with copies',
+        agendas: 'alias, name, source; text1 and text2 as the paragraphs of the text (Covert Legislation has neither: its text is its target); type (law, directive) and target in detail',
+        relics: 'alias, name, text, source; isFakeRelic excludes',
+        explores: 'id, name, text, source; type as detail.trait, resolution; identical cards are one component with copies; attachmentId with the numbers of data/attachments (resourcesModifier, influenceModifier, techSpeciality) in detail',
+        attachments: 'read only for the numbers of exploration cards; an attachment is no component of its own',
+        promissory_notes: 'alias, name, text, source, faction; the five common notes keep the "<color>" of the source in id and text',
+        public_objectives: 'alias, name, text, source; points as detail.stage and detail.points, phase',
+        secret_objectives: 'alias, name, text, source; phase and points in detail',
+        technologies: 'text; every common technology of the official sources is in the pack of its source; the text of a starting technology is also in the pack of the faction that starts with it',
+        abilities: 'permanentEffect, then window and windowEffect joined by a colon, as paragraphs',
+        leaders: 'abilityWindow and abilityText joined by a colon; unlockCondition under <id>#unlock unless it is "Always Unlocked"',
+        units: 'ability: of a mech under mech:<id>, of a ship under unit:<id>',
+        breakthroughs: 'text',
+        planets: 'legendaryAbilityText under legendary:<planet id>',
+        strategy_cards: 'primaryTexts and secondaryTexts, each joined by line ends, under strategy:<id> and strategy:<id>#secondary, in the pack of the set (base_game, pok, te) that holds the card',
+      },
+      notRead: 'flavorText, notes (rulings of the source), image and automation fields',
+      excludedSources: catalog.excludedSources,
+      excluded: catalog.excluded,
+      excludedReason: 'Only base, pok, codex* and thunders_edge from the official files are kept; every other source is homebrew or a variant of the source itself.',
+      factionTechnologiesNotNamed: { ids: unnamedFactionTechs, reason: 'faction technologies of an official source that no faction entry lists' },
+      sameTextAs: { ...SAME_TEXT, reason: 'Ta Zern is not in the source at this commit; its text is assumed to be that of Agnlan Oln, which replaces it. Not confirmed by a public source.' },
     },
     production: { spacedock: "Production of a space dock is the planet's resources plus the number in its levels: source productionValue, LRR 79.1." },
     verification: 'docs/data-verification.md',

@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { CURRENT_SCHEMA, exportGame, importGame, migrate } from './transfer';
-import { gameOfSchema1, sampleGame } from './fixture';
+import { createGame } from '../domain/newGame';
+import { CURRENT_SCHEMA, SAVE_FORMAT } from './schema';
+import { exportGame, importGame } from './transfer';
+import { oldFormatSave, sampleGame } from './fixture';
 
 const game = sampleGame();
 
@@ -9,32 +11,67 @@ test('экспорт и импорт туда и обратно', () => {
   expect(importGame(exportGame(game))).toEqual({ ok: true, game });
 });
 
-test('a file a migration chokes on is refused as damaged, the import does not throw', () => {
-  for (const opponents of [[null], [1, 'x'], [[]]]) {
-    const text = JSON.stringify({ ...gameOfSchema1(), opponents });
+test('a new game goes to a file and back as it is', () => {
+  const pack = loadPack(['pok', 'te']);
+  const fresh = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, pack);
+  expect(importGame(exportGame(fresh))).toEqual({ ok: true, game: fresh });
+});
+
+test('a new game is written with the format mark and schema version 1', () => {
+  const fresh = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, loadPack([]));
+  expect(fresh.format).toBe('ti4-planner/2');
+  expect(fresh.format).toBe(SAVE_FORMAT);
+  expect(fresh.schemaVersion).toBe(1);
+  expect(CURRENT_SCHEMA).toBe(1);
+  expect(JSON.parse(exportGame(fresh))).toMatchObject({ format: 'ti4-planner/2', schemaVersion: 1 });
+});
+
+describe('a file of an earlier version of the app', () => {
+  test('a file without the format mark is refused as saved by an earlier version', () => {
+    const { game: old } = oldFormatSave();
+    expect(importGame(JSON.stringify(old))).toEqual({ ok: false, reason: 'oldFormat' });
+    expect(importGame('{}')).toEqual({ ok: false, reason: 'oldFormat' });
+    expect(importGame('{"schemaVersion":1}')).toEqual({ ok: false, reason: 'oldFormat' });
+  });
+
+  test('so is a file with another format mark, whatever its schema version', () => {
+    for (const schemaVersion of [1, 6, 99]) {
+      expect(importGame(JSON.stringify({ ...game, format: 'ti4-planner/1', schemaVersion }))).toEqual({ ok: false, reason: 'oldFormat' });
+    }
+  });
+});
+
+test('отказ на повреждённом файле и файле новее схемы', () => {
+  expect(importGame('{oops')).toEqual({ ok: false, reason: 'invalidJson' });
+  expect(importGame(exportGame({ ...game, schemaVersion: 99 }))).toEqual({ ok: false, reason: 'newerVersion' });
+});
+
+test('a file with a part that is no part of a game is refused as damaged, the import does not throw', () => {
+  for (const opponents of [[null], [1, 'x'], [[]], 'none']) {
+    const text = JSON.stringify({ ...game, opponents });
     expect(() => importGame(text)).not.toThrow();
     expect(importGame(text)).toEqual({ ok: false, reason: 'invalidSchema' });
   }
 });
 
-test('отказ на повреждённом файле и файле новее схемы', () => {
-  expect(importGame('{oops')).toEqual({ ok: false, reason: 'invalidJson' });
-  expect(importGame('{"schemaVersion":1}')).toEqual({ ok: false, reason: 'invalidSchema' });
-  expect(importGame(exportGame({ ...game, schemaVersion: 99 }))).toEqual({ ok: false, reason: 'newerVersion' });
-});
-
 describe('схема', () => {
-  test.each(['null', '[]', '"x"', '{}'])('не-игра %s отклоняется', text => {
+  test.each(['null', '[]', '"x"', '5'])('не-игра %s отклоняется', text => {
     expect(importGame(text)).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 
-  test.each([-3, 0.5])('недопустимая версия схемы %s отклоняется', v => {
+  test.each([-3, 0, 0.5])('недопустимая версия схемы %s отклоняется', v => {
     expect(importGame(JSON.stringify({ ...game, schemaVersion: v }))).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 
   test('запись неизвестного вида отклоняется', () => {
     const bad = structuredClone(game);
     (bad.plans[0].rounds[0].entries[0] as { type: string }).type = 'bogus';
+    expect(importGame(JSON.stringify(bad))).toEqual({ ok: false, reason: 'invalidSchema' });
+  });
+
+  test('an expedition is an act of a turn: an entry of its own is refused', () => {
+    const bad = structuredClone(game) as unknown as { plans: { rounds: { entries: unknown[] }[] }[] };
+    bad.plans[0].rounds[0].entries.push({ id: 'x', phase: 'action', status: 'planned', type: 'expedition', sliceId: null, payment: { planets: [], tradeGoods: 0 } });
     expect(importGame(JSON.stringify(bad))).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 
@@ -45,21 +82,16 @@ describe('схема', () => {
     const neg = structuredClone(game);
     neg.enemyUnits = { '1,0': { o: { fighter: -1 } } };
     expect(importGame(JSON.stringify(neg)).ok).toBe(false);
+    expect(importGame(JSON.stringify({ ...game, enemyUnits: 5 })).ok).toBe(false);
   });
 });
 
-test('миграция применяется к старой схеме', () => {
-  const old = { ...gameOfSchema1(), schemaVersion: 0 };
-  expect(migrate(old)).toMatchObject({ schemaVersion: CURRENT_SCHEMA });
-  expect(importGame(JSON.stringify(old))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA } });
-});
-
 describe('раскладка карты', () => {
-  test('файл без раскладки читается как обычная, а неизвестная раскладка отклоняется', () => {
+  test('файл без раскладки и с неизвестной раскладкой отклоняется', () => {
     const withoutLayout = JSON.parse(exportGame(game)) as Record<string, unknown>;
     delete withoutLayout.layout;
-    expect(importGame(JSON.stringify(withoutLayout))).toMatchObject({ ok: true, game: { layout: 'standard' } });
-    expect(importGame(JSON.stringify({ ...withoutLayout, layout: 'lanes' })).ok).toBe(false);
+    expect(importGame(JSON.stringify(withoutLayout))).toEqual({ ok: false, reason: 'invalidSchema' });
+    expect(importGame(JSON.stringify({ ...withoutLayout, layout: 'lanes' }))).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 
   test('раскладка с гиперпутями сохраняется при экспорте', () => {
@@ -77,81 +109,25 @@ test('seats, colours and points survive export and import', () => {
   expect(result.ok && result.game.opponents.map(o => [o.seat, o.color])).toEqual(moved.opponents.map(o => [o.seat, o.color]));
 });
 
-test('a file from before seats gets them in list order', () => {
-  const { seat, color, vp, opponents, ...rest } = gameOfSchema1();
-  void seat; void color; void vp;
-  const old = { ...rest, opponents: (opponents as { faction: string; vp: number }[]).map(({ faction, vp: points }) => ({ faction, vp: points })) };
-  const result = importGame(JSON.stringify(old));
-  expect(result.ok && [result.game.seat, result.game.color, result.game.vp]).toEqual([1, 1, 0]);
-  expect(result.ok && result.game.opponents.map(o => [o.seat, o.color])).toEqual([[2, 2], [3, 3], [4, 4]]);
+test('a seat or a count of players that is no number is refused', () => {
+  const doc = JSON.parse(exportGame(sampleGame()));
+  doc.opponents[0].seat = 'two';
+  expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
+  expect(importGame(JSON.stringify({ ...sampleGame(), playerCount: 'four' }))).toEqual({ ok: false, reason: 'invalidSchema' });
 });
 
-describe('owners of enemy units and planets', () => {
-  const imported = (file: unknown) => {
-    const result = importGame(JSON.stringify(file));
-    if (!result.ok) throw new Error(result.reason);
-    return result.game;
-  };
-
-  test('a new game is written at the current schema', () => {
-    expect(sampleGame().schemaVersion).toBe(CURRENT_SCHEMA);
-  });
-
-  test('a version 1 file: opponents get ids, old units and enemy planets go to the first opponent', () => {
-    const { opponents, enemyUnits, planetControl, planetOwner, schemaVersion } = imported(gameOfSchema1());
-    expect(schemaVersion).toBe(CURRENT_SCHEMA);
-    const ids = opponents.map(o => o.id);
-    expect(new Set(ids).size).toBe(3);
-    expect(ids.every(id => id.length > 0)).toBe(true);
-    expect(enemyUnits).toEqual({ '1,0': { [ids[0]]: { dreadnought: 2 } }, '0,1': { [ids[0]]: { fighter: 3 } } });
-    expect(planetControl).toEqual({ jord: 'me', arc: 'enemy', lazar: 'enemy' });
-    expect(planetOwner).toEqual({ arc: ids[0], lazar: ids[0] });
-  });
-
-  test('the ids come out the same every time, because a migrated game is only saved after its next edit', () => {
-    expect(imported(gameOfSchema1()).opponents).toEqual(imported(gameOfSchema1()).opponents);
-  });
-
-  test('a version 1 game without opponents drops its enemy units', () => {
-    const game = imported({ ...gameOfSchema1(), opponents: [] });
-    expect(game.enemyUnits).toEqual({});
-    expect(game.planetOwner).toEqual({});
-  });
-
-  test('a current file is left alone by the migration', () => {
-    const owned = { ...game, planetOwner: { arc: game.opponents[1].id }, planetControl: { arc: 'enemy' as const } };
-    expect(importGame(exportGame(owned))).toEqual({ ok: true, game: owned });
-  });
-
-  test('a version 1 file with a bad unit is still refused after the move', () => {
-    expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: { '1,0': { spaceship: 1 } } })).ok).toBe(false);
-    expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: { '1,0': { fighter: -1 } } })).ok).toBe(false);
-    expect(importGame(JSON.stringify({ ...gameOfSchema1(), enemyUnits: 5 })).ok).toBe(false);
-  });
+test('owners of enemy units and planets survive export and import', () => {
+  const owned = { ...game, planetOwner: { arc: game.opponents[1].id }, planetControl: { arc: 'enemy' as const } };
+  expect(importGame(exportGame(owned))).toEqual({ ok: true, game: owned });
 });
 
-describe('upgrades in saved games', () => {
-  test('a version 2 file gets empty upgrades', () => {
-    const { upgrades: dropped, ...rest } = sampleGame();
-    void dropped;
-    const result = importGame(JSON.stringify({ ...rest, schemaVersion: 2 }));
-    expect(result).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, upgrades: { me: [], opponents: {} } } });
-  });
-
-  test('a version 1 file goes all the way', () => {
-    const { upgrades: dropped, ...rest } = gameOfSchema1();
-    void dropped;
-    expect(importGame(JSON.stringify(rest))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, upgrades: { me: [], opponents: {} } } });
-  });
-
-  test('upgrades survive a round trip, entries included, and a bad unit is refused', () => {
-    const game = sampleGame();
-    const opponent = game.opponents[0].id;
-    const marked = { ...game, upgrades: { me: ['carrier' as const], opponents: { [opponent]: ['fighter' as const] } } };
-    marked.plans[0].rounds[0].entries[1] = { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic', upgrades: ['cruiser'] };
-    expect(importGame(exportGame(marked))).toEqual({ ok: true, game: marked });
-    expect(importGame(JSON.stringify({ ...game, upgrades: { me: ['spaceship'], opponents: {} } })).ok).toBe(false);
-  });
+test('upgrades survive a round trip, entries included, and a bad unit is refused', () => {
+  const game = sampleGame();
+  const opponent = game.opponents[0].id;
+  const marked = { ...game, upgrades: { me: ['carrier' as const], opponents: { [opponent]: ['fighter' as const] } } };
+  marked.plans[0].rounds[0].entries[1] = { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic', upgrades: ['cruiser'] };
+  expect(importGame(exportGame(marked))).toEqual({ ok: true, game: marked });
+  expect(importGame(JSON.stringify({ ...game, upgrades: { me: ['spaceship'], opponents: {} } })).ok).toBe(false);
 });
 
 test('a card entry with its effects and a free tactical survive export and import', () => {
@@ -169,6 +145,16 @@ test('a card entry with its effects and a free tactical survive export and impor
   expect(importGame(exportGame(game))).toEqual({ ok: true, game });
 });
 
+test('the acts of a turn survive export and import', () => {
+  const game = sampleGame();
+  const rival = game.opponents[0].id;
+  game.plans[0].rounds[0].entries = [{
+    id: 'c', phase: 'action', status: 'planned', type: 'component', note: '',
+    acts: [{ kind: 'transaction', with: rival, give: { tradeGoods: 2 }, get: { note: true } }, { kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }],
+  }];
+  expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+});
+
 test('the points of a status entry survive export and import', () => {
   const game = sampleGame();
   const opponent = game.opponents[0].id;
@@ -180,20 +166,6 @@ test('the points of a status entry survive export and import', () => {
 });
 
 describe('PDS in saved games', () => {
-  const version3 = () => {
-    const { pds: dropped, ...rest } = sampleGame();
-    void dropped;
-    return { ...rest, schemaVersion: 3 };
-  };
-
-  test('a version 3 file gets no PDS and comes up to the current schema', () => {
-    expect(importGame(JSON.stringify(version3()))).toMatchObject({ ok: true, game: { schemaVersion: CURRENT_SCHEMA, pds: {} } });
-  });
-
-  test('a version 1 file goes all the way', () => {
-    expect(importGame(JSON.stringify(gameOfSchema1()))).toMatchObject({ ok: true, game: { pds: {} } });
-  });
-
   test('a file with PDS keeps them', () => {
     const game = { ...sampleGame(), pds: { jord: 2 } };
     expect(importGame(exportGame(game))).toEqual({ ok: true, game });
@@ -212,7 +184,7 @@ describe('PDS in saved games', () => {
     expect(importGame(exportGame(game))).toEqual({ ok: true, game });
   });
 
-  test('an old adjustment without a kind stays valid, and an unknown kind is refused', () => {
+  test('an adjustment by hand has no kind, and an unknown kind is refused', () => {
     const game = sampleGame();
     expect(importGame(exportGame(game)).ok).toBe(true);
     const bad = structuredClone(game) as unknown as { plans: { rounds: { entries: Record<string, unknown>[] }[] }[] };
@@ -221,40 +193,8 @@ describe('PDS in saved games', () => {
   });
 });
 
-
 describe('enemy ground units by planet', () => {
-  const tile = '26';
-  const planetOf = (id: string) => loadPack(['pok']).tiles[id].planetIds[0];
-  const version = (schemaVersion: number) => {
-    const { pds, enemyGround, ...rest } = sampleGame();
-    void enemyGround;
-    const opponent = rest.opponents[0].id;
-    return {
-      ...rest, schemaVersion, opponent,
-      ...(schemaVersion === 4 ? { pds } : {}),
-      map: { ...rest.map, '1,0': tile, '0,1': '39' },
-      enemyUnits: { '1,0': { [opponent]: { cruiser: 1, infantry: 2, mech: 1 } }, '0,1': { [opponent]: { infantry: 3 } } },
-    };
-  };
-
-  test.each([3, 4])('a version %i file moves them to the first planet of the system, or leaves them in space without one', v => {
-    const doc = version(v);
-    const result = importGame(JSON.stringify(doc));
-    if (!result.ok) throw new Error(result.reason);
-    expect(result.game.schemaVersion).toBe(CURRENT_SCHEMA);
-    expect(result.game.enemyGround).toEqual({ [planetOf(tile)]: { [doc.opponent]: { infantry: 2, mech: 1 } } });
-    expect(result.game.enemyUnits).toEqual({ '1,0': { [doc.opponent]: { cruiser: 1 } }, '0,1': { [doc.opponent]: { infantry: 3 } } });
-  });
-
-  test('a version 1 file goes all the way', () => {
-    const doc = { ...gameOfSchema1(), map: { '1,0': tile }, enemyUnits: { '1,0': { infantry: 2 } } };
-    const result = importGame(JSON.stringify(doc));
-    if (!result.ok) throw new Error(result.reason);
-    expect(result.game.enemyGround).toEqual({ [planetOf(tile)]: { [result.game.opponents[0].id]: { infantry: 2 } } });
-    expect(result.game.enemyUnits).toEqual({});
-  });
-
-  test('a current file with them is left alone, and a bad count refused', () => {
+  test('a file with them is left alone, and a bad count refused', () => {
     const game = { ...sampleGame(), enemyGround: { arc: { o: { infantry: 2 } } } };
     expect(importGame(exportGame(game))).toEqual({ ok: true, game });
     expect(importGame(JSON.stringify({ ...game, enemyGround: { arc: { o: { infantry: -1 } } } })).ok).toBe(false);
@@ -279,7 +219,7 @@ describe('routes in a saved game', () => {
     return (result.game.plans[0].rounds[0].entries[0] as { moves: unknown[] }).moves;
   };
 
-  test('a save from before routes loads as it is', () => {
+  test('a move from a neighbour has no way written down', () => {
     const moves = [{ from: '1,0', units: { carrier: 1 } }];
     expect(movesOf(importGame(withMoves(moves)))).toEqual(moves);
   });
@@ -290,159 +230,10 @@ describe('routes in a saved game', () => {
   });
 });
 
-describe('seats of an imported file', () => {
-  const withSeats = (me: number, others: number[]) => {
-    const doc = structuredClone(sampleGame());
-    const template = doc.opponents[0] ?? { id: '', faction: '', vp: 0, seat: 2, color: 2 };
-    doc.seat = me;
-    doc.opponents = others.map((seat, i) => ({ ...template, id: `o${i}`, color: i + 2, seat }));
-    return JSON.stringify(doc);
-  };
-  const seatsOf = (text: string) => {
-    const result = importGame(text);
-    if (!result.ok) throw new Error(result.reason);
-    return [result.game.seat, ...result.game.opponents.map(o => o.seat)];
-  };
-
-  test('valid seats stay as they are', () => {
-    expect(seatsOf(withSeats(3, [1, 2]))).toEqual([3, 1, 2]);
-  });
-
-  test('a duplicate takes the lowest free seat, the first holder keeps it', () => {
-    expect(seatsOf(withSeats(2, [2, 3]))).toEqual([2, 1, 3]);
-  });
-
-  test('a seat out of range takes a free one', () => {
-    expect(seatsOf(withSeats(1, [9, 0]))).toEqual([1, 2, 3]);
-  });
-
-  test('a seat that is no number stays invalid', () => {
-    const doc = JSON.parse(withSeats(1, [2, 3]));
-    doc.opponents[0].seat = 'two';
-    expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
-  });
-});
-
-describe('player count of an imported file', () => {
-  test('is set from the opponents, however the file states it', () => {
-    const doc = structuredClone(sampleGame());
-    doc.playerCount = doc.opponents.length + 4;
-    const result = importGame(JSON.stringify(doc));
-    expect(result.ok && result.game.playerCount).toBe(doc.opponents.length + 1);
-  });
-
-  test('a count that is no number stays invalid', () => {
-    const doc = { ...structuredClone(sampleGame()), playerCount: 'four' };
-    expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
-  });
-});
-
-describe('the seven-player map without hyperlanes, gone in version 5', () => {
-  const pok = loadPack(['pok']);
-  /** A version 4 file of a seven-player game on the retired four-ring map, with a tile where 85A now lies. */
-  const version4 = () => {
-    const opponents = ['hacan', 'arborec', 'jolnar', 'naalu', 'xxcha', 'yin']
-      .map((faction, i) => ({ id: `o${i + 2}`, faction, vp: 0, seat: i + 2, color: i + 2 }));
-    return {
-      ...sampleGame(), schemaVersion: 4, expansions: ['pok'], playerCount: 7, layout: 'standard', faction: 'sol', seat: 1, opponents,
-      map: { '0,0': '18', '0,-4': pok.factions.sol.homeTile, '3,-3': pok.factions.hacan.homeTile, '0,4': '25', '1,0': '26' },
-      enemyUnits: {}, enemyGround: {}, planetControl: {}, planetOwner: {}, upgrades: { me: [], opponents: {} },
-    };
-  };
-
-  test('such a file opens on the rulebook map: hyperlanes placed, homes at the new seats, the tile under a lane gone', () => {
-    const result = importGame(JSON.stringify(version4()));
-    if (!result.ok) throw new Error(result.reason);
-    expect(result.game.schemaVersion).toBe(CURRENT_SCHEMA);
-    expect(result.game.layout).toBe('hyperlanes');
-    expect(result.game.map['0,4']).toBe('85A@0');
-    expect(result.game.map['3,-4']).toBe(pok.factions.hacan.homeTile);
-    expect(result.game.map['1,0']).toBe('26');
-    expect(Object.values(result.game.map)).not.toContain('25');
-  });
-
-  test('other layouts keep their value', () => {
-    const eight = { ...version4(), playerCount: 8, opponents: [...version4().opponents, { id: 'o8', faction: 'winnu', vp: 0, seat: 8, color: 8 }] };
-    expect(migrate(eight)).toMatchObject({ schemaVersion: CURRENT_SCHEMA, layout: 'standard' });
-  });
-});
-
-describe('schema 6: an expedition becomes an act of a turn', () => {
-  const version5 = (entries: import('../domain/types').Entry[]) => {
-    const g = sampleGame();
-    g.plans[0].rounds[0].entries = entries;
-    return { ...g, schemaVersion: 5 };
-  };
-  const pay = { planets: [], tradeGoods: 3 };
-  const tactical = (id: string, owner?: string) => ({ id, phase: 'action' as const, status: 'planned' as const, type: 'tactical' as const, systemId: '1,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, ...(owner ? { owner } : {}) });
-  const expedition = (id: string, owner?: string) => ({ id, phase: 'action' as const, status: 'done' as const, type: 'expedition' as const, sliceId: 'tg3', payment: pay, ...(owner ? { owner } : {}) });
-  const entriesOf = (doc: unknown) => {
-    const result = importGame(JSON.stringify(doc));
-    if (!result.ok) throw new Error(result.reason);
-    return result.game.plans[0].rounds[0].entries;
-  };
-
-  test('it joins the turn of its owner right before it', () => {
-    const entries = entriesOf(version5([tactical('t1'), expedition('e1'), tactical('r1', 'o1')]));
-    expect(entries.map(e => e.id)).toEqual(['t1', 'r1']);
-    expect(entries[0]).toMatchObject({ acts: [{ kind: 'expedition', sliceId: 'tg3', payment: pay }] });
-    expect(entries[1]).not.toHaveProperty('acts');
-    // An opponent's entry between may change what I can pay with: the expedition stays an entry.
-    expect(entriesOf(version5([tactical('t1'), tactical('r1', 'o1'), expedition('e1')])).map(e => e.id)).toEqual(['t1', 'r1', 'e1']);
-  });
-
-  test('with no turn of its owner right before it, it stays an entry: joining a later turn would change the order of play', () => {
-    const entries = entriesOf(version5([expedition('e1', 'o1'), tactical('t1'), tactical('r1', 'o1')]));
-    expect(entries.map(e => e.id)).toEqual(['e1', 't1', 'r1']);
-  });
-
-  test('only expeditions may stand between the turn and its expedition; anything else keeps it an entry', () => {
-    const give = { id: 'g', phase: 'action' as const, status: 'planned' as const, type: 'adjustment' as const, label: '', delta: { tradeGoods: 3 } };
-    expect(entriesOf(version5([tactical('t1'), give, expedition('e1')])).map(e => e.id)).toEqual(['t1', 'g', 'e1']);
-    const two = entriesOf(version5([tactical('t1'), expedition('e1'), expedition('e2')]));
-    expect(two.map(e => e.id)).toEqual(['t1']);
-    expect(two[0]).toMatchObject({ acts: [{ kind: 'expedition' }, { kind: 'expedition' }] });
-  });
-
-  test('a cancelled expedition stays an entry, and a cancelled turn is no host', () => {
-    const cancelledExpedition = { ...expedition('e1'), status: 'cancelled' as const };
-    expect(entriesOf(version5([tactical('t1'), cancelledExpedition])).map(e => e.id)).toEqual(['t1', 'e1']);
-    const cancelledTurn = { ...tactical('t1'), status: 'cancelled' as const };
-    expect(entriesOf(version5([cancelledTurn, expedition('e1')])).map(e => e.id)).toEqual(['t1', 'e1']);
-  });
-
-  test('after the free tactical action of Warfare the expedition joins its card, never the hidden tactical', () => {
-    const card = { id: 'w', phase: 'action' as const, status: 'planned' as const, type: 'strategic' as const, card: 6 };
-    const free = { ...tactical('f'), free: true, fromCard: 'w' };
-    const entries = entriesOf(version5([card, free, expedition('e1')]));
-    expect(entries.find(e => e.id === 'w')).toMatchObject({ acts: [{ kind: 'expedition' }] });
-    expect(entries.find(e => e.id === 'f')).not.toHaveProperty('acts');
-  });
-
-  test('with no turn entry of its owner in the round it stays an entry', () => {
-    const entries = entriesOf(version5([tactical('r1', 'o1'), expedition('e1')]));
-    expect(entries.map(e => e.type)).toEqual(['tactical', 'expedition']);
-  });
-
-  test('the version becomes 6', () => {
-    expect(CURRENT_SCHEMA).toBe(6);
-    expect(migrate(version5([]))).toMatchObject({ schemaVersion: 6 });
-  });
-});
-
-test('schema 6: the forecast stays what it was: the joined expedition still pays and holds its slice', async () => {
-  const { project } = await import('../domain/project');
-  const { sliceOwners } = await import('../domain/thundersEdge');
-  const g = sampleGame();
-  const give = { id: 'g', phase: 'strategy' as const, status: 'done' as const, type: 'adjustment' as const, label: '', delta: { tradeGoods: 3 } };
-  const turn = { id: 't1', phase: 'action' as const, status: 'planned' as const, type: 'pass' as const };
-  const old = { id: 'e1', phase: 'action' as const, status: 'planned' as const, type: 'expedition' as const, sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } };
-  g.plans[0].rounds[0].entries = [give, turn, old];
-  const before = project({ ...g }, g.plans[0], 'forecast', loadPack(g.expansions)).state.tradeGoods;
-  const result = importGame(JSON.stringify({ ...g, schemaVersion: 5 }));
-  if (!result.ok) throw new Error(result.reason);
-  const plan = result.game.plans[0];
-  expect(project(result.game, plan, 'forecast', loadPack(result.game.expansions)).state.tradeGoods).toBe(before);
-  expect(before).toBe(0);
-  expect(sliceOwners(result.game, plan).tg3).toBe('me');
+test('an open Fracture with its systems survives export and import', () => {
+  const open = { ...sampleGame(), fracture: { active: true, ingress: ['1,0'], seat: 2, tiles: { '5,-5': 'fracture1' } } };
+  expect(importGame(exportGame(open))).toEqual({ ok: true, game: open });
+  const { seat, ...noSeat } = open.fracture;
+  void seat;
+  expect(importGame(JSON.stringify({ ...open, fracture: noSeat }))).toEqual({ ok: false, reason: 'invalidSchema' });
 });

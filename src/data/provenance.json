@@ -44,7 +44,7 @@
     "reason": "Thunder's Edge rulebook; absent from the source at this commit"
   },
   "factionTechnologies": {
-    "fields": "data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades. Card text is not read.",
+    "fields": "data/factions factionTech; data/technologies name, types, requirements, source; data/units requiredTechId for what a unit upgrade upgrades.",
     "added": [
       "executiveorder"
     ],
@@ -181,6 +181,211 @@
         "fighter": 10
       },
       "reason": "Fighters and infantry are not limited by their figures: tokens stand in for them (LRR 96 note 2.1), so their limit is null."
+    }
+  },
+  "components": {
+    "texts": "Card texts are copied verbatim into src/data/texts/<pack>.json (component id to text); they belong to the publisher, see src/data/texts/NOTICE.md. Only line ends are unified and the ends trimmed.",
+    "files": {
+      "action_cards": [
+        "action_cards",
+        "te_actioncards"
+      ],
+      "agendas": [
+        "base",
+        "pok"
+      ],
+      "relics": [
+        "pok",
+        "codexii",
+        "codexiv",
+        "te_relics"
+      ],
+      "explores": [
+        "explores",
+        "codex3"
+      ],
+      "attachments": [
+        "attachments",
+        "thundersEdge"
+      ],
+      "promissory_notes": [
+        "color",
+        "promissory_notes",
+        "thunders_edge"
+      ],
+      "public_objectives": [
+        "public_objectives"
+      ],
+      "secret_objectives": [
+        "secret_objectives"
+      ]
+    },
+    "fields": {
+      "action_cards": "alias, name, text, source; phase and window in detail; identical cards (name and text) are one component with copies",
+      "agendas": "alias, name, source; text1 and text2 as the paragraphs of the text (Covert Legislation has neither: its text is its target); type (law, directive) and target in detail",
+      "relics": "alias, name, text, source; isFakeRelic excludes",
+      "explores": "id, name, text, source; type as detail.trait, resolution; identical cards are one component with copies; attachmentId with the numbers of data/attachments (resourcesModifier, influenceModifier, techSpeciality) in detail",
+      "attachments": "read only for the numbers of exploration cards; an attachment is no component of its own",
+      "promissory_notes": "alias, name, text, source, faction; the five common notes keep the \"<color>\" of the source in id and text",
+      "public_objectives": "alias, name, text, source; points as detail.stage and detail.points, phase",
+      "secret_objectives": "alias, name, text, source; phase and points in detail",
+      "technologies": "text; every common technology of the official sources is in the pack of its source; the text of a starting technology is also in the pack of the faction that starts with it",
+      "abilities": "permanentEffect, then window and windowEffect joined by a colon, as paragraphs",
+      "leaders": "abilityWindow and abilityText joined by a colon; unlockCondition under <id>#unlock unless it is \"Always Unlocked\"",
+      "units": "ability: of a mech under mech:<id>, of a ship under unit:<id>",
+      "breakthroughs": "text",
+      "planets": "legendaryAbilityText under legendary:<planet id>",
+      "strategy_cards": "primaryTexts and secondaryTexts, each joined by line ends, under strategy:<id> and strategy:<id>#secondary, in the pack of the set (base_game, pok, te) that holds the card"
+    },
+    "notRead": "flavorText, notes (rulings of the source), image and automation fields",
+    "excludedSources": {
+      "action_cards": {
+        "action_deck_2": 140,
+        "asteroid": 38,
+        "black_spectrum": 14,
+        "blue_reverie": 21,
+        "deprecated": 198,
+        "miltymod": 16,
+        "monuments": 3,
+        "project_pi": 16,
+        "sigma": 10,
+        "theodisi": 48,
+        "codex1 in theodisi.json": 1,
+        "thirtyk": 40,
+        "twilights_fall": 50,
+        "tk_destroyer_cup": 25,
+        "tk_nova_cup": 1,
+        "ds": 45,
+        "untangled_space": 1,
+        "voices_of_the_council": 8
+      },
+      "agendas": {
+        "absol": 60,
+        "black_spectrum": 147,
+        "blue_reverie": 18,
+        "byz_agendas": 29,
+        "ignis_aurora": 67,
+        "little_omega": 39,
+        "miltymod": 16,
+        "monuments": 2,
+        "omega_phase": 1,
+        "project_pi": 7,
+        "riftset": 1,
+        "sigma": 23,
+        "twilights_fall": 10,
+        "tk_destroyer_cup": 5,
+        "voices_of_the_council": 49
+      },
+      "relics": {
+        "absol": 20,
+        "beans": 6,
+        "black_spectrum": 7,
+        "blue_reverie": 16,
+        "dane_leaks": 1,
+        "ds": 19,
+        "pok in fake_relics.json": 1,
+        "salliance": 1,
+        "oath_of_kings": 1,
+        "ignis_aurora": 17,
+        "pbd100": 2,
+        "other": 7,
+        "project_pi": 4,
+        "sigma": 4,
+        "theodisi": 19,
+        "thirtyk": 24
+      },
+      "attachments": {
+        "asteroid": 6,
+        "other": 33,
+        "beans": 9,
+        "blue_reverie": 7,
+        "ds": 17,
+        "lost_star_charts_of_ixth": 15,
+        "monuments": 1,
+        "promises_promises": 2,
+        "sigma": 10,
+        "theodisi": 23,
+        "thirtyk": 14,
+        "uncharted_space": 4,
+        "wftv": 1
+      },
+      "explores": {
+        "asteroid": 37,
+        "black_spectrum": 8,
+        "blue_reverie": 16,
+        "cpti": 18,
+        "fowplus": 8,
+        "project_pi": 1,
+        "riftset": 3,
+        "sigma": 13,
+        "theodisi": 32,
+        "thirtyk": 63,
+        "uncharted_space": 18
+      },
+      "promissory_notes": {
+        "absol": 1,
+        "beans": 11,
+        "black_spectrum": 26,
+        "blue_reverie": 10,
+        "keleresplus": 1,
+        "ds": 38,
+        "endlesst": 12,
+        "gamma": 15,
+        "luminous": 3,
+        "memephilosopher": 1,
+        "miltymod": 10,
+        "nomadfalcon": 3,
+        "admins": 1,
+        "ignis_aurora": 1,
+        "oath_of_kings": 1,
+        "other": 2,
+        "pbd2000": 5,
+        "project_pi": 8,
+        "promises_promises": 40,
+        "theodisi": 20,
+        "viability_patch": 3,
+        "cpti": 1,
+        "wftv": 8
+      },
+      "public_objectives": {
+        "addiction": 5,
+        "black_spectrum": 27,
+        "little_omega": 19,
+        "miltymod": 4,
+        "omega_phase": 20,
+        "oplusplus": 91,
+        "project_pi": 4,
+        "other": 40,
+        "sigma": 12
+      },
+      "secret_objectives": {
+        "black_spectrum": 18,
+        "little_omega": 18,
+        "miltymod": 3,
+        "monuments": 2,
+        "oplusplus": 86,
+        "project_pi": 1,
+        "pbd100": 69,
+        "other": 40,
+        "erwans_gambit": 20,
+        "sigma": 13,
+        "thirtyk": 27
+      }
+    },
+    "excluded": {
+      "promissory:rider": "filed under \"keleres\", which is no faction of the packs; the same card is there for each of its three factions"
+    },
+    "excludedReason": "Only base, pok, codex* and thunders_edge from the official files are kept; every other source is homebrew or a variant of the source itself.",
+    "factionTechnologiesNotNamed": {
+      "ids": [
+        "nekroc4y",
+        "nekroc4r"
+      ],
+      "reason": "faction technologies of an official source that no faction entry lists"
+    },
+    "sameTextAs": {
+      "jolnarcommander-pok": "jolnarcommander",
+      "reason": "Ta Zern is not in the source at this commit; its text is assumed to be that of Agnlan Oln, which replaces it. Not confirmed by a public source."
     }
   },
   "production": {

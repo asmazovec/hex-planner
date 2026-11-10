@@ -17,9 +17,9 @@ npm run dev
 
 ## Источники
 
-- Игровые данные собраны из публичного репозитория [AsyncTI4/TI4_map_generator_bot](https://github.com/AsyncTI4/TI4_map_generator_bot); как именно, описано в [docs/data-verification.md](docs/data-verification.md). Описания карт пересказаны своими словами, арт игры в проект не входит.
+- Игровые данные собраны из публичного репозитория [AsyncTI4/TI4_map_generator_bot](https://github.com/AsyncTI4/TI4_map_generator_bot); как именно, описано в [docs/data-verification.md](docs/data-verification.md). Тексты карт взяты оттуда дословно и лежат отдельно, в `src/data/texts`; арт игры в проект не входит.
 - Иконки юнитов — [game-icons.net](https://game-icons.net), лицензия CC BY 3.0.
 
 ## Лицензия
 
-Код проекта — [MIT](LICENSE).
+Код проекта — [MIT](LICENSE). На тексты карт в `src/data/texts` лицензия не распространяется: они принадлежат издателю игры, см. [src/data/texts/NOTICE.md](src/data/texts/NOTICE.md).

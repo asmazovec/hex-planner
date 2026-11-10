@@ -197,6 +197,19 @@ describe('a save that does not load', () => {
     expect(act().brokenSaves).toEqual({ broken: 'plans: expected array' });
   });
 
+  test('a save of an earlier version is told apart from a damaged one, and nothing is saved over it', async () => {
+    await flushSaves();
+    vi.mocked(saveGame).mockClear();
+    const before = game();
+    vi.mocked(loadGame).mockRejectedValue(Object.assign(new Error('no format'), { kind: 'oldFormat' }));
+    await act().openGame('old');
+    expect(game()).toBe(before);
+    expect(act().loadFailure).toEqual({ id: 'old', error: 'no format', oldFormat: true });
+    expect(act().brokenSaves).toEqual({ old: 'no format' });
+    await flushSaves();
+    expect(saveGame).not.toHaveBeenCalled();
+  });
+
   test('a save that opens after all clears the failure and its mark', async () => {
     vi.mocked(loadGame).mockRejectedValueOnce(new Error('busy'));
     await act().openGame('x');
@@ -242,6 +255,19 @@ describe('a save that does not load', () => {
     expect(act().draft.expansions).toEqual(['pok']);
     expect(act().loadFailure).toEqual({ id: null, error: 'no IndexedDB' });
     expect(act().brokenSaves).toEqual({});
+  });
+});
+
+describe('the kept timelines', () => {
+  test('closing or crashing the game forgets them', async () => {
+    const projection = await import('./projection');
+    const forget = vi.spyOn(projection, 'forgetTimelines');
+    act().closeGame();
+    expect(forget).toHaveBeenCalledTimes(1);
+    act().newGame({ expansions: ['pok'], playerCount: 4, faction: Object.keys(pack.factions)[0] }, pack);
+    act().crashGame('replay failed');
+    expect(forget).toHaveBeenCalledTimes(2);
+    forget.mockRestore();
   });
 });
 

@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
-import { deleteGame, listGames, saveGame } from '../../storage/db';
-import { brokenSave, gameOfSchema1, putRawSave, sampleGame } from '../../storage/fixture';
+import { deleteGame, listGames, loadRawGame, saveGame } from '../../storage/db';
+import { brokenSave, oldFormatSave, putRawSave, sampleGame } from '../../storage/fixture';
 import { GameScreen } from './GameScreen';
 
 vi.mock('../common/download', () => ({ downloadGame: vi.fn(), downloadRaw: vi.fn() }));
@@ -77,13 +77,51 @@ test('opening a save that fails tells so, and the screen still works', async () 
   expect(screen.getByRole('button', { name: 'Start game' })).toBeVisible();
 });
 
-test('importing a file a migration chokes on says it is damaged, and the saves stay', async () => {
+test('importing a file that is no game says it is damaged, and the saves stay', async () => {
   await saveGame(sampleGame());
   render(<GameScreen />);
-  const text = JSON.stringify({ ...gameOfSchema1(), opponents: [null] });
+  const text = JSON.stringify({ ...sampleGame(), opponents: [null] });
   await userEvent.upload(screen.getByLabelText('Import game'), new File([text], 'bad.json', { type: 'application/json' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('the file is not a game or is damaged');
   expect(await listGames()).toHaveLength(1);
+  expect(useGame.getState().game).toBeNull();
+});
+
+test('a save of an earlier version is listed with its own message, exports as it lies, and is never rewritten', async () => {
+  const record = oldFormatSave();
+  await putRawSave(record);
+  const bytes = JSON.stringify(record);
+  render(<GameScreen />);
+  const old = await item('Earlier');
+  expect(within(old).getByText('Saved by an earlier version of the app')).toBeVisible();
+  expect(within(old).queryByText('The save could not be loaded')).toBeNull();
+  expect(within(old).queryByRole('button', { name: 'Open' })).toBeNull();
+  await userEvent.click(within(old).getByRole('button', { name: 'Export data' }));
+  await waitFor(() => expect(downloadRaw).toHaveBeenCalledWith('old', record));
+
+  await useGame.getState().openGame('old');
+  expect(useGame.getState().game).toBeNull();
+  expect(await screen.findByText('The save “Earlier” cannot be opened: it was saved by an earlier version of the app')).toBeVisible();
+  expect(JSON.stringify(await loadRawGame('old'))).toBe(bytes);
+
+  await userEvent.click(within(await item('Earlier')).getByRole('button', { name: 'Delete game' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Delete for good' }));
+  await waitFor(async () => expect(await listGames()).toEqual([]));
+});
+
+test('a save of an earlier version says so in Russian', async () => {
+  setLanguage('ru');
+  await putRawSave(oldFormatSave('old', 'Пятница'));
+  render(<GameScreen />);
+  expect(within(await item('Пятница')).getByText('Сохранено прежней версией приложения')).toBeVisible();
+});
+
+test('importing a file of an earlier version says so, and nothing is saved', async () => {
+  render(<GameScreen />);
+  const text = JSON.stringify(oldFormatSave().game);
+  await userEvent.upload(screen.getByLabelText('Import game'), new File([text], 'old.json', { type: 'application/json' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('the file was saved by an earlier version of the app');
+  expect(await listGames()).toEqual([]);
   expect(useGame.getState().game).toBeNull();
 });
 
