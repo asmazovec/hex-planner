@@ -50,6 +50,8 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
 /**
  * The flight of one source, a step of the tactical editor that stands alone in the panel: who flies, what rides on board,
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
+ * A unit to take keeps its tile and its place down to the last one, where the tile only goes dim: a tile that left would
+ * bring another one under the finger.
  */
 export function UnitPicker({ game, pack, before, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
@@ -70,7 +72,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const unitName = (unit: UnitId) => t(`unit.${unit}`);
 
   const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
-  const offered = flying.filter(u => available(source, u) - picked(source, u) > 0);
+  const offered = flying.filter(u => available(source, u) > 0 || picked(source, u) > 0);
   const flyingNow = flying.filter(u => picked(source, u) > 0);
   const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
 
@@ -89,6 +91,23 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
     return places.filter(place => place.units.length > 0);
   };
 
+  /** One to take from a place: the tile stays with nothing left, so the next tap finds it where it was. */
+  const take = (from: string, unit: UnitId) => {
+    const left = Math.max(0, available(from, unit) - picked(from, unit));
+    return (
+      <UnitTile
+        key={unit} variant="take" kind={unit} count={left} colour={colour} showOne={left === 0} disabled={left === 0}
+        label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(from, unit, picked(from, unit) + 1)}
+      />
+    );
+  };
+  const taken = (from: string, unit: UnitId) => (
+    <UnitTile
+      key={`${unit}-taken`} variant="taken" kind={unit} count={picked(from, unit)} colour={colour}
+      label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(from, unit, picked(from, unit) - 1)}
+    />
+  );
+
   const line = (slot: string, role: 'start' | 'transit') => {
     const places = placesIn(slot);
     return (
@@ -100,20 +119,8 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
           <div key={place.from} className="stop-place" role="group" aria-label={place.name ?? systemName(game, pack, slot)}>
             {place.name && <small>{place.name}</small>}
             <div className="pics">
-              {place.units.map(unit => {
-                const got = picked(place.from, unit);
-                const left = available(place.from, unit) - got;
-                return (
-                  <span key={unit} className="pic-pair">
-                    {left > 0 && (
-                      <UnitTile variant="take" kind={unit} count={left} colour={colour} label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got + 1)} />
-                    )}
-                    {got > 0 && (
-                      <UnitTile variant="taken" kind={unit} count={got} colour={colour} label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(place.from, unit, got - 1)} />
-                    )}
-                  </span>
-                );
-              })}
+              {place.units.map(unit => take(place.from, unit))}
+              {place.units.filter(unit => picked(place.from, unit) > 0).map(unit => taken(place.from, unit))}
             </div>
           </div>
         ))}
@@ -132,30 +139,13 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       <div className="editor-section">
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.inSystem', { name: systemTitle(game, pack, source, t) })}</SectionTitle>
         <div className="pics">
-          {offered.map(unit => {
-            const got = picked(source, unit);
-            return (
-              <UnitTile
-                key={unit} variant="take" kind={unit} count={Math.max(0, available(source, unit) - got)} colour={colour}
-                label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(source, unit, got + 1)}
-              />
-            );
-          })}
-          {offered.length === 0 && <span className="muted">{t('plan.picker.allFlying')}</span>}
+          {offered.map(unit => take(source, unit))}
         </div>
         {noShipsHere && <p className="muted picker-note">{t('plan.picker.emptySource')}</p>}
 
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.flying')}</SectionTitle>
         <div className="pics">
-          {flyingNow.map(unit => {
-            const got = picked(source, unit);
-            return (
-              <UnitTile
-                key={unit} variant="taken" kind={unit} count={got} colour={colour}
-                label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(source, unit, got - 1)}
-              />
-            );
-          })}
+          {flyingNow.map(unit => taken(source, unit))}
           {flyingNow.length === 0 && <span className="muted">{t('plan.picker.nobody')}</span>}
         </div>
       </div>
@@ -164,13 +154,13 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</SectionTitle>
         <CargoPips load={load.load} capacity={load.capacity} />
         {Math.max(load.load, load.capacity) === 0 && <span className="muted">{t('plan.picker.noRoom')}</span>}
-        <WarningList warnings={cargoWarnings} game={game} pack={pack} />
-
         <ol className="stops">
           {line(source, 'start')}
           {viaOf(entry, source).map(slot => line(slot, 'transit'))}
           <li className="stop stop-target"><span className="stop-name">{systemTitle(game, pack, target, t)} · {t('plan.picker.target')}</span></li>
         </ol>
+        {/* Under the stops: a warning above them would push the cargo from under the finger. */}
+        <WarningList warnings={cargoWarnings} game={game} pack={pack} />
       </div>
 
       {/* Over the limit the warning below says it, in the look of every warning. */}

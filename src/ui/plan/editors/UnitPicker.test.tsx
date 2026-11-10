@@ -70,14 +70,15 @@ test('a tap on a picture moves one ship, a tap on a chosen one returns it', asyn
   await userEvent.click(take('Carrier'));
   expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: { carrier: 1 } }]);
   expect(put('Carrier')).toBeVisible();
-  expect(screen.queryByRole('button', { name: 'Take one Carrier' })).toBeNull();
+  // The last one taken, the tile stays in its place with nothing to take: another tile there would come under the finger.
+  expect(take('Carrier')).toBeDisabled();
   expect(screen.getByText('Cargo on board: 0 of 4')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Fly' }));
   expect(onFly).toHaveBeenCalled();
   await userEvent.click(put('Carrier'));
   // The source's own move stays, empty, for its arrow.
   expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: {} }]);
-  expect(take('Carrier')).toBeVisible();
+  expect(take('Carrier')).toBeEnabled();
 });
 
 test('fighters with no move value and ground units are cargo, listed at their system, never as flying', async () => {

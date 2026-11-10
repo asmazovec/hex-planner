@@ -68,7 +68,8 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
             className: `${main ? ' card-main' : ''}${backup ? ' card-backup' : ''}${card.initiative === shown ? ' card-shown' : ''}`,
             current: card.initiative === shown,
             onClick: () => tap(card.initiative),
-            extra: <>{main && <small>{t('plan.cards.main')}</small>}{backup && <small>{backupName}</small>}</>,
+            // The line is always there: a row that grew with it would move the row under it from under the finger.
+            extra: main ? <small>{t('plan.cards.main')}</small> : backup ? <small>{backupName}</small> : <small aria-hidden="true">{'\u00a0'}</small>,
           };
         }}
       />

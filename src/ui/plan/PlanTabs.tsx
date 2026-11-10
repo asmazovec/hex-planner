@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import type { Game, Plan } from '../../domain/types';
@@ -53,17 +53,23 @@ export interface PlanTabsProps {
 /** A press becomes a drag past this many pixels; less is a tap. */
 const DRAG_START = 6;
 
-/** Plan tabs with Copy, then the rounds of the active plan and Undo. A tab is dragged along the row to change the order of the plans. */
+/** Copy and the plan tabs, then the rounds of the active plan and Undo. A tab is dragged along the row to change the order of the plans. */
 export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRound, onDeleteRound, onDeletePlan, afterRounds }: PlanTabsProps) {
   const { t } = useTranslation();
   const setActivePlan = useGame(s => s.setActivePlan);
   const movePlan = useGame(s => s.movePlan);
   const row = useRef<HTMLDivElement>(null);
+  const rounds = useRef<HTMLDivElement>(null);
   const copyPlan = useGame(s => s.copyPlan);
   const undo = useGame(s => s.undo);
   const canUndo = useGame(s => s.canUndo);
   const cards = strategyCards(game.expansions);
   const active = game.plans.find(p => p.id === game.activePlanId);
+  const roundCount = active?.rounds.length ?? 0;
+  // The rounds scroll under their plus once they are many: the one in view is brought out from under it.
+  useEffect(() => {
+    rounds.current?.querySelector('[aria-pressed="true"]')?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+  }, [roundNo, roundCount]);
 
   const drag = useReorderDrag({
     axis: 'x', threshold: DRAG_START,
@@ -75,6 +81,8 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
   return (
     <div className="plan-top">
       <div ref={row} className="plan-tabs" role="tablist" aria-label={t('plan.tabs')}>
+        {/* Before the tabs, not after them: a new tab would push it from under the finger. */}
+        <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
         {game.plans.map(plan => {
           const card = plan.rounds.find(r => r.number === roundNo)?.strategyCard;
           const selected = plan.id === game.activePlanId;
@@ -103,10 +111,9 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
             </div>
           );
         })}
-        <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
       </div>
       <div className="plan-rounds-group">
-      <div className="plan-rounds" role="group" aria-label={t('plan.rounds')}>
+      <div ref={rounds} className="plan-rounds" role="group" aria-label={t('plan.rounds')}>
         {active?.rounds.map(round => (
           <button
             key={round.number} type="button" aria-pressed={round.number === roundNo}

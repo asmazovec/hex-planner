@@ -25,8 +25,9 @@ export interface LandingBlockProps {
 const PLANET_PX = 52;
 
 /**
- * The landing goes like the cargo of a flight, planet by planet: beside each planet the units free to land, and after a
- * tap the taken picture with its count; a tap on that takes one back. Nothing forbids landing more than arrived.
+ * The landing goes like the cargo of a flight, planet by planet: beside each planet the units free to land, each always
+ * in its place, and after them the landed ones with their count; a tap on those takes one back. Nothing forbids landing
+ * more than arrived.
  */
 export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, landedOn, onLand }: LandingBlockProps) {
   const { t } = useTranslation();
@@ -65,23 +66,18 @@ export function LandingBlock({ game, planets, before, board, units, arrived, los
               </span>
             </div>
             <div className="pics">
-              {units.map(unit => {
-                const got = landedOn(planet.id, unit);
-                return (
-                  <span key={unit} className="pic-pair">
-                    <UnitTile
-                      variant="take" kind={unit} count={Math.max(0, (arrived[unit] ?? 0) - landedInAll(unit))} colour={colour} showOne
-                      label={t('plan.tactical.landOne', { unit: unitName(unit) })} onClick={() => onLand(planet.id, unit, got + 1)}
-                    />
-                    {got > 0 && (
-                      <UnitTile
-                        variant="taken" kind={unit} count={got} colour={colour} showOne
-                        label={t('stage.giveBack', { unit: unitName(unit) })} onClick={() => onLand(planet.id, unit, got - 1)}
-                      />
-                    )}
-                  </span>
-                );
-              })}
+              {units.map(unit => (
+                <UnitTile
+                  key={unit} variant="take" kind={unit} count={Math.max(0, (arrived[unit] ?? 0) - landedInAll(unit))} colour={colour} showOne
+                  label={t('plan.tactical.landOne', { unit: unitName(unit) })} onClick={() => onLand(planet.id, unit, landedOn(planet.id, unit) + 1)}
+                />
+              ))}
+              {units.filter(unit => landedOn(planet.id, unit) > 0).map(unit => (
+                <UnitTile
+                  key={`${unit}-landed`} variant="taken" kind={unit} count={landedOn(planet.id, unit)} colour={colour} showOne
+                  label={t('stage.giveBack', { unit: unitName(unit) })} onClick={() => onLand(planet.id, unit, landedOn(planet.id, unit) - 1)}
+                />
+              ))}
             </div>
             {(standing.length > 0 || enemies.length > 0) && (
               <div className="landing-stacks">

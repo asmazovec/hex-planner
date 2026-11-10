@@ -93,6 +93,22 @@ describe('the components drawer', () => {
     expect(within(results).getByRole('button', { name: 'Remove Shard of the Throne' })).toBeVisible();
   });
 
+  test('a component added from the results stays where it is: the list keeps its order while it is asked', async () => {
+    await openDrawer();
+    await userEvent.type(searchBox(), 'the');
+    await screen.findByRole('group', { name: 'Search results' });
+    const order = () => within(section('Search results')).getAllByTestId(/^component-/).map(card => card.getAttribute('data-testid'));
+    const before = order();
+    const third = within(section('Search results')).getAllByRole('button', { name: /^Add / })[2];
+    const card = third.closest('[data-testid]')!.getAttribute('data-testid')!;
+    await userEvent.click(third);
+    expect(order()).toEqual(before);
+    // Asked again, what is held now stands first.
+    await userEvent.clear(searchBox());
+    await userEvent.type(searchBox(), 'the');
+    await vi.waitFor(() => expect(order().indexOf(card)).toBeLessThan(before.indexOf(card)));
+  });
+
   test('the cross of the field empties it', async () => {
     await openDrawer();
     await userEvent.type(searchBox(), 'sabo');

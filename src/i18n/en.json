@@ -347,7 +347,6 @@
       "inSystem": "In system {{name}}",
       "flying": "Flying",
       "nobody": "Nobody yet",
-      "allFlying": "All the ships are flying already.",
       "emptySource": "No ships here.",
       "cargo": "Cargo on board: {{load}} of {{capacity}}",
       "noRoom": "No room for cargo: the ships have nothing to carry it in.",

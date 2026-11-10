@@ -165,8 +165,14 @@ export function ComponentsPanel({ game, pack, state, rounds }: ComponentsPanelPr
   ];
 
   const searching = asked.trim() !== '';
-  const mine = found.filter(isHeld);
-  const rest = found.filter(def => !isHeld(def));
+  // What the player held when the query was asked stands first. A component added from the list stays where it is:
+  // moved up, it would bring the control of another card under the finger.
+  const asking = `${player}\n${asked}`;
+  const [heldFirst, setHeldFirst] = useState<{ asking: string; ids: string[] }>({ asking: '', ids: [] });
+  const first = heldFirst.asking === asking ? heldFirst.ids : found.filter(isHeld).map(def => def.id);
+  if (heldFirst.asking !== asking) setHeldFirst({ asking, ids: first });
+  const mine = found.filter(def => first.includes(def.id));
+  const rest = found.filter(def => !first.includes(def.id));
 
   return (
     <DrawerSheet className="components-panel" title={t('components.title')} style={playerStyle('--player', rival ? rival.color : game.color)}>

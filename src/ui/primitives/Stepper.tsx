@@ -25,7 +25,8 @@ export function Stepper({ name, value, of, note, min, format = String, onChange 
       >
         −
       </button>
-      <output>{of === undefined ? format(value) : `${format(value)}/${of}`}</output>
+      {/* The value keeps its width as it changes, so the minus beside it stays under the finger. */}
+      <output className={of === undefined ? undefined : 'stepper-of'}>{of === undefined ? format(value) : `${format(value)}/${of}`}</output>
       <button type="button" aria-label={t('plan.stepper.plus', { name })} onClick={() => onChange(value + 1)}>+</button>
     </div>
   );

@@ -147,7 +147,8 @@ export function TacticalEditor({
                 </Fragment>
               );
             })}
-            {list([...placer.at('route', w => entry.moves.length > 0 || !limitsSystem(w)), ...placer.at('cargo')])}
+            {/* The capacity of the active system is left to the result of the action: the landing below changes it, and a line that comes and goes here would push the landing from under the finger. */}
+            {list([...placer.at('route', w => !limitsSystem(w) || (entry.moves.length > 0 && !(w.code === 'capacitySystem' && w.params.systemId === target))), ...placer.at('cargo')])}
           </Section>
           {hints('movement')}
 

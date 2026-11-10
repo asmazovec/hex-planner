@@ -49,9 +49,10 @@ export function TransactionStep({ game, pack, act, owner, warnings, onChange, on
   return (
     <EditorFrame title={t('plan.acts.transactionTitle')} removeLabel={t('plan.acts.remove', { name: t('plan.acts.kind.transaction') })} onRemove={onRemove} onBack={onBack}>
       <PlayerChoice label={t('plan.acts.withWhom')} options={players} chosen={value => value === act.with} onPick={value => { if (value !== null) onChange({ ...act, with: value }); }} />
-      <WarningList warnings={placeWarnings(warnings).at('deal')} game={game} pack={pack} />
       {side('give', t('plan.acts.give'))}
       {side('get', t('plan.acts.get'))}
+      {/* Under the goods: a warning above them would push the counters from under the finger. */}
+      <WarningList warnings={placeWarnings(warnings).at('deal')} game={game} pack={pack} />
     </EditorFrame>
   );
 }

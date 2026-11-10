@@ -44,7 +44,6 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
       headAction={<button type="button" onClick={() => onManual(!manual)}>{manual ? t('plan.payment.auto') : t('plan.payment.manual')}</button>}
     >
       {!manual && <span className="muted">{parts.join(', ') || t('plan.payment.nothing')}</span>}
-      {paid > need && <span className="muted">{t('plan.payment.surplus', { n: paid - need })}</span>}
       {manual && (
         <>
           <div className="pay-planets" role="group" aria-label={t('plan.payment.planets')}>
@@ -60,6 +59,8 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
           />
         </>
       )}
+      {/* Under the choice: a line that comes and goes above the planets would push them from under the finger. */}
+      {paid > need && <span className="muted">{t('plan.payment.surplus', { n: paid - need })}</span>}
     </Section>
   );
 }

@@ -218,6 +218,17 @@ describe('the tactical editor', () => {
     expect(sections).toEqual(['Sources', 'Action result']);
   });
 
+  test('the capacity of the active system stands in the result alone: the landing under the sources changes it', () => {
+    const over: Warning = { code: 'capacitySystem', params: { systemId: HOME, load: 5, capacity: 4 } };
+    const left: Warning = { code: 'capacitySystem', params: { systemId: SOURCE, load: 3, capacity: 2 } };
+    const { container } = editor([over, left]);
+    const lines = (title: string) => [...container.querySelectorAll('.editor-section')].filter(s => s.querySelector('strong')?.textContent === title)
+      .flatMap(s => [...s.querySelectorAll('.warning-text')].map(w => w.textContent));
+    expect(lines('Sources')).toHaveLength(1);
+    expect(lines('Sources')[0]).toMatch(/3 of 2/);
+    expect(lines('Action result')).toHaveLength(2);
+  });
+
   test('with only a production there is no word in the sources', () => {
     const { container } = editor([FLEET], { moves: [], production: { fighter: 2 } });
     const sections = [...container.querySelectorAll('.editor-section')].filter(s => s.textContent!.includes('fleet pool')).map(s => s.querySelector('strong')!.textContent);

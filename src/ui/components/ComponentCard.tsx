@@ -47,7 +47,7 @@ export function ComponentCard({ def, pack, held, state, note, count, source, onR
   const stateName = state && t(`components.state.${state}`);
   const facts = [
     t(`components.kind.${def.kind}`), faction, PACK_NAMES[def.pack],
-    state && state !== 'unlocked' ? stateName : undefined, note, source !== undefined ? t('components.fromRound', { n: source }) : undefined,
+    !onCycle && state && state !== 'unlocked' ? stateName : undefined, note, source !== undefined ? t('components.fromRound', { n: source }) : undefined,
   ].filter(Boolean);
   const addLabel = pickLabel ?? t('components.add', { name: def.name });
   const control = onCycle
@@ -65,6 +65,8 @@ export function ComponentCard({ def, pack, held, state, note, count, source, onR
         <button type="button" className="source-button" aria-expanded={open} onClick={() => setOpen(!open)}>
           <b>{def.name}</b>{count !== undefined && count > 1 && <span className="component-count"> ×{count}</span>}
           <small>{facts.join(' · ')}</small>
+          {/* The state a tap changes has a line of its own, said for every state: in the line above it would wrap that line, and the card would move under the finger. */}
+          {onCycle && <small>{stateName}</small>}
         </button>
         {control}
       </div>
