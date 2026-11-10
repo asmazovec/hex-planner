@@ -106,6 +106,25 @@ export const HOLDING_FIELD: Partial<Record<ComponentKind, ListField>> = {
   technology: 'technologies', actionCard: 'hand', relic: 'relics', promissory: 'promissory', secretObjective: 'secrets', publicObjective: 'scored',
 };
 
+const LIST_FIELDS: ListField[] = ['technologies', 'hand', 'relics', 'promissory', 'scored', 'secrets'];
+
+/**
+ * What an entry can discard or lose: everything its owner held as a card before it, a hand with its repeats, and what
+ * the entry itself brings, less what it already loses, a copy at a time.
+ */
+export function losable(holdings: Holdings, entry: { gains?: string[]; spends?: string[] }): string[] {
+  const all = [...LIST_FIELDS.flatMap(field => holdings[field]), ...(entry.gains ?? [])];
+  for (const id of entry.spends ?? []) {
+    const at = all.indexOf(id);
+    if (at >= 0) all.splice(at, 1);
+  }
+  return all;
+}
+
+/** What a player holds and cannot hold twice: everything held as a card but the hand of action cards. */
+export const heldOnce = (holdings: Holdings): Set<string> =>
+  new Set(LIST_FIELDS.filter(field => field !== 'hand').flatMap(field => holdings[field]));
+
 const playerStart = (game: Game, player: string): StartHoldings | undefined =>
   (player === 'me' ? game.start.me : game.opponents.some(o => o.id === player) ? game.start.opponents[player] ?? {} : undefined);
 

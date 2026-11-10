@@ -448,7 +448,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel }, next: IDLE }))}
       />
       {/* What the turn gained and gave stands with what else it holds. */}
-      <GainsBlock entry={entry} pack={pack} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
     </>
   );
 

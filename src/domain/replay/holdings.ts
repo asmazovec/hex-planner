@@ -3,7 +3,7 @@
  * the objectives a status entry scores, and the Ready Cards step. A component id the pack does not know (an expansion
  * switched off, data rebuilt) is passed over everywhere, silently.
  */
-import { componentById } from '../components';
+import { componentById, componentsOf } from '../components';
 import { HOLDING_FIELD, holdingsOf } from '../holdings';
 import { violation } from '../rules/registry';
 import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
@@ -83,6 +83,15 @@ export function isExhausted(holdings: Holdings, def: ComponentDef): boolean {
   if (def.kind === 'leader') return holdings.leaders[def.id] === 'exhausted';
   if (def.kind === 'breakthrough') return holdings.breakthrough === 'exhausted';
   return holdings.exhausted.includes(def.id);
+}
+
+/**
+ * The components a player of a faction holds ready to play: held and not exhausted. What comes with a faction sheet
+ * counts for that faction only; a legendary planet is not tracked and passes, as it does for `holds`.
+ */
+export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: string): Set<string> {
+  const mine = (def: ComponentDef) => HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || def.faction === factionId;
+  return new Set(componentsOf(pack).filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));
 }
 
 const EXHAUSTS = /\bexhaust this card\b/i;
