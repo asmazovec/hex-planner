@@ -300,3 +300,46 @@ describe('ship data in the packs', () => {
     expect(full.factions.mentak.ships?.cruiser).toBeUndefined();
   });
 });
+
+describe('the texts of components in the language of the interface', () => {
+  const cyrillic = /[а-яё]/i;
+  test('English is the printed text; Russian is its translation, and the names inside stay English', async () => {
+    const { setTextLanguage } = await import('./loadPack');
+    try {
+      setTextLanguage('en');
+      const english = loadPack(['pok', 'te']).texts['actionCard:sabo1'];
+      expect(english).toMatch(/cancel/i);
+      expect(english).not.toMatch(cyrillic);
+      setTextLanguage('ru');
+      const pack = loadPack(['pok', 'te']);
+      expect(pack.texts['actionCard:sabo1']).toMatch(cyrillic);
+      expect(pack.components.find(c => c.id === 'actionCard:sabo1')?.text).toBe(pack.texts['actionCard:sabo1']);
+      expect(pack.components.find(c => c.id === 'actionCard:sabo1')?.name).toBe('Sabotage');
+    } finally {
+      setTextLanguage('en');
+    }
+  });
+
+  test('every printed text has its translation, and no translation is of a text that is not there', async () => {
+    const files = import.meta.glob<Record<string, string>>('./texts/*.json', { eager: true, import: 'default' });
+    for (const id of ['base', 'pok', 'te']) {
+      const printed = Object.keys(files[`./texts/${id}.json`]);
+      const translated = files[`./texts/${id}.ru.json`];
+      expect(Object.keys(translated), id).toEqual(printed);
+      expect(Object.values(translated).filter(text => !text.trim()), id).toEqual([]);
+    }
+  });
+
+  test('the same expansions and language give the same catalog, another language another one', async () => {
+    const { setTextLanguage } = await import('./loadPack');
+    try {
+      setTextLanguage('en');
+      const english = loadPack(['pok']).components;
+      expect(loadPack(['pok']).components).toBe(english);
+      setTextLanguage('ru');
+      expect(loadPack(['pok']).components).not.toBe(english);
+    } finally {
+      setTextLanguage('en');
+    }
+  });
+});

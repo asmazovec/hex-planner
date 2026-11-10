@@ -9,10 +9,25 @@ import te from './packs/te.json';
 import baseTexts from './texts/base.json';
 import pokTexts from './texts/pok.json';
 import teTexts from './texts/te.json';
+import baseTextsRu from './texts/base.ru.json';
+import pokTextsRu from './texts/pok.ru.json';
+import teTextsRu from './texts/te.ru.json';
 
 const PACKS: Record<ExpansionId, unknown> = { pok, te };
 /** Printed texts by component id, one file per expansion: they are loaded with the data of that expansion. */
 const TEXTS: Record<ExpansionId, Record<string, string>> = { pok: pokTexts, te: teTexts };
+/**
+ * The same texts in Russian: translations with the terms of the Russian Rules Reference, names left in English
+ * (docs/phase3/ru-glossary-*.md). A text with no translation is shown as printed.
+ */
+const TEXTS_RU: Record<ExpansionId, Record<string, string>> = { pok: pokTextsRu, te: teTextsRu };
+
+export type TextLanguage = 'en' | 'ru';
+let textLanguage: TextLanguage = 'en';
+/** The language the texts of components are loaded in from now on; the interface sets it with its own. */
+export function setTextLanguage(language: TextLanguage): void {
+  textLanguage = language;
+}
 /** A pack as its file holds it: the components without their texts, which lie in `texts/`. */
 type StoredPack = Omit<DataPack, 'components' | 'texts'> & { components: Omit<ComponentDef, 'text'>[] };
 
@@ -35,10 +50,10 @@ function withTeMecatol(template: MapTemplate): MapTemplate {
 const CATALOGS = new Map<string, Pick<DataPack, 'components' | 'texts'>>();
 
 function catalogOf(on: ExpansionId[], packs: StoredPack[]): Pick<DataPack, 'components' | 'texts'> {
-  const key = on.join(',');
+  const key = `${textLanguage}:${on.join(',')}`;
   let catalog = CATALOGS.get(key);
   if (!catalog) {
-    const texts: Record<string, string> = Object.assign({}, baseTexts, ...on.map(id => TEXTS[id]));
+    const texts: Record<string, string> = Object.assign({}, baseTexts, ...on.map(id => TEXTS[id]), ...(textLanguage === 'ru' ? [baseTextsRu, ...on.map(id => TEXTS_RU[id])] : []));
     catalog = { texts, components: packs.flatMap(pack => pack.components).map(component => ({ ...component, text: texts[component.id] ?? '' })) };
     CATALOGS.set(key, catalog);
   }
