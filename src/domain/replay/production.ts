@@ -1,7 +1,7 @@
 /** Step 89.5 Production (and the production of cards): which units produce, where built units stand, and what they cost. */
 import { violation } from '../rules/registry';
 import { homeSlot } from '../strategy';
-import { upgradesOf } from '../holdings';
+import { applied } from '../effects/apply';
 import { productionCost } from '../unitStats';
 import type { DataPack, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf } from './board';
@@ -19,11 +19,10 @@ export function producers(game: Game, state: GameState, systemId: string, pack: 
   return planetsOf(game, systemId, pack).filter(p => state.docks.includes(p) && state.control[p] === 'me');
 }
 
-/** A dock's Production: its planet's resources plus the dock's value (79.1), that of Space Dock II once it is upgraded. */
+/** A dock's Production: its planet's resources plus the dock's printed value (79.1), after what the player holds changed it (Space Dock II). */
 const dockValue = (state: GameState, planetId: string, pack: DataPack): number => {
-  const levels = pack.structures.find(s => s.id === 'spacedock')?.levels;
-  const level = upgradesOf(state.holdings, pack).includes('spacedock') ? levels?.two ?? levels?.one : levels?.one;
-  return (pack.planets[planetId]?.resources ?? 0) + (level?.production ?? 0);
+  const printed = pack.structures.find(s => s.id === 'spacedock')?.levels.one.production ?? 0;
+  return applied(pack, state.holdings, 'productionValue', (pack.planets[planetId]?.resources ?? 0) + printed, { structure: 'spacedock', planetId }).value;
 };
 
 /** Where my ground forces may stand: a planet I control, and not a space station (space stations 4). */

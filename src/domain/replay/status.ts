@@ -2,7 +2,7 @@
 import { violation } from '../rules/registry';
 import { STATUS_TOKENS } from '../strategy';
 import type { DataPack, Entry, Game, GameState, RuleStep, Warning } from '../types';
-import { dockFighterRoom, fleetCount } from './transport';
+import { dockFighterRoom, fleetCount, fleetLimit } from './transport';
 
 /** The command tokens of a faction (LRR 20.3, 23.2): those not in the pools or on the board are in reinforcements. */
 export const TOKEN_LIMIT = 16;
@@ -22,9 +22,10 @@ export function checkReinforcements(state: GameState, onBoard: boolean, step?: R
 
 /** Check: after the fleet pool shrank, a system holds more ships than it allows (37.3, 81.5.1). */
 export function checkFleetPool(game: Game, state: GameState, pack: DataPack, step?: RuleStep): Warning[] {
+  const limit = fleetLimit(game, state, pack);
   return Object.entries(state.systems).flatMap(([systemId, units]) => {
     const ships = fleetCount(game, units, state.holdings, pack, dockFighterRoom(game, state, systemId, pack));
-    return ships > state.fleet ? [violation('fleetPool', { systemId, ships, fleet: state.fleet }, step)] : [];
+    return ships > limit ? [violation('fleetPool', { systemId, ships, fleet: limit }, step)] : [];
   });
 }
 

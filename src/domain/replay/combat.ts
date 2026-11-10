@@ -3,7 +3,7 @@ import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, Warning } from '../types';
 import { planetsOf } from './board';
 import { take, unitIds, type TacticalEntry } from './state';
-import { capacity, dockFighterRoom, fleetCount } from './transport';
+import { capacity, dockFighterRoom, fleetCount, fleetLimit } from './transport';
 
 /**
  * Whether anything can destroy ships in the active system once they arrived: another player's ships (a space combat),
@@ -27,7 +27,8 @@ export function checkArrival(game: Game, state: GameState, target: string, entry
     for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
   }
   const ships = fleetCount(game, here, state.holdings, pack, dockFighterRoom(game, state, target, pack));
-  return ships > state.fleet ? [violation('fleetPool', { systemId: target, ships, fleet: state.fleet })] : [];
+  const limit = fleetLimit(game, state, pack);
+  return ships > limit ? [violation('fleetPool', { systemId: target, ships, fleet: limit })] : [];
 }
 
 /** Effect: ships lost in the space combat leave the active system; a loss of what is not there is reported. */
