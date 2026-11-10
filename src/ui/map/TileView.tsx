@@ -14,6 +14,7 @@ import { hexPoints, slotToPixel } from './geometry';
 import { CommandTokenMark, IngressMark, LEGENDARY_SHAPE, TECH_SHAPES } from './marks';
 import { playerStyle } from '../primitives/player';
 import { opponentName } from '../players/names';
+import { WORMHOLE_SIGNS } from './systemName';
 
 export type Highlight = 'valid' | 'dim' | 'active' | 'source' | 'path';
 
@@ -89,7 +90,7 @@ const TINT_PATHS = {
   left: `M0.3,${-TINT_RADIUS} L0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 0 0,${TINT_RADIUS} L0.3,${TINT_RADIUS} Z`,
   right: `M0,${-TINT_RADIUS} A${TINT_RADIUS},${TINT_RADIUS} 0 0 1 0,${TINT_RADIUS} Z`,
 };
-const WORMHOLE_SIGNS: Record<string, string> = { alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', epsilon: 'ε' };
+
 
 /** Distance from the hex centre to the middle of an edge. Edge 0 is at the top and numbers go clockwise. */
 const EDGE_MIDDLE = HEX_INNER * Math.sqrt(3) / 2;

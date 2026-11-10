@@ -3,7 +3,7 @@ import type { AdjustmentDelta, DataPack, Entry, Game, UnitCounts, Warning } from
 import { NoteField } from '../../primitives/NoteField';
 import { HexRemove } from '../../primitives/Icon';
 import { Stepper } from '../../primitives/Stepper';
-import { systemName } from '../../map/systemName';
+import { systemTitle } from '../../map/systemName';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { unitsText } from '../../units/unitsText';
@@ -64,7 +64,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
           ? (
             <div className="source-row in-card">
               <button type="button" className="source-button" onClick={() => onOpenHex(systemId)}>
-                {systemName(game, pack, systemId)}
+                {systemTitle(game, pack, systemId, t)}
                 {changes.map(line => <small key={line}>{line}</small>)}
                 {changes.length === 0 && <small>{t('plan.entries.changeUnits')}</small>}
               </button>

@@ -245,7 +245,7 @@ test('the way back from choosing on the map stands outside the spoken hint', asy
   expect(screen.getByRole('status')).toHaveTextContent(/./);
 });
 
-test('ships fly to the Fracture: its systems take the taps of a tactical action, and the system is told by its F number', async () => {
+test('ships fly to the Fracture: its systems take the taps of a tactical action, and the system is told by its planet', async () => {
   await openPanel();
   await userEvent.click(within(fracture()).getByRole('button', { name: 'Open the Fracture' }));
   const tiles = game().fracture.tiles!;
@@ -258,7 +258,7 @@ test('ships fly to the Fracture: its systems take the taps of a tactical action,
   await userEvent.click(group.querySelector(`[data-slot="${slot}"]`)!);
   const entry = plan().rounds[0].entries.find(e => e.type === 'tactical');
   expect(entry).toMatchObject({ systemId: slot });
-  expect(screen.getByText(/System F1|F1/, { selector: 'strong' })).toBeVisible();
+  expect(screen.getByText('Active system: Cocytus', { selector: 'strong' })).toBeVisible();
 });
 
 test('the Fracture\'s systems follow its seat and go when it closes', () => {

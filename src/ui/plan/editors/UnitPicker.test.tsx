@@ -50,11 +50,11 @@ const lineOf = (text: RegExp) => within(screen.getByText(text).closest('li')!);
 
 test('the title, the sections and the timeline in flight order', () => {
   setup([{ from: SOURCE, units: {}, via: [TRANSIT] }]);
-  expect(screen.getByText('Flight 5 → 18')).toBeVisible();
-  expect(screen.getByText('In system 5')).toBeVisible();
+  expect(screen.getByText('Flight Nestphar → Mecatol Rex')).toBeVisible();
+  expect(screen.getByText('In system Nestphar')).toBeVisible();
   expect(screen.getByText('Flying')).toBeVisible();
   expect(screen.getByText('Cargo on board: 0 of 0')).toBeVisible();
-  expect([...document.querySelectorAll('.stop-name')].map(el => el.textContent)).toEqual(['5 · start', '25 · on the way', '18 · target']);
+  expect([...document.querySelectorAll('.stop-name')].map(el => el.textContent)).toEqual(['Nestphar · start', 'Quann · on the way', 'Mecatol Rex · target']);
 });
 
 test('nothing is chosen on opening, and Fly waits for a choice', () => {
@@ -172,7 +172,7 @@ test('removing the route takes the source and all it picked up, leaving other so
 test('unit names follow the interface language, planet names stay English', () => {
   setLanguage('ru');
   setup([{ from: SOURCE, units: { carrier: 1 } }], { ground: { nestphar: { infantry: 2 } } });
-  expect(screen.getByText('Перелёт 5 → 18')).toBeVisible();
+  expect(screen.getByText('Перелёт Nestphar → Mecatol Rex')).toBeVisible();
   expect(screen.getByRole('button', { name: 'Вернуть: Транспортник' })).toBeVisible();
   const planet = screen.getByRole('group', { name: 'Nestphar' });
   expect(within(planet).getByRole('button', { name: 'Взять: Пехота' })).toBeVisible();

@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 import { opponentName } from '../players/names';
-import { systemName } from '../map/systemName';
+import { systemTitle } from '../map/systemName';
 import type { Act, DataPack, Entry, Game, Goods, Round } from '../../domain/types';
 
 type T = TFunction;
@@ -44,7 +44,7 @@ export const insideCard = (entry: Entry, round: Round): boolean =>
 /** The lines a row shows under its name for what the turn holds: Warfare's movement, transactions, the expedition. */
 export function actLines(entry: Entry, round: Round, game: Game, pack: DataPack, t: T): string[] {
   const free = freeTacticalOf(entry, round);
-  const movement = free ? [`+ ${t('plan.strategy.freeTacticalOpen')}${free.systemId ? ` · ${systemName(game, pack, free.systemId)}` : ''}`] : [];
+  const movement = free ? [`+ ${t('plan.strategy.freeTacticalOpen')}${free.systemId ? ` · ${systemTitle(game, pack, free.systemId, t)}` : ''}`] : [];
   const acts = 'acts' in entry && entry.acts ? entry.acts : [];
   // Transactions come in the turn before the expedition that ends it.
   const ordered = [...acts.filter(a => a.kind === 'transaction'), ...acts.filter(a => a.kind === 'expedition')];

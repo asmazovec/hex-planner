@@ -13,7 +13,7 @@ import { actLines, insideCard } from './actLines';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
-import { systemName } from '../map/systemName';
+import { systemTitle } from '../map/systemName';
 import { TokenTiles } from './blocks/TokenTiles';
 import { flightOf } from '../feedback/warningPlaces';
 import { WarningList } from '../feedback/WarningText';
@@ -96,14 +96,14 @@ function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =
 function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
   switch (entry.type) {
     case 'tactical':
-      return `${entry.free ? `${cardName(game, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemName(game, pack, entry.systemId)}`;
+      return `${entry.free ? `${cardName(game, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemTitle(game, pack, entry.systemId, t)}`;
     case 'strategic':
     case 'secondary': {
       const name = cardName(game, entry.card);
       return `${t(`plan.entries.${entry.type}`)}${name ? `: ${name}` : ''}${entry.forToken ? ` · ${t('plan.entries.forToken')}` : ''}`;
     }
     case 'adjustment':
-      if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemName(game, pack, entry.delta.units?.systemId ?? '')}`;
+      if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemTitle(game, pack, entry.delta.units?.systemId ?? '', t)}`;
       return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
     case 'component':
       return entry.note ? `${t('plan.menu.component')}: ${entry.note}` : t('plan.menu.component');
