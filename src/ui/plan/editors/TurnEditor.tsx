@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import type { ComponentKind, DataPack, Entry, Game, Warning } from '../../../domain/types';
+import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { StepHints } from '../../feedback/StepHints';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { NoteField } from '../../primitives/NoteField';
 import { Section } from '../../primitives/Section';
@@ -17,6 +18,8 @@ export interface TurnEditorProps {
   entry: Extract<Entry, { type: 'component' | 'pass' }>;
   game: Game;
   pack: DataPack;
+  /** The whole board just before the entry: what its owner can play as a component action is reminded of. */
+  board?: GameState;
   /** The turn's warnings: those its blocks do not show stand first, such as what an expedition lacks to pay. */
   warnings: Warning[];
   /** The «В этом ходу» block of the turn. */
@@ -29,7 +32,7 @@ export interface TurnEditorProps {
 }
 
 /** A component action or a pass as a turn: the component the action plays and its note, then the acts the turn holds. */
-export function TurnEditor({ entry, game, pack, warnings, turnActs, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const played = entry.type === 'component' && entry.componentId ? componentById(pack, entry.componentId) : undefined;
@@ -50,6 +53,7 @@ export function TurnEditor({ entry, game, pack, warnings, turnActs, onNote, onCo
           >
             {played && <ComponentCard def={played} pack={pack} held onRemove={() => onComponent(undefined)} />}
           </Section>
+          <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
         </>
       )}

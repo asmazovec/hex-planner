@@ -839,6 +839,7 @@
       "breakthrough": "Breakthrough",
       "mech": "Mech",
       "legendary": "Legendary planet"
-    }
+    },
+    "hints": "Reminders for this step"
   }
 }

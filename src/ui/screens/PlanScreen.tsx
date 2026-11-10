@@ -462,7 +462,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const systemId = edited.systemId;
         return (
           <TacticalEditor
-            game={entryGame} pack={pack} entry={edited} before={boards.before(edited.id)} board={boards.board(edited.id)}
+            game={entryGame} pack={pack} entry={edited} before={boards.before(edited.id)} board={boards.board(edited.id)} table={game}
             warnings={forecast.warningsByEntry[edited.id] ?? []}
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
@@ -518,7 +518,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const turn = slot.entry;
         return (
           <TurnEditor
-            key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} warnings={forecast.warningsByEntry[turn.id] ?? []} turnActs={turnActsOf(turn)}
+            key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} turnActs={turnActsOf(turn)}
             onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId })} onDone={toList} onRemove={() => removeEdited(turn.id)}
           />
         );

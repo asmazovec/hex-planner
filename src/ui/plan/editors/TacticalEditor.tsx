@@ -3,7 +3,8 @@ import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../../domain/payment';
 import { productionCost, routeSteps, systemPlanets } from '../../../domain/project';
-import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../../../domain/types';
+import { stepPlayers } from '../../../domain/effects/hints';
+import type { DataPack, Game, GameState, RuleStep, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { LandingBlock } from '../blocks/LandingBlock';
 import { PaymentBlock } from '../blocks/PaymentBlock';
@@ -15,6 +16,7 @@ import { unitsText } from '../../units/unitsText';
 import { systemName } from '../../map/systemName';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { StepHints } from '../../feedback/StepHints';
 import { MapPickButton } from '../../primitives/MapPickButton';
 
 export interface TacticalEditorProps {
@@ -25,6 +27,8 @@ export interface TacticalEditorProps {
   before: GameState;
   /** The whole board just before the entry, every opponent in `rivals`. */
   board?: GameState;
+  /** The game as I see it, whoever owns the entry: who holds the planets of the active system. Without it a step reminds its owner alone. */
+  table?: Pick<Game, 'opponents' | 'planetOwner'>;
   warnings: Warning[];
   manualPayment: boolean;
   /** What the next tap on the map chooses. */
@@ -52,7 +56,7 @@ export interface TacticalEditorProps {
  * block shows its own warnings. The flight of a source is a step of its own (UnitPicker), shown in its place.
  */
 export function TacticalEditor({
-  game, pack, entry, before, board, warnings, manualPayment, choosing, onChoose,
+  game, pack, entry, before, board, table, warnings, manualPayment, choosing, onChoose,
   onUpdate, onOpenPicker, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, turnActs,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
@@ -95,6 +99,12 @@ export function TacticalEditor({
   const removed = entry.fleetRemovals ?? {};
   const overFleet = warnings.some(w => w.code === 'fleetPool' && w.params.systemId === target);
   const battleWarnings = placer.at('battle');
+  /** The reminders of a step: what its players hold for it, under the block of the step. */
+  const hints = (step: RuleStep) => {
+    const owner = entry.owner ?? 'me';
+    const players = board && table ? stepPlayers(table, board, entry.owner, step, target, planets.map(p => p.id)) : [owner];
+    return <StepHints pack={pack} board={board} step={step} players={players} />;
+  };
 
   const blocks = target !== null && (
         <>
@@ -111,6 +121,7 @@ export function TacticalEditor({
             {/* The activation: a token already there, or none left to spend. */}
             {list(placer.at('system'))}
           </Section>
+          {hints('activation')}
 
           {/* The rows take the warnings of their sources first: the rest of the route's warnings is placed after them, among the children. */}
           <Section
@@ -138,6 +149,7 @@ export function TacticalEditor({
             })}
             {list([...placer.at('route', w => entry.moves.length > 0 || !limitsSystem(w)), ...placer.at('cargo')])}
           </Section>
+          {hints('movement')}
 
           {/* The battle and the build open the big hex; the row says what they hold, its warnings stand right under it. */}
           <div className="source-row in-card">
@@ -147,6 +159,7 @@ export function TacticalEditor({
             </button>
           </div>
           {list(battleWarnings)}
+          {hints('combat')}
 
           {showLanding && (
             <Section title={t('plan.tactical.landing')} optional collapsible warnings={list(placer.at('landing'))}>
@@ -156,6 +169,7 @@ export function TacticalEditor({
               />
             </Section>
           )}
+          {showLanding && hints('invasion')}
 
           {/* The limits of the system stand in the action's result; here only what the production itself breaks. */}
           <div className="source-row in-card">
@@ -165,6 +179,7 @@ export function TacticalEditor({
             </button>
           </div>
           {list(placer.at('production', w => !limitsSystem(w)))}
+          {hints('production')}
 
           {(cost > 0 || entry.payment.planets.length > 0 || entry.payment.tradeGoods > 0) && (
             <PaymentBlock
