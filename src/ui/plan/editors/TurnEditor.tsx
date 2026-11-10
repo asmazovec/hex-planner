@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
+import { readyToPlay } from '../../../domain/project';
+import { playerState } from '../../../domain/stacks';
 import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
@@ -35,6 +37,12 @@ export interface TurnEditorProps {
 export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
+  // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
+  const ready = useMemo(() => {
+    if (!board) return undefined;
+    const own = playerState(board, entry.owner);
+    return readyToPlay(pack, own.holdings, game.faction, own.control);
+  }, [board, pack, entry.owner, game.faction]);
   const played = entry.type === 'component' && entry.componentId ? componentById(pack, entry.componentId) : undefined;
   const placer = placeWarnings(warnings);
   // The acts block shows its own; the rest stands first, where it cannot be missed.
@@ -60,7 +68,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNot
       {turnActs}
       {picking && (
         <ComponentPicker
-          kinds={PLAYED_KINDS} player={entry.owner ?? 'me'} onClose={() => setPicking(false)}
+          kinds={PLAYED_KINDS} player={entry.owner ?? 'me'} owned={ready} prefer="owned" onClose={() => setPicking(false)}
           onPick={id => { onComponent(id); setPicking(false); }}
         />
       )}

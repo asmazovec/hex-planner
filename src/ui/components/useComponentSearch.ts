@@ -14,13 +14,13 @@ function indexOf(pack: DataPack): SearchIndex {
   return index;
 }
 
-/** The components of the pack a query finds by name and text, best first, of the given kinds only; none for an empty query. */
-export function searchComponents(pack: DataPack, query: string, kinds?: ComponentKind[]): ComponentDef[] {
+/** The components of the pack a query finds by name and text, best first, of the given kinds and among the given ids only; none for an empty query. */
+export function searchComponents(pack: DataPack, query: string, kinds?: ComponentKind[], among?: Set<string>): ComponentDef[] {
   if (query.trim() === '') return [];
   const found: ComponentDef[] = [];
   for (const { id } of search(indexOf(pack), query)) {
     const component = componentById(pack, id);
-    if (!component || (kinds && !kinds.includes(component.kind))) continue;
+    if (!component || (kinds && !kinds.includes(component.kind)) || (among && !among.has(id))) continue;
     found.push(component);
     if (found.length === RESULT_LIMIT) break;
   }
@@ -28,6 +28,6 @@ export function searchComponents(pack: DataPack, query: string, kinds?: Componen
 }
 
 /** The search over a pack's components, limited to some kinds: the same for the drawer and for the picker. */
-export function useComponentSearch(pack: DataPack, kinds?: ComponentKind[]): (query: string) => ComponentDef[] {
-  return useCallback(query => searchComponents(pack, query, kinds), [pack, kinds]);
+export function useComponentSearch(pack: DataPack, kinds?: ComponentKind[], among?: Set<string>): (query: string) => ComponentDef[] {
+  return useCallback(query => searchComponents(pack, query, kinds, among), [pack, kinds, among]);
 }

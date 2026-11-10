@@ -5,6 +5,8 @@ const LINK = `/?name=Relics&map=${MAP.split(' ').join('+')}&factions=sol,arborec
 
 const drawer = (page: Page) => page.getByRole('dialog', { name: 'Components' });
 const relics = (page: Page) => drawer(page).getByRole('group', { name: 'Relics' });
+/** A tab of the fan the stack of the components opens into. */
+const groupTab = (page: Page, name: string | RegExp) => page.getByRole('group', { name: 'Drawers' }).getByRole('button', { name });
 
 /** The drawer of the plan screen, opened by its tab. */
 async function openDrawer(page: Page): Promise<void> {
@@ -20,7 +22,8 @@ test('a relic found with a typo is added in the components drawer and is still t
   await openDrawer(page);
 
   // What the game starts with is listed, and nothing is held of the relics yet.
-  await expect(drawer(page).getByRole('group', { name: 'Technologies' })).toContainText('Neural Motivator');
+  await expect(drawer(page).getByRole('group', { name: 'Researched technologies' })).toContainText('Neural Motivator');
+  await groupTab(page, 'Relics').click();
   await expect(relics(page)).toHaveText(/none$/);
 
   await drawer(page).getByRole('searchbox', { name: 'Search components' }).fill('stelar convertr');
@@ -28,10 +31,10 @@ test('a relic found with a typo is added in the components drawer and is still t
   await results.getByRole('button', { name: 'Add Stellar Converter' }).click();
   await expect(results.getByRole('button', { name: 'Remove Stellar Converter' })).toBeVisible();
 
-  // The cross of the field brings the sections back, the relic among them, and the tab counts it.
+  // The cross of the field brings the group back, the relic in it, and its tab counts it.
   await drawer(page).getByRole('button', { name: 'Clear the search' }).click();
   await expect(relics(page)).toContainText('Stellar Converter');
-  await expect(page.getByRole('button', { name: 'Components · 3' })).toBeVisible();
+  await expect(groupTab(page, 'Relics · 1')).toHaveAttribute('aria-pressed', 'true');
 
   // The printed text opens in place and the drawer stays inside the screen.
   await relics(page).getByRole('button', { name: /^Stellar Converter/ }).click();
@@ -43,7 +46,27 @@ test('a relic found with a typo is added in the components drawer and is still t
   await page.reload();
   await expect(page.getByRole('button', { name: 'Plan & map' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Components · 3' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Components · 4' })).toBeVisible();
+  // The stack opens on the group it was left on.
   await openDrawer(page);
   await expect(relics(page)).toContainText('Stellar Converter');
+});
+
+test('the numbers of a unit card stand in one line, at either level and in either language', async ({ page }) => {
+  for (const lang of ['ru', 'en']) {
+    await page.addInitScript(value => localStorage.setItem('ti4.lang', value), lang);
+    await page.goto(LINK.replace('Relics', `Units-${lang}`));
+    await page.locator('.app-rail button').nth(1).click();
+    await page.locator('.tab-fan > button').first().click();
+    const cards = page.locator('.components-panel .upgrade-card');
+    await expect(cards.first()).toBeVisible();
+    for (const card of await cards.all()) if (await card.isEnabled()) await card.click();
+    // Four numbers per card, all on the line of the first.
+    const lines = await page.locator('.components-panel .ship-stat-line').evaluateAll(all => all.map(line => [...line.children].map(cell => Math.round(cell.getBoundingClientRect().top))));
+    expect(lines.length).toBeGreaterThan(5);
+    for (const tops of lines) expect(tops, lang).toEqual([tops[0], tops[0], tops[0], tops[0]]);
+    // Nothing of a card reaches past the sheet.
+    const sheet = (await page.locator('.components-panel').boundingBox())!;
+    for (const box of await cards.evaluateAll(all => all.map(card => card.getBoundingClientRect().right))) expect(box).toBeLessThanOrEqual(sheet.x + sheet.width);
+  }
 });

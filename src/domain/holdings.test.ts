@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { componentById } from './components';
-import { holdingRounds, holdingsOf, setLeader, setStartHolding, upgradesOf, upgradeTech } from './holdings';
+import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, setLeader, setStartHolding, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { gameAs, removePlayer, setPlayerFaction } from './players';
-import { project } from './project';
+import { project, readyToPlay } from './project';
 import { timeline } from './replay/timeline';
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';
@@ -316,5 +316,59 @@ describe('unit upgrades are technologies', () => {
       [RIVAL.id]: { 'actionCard:bribery': 2 },
     });
     expect(holdingRounds(game.plans[0], 'now')).toEqual({ me: { 'relic:nanoforge': 1 } });
+  });
+});
+
+describe('the groups of the components drawer', () => {
+  test('every holding is counted in one group, and the laws of the game with the objectives', () => {
+    const holdings = {
+      ...holdingsOf({ technologies: ['technology:amd', 'technology:cv2'], hand: ['actionCard:sabo1', 'actionCard:sabo1'], promissory: ['promissory:x'] }),
+      relics: ['relic:shard'], leaders: { 'leader:solagent': 'unlocked' as const }, breakthrough: 'held' as const, scored: ['publicObjective:a'], secrets: ['secretObjective:b'],
+    };
+    expect(COMPONENT_GROUPS).toEqual(['technologies', 'cards', 'faction', 'relics', 'objectives']);
+    expect(groupCounts(holdings, ['agenda:law'])).toEqual({ technologies: 2, cards: 3, faction: 2, relics: 1, objectives: 3 });
+    expect(groupCounts(holdingsOf())).toEqual({ technologies: 0, cards: 0, faction: 0, relics: 0, objectives: 0 });
+  });
+});
+
+describe('what a choice of components offers', () => {
+  const holdings = {
+    ...holdingsOf({ technologies: ['technology:amd'], hand: ['actionCard:sabo1', 'actionCard:sabo1'], relics: ['relic:shard'], secrets: ['secretObjective:x'] }),
+  };
+
+  test('an entry can lose what its owner held before it, a hand with its repeats, and what the entry itself brings', () => {
+    expect(losable(holdings, {})).toEqual(['technology:amd', 'actionCard:sabo1', 'actionCard:sabo1', 'relic:shard', 'secretObjective:x']);
+    expect(losable(holdings, { gains: ['relic:stellarconverter'] })).toContain('relic:stellarconverter');
+    expect(losable(holdingsOf(), {})).toEqual([]);
+  });
+
+  test('what the entry already loses is offered no more, a copy at a time', () => {
+    expect(losable(holdings, { spends: ['actionCard:sabo1', 'relic:shard'] })).toEqual(['technology:amd', 'actionCard:sabo1', 'secretObjective:x']);
+  });
+
+  test('what is held once cannot be taken again: everything but the hand', () => {
+    expect([...heldOnce(holdings)].sort()).toEqual(['relic:shard', 'secretObjective:x', 'technology:amd']);
+  });
+
+  test('ready to play: what the player holds and has not exhausted, and the abilities of their own faction', () => {
+    const pack = loadPack(['pok']);
+    const mine = {
+      ...holdingsOf({ hand: ['actionCard:sabo1'], relics: ['relic:shard'], technologies: ['technology:st'], leaders: { 'leader:solagent': 'unlocked', 'leader:solhero': 'purged' } }),
+      exhausted: ['technology:st'],
+    };
+    const ready = readyToPlay(pack, mine, 'sol', { primor: 'me', hopesend: 'enemy' });
+    expect(ready.has('actionCard:sabo1')).toBe(true);
+    expect(ready.has('relic:shard')).toBe(true);
+    expect(ready.has('leader:solagent')).toBe(true);
+    expect(ready.has('technology:st')).toBe(false);
+    expect(ready.has('leader:solhero')).toBe(false);
+    expect(ready.has('leader:solcommander')).toBe(false);
+    expect(ready.has('relic:stellarconverter')).toBe(false);
+    // A legendary planet is ready for the player who controls it.
+    expect([...ready].filter(id => id.startsWith('legendary:'))).toEqual(['legendary:primor']);
+    expect(readyToPlay(pack, mine, 'sol').has('legendary:primor')).toBe(false);
+    const abilities = [...ready].filter(id => id.startsWith('ability:')).map(id => componentById(pack, id)!.faction);
+    expect(abilities.length).toBeGreaterThan(0);
+    expect(new Set(abilities)).toEqual(new Set(['sol']));
   });
 });

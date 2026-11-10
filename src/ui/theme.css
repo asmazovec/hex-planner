@@ -144,7 +144,7 @@ body {
 /* The frame: content, then the menu. */
 .app { display: flex; flex-direction: column; height: 100%; }
 /* Every block that scrolls: a thin bar in the colour of a strong border. */
-.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .components-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .components-panel, .te-panel, .legend-panel, .fac-sheet, .stage-dialog, .action-list, .component-picker > .component-list { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 /* These columns keep room for the scrollbar, so nothing shrinks when it appears; the room comes out of their right padding (--scrollbar, measured at start: 0 on a tablet). */
 .plan-scroll, .players-aside, .components-panel, .te-panel, .legend-panel { scrollbar-gutter: stable; }
 .app-body > main { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 20px 22px; }
@@ -916,19 +916,31 @@ small.ship-row-round { color: var(--gold); }
 .components-panel h2, .te-panel h2, .legend-panel h2 { margin: 0 0 12px; font-size: var(--font-xl); font-weight: 650; letter-spacing: -0.01em; }
 .te-panel .editor-section { margin-bottom: 8px; }
 /* The components of a player: the choice of the player, the search, then a block per kind. */
-.components-panel > .player-choice, .components-panel > .component-search, .components-panel > .editor-section { margin-bottom: 8px; }
+.components-panel { display: flex; flex-direction: column; gap: 12px; }
+.components-panel > * { flex: none; }
+.components-panel > h2 { margin: 0; }
+/* The technologies of a colour under the mark of that colour; a card stands 8 px from the next, a colour 12 px from the next. */
+.tech-colour { margin: 0; }
+.tech-colour > span { display: inline-flex; align-items: center; gap: 6px; }
+.component-list > .component-list + .component-list { margin-top: 4px; }
+.component-card > .segment > button { flex: 1 1 0; min-width: 0; font-size: var(--font-s); }
 .components-panel .editor-section .upgrade-card { margin-bottom: 0; }
 .component-search { position: relative; display: flex; }
 .component-search > input { flex: 1 1 auto; min-width: 0; min-height: var(--touch); padding-right: 48px; }
 .component-search > .icon-button { position: absolute; right: 2px; top: 0; }
-.component-list, .component-card { display: flex; flex-direction: column; gap: 6px; }
+/* A card keeps what belongs to it close, and stands further from the next card. */
+.component-list, .component-card { display: flex; flex-direction: column; gap: 8px; }
+.component-card { gap: 4px; }
 .component-card .source-button { min-height: var(--touch); }
 .component-card .source-button b { color: var(--text); font-weight: 600; }
 .component-card.on .source-button { border-color: var(--accent); background: var(--accent-soft); }
 .component-card.dim { opacity: 0.6; }
 .component-count { color: var(--gold); font-weight: 700; }
 .component-text { margin: 0; padding: 0 4px 2px; font-size: 12.5px; line-height: 1.35; color: var(--text-muted); white-space: pre-line; }
-.component-picker { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+/* The window keeps its title and its search field in place: only the list under them scrolls. */
+.component-picker { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
+.component-picker > * { flex: none; }
+.component-picker > .component-list { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 .te-panel .row[role='group'] { gap: 4px; }
 .te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }
@@ -936,10 +948,10 @@ small.ship-row-round { color: var(--gold); }
 .upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--accent); background: var(--accent-soft); }
 .upgrade-card .unit-icon { width: 42px; height: 42px; }
 .upgrade-body b { display: block; color: var(--text); font-size: 13.5px; }
-.ship-stat-line { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
-.ship-stat-line > span { min-width: 48px; }
+.upgrade-card > .ship-stat-line, .upgrade-card > .ship-notes { grid-column: 1 / -1; }
+.ship-stat-line { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 8px; font-size: 12px; color: var(--text-muted); }
 .ship-stat-line b { display: block; color: var(--text); font-weight: 600; }
-.upgrade-body .ship-notes { display: flex; margin-top: 3px; }
+.upgrade-card > .ship-notes { display: flex; }
 .upgrade-level { font-weight: 800; font-size: 15px; text-align: center; color: var(--text-dim); }
 .upgrade-card.on .upgrade-level { color: var(--gold); }
 
@@ -972,6 +984,18 @@ small.ship-row-round { color: var(--gold); }
 .drawer-tab-right { border-right: 0; border-left: 3px solid var(--border-strong); border-radius: var(--radius-s) 0 0 var(--radius-s); }
 .drawer-tab-right span { transform: rotate(180deg); }
 .drawer-tab.te-ready { color: var(--gold); }
+/* The tabs of the components: folded, one tab over the shades of the rest, each lower, further in and fainter; fanned out, a tab per group, one under another. They take the room of one tab on the rail whatever they do, and move by `translate` alone. */
+.tab-fan { --fan-tab: 138px; position: relative; flex: none; width: 34px; height: calc(var(--fan-tab) + 18px); }
+.tab-fan > .drawer-tab { position: absolute; top: 0; right: 0; height: var(--fan-tab); padding: 0; z-index: calc(5 - var(--slot)); translate: calc(var(--slot) * 4px) calc(var(--slot) * 6px); opacity: calc(1 - var(--slot) * 0.25); transition: translate 0.26s var(--ease), opacity 0.26s var(--ease), color var(--motion-fast), border-color var(--motion-fast); }
+.tab-fan > .drawer-tab > span { transition: opacity 0.2s linear; }
+.tab-fan > .drawer-tab-aside > span { opacity: 0; }
+.tab-fan-open > .drawer-tab { translate: 0 calc(var(--slot) * (var(--fan-tab) + 6px)); opacity: 1; }
+/* The finger gets its 44 px across: the tab is 34 wide and takes the rest from the map beside it. */
+.tab-fan > .drawer-tab:not(.drawer-tab-aside)::after { content: ''; position: absolute; inset: 0 0 0 -10px; }
+/* A tab that stands aside is a shade, or has left for the edge: neither the finger nor the screen reader finds it. */
+.drawer-tab-aside { pointer-events: none; }
+.drawer-rail > .drawer-tab { transition: translate 0.26s var(--ease), opacity 0.26s var(--ease), color var(--motion-fast), border-color var(--motion-fast); }
+.drawer-rail > .drawer-tab-aside, .drawer-rail > .drawer-tab-aside:disabled { translate: 100% 0; opacity: 0; }
 .drawer { position: absolute; top: 0; bottom: 0; }
 .drawer-left { left: 0; z-index: 10; border-right: 2px solid var(--accent); box-shadow: var(--shadow-drawer); animation: drawer-from-left 0.26s var(--ease); transition: width 0.26s var(--ease); }
 .drawer-left.drawer-leaving { animation: drawer-to-left 0.26s var(--ease) forwards; }
@@ -982,6 +1006,9 @@ small.ship-row-round { color: var(--gold); }
 :root[data-blur='on'] .drawer-scrim { -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 /* Behind the plan's panel, flush with it: the sheet comes out from under it, and its shadow grows on the map as it moves. */
 .drawer-under { right: 0; z-index: 6; width: min(388px, calc(100% - 34px)); border-left: 2px solid var(--accent); box-shadow: var(--shadow-drawer-under); animation: drawer-from-under 0.26s var(--ease); }
+/* The sheet of the components opens beside its tabs, which stay at the edge of the map: the strip under them is the sheet's own. */
+.drawer-fanned { right: 34px; width: min(388px, calc(100% - 68px)); }
+.drawer-fanned::after { content: ''; position: absolute; top: 0; bottom: 0; left: 100%; width: 34px; background: var(--bg); }
 .drawer-under.drawer-leaving { animation: drawer-to-under 0.26s var(--ease) forwards; }
 .drawer-swap { height: 100%; animation: fade-in 0.16s linear; }
 @keyframes drawer-from-left { from { transform: translateX(-100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } to { transform: none; } }
@@ -989,7 +1016,7 @@ small.ship-row-round { color: var(--gold); }
 @keyframes drawer-from-under { from { transform: translateX(100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } to { transform: none; } }
 @keyframes drawer-to-under { to { transform: translateX(100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } }
 @keyframes fade-out { to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .drawer, .drawer-scrim, .drawer-rail { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-scrim, .drawer-rail, .drawer-tab, .drawer-tab > span { animation: none; transition: none; } }
 
 /* Smooth motion turned off in energy saving: the same as the system's reduced motion. Blur has its own data-blur. */
 :root[data-motion='off'] *, :root[data-motion='off'] *::before, :root[data-motion='off'] *::after { animation: none !important; transition: none !important; }

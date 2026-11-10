@@ -1,3 +1,5 @@
+import { COMPONENT_GROUPS, type ComponentGroup } from '../../domain/holdings';
+
 /** Reads a stored value; null when there is none or storage is unavailable. */
 function readStored(key: string): string | null {
   try {
@@ -95,6 +97,19 @@ export const lastExport = {
   },
   write(at: number): void {
     writeStored(LAST_EXPORT_KEY, String(at));
+  },
+};
+
+export const COMPONENTS_TAB_KEY = 'ti4.componentsTab';
+
+/** The group of the components drawer open last: the stack of its tabs opens on it. Technologies before any was. */
+export const componentsTab = {
+  read(): ComponentGroup {
+    const value = readStored(COMPONENTS_TAB_KEY);
+    return COMPONENT_GROUPS.find(group => group === value) ?? COMPONENT_GROUPS[0];
+  },
+  write(group: ComponentGroup): void {
+    writeStored(COMPONENTS_TAB_KEY, group);
   },
 };
 

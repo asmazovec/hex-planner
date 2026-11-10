@@ -549,9 +549,10 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     act().setLeader('me', 'leader:solhero', 'unlocked');
     expect(game().start.opponents[id].leaders).toEqual({ 'leader:solagent': 'exhausted' });
     act().setLeader('me', 'leader:solhero', null);
-    expect(game().start.me.leaders).toEqual({});
+    // My own agent has been unlocked since the game began.
+    expect(game().start.me.leaders).toEqual({ 'leader:arborecagent': 'unlocked' });
     act().undo();
-    expect(game().start.me.leaders).toEqual({ 'leader:solhero': 'unlocked' });
+    expect(game().start.me.leaders).toEqual({ 'leader:arborecagent': 'unlocked', 'leader:solhero': 'unlocked' });
   });
 
   test('removing an opponent through the store removes their start holdings, and undo brings them back', () => {

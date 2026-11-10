@@ -3,7 +3,8 @@
  * the one bridge from the technologies held to the unit upgrades the counts follow. The replay's side is in
  * `replay/holdings.ts`.
  */
-import type { ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
+import { componentsOf } from './components';
+import type { ComponentDef, ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
 
 export const emptyHoldings = (): Holdings =>
   ({ technologies: [], hand: [], relics: [], promissory: [], leaders: {}, scored: [], secrets: [], exhausted: [] });
@@ -22,6 +23,19 @@ export function holdingsOf(start: StartHoldings = {}): Holdings {
 export const holdingCount = (holdings: Holdings): number =>
   holdings.technologies.length + holdings.hand.length + holdings.relics.length + holdings.promissory.length
   + Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0) + holdings.scored.length + holdings.secrets.length;
+
+/** The groups the components drawer shows a player's holdings in, in the order of its tabs. */
+export const COMPONENT_GROUPS = ['technologies', 'cards', 'faction', 'relics', 'objectives'] as const;
+export type ComponentGroup = typeof COMPONENT_GROUPS[number];
+
+/** How many components a player holds in each group; the laws of the game stand with the objectives. */
+export const groupCounts = (holdings: Holdings, laws: string[] = []): Record<ComponentGroup, number> => ({
+  technologies: holdings.technologies.length,
+  cards: holdings.hand.length + holdings.promissory.length,
+  faction: Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0),
+  relics: holdings.relics.length,
+  objectives: holdings.scored.length + holdings.secrets.length + laws.length,
+});
 
 /** The kind an id names: ids are `<kind>:<source id>`. */
 export const kindOf = (id: string): string => id.slice(0, Math.max(0, id.indexOf(':')));
@@ -62,14 +76,28 @@ export function upgradeTech(pack: DataPack, factionId: string, kind: UpgradeId):
 export const startingTechnologies = (pack: DataPack, factionId: string): string[] =>
   (pack.factions[factionId]?.startingTech ?? []).map(id => TECH + id);
 
-/** A player's start after their faction changed: the old faction's starting technologies go, the new one's come. */
+const leadersOf = (pack: DataPack, factionId: string): ComponentDef[] =>
+  componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === factionId);
+
+/** The agents of a faction, as component ids: an agent needs no unlocking and begins the game readied (LRR 51.4). None without Prophecy of Kings. */
+export const startingAgents = (pack: DataPack, factionId: string): string[] =>
+  leadersOf(pack, factionId).filter(c => c.detail?.type === 'agent').map(c => c.id);
+
+/**
+ * A player's start after their faction changed: the old faction's starting technologies and leaders go, the new one's
+ * starting technologies come, and its agents come unlocked.
+ */
 export function startForFaction(start: StartHoldings = {}, from: string, to: string, pack: DataPack): StartHoldings {
   const gone = startingTechnologies(pack, from);
   const kept = (start.technologies ?? []).filter(id => !gone.includes(id));
   const technologies = [...kept, ...startingTechnologies(pack, to).filter(id => !kept.includes(id))];
-  const { technologies: old, ...rest } = start;
+  const left = new Set(leadersOf(pack, from).map(c => c.id));
+  const leaders: Record<string, LeaderState> = Object.fromEntries(Object.entries(start.leaders ?? {}).filter(([id]) => !left.has(id)));
+  for (const id of startingAgents(pack, to)) leaders[id] = 'unlocked';
+  const { technologies: old, leaders: before, ...rest } = start;
   void old;
-  return technologies.length > 0 ? { ...rest, technologies } : rest;
+  void before;
+  return { ...rest, ...(technologies.length > 0 ? { technologies } : {}), ...(Object.keys(leaders).length > 0 ? { leaders } : {}) };
 }
 
 type ListField = 'technologies' | 'hand' | 'relics' | 'promissory' | 'scored' | 'secrets';
@@ -77,6 +105,25 @@ type ListField = 'technologies' | 'hand' | 'relics' | 'promissory' | 'scored' | 
 export const HOLDING_FIELD: Partial<Record<ComponentKind, ListField>> = {
   technology: 'technologies', actionCard: 'hand', relic: 'relics', promissory: 'promissory', secretObjective: 'secrets', publicObjective: 'scored',
 };
+
+const LIST_FIELDS: ListField[] = ['technologies', 'hand', 'relics', 'promissory', 'scored', 'secrets'];
+
+/**
+ * What an entry can discard or lose: everything its owner held as a card before it, a hand with its repeats, and what
+ * the entry itself brings, less what it already loses, a copy at a time.
+ */
+export function losable(holdings: Holdings, entry: { gains?: string[]; spends?: string[] }): string[] {
+  const all = [...LIST_FIELDS.flatMap(field => holdings[field]), ...(entry.gains ?? [])];
+  for (const id of entry.spends ?? []) {
+    const at = all.indexOf(id);
+    if (at >= 0) all.splice(at, 1);
+  }
+  return all;
+}
+
+/** What a player holds and cannot hold twice: everything held as a card but the hand of action cards. */
+export const heldOnce = (holdings: Holdings): Set<string> =>
+  new Set(LIST_FIELDS.filter(field => field !== 'hand').flatMap(field => holdings[field]));
 
 const playerStart = (game: Game, player: string): StartHoldings | undefined =>
   (player === 'me' ? game.start.me : game.opponents.some(o => o.id === player) ? game.start.opponents[player] ?? {} : undefined);

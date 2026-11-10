@@ -560,14 +560,67 @@ test('a tap in the plan panel folds the open entry and still lands on its target
   await expect(page.getByRole('group', { name: 'Token distribution' })).toBeVisible();
 });
 
-test('a leader changes its state and a unit its level under the finger', async ({ page }) => {
+/** The tabs of the components: the first is the folded stack, and the tab of the open group once it is fanned out. */
+const fan = (page: Page) => page.locator('.tab-fan > button');
+const fanTab = (page: Page, name: RegExp) => page.locator('.tab-fan').getByRole('button', { name });
+
+test('the stack of the component tabs opens and folds at one point, on the group it was left on', async ({ page }) => {
+  const stack = fan(page).first();
+  const { point } = await centreOf(page, stack);
+  // Open, fold, open: the tab of the group that opens lies where the stack was.
+  for (const [press, name, open] of [[1, /^Technologies/, 1], [2, /^Components/, 0], [3, /^Technologies/, 1], [4, /^Components/, 0]] as const) {
+    await page.mouse.click(point.x, point.y);
+    await settle(page);
+    expect(await controlAt(page, point), `press ${press}`).toMatch(name);
+    await expect(drawer(page)).toHaveCount(open);
+  }
+  await pressRepeatedly(page, stack, 6);
+  await expect(drawer(page)).toHaveCount(0);
+
+  // Another group: the tabs of the fan stay where they are, and its own tab folds the fan.
+  await page.mouse.click(point.x, point.y);
+  await settle(page);
+  const places = () => fan(page).evaluateAll(tabs => tabs.map(tab => { const box = tab.getBoundingClientRect(); return [box.x, box.y, box.width, box.height].map(Math.round).join(' '); }));
+  const before = await places();
+  for (const group of [/^Relics/, /^Cards/, /^Objectives/]) {
+    await fanTab(page, group).click();
+    await settle(page);
+    await expect(fanTab(page, group)).toHaveAttribute('aria-pressed', 'true');
+    expect(await places()).toEqual(before);
+  }
+  // Five tabs stand inside the height of the map.
+  const map = (await page.locator('.plan-map').boundingBox())!;
+  const last = (await fan(page).last().boundingBox())!;
+  expect(last.y + last.height).toBeLessThanOrEqual(map.y + map.height);
+  await fanTab(page, /^Objectives/).click();
+  await expect(drawer(page)).toHaveCount(0);
+
+  // Left on Objectives: the stack opens on them, their tab under the finger, and folds again at the same point.
+  await page.mouse.click(point.x, point.y);
+  await settle(page);
+  expect(await controlAt(page, point)).toMatch(/^Objectives/);
+  await expect(drawer(page).getByRole('group', { name: 'Objectives' })).toBeVisible();
+  await page.mouse.click(point.x, point.y);
+  await pressRepeatedly(page, stack, 4);
+  await expect(drawer(page)).toHaveCount(0);
+});
+
+test('the states of a leader are chosen, and a unit changes its level, under the finger', async ({ page }) => {
   await page.getByRole('button', { name: /^Components/ }).click();
+  await fanTab(page, /^Faction/).click();
   const leaders = drawer(page).getByRole('group', { name: 'Leaders' }).locator('[data-testid^="component-leader:"]');
   const ids = await leaders.evaluateAll(cards => cards.map(card => card.getAttribute('data-testid') ?? ''));
   expect(ids.length).toBeGreaterThan(1);
-  // Locked, unlocked, exhausted, purged, and round again.
-  for (const id of ids) await pressRepeatedly(page, drawer(page).getByTestId(id).locator('.icon-button'), 8);
+  // Every state of every leader, from the last to the first and back: the segments stand still whatever is chosen.
+  for (const id of ids) {
+    const states = drawer(page).getByTestId(id).locator('.segment > button');
+    const count = await states.count();
+    expect(count).toBeGreaterThan(1);
+    for (let i = count - 1; i >= 0; i -= 1) await pressRepeatedly(page, states.nth(i), 2);
+    for (let i = 0; i < count; i += 1) await pressRepeatedly(page, states.nth(i), 2);
+  }
 
+  await fanTab(page, /^Technologies/).click();
   const levels = await drawer(page).locator('.upgrade-card:not(:disabled)').evaluateAll(cards => cards.map(card => card.getAttribute('data-testid') ?? ''));
   expect(levels.length).toBeGreaterThan(2);
   for (const id of levels) await pressRepeatedly(page, drawer(page).getByTestId(id), 4);
@@ -597,6 +650,7 @@ test('components are added from the search, and a hand is counted, under the fin
   await search.fill('sabotage');
   await results.getByRole('button', { name: 'Add Sabotage' }).click();
   await drawer(page).getByRole('button', { name: 'Clear the search' }).click();
+  await fanTab(page, /^Cards/).click();
   const hand = drawer(page).getByRole('group', { name: 'Action cards' });
   await pressRepeatedly(page, hand.getByRole('button', { name: 'Add one In hand' }).first(), 3);
   await pressRepeatedly(page, hand.getByRole('button', { name: 'Remove one In hand' }).first(), 3);
@@ -612,7 +666,7 @@ test('the energy settings of the game screen switch under the finger', async ({ 
 });
 
 test('the parts of the expedition and the seat of the Fracture switch under the finger', async ({ page }) => {
-  await page.locator('.drawer-rail-right button').nth(1).click();
+  await page.locator('.drawer-rail-right > button').click();
   const expedition = page.getByRole('group', { name: 'Expedition', exact: true });
   const parts = expedition.locator('.slice');
   await expect(parts).toHaveCount(6);
