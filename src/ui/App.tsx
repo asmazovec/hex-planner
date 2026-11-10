@@ -9,6 +9,7 @@ import { downloadGame } from './common/download';
 import { ErrorBanner } from './common/ErrorBanner';
 import { ExportReminder } from './common/ExportReminder';
 import { gameAddress } from './common/gameAddress';
+import { lastView } from './common/preferences';
 import { ShareConflict } from './common/ShareConflict';
 import { RowIcon } from './primitives/Icon';
 import { GameScreen } from './screens/GameScreen';
@@ -19,14 +20,26 @@ type Screen = (typeof SCREENS)[number];
 
 export function App() {
   const { t } = useTranslation();
-  const [screen, setScreen] = useState<Screen>('game');
+  const game = useGame(s => s.game);
+  const gameId = game?.id ?? null;
+  const [screen, setScreen] = useState<Screen>(() => (gameId === null ? null : lastView.read(gameId)?.screen) ?? 'game');
   /** The plan's hint about an unfinished map leads to the map block of the game screen. */
   const [toMap, setToMap] = useState(false);
-  const game = useGame(s => s.game);
   const saveError = useGame(s => s.saveError);
+
+  // A game that opens comes back to the screen it was left on: a page loaded again opens it from its link.
+  const [openId, setOpenId] = useState(gameId);
+  if (openId !== gameId) {
+    setOpenId(gameId);
+    const kept = gameId === null ? null : lastView.read(gameId);
+    if (kept) setScreen(kept.screen);
+  }
 
   // Without a game there is no plan to show, so the menu does not offer it. Leaving a game comes back here too.
   const shown: Screen = game ? screen : 'game';
+  useEffect(() => {
+    if (gameId !== null) lastView.write(gameId, { screen: shown });
+  }, [gameId, shown]);
 
   // The address of an open game is its link: copy it and pass it on. No history entry, for it changes with every tile.
   const query = game ? shareLinkQuery(game) : '';

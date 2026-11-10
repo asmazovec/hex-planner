@@ -17,6 +17,7 @@ import { holdingCount, holdingRounds, upgradesOf } from '../../domain/holdings';
 import { entryUpgradeRounds } from '../../domain/unitStats';
 import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { lastView } from '../common/preferences';
 import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { HexMap } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/stage/HexStage';
@@ -84,7 +85,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const deletePlan = useGame(s => s.deletePlan);
   const pack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
 
-  const [roundNo, setRoundNo] = useState<number | null>(null);
+  const [roundNo, setRoundNo] = useState<number | null>(() => (game ? lastView.read(game.id)?.round ?? null : null));
+  useEffect(() => { if (game?.id) lastView.write(game.id, { round: roundNo }); }, [game?.id, roundNo]);
   const [mapMode, setMapMode] = useState<'forecast' | 'now'>('forecast');
   /** Counts the times an entry with no place on the map was opened: the camera goes to the whole map. */
   const [viewResets, setViewResets] = useState(0);

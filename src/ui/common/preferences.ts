@@ -97,3 +97,27 @@ export const lastExport = {
     writeStored(LAST_EXPORT_KEY, String(at));
   },
 };
+
+export const LAST_VIEW_KEY = 'ti4.view';
+
+/** Where the player was in a game: the screen of the menu and the round of the plan, null for the round the plan opens on. */
+export interface KeptView { screen: 'game' | 'plan'; round: number | null }
+
+/** The place in the game last open, so that a page loaded again comes back to it. One game only: the last one. */
+export const lastView = {
+  /** What is kept for this game; null when there is nothing, or it is of another game, or it cannot be read. */
+  read(gameId: string): KeptView | null {
+    try {
+      const kept = JSON.parse(readStored(LAST_VIEW_KEY) ?? 'null') as { game?: unknown; screen?: unknown; round?: unknown } | null;
+      if (kept?.game !== gameId || (kept.screen !== 'game' && kept.screen !== 'plan')) return null;
+      return { screen: kept.screen, round: typeof kept.round === 'number' ? kept.round : null };
+    } catch {
+      return null;
+    }
+  },
+  /** Changes a part of what is kept for this game; the view of another game goes. */
+  write(gameId: string, change: Partial<KeptView>): void {
+    const next: KeptView = { ...(lastView.read(gameId) ?? { screen: 'game', round: null }), ...change };
+    writeStored(LAST_VIEW_KEY, JSON.stringify({ game: gameId, ...next }));
+  },
+};

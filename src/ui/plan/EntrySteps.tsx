@@ -14,7 +14,7 @@ import { UnitTile } from '../units/UnitTile';
 import { unitsText } from '../units/unitsText';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { flightOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from '../../domain/tactical';
-import { systemName } from '../map/systemName';
+import { systemTitle } from '../map/systemName';
 
 function UnitPictures({ units, game, t }: { units: UnitCounts; game: Game; t: (key: string) => string }) {
   return (
@@ -39,7 +39,7 @@ export interface EntryStepsProps {
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
 export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntryStepsProps) {
   const { t } = useTranslation();
-  const name = (slot: string) => systemName(game, pack, slot);
+  const name = (slot: string) => systemTitle(game, pack, slot, t);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} game={game} t={t} />;
   const planetName = (id: string) => pack.planets[id]?.name ?? id;
   const steps: ReactNode[] = [];

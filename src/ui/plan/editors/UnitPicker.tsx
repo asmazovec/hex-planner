@@ -6,7 +6,7 @@ import { UnitTile } from '../../units/UnitTile';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { availableFor, fliesNow, groupOf, hasUnits, pickedFrom, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
-import { systemName } from '../../map/systemName';
+import { systemName, systemTitle } from '../../map/systemName';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { SectionTitle } from '../../primitives/SectionTitle';
@@ -93,7 +93,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
     const places = placesIn(slot);
     return (
       <li key={slot} className="stop">
-        <span className="stop-name">{systemName(game, pack, slot)} · {t(`plan.picker.${role}`)}</span>
+        <span className="stop-name">{systemTitle(game, pack, slot, t)} · {t(`plan.picker.${role}`)}</span>
         {!pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
         {places.length === 0 && <span className="muted">{t('plan.picker.nothing')}</span>}
         {places.map(place => (
@@ -123,14 +123,14 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
 
   return (
     <EditorFrame
-      className="unit-picker" title={t('plan.picker.title', { from: systemName(game, pack, source), to: systemName(game, pack, target) })}
+      className="unit-picker" title={t('plan.picker.title', { from: systemTitle(game, pack, source, t), to: systemTitle(game, pack, target, t) })}
       onBack={onClose} removeLabel={t('plan.picker.removeSource')}
       onRemove={() => { onChange(withoutSource(game, pack, entry.moves, source)); onClose(); }}
     >
       <small className="picker-distance">{t('plan.tactical.distance', { n: routeSteps(game, [source, ...viaOf(entry, source), target], pack) })}</small>
 
       <div className="editor-section">
-        <SectionTitle as="h4" className="picker-title">{t('plan.picker.inSystem', { name: systemName(game, pack, source) })}</SectionTitle>
+        <SectionTitle as="h4" className="picker-title">{t('plan.picker.inSystem', { name: systemTitle(game, pack, source, t) })}</SectionTitle>
         <div className="pics">
           {offered.map(unit => {
             const got = picked(source, unit);
@@ -169,7 +169,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
         <ol className="stops">
           {line(source, 'start')}
           {viaOf(entry, source).map(slot => line(slot, 'transit'))}
-          <li className="stop stop-target"><span className="stop-name">{systemName(game, pack, target)} · {t('plan.picker.target')}</span></li>
+          <li className="stop stop-target"><span className="stop-name">{systemTitle(game, pack, target, t)} · {t('plan.picker.target')}</span></li>
         </ol>
       </div>
 

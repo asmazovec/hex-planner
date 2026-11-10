@@ -1,7 +1,7 @@
 import { memo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DataPack, Game, Warning } from '../../domain/types';
-import { systemName } from '../map/systemName';
+import { systemTitle } from '../map/systemName';
 
 export interface WarningTextProps {
   warning: Warning;
@@ -21,7 +21,7 @@ const sameWarning = (a: WarningTextProps, b: WarningTextProps): boolean =>
 export const WarningText = memo(function WarningText({ warning, game, pack }: WarningTextProps) {
   const { t } = useTranslation();
   const { code, params } = warning;
-  const place = (id: string | number): string => pack.planets[id]?.name ?? systemName(game, pack, String(id));
+  const place = (id: string | number): string => pack.planets[id]?.name ?? systemTitle(game, pack, String(id), t);
   const needed = Number(params.needed ?? 0);
   const paid = Number(params.paid ?? 0);
   const text = t(`plan.warning.${code}`, {

@@ -1,4 +1,4 @@
-import type { Rect } from './geometry';
+import { HEX_SIZE, type Point, type Rect } from './geometry';
 
 /** `x` and `y` move the map centre away from the viewport centre, in the units of `Size`. */
 export interface View { x: number; y: number; scale: number }
@@ -51,6 +51,53 @@ export function capFit(base: Rect, full: Rect): Rect {
   const h = axis(base.x, base.width, full.x, full.width);
   const v = axis(base.y, base.height, full.y, full.height);
   return { x: h.start, y: v.start, width: h.size, height: v.size };
+}
+
+/** Free room between the hexes and each edge of the map area when the map opens, in screen pixels. */
+export const FIT_MARGIN = 8;
+
+/** Whether a flat-top hex of radius `size` around `centre` and a rectangle have a point in common. */
+function hexMeets(centre: Point, size: number, rect: Rect): boolean {
+  // The point of the rectangle nearest to the centre on each axis: the hex is convex and symmetric, so it decides.
+  const dx = Math.max(rect.x - centre.x, 0, centre.x - (rect.x + rect.width));
+  const dy = Math.max(rect.y - centre.y, 0, centre.y - (rect.y + rect.height));
+  return dy < (size * Math.sqrt(3)) / 2 && dy < Math.sqrt(3) * (size - dx);
+}
+
+/**
+ * The viewBox the map opens on: `content` whole in an area of `viewport` screen pixels, with `margin` pixels free on
+ * every side, and no hex of `hexes` (centres, in the units of `content`) under a rectangle of `tabs` (pixels from the
+ * top left corner of the area). The box has the proportions of the area and is centred on `content`, so the browser
+ * adds nothing around it. Tabs make the map smaller only as far as they are in its way. An area with no size yet
+ * leaves `content` as it is.
+ */
+export function fitBox(content: Rect, viewport: Size, hexes: Point[] = [], tabs: Rect[] = [], hexSize: number = HEX_SIZE, margin: number = FIT_MARGIN): Rect {
+  const roomX = viewport.width - 2 * margin;
+  const roomY = viewport.height - 2 * margin;
+  if (roomX <= 0 || roomY <= 0 || content.width <= 0 || content.height <= 0) return content;
+  const midX = content.x + content.width / 2;
+  const midY = content.y + content.height / 2;
+  const clear = (scale: number) => !hexes.some(hex => {
+    const at = { x: viewport.width / 2 + (hex.x - midX) * scale, y: viewport.height / 2 + (hex.y - midY) * scale };
+    return tabs.some(tab => hexMeets(at, hexSize * scale, tab));
+  });
+  let scale = Math.min(roomX / content.width, roomY / content.height);
+  if (!clear(scale)) {
+    // Between the tabs of both sides nothing is in the way: the largest scale that is clear lies from there up.
+    const reach = Math.max(0, ...tabs.map(tab => (tab.x + tab.width / 2 < viewport.width / 2 ? tab.x + tab.width : viewport.width - tab.x)));
+    let low = Math.min((roomX - 2 * reach) / content.width, scale);
+    if (low > 0) {
+      for (let i = 0; i < 24; i += 1) {
+        const middle = (low + scale) / 2;
+        if (clear(middle)) low = middle;
+        else scale = middle;
+      }
+      scale = low;
+    }
+  }
+  const width = viewport.width / scale;
+  const height = viewport.height / scale;
+  return { x: midX - width / 2, y: midY - height / 2, width, height };
 }
 
 /** Right of the hex if the popup fits there, left if it fits there, otherwise the roomier side. */

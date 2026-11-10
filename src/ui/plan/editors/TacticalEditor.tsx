@@ -13,7 +13,7 @@ import { EditorFrame } from '../../primitives/EditorFrame';
 import { addUnits, afterBattle, countOf, groupOf, hasUnits, isUntouched, sourcesOf, splitFlight, unitsIn, viaOf, withLanding, withoutSource, type TacticalEntry } from '../../../domain/tactical';
 import { Section } from '../../primitives/Section';
 import { unitsText } from '../../units/unitsText';
-import { systemName } from '../../map/systemName';
+import { systemTitle } from '../../map/systemName';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
@@ -112,10 +112,10 @@ export function TacticalEditor({
             {isUntouched(entry)
               ? (
                 <MapPickButton className="source-button" active={choosing === 'system'} onToggle={() => onChoose(choosing === 'system' ? null : 'system')}>
-                  <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>
+                  <strong>{t('plan.tactical.system', { name: systemTitle(game, pack, target, t) })}</strong>
                 </MapPickButton>
               )
-              : <strong>{t('plan.tactical.system', { name: systemName(game, pack, target) })}</strong>}
+              : <strong>{t('plan.tactical.system', { name: systemTitle(game, pack, target, t) })}</strong>}
             <span className="muted">{entry.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
             {isUntouched(entry) && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
             {/* The activation: a token already there, or none left to spend. */}
@@ -132,12 +132,12 @@ export function TacticalEditor({
             {sources.length === 0 && <span className="muted">{t('plan.tactical.noSources')}</span>}
             {sources.map(source => {
               const via = viaOf(entry, source);
-              const name = systemName(game, pack, source);
+              const name = systemTitle(game, pack, source, t);
               return (
                 <Fragment key={source}>
                   <div className="source-row in-card">
                     <button type="button" className="source-button" onClick={() => onOpenPicker(source)}>
-                      {via.length > 0 ? t('plan.tactical.via', { name, list: via.map(v => systemName(game, pack, v)).join(', ') }) : name}
+                      {via.length > 0 ? t('plan.tactical.via', { name, list: via.map(v => systemTitle(game, pack, v, t)).join(', ') }) : name}
                       <small>{sourceLine(source)}</small>
                       {target !== null && <small>{t('plan.tactical.distance', { n: routeSteps(game, [source, ...via, target], pack) })}</small>}
                     </button>

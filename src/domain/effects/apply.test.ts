@@ -28,9 +28,9 @@ describe('applied: a point of the count asks the ready components of the player'
     expect(applied(pack, held, 'fleetLimit', 3, { faction: 'rules-tester' })).toEqual({ value: 3, by: [] });
   });
 
-  test('an exhausted component does not modify', () => {
+  test('34.4.1 a passive ability on an exhausted card is still in effect', () => {
     const held = { ...holdingsOf({ technologies: [tech('carrier')] }), exhausted: [tech('carrier')] };
-    expect(applied(pack, held, 'speed', 1, carrier)).toEqual({ value: 1, by: [] });
+    expect(applied(pack, held, 'speed', 1, carrier)).toEqual({ value: 2, by: [tech('carrier')] });
   });
 
   test('a component id the pack does not know is passed over', () => {

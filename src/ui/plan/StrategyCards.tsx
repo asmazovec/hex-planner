@@ -28,11 +28,12 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
   const block = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (shown === null) return undefined;
-    const away = (e: PointerEvent) => {
+    // On the finished tap, not on the press: closing moves the layout, and a press that moved its target is no click.
+    const away = (e: MouseEvent) => {
       if (!block.current?.contains(e.target as Node)) setShown(null);
     };
-    window.addEventListener('pointerdown', away);
-    return () => window.removeEventListener('pointerdown', away);
+    window.addEventListener('click', away, { capture: true });
+    return () => window.removeEventListener('click', away, { capture: true });
   }, [shown]);
   const pack = useMemo(() => loadPack(expansions), [expansions]);
   const cards = strategyCards(expansions);

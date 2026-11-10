@@ -108,21 +108,47 @@ export const gameSchema = z.object({
     })),
   })),
   activePlanId: z.string(),
+}).superRefine((game, ctx) => {
+  // The seats are the players: one each, numbered from 1, and as many as the game counts. A file that disagrees with
+  // itself would seat two players on one home or leave a home with nobody.
+  if (game.playerCount !== game.opponents.length + 1) {
+    ctx.addIssue({ code: 'custom', path: ['playerCount'], message: `${game.playerCount} players, but ${game.opponents.length} opponents and me` });
+  }
+  const taken = new Set<number>();
+  const seat = (value: number, path: (string | number)[]) => {
+    if (value < 1 || value > game.playerCount) ctx.addIssue({ code: 'custom', path, message: `seat ${value} is outside 1..${game.playerCount}` });
+    else if (taken.has(value)) ctx.addIssue({ code: 'custom', path, message: `seat ${value} is taken twice` });
+    taken.add(value);
+  };
+  seat(game.seat, ['seat']);
+  game.opponents.forEach((opponent, i) => seat(opponent.seat, ['opponents', i, 'seat']));
 }) satisfies z.ZodType<Game>;
+
+/** The number of the format in a mark like `ti4-planner/3`; null for anything else. */
+function formatNumber(mark: unknown): number | null {
+  const [name] = SAVE_FORMAT.split('/');
+  const found = typeof mark === 'string' && mark.startsWith(`${name}/`) ? /^\d+$/.exec(mark.slice(name.length + 1)) : null;
+  return found ? Number(found[0]) : null;
+}
 
 export type ParsedGame =
   | { ok: true; game: Game }
-  /** `oldFormat`: saved by the app before `SAVE_FORMAT`. `newerVersion`: a schema this app does not know yet. */
+  /** `oldFormat`: saved by the app before `SAVE_FORMAT`. `newerVersion`: a format or a schema this app does not know yet. */
   | { ok: false; kind: 'oldFormat' | 'newerVersion' | 'damaged'; reason: string };
 
 /**
  * Reads what a save or a file holds as a game. Nothing is brought up from an earlier shape: an object without the
- * format mark, or with another one, is of an earlier version of the app and is refused as such. Never throws.
+ * format mark, or with an earlier or unknown one, is of an earlier version of the app and is refused as such; a mark
+ * with a later number is of a newer version. Never throws.
  */
 export function parseGame(raw: unknown): ParsedGame {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return { ok: false, kind: 'damaged', reason: 'not a game' };
   const { format, schemaVersion } = raw as { format?: unknown; schemaVersion?: unknown };
-  if (format !== SAVE_FORMAT) return { ok: false, kind: 'oldFormat', reason: 'saved by an earlier version of the app' };
+  if (format !== SAVE_FORMAT) {
+    const [known, saved] = [formatNumber(SAVE_FORMAT), formatNumber(format)];
+    if (known !== null && saved !== null && saved > known) return { ok: false, kind: 'newerVersion', reason: `format ${String(format)} is newer than ${SAVE_FORMAT}` };
+    return { ok: false, kind: 'oldFormat', reason: 'saved by an earlier version of the app' };
+  }
   if (typeof schemaVersion === 'number' && schemaVersion > CURRENT_SCHEMA) {
     return { ok: false, kind: 'newerVersion', reason: `schema ${schemaVersion} is newer than ${CURRENT_SCHEMA}` };
   }

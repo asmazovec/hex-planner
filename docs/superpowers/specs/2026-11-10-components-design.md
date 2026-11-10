@@ -153,7 +153,7 @@ interface ComponentEffect {
   tier: EffectTier;
   /** Пункты LRR или номер карты, на которые опирается эффект. */
   rule: string;
-  /** passive: поправки к шагам расчёта, пока компонент у игрока и готов. */
+  /** passive: поправки к шагам расчёта, пока компонент у игрока. */
   modify?: Partial<Modifiers>;
   /** play: что происходит, когда компонент сыгран записью с выбором. */
   play?: (turn: EffectTurn) => void;
@@ -165,7 +165,7 @@ interface ComponentEffect {
 `Modifiers` — именованные точки, в которые расчёт уже заходит: `speed(unit, ctx)`, `capacity`, `fleetLimit`,
 `productionValue`, `unitCost`, `planetResources`, `planetInfluence`, `researchCost`, `prerequisites`, `tokensGained`,
 `handLimit`, `vp`. Шаг расчёта спрашивает значение через одну функцию `applied(state, point, base, ctx)`, которая
-проходит по готовым компонентам игрока. Шаг не знает ни одного компонента по имени.
+проходит по компонентам игрока; истощённая карта свои пассивные способности сохраняет (LRR 34.4.1). Шаг не знает ни одного компонента по имени.
 
 Классы:
 

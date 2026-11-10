@@ -10,7 +10,7 @@ import type { CardEffects, DataPack, Game, GameState, Round, UpgradeId, Warning 
 import { opponentName } from '../../players/names';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
 import { PaymentBlock } from '../blocks/PaymentBlock';
-import { systemName } from '../../map/systemName';
+import { systemTitle } from '../../map/systemName';
 import { TokenTiles } from '../blocks/TokenTiles';
 import { limitsSystem, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
@@ -66,7 +66,7 @@ export function StrategyEditor({
   const change = (patch: CardPatch) => onUpdate(cardChange(entry, patch, before, game.faction, pack, manualPayment));
   const setEffects = (patch: CardEffects) => change({ effects: { ...effects, ...patch } });
   const named = (id: string) => opponentName(game, pack, id, t);
-  const tile = (slot: string) => t('plan.strategy.tile', { name: systemName(game, pack, slot) });
+  const tile = (slot: string) => t('plan.strategy.tile', { name: systemTitle(game, pack, slot, t) });
   const opponents = opponentsBySeat(game);
   const toggled = (list: string[] | undefined, id: string) =>
     (list?.includes(id) ? list.filter(other => other !== id) : [...(list ?? []), id]);

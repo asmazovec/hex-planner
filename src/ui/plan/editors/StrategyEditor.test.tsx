@@ -440,8 +440,8 @@ describe('Construction', () => {
     expect(cardEntry().effects).toMatchObject({ production: { systemId: HOME, units: { cruiser: 1 } } });
     expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
     await click('Close');
-    expect(screen.getByText(/^Built: tile .*Cruiser 1$/)).toBeVisible();
-    await click(/^Production in a space dock.*· tile/);
+    expect(screen.getByText(/^Built: .*Cruiser 1$/)).toBeVisible();
+    await click(/^Production in a space dock.*· ./);
     expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' })).toHaveTextContent('+1');
   });
 
@@ -469,7 +469,7 @@ describe('Construction', () => {
   test('units a saved secondary already built stay in view with the warning, so they can be taken back', async () => {
     await secondary('Construction');
     act(() => store().updateEntry(cardEntry().id, { effects: { production: { systemId: HOME, units: { cruiser: 1 } } } }));
-    expect(screen.getByRole('button', { name: /^Production in a space dock.*· tile/ })).toBeVisible();
+    expect(screen.getByRole('button', { name: /^Production in a space dock.*· ./ })).toBeVisible();
     expect(screen.getByText(/gives the secondary a structure only/)).toBeVisible();
   });
 });
