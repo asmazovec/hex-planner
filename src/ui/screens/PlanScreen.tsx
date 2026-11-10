@@ -11,7 +11,7 @@ import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { cardChange, withSystem } from '../../domain/strategy';
-import { entrySystems, hasUnits, isUntouched, isValidSource, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
+import { emptySources, entrySystems, hasUnits, isUntouched, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
 import { holdingCount, holdingRounds, upgradesOf } from '../../domain/holdings';
 import { entryUpgradeRounds } from '../../domain/unitStats';
@@ -52,6 +52,7 @@ import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, reso
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
+import { leaveKey, useLeavingSources } from './plan/useLeavingSources';
 import { PlayerChoice, PlayerDot, playerStyle, playerTag } from '../primitives/player';
 
 /** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
@@ -132,12 +133,16 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const hasTe = game?.expansions.includes('te') ?? false;
   const drawers = useDrawers(hasTe, choosesForTe(next));
   const boards = useBoards(game, plan, pack);
+  const leavers = useLeavingSources();
 
   /** A finished route keeps the earlier ones: it adds its source, or gives a known source a new way. */
   const openRoute = ({ from, via }: RouteDraft) => {
     if (!game || !entry || !isOnMap(game, from)) return;
     const known = sourcesOf(game, pack, entry).includes(from);
     if (!known || viaOf(entry, from).join() !== via.join()) updateEntry(entry.id, { moves: withRoute(game, pack, entry.moves, from, via) });
+    // A source drawn again while it was on its way out stays; the one whose flight step this route replaces goes if nothing was chosen there.
+    leavers.keep(entry.id, from);
+    if (tactical?.pickerFrom && tactical.pickerFrom !== from) leavers.leave(entry.id, tactical.pickerFrom);
     update(state => (state.panel.kind === 'tactical' ? { ...state, panel: { ...state.panel, pickerFrom: from }, next: IDLE } : state));
     setView('plan');
   };
@@ -336,7 +341,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
-  const arrows = planArrows(game, pack, tacticals, tacticalNumbers(round.entries), focusId, tactical !== null || mapMode !== 'now');
+  const arrows = planArrows(game, pack, tacticals, tacticalNumbers(round.entries), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
   const entryGame = gameAs(game, entry?.owner);
@@ -350,10 +355,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       return blockersOf(game, board, entry.owner && board.rivals?.[entry.owner] ? entry.owner : undefined, pack);
     })
     : null;
-  // A source without ships has no speed to compare, and the distance is still worth saying.
+  // A route can start anywhere. Where no ships stand there is no speed to compare and no reach to light: the hint says
+  // so, and the distance is still worth saying.
   const speedNote = !route ? null
     : route.speed !== null ? t('plan.tactical.speedHint', { speed: route.speed, steps: route.steps, left: route.left })
-    : route.steps > 0 ? t('plan.tactical.distance', { n: route.steps }) : null;
+    : [t('plan.tactical.noShipsAtStart'), route.steps > 0 ? t('plan.tactical.distance', { n: route.steps }) : null].filter(Boolean).join(' ');
 
   const cardBefore = cardEntry ? boards.before(cardEntry.id) : undefined;
   const cardGame = gameAs(game, cardEntry?.owner);
@@ -371,12 +377,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const { mapState, layer: flightLayer } = flight.scene(tacticals, shownState, arrows);
   const shownArea = shownEntry ? focusRect(entrySystems(game, pack, shownEntry)) : null;
 
-  /** In the tactical editor a drag from the active system or a system with my units draws an arrow, a route under way goes on from its last hex; any other drag moves the map. */
+  /**
+   * In the tactical editor a drag from any system of the map draws an arrow, with ships of mine there or without: nothing
+   * is forbidden. A route under way goes on from its last hex only, and any other drag moves the map.
+   */
   const startsArrow = (slot: string): boolean => {
     if (activeSystem === null || !entryBefore || choosing !== null) return false;
     if (tapPath !== null) return slot === tapPath.at(-1);
-    if (slot === activeSystem) return true;
-    return isValidSource(game, pack, entryBefore, slot);
+    return isOnMap(game, slot);
   };
 
   const key = hintKey(pick);
@@ -420,6 +428,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     toList();
   };
   const toPicker = (source: string | null) => update(state => (state.panel.kind === 'tactical' ? { ...state, panel: { ...state.panel, pickerFrom: source } } : state));
+  /** Back from a flight step: a source with nothing chosen does not stay in the action, it leaves the editor as it returns. */
+  const closePicker = (flown: TacticalEntry, source: string) => {
+    toPicker(null);
+    if (emptySources(game, pack, flown).includes(source)) leavers.leave(flown.id, source);
+  };
 
   /** The acts of a turn entry, written back without an empty list. */
   const setActs = (entry: Entry, acts: Act[]) => updateEntry(entry.id, { acts: acts.length > 0 ? acts : undefined } as Partial<EntryBody>);
@@ -451,7 +464,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <UnitPicker
             game={entryGame} pack={pack} before={boards.before(flown.id)} entry={flown} source={slot.source}
             warnings={flightWarnings(forecast.warningsByEntry[flown.id] ?? [], entryGame, pack, flown, slot.source)}
-            onChange={moves => updateEntry(flown.id, { moves })} onClose={() => toPicker(null)}
+            onChange={moves => updateEntry(flown.id, { moves })} onClose={() => closePicker(flown, slot.source)}
             onFly={() => {
               toPicker(null);
               flight.start(flown.id);
@@ -471,6 +484,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
             onUpdate={patch => updateEntry(edited.id, patch)}
             onOpenPicker={toPicker}
+            leaving={sourcesOf(game, pack, edited).filter(source => leavers.leaving.includes(leaveKey(edited.id, source)))}
+            onLeft={source => leavers.finish(edited.id, source)}
             onManualPayment={open => toggleManualPayment(edited.id, open)}
             onOpenShop={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'build', only: 'units', for: { kind: 'tactical', id: edited.id } } })); }}
             onOpenBattle={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'battle', for: { kind: 'tactical', id: edited.id } } })); }}

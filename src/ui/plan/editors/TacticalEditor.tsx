@@ -18,6 +18,7 @@ import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPla
 import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
 import { MapPickButton } from '../../primitives/MapPickButton';
+import { Vanishing } from '../../primitives/Vanishing';
 
 export interface TacticalEditorProps {
   game: Game;
@@ -37,6 +38,10 @@ export interface TacticalEditorProps {
   onUpdate: (patch: Partial<TacticalEntry>) => void;
   /** Opens the flight step of a source. */
   onOpenPicker: (source: string) => void;
+  /** The sources on their way out: left with nothing chosen, their rows fade and fold before they go. */
+  leaving?: string[];
+  /** The row of a leaving source has finished its transition. */
+  onLeft?: (source: string) => void;
   onManualPayment: (open: boolean) => void;
   /** Opens the shop of the big hex on the active system. */
   onOpenShop: () => void;
@@ -57,7 +62,7 @@ export interface TacticalEditorProps {
  */
 export function TacticalEditor({
   game, pack, entry, before, board, table, warnings, manualPayment, choosing, onChoose,
-  onUpdate, onOpenPicker, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, turnActs,
+  onUpdate, onOpenPicker, leaving = [], onLeft, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, turnActs,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
@@ -67,6 +72,8 @@ export function TacticalEditor({
   const unitText = (units: UnitCounts): string => unitsText(units, t);
 
   const sources = sourcesOf(game, pack, entry);
+  /** A leaving source no longer counts: what the editor says without it stands from the start, so nothing jumps when it goes. */
+  const untouched = isUntouched({ ...entry, moves: leaving.reduce((moves, source) => withoutSource(game, pack, moves, source), entry.moves) });
   /** A source in the list: its ships, then how much rides as cargo. */
   const sourceLine = (source: string): string => {
     const { ships, cargo } = splitFlight(game, pack, before.holdings, unitsIn(groupOf(game, pack, entry.moves, source)));
@@ -111,7 +118,7 @@ export function TacticalEditor({
   const blocks = target !== null && (
         <>
           <Section>
-            {isUntouched(entry)
+            {untouched
               ? (
                 <MapPickButton className="source-button" active={choosing === 'system'} onToggle={() => onChoose(choosing === 'system' ? null : 'system')}>
                   <strong>{t('plan.tactical.system', { name: systemTitle(game, pack, target, t) })}</strong>
@@ -119,7 +126,7 @@ export function TacticalEditor({
               )
               : <strong>{t('plan.tactical.system', { name: systemTitle(game, pack, target, t) })}</strong>}
             <span className="muted">{entry.free ? t('plan.tactical.freeToken') : t('plan.tactical.token', { from: before.tactic, to: before.tactic - 1 })}</span>
-            {isUntouched(entry) && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
+            {untouched && <span className="muted">{t('plan.tactical.wrongSystem')}</span>}
             {/* The activation: a token already there, or none left to spend. */}
             {list(placer.at('system'))}
           </Section>
@@ -131,21 +138,22 @@ export function TacticalEditor({
             action={<MapPickButton active={choosing === 'source'} onToggle={() => onChoose(choosing === 'source' ? null : 'source')}>{t('plan.tactical.addSource')}</MapPickButton>}
           >
             <span className="muted">{t('plan.tactical.moveHint')}</span>
-            {sources.length === 0 && <span className="muted">{t('plan.tactical.noSources')}</span>}
+            {sources.every(source => leaving.includes(source)) && <span className="muted">{t('plan.tactical.noSources')}</span>}
             {sources.map(source => {
               const via = viaOf(entry, source);
               const name = systemTitle(game, pack, source, t);
+              const own = flight(source);
               return (
                 <Fragment key={source}>
-                  <div className="source-row in-card">
+                  <Vanishing className="source-row in-card" leaving={leaving.includes(source)} onGone={() => onLeft?.(source)}>
                     <button type="button" className="source-button" onClick={() => onOpenPicker(source)}>
                       {via.length > 0 ? t('plan.tactical.via', { name, list: via.map(v => systemTitle(game, pack, v, t)).join(', ') }) : name}
                       <small>{sourceLine(source)}</small>
                       {target !== null && <small>{t('plan.tactical.distance', { n: routeSteps(game, [source, ...via, target], pack) })}</small>}
                     </button>
                     <HexRemove label={t('plan.tactical.removeSource', { name })} onClick={() => onUpdate({ moves: withoutSource(game, pack, entry.moves, source) })} />
-                  </div>
-                  {list(flight(source))}
+                  </Vanishing>
+                  {!leaving.includes(source) && list(own)}
                 </Fragment>
               );
             })}

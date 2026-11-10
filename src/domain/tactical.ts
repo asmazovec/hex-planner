@@ -232,6 +232,10 @@ export function withUnitCount(game: Game, pack: DataPack, moves: Move[], source:
   return next.filter(m => m !== item || hasUnits(m.units) || (m.from === source && m.pickupOf === undefined));
 }
 
+/** The sources with nothing chosen: no ship flies from them, nothing rides on board and nothing is picked up on their way. */
+export const emptySources = (game: Game, pack: DataPack, entry: TacticalEntry): string[] =>
+  sourcesOf(game, pack, entry).filter(source => !groupOf(game, pack, entry.moves, source).some(m => hasUnits(m.units)));
+
 /** When the editor closes: a source with nothing chosen goes, and with it the empty moves. */
 export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): Move[] {
   return moves.filter(m => {
