@@ -345,7 +345,7 @@
       "battleOffer": "optional · Start a battle",
       "productionOffer": "optional · Open the shop",
       "excess": "Excess ships",
-      "excessOffer": "Choose which to remove"
+      "excessLeft": "Still to remove: {{n}}"
     },
     "picker": {
       "title": "Flight {{from}} → {{to}}",
@@ -739,6 +739,8 @@
     "stock": "In the reinforcements",
     "boughtZone": "Bought",
     "dockHere": "a space dock already stands here",
+    "fleetLeft": "Still to remove",
+    "fleetWithin": "The fleet is within the fleet pool",
     "fleetStock": "In the system",
     "fleetTake": "Remove one {{unit}}",
     "buildNote": "Tap a bought unit here, or its token with a gold ring, to take the purchase back.",

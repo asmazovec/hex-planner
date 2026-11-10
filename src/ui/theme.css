@@ -309,6 +309,12 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stage-meter { display: flex; justify-content: space-between; gap: 8px; }
 .stage-meter b { color: var(--text); font-weight: 600; }
 .stage-meter-over, .stage-meter-over b { color: var(--warning); }
+/* How many ships are still over the fleet pool: the line keeps its place and height, the number its width, and gold says there is something to do. */
+.fleet-count { display: flex; flex-direction: column; gap: 2px; font-size: var(--font-s); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.fleet-left { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; height: 28px; }
+.fleet-left b { min-width: 2ch; text-align: right; font-size: var(--font-xl); line-height: 28px; color: var(--text-dim); }
+.fleet-left-over { color: var(--text); }
+.fleet-left-over b { color: var(--gold); }
 :root[data-blur='on'] .stage { background: rgb(var(--scrim) / 0.5); -webkit-backdrop-filter: blur(7px); backdrop-filter: blur(7px); }
 .stage-losses { display: flex; flex-wrap: wrap; gap: 5px; }
 /* A planet: a card of its own, its details, then a clear gap before the choice of who holds it. No rules between planets: the cards part them. */

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../../domain/payment';
-import { productionCost, routeSteps, systemPlanets } from '../../../domain/project';
+import { fleetExcess, productionCost, routeSteps, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../domain/effects/hints';
 import type { DataPack, Game, GameState, RuleStep, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
@@ -97,6 +97,8 @@ export function TacticalEditor({
   };
   const overall = placer.at('action');
   const removed = entry.fleetRemovals ?? {};
+  /** How many ships are still to remove, as the replay says of this action. */
+  const stillOver = fleetExcess(game, entry, before, pack, warnings).over;
   const overFleet = warnings.some(w => w.code === 'fleetPool' && w.params.systemId === target);
   const battleWarnings = placer.at('battle');
   /** The reminders of a step: what its players hold for it, under the block of the step. */
@@ -198,7 +200,7 @@ export function TacticalEditor({
                 <div className="source-row in-card">
                   <button type="button" className="source-button" onClick={onOpenFleet}>
                     <span>{t('plan.tactical.excess')}</span>{' '}
-                    <small>{hasUnits(removed) ? unitText(removed) : t('plan.tactical.excessOffer')}</small>
+                    <small>{[stillOver > 0 ? t('plan.tactical.excessLeft', { n: stillOver }) : t('stage.fleetWithin'), ...(hasUnits(removed) ? [unitText(removed)] : [])].join(' · ')}</small>
                   </button>
                 </div>
               )}

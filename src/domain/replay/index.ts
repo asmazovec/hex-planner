@@ -13,7 +13,7 @@ export { readyInfluence, readyResources } from './payment';
 export { placesOf, productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
 export { planetStructureWarnings, structureOwner, structuresOn } from './structures';
-export { productionPlaces, tacticalMeters } from './tactical';
+export { fleetExcess, productionPlaces, tacticalMeters } from './tactical';
 export { boardSystemWarnings, dockFighterRoom, fightersFly, pickupAllowed, systemMeters } from './transport';
 
 const ownerOf = (plan: Plan, entryId: string): string | undefined =>

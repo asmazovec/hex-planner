@@ -11,7 +11,7 @@ import { gainControl, landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
 import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { take, unitIds, type TacticalEntry } from './state';
-import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, isPickup, overflowLeft, removeFleetExcess } from './transport';
+import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, fleetLimit, isPickup, overflowLeft, removeFleetExcess } from './transport';
 import type { Blockers } from '../movement';
 
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
@@ -92,6 +92,21 @@ export function tacticalMeters(
     ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.holdings, pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
     fleet: before.fleet,
   };
+}
+
+/**
+ * How the active system of an action stands against the fleet pool (37.3): its ships, the pool, and how many are still
+ * to remove. While the replay warns of the entry, the numbers are those of its warning, the worst one where it warns
+ * both on arrival and after the production; with no warning, the ships left at the end of the action and nothing over.
+ */
+export function fleetExcess(
+  game: Game, entry: TacticalEntry, before: GameState, pack: DataPack, warnings: Warning[],
+): { ships: number; fleet: number; over: number } {
+  const over = warnings.filter(w => w.code === 'fleetPool' && w.params.systemId === entry.systemId)
+    .map(w => ({ ships: Number(w.params.ships), fleet: Number(w.params.fleet) }))
+    .sort((a, b) => (b.ships - b.fleet) - (a.ships - a.fleet))[0];
+  if (over) return { ...over, over: Math.max(0, over.ships - over.fleet) };
+  return { ships: tacticalMeters(game, entry, '', before, pack).ships, fleet: fleetLimit(game, before, pack), over: 0 };
 }
 
 /** Where a tactical entry's production stands, as the replay places it: after the entry's own moves and landings. */

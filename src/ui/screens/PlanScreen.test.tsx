@@ -704,16 +704,26 @@ describe('the battle of a tactical action', () => {
     const excess = () => within(result()).queryByRole('button', { name: /^Excess ships/ });
     await fourCruisersArrive();
     expect(result()).toHaveTextContent(/fleet pool/);
+    // The row that opens the hex says how many are still over, without opening it.
+    expect(excess()).toHaveTextContent('Still to remove: 1');
     await userEvent.click(excess()!);
     expect(dialog().queryByRole('group', { name: 'Mode' })).toBeNull();
     expect(dialog().getByRole('group', { name: 'Removed beyond the fleet pool' })).toBeVisible();
+    // The counter of the hex: the ships against the fleet pool, and how many are still to remove.
+    const counter = () => dialog().getByRole('group', { name: 'Ships / fleet pool' });
+    expect(counter()).toHaveTextContent('4 / 3');
+    expect(within(counter()).getByText('Still to remove').nextElementSibling).toHaveTextContent(/^1$/);
     await userEvent.click(dialog().getByRole('button', { name: /^Cruiser ×4/ }));
     expect(action().fleetRemovals).toEqual({ cruiser: 1 });
     expect(action().losses).toBeUndefined();
+    // Nothing is over: the counter stays in its place and says so.
+    expect(counter()).toHaveTextContent('3 / 3');
+    expect(within(counter()).getByText('The fleet is within the fleet pool').nextElementSibling).toHaveTextContent(/^0$/);
     await userEvent.keyboard('{Escape}');
-    expect(result()).not.toHaveTextContent(/fleet pool/);
+    expect(result()).not.toHaveTextContent(/over the fleet pool/);
     // The removal stays editable from the result while it holds anything.
     expect(excess()).toHaveTextContent('Cruiser 1');
+    expect(excess()).toHaveTextContent('The fleet is within the fleet pool');
     await userEvent.click(excess()!);
     await userEvent.click(dialog().getByRole('button', { name: 'Give back Cruiser' }));
     expect(action().fleetRemovals).toBeUndefined();

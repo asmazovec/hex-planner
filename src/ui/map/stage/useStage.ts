@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { boardSystemWarnings, dockFighterRoom, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { boardSystemWarnings, dockFighterRoom, fleetExcess, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
 import { timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { unitStats } from '../../../domain/unitStats';
@@ -333,6 +333,9 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     kind: unit as TokenKind, picked: removed[unit] ?? 0, left: acting.systems[slot]?.[unit] ?? 0,
     takeLabel: t('stage.fleetTake', { unit: kindName(unit) }), returnLabel: t('stage.giveBack', { unit: kindName(unit) }),
   })).filter(item => item.picked > 0 || (item.left ?? 0) > 0);
+  const beforeFight = fightingFor && seenBefore(line, fightingFor.id);
+  /** How many ships are still over the fleet pool, as the replay says of the action. */
+  const fleetOver = fightingFor && beforeFight ? fleetExcess(view, fightingFor, beforeFight, pack, projection.warningsByEntry[fightingFor.id] ?? []) : null;
   const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, kind as UnitId, amount)); };
 
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
@@ -367,7 +370,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     game, state, shown: shownState ?? state, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
     adjusting, tapNote, handover, onToken, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
     shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
-    productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip,
+    productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip, fleetOver,
   };
 }
 

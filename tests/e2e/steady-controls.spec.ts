@@ -382,6 +382,46 @@ test('the losses of a battle are tapped on the hex and given back under the fing
   await pressUntilGone(page, back, 2, /^Give back /);
 });
 
+test('ships beyond the fleet pool are removed tap after tap, and the count of those still to remove stays where it is', async ({ page }) => {
+  // Four cruisers more at home: with the carrier and the destroyers, seven ships fly against a fleet pool of three.
+  await tile(page, 58).click();
+  await stage(page).getByRole('button', { name: 'Setup', exact: true }).click();
+  for (let i = 0; i < 4; i += 1) await stage(page).getByRole('button', { name: 'Cruiser', exact: true }).click();
+  await stage(page).getByRole('button', { name: 'Close' }).click();
+  await startFlight(page);
+  const ships = panel(page).locator('.unit-picker');
+  for (const unit of ['Carrier', 'Destroyer', 'Destroyer', 'Cruiser', 'Cruiser', 'Cruiser', 'Cruiser']) await ships.getByRole('button', { name: `Take one ${unit}` }).first().click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+
+  // The row of the editor says it without the hex.
+  const excess = panel(page).getByRole('button', { name: /^Excess ships/ });
+  await expect(excess).toContainText('Still to remove: 4');
+  await excess.click();
+  const counter = stage(page).getByRole('group', { name: 'Ships / fleet pool' });
+  const left = counter.locator('.fleet-left b');
+  await expect(counter).toContainText('7 / 3');
+  await expect(left).toHaveText('4');
+  const place = async () => JSON.stringify(await left.boundingBox());
+  const before = await place();
+
+  // A token of the hex, three times at one point: the count goes down, the token and the count stay.
+  const hex = stage(page).getByRole('group', { name: 'Big hex' });
+  await pressRepeatedly(page, hex.getByRole('button', { name: /^Cruiser/ }), 3);
+  await expect(left).toHaveText('1');
+  await expect(counter).toContainText('4 / 3');
+  expect(await place()).toBe(before);
+  // The same from the panel, down to a fleet within the pool, and back.
+  await pressRepeatedly(page, stage(page).getByRole('button', { name: 'Remove one Destroyer' }), 1);
+  await expect(left).toHaveText('0');
+  await expect(counter).toContainText('The fleet is within the fleet pool');
+  expect(await place()).toBe(before);
+  await pressRepeatedly(page, stage(page).getByRole('button', { name: 'Give back Cruiser' }), 2);
+  await expect(left).toHaveText('2');
+  expect(await place()).toBe(before);
+  await stage(page).getByRole('button', { name: 'Close' }).click();
+  await expect(excess).toContainText('Still to remove: 2');
+});
+
 test('the shop of the big hex buys and places one unit after another under the finger', async ({ page }) => {
   await tile(page, 58).click();
   await stage(page).getByRole('button', { name: 'Create', exact: true }).click();

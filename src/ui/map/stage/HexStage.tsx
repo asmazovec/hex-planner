@@ -142,6 +142,19 @@ export function HexStage(props: HexStageProps) {
           {mode === 'fleet' && (
             <>
               <SectionTitle>{t('stage.fleetRemoved')}</SectionTitle>
+              {/* Always there, above the row that is tapped again and again: only its numbers change. */}
+              {stage.fleetOver && (
+                <div className="fleet-count" role="group" aria-label={t('stage.meter.fleet')}>
+                  <div className="stage-meter">
+                    <span>{t('stage.meter.fleet')}</span>
+                    <b>{stage.fleetOver.ships} / {stage.fleetOver.fleet}</b>
+                  </div>
+                  <div className={stage.fleetOver.over > 0 ? 'fleet-left fleet-left-over' : 'fleet-left'}>
+                    <span>{t(stage.fleetOver.over > 0 ? 'stage.fleetLeft' : 'stage.fleetWithin')}</span>
+                    <b>{stage.fleetOver.over}</b>
+                  </div>
+                </div>
+              )}
               <UnitDraft
                 colour={colours[mine]} stockLabel={t('stage.fleetStock')} pickedLabel={t('stage.fleetRemoved')}
                 rows={[{ id: 'fleet', label: t('draft.space'), place: <SpaceBadge label={t('draft.space')} />, items: stage.fleetItems }]}
