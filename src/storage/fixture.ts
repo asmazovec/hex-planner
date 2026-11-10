@@ -30,7 +30,7 @@ export function sampleGame(): Game {
     { id: 'e3', phase: 'action', status: 'cancelled', type: 'secondary' },
     { id: 'e4', phase: 'action', status: 'planned', type: 'component', note: 'note' },
     { id: 'e5', phase: 'action', status: 'planned', type: 'pass',
-      acts: [{ kind: 'transaction', with: game.opponents[0].id, give: { tradeGoods: 1 }, get: { commodities: 1, note: true } }, { kind: 'expedition', sliceId: null, payment: pay }] },
+      acts: [{ kind: 'transaction', with: game.opponents[0].id, give: { tradeGoods: 1 }, get: { commodities: 1, components: ['promissory:war_funding'] } }, { kind: 'expedition', sliceId: null, payment: pay }] },
     { id: 'e7', phase: 'status', status: 'done', type: 'adjustment', label: 'ability',
       delta: { tradeGoods: -1, vp: 1, units: { systemId: '1,0', units: { mech: 1 } } } },
     { id: 'e8', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 3, fleet: 2, strategy: 1 },

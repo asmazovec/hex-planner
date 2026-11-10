@@ -4,8 +4,11 @@
  */
 import { areNeighbors } from '../neighbors';
 import { violation } from '../rules/registry';
+import { componentById } from '../components';
+import { TRANSACTION_KINDS } from '../holdings';
 import type { Act, DataPack, Entry, Game, GameState, Goods, Warning } from '../types';
 import { applyExpeditionPart } from './expedition';
+import { gain, holds, lose } from './holdings';
 
 /** What the acts of every turn share in one replay: the slices taken so far and each player's state, by `me` or id. */
 export interface ActContext {
@@ -19,9 +22,26 @@ export const actsOf = (entry: Entry): Act[] =>
 
 /**
  * Moves what one side gives to the other: trade goods as trade goods, commodities as trade goods of the receiver
- * (21.5). What the giver lacks warns and stays where it is; nothing goes below zero.
+ * (21.5), a component from the holdings of one to those of the other, by its kind. What the giver lacks warns and
+ * stays where it is, goods and components alike: nothing goes below zero and nothing comes from nowhere. A component
+ * of a kind a transaction does not move (94.3) and a second promissory note (69.5) warn and move all the same.
+ * `shared` is my state, where the laws of the whole game lie.
  */
-function hand(from: GameState, to: GameState, goods: Goods, warnings: Warning[]): void {
+function hand(from: GameState, to: GameState, goods: Goods, pack: DataPack, shared: GameState, warnings: Warning[]): void {
+  let notes = 0;
+  for (const id of goods.components ?? []) {
+    const def = componentById(pack, id);
+    if (!def) continue;
+    const params = { id: def.id, name: def.name };
+    if (!TRANSACTION_KINDS.includes(def.kind)) warnings.push(violation('transactionKind', params));
+    else if (def.kind === 'promissory' && (notes += 1) === 2) warnings.push(violation('transactionNotes', {}));
+    if (!holds(from.holdings, def)) {
+      warnings.push(violation('componentNotHeld', { ...params, context: 'transaction' }, 'transaction'));
+      continue;
+    }
+    lose(from, shared, def);
+    gain(to, shared, def);
+  }
   const tradeGoods = goods.tradeGoods ?? 0;
   if (tradeGoods > from.tradeGoods) warnings.push(violation('shortTradeGoods', { needed: tradeGoods, have: from.tradeGoods }, 'transaction'));
   const movedGoods = Math.min(tradeGoods, from.tradeGoods);
@@ -46,8 +66,9 @@ export function applyActs(game: Game, state: GameState, entry: Entry, pack: Data
     if (!other || other === state) continue;
     // Only with a neighbour, as the board stands at this point of the turn (94.1, 60).
     if (!areNeighbors(game, state, other, pack)) warnings.push(violation('notNeighbor', { player: act.with }));
-    hand(state, other, act.give, warnings);
-    hand(other, state, act.get, warnings);
+    const shared = ctx.states.me ?? state;
+    hand(state, other, act.give, pack, shared, warnings);
+    hand(other, state, act.get, pack, shared, warnings);
   }
   let expeditions = 0;
   for (const act of acts) {

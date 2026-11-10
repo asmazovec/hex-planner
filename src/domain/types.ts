@@ -281,8 +281,11 @@ export interface CardPlay {
   effects?: CardEffects;
 }
 
-/** What changes hands in a transaction (94.2): trade goods, commodities and up to one promissory note, unnamed. */
-export interface Goods { tradeGoods?: number; commodities?: number; note?: boolean }
+/**
+ * What one side of a transaction hands over (94.2): trade goods, commodities, and components by id: a promissory
+ * note (no more than one, 69.5), an action card where an ability lets it (94.3.1).
+ */
+export interface Goods { tradeGoods?: number; commodities?: number; components?: string[] }
 
 /** A part of a turn beside its action, done with it: a transaction with a neighbour (94) or an expedition at its end. */
 export type Act =
@@ -460,7 +463,7 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'noProduction', 'productionBlockaded', 'blockaded', 'productionOver', 'reinforcementsOut', 'productionPlace', 'scarProduction',
   'expeditionUnpaid', 'expeditionTwicePerTurn', 'stationGround', 'stationStructure',
   // transactions
-  'transactionRepeated', 'notNeighbor', 'shortCommodities',
+  'transactionRepeated', 'notNeighbor', 'shortCommodities', 'transactionNotes', 'transactionKind',
   // transport
   'pickupOffRoute',
   // components

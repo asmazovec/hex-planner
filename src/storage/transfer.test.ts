@@ -193,7 +193,7 @@ test('the acts of a turn survive export and import', () => {
   const rival = game.opponents[0].id;
   game.plans[0].rounds[0].entries = [{
     id: 'c', phase: 'action', status: 'planned', type: 'component', note: '',
-    acts: [{ kind: 'transaction', with: rival, give: { tradeGoods: 2 }, get: { note: true } }, { kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }],
+    acts: [{ kind: 'transaction', with: rival, give: { tradeGoods: 2 }, get: { components: ['promissory:war_funding'] } }, { kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }],
   }];
   expect(importGame(exportGame(game))).toEqual({ ok: true, game });
 });

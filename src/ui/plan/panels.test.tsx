@@ -303,6 +303,8 @@ const CASES: Record<WarningCode, Warning['params']> = {
   transactionRepeated: { player: 'o1' },
   notNeighbor: { player: 'o1' },
   shortCommodities: { needed: 2, have: 0 },
+  transactionNotes: {},
+  transactionKind: { id: 'technology:st', name: 'Sarween Tools' },
   stationGround: { planetId: 'nestphar' },
   stationStructure: { planetId: 'nestphar' },
   // transport

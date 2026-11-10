@@ -1,16 +1,17 @@
 import type { TFunction } from 'i18next';
 import { opponentName } from '../players/names';
 import { systemTitle } from '../map/systemName';
+import { componentById } from '../../domain/components';
 import type { Act, DataPack, Entry, Game, Goods, Round } from '../../domain/types';
 
 type T = TFunction;
 
-/** What changes hands, read in one line: trade goods, commodities, a note, or nothing. */
-function goodsText(goods: Goods, t: T): string {
+/** What changes hands, read in one line: trade goods, commodities, the components by their names, or nothing. */
+function goodsText(goods: Goods, pack: DataPack, t: T): string {
   const parts = [
     ...(goods.tradeGoods ? [t('plan.steps.tradeGoods', { n: goods.tradeGoods })] : []),
     ...(goods.commodities ? [t('plan.acts.commodities', { n: goods.commodities })] : []),
-    ...(goods.note ? [t('plan.acts.note')] : []),
+    ...(goods.components ?? []).map(id => componentById(pack, id)?.name ?? id),
   ];
   return parts.length > 0 ? parts.join(', ') : t('plan.acts.nothing');
 }
@@ -28,7 +29,7 @@ export const actLine = (act: Act, game: Game, pack: DataPack, t: T): string => (
   ? t('plan.acts.expedition', { brief: expeditionText(act, pack, t) })
   : t('plan.acts.transaction', {
     name: act.with === 'me' ? t('plan.acts.me') : opponentName(game, pack, act.with, t),
-    give: goodsText(act.give, t), get: goodsText(act.get, t),
+    give: goodsText(act.give, pack, t), get: goodsText(act.get, pack, t),
   }));
 
 /** Warfare's free tactical action stored for this card, if any: part of the card, shown under it. */
