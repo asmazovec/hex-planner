@@ -5,7 +5,8 @@ import { emptySlots } from '../../domain/mapBuilder';
 import { blockersOf } from '../../domain/movement';
 import { newEntryBody, tacticalBody, tacticalOwner } from '../../domain/newEntry';
 import { EXPEDITION_SLICES } from '../../domain/payment';
-import { isOnMap, project, systemSlots } from '../../domain/project';
+import { isOnMap, projectionAtRound, systemSlots } from '../../domain/project';
+import { timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
@@ -158,9 +159,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   }
 
   // Totals and map show the end of the chosen round: later rounds would ready planets and clear its tokens.
-  const upToRound = { ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) };
-  const now = project(game, upToRound, 'now', pack);
-  const forecast = project(game, upToRound, 'forecast', pack);
+  const now = projectionAtRound(timelineOf(game, plan, 'now', pack), round.number);
+  const forecast = projectionAtRound(timelineOf(game, plan, 'forecast', pack), round.number);
 
   const closeShown = () => {
     update(state => (state.panel.kind === 'list' ? { ...state, panel: LIST } : state));
@@ -325,7 +325,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
   const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
-  const lockedUpgrades = entryUpgradeRounds(upToRound, shownFilter);
+  const lockedUpgrades = entryUpgradeRounds({ ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) }, shownFilter);
   const upgradeCount = SHIP_KINDS.filter(kind => shownState.upgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   /** The action the map speaks of: the one being edited or read. */

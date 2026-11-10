@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { boardBeforeEntry } from '../../../domain/project';
+import { boardBefore } from '../../../domain/project';
+import { timelineOf } from '../../../state/projection';
 import { playerState } from '../../../domain/stacks';
 import type { DataPack, Game, GameState, Plan } from '../../../domain/types';
 
@@ -23,7 +24,7 @@ export function useBoards(game: Game | null, plan: Plan | undefined, pack: DataP
       const key = `${filter}:${entryId}`;
       let found = boards.get(key);
       if (!found) {
-        found = boardBeforeEntry(game!, plan!, entryId, pack, filter);
+        found = boardBefore(timelineOf(game!, plan!, filter, pack), entryId);
         boards.set(key, found);
       }
       return found;

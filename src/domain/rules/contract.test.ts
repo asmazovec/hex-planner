@@ -37,6 +37,13 @@ describe('rule registry', () => {
     expect(offenders).toEqual([]);
   });
 
+  test('src/ui replays no plan itself: it asks the timelines kept in src/state', () => {
+    const offenders = Object.entries(uiSources)
+      .filter(([, text]) => /\b(project|timeline|stateBeforeEntry|stateAfterEntry|boardBeforeEntry|blockersBefore)\(/.test(text))
+      .map(([path]) => path);
+    expect(offenders).toEqual([]);
+  });
+
   test('every step has a place to be shown: a block of an editor takes the warnings of each step, and of each override', () => {
     for (const step of STEPS) expect(STEP_PLACES[step].length, step).toBeGreaterThan(0);
     for (const code of WARNING_CODES) expect(placesOf({ code, params: {} }).length, code).toBeGreaterThan(0);

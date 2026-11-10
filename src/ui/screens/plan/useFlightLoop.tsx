@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { stateAfterEntry } from '../../../domain/project';
+import { seenAfter } from '../../../domain/project';
+import { timelineOf } from '../../../state/projection';
 import { gameAs } from '../../../domain/players';
 import { entrySystems, flies, stateInFlight, type TacticalEntry } from '../../../domain/tactical';
 import type { DataPack, Entry, Game, GameState, Plan } from '../../../domain/types';
@@ -80,7 +81,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   const restingEntry = !airborne && shown && shownEntry && loops && shown.plays > 0 && flightLoop.read() ? shownEntry : undefined;
   const restingId = restingEntry?.id;
   const restingState = useMemo(
-    () => (restingId && game && plan ? stateAfterEntry(game, plan, restingId, pack) : null),
+    () => (restingId && game && plan ? seenAfter(timelineOf(game, plan, 'forecast', pack), restingId) : null),
     [restingId, game, plan, pack],
   );
 

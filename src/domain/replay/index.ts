@@ -60,3 +60,24 @@ export const stateBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: 
 /** The whole board just before an entry, mine and every opponent's (`rivals`), whoever the entry belongs to. */
 export const boardBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack, filter: Filter = 'forecast'): GameState =>
   boardBefore(timeline(game, plan, filter, pack), entryId);
+
+const byRound = new WeakMap<Timeline, Map<number, Projection>>();
+/**
+ * The plan as far as the end of a round: its board, and the warnings of the entries replayed by then. Later rounds
+ * would ready planets and clear its tokens. The same timeline and round give the same object back.
+ */
+export function projectionAtRound(line: Timeline, roundNo: number): Projection {
+  let known = byRound.get(line);
+  if (!known) byRound.set(line, (known = new Map()));
+  let found = known.get(roundNo);
+  if (!found) {
+    const next = line.marks.findIndex(mark => mark.round.number > roundNo);
+    const frames = next < 0 ? line.frames : line.frames.slice(0, next === 0 ? 0 : line.marks[next - 1].to);
+    found = {
+      state: next < 0 ? line.end : line.marks[next].start,
+      warningsByEntry: Object.fromEntries(frames.filter(f => f.applied).map(f => [f.entryId, f.warnings])),
+    };
+    known.set(roundNo, found);
+  }
+  return found;
+}

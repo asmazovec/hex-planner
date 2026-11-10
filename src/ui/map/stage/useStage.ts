@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { boardSystemWarnings, dockFighterRoom, planetStructureWarnings, productionCost, productionPlaces, project, readyResources, stateBeforeEntry, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { boardSystemWarnings, dockFighterRoom, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { timelineOf } from '../../../state/projection';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, GameState, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -74,7 +75,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const round = plan?.rounds.find(r => r.number === roundNo);
   if (!game || !plan || !round) return null;
 
-  const projection = project(game, { ...plan, rounds: plan.rounds.filter(r => r.number <= roundNo) }, 'forecast', pack);
+  const line = timelineOf(game, plan, 'forecast', pack);
+  const projection = projectionAtRound(line, roundNo);
   const { state } = projection;
   const planets = systemPlanets(game, slot, pack);
   const target = Math.min(chosenPlanet, Math.max(0, planets.length - 1));
@@ -115,7 +117,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** The action that takes the purchases: the one this hex was opened from, otherwise the round's last one of mine here. */
   const tactical = onPurchase ? undefined : (fightingFor && tacticals.includes(fightingFor) ? fightingFor : tacticals.filter(e => !e.owner).at(-1));
   /** The state the tactical entry pays and places with: the end of the round may differ. */
-  const beforeTactical = tactical && stateBeforeEntry(game, plan, tactical.id, pack);
+  const beforeTactical = tactical && seenBefore(line, tactical.id);
   const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
   const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
     updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id)));
