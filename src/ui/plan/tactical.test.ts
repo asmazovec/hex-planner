@@ -5,6 +5,7 @@ import { createGame } from '../../domain/newGame';
 import { project } from '../../domain/project';
 import { routeShapes } from '../map/geometry';
 import type { Entry, Game, GameState } from '../../domain/types';
+import { emptySources } from '../../domain/tactical';
 import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
 
 const pack = loadPack(['pok']);
@@ -134,4 +135,20 @@ test('the systems an entry touches, for the camera', () => {
   expect(entrySystems(game(), pack, add({ id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' }))).toEqual([]);
   expect(entrySystems(game(), pack, add({ id: 's', phase: 'action', status: 'planned', type: 'strategic', effects: { systemId: WAY } }))).toEqual([WAY]);
   expect(entrySystems(game(), pack, add({ id: 'a', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: { units: { systemId: HOME, units: {} } } }))).toEqual([HOME]);
+});
+
+describe('the sources of an action with nothing chosen', () => {
+  test('a route alone is an empty source, whether or not ships stand there', () => {
+    expect(emptySources(game(), pack, entry([{ from: HOME, units: {} }, { from: WAY, units: {}, via: [HOME] }]))).toEqual([HOME, WAY]);
+  });
+
+  test('a source that flies or only picks up on its way is not empty', () => {
+    const moves: Move[] = [
+      { from: HOME, units: { carrier: 1 } },
+      { from: WAY, units: {}, via: [HOME] },
+      { from: HOME, units: { fighter: 1 }, pickupOf: WAY },
+      { from: '2,0', units: {} },
+    ];
+    expect(emptySources(game(), pack, entry(moves))).toEqual(['2,0']);
+  });
 });

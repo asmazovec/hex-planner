@@ -144,6 +144,7 @@ describe('the system and the sources, chosen from the panel', () => {
   test('with anything filled in the field is no longer a button', async () => {
     await chooseSystem();
     await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(screen.queryByRole('button', { name: /^Active system/ })).toBeNull();
     expect(screen.getByText('Active system: Quann')).toBeVisible();
@@ -218,6 +219,7 @@ describe('the system and the sources, chosen from the panel', () => {
     await chooseSystem();
     await addRouteByTaps(HOME, WAY, TARGET);
     expect(document.querySelector('.picker-distance')).toHaveTextContent('Distance: 2');
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(document.querySelector('.source-button')).toHaveTextContent('Distance: 2');
   });
@@ -242,6 +244,7 @@ describe('the system and the sources, chosen from the panel', () => {
     expect(tactical().moves).toEqual([]);
     await userEvent.click(addSource());
     await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     await userEvent.click(screen.getByRole('button', { name: 'Remove source Nestphar' }));
     expect(tactical().moves).toEqual([]);
@@ -480,6 +483,7 @@ test('a straight arrow needs only the source and the active system, and keeps no
 test('every arrow adds a source and keeps the earlier ones, also a source with no ships', async () => {
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
+  await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
   await addRouteByTaps(WAY, TARGET);
   expect(tactical().moves.map(m => m.from)).toEqual([HOME, WAY]);
   expect(document.querySelectorAll('.route-line')).toHaveLength(2);
@@ -523,13 +527,11 @@ test('each source is listed with its units and can be removed', async () => {
 test('a source with nothing chosen goes when the editor closes', async () => {
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
-  await addRouteByTaps(WAY, TARGET);
-  await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-  await userEvent.click(screen.getByRole('button', { name: /^Nestphar/ }));
   await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
-  // The flight is a step with no «Done»: back to the editor, and the editor closes.
-  expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+  // An empty source that the editor still holds: one put there by hand, or brought back by undo.
+  act(() => useGame.getState().updateEntry(tactical().id, { moves: [...tactical().moves, { from: WAY, units: {} }] }));
+  expect(screen.getAllByRole('button', { name: /^Remove source/ })).toHaveLength(2);
   await userEvent.click(screen.getByRole('button', { name: 'Done' }));
   expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
 });
@@ -1207,10 +1209,8 @@ describe('leaving', () => {
 
   test('leaving the screen drops an empty source and keeps a chosen one', async () => {
     await startedRoute();
-    await addRouteByTaps(WAY, TARGET);
-    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    await userEvent.click(screen.getByRole('button', { name: /^Nestphar/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    await addRouteByTaps(WAY, TARGET);
     cleanup();
     expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
   });
@@ -1694,6 +1694,7 @@ describe('one slot of the panel, one head for every editor', () => {
     expect(within(panel()).getByRole('heading', { name: 'Flight Nestphar → Quann' })).toBeVisible();
     expect(within(panel()).queryByText('Sources')).toBeNull();
     expect(within(panel()).queryByRole('button', { name: 'Done' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(within(panel()).getByText('Sources')).toBeVisible();
     await userEvent.click(screen.getByRole('button', { name: /^Nestphar/ }));
@@ -1813,4 +1814,163 @@ test('the turn editor of a pass shows what its expedition lacks, so no warning o
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
   expect(within(document.querySelector('.editor-frame') as HTMLElement).getByText(/trade goods/i, { selector: '.warning-text' })).toBeVisible();
+});
+
+describe('a route from a system without ships', () => {
+  const press = (slot: string) => fireEvent.pointerDown(tile(slot), { pointerId: 1, clientX: 1, clientY: 1, isPrimary: true, button: 0 });
+  const moveTo = (slot: string) => {
+    hoverPath(slot);
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 2, clientY: 2 });
+  };
+  const lift = () => fireEvent.pointerUp(window, { pointerId: 1, clientX: 2, clientY: 2 });
+
+  test('a stroke from it to the active system makes it a source, and its flight step says no ships stand there', async () => {
+    await chooseSystem();
+    press(WAY);
+    moveTo(TARGET);
+    lift();
+    expect(tactical().moves).toEqual([{ from: WAY, units: {} }]);
+    expect(screen.getByText('No ships here.')).toBeVisible();
+  });
+
+  test('a stroke from the active system to it does the same', async () => {
+    await chooseSystem();
+    press(TARGET);
+    moveTo(WAY);
+    lift();
+    expect(tactical().moves).toEqual([{ from: WAY, units: {} }]);
+  });
+
+  test('a stroke lifted half way goes on by taps, and through a system with ships', async () => {
+    await chooseSystem();
+    press(WAY);
+    moveTo(HOME);
+    lift();
+    await userEvent.click(tile(TARGET));
+    expect(tactical().moves).toEqual([{ from: WAY, units: {}, via: [HOME] }]);
+  });
+
+  test('while it is pulled or tapped the hint says no ships are there, and lights no reach', async () => {
+    await chooseSystem();
+    press(WAY);
+    moveTo(HOME);
+    expect(screen.getByRole('status')).toHaveTextContent('No ships where the route starts. Distance: 1');
+    expect(document.querySelector('.tile-valid')).toBeNull();
+    lift();
+    expect(screen.getByRole('status')).toHaveTextContent('No ships where the route starts.');
+  });
+
+  test('a route from a system with ships says nothing of the kind', async () => {
+    useGame.getState().setTile(HOME, pack.factions.arborec.homeTile);
+    await chooseSystem();
+    await userEvent.click(tile(HOME));
+    expect(screen.getByRole('status')).not.toHaveTextContent('No ships');
+  });
+});
+
+describe('a source left with nothing chosen', () => {
+  const smooth = () => vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+  /** The row of a source: the battle and the production are rows too, without a cross. */
+  const row = () => document.querySelector('.tactical-editor .source-row .icon-remove')?.closest('.source-row') ?? null;
+
+  test('goes on Back from its flight step, and the action stays with its empty block of sources', async () => {
+    await chooseSystem();
+    await addRouteByTaps(WAY, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(tactical().moves).toEqual([]);
+    expect(tactical().systemId).toBe(TARGET);
+    expect(screen.getByText('Drag the first arrow or add a source.')).toBeVisible();
+    expect(document.querySelector('.route-line')).toBeNull();
+  });
+
+  test('stays when a unit was taken', async () => {
+    smooth();
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(row()).not.toHaveClass('vanishing');
+    expect(document.querySelector('.route-leaving')).toBeNull();
+    expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: 1 } }]);
+  });
+
+  test('with smooth motion its row and its arrow fade first, and it goes when the transition of the row ends', async () => {
+    smooth();
+    await chooseSystem();
+    await addRouteByTaps(WAY, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(tactical().moves).toEqual([{ from: WAY, units: {} }]);
+    expect(row()).toHaveClass('vanishing');
+    expect(document.querySelectorAll('.route.route-leaving').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.route:not(.route-leaving)')).toHaveLength(0);
+    fireEvent.transitionEnd(row()!);
+    expect(tactical().moves).toEqual([]);
+    expect(row()).toBeNull();
+    expect(document.querySelector('.route')).toBeNull();
+  });
+
+  test('and goes by a timer when no end of a transition comes', async () => {
+    smooth();
+    await chooseSystem();
+    await addRouteByTaps(WAY, TARGET);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(tactical().moves).toHaveLength(1);
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(tactical().moves).toEqual([]);
+    expect(row()).toBeNull();
+  });
+
+  test('only the empty one fades: another source keeps its row and its arrow', async () => {
+    smooth();
+    await chooseSystem();
+    await addRouteByTaps(HOME, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
+    await addRouteByTaps(WAY, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    const rows = [...document.querySelectorAll('.tactical-editor .source-row .icon-remove')].map(cross => cross.closest('.source-row')!);
+    expect(rows.map(r => r.classList.contains('vanishing'))).toEqual([false, true]);
+    expect(document.querySelectorAll('.route-line')).toHaveLength(2);
+    expect(document.querySelectorAll('.route-leaving .route-line')).toHaveLength(1);
+  });
+
+  test('undo brings it back, and leaving again takes it away again', async () => {
+    await chooseSystem();
+    await addRouteByTaps(WAY, TARGET);
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(tactical().moves).toEqual([]);
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(tactical().moves).toEqual([{ from: WAY, units: {} }]);
+    await userEvent.click(document.querySelector('.tactical-editor .source-button')!);
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(tactical().moves).toEqual([]);
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(tactical().moves).toEqual([]);
+  });
+
+  test('goes when another route is drawn over its flight step', async () => {
+    await chooseSystem();
+    await addRouteByTaps(WAY, TARGET);
+    await addRouteByTaps(HOME, TARGET);
+    expect(tactical().moves).toEqual([{ from: HOME, units: {} }]);
+    expect(screen.getByRole('button', { name: 'Take one Carrier' })).toBeVisible();
+  });
+
+  test('drawn again while it fades, it stays', async () => {
+    smooth();
+    await chooseSystem();
+    await addRouteByTaps(WAY, TARGET);
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(tile(WAY));
+    fireEvent.click(tile(TARGET));
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(tactical().moves).toEqual([{ from: WAY, units: {} }]);
+    expect(document.querySelector('.route-leaving')).toBeNull();
+  });
 });

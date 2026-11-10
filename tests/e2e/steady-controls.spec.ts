@@ -364,11 +364,15 @@ test('deleting entries of the plan brings only the next cross under the finger',
 
 test('removing the sources of a tactical action brings only the next cross under the finger', async ({ page }) => {
   await startFlight(page);
+  // A source stays in the action only with something taken: a ship from home, and for the second one cargo on its way.
+  await panel(page).getByRole('button', { name: 'Take one Carrier' }).first().click();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await page.getByRole('button', { name: 'Add source' }).click();
   await tapTile(page, 110);
+  await tapTile(page, 58);
   await tapTile(page, 66);
   await expect(page.getByText(`Flight ${HORIZON} → Hope's End`)).toBeVisible();
+  await panel(page).getByRole('button', { name: 'Take one Infantry' }).first().click();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   const crosses = panel(page).getByRole('button', { name: /^Remove source / });
   await expect(crosses).toHaveCount(2);

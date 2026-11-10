@@ -11,10 +11,12 @@ import type { Highlight } from '../../map/TileView';
 
 /**
  * The arrows of the round: the action in focus, those done, and every planned one too unless the map shows only what
- * is done ("now") and no action is being edited. A cancelled action draws none.
+ * is done ("now") and no action is being edited. A cancelled action draws none. `leaving` holds the keys of the arrows
+ * whose sources are on their way out: they fade.
  */
 export function planArrows(
   game: Game, pack: DataPack, tacticals: TacticalEntry[], numbers: Record<string, number>, focusId: string | undefined, showPlanned: boolean,
+  leaving: string[] = [],
 ): Arrow[] {
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || showPlanned))
     .flatMap(item => arrowsOf(game, pack, item).map(a => ({
@@ -22,7 +24,7 @@ export function planArrows(
       tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
     })));
   const shapes = routeShapes(drawn.map(a => [a.from, ...a.via, a.to]), systemsAdjacent(game));
-  return drawn.map((a, i) => ({ ...a, shape: shapes[i] }));
+  return drawn.map((a, i) => ({ ...a, shape: shapes[i], ...(leaving.includes(a.key) ? { leaving: true } : {}) }));
 }
 
 export interface HighlightInput {

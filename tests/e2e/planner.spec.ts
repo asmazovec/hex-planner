@@ -306,6 +306,8 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await dragRoute(page, [79, 66]);
   await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
   await expect(hint).toHaveCount(0);
+  // A source stays in the action only with something taken from it.
+  await page.getByRole('button', { name: 'Take one Carrier' }).click();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByRole('button', { name: `${HOME} via ${HORIZON}, ${ASTEROIDS}`, exact: false })).toBeVisible();
 
@@ -316,17 +318,71 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await expect(page.getByText(`Flight ${HORIZON} → ${HOPE}`)).toBeVisible();
   await page.getByRole('button', { name: 'Remove route' }).click();
 
-  // The button only starts a route from the source; it is recorded on reaching the active system. The cross takes it away.
+  // The button only starts a route from the source; it is recorded on reaching the active system.
   await page.getByRole('button', { name: 'Add source' }).click();
   await tile(page, 110).click();
   await expect(page.getByText(`Flight ${HORIZON} → ${HOPE}`)).toHaveCount(0);
   await expect(tile(page, 110)).toHaveClass(/tile-path/);
   await tile(page, 66).click();
   await expect(page.getByText(`Flight ${HORIZON} → ${HOPE}`)).toBeVisible();
+  // Nothing of mine stands there to take: back in the editor the source goes by itself.
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await page.getByRole('button', { name: `Remove source ${HORIZON}` }).click();
   await expect(page.getByRole('button', { name: `Remove source ${HORIZON}` })).toHaveCount(0);
   await expect(page.getByRole('button', { name: `Remove source ${HOME}` })).toBeVisible();
+});
+
+test('a route is drawn from a system without ships, and left with nothing taken its row and its arrow fade away', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'The Argent Flight' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await pasteMap(page);
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action' }).click();
+  await tile(page, 66).click();
+
+  // A source that stays: the home system with a carrier taken.
+  await dragRoute(page, [58, 110, 79, 66]);
+  await page.getByRole('button', { name: 'Take one Carrier' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  const routes = page.locator('.routes .route-line');
+  const rows = page.locator('.tactical-editor .source-row:has(.icon-remove)');
+  await expect(rows).toHaveCount(1);
+  const drawn = await routes.count();
+
+  // No ships of mine stand in the asteroids: the finger still draws from there, and the hint says so while it does.
+  const from = await centreWhenStill(tile(page, 79));
+  const to = await centreWhenStill(tile(page, 66));
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 4 });
+  await expect(page.getByRole('status')).toContainText('No ships where the route starts.');
+  await page.mouse.move(to.x, to.y, { steps: 6 });
+  await page.mouse.up();
+  await expect(page.getByText(`Flight ${ASTEROIDS} → ${HOPE}`)).toBeVisible();
+  await expect(page.getByText('No ships here.')).toBeVisible();
+  expect(await routes.count()).toBeGreaterThan(drawn);
+
+  // Back with nothing taken: the row and the arrow are still there, fading, and then they are gone; the other source stays.
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.locator('.tactical-editor .source-row.vanishing')).toHaveCount(1);
+  await expect(page.locator('.routes .route-leaving').first()).toBeAttached();
+  await expect(page.locator('.tactical-editor .source-row.vanishing')).toHaveCount(0);
+  await expect(page.locator('.routes .route-leaving')).toHaveCount(0);
+  await expect(routes).toHaveCount(drawn);
+  await expect(rows).toHaveCount(1);
+  await expect(page.getByRole('button', { name: `Remove source ${HOME}` })).toBeVisible();
+
+  // The same by taps, and with smooth motion turned off it goes at once.
+  await page.evaluate(() => { document.documentElement.dataset.motion = 'off'; });
+  await tile(page, 79).click();
+  await tile(page, 66).click();
+  await expect(page.getByText(`Flight ${ASTEROIDS} → ${HOPE}`)).toBeVisible();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(routes).toHaveCount(drawn);
+  await expect(rows).toHaveCount(1);
 });
 
 test('a link makes a named game, opens it again, and asks when it disagrees with the save', async ({ page }) => {

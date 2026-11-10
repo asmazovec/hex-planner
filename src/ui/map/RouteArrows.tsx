@@ -8,7 +8,10 @@ import { playerStyle } from '../primitives/player';
 
 /** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
 export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape;
-  /** The colour of the opponent whose action this is. */ player?: number }
+  /** The colour of the opponent whose action this is. */ player?: number;
+  /** Its source is on its way out of the plan: the arrow fades. */ leaving?: boolean }
+
+const tone = (a: Arrow): string => `route-${a.tone}${a.leaving ? ' route-leaving' : ''}`;
 
 /** A line from the last hex to the pointer. It follows the pointer by itself, so a move renders nothing. */
 function PreviewLine({ start, clientX, clientY, reverse, outline }: { start: Point; clientX: number; clientY: number; reverse?: boolean; outline?: boolean }) {
@@ -65,7 +68,7 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
       )}
       <g mask="url(#route-gaps)">
         {arrows.map(a => (
-          <g key={a.key} className={`route route-${a.tone}`} style={playerStyle('--route', a.player || undefined)} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
+          <g key={a.key} className={`route ${tone(a)}`} style={playerStyle('--route', a.player || undefined)} role="img" aria-label={t('map.arrow', { from: a.from, to: a.to })}>
             <g className="route-casings">
               {a.shape.segments.map((segment, i) => <path key={i} d={svgPath(segment.points)} className={`route-casing${segment.gap ? ' route-gap' : ''}`} />)}
               <polygon points={arrowHead(a.shape.curve)} className="route-head-casing" />
@@ -77,7 +80,7 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
         ))}
       </g>
       {arrows.map(a => (
-        <g key={a.key} className={`route route-badge route-${a.tone}`} style={playerStyle('--route', a.player || undefined)} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
+        <g key={a.key} className={`route route-badge ${tone(a)}`} style={playerStyle('--route', a.player || undefined)} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
           <RouteBadge number={a.number} casing />
         </g>
       ))}
@@ -86,7 +89,7 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
         const row = tagged.get(slot) ?? 0;
         tagged.set(slot, row + 1);
         return (
-          <g key={`${a.key}:${slot}`} className={`route route-tag route-${a.tone}`} transform={`translate(${at.x + TAG_OFFSET} ${at.y - TAG_OFFSET + row * TAG_STEP})`}>
+          <g key={`${a.key}:${slot}`} className={`route route-tag ${tone(a)}`} transform={`translate(${at.x + TAG_OFFSET} ${at.y - TAG_OFFSET + row * TAG_STEP})`}>
             <PickupTag count={count} />
           </g>
         );

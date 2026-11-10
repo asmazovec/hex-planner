@@ -422,6 +422,8 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .route-pull { stroke: var(--gold); stroke-width: 4px; stroke-dasharray: 8 7; }
 .route-badge, .route-tag { --route-opacity: 1; transition: opacity var(--motion-route); }
 .route-badge.route-done, .route-tag.route-done { opacity: 0.5; }
+/* The arrow of a source on its way out of the plan: it fades with the row of the source. */
+.route.route-leaving { opacity: 0; transition: opacity var(--motion-route); }
 /* As wide as the outline of a line beyond its stroke. The done badge is dimmed as a whole, so this comes to the 0.3 of a done line. */
 .route-badge-casing { fill: none; stroke: var(--bg); stroke-width: 6.8px; stroke-linejoin: round; opacity: 0.7; }
 .route-done .route-badge-casing { opacity: 0.6; }
@@ -594,6 +596,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .in-card > button:first-child { flex: 1 1 auto; min-width: 0; }
 .in-card > button:first-child:not(:last-child) { padding-right: 52px; }
 .in-card > button:last-child:not(:first-child) { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); }
+/* A row on its way out of its list: it folds over the time its arrow fades. The rows below rise meanwhile, so their icon buttons wait: a finger must not find the removal of another row under it. */
+.vanishing { flex: none; overflow: hidden; pointer-events: none; transition: height var(--motion-route) var(--ease), margin-bottom var(--motion-route) var(--ease), opacity var(--motion-route); }
+.vanishing ~ * .icon-button { pointer-events: none; }
 .source-button { flex: 1; min-width: 0; text-align: left; font-size: var(--font-s); }
 .source-button small { font-weight: 400; }
 .landing { display: flex; flex-direction: column; gap: 8px; }
