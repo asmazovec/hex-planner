@@ -9,7 +9,7 @@ export interface RuleEntry { rules: string[]; step: RuleStep }
 
 /** Steps in the order the replay goes through them. */
 export const STEPS: readonly RuleStep[] = [
-  'round', 'card', 'activation', 'movement', 'transport', 'combat', 'invasion', 'production', 'payment', 'status', 'expedition', 'transaction',
+  'round', 'card', 'activation', 'movement', 'transport', 'combat', 'invasion', 'production', 'payment', 'status', 'expedition', 'transaction', 'component',
 ];
 
 export const RULES: Record<WarningCode, RuleEntry> = {
@@ -71,6 +71,9 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   stationStructure: { rules: ['space-stations-4'], step: 'card' },
   // transport
   pickupOffRoute: { rules: ['95.1'], step: 'transport' },
+  // components
+  componentNotHeld: { rules: ['22.1', '2.7', '51.10'], step: 'component' },
+  componentExhausted: { rules: ['71.4', '34.4', '51.4'], step: 'component' },
 };
 
 /** The rule and step of a code, from the registry. */

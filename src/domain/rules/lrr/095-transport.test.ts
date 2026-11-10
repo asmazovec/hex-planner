@@ -1,10 +1,10 @@
 /** LRR 95 Transport. Source: tirules2 rules-reference/transport.md. */
 import { describe, expect, test } from 'vitest';
-import { adjust, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { adjust, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 import { row } from './kit-83-101';
 
 const pack = rulesPack();
-const carrierTwo = { upgrades: { me: ['carrier' as const], opponents: {} } };
+const carrierTwo = { start: { me: { technologies: [tech('carrier')] }, opponents: {} } };
 
 describe('LRR 95 Transport', () => {
   test('95 (intro): a moving ship carries fighters and ground forces up to its capacity', () => {
@@ -67,7 +67,7 @@ describe('LRR 95 Transport', () => {
       map: { ...row(), [behind]: 'r-empty' },
       units: { [behind]: { carrier: 1 } },
       entries: [adjust({ ground: { h1: { infantry: 1 } } }, 'strategy'), tactical(HOME), pickup],
-      game: { upgrades: { me: ['carrier'], opponents: {} } },
+      game: { start: { me: { technologies: [tech('carrier')] }, opponents: {} } },
     });
     expect(codesOf(game, pack, pickup)).not.toContain('speedShort');
     expect(codesOf(game, pack, pickup)).toContain('sourceActivated');

@@ -13,6 +13,7 @@ import { focusRect } from '../map/geometry';
 import { cardChange, withSystem } from '../../domain/strategy';
 import { entrySystems, hasUnits, isUntouched, isValidSource, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
+import { upgradesOf } from '../../domain/holdings';
 import { entryUpgradeRounds, hasLevelTwo, SHIP_KINDS } from '../../domain/unitStats';
 import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
@@ -322,8 +323,10 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
   const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
-  const lockedUpgrades = entryUpgradeRounds({ ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) }, shownFilter);
-  const upgradeCount = SHIP_KINDS.filter(kind => shownState.upgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
+  const lockedUpgrades = entryUpgradeRounds({ ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) }, shownFilter, pack);
+  const shownUpgrades = upgradesOf(shownState.holdings, pack);
+  const rivalUpgraded = Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, upgradesOf(rival.holdings, pack)]));
+  const upgradeCount = SHIP_KINDS.filter(kind => shownUpgrades.includes(kind) && hasLevelTwo(game.faction, kind, pack)).length;
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
@@ -580,7 +583,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               ? (
                 <div className="players-panel">
                   <PlayerList
-                    live={{ upgraded: shownState.upgrades, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
+                    live={{ upgraded: shownUpgrades, rivalUpgraded, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
                   />
                 </div>
               )
@@ -622,7 +625,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <Drawer open={rightOpen} className="drawer-under">
             <div key={rightDrawer} className="drawer-swap">
               {rightDrawer === 'upgrades'
-                ? <UpgradesPanel game={game} pack={pack} upgraded={shownState.upgrades} locked={lockedUpgrades} />
+                ? <UpgradesPanel game={game} pack={pack} upgraded={shownUpgrades} locked={lockedUpgrades} />
                 : (
                   <ThundersEdgePanel
                     game={game} pack={pack} owners={owners}

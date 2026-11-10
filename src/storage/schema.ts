@@ -7,8 +7,6 @@ export const CURRENT_SCHEMA = 1;
 
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
-/** What an upgrade improves: a unit, or a structure (PDS II, Space Dock II). */
-const upgradeId = z.enum([...unitId.options, 'pds', 'spacedock']);
 const unitCounts = z.partialRecord(unitId, count);
 /** An adjustment's change of units. */
 const signedCounts = z.partialRecord(unitId, z.number().int());
@@ -16,15 +14,16 @@ const payment = z.object({ planets: z.array(z.string()), tradeGoods: count });
 const status = z.enum(['planned', 'done', 'cancelled']);
 const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 
-const base = { id: z.string(), phase, status, owner: z.string().optional() };
+/** Component ids: `<kind>:<source id>`. One the data no longer has is kept and passed over by the replay. */
+const ids = z.array(z.string());
+const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional() };
 const cardPlay = {
-  upgrades: z.array(upgradeId).optional(),
   card: z.number().int().optional(),
   forToken: z.boolean().optional(),
   effects: z.object({
     tokens: z.object({ tactic: z.number().int().optional(), fleet: z.number().int().optional(), strategy: z.number().int().optional() }).optional(),
     boughtTokens: count.optional(),
-    researched: count.optional(),
+    researched: ids.optional(),
     systemId: z.string().optional(),
     readied: z.array(z.string()).optional(),
     speaker: z.string().optional(),
@@ -50,7 +49,7 @@ const entrySchema = z.discriminatedUnion('type', [
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
-  z.object({ ...base, type: z.literal('component'), note: z.string(), acts }),
+  z.object({ ...base, type: z.literal('component'), componentId: z.string().optional(), note: z.string(), choices: z.record(z.string(), z.union([z.string(), z.number()])).optional(), acts }),
   z.object({ ...base, type: z.literal('pass'), acts }),
   z.object({
     ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),
@@ -63,11 +62,16 @@ const entrySchema = z.discriminatedUnion('type', [
   }),
   z.object({
     ...base, type: z.literal('statusTokens'), tactic: z.number(), fleet: z.number(), strategy: z.number(),
-    vp: z.number().optional(), opponentVp: z.record(z.string(), z.number()).optional(),
+    vp: z.number().optional(), opponentVp: z.record(z.string(), z.number()).optional(), scored: ids.optional(),
   }),
 ]);
 
 const control = z.enum(['me', 'enemy']);
+const startHoldings = z.object({
+  technologies: ids.optional(), hand: ids.optional(), relics: ids.optional(), promissory: ids.optional(),
+  leaders: z.record(z.string(), z.enum(['unlocked', 'exhausted', 'purged'])).optional(),
+  breakthrough: z.enum(['held', 'exhausted']).optional(), scored: ids.optional(), secrets: ids.optional(),
+});
 
 export const gameSchema = z.object({
   name: z.string().optional(),
@@ -84,7 +88,7 @@ export const gameSchema = z.object({
   vp: count,
   map: z.record(z.string(), z.string()),
   opponents: z.array(z.object({ id: z.string(), faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
-  upgrades: z.object({ me: z.array(upgradeId), opponents: z.record(z.string(), z.array(upgradeId)) }),
+  start: z.object({ me: startHoldings, opponents: z.record(z.string(), startHoldings) }),
   enemyUnits: z.record(z.string(), z.record(z.string(), unitCounts)),
   enemyGround: z.record(z.string(), z.record(z.string(), unitCounts)),
   planetControl: z.record(z.string(), control),

@@ -2,6 +2,7 @@ import type { CardEffects, ExpansionId } from './types';
 import { CARD } from './strategy';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
+import { emptyHoldings, holdingsOf, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { slotAcross } from './route';
 import { fleetSpeed, productionCost, productionPlaces, project, readyInfluence, readyResources, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, tacticalMeters, systemsAdjacent } from './project';
@@ -161,7 +162,7 @@ describe('how far a route goes', () => {
   });
 
   test('the speed of a fleet is its fastest ship that flies', () => {
-    expect(fleetSpeed(line(row), {}, [], routePack)).toBeNull();
+    expect(fleetSpeed(line(row), {}, emptyHoldings(), routePack)).toBeNull();
   });
 });
 
@@ -261,8 +262,8 @@ describe('project', () => {
   });
 
   test('постройка: стоимость считается за пару и округляется вверх', () => {
-    expect(productionCost({ fighter: 3 }, 'sol', [], pack)).toBe(2);
-    expect(productionCost({ cruiser: 2, infantry: 1 }, 'sol', [], pack)).toBe(5);
+    expect(productionCost({ fighter: 3 }, 'sol', emptyHoldings(), pack)).toBe(2);
+    expect(productionCost({ cruiser: 2, infantry: 1 }, 'sol', emptyHoldings(), pack)).toBe(5);
   });
 
   test('оплата постройки: нехватка ресурсов, истощение планет, товары', () => {
@@ -675,18 +676,23 @@ describe('createGame', () => {
 
 describe('ship upgrades in the replay', () => {
   const real = loadPack(['pok']);
+  /** The faction of the game under test: a unit upgrade is that faction's technology for the unit. */
+  let faction0 = 'arborec';
+  const techs = (units: UnitId[], faction = faction0): string[] => units.map(unit => upgradeTech(real, faction, unit)!);
+  const upgraded = (state: { holdings: Parameters<typeof upgradesOf>[0] }) => upgradesOf(state.holdings, real);
   const start = (faction: string, entries: Entry[], baseline: UnitId[] = []): Game => {
     const g = createGame({ expansions: ['pok'], playerCount: 3, faction }, real);
     g.map = { A: '19', B: '20', H: real.factions[faction].homeTile };
-    g.upgrades.me = baseline;
+    faction0 = faction;
+    g.start.me = { technologies: [...(g.start.me.technologies ?? []), ...techs(baseline)] };
     g.plans[0].rounds = [{ number: 1, strategyCard: null, backupCard: null, entries }];
     return g;
   };
   const go = (g: Game, filter: 'now' | 'forecast' = 'forecast', plan = g.plans[0]) => project(g, plan, filter, real);
   const flight = (id: string, units: UnitCounts, from = 'A', to = 'B', status: Entry['status'] = 'planned') =>
     withId(id, entry(tactical({ systemId: to, moves: [{ from, units }] }), 'action', status));
-  const research = (upgrades: UnitId[], status: Entry['status'] = 'planned', type: 'strategic' | 'secondary' = 'strategic') =>
-    entry({ type, upgrades }, 'action', status);
+  const research = (upgrades: UnitId[], status: Entry['status'] = 'planned', type: 'strategic' | 'secondary' = 'strategic', faction = 'arborec') =>
+    entry({ type, effects: { researched: techs(upgrades, faction) } }, 'action', status);
   const overTwoCarriers = { carrier: 2, infantry: 10 };
 
   test('two carriers carry 8, and 12 with the baseline upgrade', () => {
@@ -721,14 +727,14 @@ describe('ship upgrades in the replay', () => {
     expect(codes(go(g).warningsByEntry.first)).toEqual([]);
   });
 
-  test('state.upgrades is the baseline plus the entries so far, without repeats; a secondary counts and still costs its token', () => {
+  test('the upgrades held are the baseline plus the entries so far, without repeats; a secondary counts and still costs its token', () => {
     const second = research(['carrier', 'cruiser'], 'planned', 'secondary');
     const g = start('arborec', [research(['carrier']), withId('stop', entry({ type: 'pass' })), second], ['fighter']);
     const { state } = go(g);
-    expect(state.upgrades).toEqual(['fighter', 'carrier', 'cruiser']);
+    expect(upgraded(state)).toEqual(['fighter', 'carrier', 'cruiser']);
     expect(state.strategy).toBe(1);
-    expect(stateBeforeEntry(g, g.plans[0], 'stop', real).upgrades).toEqual(['fighter', 'carrier']);
-    expect(g.upgrades.me).toEqual(['fighter']);
+    expect(upgraded(stateBeforeEntry(g, g.plans[0], 'stop', real))).toEqual(['fighter', 'carrier']);
+    expect(upgradesOf(holdingsOf(g.start.me), real)).toEqual(['fighter']);
   });
 
   test('now counts done entries, the forecast also planned ones, a cancelled entry nothing', () => {
@@ -736,8 +742,8 @@ describe('ship upgrades in the replay', () => {
       setup('A', overTwoCarriers), research(['carrier']), research(['cruiser'], 'done'), research(['fighter'], 'cancelled'),
       flight('m', overTwoCarriers, 'A', 'B', 'done'),
     ]);
-    expect(go(g, 'now').state.upgrades).toEqual(['cruiser']);
-    expect(go(g, 'forecast').state.upgrades).toEqual(['carrier', 'cruiser']);
+    expect(upgraded(go(g, 'now').state)).toEqual(['cruiser']);
+    expect(upgraded(go(g, 'forecast').state)).toEqual(['carrier', 'cruiser']);
     expect(codes(go(g, 'now').warningsByEntry.m)).toContain('capacityGroup');
     expect(codes(go(g, 'forecast').warningsByEntry.m)).toEqual([]);
   });
@@ -755,14 +761,14 @@ describe('ship upgrades in the replay', () => {
     });
     expect(codes(go(g).warningsByEntry.m)).toEqual([]);
     expect(codes(go(g, 'forecast', g.plans[1]).warningsByEntry.m)).toContain('capacityGroup');
-    expect(go(g, 'forecast', g.plans[1]).state.upgrades).toEqual([]);
+    expect(upgraded(go(g, 'forecast', g.plans[1]).state)).toEqual([]);
   });
 
   test('upgrades of a later round do not reach back', () => {
     const g = start('arborec', [setup('A', overTwoCarriers), flight('m', overTwoCarriers)]);
     g.plans[0].rounds.push({ number: 2, strategyCard: null, backupCard: null, entries: [research(['carrier'])] });
     expect(codes(go(g).warningsByEntry.m)).toContain('capacityGroup');
-    expect(go(g).state.upgrades).toEqual(['carrier']);
+    expect(upgraded(go(g).state)).toEqual(['carrier']);
   });
 
   describe('production cost', () => {
@@ -771,22 +777,23 @@ describe('ship upgrades in the replay', () => {
     const needed = (warnings: Warning[]) => warnings.find(w => w.code === 'shortResources')?.params.needed;
 
     test('follows my faction and level: a Muaat War Sun costs 12, then 10 from the upgrade entry onward', () => {
-      const g = start('muaat', [warSun('before'), research(['warsun']), warSun('after')]);
+      const g = start('muaat', [warSun('before'), research(['warsun'], 'planned', 'strategic', 'muaat'), warSun('after')]);
       const { warningsByEntry } = go(g);
       expect(needed(warningsByEntry.before)).toBe(12);
       expect(needed(warningsByEntry.after)).toBe(10);
     });
 
     test('a planned upgrade lowers it in the forecast only', () => {
-      const g = start('muaat', [research(['warsun']), warSun('built', 'done')]);
+      const g = start('muaat', [research(['warsun'], 'planned', 'strategic', 'muaat'), warSun('built', 'done')]);
       expect(needed(go(g, 'now').warningsByEntry.built)).toBe(12);
       expect(needed(go(g, 'forecast').warningsByEntry.built)).toBe(10);
     });
 
     test('another faction pays the base price for the same mark; a fighter stays half a resource, rounded up per type', () => {
-      expect(productionCost({ warsun: 1 }, 'arborec', ['warsun'], real)).toBe(12);
-      expect(productionCost({ warsun: 1 }, 'muaat', ['warsun'], real)).toBe(10);
-      expect(productionCost({ fighter: 3 }, 'muaat', ['fighter'], real)).toBe(2);
+      const held = (unit: UnitId, faction: string) => holdingsOf({ technologies: techs([unit], faction) });
+      expect(productionCost({ warsun: 1 }, 'arborec', held('warsun', 'arborec'), real)).toBe(12);
+      expect(productionCost({ warsun: 1 }, 'muaat', held('warsun', 'muaat'), real)).toBe(10);
+      expect(productionCost({ fighter: 3 }, 'muaat', held('fighter', 'muaat'), real)).toBe(2);
     });
   });
 
@@ -836,9 +843,9 @@ describe('ship upgrades in the replay', () => {
       const flightEntry = plain.plans[0].rounds[0].entries[1] as Extract<Entry, { type: 'tactical' }>;
       const before = stateBeforeEntry(plain, plain.plans[0], 'm', real);
       expect(tacticalMeters(plain, flightEntry, 'A', before, real)).toMatchObject({ group: { load: 9, capacity: 4 }, ships: 1 });
-      const up = { ...before, upgrades: ['fighter'] as UnitId[] };
+      const up = { ...before, holdings: holdingsOf({ technologies: techs(['fighter']) }) };
       expect(tacticalMeters(plain, flightEntry, 'A', up, real)).toMatchObject({ group: { load: 2, capacity: 4 }, ships: 6 });
-      const withCarrier = { ...before, upgrades: ['carrier'] as UnitId[] };
+      const withCarrier = { ...before, holdings: holdingsOf({ technologies: techs(['carrier']) }) };
       expect(tacticalMeters(plain, flightEntry, 'A', withCarrier, real).group).toEqual({ load: 9, capacity: 6 });
     });
 

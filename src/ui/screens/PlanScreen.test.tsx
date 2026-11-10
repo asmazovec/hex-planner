@@ -1042,7 +1042,7 @@ describe('reading the plan', () => {
     add(1, { type: 'component', note: 'Plague' }, 'action');
     add(1, { type: 'adjustment', label: 'Card', delta: { tradeGoods: 2 } }, 'action');
     add(1, { type: 'strategic', card: 8, effects: { mecatol: true } }, 'action');
-    add(1, { type: 'secondary', card: 7, upgrades: ['carrier'] }, 'action');
+    add(1, { type: 'secondary', card: 7, effects: { researched: ['technology:cv2'] } }, 'action');
     add(1, { type: 'pass' }, 'action');
     add(1, { type: 'statusTokens', tactic: 1, fleet: 1, strategy: 0, vp: 2 }, 'status');
     render(<PlanScreen />);

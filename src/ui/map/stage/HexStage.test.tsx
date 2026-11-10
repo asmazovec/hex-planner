@@ -608,7 +608,7 @@ describe('build', () => {
     const warsun = () => within(screen.getByRole('button', { name: 'War Sun' }));
     expect(warsun().getByText('12')).toBeVisible();
     cleanup();
-    store().toggleUpgrade('me', 'warsun');
+    store().setStartHolding('me', 'technology:pws2', true);
     open({ initialMode: 'build' });
     expect(warsun().getByText('10')).toBeVisible();
     await side('Sol');
@@ -818,14 +818,14 @@ describe('fix round 1', () => {
   test('the price follows the level at that entry', async () => {
     store().setFaction('muaat');
     const id = addTactical();
-    store().addEntry(1, { type: 'secondary', upgrades: ['warsun'] }, 'action');
+    store().addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
     open({ initialMode: 'build', tacticalId: id });
     const warsun = within(screen.getByRole('button', { name: 'War Sun' }));
     expect(warsun.getByText('12')).toBeVisible();
     await tap('War Sun');
     expect(total()).toBe('12');
     cleanup();
-    store().toggleUpgrade('me', 'warsun');
+    store().setStartHolding('me', 'technology:pws2', true);
     open({ initialMode: 'build', tacticalId: id });
     expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();
     expect(total()).toBe('10');
@@ -833,7 +833,7 @@ describe('fix round 1', () => {
 
   test('without a tactical entry the price is that of the forecast', () => {
     store().setFaction('muaat');
-    store().addEntry(1, { type: 'secondary', upgrades: ['warsun'] }, 'action');
+    store().addEntry(1, { type: 'secondary', effects: { researched: ['technology:pws2'] } }, 'action');
     open({ initialMode: 'build' });
     expect(within(screen.getByRole('button', { name: 'War Sun' })).getByText('10')).toBeVisible();
   });

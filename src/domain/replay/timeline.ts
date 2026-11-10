@@ -12,6 +12,7 @@ import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
 import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
+import { applyComponent, applyGains, applyScored, readyCards } from './holdings';
 import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, clearBoard } from './status';
 import { keepOwnStructures } from './structures';
@@ -31,7 +32,7 @@ export interface Frame {
 }
 
 /** Where a round began, so the replay can start again from it. */
-interface RoundMark { round: Round; start: GameState; taken: string[]; to: number }
+interface RoundMark { round: Round; start: GameState; taken: string[]; to: number; /** Its status phase was replayed, so its cards are readied. */ statusDone: boolean }
 
 export interface Timeline {
   game: Game;
@@ -69,7 +70,7 @@ function sameSetup(a: Game, b: Game): boolean {
 }
 
 function applyEntry(
-  game: Game, state: GameState, entry: Entry, pack: DataPack, acts: ActContext, cards: CardRound, flow: RoundFlow, blockers: Blockers | undefined,
+  game: Game, state: GameState, shared: GameState, entry: Entry, pack: DataPack, acts: ActContext, cards: CardRound, flow: RoundFlow, blockers: Blockers | undefined,
   withActs: boolean,
 ): Warning[] {
   const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? []);
@@ -83,14 +84,19 @@ function applyEntry(
       break;
     case 'statusTokens':
       applyStatusTokens(game, state, entry, pack, warnings);
+      applyScored(state, shared, entry.scored, pack);
       break;
     case 'adjustment':
       applyAdjustment(state, entry, warnings);
       break;
     case 'component':
+      applyComponent(state, entry, pack, warnings);
+      break;
     case 'pass':
       break;
   }
+  // What the entry brings and takes beside its own effect: the owner's holdings, and the laws of the whole game.
+  applyGains(state, shared, entry, pack);
   // The acts of a turn come after its action: transactions, then the expedition at its end.
   if (withActs) applyActs(game, state, entry, pack, acts, warnings);
   return placeIn(warnings, entry.id);
@@ -99,7 +105,10 @@ function applyEntry(
 /** An opponent counted like me: what stands on the map for them is where they begin. */
 function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameState {
   const pick = (record: Game['enemyUnits']) => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => (byOwner[id] ? [[place, { ...byOwner[id] }]] : [])));
-  const state: GameState = { ...initialState(view, pack), systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
+  // The laws, the revealed objectives and the attachments are the whole game's: they stand on my state only.
+  const { laws, revealed, attachments, ...own } = initialState(view, pack);
+  void laws; void revealed; void attachments;
+  const state: GameState = { ...own, systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
   keepOwnStructures(state, false);
   return state;
 }
@@ -145,8 +154,11 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
   const everyone = [state, ...Object.values(rivals)];
   const acts: ActContext = { taken: new Set(resume?.taken), states: { me: state, ...rivals } };
 
+  /** The round before had no status phase replayed: its Ready Cards step (81.6) is made up for as the next round begins. */
+  let cardsDue = kept > 0 && !marks[kept - 1].statusDone;
   for (const round of rounds.slice(kept)) {
-    const mark: RoundMark = { round, start: snap(), taken: [...acts.taken], to: 0 };
+    const mark: RoundMark = { round, start: snap(), taken: [...acts.taken], to: 0, statusDone: false };
+    if (cardsDue) readyCards(everyone);
     // The agenda phase ends by readying the planets (LRR 8), so a round begins with them ready and the board clear.
     clearBoard(everyone);
     dirty = true;
@@ -155,6 +167,7 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
     const finishStatus = () => {
       if (!statusDone) {
         clearBoard(everyone);
+        readyCards(everyone);
         dirty = true;
       }
       statusDone = true;
@@ -172,6 +185,7 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
         if (phase === 'agenda' && !statusDone) {
           before = clone(before);
           clearBoard([before, ...Object.values(before.rivals ?? {})]);
+          readyCards([before, ...Object.values(before.rivals ?? {})]);
         }
         frames.push({ entryId: entry.id, before, after: before, applied: false, warnings: [] });
         return;
@@ -186,7 +200,7 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
       const blockers = entry.type === 'tactical' ? blockersOf(game, state, rival ? entry.owner : undefined, pack) : undefined;
       // A card with Warfare's free action plays it before the acts of its turn.
       const free = entry.type === 'strategic' ? linked(entry) : undefined;
-      let warnings = applyEntry(view, own, entry, pack, acts, cards, flow, blockers, free === undefined);
+      let warnings = applyEntry(view, own, state, entry, pack, acts, cards, flow, blockers, free === undefined);
       if (rival && entry.owner && entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack);
       dirty = true;
       if (entry.type === 'statusTokens') finishStatus();
@@ -206,6 +220,8 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
       }
     }
     mark.to = frames.length;
+    mark.statusDone = statusDone;
+    cardsDue = !statusDone;
     marks.push(mark);
   }
   return { game, plan, filter, pack, frames, byEntry: new Map(frames.map(f => [f.entryId, f])), end: snap(), marks, endTaken: [...acts.taken] };

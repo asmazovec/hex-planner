@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { factionsByExpansion } from './factionSheet';
+import { emptyHoldings } from './holdings';
 import { lookUpTile } from './mapBuilder';
 import { newEntryBody, tacticalBody, tacticalOwner } from './newEntry';
 import { rulesGame, rulesPack, tactical, TARGET } from './rules/kit';
@@ -63,12 +64,12 @@ test('factions go by the expansion that brings them', () => {
 
 test('the tactical entry: the battle leaves what lands, a landing and a production change the entry', () => {
   const pack = rulesPack();
-  const before = { systems: { [TARGET]: { infantry: 1 } }, ground: { p: { infantry: 2 } }, upgrades: [] } as unknown as GameState;
+  const before = { systems: { [TARGET]: { infantry: 1 } }, ground: { p: { infantry: 2 } }, holdings: emptyHoldings() } as unknown as GameState;
   const entry = tactical(TARGET, { moves: [{ from: 'x', units: { carrier: 1, infantry: 2 } }], losses: { infantry: 1 } }) as TacticalEntry;
   expect(afterBattle(pack, entry, before, UNIT_ORDER)).toMatchObject({ left: { carrier: 1, infantry: 2 }, landable: ['infantry'] });
   expect(standingAfterBattle(before, 'p', { p: { infantry: 1 } })).toEqual({ infantry: 1 });
   expect(withLanding(entry, 'p', 'infantry', 2).landings).toEqual([{ planetId: 'p', units: { infantry: 2 } }]);
   expect(withProduction(entry, before, 'rules-tester', 'infantry', null, 1, pack, true)).toEqual({ production: { infantry: 1 } });
   expect(availableFor(rulesGame(), pack, before, entry, 'x', TARGET, 'infantry')).toBe(1);
-  expect(flightOf(rulesGame(), pack, [], entry, 'x').stops.size).toBe(0);
+  expect(flightOf(rulesGame(), pack, emptyHoldings(), entry, 'x').stops.size).toBe(0);
 });

@@ -1,10 +1,10 @@
 /** LRR 37 Fleet Pool. Source: tirules2 rules-reference/fleet-pool.md. Base pack: a carrier I has capacity 4, a fighter II moves by itself. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
+import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();
-const fighterTwo = { upgrades: { me: ['fighter' as const], opponents: {} } };
+const fighterTwo = { start: { me: { technologies: [tech('fighter')] }, opponents: {} } };
 
 describe('LRR 37 Fleet Pool', () => {
   test('37.1: non-fighter ships in a system beyond the fleet pool are warned about', () => {

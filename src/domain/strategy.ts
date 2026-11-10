@@ -4,7 +4,7 @@ import { autoPay, type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
-import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Round, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Holdings, Round, StructureKind, UnitCounts, UnitId } from './types';
 
 export { diplomacySystemAllowed, readyChoices, readyLimit } from './replay/cards/diplomacy';
 export { controlsMecatol } from './replay/cards/imperial';
@@ -121,25 +121,25 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 }
 
 /** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
-export function cardCost(entry: CardEntry, factionId: string, upgrades: UpgradeId[], pack: DataPack): { kind: PaymentKind; amount: number } {
-  return handlerOf(entry.card).cost?.(entry, upgrades)
-    ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, upgrades, pack) };
+export function cardCost(entry: CardEntry, factionId: string, holdings: Holdings, pack: DataPack): { kind: PaymentKind; amount: number } {
+  return handlerOf(entry.card).cost?.(entry, holdings)
+    ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, holdings, pack) };
 }
 
 /**
- * A switch of the card or of its side starts the play over: what the old one chose (effects, payment, upgrades) goes,
+ * A switch of the card or of its side starts the play over: what the old one chose (effects, payment, research) goes,
  * and the store drops the free tactical action it started.
  */
 export const freshPlay = (patch: CardPatch): CardPatch =>
-  ({ ...patch, effects: undefined, upgrades: undefined, ...(patch.type === 'secondary' ? { acts: undefined } : {}) } as CardPatch);
+  ({ ...patch, effects: undefined, ...(patch.type === 'secondary' ? { acts: undefined } : {}) } as CardPatch);
 
 /** The patch for a change to the entry: a new cost pays automatically unless the payment was chosen by hand. */
 export function cardChange(
   entry: CardEntry, patch: CardPatch, before: GameState, factionId: string, pack: DataPack, manual: boolean,
 ): CardPatch {
   const next = { ...entry, ...patch } as CardEntry;
-  const was = cardCost(entry, factionId, before.upgrades, pack);
-  const cost = cardCost(next, factionId, before.upgrades, pack);
+  const was = cardCost(entry, factionId, before.holdings, pack);
+  const cost = cardCost(next, factionId, before.holdings, pack);
   if (manual || (cost.amount === was.amount && cost.kind === was.kind)) return patch;
   return { ...patch, effects: { ...next.effects, payment: autoPay(before, cost.amount, cost.kind, pack) } };
 }

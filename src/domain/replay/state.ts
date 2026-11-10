@@ -1,7 +1,8 @@
 /** The replayed state: where it begins, and the helpers every step uses to change its counts. */
 import { violation } from '../rules/registry';
 import { absentHomePlanets, homePlanets, homeSlot, startingDocks } from '../strategy';
-import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, UpgradeId, Warning } from '../types';
+import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning } from '../types';
+import { startHoldings } from './holdings';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -62,10 +63,6 @@ export function shiftUnits(target: Record<string, UnitCounts>, key: string, unit
   }
 }
 
-export function addUpgrades(state: GameState, upgrades: UpgradeId[] = []): void {
-  for (const id of upgrades) if (!state.upgrades.includes(id)) state.upgrades.push(id);
-}
-
 export function initialState(game: Game, pack: DataPack): GameState {
   const faction = pack.factions[game.faction];
   const systems: Record<string, UnitCounts> = {};
@@ -78,7 +75,8 @@ export function initialState(game: Game, pack: DataPack): GameState {
   for (const planetId of absentHomePlanets(game, pack)) delete control[planetId];
   return {
     systems, ground: {}, exhausted: [], control, tokensOnMap: [],
-    tradeGoods: 0, commodities: 0, ...START_TOKENS, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), upgrades: [...game.upgrades.me],
+    tradeGoods: 0, commodities: 0, ...START_TOKENS, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), 
+    holdings: startHoldings(game.start.me, pack), laws: [], revealed: [], attachments: {},
     docks: startingDocks(game, pack), pds: { ...game.pds },
   };
 }

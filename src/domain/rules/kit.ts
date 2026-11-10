@@ -7,8 +7,9 @@
  *   0,0 home (h1 3/1, h2 1/2)   1,0 empty   2,0 target (t1 2/1, t2 1/3)   3,0 empty   4,0 empty
  */
 import { loadPack } from '../../data/loadPack';
+import { upgradeTech } from '../holdings';
 import { project, stateBeforeEntry } from '../project';
-import { SAVE_FORMAT, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type Warning } from '../types';
+import { SAVE_FORMAT, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
 
 export const HOME = '0,0';
 export const NEAR = '1,0';
@@ -41,6 +42,9 @@ const PLANETS = {
 };
 
 export const FACTION = 'rules-tester';
+
+/** The common technology that upgrades a unit or structure, as a component id: `tech('carrier')` is Carrier II. */
+export const tech = (kind: UpgradeId): string => upgradeTech(loadPack([]), FACTION, kind) ?? `technology:${kind}`;
 
 /** The base pack with the test board and a faction whose home is `r-home` and who starts with no units. */
 export function rulesPack(edit?: (pack: DataPack) => void): DataPack {
@@ -77,7 +81,7 @@ export function rulesGame(options: {
     id: 'rules', format: SAVE_FORMAT, schemaVersion: 1, dataVersion: 'rules', expansions: [], playerCount: options.playerCount ?? 6, layout: 'standard',
     faction: FACTION, seat: 1, color: 1, vp: 0,
     map: { ...(options.map ?? DEFAULT_MAP) },
-    opponents: [], upgrades: { me: [], opponents: {} }, enemyUnits: {}, enemyGround: {}, planetControl: {}, planetOwner: {},
+    opponents: [], start: { me: {}, opponents: {} }, enemyUnits: {}, enemyGround: {}, planetControl: {}, planetOwner: {},
     docks: [], pds: {}, expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null, tiles: {} },
     plans: [{ id: 'plan', name: 'plan', rounds: rounds.map((entries, i) => ({
       number: i + 1, strategyCard: null, backupCard: null, entries: i === 0 ? [...start, ...entries] : entries,

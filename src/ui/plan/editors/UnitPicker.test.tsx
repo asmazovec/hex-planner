@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
+import { holdingsOf, upgradeTech } from '../../../domain/holdings';
 import { createGame } from '../../../domain/newGame';
 import { project } from '../../../domain/project';
 import type { Game, GameState, UnitCounts, UnitId } from '../../../domain/types';
@@ -24,7 +25,7 @@ function setup(moves: Move[], before: Partial<GameState> = {}, production: UnitC
   game.map[SOURCE] = '5';
   game.map[TRANSIT] = '25';
   const state = project(game, game.plans[0], 'forecast', pack).state;
-  const merged = { ...state, upgrades, ...before };
+  const merged = { ...state, holdings: holdingsOf({ technologies: upgrades.map(unit => upgradeTech(pack, 'arborec', unit)!) }), ...before };
   const onChange = vi.fn();
   const onFly = vi.fn();
   const entry: TacticalEntry = {

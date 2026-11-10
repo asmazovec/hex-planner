@@ -197,15 +197,15 @@ describe('modes and the lock', () => {
 
   test('after a choice the cards and modes stay open: another one resets everything the card held (#7)', async () => {
     await primary('Technology');
-    await click('Add one Researched');
     await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
+    expect(cardEntry().effects?.researched).toEqual(['technology:cv2']);
     expect(screen.queryByText(/A choice has been made/)).toBeNull();
     expect(ability('Secondary')).toBeEnabled();
     await userEvent.click(ability('Secondary'));
     expect(cardEntry()).toMatchObject({ type: 'secondary', card: CARD.technology });
     expect(cardEntry().effects?.researched).toBeUndefined();
-    expect(cardEntry().upgrades).toBeUndefined();
-    await click('Add one Researched');
+    await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Cruiser' }));
+    expect(cardEntry().effects?.researched).toEqual(['technology:cr2']);
     expect(cards().getByRole('button', { name: /Trade/ })).toBeEnabled();
     await userEvent.click(cards().getByRole('button', { name: /Trade/ }));
     expect(cardEntry().card).toBe(CARD.trade);
@@ -588,7 +588,7 @@ describe('Warfare', () => {
     const cost = (upgraded: boolean) => unitStats('muaat', 'warsun', upgraded, all)?.cost;
     expect(cost(true)).not.toBe(cost(false));
     const id = store().addEntry(1, { type: 'secondary', card: 6 }, 'action');
-    store().addEntry(1, { type: 'secondary', card: 7, upgrades: ['warsun'] }, 'action');
+    store().addEntry(1, { type: 'secondary', card: 7, effects: { researched: ['technology:pws2'] } }, 'action');
     render(<PlanScreen />);
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${id}"]`)!).getByRole('button', { name: 'Edit: Secondary: Warfare' }));
     await click('Production in the home system');
@@ -649,26 +649,34 @@ describe('Technology', () => {
     await primary('Technology');
     const row = within(screen.getByRole('group', { name: 'Upgrade' }));
     await userEvent.click(row.getByRole('button', { name: 'Carrier' }));
-    expect(cardEntry().upgrades).toEqual(['carrier']);
+    expect(cardEntry().effects?.researched).toEqual(['technology:cv2']);
     expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
     await userEvent.click(row.getByRole('button', { name: 'Cruiser' }));
     expect(screen.getByText(/To pay: 6/)).toBeVisible();
     expect(screen.getByRole('group', { name: 'Payment' })).toBeVisible();
   });
 
-  test('a technology is marked by a tap, without naming it: the primary\'s second one costs 6', async () => {
+  test('a technology is named, not counted: the title counts the named ones and a second tap takes one back', async () => {
     await primary('Technology');
-    await click('Add one Researched');
-    expect(cardEntry().effects?.researched).toBe(1);
+    expect(screen.queryByRole('button', { name: /Researched/ })).toBeNull();
+    const row = within(screen.getByRole('group', { name: 'Upgrade' }));
+    await userEvent.click(row.getByRole('button', { name: 'Carrier' }));
     expect(screen.getByText('Technology: 1')).toBeVisible();
     expect(screen.queryByRole('group', { name: 'Payment' })).toBeNull();
-    await click('Add one Researched');
-    expect(cardEntry().effects?.researched).toBe(2);
+    await userEvent.click(row.getByRole('button', { name: 'Cruiser' }));
+    expect(cardEntry().effects?.researched).toEqual(['technology:cv2', 'technology:cr2']);
     expect(screen.getByText(/To pay: 6/)).toBeVisible();
     expect(cards().getByRole('button', { name: /Trade/ })).toBeEnabled();
-    await click('Remove one Researched');
-    await click('Remove one Researched');
+    await userEvent.click(row.getByRole('button', { name: 'Carrier' }));
+    await userEvent.click(row.getByRole('button', { name: 'Cruiser' }));
     expect(cardEntry().effects?.researched).toBeUndefined();
+  });
+
+  test('a technology the row does not show stays researched when an upgrade is tapped', async () => {
+    await primary('Technology');
+    act(() => store().updateEntry(cardEntry().id, { effects: { researched: ['technology:gd'] } }));
+    await userEvent.click(within(screen.getByRole('group', { name: 'Upgrade' })).getByRole('button', { name: 'Carrier' }));
+    expect(cardEntry().effects?.researched).toEqual(['technology:gd', 'technology:cv2']);
   });
 
   test('the secondary costs 4 each, and the card stays open to switch', async () => {
@@ -715,7 +723,7 @@ describe('strategy wording and structure upgrades (#7)', () => {
     const row = within(screen.getByRole('group', { name: 'Upgrade' }));
     await userEvent.click(row.getByRole('button', { name: 'PDS' }));
     await userEvent.click(row.getByRole('button', { name: 'Space dock' }));
-    expect(cardEntry().upgrades).toEqual(['pds', 'spacedock']);
+    expect(cardEntry().effects?.researched).toEqual(['technology:pds2', 'technology:sd2']);
   });
 
   test('Construction: both abilities are named by the term', async () => {

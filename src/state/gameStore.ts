@@ -7,11 +7,11 @@ import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, 
 import { withTeMecatol } from '../domain/mecatol';
 import { startingDocks, withForTokenOfRound } from '../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
-import { toggleUpgrade } from '../domain/unitStats';
+import { setLeader, setStartHolding } from '../domain/holdings';
 import { slotKeyOf } from '../domain/layouts';
 import { placeStartUnits, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
-  DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, Phase, Plan, Round, UnitCounts, UnitId,
+  DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, Plan, Round, UnitCounts,
 } from '../domain/types';
 import { loadGame, listGames } from '../storage/db';
 import { errorText } from '../storage/errorText';
@@ -203,8 +203,10 @@ export interface GameStore {
   /** Switches the map template; see `changeLayout`. */
   setLayout(layout: MapLayout): void;
   setOpponent(index: number, patch: { faction: string }): void;
-  /** Marks a ship upgrade by hand: `me` edits my baseline, an opponent id that opponent's list. */
-  toggleUpgrade(player: string, unit: UnitId): void;
+  /** Marks by hand what a player (`me` or an opponent id) held when the plan begins, by component id; a unit upgrade is its technology. */
+  setStartHolding(player: string, id: string, present: boolean): void;
+  /** Marks by hand a leader's state when the plan begins; `null` locks it again. */
+  setLeader(player: string, id: string, state: LeaderState | null): void;
   setEnemyUnits(systemId: string, opponentId: string, units: UnitCounts): void;
   setEnemyGround(planetId: string, opponentId: string, units: UnitCounts): void;
   /** `owner` is `me`, an opponent id, or null for a free planet. */
@@ -466,7 +468,8 @@ export const useGame = create<GameStore>((set, get) => {
     }),
     setLayout: layout => commitPlayers((g, pack) => changeLayout(g, layout, pack)),
     setOpponent: (index, { faction }) => commitPlayers((g, pack) => setPlayerFaction(g, index + 1, faction, pack)),
-    toggleUpgrade: (player, unit) => commit(g => toggleUpgrade(g, player, unit)),
+    setStartHolding: (player, id, present) => commit(g => setStartHolding(g, player, id, present)),
+    setLeader: (player, id, state) => commit(g => setLeader(g, player, id, state)),
     setEnemyUnits: (systemId, opponentId, units) =>
       commit(g => {
         const inSystem = g.enemyUnits[systemId] ?? {};

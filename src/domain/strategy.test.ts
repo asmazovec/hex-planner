@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
+import { emptyHoldings, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { project, stateBeforeEntry, stateAfterEntry } from './project';
 import { withTeMecatol } from './mecatol';
@@ -7,6 +8,8 @@ import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, freshP
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);
+/** A unit upgrade as the technology Jol-Nar researches for it. */
+const techs = (units: UnitId[]): string[] => units.map(unit => upgradeTech(pack, 'jolnar', unit)!);
 const HOME = '1,0';
 const OTHER = '0,1';
 const [JOL, NAR] = pack.tiles[pack.factions.jolnar.homeTile].planetIds;
@@ -56,10 +59,10 @@ describe('the three modes', () => {
   });
 
   test('a bare secondary is charged and its upgrades apply at no resource cost', () => {
-    const bare = play({ type: 'secondary', upgrades: ['carrier'] });
+    const bare = play({ type: 'secondary', effects: { researched: techs(['carrier']) } });
     const { state, warningsByEntry } = stateOf(start([bare]));
     expect(state.strategy).toBe(1);
-    expect(state.upgrades).toEqual(['carrier']);
+    expect(upgradesOf(state.holdings, pack)).toEqual(['carrier']);
     expect(warningsByEntry[bare.id]).toEqual([]);
     expect(costsStrategyToken(bare)).toBe(true);
   });
@@ -204,7 +207,7 @@ describe('Leadership', () => {
   });
 
   test('the cost is in influence, 3 per bought token', () => {
-    expect(cardCost(secondary(1, { boughtTokens: 2 }), 'jolnar', [], pack)).toEqual({ kind: 'influence', amount: 6 });
+    expect(cardCost(secondary(1, { boughtTokens: 2 }), 'jolnar', emptyHoldings(), pack)).toEqual({ kind: 'influence', amount: 6 });
   });
 });
 
@@ -310,7 +313,7 @@ describe('Warfare', () => {
     expect(state.strategy).toBe(1);
     expect(state.tokensOnMap).toEqual([]);
     expect(state.exhausted).toEqual([JOL, NAR]);
-    expect(cardCost(entry, 'jolnar', [], pack)).toEqual({ kind: 'resources', amount: pack.units.carrier!.cost });
+    expect(cardCost(entry, 'jolnar', emptyHoldings(), pack)).toEqual({ kind: 'resources', amount: pack.units.carrier!.cost });
   });
 
   test('production at an off-map home lands on its planets, not at the gate', () => {
@@ -339,29 +342,29 @@ describe('Warfare', () => {
 
 describe('Technology', () => {
   const research = (type: 'strategic' | 'secondary', upgrades: UnitId[], over: Partial<CardEntry> = {}): CardEntry =>
-    ({ ...play({ type, card: 7 }), upgrades, ...over }) as CardEntry;
+    ({ ...play({ type, card: 7, effects: { researched: techs(upgrades) } }), ...over }) as CardEntry;
 
   test('a primary: the first upgrade is free, the second costs 6; for a token the same', () => {
-    expect(cardCost(research('strategic', ['carrier']), 'jolnar', [], pack).amount).toBe(0);
-    expect(cardCost(research('strategic', ['carrier', 'cruiser']), 'jolnar', [], pack)).toEqual({ kind: 'resources', amount: 6 });
-    expect(cardCost(research('strategic', ['carrier', 'cruiser'], { forToken: true }), 'jolnar', [], pack).amount).toBe(6);
+    expect(cardCost(research('strategic', ['carrier']), 'jolnar', emptyHoldings(), pack).amount).toBe(0);
+    expect(cardCost(research('strategic', ['carrier', 'cruiser']), 'jolnar', emptyHoldings(), pack)).toEqual({ kind: 'resources', amount: 6 });
+    expect(cardCost(research('strategic', ['carrier', 'cruiser'], { forToken: true }), 'jolnar', emptyHoldings(), pack).amount).toBe(6);
   });
 
   test('a secondary costs 4 per upgrade', () => {
-    expect(cardCost(research('secondary', ['carrier', 'cruiser']), 'jolnar', [], pack)).toEqual({ kind: 'resources', amount: 8 });
+    expect(cardCost(research('secondary', ['carrier', 'cruiser']), 'jolnar', emptyHoldings(), pack)).toEqual({ kind: 'resources', amount: 8 });
   });
 
   test('upgrades apply, and short resources warn', () => {
     const entry = research('secondary', ['carrier']);
     const { state, warningsByEntry } = stateOf(start([entry]));
-    expect(state.upgrades).toEqual(['carrier']);
+    expect(upgradesOf(state.holdings, pack)).toEqual(['carrier']);
     expect(warningsByEntry[entry.id]).toEqual([{ code: 'shortResources', params: { needed: 4, paid: 0 } }]);
   });
 
   test('without a card an entry\'s upgrades still apply and cost nothing', () => {
-    const entry = play({ type: 'strategic', upgrades: ['carrier'] });
+    const entry = play({ type: 'strategic', effects: { researched: techs(['carrier']) } });
     const { state, warningsByEntry } = stateOf(start([entry]));
-    expect(state.upgrades).toEqual(['carrier']);
+    expect(upgradesOf(state.holdings, pack)).toEqual(['carrier']);
     expect(warningsByEntry[entry.id]).toEqual([]);
   });
 });
@@ -381,8 +384,8 @@ describe('choices and changes', () => {
     expect(freshPlay({ type: 'strategic', card: 7 })).not.toHaveProperty('acts');
   });
 
-  test('a switch of card or side starts the play over: effects, payment and upgrades go', () => {
-    expect(freshPlay({ card: 7, type: 'secondary' })).toEqual({ card: 7, type: 'secondary', effects: undefined, upgrades: undefined });
+  test('a switch of card or side starts the play over: effects, payment and research go', () => {
+    expect(freshPlay({ card: 7, type: 'secondary' })).toEqual({ card: 7, type: 'secondary', effects: undefined });
   });
 
   test('a change of cost pays automatically; a manual payment is left alone', () => {

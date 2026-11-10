@@ -3,29 +3,29 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { CARD } from '../../strategy';
 import { unitStats } from '../../unitStats';
-import { before, codesOf, FACTION, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
+import { before, codesOf, FACTION, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';
 import { holding } from './kit-83-101';
 
 const pack = rulesPack();
 
 describe('LRR 90 Technology', () => {
   test('90.1 / 90.2: a technology is owned from the entry that gains it on, and not before', () => {
-    const research = primary(CARD.technology, {}, { upgrades: ['carrier'] });
+    const research = primary(CARD.technology, { researched: [tech('carrier')] });
     const game = holding(rulesGame({ entries: [research] }), CARD.technology);
-    expect(before(game, pack, research).upgrades).not.toContain('carrier');
-    expect(forecast(game, pack).state.upgrades).toContain('carrier');
+    expect(before(game, pack, research).holdings.technologies).not.toContain(tech('carrier'));
+    expect(forecast(game, pack).state.holdings.technologies).toContain(tech('carrier'));
   });
 
   test('90.3: research takes the technology from the player\'s deck into their play area', () => {
-    const research = secondary(CARD.technology, { payment: { planets: ['h1', 'h2'], tradeGoods: 0 } }, { upgrades: ['cruiser'] });
-    expect(forecast(rulesGame({ entries: [research] }), pack).state.upgrades).toEqual(['cruiser']);
+    const research = secondary(CARD.technology, { researched: [tech('cruiser')], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
+    expect(forecast(rulesGame({ entries: [research] }), pack).state.holdings.technologies).toEqual([tech('cruiser')]);
   });
 
   test('90.3.1: both the primary and the secondary of Technology research', () => {
-    const first = primary(CARD.technology, {}, { upgrades: ['carrier'] });
-    const second = secondary(CARD.technology, { payment: { planets: ['h1', 'h2'], tradeGoods: 0 } }, { upgrades: ['cruiser'] });
+    const first = primary(CARD.technology, { researched: [tech('carrier')] });
+    const second = secondary(CARD.technology, { researched: [tech('cruiser')], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
     const game = holding(rulesGame({ rounds: [[first], [second]] }), CARD.technology);
-    expect(forecast(game, pack).state.upgrades.sort()).toEqual(['carrier', 'cruiser']);
+    expect(forecast(game, pack).state.holdings.technologies).toEqual([tech('carrier'), tech('cruiser')]);
     expect(codesOf(game, pack, first)).toEqual([]);
     expect(codesOf(game, pack, second)).toEqual([]);
   });
@@ -57,23 +57,23 @@ describe('LRR 90 Technology', () => {
   test('90.8.1: prerequisites give the number and colour needed: Prototype War Sun II needs three warfare and one cybernetic', () => {
     expect(loadPack([]).technologies.pws2.requires).toEqual({ warfare: 3, cybernetic: 1 });
   });
-  test.todo('90.9: research comes from the Technology card or other effects — the card side is tested at 90.3.1; other effects are entered as upgrades on any card entry');
+  test.todo('90.9: research comes from the Technology card or other effects — the card side is tested at 90.3.1; other effects are entered as the `gains` of any entry (src/domain/holdings.test.ts)');
 
   test('90.10: research takes a card from the deck, so a technology already owned cannot be researched again', () => {
-    const again = secondary(CARD.technology, { payment: { planets: ['h1', 'h2'], tradeGoods: 0 } }, { upgrades: ['carrier'] });
-    const game = holding(rulesGame({ entries: [primary(CARD.technology, {}, { upgrades: ['carrier'] }), again] }), CARD.technology);
+    const again = secondary(CARD.technology, { researched: [tech('carrier')], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
+    const game = holding(rulesGame({ entries: [primary(CARD.technology, { researched: [tech('carrier')] }), again] }), CARD.technology);
     expect(codesOf(game, pack, again)).not.toEqual([]);
   });
 
   test('90.10: an upgrade researched again is a researchOwned and costs nothing more', () => {
-    const again = primary(CARD.technology, { researched: 1 }, { upgrades: ['carrier'] });
-    const game = holding(rulesGame({ rounds: [[primary(CARD.technology, {}, { upgrades: ['carrier'] })], [again]] }), CARD.technology);
+    const again = primary(CARD.technology, { researched: [tech('carrier'), 'technology:st'] });
+    const game = holding(rulesGame({ rounds: [[primary(CARD.technology, { researched: [tech('carrier')] })], [again]] }), CARD.technology);
     expect(codesOf(game, pack, again)).toEqual(['researchOwned']);
   });
 
   test('90.10.1: a researched unit upgrade applies to the actions after it: a carrier II then moves two systems', () => {
     const move = tactical(TARGET, { moves: [{ from: HOME, units: { carrier: 1 }, via: [NEAR] }] });
-    const research = primary(CARD.technology, {}, { upgrades: ['carrier'] });
+    const research = primary(CARD.technology, { researched: [tech('carrier')] });
     const after = holding(rulesGame({ units: { [HOME]: { carrier: 1 } }, entries: [research, move] }), CARD.technology);
     expect(codesOf(after, pack, move)).not.toContain('speedShort');
   });

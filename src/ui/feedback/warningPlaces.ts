@@ -4,7 +4,7 @@ import { groupOf, sourcesOf, type Move } from '../plan/tactical';
 
 /** The block of an editor where the thing a warning speaks of is set up. */
 export type WarningPlace =
-  | 'route' | 'cargo' | 'battle' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action' | 'ready' | 'research' | 'deal';
+  | 'route' | 'cargo' | 'battle' | 'landing' | 'production' | 'payment' | 'tokens' | 'card' | 'system' | 'slice' | 'units' | 'action' | 'ready' | 'research' | 'deal' | 'component';
 
 /** Where the warnings of a step stand: the step of the domain decides the block, so a new rule needs no edit here. */
 export const STEP_PLACES: Record<RuleStep, WarningPlace[]> = {
@@ -20,6 +20,7 @@ export const STEP_PLACES: Record<RuleStep, WarningPlace[]> = {
   status: ['tokens'],
   expedition: ['slice'],
   transaction: ['deal'],
+  component: ['component'],
 };
 
 /**

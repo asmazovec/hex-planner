@@ -530,34 +530,46 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     expect(game()).toEqual(old);
   });
 
-  test('a tap on a ship upgrade is one undo step', () => {
-    act().toggleUpgrade('me', 'carrier');
-    expect(game().upgrades.me).toEqual(['carrier']);
+  test('a mark of a start holding is one undo step, for me and for an opponent', () => {
+    const mine = game().start.me;
+    act().setStartHolding('me', 'technology:cv2', true);
+    expect(game().start.me.technologies).toEqual([...(mine.technologies ?? []), 'technology:cv2']);
     const id = game().opponents[0].id;
-    act().toggleUpgrade(id, 'fighter');
-    expect(game().upgrades.opponents[id]).toEqual(['fighter']);
+    act().setStartHolding(id, 'technology:ff2', true);
+    expect(game().start.opponents[id]).toEqual({ technologies: ['technology:ff2'] });
     act().undo();
-    expect(game().upgrades.opponents[id]).toBeUndefined();
+    expect(game().start.opponents[id]).toBeUndefined();
     act().undo();
-    expect(game().upgrades.me).toEqual([]);
+    expect(game().start.me).toEqual(mine);
   });
 
-  test('removing an opponent through the store removes their upgrades, and undo brings them back', () => {
+  test('a leader\'s state set by hand is one undo step; null locks it again', () => {
     const id = game().opponents[0].id;
-    act().toggleUpgrade(id, 'fighter');
+    act().setLeader(id, 'leader:solagent', 'exhausted');
+    act().setLeader('me', 'leader:solhero', 'unlocked');
+    expect(game().start.opponents[id].leaders).toEqual({ 'leader:solagent': 'exhausted' });
+    act().setLeader('me', 'leader:solhero', null);
+    expect(game().start.me.leaders).toEqual({});
+    act().undo();
+    expect(game().start.me.leaders).toEqual({ 'leader:solhero': 'unlocked' });
+  });
+
+  test('removing an opponent through the store removes their start holdings, and undo brings them back', () => {
+    const id = game().opponents[0].id;
+    act().setStartHolding(id, 'technology:ff2', true);
     act().removeOpponent(0);
-    expect(game().upgrades.opponents).toEqual({});
+    expect(game().start.opponents).toEqual({});
     act().undo();
-    expect(game().upgrades.opponents[id]).toEqual(['fighter']);
+    expect(game().start.opponents[id]).toEqual({ technologies: ['technology:ff2'] });
   });
 
-  test('a copied plan has entry upgrades of its own', () => {
-    const id = act().addEntry(1, { type: 'strategic', upgrades: ['carrier'] }, 'action');
+  test('a copied plan has entry research of its own', () => {
+    const id = act().addEntry(1, { type: 'strategic', effects: { researched: ['technology:cv2'] } }, 'action');
     act().copyPlan();
     const copy = round().entries[0];
-    expect(copy).toMatchObject({ upgrades: ['carrier'] });
-    act().updateEntry(copy.id, { upgrades: [] });
-    expect(plans()[0].rounds[0].entries.find(e => e.id === id)).toMatchObject({ upgrades: ['carrier'] });
+    expect(copy).toMatchObject({ effects: { researched: ['technology:cv2'] } });
+    act().updateEntry(copy.id, { effects: {} });
+    expect(plans()[0].rounds[0].entries.find(e => e.id === id)).toMatchObject({ effects: { researched: ['technology:cv2'] } });
   });
 });
 

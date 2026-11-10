@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import type { Game } from '../../types';
-import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();
 
@@ -23,7 +23,7 @@ describe('LRR 79 Space Dock', () => {
   test('79.1 (Space Dock II): an upgraded dock produces its planet’s resources + 4: the dock on h2 makes 5, not 6', () => {
     const fits = tactical(HOME, { production: { destroyer: 5 } });
     const over = tactical(HOME, { production: { destroyer: 6 } });
-    const game = (entry: typeof fits) => rulesGame({ entries: [entry], game: { docks: ['h2'], upgrades: { me: ['spacedock'], opponents: {} } } });
+    const game = (entry: typeof fits) => rulesGame({ entries: [entry], game: { docks: ['h2'], start: { me: { technologies: [tech('spacedock')] }, opponents: {} } } });
     expect(codesOf(game(fits), pack, fits)).not.toContain('productionOver');
     expect(codesOf(game(over), pack, over)).toContain('productionOver');
   });
@@ -83,7 +83,7 @@ describe('LRR 79 Space Dock', () => {
   });
 
   test('79 (Space Dock card): Fighter II a dock keeps do not count toward the fleet pool, a fourth one does', () => {
-    const fighterTwo = { upgrades: { me: ['fighter' as const], opponents: {} } };
+    const fighterTwo = { start: { me: { technologies: [tech('fighter')] }, opponents: {} } };
     const three = tactical(HOME, { production: { fighter: 2 } });
     const atHome = { [HOME]: { destroyer: 3, fighter: 1 } };
     expect(codesOf(rulesGame({ units: atHome, entries: [three], game: { docks: ['h1'], ...fighterTwo } }), pack, three)).not.toContain('fleetPool');

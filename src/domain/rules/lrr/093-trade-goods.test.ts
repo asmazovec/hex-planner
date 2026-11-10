@@ -16,7 +16,7 @@ describe('LRR 93 Trade Goods', () => {
   });
 
   test('93.3: trade goods can be spent in any phase, also on a strategy card', () => {
-    const play = secondary(CARD.technology, { researched: 1, payment: { planets: [], tradeGoods: 4 } });
+    const play = secondary(CARD.technology, { researched: ['technology:st'], payment: { planets: [], tradeGoods: 4 } });
     const game = rulesGame({ entries: [adjust({ tradeGoods: 4 }, 'strategy'), play] });
     expect(codesOf(game, pack, play)).toEqual([]);
     expect(forecast(game, pack).state.tradeGoods).toBe(0);

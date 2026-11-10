@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { CARD } from '../../strategy';
 import { hasLevelTwo, SHIP_KINDS, unitStats } from '../../unitStats';
-import { codesOf, FACTION, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { codesOf, FACTION, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 import { holding } from './kit-83-101';
 
 const pack = rulesPack();
@@ -20,12 +20,12 @@ describe('LRR 97 Unit Upgrades', () => {
     expect(hasLevelTwo(FACTION, 'infantry', pack)).toBe(true);
   });
 
-  test.todo('97.1.1: the Nekro Virus upgrade units of the same type whatever the name — not modelled: faction technologies are not tracked');
+  test.todo('97.1.1: the Nekro Virus upgrade units of the same type whatever the name — not modelled: Valefar Assimilator copies are not tracked');
   test.todo('97.2: the upgrade card covers the unit on the faction sheet — display only; the effect is tested at 97.4');
   test.todo('97.3: white arrows mark what improves — display only, nothing to compute');
 
   test('97.4: after the upgrade the unit has the upgrade\'s numbers: a carrier then moves two and carries six', () => {
-    const research = primary(CARD.technology, {}, { upgrades: ['carrier'] });
+    const research = primary(CARD.technology, { researched: [tech('carrier')] });
     const move = tactical(TARGET, { moves: [{ from: HOME, units: { carrier: 1, infantry: 6 }, via: [NEAR] }] });
     const game = holding(rulesGame({ units: { [HOME]: { carrier: 1, infantry: 6 } }, entries: [research, move] }), CARD.technology);
     expect(codesOf(game, pack, move)).toEqual([]);
@@ -33,7 +33,7 @@ describe('LRR 97 Unit Upgrades', () => {
 
   test('97.4: before the upgrade the printed numbers still hold', () => {
     const move = tactical(TARGET, { moves: [{ from: HOME, units: { carrier: 1, infantry: 6 }, via: [NEAR] }] });
-    const research = primary(CARD.technology, {}, { upgrades: ['carrier'] });
+    const research = primary(CARD.technology, { researched: [tech('carrier')] });
     const game = holding(rulesGame({ units: { [HOME]: { carrier: 1, infantry: 6 } }, entries: [move, research] }), CARD.technology);
     expect(codesOf(game, pack, move)).toEqual(expect.arrayContaining(['speedShort', 'capacityGroup']));
   });

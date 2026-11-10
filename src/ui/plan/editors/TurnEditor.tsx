@@ -26,10 +26,17 @@ export function TurnEditor({ entry, game, pack, warnings, turnActs, onNote, onDo
   // The acts block shows its own; the rest stands first, where it cannot be missed.
   placer.at('deal');
   placer.at('slice');
+  // What the component itself breaks stands with the component, under the rest.
+  const ofComponent = placer.at('component');
   return (
     <EditorFrame title={t(`plan.menu.${entry.type}`)} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
-      {entry.type === 'component' && <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />}
+      {entry.type === 'component' && (
+        <>
+          <WarningList warnings={ofComponent} game={game} pack={pack} />
+          <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
+        </>
+      )}
       {turnActs}
     </EditorFrame>
   );

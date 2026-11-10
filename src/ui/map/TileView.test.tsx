@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { hexLayout } from '../../domain/hexLayout';
+import { emptyHoldings } from '../../domain/holdings';
 import { createGame } from '../../domain/newGame';
 import type { Game, GameState } from '../../domain/types';
 import { setLanguage } from '../../i18n';
@@ -27,7 +28,7 @@ beforeEach(() => setLanguage('en'));
 
 const emptyState = (): GameState => ({
   systems: {}, ground: {}, exhausted: [], control: {}, tokensOnMap: [],
-  tradeGoods: 0, commodities: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {},
+  tradeGoods: 0, commodities: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, holdings: emptyHoldings(), docks: [], pds: {},
 });
 
 function setup(

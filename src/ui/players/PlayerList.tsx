@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
+import { holdingsOf, upgradesOf } from '../../domain/holdings';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
 import type { UnitId, UpgradeId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
@@ -17,7 +18,7 @@ export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
   /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
-  live?: { upgraded: UpgradeId[]; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
+  live?: { upgraded: UpgradeId[]; /** Each opponent's upgraded types in the state shown, by id. */ rivalUpgraded?: Record<string, UpgradeId[]>; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
@@ -123,7 +124,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
               <FactionCard
                 faction={faction} pack={pack} expansions={game.expansions}
                 live={live && {
-                  upgraded: index === 0 ? live.upgraded : game.upgrades.opponents[player.id],
+                  upgraded: index === 0 ? live.upgraded : live.rivalUpgraded?.[player.id] ?? upgradesOf(holdingsOf(game.start.opponents[player.id]), pack),
                   locked: index === 0 ? live.locked : undefined,
                 }}
               />

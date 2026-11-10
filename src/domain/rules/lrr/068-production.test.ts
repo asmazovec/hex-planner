@@ -3,6 +3,7 @@
  * A space dock I produces its planet's resources + 2: h1 (3) gives 5, h2 (1) gives 3, t1 (2) gives 4, t2 (1) gives 3.
  */
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from '../../holdings';
 import { productionCost } from '../../project';
 import { codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
@@ -43,7 +44,7 @@ describe('LRR 68 Production', () => {
   });
 
   test('68.1.3: one infantry instead of two still costs the whole cost', () => {
-    expect(productionCost({ infantry: 1 }, FACTION, [], pack)).toBe(1);
+    expect(productionCost({ infantry: 1 }, FACTION, emptyHoldings(), pack)).toBe(1);
   });
 
   test.todo('68.1.4: Arborec space docks give no production value to infantry — not modelled: faction abilities are not applied');

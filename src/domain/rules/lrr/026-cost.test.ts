@@ -1,12 +1,13 @@
 /** LRR 26 Cost. Source: tirules2 rules-reference/cost.md. */
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from '../../holdings';
 import { loadPack } from '../../../data/loadPack';
 import { CARD } from '../../strategy';
 import { productionCost } from '../../unitStats';
 import { adjust, codesOf, FACTION, HOME, primary, rulesGame, rulesPack, tactical } from '../kit';
 
 const pack = rulesPack();
-const cost = (units: Parameters<typeof productionCost>[0]) => productionCost(units, FACTION, [], pack);
+const cost = (units: Parameters<typeof productionCost>[0]) => productionCost(units, FACTION, emptyHoldings(), pack);
 const atHome = { docks: ['h1'] };
 
 describe('LRR 26 Cost', () => {

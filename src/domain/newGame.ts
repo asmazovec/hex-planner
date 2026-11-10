@@ -1,3 +1,4 @@
+import { startForFaction } from './holdings';
 import { defaultLayout, slotKeyOf, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
 import { SAVE_FORMAT, type DataPack, type ExpansionId, type Game, type MapLayout } from './types';
@@ -47,7 +48,7 @@ export function createGame(
     vp: 0,
     map,
     opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent', newId), faction: '', vp: 0, seat: i + 2, color: i + 2 })),
-    upgrades: { me: [], opponents: {} },
+    start: { me: startForFaction({}, '', input.faction, pack), opponents: {} },
     enemyUnits: {},
     enemyGround: {},
     planetControl,

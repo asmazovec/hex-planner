@@ -330,15 +330,15 @@ describe('upgrades of players', () => {
   test('removing an opponent removes their upgrades only', () => {
     const game = start(4);
     const [first, second] = game.opponents;
-    const marked = { ...game, upgrades: { me: ['carrier' as const], opponents: { [first.id]: ['cruiser' as const], [second.id]: ['fighter' as const] } } };
-    expect(removePlayer(marked, 1, pack).upgrades).toEqual({ me: ['carrier'], opponents: { [second.id]: ['fighter'] } });
+    const marked = { ...game, start: { me: { technologies: ['technology:cv2'] }, opponents: { [first.id]: { technologies: ['technology:cr2'] }, [second.id]: { technologies: ['technology:ff2'] } } } };
+    expect(removePlayer(marked, 1, pack).start).toEqual({ me: { technologies: ['technology:cv2'] }, opponents: { [second.id]: { technologies: ['technology:ff2'] } } });
   });
 
-  test('changing a faction keeps the list', () => {
+  test('changing a faction keeps what was marked by hand; only the starting technologies follow the faction', () => {
     const game = start(4);
     const opponent = game.opponents[0];
-    const marked = { ...game, upgrades: { me: ['warsun' as const], opponents: { [opponent.id]: ['cruiser' as const] } } };
-    expect(setPlayerFaction(marked, 0, 'arborec', pack).upgrades).toEqual(marked.upgrades);
-    expect(setPlayerFaction(marked, 1, 'muaat', pack).upgrades).toEqual(marked.upgrades);
+    const marked = { ...game, start: { me: { technologies: ['technology:ws'] }, opponents: { [opponent.id]: { technologies: ['technology:cr2'] } } } };
+    expect(setPlayerFaction(marked, 0, 'arborec', pack).start).toEqual({ ...marked.start, me: { technologies: ['technology:ws', 'technology:md'] } });
+    expect(setPlayerFaction(marked, 1, 'muaat', pack).start).toEqual({ ...marked.start, opponents: { [opponent.id]: { technologies: ['technology:cr2', 'technology:ps'] } } });
   });
 });

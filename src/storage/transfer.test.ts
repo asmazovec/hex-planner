@@ -121,13 +121,16 @@ test('owners of enemy units and planets survive export and import', () => {
   expect(importGame(exportGame(owned))).toEqual({ ok: true, game: owned });
 });
 
-test('upgrades survive a round trip, entries included, and a bad unit is refused', () => {
+test('holdings survive a round trip, entries included, and a bad leader state is refused', () => {
   const game = sampleGame();
   const opponent = game.opponents[0].id;
-  const marked = { ...game, upgrades: { me: ['carrier' as const], opponents: { [opponent]: ['fighter' as const] } } };
-  marked.plans[0].rounds[0].entries[1] = { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic', upgrades: ['cruiser'] };
+  const marked = { ...game, start: { me: { technologies: ['technology:cv2'], hand: ['actionCard:bribery', 'actionCard:bribery'], leaders: { 'leader:solagent': 'exhausted' as const }, breakthrough: 'held' as const }, opponents: { [opponent]: { technologies: ['technology:ff2'], relics: ['relic:nanoforge'] } } } };
+  marked.plans[0].rounds[0].entries[1] = { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic', effects: { researched: ['technology:cr2'] }, gains: ['actionCard:abs'], spends: ['actionCard:bribery'] };
+  marked.plans[0].rounds[0].entries[2] = { id: 'e3', phase: 'action', status: 'planned', type: 'component', componentId: 'leader:solagent', note: '', choices: { planet: 'jord', count: 2 } };
+  marked.plans[0].rounds[0].entries[3] = { id: 'e4', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 1, fleet: 1, strategy: 0, scored: ['publicObjective:corner'] };
   expect(importGame(exportGame(marked))).toEqual({ ok: true, game: marked });
-  expect(importGame(JSON.stringify({ ...game, upgrades: { me: ['spaceship'], opponents: {} } })).ok).toBe(false);
+  expect(importGame(JSON.stringify({ ...game, start: { me: { leaders: { 'leader:solagent': 'asleep' } }, opponents: {} } })).ok).toBe(false);
+  expect(importGame(JSON.stringify({ ...game, start: undefined })).ok).toBe(false);
 });
 
 test('a card entry with its effects and a free tactical survive export and import', () => {

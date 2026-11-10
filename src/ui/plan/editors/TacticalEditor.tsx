@@ -58,14 +58,14 @@ export function TacticalEditor({
   const { t } = useTranslation();
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
-  const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.upgrades, pack);
+  const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.holdings, pack);
   const cost = priceOf(entry.production);
   const unitText = (units: UnitCounts): string => unitsText(units, t);
 
   const sources = sourcesOf(game, pack, entry);
   /** A source in the list: its ships, then how much rides as cargo. */
   const sourceLine = (source: string): string => {
-    const { ships, cargo } = splitFlight(game, pack, before.upgrades, unitsIn(groupOf(game, pack, entry.moves, source)));
+    const { ships, cargo } = splitFlight(game, pack, before.holdings, unitsIn(groupOf(game, pack, entry.moves, source)));
     const aboard = countOf(cargo);
     return `${unitText(ships) || t('plan.tactical.noShips')}${aboard > 0 ? t('plan.tactical.cargoShort', { n: aboard }) : ''}`;
   };

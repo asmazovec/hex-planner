@@ -5,6 +5,7 @@ import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
 import { boardSystemWarnings, dockFighterRoom, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
 import { timelineOf } from '../../../state/projection';
+import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, GameState, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -240,7 +241,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const fights = (owner: string): boolean => present.has(owner) || lossesFor(owner).length > 0;
 
   const sideFaction = side === mine ? view.faction : seated.find(o => o.id === side)?.faction ?? '';
-  const sideUpgrades = side === mine ? onPurchase?.upgrades ?? beforeTactical?.upgrades ?? acting.upgrades : game.upgrades.opponents[side] ?? [];
+  const sideHoldings = side === mine ? onPurchase?.holdings ?? beforeTactical?.holdings ?? acting.holdings : state.rivals?.[side]?.holdings ?? holdingsOf(game.start.opponents[side]);
+  const sideUpgrades = upgradesOf(sideHoldings, pack);
   const inBuild = mode === 'build';
   const units = UNIT_ORDER.filter(u => pack.units[u]);
   const boughtOf = (kind: TokenKind): number => Object.entries(bought)
@@ -264,9 +266,9 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
-  const spent = productionCost(sideUnits, sideFaction, sideUpgrades, pack);
+  const spent = productionCost(sideUnits, sideFaction, sideHoldings, pack);
   const spendable = readyResources(payer, pack) + payer.tradeGoods;
-  const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.upgrades, pack, dockFighterRoom(view, acting, slot, pack));
+  const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.holdings, pack, dockFighterRoom(view, acting, slot, pack));
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
   const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
   /** Over the limit is what the domain says of the entry. */

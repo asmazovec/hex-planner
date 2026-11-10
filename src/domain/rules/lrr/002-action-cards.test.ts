@@ -1,5 +1,9 @@
-/** LRR 2 Action Cards. Source: tirules2 rules-reference/action-cards.md. The app keeps no hand and no deck of action cards. */
-import { describe, test } from 'vitest';
+/** LRR 2 Action Cards. Source: tirules2 rules-reference/action-cards.md. The hand is kept by what entries gain and play; there is no deck. */
+import { describe, expect, test } from 'vitest';
+import type { Entry } from '../../types';
+import { forecast, rulesGame, rulesPack } from '../kit';
+
+const pack = rulesPack();
 
 describe('LRR 2 Action Cards', () => {
   test.todo('2.1: each player draws one action card in each status phase — not modelled: no hand of action cards');
@@ -11,7 +15,11 @@ describe('LRR 2 Action Cards', () => {
   test.todo('2.6: the bold first paragraph gives the timing — not modelled: cards are not resolved');
   test.todo('2.6.1: an "Action" card takes a component action and must be resolvable in full — not modelled: a component action is a note');
   test.todo('2.6.2: cards of the same name cannot be played in one window on the same thing; cancelled ones do not count — not modelled: cards are not');
-  test.todo('2.7: a played card is resolved, then discarded — not modelled: no discard pile');
+  test('2.7: a played card leaves the hand; its effect is the player\'s to enter', () => {
+    const draw: Entry = { id: 'd', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: {}, gains: ['actionCard:bribery', 'actionCard:assassin'] };
+    const play: Entry = { id: 'p', phase: 'action', status: 'planned', type: 'component', note: '', componentId: 'actionCard:bribery' };
+    expect(forecast(rulesGame({ entries: [draw, play] }), pack).state.holdings.hand).toEqual(['actionCard:assassin']);
+  });
   test.todo('2.8: a cancelled card has no effect and is discarded — not modelled: cards are not');
   test.todo('2 note 1: players start with no action cards — not modelled: no hand');
   test.todo('2 note 2: the number of cards in hand is public — not modelled: no hand');

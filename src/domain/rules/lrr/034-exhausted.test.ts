@@ -32,6 +32,14 @@ describe('LRR 34 Exhausted', () => {
     expect(codesOf(game, pack, vote)).not.toContain('planetExhausted');
   });
 
+  test('34.2 / 81.6: the status phase readies an exhausted technology; note 1: the end of the agenda phase alone does not', () => {
+    const play = (id: string): Entry => ({ id, phase: 'action', status: 'planned', type: 'component', note: '', componentId: 'technology:gls' });
+    const start = { me: { technologies: ['technology:gls'] }, opponents: {} };
+    const readied = rulesGame({ entries: [play('a'), statusTokens(1, 1, 0)], game: { start } });
+    expect(forecast(rulesGame({ entries: [play('a')], game: { start } }), pack).state.holdings.exhausted).toEqual(['technology:gls']);
+    expect(forecast(readied, pack).state.holdings.exhausted).toEqual([]);
+  });
+
   test('34.3: spending a planet\'s resources exhausts it', () => {
     const spend = tactical(HOME, { production: { cruiser: 1 }, payment: { planets: ['h1'], tradeGoods: 0 } });
     expect(forecast(rulesGame({ entries: [spend], game: atHome }), pack).state.exhausted).toEqual(['h1']);
@@ -40,6 +48,14 @@ describe('LRR 34 Exhausted', () => {
   test('34.3: spending a planet\'s influence exhausts it', () => {
     const play = primary(CARD.leadership, { tokens: { tactic: 4 }, boughtTokens: 1, payment: { planets: ['h2', 'h1'], tradeGoods: 0 } });
     expect(forecast(rulesGame({ entries: [play] }), pack).state.exhausted).toEqual(['h2', 'h1']);
+  });
+
+  test('34.4 / 71.4: a card exhausted for its ability cannot be exhausted again until readied: componentExhausted', () => {
+    const play = (id: string): Entry => ({ id, phase: 'action', status: 'planned', type: 'component', note: '', componentId: 'technology:gls' });
+    const [first, again] = [play('a'), play('b')];
+    const game = rulesGame({ entries: [first, again], game: { start: { me: { technologies: ['technology:gls'] }, opponents: {} } } });
+    expect(codesOf(game, pack, first)).toEqual([]);
+    expect(codesOf(game, pack, again)).toEqual(['componentExhausted']);
   });
 
   test('34.4 / 71.4: an exhausted planet cannot be spent again', () => {

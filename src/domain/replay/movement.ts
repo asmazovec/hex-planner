@@ -24,7 +24,7 @@ export function checkRoutes(game: Game, state: GameState, target: string, moves:
     if (isLane(game, target, pack)) warnings.push(violation('routeBlocked', { from: move.from, systemId: target, context: 'hyperlane' }));
     const steps = routeSteps(game, full, pack, blockers);
     for (const unit of unitIds(move.units)) {
-      const speed = shipSpeed(game, unit, state.upgrades, pack);
+      const speed = shipSpeed(game, unit, state.holdings, pack);
       if (speed === null) continue;
       const moves = routeMove(game, left, speed, pack, blockers);
       if (moves < steps) warnings.push(violation('speedShort', { from: move.from, unit, move: moves, steps }));

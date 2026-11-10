@@ -1,6 +1,7 @@
 /** Step 89.5 Production (and the production of cards): which units produce, where built units stand, and what they cost. */
 import { violation } from '../rules/registry';
 import { homeSlot } from '../strategy';
+import { upgradesOf } from '../holdings';
 import { productionCost } from '../unitStats';
 import type { DataPack, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf } from './board';
@@ -21,7 +22,7 @@ export function producers(game: Game, state: GameState, systemId: string, pack: 
 /** A dock's Production: its planet's resources plus the dock's value (79.1), that of Space Dock II once it is upgraded. */
 const dockValue = (state: GameState, planetId: string, pack: DataPack): number => {
   const levels = pack.structures.find(s => s.id === 'spacedock')?.levels;
-  const level = state.upgrades.includes('spacedock') ? levels?.two ?? levels?.one : levels?.one;
+  const level = upgradesOf(state.holdings, pack).includes('spacedock') ? levels?.two ?? levels?.one : levels?.one;
   return (pack.planets[planetId]?.resources ?? 0) + (level?.production ?? 0);
 };
 
@@ -131,7 +132,7 @@ export function checkProduction(
 
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. */
 export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): void {
-  const cost = productionCost(entry.production, game.faction, state.upgrades, pack);
+  const cost = productionCost(entry.production, game.faction, state.holdings, pack);
   const paid = pay(state, entry.payment, 'resources', pack, warnings);
   if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
 }

@@ -1,5 +1,6 @@
 /** LRR 96 Units. Source: tirules2 rules-reference/units.md. */
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from '../../holdings';
 import { loadPack } from '../../../data/loadPack';
 import { CARD } from '../../strategy';
 import { productionCost } from '../../unitStats';
@@ -34,7 +35,7 @@ describe('LRR 96 Units', () => {
 
   test('96 note 1: a faction\'s own version of a ship is produced as that ship type, at its own cost', () => {
     const base = loadPack([]);
-    expect(productionCost({ carrier: 1 }, 'sol', [], base)).toBe(3);
+    expect(productionCost({ carrier: 1 }, 'sol', emptyHoldings(), base)).toBe(3);
     const build = tactical(HOME, { production: { carrier: 1 } });
     expect(forecast(rulesGame({ entries: [build], game: { docks: ['h1'] } }), pack).state.systems[HOME]).toEqual({ carrier: 1 });
   });

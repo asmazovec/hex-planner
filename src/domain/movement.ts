@@ -8,7 +8,8 @@ import { unitIds } from './replay/state';
 import { gridDistance, oppositeEdge, slotAcross } from './route';
 import { offMapHomes } from './strategy';
 import { unitStats } from './unitStats';
-import type { DataPack, Game, GameState, UnitCounts, UnitId, UpgradeId } from './types';
+import { upgradesOf } from './holdings';
+import type { DataPack, Game, GameState, Holdings, UnitCounts, UnitId } from './types';
 
 /** The systems holding ships of players other than the one moving: a route may end there, never pass (58.3.2). */
 export type Blockers = ReadonlySet<string>;
@@ -147,12 +148,13 @@ export function routeSteps(game: Game, path: string[], pack: DataPack, blockers:
   return stepsAlong(game, fullPath(game, path, pack, blockers), pack);
 }
 
-export const shipSpeed = (game: Game, unit: UnitId, upgrades: UpgradeId[], pack: DataPack): number | null =>
-  unitStats(game.faction, unit, upgrades.includes(unit), pack)?.move ?? null;
+/** How far a ship of the player flies with the unit upgrades they hold; null when it does not move by itself. */
+export const shipSpeed = (game: Game, unit: UnitId, holdings: Holdings, pack: DataPack): number | null =>
+  unitStats(game.faction, unit, upgradesOf(holdings, pack).includes(unit), pack)?.move ?? null;
 
 /** How far the fastest ship among these units flies; null without a ship that flies by itself. */
-export function fleetSpeed(game: Game, units: UnitCounts, upgrades: UpgradeId[], pack: DataPack): number | null {
-  const speeds = unitIds(units).flatMap(id => shipSpeed(game, id, upgrades, pack) ?? []);
+export function fleetSpeed(game: Game, units: UnitCounts, holdings: Holdings, pack: DataPack): number | null {
+  const speeds = unitIds(units).flatMap(id => shipSpeed(game, id, holdings, pack) ?? []);
   return speeds.length > 0 ? Math.max(...speeds) : null;
 }
 

@@ -280,7 +280,9 @@ const CASES: Record<WarningCode, Warning['params']> = {
   readyOverLimit: { limit: 2, readied: 3 },
   diplomacySystem: { systemId: '1,0' },
   researchOverLimit: { limit: 1, count: 2 },
-  researchOwned: { unit: 'carrier' },
+  researchOwned: { id: 'technology:cv2', name: 'Carrier II' },
+  componentNotHeld: { id: 'actionCard:bribery', name: 'Bribery' },
+  componentExhausted: { id: 'technology:gls', name: 'Graviton Laser System' },
   // combat-order, invasion, structures
   shipOnPlanet: { planetId: 'nestphar', unit: 'cruiser' },
   landingOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },

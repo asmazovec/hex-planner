@@ -57,7 +57,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   const target = entry.systemId ?? '';
   const group = groupOf(game, pack, entry.moves, source);
   const known = UNIT_ORDER.filter(u => pack.units[u]);
-  const flying = known.filter(u => fliesNow(game, pack, before.upgrades, u));
+  const flying = known.filter(u => fliesNow(game, pack, before.holdings, u));
   const cargo = known.filter(u => !flying.includes(u));
   // What rides with the ships stands by the cargo, the rest of the flight under its line.
   const placer = placeWarnings(warnings);

@@ -6,7 +6,7 @@
 import { fleetSpeed, routeMove, routeReach, type Blockers } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, UnitCounts, UnitId, UpgradeId } from './types';
+import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, UnitCounts, UnitId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -104,8 +104,8 @@ export function withProduction(
   entry: TacticalEntry, before: GameState, faction: string, unit: UnitId, planetId: string | null, amount: 1 | -1, pack: DataPack, manualPayment: boolean,
 ): Partial<TacticalEntry> {
   const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
-  const cost = productionCost(production, faction, before.upgrades, pack);
-  const seed = !manualPayment && cost !== productionCost(entry.production, faction, before.upgrades, pack);
+  const cost = productionCost(production, faction, before.holdings, pack);
+  const seed = !manualPayment && cost !== productionCost(entry.production, faction, before.holdings, pack);
   const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
   const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
   const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;
@@ -149,17 +149,17 @@ export const isValidSource = (game: Game, pack: DataPack, before: GameState, slo
   sourcePools(game, pack, before, slot).some(pool => hasUnits(pool.available));
 
 /** Whether a unit flies by itself at this point of the replay; everything else rides as cargo. */
-export function fliesNow(game: Game, pack: DataPack, upgrades: UpgradeId[], unit: UnitId): boolean {
+export function fliesNow(game: Game, pack: DataPack, holdings: Holdings, unit: UnitId): boolean {
   const def = pack.units[unit];
   if (!def || def.ground) return false;
-  return !def.fighter || fightersFly(game, upgrades, pack);
+  return !def.fighter || fightersFly(game, holdings, pack);
 }
 
 /** Splits units into the ships that fly by themselves and what rides on board. */
-export function splitFlight(game: Game, pack: DataPack, upgrades: UpgradeId[], units: UnitCounts): { ships: UnitCounts; cargo: UnitCounts } {
+export function splitFlight(game: Game, pack: DataPack, holdings: Holdings, units: UnitCounts): { ships: UnitCounts; cargo: UnitCounts } {
   const ships: UnitCounts = {};
   const cargo: UnitCounts = {};
-  for (const unit of Object.keys(units) as UnitId[]) (fliesNow(game, pack, upgrades, unit) ? ships : cargo)[unit] = units[unit];
+  for (const unit of Object.keys(units) as UnitId[]) (fliesNow(game, pack, holdings, unit) ? ships : cargo)[unit] = units[unit];
   return { ships, cargo };
 }
 
@@ -183,12 +183,12 @@ export const viaOf = (entry: Pick<TacticalEntry, 'moves'>, source: string): stri
  * A source's flight as it reads: the ships that leave it, what rides on board from the source itself, and what is picked
  * up in each system on the way.
  */
-export function flightOf(game: Game, pack: DataPack, upgrades: UpgradeId[], entry: TacticalEntry, source: string): { ships: UnitCounts; board: UnitCounts; stops: Map<string, UnitCounts> } {
+export function flightOf(game: Game, pack: DataPack, holdings: Holdings, entry: TacticalEntry, source: string): { ships: UnitCounts; board: UnitCounts; stops: Map<string, UnitCounts> } {
   const group = groupOf(game, pack, entry.moves, source);
   const own = group.filter(m => m.pickupOf === undefined);
   const leaving = own.filter(m => m.from === source).reduce((sum, m) => ({ ...sum, ...m.units }), {} as UnitCounts);
-  const { ships } = splitFlight(game, pack, upgrades, leaving);
-  const { cargo: board } = splitFlight(game, pack, upgrades, unitsIn(own));
+  const { ships } = splitFlight(game, pack, holdings, leaving);
+  const { cargo: board } = splitFlight(game, pack, holdings, unitsIn(own));
   const stops = new Map<string, UnitCounts>();
   for (const move of group) {
     const slot = move.pickupOf === undefined ? null : sourceSlot(game, pack, move.from);
@@ -343,7 +343,7 @@ export const sourceSystems = (game: Game, pack: DataPack, before: GameState): st
 export function routeHint(
   game: Game, path: string[], before: GameState, active: string | null, pack: DataPack, blockers: () => Blockers,
 ): { speed: number | null; steps: number; left: number | null; reach: Set<string> } {
-  const fastest = fleetSpeed(game, before.systems[path[0]] ?? {}, before.upgrades, pack);
+  const fastest = fleetSpeed(game, before.systems[path[0]] ?? {}, before.holdings, pack);
   const steps = routeSteps(game, path, pack);
   if (fastest === null) return { speed: null, steps, left: null, reach: new Set() };
   const speed = routeMove(game, path, fastest, pack);

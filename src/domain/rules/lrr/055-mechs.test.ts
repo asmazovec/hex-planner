@@ -1,5 +1,6 @@
 /** LRR 55 Mechs. Source: tirules2 rules-reference/mechs.md. */
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from '../../holdings';
 import { loadPack } from '../../../data/loadPack';
 import { factionSheet } from '../../factionSheet';
 import { productionCost } from '../../project';
@@ -53,11 +54,11 @@ describe('LRR 55 Mechs', () => {
   });
 
   test('55.2: a mech is produced for the cost on its card', () => {
-    expect(productionCost({ mech: 2 }, FACTION, [], pack)).toBe(4);
+    expect(productionCost({ mech: 2 }, FACTION, emptyHoldings(), pack)).toBe(4);
     for (const faction of Object.values(pok.factions)) {
       const [mech] = factionSheet(faction, ['pok']).mechs;
       if (mech?.cost == null) continue;
-      expect([faction.id, productionCost({ mech: 1 }, faction.id, [], pok)]).toEqual([faction.id, mech.cost]);
+      expect([faction.id, productionCost({ mech: 1 }, faction.id, emptyHoldings(), pok)]).toEqual([faction.id, mech.cost]);
     }
   });
 

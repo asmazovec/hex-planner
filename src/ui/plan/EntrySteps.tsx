@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
 import { tacticalMeters } from '../../domain/project';
+import { upgradesOf } from '../../domain/holdings';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
 import { flightOf as warningFlightOf, placeWarnings } from '../feedback/warningPlaces';
@@ -74,7 +75,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
           <small>{e.free ? t('plan.steps.free') : t('plan.steps.token')}</small>
         </p>
         {sources.map((source, index) => {
-          const { ships, board, stops } = flightOf(game, pack, before.upgrades, e, source);
+          const { ships, board, stops } = flightOf(game, pack, before.holdings, e, source);
           const via = viaOf(e, source);
           const { group: load } = tacticalMeters(game, e, source, before, pack);
           // What rides with the ships is said by the cargo, the rest of the flight by its start.
@@ -126,7 +127,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
     const mode = e.forToken ? 'forToken' : primary ? 'primary' : 'secondary';
     steps.push(<><b>{card.name}</b>, {t(`plan.strategy.mode.${mode}`).toLowerCase()}{costsStrategyToken(e) && <small>{t('plan.steps.strategyToken')}</small>}<small>{textOf(pack, primary ? `strategy:${card.id}` : `strategy:${card.id}#secondary`)}</small></>);
     const effects = e.effects ?? {};
-    const cost = cardCost(e, game.faction, before.upgrades, pack);
+    const cost = cardCost(e, game.faction, before.holdings, pack);
     if (cost.amount > 0) steps.push(<>{t(`plan.steps.cost.${cost.kind}`, { n: cost.amount })}{paid(effects.payment) && <small>{paid(effects.payment)}</small>}</>);
     if (effects.boughtTokens) steps.push(t('plan.steps.bought', { n: effects.boughtTokens }));
     const tokens = effects.tokens ?? {};
@@ -138,8 +139,11 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
     if (effects.mecatol) steps.push(t('plan.steps.mecatol'));
     if (effects.production) steps.push(<>{t('plan.steps.buildIn', { name: name(effects.production.systemId) })}{pictures(effects.production.units)}</>);
     for (const { kind, planetId } of effects.structures ?? []) steps.push(t('plan.steps.structure', { what: t(kind === 'pds' ? 'map.pds' : 'map.spaceDock'), planet: planetName(planetId) }));
-    if (effects.researched) steps.push(t('plan.steps.researched', { n: effects.researched }));
-    if (e.upgrades?.length) steps.push(<>{t('plan.steps.upgrades')}{pictures(Object.fromEntries(e.upgrades.map(u => [u, 1])))}</>);
+    // A unit upgrade is drawn as its unit; the other technologies researched are counted.
+    const upgrades = upgradesOf({ technologies: effects.researched ?? [] }, pack);
+    const others = (effects.researched?.length ?? 0) - upgrades.length;
+    if (others > 0) steps.push(t('plan.steps.researched', { n: others }));
+    if (upgrades.length > 0) steps.push(<>{t('plan.steps.upgrades')}{pictures(Object.fromEntries(upgrades.map(u => [u, 1])))}</>);
   };
 
   switch (entry.type) {

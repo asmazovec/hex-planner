@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { routeReach } from '../../project';
 import type { UnitCounts } from '../../types';
-import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET , tech } from '../kit';
 
 const pack = rulesPack(p => {
   p.tiles['r-rift-twice'] = { id: 'r-rift-twice', number: 'r-rift-twice', planetIds: [], kind: 'system', wormholes: [], anomaly: 'rift', secondAnomaly: 'rift' };
@@ -13,7 +13,7 @@ const row = (tiles: Partial<Record<string, string>> = {}) =>
 /** A cruiser flies from `from` along `via` into the active system. */
 function flight(from: string, active: string, via: string[], map = row(), units: UnitCounts = { cruiser: 1 }, upgrades: ('cruiser')[] = []) {
   const action = tactical(active, { moves: [{ from, units, via }] });
-  const game = rulesGame({ map, units: { [from]: units }, entries: [action], game: { upgrades: { me: upgrades, opponents: {} } } });
+  const game = rulesGame({ map, units: { [from]: units }, entries: [action], game: { start: { me: { technologies: upgrades.map(tech) }, opponents: {} } } });
   return { game, codes: codesOf(game, pack, action) };
 }
 

@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { routeDistances, routeReach, routeSteps } from '../../project';
-import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 import { row } from './kit-83-101';
 
 const pok = loadPack(['pok']);
@@ -76,7 +76,7 @@ describe('LRR 101 Wormholes', () => {
     const action = tactical(FAR, { moves: [{ from: FARTHER, units: { cruiser: 1 }, via: [HOME, FARTHER] }] });
     const game = rulesGame({
       map: row({ [HOME]: 'r-alpha', [FARTHER]: 'r-alpha' }), units: { [FARTHER]: { cruiser: 1 } }, entries: [action],
-      game: { upgrades: { me: ['cruiser'], opponents: {} } },
+      game: { start: { me: { technologies: [tech('cruiser')] }, opponents: {} } },
     });
     expect(codesOf(game, pack, action)).toEqual([]);
     expect(routeReach(game, [FARTHER, HOME, FARTHER], 3, FAR, pack).has(FAR)).toBe(true);

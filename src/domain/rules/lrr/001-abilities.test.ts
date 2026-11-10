@@ -48,7 +48,7 @@ describe('LRR 1 Abilities', () => {
   });
 
   test('1.12: spending trade goods and command tokens are costs: the Technology secondary takes four of them and a strategy token', () => {
-    const card = secondary(CARD.technology, { researched: 1, payment: { planets: [], tradeGoods: 4 } });
+    const card = secondary(CARD.technology, { researched: ['technology:st'], payment: { planets: [], tradeGoods: 4 } });
     const game = rulesGame({ entries: [adjust({ tradeGoods: 4 }), card] });
     const { state } = forecast(game, pack);
     expect([state.tradeGoods, state.strategy]).toEqual([0, 1]);

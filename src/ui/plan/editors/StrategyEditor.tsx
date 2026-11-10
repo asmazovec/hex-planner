@@ -2,10 +2,11 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../../data/loadPack';
 import { textOf } from '../../../domain/components';
+import { upgradesOf, upgradeTech } from '../../../domain/holdings';
 import { autoPay } from '../../../domain/payment';
 import { opponentsBySeat } from '../../../domain/players';
 import { cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
-import type { CardEffects, DataPack, Game, GameState, Round, Warning } from '../../../domain/types';
+import type { CardEffects, DataPack, Game, GameState, Round, UpgradeId, Warning } from '../../../domain/types';
 import { opponentName } from '../../players/names';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
 import { PaymentBlock } from '../blocks/PaymentBlock';
@@ -61,7 +62,7 @@ export function StrategyEditor({
   const effects = entry.effects ?? {};
   const mine = !entry.owner;
   const te = game.expansions.includes('te');
-  const cost = cardCost(entry, game.faction, before.upgrades, pack);
+  const cost = cardCost(entry, game.faction, before.holdings, pack);
   const change = (patch: CardPatch) => onUpdate(cardChange(entry, patch, before, game.faction, pack, manualPayment));
   const setEffects = (patch: CardEffects) => change({ effects: { ...effects, ...patch } });
   const named = (id: string) => opponentName(game, pack, id, t);
@@ -88,10 +89,19 @@ export function StrategyEditor({
     </Section>
   );
 
+  /** The row of unit upgrades writes the technologies researched: each unit stands for its upgrade technology. */
+  const researched = effects.researched ?? [];
+  const setUpgrades = (upgrades: UpgradeId[]) => {
+    const others = researched.filter(id => upgradesOf({ technologies: [id] }, pack).length === 0);
+    const next = [...others, ...upgrades.flatMap(kind => upgradeTech(pack, game.faction, kind) ?? [])];
+    const { researched: old, ...rest } = effects;
+    void old;
+    change({ effects: next.length > 0 ? { ...rest, researched: next } : rest });
+  };
   const upgradeRow = (
     <EntryUpgrades
-      upgrades={entry.upgrades ?? []} before={before.upgrades} game={game} pack={pack}
-      onChange={upgrades => change({ upgrades: upgrades.length > 0 ? upgrades : undefined })}
+      upgrades={upgradesOf({ technologies: researched }, pack)} before={upgradesOf(before.holdings, pack)} game={game} pack={pack}
+      onChange={setUpgrades}
     />
   );
 

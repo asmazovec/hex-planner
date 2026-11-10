@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { upgradeTech } from '../../domain/holdings';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
 import type { DataPack, Game, UnitId, UpgradeId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
@@ -16,10 +17,10 @@ export interface UpgradesPanelProps {
   locked: Partial<Record<UnitId, number>>;
 }
 
-/** My ships, one card per type: a tap toggles the baseline between levels I and II. */
+/** My ships, one card per type: a tap marks the unit's upgrade technology as held from the start, or takes the mark off. */
 export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelProps) {
   const { t } = useTranslation();
-  const toggleUpgrade = useGame(s => s.toggleUpgrade);
+  const setStartHolding = useGame(s => s.setStartHolding);
   return (
     <DrawerSheet className="upgrades-panel" title={t('ships.upgrades')} style={playerStyle('--player', game.color)}>
       {SHIP_KINDS.map(kind => {
@@ -29,10 +30,11 @@ export function UpgradesPanel({ game, pack, upgraded, locked }: UpgradesPanelPro
         const hasTwo = hasLevelTwo(game.faction, kind, pack);
         const on = current !== base;
         const round = locked[kind];
+        const technology = upgradeTech(pack, game.faction, kind);
         return (
           <button
             key={kind} type="button" className={`upgrade-card${on ? ' on' : ''}`} data-testid={`upgrade-${kind}`} aria-pressed={on}
-            disabled={!hasTwo || round !== undefined} onClick={() => toggleUpgrade('me', kind)}
+            disabled={!hasTwo || !technology || round !== undefined} onClick={() => technology && setStartHolding('me', technology, !on)}
           >
             <UnitIcon unit={kind} />
             <span className="upgrade-body">

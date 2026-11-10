@@ -1,7 +1,7 @@
 /** LRR 76 Ships. Source: tirules2 rules-reference/ships.md. Base pack: a carrier I has capacity 4; a Fighter II moves 2. */
 import { describe, expect, test } from 'vitest';
 import { unitStats } from '../../unitStats';
-import { codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();
 
@@ -73,7 +73,7 @@ describe('LRR 76 Ships', () => {
   test('76 note 1: a Fighter II may count toward the fleet pool when capacity runs out', () => {
     const fits = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, fighter: 6 } }] });
     const over = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, fighter: 7 } }] });
-    const upgrades = { upgrades: { me: ['fighter' as const], opponents: {} } };
+    const upgrades = { start: { me: { technologies: [tech('fighter')] }, opponents: {} } };
     const fitsGame = rulesGame({ units: { [NEAR]: { carrier: 1, fighter: 6 } }, entries: [fits], game: upgrades });
     const overGame = rulesGame({ units: { [NEAR]: { carrier: 1, fighter: 7 } }, entries: [over], game: upgrades });
     expect(codesOf(fitsGame, pack, fits)).not.toContain('fleetPool');

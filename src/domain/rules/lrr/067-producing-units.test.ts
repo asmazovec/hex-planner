@@ -3,13 +3,14 @@
  * Base pack costs: a cruiser 2, a dreadnought 4, a fighter or an infantry 1 for two.
  */
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from '../../holdings';
 import { productionCost } from '../../project';
 import { CARD } from '../../strategy';
 import type { Game } from '../../types';
 import { adjust, codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
-const cost = (units: Parameters<typeof productionCost>[0]) => productionCost(units, FACTION, [], pack);
+const cost = (units: Parameters<typeof productionCost>[0]) => productionCost(units, FACTION, emptyHoldings(), pack);
 const atHome = { docks: ['h1'] };
 
 const withLimits = rulesPack(p => {

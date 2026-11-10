@@ -1,3 +1,4 @@
+import { startForFaction } from './holdings';
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor, withPlacedTiles } from './mapBuilder';
 import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
@@ -67,7 +68,7 @@ export function gameAs(game: Game, owner: string | undefined): Game {
     ...game,
     faction: rival.faction, seat: rival.seat, color: rival.color, vp: rival.vp,
     opponents: playersOf(game).filter(p => p.id !== rival.id),
-    upgrades: { ...game.upgrades, me: game.upgrades.opponents[rival.id] ?? [] },
+    start: { me: game.start.opponents[rival.id] ?? {}, opponents: { ...Object.fromEntries(Object.entries(game.start.opponents).filter(([id]) => id !== rival.id)), me: game.start.me } },
     planetControl: Object.fromEntries(Object.keys(game.planetControl).map(id => [id, enemyPlanets.includes(id) ? 'enemy' as const : 'me' as const])),
     planetOwner: { ...game.planetOwner, ...Object.fromEntries(enemyPlanets.map(id => [id, holderOf(id)])) },
     enemyUnits: without(game.enemyUnits),
@@ -183,10 +184,10 @@ export function removePlayer(game: Game, index: number, pack: DataPack): Game {
   const leaving = players[index];
   if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return game;
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
-  const { [leaving.id]: gone, ...opponents } = game.upgrades.opponents;
+  const { [leaving.id]: gone, ...opponents } = game.start.opponents;
   void gone;
   const plans = withoutPoints(game.plans, leaving.id);
-  return withPlayers({ ...withoutHoldings(game, leaving.id), plans, upgrades: { ...game.upgrades, opponents } }, rest, pack);
+  return withPlayers({ ...withoutHoldings(game, leaving.id), plans, start: { ...game.start, opponents } }, rest, pack);
 }
 
 const homePlanets = (faction: string, pack: DataPack): string[] =>
@@ -196,7 +197,10 @@ const homePlanets = (faction: string, pack: DataPack): string[] =>
 export function setPlayerFaction(game: Game, index: number, faction: string, pack: DataPack): Game {
   const players = playersOf(game);
   if (!players[index] || players[index].faction === faction) return game;
-  const next = withPlayers(game, players.map((p, i) => (i === index ? { ...p, faction } : p)), pack);
+  const seated = withPlayers(game, players.map((p, i) => (i === index ? { ...p, faction } : p)), pack);
+  // The starting technologies follow the faction, for me and for an opponent alike.
+  const begins = startForFaction(index === 0 ? game.start.me : game.start.opponents[players[index].id], players[index].faction, faction, pack);
+  const next: Game = { ...seated, start: index === 0 ? { ...game.start, me: begins } : { ...game.start, opponents: { ...game.start.opponents, [players[index].id]: begins } } };
   if (index !== 0) return next;
   const old = homePlanets(game.faction, pack);
   const fresh = homePlanets(faction, pack);

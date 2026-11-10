@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from './holdings';
 import { autoPay, EXPEDITION_SLICES, paymentValue } from './payment';
 import type { DataPack, GameState } from './types';
 
@@ -14,7 +15,7 @@ function build(values: number[], tradeGoods: number, extra: Partial<GameState> =
   const pack: DataPack = { version: 't', tiles: {}, planets, units: {}, factions: {}, templates: [], technologies: {}, structures: [], components: [], texts: {} };
   const state: GameState = {
     systems: {}, ground: {}, exhausted: [], control, tokensOnMap: [],
-    tradeGoods, commodities: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, upgrades: [], docks: [], pds: {}, ...extra,
+    tradeGoods, commodities: 0, tactic: 3, fleet: 3, strategy: 2, vp: 0, opponentVp: {}, holdings: emptyHoldings(), docks: [], pds: {}, ...extra,
   };
   return { state, pack };
 }

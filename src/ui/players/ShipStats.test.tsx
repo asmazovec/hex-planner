@@ -8,6 +8,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { upgradesOf } from '../../domain/holdings';
 import type { Entry, EntryBody } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -23,6 +24,8 @@ beforeEach(() => setLanguage('ru'));
 
 const row = (kind: string) => screen.getByTestId(`ship-row-${kind}`);
 const game = () => useGame.getState().game!;
+/** The unit upgrades I hold from the start, as the panel marks them. */
+const baseline = () => upgradesOf({ technologies: game().start.me.technologies ?? [] }, pack);
 const round = () => game().plans[0].rounds[0];
 const startPlan = (faction = 'arborec') => {
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction }, small);
@@ -103,12 +106,12 @@ describe('the players panel of the plan screen', () => {
     expect(screen.queryByRole('button', { name: 'Добавить игрока' })).toBeNull();
     expect(within(cardOf(2)).queryByRole('button', { name: 'Убрать игрока' })).toBeNull();
     await userEvent.click(within(cardOf(1)).getByTestId('ship-row-carrier'));
-    expect(game().upgrades.me).toEqual([]);
+    expect(baseline()).toEqual([]);
   });
 
   test('a type upgraded by an entry shows the current value and its round, and does not toggle', async () => {
     startPlan();
-    addEntry({ type: 'strategic', upgrades: ['carrier'] });
+    addEntry({ type: 'strategic', effects: { researched: ['technology:cv2'] } });
     await openPlayers();
     const carrier = within(cardOf(1)).getByTestId('ship-row-carrier');
     expect(carrier.querySelectorAll('.ship-row-value')[1].textContent).toBe('4 → 6');
@@ -132,13 +135,13 @@ describe('the upgrades panel', () => {
     expect(carrier).toHaveTextContent('Транспортник');
     expect(carrier.querySelector('.upgrade-level')).toHaveTextContent('I');
     await userEvent.click(carrier);
-    expect(game().upgrades.me).toEqual(['carrier']);
+    expect(baseline()).toEqual(['carrier']);
     expect(carrier).toHaveAttribute('aria-pressed', 'true');
     expect(carrier.querySelector('.upgrade-level')).toHaveTextContent('II');
     expect(carrier).toHaveTextContent('4 → 6');
     expect(screen.getByRole('button', { name: 'Улучшения кораблей · 1' })).toBeInTheDocument();
     await userEvent.click(carrier);
-    expect(game().upgrades.me).toEqual([]);
+    expect(baseline()).toEqual([]);
     expect(screen.getByRole('button', { name: 'Улучшения кораблей' })).toBeInTheDocument();
   });
 
@@ -154,7 +157,7 @@ describe('the upgrades panel', () => {
   test('follows the mode of the map: a planned entry shows in the forecast, not now; it does not toggle', async () => {
     startPlan();
     useGame.getState().setTile('1,0', '25');
-    addEntry({ type: 'secondary', upgrades: ['carrier'] });
+    addEntry({ type: 'secondary', effects: { researched: ['technology:cv2'] } });
     const panel = await open();
     expect(card(panel, 'carrier')).toBeDisabled();
     expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
@@ -163,18 +166,18 @@ describe('the upgrades panel', () => {
     expect(card(panel, 'carrier')).toBeEnabled();
     expect(card(panel, 'carrier')).toHaveAttribute('aria-pressed', 'false');
     await userEvent.click(card(panel, 'carrier'));
-    expect(game().upgrades.me).toEqual(['carrier']);
-    expect(game().plans[0].rounds[0].entries[0]).toMatchObject({ upgrades: ['carrier'] });
+    expect(baseline()).toEqual(['carrier']);
+    expect(game().plans[0].rounds[0].entries[0]).toMatchObject({ effects: { researched: ['technology:cv2'] } });
   });
 
   test('a type in the baseline that an entry also upgrades shows the entry and takes no tap; the baseline stays', async () => {
     startPlan();
-    act(() => useGame.getState().toggleUpgrade('me', 'carrier'));
-    addEntry({ type: 'strategic', upgrades: ['carrier'] });
+    act(() => useGame.getState().setStartHolding('me', 'technology:cv2', true));
+    addEntry({ type: 'strategic', effects: { researched: ['technology:cv2'] } });
     const panel = await open();
     expect(card(panel, 'carrier')).toBeDisabled();
     expect(card(panel, 'carrier')).toHaveTextContent('раунд 1');
-    expect(game().upgrades.me).toEqual(['carrier']);
+    expect(baseline()).toEqual(['carrier']);
   });
 
   test('closes on a second tap on its tab', async () => {
@@ -212,20 +215,20 @@ describe('upgrades in an entry', () => {
     const row = await openCard(id);
     expect(row.queryByRole('button', { name: 'Солнце войны' })).toBeNull();
     await userEvent.click(row.getByRole('button', { name: 'Транспортник' }));
-    expect(entries()[0]).toMatchObject({ upgrades: ['carrier'] });
+    expect(entries()[0]).toMatchObject({ effects: { researched: ['technology:cv2'] } });
     expect(row.getByRole('button', { name: 'Транспортник' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(row.getByRole('button', { name: 'Транспортник' }));
-    expect((entries()[0] as { upgrades?: unknown }).upgrades).toBeUndefined();
+    expect((entries()[0] as { effects?: { researched?: unknown } }).effects?.researched).toBeUndefined();
     act(() => useGame.getState().undo());
-    expect(entries()[0]).toMatchObject({ upgrades: ['carrier'] });
+    expect(entries()[0]).toMatchObject({ effects: { researched: ['technology:cv2'] } });
     act(() => useGame.getState().undo());
-    expect((entries()[0] as { upgrades?: unknown }).upgrades).toBeUndefined();
+    expect((entries()[0] as { effects?: { researched?: unknown } }).effects?.researched).toBeUndefined();
   });
 
   test('a ship upgraded earlier in the replay is owned and takes no tap', async () => {
     startPlan();
-    addEntry({ type: 'strategic', card: 7, upgrades: ['carrier'] });
-    const later = addEntry({ type: 'secondary', card: 7, upgrades: ['cruiser'] });
+    addEntry({ type: 'strategic', card: 7, effects: { researched: ['technology:cv2'] } });
+    const later = addEntry({ type: 'secondary', card: 7, effects: { researched: ['technology:cr2'] } });
     render(<PlanScreen />);
     const row = await openCard(later);
     const owned = row.getByRole('button', { name: 'Транспортник' });

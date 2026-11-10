@@ -6,7 +6,7 @@ import type { DataPack, Game, GameState, Round, Warning } from '../types';
 import { handlerOf, type CardRound } from './cards/index';
 import { pay, readyPlanets } from './payment';
 import { checkProduction, placeProduction } from './production';
-import { addUpgrades } from './state';
+import { research } from './holdings';
 import { checkPoolChange, checkTokensGiven } from './status';
 import { buildStructures } from './structures';
 import { checkSystem } from './transport';
@@ -54,7 +54,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     state.strategy -= 1;
   }
   const effects = entry.effects ?? {};
-  const cost = cardCost(entry, game.faction, state.upgrades, pack);
+  const cost = cardCost(entry, game.faction, state.holdings, pack);
   const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings);
   if (cost.amount > paid) {
     warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
@@ -67,9 +67,9 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     if (change < 0 && state[pool] < 0) warnings.push(violation('poolNegative', { pool, have: state[pool] }));
   }
   readyPlanets(state, effects.readied ?? [], warnings);
-  // The card's own effects see the upgrades owned before this entry.
+  // The card's own effects see the technologies held before this entry.
   handlerOf(entry.card).apply?.({ game, state, entry, pack, round, player, primary, warnings });
-  addUpgrades(state, entry.upgrades);
+  research(state, effects.researched, pack);
   warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card'));
   buildStructures(game, state, effects.structures ?? [], primary, effects.systemId, pack, warnings);
   warnings.push(...checkStationStructures(effects.structures ?? [], pack));

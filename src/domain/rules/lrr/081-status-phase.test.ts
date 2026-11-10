@@ -1,6 +1,8 @@
 /** LRR 81 Status Phase. Source: tirules2 rules-reference/status-phase.md. */
 import { describe, expect, test } from 'vitest';
+import { loadPack } from '../../../data/loadPack';
 import { CARD } from '../../strategy';
+import type { Entry } from '../../types';
 import { adjust, before, codesOf, forecast, HOME, primary, rulesGame, rulesPack, statusTokens, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
@@ -74,6 +76,15 @@ describe('LRR 81 Status Phase', () => {
     const later = adjust({}, 'agenda');
     const game = rulesGame({ entries: [spend, statusTokens(1, 1, 0), later], game: atHome });
     expect(before(game, pack, later).exhausted).toEqual([]);
+  });
+
+  test('81.6: every exhausted card is readied: an agent and a technology exhausted in the action phase are ready after it', () => {
+    const use = (id: string, componentId: string): Entry => ({ id, phase: 'action', status: 'planned', type: 'component', note: '', componentId });
+    const start = { me: { technologies: ['technology:gls'], leaders: { 'leader:solagent': 'unlocked' as const } }, opponents: {} };
+    const game = rulesGame({ entries: [use('a', 'technology:gls'), use('b', 'leader:solagent'), statusTokens(1, 1, 0)], game: { start } });
+    const { holdings } = forecast(game, loadPack(['pok'])).state;
+    expect(holdings.exhausted).toEqual([]);
+    expect(holdings.leaders).toEqual({ 'leader:solagent': 'unlocked' });
   });
 
   test('81.6: the readied planets pay in the next round', () => {

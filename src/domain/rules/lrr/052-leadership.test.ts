@@ -1,5 +1,6 @@
 /** LRR 52 Leadership (Strategy Card). Source: tirules2 rules-reference/leadership.md. */
 import { describe, expect, test } from 'vitest';
+import { emptyHoldings } from '../../holdings';
 import { CARD, cardCost, costsStrategyToken, withLeadershipTokens } from '../../strategy';
 import type { Entry } from '../../types';
 import { adjust, codesOf, FACTION, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';
@@ -39,7 +40,7 @@ describe('LRR 52 Leadership', () => {
   test('52.2: tokens tapped beyond the three free ones are bought, at three influence each', () => {
     const effects = withLeadershipTokens({}, { tactic: 2, fleet: 2, strategy: 1 }, true);
     expect(effects.boughtTokens).toBe(2);
-    expect(cardCost(card(primary(CARD.leadership, effects)), FACTION, [], pack)).toEqual({ kind: 'influence', amount: 6 });
+    expect(cardCost(card(primary(CARD.leadership, effects)), FACTION, emptyHoldings(), pack)).toEqual({ kind: 'influence', amount: 6 });
   });
 
   test('52.2: bought tokens not paid for in full are warned about', () => {

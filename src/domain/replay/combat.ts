@@ -26,7 +26,7 @@ export function checkArrival(game: Game, state: GameState, target: string, entry
   for (const { units } of entry.landings) {
     for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
   }
-  const ships = fleetCount(game, here, state.upgrades, pack, dockFighterRoom(game, state, target, pack));
+  const ships = fleetCount(game, here, state.holdings, pack, dockFighterRoom(game, state, target, pack));
   return ships > state.fleet ? [violation('fleetPool', { systemId: target, ships, fleet: state.fleet })] : [];
 }
 
@@ -43,7 +43,7 @@ export function removeLosses(state: GameState, target: string, entry: TacticalEn
  */
 export function checkAfterCombat(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
   if (unitIds(entry.losses ?? {}).length === 0) return [];
-  const left = capacity(game, state.systems[target] ?? {}, state.upgrades, pack, dockFighterRoom(game, state, target, pack));
+  const left = capacity(game, state.systems[target] ?? {}, state.holdings, pack, dockFighterRoom(game, state, target, pack));
   return left.load > left.capacity ? [violation('capacitySystem', { systemId: target, load: left.load, capacity: left.capacity }, 'combat')] : [];
 }
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from './newGame';
-import { entryUpgradeRounds, hasLevelTwo, isUniqueShip, toggleUpgrade, unitStats } from './unitStats';
+import { upgradeTech } from './holdings';
+import { entryUpgradeRounds, hasLevelTwo, isUniqueShip, unitStats } from './unitStats';
 import type { Entry, Plan, UnitId } from './types';
 
 const pack = loadPack(['pok', 'te']);
@@ -43,27 +43,9 @@ describe('unitStats', () => {
   });
 });
 
-describe('toggleUpgrade', () => {
-  const game = createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, loadPack(['pok']));
-  const opponent = game.opponents[0].id;
-
-  test('on and off for me', () => {
-    const on = toggleUpgrade(game, 'me', 'carrier');
-    expect(on.upgrades.me).toEqual(['carrier']);
-    expect(toggleUpgrade(on, 'me', 'carrier').upgrades.me).toEqual([]);
-  });
-
-  test('on and off for one opponent; nothing is left behind', () => {
-    const on = toggleUpgrade(game, opponent, 'cruiser');
-    expect(on.upgrades.opponents).toEqual({ [opponent]: ['cruiser'] });
-    expect(on.upgrades.me).toEqual([]);
-    expect(toggleUpgrade(on, opponent, 'cruiser').upgrades.opponents).toEqual({});
-  });
-});
-
 describe('entryUpgradeRounds', () => {
   const upgrade = (id: string, status: Entry['status'], upgrades: UnitId[]): Entry =>
-    ({ id, phase: 'action', status, type: 'strategic', upgrades });
+    ({ id, phase: 'action', status, type: 'strategic', effects: { researched: upgrades.map(unit => upgradeTech(pack, 'arborec', unit)!) } });
   const plan: Plan = {
     id: 'p', name: 'p', rounds: [
       { number: 2, strategyCard: null, backupCard: null, entries: [upgrade('b', 'planned', ['carrier']), upgrade('c', 'cancelled', ['fighter'])] },
@@ -73,7 +55,7 @@ describe('entryUpgradeRounds', () => {
   };
 
   test('the first round that gives each upgrade, by filter', () => {
-    expect(entryUpgradeRounds(plan, 'forecast')).toEqual({ carrier: 2 });
-    expect(entryUpgradeRounds(plan, 'now')).toEqual({ carrier: 3 });
+    expect(entryUpgradeRounds(plan, 'forecast', pack)).toEqual({ carrier: 2 });
+    expect(entryUpgradeRounds(plan, 'now', pack)).toEqual({ carrier: 3 });
   });
 });

@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { routeReach, routeSteps } from '../../project';
 import { CARD } from '../../strategy';
 import type { Opponent } from '../../types';
-import { codesOf, FACTION, FAR, FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
+import { codesOf, FACTION, FAR, FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();
 const row = (tiles: Partial<Record<string, string>> = {}) =>
@@ -159,7 +159,7 @@ describe('LRR 58 Movement', () => {
   test('58.3.5: a ship passing through the active system and back into it with move enough is not warned about', () => {
     // A cruiser II (move 3) from NEAR through TARGET to FAR and back into TARGET.
     const move = tactical(TARGET, { moves: [{ from: NEAR, units: { cruiser: 1 }, via: [TARGET, FAR] }] });
-    const game = rulesGame({ units: { [NEAR]: { cruiser: 1 } }, entries: [move], game: { upgrades: { me: ['cruiser'], opponents: {} } } });
+    const game = rulesGame({ units: { [NEAR]: { cruiser: 1 } }, entries: [move], game: { start: { me: { technologies: [tech('cruiser')] }, opponents: {} } } });
     expect(codesOf(game, pack, move)).toEqual([]);
   });
 

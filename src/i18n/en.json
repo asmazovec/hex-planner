@@ -415,7 +415,9 @@
       "readyOverLimit": "{{readied}} planets readied, and the card allows at most {{limit}}.",
       "diplomacySystem": "{{system}}: Diplomacy picks a system with your planet, other than the Mecatol Rex system.",
       "researchOverLimit": "{{count}} technologies researched, and this ability gives at most {{limit}}.",
-      "researchOwned": "{{unit}}: the upgrade is already researched and is not researched again.",
+      "researchOwned": "{{name}}: the technology is already researched and is not researched again.",
+      "componentNotHeld": "{{name}}: you do not hold this component at this point.",
+      "componentExhausted": "{{name}} is exhausted: it is readied only in the status phase.",
       "shipOnPlanet": "{{unit}} is a ship and cannot land on {{planet}}: only ground forces land.",
       "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
       "custodians": "The custodians token is still on {{planet}}: removing it costs 6 influence, which the plan does not record; the first to land gains 1 victory point.",
@@ -499,8 +501,7 @@
       "noExhausted": "No planets of yours are exhausted at this point.",
       "boughtNonePrimary": "Three tokens are free, each further one costs 3 influence.",
       "boughtNoneSecondary": "Each token costs 3 influence.",
-      "research": "Technology: {{n}}",
-      "researched": "Researched"
+      "research": "Technology: {{n}}"
     },
     "steps": {
       "activate": "Activate {{name}}",

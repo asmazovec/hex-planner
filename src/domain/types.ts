@@ -254,8 +254,8 @@ export interface CardEffects {
   tokens?: { tactic?: number; fleet?: number; strategy?: number };
   /** Bought with influence on Leadership. */
   boughtTokens?: number;
-  /** Technology's technologies other than ship upgrades, which the app counts and does not name. */
-  researched?: number;
+  /** The technologies researched, by component id (`technology:<id>`); a unit upgrade is one of them. */
+  researched?: string[];
   /** The chosen system. */
   systemId?: string;
   /** Planet ids. */
@@ -274,8 +274,6 @@ export interface CardEffects {
 
 /** A strategy card played: all optional, an entry starts without a card and takes its parts as they are chosen. */
 export interface CardPlay {
-  /** Ships upgraded by this entry, as with research. */
-  upgrades?: UpgradeId[];
   /** Initiative number. */
   card?: number;
   /** A primary played for a strategy token, as some faction abilities allow. */
@@ -300,7 +298,7 @@ export const TURN_TYPES = ['tactical', 'strategic', 'component', 'pass'] as cons
  * whose `from` is that source: `via` lists the slots on the way, in flight order. A move with `pickupOf` takes units
  * on board on the way: it joins the group of that source slot.
  */
-export type EntryBody =
+export type EntryBody = (
   | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string }[];
       landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
       /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
@@ -311,12 +309,22 @@ export type EntryBody =
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string; acts?: Act[] }
   | ({ type: 'strategic'; acts?: Act[] } & CardPlay)
   | ({ type: 'secondary' } & CardPlay)
-  | { type: 'component'; note: string; acts?: Act[] }
+  | { type: 'component';
+      /** The component played: an action card leaves the hand, an agent is exhausted, a hero purged. Without it the action is only its note. */ componentId?: string;
+      note: string;
+      /** What the player chose for the component's effect, by the names its effect asks for. */ choices?: Record<string, string | number>; acts?: Act[] }
   | { type: 'pass'; acts?: Act[] }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
       /** My points gained this round. */ vp?: number;
-      /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number> };
+      /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number>;
+      /** Objectives the owner scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[] }
+) & {
+  /** Components the owner of the entry gains with it, by id: drawn action cards, a relic, a note received. */
+  gains?: string[];
+  /** Components the owner loses with it, one copy each. */
+  spends?: string[];
+};
 
 export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
   /** The opponent this is expected of; without it the entry is mine. */ owner?: string };
@@ -332,6 +340,29 @@ export interface Opponent {
   seat: number;
   color: number;
 }
+
+/** What a player holds of the game's components, by component id (`<kind>:<source id>`). */
+export interface Holdings {
+  /** Researched technologies, unit upgrades among them. */
+  technologies: string[];
+  /** Action cards in hand, with repeats. */
+  hand: string[];
+  relics: string[];
+  /** Promissory notes in hand and those played face up. */
+  promissory: string[];
+  /** Leaders by id; one not listed is locked. */
+  leaders: Record<string, LeaderState>;
+  breakthrough?: 'held' | 'exhausted';
+  /** Scored objectives, public and secret. */
+  scored: string[];
+  /** Secret objectives in hand. */
+  secrets: string[];
+  /** Exhausted components the status phase readies: technologies, relics, legendary planet cards. */
+  exhausted: string[];
+}
+export type LeaderState = 'unlocked' | 'exhausted' | 'purged';
+/** What a player held when the plan begins: the faction's starting technologies, and what was marked by hand. */
+export type StartHoldings = Partial<Pick<Holdings, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets'>>;
 
 /** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
 export const SAVE_FORMAT = 'ti4-planner/2';
@@ -358,8 +389,8 @@ export interface Game {
   /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
   map: Record<string, string>;
   opponents: Opponent[];
-  /** Set by hand. `me` is the baseline, such as starting technology; entries of a plan add to it. Opponents have no plan. */
-  upgrades: { me: UpgradeId[]; opponents: Record<string, UpgradeId[]> };
+  /** What each player holds before the plan: the starting technologies of the faction, the rest set by hand. Entries of a plan add to it. */
+  start: { me: StartHoldings; opponents: Record<string, StartHoldings> };
   /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
   enemyUnits: Record<string, Record<string, UnitCounts>>;
   /** Planet id to opponent id to that opponent's ground forces there. */
@@ -395,8 +426,14 @@ export interface GameState {
   vp: number;
   /** Each opponent's starting points plus their gains in the status entries replayed so far, by opponent id. */
   opponentVp: Record<string, number>;
-  /** The baseline plus the upgrades of the entries replayed so far. */
-  upgrades: UpgradeId[];
+  /** What this player holds: the game's start plus the entries replayed so far. */
+  holdings: Holdings;
+  /** Laws in play, for the whole game: on my state only, whoever's entry brought them. */
+  laws?: string[];
+  /** Public objectives revealed, for the whole game: on my state only. */
+  revealed?: string[];
+  /** Planet id to the cards attached to it, for the whole game: on my state only. */
+  attachments?: Record<string, string[]>;
   /** This player's space docks: the game's on their planets, plus those built by the entries replayed so far, less those lost with a planet. */
   docks: string[];
   /** Planet id to this player's PDS count, the same way. */
@@ -426,10 +463,12 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'transactionRepeated', 'notNeighbor', 'shortCommodities',
   // transport
   'pickupOffRoute',
+  // components
+  'componentNotHeld', 'componentExhausted',
 ] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
-export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition' | 'transaction';
+export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition' | 'transaction' | 'component';
 /** Where a violation arose: the entry, and within it the source system or the planet when there is one. */
 export interface ViolationPlace { entryId: string; source?: string; planetId?: string }
 /**

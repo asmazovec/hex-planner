@@ -87,9 +87,9 @@ export function tacticalMeters(
   const groups = target === null ? {} : moveUnits(game, state, target, entry.moves, pack, []);
   if (target !== null) landAndBuild(game, state, target, entry, pack, [], false, removeFleetExcess(state, target, entry.fleetRemovals ?? {}));
   return {
-    group: capacity(game, groups[source] ?? {}, before.upgrades, pack),
+    group: capacity(game, groups[source] ?? {}, before.holdings, pack),
     // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
-    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.upgrades, pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
+    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.holdings, pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
     fleet: before.fleet,
   };
 }

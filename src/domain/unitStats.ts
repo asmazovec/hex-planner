@@ -1,7 +1,9 @@
-import type { DataPack, Game, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import { holdingRounds, upgradesOf } from './holdings';
+import type { DataPack, Holdings, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
 
 /** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
-export function productionCost(units: UnitCounts, factionId: string, upgrades: UpgradeId[], pack: DataPack): number {
+export function productionCost(units: UnitCounts, factionId: string, holdings: Holdings, pack: DataPack): number {
+  const upgrades = upgradesOf(holdings, pack);
   let total = 0;
   for (const id of Object.keys(units) as UnitId[]) {
     if ((units[id] ?? 0) > 0) total += Math.ceil((units[id] ?? 0) * (unitStats(factionId, id, upgrades.includes(id), pack)?.cost ?? 0));
@@ -38,26 +40,12 @@ export const upgradableStructures = (pack: DataPack): StructureKind[] =>
 export const isUniqueShip = (factionId: string, kind: UnitId, pack: DataPack): boolean =>
   pack.factions[factionId]?.ships?.[kind] !== undefined;
 
-const toggled = (list: UpgradeId[], unit: UpgradeId): UpgradeId[] =>
-  (list.includes(unit) ? list.filter(id => id !== unit) : [...list, unit]);
-
-/** Switches a mark set by hand: my baseline for `me`, an opponent's list by id. An opponent's empty list is dropped. */
-export function toggleUpgrade(game: Game, player: string, unit: UpgradeId): Game {
-  if (player === 'me') return { ...game, upgrades: { ...game.upgrades, me: toggled(game.upgrades.me, unit) } };
-  const { [player]: current = [], ...rest } = game.upgrades.opponents;
-  const next = toggled(current, unit);
-  return { ...game, upgrades: { ...game.upgrades, opponents: next.length > 0 ? { ...rest, [player]: next } : rest } };
-}
-
-/** The first round whose entries give each upgrade: done ones for `now`, planned ones too for `forecast`. */
-export function entryUpgradeRounds(plan: Plan, filter: 'now' | 'forecast'): Partial<Record<UpgradeId, number>> {
+/** The first round whose entries of mine research each unit upgrade: done ones for `now`, planned ones too for `forecast`. */
+export function entryUpgradeRounds(plan: Plan, filter: 'now' | 'forecast', pack: DataPack): Partial<Record<UpgradeId, number>> {
   const rounds: Partial<Record<UpgradeId, number>> = {};
-  for (const round of [...plan.rounds].sort((a, b) => a.number - b.number)) {
-    for (const entry of round.entries) {
-      if (entry.status === 'cancelled' || (filter === 'now' && entry.status !== 'done')) continue;
-      if (entry.type !== 'strategic' && entry.type !== 'secondary') continue;
-      for (const unit of entry.upgrades ?? []) rounds[unit] ??= round.number;
-    }
+  for (const [id, round] of Object.entries(holdingRounds(plan, filter).me ?? {})) {
+    const [unit] = upgradesOf({ technologies: [id] }, pack);
+    if (unit) rounds[unit] = Math.min(rounds[unit] ?? round, round);
   }
   return rounds;
 }
