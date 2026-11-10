@@ -87,10 +87,13 @@ export function isExhausted(holdings: Holdings, def: ComponentDef): boolean {
 
 /**
  * The components a player of a faction holds ready to play: held and not exhausted. What comes with a faction sheet
- * counts for that faction only; a legendary planet is not tracked and passes, as it does for `holds`.
+ * counts for that faction only, and the card of a legendary planet for the player who controls the planet (`control`
+ * is that player's own, by planet id).
  */
-export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: string): Set<string> {
-  const mine = (def: ComponentDef) => HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || def.faction === factionId;
+export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: string, control: GameState['control'] = {}): Set<string> {
+  const mine = (def: ComponentDef) => (def.kind === 'legendary'
+    ? control[def.id.slice(def.id.indexOf(':') + 1)] === 'me'
+    : HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || def.faction === factionId);
   return new Set(componentsOf(pack).filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));
 }
 

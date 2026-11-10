@@ -356,7 +356,7 @@ describe('what a choice of components offers', () => {
       ...holdingsOf({ hand: ['actionCard:sabo1'], relics: ['relic:shard'], technologies: ['technology:st'], leaders: { 'leader:solagent': 'unlocked', 'leader:solhero': 'purged' } }),
       exhausted: ['technology:st'],
     };
-    const ready = readyToPlay(pack, mine, 'sol');
+    const ready = readyToPlay(pack, mine, 'sol', { primor: 'me', hopesend: 'enemy' });
     expect(ready.has('actionCard:sabo1')).toBe(true);
     expect(ready.has('relic:shard')).toBe(true);
     expect(ready.has('leader:solagent')).toBe(true);
@@ -364,6 +364,9 @@ describe('what a choice of components offers', () => {
     expect(ready.has('leader:solhero')).toBe(false);
     expect(ready.has('leader:solcommander')).toBe(false);
     expect(ready.has('relic:stellarconverter')).toBe(false);
+    // A legendary planet is ready for the player who controls it.
+    expect([...ready].filter(id => id.startsWith('legendary:'))).toEqual(['legendary:primor']);
+    expect(readyToPlay(pack, mine, 'sol').has('legendary:primor')).toBe(false);
     const abilities = [...ready].filter(id => id.startsWith('ability:')).map(id => componentById(pack, id)!.faction);
     expect(abilities.length).toBeGreaterThan(0);
     expect(new Set(abilities)).toEqual(new Set(['sol']));
