@@ -7,13 +7,13 @@ import type { DataPack, Game, GameState } from '../../domain/types';
 import { animates } from '../common/motion';
 import { RowIcon } from '../primitives/Icon';
 import { prepareSprites, tokenColours } from '../units/sprites';
-import { mapBounds, type Rect } from './geometry';
+import { hexToPixel, mapBounds, type Rect } from './geometry';
 import { RouteArrows, RouteDraftLine, type Arrow } from './RouteArrows';
 import { TileView, type Highlight } from './TileView';
 import type { RouteDraftView } from './useArrowDrag';
 import { useFractureFlight } from './useFractureFlight';
 import { usePanZoom, type View } from './usePanZoom';
-import { capFit } from './viewLimits';
+import { capFit, fitBox } from './viewLimits';
 
 export interface HexMapProps {
   game: Game;
@@ -39,7 +39,33 @@ export interface HexMapProps {
    * every other tile tokens change at once. Without it every tile moves on the map.
    */
   animateOnly?: ReadonlySet<string> | null;
+  /** What hangs over the edges of the map area, as a CSS selector: the map opens with no hex under it. By default the tabs of the drawers. */
+  clearOf?: string;
 }
+
+/** The map area on screen and what hangs over it, in pixels from its top left corner. */
+interface MapArea { width: number; height: number; tabs: Rect[] }
+
+/** Where an element is laid out on the page, whatever transform moves it now: an open drawer carries its tabs away. */
+function laidOut(element: HTMLElement): Rect {
+  let x = 0;
+  let y = 0;
+  for (let at: HTMLElement | null = element; at; at = at.offsetParent as HTMLElement | null) {
+    x += at.offsetLeft;
+    y += at.offsetTop;
+  }
+  return { x, y, width: element.offsetWidth, height: element.offsetHeight };
+}
+
+function measureArea(wrap: HTMLElement, clearOf: string): MapArea {
+  const own = laidOut(wrap);
+  const tabs = [...document.querySelectorAll<HTMLElement>(clearOf)].map(laidOut)
+    .filter(tab => tab.width > 0 && tab.height > 0)
+    .map(tab => ({ ...tab, x: tab.x - own.x, y: tab.y - own.y }));
+  return { width: own.width, height: own.height, tabs };
+}
+
+const sameArea = (a: MapArea | null, b: MapArea): boolean => a !== null && JSON.stringify(a) === JSON.stringify(b);
 
 /** As long as the tiles of the Fracture take to arrive. */
 const CAMERA_MS = 760;
@@ -49,17 +75,23 @@ const easeOut = (t: number): number => 1 - (1 - t) ** 3;
 const transformOf = (view: View, midX: number, midY: number): string =>
   `translate(${midX + view.x - midX * view.scale} ${midY + view.y - midY * view.scale}) scale(${view.scale})`;
 
-/** What the frame of the map shows, moving smoothly to a new frame when the map grows or shrinks. */
-function useSmoothRect(target: Rect): Rect {
+/**
+ * What the frame of the map shows, moving smoothly to a new frame when the map grows or shrinks. A new `area` of the
+ * screen is no movement of the map: the frame follows it at once, before the screen is drawn.
+ */
+function useSmoothRect(target: Rect, area: string): Rect {
   const [shown, setShown] = useState(target);
   const current = useRef(target);
+  const shownArea = useRef(area);
   const { x, y, width, height } = target;
-  useEffect(() => {
+  useLayoutEffect(() => {
     const to = { x, y, width, height };
     const from = current.current;
+    const resized = shownArea.current !== area;
+    shownArea.current = area;
     if (from.x === x && from.y === y && from.width === width && from.height === height) return undefined;
     const show = (rect: Rect) => { current.current = rect; setShown(rect); };
-    if (!animates()) { show(to); return undefined; }
+    if (resized || !animates()) { show(to); return undefined; }
     const start = performance.now();
     let frame = 0;
     const tick = (now: number) => {
@@ -70,7 +102,7 @@ function useSmoothRect(target: Rect): Rect {
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [x, y, width, height]);
+  }, [x, y, width, height, area]);
   return shown;
 }
 
@@ -82,7 +114,7 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, animateOnly = null,
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, animateOnly = null, clearOf = '.drawer-rail',
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -109,7 +141,27 @@ export function HexMap({
   const mapSlots = useMemo(() => slotKeys.map(parseKey), [slotKeys]);
   const mapRect = useMemo(() => mapBounds(mapSlots), [mapSlots]);
   const { fractureAt, fracture, leaving, opening, flyRun, flyStyle, leftGone } = useFractureFlight(game, pack, mapSlots);
-  const bounds = useMemo(() => (fracture ? capFit(mapRect, fracture.bounds) : mapRect), [fracture, mapRect]);
+  // The map opens whole in its area, clear of the edges and of the tabs over them. Without a size (no layout yet) it is the plain frame.
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [area, setArea] = useState<MapArea | null>(null);
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap || typeof ResizeObserver === 'undefined') return undefined;
+    const measure = () => setArea(known => {
+      const next = measureArea(wrap, clearOf);
+      return sameArea(known, next) ? known : next;
+    });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(wrap);
+    return () => observer.disconnect();
+  }, [clearOf]);
+  const bounds = useMemo(() => {
+    const frame = fracture ? capFit(mapRect, fracture.bounds) : mapRect;
+    if (!area) return frame;
+    const hexes = [...mapSlots.map(s => hexToPixel(s.q, s.r)), ...(fracture?.spots ?? [])];
+    return fitBox(frame, area, hexes, area.tabs);
+  }, [fracture, mapRect, mapSlots, area]);
   // Frames of a gesture or of the camera's approach go straight to the groups that carry the view, not through React:
   // the map, the moving systems, the arrows and the flight each have one, in layers drawn in that order.
   const viewGroup = useRef<SVGGElement>(null);
@@ -128,7 +180,7 @@ export function HexMap({
   useEffect(() => { focus(focusKey === null ? null : JSON.parse(focusKey) as Rect); }, [focusKey, focus]);
   useEffect(() => { if (resetSignal > 0) reset(); }, [resetSignal, reset]);
   // The view scales around the middle of the map.
-  const camera = useSmoothRect(bounds);
+  const camera = useSmoothRect(bounds, area ? `${area.width}x${area.height}` : '');
   const midX = camera.x + camera.width / 2;
   const midY = camera.y + camera.height / 2;
   const transform = transformOf(view, midX, midY);
@@ -155,7 +207,7 @@ export function HexMap({
         <button type="button" className="hex-button" aria-label={t('map.resetView')} title={t('map.resetView')} onClick={reset}><RowIcon name="reset" /></button>
       </div>
     </div>
-    <div className="hexmap-wrap">
+    <div className="hexmap-wrap" ref={wrapRef}>
     <svg
       ref={svgRef} className={`hexmap${still ? ' hexmap-still' : ''}`} role="group" aria-label={t('map.label')}
       viewBox={viewBoxText}
