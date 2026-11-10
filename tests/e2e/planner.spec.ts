@@ -209,7 +209,10 @@ test('a game from the first screen to an exported file, and back offline', async
     expect(exported.plans[0].rounds[0].entries).toHaveLength(entryCount + 1);
 
     await page.locator('input[type=file]').setInputFiles({ name: 'game.json', mimeType: 'application/json', buffer: readFileSync(file) });
-    await expect(page.getByRole('button', { name: 'Open' })).toHaveCount(2);
+    // The imported game opens at once: it is the chosen one of the two saves and has nothing to open.
+    await expect(page.locator('.saved-list li')).toHaveCount(2);
+    await expect(page.locator(".saved-list li[aria-current='true']")).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Open' })).toHaveCount(1);
     await page.getByRole('button', { name: 'Plan & map' }).click();
     await expect(actions(page)).toHaveCount(entryCount);
   });

@@ -132,3 +132,23 @@ test('when the saves cannot be listed the screen says so and stays usable', asyn
   expect(screen.queryByText('No saved games')).toBeNull();
   expect(screen.getByRole('radio', { name: 'English' })).toBeEnabled();
 });
+
+test('the open game stands out in the list as the chosen one, and has nothing to open', async () => {
+  const mine = { ...sampleGame(), id: 'mine', name: 'Mine' };
+  const other = { ...sampleGame(), id: 'other', name: 'Other' };
+  await saveGame(mine);
+  await saveGame(other);
+  await useGame.getState().openGame('mine');
+  render(<GameScreen />);
+  const current = await item('Mine');
+  expect(current).toHaveAttribute('aria-current', 'true');
+  expect(within(current).queryByRole('button', { name: 'Open' })).toBeNull();
+  expect(within(current).getByText('Open now')).toBeVisible();
+  const rest = await item('Other');
+  expect(rest).not.toHaveAttribute('aria-current');
+  expect(within(rest).getByRole('button', { name: 'Open' })).toBeVisible();
+
+  await userEvent.click(within(rest).getByRole('button', { name: 'Open' }));
+  await waitFor(async () => expect(await item('Other')).toHaveAttribute('aria-current', 'true'));
+  expect(await item('Mine')).not.toHaveAttribute('aria-current');
+});

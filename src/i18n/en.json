@@ -30,6 +30,7 @@
     "export": "Export to file",
     "copyLink": "Copy link",
     "linkCopied": "Link copied",
+    "current": "Open now",
     "import": "Import game",
     "dataVersionWarning": "This game was made with a different data version: calculations may differ from the original.",
     "homeForeign": "Seat {{seat}} holds the home system of {{other}}, and your faction is {{mine}}. Start units stand there; nothing is blocked.",

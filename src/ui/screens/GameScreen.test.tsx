@@ -125,10 +125,13 @@ test('a started game appears in the saved list, and a new game can follow', asyn
   render(<GameScreen />);
   await pick(1, 'sol');
   await userEvent.click(screen.getByRole('button', { name: 'Start game' }));
-  expect(await screen.findByRole('button', { name: 'Open' })).toBeVisible();
+  // The started game is the open one: it stands in the list as chosen, with nothing to open.
+  expect(await screen.findByText('Open now')).toBeVisible();
+  expect(screen.queryByRole('button', { name: 'Open' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Start game' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'New game' }));
   expect(useGame.getState().game).toBeNull();
+  expect(await screen.findByRole('button', { name: 'Open' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Start game' })).toBeDisabled();
 });
 

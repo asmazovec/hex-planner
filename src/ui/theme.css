@@ -211,6 +211,10 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 /* A save is a card: its text takes the free room, its controls stand inside it at the right edge. */
 .saved-list li { display: flex; align-items: center; gap: 5px; padding: 4px 5px 4px 10px; font-size: 13px; color: var(--text-muted); }
 .saved-list li > span { flex: 1 1 auto; min-width: 0; }
+/* The open game is the chosen one: blue, as everything chosen. */
+.saved-list li[aria-current='true'] { border-color: var(--accent); background: var(--accent-soft); }
+.saved-list li[aria-current='true'] strong { color: var(--text-strong); }
+.saved-list li > .saved-current { flex: none; min-height: 36px; padding: 4px 10px; display: inline-flex; align-items: center; font-size: var(--font-s); color: var(--text-muted); }
 .saved-list strong { display: block; overflow-wrap: anywhere; font-size: var(--font-s); font-weight: 600; color: var(--text); }
 /* A caption under a line of a card: small and dim, on a line of its own. */
 .saved-list small, .plan-tab small, .source-button small, .landing-target small, .ship-row-name small, .upgrade-body > small { display: block; color: var(--text-dim); font-size: var(--font-xs); }

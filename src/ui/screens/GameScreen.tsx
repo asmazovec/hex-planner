@@ -193,8 +193,10 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
             {saved.map(s => {
               /** Listed as it is, with its export and deletion: a save that does not open is never dropped on its own. */
               const broken = s.broken || s.id in brokenSaves;
+              /** The game on the screens now: chosen, so it has nothing to open. */
+              const current = !broken && open?.id === s.id;
               return (
-              <li key={s.id} className={broken ? 'saved-broken' : undefined}>
+              <li key={s.id} className={broken ? 'saved-broken' : undefined} aria-current={current ? 'true' : undefined}>
                 <span>
                   <strong>{s.name ?? (s.faction ? factionName(s.faction) : s.id)}</strong>
                   {broken
@@ -208,7 +210,8 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
                     <>
                       {broken
                         ? <button type="button" onClick={() => void exportRaw(s.id)}>{t('load.exportRaw')}</button>
-                        : <button type="button" onClick={() => void openGame(s.id).then(() => onOpened?.())}>{t('game.open')}</button>}
+                        : current ? <span className="saved-current">{t('game.current')}</span>
+                          : <button type="button" onClick={() => void openGame(s.id).then(() => onOpened?.())}>{t('game.open')}</button>}
                       <HexRemove label={t('game.delete')} onClick={() => setAsked(s.id)} />
                     </>
                   )}
