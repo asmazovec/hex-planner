@@ -4,6 +4,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 /** The map string of the user's draft: seat 1 holds tile 58, the home of the Argent Flight. */
 const MAP_STRING = '66 22 61 19 72 24 110 79 48 106 117 33 41 71 28 44 46 30 58 63 115 55 76 49 16 74 78 14 37 68 12 102 80 4 34 113';
 
+/** The plan calls a system by its planets, and one without planets by what the map writes on it and its tile number. */
+const HOME = 'Avar / Valk / Ylir';
+const HOPE = "Hope's End";
+const HORIZON = "El'Nath / Horizon / Luthien VI";
+const ANG = 'Ang';
+const ASTEROIDS = 'Asteroids (79)';
+
 const tile = (page: Page, n: number) => page.getByRole('button', { name: `Tile ${n}`, exact: true });
 const entry = (page: Page, name: string) => page.getByRole('button', { name, exact: true });
 /** The entries themselves: a warning inside one is a list item too. */
@@ -102,42 +109,42 @@ test('a game from the first screen to an exported file, and back offline', async
     await page.getByRole('button', { name: 'Setup', exact: true }).click();
     await page.getByRole('button', { name: 'Infantry' }).click();
     await page.getByRole('button', { name: 'Close' }).click();
-    await expect(entry(page, 'Setup · 110')).toBeVisible();
+    await expect(entry(page, `Setup · ${HORIZON}`)).toBeVisible();
   });
 
   await test.step('plan a tactical action with a route and a pickup', async () => {
     await page.getByRole('button', { name: 'Add action' }).click();
     await page.getByRole('button', { name: 'Tactical action' }).click();
     await tile(page, 66).click();
-    await expect(page.getByText('Active system: 66')).toBeVisible();
+    await expect(page.getByText(`Active system: ${HOPE}`)).toBeVisible();
     await dragRoute(page, [58, 110, 66]);
-    await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+    await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
     await page.getByRole('button', { name: 'Take one Carrier' }).click();
     await page.getByRole('group', { name: 'Horizon' }).getByRole('button', { name: 'Take one Infantry' }).click();
     await expect(page.getByRole('heading', { name: 'Cargo on board: 1 of 4' })).toBeVisible();
     await page.getByRole('button', { name: 'Fly' }).click();
     await page.getByRole('button', { name: 'Land one Infantry' }).click();
     await page.getByRole('button', { name: 'Done', exact: true }).click();
-    await expect(entry(page, 'Tactical action · 66')).toBeVisible();
+    await expect(entry(page, `Tactical action · ${HOPE}`)).toBeVisible();
   });
 
   await test.step('tap the entry to read it, the pencil to edit it', async () => {
-    await entry(page, 'Tactical action · 66').click();
-    await expect(page.getByText('Fly 58 → 110 → 66')).toBeVisible();
-    await expect(page.getByText('Pick up on the way in 110')).toBeVisible();
+    await entry(page, `Tactical action · ${HOPE}`).click();
+    await expect(page.getByText(`Fly ${HOME} → ${HORIZON} → ${HOPE}`)).toBeVisible();
+    await expect(page.getByText(`Pick up on the way in ${HORIZON}`)).toBeVisible();
     await expect(page.getByText("Land on Hope's End")).toBeVisible();
-    await page.getByRole('button', { name: 'Edit: Tactical action · 66' }).click();
+    await page.getByRole('button', { name: `Edit: Tactical action · ${HOPE}` }).click();
     await expect(page.getByRole('group', { name: "Landing on Hope's End" })).toBeVisible();
     // A real edit: drop the landing, and the reading no longer has that step.
     await page.getByRole('button', { name: 'Give back Infantry' }).click();
     await page.getByRole('button', { name: 'Done', exact: true }).click();
-    await entry(page, 'Tactical action · 66').click();
-    await expect(page.getByText('Fly 58 → 110 → 66')).toBeVisible();
+    await entry(page, `Tactical action · ${HOPE}`).click();
+    await expect(page.getByText(`Fly ${HOME} → ${HORIZON} → ${HOPE}`)).toBeVisible();
     await expect(page.getByText("Land on Hope's End")).toHaveCount(0);
     // Close the reading, so the camera goes back to the whole map.
-    await entry(page, 'Tactical action · 66').click();
-    await expect(page.getByText('Fly 58 → 110 → 66')).toHaveCount(0);
-    await page.getByRole('listitem', { name: 'Tactical action · 66' }).getByRole('checkbox', { name: 'Done' }).check();
+    await entry(page, `Tactical action · ${HOPE}`).click();
+    await expect(page.getByText(`Fly ${HOME} → ${HORIZON} → ${HOPE}`)).toHaveCount(0);
+    await page.getByRole('listitem', { name: `Tactical action · ${HOPE}` }).getByRole('checkbox', { name: 'Done' }).check();
     await expect(summary('Tactic')).toHaveText(/(?<!\d)2$/);
   });
 
@@ -181,6 +188,7 @@ test('a game from the first screen to an exported file, and back offline', async
     // Prove the network is down: only the worker's cache can answer the reload.
     expect(await page.evaluate(() => fetch('/not-cached.txt').then(() => 'online', () => 'offline'))).toBe('offline');
     await page.reload();
+    // The game has no name, so the address does not open it: it waits among the saves.
     await expect(page.getByRole('heading', { name: 'Players' })).toBeVisible();
     await page.getByRole('button', { name: 'Open' }).click();
     await page.getByRole('button', { name: 'Plan & map' }).click();
@@ -236,12 +244,12 @@ test('the tabs of the left drawers stay beside the map through the actions, and 
   await page.getByRole('button', { name: 'Add action' }).click();
   await page.getByRole('button', { name: 'Tactical action' }).click();
   await tile(page, 66).click();
-  await expect(page.getByText('Active system: 66')).toBeVisible();
+  await expect(page.getByText(`Active system: ${HOPE}`)).toBeVisible();
   await tabsStay();
 
   // A route does the same.
   await dragRoute(page, [58, 110, 66]);
-  await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+  await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
   await tabsStay();
 
   // The drawer really opens from there.
@@ -281,12 +289,12 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await tile(page, 66).click();
 
   // The field chooses another system while the action is empty.
-  await page.getByRole('button', { name: /^Active system: 66/ }).click();
+  await page.getByRole('button', { name: new RegExp(`^Active system: ${HOPE}`) }).click();
   await tile(page, 61).click();
-  await expect(page.getByText('Active system: 61')).toBeVisible();
-  await page.getByRole('button', { name: /^Active system: 61/ }).click();
+  await expect(page.getByText(`Active system: ${ANG}`)).toBeVisible();
+  await page.getByRole('button', { name: new RegExp(`^Active system: ${ANG}`) }).click();
   await tile(page, 66).click();
-  await expect(page.getByText('Active system: 66')).toBeVisible();
+  await expect(page.getByText(`Active system: ${HOPE}`)).toBeVisible();
 
   // A real finger: a stroke lifted half way, then a tap removes nothing it should not, then the stroke goes on.
   await dragRoute(page, [58, 110]);
@@ -296,29 +304,29 @@ test('a route is drawn by a finger, tapped on, and drawn on again, and the panel
   await tile(page, 79).click();
   await expect(tile(page, 79)).toHaveClass(/tile-path/);
   await dragRoute(page, [79, 66]);
-  await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+  await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
   await expect(hint).toHaveCount(0);
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await expect(page.getByRole('button', { name: /^58 via 110, 79/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: `${HOME} via ${HORIZON}, ${ASTEROIDS}`, exact: false })).toBeVisible();
 
   // Taps first, the finger after.
   await tile(page, 110).click();
   await tile(page, 48).click();
   await dragRoute(page, [48, 66]);
-  await expect(page.getByText('Flight 110 → 66')).toBeVisible();
+  await expect(page.getByText(`Flight ${HORIZON} → ${HOPE}`)).toBeVisible();
   await page.getByRole('button', { name: 'Remove route' }).click();
 
   // The button only starts a route from the source; it is recorded on reaching the active system. The cross takes it away.
   await page.getByRole('button', { name: 'Add source' }).click();
   await tile(page, 110).click();
-  await expect(page.getByText('Flight 110 → 66')).toHaveCount(0);
+  await expect(page.getByText(`Flight ${HORIZON} → ${HOPE}`)).toHaveCount(0);
   await expect(tile(page, 110)).toHaveClass(/tile-path/);
   await tile(page, 66).click();
-  await expect(page.getByText('Flight 110 → 66')).toBeVisible();
+  await expect(page.getByText(`Flight ${HORIZON} → ${HOPE}`)).toBeVisible();
   await page.getByRole('button', { name: 'Back', exact: true }).click();
-  await page.getByRole('button', { name: 'Remove source 110' }).click();
-  await expect(page.getByRole('button', { name: 'Remove source 110' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Remove source 58' })).toBeVisible();
+  await page.getByRole('button', { name: `Remove source ${HORIZON}` }).click();
+  await expect(page.getByRole('button', { name: `Remove source ${HORIZON}` })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: `Remove source ${HOME}` })).toBeVisible();
 });
 
 test('a link makes a named game, opens it again, and asks when it disagrees with the save', async ({ page }) => {
@@ -413,7 +421,7 @@ test('a flight loops in the details by default, and with the setting off plays o
   const laterUnit = tile(page, 110).getByRole('img', { name: /Destroyer/ });
   await expect(laterUnit).not.toHaveCount(0);
 
-  const row = entry(page, 'Tactical action · 66');
+  const row = entry(page, `Tactical action · ${HOPE}`);
 
   // On by default: the details keep flying.
   await row.click();
@@ -441,10 +449,10 @@ test('a flight loops in the details by default, and with the setting off plays o
   await row.click();
 
   // Off: one play on marking it done, none on taking the mark back.
-  await page.getByRole('listitem', { name: 'Tactical action · 66' }).getByRole('checkbox', { name: 'Done' }).check();
+  await page.getByRole('listitem', { name: `Tactical action · ${HOPE}` }).getByRole('checkbox', { name: 'Done' }).check();
   count += 1;
   await staysAt(count);
-  await page.getByRole('listitem', { name: 'Tactical action · 66' }).getByRole('checkbox', { name: 'Done' }).uncheck();
+  await page.getByRole('listitem', { name: `Tactical action · ${HOPE}` }).getByRole('checkbox', { name: 'Done' }).uncheck();
   await page.waitForTimeout(500);
   expect(await flights()).toBe(count);
 });
@@ -466,7 +474,7 @@ test('a faction whose home is not on the pasted map starts at its seat and can s
   await page.getByRole('button', { name: 'Tactical action' }).click();
   await tile(page, 66).click();
   await dragRoute(page, [58, 110, 66]);
-  await expect(page.getByText('Flight 58 → 66')).toBeVisible();
+  await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
 
   await page.getByRole('button', { name: 'Game', exact: true }).click();
   await expect(page.getByText('Seat 1 holds the home system of The Argent Flight, and your faction is The Federation of Sol.')).toBeVisible();

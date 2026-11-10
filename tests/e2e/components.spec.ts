@@ -6,9 +6,8 @@ const LINK = `/?name=Relics&map=${MAP.split(' ').join('+')}&factions=sol,arborec
 const drawer = (page: Page) => page.getByRole('dialog', { name: 'Components' });
 const relics = (page: Page) => drawer(page).getByRole('group', { name: 'Relics' });
 
-/** The plan screen with the drawer open; after a reload the game of the address is open again. */
+/** The drawer of the plan screen, opened by its tab. */
 async function openDrawer(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Plan & map' }).click();
   await page.getByRole('button', { name: /^Components/ }).click();
   await expect(drawer(page)).toBeVisible();
 }
@@ -17,6 +16,7 @@ test('a relic found with a typo is added in the components drawer and is still t
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   await page.goto(LINK);
   await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Relics');
+  await page.getByRole('button', { name: 'Plan & map' }).click();
   await openDrawer(page);
 
   // What the game starts with is listed, and nothing is held of the relics yet.
@@ -39,8 +39,11 @@ test('a relic found with a typo is added in the components drawer and is still t
   const box = (await drawer(page).boundingBox())!;
   expect(box.x + box.width).toBeLessThanOrEqual(1180);
 
+  // A page loaded again opens the game of the address on the screen it was left on: the plan, its drawer closed.
   await page.reload();
-  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveValue('Relics');
+  await expect(page.getByRole('button', { name: 'Plan & map' })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Components · 3' })).toBeVisible();
   await openDrawer(page);
   await expect(relics(page)).toContainText('Stellar Converter');
 });
