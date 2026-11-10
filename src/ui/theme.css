@@ -144,7 +144,7 @@ body {
 /* The frame: content, then the menu. */
 .app { display: flex; flex-direction: column; height: 100%; }
 /* Every block that scrolls: a thin bar in the colour of a strong border. */
-.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .components-panel, .te-panel, .legend-panel, .fac-sheet { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+.app-body > main, .saved-list, .tile-popover, .stage-panel, .plan-scroll, .players-list, .players-aside, .components-panel, .te-panel, .legend-panel, .fac-sheet, .stage-dialog, .action-list, .component-picker > .component-list { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
 /* These columns keep room for the scrollbar, so nothing shrinks when it appears; the room comes out of their right padding (--scrollbar, measured at start: 0 on a tablet). */
 .plan-scroll, .players-aside, .components-panel, .te-panel, .legend-panel { scrollbar-gutter: stable; }
 .app-body > main { flex: 1; min-height: 0; min-width: 0; overflow: auto; padding: 20px 22px; }
@@ -887,7 +887,10 @@ small.ship-row-round { color: var(--gold); }
 .component-card.dim { opacity: 0.6; }
 .component-count { color: var(--gold); font-weight: 700; }
 .component-text { margin: 0; padding: 0 4px 2px; font-size: 12.5px; line-height: 1.35; color: var(--text-muted); white-space: pre-line; }
-.component-picker { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+/* The window keeps its title and its search field in place: only the list under them scrolls. */
+.component-picker { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
+.component-picker > * { flex: none; }
+.component-picker > .component-list { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
 .te-panel .row[role='group'] { gap: 4px; }
 .te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }
