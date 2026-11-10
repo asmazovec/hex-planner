@@ -203,4 +203,14 @@
 
 ## Bench numbers
 
-(filled in by Task 1)
+Plan of 96 entries, six players, six rounds (`npx vitest bench src/domain/replay/timeline.bench.ts --run`):
+
+| What | Mean |
+|---|---|
+| The whole plan | 1.48 ms |
+| After an edit of the last round | 0.23 ms |
+| Ten questions about entries, a replay each (as the screens asked before) | 13.1 ms |
+| Ten questions about entries of one timeline | under 0.001 ms |
+
+The restart is by round, not by entry: the context of a round (cards, passes, the status phase) lives only within it,
+so a round is the smallest part that can be replayed alone. One round costs about a sixth of the plan here.
