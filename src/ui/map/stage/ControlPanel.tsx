@@ -62,7 +62,10 @@ export function ControlPanel({ game, pack, tile, rotation, planets, shown, seate
             // The whole card answers a tap, its control buttons too, so the planet it speaks of is the one ringed on the hex.
             onClick={planets.length > 1 ? () => onChoose?.(index) : undefined}
           >
-            <PlanetDetails planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)} />
+            <PlanetDetails
+              planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)}
+              control={control} holderColor={game.opponents.find(o => o.id === holder)?.color}
+            />
             <PlayerChoice
               label={t('map.sheet.controlLabel', { planet: planet.name })} options={owners}
               chosen={value => holder === value} onPick={value => setPlanetControl(planet.id, value)}

@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { textOf } from '../../../domain/components';
 import type { DataPack, PlanetDef } from '../../../domain/types';
 import { LEGENDARY_SHAPE, TECH_SHAPES } from '../marks';
+import { PlanetBadge } from '../PlanetBadge';
 
 export interface PlanetDetailsProps {
   planet: PlanetDef;
@@ -10,6 +11,9 @@ export interface PlanetDetailsProps {
   /** The planet stands on a Fracture tile, and the rulebook gives each of those a relic icon. */
   relic: boolean;
   exhausted: boolean;
+  /** Whose it is, for the edge of its picture. */
+  control?: 'me' | 'enemy';
+  holderColor?: number;
 }
 
 /** A mark in the box of the technology shapes, named for the screen reader and under the finger. */
@@ -23,16 +27,16 @@ function Mark({ d, className, label }: { d: string; className: string; label: st
 }
 
 /**
- * All printed parameters of one planet: one line with its name, resources/influence and the marks the map draws
+ * All printed parameters of one planet: one line with its picture as the map draws it and its name, resources/influence and the marks
  * (traits, technology specialties, legendary), then what its card says in words. Control is chosen beside it.
  */
-export function PlanetDetails({ planet, pack, relic, exhausted }: PlanetDetailsProps) {
+export function PlanetDetails({ planet, pack, relic, exhausted, control, holderColor }: PlanetDetailsProps) {
   const { t } = useTranslation();
   const summary = planet.legendary ? textOf(pack, `legendary:${planet.id}`) : '';
   return (
     <div className="planet-details">
       <div className="planet-head">
-        <strong>{planet.name}</strong>
+        <PlanetBadge planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} />
         <span className="planet-values">
           <span className="value-resources">{planet.resources}</span>/<span className="value-influence">{planet.influence}</span>
         </span>
