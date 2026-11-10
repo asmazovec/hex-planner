@@ -1385,11 +1385,11 @@ test('the status entry folds like the others: a second tap on its name, or a tap
   expect(label()).toHaveAttribute('aria-expanded', 'false');
   await userEvent.click(label());
   expect(label()).toHaveAttribute('aria-expanded', 'true');
-  fireEvent.pointerDown(document.querySelector('.plan-panel .phase-title')!);
+  fireEvent.click(document.querySelector('.plan-panel .phase-title')!);
   expect(label()).toHaveAttribute('aria-expanded', 'false');
   await userEvent.click(row().getByRole('button', { name: /^Edit/ }));
   expect(row().getByText('Distribute tokens: 2 left')).toBeVisible();
-  fireEvent.pointerDown(document.querySelector('.plan-panel .phase-title')!);
+  fireEvent.click(document.querySelector('.plan-panel .phase-title')!);
   expect(row().queryByText('Distribute tokens: 2 left')).toBeNull();
 });
 

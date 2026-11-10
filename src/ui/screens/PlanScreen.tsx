@@ -119,13 +119,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const unfolded = panel.kind === 'list' && (shown !== null || openId !== null);
   useEffect(() => {
     if (!unfolded) return undefined;
-    const away = (e: PointerEvent) => {
+    // On the finished tap, not on the press: folding moves the layout, and a press that moved its target is no click.
+    const away = (e: MouseEvent) => {
       const target = e.target as Element | null;
       if (!target?.closest('.plan-panel') || target.closest('.entry')) return;
       update(state => (state.panel.kind === 'list' ? { ...state, panel: LIST, openId: null } : state));
     };
-    window.addEventListener('pointerdown', away);
-    return () => window.removeEventListener('pointerdown', away);
+    window.addEventListener('click', away, { capture: true });
+    return () => window.removeEventListener('click', away, { capture: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `update` is a fresh closure each render over the same setter.
   }, [unfolded]);
   const hasTe = game?.expansions.includes('te') ?? false;
