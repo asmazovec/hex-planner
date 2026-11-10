@@ -23,6 +23,19 @@ export const holdingCount = (holdings: Holdings): number =>
   holdings.technologies.length + holdings.hand.length + holdings.relics.length + holdings.promissory.length
   + Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0) + holdings.scored.length + holdings.secrets.length;
 
+/** The groups the components drawer shows a player's holdings in, in the order of its tabs. */
+export const COMPONENT_GROUPS = ['technologies', 'cards', 'faction', 'relics', 'objectives'] as const;
+export type ComponentGroup = typeof COMPONENT_GROUPS[number];
+
+/** How many components a player holds in each group; the laws of the game stand with the objectives. */
+export const groupCounts = (holdings: Holdings, laws: string[] = []): Record<ComponentGroup, number> => ({
+  technologies: holdings.technologies.length,
+  cards: holdings.hand.length + holdings.promissory.length,
+  faction: Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0),
+  relics: holdings.relics.length,
+  objectives: holdings.scored.length + holdings.secrets.length + laws.length,
+});
+
 /** The kind an id names: ids are `<kind>:<source id>`. */
 export const kindOf = (id: string): string => id.slice(0, Math.max(0, id.indexOf(':')));
 

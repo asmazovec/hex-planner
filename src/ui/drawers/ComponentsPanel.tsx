@@ -1,7 +1,7 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById, componentsOf } from '../../domain/components';
-import { emptyHoldings, HOLDING_FIELD, upgradesOf, upgradeTech } from '../../domain/holdings';
+import { emptyHoldings, HOLDING_FIELD, upgradesOf, upgradeTech, type ComponentGroup } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
 import type { ComponentDef, DataPack, Game, GameState, LeaderState } from '../../domain/types';
@@ -24,7 +24,21 @@ export interface ComponentsPanelProps {
   state: GameState;
   /** What the entries of the plan brought, by player and component id, with the round: not to take off here. */
   rounds: Record<string, Record<string, number>>;
+  /** The group of the fan whose sections the sheet shows; a query shows its results whatever the group. */
+  group: ComponentGroup;
+  /** Whose components are shown: an opponent's id, null for mine. The tabs count the same player. */
+  chosen: string | null;
+  onChoose: (player: string | null) => void;
 }
+
+/** The sections of each group, in the order the sheet shows them. */
+const GROUP_SECTIONS: Record<ComponentGroup, string[]> = {
+  technologies: ['technologies'],
+  cards: ['actionCards', 'promissory'],
+  faction: ['leaders', 'breakthrough'],
+  relics: ['relics'],
+  objectives: ['objectives', 'laws'],
+};
 
 /** A leader by hand goes round: locked, unlocked, exhausted, purged, and locked again. */
 const NEXT_LEADER: Record<LeaderState | 'locked', LeaderState | null> = { locked: 'unlocked', unlocked: 'exhausted', exhausted: 'purged', purged: null };
@@ -36,11 +50,10 @@ const unique = (ids: string[]): string[] => [...new Set(ids)];
  * it finds, what the player holds first, the rest with a control that adds it. Marks made here are what the player held
  * when the plan begins; what an entry of the plan brought says its round and is changed in that entry.
  */
-export function ComponentsPanel({ game, pack, state, rounds }: ComponentsPanelProps) {
+export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onChoose }: ComponentsPanelProps) {
   const { t } = useTranslation();
   const setStartHolding = useGame(s => s.setStartHolding);
   const setLeader = useGame(s => s.setLeader);
-  const [chosen, setChosen] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const asked = useDeferredValue(query);
   const find = useComponentSearch(pack);
@@ -178,7 +191,7 @@ export function ComponentsPanel({ game, pack, state, rounds }: ComponentsPanelPr
     <DrawerSheet className="components-panel" title={t('components.title')} style={playerStyle('--player', rival ? rival.color : game.color)}>
       <PlayerChoice
         label={t('components.whose')}
-        chosen={value => (value === null ? !rival : rival?.id === value)} onPick={setChosen}
+        chosen={value => (value === null ? !rival : rival?.id === value)} onPick={onChoose}
         options={[
           { value: null, label: t('plan.mine'), color: game.color },
           ...opponentsBySeat(game).map(o => {
@@ -196,7 +209,7 @@ export function ComponentsPanel({ game, pack, state, rounds }: ComponentsPanelPr
             {rest.map(card)}
           </Section>
         )
-        : sections.map(([key, cards]) => {
+        : sections.filter(([key]) => GROUP_SECTIONS[group].includes(key)).map(([key, cards]) => {
           const title = t(`components.section.${key}`);
           return cards.length === 0
             ? <Section key={key} label={title} title={title} headAction={<span className="muted">{t('components.none')}</span>} />

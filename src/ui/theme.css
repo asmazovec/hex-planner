@@ -922,6 +922,18 @@ small.ship-row-round { color: var(--gold); }
 .drawer-tab-right { border-right: 0; border-left: 3px solid var(--border-strong); border-radius: var(--radius-s) 0 0 var(--radius-s); }
 .drawer-tab-right span { transform: rotate(180deg); }
 .drawer-tab.te-ready { color: var(--gold); }
+/* The tabs of the components: folded, one tab over the shades of the rest, each lower, further in and fainter; fanned out, a tab per group, one under another. They take the room of one tab on the rail whatever they do, and move by `translate` alone. */
+.tab-fan { --fan-tab: 138px; position: relative; flex: none; width: 34px; height: calc(var(--fan-tab) + 18px); }
+.tab-fan > .drawer-tab { position: absolute; top: 0; right: 0; height: var(--fan-tab); padding: 0; z-index: calc(5 - var(--slot)); translate: calc(var(--slot) * 4px) calc(var(--slot) * 6px); opacity: calc(1 - var(--slot) * 0.25); transition: translate 0.26s var(--ease), opacity 0.26s var(--ease), color var(--motion-fast), border-color var(--motion-fast); }
+.tab-fan > .drawer-tab > span { transition: opacity 0.2s linear; }
+.tab-fan > .drawer-tab-aside > span { opacity: 0; }
+.tab-fan-open > .drawer-tab { translate: 0 calc(var(--slot) * (var(--fan-tab) + 6px)); opacity: 1; }
+/* The finger gets its 44 px across: the tab is 34 wide and takes the rest from the map beside it. */
+.tab-fan > .drawer-tab:not(.drawer-tab-aside)::after { content: ''; position: absolute; inset: 0 0 0 -10px; }
+/* A tab that stands aside is a shade, or has left for the edge: neither the finger nor the screen reader finds it. */
+.drawer-tab-aside { pointer-events: none; }
+.drawer-rail > .drawer-tab { transition: translate 0.26s var(--ease), opacity 0.26s var(--ease), color var(--motion-fast), border-color var(--motion-fast); }
+.drawer-rail > .drawer-tab-aside, .drawer-rail > .drawer-tab-aside:disabled { translate: 100% 0; opacity: 0; }
 .drawer { position: absolute; top: 0; bottom: 0; }
 .drawer-left { left: 0; z-index: 10; border-right: 2px solid var(--accent); box-shadow: var(--shadow-drawer); animation: drawer-from-left 0.26s var(--ease); transition: width 0.26s var(--ease); }
 .drawer-left.drawer-leaving { animation: drawer-to-left 0.26s var(--ease) forwards; }
@@ -932,6 +944,9 @@ small.ship-row-round { color: var(--gold); }
 :root[data-blur='on'] .drawer-scrim { -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 /* Behind the plan's panel, flush with it: the sheet comes out from under it, and its shadow grows on the map as it moves. */
 .drawer-under { right: 0; z-index: 6; width: min(388px, calc(100% - 34px)); border-left: 2px solid var(--accent); box-shadow: var(--shadow-drawer-under); animation: drawer-from-under 0.26s var(--ease); }
+/* The sheet of the components opens beside its tabs, which stay at the edge of the map: the strip under them is the sheet's own. */
+.drawer-fanned { right: 34px; width: min(388px, calc(100% - 68px)); }
+.drawer-fanned::after { content: ''; position: absolute; top: 0; bottom: 0; left: 100%; width: 34px; background: var(--bg); }
 .drawer-under.drawer-leaving { animation: drawer-to-under 0.26s var(--ease) forwards; }
 .drawer-swap { height: 100%; animation: fade-in 0.16s linear; }
 @keyframes drawer-from-left { from { transform: translateX(-100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } to { transform: none; } }
@@ -939,7 +954,7 @@ small.ship-row-round { color: var(--gold); }
 @keyframes drawer-from-under { from { transform: translateX(100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } to { transform: none; } }
 @keyframes drawer-to-under { to { transform: translateX(100%); box-shadow: 0 0 0 rgb(0 0 0 / 0); } }
 @keyframes fade-out { to { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .drawer, .drawer-scrim, .drawer-rail { animation: none; transition: none; } }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer-scrim, .drawer-rail, .drawer-tab, .drawer-tab > span { animation: none; transition: none; } }
 
 /* Smooth motion turned off in energy saving: the same as the system's reduced motion. Blur has its own data-blur. */
 :root[data-motion='off'] *, :root[data-motion='off'] *::before, :root[data-motion='off'] *::after { animation: none !important; transition: none !important; }

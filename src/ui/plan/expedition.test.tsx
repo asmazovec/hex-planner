@@ -67,11 +67,14 @@ test('the widgets live in a panel the map tools open and close, and are not in t
   expect(screen.queryByRole('dialog', { name: "Thunder's Edge" })).toBeNull();
 });
 
-test('this panel and the components panel replace each other', async () => {
+test('this panel and the components panel replace each other: the tab of this one is away while the components are fanned out', async () => {
   await openPanel();
   await userEvent.click(screen.getByRole('button', { name: /^Components/ }));
   expect(screen.queryByRole('dialog', { name: "Thunder's Edge" })).toBeNull();
   expect(screen.getByRole('dialog', { name: 'Components' })).toBeVisible();
+  expect(screen.queryByRole('button', { name: /^Thunder's Edge · / })).toBeNull();
+  await userEvent.click(screen.getByRole('button', { name: /^Technologies/ }));
+  expect(screen.queryByRole('dialog', { name: 'Components' })).toBeNull();
   await userEvent.click(teButton());
   expect(screen.getByRole('dialog', { name: "Thunder's Edge" })).toBeVisible();
   expect(screen.queryByRole('dialog', { name: 'Components' })).toBeNull();

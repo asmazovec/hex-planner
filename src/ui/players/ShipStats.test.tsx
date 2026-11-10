@@ -139,10 +139,10 @@ describe('the unit cards of the components drawer', () => {
     expect(carrier).toHaveAttribute('aria-pressed', 'true');
     expect(carrier.querySelector('.upgrade-level')).toHaveTextContent('II');
     expect(carrier).toHaveTextContent('4 → 6');
-    expect(screen.getByRole('button', { name: 'Компоненты · 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Технологии · 2' })).toBeInTheDocument();
     await userEvent.click(carrier);
     expect(baseline()).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Компоненты · 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Технологии · 1' })).toBeInTheDocument();
   });
 
   test('a type with no level II shows a dash and does not react', async () => {
@@ -183,7 +183,7 @@ describe('the unit cards of the components drawer', () => {
   test('closes on a second tap on its tab', async () => {
     startPlan();
     await open();
-    await userEvent.click(screen.getByRole('button', { name: /Компоненты/ }));
+    await userEvent.click(screen.getByRole('button', { name: /^Технологии/ }));
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

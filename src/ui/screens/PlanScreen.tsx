@@ -13,11 +13,11 @@ import { focusRect } from '../map/geometry';
 import { cardChange, withSystem } from '../../domain/strategy';
 import { entrySystems, hasUnits, isUntouched, isValidSource, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
-import { holdingCount, holdingRounds, upgradesOf } from '../../domain/holdings';
+import { emptyHoldings, groupCounts, holdingCount, holdingRounds, upgradesOf, type ComponentGroup } from '../../domain/holdings';
 import { entryUpgradeRounds } from '../../domain/unitStats';
 import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { lastView } from '../common/preferences';
+import { componentsTab, lastView } from '../common/preferences';
 import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { HexMap } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/stage/HexStage';
@@ -25,6 +25,7 @@ import { cardPurchases } from '../map/stage/purchases';
 import { MapLegend } from '../drawers/MapLegend';
 import { ThundersEdgePanel } from '../drawers/ThundersEdgePanel';
 import { ComponentsPanel } from '../drawers/ComponentsPanel';
+import { ComponentTabs } from '../drawers/ComponentTabs';
 import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
@@ -131,6 +132,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   }, [unfolded]);
   const hasTe = game?.expansions.includes('te') ?? false;
   const drawers = useDrawers(hasTe, choosesForTe(next));
+  const [componentGroup, setComponentGroup] = useState(componentsTab.read);
+  /** Whose components the drawer shows: an opponent's id, null for mine. */
+  const [componentsOf, setComponentsOf] = useState<string | null>(null);
   const boards = useBoards(game, plan, pack);
 
   /** A finished route keeps the earlier ones: it adds its source, or gives a known source a new way. */
@@ -398,6 +402,18 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     stopTeChoice();
     toggleDrawer('components');
   };
+  const componentsOpen = drawers.open === 'components';
+  /** The stack opens on my components; a tab of the fan changes the group, and the tab of the open group folds the fan. */
+  const openComponents = () => {
+    setComponentsOf(null);
+    toggleComponents();
+  };
+  const pickComponentGroup = (group: ComponentGroup) => {
+    if (group === componentGroup) return toggleComponents();
+    componentsTab.write(group);
+    setComponentGroup(group);
+  };
+  const shownHoldings = (game.opponents.some(o => o.id === componentsOf) ? shownState.rivals?.[componentsOf ?? '']?.holdings : shownState.holdings) ?? emptyHoldings();
   const toggleTe = () => {
     // While the panel stands aside for the map, the button brings it back.
     if (teChoosing) stopTeChoice();
@@ -621,22 +637,24 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               {mapHint && onFinishMap && <button type="button" onClick={onFinishMap}>{t('plan.finishMap')}</button>}
             </div>
           )}
-          <div className={`drawer-rail drawer-rail-right${rightOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
-            <DrawerTab side="right" open={drawers.open === 'components'} onClick={toggleComponents}>
-              {heldCount > 0 ? `${t('components.title')} · ${heldCount}` : t('components.title')}
-            </DrawerTab>
+          {/* The fan of the components stays at the edge of the map, beside its sheet; the tab of Thunder's Edge rides on the edge of its own. */}
+          <div className={`drawer-rail drawer-rail-right${rightOpen && !componentsOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
+            <ComponentTabs
+              open={componentsOpen} group={componentGroup} counts={groupCounts(shownHoldings, shownState.laws)} total={heldCount}
+              onOpen={openComponents} onGroup={pickComponentGroup}
+            />
             {hasTe && (
-              <DrawerTab side="right" open={showTe} onClick={toggleTe} className={takenSlices === totalSlices && placedTe === null ? 'te-ready' : undefined}>
+              <DrawerTab side="right" open={showTe} aside={componentsOpen} onClick={toggleTe} className={takenSlices === totalSlices && placedTe === null ? 'te-ready' : undefined}>
                 {placedTe === null
                   ? t('thundersEdge.taken', { n: takenSlices, total: totalSlices })
                   : t('thundersEdge.placed', { system: systemName(game, pack, placedTe) })}
               </DrawerTab>
             )}
           </div>
-          <Drawer open={rightOpen} className="drawer-under">
+          <Drawer open={rightOpen} className={`drawer-under${rightDrawer === 'components' ? ' drawer-fanned' : ''}`}>
             <div key={rightDrawer} className="drawer-swap">
               {rightDrawer === 'components'
-                ? <ComponentsPanel game={game} pack={pack} state={shownState} rounds={holdingSources} />
+                ? <ComponentsPanel game={game} pack={pack} state={shownState} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />
                 : (
                   <ThundersEdgePanel
                     game={game} pack={pack} owners={owners}

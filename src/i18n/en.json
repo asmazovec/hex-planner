@@ -814,6 +814,13 @@
       "exhausted": "exhausted",
       "purged": "purged"
     },
+    "group": {
+      "technologies": "Technologies",
+      "cards": "Cards",
+      "faction": "Faction",
+      "relics": "Relics",
+      "objectives": "Objectives & laws"
+    },
     "section": {
       "technologies": "Technologies",
       "actionCards": "Action cards",

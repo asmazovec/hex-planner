@@ -816,6 +816,13 @@
       "exhausted": "истощён",
       "purged": "убран"
     },
+    "group": {
+      "technologies": "Технологии",
+      "cards": "Карты",
+      "faction": "Фракция",
+      "relics": "Реликвии",
+      "objectives": "Цели и законы"
+    },
     "section": {
       "technologies": "Технологии",
       "actionCards": "Карты действий",

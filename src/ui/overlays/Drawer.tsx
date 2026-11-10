@@ -59,14 +59,20 @@ export interface DrawerTabProps {
   open: boolean;
   label?: string;
   className?: string;
+  /** The tab stands aside: it is drawn, as a shade or on its way out, but is not there for the finger nor the screen reader. */
+  aside?: boolean;
+  style?: CSSProperties;
   onClick: () => void;
   children: ReactNode;
 }
 
 /** The vertical tab a drawer hangs on. */
-export function DrawerTab({ side, open, label, className, onClick, children }: DrawerTabProps) {
+export function DrawerTab({ side, open, label, className, aside, style, onClick, children }: DrawerTabProps) {
   return (
-    <button type="button" className={`drawer-tab drawer-tab-${side}${className ? ` ${className}` : ''}`} aria-pressed={open} aria-label={label} onClick={onClick}>
+    <button
+      type="button" className={`drawer-tab drawer-tab-${side}${className ? ` ${className}` : ''}${aside ? ' drawer-tab-aside' : ''}`} style={style}
+      aria-pressed={open} aria-label={label} aria-hidden={aside || undefined} disabled={aside} tabIndex={aside ? -1 : undefined} onClick={onClick}
+    >
       <span>{children}</span>
     </button>
   );

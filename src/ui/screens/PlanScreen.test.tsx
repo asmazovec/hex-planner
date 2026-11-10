@@ -1634,7 +1634,8 @@ describe('the drawers', () => {
 
   test('a right drawer leaves the map and the plan at hand, and only its tab closes it', async () => {
     render(<PlanScreen />);
-    const tab = () => screen.getByRole('button', { name: /Components/ });
+    // The stack of the components opens on Technologies, and the tab of that group folds it again.
+    const tab = () => screen.getByRole('button', { name: /^(Components|Technologies)/ });
     await userEvent.click(tab());
     expect(screen.queryByTestId('drawer-scrim')).toBeNull();
     await userEvent.click(tile(TARGET));

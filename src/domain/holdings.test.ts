@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { componentById } from './components';
-import { holdingRounds, holdingsOf, setLeader, setStartHolding, upgradesOf, upgradeTech } from './holdings';
+import { COMPONENT_GROUPS, groupCounts, holdingRounds, holdingsOf, setLeader, setStartHolding, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { gameAs, removePlayer, setPlayerFaction } from './players';
 import { project } from './project';
@@ -316,5 +316,17 @@ describe('unit upgrades are technologies', () => {
       [RIVAL.id]: { 'actionCard:bribery': 2 },
     });
     expect(holdingRounds(game.plans[0], 'now')).toEqual({ me: { 'relic:nanoforge': 1 } });
+  });
+});
+
+describe('the groups of the components drawer', () => {
+  test('every holding is counted in one group, and the laws of the game with the objectives', () => {
+    const holdings = {
+      ...holdingsOf({ technologies: ['technology:amd', 'technology:cv2'], hand: ['actionCard:sabo1', 'actionCard:sabo1'], promissory: ['promissory:x'] }),
+      relics: ['relic:shard'], leaders: { 'leader:solagent': 'unlocked' as const }, breakthrough: 'held' as const, scored: ['publicObjective:a'], secrets: ['secretObjective:b'],
+    };
+    expect(COMPONENT_GROUPS).toEqual(['technologies', 'cards', 'faction', 'relics', 'objectives']);
+    expect(groupCounts(holdings, ['agenda:law'])).toEqual({ technologies: 2, cards: 3, faction: 2, relics: 1, objectives: 3 });
+    expect(groupCounts(holdingsOf())).toEqual({ technologies: 0, cards: 0, faction: 0, relics: 0, objectives: 0 });
   });
 });

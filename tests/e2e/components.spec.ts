@@ -5,6 +5,8 @@ const LINK = `/?name=Relics&map=${MAP.split(' ').join('+')}&factions=sol,arborec
 
 const drawer = (page: Page) => page.getByRole('dialog', { name: 'Components' });
 const relics = (page: Page) => drawer(page).getByRole('group', { name: 'Relics' });
+/** A tab of the fan the stack of the components opens into. */
+const groupTab = (page: Page, name: string | RegExp) => page.getByRole('group', { name: 'Drawers' }).getByRole('button', { name });
 
 /** The drawer of the plan screen, opened by its tab. */
 async function openDrawer(page: Page): Promise<void> {
@@ -21,6 +23,7 @@ test('a relic found with a typo is added in the components drawer and is still t
 
   // What the game starts with is listed, and nothing is held of the relics yet.
   await expect(drawer(page).getByRole('group', { name: 'Technologies' })).toContainText('Neural Motivator');
+  await groupTab(page, 'Relics').click();
   await expect(relics(page)).toHaveText(/none$/);
 
   await drawer(page).getByRole('searchbox', { name: 'Search components' }).fill('stelar convertr');
@@ -28,10 +31,10 @@ test('a relic found with a typo is added in the components drawer and is still t
   await results.getByRole('button', { name: 'Add Stellar Converter' }).click();
   await expect(results.getByRole('button', { name: 'Remove Stellar Converter' })).toBeVisible();
 
-  // The cross of the field brings the sections back, the relic among them, and the tab counts it.
+  // The cross of the field brings the group back, the relic in it, and its tab counts it.
   await drawer(page).getByRole('button', { name: 'Clear the search' }).click();
   await expect(relics(page)).toContainText('Stellar Converter');
-  await expect(page.getByRole('button', { name: 'Components · 3' })).toBeVisible();
+  await expect(groupTab(page, 'Relics · 1')).toHaveAttribute('aria-pressed', 'true');
 
   // The printed text opens in place and the drawer stays inside the screen.
   await relics(page).getByRole('button', { name: /^Stellar Converter/ }).click();
@@ -44,6 +47,7 @@ test('a relic found with a typo is added in the components drawer and is still t
   await expect(page.getByRole('button', { name: 'Plan & map' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Components · 3' })).toBeVisible();
+  // The stack opens on the group it was left on.
   await openDrawer(page);
   await expect(relics(page)).toContainText('Stellar Converter');
 });
