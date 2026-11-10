@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 const css = readFileSync('src/ui/theme.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 /** Every rule of the stylesheet, those inside a media query too: its selectors and its declarations. */
 const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([, selectors, body]) => ({
-  selectors: selectors.split(',').map(selector => selector.trim()).filter(Boolean),
+  selectors: selectors.split(',').map((selector: string) => selector.trim()).filter(Boolean),
   body,
 }));
 const SCROLLS = /overflow(-y)?:\s*(auto|scroll)\b|overflow:\s*\w+\s+(auto|scroll)\b/;
