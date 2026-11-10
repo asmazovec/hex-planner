@@ -3,7 +3,8 @@
  * the one bridge from the technologies held to the unit upgrades the counts follow. The replay's side is in
  * `replay/holdings.ts`.
  */
-import type { ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
+import { componentsOf } from './components';
+import type { ComponentDef, ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
 
 export const emptyHoldings = (): Holdings =>
   ({ technologies: [], hand: [], relics: [], promissory: [], leaders: {}, scored: [], secrets: [], exhausted: [] });
@@ -75,14 +76,28 @@ export function upgradeTech(pack: DataPack, factionId: string, kind: UpgradeId):
 export const startingTechnologies = (pack: DataPack, factionId: string): string[] =>
   (pack.factions[factionId]?.startingTech ?? []).map(id => TECH + id);
 
-/** A player's start after their faction changed: the old faction's starting technologies go, the new one's come. */
+const leadersOf = (pack: DataPack, factionId: string): ComponentDef[] =>
+  componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === factionId);
+
+/** The agents of a faction, as component ids: an agent needs no unlocking and begins the game readied (LRR 51.4). None without Prophecy of Kings. */
+export const startingAgents = (pack: DataPack, factionId: string): string[] =>
+  leadersOf(pack, factionId).filter(c => c.detail?.type === 'agent').map(c => c.id);
+
+/**
+ * A player's start after their faction changed: the old faction's starting technologies and leaders go, the new one's
+ * starting technologies come, and its agents come unlocked.
+ */
 export function startForFaction(start: StartHoldings = {}, from: string, to: string, pack: DataPack): StartHoldings {
   const gone = startingTechnologies(pack, from);
   const kept = (start.technologies ?? []).filter(id => !gone.includes(id));
   const technologies = [...kept, ...startingTechnologies(pack, to).filter(id => !kept.includes(id))];
-  const { technologies: old, ...rest } = start;
+  const left = new Set(leadersOf(pack, from).map(c => c.id));
+  const leaders: Record<string, LeaderState> = Object.fromEntries(Object.entries(start.leaders ?? {}).filter(([id]) => !left.has(id)));
+  for (const id of startingAgents(pack, to)) leaders[id] = 'unlocked';
+  const { technologies: old, leaders: before, ...rest } = start;
   void old;
-  return technologies.length > 0 ? { ...rest, technologies } : rest;
+  void before;
+  return { ...rest, ...(technologies.length > 0 ? { technologies } : {}), ...(Object.keys(leaders).length > 0 ? { leaders } : {}) };
 }
 
 type ListField = 'technologies' | 'hand' | 'relics' | 'promissory' | 'scored' | 'secrets';

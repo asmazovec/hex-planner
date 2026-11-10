@@ -435,14 +435,20 @@ test('the stack of the component tabs opens and folds at one point, on the group
   await expect(drawer(page)).toHaveCount(0);
 });
 
-test('a leader changes its state and a unit its level under the finger', async ({ page }) => {
+test('the states of a leader are chosen, and a unit changes its level, under the finger', async ({ page }) => {
   await page.getByRole('button', { name: /^Components/ }).click();
   await fanTab(page, /^Faction/).click();
   const leaders = drawer(page).getByRole('group', { name: 'Leaders' }).locator('[data-testid^="component-leader:"]');
   const ids = await leaders.evaluateAll(cards => cards.map(card => card.getAttribute('data-testid') ?? ''));
   expect(ids.length).toBeGreaterThan(1);
-  // Locked, unlocked, exhausted, purged, and round again.
-  for (const id of ids) await pressRepeatedly(page, drawer(page).getByTestId(id).locator('.icon-button'), 8);
+  // Every state of every leader, from the last to the first and back: the segments stand still whatever is chosen.
+  for (const id of ids) {
+    const states = drawer(page).getByTestId(id).locator('.segment > button');
+    const count = await states.count();
+    expect(count).toBeGreaterThan(1);
+    for (let i = count - 1; i >= 0; i -= 1) await pressRepeatedly(page, states.nth(i), 2);
+    for (let i = 0; i < count; i += 1) await pressRepeatedly(page, states.nth(i), 2);
+  }
 
   await fanTab(page, /^Technologies/).click();
   const levels = await drawer(page).locator('.upgrade-card:not(:disabled)').evaluateAll(cards => cards.map(card => card.getAttribute('data-testid') ?? ''));

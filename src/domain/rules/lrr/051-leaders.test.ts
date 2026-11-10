@@ -2,6 +2,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { factionSheet } from '../../factionSheet';
+import { createGame } from '../../newGame';
+import { setPlayerFaction } from '../../players';
 import type { Entry, ExpansionId } from '../../types';
 import { codesOf, forecast, rulesGame, statusTokens } from '../kit';
 
@@ -37,6 +39,19 @@ describe('LRR 51 Leaders', () => {
   test.todo('51.2.1: each leader goes in the slot of its type, hash marks up — not modelled: leader sides are not tracked');
   test.todo('51.2.2: the two extra Nomad agents go in the play area readied — not modelled: leader state is not tracked');
   test.todo('51.3: agents — heading only');
+  test('51.4: an agent needs no unlocking and begins the game readied: a game begins with the agents of every player unlocked', () => {
+    const game = setPlayerFaction(createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pok), 1, 'nomad', pok);
+    expect(game.start.me.leaders).toEqual({ 'leader:solagent': 'unlocked' });
+    expect(Object.values(game.start.opponents[game.opponents[0].id].leaders ?? {})).toEqual(['unlocked', 'unlocked', 'unlocked']);
+    const use: Entry = { id: 'a', phase: 'action', status: 'planned', type: 'component', note: '', componentId: 'leader:solagent' };
+    expect(codesOf({ ...game, plans: [{ ...game.plans[0], rounds: [{ ...game.plans[0].rounds[0], entries: [use] }] }] }, pok, use)).toEqual([]);
+  });
+  test('51.4: a faction left takes its leaders with it, and without Prophecy of Kings there is no agent to begin with', () => {
+    const game = createGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pok);
+    expect(setPlayerFaction(game, 0, 'hacan', pok).start.me.leaders).toEqual({ 'leader:hacanagent': 'unlocked' });
+    const base = loadPack([]);
+    expect(createGame({ expansions: [], playerCount: 6, faction: 'sol' }, base).start.me.leaders).toBeUndefined();
+  });
   test('51.4: an agent exhausts on use, warns when used again the same round, and readies in the status phase', () => {
     const use = (id: string): Entry => ({ id, phase: 'action', status: 'planned', type: 'component', note: '', componentId: 'leader:solagent' });
     const start = { me: { leaders: { 'leader:solagent': 'unlocked' as const } }, opponents: {} };

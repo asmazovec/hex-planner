@@ -10,6 +10,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { componentsOf } from '../../domain/components';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
@@ -46,19 +47,30 @@ const section = (name: string) => within(drawer()).getByRole('group', { name });
 const searchBox = () => within(drawer()).getByRole('searchbox', { name: 'Search components' });
 
 describe('the components drawer', () => {
-  test('lists my starting technologies under Technologies, with the unit cards beside them', async () => {
+  test('lists my starting technologies by colour under Researched technologies, and the unit cards in a section of their own', async () => {
+    useGame.getState().setStartHolding('me', 'technology:st', true);
+    useGame.getState().setStartHolding('me', 'technology:pds2', true);
     await openDrawer();
-    const technologies = section('Technologies');
+    const technologies = section('Researched technologies');
     expect(within(technologies).getByText('Magen Defense Grid ΩΩ')).toBeVisible();
-    expect(within(technologies).getByTestId('upgrade-carrier')).toBeVisible();
-    expect(within(technologies).queryByText('Sarween Tools')).toBeNull();
+    expect(within(technologies).queryByTestId('upgrade-carrier')).toBeNull();
+    // A heading per colour, in the order of the technology deck; each technology under its own.
+    const colours = within(technologies).getAllByRole('group').map(group => group.getAttribute('aria-label'));
+    expect(colours).toEqual(['Cybernetic', 'Warfare']);
+    expect(within(within(technologies).getByRole('group', { name: 'Warfare' })).getByText('Magen Defense Grid ΩΩ')).toBeVisible();
+    expect(within(within(technologies).getByRole('group', { name: 'Cybernetic' })).getByText('Sarween Tools')).toBeVisible();
+    // An upgrade without a unit card here stands with the unit cards, not among the colours.
+    const upgrades = section('Unit upgrades');
+    expect(within(upgrades).getByTestId('upgrade-carrier')).toBeVisible();
+    expect(within(upgrades).getByTestId('component-technology:pds2')).toBeVisible();
+    expect(within(technologies).queryByTestId('component-technology:pds2')).toBeNull();
   });
 
   test('the tab counts what I hold', async () => {
     render(<PlanScreen />);
-    expect(tab()).toHaveAccessibleName('Components · 1');
+    expect(tab()).toHaveAccessibleName('Components · 2');
     useGame.getState().setStartHolding('me', 'relic:shard', true);
-    expect(await screen.findByRole('button', { name: 'Components · 2' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Components · 3' })).toBeVisible();
   });
 
   test('a unit card still switches the level of the unit, through its upgrade technology', async () => {
@@ -81,7 +93,7 @@ describe('the components drawer', () => {
     await openDrawer('Cards');
     await userEvent.type(searchBox(), 'sabotge');
     const results = await screen.findByRole('group', { name: 'Search results' });
-    expect(screen.queryByRole('group', { name: 'Technologies' })).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Researched technologies' })).toBeNull();
     await userEvent.click(within(results).getByRole('button', { name: 'Add Sabotage' }));
     expect(game().start.me.hand).toEqual(['actionCard:sabo1']);
     await userEvent.keyboard('{Escape}');
@@ -123,7 +135,7 @@ describe('the components drawer', () => {
     await userEvent.type(searchBox(), 'sabo');
     await userEvent.click(screen.getByRole('button', { name: 'Clear the search' }));
     expect(searchBox()).toHaveValue('');
-    expect(section('Technologies')).toBeVisible();
+    expect(section('Researched technologies')).toBeVisible();
   });
 
   test('a press on a card opens its printed text in place', async () => {
@@ -159,25 +171,58 @@ describe('the components drawer', () => {
     expect(game().start.me.hand).toHaveLength(1);
   });
 
-  test('a leader goes round its states: locked, unlocked, exhausted, purged', async () => {
+  const leaderId = (type: string) => componentsOf(pack).find(c => c.kind === 'leader' && c.faction === 'arborec' && c.detail?.type === type)!.id;
+  const leaderCard = (type: string) => within(section('Leaders')).getByTestId(`component-${leaderId(type)}`);
+  const stateOf = (type: string) => within(leaderCard(type)).getByRole('group', { name: /: state$/ });
+  const states = (type: string) => within(stateOf(type)).getAllByRole('button').map(button => button.textContent);
+  const chosen = (type: string) => within(stateOf(type)).getByRole('button', { pressed: true }).textContent;
+
+  test('a leader says its type and how it unlocks, and offers the states its type can be in', async () => {
     await openDrawer('Faction');
-    const cycle = () => within(section('Leaders')).getByRole('button', { name: /^Letani Ospha: / });
-    expect(cycle()).toHaveAccessibleName('Letani Ospha: locked. Change the state');
-    await userEvent.click(cycle());
-    expect(game().start.me.leaders).toEqual({ 'leader:arborecagent': 'unlocked' });
-    expect(cycle()).toHaveAccessibleName('Letani Ospha: unlocked. Change the state');
-    await userEvent.click(cycle());
-    expect(game().start.me.leaders).toEqual({ 'leader:arborecagent': 'exhausted' });
-    await userEvent.click(cycle());
-    expect(game().start.me.leaders).toEqual({ 'leader:arborecagent': 'purged' });
-    await userEvent.click(cycle());
+    expect(states('agent')).toEqual(['Locked', 'Unlocked', 'Exhausted']);
+    expect(states('commander')).toEqual(['Locked', 'Unlocked']);
+    expect(states('hero')).toEqual(['Locked', 'Unlocked', 'Purged']);
+    expect(leaderCard('agent')).toHaveTextContent('Agent');
+    expect(leaderCard('hero')).toHaveTextContent('Hero');
+    // The condition is in sight without opening the card.
+    const unlock = pack.texts[`${leaderId('commander')}#unlock`];
+    expect(unlock.length).toBeGreaterThan(5);
+    expect(leaderCard('commander')).toHaveTextContent('Commander');
+    expect(leaderCard('commander')).toHaveTextContent(unlock);
+    expect(section('Leaders')).toHaveTextContent('An exhausted agent readies in the status phase');
+  });
+
+  test('an agent begins unlocked; the state of a leader is chosen by its name', async () => {
+    await openDrawer('Faction');
+    expect(chosen('agent')).toBe('Unlocked');
+    expect(chosen('commander')).toBe('Locked');
+    await userEvent.click(within(stateOf('agent')).getByRole('button', { name: 'Exhausted' }));
+    expect(game().start.me.leaders).toEqual({ [leaderId('agent')]: 'exhausted' });
+    expect(chosen('agent')).toBe('Exhausted');
+    await userEvent.click(within(stateOf('agent')).getByRole('button', { name: 'Locked' }));
     expect(game().start.me.leaders).toEqual({});
+    await userEvent.click(within(stateOf('commander')).getByRole('button', { name: 'Unlocked' }));
+    await userEvent.click(within(stateOf('hero')).getByRole('button', { name: 'Purged' }));
+    expect(game().start.me.leaders).toEqual({ [leaderId('commander')]: 'unlocked', [leaderId('hero')]: 'purged' });
+    expect(states('hero')).toEqual(['Locked', 'Unlocked', 'Purged']);
+  });
+
+  test('a state the plan brought is shown and is not changed here', async () => {
+    useGame.getState().addEntry(1, { type: 'component', note: '', componentId: leaderId('agent') }, 'action');
+    await openDrawer('Faction');
+    expect(chosen('agent')).toBe('Exhausted');
+    for (const button of within(stateOf('agent')).getAllByRole('button')) expect(button).toBeDisabled();
+    expect(leaderCard('agent')).toHaveTextContent('set by the plan');
+    // Only what is done counts for "now": there the agent is as the game began, and is mine to change.
+    await userEvent.click(screen.getByRole('button', { name: 'Now' }));
+    expect(chosen('agent')).toBe('Unlocked');
+    expect(within(stateOf('agent')).getByRole('button', { name: 'Exhausted' })).toBeEnabled();
   });
 
   test('a rival is shown and edited the same way', async () => {
     await openDrawer();
     await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
-    const technologies = section('Technologies');
+    const technologies = section('Researched technologies');
     expect(within(technologies).getByText('Sarween Tools')).toBeVisible();
     expect(within(technologies).queryByText('Magen Defense Grid ΩΩ')).toBeNull();
     await userEvent.type(searchBox(), 'stellar converter');
@@ -186,7 +231,7 @@ describe('the components drawer', () => {
     expect(game().start.opponents[rival().id].relics).toEqual(['relic:stellarconverter']);
     expect(game().start.me.relics ?? []).toEqual([]);
     await userEvent.click(screen.getByRole('button', { name: 'Clear the search' }));
-    await userEvent.click(within(section('Technologies')).getByTestId('upgrade-carrier'));
+    await userEvent.click(within(section('Unit upgrades')).getByTestId('upgrade-carrier'));
     expect(game().start.opponents[rival().id].technologies).toContain('technology:cv2');
   });
 
@@ -252,10 +297,11 @@ describe('the stack and the fan of the component tabs', () => {
   test('a press on the stack fans it out by groups, hides the tab of Thunder\'s Edge and opens Technologies first', async () => {
     withTe();
     await openDrawer();
-    expect(railNames()).toEqual(['Technologies · 1', 'Cards', 'Faction', 'Relics', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Technologies · 1', 'Cards', 'Faction · 1', 'Relics', 'Objectives & laws']);
     expect(teTab()).toBeNull();
     expect(groupTab('Technologies')).toHaveAttribute('aria-pressed', 'true');
-    expect(section('Technologies')).toBeVisible();
+    expect(section('Researched technologies')).toBeVisible();
+    expect(section('Unit upgrades')).toBeVisible();
     for (const other of ['Action cards', 'Promissory notes', 'Leaders', 'Breakthrough', 'Relics', 'Objectives', 'Laws']) {
       expect(within(drawer()).queryByRole('group', { name: other })).toBeNull();
     }
@@ -263,7 +309,7 @@ describe('the stack and the fan of the component tabs', () => {
 
   test('each group shows its own sections', async () => {
     await openDrawer('Cards');
-    const shown = () => within(drawer()).getAllByRole('group').map(group => group.getAttribute('aria-label')).filter(name => name !== 'Whose components');
+    const shown = () => [...drawer().querySelectorAll('.editor-section[role="group"]')].map(group => group.getAttribute('aria-label'));
     expect(shown()).toEqual(['Action cards', 'Promissory notes']);
     await userEvent.click(groupTab('Faction'));
     expect(shown()).toEqual(['Leaders', 'Breakthrough']);
@@ -298,9 +344,9 @@ describe('the stack and the fan of the component tabs', () => {
     useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
     useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
     await openDrawer();
-    expect(railNames()).toEqual(['Technologies · 1', 'Cards · 2', 'Faction', 'Relics · 1', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Technologies · 1', 'Cards · 2', 'Faction · 1', 'Relics · 1', 'Objectives & laws']);
     await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
-    expect(railNames()).toEqual(['Technologies · 2', 'Cards', 'Faction', 'Relics', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Technologies · 2', 'Cards', 'Faction · 1', 'Relics', 'Objectives & laws']);
   });
 
   test('the group open last is remembered: the stack opens on it, and its tab stands where the stack was', async () => {
@@ -311,7 +357,7 @@ describe('the stack and the fan of the component tabs', () => {
     render(<PlanScreen />);
     await userEvent.click(tab());
     expect(section('Relics')).toBeVisible();
-    expect(railNames()).toEqual(['Relics', 'Technologies · 1', 'Cards', 'Faction', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Relics', 'Technologies · 1', 'Cards', 'Faction · 1', 'Objectives & laws']);
     expect(groupTab('Relics')).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -329,6 +375,6 @@ describe('the stack and the fan of the component tabs', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
     expect(screen.queryByRole('dialog', { name: 'Components' })).toBeNull();
     expect(within(rail()).getAllByRole('button')).toHaveLength(1);
-    expect(tab()).toHaveAccessibleName('Components · 1');
+    expect(tab()).toHaveAccessibleName('Components · 2');
   });
 });

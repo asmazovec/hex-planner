@@ -866,12 +866,21 @@ small.ship-row-round { color: var(--gold); }
 .components-panel h2, .te-panel h2, .legend-panel h2 { margin: 0 0 12px; font-size: var(--font-xl); font-weight: 650; letter-spacing: -0.01em; }
 .te-panel .editor-section { margin-bottom: 8px; }
 /* The components of a player: the choice of the player, the search, then a block per kind. */
-.components-panel > .player-choice, .components-panel > .component-search, .components-panel > .editor-section { margin-bottom: 8px; }
+.components-panel { display: flex; flex-direction: column; gap: 12px; }
+.components-panel > * { flex: none; }
+.components-panel > h2 { margin: 0; }
+/* The technologies of a colour under the mark of that colour; a card stands 8 px from the next, a colour 12 px from the next. */
+.tech-colour { margin: 0; }
+.tech-colour > span { display: inline-flex; align-items: center; gap: 6px; }
+.component-list > .component-list + .component-list { margin-top: 4px; }
+.component-card > .segment > button { flex: 1 1 0; min-width: 0; font-size: var(--font-s); }
 .components-panel .editor-section .upgrade-card { margin-bottom: 0; }
 .component-search { position: relative; display: flex; }
 .component-search > input { flex: 1 1 auto; min-width: 0; min-height: var(--touch); padding-right: 48px; }
 .component-search > .icon-button { position: absolute; right: 2px; top: 0; }
-.component-list, .component-card { display: flex; flex-direction: column; gap: 6px; }
+/* A card keeps what belongs to it close, and stands further from the next card. */
+.component-list, .component-card { display: flex; flex-direction: column; gap: 8px; }
+.component-card { gap: 4px; }
 .component-card .source-button { min-height: var(--touch); }
 .component-card .source-button b { color: var(--text); font-weight: 600; }
 .component-card.on .source-button { border-color: var(--accent); background: var(--accent-soft); }
@@ -886,10 +895,10 @@ small.ship-row-round { color: var(--gold); }
 .upgrade-card.on, .upgrade-card.on:disabled { border-color: var(--accent); background: var(--accent-soft); }
 .upgrade-card .unit-icon { width: 42px; height: 42px; }
 .upgrade-body b { display: block; color: var(--text); font-size: 13.5px; }
-.ship-stat-line { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
-.ship-stat-line > span { min-width: 48px; }
+.upgrade-card > .ship-stat-line, .upgrade-card > .ship-notes { grid-column: 1 / -1; }
+.ship-stat-line { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 8px; font-size: 12px; color: var(--text-muted); }
 .ship-stat-line b { display: block; color: var(--text); font-weight: 600; }
-.upgrade-body .ship-notes { display: flex; margin-top: 3px; }
+.upgrade-card > .ship-notes { display: flex; }
 .upgrade-level { font-weight: 800; font-size: 15px; text-align: center; color: var(--text-dim); }
 .upgrade-card.on .upgrade-level { color: var(--gold); }
 

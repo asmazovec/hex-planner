@@ -334,11 +334,11 @@ describe('upgrades of players', () => {
     expect(removePlayer(marked, 1, pack).start).toEqual({ me: { technologies: ['technology:cv2'] }, opponents: { [second.id]: { technologies: ['technology:ff2'] } } });
   });
 
-  test('changing a faction keeps what was marked by hand; only the starting technologies follow the faction', () => {
+  test('changing a faction keeps what was marked by hand; the starting technologies and the unlocked agent follow the faction', () => {
     const game = start(4);
     const opponent = game.opponents[0];
     const marked = { ...game, start: { me: { technologies: ['technology:ws'] }, opponents: { [opponent.id]: { technologies: ['technology:cr2'] } } } };
-    expect(setPlayerFaction(marked, 0, 'arborec', pack).start).toEqual({ ...marked.start, me: { technologies: ['technology:ws', 'technology:md'] } });
-    expect(setPlayerFaction(marked, 1, 'muaat', pack).start).toEqual({ ...marked.start, opponents: { [opponent.id]: { technologies: ['technology:cr2', 'technology:ps'] } } });
+    expect(setPlayerFaction(marked, 0, 'arborec', pack).start).toEqual({ ...marked.start, me: { technologies: ['technology:ws', 'technology:md'], leaders: { 'leader:arborecagent': 'unlocked' } } });
+    expect(setPlayerFaction(marked, 1, 'muaat', pack).start).toEqual({ ...marked.start, opponents: { [opponent.id]: { technologies: ['technology:cr2', 'technology:ps'], leaders: { 'leader:muaatagent': 'unlocked' } } } });
   });
 });

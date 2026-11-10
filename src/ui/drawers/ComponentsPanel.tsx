@@ -4,16 +4,18 @@ import { componentById, componentsOf } from '../../domain/components';
 import { emptyHoldings, HOLDING_FIELD, upgradesOf, upgradeTech, type ComponentGroup } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
-import type { ComponentDef, DataPack, Game, GameState, LeaderState } from '../../domain/types';
+import type { ComponentDef, DataPack, Game, GameState, TechType } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
-import { ComponentCard } from '../components/ComponentCard';
+import { ComponentCard, type CardState } from '../components/ComponentCard';
 import { ComponentSearchField } from '../components/ComponentSearchField';
 import { useComponentSearch } from '../components/useComponentSearch';
 import { DrawerSheet } from '../overlays/Drawer';
 import { shortName } from '../players/names';
 import { ShipNotes, StatLine } from '../players/ShipStats';
 import { PlayerChoice, playerStyle, playerTag } from '../primitives/player';
+import { TechMark } from '../map/marks';
 import { Section } from '../primitives/Section';
+import { SectionTitle } from '../primitives/SectionTitle';
 import { Stepper } from '../primitives/Stepper';
 import { UnitIcon } from '../units/UnitIcon';
 
@@ -33,15 +35,21 @@ export interface ComponentsPanelProps {
 
 /** The sections of each group, in the order the sheet shows them. */
 const GROUP_SECTIONS: Record<ComponentGroup, string[]> = {
-  technologies: ['technologies'],
+  technologies: ['technologies', 'unitUpgrades'],
   cards: ['actionCards', 'promissory'],
   faction: ['leaders', 'breakthrough'],
   relics: ['relics'],
   objectives: ['objectives', 'laws'],
 };
 
-/** A leader by hand goes round: locked, unlocked, exhausted, purged, and locked again. */
-const NEXT_LEADER: Record<LeaderState | 'locked', LeaderState | null> = { locked: 'unlocked', unlocked: 'exhausted', exhausted: 'purged', purged: null };
+/** The states a leader of each type can be in: an agent exhausts and readies, a commander only unlocks, a hero is purged once used (LRR 51). */
+const LEADER_STATES: Record<string, CardState[]> = {
+  agent: ['locked', 'unlocked', 'exhausted'],
+  commander: ['locked', 'unlocked'],
+  hero: ['locked', 'unlocked', 'purged'],
+};
+const TECH_ORDER: TechType[] = ['propulsion', 'biotic', 'cybernetic', 'warfare'];
+const TECH = 'technology:';
 
 const unique = (ids: string[]): string[] => [...new Set(ids)];
 
@@ -82,13 +90,23 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     const source = fromPlan[def.id];
     const tired = holdings.exhausted.includes(def.id) ? 'exhausted' as const : undefined;
     if (def.kind === 'leader') {
-      const now = holdings.leaders[def.id];
+      const now: CardState = holdings.leaders[def.id] ?? 'locked';
+      // What the plan made of the leader is shown and changed in the plan: here only the state the game began with.
+      const fixed = source !== undefined || now !== (start.leaders?.[def.id] ?? 'locked');
+      const offered = LEADER_STATES[String(def.detail?.type)] ?? LEADER_STATES.agent;
       return (
         <ComponentCard
-          key={def.id} def={def} pack={pack} held={now === 'unlocked' || now === 'exhausted'} state={now ?? 'locked'} source={source}
-          note={typeof def.detail?.type === 'string' ? def.detail.type : undefined}
-          onCycle={() => setLeader(player, def.id, NEXT_LEADER[now ?? 'locked'])}
-        />
+          key={def.id} def={def} pack={pack} held={now === 'unlocked' || now === 'exhausted'} state={now} source={source} leader
+          note={fixed && source === undefined ? t('components.byPlan') : undefined}
+        >
+          <div className="segment" role="group" aria-label={t('components.leaderState', { name: def.name })}>
+            {(offered.includes(now) ? offered : [...offered, now]).map(state => (
+              <button key={state} type="button" aria-pressed={state === now} disabled={fixed} onClick={() => setLeader(player, def.id, state === 'locked' ? null : state)}>
+                {t(`components.leaderStates.${state}`)}
+              </button>
+            ))}
+          </div>
+        </ComponentCard>
       );
     }
     if (def.kind === 'breakthrough') {
@@ -153,10 +171,11 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
             <b>{t(`unit.${kind}`)}</b>
             {isUniqueShip(faction, kind, pack) && <small>{current.name}</small>}
             {round !== undefined && <small className="ship-row-round">{t('components.fromRound', { n: round })}</small>}
-            <StatLine base={base} current={current} />
-            <ShipNotes stat={current} pack={pack} />
           </span>
           <span className="upgrade-level">{hasTwo ? (on ? 'II' : 'I') : '—'}</span>
+          {/* The numbers and the notes take the whole width of the card: four numbers stand in one line. */}
+          <StatLine base={base} current={current} />
+          <ShipNotes stat={current} pack={pack} />
         </button>
       ),
     }];
@@ -166,8 +185,24 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
 
   const ownLeaders = componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === faction).map(c => c.id);
   const breakthrough = holdings.breakthrough ? componentsOf(pack).filter(c => c.kind === 'breakthrough' && c.faction === faction) : [];
+  // The technologies by colour, in the order of the deck. An upgrade that has no unit card here stands with the unit cards.
+  const techOf = (def: ComponentDef) => pack.technologies[def.id.slice(TECH.length)];
+  const researched = known(holdings.technologies).filter(c => !onUnitCards.has(c.id));
+  const plain = researched.filter(c => !techOf(c)?.type);
+  const colours = TECH_ORDER.flatMap(type => {
+    const cards = researched.filter(c => techOf(c)?.type === type);
+    if (cards.length === 0) return [];
+    const name = t(`map.tech.${type}`);
+    return [(
+      <div key={type} className="component-list" role="group" aria-label={name}>
+        <SectionTitle as="div" className="tech-colour"><span><TechMark type={type} />{name}</span></SectionTitle>
+        {cards.map(card)}
+      </div>
+    )];
+  });
   const sections: [string, ReactNode[]][] = [
-    ['technologies', [...known(holdings.technologies).filter(c => !onUnitCards.has(c.id)).map(card), ...unitCards.map(unit => unit.card)]],
+    ['technologies', [...colours, ...plain.filter(c => !techOf(c)?.upgrade).map(card)]],
+    ['unitUpgrades', [...unitCards.map(unit => unit.card), ...plain.filter(c => techOf(c)?.upgrade).map(card)]],
     ['actionCards', known(holdings.hand).map(card)],
     ['relics', known(holdings.relics).map(card)],
     ['promissory', known(holdings.promissory).map(card)],
@@ -213,7 +248,15 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
           const title = t(`components.section.${key}`);
           return cards.length === 0
             ? <Section key={key} label={title} title={title} headAction={<span className="muted">{t('components.none')}</span>} />
-            : <Section key={key} label={title} title={title} collapsible>{cards}</Section>;
+            : (
+              <Section key={key} label={title} title={title} collapsible>
+                {/* A folding block does not space its rows itself: the list does. */}
+                <div className="component-list">
+                  {key === 'leaders' && <span className="muted">{t('components.leadersHint')}</span>}
+                  {cards}
+                </div>
+              </Section>
+            );
         })}
     </DrawerSheet>
   );
