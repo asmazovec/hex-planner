@@ -1,8 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
-import type { DataPack, Game, GameState, UnitId, Warning } from '../../../domain/types';
+import type { DataPack, Game, GameState, PlanetDef, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
-import { UnitTile } from '../../units/UnitTile';
+import { UnitDraft, type UnitDraftItem, type UnitDraftRow } from '../../units/UnitDraft';
+import { PlanetBadge, SpaceBadge } from '../../map/PlanetBadge';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { availableFor, fliesNow, groupOf, hasUnits, pickedFrom, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
@@ -34,15 +35,21 @@ export function flightWarnings(warnings: Warning[], game: Game, pack: DataPack, 
   return [...placer.at('route', mine), ...placer.at('cargo', mine)];
 }
 
-/** A hexagon per place on board, filled for load, red past capacity. */
+/** More places than this stand as a number: the row never wraps, so nothing under it moves. */
+const PIPS_SHOWN = 16;
+
+/** A hexagon per place on board, filled for load, red past capacity; the row is there with no places too. */
 function CargoPips({ load, capacity }: { load: number; capacity: number }) {
+  const all = Math.max(load, capacity);
+  const shown = all > PIPS_SHOWN ? PIPS_SHOWN - 1 : all;
   return (
     <div className="pips" aria-hidden="true">
-      {Array.from({ length: Math.max(load, capacity) }, (_, i) => (
+      {Array.from({ length: shown }, (_, i) => (
         <svg key={i} width="14" height="13" viewBox="-7 -6.5 14 13">
           <polygon points="6.4,0 3.2,5.6 -3.2,5.6 -6.4,0 -3.2,-5.6 3.2,-5.6" className={`pip${i < load ? ' pip-full' : ''}${i >= capacity ? ' pip-over' : ''}`} />
         </svg>
       ))}
+      {all > shown && <span className={load > capacity ? 'pips-more pips-over' : 'pips-more'}>+{all - shown}</span>}
     </div>
   );
 }
@@ -50,8 +57,7 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
 /**
  * The flight of one source, a step of the tactical editor that stands alone in the panel: who flies, what rides on board,
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
- * A unit to take keeps its tile and its place down to the last one, where the tile only goes dim: a tile that left would
- * bring another one under the finger.
+ * Every place a unit is taken from is a row of a `UnitDraft`: a button to take per kind, and the tray of what was taken.
  */
 export function UnitPicker({ game, pack, before, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
@@ -73,40 +79,37 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
 
   const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
   const offered = flying.filter(u => available(source, u) > 0 || picked(source, u) > 0);
-  const flyingNow = flying.filter(u => picked(source, u) > 0);
   const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
 
   /**
    * The places of a system to take cargo from: its space area and its planets, only what stands there. Where my command
    * token lies the units are still offered: the rules warn (95.3), and an ability may allow it.
    */
-  const placesIn = (slot: string): { from: string; name: string | null; units: UnitId[] }[] => {
+  const placesIn = (slot: string): { from: string; planet: PlanetDef | null; units: UnitId[] }[] => {
     const planets = systemPlanets(game, slot, pack);
     const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => available(from, u) > 0 || picked(from, u) > 0);
     const ground = known.filter(u => pack.units[u]?.ground);
     const places = [
-      { from: slot, name: null, units: offeredAt(slot, cargo) },
-      ...planets.map(planet => ({ from: planet.id, name: planet.name, units: offeredAt(planet.id, ground) })),
+      { from: slot, planet: null, units: offeredAt(slot, cargo) },
+      ...planets.map(planet => ({ from: planet.id, planet, units: offeredAt(planet.id, ground) })),
     ];
     return places.filter(place => place.units.length > 0);
   };
 
-  /** One to take from a place: the tile stays with nothing left, so the next tap finds it where it was. */
-  const take = (from: string, unit: UnitId) => {
-    const left = Math.max(0, available(from, unit) - picked(from, unit));
-    return (
-      <UnitTile
-        key={unit} variant="take" kind={unit} count={left} colour={colour} showOne={left === 0} disabled={left === 0}
-        label={t('plan.picker.take', { unit: unitName(unit) })} onClick={() => setCount(from, unit, picked(from, unit) + 1)}
-      />
-    );
-  };
-  const taken = (from: string, unit: UnitId) => (
-    <UnitTile
-      key={`${unit}-taken`} variant="taken" kind={unit} count={picked(from, unit)} colour={colour}
-      label={t('plan.picker.put', { unit: unitName(unit) })} onClick={() => setCount(from, unit, picked(from, unit) - 1)}
+  const item = (from: string, unit: UnitId): UnitDraftItem => ({
+    kind: unit, picked: picked(from, unit), left: Math.max(0, available(from, unit) - picked(from, unit)),
+    takeLabel: t('plan.picker.take', { unit: unitName(unit) }), returnLabel: t('plan.picker.put', { unit: unitName(unit) }),
+  });
+  const draft = (rows: UnitDraftRow[], pickedLabel: string) => (
+    <UnitDraft
+      rows={rows} colour={colour} stockLabel={t('plan.picker.stock')} pickedLabel={pickedLabel}
+      onTake={(from, unit) => setCount(from, unit as UnitId, picked(from, unit as UnitId) + 1)}
+      onReturn={(from, unit) => setCount(from, unit as UnitId, picked(from, unit as UnitId) - 1)}
     />
   );
+  const badge = (planet: PlanetDef | null) => (planet
+    ? <PlanetBadge planet={planet} control={before.control[planet.id]} exhausted={before.exhausted.includes(planet.id)} compact />
+    : <SpaceBadge label={t('draft.space')} />);
 
   const line = (slot: string, role: 'start' | 'transit') => {
     const places = placesIn(slot);
@@ -115,15 +118,9 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
         <span className="stop-name">{systemTitle(game, pack, slot, t)} · {t(`plan.picker.${role}`)}</span>
         {!pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
         {places.length === 0 && <span className="muted">{t('plan.picker.nothing')}</span>}
-        {places.map(place => (
-          <div key={place.from} className="stop-place" role="group" aria-label={place.name ?? systemName(game, pack, slot)}>
-            {place.name && <small>{place.name}</small>}
-            <div className="pics">
-              {place.units.map(unit => take(place.from, unit))}
-              {place.units.filter(unit => picked(place.from, unit) > 0).map(unit => taken(place.from, unit))}
-            </div>
-          </div>
-        ))}
+        {places.length > 0 && draft(places.map(place => ({
+          id: place.from, label: place.planet?.name ?? systemName(game, pack, slot), place: badge(place.planet), items: place.units.map(unit => item(place.from, unit)),
+        })), t('plan.picker.loaded'))}
       </li>
     );
   };
@@ -137,23 +134,18 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       <small className="picker-distance">{t('plan.tactical.distance', { n: routeSteps(game, [source, ...viaOf(entry, source), target], pack) })}</small>
 
       <div className="editor-section">
-        <SectionTitle as="h4" className="picker-title">{t('plan.picker.inSystem', { name: systemTitle(game, pack, source, t) })}</SectionTitle>
-        <div className="pics">
-          {offered.map(unit => take(source, unit))}
-        </div>
-        {noShipsHere && <p className="muted picker-note">{t('plan.picker.emptySource')}</p>}
-
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.flying')}</SectionTitle>
-        <div className="pics">
-          {flyingNow.map(unit => taken(source, unit))}
-          {flyingNow.length === 0 && <span className="muted">{t('plan.picker.nobody')}</span>}
-        </div>
+        {offered.length > 0 && draft([{
+          id: source, label: t('draft.space'), place: badge(null), items: offered.map(unit => item(source, unit)),
+        }], t('plan.picker.flying'))}
+        {noShipsHere && <p className="muted picker-note">{t('plan.picker.emptySource')}</p>}
       </div>
 
       <div className="editor-section">
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.cargo', { load: load.load, capacity: load.capacity })}</SectionTitle>
+        {/* The places on board stand once, above the stops; their row and the line under it are there from the start. */}
         <CargoPips load={load.load} capacity={load.capacity} />
-        {Math.max(load.load, load.capacity) === 0 && <span className="muted">{t('plan.picker.noRoom')}</span>}
+        <span className="muted cargo-note">{Math.max(load.load, load.capacity) === 0 ? t('plan.picker.noRoom') : ''}</span>
         <ol className="stops">
           {line(source, 'start')}
           {viaOf(entry, source).map(slot => line(slot, 'transit'))}

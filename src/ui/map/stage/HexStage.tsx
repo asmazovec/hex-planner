@@ -15,6 +15,9 @@ import { SetupPanel } from './SetupPanel';
 import { BattlePanel } from './BattlePanel';
 import { BuildPanel } from './BuildPanel';
 import { ControlPanel } from './ControlPanel';
+import { SectionTitle } from '../../primitives/SectionTitle';
+import { UnitDraft } from '../../units/UnitDraft';
+import { SpaceBadge } from '../PlanetBadge';
 
 /** `fleet` removes ships beyond the fleet pool for a tactical action; it is only opened from that action, never chosen. */
 export type StageMode = 'setup' | 'battle' | 'build' | 'control' | 'fleet';
@@ -119,7 +122,8 @@ export function HexStage(props: HexStageProps) {
           {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} game={game} pack={pack} boardWarnings={stage.boardWarnings} />}
           {mode === 'build' && (
             <BuildPanel
-              game={game} pack={pack} items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets}
+              game={game} pack={pack} state={state} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
+              colour={colours[side]} onTake={stage.buyAt} onReturn={stage.unbuyAt} structuresOnly={structuresOnly}
               boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
             />
           )}
@@ -136,10 +140,15 @@ export function HexStage(props: HexStageProps) {
             />
           )}
           {mode === 'fleet' && (
-            <BattlePanel
-              players={[{ id: mine, heading: t('stage.fleetRemoved') }]} note={t('stage.fleetNote')}
-              colours={colours} lossesFor={stage.removalsFor} planets={planets} kindName={stage.kindName}
-            />
+            <>
+              <SectionTitle>{t('stage.fleetRemoved')}</SectionTitle>
+              <UnitDraft
+                colour={colours[mine]} stockLabel={t('stage.fleetStock')} pickedLabel={t('stage.fleetRemoved')}
+                rows={[{ id: 'fleet', label: t('draft.space'), place: <SpaceBadge label={t('draft.space')} />, items: stage.fleetItems }]}
+                onTake={(_, kind) => stage.removeShip(kind, 1)} onReturn={(_, kind) => stage.removeShip(kind, -1)}
+              />
+              <p className="muted">{t('stage.fleetNote')}</p>
+            </>
           )}
           {mode === 'control' && (
             <ControlPanel

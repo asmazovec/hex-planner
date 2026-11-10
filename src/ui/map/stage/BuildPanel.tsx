@@ -1,19 +1,26 @@
 import { useTranslation } from 'react-i18next';
 import type { TokenKind } from '../../../domain/hexLayout';
-import { isStructure } from './UnitShop';
-import type { DataPack, Game, Warning } from '../../../domain/types';
+import type { DataPack, Game, GameState, Warning } from '../../../domain/types';
 import { SectionTitle } from '../../primitives/SectionTitle';
 import { WarningList } from '../../feedback/WarningText';
-import { UnitShop, type ShopItem } from './UnitShop';
-import type { MeterRow } from './useStage';
+import { PlanetBadge, SpaceBadge } from '../PlanetBadge';
+import { UnitDraft } from '../../units/UnitDraft';
+import type { MeterRow, ShopRow } from './useStage';
 
 export interface BuildPanelProps {
   game: Game;
   pack: DataPack;
-  items: ShopItem[];
-  onPick: (kind: TokenKind) => void;
+  /** What the hex shows: a planet's badge follows its control and readiness. */
+  state: GameState;
+  /** The rows of units produced and of structures built, by where they go. */
+  production: ShopRow[];
+  construction: ShopRow[];
+  /** The figures left in the reinforcements, for all the rows together. */
+  stock: Partial<Record<TokenKind, number>>;
+  colour: string;
+  onTake: (rowId: string, kind: TokenKind) => void;
+  onReturn: (rowId: string, kind: TokenKind) => void;
   structuresOnly: boolean;
-  manyPlanets: boolean;
   boughtTotal: number;
   spent: number;
   /** My own purchases count along against what I can pay and hold; an opponent's do not. */
@@ -25,17 +32,27 @@ export interface BuildPanelProps {
 }
 
 /**
- * Create: a picture buys one, a ringed token takes a purchase back. Units are produced and structures built, so each
- * stands under its own heading; a hex opened for one of them shows only it.
+ * Create: a row per place a purchase goes to, the space area and each planet; a button buys one while the reinforcements
+ * hold a figure, and a tap on a bought one, or on its ringed token, takes it back. Units are produced and structures
+ * built, so each stands under its own heading; a hex opened for one of them shows only it.
  */
-export function BuildPanel({ game, pack, items, onPick, structuresOnly, manyPlanets, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
+export function BuildPanel({ game, pack, state, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
   const { t } = useTranslation();
-  const units = items.filter(item => !isStructure(item.kind));
-  const structures = items.filter(item => isStructure(item.kind));
+  const draft = (rows: ShopRow[]) => (
+    <UnitDraft
+      stock={stock} colour={colour} onTake={onTake} onReturn={onReturn} stockLabel={t('stage.stock')} pickedLabel={t('stage.boughtZone')}
+      rows={rows.map(({ id, planet, items }) => ({
+        id, items, label: planet ? planet.name : t('draft.space'),
+        place: planet
+          ? <PlanetBadge planet={planet} control={state.control[planet.id]} exhausted={state.exhausted.includes(planet.id)} compact />
+          : <SpaceBadge label={t('draft.space')} />,
+      }))}
+    />
+  );
   return (
     <>
-      {units.length > 0 && <><SectionTitle>{t('stage.production')}</SectionTitle><UnitShop items={units} onPick={onPick} /></>}
-      {structures.length > 0 && <><SectionTitle>{t('stage.construction')}</SectionTitle><UnitShop items={structures} onPick={onPick} /></>}
+      {production.length > 0 && <><SectionTitle>{t('stage.production')}</SectionTitle>{draft(production)}</>}
+      {construction.length > 0 && <><SectionTitle>{t('stage.construction')}</SectionTitle>{draft(construction)}</>}
       <WarningList warnings={boardWarnings} game={game} pack={pack} />
       <div className="stage-total">
         <span>{t('stage.bought', { n: boughtTotal })}</span>
@@ -53,7 +70,6 @@ export function BuildPanel({ game, pack, items, onPick, structuresOnly, manyPlan
       )}
       {mine && <WarningList warnings={warnings} game={game} pack={pack} />}
       <p className="muted">{t('stage.buildNote')}</p>
-      {manyPlanets && <p className="muted">{t('stage.planetNote')}</p>}
     </>
   );
 }

@@ -51,8 +51,7 @@ const lineOf = (text: RegExp) => within(screen.getByText(text).closest('li')!);
 test('the title, the sections and the timeline in flight order', () => {
   setup([{ from: SOURCE, units: {}, via: [TRANSIT] }]);
   expect(screen.getByText('Flight Nestphar → Mecatol Rex')).toBeVisible();
-  expect(screen.getByText('In system Nestphar')).toBeVisible();
-  expect(screen.getByText('Flying')).toBeVisible();
+  expect(screen.getByRole('heading', { name: 'Flying' })).toBeVisible();
   expect(screen.getByText('Cargo on board: 0 of 0')).toBeVisible();
   expect([...document.querySelectorAll('.stop-name')].map(el => el.textContent)).toEqual(['Nestphar · start', 'Quann · on the way', 'Mecatol Rex · target']);
 });
@@ -60,7 +59,7 @@ test('the title, the sections and the timeline in flight order', () => {
 test('nothing is chosen on opening, and Fly waits for a choice', () => {
   const { onChange, onFly } = setup([{ from: SOURCE, units: {} }]);
   expect(onChange).not.toHaveBeenCalled();
-  expect(screen.getByText('Nobody yet')).toBeVisible();
+  expect(screen.queryByRole('button', { name: /^Return one / })).toBeNull();
   expect(screen.getByRole('button', { name: 'Fly' })).toBeDisabled();
   expect(onFly).not.toHaveBeenCalled();
 });
@@ -88,8 +87,9 @@ test('fighters with no move value and ground units are cargo, listed at their sy
   await userEvent.click(start.getByRole('button', { name: 'Take one Fighter' }));
   expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: { carrier: 1, fighter: 1 } }]);
   expect(screen.getByText('Cargo on board: 1 of 4')).toBeVisible();
-  // Taken and available stand side by side.
-  expect(start.getByRole('button', { name: 'Return one Fighter' })).toHaveClass('unit-tile-marked');
+  // What is left stays a button, what was taken is a chip in the tray of the same row.
+  expect(start.getByRole('button', { name: 'Return one Fighter' })).toHaveClass('draft-chip');
+  expect(start.getByRole('button', { name: 'Return one Fighter' })).toHaveTextContent('×1');
   expect(start.getByRole('button', { name: 'Take one Fighter' })).toBeVisible();
 });
 
@@ -130,6 +130,39 @@ test('a pip per place: filled for load, red past capacity, and the warning block
   expect(pips).toHaveLength(2);
   expect(pips.filter(p => p.classList.contains('pip-full') && p.classList.contains('pip-over'))).toHaveLength(2);
   expect(screen.getByRole('button', { name: 'Fly' })).toBeEnabled();
+});
+
+test('the row of places on board and the line under it are there from the start, with no places too', async () => {
+  setup([{ from: SOURCE, units: {} }]);
+  expect(document.querySelectorAll('.pips')).toHaveLength(1);
+  expect(document.querySelectorAll('.pip')).toHaveLength(0);
+  expect(document.querySelector('.cargo-note')).toHaveTextContent('No room for cargo');
+  await userEvent.click(take('Carrier'));
+  expect(document.querySelectorAll('.pip')).toHaveLength(4);
+  // The line stays, empty: the stops under it do not move.
+  expect(document.querySelector('.cargo-note')).toBeEmptyDOMElement();
+});
+
+test('more places on board than the row holds end in a number, so the row never wraps', () => {
+  setup([{ from: SOURCE, units: { carrier: 5 } }], { systems: { [SOURCE]: { carrier: 5 } } });
+  expect(screen.getByText('Cargo on board: 0 of 20')).toBeVisible();
+  expect(document.querySelectorAll('.pip')).toHaveLength(15);
+  expect(document.querySelector('.pips-more')).toHaveTextContent('+5');
+});
+
+test('a unit taken or returned adds and removes no control: every kind keeps its button and its place in the tray', async () => {
+  setup([{ from: SOURCE, units: {} }], { systems: { [SOURCE]: { carrier: 1, cruiser: 2 } } });
+  const row = () => within(screen.getByRole('group', { name: 'Space' }));
+  const places = () => [row().getAllByRole('button', { name: /^Take one / }).length, document.querySelectorAll('.unit-picker .draft-tray > *').length];
+  const before = places();
+  await userEvent.click(take('Cruiser'));
+  await userEvent.click(take('Cruiser'));
+  expect(take('Cruiser')).toBeDisabled();
+  expect(take('Cruiser')).toHaveAttribute('title', 'Take one Cruiser: none left');
+  expect(places()).toEqual(before);
+  await userEvent.click(put('Cruiser'));
+  await userEvent.click(put('Cruiser'));
+  expect(places()).toEqual(before);
 });
 
 test('a source with no ships offers no ship or cargo it does not have (#1)', () => {

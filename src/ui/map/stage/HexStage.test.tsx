@@ -561,23 +561,23 @@ describe('build', () => {
   });
 
   test('a tap on a bought token takes a bought one first and lowers the total; the ring goes with the last', async () => {
-    addMine({ carrier: 1 });
+    addMine({ cruiser: 1 });
     const { container } = open({ initialMode: 'build' });
-    expect(ring(container, 'me|carrier|-')).toBeNull();
-    await tap('Carrier');
-    await tap('Carrier');
-    expect(ring(container, 'me|carrier|-')).not.toBeNull();
-    expect(total()).toBe('6');
-    await tap('Carrier ×3');
-    expect(total()).toBe('3');
-    expect(ring(container, 'me|carrier|-')).not.toBeNull();
-    await tap('Carrier ×2');
+    expect(ring(container, 'me|cruiser|-')).toBeNull();
+    await tap('Cruiser');
+    await tap('Cruiser');
+    expect(ring(container, 'me|cruiser|-')).not.toBeNull();
+    expect(total()).toBe('4');
+    await tap('Cruiser ×3');
+    expect(total()).toBe('2');
+    expect(ring(container, 'me|cruiser|-')).not.toBeNull();
+    await tap('Cruiser ×2');
     expect(total()).toBe('0');
-    expect(ring(container, 'me|carrier|-')).toBeNull();
+    expect(ring(container, 'me|cruiser|-')).toBeNull();
     expect(merged('build')).toBeUndefined();
-    expect(forecast().systems[SLOT]).toEqual({ carrier: 1 });
-    await tap('Carrier ×1');
-    expect(forecast().systems[SLOT]).toEqual({ carrier: 1 });
+    expect(forecast().systems[SLOT]).toEqual({ cruiser: 1 });
+    await tap('Cruiser ×1');
+    expect(forecast().systems[SLOT]).toEqual({ cruiser: 1 });
   });
 
   test('purchases stay marked when the stage opens again', async () => {
@@ -755,8 +755,7 @@ describe('fix round 1', () => {
     store().setPlanetControl(second, 'me');
     addTactical();
     open({ initialMode: 'build' });
-    await tap(new RegExp(`^${nameOf(second)}:`));
-    await tap('Infantry');
+    await tap(`Infantry, ${nameOf(second)}`);
     expect(tactical().production).toEqual({ infantry: 1 });
     expect(tactical().productionGround).toEqual({ [second]: { infantry: 1 } });
     expect(forecast().ground[second]).toEqual({ infantry: 1 });
@@ -800,8 +799,7 @@ describe('fix round 1', () => {
     store().setTile(SLOT, TWO);
     open({ initialMode: 'build' });
     await side('Player 2');
-    await tap(new RegExp(`^${nameOf(second)}:`));
-    await tap('Infantry');
+    await tap(`Infantry, ${nameOf(second)}`);
     expect(game().enemyGround).toEqual({ [second]: { [opponent(0)]: { infantry: 1 } } });
     expect(hasRing(`${opponent(0)}|infantry|1`)).toBe(true);
     await tap('Infantry ×1 (Player 2)');
@@ -886,18 +884,85 @@ describe('fix round 1', () => {
   });
 });
 
+describe('the shop is a draft from the reinforcements', () => {
+  /** A control of the panel: a structure on the hex goes by the same name. */
+  const buy = (name: string) => within(document.querySelector<HTMLElement>('.stage-panel')!).getByRole('button', { name });
+
+  test('a button shows the figures left and goes out with the last one; a bought one is given back from the tray', async () => {
+    open({ initialMode: 'build' });
+    // Two war suns in a colour (96.2).
+    expect(buy('War Sun')).toHaveTextContent('2');
+    await tap('War Sun');
+    await tap('War Sun');
+    expect(buy('War Sun')).toBeDisabled();
+    expect(buy('War Sun')).toHaveTextContent('0');
+    expect(buy('War Sun')).toHaveAttribute('title', 'War Sun: none left');
+    expect(merged('build')?.delta.units?.units).toEqual({ warsun: 2 });
+    expect(buy('Give back War Sun')).toHaveTextContent('×2');
+    await tap('Give back War Sun');
+    expect(merged('build')?.delta.units?.units).toEqual({ warsun: 1 });
+    expect(buy('War Sun')).toBeEnabled();
+    expect(buy('War Sun')).toHaveTextContent('1');
+  });
+
+  test('what already stands on the board is out of the reinforcements: the two carriers of the start leave two', () => {
+    open({ initialMode: 'build' });
+    expect(buy('Carrier')).toHaveTextContent('2');
+  });
+
+  test('fighters and infantry have tokens: their buttons show no count and never go out', async () => {
+    open({ initialMode: 'build' });
+    expect(buy('Fighter')).toHaveTextContent(/^\+½$/);
+    for (let i = 0; i < 12; i += 1) await tap('Fighter');
+    expect(buy('Fighter')).toBeEnabled();
+    expect(buy('Give back Fighter')).toHaveTextContent('×12');
+  });
+
+  test('a system with two planets has a row per planet, and the figures of a kind run out in both rows at once', async () => {
+    store().setTile(SLOT, TWO);
+    const [first, second] = pack.tiles[TWO].planetIds.map(id => pack.planets[id].name);
+    open({ initialMode: 'build' });
+    const mech = (planet: string) => buy(`Mech, ${planet}`);
+    expect(mech(first)).toHaveTextContent('4');
+    for (let i = 0; i < 3; i += 1) await userEvent.click(mech(first));
+    await userEvent.click(mech(second));
+    expect(mech(first)).toBeDisabled();
+    expect(mech(second)).toBeDisabled();
+    expect(buy(`Give back Mech, ${first}`)).toHaveTextContent('×3');
+    expect(buy(`Give back Mech, ${second}`)).toHaveTextContent('×1');
+    await tap(`Give back Mech, ${second}`);
+    expect(mech(first)).toBeEnabled();
+    expect(screen.queryByRole('button', { name: `Give back Mech, ${second}` })).toBeNull();
+  });
+
+  test('a planet takes one space dock: with one there the button is out and says why, and the bought one is given back', async () => {
+    open({ initialMode: 'build' });
+    await userEvent.click(buy('Space dock'));
+    expect(game().docks).toContain(quann());
+    expect(buy('Space dock')).toBeDisabled();
+    await userEvent.click(buy('Give back Space dock'));
+    expect(game().docks).not.toContain(quann());
+    expect(buy('Space dock')).toBeEnabled();
+    cleanup();
+    store().setDock(quann(), true);
+    open({ initialMode: 'build' });
+    expect(buy('Space dock')).toBeDisabled();
+    expect(buy('Space dock')).toHaveAttribute('title', 'Space dock: a space dock already stands here');
+  });
+});
+
 describe('the shop counts along', () => {
   const meter = (name: RegExp) => within(screen.getByRole('group', { name: 'Counters' })).getByText(name).parentElement!;
 
   test('cost against resources, ships against the fleet pool, load against capacity, and over the limit it says so at once', async () => {
-    addMine({ carrier: 1 });
+    addMine({ cruiser: 1 });
     open({ initialMode: 'build' });
     expect(meter(/^Ships/)).toHaveTextContent('1 / 3');
-    await tap('Carrier');
-    expect(meter(/^Cost/)).toHaveTextContent(/3 \/ /);
+    await tap('Cruiser');
+    expect(meter(/^Cost/)).toHaveTextContent(/2 \/ /);
     expect(meter(/^Ships/)).toHaveTextContent('2 / 3');
-    await tap('Carrier');
-    await tap('Carrier');
+    await tap('Cruiser');
+    await tap('Cruiser');
     expect(meter(/^Ships/)).toHaveTextContent('4 / 3');
     expect(meter(/^Ships/)).toHaveClass('stage-meter-over');
   });

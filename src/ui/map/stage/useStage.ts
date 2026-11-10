@@ -7,7 +7,7 @@ import { boardSystemWarnings, dockFighterRoom, planetStructureWarnings, producti
 import { timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { unitStats } from '../../../domain/unitStats';
-import type { Entry, GameState, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
+import type { Entry, GameState, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { lossesOf, withAdjustedUnit, withFleetRemoval, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
 import { enemyChange, holderIn, stacksOf, structureInGame } from '../../../domain/stacks';
@@ -15,8 +15,9 @@ import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
 import { tokenColours } from '../../units/sprites';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { opponentName } from '../../players/names';
+import type { UnitDraftItem } from '../../units/UnitDraft';
 import type { BoughtUnit, PurchaseTarget } from './purchases';
-import { isStructure, type ShopItem } from './UnitShop';
+import { isStructure, priceText, type ShopItem } from './UnitShop';
 import type { HexStageProps, StageMode } from './HexStage';
 
 const STRUCTURES: StructureKind[] = ['pds', 'spacedock'];
@@ -42,6 +43,16 @@ export interface LossPicture {
   count: number;
   back: () => void;
 }
+
+/** A row of the shop's draft: the space area, or a planet by its index in the system. */
+export interface ShopRow {
+  id: string;
+  planet: PlanetDef | null;
+  items: UnitDraftItem[];
+}
+
+/** The row of the space area; a planet's row goes by its index. */
+const SPACE_ROW = 'space';
 
 export interface MeterRow {
   key: string;
@@ -146,27 +157,32 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
    * By hand, a structure goes to the player chosen in the toggle; when they do not control the target planet, placing it
    * hands them the planet. A card's structures are always mine.
    */
-  const handover = !purchases.changeStructure && (mode === 'setup' || mode === 'build') && targetPlanet !== undefined
-    && controllerOf(targetPlanet.id) !== side ? { planet: targetPlanet.name, player: side } : null;
+  const handsOver = (planet: PlanetDef | undefined): boolean => !purchases.changeStructure && planet !== undefined && controllerOf(planet.id) !== side;
+  const handover = (mode === 'setup' || mode === 'build') && targetPlanet !== undefined && handsOver(targetPlanet)
+    ? { planet: targetPlanet.name, player: side } : null;
 
-  const buy = (kind: TokenKind) => {
+  /** One more of a kind: on the planet chosen on the hex, or on the planet of the shop's row (`null` is the space area). */
+  const buy = (kind: TokenKind, at: number | null = target) => {
     setTapNote(null);
+    const index = at ?? undefined;
+    const planet = index === undefined ? undefined : planets.at(index);
     if (isStructure(kind)) {
-      if (!targetPlanet || (kind === 'spacedock' && structureOwner(state, 'spacedock', targetPlanet.id) !== undefined)) return;
+      if (!planet || (kind === 'spacedock' && structureOwner(state, 'spacedock', planet.id) !== undefined)) return;
       if (purchases.changeStructure) {
-        purchases.changeStructure(kind, targetPlanet.id, 1);
+        purchases.changeStructure(kind, planet.id, 1);
         return;
       }
       // A structure is its controller's (85): placed for another player, it hands them the planet first, as the note said.
-      if (handover) setPlanetControl(targetPlanet.id, side);
-      changeStructure(kind, targetPlanet.id, 1);
-      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, target), 1));
+      if (handsOver(planet)) setPlanetControl(planet.id, side);
+      changeStructure(kind, planet.id, 1);
+      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, index), 1));
       return;
     }
-    const planetId = pack.units[kind]?.ground ? targetPlanet?.id ?? null : null;
+    const ground = Boolean(pack.units[kind]?.ground);
+    const planetId = ground ? planet?.id ?? null : null;
     if (side !== mine) {
       changeEnemy(side, kind, planetId, 1);
-      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, pack.units[kind]?.ground ? target : undefined), 1));
+      if (mode === 'build') setNews(bumped(news, stackKey(side, kind, ground && planet ? index : undefined), 1));
     } else if (mode === 'build') purchases.change(kind, planetId, 1);
     else change('setup', kind, planetId, 1);
   };
@@ -230,12 +246,6 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       .map(key => ({ key, kind: parseKey(key).kind, planetId: planetIdOf(parseKey(key).planet), count: lost[key], back: () => giveBack(key) })),
   ];
 
-  /** The ships this action removes beyond the fleet pool, each given back by a tap. */
-  const removalsFor = (): LossPicture[] => Object.entries(fightingFor?.fleetRemovals ?? {}).filter(([, count]) => (count ?? 0) > 0).map(([unit, count]) => ({
-    key: unit, kind: unit as TokenKind, planetId: null, count: count ?? 0,
-    back: () => { if (fightingFor) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, unit as UnitId, -1)); },
-  }));
-
   /** Who takes part in a battle here: whoever has units or structures in the system, or has already lost some in it. */
   const present = new Set(Object.values(stacksOf(game, state, slot, planets, pack)).flat().map(stack => stack.owner));
   const fights = (owner: string): boolean => present.has(owner) || lossesFor(owner).length > 0;
@@ -255,12 +265,76 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       // Without a planet, ground forces stand in space as cargo; only the capacity warns.
       kind, label: kindName(kind), colour: colours[side],
       price: inBuild ? unitStats(sideFaction, kind, sideUpgrades.includes(kind), pack)?.cost : undefined,
-      bought: inBuild ? boughtOf(kind) : undefined,
     }))),
     ...(only === 'units' ? [] : STRUCTURES.map((kind): ShopItem => ({
-      kind, label: kindName(kind), colour: structureColour, disabled: planets.length === 0, bought: inBuild ? boughtOf(kind) : undefined,
+      kind, label: kindName(kind), colour: structureColour, disabled: planets.length === 0,
     }))),
   ];
+  /** The keys of what was bought of a kind in one row of the shop: a structure of any holder, a unit of the chosen player. */
+  const boughtKeys = (kind: TokenKind, index: number | undefined): string[] => Object.keys(bought).filter(key => {
+    const k = parseKey(key);
+    return bought[key] > 0 && k.kind === kind && k.planet === index && (isStructure(kind) || k.owner === side);
+  });
+  const boughtAt = (kind: TokenKind, index: number | undefined): number => boughtKeys(kind, index).reduce((sum, key) => sum + bought[key], 0);
+  /**
+   * The figures still in the reinforcements of the player the shop buys for (96.2, 24.4): the limit less what the forecast
+   * already holds on the board, purchases included. Fighters and infantry have tokens and never run out.
+   */
+  const sideState = side === mine ? acting : state.rivals?.[side];
+  const structureState = purchases.changeStructure || side === mine ? acting : state.rivals?.[side];
+  const shopStock: Partial<Record<TokenKind, number>> = {};
+  for (const unit of units) {
+    const limit = pack.units[unit]?.limit;
+    if (limit === null || limit === undefined || unit === 'fighter' || unit === 'infantry' || !sideState) continue;
+    const onBoard = [...Object.values(sideState.systems), ...Object.values(sideState.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
+    shopStock[unit] = Math.max(0, limit - onBoard);
+  }
+  for (const kind of STRUCTURES) {
+    const limit = pack.structures.find(s => s.id === kind)?.limit ?? null;
+    if (limit === null || !structureState) continue;
+    const held = kind === 'spacedock' ? structureState.docks.length : Object.values(structureState.pds).reduce((sum, n) => sum + n, 0);
+    shopStock[kind] = Math.max(0, limit - held);
+  }
+  /** The shop as rows by where a purchase goes: ships to the space area, ground forces and structures to a planet. */
+  const draftItem = (item: ShopItem, index: number | undefined, planet: PlanetDef | null): UnitDraftItem => {
+    const name = planet && planets.length > 1 ? t('stage.unitOn', { unit: item.label, planet: planet.name }) : item.label;
+    return {
+      kind: item.kind, picked: boughtAt(item.kind, index), price: item.price === undefined ? undefined : priceText(item.price),
+      takeLabel: name, returnLabel: t('stage.giveBack', { unit: name }),
+      // One dock to a planet (85.4): a second one was never placed, and now the button says so.
+      blockedReason: item.kind === 'spacedock' && planet && structureOwner(state, 'spacedock', planet.id) !== undefined
+        ? t('stage.dockHere') : undefined,
+    };
+  };
+  const unitItems = shopItems.filter(item => !isStructure(item.kind));
+  const groundItems = unitItems.filter(item => pack.units[item.kind as UnitId]?.ground);
+  const spaceItems = planets.length > 0 ? unitItems.filter(item => !groundItems.includes(item)) : unitItems;
+  const productionRows: ShopRow[] = [
+    ...(spaceItems.length > 0 ? [{ id: SPACE_ROW, planet: null, items: spaceItems.map(item => draftItem(item, undefined, null)) }] : []),
+    ...(groundItems.length > 0 ? planets.map((planet, index) => ({ id: String(index), planet, items: groundItems.map(item => draftItem(item, index, planet)) })) : []),
+  ];
+  const structureItems = shopItems.filter(item => isStructure(item.kind));
+  const constructionRows: ShopRow[] = structureItems.length > 0
+    ? planets.map((planet, index) => ({ id: String(index), planet, items: structureItems.map(item => draftItem(item, index, planet)) })) : [];
+  const indexOfRow = (rowId: string): number | undefined => (rowId === SPACE_ROW ? undefined : Number(rowId));
+  const buyAt = (rowId: string, kind: TokenKind) => buy(kind, indexOfRow(rowId) ?? null);
+  /** One bought in a row is taken back, the same way a tap on its ringed token does it. */
+  const unbuyAt = (rowId: string, kind: TokenKind) => {
+    const index = indexOfRow(rowId);
+    const key = boughtKeys(kind, index)[0];
+    if (!key) return;
+    setTapNote(null);
+    unbuy({ kind, owner: parseKey(key).owner, key } as PlacedStack, planetIdOf(index));
+  };
+
+  /** My ships in the space area of the system, for the removal beyond the fleet pool: what stands, and what was removed. */
+  const removed = fightingFor?.fleetRemovals ?? {};
+  const fleetItems: UnitDraftItem[] = units.filter(unit => !pack.units[unit]?.ground).map(unit => ({
+    kind: unit as TokenKind, picked: removed[unit] ?? 0, left: acting.systems[slot]?.[unit] ?? 0,
+    takeLabel: t('stage.fleetTake', { unit: kindName(unit) }), returnLabel: t('stage.giveBack', { unit: kindName(unit) }),
+  })).filter(item => item.picked > 0 || (item.left ?? 0) > 0);
+  const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, kind as UnitId, amount)); };
+
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);
   // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
@@ -292,7 +366,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   return {
     game, state, shown: shownState ?? state, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
     adjusting, tapNote, handover, onToken, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
-    shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, removalsFor, fights,
+    shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
+    productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip,
   };
 }
 

@@ -442,7 +442,7 @@ describe('Construction', () => {
     await click('Close');
     expect(screen.getByText(/^Built: .*Cruiser 1$/)).toBeVisible();
     await click(/^Production in a space dock.*· ./);
-    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cruiser' })).toHaveTextContent('+1');
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Give back Cruiser' })).toHaveTextContent('×1');
   });
 
   test('dock production replaces the first build of the Thunder\'s Edge primary: the secondary places a structure only', async () => {
@@ -597,7 +597,7 @@ describe('Warfare', () => {
     expect(warsun).not.toHaveTextContent(String(cost(true)));
   });
 
-  test('ground units go to the planet chosen on the hex', async () => {
+  test('ground units go to the planet of their row', async () => {
     start({ faction: 'hacan' });
     const hacan = loadPack(['pok', 'te']);
     const [first, second] = hacan.tiles[hacan.factions.hacan.homeTile].planetIds;
@@ -606,8 +606,7 @@ describe('Warfare', () => {
     await userEvent.click(within(document.querySelector<HTMLElement>(`[data-entry-id="${later}"]`)!).getByRole('button', { name: 'Edit: Secondary: Warfare' }));
     await click('Production in the home system');
     const shop = within(screen.getByRole('dialog'));
-    await userEvent.click(document.querySelector(`.stage-hex [role="button"][aria-label*="${hacan.planets[second].name}"]`)!);
-    await userEvent.click(shop.getByRole('button', { name: 'Infantry' }));
+    await userEvent.click(shop.getByRole('button', { name: `Infantry, ${hacan.planets[second].name}` }));
     const entry = entries().find(e => e.id === later) as CardEntry;
     expect(entry.effects?.production?.ground).toEqual({ [second]: { infantry: 1 } });
     expect(entry.effects?.production?.ground?.[first]).toBeUndefined();

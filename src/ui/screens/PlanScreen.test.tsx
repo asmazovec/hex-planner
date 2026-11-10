@@ -717,6 +717,13 @@ describe('the battle of a tactical action', () => {
     await userEvent.click(excess()!);
     await userEvent.click(dialog().getByRole('button', { name: 'Give back Cruiser' }));
     expect(action().fleetRemovals).toBeUndefined();
+    // The same from the panel: a button per ship that stands in the system, and what is left of it.
+    const remove = () => dialog().getByRole('button', { name: 'Remove one Cruiser' });
+    expect(remove()).toHaveTextContent('4');
+    await userEvent.click(remove());
+    expect(action().fleetRemovals).toEqual({ cruiser: 1 });
+    expect(remove()).toHaveTextContent('3');
+    expect(dialog().getByRole('button', { name: 'Give back Cruiser' })).toHaveTextContent('×1');
   });
 
   test('the button opens the big hex in its battle, and no units are chosen in the panel', async () => {
@@ -889,19 +896,21 @@ test('landing shows counts of what arrived and what is assigned; no icon for a u
   expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('2');
   expect(screen.queryByRole('button', { name: 'Land one Mech' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
-  // The landing writes a count of one too, on both pictures.
+  // The landing writes a count of one too, on the button and on the landed one.
   expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('1');
-  expect(screen.getByRole('button', { name: 'Give back Infantry' })).toHaveTextContent('1');
+  expect(screen.getByRole('button', { name: 'Give back Infantry' })).toHaveTextContent('×1');
 });
 
-test('a landing whose units are gone stays visible, can go over the limit, and warns', async () => {
+test('a landing whose units are gone stays visible and warns; with nothing left to land its button is out, and the landed one is given back', async () => {
   await chooseSystem();
   act(() => useGame.getState().updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
   expect(screen.getByText('Landing')).toBeVisible();
+  expect(screen.getByText('Landing needs 1 × Infantry, but only 0 arrived.')).toBeVisible();
+  // The stock is empty: the button keeps its place and takes no tap.
   expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('0');
-  await userEvent.click(screen.getByRole('button', { name: 'Land one Infantry' }));
-  expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
-  expect(screen.getByText('Landing needs 2 × Infantry, but only 0 arrived.')).toBeVisible();
+  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: 'Give back Infantry' }));
+  expect(tactical().landings).toEqual([]);
 });
 
 test('a tap on an empty slot opens nothing', async () => {

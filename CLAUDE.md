@@ -49,7 +49,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `map/stage/`: большой гекс и магазин; `map/builder/`: сборка карты.
 - `screens/plan/`: состояние экрана плана, один выбор на карте на весь экран (`pick.ts`).
 
-Общие контейнеры и есть визуальный язык: новый интерфейс собирается из `Section`, `SectionTitle`, `PlayerDot`/`PlayerChoice`, `UnitTile`, `ConfirmBar`, `Modal`, `DrawerSheet`, `Popover`, `MapPickButton`, а не из своей разметки и стилей.
+Общие контейнеры и есть визуальный язык: новый интерфейс собирается из `Section`, `SectionTitle`, `PlayerDot`/`PlayerChoice`, `UnitTile`, `ConfirmBar`, `Modal`, `DrawerSheet`, `Popover`, `MapPickButton`, а не из своей разметки и стилей. Набор юнитов из запаса (корабли и груз полёта, высадка, покупка и постройка, снятие сверх резерва флота) — только `UnitDraft` (`src/ui/units/UnitDraft.tsx`): строка на место, кнопки «взять» с остатком, лоток набранного с постоянным местом на каждый тип; остаток считает вызывающий код, пустой запас гасит кнопку во всех строках. Планета рядом с выбором — `PlanetBadge` (`src/ui/map/PlanetBadge.tsx`), космос системы — `SpaceBadge`.
 
 ## Интерфейс
 

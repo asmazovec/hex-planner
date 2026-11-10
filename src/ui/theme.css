@@ -217,7 +217,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .saved-list li > .saved-current { flex: none; min-height: 36px; padding: 4px 10px; display: inline-flex; align-items: center; font-size: var(--font-s); color: var(--text-muted); }
 .saved-list strong { display: block; overflow-wrap: anywhere; font-size: var(--font-s); font-weight: 600; color: var(--text); }
 /* A caption under a line of a card: small and dim, on a line of its own. */
-.saved-list small, .plan-tab small, .source-button small, .landing-target small, .ship-row-name small, .upgrade-body > small { display: block; color: var(--text-dim); font-size: var(--font-xs); }
+.saved-list small, .plan-tab small, .source-button small, .ship-row-name small, .upgrade-body > small { display: block; color: var(--text-dim); font-size: var(--font-xs); }
 .saved-list small { font-weight: 400; }
 /* TODO(P2-512) #ws:ui-containers #type:dup #size:m #small-button — маленькая кнопка: 14 контекстных переопределений padding/min-height/font-size: 180, 226, 251, 398, 401, 418, 433, 440, 547, 576, 636, 701, 712, 739; модификатор .small или проп у кнопки — P2 note: the fourteen overrides differ (padding 4/5 px by 8/10/14 px, heights 32/36 px, 12/13 px text), so one .small modifier changes most of them: needs prototype */
 .saved-list button { position: relative; flex: none; min-height: 36px; padding: 4px 10px; font-size: var(--font-s); }
@@ -601,12 +601,15 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .source-button { flex: 1; min-width: 0; text-align: left; font-size: var(--font-s); }
 .source-button small { font-weight: 400; }
 .landing { display: flex; flex-direction: column; gap: 8px; }
-.landing-planet { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.landing-target { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; min-width: 120px; }
-.landing-target svg { flex: none; overflow: visible; }
-.landing-target span { min-width: 0; }
-.landing-target strong { display: block; font-size: var(--font-s); }
-.landing-target small { font-weight: 400; }
+/* A planet as the map draws it, small, with its name beside it; compact as the place of a row. */
+.planet-badge { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.planet-badge svg { flex: none; overflow: visible; }
+.planet-badge > span { min-width: 0; }
+.planet-badge strong { display: block; font-size: var(--font-s); overflow: hidden; text-overflow: ellipsis; }
+.planet-badge small { display: block; color: var(--text-dim); font-size: var(--font-xs); font-weight: 400; }
+.planet-badge-compact { gap: 4px; }
+.planet-badge-compact strong { font-size: var(--font-xs); font-weight: 600; line-height: 1.2; }
+.space-mark { fill: none; stroke: var(--border-hover); stroke-width: 1.2; stroke-dasharray: 2.4 1.6; }
 .landing-stacks { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
 .landing-stacks svg { display: block; overflow: visible; }
 .start-game { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
@@ -626,12 +629,46 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .unit-tile svg { pointer-events: none; overflow: visible; }
 .unit-tile > i { position: absolute; right: 2px; top: 34px; font-style: normal; font-weight: 700; font-size: 10.5px; line-height: 1.3; background: var(--bg); border: 1px solid var(--counter-stroke); border-radius: 8px; padding: 0 3px; color: var(--text); }
 .unit-tile > small { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--font-xs); text-align: center; }
-.unit-tile > b { color: var(--gold); font-size: 13px; }
-.unit-tile-marked { border-color: var(--accent); background: var(--accent-soft); }
 .unit-tile-shop { width: auto; }
 .unit-tile-mini { width: 32px; min-height: 32px; padding: 0; background: transparent; border: 0; }
 .unit-tile-mini > i { top: auto; bottom: -2px; right: -2px; }
-.pips { display: flex; flex-wrap: wrap; gap: 3px; }
+/* Units taken from a stock, a row per place: the place, a button to take per kind, a quiet arrow, the tray of what was taken. Every part has a fixed width, so a row wraps by the number of kinds and the width of the panel, never by a tap. */
+.unit-draft { display: flex; flex-direction: column; gap: 8px; --cell: 52px; --place: 86px; }
+.draft-row { --cells: calc(var(--kinds) * (var(--cell) + 4px) - 4px); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.draft-place { flex: 0 0 var(--place); width: var(--place); min-width: 0; }
+.draft-stock { flex: none; display: flex; flex-wrap: wrap; gap: 4px; width: min(100%, var(--cells)); }
+.draft-picked { flex: none; display: flex; align-items: center; gap: 2px; max-width: 100%; }
+.draft-arrow { flex: none; display: flex; color: var(--text-dim); }
+.draft-arrow svg { width: 14px; height: 14px; transform: rotate(-90deg); }
+.draft-tray { flex: 0 1 calc(var(--cells) + 8px); min-width: calc(var(--cell) + 8px); display: flex; flex-wrap: wrap; gap: 4px; padding: 4px; border-radius: var(--radius-m); background: var(--accent-soft); }
+.draft-take, .draft-chip, .draft-slot { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 0; width: var(--cell); height: 58px; min-height: 0; padding: 1px 0 0; border-radius: var(--radius-s); font-size: var(--font-xs); line-height: 14px; font-variant-numeric: tabular-nums; }
+.draft-take svg, .draft-chip svg, .draft-slot svg { flex: none; pointer-events: none; overflow: visible; }
+/* The stock: a button with a plus, and what is left of the kind at its foot. */
+.draft-take { background: var(--surface-2); border: 1px solid var(--border-strong); color: var(--text-muted); font-weight: 400; }
+.draft-plus { position: absolute; left: 4px; top: 2px; font-size: 13px; font-weight: 700; line-height: 1; color: var(--accent); }
+.draft-foot { align-self: stretch; display: flex; justify-content: space-between; height: 14px; padding: 0 4px; }
+.draft-foot b { color: var(--gold); font-weight: 700; }
+.draft-foot i, .draft-chip i { font-style: normal; font-weight: 700; }
+.draft-foot i { margin-left: auto; color: var(--text); }
+/* Nothing to take: the same place and size, a dashed outline with nothing in it but the dimmed picture. */
+.draft-take:disabled { opacity: 1; background: transparent; border-style: dashed; color: var(--text-dim); }
+.draft-take:disabled svg { opacity: 0.3; filter: grayscale(1); }
+.draft-take:disabled .draft-plus { visibility: hidden; }
+.draft-take:disabled .draft-foot b, .draft-take:disabled .draft-foot i { color: var(--text-dim); }
+/* The tray: one place per kind, an outline with a pale picture while empty, a filled chip with its count once taken. */
+.draft-slot { border: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent); }
+.draft-slot svg { opacity: 0.2; }
+button.draft-chip { background: var(--accent-solid); border: 1px solid var(--accent); color: var(--accent-text); }
+@media (hover: hover) { button.draft-chip:hover:not(:disabled) { background: var(--accent-solid-hover); border-color: var(--accent); color: var(--accent-text); } }
+.draft-row > .landing-stacks { margin-left: auto; }
+/* The big hex is narrower than the plan panel: a smaller cell and place keep a planet's row on one line. */
+.stage-panel .unit-draft { --cell: 48px; --place: 74px; }
+.pips { display: flex; flex-wrap: nowrap; align-items: center; gap: 3px; height: 14px; overflow: hidden; }
+.pips svg { flex: none; }
+.pips-more { font-size: var(--font-xs); font-weight: 700; line-height: 1; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.pips-more.pips-over { color: var(--danger); }
+/* The line under the places on board is always there: what it says comes and goes, the stops below stay. */
+.cargo-note { display: block; height: 16px; margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: var(--font-s); line-height: 16px; }
 .pip { fill: transparent; stroke: var(--border-hover); stroke-width: 1; }
 .pip-full { fill: var(--accent); }
 .pip-over { stroke: var(--danger); }
@@ -644,8 +681,6 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stop-target::before { background: var(--gold); }
 .stop-target::after { display: none; }
 .stop-name { font-size: 12.5px; color: var(--text-muted); }
-.stop-place { display: flex; flex-direction: column; gap: 2px; }
-.stop-place small { font-size: var(--font-xs); color: var(--text-dim); }
 .pay-planets { display: flex; flex-wrap: wrap; gap: 4px; }
 .pay-planets button { padding: 4px 10px; font-size: var(--font-s); }
 

@@ -44,12 +44,10 @@ export interface BattlePanelProps {
   lossesFor: (owner: string) => LossPicture[];
   planets: PlanetDef[];
   kindName: (kind: TokenKind) => string;
-  /** How the taps work, when it differs from a battle's. */
-  note?: string;
 }
 
 /** Battle: a tap on a token records a loss, and each player's strip gives it back. */
-export function BattlePanel({ players, colours, lossesFor, planets, kindName, note }: BattlePanelProps) {
+export function BattlePanel({ players, colours, lossesFor, planets, kindName }: BattlePanelProps) {
   const { t } = useTranslation();
   return (
     <>
@@ -57,7 +55,7 @@ export function BattlePanel({ players, colours, lossesFor, planets, kindName, no
       {players.map(({ id, heading }) => (
         <LossStrip key={id} heading={heading} colour={colours[id]} pictures={lossesFor(id)} planets={planets} kindName={kindName} />
       ))}
-      <p className="muted">{note ?? t('stage.battleNote')}</p>
+      <p className="muted">{t('stage.battleNote')}</p>
     </>
   );
 }
