@@ -486,8 +486,8 @@ test('a transaction counts its goods under the finger', async ({ page }) => {
       await pressRepeatedly(page, group.getByRole('button', { name: `Add one ${goods}` }), 11);
       await pressRepeatedly(page, group.getByRole('button', { name: `Remove one ${goods}` }), 11);
     }
-    // Neither side holds a promissory note or an action card yet: there is nothing to choose a component from.
-    await expect(group.getByRole('button', { name: '+ Component' })).toBeDisabled();
+    // Each side begins with the promissory notes of its colour: there is something to choose a component from.
+    await expect(group.getByRole('button', { name: '+ Component' })).toBeEnabled();
   }
 });
 
