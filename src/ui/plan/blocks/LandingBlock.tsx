@@ -25,7 +25,7 @@ export interface LandingBlockProps {
 
 /**
  * The landing is one draft with a row per planet: the stock is what arrived, less what landed on every planet, so a
- * kind that ran out goes dim in all the rows at once; the tray of a row holds what lands there.
+ * kind that ran out changes its look in all the rows at once and counts what lands beyond it (the domain warns, nothing is forbidden); the tray of a row holds what lands there.
  */
 export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, landedOn, onLand }: LandingBlockProps) {
   const { t } = useTranslation();
@@ -33,7 +33,7 @@ export function LandingBlock({ game, planets, before, board, units, arrived, los
   const colour = playerColour(game.color);
   const unitName = (unit: UnitId) => t(`unit.${unit}`);
   const landedInAll = (unit: UnitId) => planets.reduce((sum, p) => sum + landedOn(p.id, unit), 0);
-  const stock = Object.fromEntries(units.map(unit => [unit, Math.max(0, (arrived[unit] ?? 0) - landedInAll(unit))]));
+  const stock = Object.fromEntries(units.map(unit => [unit, (arrived[unit] ?? 0) - landedInAll(unit)]));
 
   const rows: UnitDraftRow[] = planets.map(planet => {
     const control = before.control[planet.id];

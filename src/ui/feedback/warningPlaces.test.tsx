@@ -205,11 +205,11 @@ describe('the tactical editor', () => {
     expect(picker.querySelector('.meter-over')).toBeNull();
   });
 
-  test('the fleet limit is the result of the whole action: it stands in its own block at the very end', () => {
+  test('the fleet limit is the result of the whole action: it stands in its own block at the very end of the own part of the action', () => {
     const { container } = editor([FLEET, SHORT], { production: { fighter: 2 } });
     const result = screen.getByRole('group', { name: 'Action result' });
     expect(result).toHaveTextContent(/fleet pool/);
-    expect(container.querySelector('.tactical-editor')!.lastElementChild).toBe(result);
+    expect(container.querySelector('.tactical-editor .editor-part')!.lastElementChild).toBe(result);
   });
 
   test('with ships chosen it is said in the sources too, where they are chosen', () => {

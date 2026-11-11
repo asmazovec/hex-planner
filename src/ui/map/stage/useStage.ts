@@ -278,7 +278,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const boughtAt = (kind: TokenKind, index: number | undefined): number => boughtKeys(kind, index).reduce((sum, key) => sum + bought[key], 0);
   /**
    * The figures still in the reinforcements of the player the shop buys for (96.2, 24.4): the limit less what the forecast
-   * already holds on the board, purchases included. Fighters and infantry have tokens and never run out.
+   * already holds on the board, purchases included; below zero by what was bought beyond them. Fighters and infantry have tokens and never run out.
    */
   const sideState = side === mine ? acting : state.rivals?.[side];
   const structureState = purchases.changeStructure || side === mine ? acting : state.rivals?.[side];
@@ -287,13 +287,13 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const limit = pack.units[unit]?.limit;
     if (limit === null || limit === undefined || unit === 'fighter' || unit === 'infantry' || !sideState) continue;
     const onBoard = [...Object.values(sideState.systems), ...Object.values(sideState.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
-    shopStock[unit] = Math.max(0, limit - onBoard);
+    shopStock[unit] = limit - onBoard;
   }
   for (const kind of STRUCTURES) {
     const limit = pack.structures.find(s => s.id === kind)?.limit ?? null;
     if (limit === null || !structureState) continue;
     const held = kind === 'spacedock' ? structureState.docks.length : Object.values(structureState.pds).reduce((sum, n) => sum + n, 0);
-    shopStock[kind] = Math.max(0, limit - held);
+    shopStock[kind] = limit - held;
   }
   /** The shop as rows by where a purchase goes: ships to the space area, ground forces and structures to a planet. */
   const draftItem = (item: ShopItem, index: number | undefined, planet: PlanetDef | null): UnitDraftItem => {
@@ -332,6 +332,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const fleetItems: UnitDraftItem[] = units.filter(unit => !pack.units[unit]?.ground).map(unit => ({
     kind: unit as TokenKind, picked: removed[unit] ?? 0, left: acting.systems[slot]?.[unit] ?? 0,
     takeLabel: t('stage.fleetTake', { unit: kindName(unit) }), returnLabel: t('stage.giveBack', { unit: kindName(unit) }),
+    // A ship that does not stand here cannot be removed: before the draft there was no token of it to tap, and no rule warns of it.
+    blockedReason: (acting.systems[slot]?.[unit] ?? 0) > 0 ? undefined : t('stage.fleetNone'),
   })).filter(item => item.picked > 0 || (item.left ?? 0) > 0);
   const beforeFight = fightingFor && seenBefore(line, fightingFor.id);
   /** How many ships are still over the fleet pool, as the replay says of the action. */

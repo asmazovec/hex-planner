@@ -237,10 +237,16 @@ test('the ships and the cargo of a flight are taken and returned under the finge
   for (const unit of ['Destroyer', 'Carrier', 'Fighter']) {
     const take = ships.getByRole('button', { name: `Take one ${unit}` }).first();
     const all = await countOn(take);
-    // Down to the last one: the button stays where it is, out, with nothing left to take.
+    // Down to the last one: the button stays where it is, in the look of "beyond the stock", and still takes a tap.
     await pressRepeatedly(page, take, all);
-    await expect(take).toBeDisabled();
+    await expect(take).toHaveClass(/draft-take-over/);
+    await expect(take).toBeEnabled();
   }
+  // One destroyer more than stands there: nothing forbids it, the button counts it and the flight warns under the buttons.
+  const destroyer = ships.getByRole('button', { name: 'Take one Destroyer' }).first();
+  await pressRepeatedly(page, destroyer, 1);
+  await expect(destroyer.locator('.draft-over')).toHaveText('+1');
+  await expect(ships.getByText(/is missing 1 × Destroyer/)).toBeVisible();
   const back = ships.getByRole('button', { name: 'Return one Destroyer' }).first();
   await pressRepeatedly(page, back, await countOn(back) - 1);
   // The last one returned leaves an empty place of the tray: nothing else comes under the finger.
@@ -267,15 +273,18 @@ test('the landing of a flight is set and taken back under the finger', async ({ 
   await page.getByRole('button', { name: 'Back', exact: true }).click();
 
   const landing = panel(page).getByRole('group', { name: "Landing on Hope's End" });
-  // Down to the last one that arrived, and once more on the button that went out.
+  // One more than arrived: the button changes its look with the last one and still lands, and the plan warns.
   await pressRepeatedly(page, landing.getByRole('button', { name: 'Land one Infantry' }), all + 1);
-  await expect(landing.getByRole('button', { name: 'Land one Infantry' })).toBeDisabled();
-  await expect(landing.getByRole('button', { name: 'Give back Infantry' })).toContainText(`×${all}`);
-  await pressRepeatedly(page, landing.getByRole('button', { name: 'Give back Infantry' }), all - 1);
+  await expect(landing.getByRole('button', { name: 'Land one Infantry' })).toBeEnabled();
+  await expect(landing.getByRole('button', { name: 'Land one Infantry' })).toHaveClass(/draft-take-over/);
+  await expect(landing.getByRole('button', { name: 'Land one Infantry' }).locator('.draft-over')).toHaveText('+1');
+  await expect(landing.getByRole('button', { name: 'Give back Infantry' })).toContainText(`×${all + 1}`);
+  await expect(panel(page).getByText(`Landing needs ${all + 1} × Infantry, but only ${all} arrived.`)).toBeVisible();
+  await pressRepeatedly(page, landing.getByRole('button', { name: 'Give back Infantry' }), all);
   await pressUntilGone(page, landing.getByRole('button', { name: 'Give back Infantry' }), 3, /^Give back Infantry$/);
 });
 
-test('a kind landed to the last one goes out on every planet of the system at once', async ({ page }) => {
+test('a kind landed to the last one changes its look to "beyond the stock" on every planet at once, still takes a tap and does not move', async ({ page }) => {
   // Horizon lies next to home and has three planets.
   await addAction(page, 'Tactical action');
   await tapTile(page, 110);
@@ -294,10 +303,24 @@ test('a kind landed to the last one goes out on every planet of the system at on
   for (const planet of ['Horizon', "El'Nath", 'Luthien VI']) await expect(land(planet)).toContainText(String(all));
   await land("El'Nath").click();
   await pressRepeatedly(page, land('Horizon'), all - 1);
-  for (const planet of ['Horizon', "El'Nath", 'Luthien VI']) await expect(land(planet)).toBeDisabled();
+  const landing = panel(page).locator('.landing');
+  const places = () => placesIn(landing, landing.getByRole('button', { name: 'Land one Infantry' }));
+  const before = await places();
+  for (const planet of ['Horizon', "El'Nath", 'Luthien VI']) {
+    await expect(land(planet)).toHaveClass(/draft-take-over/);
+    await expect(land(planet)).toBeEnabled();
+    await expect(land(planet).locator('.draft-over')).toHaveCount(0);
+  }
+  // Two more than arrived on a third planet: every row counts them, the plan warns below, and no button has moved.
+  await pressRepeatedly(page, land('Luthien VI'), 2);
+  for (const planet of ['Horizon', "El'Nath", 'Luthien VI']) await expect(land(planet).locator('.draft-over')).toHaveText('+2');
+  await expect(panel(page).getByText(`Landing needs ${all + 2} × Infantry, but only ${all} arrived.`)).toBeVisible();
+  expect(await places()).toEqual(before);
+  await pressUntilGone(page, on('Luthien VI').getByRole('button', { name: 'Give back Infantry' }), 3, /^Give back Infantry$/);
   // One given back on a planet lights the kind again on all of them, and no button has moved.
   await on("El'Nath").getByRole('button', { name: 'Give back Infantry' }).click();
-  for (const planet of ['Horizon', "El'Nath", 'Luthien VI']) await expect(land(planet)).toBeEnabled();
+  for (const planet of ['Horizon', "El'Nath", 'Luthien VI']) await expect(land(planet)).not.toHaveClass(/draft-take-over/);
+  expect(await places()).toEqual(before);
   await pressRepeatedly(page, land('Luthien VI'), 1);
   await pressUntilGone(page, on('Horizon').getByRole('button', { name: 'Give back Infantry' }), all + 1, /^Give back Infantry$/);
 });
@@ -425,24 +448,30 @@ test('ships beyond the fleet pool are removed tap after tap, and the count of th
 test('the shop of the big hex buys and places one unit after another under the finger', async ({ page }) => {
   await tile(page, 58).click();
   await stage(page).getByRole('button', { name: 'Create', exact: true }).click();
-  // Five of each, and the two war suns the reinforcements hold: the third press finds the button out.
+  // Five of each, three war suns more than the two the reinforcements hold: the button changes its look and buys on.
   for (const unit of ['Destroyer', 'Infantry, Valk', 'Dreadnought', 'War Sun']) {
     await pressRepeatedly(page, stage(page).getByRole('button', { name: unit, exact: true }), 5);
   }
-  await expect(stage(page).getByRole('button', { name: 'War Sun', exact: true })).toBeDisabled();
-  await expect(stage(page).getByText('Bought: 17')).toBeVisible();
-  // The figures of a kind are one stock for every planet: the last mech bought on one puts the button out on the others.
+  const warSun = stage(page).getByRole('button', { name: 'War Sun', exact: true });
+  await expect(warSun).toBeEnabled();
+  await expect(warSun).toHaveClass(/draft-take-over/);
+  await expect(warSun.locator('.draft-over')).toHaveText('+3');
+  await expect(stage(page).getByText('Bought: 20')).toBeVisible();
+  // The figures of a kind are one stock for every planet: the last mech bought on one changes the button on the others.
   await pressRepeatedly(page, stage(page).getByRole('button', { name: 'Mech, Avar', exact: true }), 4);
-  for (const planet of ['Avar', 'Valk', 'Ylir']) await expect(stage(page).getByRole('button', { name: `Mech, ${planet}`, exact: true })).toBeDisabled();
+  for (const planet of ['Avar', 'Valk', 'Ylir']) {
+    await expect(stage(page).getByRole('button', { name: `Mech, ${planet}`, exact: true })).toHaveClass(/draft-take-over/);
+    await expect(stage(page).getByRole('button', { name: `Mech, ${planet}`, exact: true })).toBeEnabled();
+  }
   // What was bought is given back where it stands in the tray, kind after kind, and no other kind is touched.
   const bought = (unit: string) => stage(page).getByRole('button', { name: `Give back ${unit}`, exact: true });
   await pressRepeatedly(page, bought('Destroyer'), 4);
   await pressUntilGone(page, bought('Destroyer'), 3, /^Give back Destroyer$/);
   await pressUntilGone(page, bought('Infantry, Valk'), 7, /^Give back Infantry, Valk$/);
   await expect(bought('Dreadnought')).toContainText('×5');
-  await expect(bought('War Sun')).toContainText('×2');
+  await expect(bought('War Sun')).toContainText('×5');
   await expect(bought('Mech, Avar')).toContainText('×4');
-  await expect(stage(page).getByText('Bought: 11')).toBeVisible();
+  await expect(stage(page).getByText('Bought: 14')).toBeVisible();
 
   await stage(page).getByRole('button', { name: 'Setup', exact: true }).click();
   for (const unit of ['Fighter', 'Infantry', 'Cruiser']) {

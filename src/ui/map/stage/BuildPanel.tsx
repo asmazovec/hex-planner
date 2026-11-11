@@ -33,7 +33,7 @@ export interface BuildPanelProps {
 
 /**
  * Create: a row per place a purchase goes to, the space area and each planet; a button buys one while the reinforcements
- * hold a figure, and a tap on a bought one, or on its ringed token, takes it back. Units are produced and structures
+ * hold a figure and, in the look of "beyond the stock", after that too (the domain warns); a tap on a bought one, or on its ringed token, takes it back. Units are produced and structures
  * built, so each stands under its own heading; a hex opened for one of them shows only it.
  */
 export function BuildPanel({ game, pack, state, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {

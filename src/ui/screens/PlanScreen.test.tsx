@@ -493,6 +493,27 @@ test('every arrow adds a source and keeps the earlier ones, also a source with n
   expect(screen.getByRole('button', { name: 'Fly' })).toBeDisabled();
 });
 
+test('a flight takes more ships than stand at its source, and warns of the missing one under the buttons', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  const take = () => screen.getByRole('button', { name: 'Take one Carrier' });
+  let standing = 0;
+  while (!take().classList.contains('draft-take-over')) {
+    await userEvent.click(take());
+    standing += 1;
+  }
+  expect(standing).toBeGreaterThan(0);
+  expect(screen.queryByText(/is missing/)).toBeNull();
+  // An empty stock forbids nothing: one more flies in the plan, and the domain says which one is not there.
+  expect(take()).toBeEnabled();
+  await userEvent.click(take());
+  expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: standing + 1 } }]);
+  expect(take().querySelector('.draft-over')).toHaveTextContent('+1');
+  const warning = screen.getByText(/is missing 1 × Carrier/);
+  expect(warning).toBeVisible();
+  expect(take().compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
 test('the outline of an arrow goes round its head too, as one shape with the line', async () => {
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
@@ -913,14 +934,24 @@ test('landing shows counts of what arrived and what is assigned; no icon for a u
   expect(screen.getByRole('button', { name: 'Give back Infantry' })).toHaveTextContent('×1');
 });
 
-test('a landing whose units are gone stays visible and warns; with nothing left to land its button is out, and the landed one is given back', async () => {
+test('a landing whose units are gone stays visible, can go over the limit, and warns', async () => {
   await chooseSystem();
   act(() => useGame.getState().updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
   expect(screen.getByText('Landing')).toBeVisible();
   expect(screen.getByText('Landing needs 1 × Infantry, but only 0 arrived.')).toBeVisible();
-  // The stock is empty: the button keeps its place and takes no tap.
-  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('0');
-  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toBeDisabled();
+  // The stock is empty: the button keeps its place, shows nothing left and how many land beyond it, and still takes a tap.
+  const land = () => screen.getByRole('button', { name: 'Land one Infantry' });
+  expect(land().querySelector('.draft-foot')).toHaveTextContent(/^0$/);
+  expect(land().querySelector('.draft-over')).toHaveTextContent('+1');
+  expect(land()).toBeEnabled();
+  await userEvent.click(land());
+  expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
+  expect(land().querySelector('.draft-over')).toHaveTextContent('+2');
+  // The warning stands in the block of the landing, under the button.
+  const warning = screen.getByText('Landing needs 2 × Infantry, but only 0 arrived.');
+  expect(warning).toBeVisible();
+  expect(land().compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Give back Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Give back Infantry' }));
   expect(tactical().landings).toEqual([]);
 });
@@ -1813,6 +1844,66 @@ describe('the acts of a turn in its editor', () => {
     expect(entries()[0]).toMatchObject({ acts: [{ kind: 'transaction', give: { tradeGoods: 1 } }] });
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(block().getByRole('button', { name: /^\+ Transaction with Player 2: give trade goods 1/ })).toBeVisible();
+  });
+
+  /** The parts of the open editor by their headings, and the blocks of the common one by their names, in order. */
+  const parts = () => {
+    const titles = [...document.querySelectorAll('.plan-panel .editor-part > .section-title')].map(title => title.textContent);
+    const common = screen.queryByRole('group', { name: 'In this turn' });
+    const blocks = common ? [...common.querySelectorAll(':scope > [role="group"]')].map(block => block.getAttribute('aria-label')) : null;
+    return { titles, blocks };
+  };
+  /** What any turn holds beside its action, in one order in every editor. */
+  const COMMON = ['Transactions', 'Taken and discarded'];
+  const follows = (first: Element, second: Element) => Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+  test('the tactical editor stands in two parts under their headings: its own setup, then what any turn holds', async () => {
+    await chooseSystem();
+    expect(parts()).toEqual({ titles: ['Action setup', 'In this turn'], blocks: COMMON });
+    const own = screen.getByRole('group', { name: 'Action setup' });
+    const common = screen.getByRole('group', { name: 'In this turn' });
+    expect(follows(own, common)).toBe(true);
+    // The headings are the common ones, and the blocks of the action itself stay in its own part.
+    expect(within(own).getByRole('heading', { name: 'Action setup' })).toHaveClass('section-title');
+    expect(within(common).getByRole('heading', { name: 'In this turn' })).toHaveClass('section-title');
+    expect(within(own).getByText(/^Active system:/)).toBeVisible();
+    expect(within(common).queryByText(/^Active system:/)).toBeNull();
+  });
+
+  test('the result of a tactical action belongs to its own part', async () => {
+    await chooseSystem();
+    act(() => useGame.getState().updateEntry(tactical().id, { fleetRemovals: { carrier: 1 } }));
+    const own = screen.getByRole('group', { name: 'Action setup' });
+    expect(within(own).getByRole('group', { name: 'Action result' })).toBeVisible();
+    expect(follows(within(own).getByRole('group', { name: 'Action result' }), screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
+  });
+
+  test('the strategy editor names its own part by the card and its ability, and a secondary has no common part', async () => {
+    useGame.getState().setStrategyCard(1, 1);
+    useGame.getState().addEntry(1, { type: 'strategic', card: 1 }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: / }));
+    expect(parts()).toEqual({ titles: ['Leadership · primary ability', 'In this turn'], blocks: COMMON });
+    const own = screen.getByRole('group', { name: 'Leadership · primary ability' });
+    expect(within(own).getByRole('group', { name: 'Card' })).toBeVisible();
+    expect(follows(own, screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
+    // Another player's turn holds no acts of mine.
+    await userEvent.click(within(own).getByRole('button', { name: /^Secondary/ }));
+    expect(parts()).toEqual({ titles: ['Leadership · secondary ability'], blocks: null });
+  });
+
+  test('a component action has both parts in the same order, and a pass only the common one', async () => {
+    useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Component action/ }));
+    expect(parts()).toEqual({ titles: ['Action setup', 'In this turn'], blocks: COMMON });
+    const own = screen.getByRole('group', { name: 'Action setup' });
+    expect(within(own).getByRole('textbox', { name: 'Note' })).toBeVisible();
+    expect(follows(own, screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
+    expect(parts()).toEqual({ titles: ['In this turn'], blocks: COMMON });
   });
 
   test('the tactical editor ends with «In this turn»', async () => {

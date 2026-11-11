@@ -20,6 +20,7 @@ import { Section } from '../../primitives/Section';
 import { CardGrid } from '../blocks/CardGrid';
 import { MapPickButton } from '../../primitives/MapPickButton';
 import { EditorFrame } from '../../primitives/EditorFrame';
+import { EditorPart } from '../../primitives/EditorPart';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
@@ -46,7 +47,7 @@ export interface StrategyEditorProps {
   onDone: () => void;
   /** The cross of the head: the card goes, with what it holds. */
   onRemove: () => void;
-  /** The «В этом ходу» block: what the turn holds beside its action, last in the editor. */
+  /** The blocks of «В этом ходу»: what the turn holds beside its action, the last part of the editor under its own heading. */
   turnActs?: ReactNode;
 }
 
@@ -165,16 +166,19 @@ export function StrategyEditor({
 
   return (
     <EditorFrame className="strategy-editor" title={t('plan.menu.strategic')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
-      <CardGrid
-        label={t('plan.strategy.cards')} cards={cards}
-        cellOf={c => ({ pressed: c.initiative === entry.card, onClick: () => pickCard(c.initiative) })}
-      />
-      {/* The mode and the card decide these; a warning whose block is not on the screen stands here too, where it cannot be missed. */}
-      {list([...cardWarnings, ...placer.rest()])}
-      {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
-      {cardBlocks}
+      {/* The card's own part is named by what is played: the card and its ability. */}
+      <EditorPart title={card ? t(primary ? 'plan.strategy.partPrimary' : 'plan.strategy.partSecondary', { card: card.name }) : t('editor.setup')}>
+        <CardGrid
+          label={t('plan.strategy.cards')} cards={cards}
+          cellOf={c => ({ pressed: c.initiative === entry.card, onClick: () => pickCard(c.initiative) })}
+        />
+        {/* The mode and the card decide these; a warning whose block is not on the screen stands here too, where it cannot be missed. */}
+        {list([...cardWarnings, ...placer.rest()])}
+        {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
+        {cardBlocks}
+      </EditorPart>
       {/* A secondary is played in another player's turn: it holds no acts. */}
-      {primary && turnActs}
+      {primary && turnActs && <EditorPart title={t('plan.acts.title')}>{turnActs}</EditorPart>}
     </EditorFrame>
   );
 }

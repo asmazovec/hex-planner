@@ -97,7 +97,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   };
 
   const item = (from: string, unit: UnitId): UnitDraftItem => ({
-    kind: unit, picked: picked(from, unit), left: Math.max(0, available(from, unit) - picked(from, unit)),
+    kind: unit, picked: picked(from, unit), left: available(from, unit) - picked(from, unit),
     takeLabel: t('plan.picker.take', { unit: unitName(unit) }), returnLabel: t('plan.picker.put', { unit: unitName(unit) }),
   });
   const draft = (rows: UnitDraftRow[], pickedLabel: string) => (

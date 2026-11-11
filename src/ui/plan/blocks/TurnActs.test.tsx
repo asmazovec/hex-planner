@@ -47,7 +47,7 @@ test('the block lists the acts of the turn as cards, each opening its step and r
   const game = gameWith();
   const deal: Act = { kind: 'transaction', with: game.opponents[0].id, give: { tradeGoods: 2 }, get: {} };
   const { onChange, onOpen } = block(turn([deal]), game);
-  const section = within(screen.getByRole('group', { name: 'In this turn' }));
+  const section = within(screen.getByRole('group', { name: /^Transactions/ }));
   await userEvent.click(section.getByRole('button', { name: /^\+ Transaction with Player 2/ }));
   expect(onOpen).toHaveBeenCalledWith(0);
   await userEvent.click(section.getByRole('button', { name: 'Remove: transaction' }));

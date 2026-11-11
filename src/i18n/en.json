@@ -1,6 +1,7 @@
 {
   "draft": {
-    "out": "none left",
+    "over": "none left, the next one is taken beyond the stock",
+    "overBy": "{{n}} beyond the stock",
     "space": "Space"
   },
   "share": {
@@ -465,6 +466,8 @@
       "agendaEmpty": "A vote, if Mecatol Rex is held. No entries here yet."
     },
     "strategy": {
+      "partPrimary": "{{card}} · primary ability",
+      "partSecondary": "{{card}} · secondary ability",
       "mode": {
         "primary": "Primary",
         "secondary": "Secondary",
@@ -560,6 +563,8 @@
       "nothing": "nothing",
       "me": "you",
       "title": "In this turn",
+      "block": "Transactions",
+      "blockTe": "Transactions and the expedition",
       "addTransaction": "+ Transaction",
       "addExpedition": "+ Expedition",
       "remove": "Remove: {{name}}",
@@ -749,6 +754,7 @@
     "fleetWithin": "The fleet is within the fleet pool",
     "fleetStock": "In the system",
     "fleetTake": "Remove one {{unit}}",
+    "fleetNone": "none of them stands here any more",
     "buildNote": "Tap a bought unit here, or its token with a gold ring, to take the purchase back.",
     "setupNote": "Tap a token on the hex to remove one.",
     "planetNote": "Tap a planet: ground forces and structures go there.",
@@ -780,7 +786,8 @@
   "editor": {
     "done": "Done",
     "back": "Back",
-    "remove": "Remove action"
+    "remove": "Remove action",
+    "setup": "Action setup"
   },
   "legal": {
     "unofficial": {

@@ -70,27 +70,38 @@ test('taking and returning changes no place: the order and the number of cells d
   expect(back('Alpha', 'Mech')).toBeNull();
 });
 
-test('the stock is one for all the rows: the last one taken in a row puts the button out in every row at once', async () => {
+test('the stock is one for all the rows: the last one taken in a row turns the button to "beyond the stock" in every row at once, and it still takes', async () => {
   const onTake = vi.fn();
   render(<Shared arrived={{ infantry: 2, mech: 1 }} onTake={onTake} />);
   await userEvent.click(take('Alpha', 'Infantry'));
   expect(take('Beta', 'Infantry')).toHaveTextContent('+1');
-  expect(take('Beta', 'Infantry')).toBeEnabled();
+  expect(take('Beta', 'Infantry')).not.toHaveClass('draft-take-over');
   await userEvent.click(take('Beta', 'Infantry'));
   for (const place of ['Alpha', 'Beta']) {
-    expect(take(place, 'Infantry')).toBeDisabled();
-    expect(take(place, 'Infantry')).toHaveClass('draft-take-out');
-    expect(take(place, 'Infantry')).toHaveTextContent('0');
-    expect(take(place, 'Infantry')).toHaveAttribute('title', 'Take Infantry: none left');
-    expect(take(place, 'Mech')).toBeEnabled();
+    // An empty stock forbids nothing: the button changes its look and says what the next tap does.
+    expect(take(place, 'Infantry')).toBeEnabled();
+    expect(take(place, 'Infantry')).not.toHaveAttribute('aria-disabled');
+    expect(take(place, 'Infantry')).toHaveClass('draft-take-over');
+    expect(take(place, 'Infantry').querySelector('.draft-foot')).toHaveTextContent(/^0$/);
+    expect(take(place, 'Infantry').querySelector('.draft-plus')).not.toBeNull();
+    expect(take(place, 'Infantry').querySelector('.draft-over')).toBeNull();
+    expect(take(place, 'Infantry')).toHaveAttribute('title', 'Take Infantry: none left, the next one is taken beyond the stock');
+    expect(take(place, 'Mech')).not.toHaveClass('draft-take-over');
   }
-  // A disabled button takes no tap.
+  // The tap is taken, and every row says how many are beyond the stock; what is left never goes below zero.
   await userEvent.click(take('Alpha', 'Infantry'));
-  expect(onTake).toHaveBeenCalledTimes(2);
-  // One returned anywhere lights the kind again everywhere.
-  await userEvent.click(back('Alpha', 'Infantry')!);
-  expect(take('Alpha', 'Infantry')).toBeEnabled();
-  expect(take('Beta', 'Infantry')).toBeEnabled();
+  await userEvent.click(take('Alpha', 'Infantry'));
+  expect(onTake).toHaveBeenCalledTimes(4);
+  expect(back('Alpha', 'Infantry')).toHaveTextContent('×3');
+  for (const place of ['Alpha', 'Beta']) {
+    expect(take(place, 'Infantry').querySelector('.draft-over')).toHaveTextContent(/^\+2$/);
+    expect(take(place, 'Infantry').querySelector('.draft-foot')).toHaveTextContent(/^0$/);
+    expect(take(place, 'Infantry')).toHaveAttribute('title', 'Take Infantry: none left, the next one is taken beyond the stock · 2 beyond the stock');
+  }
+  // Returned down to the stock, the kind looks as before everywhere.
+  for (let i = 0; i < 3; i += 1) await userEvent.click(back('Alpha', 'Infantry')!);
+  expect(take('Alpha', 'Infantry')).not.toHaveClass('draft-take-over');
+  expect(take('Beta', 'Infantry')).toHaveTextContent('+1');
 });
 
 test('a stock that never ends shows no count and never goes out', async () => {
@@ -103,7 +114,7 @@ test('a stock that never ends shows no count and never goes out', async () => {
   expect(onTake).toHaveBeenLastCalledWith('Beta', 'mech');
 });
 
-test('a row or a kind is blocked for a reason of its own: the same look, and the title says why', () => {
+test('a row or a kind is blocked for a reason of its own, never for an empty stock: it takes no tap, and the title says why', () => {
   const rows = rowsOf({});
   rows[0].blockedReason = 'your command token is here';
   rows[1].items[1].blockedReason = 'no dock on the planet';
@@ -115,16 +126,23 @@ test('a row or a kind is blocked for a reason of its own: the same look, and the
   expect(take('Beta', 'Mech')).toBeDisabled();
   expect(take('Beta', 'Mech')).toHaveClass('draft-take-out');
   expect(take('Beta', 'Mech')).toHaveAttribute('title', 'Take Mech: no dock on the planet');
+  // A reason of its own blocks with an empty stock too.
+  rows[1].items[1].left = 0;
+  cleanup();
+  render(<UnitDraft rows={rows} stock={{ infantry: 5, mech: 5 }} colour="#7fb2ff" stockLabel="Stock" pickedLabel="Picked" onTake={vi.fn()} onReturn={vi.fn()} />);
+  expect(take('Beta', 'Mech')).toBeDisabled();
+  expect(take('Beta', 'Mech')).not.toHaveClass('draft-take-over');
   // The price and the count stay on a blocked button.
-  expect(take('Beta', 'Mech')).toHaveTextContent('+25');
+  expect(take('Beta', 'Mech')).toHaveTextContent('+20');
 });
 
 test('a row counts its own stock where it has one, apart from the shared one', () => {
   const rows = rowsOf({});
   rows[0].items[0].left = 0;
   render(<UnitDraft rows={rows} stock={{ infantry: 5, mech: 5 }} colour="#7fb2ff" stockLabel="Stock" pickedLabel="Picked" onTake={vi.fn()} onReturn={vi.fn()} />);
-  expect(take('Alpha', 'Infantry')).toBeDisabled();
-  expect(take('Beta', 'Infantry')).toBeEnabled();
+  expect(take('Alpha', 'Infantry')).toHaveClass('draft-take-over');
+  expect(take('Alpha', 'Infantry')).toBeEnabled();
+  expect(take('Beta', 'Infantry')).not.toHaveClass('draft-take-over');
   expect(take('Beta', 'Infantry')).toHaveTextContent('+5');
 });
 
