@@ -8,15 +8,19 @@ vi.mock('../../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../../data/loadPack';
+import { textOf } from '../../../domain/components';
 import { project } from '../../../domain/project';
 import type { Entry, UnitCounts } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { HexStage, type HexStageProps } from './HexStage';
 
-const pack = loadPack(['pok']);
-const full = loadPack(['pok', 'te']);
+/** The interface of these tests is English, and so are the texts of the packs. */
+const pack = loadPack(['pok'], 'en');
+const full = loadPack(['pok', 'te'], 'en');
 const SLOT = '1,0';
+/** The legendary ability of the planet of tile 66. */
+const HOPES_END = 'legendary:hopesend';
 /** Tile 25 has one planet, tile 71 two. */
 const ONE = '25';
 const TWO = '71';
@@ -349,7 +353,7 @@ describe('setup', () => {
     expect(game().planetControl[quann()]).toBeUndefined();
   });
 
-  test('tile 66: the ability and its printed text, English in either language, and the traits', () => {
+  test('tile 66: the ability, its printed text in the language of the interface under its English name, and the traits', () => {
     store().setTile(SLOT, '66');
     open({ initialMode: 'control' });
     const planet = within(screen.getByRole('group', { name: "Hope's End" }));
@@ -360,8 +364,14 @@ describe('setup', () => {
     expect(planet.queryByText(/relic/i)).toBeNull();
     cleanup();
     setLanguage('ru');
-    open({ initialMode: 'control' });
-    expect(screen.getByText(/place 1 mech from your reinforcements/)).toBeInTheDocument();
+    const russian = loadPack(['pok']);
+    const translated = textOf(russian, HOPES_END);
+    expect(translated).toMatch(/[а-яё]/i);
+    expect(translated).not.toBe(textOf(pack, HOPES_END));
+    open({ initialMode: 'control' }, russian);
+    expect(screen.getByText(translated)).toBeInTheDocument();
+    expect(screen.getByText('Imperial Arms Vault')).toBeInTheDocument();
+    expect(screen.queryByText(/place 1 mech from your reinforcements/)).toBeNull();
   });
 
   test('a planet heads with its name, then resources/influence, then its marks as named icons; its text follows', () => {

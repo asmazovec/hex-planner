@@ -789,7 +789,7 @@
     "data": {
       "title": "Game data",
       "text": "Systems, planets, units and card sets are built from the public repository",
-      "wording": "Card, technology and ability texts are quoted verbatim in English and belong to the publisher of the game. Terms follow the English Rules Reference and the Russian edition by Hobby World. The data may contain mistakes; where it differs, the official rules win."
+      "wording": "Card, technology and ability texts belong to the publisher of the game: they are quoted verbatim in English, and the Russian interface shows their translation. Terms follow the English Rules Reference and the Russian edition by Hobby World. The data may contain mistakes; where it differs, the official rules win."
     },
     "icons": {
       "title": "Icons"

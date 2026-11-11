@@ -1,9 +1,9 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPack } from '../../data/loadPack';
 import { componentById, componentsOf } from '../../domain/components';
 import type { ComponentDef, ComponentKind } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { usePack } from '../common/usePack';
 import { Modal } from '../overlays/Modal';
 import { ComponentCard } from './ComponentCard';
 import { ComponentSearchField } from './ComponentSearchField';
@@ -31,7 +31,7 @@ export interface ComponentPickerProps {
 export function ComponentPicker({ kinds, ids, owned, prefer, player, onPick, onClose }: ComponentPickerProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game);
-  const pack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
+  const pack = usePack(game?.expansions);
   const [query, setQuery] = useState('');
   const asked = useDeferredValue(query);
   const among = useMemo(() => ids && new Set(ids), [ids]);

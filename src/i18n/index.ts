@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import ru from './ru.json';
 import en from './en.json';
+import { setTextLanguage } from '../data/loadPack';
 
 export type Language = 'ru' | 'en';
 
@@ -29,6 +30,10 @@ void i18next.use(initReactI18next).init({
   fallbackLng: 'ru',
   interpolation: { escapeValue: false },
 });
+
+// The texts of components follow the language of the interface.
+setTextLanguage(i18next.language === 'en' ? 'en' : 'ru');
+i18next.on('languageChanged', language => setTextLanguage(language === 'en' ? 'en' : 'ru'));
 
 export function setLanguage(lang: Language): void {
   try {

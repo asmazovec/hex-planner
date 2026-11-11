@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPack } from '../../data/loadPack';
 import { playersOf } from '../../domain/players';
 import { homeNotes } from '../../domain/strategy';
 import type { ExpansionId } from '../../domain/types';
@@ -15,6 +14,7 @@ import { NoteField } from '../primitives/NoteField';
 import { downloadGame, downloadRaw } from '../common/download';
 import { EXPANSION_NAMES, EXPANSIONS } from '../common/expansions';
 import { gameAddress } from '../common/gameAddress';
+import { usePack } from '../common/usePack';
 import { MapSetup } from '../map/builder/MapSetup';
 import { HexRemove } from '../primitives/Icon';
 import { factionName } from '../players/names';
@@ -63,7 +63,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const [asked, setAsked] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
+  const pack = usePack(game.expansions);
   const players = playersOf(game);
   const { ghostRef, ...drag } = useSeatDrag(players, swapSeats);
   const mapBlock = useRef<HTMLDivElement>(null);

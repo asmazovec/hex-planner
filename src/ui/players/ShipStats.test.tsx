@@ -8,6 +8,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { textOf } from '../../domain/components';
 import { upgradesOf } from '../../domain/holdings';
 import type { Entry, EntryBody } from '../../domain/types';
 import { setLanguage } from '../../i18n';
@@ -16,8 +17,18 @@ import { PlanScreen } from '../screens/PlanScreen';
 import { FactionCard } from './FactionCard';
 import { ShipStats } from './ShipStats';
 
-const pack = loadPack(['pok', 'te']);
-const small = loadPack(['pok']);
+/** The interface of these tests is Russian, and so are the texts of the packs. */
+const pack = loadPack(['pok', 'te'], 'ru');
+const small = loadPack(['pok'], 'ru');
+const english = loadPack(['pok', 'te'], 'en');
+const CYRILLIC = /[а-яё]/i;
+/** The text the Russian pack prints for a component: a translation, not the original. */
+function printed(id: string): string {
+  const text = textOf(pack, id);
+  expect(text).toMatch(CYRILLIC);
+  expect(text).not.toBe(textOf(english, id));
+  return text;
+}
 
 afterEach(cleanup);
 beforeEach(() => setLanguage('ru'));
@@ -65,20 +76,22 @@ describe('the table', () => {
     expect(combat.querySelector('em')).toHaveTextContent('7');
     expect(row('destroyer').querySelectorAll('.ship-row-value')[0].querySelector('em')).toBeNull();
     expect(row('destroyer')).toHaveTextContent('Заградительный огонь 6×3');
-    expect(row('destroyer').textContent).toMatch(/each result of 9 or 10 also destroys 1 of your opponent's infantry/);
+    expect(row('destroyer').textContent).toContain(printed('unit:argent_destroyer2'));
   });
 
-  test('properties in the chosen language, the printed ability in English: war sun and a space cannon', () => {
+  test('properties and the printed ability in the chosen language: war sun and a space cannon', () => {
     render(<ShipStats factionId="xxcha" pack={pack} />);
-    expect(row('flagship')).toHaveTextContent('Устойчивость');
+    expect(row('flagship')).toHaveTextContent('Поглощение урона');
     expect(row('flagship')).toHaveTextContent('Космическая пушка 5×3');
-    expect(row('flagship').textContent).toMatch(/adjacent systems/);
+    expect(row('flagship').textContent).toContain(printed('unit:xxcha_flagship'));
+    expect(row('flagship').textContent).not.toMatch(/adjacent systems/);
     expect(row('warsun')).toHaveTextContent('Бомбардировка 3×3');
     cleanup();
     setLanguage('en');
-    render(<ShipStats factionId="xxcha" pack={pack} />);
+    render(<ShipStats factionId="xxcha" pack={loadPack(['pok', 'te'])} />);
     expect(row('flagship')).toHaveTextContent('Sustain Damage');
     expect(row('flagship').textContent).toMatch(/adjacent systems/);
+    expect(row('flagship').textContent).not.toMatch(CYRILLIC);
   });
 });
 

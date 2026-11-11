@@ -5,7 +5,7 @@ export const COMPONENT_KINDS: ComponentKind[] = [
   'leader', 'ability', 'breakthrough', 'mech', 'legendary',
 ];
 
-/** The printed text under an id, verbatim from the source; empty when the pack has none (an unknown id, an expansion that is off). */
+/** The printed text under an id, verbatim from the source or its translation, as the pack was loaded; empty when the pack has none (an unknown id, an expansion that is off). */
 export function textOf(pack: DataPack, id: string): string {
   return pack.texts[id] ?? '';
 }

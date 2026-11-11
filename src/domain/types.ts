@@ -180,7 +180,7 @@ export interface DataPack {
   structures: StructureDef[];
   /** The cards with no home elsewhere in the pack: action cards, agendas, relics, objectives, exploration, promissory notes. */
   components: ComponentDef[];
-  /** Printed texts by component id, verbatim from the source (src/data/texts): of `components`, and of technologies, sheet items, legendary planets, ships (`unit:<id>`) and strategy cards (`strategy:<id>`, `strategy:<id>#secondary`). */
+  /** Printed texts by component id, verbatim from the source or translated, by the language the pack was loaded in (src/data/texts): of `components`, and of technologies, sheet items, legendary planets, ships (`unit:<id>`) and strategy cards (`strategy:<id>`, `strategy:<id>#secondary`). */
   texts: Record<string, string>;
 }
 

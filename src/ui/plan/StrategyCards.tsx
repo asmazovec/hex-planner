@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPack, strategyCards } from '../../data/loadPack';
+import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
 import { cardsHeld } from '../../domain/strategy';
 import type { ExpansionId, Round } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { usePack } from '../common/usePack';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { CardGrid } from './blocks/CardGrid';
 
@@ -35,7 +36,7 @@ export function StrategyCards({ expansions, playerCount, round }: StrategyCardsP
     window.addEventListener('click', away, { capture: true });
     return () => window.removeEventListener('click', away, { capture: true });
   }, [shown]);
-  const pack = useMemo(() => loadPack(expansions), [expansions]);
+  const pack = usePack(expansions);
   const cards = strategyCards(expansions);
   const backupName = t(cardsHeld(playerCount) > 1 ? 'plan.cards.second' : 'plan.cards.backup');
   const tap = (initiative: number) => {

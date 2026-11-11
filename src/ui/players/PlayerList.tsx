@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPack } from '../../data/loadPack';
 import { holdingsOf, upgradesOf } from '../../domain/holdings';
 import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
 import type { UnitId, UpgradeId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { usePack } from '../common/usePack';
 import { FactionCard } from './FactionCard';
 import { HexRemove } from '../primitives/Icon';
 import { FactionPicker } from './FactionPicker';
@@ -30,7 +30,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
   const addOpponent = useGame(s => s.addOpponent);
   const removeOpponent = useGame(s => s.removeOpponent);
   const started = useGame(s => s.game !== null);
-  const pack = useMemo(() => loadPack(game.expansions), [game.expansions]);
+  const pack = usePack(game.expansions);
   const factions = useMemo(
     () => Object.values(pack.factions).sort((a, b) => a.name.localeCompare(b.name, 'en')),
     [pack],

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../../data/loadPack';
 import { emptySlots } from '../../domain/mapBuilder';
@@ -18,6 +18,7 @@ import { entryUpgradeRounds } from '../../domain/unitStats';
 import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { componentsTab, lastView } from '../common/preferences';
+import { usePack } from '../common/usePack';
 import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { HexMap } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/stage/HexStage';
@@ -85,7 +86,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const removeEntry = useGame(s => s.removeEntry);
   const deleteRound = useGame(s => s.deleteRound);
   const deletePlan = useGame(s => s.deletePlan);
-  const pack = useMemo(() => loadPack(game?.expansions ?? []), [game?.expansions]);
+  const pack = usePack(game?.expansions);
 
   const [roundNo, setRoundNo] = useState<number | null>(() => (game ? lastView.read(game.id)?.round ?? null : null));
   useEffect(() => { if (game?.id) lastView.write(game.id, { round: roundNo }); }, [game?.id, roundNo]);

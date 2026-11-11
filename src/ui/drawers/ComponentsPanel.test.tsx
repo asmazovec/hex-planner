@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { act, cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -10,12 +10,14 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { componentsOf } from '../../domain/components';
+import { componentsOf, textOf } from '../../domain/components';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 
-const pack = loadPack(['pok']);
+/** The interface of these tests is English, and so are the texts of the pack. */
+const pack = loadPack(['pok'], 'en');
+const russian = loadPack(['pok'], 'ru');
 const game = () => useGame.getState().game!;
 const rival = () => game().opponents[0];
 
@@ -147,6 +149,43 @@ describe('the components drawer', () => {
     expect(card).not.toHaveTextContent(text.slice(0, 20));
     await userEvent.click(within(card).getByRole('button', { name: /Shard of the Throne/, expanded: false }));
     expect(card).toHaveTextContent(text.slice(0, 20));
+  });
+
+  test('the open card follows a change of the language in place: the text is translated, the name stays English', async () => {
+    useGame.getState().setStartHolding('me', 'relic:shard', true);
+    await openDrawer('Relics');
+    const card = screen.getByTestId('component-relic:shard');
+    await userEvent.click(within(card).getByRole('button', { name: /Shard of the Throne/, expanded: false }));
+    const english = textOf(pack, 'relic:shard');
+    const translated = textOf(russian, 'relic:shard');
+    expect(english).toMatch(/^When you gain this card/);
+    expect(translated).toMatch(/[а-яё]/i);
+    expect(translated).not.toBe(english);
+    expect(card).toHaveTextContent(english);
+    act(() => setLanguage('ru'));
+    // The same card, not a new one: it is still open.
+    expect(card).toBeInTheDocument();
+    expect(card).toHaveTextContent(translated);
+    expect(card).not.toHaveTextContent(english);
+    expect(within(card).getByRole('button', { name: /Shard of the Throne/, expanded: true })).toBeInTheDocument();
+    act(() => setLanguage('en'));
+    expect(card).toBeInTheDocument();
+    expect(card).toHaveTextContent(english);
+    expect(card).not.toHaveTextContent(translated);
+  });
+
+  test('after a change of the language the search reads the translated text, and still finds by the English name', async () => {
+    await openDrawer('Relics');
+    act(() => setLanguage('ru'));
+    const box = () => screen.getByRole('searchbox', { name: 'Поиск компонентов' });
+    await userEvent.type(box(), 'победное очко легендарной');
+    const byText = await screen.findByRole('group', { name: 'Найдено' });
+    expect(await within(byText).findByTestId('component-relic:shard')).toBeInTheDocument();
+    await userEvent.clear(box());
+    await userEvent.type(box(), 'shard of the throne');
+    const byName = await screen.findByRole('group', { name: 'Найдено' });
+    expect(await within(byName).findByTestId('component-relic:shard')).toBeInTheDocument();
+    expect(within(byName).getByTestId('component-relic:shard')).toHaveTextContent('Shard of the Throne');
   });
 
   test('a card held from the start is taken off by its cross', async () => {

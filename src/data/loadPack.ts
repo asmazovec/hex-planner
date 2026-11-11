@@ -49,18 +49,19 @@ function withTeMecatol(template: MapTemplate): MapTemplate {
 /** Texts and components of a set of expansions: the same objects on every load, as they are large and never edited. */
 const CATALOGS = new Map<string, Pick<DataPack, 'components' | 'texts'>>();
 
-function catalogOf(on: ExpansionId[], packs: StoredPack[]): Pick<DataPack, 'components' | 'texts'> {
-  const key = `${textLanguage}:${on.join(',')}`;
+function catalogOf(on: ExpansionId[], packs: StoredPack[], language: TextLanguage): Pick<DataPack, 'components' | 'texts'> {
+  const key = `${language}:${on.join(',')}`;
   let catalog = CATALOGS.get(key);
   if (!catalog) {
-    const texts: Record<string, string> = Object.assign({}, baseTexts, ...on.map(id => TEXTS[id]), ...(textLanguage === 'ru' ? [baseTextsRu, ...on.map(id => TEXTS_RU[id])] : []));
+    const texts: Record<string, string> = Object.assign({}, baseTexts, ...on.map(id => TEXTS[id]), ...(language === 'ru' ? [baseTextsRu, ...on.map(id => TEXTS_RU[id])] : []));
     catalog = { texts, components: packs.flatMap(pack => pack.components).map(component => ({ ...component, text: texts[component.id] ?? '' })) };
     CATALOGS.set(key, catalog);
   }
   return catalog;
 }
 
-export function loadPack(expansions: ExpansionId[]): DataPack {
+/** The data of a set of expansions; the texts of components in the given language, by default the one the interface has set. */
+export function loadPack(expansions: ExpansionId[], language: TextLanguage = textLanguage): DataPack {
   const order: ExpansionId[] = ['pok', 'te'];
   const on = order.filter(id => expansions.includes(id));
   const packs = [base as unknown, ...on.map(id => PACKS[id])] as StoredPack[];
@@ -74,7 +75,7 @@ export function loadPack(expansions: ExpansionId[]): DataPack {
     templates: expansions.includes('te') ? templates.map(withTeMecatol) : templates,
     technologies: Object.assign({}, ...packs.map(pack => pack.technologies)),
     structures: packs.flatMap(pack => pack.structures),
-    ...catalogOf(on, packs),
+    ...catalogOf(on, packs, language),
   };
 }
 
