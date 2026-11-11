@@ -1,7 +1,7 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { componentById, componentsOf } from '../../domain/components';
-import { emptyHoldings, HOLDING_FIELD, upgradesOf, upgradeTech, type ComponentGroup } from '../../domain/holdings';
+import { componentById, componentsOf, noteAddress } from '../../domain/components';
+import { emptyHoldings, HOLDING_FIELD, ownNotes, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
 import type { ComponentDef, DataPack, Game, GameState, TechType } from '../../domain/types';
@@ -14,9 +14,7 @@ import { DrawerSheet } from '../overlays/Drawer';
 import { shortName } from '../players/names';
 import { ShipNotes, StatLine } from '../players/ShipStats';
 import { PlayerChoice, playerStyle, playerTag } from '../primitives/player';
-import { TechMark } from '../map/marks';
 import { Section } from '../primitives/Section';
-import { SectionTitle } from '../primitives/SectionTitle';
 import { Stepper } from '../primitives/Stepper';
 import { UnitIcon } from '../units/UnitIcon';
 
@@ -37,7 +35,7 @@ export interface ComponentsPanelProps {
 /** The sections of each group, in the order the sheet shows them. */
 const GROUP_SECTIONS: Record<ComponentGroup, string[]> = {
   technologies: ['technologies', 'unitUpgrades'],
-  cards: ['actionCards', 'promissory'],
+  cards: ['ownNotes', 'promissory', 'actionCards'],
   faction: ['leaders', 'breakthrough'],
   relics: ['relics'],
   objectives: ['objectives', 'laws'],
@@ -148,6 +146,33 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     );
   };
 
+  const playerOf = (who: string) => (who === 'me' ? game : game.opponents.find(o => o.id === who));
+  const nameOf = (who: string): string => {
+    const found = playerOf(who);
+    return found ? shortName(pack, found.faction, t('players.player', { n: found.seat })) : who;
+  };
+  /** A note of the shown player wherever it is: in hand it is taken off as any card, with another player it names them, out of the game it comes back by its plus. */
+  const ownNote = ({ id, holder }: NotePlace): ReactNode => {
+    const def = componentById(pack, id);
+    if (!def) return null;
+    const { text } = noteMark(game, pack, id, t);
+    const there = holder === undefined || holder === player ? undefined : playerOf(holder);
+    if (holder === player) {
+      const source = fromPlan[id];
+      return (
+        <ComponentCard
+          key={id} def={def} pack={pack} held where={{ label: t('components.inHandNote'), color: there?.color ?? playerOf(player)?.color }} text={text} source={source}
+          onRemove={countIn(start.promissory, id) > 0 && source === undefined ? () => setStartHolding(player, id, false) : undefined}
+        />
+      );
+    }
+    if (holder !== undefined && there) {
+      return <ComponentCard key={id} def={def} pack={pack} where={{ label: t('components.heldBy', { name: nameOf(holder) }), color: there.color }} text={text} source={rounds[holder]?.[id]} />;
+    }
+    return <ComponentCard key={id} def={def} pack={pack} where={{ label: t('components.outOfGame') }} text={text} onAdd={() => setStartHolding(player, id, true)} />;
+  };
+  const everyHoldings = { me: state.holdings, ...Object.fromEntries(game.opponents.map(o => [o.id, state.rivals?.[o.id]?.holdings])) };
+
   /** The components under these ids that the data still knows, each once. */
   const known = (ids: string[]): ComponentDef[] => unique(ids).flatMap(id => componentById(pack, id) ?? []);
 
@@ -186,27 +211,22 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
 
   const ownLeaders = componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === faction).map(c => c.id);
   const breakthrough = holdings.breakthrough ? componentsOf(pack).filter(c => c.kind === 'breakthrough' && c.faction === faction) : [];
-  // The technologies by colour, in the order of the deck. An upgrade that has no unit card here stands with the unit cards.
+  // The technologies in one list: by type in the order of the deck, then as they were researched; each card marks its type itself.
+  // An upgrade that has no unit card here stands with the unit cards.
   const techOf = (def: ComponentDef) => pack.technologies[def.id.slice(TECH.length)];
+  const rank = (def: ComponentDef): number => {
+    const type = techOf(def)?.type;
+    return type ? TECH_ORDER.indexOf(type) : TECH_ORDER.length;
+  };
   const researched = known(holdings.technologies).filter(c => !onUnitCards.has(c.id));
-  const plain = researched.filter(c => !techOf(c)?.type);
-  const colours = TECH_ORDER.flatMap(type => {
-    const cards = researched.filter(c => techOf(c)?.type === type);
-    if (cards.length === 0) return [];
-    const name = t(`map.tech.${type}`);
-    return [(
-      <div key={type} className="component-list" role="group" aria-label={name}>
-        <SectionTitle as="div" className="tech-colour"><span><TechMark type={type} />{name}</span></SectionTitle>
-        {cards.map(card)}
-      </div>
-    )];
-  });
+  const listed = researched.filter(c => techOf(c)?.type || !techOf(c)?.upgrade).sort((a, b) => rank(a) - rank(b));
   const sections: [string, ReactNode[]][] = [
-    ['technologies', [...colours, ...plain.filter(c => !techOf(c)?.upgrade).map(card)]],
-    ['unitUpgrades', [...unitCards.map(unit => unit.card), ...plain.filter(c => techOf(c)?.upgrade).map(card)]],
+    ['technologies', listed.map(card)],
+    ['unitUpgrades', [...unitCards.map(unit => unit.card), ...researched.filter(c => !listed.includes(c)).map(card)]],
+    ['ownNotes', ownNotes(game, pack, player, everyHoldings).map(ownNote)],
+    ['promissory', known(holdings.promissory).filter(c => noteAddress(c.id) !== player).map(card)],
     ['actionCards', known(holdings.hand).map(card)],
     ['relics', known(holdings.relics).map(card)],
-    ['promissory', known(holdings.promissory).map(card)],
     ['leaders', known([...ownLeaders, ...Object.keys(holdings.leaders)]).map(card)],
     ['breakthrough', breakthrough.map(card)],
     ['objectives', known([...holdings.scored, ...holdings.secrets]).map(card)],
@@ -246,7 +266,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
           </Section>
         )
         : sections.filter(([key]) => GROUP_SECTIONS[group].includes(key)).map(([key, cards]) => {
-          const title = t(`components.section.${key}`);
+          const title = key === 'ownNotes' && rival ? t('components.section.ownNotesOf', { name: nameOf(rival.id) }) : t(`components.section.${key}`);
           return cards.length === 0
             ? <Section key={key} label={title} title={title} headAction={<span className="muted">{t('components.none')}</span>} />
             : (

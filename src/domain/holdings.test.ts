@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { componentById, noteAddress, noteBase, noteId, textOf } from './components';
-import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, noteText, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
+import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, noteText, ownNotes, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { addPlayer, draftWithExpansions, gameAs, removePlayer, setPlayerFaction } from './players';
 import { project, readyToPlay } from './project';
@@ -386,6 +386,26 @@ describe('a promissory note is the card of one player', () => {
     const ready = readyToPlay(pack, holdingsOf({ promissory: [`${TA}@o1`] }), 'rules-tester');
     expect(ready.has(`${TA}@o1`)).toBe(true);
     expect(ready.has(TA)).toBe(false);
+  });
+
+  test('ownNotes lists every note of a player with who holds it now: the owner, another player, or nobody', () => {
+    let game = setPlayerFaction(createGame({ expansions: ['pok'], playerCount: 3, faction: 'hacan' }, pok), 1, 'sol', pok);
+    const [first] = game.opponents;
+    // My Trade Agreement is with Sol when the plan begins, and my Ceasefire is out of the game.
+    game = setStartHolding(game, first.id, `${TA}@me`, true);
+    game = setStartHolding(game, 'me', 'promissory:<color>_cf@me', false);
+    const by = { me: holdingsOf(game.start.me), [first.id]: holdingsOf(game.start.opponents[first.id]) };
+    const mine = ownNotes(game, pok, 'me', by);
+    expect(mine.map(note => note.id)).toEqual([...['cf', 'ps', 'sftt', 'ta', 'an'].map(note => `promissory:<color>_${note}@me`), 'promissory:convoys@me']);
+    expect(Object.fromEntries(mine.map(note => [note.id, note.holder]))).toEqual({
+      'promissory:<color>_cf@me': undefined, 'promissory:<color>_ps@me': 'me', 'promissory:<color>_sftt@me': 'me',
+      [`${TA}@me`]: first.id, 'promissory:<color>_an@me': 'me', 'promissory:convoys@me': 'me',
+    });
+    // The notes of the opponent are all with them; a player whose holdings are not known holds nothing.
+    const theirs = ownNotes(game, pok, first.id, by);
+    expect(theirs.map(note => note.id)).toContain(`promissory:ms@${first.id}`);
+    expect(theirs.every(note => note.holder === first.id)).toBe(true);
+    expect(ownNotes(game, pok, first.id, {}).every(note => note.holder === undefined)).toBe(true);
   });
 
   test('a catalogue note stands for one card of each player; a faction note for the card of who plays the faction', () => {

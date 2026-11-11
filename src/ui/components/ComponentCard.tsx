@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { textOf } from '../../domain/components';
 import type { ComponentDef, ComponentPack, DataPack, LeaderState } from '../../domain/types';
 import { EXPANSION_NAMES } from '../common/expansions';
+import { TechMark } from '../map/marks';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { PlayerDot } from '../primitives/player';
 
@@ -24,6 +25,8 @@ export interface ComponentCardProps {
   note?: string;
   /** Whose card it is, whoever holds it: the player a promissory note belongs to, by name and colour. */
   owner?: { name: string; color: number };
+  /** Where it is now, said on a line of its own: one's own note in hand, with another player (in their colour), out of the game. */
+  where?: { label: string; color?: number };
   /** The text as it reads in this game instead of the printed one: a generic note names its owner. */
   text?: string;
   /** How many copies are held; said from two on. */
@@ -41,13 +44,20 @@ export interface ComponentCardProps {
   children?: ReactNode;
 }
 
+const TECH = 'technology:';
+
 /**
- * One component as a card: its name, kind and expansion; a press opens its printed text in place, word for word.
- * Whatever changes it stands inside the card, at its right edge.
+ * One component as a card, one frame: its head with the name, kind and expansion, and its printed text as its own
+ * details, word for word. The details are folded; a press on the head opens them inside the card, under the head, which
+ * stays where it is. A technology says its type by a mark at its name. Whatever changes the component stands inside
+ * the card, at the right edge of its head.
  */
-export function ComponentCard({ def, pack, held, state, note, owner, text, count, source, onRemove, onAdd, pickLabel, leader, children }: ComponentCardProps) {
+export function ComponentCard({ def, pack, held, state, note, owner, where, text, count, source, onRemove, onAdd, pickLabel, leader, children }: ComponentCardProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const details = useId();
+  const technology = def.kind === 'technology' ? pack.technologies[def.id.slice(TECH.length)] : undefined;
+  const techName = technology?.type ? t(`map.tech.${technology.type}`) : technology?.upgrade ? t('components.unitUpgrade') : undefined;
   const unlock = textOf(pack, `${def.id}#unlock`);
   const dim = state === 'exhausted' || state === 'purged';
   const faction = def.faction ? pack.factions[def.faction]?.name : undefined;
@@ -65,16 +75,23 @@ export function ComponentCard({ def, pack, held, state, note, owner, text, count
   return (
     <div className={`component-card${held ? ' on' : ''}${dim ? ' dim' : ''}`} data-testid={`component-${def.id}`}>
       <div className="in-card">
-        <button type="button" className="source-button" aria-expanded={open} onClick={() => setOpen(!open)}>
-          <b>{def.name}</b>{count !== undefined && count > 1 && <span className="component-count"> ×{count}</span>}
+        <button type="button" className="source-button component-head" aria-expanded={open} aria-controls={open ? details : undefined} onClick={() => setOpen(!open)}>
+          <b>{def.name}</b>
+          {techName && (
+            <span className={`component-mark${technology?.type ? '' : ' component-mark-upgrade'}`} role="img" aria-label={techName} title={techName}>
+              {technology?.type ? <TechMark type={technology.type} size={11} /> : 'II'}
+            </span>
+          )}
+          {count !== undefined && count > 1 && <span className="component-count"> ×{count}</span>}
           {owner && <small className="component-owner"><PlayerDot color={owner.color} />{owner.name}</small>}
+          {where && <small className="component-owner">{where.color !== undefined && <PlayerDot color={where.color} />}{where.label}</small>}
           <small>{facts.join(' · ')}</small>
           {leader && unlock && <small>{t('players.unlock', { text: unlock })}</small>}
         </button>
         {control}
       </div>
       {open && (
-        <p className="component-text">
+        <p id={details} className="component-text">
           {(text ?? def.text) || t('components.noText')}
           {unlock && !leader && <span className="muted">{`\n${t('players.unlock', { text: unlock })}`}</span>}
         </p>
