@@ -76,6 +76,7 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   // components
   componentNotHeld: { rules: ['22.1', '2.7', '51.10'], step: 'component' },
   componentExhausted: { rules: ['71.4', '34.4', '51.4'], step: 'component' },
+  ownPromissory: { rules: ['69.2'], step: 'component' },
 };
 
 /** The rule and step of a code, from the registry. */

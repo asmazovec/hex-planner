@@ -3,7 +3,7 @@
  * the objectives a status entry scores, and the Ready Cards step. A component id the pack does not know (an expansion
  * switched off, data rebuilt) is passed over everywhere, silently.
  */
-import { componentById, componentsOf } from '../components';
+import { componentById, componentsOf, noteAddress } from '../components';
 import { HOLDING_FIELD, holdingsOf } from '../holdings';
 import { violation } from '../rules/registry';
 import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
@@ -94,25 +94,47 @@ export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: strin
   const mine = (def: ComponentDef) => (def.kind === 'legendary'
     ? control[def.id.slice(def.id.indexOf(':') + 1)] === 'me'
     : HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || def.faction === factionId);
-  return new Set(componentsOf(pack).filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));
+  // The notes held are cards of their own, each under its address: the catalogue does not list them.
+  const notes = holdings.promissory.flatMap(id => (noteAddress(id) === undefined ? [] : componentById(pack, id) ?? []));
+  return new Set([...componentsOf(pack), ...notes].filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));
 }
 
 const EXHAUSTS = /\bexhaust this card\b/i;
 const PURGES = /\bpurge this card\b/i;
+/** A note that goes back once its ability is resolved says so last: "Then, return this card to the ... player." */
+const RETURNS = /\bthen,? return this card to\b/i;
 
 /**
  * A component action names its component (22.1). One not held, or exhausted (71.4), is warned about and still played.
  * Playing it: an action card is discarded (2.7); an agent is exhausted (51.4) and a hero purged (51.12); a card whose
- * printed text exhausts it is exhausted (34.4), and a relic whose text purges it is gone (70).
+ * printed text exhausts it is exhausted (34.4), and a relic whose text purges it is gone (70). A promissory note of the
+ * player's own colour or faction (`faction` is theirs) is warned about (69.2); another player's note whose text
+ * returns it goes back to its owner (69.3), found in `states` by `me` or opponent id, and one that purges itself is gone.
  */
-export function applyComponent(own: GameState, entry: Extract<Entry, { type: 'component' }>, pack: DataPack, warnings: Warning[]): void {
+export function applyComponent(
+  own: GameState, entry: Extract<Entry, { type: 'component' }>, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {},
+): void {
   const def = entry.componentId === undefined ? undefined : componentById(pack, entry.componentId);
   if (!def) return;
   const holdings = own.holdings;
   const params = { id: def.id, name: def.name };
-  if (!holds(holdings, def)) warnings.push(violation('componentNotHeld', params));
+  const held = holds(holdings, def);
+  if (!held) warnings.push(violation('componentNotHeld', params));
   else if (isExhausted(holdings, def)) warnings.push(violation('componentExhausted', params));
   switch (def.kind) {
+    case 'promissory': {
+      const owner = noteAddress(def.id);
+      // A note marked by hand has no address: only its faction tells whose it is.
+      if (owner === undefined ? def.faction !== undefined && def.faction === faction : owner === (entry.owner ?? 'me')) {
+        warnings.push(violation('ownPromissory', params));
+        break;
+      }
+      if (!held) break;
+      const back = owner === undefined ? undefined : states[owner]?.holdings;
+      if (PURGES.test(def.text) || (back && RETURNS.test(def.text))) removeOne(holdings.promissory, def.id);
+      if (back && RETURNS.test(def.text) && !back.promissory.includes(def.id)) back.promissory.push(def.id);
+      break;
+    }
     case 'actionCard':
       removeOne(holdings.hand, def.id);
       break;

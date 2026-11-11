@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { componentById } from './components';
-import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, setLeader, setStartHolding, upgradesOf, upgradeTech } from './holdings';
+import { componentById, noteAddress, noteBase, noteId, textOf } from './components';
+import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, noteText, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
-import { gameAs, removePlayer, setPlayerFaction } from './players';
+import { addPlayer, draftWithExpansions, gameAs, removePlayer, setPlayerFaction } from './players';
 import { project, readyToPlay } from './project';
 import { timeline } from './replay/timeline';
 import { CARD } from './strategy';
@@ -58,7 +58,10 @@ describe('the holdings a game begins with', () => {
   test('an opponent who leaves takes their start holdings along', () => {
     const base = loadPack([]);
     const game = setPlayerFaction(createGame({ expansions: [], playerCount: 6, faction: 'sol' }, base), 1, 'jolnar', base);
-    expect(removePlayer(game, 1, base).start.opponents).toEqual({});
+    const leaving = game.opponents[0].id;
+    const next = removePlayer(game, 1, base);
+    expect(Object.keys(next.start.opponents)).toEqual(next.opponents.map(o => o.id));
+    expect(next.start.opponents[leaving]).toBeUndefined();
   });
 
   test('setStartHolding files a component by its kind; a hand keeps repeats, the rest holds one of each', () => {
@@ -316,6 +319,143 @@ describe('unit upgrades are technologies', () => {
       [RIVAL.id]: { 'actionCard:bribery': 2 },
     });
     expect(holdingRounds(game.plans[0], 'now')).toEqual({ me: { 'relic:nanoforge': 1 } });
+  });
+});
+
+describe('a promissory note is the card of one player', () => {
+  const TA = 'promissory:<color>_ta';
+  const table = (extra: Partial<Game> = {}) => rulesGame({ game: { ...withRival, ...extra } });
+
+  test('its id is the catalogue id with the address of its player; any other id has no address', () => {
+    expect(noteId(TA, 'me')).toBe(`${TA}@me`);
+    expect(noteId(`${TA}@me`, 'o1')).toBe(`${TA}@o1`);
+    expect(noteBase(`${TA}@opponent-2`)).toBe(TA);
+    expect(noteAddress(`${TA}@opponent-2`)).toBe('opponent-2');
+    expect(noteBase(TA)).toBe(TA);
+    expect(noteAddress(TA)).toBeUndefined();
+    // Only a note is addressed: a map tile with a rotation keeps its `@` elsewhere, and so would any other id.
+    expect(noteBase('relic:x@me')).toBe('relic:x@me');
+    expect(noteAddress('relic:x@me')).toBeUndefined();
+  });
+
+  test('the catalogue knows an addressed note as its card under its own id, with the printed text; an unknown note stays unknown', () => {
+    const base = componentById(pack, TA)!;
+    expect(componentById(pack, `${TA}@o1`)).toEqual({ ...base, id: `${TA}@o1` });
+    expect(textOf(pack, `${TA}@o1`)).toBe(textOf(pack, TA));
+    // A text beside the main one is asked under `<id>#<name>`: the address is not part of that name.
+    expect(noteBase(`${TA}@o1#unlock`)).toBe(`${TA}#unlock`);
+    expect(textOf(pack, `${TA}@o1#unlock`)).toBe('');
+    expect(componentById(pack, 'promissory:nothing@o1')).toBeUndefined();
+    expect(componentById(pack, 'promissory:<color>_an@o1')).toBeUndefined();
+    expect(componentById(pok, 'promissory:<color>_an@o1')?.name).toBe('Alliance');
+  });
+
+  test('noteOwner is the player addressed, when they are in the game; seen as an opponent, that opponent is the viewer', () => {
+    const game = table();
+    expect(noteOwner(game, `${TA}@me`)).toBe('me');
+    expect(noteOwner(game, `${TA}@o1`)).toBe('o1');
+    expect(noteOwner(game, `${TA}@gone`)).toBeUndefined();
+    expect(noteOwner(game, TA)).toBeUndefined();
+    const theirs = gameAs(game, 'o1');
+    expect(noteOwner(theirs, `${TA}@o1`, 'o1')).toBe('o1');
+    expect(noteOwner(theirs, `${TA}@me`, 'o1')).toBe('me');
+  });
+
+  test('noteText names the owner where the card says <color>; a faction note and a catalogue id read as printed', () => {
+    const game = table();
+    const nameOf = (player: string) => (player === 'o1' ? 'Hacan' : 'Sol');
+    expect(noteText(game, pack, `${TA}@o1`, nameOf)).toBe('When the Hacan player replenishes commodities: The Hacan player gives you all of their commodities. Then, return this card to the Hacan player.');
+    expect(noteText(game, pack, TA, nameOf)).toBe(textOf(pack, TA));
+    expect(noteText(game, pack, 'promissory:convoys@o1', nameOf)).toBe(textOf(pack, 'promissory:convoys'));
+  });
+
+  test('an addressed note is held from the start: the replay does not pass it over as unknown', () => {
+    const game = table({ start: { me: { promissory: [`${TA}@o1`, 'promissory:nothing@o1'] }, opponents: { o1: { promissory: [`${TA}@me`] } } } });
+    const { state } = forecast(game, pack);
+    expect(state.holdings.promissory).toEqual([`${TA}@o1`]);
+    expect(state.rivals?.o1.holdings.promissory).toEqual([`${TA}@me`]);
+  });
+
+  test('a transaction offers the notes the giver holds, their own and those got from others, each with its address', () => {
+    const held = holdingsOf({ promissory: [`${TA}@me`, `${TA}@o1`, 'promissory:convoys@o1'], hand: ['actionCard:sabo1'] });
+    expect(tradable(held)).toEqual([`${TA}@me`, `${TA}@o1`, 'promissory:convoys@o1', 'actionCard:sabo1']);
+    expect(tradable(held, [`${TA}@o1`])).toEqual([`${TA}@me`, 'promissory:convoys@o1', 'actionCard:sabo1']);
+  });
+
+  test('a note held is ready to play under its own id', () => {
+    const ready = readyToPlay(pack, holdingsOf({ promissory: [`${TA}@o1`] }), 'rules-tester');
+    expect(ready.has(`${TA}@o1`)).toBe(true);
+    expect(ready.has(TA)).toBe(false);
+  });
+
+  test('a catalogue note stands for one card of each player; a faction note for the card of who plays the faction', () => {
+    const game = table({ opponents: [{ ...RIVAL, faction: 'hacan' }] });
+    expect(noteCards(game, pack, componentById(pack, TA)!).map(c => c.id)).toEqual([`${TA}@me`, `${TA}@o1`]);
+    expect(noteCards(game, pack, componentById(pack, 'promissory:convoys')!).map(c => c.id)).toEqual(['promissory:convoys@o1']);
+    // Nobody plays Sol: its note stays the catalogue card. Any other component is itself.
+    expect(noteCards(game, pack, componentById(pack, 'promissory:ms')!).map(c => c.id)).toEqual(['promissory:ms']);
+    expect(noteCards(game, pack, componentById(pack, 'actionCard:sabo1')!).map(c => c.id)).toEqual(['actionCard:sabo1']);
+  });
+
+  test('a change of faction changes the faction note only; two players of one faction hold a note each', () => {
+    let game = createGame({ expansions: ['pok'], playerCount: 3, faction: 'hacan' }, pok);
+    const [first] = game.opponents;
+    const generic = (player: string) => ['cf', 'ps', 'sftt', 'ta', 'an'].map(note => `promissory:<color>_${note}@${player}`);
+    game = setPlayerFaction(game, 0, 'empyrean', pok);
+    expect(game.start.me.promissory).toEqual([...generic('me'), 'promissory:blood_pact@me', 'promissory:dark_pact@me']);
+    game = setPlayerFaction(game, 1, 'empyrean', pok);
+    expect(game.start.opponents[first.id].promissory).toEqual([...generic(first.id), `promissory:blood_pact@${first.id}`, `promissory:dark_pact@${first.id}`]);
+    game = setPlayerFaction(game, 1, '', pok);
+    expect(game.start.opponents[first.id].promissory).toEqual(generic(first.id));
+    expect(game.start.me.promissory).toHaveLength(7);
+  });
+
+  test('a player added is dealt the generic notes; a player removed takes their notes from every start and every entry', () => {
+    let game = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, loadPack([]));
+    const base = loadPack([]);
+    game = addPlayer(game, base);
+    const [first, , added] = game.opponents;
+    expect(game.start.opponents[added.id].promissory).toEqual(['cf', 'ps', 'sftt', 'ta'].map(note => `promissory:<color>_${note}@${added.id}`));
+    const theirs = `${TA}@${first.id}`;
+    const kept = `${TA}@${added.id}`;
+    game = setStartHolding(game, 'me', theirs, true);
+    game = setStartHolding(game, added.id, `promissory:<color>_cf@${first.id}`, true);
+    const entries: Entry[] = [
+      entry({ type: 'component', note: '', componentId: theirs, gains: [theirs, kept], spends: [theirs] }),
+      entry({ type: 'pass', acts: [{ kind: 'transaction', with: added.id, give: { tradeGoods: 1, components: [theirs] }, get: { components: [theirs, kept] } }] }),
+    ];
+    game = { ...game, plans: [{ ...game.plans[0], rounds: [{ ...game.plans[0].rounds[0], entries }] }] };
+    const next = removePlayer(game, 1, base);
+    expect(JSON.stringify(next)).not.toContain(`@${first.id}`);
+    expect(next.start.me.promissory).toEqual(game.start.me.promissory!.filter(id => id !== theirs));
+    expect(next.plans[0].rounds[0].entries).toEqual([
+      { ...entries[0], componentId: undefined, gains: [kept], spends: undefined },
+      { ...entries[1], acts: [{ kind: 'transaction', with: added.id, give: { tradeGoods: 1 }, get: { components: [kept] } }] },
+    ].map(e => JSON.parse(JSON.stringify(e))));
+  });
+
+  test('a draft under other expansions deals the notes again, to the same players', () => {
+    const draft = setPlayerFaction(createGame({ expansions: ['pok'], playerCount: 3, faction: 'hacan' }, pok), 1, 'sol', pok);
+    const base = loadPack([]);
+    const next = draftWithExpansions(draft, [], base);
+    const generic = (player: string) => ['cf', 'ps', 'sftt', 'ta'].map(note => `promissory:<color>_${note}@${player}`);
+    expect(next.start.me.promissory).toEqual([...generic('me'), 'promissory:convoys@me']);
+    expect(next.opponents.map(o => o.id)).toEqual(draft.opponents.map(o => o.id));
+    expect(next.start.opponents).toEqual({
+      [draft.opponents[0].id]: expect.objectContaining({ promissory: [...generic(draft.opponents[0].id), `promissory:ms@${draft.opponents[0].id}`] }),
+      [draft.opponents[1].id]: { promissory: generic(draft.opponents[1].id) },
+    });
+  });
+
+  test('marked by hand, a note is with one player: it leaves who had it, and taken off, it is back with its owner', () => {
+    let game = table({ start: { me: { promissory: [`${TA}@me`] }, opponents: { o1: { promissory: [`${TA}@o1`] } } } });
+    game = setStartHolding(game, 'me', `${TA}@o1`, true);
+    expect(game.start).toEqual({ me: { promissory: [`${TA}@me`, `${TA}@o1`] }, opponents: { o1: { promissory: [] } } });
+    game = setStartHolding(game, 'me', `${TA}@o1`, false);
+    expect(game.start).toEqual({ me: { promissory: [`${TA}@me`] }, opponents: { o1: { promissory: [`${TA}@o1`] } } });
+    // My own note taken off me is with nobody: who got it is not said.
+    game = setStartHolding(game, 'me', `${TA}@me`, false);
+    expect(game.start).toEqual({ me: { promissory: [] }, opponents: { o1: { promissory: [`${TA}@o1`] } } });
   });
 });
 

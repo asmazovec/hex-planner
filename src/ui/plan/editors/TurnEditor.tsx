@@ -6,6 +6,7 @@ import { playerState } from '../../../domain/stacks';
 import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
+import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
@@ -59,7 +60,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNot
             label={t('components.played')} title={t('components.played')} warnings={<WarningList warnings={ofComponent} game={game} pack={pack} />}
             action={<div className="side-actions"><button type="button" onClick={() => setPicking(true)}>{t('components.pickPlayed')}</button></div>}
           >
-            {played && <ComponentCard def={played} pack={pack} held onRemove={() => onComponent(undefined)} />}
+            {played && <ComponentCard def={played} pack={pack} held {...noteMark(game, pack, played.id, t, entry.owner ?? 'me')} onRemove={() => onComponent(undefined)} />}
           </Section>
           <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />

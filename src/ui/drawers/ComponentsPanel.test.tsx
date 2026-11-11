@@ -68,9 +68,9 @@ describe('the components drawer', () => {
 
   test('the tab counts what I hold', async () => {
     render(<PlanScreen />);
-    expect(tab()).toHaveAccessibleName('Components · 2');
+    expect(tab()).toHaveAccessibleName('Components · 8');
     useGame.getState().setStartHolding('me', 'relic:shard', true);
-    expect(await screen.findByRole('button', { name: 'Components · 3' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: 'Components · 9' })).toBeVisible();
   });
 
   test('a unit card still switches the level of the unit, through its upgrade technology', async () => {
@@ -169,6 +169,35 @@ describe('the components drawer', () => {
     await userEvent.click(within(cards).getByRole('button', { name: 'Remove one In hand' }));
     await userEvent.click(within(cards).getByRole('button', { name: 'Remove one In hand' }));
     expect(game().start.me.hand).toHaveLength(1);
+  });
+
+  test('a promissory note says whose it is: the owner by name, and in its text instead of <color>', async () => {
+    // I hold the Trade Agreement of Hacan when the plan begins: it is with me and no more with them.
+    const theirs = `promissory:<color>_ta@${rival().id}`;
+    useGame.getState().setStartHolding('me', theirs, true);
+    expect(game().start.opponents[rival().id].promissory).not.toContain(theirs);
+    await openDrawer('Cards');
+    const notes = section('Promissory notes');
+    const card = within(notes).getByTestId(`component-${theirs}`);
+    expect(within(card).getByRole('button', { name: /^Trade Agreement\s*Hacan/ })).toBeVisible();
+    expect(within(notes).getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('Arborec');
+    expect(within(notes).getByTestId('component-promissory:stymie@me')).toHaveTextContent('Arborec');
+    await userEvent.click(within(card).getByRole('button', { name: /^Trade Agreement/ }));
+    expect(card).toHaveTextContent('When the Hacan player replenishes commodities');
+    expect(card).not.toHaveTextContent('<color>');
+    // Taken off me, the note is back with its owner.
+    await userEvent.click(within(card).getByRole('button', { name: 'Remove Trade Agreement' }));
+    expect(game().start.me.promissory).not.toContain(theirs);
+    expect(game().start.opponents[rival().id].promissory).toContain(theirs);
+  });
+
+  test('a search finds a generic note as one card of each player', async () => {
+    await openDrawer('Cards');
+    await userEvent.type(searchBox(), 'ceasefire');
+    const results = await screen.findByRole('group', { name: 'Search results' });
+    const cards = within(results).getAllByTestId(/^component-promissory:<color>_cf@/);
+    expect(cards).toHaveLength(6);
+    expect(cards[0]).toHaveAttribute('data-testid', 'component-promissory:<color>_cf@me');
   });
 
   const leaderId = (type: string) => componentsOf(pack).find(c => c.kind === 'leader' && c.faction === 'arborec' && c.detail?.type === type)!.id;
@@ -297,7 +326,7 @@ describe('the stack and the fan of the component tabs', () => {
   test('a press on the stack fans it out by groups, hides the tab of Thunder\'s Edge and opens Technologies first', async () => {
     withTe();
     await openDrawer();
-    expect(railNames()).toEqual(['Technologies · 1', 'Cards', 'Faction · 1', 'Relics', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Technologies · 1', 'Cards · 6', 'Faction · 1', 'Relics', 'Objectives & laws']);
     expect(teTab()).toBeNull();
     expect(groupTab('Technologies')).toHaveAttribute('aria-pressed', 'true');
     expect(section('Researched technologies')).toBeVisible();
@@ -344,9 +373,9 @@ describe('the stack and the fan of the component tabs', () => {
     useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
     useGame.getState().setStartHolding('me', 'actionCard:sabo1', true);
     await openDrawer();
-    expect(railNames()).toEqual(['Technologies · 1', 'Cards · 2', 'Faction · 1', 'Relics · 1', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Technologies · 1', 'Cards · 8', 'Faction · 1', 'Relics · 1', 'Objectives & laws']);
     await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
-    expect(railNames()).toEqual(['Technologies · 2', 'Cards', 'Faction · 1', 'Relics', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Technologies · 2', 'Cards · 6', 'Faction · 1', 'Relics', 'Objectives & laws']);
   });
 
   test('the group open last is remembered: the stack opens on it, and its tab stands where the stack was', async () => {
@@ -357,7 +386,7 @@ describe('the stack and the fan of the component tabs', () => {
     render(<PlanScreen />);
     await userEvent.click(tab());
     expect(section('Relics')).toBeVisible();
-    expect(railNames()).toEqual(['Relics', 'Technologies · 1', 'Cards', 'Faction · 1', 'Objectives & laws']);
+    expect(railNames()).toEqual(['Relics', 'Technologies · 1', 'Cards · 6', 'Faction · 1', 'Objectives & laws']);
     expect(groupTab('Relics')).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -375,6 +404,6 @@ describe('the stack and the fan of the component tabs', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Tactical action' }));
     expect(screen.queryByRole('dialog', { name: 'Components' })).toBeNull();
     expect(within(rail()).getAllByRole('button')).toHaveLength(1);
-    expect(tab()).toHaveAccessibleName('Components · 2');
+    expect(tab()).toHaveAccessibleName('Components · 8');
   });
 });

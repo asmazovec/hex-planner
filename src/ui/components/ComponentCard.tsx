@@ -4,6 +4,7 @@ import { textOf } from '../../domain/components';
 import type { ComponentDef, ComponentPack, DataPack, LeaderState } from '../../domain/types';
 import { EXPANSION_NAMES } from '../common/expansions';
 import { HexRemove, RowIcon } from '../primitives/Icon';
+import { PlayerDot } from '../primitives/player';
 
 const LEADER_TYPES = ['agent', 'commander', 'hero'];
 
@@ -21,6 +22,10 @@ export interface ComponentCardProps {
   state?: CardState;
   /** Said under the name as it is: "in hand", "scored". */
   note?: string;
+  /** Whose card it is, whoever holds it: the player a promissory note belongs to, by name and colour. */
+  owner?: { name: string; color: number };
+  /** The text as it reads in this game instead of the printed one: a generic note names its owner. */
+  text?: string;
   /** How many copies are held; said from two on. */
   count?: number;
   /** The round whose entry of the plan brought it. */
@@ -40,7 +45,7 @@ export interface ComponentCardProps {
  * One component as a card: its name, kind and expansion; a press opens its printed text in place, word for word.
  * Whatever changes it stands inside the card, at its right edge.
  */
-export function ComponentCard({ def, pack, held, state, note, count, source, onRemove, onAdd, pickLabel, leader, children }: ComponentCardProps) {
+export function ComponentCard({ def, pack, held, state, note, owner, text, count, source, onRemove, onAdd, pickLabel, leader, children }: ComponentCardProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const unlock = textOf(pack, `${def.id}#unlock`);
@@ -62,6 +67,7 @@ export function ComponentCard({ def, pack, held, state, note, count, source, onR
       <div className="in-card">
         <button type="button" className="source-button" aria-expanded={open} onClick={() => setOpen(!open)}>
           <b>{def.name}</b>{count !== undefined && count > 1 && <span className="component-count"> ×{count}</span>}
+          {owner && <small className="component-owner"><PlayerDot color={owner.color} />{owner.name}</small>}
           <small>{facts.join(' · ')}</small>
           {leader && unlock && <small>{t('players.unlock', { text: unlock })}</small>}
         </button>
@@ -69,7 +75,7 @@ export function ComponentCard({ def, pack, held, state, note, count, source, onR
       </div>
       {open && (
         <p className="component-text">
-          {def.text || t('components.noText')}
+          {(text ?? def.text) || t('components.noText')}
           {unlock && !leader && <span className="muted">{`\n${t('players.unlock', { text: unlock })}`}</span>}
         </p>
       )}

@@ -1,4 +1,5 @@
-import { startForFaction } from './holdings';
+import { noteAddress } from './components';
+import { genericNotes, startForFaction, withoutNotesOf } from './holdings';
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor, withPlacedTiles } from './mapBuilder';
 import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
@@ -151,15 +152,43 @@ export function addPlayer(game: Game, pack: DataPack, newId: IdMaker = timeIdMak
   if (players.length >= maxPlayers(pack)) return game;
   const used = players.map(p => p.color);
   const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
-  return withPlayers(game, [...players, { id: makeId('opponent', newId), faction: '', vp: 0, seat: players.length + 1, color }], pack);
+  const id = makeId('opponent', newId);
+  // The newcomer begins with the generic notes of their colour (69).
+  const start = { ...game.start, opponents: { ...game.start.opponents, [id]: { promissory: genericNotes(pack, id) } } };
+  return withPlayers({ ...game, start }, [...players, { id, faction: '', vp: 0, seat: players.length + 1, color }], pack);
 }
 
-/** Entries forget an opponent who left: their points and their place in card effects. */
+/** An entry without the notes of a player who left: those it takes, discards, plays or hands over in a transaction. */
+function withoutNotes(entry: Entry, player: string): Entry {
+  const gone = (id: string) => noteAddress(id) === player;
+  const kept = (ids: string[] | undefined) => (ids?.some(gone) ? ids.filter(id => !gone(id)) : ids);
+  const next = { ...entry } as Entry;
+  for (const side of ['gains', 'spends'] as const) {
+    const ids = kept(entry[side]);
+    if (ids === entry[side]) continue;
+    if (ids && ids.length > 0) next[side] = ids; else delete next[side];
+  }
+  if (next.type === 'component' && next.componentId !== undefined && gone(next.componentId)) delete next.componentId;
+  if ('acts' in next && next.acts) {
+    next.acts = next.acts.map(act => {
+      if (act.kind !== 'transaction' || ![act.give, act.get].some(goods => goods.components?.some(gone))) return act;
+      const side = (goods: typeof act.give) => {
+        const { components, ...rest } = goods;
+        const left = kept(components);
+        return left && left.length > 0 ? { ...rest, components: left } : rest;
+      };
+      return { ...act, give: side(act.give), get: side(act.get) };
+    });
+  }
+  return next;
+}
+
+/** Entries forget an opponent who left: their points, their place in card effects and their promissory notes (69.7). */
 const withoutPoints = (plans: Plan[], opponentId: string): Plan[] => plans.map(plan => ({
   ...plan,
   rounds: plan.rounds.map(round => ({
     ...round,
-    entries: round.entries.filter(entry => entry.owner !== opponentId).map((entry): Entry => {
+    entries: round.entries.filter(entry => entry.owner !== opponentId).map(entry => withoutNotes(entry, opponentId)).map((entry): Entry => {
       if (entry.type === 'statusTokens' && entry.opponentVp) {
         const { [opponentId]: gone, ...opponentVp } = entry.opponentVp;
         void gone;
@@ -184,10 +213,12 @@ export function removePlayer(game: Game, index: number, pack: DataPack): Game {
   const leaving = players[index];
   if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return game;
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
-  const { [leaving.id]: gone, ...opponents } = game.start.opponents;
+  const { [leaving.id]: gone, ...others } = game.start.opponents;
   void gone;
+  // The notes of the player who leaves go with them, whoever held them (69.7).
+  const opponents = Object.fromEntries(Object.entries(others).map(([id, start]) => [id, withoutNotesOf(start, leaving.id)]));
   const plans = withoutPoints(game.plans, leaving.id);
-  return withPlayers({ ...withoutHoldings(game, leaving.id), plans, start: { ...game.start, opponents } }, rest, pack);
+  return withPlayers({ ...withoutHoldings(game, leaving.id), plans, start: { me: withoutNotesOf(game.start.me, leaving.id), opponents } }, rest, pack);
 }
 
 const homePlanets = (faction: string, pack: DataPack): string[] =>
@@ -199,7 +230,7 @@ export function setPlayerFaction(game: Game, index: number, faction: string, pac
   if (!players[index] || players[index].faction === faction) return game;
   const seated = withPlayers(game, players.map((p, i) => (i === index ? { ...p, faction } : p)), pack);
   // The starting technologies follow the faction, for me and for an opponent alike.
-  const begins = startForFaction(index === 0 ? game.start.me : game.start.opponents[players[index].id], players[index].faction, faction, pack);
+  const begins = startForFaction(index === 0 ? game.start.me : game.start.opponents[players[index].id], players[index].faction, faction, pack, players[index].id);
   const next: Game = { ...seated, start: index === 0 ? { ...game.start, me: begins } : { ...game.start, opponents: { ...game.start.opponents, [players[index].id]: begins } } };
   if (index !== 0) return next;
   const old = homePlanets(game.faction, pack);
@@ -241,7 +272,9 @@ export function draftWithExpansions(draft: Game, expansions: ExpansionId[], pack
   const seated = kept.map(p => ({ ...p, seat: order.indexOf(p) + 1, faction: '' }));
   const layout = templateFor(kept.length, draft.layout, pack) ? draft.layout : undefined;
   const blank = createGame({ expansions, playerCount: kept.length, faction: '', layout }, pack);
-  const empty = withPlayers({ ...blank, id: draft.id }, seated, pack);
+  // The players keep their ids, so the notes of the blank game are dealt again, to them.
+  const start = { me: blank.start.me, opponents: Object.fromEntries(seated.slice(1).map(p => [p.id, { promissory: genericNotes(pack, p.id) }])) };
+  const empty = withPlayers({ ...blank, id: draft.id, start }, seated, pack);
   const seatedGame = kept.reduce<Game>(
     (game, player, index) => (pack.factions[player.faction] ? setPlayerFaction(game, index, player.faction, pack) : game),
     empty,

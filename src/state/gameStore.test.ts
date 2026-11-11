@@ -535,10 +535,11 @@ describe("Thunder's Edge turned on in a game in progress", () => {
     act().setStartHolding('me', 'technology:cv2', true);
     expect(game().start.me.technologies).toEqual([...(mine.technologies ?? []), 'technology:cv2']);
     const id = game().opponents[0].id;
+    const theirs = game().start.opponents[id];
     act().setStartHolding(id, 'technology:ff2', true);
-    expect(game().start.opponents[id]).toEqual({ technologies: ['technology:ff2'] });
+    expect(game().start.opponents[id]).toEqual({ ...theirs, technologies: ['technology:ff2'] });
     act().undo();
-    expect(game().start.opponents[id]).toBeUndefined();
+    expect(game().start.opponents[id]).toEqual(theirs);
     act().undo();
     expect(game().start.me).toEqual(mine);
   });
@@ -557,11 +558,12 @@ describe("Thunder's Edge turned on in a game in progress", () => {
 
   test('removing an opponent through the store removes their start holdings, and undo brings them back', () => {
     const id = game().opponents[0].id;
+    const theirs = game().start.opponents[id];
     act().setStartHolding(id, 'technology:ff2', true);
     act().removeOpponent(0);
-    expect(game().start.opponents).toEqual({});
+    expect(game().start.opponents[id]).toBeUndefined();
     act().undo();
-    expect(game().start.opponents[id]).toEqual({ technologies: ['technology:ff2'] });
+    expect(game().start.opponents[id]).toEqual({ ...theirs, technologies: ['technology:ff2'] });
   });
 
   test('a copied plan has entry research of its own', () => {

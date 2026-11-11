@@ -174,3 +174,37 @@ test('in the turn of an opponent the transaction step lists every other player o
   expect(names).toHaveLength(game.opponents.length);
   expect(new Set(names).size).toBe(names.length);
 });
+
+test('a note got from a rival says whose it is, in the choice, in its text and once chosen; a search finds it among what they hold', async () => {
+  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  const game = useGame.getState().game!;
+  const rival = game.opponents[0].id;
+  const theirs = `promissory:<color>_ta@${rival}`;
+  const onChange = vi.fn();
+  const act: Act = { kind: 'transaction', with: rival, give: {}, get: { components: [`promissory:convoys@${rival}`] } };
+  const board = boardOf({ promissory: ['promissory:<color>_ta@me'] }, { [rival]: { promissory: [theirs, `promissory:convoys@${rival}`] } });
+  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
+  const get = within(screen.getByRole('group', { name: 'Get' }));
+  expect(get.getByTestId(`component-promissory:convoys@${rival}`)).toHaveTextContent('Hacan');
+  await userEvent.click(get.getByRole('button', { name: '+ Component' }));
+  expect(offered()).toEqual([`component-${theirs}`]);
+  const choice = within(screen.getByRole('dialog', { name: 'Choose a component' }));
+  const card = choice.getByTestId(`component-${theirs}`);
+  await userEvent.click(within(card).getByRole('button', { name: /^Trade Agreement\s*Hacan/ }));
+  expect(card).toHaveTextContent('return this card to the Hacan player');
+  await userEvent.type(choice.getByRole('searchbox'), 'trade agreement');
+  expect(offered()).toEqual([`component-${theirs}`]);
+  await userEvent.click(choice.getByRole('button', { name: 'Choose Trade Agreement' }));
+  expect(onChange).toHaveBeenLastCalledWith({ ...act, get: { components: [`promissory:convoys@${rival}`, theirs] } });
+});
+
+test('in a rival\'s turn the note the rival gives is still marked as theirs, and mine as mine', async () => {
+  const { gameAs } = await import('../../../domain/players');
+  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  const game = useGame.getState().game!;
+  const rival = game.opponents[0].id;
+  const act: Act = { kind: 'transaction', with: 'me', give: { components: [`promissory:<color>_ta@${rival}`] }, get: { components: ['promissory:<color>_ta@me'] } };
+  render(<TransactionStep game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  expect(within(screen.getByRole('group', { name: 'Give' })).getByTestId(`component-promissory:<color>_ta@${rival}`)).toHaveTextContent('Hacan');
+  expect(within(screen.getByRole('group', { name: 'Get' })).getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('Sol');
+});

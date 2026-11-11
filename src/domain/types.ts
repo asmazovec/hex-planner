@@ -467,7 +467,7 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   // transport
   'pickupOffRoute',
   // components
-  'componentNotHeld', 'componentExhausted',
+  'componentNotHeld', 'componentExhausted', 'ownPromissory',
 ] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */

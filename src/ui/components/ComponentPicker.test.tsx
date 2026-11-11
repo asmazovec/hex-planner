@@ -111,3 +111,16 @@ test('what is held stands first, and the rest says it is not held, when somethin
   await userEvent.click(within(screen.getByTestId(`component-${cards()[1]}`)).getByRole('button', { name: /^Choose / }));
   expect(onPick).toHaveBeenCalled();
 });
+
+test('the notes I hold of other players stand first when something is played, each with its owner; my own are offered after them', async () => {
+  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  const rival = useGame.getState().game!.opponents[0].id;
+  const held = [`promissory:convoys@${rival}`, `promissory:<color>_ta@${rival}`];
+  render(<ComponentPicker kinds={['promissory']} owned={new Set(held)} prefer="owned" player="me" onPick={() => undefined} onClose={() => undefined} />);
+  expect(cards().slice(0, 2).sort()).toEqual([...held].sort());
+  expect(screen.getByTestId(`component-${held[1]}`)).toHaveTextContent('Hacan');
+  expect(cards()).toContain('promissory:<color>_ta@me');
+  expect(screen.getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('not held');
+  // The catalogue card without an address is not offered: a note is always somebody's.
+  expect(cards()).not.toContain('promissory:<color>_ta');
+});

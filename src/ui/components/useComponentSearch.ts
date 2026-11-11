@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
-import { componentById, componentsOf } from '../../domain/components';
+import { componentById, componentsOf, noteBase } from '../../domain/components';
 import { buildIndex, search, type SearchIndex } from '../../domain/fuzzy';
-import type { ComponentDef, ComponentKind, DataPack } from '../../domain/types';
+import { noteCards } from '../../domain/holdings';
+import type { ComponentDef, ComponentKind, DataPack, Game } from '../../domain/types';
 
 /** How many results a search shows. */
 export const RESULT_LIMIT = 30;
@@ -14,20 +15,26 @@ function indexOf(pack: DataPack): SearchIndex {
   return index;
 }
 
-/** The components of the pack a query finds by name and text, best first, of the given kinds and among the given ids only; none for an empty query. */
-export function searchComponents(pack: DataPack, query: string, kinds?: ComponentKind[], among?: Set<string>): ComponentDef[] {
+/**
+ * The components of the pack a query finds by name and text, best first, of the given kinds and among the given ids
+ * only; none for an empty query. A promissory note found is the cards it stands for: those among the ids, or else one
+ * of each player of the game.
+ */
+export function searchComponents(pack: DataPack, query: string, kinds?: ComponentKind[], among?: Set<string>, game?: Game | null): ComponentDef[] {
   if (query.trim() === '') return [];
   const found: ComponentDef[] = [];
   for (const { id } of search(indexOf(pack), query)) {
     const component = componentById(pack, id);
-    if (!component || (kinds && !kinds.includes(component.kind)) || (among && !among.has(id))) continue;
-    found.push(component);
-    if (found.length === RESULT_LIMIT) break;
+    if (!component || (kinds && !kinds.includes(component.kind))) continue;
+    const cards = among ? [...among].filter(other => noteBase(other) === id).flatMap(other => componentById(pack, other) ?? [])
+      : game ? noteCards(game, pack, component) : [component];
+    found.push(...cards);
+    if (found.length >= RESULT_LIMIT) break;
   }
-  return found;
+  return found.slice(0, RESULT_LIMIT);
 }
 
 /** The search over a pack's components, limited to some kinds: the same for the drawer and for the picker. */
-export function useComponentSearch(pack: DataPack, kinds?: ComponentKind[], among?: Set<string>): (query: string) => ComponentDef[] {
-  return useCallback(query => searchComponents(pack, query, kinds, among), [pack, kinds, among]);
+export function useComponentSearch(pack: DataPack, kinds?: ComponentKind[], among?: Set<string>, game?: Game | null): (query: string) => ComponentDef[] {
+  return useCallback(query => searchComponents(pack, query, kinds, among, game), [pack, kinds, among, game]);
 }
