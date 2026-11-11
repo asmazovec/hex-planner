@@ -45,6 +45,20 @@ test('kinds leave only those components, before a query and after it', async () 
   expect(await screen.findByRole('button', { name: 'Choose Sarween Tools' })).toBeVisible();
 });
 
+test('ids leave only those components, all of them in their order before a query, and those of them a query finds', async () => {
+  const ids = ['promissory:war_funding', 'actionCard:sabo1'];
+  render(<ComponentPicker ids={ids} player="me" onPick={() => undefined} onClose={() => undefined} />);
+  const dialog = screen.getByRole('dialog', { name: 'Choose a component' });
+  const shown = () => within(dialog).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!);
+  expect(shown()).toEqual(ids.map(id => `component-${id}`));
+  await userEvent.type(box(), 'sarween');
+  expect(await screen.findByText('Nothing found.')).toBeVisible();
+  await userEvent.clear(box());
+  await userEvent.type(box(), 'sabotage');
+  await screen.findByRole('button', { name: 'Choose Sabotage' });
+  expect(shown()).toEqual(['component-actionCard:sabo1']);
+});
+
 test('Escape empties the field first and closes the window only after that', async () => {
   const onClose = vi.fn();
   render(<ComponentPicker player="me" onPick={() => undefined} onClose={onClose} />);

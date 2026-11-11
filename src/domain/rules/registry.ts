@@ -67,6 +67,8 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   transactionRepeated: { rules: ['94.1'], step: 'transaction' },
   notNeighbor: { rules: ['94.1', '60.1'], step: 'transaction' },
   shortCommodities: { rules: ['94.2'], step: 'transaction' },
+  transactionNotes: { rules: ['69.5', '94.2'], step: 'transaction' },
+  transactionKind: { rules: ['94.3'], step: 'transaction' },
   stationGround: { rules: ['space-stations-4'], step: 'invasion' },
   stationStructure: { rules: ['space-stations-4'], step: 'card' },
   // transport

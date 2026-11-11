@@ -568,7 +568,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         if (act.kind === 'transaction') {
           return (
             <TransactionStep
-              key={`${host.id}-${index}`} game={hostGame} pack={pack} act={act} owner={host.owner ?? 'me'}
+              key={`${host.id}-${index}`} game={hostGame} pack={pack} act={act} owner={host.owner ?? 'me'} board={boards.board(host.id)}
               warnings={all.filter(w => w.step === 'transaction')} onChange={replace} onBack={backTo} onRemove={drop}
             />
           );

@@ -125,6 +125,27 @@ export function losable(holdings: Holdings, entry: { gains?: string[]; spends?: 
 export const heldOnce = (holdings: Holdings): Set<string> =>
   new Set(LIST_FIELDS.filter(field => field !== 'hand').flatMap(field => holdings[field]));
 
+/**
+ * The kinds of component a transaction hands over (94.3): promissory notes, and action cards, which only an ability
+ * lets a player trade (94.3.1) and the app does not know abilities. A relic fragment is an exploration card, which no
+ * player's holdings keep, so it is not here.
+ */
+export const TRANSACTION_KINDS: readonly ComponentKind[] = ['promissory', 'actionCard'];
+
+/**
+ * What a player can still hand over in a transaction: the promissory notes held and then the action cards in hand,
+ * each id once, less the copies already `chosen` for it.
+ */
+export function tradable(holdings: Holdings, chosen: string[] = []): string[] {
+  const left = [...chosen];
+  const free = TRANSACTION_KINDS.flatMap(kind => holdings[HOLDING_FIELD[kind]!]).filter(id => {
+    const at = left.indexOf(id);
+    if (at >= 0) left.splice(at, 1);
+    return at < 0;
+  });
+  return [...new Set(free)];
+}
+
 const playerStart = (game: Game, player: string): StartHoldings | undefined =>
   (player === 'me' ? game.start.me : game.opponents.some(o => o.id === player) ? game.start.opponents[player] ?? {} : undefined);
 

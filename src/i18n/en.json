@@ -424,6 +424,7 @@
       "researchOverLimit": "{{count}} technologies researched, and this ability gives at most {{limit}}.",
       "researchOwned": "{{name}}: the technology is already researched and is not researched again.",
       "componentNotHeld": "{{name}}: you do not hold this component at this point.",
+      "componentNotHeld_transaction": "{{name}}: the side that gives it does not hold this component at this point.",
       "componentExhausted": "{{name}} is exhausted: it is readied only in the status phase.",
       "shipOnPlanet": "{{unit}} is a ship and cannot land on {{planet}}: only ground forces land.",
       "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
@@ -448,7 +449,9 @@
       "pickupOffRoute": "Units are picked up in {{system}}, off the way of the ships from {{from}}: by the rules a ship picks units up only where it starts, passes or ends its move.",
       "transactionRepeated": "No more than one transaction with a player in a turn.",
       "notNeighbor": "A transaction is only with a neighbour: you need units or planets in the same or adjacent systems.",
-      "shortCommodities": "Not enough commodities: {{needed}} needed, {{have}} held."
+      "shortCommodities": "Not enough commodities: {{needed}} needed, {{have}} held.",
+      "transactionNotes": "No more than one promissory note from each side of a transaction.",
+      "transactionKind": "{{name}}: a transaction does not hand this over, only trade goods, commodities, promissory notes and relic fragments."
     },
     "phases": {
       "strategy": "Strategy",
@@ -553,7 +556,6 @@
       "transaction": "+ Transaction with {{name}}: give {{give}}; get {{get}}",
       "expedition": "+ Expedition: {{brief}}",
       "commodities": "commodities {{n}}",
-      "note": "a promissory note",
       "nothing": "nothing",
       "me": "you",
       "title": "In this turn",
@@ -568,7 +570,9 @@
       "withWhom": "With whom",
       "give": "Give",
       "get": "Get",
-      "noteToggle": "Promissory note"
+      "addComponent": "+ Component",
+      "byAbility": "by an ability",
+      "nothingToGive": "No promissory notes or action cards to hand over."
     }
   },
   "expedition": {

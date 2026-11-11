@@ -34,7 +34,7 @@ const cardPlay = {
     payment: payment.optional(),
   }).optional(),
 };
-const goods = z.object({ tradeGoods: count.optional(), commodities: count.optional(), note: z.boolean().optional() });
+const goods = z.object({ tradeGoods: count.optional(), commodities: count.optional(), components: z.array(z.string()).optional() });
 const act = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
   z.object({ kind: z.literal('transaction'), with: z.string(), give: goods, get: goods }),
