@@ -53,6 +53,32 @@ test('a relic found with a typo is added in the components drawer and is still t
   await expect(relics(page)).toContainText('Stellar Converter');
 });
 
+test('in Russian one search line finds a component by its kind and faction, by its colour, and by words of its text with a typo', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'ru'));
+  await page.goto(LINK);
+  await page.getByRole('button', { name: 'План и карта' }).click();
+  await page.getByRole('button', { name: /^Компоненты/ }).click();
+  const panel = page.getByRole('dialog', { name: 'Компоненты' });
+  const search = panel.getByRole('searchbox', { name: 'Поиск компонентов' });
+  await expect(search).toHaveAttribute('placeholder', 'Название, тип, фракция, текст');
+  const cards = panel.getByRole('group', { name: 'Найдено' }).locator('.component-card');
+
+  // The kind and the faction, the faction typed as it sounds: the one agent of Hacan.
+  await search.fill('агент хакан');
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first()).toContainText('Carth of Golden Sands');
+  // The colour of a technology, «е» for «ё».
+  await search.fill('зеленая технология');
+  await expect(cards.first()).toContainText('Технология');
+  await expect(panel.getByRole('group', { name: 'Найдено' })).toContainText('Neural Motivator');
+  // Words of the Russian text in another order and with typos.
+  await search.fill('астеройдов поля передвигатся');
+  await expect(cards.first()).toContainText('Antimass Deflectors');
+  // Nothing matches every word.
+  await search.fill('агент хакан ъъъъъъ');
+  await expect(panel).toContainText('Ничего не найдено.');
+});
+
 test('the numbers of a unit card stand in one line, at either level and in either language', async ({ page }) => {
   for (const lang of ['ru', 'en']) {
     await page.addInitScript(value => localStorage.setItem('ti4.lang', value), lang);

@@ -47,14 +47,15 @@ function withTeMecatol(template: MapTemplate): MapTemplate {
 }
 
 /** Texts and components of a set of expansions: the same objects on every load, as they are large and never edited. */
-const CATALOGS = new Map<string, Pick<DataPack, 'components' | 'texts'>>();
+const CATALOGS = new Map<string, Pick<DataPack, 'components' | 'texts' | 'originalTexts'>>();
 
-function catalogOf(on: ExpansionId[], packs: StoredPack[], language: TextLanguage): Pick<DataPack, 'components' | 'texts'> {
+function catalogOf(on: ExpansionId[], packs: StoredPack[], language: TextLanguage): Pick<DataPack, 'components' | 'texts' | 'originalTexts'> {
   const key = `${language}:${on.join(',')}`;
   let catalog = CATALOGS.get(key);
   if (!catalog) {
     const texts: Record<string, string> = Object.assign({}, baseTexts, ...on.map(id => TEXTS[id]), ...(language === 'ru' ? [baseTextsRu, ...on.map(id => TEXTS_RU[id])] : []));
-    catalog = { texts, components: packs.flatMap(pack => pack.components).map(component => ({ ...component, text: texts[component.id] ?? '' })) };
+    const originalTexts = language === 'en' ? undefined : catalogOf(on, packs, 'en').texts;
+    catalog = { texts, ...(originalTexts ? { originalTexts } : {}), components: packs.flatMap(pack => pack.components).map(component => ({ ...component, text: texts[component.id] ?? '' })) };
     CATALOGS.set(key, catalog);
   }
   return catalog;

@@ -953,7 +953,8 @@ small.ship-row-round { color: var(--gold); }
 /* The window keeps its title and its search field in place: only the list under them scrolls. */
 .component-picker { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); }
 .component-picker > * { flex: none; }
-.component-picker > .component-list { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+/* Its scrollbar stands in the right padding of the window, at the very edge, as in the plan column: the cards stay as wide as the field above them (--scrollbar is 0 on a tablet). */
+.component-picker > .component-list { flex: 0 1 auto; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; margin-right: -18px; padding-right: calc(18px - var(--scrollbar)); }
 .te-panel .row[role='group'] { gap: 4px; }
 .te-panel .row[role='group'] button { min-width: var(--touch); padding: 4px 0; }
 .upgrade-card { display: grid; grid-template-columns: 46px minmax(0, 1fr) 34px; gap: 8px; align-items: center; width: 100%; min-height: var(--touch); padding: 6px 8px; margin-bottom: 5px; text-align: left; font: inherit; color: var(--text-muted); cursor: pointer; }

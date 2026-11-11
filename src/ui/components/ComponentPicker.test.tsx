@@ -83,7 +83,7 @@ test('`ids` leaves only that set, a repeat as one card with its count, and the s
   render(<ComponentPicker ids={['actionCard:sabo1', 'relic:shard', 'actionCard:sabo1']} player="me" onPick={() => undefined} onClose={() => undefined} />);
   expect(cards()).toEqual(['actionCard:sabo1', 'relic:shard']);
   expect(screen.getByTestId('component-actionCard:sabo1')).toHaveTextContent('×2');
-  expect(screen.queryByText('Type a name or words of the text.')).toBeNull();
+  expect(screen.queryByText(/^One line searches the name, kind, faction/)).toBeNull();
   await userEvent.type(box(), 'stellar converter');
   expect(await screen.findByText('Nothing found.')).toBeVisible();
   await userEvent.clear(box());
@@ -123,4 +123,33 @@ test('the notes I hold of other players stand first when something is played, ea
   expect(screen.getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('not held');
   // The catalogue card without an address is not offered: a note is always somebody's.
   expect(cards()).not.toContain('promissory:<color>_ta');
+});
+
+test('the placeholder of the one search line says what can be typed, in the language of the interface', () => {
+  render(<ComponentPicker player="me" onPick={() => undefined} onClose={() => undefined} />);
+  expect(box()).toHaveAttribute('placeholder', 'Name, kind, faction, text');
+  cleanup();
+  setLanguage('ru');
+  render(<ComponentPicker player="me" onPick={() => undefined} onClose={() => undefined} />);
+  expect(screen.getByRole('searchbox', { name: 'Поиск компонентов' })).toHaveAttribute('placeholder', 'Название, тип, фракция, текст');
+});
+
+test('in Russian one line finds by the kind and the faction, by the colour of a technology, and by words of the Russian text', async () => {
+  setLanguage('ru');
+  render(<ComponentPicker player="me" onPick={() => undefined} onClose={() => undefined} />);
+  const field = screen.getByRole('searchbox', { name: 'Поиск компонентов' });
+  const shown = () => within(screen.getByRole('dialog', { name: 'Выбор компонента' })).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!.slice('component-'.length));
+  await userEvent.type(field, 'Агент Хакан');
+  await vi.waitFor(() => expect(shown()[0]).toBe('leader:hacanagent'));
+  await userEvent.clear(field);
+  await userEvent.type(field, 'зеленая технология');
+  await vi.waitFor(() => expect(shown()).toContain('technology:nm'));
+  // The green technologies first; what only mentions a technology (a green research facility) after them.
+  expect(shown().slice(0, 5).every(id => id.startsWith('technology:'))).toBe(true);
+  await userEvent.clear(field);
+  await userEvent.type(field, 'поля астеройдов');
+  await vi.waitFor(() => expect(shown()).toContain('technology:amd'));
+  await userEvent.clear(field);
+  await userEvent.type(field, 'ъъъъъъ');
+  expect(await screen.findByText('Ничего не найдено.')).toBeVisible();
 });

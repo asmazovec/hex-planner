@@ -108,7 +108,9 @@ describe('fuzzy search', () => {
     ]);
     const all = search(same, 'war');
     expect(all.map(hit => hit.id)).toEqual(['2', '3', '1', '4']);
-    expect(new Set(all.slice(0, 3).map(hit => hit.score)).size).toBe(1);
+    // The whole word «war» is above «warfare», which only starts with it.
+    expect(new Set(all.slice(0, 2).map(hit => hit.score)).size).toBe(1);
+    expect(all[2].score).toBeLessThan(all[1].score);
     expect(search(same, 'war', 2).map(hit => hit.id)).toEqual(['2', '3']);
     expect(search(same, 'war', 0)).toEqual([]);
   });

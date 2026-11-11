@@ -182,6 +182,8 @@ export interface DataPack {
   components: ComponentDef[];
   /** Printed texts by component id, verbatim from the source or translated, by the language the pack was loaded in (src/data/texts): of `components`, and of technologies, sheet items, legendary planets, ships (`unit:<id>`) and strategy cards (`strategy:<id>`, `strategy:<id>#secondary`). */
   texts: Record<string, string>;
+  /** The texts as printed, in English, when `texts` holds their translation; absent when `texts` are the printed ones. The search reads both. */
+  originalTexts?: Record<string, string>;
 }
 
 export type ComponentKind = 'technology' | 'actionCard' | 'relic' | 'publicObjective' | 'secretObjective' | 'agenda'
