@@ -1135,7 +1135,13 @@ describe('reading the plan', () => {
     // While its ships are in the air the tiles change at once, in a layer of its own over the map.
     expect(document.querySelector('.hexmap-still')).toBeInTheDocument();
     expect(document.querySelector('.hexmap-overlay .flight-layer')).toBeInTheDocument();
-    // On landing only the systems of the action move: the others are quiet, its own are not.
+    // The first flight of a reading steps back with no motion: nothing has flown yet, so nothing is seen coming back.
+    expect(tile(HOME)).toHaveClass('tile-quiet');
+    expect(tile(TARGET)).toHaveClass('tile-quiet');
+    expect(document.querySelectorAll('.lift-layer .tile-lifted:not(.tile-quiet)').length).toBe(0);
+    // The flight runs on animation frames, which the fake timers leave alone: a few of them pass the short hold.
+    for (const until = Date.now() + 4000; Date.now() < until && tile(HOME)?.classList.contains('tile-quiet');) await act(async () => { await new Promise(r => requestAnimationFrame(r)); });
+    // Once the ships leave, and on landing, only the systems of the action move: the others are quiet, its own are not.
     expect(tile(HOME)).not.toHaveClass('tile-quiet');
     expect(tile(TARGET)).not.toHaveClass('tile-quiet');
     expect(document.querySelectorAll('.tile-quiet').length).toBeGreaterThan(0);

@@ -21,13 +21,15 @@ type Filter = 'now' | 'forecast';
  * the way; `filter` is the replay its map stands on. A flight goes through three phases: the units stand where they are
  * until `departed`, then fly, and once `landed` the ships fade out over the map that shows them landed.
  */
-interface Flight { entryId: string; run: number; game: Game; passed: number[]; filter: Filter; departed?: boolean; landed?: boolean }
+interface Flight { entryId: string; run: number; game: Game; passed: number[]; filter: Filter; /** A flight after another of the same reading: only then is the step back seen. */ repeat: boolean; departed?: boolean; landed?: boolean }
 
 /** The pause before a shown action first flies, and between its flights. */
 const LOOP_START_MS = 380;
 const LOOP_PAUSE_MS = 750;
 /** How long the units stand in their systems, as before the action, before they leave: the step back plays out first. */
 const DEPART_HOLD_MS = 600;
+/** The same before the first flight of a reading: nothing steps back, the map only has to stand a moment. */
+const FIRST_HOLD_MS = 120;
 
 /**
  * The state before an action with its system already activated: the command token stands there while the units wait,
@@ -66,11 +68,11 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   // Nothing to show in a flight, nothing to repeat: an action with no units in its moves, for one.
   const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined && flies(shownEntry);
 
-  const start = useCallback((entryId: string, filter: Filter = 'forecast') => {
+  const start = useCallback((entryId: string, filter: Filter = 'forecast', repeat = false) => {
     const current = useGame.getState().game;
     if (!playsFlights() || !current) return;
     runs.current += 1;
-    setFlight({ entryId, run: runs.current, game: current, passed: [], filter });
+    setFlight({ entryId, run: runs.current, game: current, passed: [], filter, repeat });
   }, []);
   const stop = useCallback(() => setFlight(null), []);
 
@@ -91,7 +93,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
     if (shown.plays > 0 && !flightLoop.read()) return undefined;
     const timer = setTimeout(() => {
       onPlayed();
-      start(shown.id);
+      start(shown.id, 'forecast', shown.plays > 0);
     }, shown.plays === 0 ? LOOP_START_MS : LOOP_PAUSE_MS);
     return () => clearTimeout(timer);
   }, [shown, loops, flying, start, onPlayed]);
@@ -118,7 +120,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
         key={flying.run} colour={playerColour(flyingGame.color)} passed={flying.passed}
         routes={flightRoutes(flyingGame, pack, flyingEntry, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
         onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
-        holdMs={DEPART_HOLD_MS}
+        holdMs={flying.repeat ? DEPART_HOLD_MS : FIRST_HOLD_MS}
         onDepart={() => setFlight(f => f && { ...f, departed: true })}
         onArrive={() => setFlight(f => f && { ...f, landed: true })}
         onDone={stop}
@@ -132,6 +134,8 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
    * their own); every other tile changes at once, the whole map too while the units wait to leave.
    */
   const still = waiting;
+  /** Before the first flight of a reading nothing has flown: its systems step back at once too, with no motion to see. */
+  const quiet = waiting && !flying.repeat;
   /** On landing only the systems of the action move: its active system and those its ships and cargo left. */
   const loopingEntry = shown && loops && shownEntry && game ? shownEntry : undefined;
   const animated = useMemo(
@@ -139,5 +143,5 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
     [loopingEntry, game, pack],
   );
 
-  return { flying, loops, still, animated, start, stop, scene };
+  return { flying, loops, still, quiet, animated, start, stop, scene };
 }

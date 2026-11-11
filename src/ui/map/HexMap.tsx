@@ -35,6 +35,8 @@ export interface HexMapProps {
   startsArrow?: (systemId: string) => boolean;
   /** Ships come and go from the tiles without growing or sliding: a flight in the air shows their movement already. */
   still?: boolean;
+  /** Every tile changes at once, those of `animateOnly` too. */
+  quietAll?: boolean;
   /**
    * Only these systems move their tokens, drawn in the layer over the map so that their moving repaints them alone; on
    * every other tile tokens change at once. Without it every tile moves on the map.
@@ -117,7 +119,7 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, quietAll = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -223,10 +225,10 @@ export function HexMap({
     <TileView
       key={key} slotKey={key} pack={pack} game={game} state={state}
       highlight={highlights?.[key]} ingress={game.fracture.ingress.includes(key)} seat={seats.get(key)}
-      onTap={onTileTap} onPointerDown={onTilePointerDown} quiet={animateOnly !== null && !animateOnly.has(key)}
+      onTap={onTileTap} onPointerDown={onTilePointerDown} quiet={quietAll || (animateOnly !== null && !animateOnly.has(key))}
       liftInto={animateOnly?.has(key) ? liftLayer : null}
     />
-  )), [slotKeys, pack, game, state, seats, highlights, onTileTap, onTilePointerDown, animateOnly, liftLayer]);
+  )), [slotKeys, pack, game, state, seats, highlights, onTileTap, onTilePointerDown, animateOnly, quietAll, liftLayer]);
 
   return (
     <div className="hexmap-frame">
@@ -269,7 +271,7 @@ export function HexMap({
                 fracture={{ tileId: spot.tileId, index: i, x: spot.x, y: spot.y }}
                 highlight={highlights?.[slotKeyOf(fractureAt[i].q, fractureAt[i].r)]} ingress={game.fracture.ingress.includes(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
                 onTap={onTileTap} onPointerDown={onTilePointerDown}
-                quiet={animateOnly !== null && !animateOnly.has(slotKeyOf(fractureAt[i].q, fractureAt[i].r))}
+                quiet={quietAll || (animateOnly !== null && !animateOnly.has(slotKeyOf(fractureAt[i].q, fractureAt[i].r)))}
               />
               </g>
             ))}
