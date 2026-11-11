@@ -1,6 +1,7 @@
 {
   "draft": {
-    "out": "none left",
+    "over": "none left, the next one is taken beyond the stock",
+    "overBy": "{{n}} beyond the stock",
     "space": "Space"
   },
   "share": {
@@ -748,6 +749,7 @@
     "fleetWithin": "The fleet is within the fleet pool",
     "fleetStock": "In the system",
     "fleetTake": "Remove one {{unit}}",
+    "fleetNone": "none of them stands here any more",
     "buildNote": "Tap a bought unit here, or its token with a gold ring, to take the purchase back.",
     "setupNote": "Tap a token on the hex to remove one.",
     "planetNote": "Tap a planet: ground forces and structures go there.",

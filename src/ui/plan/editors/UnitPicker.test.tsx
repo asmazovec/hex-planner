@@ -69,15 +69,16 @@ test('a tap on a picture moves one ship, a tap on a chosen one returns it', asyn
   await userEvent.click(take('Carrier'));
   expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: { carrier: 1 } }]);
   expect(put('Carrier')).toBeVisible();
-  // The last one taken, the tile stays in its place with nothing to take: another tile there would come under the finger.
-  expect(take('Carrier')).toBeDisabled();
+  // The last one taken, the button stays in its place and only changes its look: another one there would come under the finger.
+  expect(take('Carrier')).toHaveClass('draft-take-over');
+  expect(take('Carrier')).toBeEnabled();
   expect(screen.getByText('Cargo on board: 0 of 4')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Fly' }));
   expect(onFly).toHaveBeenCalled();
   await userEvent.click(put('Carrier'));
   // The source's own move stays, empty, for its arrow.
   expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: {} }]);
-  expect(take('Carrier')).toBeEnabled();
+  expect(take('Carrier')).not.toHaveClass('draft-take-over');
 });
 
 test('fighters with no move value and ground units are cargo, listed at their system, never as flying', async () => {
@@ -151,15 +152,21 @@ test('more places on board than the row holds end in a number, so the row never 
 });
 
 test('a unit taken or returned adds and removes no control: every kind keeps its button and its place in the tray', async () => {
-  setup([{ from: SOURCE, units: {} }], { systems: { [SOURCE]: { carrier: 1, cruiser: 2 } } });
+  const { onChange } = setup([{ from: SOURCE, units: {} }], { systems: { [SOURCE]: { carrier: 1, cruiser: 2 } } });
   const row = () => within(screen.getByRole('group', { name: 'Space' }));
   const places = () => [row().getAllByRole('button', { name: /^Take one / }).length, document.querySelectorAll('.unit-picker .draft-tray > *').length];
   const before = places();
   await userEvent.click(take('Cruiser'));
   await userEvent.click(take('Cruiser'));
-  expect(take('Cruiser')).toBeDisabled();
-  expect(take('Cruiser')).toHaveAttribute('title', 'Take one Cruiser: none left');
+  expect(take('Cruiser')).toHaveClass('draft-take-over');
+  expect(take('Cruiser')).toHaveAttribute('title', 'Take one Cruiser: none left, the next one is taken beyond the stock');
   expect(places()).toEqual(before);
+  // Nothing forbids one more than stands there: it flies in the plan, the button counts it, and the domain warns.
+  await userEvent.click(take('Cruiser'));
+  expect(onChange).toHaveBeenLastCalledWith([{ from: SOURCE, units: { cruiser: 3 } }]);
+  expect(take('Cruiser').querySelector('.draft-over')).toHaveTextContent('+1');
+  expect(places()).toEqual(before);
+  await userEvent.click(put('Cruiser'));
   await userEvent.click(put('Cruiser'));
   await userEvent.click(put('Cruiser'));
   expect(places()).toEqual(before);

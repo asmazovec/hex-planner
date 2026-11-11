@@ -8,13 +8,13 @@ export interface UnitDraftItem {
   kind: TokenKind;
   /** How many of the kind this row has taken. */
   picked: number;
-  /** What is left for this row alone; without it the shared `stock` counts, and with neither the stock never ends. */
+  /** What is left for this row alone, below zero by what was taken beyond it; without it the shared `stock` counts, and with neither the stock never ends. */
   left?: number;
   /** The price on the button to take. */
   price?: string;
   takeLabel: string;
   returnLabel: string;
-  /** Why this one cannot be taken, apart from an empty stock. */
+  /** Why this one cannot be taken at all: a reason of its own, never an empty stock. */
   blockedReason?: string;
 }
 
@@ -33,7 +33,7 @@ export interface UnitDraftRow {
 
 export interface UnitDraftProps {
   rows: UnitDraftRow[];
-  /** What is left of each kind for all the rows together: the caller counts it, and a kind that ran out goes dim in every row. */
+  /** What is left of each kind for all the rows together, below zero by what was taken beyond it: the caller counts it, and a kind that ran out changes its look in every row. */
   stock?: Partial<Record<TokenKind, number>>;
   colour: string;
   onTake: (rowId: string, kind: TokenKind) => void;
@@ -47,8 +47,9 @@ const PICTURE = 40;
 
 /**
  * Units taken from a known stock, a row per place. A row is its place, a button to take per kind, a quiet arrow and the
- * tray of what was taken. A button is the stock: a plus and what is left; with nothing left it stays where it is,
- * dashed and disabled. The tray keeps one place per kind in the order of the buttons: an outline while empty, a filled
+ * tray of what was taken. A button is the stock: a plus and what is left. An empty stock forbids nothing, since an
+ * ability may change the rule and the domain warns: with nothing left the button stays where it is and still takes,
+ * dashed, with the number taken beyond the stock in its corner. Only a reason of its own disables it. The tray keeps one place per kind in the order of the buttons: an outline while empty, a filled
  * chip with its count once taken, and a tap on the chip returns one. Nothing appears, leaves or changes its width from
  * a tap, so the finger stays on what it pressed. The one way to take units from a stock anywhere in the app.
  */
@@ -63,13 +64,17 @@ export function UnitDraft({ rows, stock, colour, onTake, onReturn, stockLabel, p
             {row.items.map(item => {
               const left = item.left ?? stock?.[item.kind];
               const counted = left !== undefined && Number.isFinite(left);
-              const reason = row.blockedReason ?? item.blockedReason ?? (counted && left <= 0 ? t('draft.out') : undefined);
+              const blocked = row.blockedReason ?? item.blockedReason;
+              const out = !blocked && counted && left <= 0;
+              const over = out ? -left : 0;
+              const note = blocked ?? (out ? [t('draft.over'), ...(over > 0 ? [t('draft.overBy', { n: over })] : [])].join(' · ') : undefined);
               return (
                 <button
-                  key={item.kind} type="button" className={reason ? 'draft-take draft-take-out' : 'draft-take'} aria-label={item.takeLabel}
-                  title={reason ? `${item.takeLabel}: ${reason}` : item.takeLabel} disabled={Boolean(reason)} onClick={() => onTake(row.id, item.kind)}
+                  key={item.kind} type="button" className={blocked ? 'draft-take draft-take-out' : out ? 'draft-take draft-take-over' : 'draft-take'} aria-label={item.takeLabel}
+                  title={note ? `${item.takeLabel}: ${note}` : item.takeLabel} disabled={Boolean(blocked)} onClick={() => onTake(row.id, item.kind)}
                 >
                   <span className="draft-plus" aria-hidden="true">+</span>
+                  {over > 0 && <span className="draft-over">+{over}</span>}
                   <TokenPicture kind={item.kind} colour={colour} px={PICTURE} />
                   <span className="draft-foot">
                     {item.price !== undefined && <b>{item.price}</b>}

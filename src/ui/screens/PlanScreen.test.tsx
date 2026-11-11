@@ -493,6 +493,27 @@ test('every arrow adds a source and keeps the earlier ones, also a source with n
   expect(screen.getByRole('button', { name: 'Fly' })).toBeDisabled();
 });
 
+test('a flight takes more ships than stand at its source, and warns of the missing one under the buttons', async () => {
+  await chooseSystem();
+  await addRouteByTaps(HOME, TARGET);
+  const take = () => screen.getByRole('button', { name: 'Take one Carrier' });
+  let standing = 0;
+  while (!take().classList.contains('draft-take-over')) {
+    await userEvent.click(take());
+    standing += 1;
+  }
+  expect(standing).toBeGreaterThan(0);
+  expect(screen.queryByText(/is missing/)).toBeNull();
+  // An empty stock forbids nothing: one more flies in the plan, and the domain says which one is not there.
+  expect(take()).toBeEnabled();
+  await userEvent.click(take());
+  expect(tactical().moves).toEqual([{ from: HOME, units: { carrier: standing + 1 } }]);
+  expect(take().querySelector('.draft-over')).toHaveTextContent('+1');
+  const warning = screen.getByText(/is missing 1 × Carrier/);
+  expect(warning).toBeVisible();
+  expect(take().compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+});
+
 test('the outline of an arrow goes round its head too, as one shape with the line', async () => {
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
@@ -913,14 +934,24 @@ test('landing shows counts of what arrived and what is assigned; no icon for a u
   expect(screen.getByRole('button', { name: 'Give back Infantry' })).toHaveTextContent('×1');
 });
 
-test('a landing whose units are gone stays visible and warns; with nothing left to land its button is out, and the landed one is given back', async () => {
+test('a landing whose units are gone stays visible, can go over the limit, and warns', async () => {
   await chooseSystem();
   act(() => useGame.getState().updateEntry(tactical().id, { landings: [{ planetId: 'quann', units: { infantry: 1 } }] }));
   expect(screen.getByText('Landing')).toBeVisible();
   expect(screen.getByText('Landing needs 1 × Infantry, but only 0 arrived.')).toBeVisible();
-  // The stock is empty: the button keeps its place and takes no tap.
-  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toHaveTextContent('0');
-  expect(screen.getByRole('button', { name: 'Land one Infantry' })).toBeDisabled();
+  // The stock is empty: the button keeps its place, shows nothing left and how many land beyond it, and still takes a tap.
+  const land = () => screen.getByRole('button', { name: 'Land one Infantry' });
+  expect(land().querySelector('.draft-foot')).toHaveTextContent(/^0$/);
+  expect(land().querySelector('.draft-over')).toHaveTextContent('+1');
+  expect(land()).toBeEnabled();
+  await userEvent.click(land());
+  expect(tactical().landings).toEqual([{ planetId: 'quann', units: { infantry: 2 } }]);
+  expect(land().querySelector('.draft-over')).toHaveTextContent('+2');
+  // The warning stands in the block of the landing, under the button.
+  const warning = screen.getByText('Landing needs 2 × Infantry, but only 0 arrived.');
+  expect(warning).toBeVisible();
+  expect(land().compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await userEvent.click(screen.getByRole('button', { name: 'Give back Infantry' }));
   await userEvent.click(screen.getByRole('button', { name: 'Give back Infantry' }));
   expect(tactical().landings).toEqual([]);
 });

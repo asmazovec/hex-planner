@@ -888,21 +888,41 @@ describe('the shop is a draft from the reinforcements', () => {
   /** A control of the panel: a structure on the hex goes by the same name. */
   const buy = (name: string) => within(document.querySelector<HTMLElement>('.stage-panel')!).getByRole('button', { name });
 
-  test('a button shows the figures left and goes out with the last one; a bought one is given back from the tray', async () => {
+  test('a button shows the figures left; with the last one it changes its look and still buys, counting what is beyond the reinforcements', async () => {
     open({ initialMode: 'build' });
     // Two war suns in a colour (96.2).
     expect(buy('War Sun')).toHaveTextContent('2');
     await tap('War Sun');
     await tap('War Sun');
-    expect(buy('War Sun')).toBeDisabled();
-    expect(buy('War Sun')).toHaveTextContent('0');
-    expect(buy('War Sun')).toHaveAttribute('title', 'War Sun: none left');
+    expect(buy('War Sun')).toBeEnabled();
+    expect(buy('War Sun')).toHaveClass('draft-take-over');
+    expect(buy('War Sun').querySelector('.draft-foot')).toHaveTextContent(/0$/);
+    expect(buy('War Sun')).toHaveAttribute('title', 'War Sun: none left, the next one is taken beyond the stock');
     expect(merged('build')?.delta.units?.units).toEqual({ warsun: 2 });
-    expect(buy('Give back War Sun')).toHaveTextContent('×2');
+    // An ability may allow more: nothing forbids the third one.
+    await tap('War Sun');
+    expect(merged('build')?.delta.units?.units).toEqual({ warsun: 3 });
+    expect(buy('War Sun').querySelector('.draft-over')).toHaveTextContent('+1');
+    expect(buy('Give back War Sun')).toHaveTextContent('×3');
+    await tap('Give back War Sun');
     await tap('Give back War Sun');
     expect(merged('build')?.delta.units?.units).toEqual({ warsun: 1 });
-    expect(buy('War Sun')).toBeEnabled();
+    expect(buy('War Sun')).not.toHaveClass('draft-take-over');
     expect(buy('War Sun')).toHaveTextContent('1');
+  });
+
+  test('a unit produced beyond the reinforcements by a tactical action warns under the shop (reinforcementsOut)', async () => {
+    store().setDock(quann(), true);
+    const id = store().addEntry(1, { type: 'tactical', systemId: SLOT, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    open({ initialMode: 'build' });
+    await tap('War Sun');
+    await tap('War Sun');
+    expect(screen.queryByText(/War Sun: .*the reinforcements hold no more/)).toBeNull();
+    await tap('War Sun');
+    expect(entries().find(e => e.id === id)).toMatchObject({ production: { warsun: 3 } });
+    const warning = screen.getByText(/War Sun: .*the reinforcements hold no more/);
+    expect(warning).toBeVisible();
+    expect(buy('War Sun').compareDocumentPosition(warning) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   test('what already stands on the board is out of the reinforcements: the two carriers of the start leave two', () => {
@@ -926,12 +946,14 @@ describe('the shop is a draft from the reinforcements', () => {
     expect(mech(first)).toHaveTextContent('4');
     for (let i = 0; i < 3; i += 1) await userEvent.click(mech(first));
     await userEvent.click(mech(second));
-    expect(mech(first)).toBeDisabled();
-    expect(mech(second)).toBeDisabled();
+    for (const planet of [first, second]) {
+      expect(mech(planet)).toHaveClass('draft-take-over');
+      expect(mech(planet)).toBeEnabled();
+    }
     expect(buy(`Give back Mech, ${first}`)).toHaveTextContent('×3');
     expect(buy(`Give back Mech, ${second}`)).toHaveTextContent('×1');
     await tap(`Give back Mech, ${second}`);
-    expect(mech(first)).toBeEnabled();
+    expect(mech(first)).not.toHaveClass('draft-take-over');
     expect(screen.queryByRole('button', { name: `Give back Mech, ${second}` })).toBeNull();
   });
 

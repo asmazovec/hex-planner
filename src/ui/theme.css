@@ -661,11 +661,14 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .draft-foot b { color: var(--gold); font-weight: 700; }
 .draft-foot i, .draft-chip i { font-style: normal; font-weight: 700; }
 .draft-foot i { margin-left: auto; color: var(--text); }
-/* Nothing to take: the same place and size, a dashed outline with nothing in it but the dimmed picture. */
-.draft-take:disabled { opacity: 1; background: transparent; border-style: dashed; color: var(--text-dim); }
-.draft-take:disabled svg { opacity: 0.3; filter: grayscale(1); }
+/* Nothing left, or blocked: the same place and size, a dashed outline with the dimmed picture in it. */
+.draft-take:disabled, .draft-take-over { opacity: 1; background: transparent; border-style: dashed; color: var(--text-dim); }
+.draft-take:disabled svg, .draft-take-over svg { opacity: 0.3; filter: grayscale(1); }
 .draft-take:disabled .draft-plus { visibility: hidden; }
-.draft-take:disabled .draft-foot b, .draft-take:disabled .draft-foot i { color: var(--text-dim); }
+.draft-take:disabled .draft-foot b, .draft-take:disabled .draft-foot i, .draft-take-over .draft-foot b, .draft-take-over .draft-foot i { color: var(--text-dim); }
+/* An empty stock still takes: the plus stays, in the colour of a warning, and the corner counts what went beyond the stock. */
+.draft-take-over .draft-plus, .draft-over { color: var(--warning); }
+.draft-over { position: absolute; right: 4px; top: 2px; font-size: var(--font-xs); font-weight: 700; line-height: 1; }
 /* The tray: one place per kind, an outline with a pale picture while empty, a filled chip with its count once taken. */
 .draft-slot { border: 1px dashed color-mix(in srgb, var(--accent) 40%, transparent); }
 .draft-slot svg { opacity: 0.2; }
