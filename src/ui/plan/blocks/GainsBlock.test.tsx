@@ -73,7 +73,7 @@ test('a component action chooses its component, shows it over the note and lets 
   const onComponent = vi.fn();
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const shown = (e: typeof entry) => (
-    <TurnEditor entry={e} game={game()} pack={pack} warnings={[]} turnActs={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
+    <TurnEditor entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
   );
   const { rerender } = render(shown(entry));
   await userEvent.click(screen.getByRole('button', { name: 'Choose the component' }));
@@ -84,6 +84,60 @@ test('a component action chooses its component, shows it over the note and lets 
   expect(card.compareDocumentPosition(screen.getByRole('textbox', { name: 'Note' })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   await userEvent.click(within(card).getByRole('button', { name: 'Remove Letani Ospha' }));
   expect(onComponent).toHaveBeenLastCalledWith(undefined);
+});
+
+test('a component action begins with the place of its component: as wide as the block while empty, then the card with its cross and «Change»', async () => {
+  const onComponent = vi.fn();
+  const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
+  const shown = (e: typeof entry) => (
+    <TurnEditor entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
+  );
+  const { rerender } = render(shown(entry));
+  const own = () => within(screen.getByRole('group', { name: 'Action setup' }));
+  // The empty place is the first control of the part, and nothing is chosen for the player.
+  expect(own().getAllByRole('button')[0]).toHaveAccessibleName('Choose the component');
+  expect(own().getByRole('button', { name: 'Choose the component' })).toHaveClass('component-slot');
+  expect(screen.queryByRole('dialog', { name: 'Choose a component' })).toBeNull();
+  rerender(shown({ ...entry, componentId: 'leader:arborecagent' }));
+  expect(own().queryByRole('button', { name: 'Choose the component' })).toBeNull();
+  const card = within(screen.getByTestId('component-leader:arborecagent'));
+  expect(card.getByRole('button', { name: 'Remove Letani Ospha' })).toBeVisible();
+  // «Change» stands inside the card and opens the same choice.
+  await userEvent.click(card.getByRole('button', { name: 'Change' }));
+  await find('stellar converter', 'Stellar Converter');
+  expect(onComponent).toHaveBeenLastCalledWith('relic:stellarconverter');
+});
+
+test('a component action just added from the menu opens the choice of its component at once', async () => {
+  const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
+  render(<TurnEditor entry={entry} game={game()} pack={pack} warnings={[]} common={null} pickFirst onNote={() => undefined} onComponent={() => undefined} onDone={() => undefined} onRemove={() => undefined} />);
+  expect(picker()).toBeVisible();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.getByRole('button', { name: 'Choose the component' })).toBeVisible();
+});
+
+test('the kind an entry takes most has a button of its own that offers that kind alone', async () => {
+  const onChange = vi.fn();
+  render(<GainsBlock entry={turn()} pack={pack} lead="actionCard" onChange={onChange} />);
+  const names = within(screen.getByRole('group', { name: 'Taken and discarded' })).getAllByRole('button').map(b => b.textContent);
+  expect(names).toEqual(['+ Action card', '+ Took', '+ Discarded']);
+  await userEvent.click(screen.getByRole('button', { name: '+ Action card' }));
+  // Before a search the choice lists action cards, and nothing else.
+  expect(offered().length).toBeGreaterThan(5);
+  expect(offered().every(id => id.startsWith('actionCard:'))).toBe(true);
+  await find('sabotage', 'Sabotage');
+  expect(onChange).toHaveBeenCalledWith({ gains: ['actionCard:sabo1'] });
+});
+
+test('a card taken stands under the buttons, so adding one moves none; an agenda the entry names is not listed and is kept', async () => {
+  const onChange = vi.fn();
+  render(<GainsBlock entry={turn({ gains: ['agenda:revolution', 'relic:shard'] })} pack={pack} onChange={onChange} />);
+  const block = within(screen.getByRole('group', { name: 'Taken and discarded' }));
+  expect(block.queryByTestId('component-agenda:revolution')).toBeNull();
+  const card = block.getByTestId('component-relic:shard');
+  expect(block.getByRole('button', { name: '+ Took' }).compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  await userEvent.click(block.getByRole('button', { name: 'Remove Shard of the Throne' }));
+  expect(onChange).toHaveBeenLastCalledWith({ gains: ['agenda:revolution'] });
 });
 
 test('on the plan screen a turn keeps what it gained and the component it plays', async () => {
@@ -171,7 +225,7 @@ test('a component action offers first what its owner holds ready; the rest says 
   const onComponent = vi.fn();
   render(
     <TurnEditor
-      entry={entry} game={game()} pack={pack} board={holding({ relics: ['relic:thalnos'] })} warnings={[]} turnActs={null}
+      entry={entry} game={game()} pack={pack} board={holding({ relics: ['relic:thalnos'] })} warnings={[]} common={null}
       onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined}
     />,
   );

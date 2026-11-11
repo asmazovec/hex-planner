@@ -1373,13 +1373,14 @@ test('an empty round shows the four phases in order, each with a line of what it
   expect(phase('Actions').getByText(/Tactical actions/)).toBeVisible();
   expect(phase('Status').getByText(/New tokens/)).toBeVisible();
   expect(phase('Agenda').getByText(/No entries/)).toBeVisible();
-  expect(phase('Agenda').queryByRole('button')).toBeNull();
+  expect(phase('Agenda').getAllByRole('button').map(b => b.textContent)).toEqual(['+ Agenda']);
 });
 
 test('an action goes under Actions; a filled section drops its line', async () => {
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
   await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Done' }));
   expect(phase('Actions').getByRole('listitem', { name: 'Pass' })).toBeVisible();
   expect(phase('Actions').queryByText(/Tactical actions/)).toBeNull();
 });
@@ -1553,13 +1554,80 @@ describe('a manual adjustment', () => {
   });
 });
 
-test('a component action keeps a note', async () => {
+test('a component action added from the menu opens its editor on the choice of the component, and keeps a note', async () => {
   render(<PlanScreen />);
   await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
   await userEvent.click(screen.getByRole('button', { name: 'Component action' }));
-  const row = within(screen.getByRole('listitem', { name: /Component action/ }));
-  await userEvent.type(row.getByRole('textbox', { name: 'Note' }), 'Plague{Enter}');
+  // The choice of the component is the first thing asked; closed, it leaves the editor with both its parts.
+  expect(screen.getByRole('dialog', { name: 'Choose a component' })).toBeVisible();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.getByRole('heading', { name: 'Component action' })).toBeVisible();
+  expect(screen.getByRole('group', { name: 'In this turn' })).toBeVisible();
+  await userEvent.type(screen.getByRole('textbox', { name: 'Note' }), 'Plague{Enter}');
   expect(entries()[0]).toMatchObject({ type: 'component', note: 'Plague' });
+  // Back from a step of the turn the choice does not open again by itself.
+  await userEvent.click(screen.getByRole('button', { name: '+ Transaction' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.queryByRole('dialog', { name: 'Choose a component' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Choose the component' })).toBeVisible();
+});
+
+test('a pass added from the menu opens its editor, where the turn holds its acts', async () => {
+  render(<PlanScreen />);
+  await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Pass' }));
+  expect(screen.getByRole('heading', { name: 'Pass' })).toBeVisible();
+  expect(within(screen.getByRole('group', { name: 'In this turn' })).getByRole('button', { name: '+ Took' })).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+  expect(screen.getByRole('listitem', { name: 'Pass' })).toBeVisible();
+});
+
+describe('what the phases after the actions take', () => {
+  const pickFrom = async (query: string, name: string) => {
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), query);
+    await userEvent.click(await screen.findByRole('button', { name: `Choose ${name}` }));
+  };
+  const offered = () => within(screen.getByRole('dialog', { name: 'Choose a component' })).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!.slice('component-'.length));
+
+  test('the status entry takes the action card drawn in the phase, and the hand holds it', async () => {
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Tokens and points' }));
+    const row = within(screen.getByRole('listitem', { name: 'Tokens and points' }));
+    const block = within(row.getByRole('group', { name: 'Taken and discarded' }));
+    await userEvent.click(block.getByRole('button', { name: '+ Action card' }));
+    expect(offered().every(id => id.startsWith('actionCard:'))).toBe(true);
+    await pickFrom('sabotage', 'Sabotage');
+    expect(entries()[0]).toMatchObject({ type: 'statusTokens', gains: ['actionCard:sabo1'] });
+    expect(block.getByTestId('component-actionCard:sabo1')).toHaveTextContent('taken');
+    expect(project(game(), plan(), 'forecast', pack).state.holdings.hand).toEqual(['actionCard:sabo1']);
+  });
+
+  test('the agenda phase adds an agenda that was resolved: a law stays in play, a directive does not', async () => {
+    render(<PlanScreen />);
+    await userEvent.click(phase('Agenda').getByRole('button', { name: '+ Agenda' }));
+    expect(screen.getByRole('heading', { name: 'Agenda' })).toBeVisible();
+    expect(entries()[0]).toMatchObject({ type: 'adjustment', phase: 'agenda' });
+    // The card is the first thing of the editor, and the choice offers agendas alone.
+    const own = within(screen.getByRole('group', { name: 'What was resolved' }));
+    expect(own.getAllByRole('button')[0]).toHaveAccessibleName('Choose the agenda');
+    await userEvent.click(own.getByRole('button', { name: 'Choose the agenda' }));
+    expect(offered().length).toBeGreaterThan(5);
+    expect(offered().every(id => id.startsWith('agenda:'))).toBe(true);
+    await pickFrom('anti-intellectual', 'Anti-Intellectual Revolution');
+    expect(entries()[0]).toMatchObject({ gains: ['agenda:revolution'] });
+    expect(within(screen.getByTestId('component-agenda:revolution')).getByRole('button', { name: /^Anti-Intellectual Revolution/ })).toHaveTextContent('law: stays in play');
+    expect(project(game(), plan(), 'forecast', pack).state.laws).toEqual(['agenda:revolution']);
+    // Another card takes the place of the first: an entry names one agenda.
+    await userEvent.click(screen.getByRole('button', { name: 'Change' }));
+    await pickFrom('arms reduction', 'Arms Reduction');
+    expect(entries()[0]).toMatchObject({ gains: ['agenda:arms_reduction'] });
+    expect(screen.getByTestId('component-agenda:arms_reduction')).toHaveTextContent('directive: does not stay in play');
+    expect(project(game(), plan(), 'forecast', pack).state.laws ?? []).toEqual([]);
+    // The row is named by the card, and the phase offers the next agenda.
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.getByRole('listitem', { name: 'Agenda: Arms Reduction' })).toBeVisible();
+    expect(within(screen.getByRole('region', { name: 'Agenda' })).getByRole('button', { name: '+ Agenda' })).toBeVisible();
+  });
 });
 
 test('the plan name can be changed', async () => {
@@ -1878,7 +1946,7 @@ describe('the acts of a turn in its editor', () => {
     expect(follows(within(own).getByRole('group', { name: 'Action result' }), screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
   });
 
-  test('the strategy editor names its own part by the card and its ability, and a secondary has no common part', async () => {
+  test('the strategy editor names its own part by the card and its ability; a secondary keeps the common part with what it took, without the acts of a turn', async () => {
     useGame.getState().setStrategyCard(1, 1);
     useGame.getState().addEntry(1, { type: 'strategic', card: 1 }, 'action');
     render(<PlanScreen />);
@@ -1887,9 +1955,32 @@ describe('the acts of a turn in its editor', () => {
     const own = screen.getByRole('group', { name: 'Leadership · primary ability' });
     expect(within(own).getByRole('group', { name: 'Card' })).toBeVisible();
     expect(follows(own, screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
-    // Another player's turn holds no acts of mine.
+    // Another player's turn holds no acts of mine, and what the secondary brought is still entered.
     await userEvent.click(within(own).getByRole('button', { name: /^Secondary/ }));
-    expect(parts()).toEqual({ titles: ['Leadership · secondary ability'], blocks: null });
+    expect(parts()).toEqual({ titles: ['Leadership · secondary ability', 'In this turn'], blocks: ['Taken and discarded'] });
+  });
+
+  test('a card chosen in the strategy editor keeps the common part in its place, whichever side it starts on', async () => {
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Strategy' }));
+    expect(parts().titles).toEqual(['Action setup', 'In this turn']);
+    // No card of the round is mine: the card starts as a secondary.
+    await userEvent.click(within(screen.getByRole('group', { name: 'Card' })).getByRole('button', { name: /Politics/ }));
+    expect(parts()).toEqual({ titles: ['Politics · secondary ability', 'In this turn'], blocks: ['Taken and discarded'] });
+    await userEvent.click(within(screen.getByRole('group', { name: 'In this turn' })).getByRole('button', { name: '+ Took' }));
+    expect(screen.getByRole('dialog', { name: 'Choose a component' })).toBeVisible();
+  });
+
+  test('a manual adjustment stands in the same two parts: its setup, then what was taken and discarded with it', async () => {
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Manual adjustment' }));
+    const titles = [...document.querySelectorAll('.plan-panel .editor-part > .section-title')].map(title => title.textContent);
+    expect(titles).toEqual(['Action setup', 'With this entry']);
+    const common = screen.getByRole('group', { name: 'With this entry' });
+    expect([...common.querySelectorAll(':scope > [role="group"]')].map(block => block.getAttribute('aria-label'))).toEqual(['Taken and discarded']);
+    expect(follows(screen.getByRole('group', { name: 'Action setup' }), common)).toBe(true);
   });
 
   test('a component action has both parts in the same order, and a pass only the common one', async () => {

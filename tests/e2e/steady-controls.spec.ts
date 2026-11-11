@@ -110,6 +110,20 @@ async function addAction(page: Page, type: string): Promise<void> {
   await page.locator('.action-list').getByRole('button', { name: type, exact: true }).click();
 }
 
+/** A pass in the plan: it opens as every action does, and «Done» returns to the list. */
+async function addPass(page: Page): Promise<void> {
+  await addAction(page, 'Pass');
+  await panel(page).getByRole('button', { name: 'Done' }).click();
+}
+
+/** A component action open in its editor: the choice of the component it begins with is closed. */
+async function addComponentAction(page: Page): Promise<void> {
+  await addAction(page, 'Component action');
+  await expect(page.getByRole('dialog', { name: 'Choose a component' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Choose a component' })).toHaveCount(0);
+}
+
 /** A tap on a system of the map once the map stands still: it glides after a tap on the active system. */
 async function tapTile(page: Page, n: number): Promise<void> {
   let last = '';
@@ -505,8 +519,7 @@ test('the production of a tactical action and its payment by planets stay under 
 });
 
 test('a transaction counts its goods under the finger', async ({ page }) => {
-  await addAction(page, 'Component action');
-  await page.getByRole('button', { name: 'Edit: Component action' }).click();
+  await addComponentAction(page);
   await panel(page).getByRole('button', { name: '+ Transaction' }).click();
   for (const side of ['Give', 'Get']) {
     const group = panel(page).getByRole('group', { name: side, exact: true });
@@ -547,12 +560,12 @@ test.fixme('an action is added again and again under the finger', async ({ page 
 });
 
 test('an entry is marked done and back under the finger', async ({ page }) => {
-  for (let i = 0; i < 3; i += 1) await addAction(page, 'Pass');
+  for (let i = 0; i < 3; i += 1) await addPass(page);
   await pressRepeatedly(page, page.locator('.entry').nth(1).locator('.entry-check'), 6);
 });
 
 test('deleting entries of the plan brings only the next cross under the finger', async ({ page }) => {
-  for (let i = 0; i < 4; i += 1) await addAction(page, 'Pass');
+  for (let i = 0; i < 4; i += 1) await addPass(page);
   await expect(page.locator('.entry')).toHaveCount(4);
   await pressUntilGone(page, page.locator('.entry').first().getByRole('button', { name: 'Delete' }), 5, /^Delete$/);
   await expect(page.locator('.entry')).toHaveCount(0);
@@ -722,8 +735,7 @@ test('the parts of the expedition and the seat of the Fracture switch under the 
 });
 
 test('a part of the expedition is chosen in a turn under the finger', async ({ page }) => {
-  await addAction(page, 'Component action');
-  await page.getByRole('button', { name: 'Edit: Component action' }).click();
+  await addComponentAction(page);
   await panel(page).getByRole('button', { name: '+ Expedition' }).click();
   const parts = panel(page).locator('.slice');
   await expect(parts).toHaveCount(6);

@@ -54,7 +54,7 @@ export interface TacticalEditorProps {
   /** The cross of the head: the action goes. */
   onRemove: () => void;
   /** The blocks of «В этом ходу»: what the turn holds beside its action, the last part of the editor under its own heading. */
-  turnActs?: ReactNode;
+  common?: ReactNode;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface TacticalEditorProps {
  */
 export function TacticalEditor({
   game, pack, entry, before, board, table, warnings, manualPayment, choosing, onChoose,
-  onUpdate, onOpenPicker, leaving = [], onLeft, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, turnActs,
+  onUpdate, onOpenPicker, leaving = [], onLeft, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, common,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
   const target = entry.systemId;
@@ -224,7 +224,7 @@ export function TacticalEditor({
       {list(placer.rest())}
       {/* The action's own setup, its result included; then what any turn holds, in the same order in every editor. */}
       {blocks && <EditorPart title={t('editor.setup')}>{blocks}</EditorPart>}
-      {turnActs && <EditorPart title={t('plan.acts.title')}>{turnActs}</EditorPart>}
+      {common}
     </EditorFrame>
   );
 }

@@ -211,6 +211,13 @@ export function tradable(holdings: Holdings, chosen: string[] = []): string[] {
   return [...new Set(free)];
 }
 
+/**
+ * What a transaction offers, with the promissory notes of `player` first: a note goes back to its owner more often
+ * than anywhere else, so the owner's side finds its own without a search. The rest keeps its order.
+ */
+export const notesOfFirst = (ids: string[], player: string): string[] =>
+  [...ids.filter(id => noteAddress(id) === player), ...ids.filter(id => noteAddress(id) !== player)];
+
 const playerStart = (game: Game, player: string): StartHoldings | undefined =>
   (player === 'me' ? game.start.me : game.opponents.some(o => o.id === player) ? game.start.opponents[player] ?? {} : undefined);
 

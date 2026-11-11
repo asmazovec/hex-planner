@@ -37,6 +37,11 @@ export function opponentName(game: Pick<Game, 'opponents'>, pack: DataPack, id: 
   return playerName(pack, game.opponents[index].faction, index + 2, t);
 }
 
+/** How a narrow place names an opponent: the short name of the faction, or the player number when no faction is set. */
+export function opponentShortName(game: Pick<Game, 'opponents'>, pack: DataPack, id: string, t: TFunction): string {
+  return shortName(pack, game.opponents.find(o => o.id === id)?.faction ?? '', opponentName(game, pack, id, t));
+}
+
 /** Every faction of every expansion: a saved game names its faction whatever expansions are on now. */
 const allFactions = loadPack(['pok', 'te']).factions;
 

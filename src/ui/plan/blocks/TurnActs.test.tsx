@@ -175,6 +175,44 @@ test('in the turn of an opponent the transaction step lists every other player o
   expect(new Set(names).size).toBe(names.length);
 });
 
+test('the players of a transaction are named as everywhere, by the short name of the faction, in the step and in its line', async () => {
+  useGame.getState().setOpponent(0, { faction: 'hacan' });
+  useGame.getState().setOpponent(1, { faction: 'letnev' });
+  const game = useGame.getState().game!;
+  const act: Act = { kind: 'transaction', with: game.opponents[0].id, give: {}, get: {} };
+  const { unmount } = render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  expect(within(screen.getByRole('group', { name: 'With whom' })).getAllByRole('button').map(b => b.textContent)).toEqual(['Hacan', 'Letnev', 'Player 4']);
+  unmount();
+  block(turn([act]), game);
+  expect(screen.getByRole('button', { name: '+ Transaction with Hacan: give nothing; get nothing' })).toBeVisible();
+});
+
+test('in the turn of an opponent I stand among the players under the short name of my faction', async () => {
+  const { gameAs } = await import('../../../domain/players');
+  const game = useGame.getState().game!;
+  const rival = game.opponents[0].id;
+  const act: Act = { kind: 'transaction', with: 'me', give: {}, get: {} };
+  render(<TransactionStep game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  expect(within(screen.getByRole('group', { name: 'With whom' })).getByRole('button', { name: 'Sol' })).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('«+ Component» offers first the notes of the side that gets them: mine among what I get, the other player\'s among what I give', async () => {
+  const game = gameWith();
+  const rival = game.opponents[0].id;
+  const other = game.opponents[1].id;
+  const act: Act = { kind: 'transaction', with: rival, give: {}, get: {} };
+  const board = boardOf(
+    { promissory: [`${NOTE}@me`, `${NOTE}@${other}`, `${NOTE}@${rival}`], hand: [CARD] },
+    { [rival]: { promissory: [`${NOTE}@${rival}`, `promissory:<color>_cf@${other}`, `promissory:<color>_cf@me`] } },
+  );
+  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  await userEvent.click(within(screen.getByRole('group', { name: 'Get' })).getByRole('button', { name: '+ Component' }));
+  expect(offered()).toEqual([`component-promissory:<color>_cf@me`, `component-${NOTE}@${rival}`, `component-promissory:<color>_cf@${other}`]);
+  await userEvent.keyboard('{Escape}');
+  await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
+  expect(offered()).toEqual([`component-${NOTE}@${rival}`, `component-${NOTE}@me`, `component-${NOTE}@${other}`, `component-${CARD}`]);
+});
+
 test('a note got from a rival says whose it is, in the choice, in its text and once chosen; a search finds it among what they hold', async () => {
   useGame.getState().setOpponent(0, { faction: 'hacan' });
   const game = useGame.getState().game!;

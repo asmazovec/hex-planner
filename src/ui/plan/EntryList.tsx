@@ -4,14 +4,15 @@ import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
-import type { DataPack, Entry, Game, GameState, Phase, Round, Warning } from '../../domain/types';
+import type { DataPack, Entry, EntryBody, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
 import { actLines, insideCard } from './actLines';
+import { GainsBlock } from './blocks/GainsBlock';
+import { agendaOf } from './editors/AdjustmentEditor';
 import { HexRemove, RowIcon } from '../primitives/Icon';
-import { NoteField } from '../primitives/NoteField';
 import { Stepper } from '../primitives/Stepper';
 import { systemTitle } from '../map/systemName';
 import { TokenTiles } from './blocks/TokenTiles';
@@ -43,6 +44,8 @@ export interface EntryListProps {
   onDone?: (entry: Entry) => void;
   /** The status entry was added; it opens for its tokens and points. */
   onStatusAdded?: (id: string) => void;
+  /** Adds an agenda that was resolved to the agenda phase and opens it. */
+  onAddAgenda?: () => void;
   /** Stands in the strategy section in place of its title and line. */
   strategy?: ReactNode;
   /** The add button of the action section, kept in view while its list is long. */
@@ -50,9 +53,12 @@ export interface EntryListProps {
 }
 
 // TODO(P2-349) #ws:ui-nesting #type:ui #needs:prototype — жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment
-/** The status entry: the tokens taken this round, the points each player gains with their running total. */
-function StatusFields({ entry, game, pack, state, warnings }: {
-  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState; warnings: Warning[];
+/**
+ * The status entry: the tokens taken this round, the points each player gains with their running total, and what the
+ * phase brings: the action card drawn (81.3), whichever it is, has a button of its own.
+ */
+function StatusFields({ entry, game, pack, state, before, warnings }: {
+  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState; before?: GameState; warnings: Warning[];
 }) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -79,6 +85,8 @@ function StatusFields({ entry, game, pack, state, warnings }: {
         );
       })}
       <p className="muted status-reminder">{t('plan.entries.planetsRefresh')}</p>
+      {/* Last: a card taken stands under its buttons and moves nothing above. */}
+      <GainsBlock entry={entry} pack={pack} before={before} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
     </>
   );
 }
@@ -103,6 +111,8 @@ function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =>
       return `${t(`plan.entries.${entry.type}`)}${name ? `: ${name}` : ''}${entry.forToken ? ` · ${t('plan.entries.forToken')}` : ''}`;
     }
     case 'adjustment':
+      // In the agenda phase the entry is the agenda that was resolved.
+      if (entry.phase === 'agenda') return [t('plan.agenda.title'), agendaOf(entry, pack)?.name ?? entry.label].filter(Boolean).join(': ');
       if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemTitle(game, pack, entry.delta.units?.systemId ?? '', t)}`;
       return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
     case 'component':
@@ -129,10 +139,9 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, strategy, addAction,
+  game, pack, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
-  const updateEntry = useGame(s => s.updateEntry);
   const moveEntry = useGame(s => s.moveEntry);
   const removeEntry = useGame(s => s.removeEntry);
   const setEntryStatus = useGame(s => s.setEntryStatus);
@@ -209,12 +218,7 @@ export function EntryList({
                     {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
-                        <StatusFields entry={entry} game={game} pack={pack} state={state} warnings={list} />
-                      </div>
-                    )}
-                    {entry.id === openId && entry.type === 'component' && (
-                      <div className="entry-details">
-                        <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={note => updateEntry(entry.id, { note })} />
+                        <StatusFields entry={entry} game={game} pack={pack} state={state} before={stateBefore?.(entry.id)} warnings={list} />
                       </div>
                     )}
                   </li>
@@ -225,6 +229,8 @@ export function EntryList({
             {phase === 'status' && !entries.some(e => e.type === 'statusTokens') && (
               <button type="button" onClick={() => onStatusAdded?.(addStatusEntry(round.number))}>{t('plan.entries.statusTokens')}</button>
             )}
+            {/* Each agenda of the phase is an entry of its own: the button stays for the next one. */}
+            {phase === 'agenda' && onAddAgenda && <button type="button" onClick={onAddAgenda}>{t('plan.agenda.add')}</button>}
           </section>
         );
       })}

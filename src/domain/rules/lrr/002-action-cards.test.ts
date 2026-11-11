@@ -6,7 +6,10 @@ import { forecast, rulesGame, rulesPack } from '../kit';
 const pack = rulesPack();
 
 describe('LRR 2 Action Cards', () => {
-  test.todo('2.1: each player draws one action card in each status phase — not modelled: no hand of action cards');
+  test('2.1: the card drawn in the status phase joins the hand; which one it is, the player says', () => {
+    const status: Entry = { id: 's', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, gains: ['actionCard:bribery'] };
+    expect(forecast(rulesGame({ entries: [status] }), pack).state.holdings.hand).toEqual(['actionCard:bribery']);
+  });
   test.todo('2.2: Politics draws action cards with its primary and secondary — not modelled: Politics is shown only');
   test.todo('2.3: a drawn card comes from the top of the deck into the hand — not modelled: no deck');
   test.todo('2.4: a hand holds at most seven action cards, the rest is discarded — not modelled: no hand');

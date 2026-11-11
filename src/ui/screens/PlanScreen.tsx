@@ -56,6 +56,7 @@ import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
 import { leaveKey, useLeavingSources } from './plan/useLeavingSources';
+import { EditorPart } from '../primitives/EditorPart';
 import { PlayerChoice, PlayerDot, playerStyle, playerTag } from '../primitives/player';
 
 /** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
@@ -219,8 +220,16 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     } else if (type === 'adjustment') {
       update(state => ({ ...state, panel: { kind: type, entryId: id }, next: IDLE }));
     } else {
-      update(state => ({ ...state, panel: LIST, next: IDLE, openId: id }));
+      // A component action and a pass open as every action does: what the turn holds is in the editor, not in the row.
+      update(state => ({ ...state, panel: { kind: 'turn', entryId: id, fresh: true }, next: IDLE }));
     }
+  };
+
+  /** An agenda that was resolved: an entry of the agenda phase, opened to choose the card. */
+  const onAddAgenda = () => {
+    flight.stop();
+    const id = addEntry(round.number, newEntryBody('adjustment', round, game.playerCount), 'agenda');
+    update(state => ({ ...state, panel: { kind: 'adjustment', entryId: id }, next: IDLE }));
   };
 
   const owners = sliceOwners(game, plan);
@@ -457,18 +466,29 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   /** The acts of a turn entry, written back without an empty list. */
   const setActs = (entry: Entry, acts: Act[]) => updateEntry(entry.id, { acts: acts.length > 0 ? acts : undefined } as Partial<EntryBody>);
-  /** «В этом ходу» of a turn: each act opens as a step of this editor, and Back returns here. */
-  const turnActsOf = (entry: Entry) => (
-    <>
-      <TurnActs
-        game={gameAs(game, entry.owner)} pack={pack} entry={entry} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
-        onChange={acts => setActs(entry, acts)}
-        onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel }, next: IDLE }))}
-      />
-      {/* What the turn gained and gave stands with what else it holds. */}
-      <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
-    </>
-  );
+  /**
+   * The common part of every editor, the last one, under its own heading. A turn of the active player holds its acts,
+   * each opening as a step of this editor with Back returning here, and what it took and discarded. A secondary is
+   * played in another player's turn and a manual adjustment is no turn: a transaction is the active player's (94.1),
+   * so theirs holds only what was taken and discarded.
+   */
+  const commonOf = (entry: Entry) => {
+    const turn = entry.type === 'tactical' || entry.type === 'strategic' || entry.type === 'component' || entry.type === 'pass';
+    return (
+      <EditorPart title={t(entry.type === 'adjustment' ? 'plan.acts.titleEntry' : 'plan.acts.title')}>
+        {turn && (
+          <TurnActs
+            game={gameAs(game, entry.owner)} pack={pack} entry={entry} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
+            onChange={acts => setActs(entry, acts)}
+            // Back from a step returns to the editor as it stands, not as it was first opened.
+            onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel.kind === 'turn' ? { kind: 'turn', entryId: entry.id } : state.panel }, next: IDLE }))}
+          />
+        )}
+        {/* What the entry gained and gave stands with what else it holds. */}
+        <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      </EditorPart>
+    );
+  };
 
   /** The one slot of the panel: an editor, a step of one, or the choice of a system; the list stands there otherwise. */
   const editorIn = (slot: Exclude<Slot, { kind: 'list' }>) => {
@@ -513,7 +533,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onOpenFleet={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'fleet', for: { kind: 'tactical', id: edited.id } } })); }}
             onDone={leaveEditor}
             onRemove={() => removeEdited(edited.id)}
-            turnActs={edited.fromCard ? undefined : turnActsOf(edited)}
+            common={edited.fromCard ? undefined : commonOf(edited)}
           />
         );
       }
@@ -535,7 +555,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onOpenTactical={id => { drawers.closeRight(); update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: played.id }, next: IDLE })); }}
             onDone={toList}
             onRemove={() => removeEdited(played.id)}
-            turnActs={turnActsOf(played)}
+            common={commonOf(played)}
           />
         );
       }
@@ -544,7 +564,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <AdjustmentEditor
             key={adjusted.id} game={gameAs(game, adjusted.owner)} pack={pack} entry={adjusted} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
-            picking={adjustPick !== undefined}
+            picking={adjustPick !== undefined} laws={boards.board(adjusted.id).laws} common={commonOf(adjusted)}
             onPickSystem={() => { if (!adjustPick) drawers.closeRight(); update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
             onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
             onUpdate={patch => updateEntry(adjusted.id, patch)}
@@ -557,7 +577,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const turn = slot.entry;
         return (
           <TurnEditor
-            key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} turnActs={turnActsOf(turn)}
+            key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
             onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId })} onDone={toList} onRemove={() => removeEdited(turn.id)}
           />
         );
@@ -699,7 +719,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                   game={game} pack={pack} round={round}
                   stateBefore={id => boards.before(id)} warnings={forecast.warningsByEntry} state={forecast.state}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
-                  onStatusAdded={id => update(state => ({ ...state, openId: id }))}
+                  onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) flight.start(done.id, shownFilter); }}
                   strategy={<StrategyCards key={`${plan.id}:${round.number}`} expansions={game.expansions} playerCount={game.playerCount} round={round} />}
                   addAction={(

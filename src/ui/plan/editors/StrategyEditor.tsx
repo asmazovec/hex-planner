@@ -47,14 +47,18 @@ export interface StrategyEditorProps {
   onDone: () => void;
   /** The cross of the head: the card goes, with what it holds. */
   onRemove: () => void;
-  /** The blocks of «В этом ходу»: what the turn holds beside its action, the last part of the editor under its own heading. */
-  turnActs?: ReactNode;
+  /**
+   * «В этом ходу», the last part of the editor under its own heading: what the turn holds beside its action. A secondary
+   * is played in another player's turn, so its part holds only what was taken and discarded (94.1: a transaction is the
+   * active player's).
+   */
+  common?: ReactNode;
 }
 
 /** A strategy card played: first the card, then its primary or secondary; either stays open, and a switch starts the play over. */
 export function StrategyEditor({
   game, pack, round, entry, before, warnings, manualPayment, picking,
-  onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, turnActs,
+  onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, common,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
   const cards = strategyCards(game.expansions);
@@ -177,8 +181,7 @@ export function StrategyEditor({
         {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
         {cardBlocks}
       </EditorPart>
-      {/* A secondary is played in another player's turn: it holds no acts. */}
-      {primary && turnActs && <EditorPart title={t('plan.acts.title')}>{turnActs}</EditorPart>}
+      {common}
     </EditorFrame>
   );
 }
