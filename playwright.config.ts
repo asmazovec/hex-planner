@@ -1,7 +1,8 @@
 import { defineConfig } from '@playwright/test';
 
 // Port 5199 belongs to the dev server with the saved games; another port gives the tests their own browser database.
-const PORT = 5301;
+// E2E_PORT lets several checkouts run their tests at once, each on its own port.
+const PORT = Number(process.env.E2E_PORT ?? 5301);
 
 export default defineConfig({
   testDir: 'tests/e2e',
