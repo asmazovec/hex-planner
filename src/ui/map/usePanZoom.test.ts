@@ -295,3 +295,23 @@ test('with a frame drawer a gesture draws its frames there, and the view changes
   expect(result.current.view).toEqual(result.current.live());
   expect(result.current.view).toEqual(drawn.at(-1));
 });
+
+test('a step in screen pixels moves the view within the limits, with no stretch, and React learns it at rest', () => {
+  const onFrame = vi.fn();
+  const { result } = renderHook(() => usePanZoom(bounds, { current: null }, undefined, bounds, undefined, onFrame));
+  let moved = false;
+  act(() => { moved = result.current.panBy(-30, 10); });
+  expect(moved).toBe(true);
+  expect(result.current.live()).toEqual({ x: -30, y: 10, scale: 1 });
+  expect(onFrame).toHaveBeenLastCalledWith({ x: -30, y: 10, scale: 1 });
+  expect(result.current.view).toEqual({ x: 0, y: 0, scale: 1 });
+  // The limit on each axis is 50 + 50 - 100 / 3: the step stops there, it does not give way as a finger's drag does.
+  act(() => { moved = result.current.panBy(-500, 0); });
+  expect(moved).toBe(true);
+  expect(result.current.live().x).toBeCloseTo(-(100 - 100 / 3));
+  act(() => { moved = result.current.panBy(-500, 0); });
+  expect(moved).toBe(false);
+  act(() => result.current.rest());
+  expect(result.current.view).toEqual(result.current.live());
+  expect(frames).toHaveLength(0);
+});

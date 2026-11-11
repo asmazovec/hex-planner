@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatSlots, slotsFor } from '../../domain/mapBuilder';
 import { slotKeyOf } from '../../domain/newGame';
@@ -7,6 +7,7 @@ import type { DataPack, Game, GameState } from '../../domain/types';
 import { animates } from '../common/motion';
 import { RowIcon } from '../primitives/Icon';
 import { prepareSprites, tokenColours } from '../units/sprites';
+import type { MapPan } from './edgePan';
 import { hexToPixel, mapBounds, type Rect } from './geometry';
 import { RouteArrows, RouteDraftLine, type Arrow } from './RouteArrows';
 import { TileView, type Highlight } from './TileView';
@@ -41,6 +42,8 @@ export interface HexMapProps {
   animateOnly?: ReadonlySet<string> | null;
   /** What hangs over the edges of the map area, as a CSS selector: the map opens with no hex under it. By default the tabs of the drawers. */
   clearOf?: string;
+  /** What a route drawn near the edge of the map area needs to move the map: the area on screen and steps of the view. */
+  panRef?: Ref<MapPan>;
 }
 
 /** The map area on screen and what hangs over it, in pixels from its top left corner. */
@@ -114,7 +117,7 @@ const parseKey = (key: string): { q: number; r: number } => {
 };
 
 export function HexMap({
-  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, animateOnly = null, clearOf = '.drawer-rail',
+  game, state, pack, highlights, arrows, arrowPreview, focusRect, resetSignal = 0, overlay, onTileTap, onTilePointerDown, startsArrow, still = false, animateOnly = null, clearOf = '.drawer-rail', panRef,
 }: HexMapProps) {
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -175,7 +178,32 @@ export function HexMap({
     const text = transformOf(next, middle.current.x, middle.current.y);
     for (const group of [viewGroup, liftGroup, arrowGroup, overlayGroup]) group.current?.setAttribute('transform', text);
   }, []);
-  const { view, live, handlers, reset, focus } = usePanZoom(bounds, svgRef, undefined, mapRect, startsArrow, drawFrame);
+  const { view, live, handlers, reset, focus, panBy, rest } = usePanZoom(bounds, svgRef, undefined, mapRect, startsArrow, drawFrame);
+  // A route drawn near the edge moves the map under a resting finger: the line to the finger is told of each such frame.
+  const panFrames = useRef(new Set<() => void>());
+  const onPanned = useCallback((listener: () => void) => {
+    panFrames.current.add(listener);
+    return () => { panFrames.current.delete(listener); };
+  }, []);
+  useImperativeHandle(panRef, () => {
+    const onScreen = (element: Element): Rect => {
+      const { left, top, width, height } = element.getBoundingClientRect();
+      return { x: left, y: top, width, height };
+    };
+    return {
+      // Where things are now, not where they are laid out: a tab carried away by its open drawer hides nothing here.
+      area: () => ({
+        rect: wrapRef.current ? onScreen(wrapRef.current) : { x: 0, y: 0, width: 0, height: 0 },
+        tabs: [...document.querySelectorAll(clearOf)].flatMap(rail => [...rail.children]).map(onScreen).filter(tab => tab.width > 0 && tab.height > 0),
+      }),
+      by: (dx, dy) => {
+        const moved = panBy(dx, dy);
+        if (moved) panFrames.current.forEach(listener => listener());
+        return moved;
+      },
+      rest,
+    };
+  }, [clearOf, panBy, rest]);
   const focusKey = focusRect ? JSON.stringify(focusRect) : null;
   useEffect(() => { focus(focusKey === null ? null : JSON.parse(focusKey) as Rect); }, [focusKey, focus]);
   useEffect(() => { if (resetSignal > 0) reset(); }, [resetSignal, reset]);
@@ -261,7 +289,7 @@ export function HexMap({
     <svg className="hexmap-arrows" viewBox={viewBoxText} aria-hidden="true">
       <g ref={arrowGroup} transform={transform}>
         <RouteArrows arrows={arrows ?? NO_ARROWS} bounds={bounds} />
-        {arrowPreview && <RouteDraftLine draft={arrowPreview} />}
+        {arrowPreview && <RouteDraftLine draft={arrowPreview} onPanned={onPanned} />}
       </g>
     </svg>
     {overlay && (

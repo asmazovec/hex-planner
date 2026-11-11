@@ -283,9 +283,28 @@ export function usePanZoom(
   /** The view on screen now, ahead of `view` while a gesture or an approach draws its frames through `onFrame`. */
   const live = useCallback((): View => shown.current, []);
 
+  /**
+   * One frame of a movement that is no gesture of the map's own, such as a route drawn near its edge: the view moves by
+   * screen pixels and stops at the limit without stretching. False when the limit let nothing move. `rest` ends it.
+   */
+  const panBy = useCallback((dx: number, dy: number): boolean => {
+    stopAnimation();
+    const { k, viewport, map } = mapping();
+    const from = shown.current;
+    // An approach it interrupts ends where it is.
+    goal.current = from;
+    const next = clampView({ x: from.x + dx * k, y: from.y + dy * k, scale: from.scale }, viewport, map);
+    if (next.x === from.x && next.y === from.y) return false;
+    goal.current = next;
+    show(next);
+    return true;
+  }, [mapping, show, stopAnimation]);
+
   return {
     view,
     live,
+    panBy,
+    rest: commit,
     focus,
     reset,
     handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel, onClickCapture },

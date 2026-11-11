@@ -388,6 +388,115 @@ test('a route is drawn from a system without ships, and left with nothing taken 
   await expect(rows).toHaveCount(1);
 });
 
+/** A game of the Argent Flight with the map pasted and a tactical action whose active system is Hope's End. */
+async function startTactical(page: Page): Promise<void> {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'My faction', exact: true }).click();
+  await page.getByRole('button', { name: 'The Argent Flight' }).click();
+  await page.getByRole('button', { name: 'Start game' }).click();
+  await pasteMap(page);
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  await page.getByRole('button', { name: 'Add action' }).click();
+  await page.getByRole('button', { name: 'Tactical action' }).click();
+  await tile(page, 66).click();
+}
+
+const pathSlots = (page: Page) => page.evaluate(() => [...document.querySelectorAll<SVGElement>('.tile-path[data-slot]')].map(el => el.dataset.slot ?? ''));
+
+test('a finger drawing a route near the edge of the map area moves the map, and the systems that come under it join the route', async ({ page }) => {
+  await startTactical(page);
+  const area = (await page.locator('.hexmap-wrap').boundingBox())!;
+  const view = page.locator('svg.hexmap > g').first();
+  const transform = () => view.getAttribute('transform');
+  const whenStill = async () => {
+    let last: string | null = '';
+    await expect.poll(async () => {
+      const now = await transform();
+      const still = now === last;
+      last = now;
+      return still;
+    }, { intervals: [150] }).toBe(true);
+    return last;
+  };
+
+  // The map is brought nearer, so that part of it lies past the edges of its area.
+  await page.mouse.move(area.x + area.width / 2, area.y + area.height / 2);
+  await page.mouse.wheel(0, -600);
+  await whenStill();
+  const before = await whenStill();
+  const edge = { x: area.x + area.width - 8, y: area.y + area.height / 2 - 20 };
+  // What cannot be reached before the map moves: every system that lies to the right of the finger's place at the edge.
+  const beyond = await page.evaluate(x => [...document.querySelectorAll<SVGElement>('svg.hexmap [data-slot]')]
+    .filter(el => el.getBoundingClientRect().left > x).map(el => el.dataset.slot ?? ''), edge.x);
+  expect(beyond.length).toBeGreaterThan(0);
+
+  // In the middle of the area the finger draws and the map stays.
+  const start = { x: area.x + area.width / 2, y: edge.y };
+  await page.mouse.move(start.x, start.y);
+  await page.mouse.down();
+  await page.mouse.move(start.x + 80, start.y, { steps: 6 });
+  expect(await transform()).toBe(before);
+
+  // At the edge the finger rests and the map goes on under it, up to the limit of the map.
+  await page.mouse.move(edge.x, edge.y, { steps: 12 });
+  await expect.poll(transform).not.toBe(before);
+  const moved = await whenStill();
+  expect(moved).not.toBe(before);
+  const path = await pathSlots(page);
+  expect(path.filter(slot => beyond.includes(slot)).length).toBeGreaterThan(0);
+
+  // Away from the edge the map stops at once; the finger lifted, the route waits for more.
+  await page.mouse.move(start.x, start.y, { steps: 6 });
+  const stopped = await transform();
+  await page.waitForTimeout(200);
+  expect(await transform()).toBe(stopped);
+  await page.mouse.up();
+  await expect(page.getByRole('status')).toContainText('finish on the active system');
+});
+
+test('a finger going back along the route it draws erases it hex by hex, and forward draws it again', async ({ page }) => {
+  await startTactical(page);
+  const points = [];
+  for (const n of [58, 110, 79, 66]) points.push(await centreWhenStill(tile(page, n)));
+  const [home, horizon, asteroids, hope] = points;
+  const hint = page.getByRole('status');
+
+  await page.mouse.move(home.x, home.y);
+  await page.mouse.down();
+  await page.mouse.move(horizon.x, horizon.y, { steps: 8 });
+  await expect(tile(page, 110)).toHaveClass(/tile-path/);
+  const two = await hint.textContent();
+  await page.mouse.move(asteroids.x, asteroids.y, { steps: 8 });
+  await expect(tile(page, 79)).toHaveClass(/tile-path/);
+  expect(await pathSlots(page)).toHaveLength(3);
+  const three = await hint.textContent();
+  expect(three).not.toBe(two);
+
+  // Back onto the system the finger came from: the last one leaves the route, and the hint counts again.
+  await page.mouse.move(horizon.x, horizon.y, { steps: 8 });
+  await expect(tile(page, 79)).not.toHaveClass(/tile-path/);
+  expect(await pathSlots(page)).toHaveLength(2);
+  await expect(hint).toHaveText(two ?? '');
+  // Further back, down to the start, which stays.
+  await page.mouse.move(home.x, home.y, { steps: 8 });
+  await expect(tile(page, 110)).not.toHaveClass(/tile-path/);
+  expect(await pathSlots(page)).toHaveLength(1);
+
+  // Forward again draws the same route, and it ends on the active system as any other.
+  await page.mouse.move(horizon.x, horizon.y, { steps: 8 });
+  await page.mouse.move(asteroids.x, asteroids.y, { steps: 8 });
+  await expect(tile(page, 79)).toHaveClass(/tile-path/);
+  expect(await pathSlots(page)).toHaveLength(3);
+  await expect(hint).toHaveText(three ?? '');
+  await page.mouse.move(hope.x, hope.y, { steps: 8 });
+  await page.mouse.up();
+  await expect(page.getByText(`Flight ${HOME} → ${HOPE}`)).toBeVisible();
+  await page.getByRole('button', { name: 'Take one Carrier' }).click();
+  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('button', { name: `${HOME} via ${HORIZON}, ${ASTEROIDS}`, exact: false })).toBeVisible();
+});
+
 test('a link makes a named game, opens it again, and asks when it disagrees with the save', async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
   const link = `/?name=Friday&exp=pok&factions=argent,sol,hacan&map=${MAP_STRING.split(' ').slice(0, 6).join('+')}`;

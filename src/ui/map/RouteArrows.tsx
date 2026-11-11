@@ -13,11 +13,20 @@ export interface Arrow extends RouteArrow { key: string; number: number; tone: '
 
 const tone = (a: Arrow): string => `route-${a.tone}${a.leaving ? ' route-leaving' : ''}`;
 
-/** A line from the last hex to the pointer. It follows the pointer by itself, so a move renders nothing. */
-function PreviewLine({ start, clientX, clientY, reverse, outline }: { start: Point; clientX: number; clientY: number; reverse?: boolean; outline?: boolean }) {
+/** Tells a listener of every frame in which the map moved under a resting pointer; gives back the way to stop. */
+export type PanFrames = (listener: () => void) => () => void;
+
+/**
+ * A line from the last hex to the pointer. It follows the pointer by itself, so a move renders nothing, and stays under
+ * a resting pointer while the map moves (`onPanned`).
+ */
+function PreviewLine({ start, clientX, clientY, reverse, outline, onPanned }: { start: Point; clientX: number; clientY: number; reverse?: boolean; outline?: boolean; onPanned?: PanFrames }) {
   const ref = useRef<SVGLineElement>(null);
   useLayoutEffect(() => {
+    const at = { x: clientX, y: clientY };
     const place = (x: number, y: number) => {
+      at.x = x;
+      at.y = y;
       const line = ref.current;
       const matrix = line?.getScreenCTM?.();
       if (!line || !matrix) return;
@@ -28,8 +37,12 @@ function PreviewLine({ start, clientX, clientY, reverse, outline }: { start: Poi
     place(clientX, clientY);
     const onMove = (e: globalThis.PointerEvent) => place(e.clientX, e.clientY);
     window.addEventListener('pointermove', onMove);
-    return () => window.removeEventListener('pointermove', onMove);
-  }, [clientX, clientY]);
+    const unsubscribe = onPanned?.(() => place(at.x, at.y));
+    return () => {
+      window.removeEventListener('pointermove', onMove);
+      unsubscribe?.();
+    };
+  }, [clientX, clientY, onPanned]);
   return <line ref={ref} x1={start.x} y1={start.y} x2={start.x} y2={start.y} className={outline ? 'route-casing' : 'route-pull'} markerEnd={reverse ? undefined : `url(#${outline ? 'arrow-head-casing' : 'arrow-head'})`} />;
 }
 
@@ -99,7 +112,7 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
 });
 
 /** The route under way: its line so far and, while a finger pulls it, the line to the pointer. */
-export function RouteDraftLine({ draft }: { draft: RouteDraftView }) {
+export function RouteDraftLine({ draft, onPanned }: { draft: RouteDraftView; onPanned?: PanFrames }) {
   const points = draft.path.map(slotToPixel);
   const curve = curveThrough(points);
   const pulled = draft.clientX !== undefined && draft.clientY !== undefined
@@ -109,11 +122,11 @@ export function RouteDraftLine({ draft }: { draft: RouteDraftView }) {
     <g className="routes route route-active route-draft">
       <g className="route-casings">
         {points.length > 1 && <path d={svgPath(curve)} className="route-casing" />}
-        {pulled && <PreviewLine {...pulled} outline />}
+        {pulled && <PreviewLine {...pulled} outline onPanned={onPanned} />}
       </g>
       {points.length > 1 && <path d={svgPath(curve)} className="route-line" />}
       {points.slice(0, -1).map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={4} className="route-dot" />)}
-      {pulled && <PreviewLine {...pulled} />}
+      {pulled && <PreviewLine {...pulled} onPanned={onPanned} />}
     </g>
   );
 }

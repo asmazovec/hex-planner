@@ -39,12 +39,24 @@ export function areAdjacent(a: string, b: string): boolean {
 
 export type Adjacency = (a: string, b: string) => boolean;
 
-/** One step of a drawn route: the previous hex removes the last step, a hex already on it changes nothing, any other is added. */
-export function extendPath(path: string[], slot: string): string[] {
-  if (path.at(-1) === slot) return path;
-  if (path.at(-2) === slot) return path.slice(0, -1);
-  return path.includes(slot) ? path : [...path, slot];
+/** What the hex now under a stroke does to the path: `path` is the same array when nothing changes. */
+export interface StrokeStep { kind: 'add' | 'remove' | 'none'; path: string[] }
+
+/**
+ * The next hex under a finger drawing a route. The hex the stroke came from, the one before the last, takes the last
+ * one away: a finger going back along its route erases it hex by hex, down to the first, which stays. Back is that one
+ * hex only, wherever else the path passes it. The hex under the finger already changes nothing, and neither does one
+ * passed earlier: a stroke does not cross itself. Any other hex is added, next to the last one or not: a hex that is
+ * no neighbour is a jump, a step like any other.
+ */
+export function strokeStep(path: string[], slot: string): StrokeStep {
+  if (path.at(-1) === slot) return { kind: 'none', path };
+  if (path.at(-2) === slot) return { kind: 'remove', path: path.slice(0, -1) };
+  return path.includes(slot) ? { kind: 'none', path } : { kind: 'add', path: [...path, slot] };
 }
+
+/** The path after one step of a stroke. */
+export const extendPath = (path: string[], slot: string): string[] => strokeStep(path, slot).path;
 
 export interface RouteDraft { from: string; via: string[] }
 
