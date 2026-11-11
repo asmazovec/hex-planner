@@ -22,8 +22,8 @@ export type Panel =
   | { kind: 'tactical'; entryId: string | null; pickerFrom: string | null; fromCard?: string; card?: string }
   | { kind: 'card'; entryId: string }
   | { kind: 'adjustment'; entryId: string }
-  /** A component action or a pass: the turn's acts, and the note of a component action. */
-  | { kind: 'turn'; entryId: string }
+  /** A component action or a pass: the turn's acts, and the note of a component action. `fresh`: just added from the menu. */
+  | { kind: 'turn'; entryId: string; fresh?: boolean }
   /** One act of a turn as a step of its editor; Back returns to `back`. */
   | { kind: 'act'; entryId: string; index: number; back: Panel };
 

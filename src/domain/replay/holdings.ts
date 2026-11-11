@@ -24,8 +24,9 @@ const removeOne = (list: string[], id: string): void => {
 
 /**
  * A player gains a component: its kind decides where it lies. An action card joins the hand as one more copy, the rest
- * is held once. An agenda becomes a law of the whole game (`shared` is my state). An exploration card is not held:
- * an attachment needs its planet, which gains do not name.
+ * is held once. An agenda that is a law becomes a law of the whole game (`shared` is my state, 7.3); a directive is
+ * resolved and discarded (7.8), so it leaves nothing. An exploration card is not held: an attachment needs its planet,
+ * which gains do not name.
  */
 export function gain(own: GameState, shared: GameState, def: ComponentDef): void {
   const holdings = own.holdings;
@@ -34,7 +35,7 @@ export function gain(own: GameState, shared: GameState, def: ComponentDef): void
     if (field === 'hand' || !holdings[field].includes(def.id)) holdings[field].push(def.id);
   } else if (def.kind === 'leader') holdings.leaders[def.id] = 'unlocked';
   else if (def.kind === 'breakthrough') holdings.breakthrough = 'held';
-  else if (def.kind === 'agenda') {
+  else if (def.kind === 'agenda' && def.detail?.type !== 'directive') {
     const laws = (shared.laws ??= []);
     if (!laws.includes(def.id)) laws.push(def.id);
   }

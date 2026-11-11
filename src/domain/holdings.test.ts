@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { componentById, noteAddress, noteBase, noteId, textOf } from './components';
-import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, noteText, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
+import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, notesOfFirst, noteText, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { addPlayer, draftWithExpansions, gameAs, removePlayer, setPlayerFaction } from './players';
 import { project, readyToPlay } from './project';
@@ -126,13 +126,13 @@ describe('holdings derived from entries', () => {
     expect(state.holdings.technologies).toEqual(['technology:gd']);
   });
 
-  test('an agenda gained becomes a law of the whole game, whoever\'s entry brought it', () => {
-    const mine = change({ gains: ['agenda:arms_reduction'] });
+  test('a law gained stays in play as a law of the whole game, whoever\'s entry brought it', () => {
+    const mine = change({ gains: ['agenda:conventions'] });
     const theirs = change({ gains: ['agenda:revolution'] });
     const { state } = forecast(rulesGame({ entries: [mine, { ...theirs, owner: RIVAL.id }], game: withRival }), pack);
-    expect(state.laws).toEqual(['agenda:arms_reduction', 'agenda:revolution']);
+    expect(state.laws).toEqual(['agenda:conventions', 'agenda:revolution']);
     expect(state.rivals?.[RIVAL.id].laws).toBeUndefined();
-    const repealed = forecast(rulesGame({ entries: [mine, change({ spends: ['agenda:arms_reduction'] })] }), pack).state;
+    const repealed = forecast(rulesGame({ entries: [mine, change({ spends: ['agenda:conventions'] })] }), pack).state;
     expect(repealed.laws).toEqual([]);
   });
 
@@ -380,6 +380,13 @@ describe('a promissory note is the card of one player', () => {
     const held = holdingsOf({ promissory: [`${TA}@me`, `${TA}@o1`, 'promissory:convoys@o1'], hand: ['actionCard:sabo1'] });
     expect(tradable(held)).toEqual([`${TA}@me`, `${TA}@o1`, 'promissory:convoys@o1', 'actionCard:sabo1']);
     expect(tradable(held, [`${TA}@o1`])).toEqual([`${TA}@me`, 'promissory:convoys@o1', 'actionCard:sabo1']);
+  });
+
+  test('a transaction offers first the notes of the player they go back to, the rest in the order they were', () => {
+    const offer = ['promissory:convoys@o1', `${TA}@me`, 'actionCard:sabo1', `${TA}@o1`, 'promissory:sftt@me'];
+    expect(notesOfFirst(offer, 'me')).toEqual([`${TA}@me`, 'promissory:sftt@me', 'promissory:convoys@o1', 'actionCard:sabo1', `${TA}@o1`]);
+    expect(notesOfFirst(offer, 'o1')).toEqual(['promissory:convoys@o1', `${TA}@o1`, `${TA}@me`, 'actionCard:sabo1', 'promissory:sftt@me']);
+    expect(notesOfFirst(offer, 'o2')).toEqual(offer);
   });
 
   test('a note held is ready to play under its own id', () => {

@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { opponentName } from '../players/names';
+import { opponentShortName } from '../players/names';
 import { systemTitle } from '../map/systemName';
 import { componentById } from '../../domain/components';
 import type { Act, DataPack, Entry, Game, Goods, Round } from '../../domain/types';
@@ -28,7 +28,7 @@ export function expeditionText(part: { sliceId: string | null; payment: { planet
 export const actLine = (act: Act, game: Game, pack: DataPack, t: T): string => (act.kind === 'expedition'
   ? t('plan.acts.expedition', { brief: expeditionText(act, pack, t) })
   : t('plan.acts.transaction', {
-    name: act.with === 'me' ? t('plan.acts.me') : opponentName(game, pack, act.with, t),
+    name: act.with === 'me' ? t('plan.acts.me') : opponentShortName(game, pack, act.with, t),
     give: goodsText(act.give, pack, t), get: goodsText(act.get, pack, t),
   }));
 

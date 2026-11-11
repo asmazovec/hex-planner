@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { nameTag } from '../players/names';
+import type { DataPack, Opponent } from '../../domain/types';
+import { nameTag, shortName } from '../players/names';
 
 /** The theme variable of a player's colour: `--player-1` to `--player-8`. */
 export const playerVar = (color: number): string => `var(--player-${color})`;
@@ -36,6 +37,15 @@ const FULL_NAMES_UP_TO = 4;
 
 /** The tag of a player on a crowded line: three letters of a faction, the seat number without one. */
 export const playerTag = (name: string, hasFaction: boolean, seat: number): string => (hasFaction ? nameTag(name) : String(seat));
+
+/**
+ * Players as the options of a choice, named as everywhere: the short name of the faction (`named` says what a player
+ * without a faction is called), the colour, the tag for a crowded line.
+ */
+export const playerOptions = (players: Opponent[], pack: DataPack, named: (id: string) => string): PlayerOption[] => players.map(o => {
+  const label = shortName(pack, o.faction, named(o.id));
+  return { value: o.id, label, color: o.color, tag: playerTag(label, Boolean(pack.factions[o.faction]), o.seat) };
+});
 
 export interface PlayerChoiceProps {
   /** The name of the group for the screen reader. */

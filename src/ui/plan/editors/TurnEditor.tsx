@@ -4,7 +4,6 @@ import { componentById } from '../../../domain/components';
 import { readyToPlay } from '../../../domain/project';
 import { playerState } from '../../../domain/stacks';
 import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
-import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
@@ -14,6 +13,7 @@ import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
 import { NoteField } from '../../primitives/NoteField';
 import { Section } from '../../primitives/Section';
+import { ComponentSlot } from '../blocks/ComponentSlot';
 
 /** What a component action can play. */
 const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary'];
@@ -26,8 +26,10 @@ export interface TurnEditorProps {
   board?: GameState;
   /** The turn's warnings: those its blocks do not show stand first, such as what an expedition lacks to pay. */
   warnings: Warning[];
-  /** The blocks of «В этом ходу», the common part of the turn under its own heading. */
-  turnActs: ReactNode;
+  /** «В этом ходу», the common part of the turn under its own heading: it stands last. */
+  common: ReactNode;
+  /** A component action just added from the menu: the choice of its component opens at once. */
+  pickFirst?: boolean;
   onNote: (note: string) => void;
   /** The component the action plays; none takes it off. */
   onComponent: (id: string | undefined) => void;
@@ -35,10 +37,13 @@ export interface TurnEditorProps {
   onRemove: () => void;
 }
 
-/** A component action or a pass as a turn: the component the action plays and its note in a part of their own, then what any turn holds; a pass has only that. */
-export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
+/**
+ * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
+ * in a part of their own, then what any turn holds; a pass has only that.
+ */
+export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
-  const [picking, setPicking] = useState(false);
+  const [picking, setPicking] = useState(() => Boolean(pickFirst) && entry.type === 'component' && entry.componentId === undefined);
   // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
   const ready = useMemo(() => {
     if (!board) return undefined;
@@ -57,17 +62,17 @@ export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNot
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
       {entry.type === 'component' && (
         <EditorPart title={t('editor.setup')}>
-          <Section
-            label={t('components.played')} title={t('components.played')} warnings={<WarningList warnings={ofComponent} game={game} pack={pack} />}
-            action={<div className="side-actions"><button type="button" onClick={() => setPicking(true)}>{t('components.pickPlayed')}</button></div>}
-          >
-            {played && <ComponentCard def={played} pack={pack} held {...noteMark(game, pack, played.id, t, entry.owner ?? 'me')} onRemove={() => onComponent(undefined)} />}
+          <Section label={t('components.played')} title={t('components.played')} warnings={<WarningList warnings={ofComponent} game={game} pack={pack} />}>
+            <ComponentSlot
+              label={t('components.pickPlayed')} def={played} pack={pack} card={played && noteMark(game, pack, played.id, t, entry.owner ?? 'me')}
+              onPick={() => setPicking(true)} onRemove={() => onComponent(undefined)}
+            />
           </Section>
           <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
         </EditorPart>
       )}
-      <EditorPart title={t('plan.acts.title')}>{turnActs}</EditorPart>
+      {common}
       {picking && (
         <ComponentPicker
           kinds={PLAYED_KINDS} player={entry.owner ?? 'me'} owned={ready} prefer="owned" onClose={() => setPicking(false)}

@@ -15,6 +15,7 @@ import { unitsText } from '../units/unitsText';
 import { UNIT_ORDER } from '../units/unitOrder';
 import { flightOf, hasUnits, sourcesOf, viaOf, type TacticalEntry } from '../../domain/tactical';
 import { systemTitle } from '../map/systemName';
+import { agendaOf } from './editors/AdjustmentEditor';
 
 function UnitPictures({ units, game, t }: { units: UnitCounts; game: Game; t: (key: string) => string }) {
   return (
@@ -158,6 +159,9 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
       break;
     case 'adjustment': {
       const { delta } = entry;
+      // The agenda an entry of the agenda phase names, and whether it stays in play.
+      const agenda = entry.phase === 'agenda' ? agendaOf(entry, pack) : undefined;
+      if (agenda) steps.push(<>{agenda.name}<small>{t(agenda.detail?.type === 'directive' ? 'plan.agenda.directive' : 'plan.agenda.law')}</small></>);
       if (entry.label) steps.push(entry.label);
       for (const field of ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const) {
         const value = delta[field] ?? 0;

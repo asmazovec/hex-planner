@@ -578,7 +578,18 @@
       "get": "Get",
       "addComponent": "+ Component",
       "byAbility": "by an ability",
-      "nothingToGive": "No promissory notes or action cards to hand over."
+      "nothingToGive": "No promissory notes or action cards to hand over.",
+      "titleEntry": "With this entry"
+    },
+    "agenda": {
+      "title": "Agenda",
+      "add": "+ Agenda",
+      "part": "What was resolved",
+      "card": "Agenda card",
+      "pick": "Choose the agenda",
+      "law": "law: stays in play",
+      "directive": "directive: does not stay in play",
+      "hint": "A law that passed stays in play and stands in the components, under «Objectives & laws». Enter below what the outcome changed."
     }
   },
   "expedition": {
@@ -846,7 +857,10 @@
       "spend": "+ Discarded",
       "gained": "taken",
       "spent": "discarded",
-      "nothing": "Nothing to discard"
+      "nothing": "Nothing to discard",
+      "lead": {
+        "actionCard": "+ Action card"
+      }
     },
     "state": {
       "locked": "locked",
@@ -887,6 +901,7 @@
       "mech": "Mech",
       "legendary": "Legendary planet"
     },
-    "hints": "Reminders for this step"
+    "hints": "Reminders for this step",
+    "change": "Change"
   }
 }

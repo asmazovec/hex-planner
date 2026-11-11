@@ -1,5 +1,8 @@
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { componentById } from '../../../domain/components';
 import type { AdjustmentDelta, DataPack, Entry, Game, UnitCounts, Warning } from '../../../domain/types';
+import { ComponentPicker } from '../../components/ComponentPicker';
 import { NoteField } from '../../primitives/NoteField';
 import { HexRemove } from '../../primitives/Icon';
 import { Stepper } from '../../primitives/Stepper';
@@ -9,9 +12,15 @@ import { WarningList } from '../../feedback/WarningText';
 import { unitsText } from '../../units/unitsText';
 import { MapPickButton } from '../../primitives/MapPickButton';
 import { EditorFrame } from '../../primitives/EditorFrame';
+import { EditorPart } from '../../primitives/EditorPart';
 import { Section } from '../../primitives/Section';
+import { ComponentSlot } from '../blocks/ComponentSlot';
 
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
+
+/** The agenda an entry of the agenda phase names, among what it gains. */
+export const agendaOf = (entry: Pick<Entry, 'gains'>, pack: DataPack) =>
+  (entry.gains ?? []).flatMap(id => componentById(pack, id) ?? []).find(def => def.kind === 'agenda');
 
 export interface AdjustmentEditorProps {
   game: Game;
@@ -20,18 +29,27 @@ export interface AdjustmentEditorProps {
   warnings: Warning[];
   /** The next tap on the map chooses the system. */
   picking: boolean;
+  /** The laws in play just before the entry: the choice of an agenda puts them last. */
+  laws?: string[];
+  /** The common part of every editor, under its own heading: what the entry takes and discards. It stands last. */
+  common?: ReactNode;
   onPickSystem: () => void;
   /** Opens the big hex of the system, where its units change. */
   onOpenHex: (slot: string) => void;
-  onUpdate: (patch: { label?: string; delta?: AdjustmentDelta }) => void;
+  onUpdate: (patch: { label?: string; delta?: AdjustmentDelta; gains?: string[] }) => void;
   onDone: () => void;
   /** The cross of the head: the adjustment goes. */
   onRemove: () => void;
 }
 
-/** A manual adjustment on one screen: its label, the numbers it changes, and the system whose units it changes in the big hex. */
-export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
+/**
+ * A manual adjustment on one screen: its label, the numbers it changes, and the system whose units it changes in the
+ * big hex. In the agenda phase it is an agenda that was resolved: the card stands first, and a law among them stays in
+ * play (7.3), while a directive leaves nothing (7.8); what the outcome changed is entered by the same numbers.
+ */
+export function AdjustmentEditor({ game, pack, entry, warnings, picking, laws, common, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
   const { t } = useTranslation();
+  const [choosing, setChoosing] = useState(false);
   const { delta } = entry;
   const setDelta = (patch: Partial<AdjustmentDelta>) => onUpdate({ delta: { ...delta, ...patch } });
   const systemId = delta.units?.systemId;
@@ -44,35 +62,65 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, onPickS
   const placer = placeWarnings(warnings);
   const systemWarnings = [...placer.at('units'), ...placer.at('system')];
 
+  const ofAgenda = entry.phase === 'agenda';
+  const agenda = ofAgenda ? agendaOf(entry, pack) : undefined;
+  const inPlay = useMemo(() => new Set(laws), [laws]);
+  /** The entry names one agenda: another takes its place, and the rest of what the entry gains stays. */
+  const setAgenda = (id: string | undefined) => {
+    const rest = (entry.gains ?? []).filter(other => componentById(pack, other)?.kind !== 'agenda');
+    const next = [...rest, ...(id ? [id] : [])];
+    onUpdate({ gains: next.length > 0 ? next : undefined });
+  };
+
   return (
-    <EditorFrame title={t('plan.menu.adjustment')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
+    <EditorFrame title={t(ofAgenda ? 'plan.agenda.title' : 'plan.menu.adjustment')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
 
-      <Section>
-        <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
-      </Section>
+      <EditorPart title={t(ofAgenda ? 'plan.agenda.part' : 'editor.setup')}>
+        {ofAgenda && (
+          <Section label={t('plan.agenda.card')}>
+            <ComponentSlot
+              label={t('plan.agenda.pick')} def={agenda} pack={pack}
+              card={agenda && { note: t(agenda.detail?.type === 'directive' ? 'plan.agenda.directive' : 'plan.agenda.law') }}
+              onPick={() => setChoosing(true)} onRemove={() => setAgenda(undefined)}
+            />
+            <span className="muted">{t('plan.agenda.hint')}</span>
+          </Section>
+        )}
 
-      <Section>
-        {DELTA_FIELDS.map(field => (
-          <Stepper key={field} name={t(`plan.summary.${field}`)} value={delta[field] ?? 0} onChange={value => setDelta({ [field]: value })} />
-        ))}
-      </Section>
+        <Section>
+          <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
+        </Section>
 
-      <Section label={t('plan.entries.system')} title={t('plan.entries.system')} warnings={<WarningList warnings={systemWarnings} game={game} pack={pack} />}>
-        {systemId
-          ? (
-            <div className="source-row in-card">
-              <button type="button" className="source-button" onClick={() => onOpenHex(systemId)}>
-                {systemTitle(game, pack, systemId, t)}
-                {changes.map(line => <small key={line}>{line}</small>)}
-                {changes.length === 0 && <small>{t('plan.entries.changeUnits')}</small>}
-              </button>
-              <HexRemove label={t('plan.entries.clearSystem')} onClick={() => setDelta({ units: undefined, ground: undefined })} />
-            </div>
-          )
-          : <MapPickButton active={picking} onToggle={onPickSystem}>{t('plan.entries.pickSystem')}</MapPickButton>}
-      </Section>
+        <Section>
+          {DELTA_FIELDS.map(field => (
+            <Stepper key={field} name={t(`plan.summary.${field}`)} value={delta[field] ?? 0} onChange={value => setDelta({ [field]: value })} />
+          ))}
+        </Section>
+
+        <Section label={t('plan.entries.system')} title={t('plan.entries.system')} warnings={<WarningList warnings={systemWarnings} game={game} pack={pack} />}>
+          {systemId
+            ? (
+              <div className="source-row in-card">
+                <button type="button" className="source-button" onClick={() => onOpenHex(systemId)}>
+                  {systemTitle(game, pack, systemId, t)}
+                  {changes.map(line => <small key={line}>{line}</small>)}
+                  {changes.length === 0 && <small>{t('plan.entries.changeUnits')}</small>}
+                </button>
+                <HexRemove label={t('plan.entries.clearSystem')} onClick={() => setDelta({ units: undefined, ground: undefined })} />
+              </div>
+            )
+            : <MapPickButton active={picking} onToggle={onPickSystem}>{t('plan.entries.pickSystem')}</MapPickButton>}
+        </Section>
+      </EditorPart>
+      {common}
+      {choosing && (
+        <ComponentPicker
+          kinds={['agenda']} player={entry.owner ?? 'me'} owned={inPlay} prefer="new" onClose={() => setChoosing(false)}
+          onPick={id => { setAgenda(id); setChoosing(false); }}
+        />
+      )}
     </EditorFrame>
   );
 }
