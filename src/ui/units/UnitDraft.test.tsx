@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import type { TokenKind } from '../../domain/hexLayout';
 import { setLanguage } from '../../i18n';
-import { UnitDraft, type UnitDraftProps, type UnitDraftRow } from './UnitDraft';
+import { layoutFor, UnitDraft, type UnitDraftProps, type UnitDraftRow } from './UnitDraft';
 
 afterEach(cleanup);
 beforeEach(() => setLanguage('en'));
@@ -155,4 +155,82 @@ test('the zones and the controls are named for a screen reader; the arrow and th
   expect(back('Beta', 'Mech')).toHaveAttribute('title', 'Return Mech');
   await userEvent.click(back('Beta', 'Mech')!);
   expect(onReturn).toHaveBeenCalledWith('Beta', 'mech');
+});
+
+const SHIPS: TokenKind[] = ['fighter', 'destroyer', 'cruiser', 'carrier', 'dreadnought', 'flagship', 'warsun'];
+const fleetRow = (extra: Partial<UnitDraftRow> = {}): UnitDraftRow => ({
+  id: 'space', label: 'Space', place: <span>Space</span>, ...extra,
+  items: SHIPS.map(kind => ({ kind, picked: kind === 'cruiser' ? 2 : 0, takeLabel: `Take ${kind}`, returnLabel: `Return ${kind}` })),
+});
+const draftOf = (rows: UnitDraftRow[], layout?: UnitDraftProps['layout']) => (
+  <UnitDraft rows={rows} layout={layout} colour="#7fb2ff" stockLabel="Stock" pickedLabel="Picked" onTake={vi.fn()} onReturn={vi.fn()} />
+);
+/** The children of a row by their class, in the order they stand in. */
+const parts = (name: string) => [...screen.getByRole('group', { name }).children].map(el => el.className);
+
+test('the layout is horizontal unless asked: the place, the buttons, the arrow with the tray, and what stands at the end', () => {
+  render(draftOf([fleetRow({ aside: <em className="aside">there</em> })]));
+  expect(screen.getByRole('group', { name: 'Space' })).toHaveClass('draft-row', 'draft-row-horizontal');
+  expect(parts('Space')).toEqual(['draft-place', 'draft-stock', 'draft-picked', 'aside']);
+  expect(document.querySelectorAll('.draft-arrow')).toHaveLength(1);
+  cleanup();
+  render(draftOf([fleetRow()], 'horizontal'));
+  expect(screen.getByRole('group', { name: 'Space' })).toHaveClass('draft-row-horizontal');
+});
+
+test('the vertical layout puts the place with what stands beside it on a line of its own, the buttons under it and the tray under them, a cell per kind in both and in one order', () => {
+  render(draftOf([fleetRow({ aside: <em className="aside">there</em> })], 'vertical'));
+  const space = screen.getByRole('group', { name: 'Space' });
+  expect(space).toHaveClass('draft-row', 'draft-row-vertical');
+  expect(space).not.toHaveClass('draft-row-horizontal');
+  expect(parts('Space')).toEqual(['draft-head', 'draft-stock', 'draft-picked']);
+  expect([...space.querySelector('.draft-head')!.children].map(el => el.className)).toEqual(['draft-place', 'aside']);
+  // No arrow between two lines: the tray is the line under the buttons.
+  expect(space.querySelector('.draft-arrow')).toBeNull();
+  const stock = [...within(space).getByRole('group', { name: 'Stock' }).children];
+  const tray = [...within(space).getByRole('group', { name: 'Picked' }).children];
+  expect(stock.map(el => el.getAttribute('aria-label'))).toEqual(SHIPS.map(kind => `Take ${kind}`));
+  expect(tray.map(el => el.className)).toEqual(SHIPS.map(kind => (kind === 'cruiser' ? 'draft-chip' : 'draft-slot')));
+  // Both lines are counted in the same columns.
+  expect(space.style.getPropertyValue('--kinds')).toBe(String(SHIPS.length));
+});
+
+test('a row may ask for its own layout, apart from the draft it stands in', () => {
+  render(draftOf([fleetRow({ layout: 'vertical' }), rowsOf({})[0], { ...rowsOf({})[1], layout: 'horizontal' }], 'horizontal'));
+  expect(screen.getByRole('group', { name: 'Space' })).toHaveClass('draft-row-vertical');
+  expect(screen.getByRole('group', { name: 'Alpha' })).toHaveClass('draft-row-horizontal');
+  expect(screen.getByRole('group', { name: 'Beta' })).toHaveClass('draft-row-horizontal');
+  cleanup();
+  render(draftOf([fleetRow({ layout: 'horizontal' }), rowsOf({})[0]], 'vertical'));
+  expect(screen.getByRole('group', { name: 'Space' })).toHaveClass('draft-row-horizontal');
+  expect(screen.getByRole('group', { name: 'Alpha' })).toHaveClass('draft-row-vertical');
+});
+
+test('a row with more kinds than a narrow panel holds beside their tray stands vertically', () => {
+  expect([1, 2, 3, 7].map(kinds => layoutFor(kinds))).toEqual(['horizontal', 'horizontal', 'vertical', 'vertical']);
+});
+
+test('taking in the vertical layout changes no place either', async () => {
+  function Fleet() {
+    const [picked, setPicked] = useState<Partial<Record<TokenKind, number>>>({});
+    return (
+      <UnitDraft
+        layout="vertical" colour="#7fb2ff" stockLabel="Stock" pickedLabel="Picked"
+        rows={[{ id: 'space', label: 'Space', items: SHIPS.map(kind => ({ kind, picked: picked[kind] ?? 0, left: 1 - (picked[kind] ?? 0), takeLabel: `Take ${kind}`, returnLabel: `Return ${kind}` })) }]}
+        onTake={(_, kind) => setPicked({ ...picked, [kind]: (picked[kind] ?? 0) + 1 })} onReturn={(_, kind) => setPicked({ ...picked, [kind]: (picked[kind] ?? 0) - 1 })}
+      />
+    );
+  }
+  render(<Fleet />);
+  const space = screen.getByRole('group', { name: 'Space' });
+  const order = () => [...within(space).getByRole('group', { name: 'Stock' }).children].map(el => el.getAttribute('aria-label'));
+  const before = order();
+  for (let i = 0; i < 2; i += 1) await userEvent.click(within(space).getByRole('button', { name: 'Take flagship' }));
+  expect(order()).toEqual(before);
+  // Without a place and with nothing beside it the row has no line above the buttons.
+  expect(parts('Space')).toEqual(['draft-stock', 'draft-picked']);
+  const tray = within(space).getByRole('group', { name: 'Picked' });
+  expect(tray.children).toHaveLength(SHIPS.length);
+  expect(tray.children[5]).toHaveTextContent('×2');
+  expect(within(space).getByRole('button', { name: 'Take flagship' })).toHaveClass('draft-take-over');
 });

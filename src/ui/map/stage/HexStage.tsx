@@ -156,7 +156,7 @@ export function HexStage(props: HexStageProps) {
                 </div>
               )}
               <UnitDraft
-                colour={colours[mine]} stockLabel={t('stage.fleetStock')} pickedLabel={t('stage.fleetRemoved')}
+                layout="vertical" colour={colours[mine]} stockLabel={t('stage.fleetStock')} pickedLabel={t('stage.fleetRemoved')}
                 rows={[{ id: 'fleet', label: t('draft.space'), place: <SpaceBadge label={t('draft.space')} />, items: stage.fleetItems }]}
                 onTake={(_, kind) => stage.removeShip(kind, 1)} onReturn={(_, kind) => stage.removeShip(kind, -1)}
               />
