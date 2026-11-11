@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
 import type { DataPack, Game, GameState, PlanetDef, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
-import { UnitDraft, type UnitDraftItem, type UnitDraftRow } from '../../units/UnitDraft';
+import { layoutFor, UnitDraft, type UnitDraftItem, type UnitDraftRow } from '../../units/UnitDraft';
 import { PlanetBadge, SpaceBadge } from '../../map/PlanetBadge';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { UNIT_ORDER } from '../../units/unitOrder';
@@ -119,7 +119,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
         {!pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
         {places.length === 0 && <span className="muted">{t('plan.picker.nothing')}</span>}
         {places.length > 0 && draft(places.map(place => ({
-          id: place.from, label: place.planet?.name ?? systemName(game, pack, slot), place: badge(place.planet), items: place.units.map(unit => item(place.from, unit)),
+          id: place.from, layout: layoutFor(place.units.length), label: place.planet?.name ?? systemName(game, pack, slot), place: badge(place.planet), items: place.units.map(unit => item(place.from, unit)),
         })), t('plan.picker.loaded'))}
       </li>
     );
@@ -136,7 +136,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       <div className="editor-section">
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.flying')}</SectionTitle>
         {offered.length > 0 && draft([{
-          id: source, label: t('draft.space'), place: badge(null), items: offered.map(unit => item(source, unit)),
+          id: source, layout: 'vertical', label: t('draft.space'), place: badge(null), items: offered.map(unit => item(source, unit)),
         }], t('plan.picker.flying'))}
         {noShipsHere && <p className="muted picker-note">{t('plan.picker.emptySource')}</p>}
       </div>

@@ -4,7 +4,7 @@ import type { DataPack, Game, GameState, Warning } from '../../../domain/types';
 import { SectionTitle } from '../../primitives/SectionTitle';
 import { WarningList } from '../../feedback/WarningText';
 import { PlanetBadge, SpaceBadge } from '../PlanetBadge';
-import { UnitDraft } from '../../units/UnitDraft';
+import { layoutFor, UnitDraft } from '../../units/UnitDraft';
 import type { MeterRow, ShopRow } from './useStage';
 
 export interface BuildPanelProps {
@@ -42,7 +42,7 @@ export function BuildPanel({ game, pack, state, production, construction, stock,
     <UnitDraft
       stock={stock} colour={colour} onTake={onTake} onReturn={onReturn} stockLabel={t('stage.stock')} pickedLabel={t('stage.boughtZone')}
       rows={rows.map(({ id, planet, items }) => ({
-        id, items, label: planet ? planet.name : t('draft.space'),
+        id, items, layout: layoutFor(items.length), label: planet ? planet.name : t('draft.space'),
         place: planet
           ? <PlanetBadge planet={planet} control={state.control[planet.id]} exhausted={state.exhausted.includes(planet.id)} compact />
           : <SpaceBadge label={t('draft.space')} />,
