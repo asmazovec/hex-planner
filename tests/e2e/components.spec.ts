@@ -71,3 +71,63 @@ test('the numbers of a unit card stand in one line, at either level and in eithe
     for (const box of await cards.evaluateAll(all => all.map(card => card.getBoundingClientRect().right))) expect(box).toBeLessThanOrEqual(sheet.x + sheet.width);
   }
 });
+
+test('the fan of tabs rides on the map-side edge of the open sheet, a change of the group moves no tab, and a card opens its details in place', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('ti4.lang', 'en'));
+  await page.goto(LINK.replace('Relics', 'Fan'));
+  await page.getByRole('button', { name: 'Plan & map' }).click();
+  const tabs = page.locator('.tab-fan > button');
+  const boxes = () => tabs.evaluateAll(all => all.map(tab => { const box = tab.getBoundingClientRect(); return [Math.round(box.left), Math.round(box.top), Math.round(box.right)]; }));
+  /** The tabs once they have come to rest: no transition nor animation of the page still runs. */
+  const settled = async () => {
+    await page.waitForTimeout(50);
+    await page.waitForFunction(() => document.getAnimations().every(animation => animation.playState !== 'running'));
+    return boxes();
+  };
+  const stack = (await settled())[0];
+  await openDrawer(page);
+  const open = await settled();
+  const sheet = (await page.locator('.drawer-under').boundingBox())!;
+  // Every tab hangs on the outer edge of the sheet, over its blue line, one under another; the open group is first, at the height of the stack.
+  for (const [, , right] of open) expect(Math.abs(right - (sheet.x + 2))).toBeLessThanOrEqual(1);
+  expect(open[0][1]).toBe(stack[1]);
+  expect(open[0][0]).toBeLessThan(stack[0] - 300);
+  expect(open.map(box => box[1])).toEqual([...open.map(box => box[1])].sort((a, b) => a - b));
+  // The sheet reaches the panel of the plan: no strip is kept for tabs at its base.
+  const map = (await page.locator('.plan-map').boundingBox())!;
+  expect(Math.round(sheet.x + sheet.width)).toBe(Math.round(map.x + map.width));
+
+  // Another group, and another: the same tabs at the same places.
+  for (const name of ['Cards', 'Relics', 'Technologies']) {
+    await groupTab(page, new RegExp(`^${name}`)).click();
+    await expect(groupTab(page, new RegExp(`^${name}`))).toHaveAttribute('aria-pressed', 'true');
+    expect(await boxes()).toEqual(open);
+  }
+
+  // A card opens its details inside its own frame, and its head stays under the finger.
+  const card = drawer(page).getByTestId('component-technology:amd');
+  const head = card.getByRole('button', { name: /^Antimass Deflectors/ });
+  await expect(head.getByRole('img', { name: 'Propulsion' })).toBeVisible();
+  const before = (await head.boundingBox())!;
+  const folded = (await card.boundingBox())!;
+  await head.click();
+  const text = card.locator('.component-text');
+  await expect(text).toBeVisible();
+  expect(await head.boundingBox()).toEqual(before);
+  const frame = (await card.boundingBox())!;
+  const details = (await text.boundingBox())!;
+  expect(frame.height).toBeGreaterThan(folded.height);
+  expect(details.y).toBeGreaterThanOrEqual(before.y + before.height - 1);
+  expect(details.x).toBeGreaterThanOrEqual(frame.x);
+  expect(details.y + details.height).toBeLessThanOrEqual(frame.y + frame.height);
+  expect(details.x + details.width).toBeLessThanOrEqual(frame.x + frame.width);
+  await head.click();
+  await expect(text).toHaveCount(0);
+  expect(await head.boundingBox()).toEqual(before);
+
+  // A press at the point of the open tab folds the fan and closes the sheet; the stack is back where it was.
+  const [left, top] = open[0];
+  await page.mouse.click(left + 17, top + 60);
+  await expect(drawer(page)).toHaveCount(0);
+  expect((await settled())[0]).toEqual(stack);
+});

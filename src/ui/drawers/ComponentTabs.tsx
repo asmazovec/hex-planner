@@ -22,8 +22,9 @@ const counted = (name: string, count: number): string => (count > 0 ? `${name} Â
 
 /**
  * The tabs of the components drawer. Folded, they lie as a stack: one tab over the shades of the others. A press fans
- * them out, a tab per group. The group that opens stands first, where the stack was, so a second press at the same
- * point folds the fan again; the rest follow in their usual order, and no tab leaves its place while the fan is open.
+ * them out, a tab per group, and the rail carries the fan out on the map-side edge of the sheet, as the tab of any
+ * drawer. The group that opens stands first, at the height of the stack, and a second press on it folds the fan again;
+ * the rest follow in their usual order, and no tab leaves its place while the fan is open.
  */
 export function ComponentTabs({ open, group, counts, total, onOpen, onGroup }: ComponentTabsProps) {
   const { t } = useTranslation();

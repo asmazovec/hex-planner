@@ -658,7 +658,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             </div>
           )}
           {/* The fan of the components stays at the edge of the map, beside its sheet; the tab of Thunder's Edge rides on the edge of its own. */}
-          <div className={`drawer-rail drawer-rail-right${rightOpen && !componentsOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
+          <div className={`drawer-rail drawer-rail-right${rightOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
             <ComponentTabs
               open={componentsOpen} group={componentGroup} counts={groupCounts(shownHoldings, shownState.laws)} total={heldCount}
               onOpen={openComponents} onGroup={pickComponentGroup}
@@ -671,7 +671,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               </DrawerTab>
             )}
           </div>
-          <Drawer open={rightOpen} className={`drawer-under${rightDrawer === 'components' ? ' drawer-fanned' : ''}`}>
+          <Drawer open={rightOpen} className="drawer-under">
             <div key={rightDrawer} className="drawer-swap">
               {rightDrawer === 'components'
                 ? <ComponentsPanel game={game} pack={pack} state={shownState} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />

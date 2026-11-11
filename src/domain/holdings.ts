@@ -120,6 +120,21 @@ export function noteCards(game: Pick<Game, 'faction' | 'opponents'>, pack: DataP
   return cards.length > 0 ? cards : [def];
 }
 
+/** A note of a player and the player who holds it now, `me` or an opponent id; nobody when it is out of the game. */
+export interface NotePlace { id: string; holder: string | undefined }
+
+/**
+ * Every note of a player (`me` or an opponent id), the generic ones and then those of their faction, each with who
+ * holds it now: `holdings` are those of every player, by `me` and opponent id. A note nobody holds was played and
+ * purged, or was taken off by hand.
+ */
+export function ownNotes(game: Pick<Game, 'faction' | 'opponents'>, pack: DataPack, owner: string, holdings: Record<string, Holdings | undefined>): NotePlace[] {
+  const faction = owner === 'me' ? game.faction : game.opponents.find(o => o.id === owner)?.faction ?? '';
+  const holders = Object.keys(holdings);
+  return [...genericNotes(pack, owner), ...factionNotes(pack, faction, owner)]
+    .map(id => ({ id, holder: holders.find(player => holdings[player]?.promissory.includes(id)) }));
+}
+
 /** A start without the notes of a player who left the game. */
 export function withoutNotesOf(start: StartHoldings, player: string): StartHoldings {
   const promissory = start.promissory?.filter(id => noteAddress(id) !== player);

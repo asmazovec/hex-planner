@@ -594,22 +594,30 @@ test('a tap in the plan panel folds the open entry and still lands on its target
 const fan = (page: Page) => page.locator('.tab-fan > button');
 const fanTab = (page: Page, name: RegExp) => page.locator('.tab-fan').getByRole('button', { name });
 
-test('the stack of the component tabs opens and folds at one point, on the group it was left on', async ({ page }) => {
+test('the stack of the component tabs opens at one point and folds at one point, the tab riding out on its sheet, on the group it was left on', async ({ page }) => {
   const stack = fan(page).first();
   const { point } = await centreOf(page, stack);
-  // Open, fold, open: the tab of the group that opens lies where the stack was.
-  for (const [press, name, open] of [[1, /^Technologies/, 1], [2, /^Components/, 0], [3, /^Technologies/, 1], [4, /^Components/, 0]] as const) {
-    await page.mouse.click(point.x, point.y);
-    await settle(page);
-    expect(await controlAt(page, point), `press ${press}`).toMatch(name);
-    await expect(drawer(page)).toHaveCount(open);
-  }
-  await pressRepeatedly(page, stack, 6);
-  await expect(drawer(page)).toHaveCount(0);
-
-  // Another group: the tabs of the fan stay where they are, and its own tab folds the fan.
+  // The fan rides out on the edge of its sheet, as the tab of any drawer: the tab of the open group lies at the height
+  // of the stack, moved out by the sheet. So the finger knows two points, and each press finds its control at its own.
   await page.mouse.click(point.x, point.y);
   await settle(page);
+  const { point: out, box } = await centreOf(page, stack);
+  expect(Math.round(out.y)).toBe(Math.round(point.y));
+  const sheet = (await page.locator('.drawer-under').boundingBox())!;
+  expect(Math.abs(box.x + box.width - (sheet.x + 2))).toBeLessThanOrEqual(1);
+  expect(await controlAt(page, out)).toMatch(/^Technologies/);
+  for (let round = 1; round <= 4; round += 1) {
+    await page.mouse.click(out.x, out.y);
+    await settle(page);
+    expect(await controlAt(page, point), `fold ${round}`).toMatch(/^Components/);
+    await expect(drawer(page)).toHaveCount(0);
+    await page.mouse.click(point.x, point.y);
+    await settle(page);
+    expect(await controlAt(page, out), `open ${round}`).toMatch(/^Technologies/);
+    await expect(drawer(page)).toHaveCount(1);
+  }
+
+  // Another group: the tabs of the fan stay where they are, and its own tab folds the fan.
   const places = () => fan(page).evaluateAll(tabs => tabs.map(tab => { const box = tab.getBoundingClientRect(); return [box.x, box.y, box.width, box.height].map(Math.round).join(' '); }));
   const before = await places();
   for (const group of [/^Relics/, /^Cards/, /^Objectives/]) {
@@ -625,13 +633,14 @@ test('the stack of the component tabs opens and folds at one point, on the group
   await fanTab(page, /^Objectives/).click();
   await expect(drawer(page)).toHaveCount(0);
 
-  // Left on Objectives: the stack opens on them, their tab under the finger, and folds again at the same point.
+  // Left on Objectives: the stack opens on them, their tab first, at the point the open tab always has, and folds there.
   await page.mouse.click(point.x, point.y);
   await settle(page);
-  expect(await controlAt(page, point)).toMatch(/^Objectives/);
+  expect(await controlAt(page, out)).toMatch(/^Objectives/);
   await expect(drawer(page).getByRole('group', { name: 'Objectives' })).toBeVisible();
-  await page.mouse.click(point.x, point.y);
-  await pressRepeatedly(page, stack, 4);
+  await page.mouse.click(out.x, out.y);
+  await settle(page);
+  expect(await controlAt(page, point)).toMatch(/^Components/);
   await expect(drawer(page)).toHaveCount(0);
 });
 

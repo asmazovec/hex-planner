@@ -49,22 +49,24 @@ const section = (name: string) => within(drawer()).getByRole('group', { name });
 const searchBox = () => within(drawer()).getByRole('searchbox', { name: 'Search components' });
 
 describe('the components drawer', () => {
-  test('lists my starting technologies by colour under Researched technologies, and the unit cards in a section of their own', async () => {
+  test('lists my technologies as one list, each with the mark of its type by its name, and the unit cards in a section of their own', async () => {
     useGame.getState().setStartHolding('me', 'technology:st', true);
+    useGame.getState().setStartHolding('me', 'technology:amd', true);
     useGame.getState().setStartHolding('me', 'technology:pds2', true);
     await openDrawer();
     const technologies = section('Researched technologies');
-    expect(within(technologies).getByText('Magen Defense Grid ΩΩ')).toBeVisible();
     expect(within(technologies).queryByTestId('upgrade-carrier')).toBeNull();
-    // A heading per colour, in the order of the technology deck; each technology under its own.
-    const colours = within(technologies).getAllByRole('group').map(group => group.getAttribute('aria-label'));
-    expect(colours).toEqual(['Cybernetic', 'Warfare']);
-    expect(within(within(technologies).getByRole('group', { name: 'Warfare' })).getByText('Magen Defense Grid ΩΩ')).toBeVisible();
-    expect(within(within(technologies).getByRole('group', { name: 'Cybernetic' })).getByText('Sarween Tools')).toBeVisible();
-    // An upgrade without a unit card here stands with the unit cards, not among the colours.
+    // No heading per colour: one list, by type in the order of the technology deck, then as researched.
+    expect(within(technologies).queryAllByRole('group')).toHaveLength(0);
+    expect(within(technologies).getAllByTestId(/^component-technology:/).map(card => within(card).getByRole('img').getAttribute('aria-label')))
+      .toEqual(['Propulsion', 'Cybernetic', 'Warfare']);
+    const card = within(technologies).getByTestId('component-technology:st');
+    expect(within(card).getByText('Sarween Tools')).toBeVisible();
+    expect(within(card).getByRole('img', { name: 'Cybernetic' })).toBeVisible();
+    // An upgrade without a unit card here stands with the unit cards, under the mark of an upgrade.
     const upgrades = section('Unit upgrades');
     expect(within(upgrades).getByTestId('upgrade-carrier')).toBeVisible();
-    expect(within(upgrades).getByTestId('component-technology:pds2')).toBeVisible();
+    expect(within(within(upgrades).getByTestId('component-technology:pds2')).getByRole('img', { name: 'Unit upgrade' })).toBeVisible();
     expect(within(technologies).queryByTestId('component-technology:pds2')).toBeNull();
   });
 
@@ -210,17 +212,17 @@ describe('the components drawer', () => {
     expect(game().start.me.hand).toHaveLength(1);
   });
 
-  test('a promissory note says whose it is: the owner by name, and in its text instead of <color>', async () => {
+  test('a note of another player I hold says whose it is: the owner by name, and in its text instead of <color>', async () => {
     // I hold the Trade Agreement of Hacan when the plan begins: it is with me and no more with them.
     const theirs = `promissory:<color>_ta@${rival().id}`;
     useGame.getState().setStartHolding('me', theirs, true);
     expect(game().start.opponents[rival().id].promissory).not.toContain(theirs);
     await openDrawer('Cards');
-    const notes = section('Promissory notes');
+    const notes = section('Notes of other players');
     const card = within(notes).getByTestId(`component-${theirs}`);
     expect(within(card).getByRole('button', { name: /^Trade Agreement\s*Hacan/ })).toBeVisible();
-    expect(within(notes).getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('Arborec');
-    expect(within(notes).getByTestId('component-promissory:stymie@me')).toHaveTextContent('Arborec');
+    // My own notes are not among them.
+    expect(within(notes).getAllByTestId(/^component-/)).toHaveLength(1);
     await userEvent.click(within(card).getByRole('button', { name: /^Trade Agreement/ }));
     expect(card).toHaveTextContent('When the Hacan player replenishes commodities');
     expect(card).not.toHaveTextContent('<color>');
@@ -228,6 +230,42 @@ describe('the components drawer', () => {
     await userEvent.click(within(card).getByRole('button', { name: 'Remove Trade Agreement' }));
     expect(game().start.me.promissory).not.toContain(theirs);
     expect(game().start.opponents[rival().id].promissory).toContain(theirs);
+  });
+
+  test('my notes are always all in sight, each with where it is now: in hand, with a player, out of the game', async () => {
+    const ta = 'promissory:<color>_ta@me';
+    const cf = 'promissory:<color>_cf@me';
+    // My Trade Agreement is with Hacan when the plan begins, my Ceasefire is out of the game.
+    useGame.getState().setStartHolding(rival().id, ta, true);
+    useGame.getState().setStartHolding('me', cf, false);
+    await openDrawer('Cards');
+    const mine = section('My promissory notes');
+    expect(within(mine).getAllByTestId(/^component-promissory:/).map(card => card.getAttribute('data-testid')!.slice('component-promissory:'.length)))
+      .toEqual(['<color>_cf@me', '<color>_ps@me', '<color>_sftt@me', '<color>_ta@me', '<color>_an@me', 'stymie@me']);
+    expect(within(mine).getByTestId(`component-${ta}`)).toHaveTextContent('with Hacan');
+    expect(within(mine).getByTestId(`component-${ta}`)).not.toHaveClass('on');
+    expect(within(mine).getByTestId('component-promissory:stymie@me')).toHaveTextContent('in hand');
+    expect(within(mine).getByTestId('component-promissory:stymie@me')).toHaveClass('on');
+    expect(within(mine).getByTestId(`component-${cf}`)).toHaveTextContent('out of the game');
+    // The text of my note names me.
+    await userEvent.click(within(within(mine).getByTestId(`component-${ta}`)).getByRole('button', { name: /^Trade Agreement/ }));
+    expect(within(mine).getByTestId(`component-${ta}`)).toHaveTextContent('When the Arborec player replenishes commodities');
+    // A note nobody holds comes back to my hand by its plus.
+    await userEvent.click(within(mine).getByRole('button', { name: 'Add Ceasefire' }));
+    expect(game().start.me.promissory).toContain(cf);
+    // The opponent's sheet lists their notes the same way, and my note among those of others.
+    await userEvent.click(within(screen.getByRole('group', { name: 'Whose components' })).getByRole('button', { name: /Hacan/ }));
+    expect(within(section('Promissory notes of Hacan')).getAllByTestId(/^component-promissory:/).length).toBeGreaterThan(5);
+    expect(within(section('Notes of other players')).getByTestId(`component-${ta}`)).toHaveTextContent('Arborec');
+  });
+
+  test('a note the plan handed over says with whom it is', async () => {
+    const ta = 'promissory:<color>_ta@me';
+    useGame.getState().addEntry(1, { type: 'pass', acts: [{ kind: 'transaction', with: rival().id, give: { components: [ta] }, get: {} }] }, 'action');
+    await openDrawer('Cards');
+    const card = within(section('My promissory notes')).getByTestId(`component-${ta}`);
+    expect(card).toHaveTextContent('with Hacan');
+    expect(card).not.toHaveClass('on');
   });
 
   test('a search finds a generic note as one card of each player', async () => {
@@ -370,7 +408,7 @@ describe('the stack and the fan of the component tabs', () => {
     expect(groupTab('Technologies')).toHaveAttribute('aria-pressed', 'true');
     expect(section('Researched technologies')).toBeVisible();
     expect(section('Unit upgrades')).toBeVisible();
-    for (const other of ['Action cards', 'Promissory notes', 'Leaders', 'Breakthrough', 'Relics', 'Objectives', 'Laws']) {
+    for (const other of ['Action cards', 'My promissory notes', 'Notes of other players', 'Leaders', 'Breakthrough', 'Relics', 'Objectives', 'Laws']) {
       expect(within(drawer()).queryByRole('group', { name: other })).toBeNull();
     }
   });
@@ -378,13 +416,25 @@ describe('the stack and the fan of the component tabs', () => {
   test('each group shows its own sections', async () => {
     await openDrawer('Cards');
     const shown = () => [...drawer().querySelectorAll('.editor-section[role="group"]')].map(group => group.getAttribute('aria-label'));
-    expect(shown()).toEqual(['Action cards', 'Promissory notes']);
+    expect(shown()).toEqual(['My promissory notes', 'Notes of other players', 'Action cards']);
     await userEvent.click(groupTab('Faction'));
     expect(shown()).toEqual(['Leaders', 'Breakthrough']);
     await userEvent.click(groupTab('Relics'));
     expect(shown()).toEqual(['Relics']);
     await userEvent.click(groupTab('Objectives & laws'));
     expect(shown()).toEqual(['Objectives', 'Laws']);
+  });
+
+  test('the fan rides on the edge of the open sheet: the rail moves out with it, and the sheet takes the whole width of a drawer', async () => {
+    render(<PlanScreen />);
+    expect(rail()).not.toHaveClass('drawer-rail-open');
+    await userEvent.click(tab());
+    expect(rail()).toHaveClass('drawer-rail-open');
+    expect(drawer().closest('.drawer')).not.toHaveClass('drawer-fanned');
+    await userEvent.click(groupTab('Relics'));
+    expect(rail()).toHaveClass('drawer-rail-open');
+    await userEvent.click(groupTab('Relics'));
+    expect(rail()).not.toHaveClass('drawer-rail-open');
   });
 
   test('another tab changes the group, the drawer stays open and no tab leaves its place', async () => {
