@@ -1846,6 +1846,66 @@ describe('the acts of a turn in its editor', () => {
     expect(block().getByRole('button', { name: /^\+ Transaction with Player 2: give trade goods 1/ })).toBeVisible();
   });
 
+  /** The parts of the open editor by their headings, and the blocks of the common one by their names, in order. */
+  const parts = () => {
+    const titles = [...document.querySelectorAll('.plan-panel .editor-part > .section-title')].map(title => title.textContent);
+    const common = screen.queryByRole('group', { name: 'In this turn' });
+    const blocks = common ? [...common.querySelectorAll(':scope > [role="group"]')].map(block => block.getAttribute('aria-label')) : null;
+    return { titles, blocks };
+  };
+  /** What any turn holds beside its action, in one order in every editor. */
+  const COMMON = ['Transactions', 'Taken and discarded'];
+  const follows = (first: Element, second: Element) => Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+  test('the tactical editor stands in two parts under their headings: its own setup, then what any turn holds', async () => {
+    await chooseSystem();
+    expect(parts()).toEqual({ titles: ['Action setup', 'In this turn'], blocks: COMMON });
+    const own = screen.getByRole('group', { name: 'Action setup' });
+    const common = screen.getByRole('group', { name: 'In this turn' });
+    expect(follows(own, common)).toBe(true);
+    // The headings are the common ones, and the blocks of the action itself stay in its own part.
+    expect(within(own).getByRole('heading', { name: 'Action setup' })).toHaveClass('section-title');
+    expect(within(common).getByRole('heading', { name: 'In this turn' })).toHaveClass('section-title');
+    expect(within(own).getByText(/^Active system:/)).toBeVisible();
+    expect(within(common).queryByText(/^Active system:/)).toBeNull();
+  });
+
+  test('the result of a tactical action belongs to its own part', async () => {
+    await chooseSystem();
+    act(() => useGame.getState().updateEntry(tactical().id, { fleetRemovals: { carrier: 1 } }));
+    const own = screen.getByRole('group', { name: 'Action setup' });
+    expect(within(own).getByRole('group', { name: 'Action result' })).toBeVisible();
+    expect(follows(within(own).getByRole('group', { name: 'Action result' }), screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
+  });
+
+  test('the strategy editor names its own part by the card and its ability, and a secondary has no common part', async () => {
+    useGame.getState().setStrategyCard(1, 1);
+    useGame.getState().addEntry(1, { type: 'strategic', card: 1 }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: / }));
+    expect(parts()).toEqual({ titles: ['Leadership · primary ability', 'In this turn'], blocks: COMMON });
+    const own = screen.getByRole('group', { name: 'Leadership · primary ability' });
+    expect(within(own).getByRole('group', { name: 'Card' })).toBeVisible();
+    expect(follows(own, screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
+    // Another player's turn holds no acts of mine.
+    await userEvent.click(within(own).getByRole('button', { name: /^Secondary/ }));
+    expect(parts()).toEqual({ titles: ['Leadership · secondary ability'], blocks: null });
+  });
+
+  test('a component action has both parts in the same order, and a pass only the common one', async () => {
+    useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Component action/ }));
+    expect(parts()).toEqual({ titles: ['Action setup', 'In this turn'], blocks: COMMON });
+    const own = screen.getByRole('group', { name: 'Action setup' });
+    expect(within(own).getByRole('textbox', { name: 'Note' })).toBeVisible();
+    expect(follows(own, screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Edit: Pass' }));
+    expect(parts()).toEqual({ titles: ['In this turn'], blocks: COMMON });
+  });
+
   test('the tactical editor ends with «In this turn»', async () => {
     await chooseSystem();
     expect(screen.getByRole('group', { name: 'In this turn' })).toBeVisible();

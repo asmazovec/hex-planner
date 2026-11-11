@@ -10,6 +10,7 @@ import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
 import { EditorFrame } from '../../primitives/EditorFrame';
+import { EditorPart } from '../../primitives/EditorPart';
 import { NoteField } from '../../primitives/NoteField';
 import { Section } from '../../primitives/Section';
 
@@ -24,7 +25,7 @@ export interface TurnEditorProps {
   board?: GameState;
   /** The turn's warnings: those its blocks do not show stand first, such as what an expedition lacks to pay. */
   warnings: Warning[];
-  /** The «В этом ходу» block of the turn. */
+  /** The blocks of «В этом ходу», the common part of the turn under its own heading. */
   turnActs: ReactNode;
   onNote: (note: string) => void;
   /** The component the action plays; none takes it off. */
@@ -33,7 +34,7 @@ export interface TurnEditorProps {
   onRemove: () => void;
 }
 
-/** A component action or a pass as a turn: the component the action plays and its note, then the acts the turn holds. */
+/** A component action or a pass as a turn: the component the action plays and its note in a part of their own, then what any turn holds; a pass has only that. */
 export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
@@ -54,7 +55,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNot
     <EditorFrame title={t(`plan.menu.${entry.type}`)} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
       {entry.type === 'component' && (
-        <>
+        <EditorPart title={t('editor.setup')}>
           <Section
             label={t('components.played')} title={t('components.played')} warnings={<WarningList warnings={ofComponent} game={game} pack={pack} />}
             action={<div className="side-actions"><button type="button" onClick={() => setPicking(true)}>{t('components.pickPlayed')}</button></div>}
@@ -63,9 +64,9 @@ export function TurnEditor({ entry, game, pack, board, warnings, turnActs, onNot
           </Section>
           <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
-        </>
+        </EditorPart>
       )}
-      {turnActs}
+      <EditorPart title={t('plan.acts.title')}>{turnActs}</EditorPart>
       {picking && (
         <ComponentPicker
           kinds={PLAYED_KINDS} player={entry.owner ?? 'me'} owned={ready} prefer="owned" onClose={() => setPicking(false)}

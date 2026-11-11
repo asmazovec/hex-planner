@@ -465,6 +465,8 @@
       "agendaEmpty": "Голосование, если Mecatol Rex занят. Записей здесь пока нет."
     },
     "strategy": {
+      "partPrimary": "{{card}} · основная способность",
+      "partSecondary": "{{card}} · второстепенная способность",
       "mode": {
         "primary": "Основное",
         "secondary": "Второстепенное",
@@ -560,6 +562,8 @@
       "nothing": "ничего",
       "me": "вами",
       "title": "В этом ходу",
+      "block": "Сделки",
+      "blockTe": "Сделки и экспедиция",
       "addTransaction": "+ Сделка",
       "addExpedition": "+ Экспедиция",
       "remove": "Убрать: {{name}}",
@@ -783,7 +787,8 @@
   "editor": {
     "done": "Готово",
     "back": "Назад",
-    "remove": "Убрать действие"
+    "remove": "Убрать действие",
+    "setup": "Настройка действия"
   },
   "legal": {
     "unofficial": {

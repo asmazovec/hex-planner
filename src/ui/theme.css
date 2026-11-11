@@ -593,6 +593,9 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .stepper output { min-width: 3ch; text-align: center; font-weight: 600; font-size: var(--font-m); font-variant-numeric: tabular-nums; }
 .stepper output.stepper-of { min-width: 5ch; }
 .stepper button { padding: 0; }
+/* The two parts of a turn's editor, each under its heading: they stand further apart than the blocks inside one. */
+.editor-part > .section-title { margin: 0; }
+.editor-part + .editor-part { margin-top: calc(var(--gap) - 8px); }
 .editor-section { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; font-size: var(--font-s); margin: 0; }
 .editor-section > strong, .editor-section .panel-head > strong { font-size: var(--font-m); font-weight: 600; }
 .editor-section summary { min-height: var(--touch); display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-weight: 600; font-size: var(--font-m); list-style: none; }

@@ -465,6 +465,8 @@
       "agendaEmpty": "A vote, if Mecatol Rex is held. No entries here yet."
     },
     "strategy": {
+      "partPrimary": "{{card}} · primary ability",
+      "partSecondary": "{{card}} · secondary ability",
       "mode": {
         "primary": "Primary",
         "secondary": "Secondary",
@@ -560,6 +562,8 @@
       "nothing": "nothing",
       "me": "you",
       "title": "In this turn",
+      "block": "Transactions",
+      "blockTe": "Transactions and the expedition",
       "addTransaction": "+ Transaction",
       "addExpedition": "+ Expedition",
       "remove": "Remove: {{name}}",
@@ -781,7 +785,8 @@
   "editor": {
     "done": "Done",
     "back": "Back",
-    "remove": "Remove action"
+    "remove": "Remove action",
+    "setup": "Action setup"
   },
   "legal": {
     "unofficial": {

@@ -26,7 +26,8 @@ export interface TurnActsProps {
 const NO_PAYMENT = { planets: [], tradeGoods: 0 };
 
 /**
- * «В этом ходу»: what the turn holds beside its action, each act a card that opens its own step, with a cross inside it.
+ * The first block of «В этом ходу», the part of an editor common to every turn: the acts the turn holds beside its
+ * action, each a card that opens its own step, with a cross inside it. The block is named by what it can hold.
  * A transaction is added with the first opponent (or me in an opponent's turn); an expedition only with Thunder's Edge
  * while a part is free.
  */
@@ -40,8 +41,9 @@ export function TurnActs({ game, pack, entry, warnings, owners, onChange, onOpen
     onChange([...acts, act]);
     onOpen(acts.length);
   };
+  const title = t(game.expansions.includes('te') ? 'plan.acts.blockTe' : 'plan.acts.block');
   return (
-    <Section label={t('plan.acts.title')} title={t('plan.acts.title')} warnings={<WarningList warnings={[...placer.at('deal'), ...placer.at('slice')]} game={game} pack={pack} />}>
+    <Section label={title} title={title} warnings={<WarningList warnings={[...placer.at('deal'), ...placer.at('slice')]} game={game} pack={pack} />}>
       {acts.map((act, index) => (
         <div key={index} className="source-row in-card">
           <button type="button" className="source-button" onClick={() => onOpen(index)}>{actLine(act, game, pack, t)}</button>

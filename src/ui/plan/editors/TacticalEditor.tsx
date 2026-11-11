@@ -10,6 +10,7 @@ import { LandingBlock } from '../blocks/LandingBlock';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { HexRemove } from '../../primitives/Icon';
 import { EditorFrame } from '../../primitives/EditorFrame';
+import { EditorPart } from '../../primitives/EditorPart';
 import { addUnits, afterBattle, countOf, groupOf, hasUnits, isUntouched, sourcesOf, splitFlight, unitsIn, viaOf, withLanding, withoutSource, type TacticalEntry } from '../../../domain/tactical';
 import { Section } from '../../primitives/Section';
 import { unitsText } from '../../units/unitsText';
@@ -52,7 +53,7 @@ export interface TacticalEditorProps {
   onDone: () => void;
   /** The cross of the head: the action goes. */
   onRemove: () => void;
-  /** The «В этом ходу» block: what the turn holds beside its action, last in the editor. */
+  /** The blocks of «В этом ходу»: what the turn holds beside its action, the last part of the editor under its own heading. */
   turnActs?: ReactNode;
 }
 
@@ -221,8 +222,9 @@ export function TacticalEditor({
     <EditorFrame className="tactical-editor" title={t('plan.tactical.title')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
       {list(placer.rest())}
-      {blocks}
-      {turnActs}
+      {/* The action's own setup, its result included; then what any turn holds, in the same order in every editor. */}
+      {blocks && <EditorPart title={t('editor.setup')}>{blocks}</EditorPart>}
+      {turnActs && <EditorPart title={t('plan.acts.title')}>{turnActs}</EditorPart>}
     </EditorFrame>
   );
 }
