@@ -27,6 +27,7 @@ import { MapLegend } from '../drawers/MapLegend';
 import { ThundersEdgePanel } from '../drawers/ThundersEdgePanel';
 import { ComponentsPanel } from '../drawers/ComponentsPanel';
 import { ComponentTabs } from '../drawers/ComponentTabs';
+import type { MapPan } from '../map/edgePan';
 import { useArrowDrag } from '../map/useArrowDrag';
 import type { ActionType } from '../plan/ActionMenu';
 import { ActionMenu } from '../plan/ActionMenu';
@@ -152,9 +153,12 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     setView('plan');
   };
 
+  /** The map under a route being drawn: a finger near the edge of its area moves it. */
+  const mapPan = useRef<MapPan>(null);
   const arrow = useArrowDrag({
     activeSystem, onComplete: openRoute, onCancel: () => undefined, isSystem: slot => game !== null && isOnMap(game, slot),
     onPause: path => update(state => ({ ...state, next: { kind: 'route', path: pausedPath(path, activeSystem ?? '') } })),
+    pan: mapPan,
   });
 
   const onPlayed = useCallback(() => setPick(state => (state.panel.kind === 'list' && state.panel.shown
@@ -643,7 +647,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             game={game} state={mapState} pack={pack} highlights={highlights} arrows={arrows}
             arrowPreview={draft} focusRect={shownArea} resetSignal={viewResets} onTileTap={onTileTap}
             overlay={flightLayer} still={flight.still} animateOnly={flight.animated}
-            onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow}
+            onTilePointerDown={(slot, e) => { if (startsArrow(slot)) arrow.onTilePointerDown(slot, e, tapPath ?? undefined); }} startsArrow={startsArrow} panRef={mapPan}
           />
           {shownArea && <button type="button" className="map-home" onClick={closeShown}>{t('map.home')}</button>}
           {hint && (

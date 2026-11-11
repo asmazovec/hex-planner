@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest';
-import { areAdjacent, extendPath, routeFromPath, tacticalNumbers, tapStep } from './route';
+import { describe, expect, test } from 'vitest';
+import { areAdjacent, extendPath, routeFromPath, strokeStep, tacticalNumbers, tapStep } from './route';
 import type { Entry } from './types';
 
 test('plain grid neighbours are adjacent, wormholes and hyperlanes mean nothing', () => {
@@ -70,4 +70,42 @@ test('Warfare\'s free tactical is an act of its card: it takes no number, and th
   const card: Entry = { id: 'w', status: 'planned', phase: 'action', type: 'strategic', card: 6 };
   const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
   expect(tacticalNumbers([card, free, tacticalEntry('t')])).toEqual({ t: 1 });
+});
+
+describe('the next hex under a stroke', () => {
+  test('a hex ahead is added, next to the last one or not: a jump is a step like any other', () => {
+    expect(strokeStep(['0,0'], '1,0')).toEqual({ kind: 'add', path: ['0,0', '1,0'] });
+    expect(strokeStep(['0,0', '1,0'], '4,0')).toEqual({ kind: 'add', path: ['0,0', '1,0', '4,0'] });
+  });
+
+  test('the hex the stroke came from takes the last one away, hex by hex down to the start', () => {
+    const back = strokeStep(['a', 'b', 'c'], 'b');
+    expect(back).toEqual({ kind: 'remove', path: ['a', 'b'] });
+    expect(strokeStep(back.path, 'a')).toEqual({ kind: 'remove', path: ['a'] });
+    expect(strokeStep(['a', 'b'], 'c')).toEqual({ kind: 'add', path: ['a', 'b', 'c'] });
+  });
+
+  test('the hex under the finger already changes nothing, and gives the same path back', () => {
+    const path = ['a', 'b'];
+    const step = strokeStep(path, 'b');
+    expect(step.kind).toBe('none');
+    expect(step.path).toBe(path);
+  });
+
+  test('a hex passed long ago is neither a step back nor a new step: only the one before the last undoes', () => {
+    const path = ['a', 'b', 'c', 'd'];
+    expect(strokeStep(path, 'a')).toEqual({ kind: 'none', path });
+    expect(strokeStep(path, 'b')).toEqual({ kind: 'none', path });
+  });
+
+  test('back means the hex before the last one, wherever else on the path that hex stands', () => {
+    expect(strokeStep(['a', 'b', 'a', 'c'], 'a')).toEqual({ kind: 'remove', path: ['a', 'b', 'a'] });
+    expect(strokeStep(['a', 'b', 'a'], 'b')).toEqual({ kind: 'remove', path: ['a', 'b'] });
+  });
+
+  test('a path of one hex has nothing to take away', () => {
+    const path = ['a'];
+    expect(strokeStep(path, 'a')).toEqual({ kind: 'none', path });
+    expect(strokeStep([], 'a')).toEqual({ kind: 'add', path: ['a'] });
+  });
 });

@@ -1,6 +1,7 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { EDGE_PAN_MAX, EDGE_PAN_STEADY, EDGE_ZONE } from './edgePan';
 import { useArrowDrag } from './useArrowDrag';
 
 const onComplete = vi.fn();
@@ -214,6 +215,149 @@ describe('a route in strokes', () => {
     fire('pointerup');
     expect(onComplete).toHaveBeenCalledWith({ from: 'A', via: [] });
     expect(onPause).not.toHaveBeenCalled();
+  });
+});
+
+describe('a stroke near the edge of the map area', () => {
+  let frames: FrameRequestCallback[] = [];
+  let clock = 0;
+  const by = vi.fn<(dx: number, dy: number) => boolean>(() => true);
+  const rest = vi.fn();
+  const pan = { current: { by, rest, area: () => ({ rect: { x: 0, y: 0, width: 1000, height: 600 }, tabs: [] }) } };
+  const runFrame = () => act(() => {
+    clock += 16;
+    const due = frames;
+    frames = [];
+    due.forEach(f => f(clock));
+  });
+
+  beforeEach(() => {
+    frames = [];
+    clock = 0;
+    by.mockClear();
+    by.mockImplementation(() => true);
+    rest.mockClear();
+    document.documentElement.dataset.motion = 'on';
+    vi.stubGlobal('requestAnimationFrame', (f: FrameRequestCallback) => frames.push(f));
+    vi.stubGlobal('cancelAnimationFrame', () => { frames = []; });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    delete document.documentElement.dataset.motion;
+  });
+
+  function edge(onPause = vi.fn()) {
+    const { result } = renderHook(() => useArrowDrag({ activeSystem: 'X', onComplete, onCancel: () => undefined, onPause, pan }));
+    act(() => result.current.onTilePointerDown('A', { pointerId: 1, clientX: 500, clientY: 300, isPrimary: true, button: 0 } as ReactPointerEvent));
+    const fire = (type: string, x = 0, y = 0) => act(() => { window.dispatchEvent(new PointerEvent(type, { pointerId: 1, clientX: x, clientY: y })); });
+    return { fire, preview: () => result.current.preview, onPause };
+  }
+
+  test('in the middle of the area the map stays', () => {
+    const { fire } = edge();
+    fire('pointermove', 600, 300);
+    expect(frames).toHaveLength(0);
+    expect(by).not.toHaveBeenCalled();
+  });
+
+  test('at the edge the map follows the finger frame by frame, faster the nearer the edge, on both axes', () => {
+    const { fire } = edge();
+    fire('pointermove', 1000 - EDGE_ZONE / 2, 300);
+    runFrame();
+    expect(by).toHaveBeenCalledTimes(1);
+    expect(by.mock.calls[0][0]).toBeCloseTo(-(EDGE_PAN_MAX / 2) * 0.016);
+    expect(by.mock.calls[0][1]).toBeCloseTo(0);
+    fire('pointermove', 1000, 600);
+    runFrame();
+    expect(by.mock.calls[1][0]).toBeCloseTo(-EDGE_PAN_MAX * 0.016);
+    expect(by.mock.calls[1][1]).toBeCloseTo(-EDGE_PAN_MAX * 0.016);
+    // The finger rests and the map goes on.
+    runFrame();
+    runFrame();
+    expect(by).toHaveBeenCalledTimes(4);
+  });
+
+  test('the systems the map brings under a resting finger join the route, and leave it the same way', () => {
+    const { fire, preview } = edge();
+    under = 'A';
+    fire('pointermove', 990, 300);
+    runFrame();
+    expect(preview()?.path).toEqual(['A']);
+    under = 'B';
+    runFrame();
+    expect(preview()?.path).toEqual(['A', 'B']);
+    under = 'C';
+    runFrame();
+    expect(preview()?.path).toEqual(['A', 'B', 'C']);
+    under = 'B';
+    runFrame();
+    expect(preview()?.path).toEqual(['A', 'B']);
+  });
+
+  test('the finger out of the zone or lifted stops the map at once, and the view comes to rest', () => {
+    const { fire, onPause } = edge();
+    fire('pointermove', 990, 300);
+    runFrame();
+    fire('pointermove', 700, 300);
+    runFrame();
+    runFrame();
+    expect(by).toHaveBeenCalledTimes(1);
+    expect(rest).toHaveBeenCalled();
+    expect(frames).toHaveLength(0);
+
+    under = 'B';
+    fire('pointermove', 995, 300);
+    runFrame();
+    expect(by).toHaveBeenCalledTimes(2);
+    fire('pointerup', 995, 300);
+    expect(frames).toHaveLength(0);
+    runFrame();
+    expect(by).toHaveBeenCalledTimes(2);
+    expect(onPause).toHaveBeenCalledWith(['A', 'B']);
+  });
+
+  test('at the limit of the map the frames stop until the finger moves again', () => {
+    const { fire } = edge();
+    by.mockImplementation(() => false);
+    fire('pointermove', 990, 300);
+    runFrame();
+    expect(frames).toHaveLength(0);
+    expect(rest).toHaveBeenCalled();
+    fire('pointermove', 991, 300);
+    expect(frames).toHaveLength(1);
+  });
+
+  test('a frame that comes with the time of the one before moves nothing and stops nothing', () => {
+    const { fire } = edge();
+    // A step of no length moves nothing, as the map itself would answer.
+    by.mockImplementation((dx, dy) => dx !== 0 || dy !== 0);
+    fire('pointermove', 990, 300);
+    runFrame();
+    clock -= 16;
+    runFrame();
+    expect(rest).not.toHaveBeenCalled();
+    expect(frames).toHaveLength(1);
+    runFrame();
+    expect(by.mock.calls.filter(([dx]) => dx !== 0)).toHaveLength(2);
+  });
+
+  test('a press at the edge that goes nowhere is a tap: the map stays', () => {
+    const { result } = renderHook(() => useArrowDrag({ activeSystem: 'X', onComplete, onCancel, pan }));
+    act(() => result.current.onTilePointerDown('A', { pointerId: 1, clientX: 990, clientY: 300, isPrimary: true, button: 0 } as ReactPointerEvent));
+    act(() => { window.dispatchEvent(new PointerEvent('pointermove', { pointerId: 1, clientX: 992, clientY: 301 })); });
+    expect(frames).toHaveLength(0);
+    expect(by).not.toHaveBeenCalled();
+  });
+
+  test('with smooth motion off the map still follows, at one moderate speed', () => {
+    document.documentElement.dataset.motion = 'off';
+    const { fire } = edge();
+    fire('pointermove', 1000 - EDGE_ZONE + 2, 300);
+    runFrame();
+    expect(by.mock.calls[0][0]).toBeCloseTo(-EDGE_PAN_STEADY * 0.016);
+    fire('pointermove', 1000, 300);
+    runFrame();
+    expect(by.mock.calls[1][0]).toBeCloseTo(-EDGE_PAN_STEADY * 0.016);
   });
 });
 
