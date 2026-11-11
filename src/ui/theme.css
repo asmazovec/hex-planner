@@ -1154,7 +1154,12 @@ button.drawer-tab.drawer-tab-right[aria-pressed='true'], button.drawer-tab.drawe
 .drawer-rail-open-players .drawer-tab[aria-pressed='false'], .drawer-rail-open-legend .drawer-tab[aria-pressed='false'] { transform: translateX(2px); }
 .drawer-rail-open .drawer-tab[aria-pressed='false'] { transform: translateX(-2px); }
 /* The fan rides on the edge of its sheet, and a change of the group moves no tab: each lies over the blue line, and a tab that is not open draws the line on itself. */
-.drawer-rail-open .tab-fan > .drawer-tab[aria-pressed='false'] { transform: none; box-shadow: inset -2px 0 0 var(--accent); }
+.drawer-rail-open .tab-fan > .drawer-tab[aria-pressed='false'] { transform: none; }
+/* The strip of a tab that lies over the sheet's line, its own grey edges included: the line itself on a tab that is not open, the sheet's ground on the open one, so no edge of a tab shows on the sheet. */
+.drawer-rail-open .tab-fan-open > .drawer-tab::before { content: ''; position: absolute; top: -1px; bottom: -1px; right: 0; width: 2px; background: var(--accent); }
+.drawer-rail-open .tab-fan-open > .drawer-tab[aria-pressed='true']::before { background: var(--bg); }
+/* Beside another sheet (Thunder's Edge) the folded stack stays outside it: it stops at the sheet's line, and its shades are cut there. */
+.drawer-rail-open .tab-fan:not(.tab-fan-open) { transform: translateX(-2px); clip-path: inset(-24px 0 -24px -24px); }
 
 /* The map's own actions hang in its corners, as hexagons like the menu; the one switched on is blue. */
 button.hex-button[aria-pressed='true'] { --hex-edge: var(--accent); --hex-fill: var(--accent-soft); --hex-ink: var(--text-strong); }
