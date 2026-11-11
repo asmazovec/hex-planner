@@ -46,7 +46,8 @@ test('a relic found with a typo is added in the components drawer and is still t
   await page.reload();
   await expect(page.getByRole('button', { name: 'Plan & map' })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('textbox', { name: 'Game name' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Components · 4' })).toBeVisible();
+  // Sol begins with two technologies, its agent, five generic promissory notes and its own; the relic is one more.
+  await expect(page.getByRole('button', { name: 'Components · 10' })).toBeVisible();
   // The stack opens on the group it was left on.
   await openDrawer(page);
   await expect(relics(page)).toContainText('Stellar Converter');

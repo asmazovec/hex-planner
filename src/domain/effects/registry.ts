@@ -3,7 +3,7 @@
  * out (so far the unit upgrades, generated from the unit tables); everything else is a hint, listed by `hintsFor`,
  * so no component is left without an entry. A hint's step comes from the data where the data names one.
  */
-import { componentById, componentsOf } from '../components';
+import { componentById, componentsOf, noteBase } from '../components';
 import type { ComponentDef, DataPack, GameState, Holdings, RuleStep } from '../types';
 import type { ComponentEffect } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
@@ -63,10 +63,10 @@ function registryOf(pack: DataPack): Registry {
 export const effectsOf = (pack: DataPack): ReadonlyMap<string, ComponentEffect> => registryOf(pack).effects;
 
 /** The effect of a component; none for an id the pack does not have. */
-export const effectOf = (pack: DataPack, id: string): ComponentEffect | undefined => registryOf(pack).effects.get(id);
+export const effectOf = (pack: DataPack, id: string): ComponentEffect | undefined => registryOf(pack).effects.get(noteBase(id));
 
 /** The place of a component in the registry, for the order effects are asked in. */
-export const orderOf = (pack: DataPack, id: string): number => registryOf(pack).order.get(id) ?? Number.MAX_SAFE_INTEGER;
+export const orderOf = (pack: DataPack, id: string): number => registryOf(pack).order.get(noteBase(id)) ?? Number.MAX_SAFE_INTEGER;
 
 /**
  * The components a player has ready: technologies, relics, promissory notes, action cards in hand and unlocked
@@ -78,7 +78,7 @@ export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
   const leaders = Object.keys(holdings.leaders).filter(id => holdings.leaders[id] === 'unlocked');
   const ids = new Set([...holdings.technologies, ...holdings.relics, ...holdings.promissory, ...holdings.hand, ...leaders]);
   for (const id of holdings.exhausted) ids.delete(id);
-  return [...ids].filter(id => effects.has(id)).sort((a, b) => order.get(a)! - order.get(b)!);
+  return [...ids].filter(id => effects.has(noteBase(id))).sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!);
 }
 
 /**
@@ -89,14 +89,14 @@ export function passivesOf(pack: DataPack, holdings: Holdings): [string, Compone
   const { effects, order } = registryOf(pack);
   const found: [string, ComponentEffect][] = [];
   const ask = (id: string): void => {
-    const effect = effects.get(id);
+    const effect = effects.get(noteBase(id));
     if (effect?.tier === 'passive' && !found.some(([known]) => known === id)) found.push([id, effect]);
   };
   for (const id of holdings.technologies) ask(id);
   for (const id of holdings.relics) ask(id);
   for (const id of holdings.promissory) ask(id);
   for (const id in holdings.leaders) if (holdings.leaders[id] !== 'purged') ask(id);
-  return found.length > 1 ? found.sort((a, b) => order.get(a[0])! - order.get(b[0])!) : found;
+  return found.length > 1 ? found.sort((a, b) => order.get(noteBase(a[0]))! - order.get(noteBase(b[0]))!) : found;
 }
 
 /**
@@ -114,5 +114,5 @@ export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, player
       if (effect?.tier === 'hint' && effect.hintAt?.includes(step)) ids.add(id);
     }
   }
-  return [...ids].sort((a, b) => order.get(a)! - order.get(b)!).flatMap(id => componentById(pack, id) ?? []);
+  return [...ids].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!).flatMap(id => componentById(pack, id) ?? []);
 }

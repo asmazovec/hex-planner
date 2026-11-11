@@ -5,9 +5,39 @@ export const COMPONENT_KINDS: ComponentKind[] = [
   'leader', 'ability', 'breakthrough', 'mech', 'legendary',
 ];
 
+const NOTE = 'promissory:';
+
+/** Where the address of a note stands in its id: after the `@`, up to the `#` of a text beside the main one, if any. */
+function addressOf(id: string): { at: number; end: number } | undefined {
+  if (!id.startsWith(NOTE)) return undefined;
+  const hash = id.indexOf('#');
+  const end = hash < 0 ? id.length : hash;
+  const at = id.lastIndexOf('@', end);
+  return at < 0 ? undefined : { at, end };
+}
+
+/** The catalogue id of a note, without the address; any other id as it is. */
+export function noteBase(id: string): string {
+  const address = addressOf(id);
+  return address ? id.slice(0, address.at) + id.slice(address.end) : id;
+}
+
+/**
+ * A promissory note a player holds is one card of one player: its id is the catalogue id with the address of the
+ * player whose note it is, `promissory:<id>@<player>`, `me` or an opponent id. The catalogue itself lists each note
+ * once, without an address.
+ */
+export const noteId = (base: string, player: string): string => `${noteBase(base)}@${player}`;
+
+/** The player a note is addressed to, `me` or an opponent id; none for a catalogue id. */
+export function noteAddress(id: string): string | undefined {
+  const address = addressOf(id);
+  return address && id.slice(address.at + 1, address.end);
+}
+
 /** The printed text under an id, verbatim from the source or its translation, as the pack was loaded; empty when the pack has none (an unknown id, an expansion that is off). */
 export function textOf(pack: DataPack, id: string): string {
-  return pack.texts[id] ?? '';
+  return pack.texts[noteBase(id)] ?? '';
 }
 
 interface Catalog { list: ComponentDef[]; byId: Map<string, ComponentDef> }
@@ -77,6 +107,15 @@ export function componentsOf(pack: DataPack): ComponentDef[] {
   return catalogOf(pack).list;
 }
 
+/** The component under an id. An addressed note is its catalogue card under its own id: it is held and handed over as that one card. */
 export function componentById(pack: DataPack, id: string): ComponentDef | undefined {
-  return catalogOf(pack).byId.get(id);
+  const { byId } = catalogOf(pack);
+  const found = byId.get(id);
+  if (found) return found;
+  const base = noteBase(id);
+  const note = base === id ? undefined : byId.get(base);
+  if (!note) return undefined;
+  const addressed = { ...note, id };
+  byId.set(id, addressed);
+  return addressed;
 }

@@ -283,6 +283,7 @@ const CASES: Record<WarningCode, Warning['params']> = {
   researchOwned: { id: 'technology:cv2', name: 'Carrier II' },
   componentNotHeld: { id: 'actionCard:bribery', name: 'Bribery' },
   componentExhausted: { id: 'technology:gls', name: 'Graviton Laser System' },
+  ownPromissory: { id: 'promissory:<color>_ta@me', name: 'Trade Agreement' },
   // combat-order, invasion, structures
   shipOnPlanet: { planetId: 'nestphar', unit: 'cruiser' },
   landingOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },

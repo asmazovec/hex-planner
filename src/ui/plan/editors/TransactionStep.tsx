@@ -6,6 +6,7 @@ import { opponentsBySeat } from '../../../domain/players';
 import type { Act, DataPack, Game, GameState, Goods, Warning } from '../../../domain/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
+import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { opponentName } from '../../players/names';
@@ -70,7 +71,7 @@ export function TransactionStep({ game, pack, act, owner, board, warnings, onCha
           const def = componentById(pack, id);
           return def && (
             <ComponentCard
-              key={`${id}-${index}`} def={def} pack={pack} held
+              key={`${id}-${index}`} def={def} pack={pack} held {...noteMark(game, pack, id, t, owner)}
               note={def.kind === 'actionCard' ? t('plan.acts.byAbility') : undefined}
               onRemove={() => set(key, { components: components.filter((_, i) => i !== index) })}
             />

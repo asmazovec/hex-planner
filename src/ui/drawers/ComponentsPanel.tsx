@@ -8,6 +8,7 @@ import type { ComponentDef, DataPack, Game, GameState, TechType } from '../../do
 import { useGame } from '../../state/gameStore';
 import { ComponentCard, type CardState } from '../components/ComponentCard';
 import { ComponentSearchField } from '../components/ComponentSearchField';
+import { noteMark } from '../components/noteMark';
 import { useComponentSearch } from '../components/useComponentSearch';
 import { DrawerSheet } from '../overlays/Drawer';
 import { shortName } from '../players/names';
@@ -64,7 +65,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
   const setLeader = useGame(s => s.setLeader);
   const [query, setQuery] = useState('');
   const asked = useDeferredValue(query);
-  const find = useComponentSearch(pack);
+  const find = useComponentSearch(pack, undefined, undefined, game);
   const found = useMemo(() => find(asked), [find, asked]);
 
   const rival = game.opponents.find(o => o.id === chosen);
@@ -140,7 +141,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     }
     return (
       <ComponentCard
-        key={def.id} def={def} pack={pack} held={held} state={held ? tired : undefined} note={note} source={source}
+        key={def.id} def={def} pack={pack} held={held} state={held ? tired : undefined} note={note} source={source} {...noteMark(game, pack, def.id, t)}
         onRemove={held && atStart > 0 && source === undefined ? () => setStartHolding(player, def.id, false) : undefined}
         onAdd={held ? undefined : add}
       />

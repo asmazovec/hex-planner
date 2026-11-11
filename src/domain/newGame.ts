@@ -1,4 +1,4 @@
-import { startForFaction } from './holdings';
+import { genericNotes, startForFaction } from './holdings';
 import { defaultLayout, slotKeyOf, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
 import { SAVE_FORMAT, type DataPack, type ExpansionId, type Game, type MapLayout } from './types';
@@ -34,8 +34,10 @@ export function createGame(
   const planetControl: Game['planetControl'] = {};
   for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) planetControl[planetId] = 'me';
   const planId = makeId('plan', newId);
+  const gameId = makeId('game', newId);
+  const opponents = Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent', newId), faction: '', vp: 0, seat: i + 2, color: i + 2 }));
   return {
-    id: makeId('game', newId),
+    id: gameId,
     format: SAVE_FORMAT,
     schemaVersion: 1,
     dataVersion: pack.version,
@@ -47,8 +49,12 @@ export function createGame(
     color: 1,
     vp: 0,
     map,
-    opponents: Array.from({ length: Math.max(0, input.playerCount - 1) }, (_, i) => ({ id: makeId('opponent', newId), faction: '', vp: 0, seat: i + 2, color: i + 2 })),
-    start: { me: startForFaction({}, '', input.faction, pack), opponents: {} },
+    opponents,
+    // Every player begins with the generic notes of their colour (69); the faction brings its own.
+    start: {
+      me: startForFaction({ promissory: genericNotes(pack, 'me') }, '', input.faction, pack),
+      opponents: Object.fromEntries(opponents.map(o => [o.id, { promissory: genericNotes(pack, o.id) }])),
+    },
     enemyUnits: {},
     enemyGround: {},
     planetControl,

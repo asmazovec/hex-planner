@@ -426,6 +426,7 @@
       "componentNotHeld": "{{name}}: you do not hold this component at this point.",
       "componentNotHeld_transaction": "{{name}}: the side that gives it does not hold this component at this point.",
       "componentExhausted": "{{name}} is exhausted: it is readied only in the status phase.",
+      "ownPromissory": "{{name}}: a player cannot play their own promissory note.",
       "shipOnPlanet": "{{unit}} is a ship and cannot land on {{planet}}: only ground forces land.",
       "landingOutsideSystem": "{{planet}} is not in the active system {{system}}: ground forces land only there.",
       "custodians": "The custodians token is still on {{planet}}: removing it costs 6 influence, which the plan does not record; the first to land gains 1 victory point.",

@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import { CURRENT_SCHEMA, parseGame, SAVE_FORMAT } from './schema';
+import type { Game } from '../domain/types';
 import { exportGame, importGame } from './transfer';
 import { oldFormatSave, sampleGame } from './fixture';
 
@@ -15,6 +16,22 @@ test('a new game goes to a file and back as it is', () => {
   const pack = loadPack(['pok', 'te']);
   const fresh = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, pack);
   expect(importGame(exportGame(fresh))).toEqual({ ok: true, game: fresh });
+});
+
+test('a promissory note addressed to its player (`@`) goes to a file and back: held, handed over, played', () => {
+  const pack = loadPack(['pok']);
+  const fresh = createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack);
+  const rival = fresh.opponents[0].id;
+  const theirs = `promissory:<color>_ta@${rival}`;
+  expect(fresh.start.opponents[rival].promissory).toContain(theirs);
+  const played: Game = {
+    ...fresh,
+    plans: [{ ...fresh.plans[0], rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [
+      { id: 'e1', phase: 'action', status: 'planned', type: 'pass', acts: [{ kind: 'transaction', with: rival, give: { components: ['promissory:ms@me'] }, get: { components: [theirs] } }] },
+      { id: 'e2', phase: 'action', status: 'planned', type: 'component', componentId: theirs, note: '', gains: [theirs], spends: [theirs] },
+    ] }] }],
+  };
+  expect(importGame(exportGame(played))).toEqual({ ok: true, game: played });
 });
 
 test('a new game is written with the format mark and schema version 1', () => {

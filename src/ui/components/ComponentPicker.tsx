@@ -1,12 +1,14 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById, componentsOf } from '../../domain/components';
+import { noteCards } from '../../domain/holdings';
 import type { ComponentDef, ComponentKind } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
 import { Modal } from '../overlays/Modal';
 import { ComponentCard } from './ComponentCard';
 import { ComponentSearchField } from './ComponentSearchField';
+import { noteMark } from './noteMark';
 import { RESULT_LIMIT, useComponentSearch } from './useComponentSearch';
 
 export interface ComponentPickerProps {
@@ -35,7 +37,7 @@ export function ComponentPicker({ kinds, ids, owned, prefer, player, onPick, onC
   const [query, setQuery] = useState('');
   const asked = useDeferredValue(query);
   const among = useMemo(() => ids && new Set(ids), [ids]);
-  const find = useComponentSearch(pack, kinds, among);
+  const find = useComponentSearch(pack, kinds, among, game);
   const faction = player === 'me' ? game?.faction : game?.opponents.find(o => o.id === player)?.faction;
   const shown = useMemo(() => {
     const held = (def: ComponentDef) => owned?.has(def.id) ?? false;
@@ -43,9 +45,12 @@ export function ComponentPicker({ kinds, ids, owned, prefer, player, onPick, onC
     const ordered = (list: ComponentDef[]) => (!prefer || !owned ? list : [...list.filter(def => held(def) === (prefer === 'owned')), ...list.filter(def => held(def) !== (prefer === 'owned'))]);
     if (asked.trim() !== '') return ordered(find(asked));
     if (among) return ordered([...among].flatMap(id => componentById(pack, id) ?? []).filter(c => !kinds || kinds.includes(c.kind)));
-    const offered = componentsOf(pack).filter(c => !kinds || kinds.includes(c.kind));
-    return ordered([...offered.filter(c => c.faction !== undefined && c.faction === faction), ...offered.filter(c => c.faction === undefined)]).slice(0, RESULT_LIMIT);
-  }, [asked, find, pack, kinds, faction, among, owned, prefer]);
+    // A promissory note of the catalogue is a card of each player: the one held stands first like any other.
+    const offered = componentsOf(pack).filter(c => !kinds || kinds.includes(c.kind)).flatMap(c => (game ? noteCards(game, pack, c) : [c]));
+    // What is held of another faction is offered too: a note got from its player.
+    const foreign = offered.filter(c => c.faction !== undefined && c.faction !== faction && held(c));
+    return ordered([...offered.filter(c => c.faction !== undefined && c.faction === faction), ...offered.filter(c => c.faction === undefined), ...foreign]).slice(0, RESULT_LIMIT);
+  }, [asked, find, pack, kinds, faction, among, owned, prefer, game]);
   const noteOf = (def: ComponentDef): string | undefined => {
     if (!prefer || !owned) return undefined;
     if (prefer === 'new') return owned.has(def.id) ? t('components.alreadyHeld') : undefined;
@@ -60,6 +65,7 @@ export function ComponentPicker({ kinds, ids, owned, prefer, player, onPick, onC
         {shown.map(def => (
           <ComponentCard
             key={def.id} def={def} pack={pack} held={owned?.has(def.id)} note={noteOf(def)} count={ids?.filter(id => id === def.id).length}
+            {...(game ? noteMark(game, pack, def.id, t) : {})}
             pickLabel={t('components.choose', { name: def.name })} onAdd={() => onPick(def.id)}
           />
         ))}

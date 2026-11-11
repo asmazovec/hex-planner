@@ -338,7 +338,7 @@ describe('upgrades of players', () => {
     const game = start(4);
     const opponent = game.opponents[0];
     const marked = { ...game, start: { me: { technologies: ['technology:ws'] }, opponents: { [opponent.id]: { technologies: ['technology:cr2'] } } } };
-    expect(setPlayerFaction(marked, 0, 'arborec', pack).start).toEqual({ ...marked.start, me: { technologies: ['technology:ws', 'technology:md'], leaders: { 'leader:arborecagent': 'unlocked' } } });
-    expect(setPlayerFaction(marked, 1, 'muaat', pack).start).toEqual({ ...marked.start, opponents: { [opponent.id]: { technologies: ['technology:cr2', 'technology:ps'], leaders: { 'leader:muaatagent': 'unlocked' } } } });
+    expect(setPlayerFaction(marked, 0, 'arborec', pack).start).toEqual({ ...marked.start, me: { technologies: ['technology:ws', 'technology:md'], leaders: { 'leader:arborecagent': 'unlocked' }, promissory: ['promissory:stymie@me'] } });
+    expect(setPlayerFaction(marked, 1, 'muaat', pack).start).toEqual({ ...marked.start, opponents: { [opponent.id]: { technologies: ['technology:cr2', 'technology:ps'], leaders: { 'leader:muaatagent': 'unlocked' }, promissory: [`promissory:fires@${opponent.id}`] } } });
   });
 });

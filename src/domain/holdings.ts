@@ -3,7 +3,7 @@
  * the one bridge from the technologies held to the unit upgrades the counts follow. The replay's side is in
  * `replay/holdings.ts`.
  */
-import { componentsOf } from './components';
+import { componentById, componentsOf, noteAddress, noteId, textOf } from './components';
 import type { ComponentDef, ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
 
 export const emptyHoldings = (): Holdings =>
@@ -83,21 +83,71 @@ const leadersOf = (pack: DataPack, factionId: string): ComponentDef[] =>
 export const startingAgents = (pack: DataPack, factionId: string): string[] =>
   leadersOf(pack, factionId).filter(c => c.detail?.type === 'agent').map(c => c.id);
 
+const notesOf = (pack: DataPack, player: string, mine: (def: ComponentDef) => boolean): string[] =>
+  componentsOf(pack).filter(c => c.kind === 'promissory' && mine(c)).map(c => noteId(c.id, player));
+
+/** The generic notes a player (`me` or an opponent id) begins with, addressed to them (69): four in the base game, Alliance with Prophecy of Kings. */
+export const genericNotes = (pack: DataPack, player: string): string[] => notesOf(pack, player, c => c.faction === undefined);
+
+/** The notes of a faction, addressed to the player who plays it; none without a faction. */
+export const factionNotes = (pack: DataPack, factionId: string, player: string): string[] =>
+  (factionId === '' ? [] : notesOf(pack, player, c => c.faction === factionId));
+
 /**
- * A player's start after their faction changed: the old faction's starting technologies and leaders go, the new one's
- * starting technologies come, and its agents come unlocked.
+ * The player a note belongs to, whoever holds it: its address, when that player is in the game. `viewer` is the player
+ * the game is shown as (`gameAs`), who is not among its opponents. None for a catalogue id.
  */
-export function startForFaction(start: StartHoldings = {}, from: string, to: string, pack: DataPack): StartHoldings {
+export function noteOwner(game: Pick<Game, 'opponents'>, id: string, viewer = 'me'): string | undefined {
+  const address = noteAddress(id);
+  return address !== undefined && (address === viewer || game.opponents.some(o => o.id === address)) ? address : undefined;
+}
+
+/** The text of a note as it reads in this game: the `<color>` of a generic note is its owner, named by `nameOf`. */
+export function noteText(game: Pick<Game, 'opponents'>, pack: DataPack, id: string, nameOf: (player: string) => string, viewer = 'me'): string {
+  const owner = noteOwner(game, id, viewer);
+  const text = textOf(pack, id);
+  return owner === undefined ? text : text.replaceAll('<color>', nameOf(owner));
+}
+
+/**
+ * The cards a catalogue note stands for in a game: a generic note is one card of each player, a faction's note the
+ * card of each player of that faction. A note of a faction nobody plays, and any other component, is itself.
+ */
+export function noteCards(game: Pick<Game, 'faction' | 'opponents'>, pack: DataPack, def: ComponentDef): ComponentDef[] {
+  if (def.kind !== 'promissory' || noteAddress(def.id) !== undefined) return [def];
+  const players = [{ id: 'me', faction: game.faction }, ...game.opponents];
+  const cards = players.filter(p => def.faction === undefined || def.faction === p.faction).flatMap(p => componentById(pack, noteId(def.id, p.id)) ?? []);
+  return cards.length > 0 ? cards : [def];
+}
+
+/** A start without the notes of a player who left the game. */
+export function withoutNotesOf(start: StartHoldings, player: string): StartHoldings {
+  const promissory = start.promissory?.filter(id => noteAddress(id) !== player);
+  return promissory === undefined || promissory.length === start.promissory?.length ? start : { ...start, promissory };
+}
+
+/**
+ * A player's start after their faction changed: the old faction's starting technologies, leaders and notes go, the new
+ * one's starting technologies and notes come, and its agents come unlocked. `player` is whose start it is.
+ */
+export function startForFaction(start: StartHoldings = {}, from: string, to: string, pack: DataPack, player = 'me'): StartHoldings {
   const gone = startingTechnologies(pack, from);
   const kept = (start.technologies ?? []).filter(id => !gone.includes(id));
   const technologies = [...kept, ...startingTechnologies(pack, to).filter(id => !kept.includes(id))];
   const left = new Set(leadersOf(pack, from).map(c => c.id));
   const leaders: Record<string, LeaderState> = Object.fromEntries(Object.entries(start.leaders ?? {}).filter(([id]) => !left.has(id)));
   for (const id of startingAgents(pack, to)) leaders[id] = 'unlocked';
-  const { technologies: old, leaders: before, ...rest } = start;
+  const lost = factionNotes(pack, from, player);
+  const notes = (start.promissory ?? []).filter(id => !lost.includes(id));
+  const promissory = [...notes, ...factionNotes(pack, to, player).filter(id => !notes.includes(id))];
+  const { technologies: old, leaders: before, promissory: held, ...rest } = start;
   void old;
   void before;
-  return { ...rest, ...(technologies.length > 0 ? { technologies } : {}), ...(Object.keys(leaders).length > 0 ? { leaders } : {}) };
+  void held;
+  return {
+    ...rest, ...(technologies.length > 0 ? { technologies } : {}), ...(Object.keys(leaders).length > 0 ? { leaders } : {}),
+    ...(promissory.length > 0 ? { promissory } : {}),
+  };
 }
 
 type ListField = 'technologies' | 'hand' | 'relics' | 'promissory' | 'scored' | 'secrets';
@@ -157,6 +207,8 @@ const withStart = (game: Game, player: string, start: StartHoldings): Game => ({
 /**
  * Marks by hand what a player (`me` or an opponent id) held when the plan begins. The kind of the id decides the place:
  * a hand of action cards keeps repeats and loses one copy at a time, everything else is held once. Leaders have `setLeader`.
+ * A promissory note is one card: marked with a player, it leaves whoever else had it, and taken off a player who is not
+ * its owner, it is back with its owner.
  */
 export function setStartHolding(game: Game, player: string, id: string, present: boolean): Game {
   const start = playerStart(game, player);
@@ -173,7 +225,18 @@ export function setStartHolding(game: Game, player: string, id: string, present:
   const list = start[field] ?? [];
   const at = list.indexOf(id);
   if (present ? at >= 0 && field !== 'hand' : at < 0) return game;
-  return withStart(game, player, { ...start, [field]: present ? [...list, id] : list.filter((_, i) => i !== at) });
+  const next = withStart(game, player, { ...start, [field]: present ? [...list, id] : list.filter((_, i) => i !== at) });
+  const owner = field === 'promissory' ? noteAddress(id) : undefined;
+  if (owner === undefined) return next;
+  if (!present) return owner === player ? next : setStartHolding(next, owner, id, true);
+  const without = (other: StartHoldings): StartHoldings => (other.promissory?.includes(id) ? { ...other, promissory: other.promissory.filter(held => held !== id) } : other);
+  return {
+    ...next,
+    start: {
+      me: player === 'me' ? next.start.me : without(next.start.me),
+      opponents: Object.fromEntries(Object.entries(next.start.opponents).map(([other, theirs]) => [other, other === player ? theirs : without(theirs)])),
+    },
+  };
 }
 
 /** Marks by hand the state of a player's leader when the plan begins; `null` locks it again. */

@@ -90,7 +90,7 @@ function applyEntry(
       applyAdjustment(state, entry, warnings);
       break;
     case 'component':
-      applyComponent(state, entry, pack, warnings);
+      applyComponent(state, entry, pack, warnings, game.faction, acts.states);
       break;
     case 'pass':
       break;
