@@ -1,9 +1,9 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { componentById, componentsOf, noteAddress } from '../../domain/components';
+import { componentById, componentsOf, noteAddress, textOf } from '../../domain/components';
 import { emptyHoldings, HOLDING_FIELD, ownNotes, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
-import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats } from '../../domain/unitStats';
+import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats, upgradableStructures } from '../../domain/unitStats';
 import type { ComponentDef, DataPack, Game, GameState, TechType } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { ComponentCard, type CardState } from '../components/ComponentCard';
@@ -206,8 +206,38 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
       ),
     }];
   });
+  // The structures after the units: a card each, with the level its technology gives and what the level changes.
+  const structureCards = upgradableStructures(pack).flatMap(kind => {
+    const levels = pack.structures.find(s => s.id === kind)?.levels;
+    const technology = upgradeTech(pack, faction, kind);
+    if (!levels) return [];
+    const on = upgraded.includes(kind) && levels.two !== undefined;
+    const stat = on && levels.two ? levels.two : levels.one;
+    const round = technology === undefined ? undefined : fromPlan[technology];
+    return [{
+      technology,
+      card: (
+        <button
+          key={kind} type="button" className={`upgrade-card${on ? ' on' : ''}`} data-testid={`upgrade-${kind}`} aria-pressed={on}
+          disabled={!technology || round !== undefined} onClick={() => technology && setStartHolding(player, technology, !on)}
+        >
+          <UnitIcon unit={kind} />
+          <span className="upgrade-body">
+            <b>{t(kind === 'pds' ? 'map.pds' : 'map.spaceDock')}</b>
+            {round !== undefined && <small className="ship-row-round">{t('components.fromRound', { n: round })}</small>}
+          </span>
+          <span className="upgrade-level">{on ? 'II' : 'I'}</span>
+          <span className="ship-notes">
+            {stat.cannon && <span className="ship-prop">{t('ships.cannon', { value: stat.cannon.dice > 1 ? `${stat.cannon.hit}×${stat.cannon.dice}` : `${stat.cannon.hit}` })}</span>}
+            {stat.production !== undefined && <span className="ship-prop">{t('ships.dockProduction', { n: stat.production })}</span>}
+            {on && technology && textOf(pack, technology) && <small>{textOf(pack, technology)}</small>}
+          </span>
+        </button>
+      ),
+    }];
+  });
   // A unit card stands for its upgrade technology: that one is not listed a second time.
-  const onUnitCards = new Set(unitCards.map(unit => unit.technology));
+  const onUnitCards = new Set([...unitCards, ...structureCards].map(unit => unit.technology));
 
   const ownLeaders = componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === faction).map(c => c.id);
   const breakthrough = holdings.breakthrough ? componentsOf(pack).filter(c => c.kind === 'breakthrough' && c.faction === faction) : [];
@@ -222,7 +252,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
   const listed = researched.filter(c => techOf(c)?.type || !techOf(c)?.upgrade).sort((a, b) => rank(a) - rank(b));
   const sections: [string, ReactNode[]][] = [
     ['technologies', listed.map(card)],
-    ['unitUpgrades', [...unitCards.map(unit => unit.card), ...researched.filter(c => !listed.includes(c)).map(card)]],
+    ['unitUpgrades', [...unitCards.map(unit => unit.card), ...structureCards.map(unit => unit.card), ...researched.filter(c => !listed.includes(c)).map(card)]],
     ['ownNotes', ownNotes(game, pack, player, everyHoldings).map(ownNote)],
     ['promissory', known(holdings.promissory).filter(c => noteAddress(c.id) !== player).map(card)],
     ['actionCards', known(holdings.hand).map(card)],

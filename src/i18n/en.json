@@ -683,6 +683,7 @@
     "barrage": "Anti-Fighter Barrage {{value}}",
     "bombard": "Bombardment {{value}}",
     "cannon": "Space Cannon {{value}}",
+    "dockProduction": "Production: the planet's resources +{{n}}",
     "upgradeRow": {
       "ships": "Ships",
       "ground": "Ground forces",

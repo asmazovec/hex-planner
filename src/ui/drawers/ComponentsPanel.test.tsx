@@ -66,7 +66,9 @@ describe('the components drawer', () => {
     // An upgrade without a unit card here stands with the unit cards, under the mark of an upgrade.
     const upgrades = section('Unit upgrades');
     expect(within(upgrades).getByTestId('upgrade-carrier')).toBeVisible();
-    expect(within(within(upgrades).getByTestId('component-technology:pds2')).getByRole('img', { name: 'Unit upgrade' })).toBeVisible();
+    // A structure has its card too: PDS II is the level of the PDS card, not a card of its own.
+    expect(within(upgrades).getByTestId('upgrade-pds')).toHaveAttribute('aria-pressed', 'true');
+    expect(within(upgrades).queryByTestId('component-technology:pds2')).toBeNull();
     expect(within(technologies).queryByTestId('component-technology:pds2')).toBeNull();
   });
 
@@ -84,6 +86,23 @@ describe('the components drawer', () => {
     await userEvent.click(carrier);
     expect(game().start.me.technologies).toContain('technology:cv2');
     expect(screen.getByTestId('upgrade-carrier')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('the structures stand with the unit cards, each with its level and its numbers, and switch through their technologies', async () => {
+    await openDrawer();
+    const upgrades = section('Unit upgrades');
+    const pds = within(upgrades).getByTestId('upgrade-pds');
+    const dock = within(upgrades).getByTestId('upgrade-spacedock');
+    expect(pds).toHaveAttribute('aria-pressed', 'false');
+    expect(pds).toHaveTextContent('Space Cannon 6');
+    expect(dock).toHaveTextContent('+2');
+    await userEvent.click(dock);
+    expect(game().start.me.technologies).toContain('technology:sd2');
+    expect(screen.getByTestId('upgrade-spacedock')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('upgrade-spacedock')).toHaveTextContent('+4');
+    await userEvent.click(screen.getByTestId('upgrade-pds'));
+    expect(game().start.me.technologies).toContain('technology:pds2');
+    expect(screen.getByTestId('upgrade-pds')).toHaveTextContent('Space Cannon 5');
   });
 
   test('an empty section is one line that says so', async () => {
