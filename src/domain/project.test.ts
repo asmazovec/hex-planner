@@ -326,12 +326,12 @@ describe('project', () => {
       expect(warnings).toContainEqual({ code: 'fleetPool', params: { systemId: 'B', ships: 5, fleet: 3 } });
     });
 
-    test('the meters count only what the source really holds, as the warnings do', () => {
+    test('the meters count what was entered, beyond what the source holds too: the warning says the rest', () => {
       const m = moves([{ from: 'A', units: { carrier: 2 } }]);
       const g = gameWith([setup('A', { carrier: 1 }), m]);
       const meters = tacticalMeters(g, m as Extract<Entry, { type: 'tactical' }>, 'A', stateBeforeEntry(g, g.plans[0], 'm', pack), pack);
-      expect(meters.group).toEqual({ load: 0, capacity: 4 });
-      expect(meters.ships).toBe(1);
+      expect(meters.group).toEqual({ load: 0, capacity: 8 });
+      expect(meters.ships).toBe(2);
     });
   });
 
@@ -344,13 +344,14 @@ describe('project', () => {
       expect(landWarnings(run(g).warningsByEntry.l)).toEqual([]);
     });
 
-    test('over the limit across two planets: one warning with totals, only what exists lands, in order', () => {
+    test('over the limit across two planets: one warning with totals, and both landings stand as entered', () => {
       const g = gameWith([ // Sol starts with two infantry at home
         withId('l', entry(tactical({ systemId: 'H', landings: [landing('jord', 2), landing('arc', 1)] })))]);
       const r = run(g);
       expect(landWarnings(r.warningsByEntry.l)).toEqual([{ code: 'landingOverLimit', params: { unit: 'infantry', wanted: 3, available: 2 } }]);
       expect(r.state.ground.jord.infantry).toBe(2);
-      expect(r.state.ground.arc?.infantry).toBeUndefined();
+      expect(r.state.ground.arc?.infantry).toBe(1);
+      expect(r.state.systems.H?.infantry).toBeUndefined();
     });
 
     test('moves and pickups from planets count as arrived', () => {
@@ -447,18 +448,19 @@ describe('project', () => {
     expect(r.state.tradeGoods).toBe(0);
   });
 
-  test('перемещение несуществующих юнитов: без минуса и с unitsMissing', () => {
+  test('перемещение несуществующих юнитов: источник без минуса, летит введённое, есть unitsMissing', () => {
     const g = gameWith([move('e1', 'A', { cruiser: 1 })]);
     const r = run(g);
-    expect(r.state.systems.A.cruiser ?? 0).toBe(0);
-    expect(r.state.systems.B.cruiser ?? 0).toBe(0);
+    expect(r.state.systems.A?.cruiser ?? 0).toBe(0);
+    expect(r.state.systems.B.cruiser).toBe(1);
     expect(codes(r.warningsByEntry.e1)).toContain('unitsMissing');
   });
 
-  test('перемещается то, что есть, остальное в unitsMissing', () => {
+  test('перемещается всё введённое, нехватка в unitsMissing, источник пуст', () => {
     const g = gameWith([setup('A', { cruiser: 1 }), move('e1', 'A', { cruiser: 3 })]);
     const r = run(g);
-    expect(r.state.systems.B.cruiser).toBe(1);
+    expect(r.state.systems.B.cruiser).toBe(3);
+    expect(r.state.systems.A?.cruiser ?? 0).toBe(0);
     expect(r.warningsByEntry.e1).toContainEqual({ code: 'unitsMissing', params: { where: 'A', unit: 'cruiser', missing: 2 } });
   });
 
@@ -467,8 +469,11 @@ describe('project', () => {
     const mv = move('m', 'A', { cruiser: 1 });
     const buildFirst = run(gameWith([build, mv])).state;
     expect(buildFirst.systems.B.cruiser).toBe(1);
+    expect(buildFirst.systems.A?.cruiser ?? 0).toBe(0);
+    // Перелёт раньше постройки: летит введённое, о нехватке говорит предупреждение, построенный остаётся на месте.
     const moveFirst = run(gameWith([mv, build]));
-    expect(moveFirst.state.systems.B.cruiser ?? 0).toBe(0);
+    expect(moveFirst.state.systems.B.cruiser).toBe(1);
+    expect(moveFirst.state.systems.A.cruiser).toBe(1);
     expect(codes(moveFirst.warningsByEntry.m)).toContain('unitsMissing');
   });
 
@@ -585,13 +590,15 @@ describe('project', () => {
       expect(readyResources(next.state, pack)).toBe(6);
     });
 
-    test('своя планета остаётся готовой, высадка без юнитов ничего не меняет', () => {
+    test('своя планета остаётся готовой; высадка тех, кого нет в системе, предупреждает и считается как введена', () => {
       const own = run(gameWith([setup('B', { infantry: 2 }), land('arc', ['arc'])]));
       expect(codes(own.warningsByEntry.t)).not.toContain('planetExhausted');
       expect(own.state.exhausted).toEqual(['arc']);
       const none = run(gameWith([land('lazar', [])]));
-      expect(none.state.exhausted).toEqual([]);
-      expect(none.state.control.lazar).toBeUndefined();
+      expect(codes(none.warningsByEntry.t)).toContain('landingOverLimit');
+      expect(none.state.ground.lazar).toEqual({ infantry: 2 });
+      expect(none.state.control.lazar).toBe('me');
+      expect(none.state.exhausted).toEqual(['lazar']);
     });
 
     test('планета, отнятая у соперника, тоже истощена', () => {
@@ -1029,7 +1036,8 @@ describe('pickups on the way', () => {
       { from: 'M', units: { fighter: 3 }, pickupOf: 'A' },
     ] })]);
     const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
-    expect(state.systems.T).toEqual({ carrier: 1, fighter: 2 });
+    expect(state.systems.T).toEqual({ carrier: 1, fighter: 3 });
+    expect(state.systems.M?.fighter).toBeUndefined();
     expect(warningsByEntry.r).toContainEqual({ code: 'unitsMissing', params: { where: 'M', unit: 'fighter', missing: 1 } });
   });
 });

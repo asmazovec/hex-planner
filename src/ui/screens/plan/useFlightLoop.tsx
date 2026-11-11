@@ -63,8 +63,8 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   }), []);
   const flying = flight?.game === game ? flight : null;
 
-  // Nothing to show in a flight, nothing to repeat: a move whose units are not at the source, for one.
-  const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined && flies(pack, shownEntry, boards.before(shownEntry.id));
+  // Nothing to show in a flight, nothing to repeat: an action with no units in its moves, for one.
+  const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined && flies(shownEntry);
 
   const start = useCallback((entryId: string, filter: Filter = 'forecast') => {
     const current = useGame.getState().game;
@@ -116,7 +116,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
     const layer = flying && flyingEntry && beforeFlight && (
       <FlightLayer
         key={flying.run} colour={playerColour(flyingGame.color)} passed={flying.passed}
-        routes={flightRoutes(flyingGame, pack, flyingEntry, beforeFlight, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
+        routes={flightRoutes(flyingGame, pack, flyingEntry, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
         onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
         holdMs={DEPART_HOLD_MS}
         onDepart={() => setFlight(f => f && { ...f, departed: true })}

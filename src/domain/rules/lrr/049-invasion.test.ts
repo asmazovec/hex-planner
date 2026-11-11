@@ -29,11 +29,14 @@ describe('LRR 49 Invasion', () => {
     expect(codesOf(game, pack, land)).toContain('landingOverLimit');
   });
 
-  test('49.2: ground forces lost in the space combat are no longer in the space area to land', () => {
+  test('49.2: ground forces lost in the space combat are no longer in the space area to land: landing them is warned about, and lands what was entered', () => {
     const land = invasion({ losses: { infantry: 1 } });
     const game = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [land] });
     expect(codesOf(game, pack, land)).toContain('landingOverLimit');
-    expect(forecast(game, pack).state.ground.t1).toEqual({ infantry: 1 });
+    // A warning forbids nothing: the landing stands as entered, the space area only ends empty.
+    const { state } = forecast(game, pack);
+    expect(state.ground.t1).toEqual({ infantry: 2 });
+    expect(state.systems[TARGET]).toEqual({ carrier: 1 });
   });
 
   test('49.2: ground forces land only on planets of the active system', () => {
@@ -103,17 +106,31 @@ describe('LRR 49 Invasion', () => {
     expect(state.control.t1).not.toBe('me');
   });
 
-  test('49.5: a landing that puts no ground force on the planet gains no control', () => {
-    // Nothing to land: the landing is warned about and the planet stays as it was.
-    const land = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1 } }], landings: [{ planetId: 't1', units: { infantry: 1 } }] });
+  test('49.5: a landing with no ground force entered gains no control', () => {
+    const land = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1 } }], landings: [{ planetId: 't1', units: {} }] });
     const game = rulesGame({ units: { [NEAR]: { carrier: 1 } }, entries: [land], game: { planetControl: { t1: 'enemy' } } });
     expect(forecast(game, pack).state.control.t1).toBe('enemy');
   });
 
-  test('49.5: an opponent\'s landing that puts no ground force on my planet does not take it', () => {
+  test('49.2 / 49.5: a landing of ground forces that never arrived is warned about and lands as entered, taking the planet', () => {
+    const land = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1 } }], landings: [{ planetId: 't1', units: { infantry: 1 } }] });
+    const game = rulesGame({ units: { [NEAR]: { carrier: 1 } }, entries: [land], game: { planetControl: { t1: 'enemy' } } });
+    expect(codesOf(game, pack, land)).toContain('landingOverLimit');
+    const { state } = forecast(game, pack);
+    expect(state.ground.t1).toEqual({ infantry: 1 });
+    expect(state.control.t1).toBe('me');
+  });
+
+  test('49.5: an opponent\'s landing of ground forces they do not have there is warned about and takes my planet as entered', () => {
     const theirs = tactical(TARGET, { landings: [{ planetId: 't1', units: { infantry: 1 } }] }, { owner: 'o1' });
     const game = rulesGame({ entries: [theirs], game: { planetControl: { t1: 'me' }, opponents: [rival] } });
     expect(codesOf(game, pack, theirs)).toContain('landingOverLimit');
+    expect(forecast(game, pack).state.control.t1).not.toBe('me');
+  });
+
+  test('49.5: an opponent\'s landing with no ground force entered does not take my planet', () => {
+    const theirs = tactical(TARGET, { landings: [{ planetId: 't1', units: {} }] }, { owner: 'o1' });
+    const game = rulesGame({ entries: [theirs], game: { planetControl: { t1: 'me' }, opponents: [rival] } });
     expect(forecast(game, pack).state.control.t1).toBe('me');
   });
 
