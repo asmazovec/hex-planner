@@ -34,18 +34,20 @@ export function checkRoutes(game: Game, state: GameState, target: string, moves:
 }
 
 /**
- * Effect: carries the moves into the target and returns what each source system really sent, by slot; a unit asked for
- * that is not there is reported. Pickups from the target's own planets stay in the system, so they join no group.
+ * Effect: carries the moves into the target and returns what each source system sent, by slot. What was entered is what
+ * flies: a unit asked for that is not there is reported (`unitsMissing`) and flies all the same, since a warning forbids
+ * nothing; its source only ends empty, never below. Pickups from the target's own planets stay in the system, so they
+ * join no group.
  */
 export function moveUnits(
   game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, warnings: Warning[],
 ): Record<string, UnitCounts> {
   const groups: Record<string, UnitCounts> = {};
   for (const move of moves) {
-    const taken = take(move.from in pack.planets ? state.ground : state.systems, move.from, move.units, warnings);
-    add(state.systems, target, taken);
+    take(move.from in pack.planets ? state.ground : state.systems, move.from, move.units, warnings);
+    add(state.systems, target, move.units);
     const slot = move.pickupOf ?? sourceSlot(game, pack, move.from);
-    if (slot !== null && slot !== target) add(groups, slot, taken);
+    if (slot !== null && slot !== target) add(groups, slot, move.units);
   }
   return groups;
 }

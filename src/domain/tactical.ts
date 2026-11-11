@@ -305,13 +305,9 @@ export function entrySystems(game: Game, pack: DataPack, entry: Entry): string[]
   return [...new Set(slots)].filter((s): s is string => Boolean(s) && isOnMap(game, s as string));
 }
 
-/** Whether a flight of this entry would show anything: a destination, and a unit its move really finds at the source. */
-export function flies(pack: DataPack, entry: TacticalEntry, before: GameState): boolean {
-  if (entry.systemId === null) return false;
-  return entry.moves.some(move => {
-    const pool = poolOf(before, pack, move.from) ?? {};
-    return (Object.keys(move.units) as UnitId[]).some(unit => Math.min(move.units[unit] ?? 0, pool[unit] ?? 0) > 0);
-  });
+/** Whether a flight of this entry would show anything: a destination and a unit in its moves. What was entered flies, whether or not it stands at the source. */
+export function flies(entry: TacticalEntry): boolean {
+  return entry.systemId !== null && entry.moves.some(move => hasUnits(move.units));
 }
 
 /** The map during a flight: what flies has left its tile, what is picked up on the way leaves when the leader passes. It lands with the end of the flight. */

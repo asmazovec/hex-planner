@@ -45,9 +45,9 @@ export function checkLandings(game: Game, state: GameState, target: string, entr
 }
 
 /**
- * Effect: the ground forces of each landing go from the active system's space onto its planet; returns the planets
- * something landed on. The first to land on Mecatol Rex removes the custodians token: six influence the plan does not
- * record, so it is warned about, and one victory point (27.2, 27.3, 54.1).
+ * Effect: the ground forces of each landing go from the active system's space onto its planet, as many as were entered;
+ * returns the planets something landed on. The first to land on Mecatol Rex removes the custodians token: six influence
+ * the plan does not record, so it is warned about, and one victory point (27.2, 27.3, 54.1).
  */
 export function landUnits(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): string[] {
   warnings.push(...checkLandings(game, state, target, entry, pack));
@@ -55,8 +55,9 @@ export function landUnits(game: Game, state: GameState, target: string, entry: T
   const landedOn: string[] = [];
   for (const landing of entry.landings) {
     if (!planets.includes(landing.planetId)) continue;
-    // The shortfall is already reported as landingOverLimit, so the generic warning is not given here.
-    const landed = removeUnits(state.systems, target, groundOf(landing.units, pack));
+    // What was entered lands: the shortfall is reported as landingOverLimit and forbids nothing; the space area only ends empty.
+    const landed = groundOf(landing.units, pack);
+    removeUnits(state.systems, target, landed);
     if (unitIds(landed).length === 0) continue;
     if (custodiansOn(state, landing.planetId)) {
       warnings.push(violation('custodians', { planetId: landing.planetId }));

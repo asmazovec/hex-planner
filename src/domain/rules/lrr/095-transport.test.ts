@@ -1,6 +1,8 @@
 /** LRR 95 Transport. Source: tirules2 rules-reference/transport.md. */
 import { describe, expect, test } from 'vitest';
-import { adjust, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
+import { tacticalMeters } from '../../replay';
+import type { TacticalEntry } from '../../tactical';
+import { adjust, before, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 import { row } from './kit-83-101';
 
 const pack = rulesPack();
@@ -119,4 +121,41 @@ describe('LRR 95 Transport', () => {
   });
 
   test.todo('95 note 5: ships will carry units from systems with the player\'s token outside a tactical action — not modelled: a future rule change, not in force');
+
+  test('95 / 16.1: cargo picked beyond the capacity flies all the same: it is carried, arrives, lands and counts, and only the warning says so', () => {
+    const action = tactical(TARGET, {
+      moves: [{ from: NEAR, units: { carrier: 1, infantry: 6 } }],
+      landings: [{ planetId: 't1', units: { infantry: 6 } }],
+    });
+    const game = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 6 } }, entries: [action] });
+    expect(codesOf(game, pack, action)).toEqual(['capacityGroup']);
+    const { state } = forecast(game, pack);
+    expect(state.systems[TARGET]).toEqual({ carrier: 1 });
+    expect(state.ground.t1).toEqual({ infantry: 6 });
+    expect(tacticalMeters(game, action as TacticalEntry, NEAR, before(game, pack, action), pack).group).toEqual({ load: 6, capacity: 4 });
+  });
+
+  test('95 / 58.3: units taken beyond what stands at the source fly all the same; the source ends empty and the shortfall is warned about', () => {
+    const action = tactical(TARGET, {
+      moves: [{ from: NEAR, units: { carrier: 1, infantry: 6 } }],
+      landings: [{ planetId: 't1', units: { infantry: 5 } }],
+    });
+    const game = rulesGame({ units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [action] });
+    const warnings = forecast(game, pack).warnings[action.id] ?? [];
+    expect(warnings.map(w => w.code).sort()).toEqual(['capacityGroup', 'unitsMissing']);
+    expect(warnings.find(w => w.code === 'unitsMissing')?.params).toMatchObject({ where: NEAR, unit: 'infantry', missing: 4 });
+    expect(warnings.find(w => w.code === 'capacityGroup')?.params).toMatchObject({ from: NEAR, load: 6 });
+    const { state } = forecast(game, pack);
+    expect(state.systems[NEAR] ?? {}).toEqual({});
+    expect(state.systems[TARGET]).toEqual({ carrier: 1, infantry: 1 });
+    expect(state.ground.t1).toEqual({ infantry: 5 });
+    expect(tacticalMeters(game, action as TacticalEntry, NEAR, before(game, pack, action), pack).group.load).toBe(6);
+  });
+
+  test('95 / 58.3: a ship that is not at the source flies as entered and counts against the fleet pool', () => {
+    const action = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 5 } }] });
+    const game = rulesGame({ units: { [HOME]: { cruiser: 1 } }, entries: [action] });
+    expect(codesOf(game, pack, action).sort()).toEqual(['fleetPool', 'unitsMissing']);
+    expect(forecast(game, pack).state.systems[NEAR]).toEqual({ cruiser: 5 });
+  });
 });

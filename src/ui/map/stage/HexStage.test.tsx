@@ -698,7 +698,7 @@ describe('build', () => {
     expect(screen.queryByRole('status')).toBeNull();
   });
 
-  test('a loss the plan cannot place gets an entry of its own, with no note', async () => {
+  test('a loss behind a flight that took the stack away moves its entry behind the arrival, with no note', async () => {
     const FROM = '2,0';
     store().setTile(FROM, '26');
     const noPay = { planets: [], tradeGoods: 0 };
@@ -711,8 +711,8 @@ describe('build', () => {
     open({ initialMode: 'battle' });
     await userEvent.click(document.querySelector('[data-stack="me|carrier|-"] .token-hit')!);
     const entries = game().plans[0].rounds[0].entries;
-    expect(entries).toHaveLength(before.plans[0].rounds[0].entries.length + 1);
-    expect(entries.at(-1)).toMatchObject({ kind: 'losses', phase: 'action', delta: { units: { systemId: SLOT, units: { carrier: -1 } } } });
+    expect(entries).toHaveLength(before.plans[0].rounds[0].entries.length);
+    expect(entries.at(-1)).toMatchObject({ kind: 'losses', phase: 'action', delta: { units: { systemId: SLOT, units: { fighter: -1, carrier: -1 } } } });
     expect(screen.queryByRole('status')).toBeNull();
   });
 

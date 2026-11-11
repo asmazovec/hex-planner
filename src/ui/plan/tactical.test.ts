@@ -77,7 +77,7 @@ describe('the flight', () => {
 
   test('each route is one formation, laid out as a tile with no planets, with cells of the same size as there', () => {
     const e = entry(ROUTE);
-    const [route] = flightRoutes(game(), pack, e, before(), () => shapes(e)[0]);
+    const [route] = flightRoutes(game(), pack, e, () => shapes(e)[0]);
     const { items } = hexLayout({ planets: 0, ground: [], space: [{ kind: 'carrier', owner: 'me', count: 1 }, { kind: 'fighter', owner: 'me', count: 3 }, { kind: 'infantry', owner: 'me', count: 1 }] });
     expect(route.stacks.map(s => [s.kind, s.x, s.y, s.size]).sort()).toEqual(items.map(i => [i.kind, i.x, i.y, i.size]).sort());
     expect(route.durationMs).toBe(600);
@@ -86,7 +86,7 @@ describe('the flight', () => {
 
   test('stacks of the source start at once, picked-up ones join where the leader passes their hex', () => {
     const e = entry(ROUTE);
-    const [route] = flightRoutes(game(), pack, e, before(), () => shapes(e)[0]);
+    const [route] = flightRoutes(game(), pack, e, () => shapes(e)[0]);
     const joins = Object.fromEntries(route.stacks.map(s => [s.kind, s.joins]));
     expect(joins.carrier).toEqual([{ at: 0, count: 1, move: 0 }]);
     expect(joins.fighter[0]).toEqual({ at: 0, count: 1, move: 0 });
@@ -96,15 +96,15 @@ describe('the flight', () => {
     expect(joins.infantry[0].move).toBe(2);
   });
 
-  test('only what exists flies; a route with nothing real stays home; a stagger stands between routes only', () => {
+  test('what was entered flies, whether or not it stands at the source; a stagger stands between routes', () => {
     const e = entry([
       { from: HOME, units: { carrier: 5 } }, { from: '0,0', units: { dreadnought: 1 } }, { from: WAY, units: { cruiser: 1 } },
     ]);
     const all = shapes(e);
-    const routes = flightRoutes(game(), pack, e, before(), from => all[sourcesOf(game(), pack, e).indexOf(from)]);
-    expect(routes).toHaveLength(2);
-    expect(routes[0].stacks[0].joins[0].count).toBe(2);
-    expect(routes.map(r => r.delayMs)).toEqual([0, 60]);
+    const routes = flightRoutes(game(), pack, e, from => all[sourcesOf(game(), pack, e).indexOf(from)]);
+    expect(routes).toHaveLength(3);
+    expect(routes[0].stacks[0].joins[0].count).toBe(5);
+    expect(routes.map(r => r.delayMs)).toEqual([0, 60, 120]);
   });
 
   test('what flies has left its tile; a pickup leaves when passed; the token of the action stands', () => {
@@ -121,12 +121,12 @@ describe('the flight', () => {
   });
 });
 
-test('a flight has something to show only with a destination and units really at the source', () => {
-  const before = { systems: { [HOME]: { carrier: 1 } }, ground: {} } as unknown as GameState;
-  const body = (from: string, systemId: string | null) => ({ id: 'f', phase: 'action', status: 'planned', type: 'tactical', systemId, moves: [{ from, units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }) as unknown as TacticalEntry;
-  expect(flies(pack, body(HOME, TARGET), before)).toBe(true);
-  expect(flies(pack, body(WAY, TARGET), before)).toBe(false);
-  expect(flies(pack, body(HOME, null), before)).toBe(false);
+test('a flight has something to show with a destination and units entered, standing at the source or not', () => {
+  const body = (from: string, systemId: string | null, units: Move['units'] = { carrier: 1 }) => ({ id: 'f', phase: 'action', status: 'planned', type: 'tactical', systemId, moves: [{ from, units }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }) as unknown as TacticalEntry;
+  expect(flies(body(HOME, TARGET))).toBe(true);
+  expect(flies(body(WAY, TARGET))).toBe(true);
+  expect(flies(body(HOME, TARGET, {}))).toBe(false);
+  expect(flies(body(HOME, null))).toBe(false);
 });
 
 test('the systems an entry touches, for the camera', () => {

@@ -1057,7 +1057,7 @@ describe('reading the plan', () => {
     expect(row.getByText('Activate Quann')).toBeVisible();
     expect(row.getByText('Fly Nestphar → Wormhole α (39) → Quann', { exact: false })).toBeVisible();
     expect(row.getByText(/Pick up on the way in/)).toBeVisible();
-    expect(row.getByText('Cargo 1 of 4', { exact: false })).toBeVisible();
+    expect(row.getByText('Cargo 2 of 4', { exact: false })).toBeVisible();
     expect(tile(TARGET)).toHaveClass('tile-active');
     expect(tile(HOME)).toHaveClass('tile-source');
     expect(document.querySelector('.route.route-active')).toBeInTheDocument();
