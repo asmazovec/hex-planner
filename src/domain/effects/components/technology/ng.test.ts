@@ -23,7 +23,7 @@ describe('technology:ng Neuroglaive', () => {
   // Checks: the rival activates the system where my cruiser stands; its fleet pool goes from 3 to 2.
   // Why the default count does not apply: an activation spends a tactic token only (LRR 5.1); the card takes a fleet
   // token from the activating player as well.
-  test.fails('technology:ng a rival activating a system with my ships loses a fleet token', () => {
+  test('technology:ng a rival activating a system with my ships loses a fleet token', () => {
     const game = table([rivalMove(NEAR)]);
     quote(game.pack, id, 'that player removes 1 token from their fleet pool and returns it to their reinforcements');
     expect(rivalFleet(game)).toBe(2);
@@ -56,7 +56,7 @@ describe('technology:ng Neuroglaive', () => {
     expect(endOf(table([mine])).fleet).toBe(3);
   });
 
-  test.fails('technology:ng is a passive effect', () => {
+  test('technology:ng is a passive effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('passive');
   });

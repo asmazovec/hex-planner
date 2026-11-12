@@ -23,7 +23,7 @@ const table = (rival: string) => {
 // landing is taken, and the influence it owes is shown as a warning that stands.
 // Why the check is not lifted: the mech imposes the cost; nothing of mine pays it, and the plan records no influence
 // spent on a landing, so it can only remind of it.
-test.fails('mech:keleres_mech landing on its planet is taken and the influence owed is shown', async () => {
+test('mech:keleres_mech landing on its planet is taken and the influence owed is shown', async () => {
   const { move, ...keleres } = table('keleresm');
   quote(keleres.pack, id, 'must spend 1 influence to commit ground forces');
   const live = showTactical(keleres, move);

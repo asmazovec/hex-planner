@@ -33,6 +33,7 @@ function movement(game: Game, state: GameState, target: string, entry: TacticalE
  */
 function fightAndLand(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false, afterLosses?: () => void,
+  shared: GameState = state,
 ): void {
   if (!lossesTaken) {
     removeLosses(state, target, entry, warnings);
@@ -40,7 +41,7 @@ function fightAndLand(
   }
   warnings.push(...checkAfterCombat(game, state, target, entry, pack));
   warnings.push(...checkStationLandings(entry, pack));
-  const landedOn = landUnits(game, state, target, entry, pack, warnings);
+  const landedOn = landUnits(game, state, target, entry, pack, warnings, shared);
   removeGroundLosses(state, entry, warnings);
   gainControl(game, state, landedOn, pack, warnings, entry);
 }
@@ -51,9 +52,9 @@ function fightAndLand(
  */
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
-  removeLater: UnitCounts = {}, afterLosses?: () => void,
+  removeLater: UnitCounts = {}, afterLosses?: () => void, shared: GameState = state,
 ): boolean {
-  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken, afterLosses);
+  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken, afterLosses, shared);
   warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround, 'system', undefined, entry));
   // Whether a unit used PRODUCTION (Sarween Tools asks): the producers stand before the built units do.
   const producing = producerList(game, state, target, pack).length > 0;
@@ -89,7 +90,7 @@ export function applyTactical(
   // The excess beyond the fleet pool goes at once (37.3), so the arrival counts what is left.
   const removeLater = removeFleetExcess(state, target, entry.fleetRemovals ?? {});
   if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
-  const producing = landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, afterLosses);
+  const producing = landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, afterLosses, shared);
   payProduction(game, state, entry, pack, warnings, producing);
   // The structures a flight brought are put on planets when the action ends, after its production.
   placeCarried(game, state, target, entry.landings, pack, warnings);

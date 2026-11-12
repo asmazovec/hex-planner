@@ -38,8 +38,8 @@ describe('applied: a point of the count asks the ready components of the player'
   });
 
   test('a hint changes nothing: a held technology that is no unit upgrade leaves every point alone', () => {
-    expect(effectOf(pack, 'technology:ng')).toEqual({ tier: 'hint', rule: 'technology:ng' });
-    expect(applied(pack, holdingsOf({ technologies: ['technology:ng'] }), 'speed', 1, carrier)).toEqual({ value: 1, by: [] });
+    expect(effectOf(pack, 'technology:asc')).toMatchObject({ tier: 'hint', rule: 'technology:asc' });
+    expect(applied(pack, holdingsOf({ technologies: ['technology:asc'] }), 'speed', 1, carrier)).toEqual({ value: 1, by: [] });
   });
 
   test('two modifiers stack in registry order, and `by` lists both', () => {

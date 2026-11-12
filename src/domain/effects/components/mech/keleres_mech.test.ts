@@ -29,7 +29,7 @@ describe('mech:keleres_mech Omniopiares', () => {
   // influence owed is warned of at the invasion, as the six influence of the custodians token are (27.2).
   // Why the default check does not apply: the rules ask nothing to commit ground forces (49.2); this mech adds a cost
   // for everyone but its owner, so the check is made only while it stands on the planet.
-  test.fails('mech:keleres_mech landing on its planet owes 1 influence, warned of at the invasion', () => {
+  test('mech:keleres_mech landing on its planet owes 1 influence, warned of at the invasion', () => {
     const table = invade('letnev', 'keleresm', { mech: 1, infantry: 1 });
     quote(table.pack, id, 'Other players must spend 1 influence to commit ground forces to the planet that contains this unit.');
     const warnings = warningsOf(table, table.move);
@@ -41,7 +41,7 @@ describe('mech:keleres_mech Omniopiares', () => {
   //  for each, as separate payments."
   // Checks: two Keleres mechs on the planet make 2 influence owed.
   // Why the number is right: each mech imposes its own cost.
-  test.fails('mech:keleres_mech two mechs on the planet owe 1 influence each', () => {
+  test('mech:keleres_mech two mechs on the planet owe 1 influence each', () => {
     const table = invade('letnev', 'keleresm', { mech: 2 });
     expect(influenceShort(warningsOf(table, table.move))).toBe(2);
   });
@@ -61,7 +61,7 @@ describe('mech:keleres_mech Omniopiares', () => {
     expectNone(warningsOf(table, table.move), 'shortInfluence');
   });
 
-  test.fails('mech:keleres_mech is a passive effect', () => {
+  test('mech:keleres_mech is a passive effect', () => {
     const { pack } = invade('letnev', 'keleresm', { mech: 1 });
     expect(effect(pack, id).tier).toBe('passive');
   });

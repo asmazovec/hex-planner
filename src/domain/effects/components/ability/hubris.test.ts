@@ -20,7 +20,7 @@ describe('ability:hubris Hubris', () => {
   // Checks: the Mahact player's start holds the generic notes of their colour but their Alliance.
   // Why the default deal does not apply: every player begins with the generic notes (69), Alliance among them with
   // Prophecy of Kings; the ability purges the Mahact one at setup.
-  test.fails('ability:hubris the Mahact player begins without their Alliance', () => {
+  test('ability:hubris the Mahact player begins without their Alliance', () => {
     const { pack } = bench({ faction: 'mahact', expansions: ['pok'] });
     quote(pack, id, 'During setup, purge your "Alliance" promissory note.');
     const start = startForFaction({ promissory: genericNotes(pack, 'me') }, '', 'mahact', pack);

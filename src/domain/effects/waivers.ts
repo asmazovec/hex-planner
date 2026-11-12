@@ -12,6 +12,7 @@
  */
 import { noteBase } from '../components';
 import type { DataPack, Entry, Warning } from '../types';
+import { notesInPlay } from './points/rivals';
 import { effectOf, effectsOf, holderOf, inForceOf } from './registry';
 import type { ComponentEffect, WaiverContext } from './types';
 
@@ -61,6 +62,8 @@ export function askedFor(ctx: WaiverContext, earlier: readonly string[] = []): A
   };
   ask(inForceOf(pack, holderOf(ctx.game, ctx.before, ctx.shared)), 'force');
   if (ctx.entry) ask(playedBy(ctx.entry), 'entry');
+  // A promissory note in the play area acts in every entry of its holder, whatever its tier, until it is returned.
+  ask(notesInPlay(ctx.before.holdings), 'entry');
   ask(earlier, 'round');
   return asked;
 }

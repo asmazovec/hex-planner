@@ -36,7 +36,7 @@ describe('promissory:convoys Trade Convoys', () => {
   // "While this card is in your play area ..."
   // Checks: played in round 1, it still lifts the check in round 2.
   // Why the check is redundant here: the card stays in the play area from round to round until it is returned.
-  test.fails('promissory:convoys played in an earlier round still lifts the neighbour check', () => {
+  test('promissory:convoys played in an earlier round still lifts the neighbour check', () => {
     const move = trade();
     const table = sol([[componentAction(NOTE)], [adjust({ tradeGoods: 1 }), move]]);
     expectWaived(warningsOf(table, move), 'notNeighbor', NOTE);
@@ -46,7 +46,7 @@ describe('promissory:convoys Trade Convoys', () => {
   // Checks: once played it stays with Sol, and only the activation of a system holding a Hacan ship returns it.
   // Why this is the card's own: a played note returns only when its text says when (69.3); this one names the
   // activation of a system with the Hacan's units, which the replay does not watch for yet (today it stays for good).
-  test.fails('promissory:convoys stays in the play area until a system with the Hacan\'s units is activated', () => {
+  test('promissory:convoys stays in the play area until a system with the Hacan\'s units is activated', () => {
     const played = sol([[componentAction(NOTE)]]);
     expect(endOf(played).holdings.promissory).toContain(NOTE);
     const returned = sol([[componentAction(NOTE), tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] })]], NEAR);

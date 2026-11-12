@@ -11,6 +11,7 @@ import { unitStats } from './unitStats';
 import { applied } from './effects/apply';
 import { effectOf, holderFor, holderOf, inForceOf, type Holder, type Who } from './effects/registry';
 import './effects/points/movement';
+import './effects/points/rivals';
 import { noteBase } from './components';
 import type { DataPack, Game, GameState, UnitCounts, UnitId } from './types';
 
@@ -181,6 +182,33 @@ const holdsShips = (units: UnitCounts, pack: DataPack): boolean => unitIds(units
  * state (mine, with the opponents' in `rivals`) when there is one; what stands on the map by hand for anyone it does not count.
  */
 export function blockersOf(game: Game, state: Pick<GameState, 'systems' | 'rivals'> | null, mover: string | undefined, pack: DataPack): Set<string> {
+  const blockers = shipBlockersOf(game, state, mover, pack);
+  for (const slot of passageBarredOf(game, state, mover, pack)) blockers.add(slot);
+  return blockers;
+}
+
+/**
+ * The systems that the components in force of every player but the mover bar to the mover's ships (`stopsPassage`:
+ * Aerie Hololattice). They end a route like a system with other players' ships, so a route through one is warned of.
+ * Asked over the replayed state only: `state` is mine, with the opponents' in `rivals`.
+ */
+export function passageBarredOf(game: Game, state: Pick<GameState, 'systems' | 'rivals'> | null, mover: string | undefined, pack: DataPack): Set<string> {
+  const barred = new Set<string>();
+  if (!state || !('holdings' in state)) return barred;
+  const shared = state as GameState;
+  const players: Array<[string, GameState]> = [['me', shared], ...Object.entries(shared.rivals ?? {})];
+  for (const [owner, own] of players) {
+    if (owner === (mover ?? 'me')) continue;
+    const holder = holderOf(owner === 'me' ? game : { faction: own.faction ?? game.faction }, own, shared);
+    for (const id of inForceOf(pack, holder, effect => effect.stopsPassage !== undefined)) {
+      for (const slot of effectOf(pack, id)!.stopsPassage!({ id, game, pack, owner, mover: mover ?? 'me', state: own, shared })) barred.add(slot);
+    }
+  }
+  return barred;
+}
+
+/** The systems where other players' ships stand, as `blockersOf` has them, without what the other players' components bar. */
+export function shipBlockersOf(game: Game, state: Pick<GameState, 'systems' | 'rivals'> | null, mover: string | undefined, pack: DataPack): Set<string> {
   const me = mover === undefined || mover === 'me';
   const rivals = state?.rivals ?? {};
   const blockers = new Set<string>();
