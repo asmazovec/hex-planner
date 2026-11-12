@@ -17,7 +17,7 @@ describe('technology:sar Self-Assembly Routines', () => {
   // of the home system, besides the two infantry built.
   // Why the default does not apply: a mech is otherwise only produced and paid for (67, 68); the card places one
   // without cost or Production.
-  test.fails('technology:sar used after a production places one mech on a planet I control in that system', () => {
+  test('technology:sar used after a production places one mech on a planet I control in that system', () => {
     const entry = using(production(), id);
     const bench = table([entry]);
     quote(bench.pack, id, 'place 1 mech from your reinforcements on a planet you control in that system');
@@ -52,7 +52,7 @@ describe('technology:sar Self-Assembly Routines', () => {
   // "After 1 of your mechs is destroyed, gain 1 trade good."
   test.todo('technology:sar a trade good for each mech lost (`losses`, `groundLosses`): it is passive while the placing is played, and one effect has one tier');
 
-  test.fails('technology:sar is a play effect', () => {
+  test('technology:sar is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

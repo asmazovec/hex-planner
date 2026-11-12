@@ -17,7 +17,7 @@ describe('technology:md Magen Defense Grid ΩΩ', () => {
   // placed on h1 and one on h2.
   // Why the default does not apply: without the card nothing is placed on activation (LRR 5 activates, it builds
   // nothing); the card adds units to the board, one with each structure.
-  test.fails('technology:md activating a system with my structures places one infantry with each of them', () => {
+  test('technology:md activating a system with my structures places one infantry with each of them', () => {
     const table = activate(HOME);
     quote(table.pack, id, 'place 1 infantry from your reinforcements with each of those structures');
     expect(infantryOn(table, 'h1')).toBe(2);
@@ -48,7 +48,7 @@ describe('technology:md Magen Defense Grid ΩΩ', () => {
   test.todo('technology:md the hit at the start of ground combat is a reminder of the invasion: a passive effect cannot carry `hintAt`, and the plan does not fight the combat');
 
   // Checks: the effect that places the infantry applies by itself while the card is held (no exhaust, no choice).
-  test.fails('technology:md is a passive effect', () => {
+  test('technology:md is a passive effect', () => {
     const { pack } = activate(HOME);
     expect(effect(pack, id).tier).toBe('passive');
   });

@@ -18,7 +18,7 @@ const build = (technologies: string[]) => {
 //  sun on the board for any reason."
 // Checks: a war sun produced while holding War Sun: the warning is on the screen in the allowed look, naming War Sun.
 // Why the check is redundant here: the technology is what unlocks the unit.
-test.fails('technology:ws a war sun produced with the technology reads as allowed by War Sun', () => {
+test('technology:ws a war sun produced with the technology reads as allowed by War Sun', () => {
   const table = build([id]);
   quote(table.pack, id, 'Move 2, Capacity 6');
   showWarnings(table, table.entry);

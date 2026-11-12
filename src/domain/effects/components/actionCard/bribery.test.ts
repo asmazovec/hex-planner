@@ -14,7 +14,7 @@ describe('actionCard:bribery Bribery', () => {
   // Checks: with three trade goods I play Bribery for two; one is left at the end of the plan.
   // Why this is counted: the votes are not, but trade goods spent are gone from the player's sheet (LRR 93), and the
   // plan counts trade goods.
-  test.fails('actionCard:bribery spends the trade goods chosen', () => {
+  test('actionCard:bribery spends the trade goods chosen', () => {
     const table = bribe(3, 2);
     quote(table.pack, id, 'Spend any number of trade goods.');
     expect(endOf(table).tradeGoods).toBe(1);
@@ -22,7 +22,7 @@ describe('actionCard:bribery Bribery', () => {
 
   // Checks: two trade goods chosen with only one held is a shortfall of trade goods.
   // Why the check is NOT redundant here: the card spends trade goods the player has; it gives none.
-  test.fails('actionCard:bribery spending more trade goods than held is warned of', () => {
+  test('actionCard:bribery spending more trade goods than held is warned of', () => {
     const table = bribe(1, 2);
     expectStanding(warningsOf(table, table.play), 'shortTradeGoods');
   });
@@ -34,7 +34,7 @@ describe('actionCard:bribery Bribery', () => {
     expect(endOf(table).tradeGoods).toBe(3);
   });
 
-  test.fails('actionCard:bribery is a play effect', () => {
+  test('actionCard:bribery is a play effect', () => {
     const { pack } = bribe(0, 0);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

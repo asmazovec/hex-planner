@@ -21,7 +21,7 @@ describe('technology:ws War Sun', () => {
   // Checks: holding War Sun, a war sun is built; the warning that the war sun is not unlocked is listed and lifted by
   // the technology.
   // Why the check is redundant here: the rule forbids the war sun to a player without its technology, and this is it.
-  test.fails('technology:ws lets the war sun be produced: the warning is waived', () => {
+  test('technology:ws lets the war sun be produced: the warning is waived', () => {
     const table = build('hacan', [id]);
     quote(table.pack, id, 'Cost 12, Combat 3(x3), Move 2, Capacity 6');
     expectWaived(warningsOf(table, table.entry), CODE, id);
@@ -48,7 +48,7 @@ describe('technology:ws War Sun', () => {
   // "Other players' units in this system lose PLANETARY SHIELD."
   test.todo('technology:ws the lost PLANETARY SHIELD of other players belongs to the combat, which the plan does not fight');
 
-  test.fails('technology:ws is a passive effect that waives the locked war sun', () => {
+  test('technology:ws is a passive effect that waives the locked war sun', () => {
     const { pack } = build('hacan', [id]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
