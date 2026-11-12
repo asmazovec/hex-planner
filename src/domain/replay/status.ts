@@ -1,7 +1,15 @@
 /** The status phase (LRR 81): tokens gained and redistributed, points scored, then the board cleared and every card readied. */
+import { componentById } from '../components';
+import { appliedFor } from '../effects/points/status';
+import { effectOf, holderOf } from '../effects/registry';
+import objectiveRepeated from '../rules/codes/objectiveRepeated';
+import objectivesPerPhase from '../rules/codes/objectivesPerPhase';
+import scoreWithoutHome from '../rules/codes/scoreWithoutHome';
 import { violation } from '../rules/registry';
-import { STATUS_TOKENS } from '../strategy';
+import { homePlanets, STATUS_TOKENS } from '../strategy';
+import type { EffectTurn } from '../effects/types';
 import type { DataPack, Entry, Game, GameState, RuleStep, Warning } from '../types';
+import { objectiveNotMet } from '../effects/points/status';
 import { dockFighterRoom, fleetCount, fleetLimit } from './transport';
 
 /** The command tokens of a faction (LRR 20.3, 23.2): those not in the pools or on the board are in reinforcements. */
@@ -12,6 +20,14 @@ type Pools = Partial<Record<'tactic' | 'fleet' | 'strategy', number>>;
 /** Check: no more tokens gained than the step or card gives. */
 export function checkTokensGiven(given: number, free: number, step?: RuleStep): Warning[] {
   return given > free ? [violation('tokensOver', { given, free }, step)] : [];
+}
+
+/**
+ * The command tokens a player gains in the status phase (81.5): two, changed by the components in force for them and by
+ * those the entry names in `uses` (the `tokensGained` point at the step `status`). `state` is the owner's, `shared` mine.
+ */
+export function statusTokensFree(game: Game, state: GameState, shared: GameState, entry: Entry, pack: DataPack): number {
+  return appliedFor(pack, holderOf(game, state, shared), entry, state, 'tokensGained', STATUS_TOKENS, { step: 'status' }).value;
 }
 
 /** Check: the tokens in the pools, and with `onBoard` those on the board, are more than the sixteen of a faction (20.3.1). */
@@ -45,8 +61,10 @@ export function checkPoolChange(game: Game, state: GameState, pack: DataPack, ch
  * Steps 81.1 and 81.5: points scored, two tokens gained and the pools redistributed. The board is already clear (81.4),
  * so only the pools count against the sixteen tokens.
  */
-export function applyStatusTokens(game: Game, state: GameState, entry: Extract<Entry, { type: 'statusTokens' }>, pack: DataPack, warnings: Warning[]): void {
-  warnings.push(...checkTokensGiven(entry.tactic + entry.fleet + entry.strategy, STATUS_TOKENS));
+export function applyStatusTokens(
+  game: Game, state: GameState, entry: Extract<Entry, { type: 'statusTokens' }>, pack: DataPack, warnings: Warning[], shared: GameState = state,
+): void {
+  warnings.push(...checkTokensGiven(entry.tactic + entry.fleet + entry.strategy, statusTokensFree(game, state, shared, entry, pack)));
   for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
     state[pool] += entry[pool];
     if (entry[pool] < 0 && state[pool] < 0) warnings.push(violation('poolNegative', { pool, have: state[pool] }, 'status'));
@@ -65,4 +83,52 @@ export function clearBoard(states: GameState[]): void {
     state.exhausted = [];
     state.tokensOnMap = [];
   }
+}
+
+const isPublic = (id: string): boolean => id.startsWith('publicObjective:');
+const isSecret = (id: string): boolean => id.startsWith('secretObjective:');
+
+/**
+ * Step 81.1, before the entry changes anything: what the objectives it scores must meet. At most one public and one
+ * secret one (61.6), none twice by the same player (61.8), a public one only while every planet of the home system is
+ * controlled (61.16), and the requirement of each objective's effect (61.5.1, `requirement`). The score of the objective's
+ * own `play` (a cost, a count the replay keeps) comes with the entry's other plays. `state` is the owner's board before
+ * the entry, `shared` mine.
+ */
+export function checkObjectives(
+  game: Game, state: GameState, shared: GameState, entry: Extract<Entry, { type: 'statusTokens' }>, pack: DataPack, warnings: Warning[],
+): void {
+  const scored = (entry.scored ?? []).filter(id => componentById(pack, id) !== undefined);
+  for (const [kind, test] of [['public', isPublic], ['secret', isSecret]] as const) {
+    const count = scored.filter(test).length;
+    if (count > 1) warnings.push(violation(objectivesPerPhase.code, { kind, count }, 'status'));
+  }
+  const homeHeld = homePlanets(game, pack).every(planetId => state.control[planetId] === 'me');
+  scored.forEach((id, index) => {
+    if (state.holdings.scored.includes(id) || scored.indexOf(id) !== index) warnings.push(violation(objectiveRepeated.code, { objective: id }, 'status'));
+    if (isPublic(id) && !homeHeld) warnings.push(violation(scoreWithoutHome.code, { objective: id }, 'status'));
+    const need = effectOf(pack, id)?.requirement?.({ pack, game, state, shared, entry, objective: id });
+    if (need && need.have < need.need) warnings.push(objectiveNotMet(id, need.have, need.need));
+  });
+}
+
+/**
+ * For the `play` of a component that gives or takes command tokens: changes the pools of the player by `change` (signed)
+ * and warns as a card does (`checkPoolChange`: more than the sixteen tokens of a faction, a fleet pool below the ships
+ * standing) and, for a pool taken below zero, `poolNegative`. The warnings carry `step`, the block the component's tokens are set in.
+ */
+export function gainTokens(turn: EffectTurn, change: Pools, step: RuleStep = 'component'): void {
+  const { game, state, pack, warnings } = turn;
+  for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
+    const count = change[pool] ?? 0;
+    state[pool] += count;
+    if (count < 0 && state[pool] < 0) warnings.push(violation('poolNegative', { pool, have: state[pool] }, step));
+  }
+  warnings.push(...checkPoolChange(game, state, pack, change, step));
+}
+
+/** For the `play` of a component that costs strategy tokens (Quash, Imperial Talent): takes `count` from the pool, warns `shortStrategy` when it holds fewer (20.5). */
+export function spendStrategyTokens(turn: EffectTurn, count = 1): void {
+  if (turn.state.strategy < count) turn.warnings.push(violation('shortStrategy', { have: turn.state.strategy }));
+  turn.state.strategy -= count;
 }

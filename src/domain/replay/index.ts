@@ -10,6 +10,7 @@ export { timeline, type Filter, type Frame, type Timeline } from './timeline';
 export { isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileIdOf } from './board';
 export { fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed } from '../movement';
 export { readyToPlay } from './holdings';
+export { statusTokensFree } from './status';
 export { readyInfluence, readyResources } from './payment';
 export { placesOf, productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';

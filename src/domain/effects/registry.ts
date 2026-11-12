@@ -119,8 +119,12 @@ export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
 export interface Holder { holdings: Holdings; faction?: string; control?: GameState['control']; laws?: readonly string[] }
 
 /** The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. */
-export const holderOf = (game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>, shared: Pick<GameState, 'laws'> = state): Holder =>
-  ({ holdings: state.holdings, faction: game.faction, control: state.control, laws: shared.laws });
+export const holderOf = (game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>, shared: Pick<GameState, 'laws' | 'lawOwners'> = state): Holder =>
+  ({ holdings: state.holdings, faction: game.faction, control: state.control, laws: lawsFor(shared, game.faction) });
+
+/** The laws that bind a faction: those of the whole game, and the `Elect Player` laws only for the player they elected. */
+const lawsFor = (shared: Pick<GameState, 'laws' | 'lawOwners'>, faction: string): readonly string[] | undefined =>
+  (shared.lawOwners && shared.laws ? shared.laws.filter(id => shared.lawOwners![id] === undefined || shared.lawOwners![id] === faction) : shared.laws);
 
 /** What a faction sheet brings by itself: the abilities and the mech; the breakthrough apart, as it must be held. */
 interface Sheet { always: string[]; breakthrough?: string }
@@ -169,6 +173,13 @@ export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Compon
   }
   if (holder.control) for (const planetId in holder.control) if (holder.control[planetId] === 'me') ask(`legendary:${planetId}`);
   for (const id of holder.laws ?? []) ask(id);
+  // A law in force may take other components out of force (Articles of War: the mechs).
+  const suppressors = (holder.laws ?? []).flatMap(id => effects.get(noteBase(id))?.suppresses ?? []);
+  if (suppressors.length > 0) {
+    const kept = found.filter(id => !suppressors.some(suppresses => suppresses(id)));
+    found.length = 0;
+    found.push(...kept);
+  }
   return found.length > 1 ? found.sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!) : found;
 }
 
@@ -196,7 +207,9 @@ export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, player
   for (const player of players) {
     const holdings = player === 'me' ? board.holdings : board.rivals?.[player]?.holdings;
     if (!holdings) continue;
-    for (const id of readyComponents(pack, holdings)) {
+    // A secret objective in hand, and a public one revealed and not yet scored by the player, are reminded of at the status step.
+    const objectives = [...holdings.secrets, ...(board.revealed ?? []).filter(id => !holdings.scored.includes(id))];
+    for (const id of [...readyComponents(pack, holdings), ...objectives]) {
       const effect = effectOf(pack, id);
       if (effect?.tier === 'hint' && effect.hintAt?.includes(step)) ids.add(id);
     }

@@ -1,4 +1,6 @@
 import { strategyCardSet } from './cards';
+import { appliedFor } from './effects/points/status';
+import { holderOf } from './effects/registry';
 import { seatSlots } from './mapBuilder';
 import { autoPay, type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
@@ -82,6 +84,18 @@ export function plannedCard(round: Round, playerCount: number): number | undefin
 export function costsStrategyToken(entry: CardEntry, play: { held?: number[]; free?: boolean } = {}): boolean {
   if (entry.type === 'secondary') return !handlerOf(entry.card).freeSecondary && !play.free;
   return primaryForToken(entry, play.held ?? []);
+}
+
+/**
+ * How many strategy tokens the entry owes: `costsStrategyToken` says whether a token is owed at all, and the `strategyCost`
+ * point asks the components in force for the player, and those the entry names in `uses` or `spends`, how many (a faction
+ * ability, an agent or a card that makes the token free). `state` is the owner's board before the entry, `shared` mine.
+ */
+export function strategyTokensOwed(
+  entry: CardEntry, play: { held?: number[]; free?: boolean }, game: Pick<Game, 'faction'>, state: GameState, shared: GameState, pack: DataPack,
+): number {
+  if (!costsStrategyToken(entry, play)) return 0;
+  return Math.max(0, appliedFor(pack, holderOf(game, state, shared), entry, state, 'strategyCost', 1, { card: entry.card, secondary: entry.type === 'secondary' }).value);
 }
 
 /**

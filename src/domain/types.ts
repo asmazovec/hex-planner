@@ -251,6 +251,9 @@ export interface AdjustmentDelta {
 /** What made an adjustment: the big hex merges its taps into one entry per system. Absent for one made by hand. */
 export type AdjustmentKind = 'losses' | 'build' | 'setup';
 
+/** What the objectives scored in a status phase cost: command tokens from the pools, trade goods, and the planets exhausted for resources and for influence. */
+export interface StatusSpend { tactic?: number; fleet?: number; strategy?: number; tradeGoods?: number; resources?: Payment; influence?: Payment }
+
 /** What a strategy card did. Only tokens, payment, readied planets, Mecatol, production and structures reach the projection; the rest is shown. */
 export interface CardEffects {
   /** Token distribution, signed: Warfare's rearrangement takes from a pool. Bought tokens count only once distributed. */
@@ -324,11 +327,13 @@ export type EntryBody = (
       note: string;
       /** What the player chose for the component's effect, by the names its effect asks for. */ choices?: Record<string, string | number>; acts?: Act[] }
   | { type: 'pass'; acts?: Act[] }
-  | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
+  | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind;
+      /** An agenda of the agenda phase: its outcome (`for` or `against`) and what was elected (`elect`: a planet id, a law id, `me` or an opponent id), the strategy card elected (`card`, its initiative as text or number). */ choices?: Record<string, string | number> }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
       /** My points gained this round. */ vp?: number;
       /** Opponent id to the points they gained this round. */ opponentVp?: Record<string, number>;
-      /** Objectives the owner scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[] }
+      /** Objectives the owner scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[];
+      /** What scoring them cost, when an objective is scored by spending (61.10): tokens from the pools, trade goods, planets paying resources or influence. */ spend?: StatusSpend }
 ) & {
   /** Components the owner of the entry gains with it, by id: drawn action cards, a relic, a note received. */
   gains?: string[];
@@ -448,6 +453,8 @@ export interface GameState {
   laws?: string[];
   /** Public objectives revealed, for the whole game: on my state only. */
   revealed?: string[];
+  /** Law id to the faction of the player an `Elect Player` law binds (Censure, the ministers): on my state only; a law not listed binds everyone. */
+  lawOwners?: Record<string, string>;
   /** Planet id to the cards attached to it, for the whole game: on my state only. */
   attachments?: Record<string, string[]>;
   /** This player's space docks: the game's on their planets, plus those built by the entries replayed so far, less those lost with a planet. */

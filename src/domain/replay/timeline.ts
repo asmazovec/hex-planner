@@ -10,13 +10,14 @@ import { gameAs } from '../players';
 import { placeIn } from '../rules/registry';
 import type { DataPack, Entry, Game, GameState, Plan, Round, Warning } from '../types';
 import { applyActs, type ActContext } from './acts';
+import { afterEntry, choicesOf } from './afterEntry';
 import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
 import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyComponent, applyGains, applyScored, applyUses, readyCards } from './holdings';
 import { applyAdjustment, initialState } from './state';
-import { applyStatusTokens, clearBoard } from './status';
+import { applyStatusTokens, checkObjectives, clearBoard } from './status';
 import { keepOwnStructures } from './structures';
 import { applyTactical } from './tactical';
 
@@ -73,9 +74,9 @@ function sameSetup(a: Game, b: Game): boolean {
 
 function applyEntry(
   game: Game, state: GameState, shared: GameState, entry: Entry, pack: DataPack, acts: ActContext, cards: CardRound, flow: RoundFlow, blockers: Blockers | undefined,
-  withActs: boolean,
+  withActs: boolean, playerFaction: (player: string) => string | undefined = () => undefined,
 ): Warning[] {
-  const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? []);
+  const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? [], pack);
   switch (entry.type) {
     case 'tactical':
       applyTactical(game, state, entry, pack, warnings, blockers);
@@ -85,7 +86,9 @@ function applyEntry(
       applyCard(game, state, entry, pack, cards, warnings);
       break;
     case 'statusTokens':
-      applyStatusTokens(game, state, entry, pack, warnings);
+      // The objectives are asked against the board before the entry (81.1, note 1).
+      checkObjectives(game, state, shared, entry, pack, warnings);
+      applyStatusTokens(game, state, entry, pack, warnings, shared);
       applyScored(state, shared, entry.scored, pack);
       break;
     case 'adjustment':
@@ -100,10 +103,11 @@ function applyEntry(
   // What the entry uses beside its action is played like a component action's own; then each played component does what its effect says.
   applyUses(state, entry, pack, warnings, game.faction, acts.states);
   for (const id of playedBy(entry)) {
-    effectOf(pack, id)?.play?.({ game, state, shared, entry, choices: (entry.type === 'component' ? entry.choices : undefined) ?? {}, pack, warnings });
+    effectOf(pack, id)?.play?.({ game, state, shared, entry, choices: choicesOf(entry), pack, warnings, cards });
   }
   // What the entry brings and takes beside its own effect: the owner's holdings, and the laws of the whole game.
-  applyGains(state, shared, entry, pack);
+  applyGains(state, shared, entry, pack, playerFaction);
+  afterEntry({ game, state, shared, entry, pack, cards, warnings });
   // The acts of a turn come after its action: transactions, then the expedition at its end.
   if (withActs) applyActs(game, state, entry, pack, acts, warnings);
   return placeIn(warnings, entry.id);
@@ -180,6 +184,8 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
       statusDone = true;
     };
     const cards = cardRound(round, game.playerCount, { me: state, ...rivals });
+    /** The faction of a player id, for the laws that bind the player elected. */
+    const factionOf = (player: string): string | undefined => (player === 'me' ? game.faction : game.opponents.find(o => o.id === player)?.faction);
     /** The components each player played so far this round: a waiver may last to its end. */
     const plays: Record<string, string[]> = {};
     const flow = roundFlow(round);
@@ -209,7 +215,7 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
       const blockers = entry.type === 'tactical' ? blockersOf(game, state, rival ? entry.owner : undefined, pack) : undefined;
       // A card with Warfare's free action plays it before the acts of its turn.
       const free = entry.type === 'strategic' ? linked(entry) : undefined;
-      let warnings = applyEntry(view, own, state, entry, pack, acts, cards, flow, blockers, free === undefined);
+      let warnings = applyEntry(view, own, state, entry, pack, acts, cards, flow, blockers, free === undefined, factionOf);
       if (rival && entry.owner && entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack);
       dirty = true;
       if (entry.type === 'statusTokens') finishStatus();
