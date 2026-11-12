@@ -5,8 +5,21 @@
  * control 4 planets that share a trait. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
  * tests mark what it must do.
  */
+import type { PlanetTrait } from '../../../types';
 import type { ComponentEffect } from '../../types';
+import '../../points/status';
 
 export const id = 'publicObjective:corner';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  requirement: ({ pack, state }) => {
+    const counts: Partial<Record<PlanetTrait, number>> = {};
+    for (const planetId of Object.keys(state.control)) {
+      if (state.control[planetId] !== 'me') continue;
+      for (const trait of pack.planets[planetId]?.traits ?? []) counts[trait] = (counts[trait] ?? 0) + 1;
+    }
+    return { have: Math.max(0, ...Object.values(counts)), need: 4 };
+  },
+};

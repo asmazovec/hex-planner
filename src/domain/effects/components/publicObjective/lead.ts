@@ -7,7 +7,13 @@
  * tests mark what it must do.
  */
 import type { ComponentEffect } from '../../types';
+import '../../points/status';
 
 export const id = 'publicObjective:lead';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // Tokens of the fleet pool do not count (61.10): the tactic and strategy pools must hold 3. Which pools pay is not entered: nothing is taken.
+  requirement: ({ state }) => ({ have: state.tactic + state.strategy, need: 3 }),
+};

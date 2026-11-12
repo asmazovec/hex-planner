@@ -12,4 +12,17 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:crisis';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: turn => {
+    const card = Number(turn.choices.card);
+    const { cards } = turn;
+    if (!card || !cards) return;
+    cards.freeSecondary[card] = [...new Set([...(cards.freeSecondary[card] ?? []), ...Object.keys(cards.states)])];
+  },
+  waive: [
+    { code: 'secondaryRepeated', rule: 'Each player may perform the secondary ability of the elected strategy card', lasts: 'round' },
+    { code: 'ownSecondary', rule: 'Each player may perform the secondary ability of the elected strategy card', lasts: 'round' },
+  ],
+};

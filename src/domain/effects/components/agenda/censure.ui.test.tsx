@@ -20,7 +20,7 @@ const table = (agenda: Entry, move: Entry) => bench({
 // Checks: elected in round 1, I name an action card in «Used» of a tactical action of round 2: the card is taken
 // (the plan forbids nothing) and the warning stands on the screen.
 // Why the check is NOT redundant here: the law forbids; nothing lifts it.
-test.fails('agenda:censure an action card chosen in «Used» by the elected player shows its warning, standing', async () => {
+test('agenda:censure an action card chosen in «Used» by the elected player shows its warning, standing', async () => {
   const move = tactical(TARGET);
   const t = table(elected(), move);
   quote(t.pack, id, 'The elected player cannot play action cards.');

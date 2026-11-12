@@ -15,7 +15,7 @@ describe('publicObjective:develop Develop Weaponry', () => {
   // "Own 2 unit upgrade technologies."
   // Checks: Destroyer II and Gravity Drive: one unit upgrade only, so scoring is warned of.
   // Why the check is NOT redundant here: the objective is its own requirement (61.5) and counts unit upgrades only.
-  test.fails('publicObjective:develop scored with one unit upgrade is warned of', () => {
+  test('publicObjective:develop scored with one unit upgrade is warned of', () => {
     const t = table(['technology:dd2', 'technology:gd']);
     quote(t.pack, id, 'Own 2 unit upgrade technologies.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -31,13 +31,13 @@ describe('publicObjective:develop Develop Weaponry', () => {
   // Rulings (Nekro): owning two unit upgrades for the same type of unit only counts as one unit upgrade.
   // Checks: Carrier II and the Sol Advanced Carrier II upgrade the same unit: one, so scoring is warned of.
   // Why the check is NOT redundant here: the requirement counts the units upgraded, not the cards.
-  test.fails('publicObjective:develop two upgrades of the same unit count once', () => {
+  test('publicObjective:develop two upgrades of the same unit count once', () => {
     const t = table(['technology:cv2', 'technology:ac2']);
     expectStanding(warningsOf(t, t.scoring), CODE);
   });
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:develop is a play effect of the status entry', () => {
+  test('publicObjective:develop is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

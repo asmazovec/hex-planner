@@ -15,7 +15,7 @@ describe('agenda:crisis Galactic Crisis Pact', () => {
   // Checks: Politics elected; my secondary of Politics in the agenda phase leaves the strategy pool at its 2 tokens.
   // Why the check is redundant here: a secondary costs a strategy token (20.5.1, 83.4) only when it is resolved by the
   // card's own rule; the agenda resolves it without one, so there is nothing to spend and nothing short.
-  test.fails('agenda:crisis the secondary of the elected card spends no strategy token', () => {
+  test('agenda:crisis the secondary of the elected card spends no strategy token', () => {
     const politics = secondaryOf(CARD.politics, 'agenda');
     const t = table([crisis(CARD.politics), politics]);
     quote(t.pack, id, 'perform the secondary ability of the elected strategy card without spending a command token');
@@ -28,7 +28,7 @@ describe('agenda:crisis Galactic Crisis Pact', () => {
   // repeated and the warning is lifted by the agenda.
   // Why the check is redundant here: the agenda gives every player a fresh resolution of the elected card's secondary,
   // apart from the one of the action phase (rulings: it is resolved immediately, during the agenda phase).
-  test.fails('agenda:crisis lifts the repeated secondary of the elected card', () => {
+  test('agenda:crisis lifts the repeated secondary of the elected card', () => {
     const again = secondaryOf(CARD.politics, 'agenda');
     const t = table([secondaryOf(CARD.politics, 'action'), crisis(CARD.politics), again]);
     expectWaived(warningsOf(t, again), 'secondaryRepeated', id);
@@ -38,7 +38,7 @@ describe('agenda:crisis Galactic Crisis Pact', () => {
   //  clockwise, may perform the secondary ability of that strategy card."
   // Checks: I hold Politics this round; the agenda's "Each player" includes me, so my secondary of it is lifted.
   // Why the check is redundant here: the secondary is the agenda's to give, to each player, the holder among them.
-  test.fails('agenda:crisis lifts the secondary of the card I hold myself', () => {
+  test('agenda:crisis lifts the secondary of the card I hold myself', () => {
     const own = secondaryOf(CARD.politics, 'agenda');
     const t = table([crisis(CARD.politics), own]);
     t.game.plans[0].rounds[0].strategyCard = CARD.politics;
@@ -62,7 +62,7 @@ describe('agenda:crisis Galactic Crisis Pact', () => {
   });
 
   // Checks: the agenda is played by its entry and lifts the two checks for the rest of that round.
-  test.fails('agenda:crisis is a play effect that waives the repeated and the own secondary for the round', () => {
+  test('agenda:crisis is a play effect that waives the repeated and the own secondary for the round', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['secondaryRepeated', 'round'], ['ownSecondary', 'round']]);

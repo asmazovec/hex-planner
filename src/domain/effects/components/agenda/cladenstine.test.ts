@@ -17,7 +17,7 @@ describe('agenda:cladenstine Clandestine Operations', () => {
   // Checks: the outcome "Against" takes one token from the fleet pool by itself: 3 becomes 2.
   // Why the check is redundant here: nothing is lifted; the agenda changes the command sheet, which the plan counts,
   // so the player should not have to enter the token by hand.
-  test.fails('agenda:cladenstine against takes one token from the fleet pool', () => {
+  test('agenda:cladenstine against takes one token from the fleet pool', () => {
     const against = table(resolved({ outcome: 'against' }));
     quote(against.pack, id, 'Each player removes 1 command token from their fleet pool');
     expect(endOf(against).fleet).toBe(2);
@@ -26,7 +26,7 @@ describe('agenda:cladenstine Clandestine Operations', () => {
   // LRR 37.3: a player whose fleet pool falls below the ships of a system removes the ships beyond it.
   // Checks: with three cruisers at home, the lowered pool of 2 is warned of on the agenda entry.
   // Why the check is NOT redundant here: the agenda lowers the limit; it says nothing that lets the ships stay.
-  test.fails('agenda:cladenstine against: three ships at home are beyond the lowered fleet pool', () => {
+  test('agenda:cladenstine against: three ships at home are beyond the lowered fleet pool', () => {
     const against = table(resolved({ outcome: 'against' }));
     expectStanding(warningsOf(against, against.agenda), 'fleetPool');
   });
@@ -34,7 +34,7 @@ describe('agenda:cladenstine Clandestine Operations', () => {
   // "For: Each player removes 2 command tokens from their command sheet and returns those tokens to their reinforcements."
   // Checks: the two tokens leave the pools the player chose, one tactic and one strategy, and the fleet pool stays.
   // Why the check is redundant here: nothing is lifted; the outcome changes the pools the plan counts.
-  test.fails('agenda:cladenstine for takes the two tokens from the pools the player chose', () => {
+  test('agenda:cladenstine for takes the two tokens from the pools the player chose', () => {
     const forIt = table(resolved({ outcome: 'for', tactic: 1, strategy: 1 }));
     quote(forIt.pack, id, 'Each player removes 2 command tokens from their command sheet');
     expect(endOf(forIt)).toMatchObject({ tactic: 2, strategy: 1, fleet: 3 });
@@ -48,7 +48,7 @@ describe('agenda:cladenstine Clandestine Operations', () => {
   });
 
   // Checks: the card is a play of the agenda entry; it lifts nothing.
-  test.fails('agenda:cladenstine is a play effect with no waiver', () => {
+  test('agenda:cladenstine is a play effect with no waiver', () => {
     const { pack } = table(resolved({ outcome: 'against' }));
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

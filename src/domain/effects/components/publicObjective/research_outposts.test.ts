@@ -28,7 +28,7 @@ describe('publicObjective:research_outposts Found Research Outposts', () => {
   // "Control 3 planets that have technology specialties."
   // Checks: two planets with a specialty and two without: scoring is warned of.
   // Why the check is NOT redundant here: the requirement counts planets with a specialty only (61.5).
-  test.fails('publicObjective:research_outposts scored with two planets with a specialty is warned of', () => {
+  test('publicObjective:research_outposts scored with two planets with a specialty is warned of', () => {
     const t = table(['wellon', 'thibah', 'saudor', 't1']);
     quote(t.pack, id, 'Control 3 planets that have technology specialties.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -43,7 +43,7 @@ describe('publicObjective:research_outposts Found Research Outposts', () => {
   });
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:research_outposts is a play effect of the status entry', () => {
+  test('publicObjective:research_outposts is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });
