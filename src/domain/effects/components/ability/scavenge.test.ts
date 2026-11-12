@@ -17,7 +17,7 @@ describe('ability:scavenge Scavenge', () => {
   // Checks: the Saar land on t1 and gain control of it; they end the plan with 1 trade good.
   // Why it is counted here: the plan keeps the trade goods, and the ability adds one whenever control is gained; no
   // check is lifted, the count itself changes.
-  test.fails('ability:scavenge gaining control of a planet brings 1 trade good', () => {
+  test('ability:scavenge gaining control of a planet brings 1 trade good', () => {
     const table = invade('saar', ['t1']);
     quote(table.pack, id, 'After you gain control of a planet: Gain 1 trade good.');
     expect(endOf(table).control.t1).toBe('me');
@@ -27,7 +27,7 @@ describe('ability:scavenge Scavenge', () => {
   // Saar, Scavenge note 1: "If the Saar player gains control of multiple planets during one invasion, the trade goods
   //  are gained one at a time."
   // Checks: two planets taken in one invasion bring two trade goods.
-  test.fails('ability:scavenge two planets gained in one invasion bring 2 trade goods', () => {
+  test('ability:scavenge two planets gained in one invasion bring 2 trade goods', () => {
     expect(endOf(invade('saar', ['t1', 't2'])).tradeGoods).toBe(2);
   });
 
@@ -47,7 +47,7 @@ describe('ability:scavenge Scavenge', () => {
     expect(endOf(table).tradeGoods).toBe(0);
   });
 
-  test.fails('ability:scavenge is a passive effect of the faction sheet', () => {
+  test('ability:scavenge is a passive effect of the faction sheet', () => {
     const { pack } = invade('saar', ['t1']);
     expect(effect(pack, id).tier).toBe('passive');
   });

@@ -8,11 +8,21 @@
  * group), and a route that the highest move value of a ship on the board reaches. The agent is exhausted by the
  * replay as any agent named in «Used». Played on another player's ship it would be that player's entry naming a
  * component it does not hold: a known limit of the foundation.
- *
- * Pass 1: the hint it is today.
  */
+import { fastestOnBoard, oneShipShort } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:saaragent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // Nothing to change on the board: the agent is exhausted by the replay, the waiver is its whole effect.
+  play: () => {},
+  waive: [{
+    code: 'speedShort',
+    rule: "increase the move value of 1 of that player's ships to match the move value of the ship on the game board that has the highest move value",
+    // One ship, short by no more than the highest move value on the board gives it.
+    when: (warning, ctx) => oneShipShort(warning, ctx, fastestOnBoard(ctx) - Number(warning.params.move)),
+  }],
+};

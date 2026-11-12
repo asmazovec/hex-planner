@@ -8,11 +8,15 @@
  * Decided (pass 2 to build): a `modify` of `productionValue` that sets a dock of this player to 7. What makes the
  * Floating Factory a ship (space area, move, capacity, destroyed when blockaded) is not modelled: the app keeps docks
  * on planets only (85.1.1 and 79.4.1 are test.todo in the rules tests).
- *
- * Pass 1: the generated upgrade unchanged; the file adds nothing yet.
  */
 import type { ComponentEffect } from '../../types';
+import '../../points/production';
 
 export const id = 'technology:ffac2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: '97.4',
+  // The printed PRODUCTION 7 is flat: the dock of this player is worth 7 whatever its planet gives.
+  modify: { productionValue: (value, ctx) => (ctx.structure === 'spacedock' ? 7 : value) },
+};

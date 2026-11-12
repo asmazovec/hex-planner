@@ -20,7 +20,7 @@ describe('leader:saaragent Captain Mendosa', () => {
   // cruiser's move 2 (a cruiser stands elsewhere on the board), and its route warning is listed and lifted by the agent.
   // Why the check is redundant here: the route check (58.2) compares the route with the dreadnought's move 1, and the
   // agent raises that ship's move to the highest on the board, which reaches the target.
-  test.fails('leader:saaragent used on activation lets one slow ship reach the target: the warning is waived', () => {
+  test('leader:saaragent used on activation lets one slow ship reach the target: the warning is waived', () => {
     const saar = flight(1, { cruiser: 1 }, true);
     quote(saar.pack, id, 'increase the move value of 1 of that player\'s ships to match the move value of the ship on the game board that has the highest move value');
     expectWaived(warningsOf(saar, saar.move), 'speedShort', id);
@@ -60,7 +60,7 @@ describe('leader:saaragent Captain Mendosa', () => {
     expectStanding(warningsOf(saar, saar.move), 'componentExhausted');
   });
 
-  test.fails('leader:saaragent is a play effect that waives the route check of its entry', () => {
+  test('leader:saaragent is a play effect that waives the route check of its entry', () => {
     const { pack } = flight(1, {}, false);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['speedShort', undefined]]);

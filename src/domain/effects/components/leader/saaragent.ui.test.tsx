@@ -18,7 +18,7 @@ const table = () => {
 // Checks: the dreadnought's route warning stands; I choose Captain Mendosa in «Used», it is written into the entry,
 // and the warning now reads as allowed by her.
 // Why the check is redundant here: the agent raises the one slow ship to the move 2 of the cruiser on the board.
-test.fails('leader:saaragent chosen in «Used», the slow ship\'s route warning reads as allowed by Captain Mendosa', async () => {
+test('leader:saaragent chosen in «Used», the slow ship\'s route warning reads as allowed by Captain Mendosa', async () => {
   const saar = table();
   quote(saar.table.pack, id, 'to match the move value of the ship on the game board that has the highest move value');
   const live = showUses(saar.table, saar.move);

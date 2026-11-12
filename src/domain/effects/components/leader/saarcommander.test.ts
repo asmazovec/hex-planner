@@ -22,7 +22,7 @@ describe('leader:saarcommander Rowl Sarrig', () => {
   // warning is listed and lifted by the commander.
   // Why the check is redundant here: LRR 68.3 puts produced ground forces on the planet of the producing unit, and the
   // commander lets infantry go to any of my docks not blockaded.
-  test.fails('leader:saarcommander places produced infantry at another space dock: the warning is waived', () => {
+  test('leader:saarcommander places produced infantry at another space dock: the warning is waived', () => {
     const saar = produce({ infantry: 2 }, 'h1');
     quote(saar.pack, id, 'You may place each of those units at any of your space docks that are not blockaded.');
     expectWaived(warningsOf(saar, saar.build), 'productionPlace', id);
@@ -55,7 +55,7 @@ describe('leader:saarcommander Rowl Sarrig', () => {
   test.todo('leader:saarcommander fighters placed in the space area of another dock: the entry has no field for produced ships placed outside the active system');
   test.todo('leader:saarcommander a blockaded dock is not a place for them: the waiver must ask whether another player\'s ships stand in the dock\'s system');
 
-  test.fails('leader:saarcommander is a passive effect that waives the placement of produced units', () => {
+  test('leader:saarcommander is a passive effect that waives the placement of produced units', () => {
     const { pack } = produce({ infantry: 1 }, 'h1');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionPlace']);
