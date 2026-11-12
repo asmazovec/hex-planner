@@ -13,4 +13,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:ce';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  modify: { tokensGained: (value, ctx) => (ctx.step === 'status' ? value + 1 : value) },
+};

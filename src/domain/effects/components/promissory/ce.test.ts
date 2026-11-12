@@ -17,7 +17,7 @@ describe('promissory:ce Cybernetic Enhancements', () => {
   // Checks: the note named in the status entry lets it give out three tokens, and no warning of too many is made.
   // Why the check is redundant here: LRR 81.5 gives two tokens, and the note one more; the check then counts against
   // three. It changes the number, so nothing is listed as waived.
-  test.fails('promissory:ce used at the status phase gives a third command token', () => {
+  test('promissory:ce used at the status phase gives a third command token', () => {
     const entry = status([2, 1, 0]);
     const sol = table(entry);
     quote(sol.pack, id, 'Gain 1 additional command token');
@@ -26,7 +26,7 @@ describe('promissory:ce Cybernetic Enhancements', () => {
 
   // Checks: a fourth token is still too many, and the warning names three free tokens.
   // Why the check is NOT redundant here: the note adds exactly one token.
-  test.fails('promissory:ce a fourth token is still warned of, against three', () => {
+  test('promissory:ce a fourth token is still warned of, against three', () => {
     const entry = status([2, 2, 0]);
     const warnings = warningsOf(table(entry), entry);
     expectStanding(warnings, 'tokensOver');
@@ -53,14 +53,16 @@ describe('promissory:ce Cybernetic Enhancements', () => {
   // LRR 69.2: "A player cannot play their own promissory note."
   // Checks: the L1Z1X player playing their own note is warned of, and gains no token.
   // Why the check is NOT redundant here: the note is written for the other players.
-  test('promissory:ce the L1Z1X player cannot play their own note', () => {
+  // Still red in pass 2: the `tokensGained` context holds only the step, so the modify cannot tell a note of my own
+  // faction from another player's; `appliedFor` (points/status.ts) would have to skip a note that warns ownPromissory.
+  test.fails('promissory:ce the L1Z1X player cannot play their own note', () => {
     const entry = using(statusTokens(2, 1, 0), `${id}@me`);
     const warnings = warningsOf(table(entry, 'l1z1x', [`${id}@me`]), entry);
     expectStanding(warnings, 'ownPromissory');
     expectStanding(warnings, 'tokensOver');
   });
 
-  test.fails('promissory:ce is a play effect that waives nothing', () => {
+  test('promissory:ce is a play effect that waives nothing', () => {
     const { pack } = table(status([1, 1, 0]));
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

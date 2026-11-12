@@ -1,14 +1,14 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { ExtensionCode } from '../../../types';
 import { adjust, bench, quote, secondary } from '../kit';
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './is';
 
 uiBench();
 
-/** The check pass 2 adds for everyone (src/domain/rules/codes/researchPrerequisites.ts, LRR 90.12). */
-const CODE = 'researchPrerequisites' as ExtensionCode;
+/** The check of LRR 90.12 (src/domain/rules/codes/prerequisitesMissing.ts). */
+const CODE = prerequisitesMissing.code;
 
 /** The Technology secondary for Fleet Logistics (two propulsion prerequisites) by the L1Z1X, who own none. */
 const research = () => {
@@ -21,7 +21,7 @@ const research = () => {
 // Checks: in «Used» of the research I choose Inheritance Systems; it is written into the entry, and the prerequisites
 // warning reads as allowed by it.
 // Why the check is redundant here: the card ignores every prerequisite of the technology researched (90.12).
-test.fails('technology:is chosen in «Used» of a research, the prerequisites warning reads as allowed by Inheritance Systems', async () => {
+test('technology:is chosen in «Used» of a research, the prerequisites warning reads as allowed by Inheritance Systems', async () => {
   const { card, table } = research();
   quote(table.pack, id, "ignore all of that technology's prerequisites");
   const live = showUses(table, card);
@@ -33,7 +33,7 @@ test.fails('technology:is chosen in «Used» of a research, the prerequisites wa
 // LRR 90.12: "that player must own one technology of the matching color for each prerequisite symbol".
 // Checks: without choosing the card the warning stands.
 // Why the check is NOT redundant here: the card says "may exhaust"; not chosen, not used.
-test.fails('technology:is not chosen, the prerequisites warning stands', () => {
+test('technology:is not chosen, the prerequisites warning stands', () => {
   const { card, table } = research();
   showUses(table, card);
   expectShownStanding(CODE);

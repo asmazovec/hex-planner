@@ -15,7 +15,7 @@ describe('technology:mc Mirror Computing', () => {
   // Why the check is redundant here: the payment check (LRR 19.3, 91.3) counts one resource per trade good and
   // would find two of four; the card makes each worth 2, so the payment is whole. It changes the number, so nothing
   // is listed as waived (a `modify`).
-  test.fails('technology:mc two trade goods pay four resources', () => {
+  test('technology:mc two trade goods pay four resources', () => {
     const table = research('mentak', 2);
     quote(table.pack, id, 'each trade good is worth 2 resources or influence instead of 1');
     expectNone(warningsOf(table, table.card), 'shortResources');
@@ -24,7 +24,7 @@ describe('technology:mc Mirror Computing', () => {
   // "... worth 2 resources or influence ..."
   // Checks: Leadership's token bought for three influence is paid with two trade goods.
   // Why the check is redundant here: two trade goods are worth four influence with the card, more than the three due.
-  test.fails('technology:mc two trade goods pay three influence for a token of Leadership', () => {
+  test('technology:mc two trade goods pay three influence for a token of Leadership', () => {
     const card = primary(CARD.leadership, { tokens: { tactic: 4 }, boughtTokens: 1, payment: { planets: [], tradeGoods: 2 } });
     const table = bench({ faction: 'mentak', start: { technologies: [id] }, entries: [adjust({ tradeGoods: 2 }), card] });
     expectNone(warningsOf(table, card), 'shortInfluence');
@@ -32,7 +32,7 @@ describe('technology:mc Mirror Computing', () => {
 
   // Checks: one trade good is worth 2, still short of four, and the warning names the doubled value paid.
   // Why the check is NOT redundant here: the card doubles the value, it does not remove the cost.
-  test.fails('technology:mc one trade good is still short of four resources, counted as two', () => {
+  test('technology:mc one trade good is still short of four resources, counted as two', () => {
     const table = research('mentak', 1);
     const warnings = warningsOf(table, table.card);
     expectStanding(warnings, 'shortResources');
@@ -54,7 +54,7 @@ describe('technology:mc Mirror Computing', () => {
     expectStanding(warningsOf(table, table.card), 'shortTradeGoods');
   });
 
-  test.fails('technology:mc is a passive effect that changes the value of a trade good and waives nothing', () => {
+  test('technology:mc is a passive effect that changes the value of a trade good and waives nothing', () => {
     const { pack } = research('mentak', 2);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();

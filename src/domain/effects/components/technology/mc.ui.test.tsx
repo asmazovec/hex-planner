@@ -15,7 +15,7 @@ const research = (technologies: string[]) => {
 // "When you spend trade goods, each trade good is worth 2 resources or influence instead of 1."
 // Checks: the warnings of the research paid with two trade goods show no shortage of resources.
 // Why the check is redundant here: two trade goods are worth four resources with the card.
-test.fails('technology:mc two trade goods pay the research, and no shortage is shown', () => {
+test('technology:mc two trade goods pay the research, and no shortage is shown', () => {
   const { card, table } = research([id]);
   quote(table.pack, id, 'each trade good is worth 2 resources or influence instead of 1');
   showWarnings(table, card);

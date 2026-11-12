@@ -7,10 +7,20 @@
  * in the same tactical action). Pass 2 needs a point in `gainControl` (src/domain/replay/invasion.ts) where a
  * component changes what happens to the structures on a planet gained.
  *
- * Pass 1: the hint it is today; its tests say what it must do.
+ * Pass 2: `onGainControl`: each structure of another player that stood on the planet (`lost`) is put on it as mine.
+ * Reinforcement limits are not counted by the replay.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:assimilate';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  onGainControl: ({ state, planetId, lost }) => {
+    for (const { kind, count } of lost) {
+      if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + count;
+      else if (!state.docks.includes(planetId)) state.docks.push(planetId);
+    }
+  },
+};

@@ -6,10 +6,32 @@
  * infantry in the active system becomes a mech from reinforcements. Faction note 1: only an infantry that stood in
  * the system when it was activated. Pass 2 writes the replacement.
  *
- * Pass 1: the hint it is today; its tests say what it must do.
+ * Pass 2: `play` at `playAt: 'activation'` (right after the command token, before the move: an infantry that arrives
+ * later is not eligible). The infantry of the active system's space area goes first, else one on a planet of it; none
+ * there is `unitsMissing`. Reinforcements of mechs are not counted.
  */
+import { planetsOf } from '../../../replay/board';
+import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:l1z1xagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  playAt: 'activation',
+  play: ({ entry, game, pack, state, held, warnings }) => {
+    if (!held || entry.type !== 'tactical' || entry.systemId === null) return;
+    const swap = (units: Record<string, number | undefined>): boolean => {
+      if ((units.infantry ?? 0) <= 0) return false;
+      units.infantry = (units.infantry ?? 0) - 1;
+      if (units.infantry === 0) delete units.infantry;
+      units.mech = (units.mech ?? 0) + 1;
+      return true;
+    };
+    const here = state.systems[entry.systemId] ??= {};
+    if (swap(here)) return;
+    for (const planetId of planetsOf(game, entry.systemId, pack)) if (swap(state.ground[planetId] ??= {})) return;
+    warnings.push(violation('unitsMissing', { where: entry.systemId, unit: 'infantry', missing: 1 }));
+  },
+};

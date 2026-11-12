@@ -21,7 +21,7 @@ describe('ability:assimilate Assimilate', () => {
   // Checks: the L1Z1X take Target One; its PDS and space dock are theirs afterwards, and no longer the rival's.
   // Why nothing is waived: LRR 49.5.1 destroys the structures of the player who loses the planet; the ability
   // replaces them instead, a change of the board the replay must make (faction note 4: every structure, mandatorily).
-  test.fails('ability:assimilate the structures of a planet taken become the L1Z1X\'s', () => {
+  test('ability:assimilate the structures of a planet taken become the L1Z1X\'s', () => {
     const move = invade();
     const l1z1x = table('l1z1x', move);
     quote(l1z1x.pack, id, 'Replace each PDS and space dock that is on that planet with a matching unit from your reinforcements');
@@ -47,7 +47,7 @@ describe('ability:assimilate Assimilate', () => {
   // Checks: the dock gained on Target One produces two infantry in the same action without a warning of no production.
   // Why the check is redundant here: production asks for a dock of mine in the active system (67.1), which the
   // ability has just given.
-  test.fails('ability:assimilate a space dock gained produces in the same tactical action', () => {
+  test('ability:assimilate a space dock gained produces in the same tactical action', () => {
     const move = invade({ production: { infantry: 2 }, payment: { planets: [], tradeGoods: 1 } });
     expectNone(warningsOf(table('l1z1x', move), move), 'noProduction');
   });
@@ -70,7 +70,7 @@ describe('ability:assimilate Assimilate', () => {
 
   test.todo('ability:assimilate with no PDS or space dock left in reinforcements the structure may be taken from elsewhere (faction note 3): the replay does not choose a structure on the board');
 
-  test.fails('ability:assimilate is a passive effect that waives nothing', () => {
+  test('ability:assimilate is a passive effect that waives nothing', () => {
     const { pack } = table('l1z1x', invade());
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive).toBeUndefined();

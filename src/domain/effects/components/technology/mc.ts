@@ -6,10 +6,14 @@
  * (`shortResources`, `shortInfluence`) run against the doubled value. Trade goods spent beyond those held stay
  * warned (`shortTradeGoods`). Pass 2 needs a point for the value of a trade good in src/domain/replay/payment.ts.
  *
- * Pass 1: the hint it is today; its tests say what it must do.
+ * Pass 2: `modify` of `tradeGoodValue` (src/domain/effects/points/payment.ts): 2 instead of 1, for resources and influence.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:mc';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { tradeGoodValue: () => 2 },
+};

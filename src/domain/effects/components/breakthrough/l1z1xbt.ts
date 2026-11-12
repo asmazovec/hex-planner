@@ -6,10 +6,18 @@
  * is placed on it from reinforcements (mandatory, faction note 2). Pass 2 needs the same point in `gainControl` as
  * Assimilate.
  *
- * Pass 1: the hint it is today; its tests say what it must do.
+ * Pass 2: `onGainControl`: infantry equal to the printed influence of the planet are placed on it (`placeOnPlanet`).
  */
+import { placeOnPlanet } from '../../../replay/invasion';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:l1z1xbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  onGainControl: ({ pack, state, warnings, planetId }) => {
+    const influence = pack.planets[planetId]?.influence ?? 0;
+    if (influence > 0) placeOnPlanet(state, planetId, { infantry: influence }, warnings);
+  },
+};
