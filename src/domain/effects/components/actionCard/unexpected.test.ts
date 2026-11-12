@@ -15,7 +15,7 @@ describe('actionCard:unexpected Unexpected Action', () => {
   // Checks: my token leaves the activated system; it goes to the reinforcements, so the tactic pool stays at two.
   // Why the check is redundant here: nothing is lifted; a token leaves the board otherwise only in the status phase
   // (81.4), and the count must know the system is free to be activated again.
-  test.fails('actionCard:unexpected returns my command token from the board to my reinforcements', () => {
+  test('actionCard:unexpected returns my command token from the board to my reinforcements', () => {
     const play = unexpected(NEAR);
     const table1 = table([tactical(NEAR), play]);
     quote(table1.pack, id, 'Remove 1 of your command tokens from the game board and return it to your reinforcements.');
@@ -27,7 +27,7 @@ describe('actionCard:unexpected Unexpected Action', () => {
 
   // Checks: the system freed by the card can be activated again without the warning that it holds my token.
   // Why the check is redundant here: the token that LRR 5.2 looks for is no longer there.
-  test.fails('actionCard:unexpected the freed system is activated again without warning', () => {
+  test('actionCard:unexpected the freed system is activated again without warning', () => {
     const again = tactical(NEAR);
     expectNone(warningsOf(table([tactical(NEAR), unexpected(NEAR), again]), again), 'systemHasToken');
   });
@@ -35,12 +35,12 @@ describe('actionCard:unexpected Unexpected Action', () => {
   // Note 1 of the card: "Unexpected Action cannot be played by a player with zero command tokens on the game board."
   // Checks: a system without my token named is warned of.
   // Why the check is NOT redundant here: the card removes one of my tokens, and there is none there.
-  test.fails('actionCard:unexpected naming a system without my token is warned of', () => {
+  test('actionCard:unexpected naming a system without my token is warned of', () => {
     const play = unexpected(TARGET);
     expectStanding(warningsOf(table([tactical(NEAR), play]), play), PLAY_CONDITION);
   });
 
-  test.fails('actionCard:unexpected is a play effect', () => {
+  test('actionCard:unexpected is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

@@ -24,7 +24,7 @@ describe('actionCard:f_conscription Fighter Conscription', () => {
   // Checks: home (dock and carrier) gets one fighter; a carrier next to home gets one; a cruiser (no capacity) none;
   // the carrier beside the Hacan cruiser none.
   // Why the check is redundant here: nothing is lifted; fighters are placed, not produced, so no production is asked.
-  test.fails('actionCard:f_conscription places one fighter in each system with my dock or my unit with capacity', () => {
+  test('actionCard:f_conscription places one fighter in each system with my dock or my unit with capacity', () => {
     const card = table({ [HOME]: { carrier: 1 }, [NEAR]: { carrier: 1 }, [FAR]: { cruiser: 1 }, [TARGET]: { carrier: 1 } });
     quote(card.pack, id, 'Place 1 fighter from your reinforcements in each system that contains 1 or more of your space docks or units that have capacity.');
     const end = endOf(card);
@@ -45,15 +45,15 @@ describe('actionCard:f_conscription Fighter Conscription', () => {
 
   // Note 2 of the card: "A player may place a fighter in a system that is at its capacity limit. If they do so, they
   //  must then remove a fighter or ground force from the space area of that system."
-  // Checks: a carrier full with four fighters gets a fifth; the capacity of the system is warned of and stands.
+  // Checks: a carrier full with six fighters (the Sol carrier carries six) gets a seventh; the capacity of the system is warned of and stands.
   // Why the check is NOT redundant here: the card places beyond capacity but does not lift it (16.3): one must go.
-  test.fails('actionCard:f_conscription into a full carrier leaves the capacity warning standing', () => {
-    const card = table({ [NEAR]: { carrier: 1, fighter: 4 } });
-    expect(endOf(card).systems[NEAR]).toEqual({ carrier: 1, fighter: 5 });
+  test('actionCard:f_conscription into a full carrier leaves the capacity warning standing', () => {
+    const card = table({ [NEAR]: { carrier: 1, fighter: 6 } });
+    expect(endOf(card).systems[NEAR]).toEqual({ carrier: 1, fighter: 7 });
     expectStanding(warningsOf(card, card.play), 'capacitySystem');
   });
 
-  test.fails('actionCard:f_conscription is a play effect', () => {
+  test('actionCard:f_conscription is a play effect', () => {
     expect(effect(table({}).pack, id).tier).toBe('play');
   });
 });

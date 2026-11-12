@@ -16,7 +16,7 @@ describe('actionCard:summit Summit', () => {
   // Checks: one token goes to the tactic pool and one to the fleet pool.
   // Why the check is redundant here: nothing is lifted; the card adds tokens outside the status phase and Leadership,
   // which the count must know to warn of the pools later.
-  test.fails('actionCard:summit gains two command tokens into the pools chosen', () => {
+  test('actionCard:summit gains two command tokens into the pools chosen', () => {
     const play = summit({ tactic: 1, fleet: 1 });
     const end = endOf(table(play));
     quote(table(play).pack, id, 'Gain 2 command tokens.');
@@ -34,12 +34,12 @@ describe('actionCard:summit Summit', () => {
   // "Gain 2 command tokens."
   // Checks: three tokens asked of the card are warned of.
   // Why the check is NOT redundant here: the card gives two, no more.
-  test.fails('actionCard:summit asked for more than two tokens is warned of', () => {
+  test('actionCard:summit asked for more than two tokens is warned of', () => {
     const play = summit({ tactic: 3 });
     expectStanding(warningsOf(table(play), play), PLAY_CONDITION);
   });
 
-  test.fails('actionCard:summit is a play effect', () => {
+  test('actionCard:summit is a play effect', () => {
     expect(effect(table(summit({})).pack, id).tier).toBe('play');
   });
 });

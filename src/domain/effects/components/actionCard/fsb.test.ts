@@ -17,7 +17,7 @@ describe('actionCard:fsb Forward Supply Base', () => {
   // Checks: I gain three trade goods and the Hacan one.
   // Why the check is redundant here: nothing is lifted; the card gives trade goods outside a transaction, which the
   // count must know for later payments.
-  test.fails('actionCard:fsb gains me three trade goods and the chosen player one', () => {
+  test('actionCard:fsb gains me three trade goods and the chosen player one', () => {
     const card = table([theirs(), supply()]);
     quote(card.pack, id, 'Gain 3 trade goods. Then, choose another player to gain 1 trade good.');
     const end = endOf(card);
@@ -41,7 +41,7 @@ describe('actionCard:fsb Forward Supply Base', () => {
 
   test.todo('actionCard:fsb the condition "a system that contains your units" needs the activation it answers: an entry does not name the action it reacts to');
 
-  test.fails('actionCard:fsb is a play effect', () => {
+  test('actionCard:fsb is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

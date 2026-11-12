@@ -16,7 +16,7 @@ describe('actionCard:tech_rider Technology Rider', () => {
   // Checks: the prediction came true and Gravity Drive is entered: it joins my technologies.
   // Why the check is redundant here: nothing is lifted; the plan counts no votes, so the player enters the result,
   // and the technology then counts for movement and prerequisites as any researched one.
-  test.fails('actionCard:tech_rider with a correct prediction researches the technology entered', () => {
+  test('actionCard:tech_rider with a correct prediction researches the technology entered', () => {
     const rides = table(rider({ technology: GRAVITY_DRIVE }));
     quote(rides.pack, id, 'If your prediction is correct, research 1 technology.');
     expect(endOf(rides).holdings.technologies).toContain(GRAVITY_DRIVE);
@@ -41,12 +41,12 @@ describe('actionCard:tech_rider Technology Rider', () => {
   // LRR 90.10: a player cannot research a technology they already own.
   // Checks: a technology I already own, entered for the rider, is warned of.
   // Why the check is NOT redundant here: the rider researches as research does; it does not allow a second copy.
-  test.fails('actionCard:tech_rider researching a technology I own is warned of', () => {
+  test('actionCard:tech_rider researching a technology I own is warned of', () => {
     const play = rider({ technology: GRAVITY_DRIVE });
     expectStanding(warningsOf(table(play, { technologies: [GRAVITY_DRIVE] }), play), 'researchOwned');
   });
 
-  test.fails('actionCard:tech_rider is a play effect', () => {
+  test('actionCard:tech_rider is a play effect', () => {
     expect(effect(table(rider()).pack, id).tier).toBe('play');
   });
 });

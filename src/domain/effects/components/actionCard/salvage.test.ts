@@ -24,7 +24,7 @@ describe('actionCard:salvage Salvage', () => {
   // goods, and the Hacan have none left.
   // Why the check is redundant here: no check is lifted; the card moves goods outside a transaction (94), which the
   // plan otherwise counts only in a transaction's act.
-  test.fails('actionCard:salvage used in a won battle turns all the opponent\'s commodities into my trade goods', () => {
+  test('actionCard:salvage used in a won battle turns all the opponent\'s commodities into my trade goods', () => {
     const move = using(attack(), id);
     const salvage = table([replenish(), move]);
     quote(salvage.pack, id, 'Your opponent gives you all of their commodities.');
@@ -47,7 +47,7 @@ describe('actionCard:salvage Salvage', () => {
   // Checks: used in an action with no other player's ships in the active system, there is no battle to win: the card's
   // own condition is warned of.
   // Why the check is NOT redundant here: the window of the card is a won space combat, and there was none.
-  test.fails('actionCard:salvage used without a battle in the active system is warned of', () => {
+  test('actionCard:salvage used without a battle in the active system is warned of', () => {
     const move = using(attack(), id);
     expectStanding(warningsOf(table([replenish(), move], false), move), PLAY_CONDITION);
   });
@@ -61,7 +61,7 @@ describe('actionCard:salvage Salvage', () => {
 
   test.todo('actionCard:salvage played as the defender who wins: an entry of mine in another player\'s action is not modelled');
 
-  test.fails('actionCard:salvage is a play effect', () => {
+  test('actionCard:salvage is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

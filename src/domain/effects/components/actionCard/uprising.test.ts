@@ -17,7 +17,7 @@ describe('actionCard:uprising Uprising', () => {
   // Checks: Target One of the Hacan is exhausted and I gain two trade goods.
   // Why the check is redundant here: nothing is lifted; the card exhausts another player's planet and gives me trade
   // goods outside a transaction, both of which the count must know.
-  test.fails('actionCard:uprising exhausts another player\'s planet and gains its resources as trade goods', () => {
+  test('actionCard:uprising exhausts another player\'s planet and gains its resources as trade goods', () => {
     const play = uprising('t1');
     const card = table([play]);
     quote(card.pack, id, 'Exhaust 1 non-home planet controlled by another player. Then gain trade goods equal to its resource value.');
@@ -30,7 +30,7 @@ describe('actionCard:uprising Uprising', () => {
   // "Exhaust 1 non-home planet ..."
   // Checks: a planet of a home system, though held by the Hacan, is warned of.
   // Why the check is NOT redundant here: the card names non-home planets only.
-  test.fails('actionCard:uprising on a planet of a home system is warned of', () => {
+  test('actionCard:uprising on a planet of a home system is warned of', () => {
     const play = uprising('h1');
     expectStanding(warningsOf(table([play], { planetControl: { h1: 'enemy' }, planetOwner: { h1: RIVAL.id } }), play), PLAY_CONDITION);
   });
@@ -38,7 +38,7 @@ describe('actionCard:uprising Uprising', () => {
   // "... controlled by another player."
   // Checks: my own planet named is warned of.
   // Why the check is NOT redundant here: the card names other players' planets only.
-  test.fails('actionCard:uprising on my own planet is warned of', () => {
+  test('actionCard:uprising on my own planet is warned of', () => {
     const play = uprising('t1');
     expectStanding(warningsOf(table([play], { planetControl: { t1: 'me' } }), play), PLAY_CONDITION);
   });
@@ -46,13 +46,13 @@ describe('actionCard:uprising Uprising', () => {
   // Note 2 of the card: "Uprising cannot target an exhausted planet."
   // Checks: the Hacan spent Target One earlier; naming it is warned of.
   // Why the check is NOT redundant here: an exhausted planet cannot be exhausted again for its trade goods.
-  test.fails('actionCard:uprising on an exhausted planet is warned of', () => {
+  test('actionCard:uprising on an exhausted planet is warned of', () => {
     const spend = tactical(HOME, { payment: { planets: ['t1'], tradeGoods: 0 } }, { owner: RIVAL.id });
     const play = uprising('t1');
     expectStanding(warningsOf(table([spend, play]), play), PLAY_CONDITION);
   });
 
-  test.fails('actionCard:uprising is a play effect', () => {
+  test('actionCard:uprising is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

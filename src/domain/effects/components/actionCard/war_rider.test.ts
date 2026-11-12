@@ -16,7 +16,7 @@ describe('actionCard:war_rider Warfare Rider', () => {
   // Checks: a correct prediction places a dreadnought beside my cruiser.
   // Why the check is redundant here: nothing is lifted; the dreadnought is placed, not produced, so no production
   // value, cost or space dock is asked.
-  test.fails('actionCard:war_rider with a correct prediction places a dreadnought where my ships are', () => {
+  test('actionCard:war_rider with a correct prediction places a dreadnought where my ships are', () => {
     const play = rider({ systemId: NEAR });
     const rides = table(play);
     quote(rides.pack, id, 'place 1 dreadnought from your reinforcements in a system that contains 1 or more of your ships.');
@@ -35,7 +35,7 @@ describe('actionCard:war_rider Warfare Rider', () => {
   // "... in a system that contains 1 or more of your ships."
   // Checks: the target, where I have no ships, is warned of.
   // Why the check is NOT redundant here: the card places only beside my ships.
-  test.fails('actionCard:war_rider in a system without my ships is warned of', () => {
+  test('actionCard:war_rider in a system without my ships is warned of', () => {
     const play = rider({ systemId: TARGET });
     expectStanding(warningsOf(table(play), play), PLAY_CONDITION);
   });
@@ -46,7 +46,7 @@ describe('actionCard:war_rider Warfare Rider', () => {
     expect(endOf(table(rider())).systems[NEAR]).toEqual({ cruiser: 1 });
   });
 
-  test.fails('actionCard:war_rider is a play effect', () => {
+  test('actionCard:war_rider is a play effect', () => {
     expect(effect(table(rider()).pack, id).tier).toBe('play');
   });
 });
