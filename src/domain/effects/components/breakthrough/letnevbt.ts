@@ -1,0 +1,19 @@
+/**
+ * Gravleash Maneuvers (Barony of Letnev, breakthrough, Thunder's Edge): "Before you roll dice during space combat,
+ * apply +X to the results of 1 of your ship's rolls, where X is the number of ship types you have in the combat.
+ * During movement, your non-fighter ships' move values are equal to the highest move value amongst moving ships in
+ * the system they started in."
+ *
+ * Decided (pass 2 to build): a `modify` of the move value. The second sentence changes the number the route check
+ * (`speedShort`, 58.2) compares the route with, so a slow ship moving with a fast one from the same system is not
+ * warned of at all; the warning would name another number with the breakthrough in force, which makes it a modify
+ * and not a waiver. The `speed` point does not know the companions of a ship yet (see the report). The first
+ * sentence is a roll of dice: a hint of the combat.
+ *
+ * Pass 1: the hint it is today.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'breakthrough:letnevbt';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id };
