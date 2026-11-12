@@ -1,10 +1,10 @@
 import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
-import { CARD, STATUS_TOKENS } from '../../domain/strategy';
+import { CARD } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
-import { standing } from '../../domain/project';
+import { standing, statusTokensFree } from '../../domain/project';
 import type { DataPack, Entry, EntryBody, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
@@ -12,6 +12,8 @@ import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
 import { actLines, insideCard } from './actLines';
 import { GainsBlock } from './blocks/GainsBlock';
+import { ScoredBlock } from './blocks/ScoredBlock';
+import { StepHints } from '../feedback/StepHints';
 import { agendaOf } from './editors/AdjustmentEditor';
 import { HexRemove, RowIcon } from '../primitives/Icon';
 import { Stepper } from '../primitives/Stepper';
@@ -64,10 +66,12 @@ function StatusFields({ entry, game, pack, state, before, warnings }: {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
   const gains = entry.opponentVp ?? {};
+  // Two tokens, and what the player's components make of them (Versatile, Hyper Metabolism, a note named in «Used»).
+  const free = statusTokensFree(game, before ?? state, before ?? state, entry, pack);
   return (
     <>
       <TokenTiles
-        free={STATUS_TOKENS} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
+        free={free} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
         onChange={values => updateEntry(entry.id, values)}
       />
       <WarningList warnings={warnings} game={game} pack={pack} />
@@ -86,6 +90,9 @@ function StatusFields({ entry, game, pack, state, before, warnings }: {
         );
       })}
       <p className="muted status-reminder">{t('plan.entries.planetsRefresh')}</p>
+      {/* The objectives scored and their reminders come after the points: the warning under the tiles stays above the points. */}
+      <StepHints pack={pack} board={before} step="status" players={['me']} />
+      <ScoredBlock entry={entry} pack={pack} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       {/* Last: a card taken stands under its buttons and moves nothing above. */}
       <GainsBlock entry={entry} pack={pack} before={before} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
     </>

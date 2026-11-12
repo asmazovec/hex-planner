@@ -14,6 +14,7 @@ import { MapPickButton } from '../../primitives/MapPickButton';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
 import { Section } from '../../primitives/Section';
+import { AgendaChoices } from '../blocks/AgendaChoices';
 import { ComponentSlot } from '../blocks/ComponentSlot';
 
 const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
@@ -36,7 +37,7 @@ export interface AdjustmentEditorProps {
   onPickSystem: () => void;
   /** Opens the big hex of the system, where its units change. */
   onOpenHex: (slot: string) => void;
-  onUpdate: (patch: { label?: string; delta?: AdjustmentDelta; gains?: string[] }) => void;
+  onUpdate: (patch: { label?: string; delta?: AdjustmentDelta; gains?: string[]; choices?: Record<string, string> }) => void;
   onDone: () => void;
   /** The cross of the head: the adjustment goes. */
   onRemove: () => void;
@@ -88,6 +89,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, laws, c
             <span className="muted">{t('plan.agenda.hint')}</span>
           </Section>
         )}
+        {agenda && <AgendaChoices game={game} pack={pack} agenda={agenda} choices={entry.choices} laws={laws} onChange={choices => onUpdate({ choices })} />}
 
         <Section>
           <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
