@@ -28,7 +28,7 @@ describe('secretObjective:fsn Form a Spy Network', () => {
   // Checks: scored while the entry discards only 2 action cards: the scoring is warned of, and recorded all the same.
   // Why the check is NOT redundant here: the card lifts no rule; its own requirement is 5 discarded cards and the
   //  plan counts the hand.
-  test.fails('secretObjective:fsn scored with only 2 action cards discarded is warned of', () => {
+  test('secretObjective:fsn scored with only 2 action cards discarded is warned of', () => {
     const score = scoring(HAND.slice(0, 2));
     const plan = table([score]);
     expectStanding(warningsOf(plan, score), UNMET);
@@ -39,14 +39,14 @@ describe('secretObjective:fsn Form a Spy Network', () => {
   //  the action phase will have no effect."
   // Checks: five cards discarded by an action of the action phase do not count for a scoring that discards none.
   // Why the check is NOT redundant here: the discards fall outside the card's timing, the Score Objectives step.
-  test.fails('secretObjective:fsn the cards discarded in the action phase do not count', () => {
+  test('secretObjective:fsn the cards discarded in the action phase do not count', () => {
     const score = scoring([]);
     const plan = table([componentAction('', { spends: HAND }), score]);
     expectStanding(warningsOf(plan, score), UNMET);
   });
 
   // Checks: the effect is played by the scoring, not a reminder.
-  test.fails('secretObjective:fsn is a play effect of its scoring', () => {
+  test('secretObjective:fsn is a play effect of its scoring', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
   });

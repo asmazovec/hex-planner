@@ -8,11 +8,21 @@
  * planets exhausted for the rest are the player's choice and the status entry has no payment, so they are not
  * counted. Until pass 2 it is the hint every component is by default.
  */
+import { violation } from '../../../rules/registry';
+import { spentOnObjectives } from '../../points/status';
 import type { ComponentEffect } from '../../types';
+
+const GOODS = 6;
 
 export const id = 'publicObjective:vast_reserves';
 
 export const effect: ComponentEffect = {
-  tier: 'hint',
+  tier: 'play',
   rule: id,
+  play(turn) {
+    // What the entry's own `spend` already paid in trade goods counts; the rest comes from the pool.
+    const owed = Math.max(0, GOODS - spentOnObjectives(turn).tradeGoods);
+    if (owed > turn.state.tradeGoods) turn.warnings.push(violation('shortTradeGoods', { needed: owed, have: turn.state.tradeGoods }, 'status'));
+    turn.state.tradeGoods -= Math.min(owed, turn.state.tradeGoods);
+  },
 };

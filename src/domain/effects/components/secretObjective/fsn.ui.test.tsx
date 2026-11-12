@@ -17,7 +17,7 @@ describe('secretObjective:fsn Form a Spy Network', () => {
   // "Discard 5 action cards."
   // Checks: the status entry that scores it while discarding 2 action cards shows the unmet requirement in its list.
   // Why the check is NOT redundant here: the card's own requirement is 5 discarded cards; the plan counts the hand.
-  test.fails('secretObjective:fsn scored with 2 action cards discarded shows the unmet requirement', () => {
+  test('secretObjective:fsn scored with 2 action cards discarded shows the unmet requirement', () => {
     const score = scoring(HAND.slice(0, 2));
     const plan = table(score);
     quote(plan.pack, id, 'Discard 5 action cards');
