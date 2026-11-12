@@ -9,10 +9,32 @@
  * as Cruiser II has them), and its ability waives `routeBlocked` for a move of Corsairs while the active system
  * holds another player's non-fighter ships (faction note 1: through the ships of any player).
  *
- * Pass 1: the hint it is today; its tests say what it must do.
+ * Pass 2: capacity 2 for a cruiser that already has capacity (Cruiser II owned: the value so far is 1; order of the
+ * registry puts technologies before breakthroughs), and a waiver of `routeBlocked` narrowed to ships blocking a move of
+ * cruisers alone while Cruiser II is owned and the active system holds another player's non-fighter ships.
  */
+import { componentById } from '../../../components';
+import { holds } from '../../../replay/holdings';
+import { onlyUnits, othersShipsIn, routeBlockKind } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
+
 
 export const id = 'breakthrough:mentakbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { capacity: (value, ctx) => (ctx.unit === 'cruiser' && value >= 1 ? 2 : value) },
+  waive: [{
+    code: 'routeBlocked',
+    rule: "If the active system contains another player's non-fighter ships, this unit can move through systems that contain other players' ships.",
+    when: (warning, ctx) => {
+      const upgrade = componentById(ctx.pack, 'technology:cr2');
+      const active = ctx.entry?.type === 'tactical' ? ctx.entry.systemId ?? undefined : undefined;
+      return upgrade !== undefined && active !== undefined && holds(ctx.before.holdings, upgrade)
+        && routeBlockKind(warning, ctx) === 'ships'
+        && onlyUnits(warning, ctx, ['cruiser'])
+        && Object.keys(othersShipsIn(ctx, active)).length > 0;
+    },
+  }],
+};

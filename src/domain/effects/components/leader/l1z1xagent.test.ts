@@ -13,7 +13,7 @@ describe('leader:l1z1xagent I48S', () => {
   // Checks: I activate NEAR, where my carrier holds one infantry, and name the agent in «Used»: the infantry becomes a
   // mech.
   // Why nothing is waived: the agent changes the board; the replay must make the replacement.
-  test.fails('leader:l1z1xagent replaces an infantry of the active system with a mech', () => {
+  test('leader:l1z1xagent replaces an infantry of the active system with a mech', () => {
     const activate = using(tactical(NEAR), id);
     const l1z1x = table([activate]);
     quote(l1z1x.pack, id, 'replace 1 of their infantry in the active system with 1 mech from their reinforcements');
@@ -22,7 +22,7 @@ describe('leader:l1z1xagent I48S', () => {
 
   // Checks: only one infantry is replaced, whatever stands there.
   // Why the check is NOT redundant here: the text says 1 infantry.
-  test.fails('leader:l1z1xagent replaces one infantry, not two', () => {
+  test('leader:l1z1xagent replaces one infantry, not two', () => {
     const activate = using(tactical(NEAR), id);
     expect(endOf(table([activate], { carrier: 1, infantry: 2 })).systems[NEAR]).toEqual({ carrier: 1, infantry: 1, mech: 1 });
   });
@@ -32,7 +32,7 @@ describe('leader:l1z1xagent I48S', () => {
   // Checks: the infantry that arrives with the move is not replaced, and the replacement that finds no infantry is
   // reported as a missing unit.
   // Why the check is NOT redundant here: the agent acts right after the activation, before the move.
-  test.fails('leader:l1z1xagent an infantry moved in later is not replaced', () => {
+  test('leader:l1z1xagent an infantry moved in later is not replaced', () => {
     const activate = using(tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1, infantry: 1 } }] }), id);
     const l1z1x = table([activate], {});
     expect(endOf(l1z1x).systems[NEAR]).toEqual({ carrier: 1, infantry: 1 });
@@ -52,7 +52,7 @@ describe('leader:l1z1xagent I48S', () => {
     expectStanding(warningsOf(table([using(tactical(NEAR), id), second]), second), 'componentExhausted');
   });
 
-  test.fails('leader:l1z1xagent is a play effect', () => {
+  test('leader:l1z1xagent is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeDefined();

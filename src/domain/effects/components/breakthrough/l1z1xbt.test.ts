@@ -15,7 +15,7 @@ describe('breakthrough:l1z1xbt Fealty Uplink', () => {
   // Checks: the L1Z1X take Target Two (influence 3) with one infantry; three more are placed on it.
   // Why nothing is waived: the breakthrough adds units to the board; no check of the rules forbids it, the replay
   // must place them (faction note 2: the placement is mandatory).
-  test.fails('breakthrough:l1z1xbt places infantry equal to the influence of a planet gained', () => {
+  test('breakthrough:l1z1xbt places infantry equal to the influence of a planet gained', () => {
     const table = invade('l1z1x');
     quote(table.pack, id, "place infantry from your reinforcements equal to that planet's influence value on that planet");
     expect(endOf(table).ground.t2).toEqual({ infantry: 4 });
@@ -42,7 +42,7 @@ describe('breakthrough:l1z1xbt Fealty Uplink', () => {
 
   test.todo('breakthrough:l1z1xbt when the reinforcements hold fewer infantry than the influence: the infantry limit is not counted by the replay');
 
-  test.fails('breakthrough:l1z1xbt is a passive effect that places units and waives nothing', () => {
+  test('breakthrough:l1z1xbt is a passive effect that places units and waives nothing', () => {
     const { pack } = invade('l1z1x');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive).toBeUndefined();

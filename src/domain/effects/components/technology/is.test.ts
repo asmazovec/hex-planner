@@ -1,14 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry, ExtensionCode } from '../../../types';
+import type { Entry } from '../../../types';
 import { adjust, bench, effect, expectNone, expectStanding, expectWaived, quote, secondary, using, warningsOf } from '../kit';
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './is';
 
-/**
- * The check pass 2 adds for everyone (src/domain/rules/codes/researchPrerequisites.ts, LRR 90.12, step `card`): a
- * technology researched without its prerequisites. Named here by its string until its file exists.
- */
-const CODE = 'researchPrerequisites' as ExtensionCode;
+/** The check of LRR 90.12, step `card` (src/domain/rules/codes/prerequisitesMissing.ts). */
+const CODE = prerequisitesMissing.code;
 
 /** Fleet Logistics needs two propulsion technologies (90.12); the L1Z1X research it with the Technology secondary. */
 const FLEET_LOGISTICS = 'technology:fl';
@@ -27,7 +25,7 @@ describe('technology:is Inheritance Systems', () => {
   // and lifts the prerequisites warning.
   // Why the check is redundant here: LRR 90.12 asks a player to own a technology of the matching colour for each
   // prerequisite, and the card says to ignore all of them.
-  test.fails('technology:is used for a research lifts the prerequisites warning', () => {
+  test('technology:is used for a research lifts the prerequisites warning', () => {
     const card = using(research(2), id);
     const l1z1x = table([card]);
     quote(l1z1x.pack, id, "ignore all of that technology's prerequisites");
@@ -38,7 +36,7 @@ describe('technology:is Inheritance Systems', () => {
   //  each prerequisite symbol on the technology card they wish to research."
   // Checks: the card held but not used leaves the warning standing.
   // Why the check is NOT redundant here: the card says "you may exhaust"; not named, it was not used.
-  test.fails('technology:is held but not used leaves the prerequisites warning standing', () => {
+  test('technology:is held but not used leaves the prerequisites warning standing', () => {
     const card = research(0);
     expectStanding(warningsOf(table([card]), card), CODE);
   });
@@ -70,13 +68,13 @@ describe('technology:is Inheritance Systems', () => {
 
   // Checks: the second use, with the card already exhausted, does not lift the prerequisites.
   // Why the check is NOT redundant here: the card's ability needs it to be exhausted, which it cannot be again.
-  test.fails('technology:is already exhausted does not lift the prerequisites of a second research', () => {
+  test('technology:is already exhausted does not lift the prerequisites of a second research', () => {
     const second = using(secondary(CARD.technology, { researched: ['technology:dxa'], payment: { planets: [], tradeGoods: 0 } }), id);
     const l1z1x = bench({ faction: 'l1z1x', start: { technologies: [id] }, edit: pack => { pack.technologies.dxa = { ...pack.technologies.dxa, requires: { biotic: 1 } }; }, entries: [using(research(2), id), second] });
     expectStanding(warningsOf(l1z1x, second), CODE);
   });
 
-  test.fails('technology:is is a play effect that waives the prerequisites', () => {
+  test('technology:is is a play effect that waives the prerequisites', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);

@@ -1,13 +1,11 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode, Game } from '../../../types';
+import type { Entry, Game } from '../../../types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, HOME, NEAR, quote, warningsOf } from '../kit';
+import systemOccupied from '../../../rules/codes/systemOccupied';
 import { id } from './l1z1xhero';
 
-/**
- * The check pass 2 adds with the hero's play (a code of its own under src/domain/rules/codes): the chosen system
- * holds other players' ships. Named here by its string until its file exists.
- */
-const OCCUPIED = 'systemOccupied' as ExtensionCode;
+/** The check of the hero's play (src/domain/rules/codes/systemOccupied.ts): the chosen system holds other players' ships. */
+const OCCUPIED = systemOccupied.code;
 
 /** The hero's action: FAR is chosen, and the ships named by `<unit>@<slot>` go there. */
 const helmsman = (choices: Record<string, string | number> = { system: FAR, [`dreadnought@${HOME}`]: 2, [`flagship@${NEAR}`]: 1 }) =>
@@ -25,7 +23,7 @@ describe('leader:l1z1xhero The Helmsman', () => {
   // two systems away.
   // Why nothing is waived: it is not a tactical action; faction note 3: "Ships move directly to their destination
   // system", so no route and no move value are checked.
-  test.fails('leader:l1z1xhero moves the flagship and the dreadnoughts chosen into the chosen system', () => {
+  test('leader:l1z1xhero moves the flagship and the dreadnoughts chosen into the chosen system', () => {
     const hero = helmsman();
     const l1z1x = table([hero]);
     quote(l1z1x.pack, id, 'you may move your flagship and any number of your dreadnoughts from other systems into the chosen system');
@@ -37,7 +35,7 @@ describe('leader:l1z1xhero The Helmsman', () => {
 
   // Checks: a carrier named with the dreadnoughts stays where it is.
   // Why the check is NOT redundant here: the text moves the flagship and dreadnoughts only.
-  test.fails('leader:l1z1xhero moves no other ship', () => {
+  test('leader:l1z1xhero moves no other ship', () => {
     const l1z1x = table([helmsman({ system: FAR, [`dreadnought@${HOME}`]: 1, [`carrier@${HOME}`]: 1 })]);
     const end = endOf(l1z1x);
     expect(end.systems[FAR]).toEqual({ dreadnought: 1 });
@@ -47,7 +45,7 @@ describe('leader:l1z1xhero The Helmsman', () => {
   // "Choose 1 system that does not contain other players' ships."
   // Checks: a chosen system holding a rival's cruiser is warned of; the ships still move, as a warning forbids nothing.
   // Why the check is NOT redundant here: the hero's own condition.
-  test.fails('leader:l1z1xhero choosing a system with other players\' ships is warned of', () => {
+  test('leader:l1z1xhero choosing a system with other players\' ships is warned of', () => {
     const hero = helmsman();
     const l1z1x = table([hero], { opponents: [{ id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 }], enemyUnits: { [FAR]: { o1: { cruiser: 1 } } } });
     expectStanding(warningsOf(l1z1x, hero), OCCUPIED);
@@ -63,7 +61,7 @@ describe('leader:l1z1xhero The Helmsman', () => {
 
   test.todo('leader:l1z1xhero ships moved may transport units from a system without a command token, and not into a nebula or supernova (faction notes 2 and 5): the play takes ships only');
 
-  test.fails('leader:l1z1xhero is a play effect', () => {
+  test('leader:l1z1xhero is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeDefined();

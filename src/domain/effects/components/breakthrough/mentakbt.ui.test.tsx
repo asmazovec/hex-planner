@@ -23,7 +23,7 @@ const flight = (defended: UnitCounts | null) => {
 // move, and the warning of the blocked route reads as allowed by The Table's Grace.
 // Why the check is redundant here: LRR 58.3.2 forbids moving through other players' ships, and the Corsair may while
 // the active system holds another player's non-fighter ships.
-test.fails('breakthrough:mentakbt a Corsair is taken through enemy ships, and the warning reads as allowed by The Table\'s Grace', async () => {
+test('breakthrough:mentakbt a Corsair is taken through enemy ships, and the warning reads as allowed by The Table\'s Grace', async () => {
   const { table, live } = flight({ cruiser: 1 });
   quote(table.pack, id, "this unit can move through systems that contain other players' ships");
   await take('Cruiser');

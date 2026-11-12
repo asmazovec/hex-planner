@@ -6,10 +6,26 @@
  * check for everyone (code `researchPrerequisites`, step `card`), and this card, named in the `uses` of the
  * research, lifts it for that entry and adds 2 resources to its cost (faction note 1: paid apart from the research).
  *
- * Pass 1: the hint it is today; its tests say what it must do.
+ * Pass 2: a `play` that waives `prerequisitesMissing` for the entry that names it, while the card is held and ready (a
+ * second use finds it exhausted and lifts nothing). The 2 resources more are not counted: `researchCost` is asked
+ * without the entry's `uses` (see the report).
  */
+import { componentById } from '../../../components';
+import { holds, isExhausted } from '../../../replay/holdings';
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:is';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  waive: [{
+    code: prerequisitesMissing.code,
+    rule: "ignore all of that technology's prerequisites",
+    when: (_warning, ctx) => {
+      const def = componentById(ctx.pack, id);
+      return !def || (holds(ctx.before.holdings, def) && !isExhausted(ctx.before.holdings, def));
+    },
+  }],
+};

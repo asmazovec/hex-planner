@@ -30,7 +30,7 @@ describe('breakthrough:mentakbt The Table\'s Grace', () => {
   // active system with an enemy cruiser; the warning that the route is blocked is listed and lifted.
   // Why the check is redundant here: LRR 58.3.2 says "The ship cannot move through a system that contains ships that
   // are controlled by another player", and the Corsair's ability says it can while the active system is defended.
-  test.fails('breakthrough:mentakbt a Corsair moves through enemy ships into a defended system: routeBlocked is waived', () => {
+  test('breakthrough:mentakbt a Corsair moves through enemy ships into a defended system: routeBlocked is waived', () => {
     const table = raid({ cruiser: 1 });
     quote(table.pack, id, "this unit can move through systems that contain other players' ships");
     expectWaived(warningsOf(table, table.move), 'routeBlocked', id);
@@ -40,7 +40,7 @@ describe('breakthrough:mentakbt The Table\'s Grace', () => {
   //  just those of the player in the active system."
   // Checks: the condition is about the active system, not about whose ships stand on the way.
   // Why the check is redundant here: the text names other players' ships in general.
-  test.fails('breakthrough:mentakbt the ships on the way need not be those of the defender', () => {
+  test('breakthrough:mentakbt the ships on the way need not be those of the defender', () => {
     const move = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }] });
     const table = bench({
       faction: 'mentak', expansions: ['te'], units: { [HOME]: { cruiser: 1 } }, entries: [move],
@@ -97,7 +97,7 @@ describe('breakthrough:mentakbt The Table\'s Grace', () => {
   // Checks: a Corsair carries two infantry; Cruiser II carries one.
   // Why the check is redundant here: the capacity check (16.1) counts against the Corsair's capacity of 2; the number
   // changes, nothing is waived.
-  test.fails('breakthrough:mentakbt a Corsair has capacity 2', () => {
+  test('breakthrough:mentakbt a Corsair has capacity 2', () => {
     const corsair = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1, infantry: 2 } }] });
     const table = bench({ faction: 'mentak', expansions: ['te'], units: { [HOME]: { cruiser: 1, infantry: 2 } }, entries: [corsair], start: { technologies: [CRUISER_II], breakthrough: 'held' } });
     expectNone(warningsOf(table, corsair), 'capacityGroup');
@@ -111,7 +111,7 @@ describe('breakthrough:mentakbt The Table\'s Grace', () => {
     expectStanding(warningsOf(table, move), 'capacityGroup');
   });
 
-  test.fails('breakthrough:mentakbt is a passive effect that changes the cruiser and waives the blocked route', () => {
+  test('breakthrough:mentakbt is a passive effect that changes the cruiser and waives the blocked route', () => {
     const { pack } = raid({ cruiser: 1 });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.capacity).toBeDefined();

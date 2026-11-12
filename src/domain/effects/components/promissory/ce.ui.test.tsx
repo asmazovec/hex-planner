@@ -18,7 +18,7 @@ const status = () => {
 // Checks: in «Used» of the status entry I choose Cybernetic Enhancements; it is written into the entry and the
 // warning of too many tokens is gone.
 // Why the check is redundant here: with the note three tokens are gained, as many as the entry gives out.
-test.fails('promissory:ce chosen in «Used» of the status phase, three tokens are given without a warning', async () => {
+test('promissory:ce chosen in «Used» of the status phase, three tokens are given without a warning', async () => {
   const { entry, table } = status();
   quote(table.pack, id, 'Gain 1 additional command token');
   const live = showUses(table, entry);
