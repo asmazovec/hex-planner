@@ -1,0 +1,15 @@
+/**
+ * Minister of Exploration (agenda): "The elected player gains this card. When the owner of this card gains control
+ * of a planet, they gain 1 trade good."
+ *
+ * Passive, needs a new point of the count: when the owner gains control of a planet (25, invasion 49.6) they gain 1
+ * trade good. Pass 2: the step that sets control asks a point for the trade goods gained; the law is the elected
+ * player's only.
+ *
+ * Pass 1: written as the hint it is today; the tests beside it say what it must do.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'agenda:minister_exploration';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id };
