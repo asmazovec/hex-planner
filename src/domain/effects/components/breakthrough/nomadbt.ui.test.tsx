@@ -18,7 +18,7 @@ const table = (again: ReturnType<typeof componentAction>) => bench({
 // Checks: the second use of Mercer already names The Thundarian in «Used»; I add Thunder's Paradox there, and the
 // warning that Mercer is exhausted reads as allowed by the breakthrough.
 // Why the check is redundant here: the breakthrough readied Mercer at the start of the turn, paid with The Thundarian.
-test.fails('breakthrough:nomadbt Thunder\'s Paradox is added to «Used», and the exhausted agent reads as allowed by it', async () => {
+test('breakthrough:nomadbt Thunder\'s Paradox is added to «Used», and the exhausted agent reads as allowed by it', async () => {
   const again = using(componentAction(MERCER), THUNDARIAN);
   const nomad = table(again);
   quote(nomad.pack, id, 'exhaust 1 of your agents to ready any other agent');

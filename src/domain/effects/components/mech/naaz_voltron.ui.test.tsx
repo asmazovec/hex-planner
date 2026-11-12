@@ -16,7 +16,7 @@ const flight = (flipped: boolean) => {
 // Checks: in the flight step I take the lone mech with no ship to carry it; the button takes it, and the capacity
 // warning reads as allowed by Eidolon Maximum.
 // Why the check is redundant here: the Eidolon Maximum is a ship and moves by itself; it is not transported.
-test.fails('mech:naaz_voltron a lone mech is taken into the flight, and the capacity warning reads as allowed by Eidolon Maximum', async () => {
+test('mech:naaz_voltron a lone mech is taken into the flight, and the capacity warning reads as allowed by Eidolon Maximum', async () => {
   const { table, live } = flight(true);
   quote(table.pack, id, 'This unit is both a ship and ground force.');
   expect(takeButton('Mech')).toBeEnabled();

@@ -11,8 +11,42 @@
  * or exhausted, not flipped, so held stands for flipped. Its fleet pool share ("counts towards either of the Naaz-Rokha
  * player's capacity or fleet pool", note 1) and its move 3 are not counted. Pass 1: the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import { sourceSlot } from '../../../replay/board';
+import type { Warning } from '../../../types';
+import type { ComponentEffect, WaiverContext } from '../../types';
 
 export const id = 'mech:naaz_voltron';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+const RULE = 'This unit is both a ship and ground force.';
+
+/** Only the Naaz-Rokha, and only once Absolute Synergy is gained (held stands for flipped). */
+const flipped = (ctx: WaiverContext): boolean => ctx.game.faction === 'naaz' && !!ctx.before.holdings.breakthrough;
+
+/** The load without one mech (the one that is a ship) fits the capacity. */
+const fitsWithout = (warning: Warning, mechs: number, ctx: WaiverContext): boolean => {
+  if (!flipped(ctx) || mechs < 1) return false;
+  const place = ctx.pack.units.mech?.capacityUsed ?? 1;
+  return Number(warning.params.load) - place <= Number(warning.params.capacity);
+};
+
+const mechsOfGroup = (from: string, ctx: WaiverContext): number => {
+  const { entry, game, pack } = ctx;
+  if (entry?.type !== 'tactical') return 0;
+  return entry.moves.filter(move => (move.pickupOf ?? sourceSlot(game, pack, move.from)) === from).reduce((sum, move) => sum + (move.units.mech ?? 0), 0);
+};
+
+const mechsInSpace = (systemId: string, ctx: WaiverContext): number => {
+  const { entry, after } = ctx;
+  const there = after.systems[systemId]?.mech ?? 0;
+  if (entry?.type !== 'tactical' || entry.systemId !== systemId) return there;
+  return there + entry.landings.reduce((sum, landing) => sum + (landing.units.mech ?? 0), 0) + (entry.losses?.mech ?? 0);
+};
+
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [
+    { code: 'capacityGroup', rule: RULE, when: (warning, ctx) => fitsWithout(warning, mechsOfGroup(String(warning.params.from), ctx), ctx) },
+    { code: 'capacitySystem', rule: RULE, when: (warning, ctx) => fitsWithout(warning, mechsInSpace(String(warning.params.systemId), ctx), ctx) },
+  ],
+};

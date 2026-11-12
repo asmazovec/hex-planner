@@ -18,7 +18,7 @@ const table = (between: Entry[], move: Entry) => bench({
 // both are taken, and the warning of the route reads as allowed by the hero.
 // Why the check is redundant here: the flagship and what it transports may leave such a system this round (58.3.3
 // forbids it otherwise).
-test.fails('leader:nomadhero the flagship and its cargo are taken out of a system with my token, and the warning reads as allowed by Ahk-Syl Siven', async () => {
+test('leader:nomadhero the flagship and its cargo are taken out of a system with my token, and the warning reads as allowed by Ahk-Syl Siven', async () => {
   const move = tactical(TARGET, { moves: [{ from: NEAR, units: {} }] });
   const nomad = table([componentAction(id)], move);
   quote(nomad.pack, id, 'your flagship and units it transports can move out of systems that contain your command tokens');

@@ -15,7 +15,7 @@ describe('leader:nomadcommander Navarch Feng', () => {
   // Why the check is redundant here: the payment check (26.1) asks for the flagship's cost of 8; the commander says
   // no resources are spent on it, so the flagship adds nothing to what must be paid (a `modify` of the cost, so
   // nothing is listed as waived).
-  test.fails('leader:nomadcommander the flagship is produced without spending resources', () => {
+  test('leader:nomadcommander the flagship is produced without spending resources', () => {
     const table = build({ flagship: 1 }, []);
     quote(table.pack, id, 'You can produce your flagship without spending resources.');
     expectNone(warningsOf(table, table.move), 'shortResources');
@@ -23,7 +23,7 @@ describe('leader:nomadcommander Navarch Feng', () => {
 
   // Checks: the rest of the production is still paid: a carrier beside the flagship costs 3, paid with Home One.
   // Why the check is redundant here: only the flagship is free; the carrier's 3 are met.
-  test.fails('leader:nomadcommander a carrier beside the flagship is paid for alone', () => {
+  test('leader:nomadcommander a carrier beside the flagship is paid for alone', () => {
     const table = build({ flagship: 1, carrier: 1 }, ['h1']);
     expectNone(warningsOf(table, table.move), 'shortResources');
   });
@@ -52,7 +52,7 @@ describe('leader:nomadcommander Navarch Feng', () => {
     expectStanding(warningsOf(table, table.move), 'productionOver');
   });
 
-  test.fails('leader:nomadcommander is a passive effect that changes the cost of units', () => {
+  test('leader:nomadcommander is a passive effect that changes the cost of units', () => {
     const { pack } = build({}, []);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.unitCost?.(8, { faction: 'nomad', unit: 'flagship' })).toBe(0);

@@ -17,7 +17,7 @@ describe('breakthrough:nomadbt Thunder\'s Paradox', () => {
   // Mercer is used again: its warning that it is exhausted is listed and lifted by the breakthrough.
   // Why the check is redundant here: an exhausted agent cannot be used (51.4, 71.4) until it is readied, and the
   // breakthrough readies it at the start of the turn, paid with another agent.
-  test.fails('breakthrough:nomadbt an exhausted agent is used again, paid with another agent: the warning is waived', () => {
+  test('breakthrough:nomadbt an exhausted agent is used again, paid with another agent: the warning is waived', () => {
     const again = using(componentAction(MERCER), id, THUNDARIAN);
     const table = nomad([componentAction(MERCER), again]);
     quote(table.pack, id, 'exhaust 1 of your agents to ready any other agent');
@@ -48,7 +48,7 @@ describe('breakthrough:nomadbt Thunder\'s Paradox', () => {
     expect(warningsOf(table, again).filter(w => w.code === 'componentExhausted' && w.params.id === MERCER).flatMap(w => w.waivedBy ?? [])).toEqual([]);
   });
 
-  test.fails('breakthrough:nomadbt is named in an entry and waives an exhausted agent', () => {
+  test('breakthrough:nomadbt is named in an entry and waives an exhausted agent', () => {
     const { pack } = nomad([]);
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['componentExhausted']);

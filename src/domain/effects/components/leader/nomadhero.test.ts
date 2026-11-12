@@ -17,7 +17,7 @@ describe('leader:nomadhero Ahk-Syl Siven — Probability Matrix', () => {
   // token; the warning is listed and lifted by the hero.
   // Why the check is redundant here: LRR 58.3.3 forbids moving a ship out of a system with one's own command token,
   // and the card says the flagship and what it transports can, this round.
-  test.fails('leader:nomadhero played, the flagship and its cargo move out of a system with my token: the warning is waived', () => {
+  test('leader:nomadhero played, the flagship and its cargo move out of a system with my token: the warning is waived', () => {
     const move = outOfNear({ flagship: 1, infantry: 1 });
     const table = nomad([[intoNear({ flagship: 1, infantry: 1 }), componentAction(id), move]]);
     quote(table.pack, id, 'your flagship and units it transports can move out of systems that contain your command tokens during this game round');
@@ -54,7 +54,7 @@ describe('leader:nomadhero Ahk-Syl Siven — Probability Matrix', () => {
   // there; the pickup's warning is lifted by the hero.
   // Why the check is redundant here: the transport rule (58.4) forbids picking up in a system with my token, and the
   // flagship's units may move out of such a system this round.
-  test.fails('leader:nomadhero played, the flagship picks up ground forces in a system with my token', () => {
+  test('leader:nomadhero played, the flagship picks up ground forces in a system with my token', () => {
     const pickup = tactical(TARGET, { moves: [{ from: HOME, units: { flagship: 1 }, via: [NEAR] }, { from: NEAR, units: { infantry: 1 }, pickupOf: HOME }] });
     const table = nomad([[intoNear({ carrier: 1, infantry: 1 }), componentAction(id), pickup]], { flagship: 1, carrier: 1, infantry: 1 });
     expectWaived(warningsOf(table, pickup), 'sourceActivated', id);
@@ -67,7 +67,7 @@ describe('leader:nomadhero Ahk-Syl Siven — Probability Matrix', () => {
     expectStanding(warningsOf(table, pickup), 'sourceActivated');
   });
 
-  test.fails('leader:nomadhero is a play effect that waives the move out of a system with my token for the round', () => {
+  test('leader:nomadhero is a play effect that waives the move out of a system with my token for the round', () => {
     const { pack } = nomad([[]]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['sourceActivated', 'round']]);

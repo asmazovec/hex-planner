@@ -16,7 +16,7 @@ describe('ability:fabrication Fabrication', () => {
   // Why the check is redundant here: command tokens are gained in the status phase and by Leadership (LRR 20); the
   // ability is one more source, and the count of tokens must hold it, or every later entry is warned of a pool short
   // by one.
-  test.fails('ability:fabrication gains 1 command token in the chosen pool', () => {
+  test('ability:fabrication gains 1 command token in the chosen pool', () => {
     const play = componentAction(id, { choices: { gain: 'token', pool: 'tactic' } } as Partial<Entry>);
     quote(naaz([]).pack, id, 'purge 1 of your relic fragments to gain 1 command token');
     const without = tokens([]);
@@ -24,7 +24,7 @@ describe('ability:fabrication Fabrication', () => {
   });
 
   // Checks: the token goes where the player puts it: the fleet pool.
-  test.fails('ability:fabrication the token may go to the fleet pool', () => {
+  test('ability:fabrication the token may go to the fleet pool', () => {
     const play = componentAction(id, { choices: { gain: 'token', pool: 'fleet' } } as Partial<Entry>);
     const without = tokens([]);
     expect(tokens([play])).toEqual({ ...without, fleet: without.fleet + 1 });
@@ -48,7 +48,7 @@ describe('ability:fabrication Fabrication', () => {
 
   test.todo('ability:fabrication the relic fragments purged: exploration cards are not held by the plan');
 
-  test.fails('ability:fabrication is a play effect', () => {
+  test('ability:fabrication is a play effect', () => {
     const { pack } = naaz([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

@@ -24,7 +24,7 @@ describe('technology:tcs Temporal Command Suite', () => {
   // warned of, and the card itself is exhausted.
   // Why the check is redundant here: the exhausted agent (51.4) is readied by the card at once, so the second use finds
   // it ready.
-  test.fails('technology:tcs readies the agent exhausted with it: the next use finds it ready', () => {
+  test('technology:tcs readies the agent exhausted with it: the next use finds it ready', () => {
     const later = componentAction(MERCER);
     const table = nomad([using(componentAction(MERCER), id), later]);
     quote(table.pack, id, 'you may exhaust this card to ready that agent');
@@ -66,7 +66,7 @@ describe('technology:tcs Temporal Command Suite', () => {
   // neighbour, and the warning is lifted by the card.
   // Why the check is redundant here: transactions are with neighbours (94.1, 60.1), and the card gives one with the
   // player whose agent it readied, wherever they are.
-  test.fails('technology:tcs a transaction with a player who is not a neighbour: the warning is waived', () => {
+  test('technology:tcs a transaction with a player who is not a neighbour: the warning is waived', () => {
     const turn = using(tactical(HOME, { acts: [deal] }), id);
     const table = withRival(turn);
     quote(table.pack, id, 'if you ready another player\'s agent, you may perform a transaction with that player');
@@ -77,7 +77,7 @@ describe('technology:tcs Temporal Command Suite', () => {
   //  transaction with another player during one turn, before or after the regular transaction."
   // Checks: two transactions with the same rival in a turn that names the card: the repeat is lifted by the card.
   // Why the check is redundant here: one transaction per player per turn (94.1), and the card gives one more.
-  test.fails('technology:tcs a second transaction with the same player in a turn: the warning is waived', () => {
+  test('technology:tcs a second transaction with the same player in a turn: the warning is waived', () => {
     const turn = using(tactical(HOME, { acts: [deal, deal] }), id);
     expectWaived(warningsOf(withRival(turn), turn), 'transactionRepeated', id);
   });
@@ -90,7 +90,7 @@ describe('technology:tcs Temporal Command Suite', () => {
     expectStanding(warningsOf(withRival(turn), turn), 'notNeighbor');
   });
 
-  test.fails('technology:tcs is a play effect that waives the transaction checks', () => {
+  test('technology:tcs is a play effect that waives the transaction checks', () => {
     const { pack } = nomad([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

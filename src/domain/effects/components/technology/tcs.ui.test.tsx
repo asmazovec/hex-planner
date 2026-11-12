@@ -19,7 +19,7 @@ const table = (turn: Entry) => bench({
 // Checks: the turn's transaction with a rival who is not my neighbour is warned of; I add Temporal Command Suite in
 // «Used», and the warning reads as allowed by it.
 // Why the check is redundant here: the card gives a transaction with the player whose agent it readied, wherever they are.
-test.fails('technology:tcs Temporal Command Suite is added to «Used», and the transaction with a far player reads as allowed by it', async () => {
+test('technology:tcs Temporal Command Suite is added to «Used», and the transaction with a far player reads as allowed by it', async () => {
   const turn = tactical(HOME, { acts: [deal] });
   const nomad = table(turn);
   quote(nomad.pack, id, 'you may perform a transaction with that player');
