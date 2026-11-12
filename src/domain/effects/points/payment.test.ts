@@ -4,8 +4,9 @@
  * the cost of a component action. A component's own file is never touched.
  */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { autoPay, paymentValue } from '../../payment';
+// Loaded first: the components the registry loads import this module, and it must see the mocked registry (a cycle).
 import { applyPayment, checkPayment, commoditiesForShortfall, pay, readyInfluence, readyResources, spendTradeGoods } from '../../replay/payment';
+import { autoPay, paymentValue } from '../../payment';
 import { commodityValueOf, gainCommodities, replenish } from '../../replay/cards/trade';
 import { forecast, rulesGame, rulesPack, tactical } from '../../rules/kit';
 import type { Entry, GameState, Opponent, Warning } from '../../types';

@@ -38,8 +38,8 @@ describe('applied: a point of the count asks the ready components of the player'
   });
 
   test('a hint changes nothing: a held technology that is no unit upgrade leaves every point alone', () => {
-    expect(effectOf(pack, 'technology:gd')).toEqual({ tier: 'hint', rule: 'technology:gd' });
-    expect(applied(pack, holdingsOf({ technologies: ['technology:gd'] }), 'speed', 1, carrier)).toEqual({ value: 1, by: [] });
+    expect(effectOf(pack, 'technology:ng')).toEqual({ tier: 'hint', rule: 'technology:ng' });
+    expect(applied(pack, holdingsOf({ technologies: ['technology:ng'] }), 'speed', 1, carrier)).toEqual({ value: 1, by: [] });
   });
 
   test('two modifiers stack in registry order, and `by` lists both', () => {
@@ -86,17 +86,18 @@ describe('hints: where a component the app does not count is shown', () => {
     expect(stepsOfWindow('any', 'When another player plays an action card other than \'Sabotage\'')).toEqual([]);
   });
 
-  test('every action card is a hint, with its step where its window names one; other kinds have no step yet', () => {
+  test('every action card is a hint or a play, and a hint has its step where its window names one; other kinds have no step yet', () => {
     const cards = pok.components.filter(component => component.kind === 'actionCard');
     expect(cards.length).toBeGreaterThan(80);
     for (const card of cards) {
       const effect = effectOf(pok, card.id);
-      expect(effect?.tier, card.id).toBe('hint');
+      expect(['hint', 'play'], card.id).toContain(effect?.tier);
+      if (effect?.tier !== 'hint') continue;
       const steps = stepsOfWindow(String(card.detail?.phase), String(card.detail?.window));
       expect(effect?.hintAt, card.id).toEqual(steps.length > 0 ? steps : undefined);
     }
-    expect(effectOf(pok, 'actionCard:bribery')).toEqual({ tier: 'hint', rule: 'actionCard:bribery' });
-    expect(effectOf(pok, 'relic:nanoforge')).toEqual({ tier: 'hint', rule: 'relic:nanoforge' });
+    expect(effectOf(pok, 'actionCard:veto')).toEqual({ tier: 'hint', rule: 'actionCard:veto' });
+    expect(effectOf(pok, 'relic:codex')).toEqual({ tier: 'hint', rule: 'relic:codex' });
   });
 
   describe('hintsAt', () => {

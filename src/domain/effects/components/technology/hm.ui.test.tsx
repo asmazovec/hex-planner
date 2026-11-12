@@ -7,7 +7,7 @@ uiBench();
 
 const status = (tactic: number, fleet: number, strategy: number, technologies: string[]) => {
   const entry = statusTokens(tactic, fleet, strategy);
-  return { entry, table: bench({ faction: 'sol', start: { technologies }, entries: [entry] }) };
+  return { entry, table: bench({ faction: 'arborec', start: { technologies }, entries: [entry] }) };
 };
 
 // "During the status phase, gain 3 command tokens instead of 2."

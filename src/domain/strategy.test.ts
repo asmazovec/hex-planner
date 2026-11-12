@@ -14,9 +14,9 @@ const HOME = '1,0';
 const OTHER = '0,1';
 const [JOL, NAR] = pack.tiles[pack.factions.jolnar.homeTile].planetIds;
 
-function start(entries: Entry[], { players = 6, expansions = ['pok', 'te'] as ExpansionId[], extra = {} as Partial<Game> } = {}): Game {
-  const game = createGame({ expansions, playerCount: players, faction: 'jolnar' }, pack);
-  game.map = { [HOME]: pack.factions.jolnar.homeTile, [OTHER]: '25' };
+function start(entries: Entry[], { players = 6, expansions = ['pok', 'te'] as ExpansionId[], extra = {} as Partial<Game>, faction = 'jolnar' } = {}): Game {
+  const game = createGame({ expansions, playerCount: players, faction }, pack);
+  game.map = { [HOME]: pack.factions[faction].homeTile, [OTHER]: '25' };
   game.plans[0].rounds = [{ number: 1, strategyCard: null, backupCard: null, entries }];
   return Object.assign(game, extra);
 }
@@ -254,7 +254,8 @@ describe('Construction', () => {
     const { state, warningsByEntry } = stateOf(start([entry]));
     expect(state.systems[HOME].cruiser).toBe((before.systems[HOME].cruiser ?? 0) + 1);
     expect(Object.values(state.ground).reduce((sum, units) => sum + (units.infantry ?? 0), 0)).toBe(3);
-    expect(warningsByEntry[entry.id]).toContainEqual({ code: 'shortResources', params: { needed: 4, paid: pack.planets[NAR].resources } });
+    // A cruiser and three infantry cost 4; Jol-Nar starts with Sarween Tools, which takes 1 off the combined cost.
+    expect(warningsByEntry[entry.id]).toContainEqual({ code: 'shortResources', params: { needed: 3, paid: pack.planets[NAR].resources } });
   });
 
   test('the fleet pool is checked as with tactical production', () => {
@@ -351,12 +352,16 @@ describe('Technology', () => {
   });
 
   test('a secondary costs 4 per upgrade', () => {
-    expect(cardCost(research('secondary', ['carrier', 'cruiser']), 'jolnar', emptyHoldings(), pack)).toEqual({ kind: 'resources', amount: 8 });
+    expect(cardCost(research('secondary', ['carrier', 'cruiser']), 'arborec', emptyHoldings(), pack)).toEqual({ kind: 'resources', amount: 8 });
+  });
+
+  test('Brilliant: the secondary of Jol-Nar is resolved as the primary, the first upgrade free and the second 6', () => {
+    expect(cardCost(research('secondary', ['carrier', 'cruiser']), 'jolnar', emptyHoldings(), pack)).toEqual({ kind: 'resources', amount: 6 });
   });
 
   test('upgrades apply, and short resources warn', () => {
     const entry = research('secondary', ['carrier']);
-    const { state, warningsByEntry } = stateOf(start([entry]));
+    const { state, warningsByEntry } = stateOf(start([entry], { faction: 'arborec' }));
     expect(upgradesOf(state.holdings, pack)).toEqual(['carrier']);
     // Carrier II lacks its propulsion prerequisite (90.12): that is the research check's, tested apart.
     expect(warningsByEntry[entry.id].filter(w => w.code !== 'prerequisitesMissing')).toEqual([{ code: 'shortResources', params: { needed: 4, paid: 0 } }]);

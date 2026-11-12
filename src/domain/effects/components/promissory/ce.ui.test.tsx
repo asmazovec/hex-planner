@@ -10,7 +10,7 @@ const NOTE = `${id}@o1`;
 /** I play the Sol, hold the L1Z1X note, and give out three tokens at the status phase. */
 const status = () => {
   const entry = statusTokens(2, 1, 0);
-  const table = bench({ faction: 'sol', game: { opponents: [{ id: 'o1', faction: 'l1z1x', vp: 0, seat: 2, color: 2 }] }, start: { promissory: [NOTE] }, entries: [entry] });
+  const table = bench({ faction: 'arborec', game: { opponents: [{ id: 'o1', faction: 'l1z1x', vp: 0, seat: 2, color: 2 }] }, start: { promissory: [NOTE] }, entries: [entry] });
   return { entry, table };
 };
 

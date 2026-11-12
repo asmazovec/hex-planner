@@ -4,7 +4,7 @@
  */
 import { UNIT_ORDER, type GroundStack, type SpaceStack } from './hexLayout';
 import { opponentsBySeat, planetHolder } from './players';
-import { structuresOn } from './project';
+import { structuresOn } from './replay/structures';
 import { planetsOf, systemSlots, tileAt } from './replay/board';
 import { startingDocks } from './strategy';
 import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitCounts, UnitId } from './types';

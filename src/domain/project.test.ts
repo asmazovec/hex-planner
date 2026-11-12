@@ -833,7 +833,10 @@ describe('ship upgrades in the replay', () => {
 
     test("Naalu's Fighter II follows the same rule, without the upgrade the old one", () => {
       expect(codes(fly('naalu', fighters(5), ['fighter']))).toEqual([]);
-      expect(codes(fly('naalu', fighters(7), ['fighter']))).toEqual(['fleetPool']);
+      // Hybrid Crystal Fighter II (the Naalu upgrade) halves the fighters in excess: three of them weigh as two, so
+      // seven fighters now fit the pool where they did not before, and nine are over it.
+      expect(codes(fly('naalu', fighters(7), ['fighter']))).toEqual([]);
+      expect(codes(fly('naalu', fighters(9), ['fighter']))).toEqual(['fleetPool']);
       expect(codes(fly('naalu', fighters(5)))).toEqual(['capacityGroup', 'capacitySystem']);
     });
 

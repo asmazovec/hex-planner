@@ -21,9 +21,10 @@ import { StepHints } from './StepHints';
 
 const pack = loadPack(['pok']);
 /** An action card whose printed window belongs to this step and to no other. */
-const cardOf = (step: RuleStep) => componentsOf(pack).find(c => c.kind === 'actionCard' && effectOf(pack, c.id)?.hintAt?.join() === step)!;
+const cardOf = (step: RuleStep, kind = 'actionCard') => componentsOf(pack).find(c => c.kind === kind && effectOf(pack, c.id)?.hintAt?.join() === step)!;
 const combat = cardOf('combat');
-const production = cardOf('production');
+// No action card is a reminder for the production step now: Chaos Mapping is.
+const production = cardOf('production', 'technology');
 const played = cardOf('component');
 
 const board = (hand: string[], rivalHand: string[] = []): GameState => {

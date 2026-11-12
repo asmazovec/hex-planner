@@ -5,7 +5,7 @@ import { id } from './hm';
 /** The status entry of round 1 takes `tactic`, `fleet` and `strategy` tokens, the card held or not. */
 const status = (tactic: number, fleet: number, strategy: number, technologies: string[] = [id]) => {
   const entry = statusTokens(tactic, fleet, strategy);
-  return { entry, ...bench({ faction: 'sol', start: { technologies }, entries: [entry] }) };
+  return { entry, ...bench({ faction: 'arborec', start: { technologies }, entries: [entry] }) };
 };
 
 describe('technology:hm Hyper Metabolism', () => {
@@ -44,7 +44,7 @@ describe('technology:hm Hyper Metabolism', () => {
   // Why the check is NOT redundant here: the card speaks of the status phase only.
   test('technology:hm does not raise the tokens of Leadership\'s primary', () => {
     const leadership = primary(1, { tokens: { tactic: 2, fleet: 1, strategy: 1 } });
-    const table = bench({ faction: 'sol', start: { technologies: [id] }, entries: [leadership] });
+    const table = bench({ faction: 'arborec', start: { technologies: [id] }, entries: [leadership] });
     expectStanding(warningsOf(table, leadership), 'tokensOver');
   });
 

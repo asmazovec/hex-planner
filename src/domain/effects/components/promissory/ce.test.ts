@@ -7,9 +7,9 @@ import { id } from './ce';
 const L1Z1X: Opponent = { id: 'o1', faction: 'l1z1x', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 
-/** I play the Sol and hold the L1Z1X note; the status entry gives out `tokens` command tokens. */
+/** I play the Arborec (not the Sol: its Versatile already gives a third token) and hold the L1Z1X note; the status entry gives out `tokens` command tokens. */
 const status = (tokens: [number, number, number], uses: string[] = [NOTE]) => using(statusTokens(...tokens), ...uses);
-const table = (entry: Entry, faction = 'sol', promissory = [NOTE]) =>
+const table = (entry: Entry, faction = 'arborec', promissory = [NOTE]) =>
   bench({ faction, game: { opponents: [L1Z1X] }, start: { promissory }, rounds: [[entry]] });
 
 describe('promissory:ce Cybernetic Enhancements', () => {
