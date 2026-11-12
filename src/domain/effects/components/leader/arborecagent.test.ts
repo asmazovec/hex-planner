@@ -18,7 +18,7 @@ describe('leader:arborecagent Letani Ospha', () => {
   // Checks: my destroyer (cost 1) is replaced by a cruiser (cost 2): the board holds the cruiser and not the destroyer.
   // Why the default does not apply: ships enter the board by production only (67), paid for; the agent places one
   // without producing it (Arborec, Letani Ospha note 1), so no production or payment is checked.
-  test.fails('leader:arborecagent replaces a destroyer with a cruiser', () => {
+  test('leader:arborecagent replaces a destroyer with a cruiser', () => {
     const table = agent('cruiser');
     quote(table.pack, id, 'replace that ship with one from their reinforcements that costs up to 2 more than the replaced ship');
     expect(endOf(table).systems[HOME]).toEqual({ cruiser: 1 });
@@ -27,7 +27,7 @@ describe('leader:arborecagent Letani Ospha', () => {
   });
 
   // Checks: a carrier (cost 3) is 2 more than the destroyer: still within the card.
-  test.fails('leader:arborecagent a replacement exactly 2 dearer is within the card', () => {
+  test('leader:arborecagent a replacement exactly 2 dearer is within the card', () => {
     const table = agent('carrier');
     expect(endOf(table).systems[HOME]).toEqual({ carrier: 1 });
     expectNone(warningsOf(table, table.play), REPLACEMENT_COST);
@@ -36,7 +36,7 @@ describe('leader:arborecagent Letani Ospha', () => {
   // "... that costs up to 2 more than the replaced ship."
   // Checks: a dreadnought (cost 4) is 3 more than the destroyer: the replacement is warned of, and made all the same.
   // Why the check is NOT redundant here: the card's own limit is 2 more.
-  test.fails('leader:arborecagent a replacement 3 dearer is warned of', () => {
+  test('leader:arborecagent a replacement 3 dearer is warned of', () => {
     const table = agent('dreadnought');
     expectStanding(warningsOf(table, table.play), REPLACEMENT_COST);
     expect(endOf(table).systems[HOME]).toEqual({ dreadnought: 1 });
@@ -49,7 +49,7 @@ describe('leader:arborecagent Letani Ospha', () => {
     expectStanding(warningsOf(table, table.play), 'componentExhausted');
   });
 
-  test.fails('leader:arborecagent is a play effect', () => {
+  test('leader:arborecagent is a play effect', () => {
     expect(effect(agent('cruiser').pack, id).tier).toBe('play');
   });
 

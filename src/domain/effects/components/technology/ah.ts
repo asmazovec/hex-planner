@@ -8,8 +8,14 @@
  * Argent note 1). Its first sentence is a check on the other players: their routes through a system with my structures
  * are blocked (`routeBlocked`), Light/Wave Deflector or not (note 2).
  */
+import '../../points/production';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:ah';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // A planet with one of my structures produces as a unit of PRODUCTION 1.
+  modify: { planetProduction: (value, ctx) => (ctx.structures.pds || ctx.structures.spacedock ? Math.max(value, 1) : value) },
+};

@@ -15,7 +15,7 @@ const production = (technologies: string[]) => {
 // Checks: the tactical editor of a production at home, with only a PDS on h2, shows no warning that nothing produces
 // there, nor that the infantry is placed off a producing unit.
 // Why the check is redundant here: the planet with my structure is itself a unit with PRODUCTION 1.
-test.fails('technology:ah the production of a system with only my PDS is shown without a production warning', () => {
+test('technology:ah the production of a system with only my PDS is shown without a production warning', () => {
   const { move, table } = production([id]);
   quote(table.pack, id, 'gains the PRODUCTION 1 ability as if it were a unit');
   showTactical(table, move);

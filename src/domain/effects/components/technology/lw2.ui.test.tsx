@@ -19,7 +19,7 @@ const production = (faction: string, technologies: string[]) => {
 // "PRODUCTION 2"
 // Checks: the tactical editor of a production made by one Letani Warrior II shows no production warning.
 // Why the check is redundant here: the Arborec infantry is a unit with PRODUCTION, 2 with this upgrade.
-test.fails('technology:lw2 two infantry produced by a Letani Warrior II are shown without a production warning', () => {
+test('technology:lw2 two infantry produced by a Letani Warrior II are shown without a production warning', () => {
   const { move, table } = production('arborec', [id]);
   quote(table.pack, id, 'PRODUCTION 2');
   showTactical(table, move);

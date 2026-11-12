@@ -26,7 +26,7 @@ describe('leader:arborechero Letani Miasmiala — Ultrasonic Emitter', () => {
   // are on the board, and no warning stands of a missing producing unit or of a Production value.
   // Why the check is redundant here: 67/68 ask for a unit with Production and count its value; the hero produces "any
   // number" with no unit using Production (Arborec, hero note 3), only where my ground forces are.
-  test.fails('leader:arborechero produces in a system with my ground forces and no space dock', () => {
+  test('leader:arborechero produces in a system with my ground forces and no space dock', () => {
     const play = heroPlay({ production: { systemId: TARGET, units: { cruiser: 1, infantry: 2 }, ground: { t1: { infantry: 2 } } }, payment: PAID });
     const hero = table(play);
     quote(hero.pack, id, 'Produce any number of units in any number of systems that contain 1 or more of your ground forces');
@@ -73,7 +73,7 @@ describe('leader:arborechero Letani Miasmiala — Ultrasonic Emitter', () => {
     expect(warningsOf(hero, again).map(w => w.code)).toContain('componentNotHeld');
   });
 
-  test.fails('leader:arborechero is a play effect', () => {
+  test('leader:arborechero is a play effect', () => {
     expect(effect(table(componentAction(id)).pack, id).tier).toBe('play');
   });
 });

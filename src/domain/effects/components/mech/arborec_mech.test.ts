@@ -18,7 +18,7 @@ describe('mech:arborec_mech Letani Behemoth', () => {
   // a mech, instead of a third infantry being placed by Mitosis; naming the mech is not warned as a card not held.
   // Why the default does not apply: a mech is placed by production only (67); DEPLOY places it at another moment, and
   // the mech of my own faction sheet is mine to deploy without being a card in hand.
-  test.fails('mech:arborec_mech deployed by Mitosis replaces one infantry with a mech', () => {
+  test('mech:arborec_mech deployed by Mitosis replaces one infantry with a mech', () => {
     const table = status('arborec', using(statusTokens(2, 0, 0), id));
     quote(table.pack, id, 'you may replace 1 of your infantry with 1 mech from your reinforcements instead');
     const end = endOf(table);
@@ -44,7 +44,7 @@ describe('mech:arborec_mech Letani Behemoth', () => {
   });
 
   // Checks: the mech is a play named by its entry.
-  test.fails('mech:arborec_mech is a play effect', () => {
+  test('mech:arborec_mech is a play effect', () => {
     const { pack } = status('arborec', statusTokens(0, 0, 0));
     expect(effect(pack, id).tier).toBe('play');
   });

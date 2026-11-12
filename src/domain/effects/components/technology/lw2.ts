@@ -9,8 +9,14 @@
  * value (a `productionValue` asked for the infantry, which this file then raises from 1 to 2). The revival rests on a
  * die and is not counted.
  */
+import '../../points/production';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:lw2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+/** The infantry's PRODUCTION: 1 printed on the Arborec sheet (the replay), 2 with this card; only the Arborec infantry has one. */
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: '97.4',
+  modify: { unitProduction: (value, ctx) => (ctx.unit === 'infantry' && value > 0 ? value + 1 : value) },
+};

@@ -23,7 +23,7 @@ describe('ability:mitosis Mitosis', () => {
   // Checks: the Arborec dock produces two infantry; the production step warns that the dock cannot produce them.
   // Why the check is NOT redundant here: this is the reverse of a waiver; the ability adds a limit the rules do not
   // have for anyone else, so the warning stands and nothing lifts it.
-  test.fails('ability:mitosis an Arborec space dock producing infantry is warned of', () => {
+  test('ability:mitosis an Arborec space dock producing infantry is warned of', () => {
     const table = build('arborec', { infantry: 2 });
     quote(table.pack, id, 'Your space docks cannot produce infantry');
     expectStanding(warningsOf(table, table.move), DOCK_INFANTRY);
@@ -72,7 +72,7 @@ describe('ability:mitosis Mitosis', () => {
   });
 
   // Checks: the ability is passive and changes the count (the dock's infantry, the status placement); it lifts nothing.
-  test.fails('ability:mitosis is a passive effect that changes the count and waives nothing', () => {
+  test('ability:mitosis is a passive effect that changes the count and waives nothing', () => {
     const { pack } = build('arborec', {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();

@@ -28,7 +28,7 @@ describe('technology:ah Aerie Hololattice', () => {
   // warning of a missing producing unit, of the value or of the placement.
   // Why the check is redundant here: 67/68 ask for a unit with Production; with this card the planet itself is one, of
   // value 1, and its ground forces are placed on it (Argent, Aerie Hololattice note 1).
-  test.fails('technology:ah a planet with my PDS produces one unit without a space dock', () => {
+  test('technology:ah a planet with my PDS produces one unit without a space dock', () => {
     const table = build({ infantry: 1 });
     quote(table.pack, id, 'gains the PRODUCTION 1 ability as if it were a unit');
     const warnings = warningsOf(table, table.move);
@@ -40,7 +40,7 @@ describe('technology:ah Aerie Hololattice', () => {
 
   // Checks: two units are beyond the value of 1, and the warning names it.
   // Why the check is NOT redundant here: the planet produces as a unit of PRODUCTION 1, not without a limit.
-  test.fails('technology:ah a second unit is beyond PRODUCTION 1', () => {
+  test('technology:ah a second unit is beyond PRODUCTION 1', () => {
     const table = build({ infantry: 1, cruiser: 1 });
     expect(warningsOf(table, table.move).find(w => w.code === 'productionOver')?.params).toMatchObject({ value: 1, count: 2 });
   });
@@ -71,7 +71,7 @@ describe('technology:ah Aerie Hololattice', () => {
     expectNone(warningsOf(table, table.theirs), 'routeBlocked');
   });
 
-  test.fails('technology:ah is a passive effect that changes the count', () => {
+  test('technology:ah is a passive effect that changes the count', () => {
     const { pack } = build({});
     expect(effect(pack, id).tier).toBe('passive');
   });
