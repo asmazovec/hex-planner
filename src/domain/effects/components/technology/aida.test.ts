@@ -46,7 +46,7 @@ describe('technology:aida AI Development Algorithm', () => {
   //  each prerequisite symbol on the technology card they wish to research."
   // Checks: the same research without AIDA named leaves the warning standing.
   // Why the check is NOT redundant here: the card is used by exhausting it; held and not used, it ignores nothing.
-  test.fails('technology:aida held but not used, the missing prerequisite stands', () => {
+  test('technology:aida held but not used, the missing prerequisite stands', () => {
     const table = research('technology:dd2', false);
     expectStanding(warningsOf(table, table.entry), CODE);
   });
@@ -54,7 +54,7 @@ describe('technology:aida AI Development Algorithm', () => {
   // "... ignore any 1 prerequisite."
   // Checks: Carrier II needs two blue and I own none: two are missing, and AIDA ignores only one.
   // Why the check is NOT redundant here: one symbol is ignored, the second still has to be met.
-  test.fails('technology:aida ignores one prerequisite, not two', () => {
+  test('technology:aida ignores one prerequisite, not two', () => {
     const table = research('technology:cv2', true);
     expectStanding(warningsOf(table, table.entry), CODE);
   });
@@ -62,7 +62,7 @@ describe('technology:aida AI Development Algorithm', () => {
   // "When you research a unit upgrade technology ..."
   // Checks: Gravity Drive (one blue) is not a unit upgrade: AIDA used does not lift its missing prerequisite.
   // Why the check is NOT redundant here: the card speaks of unit upgrades only.
-  test.fails('technology:aida does not lift the prerequisite of a technology that is not a unit upgrade', () => {
+  test('technology:aida does not lift the prerequisite of a technology that is not a unit upgrade', () => {
     const table = research('technology:gd', true);
     expectStanding(warningsOf(table, table.entry), CODE);
   });

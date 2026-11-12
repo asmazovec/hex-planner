@@ -36,7 +36,7 @@ describe('technology:parasite-obs Neural Parasite (Obsidian)', () => {
   // Checks: researching the card with the Technology primary warns.
   // Why the check is NOT redundant here: the card forbids its own research for every player; the replay has no such
   // check yet.
-  test.fails('technology:parasite-obs researched by the Technology primary is warned of', () => {
+  test('technology:parasite-obs researched by the Technology primary is warned of', () => {
     const research = primary(CARD.technology, { researched: [id] });
     const made = table('obsidian', research);
     quote(made.pack, id, 'This technology cannot be researched.');
@@ -46,7 +46,7 @@ describe('technology:parasite-obs Neural Parasite (Obsidian)', () => {
   // "This technology cannot be researched."
   // Checks: the secondary of Technology is a research too, and warns the same.
   // Why the check is NOT redundant here: any research of the card is forbidden, whichever ability of the card.
-  test.fails('technology:parasite-obs researched by the Technology secondary is warned of', () => {
+  test('technology:parasite-obs researched by the Technology secondary is warned of', () => {
     const research = secondary(CARD.technology, { researched: [id], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
     expect(codes(table('obsidian', research, false), research)).toContain(UNAVAILABLE);
   });

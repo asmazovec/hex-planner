@@ -36,7 +36,7 @@ describe('technology:planesplitter-obs Planesplitter (Obsidian)', () => {
   // Checks: researching the card with the Technology primary warns, even for the Obsidian.
   // Why the check is NOT redundant here: the card forbids its own research; it comes only by being gained (Puppets
   // of the Blade), so a research of it is a breach for every player. The replay has no such check yet.
-  test.fails('technology:planesplitter-obs researched by the Technology primary is warned of', () => {
+  test('technology:planesplitter-obs researched by the Technology primary is warned of', () => {
     const research = primary(CARD.technology, { researched: [id] });
     const made = table('obsidian', research);
     quote(made.pack, id, 'This technology cannot be researched.');
