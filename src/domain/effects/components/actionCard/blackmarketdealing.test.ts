@@ -24,7 +24,7 @@ describe('actionCard:blackmarketdealing Black Market Dealings', () => {
   // relic changes hands.
   // Why the check is redundant here: LRR 94.3 lets only commodities, trade goods, promissory notes and relic fragments
   // change hands, and the card adds relics for this transaction.
-  test.fails('actionCard:blackmarketdealing lets a relic be given in the transaction: transactionKind is waived', () => {
+  test('actionCard:blackmarketdealing lets a relic be given in the transaction: transactionKind is waived', () => {
     const mine = using(turn([deal({ components: [RELIC] })]), id);
     const market = table([mine], { relics: [RELIC] });
     quote(market.pack, id, 'may include relics, action cards, and unscored secret objectives');
@@ -35,7 +35,7 @@ describe('actionCard:blackmarketdealing Black Market Dealings', () => {
   // "You and the other player may include ... unscored secret objectives"
   // Checks: the other side gives me its unscored secret objective; that warning is lifted too.
   // Why the check is redundant here: the card speaks of both players and of unscored secret objectives by name.
-  test.fails('actionCard:blackmarketdealing lets the other player give an unscored secret objective: transactionKind is waived', () => {
+  test('actionCard:blackmarketdealing lets the other player give an unscored secret objective: transactionKind is waived', () => {
     const { pack } = table([]);
     const secret = secretOf(pack);
     const mine = using(turn([deal({}, { components: [secret] })]), id);
@@ -72,7 +72,7 @@ describe('actionCard:blackmarketdealing Black Market Dealings', () => {
     expectStanding(warningsOf(table([mine], { scored: [secret] }), mine), 'transactionKind');
   });
 
-  test.fails('actionCard:blackmarketdealing waives transactionKind for its own turn only', () => {
+  test('actionCard:blackmarketdealing waives transactionKind for its own turn only', () => {
     const { pack } = table([]);
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['transactionKind', undefined]]);
   });

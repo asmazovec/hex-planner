@@ -23,7 +23,7 @@ describe('actionCard:nav_suite Nav Suite', () => {
   // lifted by the card.
   // Why the check is redundant here: LRR 11.1 closes an asteroid field to movement as an effect of the anomaly, and the
   // card says to ignore the effect of anomalies for this movement.
-  test.fails('actionCard:nav_suite played with the action lets ships fly through an asteroid field: routeBlocked is waived', () => {
+  test('actionCard:nav_suite played with the action lets ships fly through an asteroid field: routeBlocked is waived', () => {
     const move = using(through(), id);
     const navy = table([move], row('r-asteroid'));
     quote(navy.pack, id, 'ignore the effect of anomalies');
@@ -33,7 +33,7 @@ describe('actionCard:nav_suite Nav Suite', () => {
   // Note 5: "A player may move ships through a nebula."
   // Checks: the same through a nebula, which otherwise ends a move.
   // Why the check is redundant here: a nebula stops a route (LRR 59.1) by its anomaly effect, which the card ignores.
-  test.fails('actionCard:nav_suite lets ships fly through a nebula: routeBlocked is waived', () => {
+  test('actionCard:nav_suite lets ships fly through a nebula: routeBlocked is waived', () => {
     const move = using(through(), id);
     expectWaived(warningsOf(table([move], row('r-nebula')), move), 'routeBlocked', id);
   });
@@ -41,7 +41,7 @@ describe('actionCard:nav_suite Nav Suite', () => {
   // Note 6: "A player may move ships through or into a supernova."
   // Checks: a supernova as the active system itself; the move into it is lifted as well.
   // Why the check is redundant here: LRR 86.1 forbids moving into a supernova as its anomaly effect.
-  test.fails('actionCard:nav_suite lets ships move into a supernova: routeBlocked is waived', () => {
+  test('actionCard:nav_suite lets ships move into a supernova: routeBlocked is waived', () => {
     const move = using(tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 2 } }] }), id);
     expectWaived(warningsOf(table([move], row('r-supernova')), move), 'routeBlocked', id);
   });
@@ -50,7 +50,7 @@ describe('actionCard:nav_suite Nav Suite', () => {
   // Checks: a cruiser starting in a nebula flies two systems; the speed warning (move value 1 in a nebula) is lifted.
   // Why the check is redundant here: the move value of 1 is the nebula's effect (LRR 59.3), which the card ignores, so
   // the cruiser keeps its move value of 2 and reaches.
-  test.fails('actionCard:nav_suite keeps the normal move value out of a nebula: speedShort is waived', () => {
+  test('actionCard:nav_suite keeps the normal move value out of a nebula: speedShort is waived', () => {
     const move = using(tactical(FAR, { moves: [{ from: NEAR, units: { cruiser: 1 }, via: [TARGET] }] }), id);
     expectWaived(warningsOf(table([move], row('r-nebula')), move), 'speedShort', id);
   });
@@ -89,7 +89,7 @@ describe('actionCard:nav_suite Nav Suite', () => {
     expect(effect(pack, id).hintAt).toEqual(['activation']);
   });
 
-  test.fails('actionCard:nav_suite waives routeBlocked and speedShort for its own action only', () => {
+  test('actionCard:nav_suite waives routeBlocked and speedShort for its own action only', () => {
     const { pack } = table([], row('r-empty'));
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['routeBlocked', undefined], ['speedShort', undefined]]);
   });

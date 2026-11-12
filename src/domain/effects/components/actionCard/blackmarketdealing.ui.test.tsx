@@ -24,7 +24,7 @@ const giving = (components: string[]): Transaction => ({ kind: 'transaction', wi
 // Checks: a turn whose transaction gives a relic is warned of; I name the card in «Used», it is written into the entry,
 // and the warning reads as allowed by Black Market Dealings.
 // Why the check is redundant here: LRR 94.3 keeps relics out of transactions, and the card lets them in.
-test.fails('actionCard:blackmarketdealing named in «Used», the relic in the transaction reads as allowed by Black Market Dealings', async () => {
+test('actionCard:blackmarketdealing named in «Used», the relic in the transaction reads as allowed by Black Market Dealings', async () => {
   const turn = tactical(NEAR, { acts: [giving([RELIC])] });
   const market = table(turn);
   quote(market.pack, id, 'may include relics, action cards, and unscored secret objectives');
@@ -39,7 +39,7 @@ test.fails('actionCard:blackmarketdealing named in «Used», the relic in the tr
 // Checks: in the transaction of a turn that plays the card, «+ Component» of my side offers the relic I hold (today the
 // side offers only promissory notes and action cards: the card itself, not the relic).
 // Why the check is redundant here: the card adds relics to what a transaction hands over (94.3).
-test.fails('actionCard:blackmarketdealing the transaction offers the relic I hold once the card is played', async () => {
+test('actionCard:blackmarketdealing the transaction offers the relic I hold once the card is played', async () => {
   const act = giving([]);
   const turn = using(tactical(NEAR, { acts: [act] }), id);
   const market = table(turn);
@@ -47,7 +47,7 @@ test.fails('actionCard:blackmarketdealing the transaction offers the relic I hol
   const board = stateBeforeEntry(market.game, plan, turn.id, market.pack);
   const warnings = project(market.game, plan, 'forecast', market.pack).warningsByEntry[turn.id] ?? [];
   const nothing = () => undefined;
-  render(<TransactionStep game={market.game} pack={market.pack} act={act} owner="me" board={board} warnings={warnings} onChange={nothing} onBack={nothing} onRemove={nothing} />);
+  render(<TransactionStep game={market.game} pack={market.pack} act={act} owner="me" board={board} warnings={warnings} uses={turn.uses} onChange={nothing} onBack={nothing} onRemove={nothing} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
   expect(await screen.findByRole('button', { name: 'Choose Dynamis Core' })).toBeEnabled();
 });

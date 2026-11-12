@@ -5,11 +5,13 @@
  * A waiver of `actionAfterPass` (LRR 3.3) for the one action that names the card in `uses` (or `spends`): a passed
  * player performs one more action. The rulings (tirules2 components/action-cards.md, Puppets On A String 6) keep the
  * player passed, so a later action without the card is warned of as before. Only the entry: no `lasts`.
- *
- * Pass 1: still the hint it is today; pass 2 writes the waiver.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:puppetsonastring';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'hint',
+  rule: id,
+  waive: [{ code: 'actionAfterPass', rule: 'Perform 1 action.' }],
+};

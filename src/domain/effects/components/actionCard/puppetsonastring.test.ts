@@ -13,7 +13,7 @@ describe('actionCard:puppetsonastring Puppets on a String', () => {
   // Checks: after my pass a tactical action names the card; the warning that a passed player acts is listed and lifted.
   // Why the check is redundant here: LRR 3.3 ends the turns of a passed player, and the card gives that player one
   // action all the same.
-  test.fails('actionCard:puppetsonastring lets a passed player perform one action: actionAfterPass is waived', () => {
+  test('actionCard:puppetsonastring lets a passed player perform one action: actionAfterPass is waived', () => {
     const puppet = using(move(), id);
     const puppets = table([pass(), puppet]);
     quote(puppets.pack, id, 'Perform 1 action.');
@@ -46,7 +46,7 @@ describe('actionCard:puppetsonastring Puppets on a String', () => {
     expectNone(warningsOf(table([early, pass()]), early), 'actionAfterPass');
   });
 
-  test.fails('actionCard:puppetsonastring waives actionAfterPass for its own entry only', () => {
+  test('actionCard:puppetsonastring waives actionAfterPass for its own entry only', () => {
     const { pack } = table([]);
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['actionAfterPass', undefined]]);
   });

@@ -16,7 +16,7 @@ const late = () => tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } 
 // Checks: an action entered after my pass is warned of; I name the card in «Used», it is written into the entry, and
 // the warning reads as allowed by Puppets on a String.
 // Why the check is redundant here: LRR 3.3 ends a passed player's actions; the card grants one more.
-test.fails('actionCard:puppetsonastring named in «Used» of an action after the pass, the warning reads as allowed by Puppets on a String', async () => {
+test('actionCard:puppetsonastring named in «Used» of an action after the pass, the warning reads as allowed by Puppets on a String', async () => {
   const action = late();
   const puppets = table(action);
   quote(puppets.pack, id, 'Perform 1 action.');

@@ -17,7 +17,7 @@ const table = (move: Entry) => bench({
 // the entry, and the route warning reads as allowed by Nav Suite.
 // Why the check is redundant here: the asteroid field closes the route by its anomaly effect (LRR 11.1), which the card
 // ignores for this movement.
-test.fails('actionCard:nav_suite named in «Used» of the action, the route through the asteroid field reads as allowed by Nav Suite', async () => {
+test('actionCard:nav_suite named in «Used» of the action, the route through the asteroid field reads as allowed by Nav Suite', async () => {
   const move = through();
   const navy = table(move);
   quote(navy.pack, id, 'ignore the effect of anomalies');
