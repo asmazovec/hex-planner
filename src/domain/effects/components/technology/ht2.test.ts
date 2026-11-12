@@ -16,7 +16,7 @@ describe('technology:ht2 Hel-Titan II', () => {
   // the system has Production.
   // Why the check is redundant here: LRR 67.1 asks for a unit with Production in the system; the upgraded PDS of the
   // Titans has PRODUCTION 1 itself, so a space dock is not needed.
-  test.fails('technology:ht2 a Hel-Titan produces without a space dock', () => {
+  test('technology:ht2 a Hel-Titan produces without a space dock', () => {
     const table = build({ infantry: 1 });
     quote(table.pack, id, 'PRODUCTION 1');
     expectNone(warningsOf(table, table.entry), 'noProduction');
@@ -26,7 +26,7 @@ describe('technology:ht2 Hel-Titan II', () => {
   // Checks: its value is 1: two infantry are over it, and the warning names the value 1.
   // Why the check is NOT redundant here: PRODUCTION 1 is a limit like any other (67.2); it is not the planet's
   // resources plus a value, as a space dock's is.
-  test.fails('technology:ht2 a Hel-Titan produces one unit, not two', () => {
+  test('technology:ht2 a Hel-Titan produces one unit, not two', () => {
     const table = build({ infantry: 2 });
     expect(warningsOf(table, table.entry).find(w => w.code === 'productionOver')?.params).toMatchObject({ value: 1, count: 2 });
   });
@@ -34,7 +34,7 @@ describe('technology:ht2 Hel-Titan II', () => {
   // Titans of Ul, Hel-Titan note 2: "When multiple units use their Production ability, the Production value is pooled."
   // Checks: two Hel-Titans on one planet produce two infantry together.
   // Why the check is redundant here: each Hel-Titan adds its 1 to the system's Production.
-  test.fails('technology:ht2 two Hel-Titans pool their Production', () => {
+  test('technology:ht2 two Hel-Titans pool their Production', () => {
     const table = build({ infantry: 2 }, 2);
     expectNone(warningsOf(table, table.entry), 'productionOver');
     expectNone(warningsOf(table, table.entry), 'noProduction');
@@ -60,7 +60,7 @@ describe('technology:ht2 Hel-Titan II', () => {
 
   test.todo('technology:ht2 a Hel-Titan counts as a ground force for the control of its planet: control by ground forces is not counted apart from landings');
 
-  test.fails('technology:ht2 is a passive unit upgrade that gives a PDS a Production value', () => {
+  test('technology:ht2 is a passive unit upgrade that gives a PDS a Production value', () => {
     const { pack } = build({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.productionValue?.(0, { structure: 'pds', planetId: 'h1' })).toBe(1);

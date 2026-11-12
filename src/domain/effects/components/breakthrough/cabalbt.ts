@@ -4,10 +4,15 @@
  * contain gravity rifts. Apply +1 to the MOVE value of each of your ships that start their movement in The Fracture."
  *
  * Decided: `modify` of `speed`: +1 for a ship whose movement starts in a system of The Fracture. The Fracture and its
- * ingress tokens are set on the map by hand. Pass 1: still the hint it is today.
+ * ingress tokens are set on the map by hand.
  */
+import { startsInFracture } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:cabalbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { speed: (value, ctx) => (value > 0 && startsInFracture(ctx) ? value + 1 : value) },
+};

@@ -15,7 +15,7 @@ describe('leader:titanscommander Tungstantus', () => {
   // "When 1 or more of your units use PRODUCTION: You may gain 1 trade good."
   // Checks: a production that names the commander gains 1 trade good.
   // Why nothing is waived here: the commander adds to the trade goods (a `play` named in `uses`); no rule forbids it.
-  test.fails('leader:titanscommander a production gains 1 trade good', () => {
+  test('leader:titanscommander a production gains 1 trade good', () => {
     const table = titans(build());
     quote(table.pack, id, 'You may gain 1 trade good');
     expect(endOf(table).tradeGoods).toBe(1);
@@ -43,7 +43,7 @@ describe('leader:titanscommander Tungstantus', () => {
     expectStanding(warningsOf(table, table.entry), 'componentNotHeld');
   });
 
-  test.fails('leader:titanscommander is played', () => {
+  test('leader:titanscommander is played', () => {
     const { pack } = titans(build());
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeDefined();

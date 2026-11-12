@@ -5,10 +5,15 @@
  *
  * Decided: `modify` of `productionValue` for a PDS: 1, so that a Hel-Titan produces where it stands even without a
  * space dock, its value pooled with the docks' (Titans of Ul, Hel-Titan note 2). "It cannot be transported" is the
- * check every structure already has (`structureAboard`); the cannon is combat. Pass 1: the generated upgrade only.
+ * check every structure already has (`structureAboard`); the cannon is combat.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:ht2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: '97.4',
+  // A PDS asks with a base of 0: the upgraded one produces 1, and the replay pools it with the docks' value.
+  modify: { productionValue: (value, ctx) => (ctx.structure === 'pds' ? 1 : value) },
+};

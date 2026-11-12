@@ -21,7 +21,7 @@ const show = (played: boolean) => {
 // "Its resource and influence values are each increased by 1"
 // Checks: after Terraform on t1 the payment of 3 with t1 alone shows no shortfall.
 // Why the check is redundant here: t1 is worth 3 resources with the card attached.
-test.fails('promissory:terraform attached to t1, a payment of 3 with t1 shows no shortfall', () => {
+test('promissory:terraform attached to t1, a payment of 3 with t1 shows no shortfall', () => {
   const table = show(true);
   quote(table.pack, id, 'Its resource and influence values are each increased by 1');
   expectNotShown('shortResources');

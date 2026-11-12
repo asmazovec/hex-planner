@@ -17,7 +17,7 @@ describe('leader:cabalcommander That Which Molds Flesh', () => {
   // Checks: seven infantry from a dock of Production 5; the warning is listed and lifted by the commander.
   // Why the check is redundant here: LRR 67.2 counts every unit produced against the Production value; the commander
   // takes two infantry out of that count, and the other five fit.
-  test.fails('leader:cabalcommander two infantry beyond the Production limit: the warning is waived', () => {
+  test('leader:cabalcommander two infantry beyond the Production limit: the warning is waived', () => {
     const table = build({ infantry: 7 });
     quote(table.pack, id, 'Up to 2 of those units do not count against your PRODUCTION limit');
     expectWaived(warningsOf(table, table.entry), 'productionOver', id);
@@ -25,7 +25,7 @@ describe('leader:cabalcommander That Which Molds Flesh', () => {
 
   // Checks: fighters are covered as infantry are: five cruisers and two fighters fit.
   // Why the check is redundant here: the card names fighters and infantry.
-  test.fails('leader:cabalcommander two fighters beside five ships are waived as well', () => {
+  test('leader:cabalcommander two fighters beside five ships are waived as well', () => {
     const table = build({ cruiser: 5, fighter: 2 });
     expectWaived(warningsOf(table, table.entry), 'productionOver', id);
   });
@@ -58,7 +58,7 @@ describe('leader:cabalcommander That Which Molds Flesh', () => {
     expectNone(warningsOf(table, table.entry), 'productionOver');
   });
 
-  test.fails('leader:cabalcommander is a passive effect that waives the Production limit', () => {
+  test('leader:cabalcommander is a passive effect that waives the Production limit', () => {
     const { pack } = build({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionOver']);

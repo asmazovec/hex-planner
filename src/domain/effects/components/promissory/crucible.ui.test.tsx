@@ -31,7 +31,7 @@ test('promissory:crucible is chosen in «Used» of the action, and is written in
 // "... apply an additional +1 to the move values of your ships that would move out of or through a gravity rift instead."
 // Checks: once Crucible is named in «Used» the speed warning reads as allowed by it.
 // Why the check is redundant here: the note adds 1 to a ship through a rift, which is the one step it lacked.
-test.fails('promissory:crucible named in «Used», the speed warning reads as allowed by Crucible', async () => {
+test('promissory:crucible named in «Used», the speed warning reads as allowed by Crucible', async () => {
   const { table } = show();
   quote(table.pack, id, 'apply an additional +1 to the move values');
   await use('Crucible');

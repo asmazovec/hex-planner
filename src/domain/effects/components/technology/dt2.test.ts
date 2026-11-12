@@ -23,7 +23,7 @@ describe('technology:dt2 Dimensional Tear II', () => {
   // Checks: a Dimensional Tear II on a planet of 1 resource produces seven units; no warning.
   // Why the default limit does not apply: the upgrade changes the number itself (a `modify` of the dock's Production):
   // it is 7, not the planet's resources plus a value as for Space Dock II (79.1), which would give 5 here.
-  test.fails('technology:dt2 produces seven units whatever its planet\'s resources', () => {
+  test('technology:dt2 produces seven units whatever its planet\'s resources', () => {
     const table = build({ infantry: 7 });
     quote(table.pack, id, 'PRODUCTION 7');
     expectNone(warningsOf(table, table.entry), 'productionOver');
@@ -31,7 +31,7 @@ describe('technology:dt2 Dimensional Tear II', () => {
 
   // Checks: the eighth unit is over, and the warning names the value 7.
   // Why the check is NOT redundant here: 7 is the limit of the dock, not its absence.
-  test.fails('technology:dt2 the eighth unit is over the Production of 7', () => {
+  test('technology:dt2 the eighth unit is over the Production of 7', () => {
     const table = build({ infantry: 8 });
     const warnings = warningsOf(table, table.entry);
     expectStanding(warnings, 'productionOver');
@@ -51,7 +51,7 @@ describe('technology:dt2 Dimensional Tear II', () => {
   // Checks: twelve fighters in the dock's system and a cruiser without capacity: no capacity warning.
   // Why the default limit does not apply: a space dock keeps 3 fighters apart from capacity (Space Dock I and II); the
   // Dimensional Tear II keeps 12, a different number (a `modify`), so nothing is waived: the check finds nothing.
-  test.fails('technology:dt2 keeps twelve fighters in its system apart from capacity', () => {
+  test('technology:dt2 keeps twelve fighters in its system apart from capacity', () => {
     const table = homecoming(12);
     quote(table.pack, id, 'Up to 12 fighters in this system do not count against your ships\' capacity');
     expectNone(warningsOf(table, table.entry), 'capacitySystem');
@@ -59,7 +59,7 @@ describe('technology:dt2 Dimensional Tear II', () => {
 
   // Checks: the thirteenth fighter counts, and the warning names a load of 1.
   // Why the check is NOT redundant here: the card says "up to 12".
-  test.fails('technology:dt2 the thirteenth fighter counts against capacity', () => {
+  test('technology:dt2 the thirteenth fighter counts against capacity', () => {
     const table = homecoming(13);
     expect(warningsOf(table, table.entry).find(w => w.code === 'capacitySystem')?.params).toMatchObject({ load: 1, capacity: 0 });
   });
@@ -84,7 +84,7 @@ describe('technology:dt2 Dimensional Tear II', () => {
   // Checks: a cruiser (move 2) leaves the dock's system and reaches a system three away; no speed warning.
   // Why the check is redundant here: the system of the dock is a gravity rift, which adds 1 to the move of a ship that
   // leaves it (41.3); the roll for removal is not simulated, and the Cabal do not roll for it anyway.
-  test.fails('technology:dt2 the dock\'s system is a gravity rift: a ship leaving it moves one system further', () => {
+  test('technology:dt2 the dock\'s system is a gravity rift: a ship leaving it moves one system further', () => {
     const entry = tactical(FAR, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR, TARGET] }] });
     const table = cabal({ entry, dock: 'h1', units: { [HOME]: { cruiser: 1 } } });
     quote(table.pack, id, 'This system is a gravity rift');
@@ -101,7 +101,7 @@ describe('technology:dt2 Dimensional Tear II', () => {
     expectStanding(warningsOf(table, entry), 'speedShort');
   });
 
-  test.fails('technology:dt2 is a passive unit upgrade whose dock produces 7', () => {
+  test('technology:dt2 is a passive unit upgrade whose dock produces 7', () => {
     const { pack } = build({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.productionValue?.(3, { structure: 'spacedock', planetId: 'h2' })).toBe(7);

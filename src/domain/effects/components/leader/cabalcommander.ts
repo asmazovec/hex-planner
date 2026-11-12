@@ -4,10 +4,23 @@
  *
  * Decided: `passive` waiver of `productionOver`, narrowed with `when`: the production without up to 2 of its fighters
  * and infantry must fit the value. It is a waiver and not a modify: the limit stays, fewer units are counted against it.
- * Pass 1: still the hint it is today.
- */
+ * */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:cabalcommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'productionOver',
+    rule: 'Up to 2 of those units do not count against your PRODUCTION limit.',
+    // Up to 2 of the fighters and infantry are left out of the count; what remains must fit.
+    when: (warning, ctx) => {
+      const units = ctx.entry?.type === 'tactical' ? ctx.entry.production : undefined;
+      if (!units) return false;
+      const left = Math.min(2, (units.fighter ?? 0) + (units.infantry ?? 0));
+      return Number(warning.params.count) - left <= Number(warning.params.value);
+    },
+  }],
+};

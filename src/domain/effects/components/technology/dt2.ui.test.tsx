@@ -12,7 +12,7 @@ const cabal = (entry: ReturnType<typeof tactical>, dock: string, technologies: s
 // Checks: seven infantry bought at a Dimensional Tear II on a planet of 1 resource; the production block shows no
 // warning.
 // Why the default limit does not apply: the dock's Production is 7 itself (a `modify`), not 1 + 4.
-test.fails('technology:dt2 seven infantry at a Dimensional Tear II on a poor planet: no production warning', () => {
+test('technology:dt2 seven infantry at a Dimensional Tear II on a poor planet: no production warning', () => {
   const entry = tactical(HOME, { production: { infantry: 7 } });
   const table = cabal(entry, 'h2', [id]);
   quote(table.pack, id, 'PRODUCTION 7');
@@ -31,7 +31,7 @@ test('technology:dt2 without it the production warning stands', () => {
 // "Up to 12 fighters in this system do not count against your ships' capacity."
 // Checks: a cruiser comes home to twelve fighters by the dock; the result of the action shows no capacity warning.
 // Why the default limit does not apply: the dock keeps 12 fighters instead of 3 (a `modify`).
-test.fails('technology:dt2 twelve fighters by the dock: the result of the action shows no capacity warning', () => {
+test('technology:dt2 twelve fighters by the dock: the result of the action shows no capacity warning', () => {
   const entry = tactical(HOME, { moves: [{ from: NEAR, units: { cruiser: 1 } }] });
   showTactical(cabal(entry, 'h1', [id], { [HOME]: { fighter: 12 }, [NEAR]: { cruiser: 1 } }), entry);
   expectNotShown('capacitySystem');

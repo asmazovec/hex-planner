@@ -23,7 +23,7 @@ const show = (played: boolean) => {
 // "ACTION: Ready Elysium and attach this card to it."
 // Checks: after the hero the second payment with Elysium shows no warning that it is exhausted.
 // Why the check is redundant here: the hero readies Elysium (LRR 34 forbids spending an exhausted planet).
-test.fails('leader:titanshero after the hero, Elysium pays again with no exhausted warning', () => {
+test('leader:titanshero after the hero, Elysium pays again with no exhausted warning', () => {
   const table = show(true);
   quote(table.pack, id, 'Ready Elysium');
   expectNotShown('planetExhausted');

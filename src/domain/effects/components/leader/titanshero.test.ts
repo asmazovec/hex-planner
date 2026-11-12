@@ -17,7 +17,7 @@ describe('leader:titanshero Ul the Progenitor', () => {
   // "ACTION: Ready Elysium and attach this card to it."
   // Checks: Elysium exhausted by a first payment is readied by the hero and pays again without a warning.
   // Why the check is redundant here: LRR 34 says an exhausted planet cannot be spent until readied; the hero readies it.
-  test.fails('leader:titanshero readies Elysium', () => {
+  test('leader:titanshero readies Elysium', () => {
     const second = build(1);
     const table = titans([build(1), componentAction(id), second]);
     quote(table.pack, id, 'Ready Elysium and attach this card to it');
@@ -27,7 +27,7 @@ describe('leader:titanshero Ul the Progenitor', () => {
   // "Its resource and influence values are each increased by 3"
   // Checks: after the hero Elysium (4) pays for three cruisers (6) with 7, and the card is attached to it.
   // Why the check is redundant here: the payment counts a planet's printed value (LRR 75); the attached card adds 3.
-  test.fails('leader:titanshero raises Elysium\'s resources by 3', () => {
+  test('leader:titanshero raises Elysium\'s resources by 3', () => {
     const pay = build(3);
     const table = titans([componentAction(id), pay]);
     expectNone(warningsOf(table, pay), 'shortResources');
@@ -58,9 +58,9 @@ describe('leader:titanshero Ul the Progenitor', () => {
 
   test.todo('leader:titanshero gives Elysium SPACE CANNON 5 (x3): combat is not simulated');
 
-  test.fails('leader:titanshero is played', () => {
+  test('leader:titanshero is played', () => {
     const { pack } = titans([]);
-    expect(effect(pack, id).tier).toBe('play');
+    expect(effect(pack, id).tier).toBe('passive'); // the base stacks the value of an attached card from passive effects only
     expect(effect(pack, id).play).toBeDefined();
   });
 });

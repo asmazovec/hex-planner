@@ -18,7 +18,7 @@ const show = (faction: string) => {
 // Checks: Construction's secondary placing a mech and an infantry instead of a PDS shows its warning in the allowed
 // look, naming Hecatoncheires.
 // Why the check is redundant here: Construction places structures only (LRR 24), and the Titans' mech replaces a PDS.
-test.fails('mech:titans_mech a mech and an infantry instead of a PDS: the warning reads as allowed by Hecatoncheires', () => {
+test('mech:titans_mech a mech and an infantry instead of a PDS: the warning reads as allowed by Hecatoncheires', () => {
   const table = show('titans');
   quote(table.pack, id, 'place 1 mech and 1 infantry on that planet instead');
   expectShownWaived('constructionUnits', 'Hecatoncheires');

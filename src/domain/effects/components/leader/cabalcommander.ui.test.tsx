@@ -18,7 +18,7 @@ const show = (units: UnitCounts) => {
 // Checks: seven infantry are bought at a dock of Production 5; the production block shows the warning in the allowed
 // look, naming the commander.
 // Why the check is redundant here: two of the infantry are not counted (67.2 counts the rest, five).
-test.fails('leader:cabalcommander seven infantry at a dock of 5: the production warning reads as allowed by That Which Molds Flesh', () => {
+test('leader:cabalcommander seven infantry at a dock of 5: the production warning reads as allowed by That Which Molds Flesh', () => {
   const table = show({ infantry: 7 });
   quote(table.pack, id, 'Up to 2 of those units do not count against your PRODUCTION limit');
   expectShownWaived('productionOver', 'That Which Molds Flesh');
