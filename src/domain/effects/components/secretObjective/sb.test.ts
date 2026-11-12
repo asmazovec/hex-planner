@@ -42,7 +42,7 @@ describe('secretObjective:sb Strengthen Bonds', () => {
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective".
   // Checks: no note of another player held; scoring is warned of.
   // Why the check is NOT redundant here: nothing of another player is in my play area.
-  test.fails('secretObjective:sb no note of another player: scoring it is warned of', () => {
+  test('secretObjective:sb no note of another player: scoring it is warned of', () => {
     const none = table([]);
     expectStanding(warningsOf(none, none.entry), UNMET);
   });
@@ -50,7 +50,7 @@ describe('secretObjective:sb Strengthen Bonds', () => {
   // "Have another player's promissory note ..."
   // Checks: my own Support for the Throne, held back, does not count.
   // Why the check is NOT redundant here: the note must be another player's.
-  test.fails('secretObjective:sb my own note does not count', () => {
+  test('secretObjective:sb my own note does not count', () => {
     const own = table([SFTT('me')]);
     expectStanding(warningsOf(own, own.entry), UNMET);
   });
@@ -59,7 +59,7 @@ describe('secretObjective:sb Strengthen Bonds', () => {
   // Checks: the rival's Ceasefire is kept in hand until played, then returned; it is not in the play area.
   // Why the check is NOT redundant here: only notes whose text puts them in the play area qualify (objectives notes,
   // Strengthen Bonds 1 lists them).
-  test.fails('secretObjective:sb a note of another player kept in hand does not count', () => {
+  test('secretObjective:sb a note of another player kept in hand does not count', () => {
     const hand = table([CEASEFIRE('o1')]);
     expectStanding(warningsOf(hand, hand.entry), UNMET);
   });

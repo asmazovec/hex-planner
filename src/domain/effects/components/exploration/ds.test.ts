@@ -14,7 +14,7 @@ describe('exploration:ds Dyson Sphere', () => {
   // "This planet's resource value is increased by 2 and its influence value is increased by 1."
   // Checks: Target One is explored with the card and attached; in round 2 it alone pays two cruisers (4 resources).
   // Why the check is redundant here: the payment is short only against the printed 2 resources; the planet's value is 4.
-  test.fails('exploration:ds the planet pays with two more resources', () => {
+  test('exploration:ds the planet pays with two more resources', () => {
     const pay = build({ cruiser: 2 });
     const sphere = table([[using(take(), id)], [pay]]);
     quote(sphere.pack, id, "This planet's resource value is increased by 2");

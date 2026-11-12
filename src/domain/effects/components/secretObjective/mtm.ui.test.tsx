@@ -10,7 +10,7 @@ uiBench();
 // Checks: the status entry scores the secret with no mech on the board; the warning of an unmet requirement stands on
 // the screen.
 // Why the check is NOT redundant here: LRR 61.5 lets a player score an objective whose requirement they fulfil.
-test.fails('secretObjective:mtm scored without mechs on four planets is shown warned of', () => {
+test('secretObjective:mtm scored without mechs on four planets is shown warned of', () => {
   const entry = { ...statusTokens(0, 0, 0), scored: [id] } as Entry;
   const table = bench({ faction: 'sol', expansions: ['pok'], start: { secrets: [id] }, entries: [entry] });
   quote(table.pack, id, 'Have 1 mech on each of 4 planets.');

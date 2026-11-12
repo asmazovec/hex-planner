@@ -33,7 +33,7 @@ describe('secretObjective:pem Produce en Masse', () => {
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective".
   // Checks: one dock of 5; scoring is warned of.
   // Why the check is NOT redundant here: the Production in the system is short of 8.
-  test.fails('secretObjective:pem one dock of 5: scoring it is warned of', () => {
+  test('secretObjective:pem one dock of 5: scoring it is warned of', () => {
     const short = table(['h1']);
     expectStanding(warningsOf(short, short.entry), UNMET);
   });
@@ -41,7 +41,7 @@ describe('secretObjective:pem Produce en Masse', () => {
   // "... in a single system."
   // Checks: docks of 5 (home) and 4 (target) make 9 in all but not in one system; scoring is warned of.
   // Why the check is NOT redundant here: the card counts one system, not the whole board.
-  test.fails('secretObjective:pem Production spread over two systems does not count', () => {
+  test('secretObjective:pem Production spread over two systems does not count', () => {
     const spread = table(['h1', 't1']);
     expectStanding(warningsOf(spread, spread.entry), UNMET);
   });

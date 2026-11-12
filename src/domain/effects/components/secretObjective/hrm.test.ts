@@ -37,7 +37,7 @@ describe('secretObjective:hrm Hoard Raw Materials', () => {
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective".
   // Checks: eleven resources controlled; scoring it is warned of, and the plan still scores it.
   // Why the check is NOT redundant here: the requirement is short by one resource.
-  test.fails('secretObjective:hrm eleven resources: scoring it is warned of', () => {
+  test('secretObjective:hrm eleven resources: scoring it is warned of', () => {
     const short = table(7);
     expectStanding(warningsOf(short, short.entry), UNMET);
   });
@@ -45,7 +45,7 @@ describe('secretObjective:hrm Hoard Raw Materials', () => {
   // "... a combined resource value ..." — the value of the planets, not what the player could spend.
   // Checks: ten trade goods beside eleven resources do not meet it.
   // Why the check is NOT redundant here: trade goods are spent as resources but are not the resource value of a planet.
-  test.fails('secretObjective:hrm trade goods do not count toward the resource value', () => {
+  test('secretObjective:hrm trade goods do not count toward the resource value', () => {
     const rich = table(7, [adjust({ tradeGoods: 10 })]);
     expectStanding(warningsOf(rich, rich.entry), UNMET);
   });

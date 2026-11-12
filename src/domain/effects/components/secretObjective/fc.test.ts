@@ -41,7 +41,7 @@ describe('secretObjective:fc Foster Cohesion', () => {
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective".
   // Checks: the second rival is four systems away; scoring is warned of.
   // Why the check is NOT redundant here: "all other players" — one of them is not a neighbour.
-  test.fails('secretObjective:fc one rival far away: scoring it is warned of', () => {
+  test('secretObjective:fc one rival far away: scoring it is warned of', () => {
     const apart = table([NEAR, FARTHER]);
     expectStanding(warningsOf(apart, apart.entry), UNMET);
   });

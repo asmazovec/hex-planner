@@ -38,14 +38,14 @@ describe('secretObjective:sai Seize an Icon', () => {
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective".
   // Checks: I control only my home planets, none legendary; scoring is warned of.
   // Why the check is NOT redundant here: no legendary planet of mine.
-  test.fails('secretObjective:sai no legendary planet: scoring it is warned of', () => {
+  test('secretObjective:sai no legendary planet: scoring it is warned of', () => {
     const none = table({});
     expectStanding(warningsOf(none, none.entry), UNMET);
   });
 
   // Checks: the legendary planet is the rival's; scoring is warned of.
   // Why the check is NOT redundant here: the card asks the scorer to control it, not to have it on the board.
-  test.fails('secretObjective:sai a legendary planet another player controls does not count', () => {
+  test('secretObjective:sai a legendary planet another player controls does not count', () => {
     const theirs = table({ opponents: [RIVAL], planetControl: { t1: 'enemy' }, planetOwner: { t1: 'o1' } });
     expectStanding(warningsOf(theirs, theirs.entry), UNMET);
   });

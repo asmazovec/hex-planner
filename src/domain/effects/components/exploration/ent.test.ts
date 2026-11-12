@@ -13,7 +13,7 @@ describe('exploration:ent Entropic Field', () => {
   // Checks: the tactical action names the card it explored; after it the pools hold one token more than the eight of
   // the start less the one spent (20.2: into a pool of the player's choice), and two trade goods.
   // Why nothing is waived here: the card gives; the token and the goods go through the usual counts.
-  test.fails('exploration:ent the explore gives one command token and two trade goods', () => {
+  test('exploration:ent the explore gives one command token and two trade goods', () => {
     const move = using(explore(), id);
     const bench = table([move]);
     quote(bench.pack, id, 'Gain 1 command token and 2 trade goods.');
@@ -33,7 +33,7 @@ describe('exploration:ent Entropic Field', () => {
   // LRR 20.3: "A player is limited by the amount of command tokens in their reinforcements."
   // Checks: with all sixteen tokens in the pools and on the board, the token gained is warned of.
   // Why the check is NOT redundant here: the card gives a token, not one more than the faction has.
-  test.fails('exploration:ent a token beyond the sixteen of the faction is warned of', () => {
+  test('exploration:ent a token beyond the sixteen of the faction is warned of', () => {
     const move = using(explore(), id);
     const bench = table([adjust({ tactic: 8 }), move]);
     expectStanding(warningsOf(bench, move), 'noReinforcements');

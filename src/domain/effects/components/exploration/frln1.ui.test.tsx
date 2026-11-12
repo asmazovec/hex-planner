@@ -16,7 +16,7 @@ const setup = () => {
 // in the allowed look, naming the card.
 // Why the check is redundant here: LRR 67.1 asks for a unit with Production and 68.1 for resources; the card lets one
 // unit be produced here and paid with influence.
-test.fails('exploration:frln1 named in «Used» shows the production in a system without a dock as allowed', async () => {
+test('exploration:frln1 named in «Used» shows the production in a system without a dock as allowed', async () => {
   const { move, table } = setup();
   quote(table.pack, id, 'You may spend influence as if it were resources to produce this unit.');
   showUses(table, move);

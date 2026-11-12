@@ -8,8 +8,22 @@
  * and is warned of with the common code `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Until then the
  * card is the hint it was.
  */
+import { noteAddress, noteBase } from '../../../components';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'secretObjective:sb';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+/** A note that goes to the play area of whoever receives it, with no action to play it (the card's own text). */
+const PLACED = /you must place it faceup in your play area/i;
+
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  requirement: ({ state, pack }) => ({
+    have: state.holdings.promissory.filter(note => {
+      const owner = noteAddress(note);
+      return owner !== undefined && owner !== 'me' && PLACED.test(pack.originalTexts?.[noteBase(note)] ?? pack.texts[noteBase(note)] ?? '');
+    }).length,
+    need: 1,
+  }),
+};

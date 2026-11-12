@@ -13,7 +13,7 @@ describe('exploration:kel1 Keleres Ship', () => {
   // Checks: the tactical action names the card it explored; after it the pools hold two tokens more than the eight of
   // the start less the one spent (20.2: into pools of the player's choice).
   // Why nothing is waived here: the card gives; the tokens go through the usual counts.
-  test.fails('exploration:kel1 the explore gives two command tokens', () => {
+  test('exploration:kel1 the explore gives two command tokens', () => {
     const move = using(explore(), id);
     const bench = table([move]);
     quote(bench.pack, id, 'Gain 2 command tokens.');
@@ -29,7 +29,7 @@ describe('exploration:kel1 Keleres Ship', () => {
   // LRR 20.3: "A player is limited by the amount of command tokens in their reinforcements."
   // Checks: with fifteen tokens in the pools and on the board, the second token gained is warned of.
   // Why the check is NOT redundant here: the card gives tokens, not more than the faction has.
-  test.fails('exploration:kel1 tokens beyond the sixteen of the faction are warned of', () => {
+  test('exploration:kel1 tokens beyond the sixteen of the faction are warned of', () => {
     const move = using(explore(), id);
     const bench = table([adjust({ tactic: 7 }), move]);
     expectStanding(warningsOf(bench, move), 'noReinforcements');

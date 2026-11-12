@@ -6,8 +6,17 @@
  * and is warned of with the common code `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Until then the
  * card is the hint it was.
  */
+import { areNeighbors } from '../../../neighbors';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'secretObjective:fc';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  requirement: ({ game, state, shared, pack }) => {
+    // The others as this owner sees them: their replayed states, and mine when the owner is a rival.
+    const others = [...Object.values(state.rivals ?? {}), ...(state.faction !== shared.faction ? [shared] : [])];
+    return { have: others.filter(other => areNeighbors(game, state, other, pack)).length, need: others.length };
+  },
+};

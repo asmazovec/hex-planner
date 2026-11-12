@@ -12,7 +12,7 @@ describe('exploration:mo1 Mercenary Outfit', () => {
   // "You may place 1 infantry from your reinforcements on this planet."
   // Checks: the landing takes Target One, which is explored (35.1) with this card: one more infantry stands there.
   // Why nothing is waived here: the card places a unit, which the plan counts as placed.
-  test.fails('exploration:mo1 the planet taken gets one more infantry', () => {
+  test('exploration:mo1 the planet taken gets one more infantry', () => {
     const move = using(land(), id);
     const outfit = table(move);
     quote(outfit.pack, id, 'You may place 1 infantry from your reinforcements on this planet.');

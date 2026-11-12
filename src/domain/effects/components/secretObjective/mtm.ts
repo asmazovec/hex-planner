@@ -10,4 +10,11 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'secretObjective:mtm';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  requirement: ({ state }) => ({
+    have: Object.entries(state.ground).filter(([planetId, units]) => state.control[planetId] === 'me' && (units.mech ?? 0) > 0).length,
+    need: 4,
+  }),
+};

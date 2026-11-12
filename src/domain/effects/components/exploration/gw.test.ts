@@ -29,7 +29,7 @@ describe('exploration:gw Gamma Wormhole', () => {
   // is my neighbour, and the transaction is not warned of.
   // Why the check is redundant here: LRR 60.1 lets neighbours trade; systems with identical wormholes are adjacent
   // (101) and so make neighbours (101.3) — the token makes my system one of them.
-  test.fails('exploration:gw the token placed makes the player across the gamma wormhole a neighbour', () => {
+  test('exploration:gw the token placed makes the player across the gamma wormhole a neighbour', () => {
     const transaction = deal();
     const wormhole = table(using(explore(), id), transaction);
     quote(wormhole.pack, id, 'Place a gamma wormhole token in this system.');
