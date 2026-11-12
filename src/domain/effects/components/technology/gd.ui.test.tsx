@@ -16,7 +16,7 @@ const flight = (technologies: string[]) => {
 // Checks: in the flight step I take the cruiser for a route one system longer than its move value; it is taken, and
 // the speed warning of the route reads as allowed by Gravity Drive.
 // Why the check is redundant here: the card gives this one ship the +1 the route needs.
-test.fails('technology:gd a ship is taken for a route one system too long, and the warning reads as allowed by Gravity Drive', async () => {
+test('technology:gd a ship is taken for a route one system too long, and the warning reads as allowed by Gravity Drive', async () => {
   const { table, live } = flight([id]);
   quote(table.pack, id, 'apply +1 to the move value of 1 of your ships');
   await take('Cruiser');

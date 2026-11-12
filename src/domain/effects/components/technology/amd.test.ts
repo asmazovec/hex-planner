@@ -22,7 +22,7 @@ describe('technology:amd Antimass Deflectors', () => {
   // Checks: a cruiser passes through an asteroid field on its way; the route warning is listed and lifted by the card.
   // Why the check is redundant here: LRR 11.1 says "A ship cannot move through or into an asteroid field", and the
   // card says this player's ships can.
-  test.fails('technology:amd lets a ship move through an asteroid field: the route warning is waived', () => {
+  test('technology:amd lets a ship move through an asteroid field: the route warning is waived', () => {
     const table = flight('r-asteroid');
     quote(table.pack, id, 'Your ships can move into and through asteroid fields.');
     expectWaived(warningsOf(table, table.move), 'routeBlocked', id);
@@ -31,7 +31,7 @@ describe('technology:amd Antimass Deflectors', () => {
   // "... move into ... asteroid fields."
   // Checks: the asteroid field is the active system itself; the warning is lifted too.
   // Why the check is redundant here: the card speaks of moving into an asteroid field as well as through it.
-  test.fails('technology:amd lets a ship move into an asteroid field as the active system', () => {
+  test('technology:amd lets a ship move into an asteroid field as the active system', () => {
     const table = flight('r-asteroid', { into: NEAR });
     expectWaived(warningsOf(table, table.move), 'routeBlocked', id);
   });
@@ -60,7 +60,7 @@ describe('technology:amd Antimass Deflectors', () => {
     expectStanding(warningsOf(table, table.move), 'routeBlocked');
   });
 
-  test.fails('technology:amd is a passive effect that waives the route check', () => {
+  test('technology:amd is a passive effect that waives the route check', () => {
     const { pack } = flight('r-asteroid');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);

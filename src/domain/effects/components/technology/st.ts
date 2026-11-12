@@ -9,4 +9,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:st';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { productionCost: value => Math.max(0, value - 1) },
+};

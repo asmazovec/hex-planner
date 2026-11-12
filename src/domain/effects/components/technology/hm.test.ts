@@ -13,7 +13,7 @@ describe('technology:hm Hyper Metabolism', () => {
   // Checks: the status entry takes three tokens and nothing is warned of.
   // Why the check is redundant here: the check is not lifted, its number changes: 81.5 gives two tokens and the card
   // three, so this is a `modify` of the point `tokensGained` at the step `status`, and nothing is listed as waived.
-  test.fails('technology:hm lets the status phase gain three command tokens with no warning', () => {
+  test('technology:hm lets the status phase gain three command tokens with no warning', () => {
     const table = status(1, 1, 1);
     quote(table.pack, id, 'During the status phase, gain 3 command tokens instead of 2.');
     expectNone(warningsOf(table, table.entry), 'tokensOver');
@@ -21,7 +21,7 @@ describe('technology:hm Hyper Metabolism', () => {
 
   // Checks: a fourth token is beyond the changed number, and the warning names the 3 the card gives.
   // Why the check is NOT redundant here: the card raises the number, it does not remove it.
-  test.fails('technology:hm still warns of a fourth token, against three', () => {
+  test('technology:hm still warns of a fourth token, against three', () => {
     const table = status(2, 1, 1);
     const warnings = warningsOf(table, table.entry);
     expectStanding(warnings, 'tokensOver');
@@ -48,7 +48,7 @@ describe('technology:hm Hyper Metabolism', () => {
     expectStanding(warningsOf(table, leadership), 'tokensOver');
   });
 
-  test.fails('technology:hm is a passive effect that changes the tokens gained, with no waiver', () => {
+  test('technology:hm is a passive effect that changes the tokens gained, with no waiver', () => {
     const { pack } = status(1, 1, 0);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.tokensGained?.(2, { step: 'status' })).toBe(3);

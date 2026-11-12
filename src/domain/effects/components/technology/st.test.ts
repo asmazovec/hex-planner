@@ -17,7 +17,7 @@ describe('technology:st Sarween Tools', () => {
   // Checks: a cruiser (cost 2) produced by the space dock is paid with 1 resource and nothing is warned of.
   // Why the check is redundant here: the check is not lifted, its number changes: LRR 67.1 asks resources equal to
   // the cost, and the card takes 1 from the combined cost, so this is a `modify` and nothing is listed as waived.
-  test.fails('technology:st a cruiser produced by a space dock costs 1: paid with 1 resource, no warning', () => {
+  test('technology:st a cruiser produced by a space dock costs 1: paid with 1 resource, no warning', () => {
     const table = produce({ cruiser: 1 });
     quote(table.pack, id, 'reduce the combined cost of the produced units by 1');
     expectNone(warningsOf(table, table.move), 'shortResources');
@@ -26,7 +26,7 @@ describe('technology:st Sarween Tools', () => {
   // "... the combined cost ..."
   // Checks: a dreadnought (cost 4) paid with 1 resource is still short, and the warning names the reduced cost of 3.
   // Why the check is NOT redundant here: the card takes 1 off once per production, not the whole cost.
-  test.fails('technology:st takes off 1 only: the shortfall is counted against the reduced cost', () => {
+  test('technology:st takes off 1 only: the shortfall is counted against the reduced cost', () => {
     const table = produce({ dreadnought: 1 });
     expectStanding(warningsOf(table, table.move), 'shortResources');
     expect(shortOf(table)).toMatchObject({ needed: 3, paid: 1 });
@@ -59,7 +59,7 @@ describe('technology:st Sarween Tools', () => {
     expectStanding(warningsOf(table, move), 'shortResources');
   });
 
-  test.fails('technology:st is a passive effect that changes a number, with no waiver', () => {
+  test('technology:st is a passive effect that changes a number, with no waiver', () => {
     const { pack } = produce({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();

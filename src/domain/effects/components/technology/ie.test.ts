@@ -27,7 +27,7 @@ describe('technology:ie Integrated Economy', () => {
   // the warning that nothing in the system has PRODUCTION is listed and lifted by the card.
   // Why the check is redundant here: LRR 67.3 has a player produce through their units' Production abilities, and the
   // card produces on the planet just taken without any.
-  test.fails('technology:ie produces on a planet just taken without a space dock: the warning is waived', () => {
+  test('technology:ie produces on a planet just taken without a space dock: the warning is waived', () => {
     const table = invade({ infantry: 2 });
     quote(table.pack, id, 'After you gain control of a planet, you may produce any number of units on that planet');
     expectWaived(warningsOf(table, table.move), 'noProduction', id);
@@ -37,7 +37,7 @@ describe('technology:ie Integrated Economy', () => {
   //  in the space area of that planet's system."
   // Checks: a destroyer and two infantry (cost 2, the resources of t1) are produced, and the destroyer stands in space.
   // Why the check is redundant here: the combined cost is within the planet's resources, ships included.
-  test.fails('technology:ie may produce ships too, up to the planet\'s resources', () => {
+  test('technology:ie may produce ships too, up to the planet\'s resources', () => {
     const table = invade({ destroyer: 1, infantry: 2 });
     expectWaived(warningsOf(table, table.move), 'noProduction', id);
     expect(endOf(table).systems[TARGET]).toMatchObject({ destroyer: 1 });
@@ -81,7 +81,7 @@ describe('technology:ie Integrated Economy', () => {
     expectStanding(warningsOf(table, move), 'shortResources');
   });
 
-  test.fails('technology:ie is a passive effect that waives the need of a unit with PRODUCTION', () => {
+  test('technology:ie is a passive effect that waives the need of a unit with PRODUCTION', () => {
     const { pack } = invade({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['noProduction']);

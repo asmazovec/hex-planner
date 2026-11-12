@@ -15,7 +15,7 @@ describe('technology:sr Sling Relay', () => {
   // destroyer in its space area.
   // Why the check is redundant here: a ship is otherwise produced only in the Production step of a tactical action
   // (67.3); the card's action produces one by itself, as LRR 67.4 lets an ability do.
-  test.fails('technology:sr its action puts the ship chosen in a system with my space dock', () => {
+  test('technology:sr its action puts the ship chosen in a system with my space dock', () => {
     const play = relay(HOME);
     const table = held([play]);
     quote(table.pack, id, 'produce 1 ship in any system that contains one of your space docks');
@@ -26,7 +26,7 @@ describe('technology:sr Sling Relay', () => {
   // "... in any system that contains one of your space docks."
   // Checks: the target holds no space dock of mine; the action is warned of, and the ship is placed all the same.
   // Why the check is NOT redundant here: the card names systems with a space dock only.
-  test.fails('technology:sr a system without my space dock is warned of', () => {
+  test('technology:sr a system without my space dock is warned of', () => {
     const play = relay(TARGET);
     const table = held([play]);
     expectStanding(warningsOf(table, play), 'noProduction');
@@ -36,7 +36,7 @@ describe('technology:sr Sling Relay', () => {
   // "... produce 1 ship ..." Ruling (Sling Relay 1): "The produced unit must be paid for."
   // Checks: the destroyer (cost 1) produced with nothing paid is short of resources.
   // Why the check is NOT redundant here: the card lifts the tactical action, not the cost.
-  test.fails('technology:sr the ship is paid for: produced with nothing paid it is short', () => {
+  test('technology:sr the ship is paid for: produced with nothing paid it is short', () => {
     const play = relay(HOME);
     expectStanding(warningsOf(held([play]), play), 'shortResources');
   });
@@ -57,7 +57,7 @@ describe('technology:sr Sling Relay', () => {
 
   test.todo('technology:sr the payment of the ship: a component action has no payment of its own yet, so the test above can only see a shortfall once pass 2 gives it one');
 
-  test.fails('technology:sr is a play effect', () => {
+  test('technology:sr is a play effect', () => {
     const { pack } = held([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeDefined();
