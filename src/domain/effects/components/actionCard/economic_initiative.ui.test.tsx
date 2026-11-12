@@ -17,7 +17,7 @@ const table = (between: Entry[]) => {
 // Checks: after the card's component action, the later payment with the cultural planet shows no warning that the
 // planet is exhausted.
 // Why the check is redundant here: the card readied the planet, so it is not exhausted when it pays again.
-test.fails('actionCard:economic_initiative the later payment with the readied planet shows no exhausted warning', () => {
+test('actionCard:economic_initiative the later payment with the readied planet shows no exhausted warning', () => {
   const readied = table([componentAction(id)]);
   quote(readied.pack, id, 'Ready each cultural planet you control.');
   showWarnings(readied, readied.again);

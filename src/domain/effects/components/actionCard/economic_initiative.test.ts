@@ -14,7 +14,7 @@ describe('actionCard:economic_initiative Economic Initiative', () => {
   // Checks: h1, exhausted by a payment, is readied by the card and pays again later in the round without warning.
   // Why the check is redundant here: the exhausted planet check (34.4) asks whether the planet is exhausted; the card
   // readies it, so it is not: nothing is listed, the planet really is ready.
-  test.fails('actionCard:economic_initiative readies the cultural planet: it pays again without warning', () => {
+  test('actionCard:economic_initiative readies the cultural planet: it pays again without warning', () => {
     const again = payAgain('h1');
     const table1 = table([spend('h1', 'h2'), componentAction(id), again]);
     quote(table1.pack, id, 'Ready each cultural planet you control.');
@@ -24,7 +24,7 @@ describe('actionCard:economic_initiative Economic Initiative', () => {
   // "Ready each cultural planet you control."
   // Checks: at the end of the plan h1 is ready and h2, which has no cultural trait, stays exhausted.
   // Why nothing is waived: the card readies, it lifts nothing; the board itself changes.
-  test.fails('actionCard:economic_initiative leaves the board with the cultural planet ready', () => {
+  test('actionCard:economic_initiative leaves the board with the cultural planet ready', () => {
     expect(endOf(table([spend('h1', 'h2'), componentAction(id)])).exhausted).toEqual(['h2']);
   });
 
@@ -52,7 +52,7 @@ describe('actionCard:economic_initiative Economic Initiative', () => {
     expectStanding(warningsOf(table([componentAction(id), spend('h1'), again]), again), 'planetExhausted');
   });
 
-  test.fails('actionCard:economic_initiative is a play effect', () => {
+  test('actionCard:economic_initiative is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

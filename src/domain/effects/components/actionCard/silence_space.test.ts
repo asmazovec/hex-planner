@@ -16,7 +16,7 @@ describe('actionCard:silence_space In The Silence Of Space', () => {
   // the warning is still listed, marked with the card.
   // Why the check is redundant here: LRR 58.3.2 forbids moving through a system with other players' ships, and the
   // card says the ships of the chosen system can.
-  test.fails('actionCard:silence_space played with the action lifts the route blocked by other players\' ships', () => {
+  test('actionCard:silence_space played with the action lifts the route blocked by other players\' ships', () => {
     const move = using(through(), id);
     const silent = table([move]);
     quote(silent.pack, id, 'your ships in the chosen system can move through systems that contain other players\' ships');
@@ -54,7 +54,7 @@ describe('actionCard:silence_space In The Silence Of Space', () => {
   //  other players' ships."
   test.todo('actionCard:silence_space lifts the route of the chosen system only, another source still blocked: a card in `uses` has no choices, so the chosen system cannot be entered yet');
 
-  test.fails('actionCard:silence_space waives the blocked route and nothing else', () => {
+  test('actionCard:silence_space waives the blocked route and nothing else', () => {
     const { pack } = table([]);
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
   });

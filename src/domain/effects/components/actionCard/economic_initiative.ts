@@ -5,11 +5,15 @@
  * trait the player controls when it is played. A planet readied pays again later without the `planetExhausted`
  * warning; that is the effect of the play, not a waiver, as the planet really is ready. Zero cultural planets is
  * allowed (ruling): nothing happens.
- *
- * Pass 1: the hint it is today; pass 2 writes the play.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:economic_initiative';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: ({ state, pack }) => {
+    state.exhausted = state.exhausted.filter(planet => !(state.control[planet] === 'me' && pack.planets[planet]?.traits?.includes('cultural')));
+  },
+};

@@ -16,7 +16,7 @@ describe('actionCard:fs1 Flank Speed', () => {
   // made at all.
   // Why the check is redundant here: the route check (58.3.6) compares the route with the move value, and the card
   // raises the move value of the cruiser from 2 to 3 for this action: the check runs against 3 and finds nothing.
-  test.fails('actionCard:fs1 played with the action gives each ship +1 move: three systems away is reached', () => {
+  test('actionCard:fs1 played with the action gives each ship +1 move: three systems away is reached', () => {
     const move = using(toFar(), id);
     const fast = table([move]);
     quote(fast.pack, id, 'Apply +1 to the move value of each of your ships during this tactical action.');
@@ -26,7 +26,7 @@ describe('actionCard:fs1 Flank Speed', () => {
   // "Apply +1 to the move value ..."
   // Checks: four systems away is still beyond the raised move value, and the warning names the move of 3.
   // Why the check is NOT redundant here: the card adds one, it does not lift the move value.
-  test.fails('actionCard:fs1 a route one system longer still warns, against the move value of 3', () => {
+  test('actionCard:fs1 a route one system longer still warns, against the move value of 3', () => {
     const move = using(toFarther(), id);
     const warnings = warningsOf(table([move]), move);
     expectStanding(warnings, 'speedShort');
@@ -36,7 +36,7 @@ describe('actionCard:fs1 Flank Speed', () => {
   // Ruling (Flank Speed 1): "A second Flank Speed cannot be played to give +2 to the move value of each ship."
   // Checks: two copies named in the same action still give +1: four systems away is short, against 3.
   // Why the check is NOT redundant here: the move value is raised once per action, whatever the copies.
-  test.fails('actionCard:fs1 two copies in one action still add only one', () => {
+  test('actionCard:fs1 two copies in one action still add only one', () => {
     const move = using(toFarther(), id, id);
     const warnings = warningsOf(table([move], [id, id]), move);
     expect(speedOf(warnings)).toMatchObject({ move: 3, steps: 4 });
@@ -71,9 +71,9 @@ describe('actionCard:fs1 Flank Speed', () => {
     expectStanding(warningsOf(table([move], []), move), 'componentNotHeld');
   });
 
-  test.fails('actionCard:fs1 changes the move value: a modify of speed, no waiver', () => {
+  test('actionCard:fs1 changes the move value: a modifyWhenNamed of speed, no waiver', () => {
     const { pack } = table([]);
-    expect(effect(pack, id).modify?.speed).toBeTypeOf('function');
+    expect(effect(pack, id).modifyWhenNamed?.speed).toBeTypeOf('function');
     expect(effect(pack, id).waive).toBeUndefined();
   });
 });
