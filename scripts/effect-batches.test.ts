@@ -43,7 +43,8 @@ describe('the batches of component effects', () => {
   test('are the same on every run, and the files in docs/phase4/batches are those of the data as it is', () => {
     expect(batchesOf(pack)).toEqual(batches);
     expect(written).toEqual(batches);
-    expect(readFileSync(`${OUT}/README.md`, 'utf8')).toBe(renderIndex(batches));
+    // A checkout may give the file other line ends.
+    expect(readFileSync(`${OUT}/README.md`, 'utf8').replace(/\r\n/g, '\n')).toBe(renderIndex(batches));
   });
 
   test('know the exemplars as written: the status is read from the files of the components', () => {

@@ -209,6 +209,23 @@ of shared files (`ModifierContext` in `types.ts`, the step that calls `applied`)
 listed in your report. Call `applied(pack, holderOf(game, state), point, base, ctx)` so that the faction sheet, the
 legendary planets and the laws are asked too; holdings alone ask only the cards held.
 
+## Known limits of the foundation
+
+Say so in your report when a component of your batch runs into one; do not work around it in a shared file.
+
+- A flagship's printed ability (`unit:<id>` in the texts) is not a component of the catalogue: it has no effect file.
+- The reminders of a step (`hintsAt`) are asked of the cards a player holds ready. A `hintAt` on an ability, a mech, a
+  breakthrough or a legendary planet is kept in the registry but not yet shown.
+- `applied` is given the faction at every point, but the planets controlled and the laws only at `fleetLimit` and
+  `productionValue`. A law or a legendary planet that changes another point needs `holderOf` at that call.
+- A waiver lasts for its entry, or to the end of the round. "Until the end of your turn" is the entry; anything longer
+  or tied to another player's turn is not modelled.
+- What happens when a waiver ends (the Letnev hero's excess ships at the end of the round) is not replayed.
+- Structures in a space area (`GameState.afloat`) are counted by the replay and offered by the editors; the map does
+  not draw them yet.
+- A waiver is asked of the owner of the entry only. A component of another player that lifts a check for this one
+  ("other players may…") is named in the entry's `uses`.
+
 ## Two passes
 
 **Pass 1, red.** For each component of the batch: decide what it is (waiver, modify, play, hint), write its effect file
