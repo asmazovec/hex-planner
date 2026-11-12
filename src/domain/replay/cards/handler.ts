@@ -30,13 +30,16 @@ export interface CardTurn {
   warnings: Warning[];
 }
 
+/** Whose play it is, for a card whose numbers a component of the player changes (Brilliant, research cost). */
+export interface CardWho { pack: DataPack; faction: string }
+
 export interface CardCost { kind: PaymentKind; amount: number }
 
 export interface CardHandler {
   /** Its secondary spends no strategy token (Leadership, 20.5.1). */
   freeSecondary?: boolean;
   /** What it owes in resources or influence, given what the player already holds; without it, what its production costs. */
-  cost?: (entry: CardEntry, held: Holdings) => CardCost;
+  cost?: (entry: CardEntry, held: Holdings, who?: CardWho) => CardCost;
   /** The tokens it gives to distribute; `before`, the state before the entry, when the board is known. */
   freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: GameState) => number;
   /** Its own effects and checks, after the common steps (token, payment, distribution, readying). */

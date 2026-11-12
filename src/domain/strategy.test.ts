@@ -358,7 +358,8 @@ describe('Technology', () => {
     const entry = research('secondary', ['carrier']);
     const { state, warningsByEntry } = stateOf(start([entry]));
     expect(upgradesOf(state.holdings, pack)).toEqual(['carrier']);
-    expect(warningsByEntry[entry.id]).toEqual([{ code: 'shortResources', params: { needed: 4, paid: 0 } }]);
+    // Carrier II lacks its propulsion prerequisite (90.12): that is the research check's, tested apart.
+    expect(warningsByEntry[entry.id].filter(w => w.code !== 'prerequisitesMissing')).toEqual([{ code: 'shortResources', params: { needed: 4, paid: 0 } }]);
   });
 
   test('without a card an entry\'s upgrades still apply and cost nothing', () => {

@@ -7,6 +7,7 @@ import { handlerOf, type CardRound } from './cards/index';
 import { pay, readyPlanets } from './payment';
 import { checkProduction, placeProduction } from './production';
 import { research } from './holdings';
+import { researchTokensGiven } from './research';
 import { checkPoolChange, checkTokensGiven } from './status';
 import { buildStructures } from './structures';
 import { checkSystem } from './transport';
@@ -44,6 +45,10 @@ function checkPlay(game: Game, entry: CardEntry, round: CardRound, player: strin
   return costsStrategyToken(entry, { free: !repeated && (round.freeSecondary[card] ?? []).includes(player) });
 }
 
+/** The tokens a component gives for the researches of a Technology entry instead of the technologies (Propagation). */
+const researchBonus = (game: Game, state: GameState, entry: CardEntry, pack: DataPack, round: CardRound): number =>
+  entry.card === CARD.technology ? researchTokensGiven(pack, game, state, round.states.me ?? state, entry.effects?.researched) : 0;
+
 /** Applies what a strategy card can track; everything else about it is shown only. */
 export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: DataPack, round: CardRound, warnings: Warning[]): void {
   const primary = entry.type === 'strategic';
@@ -60,7 +65,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
   }
   const given = (effects.tokens?.tactic ?? 0) + (effects.tokens?.fleet ?? 0) + (effects.tokens?.strategy ?? 0);
-  warnings.push(...checkTokensGiven(given, freeTokens(entry, game.expansions, state), 'card'));
+  warnings.push(...checkTokensGiven(given, freeTokens(entry, game.expansions, state) + researchBonus(game, state, entry, pack, round), 'card'));
   for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
     const change = effects.tokens?.[pool] ?? 0;
     state[pool] += change;
@@ -69,7 +74,8 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   readyPlanets(state, effects.readied ?? [], warnings);
   // The card's own effects see the technologies held before this entry.
   handlerOf(entry.card).apply?.({ game, state, entry, pack, round, player, primary, warnings });
-  research(state, effects.researched, pack);
+  // The Technology card researches with every check in its handler; a play with no card chosen only adds what it lists.
+  if (entry.card !== CARD.technology) research(state, effects.researched, pack);
   warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card'));
   buildStructures(game, state, effects.structures ?? [], primary, effects.systemId, pack, warnings);
   warnings.push(...checkStationStructures(effects.structures ?? [], pack));

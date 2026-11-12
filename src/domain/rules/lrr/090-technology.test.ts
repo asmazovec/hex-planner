@@ -22,16 +22,15 @@ describe('LRR 90 Technology', () => {
   });
 
   test('90.3.1: both the primary and the secondary of Technology research', () => {
-    const first = primary(CARD.technology, { researched: [tech('carrier')] });
-    const second = secondary(CARD.technology, { researched: [tech('cruiser')], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
+    const first = primary(CARD.technology, { researched: ['technology:st'] });
+    const second = secondary(CARD.technology, { researched: ['technology:nm'], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
     const game = holding(rulesGame({ rounds: [[first], [second]] }), CARD.technology);
-    expect(forecast(game, pack).state.holdings.technologies).toEqual([tech('carrier'), tech('cruiser')]);
+    expect(forecast(game, pack).state.holdings.technologies).toEqual(['technology:st', 'technology:nm']);
     expect(codesOf(game, pack, first)).toEqual([]);
     expect(codesOf(game, pack, second)).toEqual([]);
   });
 
   test.todo('90.4: a player may look through their deck at any time — not modelled: the deck is not shown');
-  test.todo('90.5: a gained technology ignores prerequisites — not modelled: prerequisites are not tracked');
 
   test('90.6 / 90.6.1: a unit upgrade covers the unit of the same name: its numbers replace the printed ones', () => {
     expect(unitStats(FACTION, 'carrier', false, pack)?.capacity).toBe(4);
@@ -39,7 +38,6 @@ describe('LRR 90 Technology', () => {
   });
 
   test.todo('90.7: a technology that is no unit upgrade has a colour — kept in the pack as its type, no effect to compute');
-  test.todo('90.7.1: a colour satisfies prerequisites of that colour — not modelled: prerequisites are not tracked');
 
   test('90.7.2: unit upgrades have no colour: the faction unit upgrades of the pack have no type', () => {
     const upgrades = Object.values(loadPack(['pok', 'te']).technologies).filter(t => t.upgrade);
@@ -52,12 +50,74 @@ describe('LRR 90 Technology', () => {
     expect([...colours].sort()).toEqual(['biotic', 'cybernetic', 'propulsion', 'warfare']);
   });
 
-  test.todo('90.8: the prerequisites printed on a card — kept for faction technologies only and shown on the faction sheet; research does not check them');
 
   test('90.8.1: prerequisites give the number and colour needed: Prototype War Sun II needs three warfare and one cybernetic', () => {
     expect(loadPack([]).technologies.pws2.requires).toEqual({ warfare: 3, cybernetic: 1 });
   });
   test.todo('90.9: research comes from the Technology card or other effects — the card side is tested at 90.3.1; other effects are entered as the `gains` of any entry (src/domain/holdings.test.ts)');
+
+  const ONE_BIOTIC = 'technology:it';
+  const TWO_BIOTIC = 'technology:hm';
+  const research = (...ids: string[]) => secondary(CARD.technology, { researched: ids, payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
+  const owning = (technologies: string[], entry: ReturnType<typeof research>) =>
+    ({ game: rulesGame({ entries: [entry], game: { start: { me: { technologies }, opponents: {} } } }), pack });
+
+  test('90.12 / 90.8.1: a technology researched without one technology of the colour per prerequisite symbol is a prerequisitesMissing', () => {
+    const entry = research(TWO_BIOTIC);
+    const lacking = owning(['technology:nm'], entry);
+    expect(codesOf(lacking.game, lacking.pack, entry)).toContain('prerequisitesMissing');
+    const enough = owning(['technology:nm', 'technology:pa'], entry);
+    expect(codesOf(enough.game, enough.pack, entry)).not.toContain('prerequisitesMissing');
+  });
+
+  test('90.12.2 / 90.7.2: a unit upgrade has no colour and covers no prerequisite', () => {
+    const entry = research(ONE_BIOTIC);
+    const upgrades = owning([tech('carrier'), tech('cruiser')], entry);
+    expect(codesOf(upgrades.game, upgrades.pack, entry)).toContain('prerequisitesMissing');
+  });
+
+  test('90.7.1: a technology of a colour satisfies a prerequisite of that colour', () => {
+    const entry = research(ONE_BIOTIC);
+    const owned = owning(['technology:nm'], entry);
+    expect(codesOf(owned.game, owned.pack, entry)).not.toContain('prerequisitesMissing');
+  });
+
+  test('90 note 1 / 90.9: research by the card meets the prerequisites, the first technology of an entry serving the second', () => {
+    const entry = primary(CARD.technology, { researched: ['technology:nm', ONE_BIOTIC] });
+    expect(codesOf(holding(rulesGame({ entries: [entry] }), CARD.technology), pack, entry)).not.toContain('prerequisitesMissing');
+  });
+
+  test('90.5 / 90 note 2: a technology gained is not researched: it ignores prerequisites', () => {
+    const gain = tactical(TARGET, { gains: [TWO_BIOTIC] });
+    expect(codesOf(rulesGame({ entries: [gain] }), pack, gain)).not.toContain('prerequisitesMissing');
+  });
+
+  test('90.14 / 90.12.3: exhausting a planet with a technology specialty ignores one prerequisite of its colour', () => {
+    const entry = secondary(CARD.technology, { researched: [ONE_BIOTIC], payment: { planets: [], tradeGoods: 0 }, specialties: ['h2'] });
+    const specialty = rulesPack(data => { data.planets.h2 = { ...data.planets.h2, tech: ['biotic'] }; });
+    const game = rulesGame({ entries: [entry] });
+    expect(codesOf(game, specialty, entry)).not.toContain('prerequisitesMissing');
+    expect(forecast(game, specialty).state.exhausted).toContain('h2');
+    // Of another colour it ignores nothing.
+    const wrong = rulesPack(data => { data.planets.h2 = { ...data.planets.h2, tech: ['warfare'] }; });
+    expect(codesOf(game, wrong, entry)).toContain('prerequisitesMissing');
+  });
+
+  test('90.15: a planet already exhausted cannot be used for its specialty', () => {
+    const entry = secondary(CARD.technology, { researched: [ONE_BIOTIC], payment: { planets: ['h2'], tradeGoods: 0 }, specialties: ['h2'] });
+    const specialty = rulesPack(data => { data.planets.h2 = { ...data.planets.h2, tech: ['biotic'] }; });
+    const codes = codesOf(rulesGame({ entries: [entry] }), specialty, entry);
+    expect(codes).toContain('planetExhausted');
+    expect(codes).toContain('prerequisitesMissing');
+  });
+
+  test('90.9 / 90.5: a technology that cannot be researched is a researchUnavailable when researched, none when gained', () => {
+    const full = rulesPack(undefined, ['pok', 'te']);
+    const entry = research('technology:planesplitter-obs');
+    expect(codesOf(rulesGame({ entries: [entry], expansions: ['pok', 'te'] }), full, entry)).toContain('researchUnavailable');
+    const gain = tactical(TARGET, { gains: ['technology:planesplitter-obs'] });
+    expect(codesOf(rulesGame({ entries: [gain], expansions: ['pok', 'te'] }), full, gain)).not.toContain('researchUnavailable');
+  });
 
   test('90.10: research takes a card from the deck, so a technology already owned cannot be researched again', () => {
     const again = secondary(CARD.technology, { researched: [tech('carrier')], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
@@ -79,13 +139,7 @@ describe('LRR 90 Technology', () => {
   });
 
   test.todo('90.11: a faction technology of another faction cannot be researched — not modelled: faction technologies are not tracked');
-  test.todo('90.12: research must satisfy every prerequisite — not modelled: prerequisites are not in the pack');
-  test.todo('90.12.1: prerequisites are the symbols in the lower left — not modelled: prerequisites are not in the pack');
-  test.todo('90.12.2: unit upgrades satisfy no prerequisite — not modelled: prerequisites are not in the pack');
-  test.todo('90.12.3: abilities and specialties may ignore prerequisites — not modelled: prerequisites are not in the pack');
   test.todo('90.13: technology specialties on planets — kept in the pack, not used by research');
-  test.todo('90.14: exhausting a planet with a specialty ignores one prerequisite — not modelled: prerequisites are not in the pack');
-  test.todo('90.15: an exhausted planet\'s specialty cannot be used — not modelled: prerequisites are not in the pack');
   test.todo('90.16: Valefar Assimilator copies other players\' faction technologies — not modelled: faction technologies are not tracked');
   test.todo('90.17: printed units are no Valefar target — not modelled: faction technologies are not tracked');
   test.todo('90.18: an assimilated technology of an eliminated player stays — not modelled: faction technologies are not tracked');
@@ -93,8 +147,6 @@ describe('LRR 90 Technology', () => {
   test.todo('90.20: losing an assimilated war sun upgrade removes war suns — not modelled: faction technologies are not tracked');
   test.todo('90.21: Nekro upgrades units by type — not modelled: faction technologies are not tracked');
   test.todo('90.22: an assimilated technology counts for objectives — not modelled: objectives are not tracked');
-  test.todo('90 note 1: research by any effect must meet prerequisites — not modelled: prerequisites are not in the pack');
-  test.todo('90 note 2: gaining ignores prerequisites — not modelled: prerequisites are not in the pack');
 
   test('90 note 3: a faction with its own unit upgrade gets that one, never the generic upgrade', () => {
     const base = loadPack([]);

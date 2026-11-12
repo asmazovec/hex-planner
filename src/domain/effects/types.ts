@@ -2,7 +2,7 @@
  * The contract of a component's effect (design §5.1). A step of the count never names a component: it asks a named
  * point for its value through `applied`, and the components of the player answer.
  */
-import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, UnitId, Warning } from '../types';
+import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitId, Warning } from '../types';
 
 /**
  * `passive` applies by itself while the component is in force (`inForce`), exhausted or not (LRR 34.4.1); `play`
@@ -31,8 +31,12 @@ export interface ModifierContext {
   planetInfluence: { planetId: string };
   /** What researching one technology costs, by its component id. */
   researchCost: { technology: string };
-  /** The prerequisites a technology still lacks, by its component id. */
-  prerequisites: { technology: string };
+  /**
+   * The prerequisites a technology still lacks, by its component id: the base is the number of symbols no technology
+   * owned covers (a specialty planet exhausted for it has covered its own). `upgrade` is whether it is a unit upgrade,
+   * `missing` the symbols lacking by colour.
+   */
+  prerequisites: { technology: string; upgrade?: boolean; missing?: Partial<Record<TechType, number>> };
   /** Command tokens gained at a step. */
   tokensGained: { step: RuleStep };
   handLimit: { faction: string };
