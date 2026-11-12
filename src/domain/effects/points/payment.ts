@@ -64,7 +64,7 @@ declare module '../types' {
  * know it was elected for this planet.
  */
 export function appliedToPlanet(
-  pack: DataPack, who: Holder, attached: readonly string[], point: 'planetResources' | 'planetInfluence', base: number, planetId: string,
+  pack: DataPack, who: Holder, attached: readonly string[], point: 'planetResources' | 'planetInfluence', base: number, planetId: string, dock = false,
 ): Applied {
   const own = passivesOf(pack, who);
   const have = new Set(own.map(([id]) => id));
@@ -73,5 +73,5 @@ export function appliedToPlanet(
     return effect ? [[id, effect]] : [];
   });
   const all = [...own, ...extra].sort((a, b) => orderOf(pack, a[0]) - orderOf(pack, b[0]));
-  return stacked(all, point, base, { planetId, attached, pack });
+  return stacked(all, point, base, { planetId, attached, pack, dock });
 }

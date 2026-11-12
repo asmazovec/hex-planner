@@ -19,7 +19,7 @@ const nine = (technologies: string[]) => {
 // the Production value is exceeded.
 // Why the default limit does not apply: the dock produces 3 + 2 + 4 = 9, not the 7 of Space Dock II; the number
 // changes, so nothing is shown as waived either.
-test.fails('technology:helios2 nine units built at a Helios on a planet of 3 show no Production warning', () => {
+test('technology:helios2 nine units built at a Helios on a planet of 3 show no Production warning', () => {
   const table = nine([id]);
   quote(table.pack, id, 'The resource value of this planet is increased by 2.');
   expectNotShown('productionOver');

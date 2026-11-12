@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { StartHoldings, UnitCounts } from '../../../types';
-import { bench, effect, expectNone, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
+import { bench, effect, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './ghostbt';
 
 /** An alpha wormhole in NEAR, which has no planet and so no space dock. */
@@ -18,17 +18,20 @@ describe('breakthrough:ghostbt Particle Synthesis', () => {
   // warning that no unit has Production there is listed and lifted.
   // Why the check is redundant here: 67/79 ask for a unit with Production in the system; the breakthrough makes the
   // wormhole one.
-  test('breakthrough:ghostbt a wormhole in a system with my ships produces: the warning is waived', () => {
+  // Changed in pass 2 wave 3: the wormhole is now a producer of the count (`spaceProduction`), so the warning that
+  // nothing produces is not made at all, instead of being made and lifted; one unit fits its PRODUCTION 1.
+  test('breakthrough:ghostbt a wormhole in a system with my ships produces: nothing warns that no unit produces', () => {
     const table = build(NEAR, { destroyer: 1 });
     quote(table.pack, id, 'Each wormhole in a system that contains your ships gains PRODUCTION 1 as if it were a unit you control.');
-    expectWaived(warningsOf(table, table.entry), 'noProduction', id);
+    expectNone(warningsOf(table, table.entry), 'noProduction');
+    expectNone(warningsOf(table, table.entry), 'productionOver');
   });
 
   // "Reduce the combined cost of units you produce in systems that contain wormholes by 1 for each wormhole in that system."
   // Checks: the destroyer (cost 1) costs nothing in a system with one wormhole: nothing paid and no shortfall.
   // Why the default cost does not apply: the combined cost of the production is 1 less, a change of the number (a new
   // point of the count), not a waiver.
-  test.fails('breakthrough:ghostbt the production in a wormhole system costs 1 less', () => {
+  test('breakthrough:ghostbt the production in a wormhole system costs 1 less', () => {
     const table = build(NEAR, { destroyer: 1 });
     quote(table.pack, id, 'Reduce the combined cost of units you produce in systems that contain wormholes by 1 for each wormhole in that system.');
     expectNone(warningsOf(table, table.entry), 'shortResources');
@@ -38,10 +41,10 @@ describe('breakthrough:ghostbt Particle Synthesis', () => {
   // Checks: two destroyers in a system with one wormhole are beyond its PRODUCTION 1.
   // Why the check is NOT redundant here: one wormhole produces one unit (Creuss notes, Particle Synthesis 1: each
   // wormhole gives its own value).
-  test.fails('breakthrough:ghostbt one wormhole produces one unit: a second is warned of', () => {
+  test('breakthrough:ghostbt one wormhole produces one unit: a second is warned of', () => {
     const table = build(NEAR, { destroyer: 2 });
     const warnings = warningsOf(table, table.entry);
-    expectWaived(warnings, 'noProduction', id);
+    expectNone(warnings, 'noProduction');
     expectStanding(warnings, 'productionOver');
   });
 
@@ -71,9 +74,12 @@ describe('breakthrough:ghostbt Particle Synthesis', () => {
   });
 
   // Checks: the breakthrough is in force while held: a passive effect that lifts the two checks of production.
-  test('breakthrough:ghostbt is a passive effect that waives the production checks', () => {
+  // Changed in pass 2 wave 3: the effect changes the two numbers (the Production of the system and the combined cost)
+  // instead of lifting the two warnings, so it has `modify` and no `waive`.
+  test('breakthrough:ghostbt is a passive effect that changes the Production of the system and the combined cost', () => {
     const { pack } = build(NEAR, {});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['noProduction', 'productionOver']);
+    expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['productionCost', 'spaceProduction']);
+    expect(effect(pack, id).waive).toBeUndefined();
   });
 });

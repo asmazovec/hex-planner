@@ -1,5 +1,5 @@
 import { test } from 'vitest';
-import { expectNotShown, expectShownStanding, expectShownWaived, showTactical, uiBench } from '../../../../ui/testing/effects';
+import { expectNotShown, expectShownStanding, showTactical, uiBench } from '../../../../ui/testing/effects';
 import type { StartHoldings } from '../../../types';
 import { bench, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './ghostbt';
@@ -19,10 +19,11 @@ const show = (start: StartHoldings) => {
 // Checks: a destroyer built in the alpha system with no dock: the warning that nothing produces there reads as allowed
 // by Particle Synthesis, and the destroyer (cost 1) asks for no payment.
 // Why the check is redundant here: the wormhole is a unit with PRODUCTION 1 for the Creuss player, and the cost is 1 less.
-test.fails('breakthrough:ghostbt a destroyer built at a wormhole reads as allowed by Particle Synthesis and costs nothing', () => {
+// Changed in pass 2 wave 3: the wormhole is a producer of the count, so the warning is not shown at all (not shown as allowed).
+test('breakthrough:ghostbt a destroyer built at a wormhole needs no dock and costs nothing', () => {
   const table = show({ breakthrough: 'held' });
   quote(table.pack, id, 'gains PRODUCTION 1 as if it were a unit you control');
-  expectShownWaived('noProduction', 'Particle Synthesis');
+  expectNotShown('noProduction');
   expectNotShown('shortResources');
 });
 

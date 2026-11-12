@@ -53,9 +53,7 @@ describe('promissory:ce Cybernetic Enhancements', () => {
   // LRR 69.2: "A player cannot play their own promissory note."
   // Checks: the L1Z1X player playing their own note is warned of, and gains no token.
   // Why the check is NOT redundant here: the note is written for the other players.
-  // Still red in pass 2: the `tokensGained` context holds only the step, so the modify cannot tell a note of my own
-  // faction from another player's; `appliedFor` (points/status.ts) would have to skip a note that warns ownPromissory.
-  test.fails('promissory:ce the L1Z1X player cannot play their own note', () => {
+  test('promissory:ce the L1Z1X player cannot play their own note', () => {
     const entry = using(statusTokens(2, 1, 0), `${id}@me`);
     const warnings = warningsOf(table(entry, 'l1z1x', [`${id}@me`]), entry);
     expectStanding(warnings, 'ownPromissory');

@@ -7,7 +7,7 @@
  * a unit upgrade it waives a missing prerequisite, one only: the replay has no prerequisite check yet (90.9 note 1),
  * pass 2 adds it for everyone. In the entry that produces it takes the number of unit upgrades owned off the cost of
  * that production.
- * Pass 2: the prerequisite waiver. The production half is missing: see the comment on `effect`.
+ * Pass 2: the prerequisite waiver and the reduction of the cost.
  */
 import { techOf } from '../../../replay/research';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
@@ -24,6 +24,8 @@ export const effect: ComponentEffect = {
     // One symbol only, and only of a unit upgrade.
     when: (warning, { pack }) => Number(warning.params.missing) <= 1 && techOf(pack, String(warning.params.id))?.upgrade !== undefined,
   }],
-  // The production half ("reduce the combined cost ... by the number of unit upgrade technologies that you own") needs
-  // the owner's holdings in the context of the point `productionCost`, which has the faction only: not modelled yet.
+  // The production half: the combined cost falls by the unit upgrades the owner holds (asked when a unit used PRODUCTION).
+  modify: {
+    productionCost: (value, { holdings, pack }) => Math.max(0, value - holdings.technologies.filter(tech => techOf(pack, tech)?.upgrade !== undefined).length),
+  },
 };

@@ -9,7 +9,7 @@ says which components asked for it (batch numbers from `docs/phase4/needs/paymen
 | --- | --- | --- | --- |
 | `tradeGoodValue` | `{ kind: 'resources' \| 'influence', faction }` | 1 | `applyPayment`, `paymentValue`, `autoPay`: what one trade good spent is worth. Mirror Computing (04): `modify: { tradeGoodValue: v => v * 2 }`. The shortfall warnings run against the new worth; `shortTradeGoods` is unchanged. |
 | `commodityValue` | `{ faction }` | printed value of the faction | `commodityValueOf` (`replay/cards/trade.ts`): Trade's replenish, `replenish`, `gainCommodities`. Dynamis Core (24): `v => v + 2`. |
-| `planetResources`, `planetInfluence` | `{ planetId, attached? }` (line added to `ModifierContext`) | printed value | `planetValue` (`domain/payment.ts`) in `checkPayment`/`applyPayment`/`autoPay`/`readyResources`/`readyInfluence`, the payment block. |
+| `planetResources`, `planetInfluence` | `{ planetId, attached? }`; `planetResources` also `dock?` (the player has a space dock on the planet: `planetValue` passes `state.docks`, the dock's Production passes `true`; Helios V2) (line added to `ModifierContext`) | printed value | `planetValue` (`domain/payment.ts`) in `checkPayment`/`applyPayment`/`autoPay`/`readyResources`/`readyInfluence`, the payment block. |
 
 `attached` is the list of cards and laws attached to the planet (`shared.attachments[planetId]`). Cards attached to a
 planet are held by no player, so `appliedToPlanet` asks them as well, for that planet only, in registry order.

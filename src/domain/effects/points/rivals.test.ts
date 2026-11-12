@@ -34,7 +34,7 @@ describe('stopsPassage: a system a component bars to the ships of other players'
 
 describe('a note in the play area', () => {
   test('only a note still held counts as in play', () => {
-    expect(notesInPlay({ technologies: [], hand: [], relics: [], promissory: ['a'], leaders: {}, scored: [], secrets: [], exhausted: [], inPlay: ['a', 'b'] })).toEqual(['a']);
+    expect(notesInPlay({ technologies: [], hand: [], relics: [], promissory: ['a'], leaders: {}, scored: [], secrets: [], exhausted: [], found: [], inPlay: ['a', 'b'] })).toEqual(['a']);
   });
 });
 

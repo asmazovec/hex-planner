@@ -1,8 +1,8 @@
 /** The status phase (LRR 81): tokens gained and redistributed, points scored, then the board cleared and every card readied. */
 import { componentById } from '../components';
 import { applied } from '../effects/apply';
+import { appliedFor } from '../effects/entryApply';
 import { fire } from '../effects/points/moments';
-import { appliedFor } from '../effects/points/status';
 import fleetPoolTokens from '../rules/codes/fleetPoolTokens';
 import { effectOf, holderOf } from '../effects/registry';
 import objectiveRepeated from '../rules/codes/objectiveRepeated';
@@ -30,7 +30,7 @@ export function checkTokensGiven(given: number, free: number, step?: RuleStep): 
  * those the entry names in `uses` (the `tokensGained` point at the step `status`). `state` is the owner's, `shared` mine.
  */
 export function statusTokensFree(game: Game, state: GameState, shared: GameState, entry: Entry, pack: DataPack): number {
-  return appliedFor(pack, holderOf(game, state, shared), entry, state, 'tokensGained', STATUS_TOKENS, { step: 'status' }).value;
+  return appliedFor(pack, holderOf(game, state, shared), entry, 'tokensGained', STATUS_TOKENS, { step: 'status' }, state).value;
 }
 
 /** Check: the tokens in the pools, and with `onBoard` those on the board, are more than the sixteen of a faction (20.3.1). */

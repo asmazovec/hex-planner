@@ -58,7 +58,7 @@ specialties) and `warning.params.id` (the technology). Prophet's Tears, AIDA: `w
   primary: limit 2, the first free, the second 6. Brilliant: `modify: { researchAsPrimary: () => 1 }`. It is asked at
   the card's cost and limit; the editor's note follows it. (`holderOf` there has holdings and faction only: a law or a
   legendary planet that sets it is not asked.)
-- **`researchCost`** (existing, now asked): `{ technology: string }`; the base is what that technology costs on this
+- **`researchCost`** (existing, now asked through `appliedFor` with the entry, so a `play` effect of a component the entry names counts: Inheritance Systems adds 2 when `ctx.index === 0`): `{ technology: string; index?: number }` (`index`: the place among the technologies the entry researches anew); the base is what that technology costs on this
   side (0, 4 or 6). The cost of the entry is the sum over the technologies researched anew.
 
 Declaration merging works: the two new points are in `Modifiers` at once. `researchTokens` and `researchAsPrimary` are

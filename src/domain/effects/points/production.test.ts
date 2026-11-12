@@ -149,7 +149,7 @@ describe('the cost and the total of a production', () => {
     const table = bench({ faction: 'sol', start: { technologies: [TECH] } });
     give(table, TECH, { modify: { productionCost: v => v - 1 } });
     const holder = { holdings: { technologies: [TECH], relics: [], promissory: [], hand: [], leaders: {}, exhausted: [] } } as never;
-    expect(appliedFor(table.pack, holder, undefined, 'productionCost', 5, { faction: 'sol' }).value).toBe(4);
+    expect(appliedFor(table.pack, holder, undefined, 'productionCost', 5, { faction: 'sol', wormholes: [], holdings: (holder as { holdings: never }).holdings, pack: table.pack }).value).toBe(4);
   });
 });
 

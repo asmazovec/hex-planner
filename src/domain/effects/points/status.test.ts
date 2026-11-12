@@ -12,7 +12,8 @@ import type { Entry, EntryBody, ExpansionId, Opponent } from '../../types';
 import { hintsAt, holderOf, inForceOf } from '../registry';
 import type { ComponentEffect } from '../types';
 import { gainTokens, spendStrategyTokens } from '../../replay/status';
-import { appliedFor, objectiveNotMet, spentOnObjectives } from './status';
+import { appliedFor } from '../entryApply';
+import { objectiveNotMet, spentOnObjectives } from './status';
 import { withEffect } from './status.kit';
 
 const R1: Opponent = { id: 'r1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
@@ -72,7 +73,7 @@ describe('strategyCost: the strategy tokens a card owes', () => {
   test('strategyCost: asking it without an entry gives the base', () => {
     const own = rulesPack();
     const state = forecast(rulesGame(), own).state;
-    expect(appliedFor(own, holderOf({ faction: 'rules-tester' }, state), undefined, undefined, 'strategyCost', 1, { card: CARD.trade, secondary: true }).value).toBe(1);
+    expect(appliedFor(own, holderOf({ faction: 'rules-tester' }, state), undefined, 'strategyCost', 1, { card: CARD.trade, secondary: true }).value).toBe(1);
   });
 });
 

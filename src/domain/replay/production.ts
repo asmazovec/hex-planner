@@ -8,6 +8,7 @@ import { holderOf } from '../effects/registry';
 import dockInfantry from '../rules/codes/dockInfantry';
 import warSunLocked from '../rules/codes/warSunLocked';
 import { planetValue } from '../payment';
+import { wormholesOf } from '../movement';
 import { productionCost, unitStats } from '../unitStats';
 import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf, tileAt } from './board';
@@ -90,7 +91,7 @@ export function producerList(game: Game, state: GameState, systemId: string, pac
   if (unitIds(state.systems[systemId] ?? {}).length > 0) {
     const tile = tileAt(game, systemId, pack);
     const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter((a): a is NonNullable<typeof a> => a !== undefined);
-    const value = applied(pack, holder, 'spaceProduction', 0, { systemId, anomalies, units: state.systems[systemId] ?? {} }).value;
+    const value = applied(pack, holder, 'spaceProduction', 0, { systemId, anomalies, units: state.systems[systemId] ?? {}, wormholes: wormholesOf(game, pack, systemId, state.wormholeTokens), game, pack }).value;
     if (value > 0) list.push({ kind: 'space', planetId: null, value, infantry: true });
   }
   return list;
@@ -232,6 +233,10 @@ export function checkProduction(
   return warnings;
 }
 
+/** The system an entry produces in: the tactical action's, or the one its card or component names. */
+const systemOfProduction = (entry: Entry | undefined): string | undefined =>
+  entry?.type === 'tactical' ? entry.systemId ?? undefined : entry && 'effects' in entry ? entry.effects?.production?.systemId : undefined;
+
 /**
  * The combined cost of a production as it is paid: each unit's cost (`unitCost`, with the laws and what the entry
  * plays), then the combined cost (`productionCost`, Sarween Tools) when a unit used PRODUCTION (`producing`; Sarween
@@ -241,7 +246,9 @@ export function costOf(game: Game, state: GameState, units: UnitCounts, pack: Da
   const holder = holderOf(game, state);
   const cost = productionCost(units, game.faction, holder, pack, entry);
   if (!producing || cost <= 0) return cost;
-  return Math.max(0, appliedFor(pack, holder, entry, 'productionCost', cost, { faction: game.faction }).value);
+  const systemId = systemOfProduction(entry);
+  const wormholes = systemId === undefined ? [] : wormholesOf(game, pack, systemId, state.wormholeTokens);
+  return Math.max(0, appliedFor(pack, holder, entry, 'productionCost', cost, { faction: game.faction, systemId, wormholes, holdings: state.holdings, pack }).value);
 }
 
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. `producing`: a unit used PRODUCTION. */

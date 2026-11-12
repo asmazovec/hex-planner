@@ -53,7 +53,7 @@ export function planetValue(pack: DataPack, state: GameState, planetId: string, 
   const shared = view.shared ?? state;
   return appliedToPlanet(
     pack, holderOf(view, state, shared), shared.attachments?.[planetId] ?? [],
-    kind === 'resources' ? 'planetResources' : 'planetInfluence', printed, planetId,
+    kind === 'resources' ? 'planetResources' : 'planetInfluence', printed, planetId, state.docks.includes(planetId),
   ).value;
 }
 
