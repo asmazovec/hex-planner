@@ -16,7 +16,7 @@ describe('technology:nf Nullification Field', () => {
   // Checks: the technology named in «Used» spends 1 strategy token: the pool goes from 2 to 1.
   // Why this is the component's own: no rule spends a strategy token to end a turn; the turn is not planned, the
   // token is.
-  test.fails('technology:nf spends 1 strategy token', () => {
+  test('technology:nf spends 1 strategy token', () => {
     const xxcha = table([nullify()]);
     quote(xxcha.pack, id, 'exhaust this card and spend 1 token from your strategy pool');
     expect(endOf(xxcha).strategy).toBe(1);
@@ -25,7 +25,7 @@ describe('technology:nf Nullification Field', () => {
   // LRR 20.4: tokens are spent from a pool that has them.
   // Checks: with the strategy pool empty the use is still entered and warned of.
   // Why the check is NOT redundant here: the token is the price, nothing pays it in its place.
-  test.fails('technology:nf with an empty strategy pool is warned of', () => {
+  test('technology:nf with an empty strategy pool is warned of', () => {
     const use = nullify();
     expectStanding(warningsOf(table([adjust({ strategy: -2 }), use]), use), 'shortStrategy');
   });
@@ -39,7 +39,7 @@ describe('technology:nf Nullification Field', () => {
 
   test.todo('technology:nf the other player\'s turn ends: opponents\' turns are not replayed step by step');
 
-  test.fails('technology:nf is a play effect', () => {
+  test('technology:nf is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

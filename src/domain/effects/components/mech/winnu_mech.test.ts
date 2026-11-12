@@ -21,7 +21,7 @@ describe('mech:winnu_mech Reclaimer', () => {
   // warning that it is missing from the space area is listed and lifted by the mech, and the PDS stands on t1.
   // Why the check is redundant here: the landing places only structures a flight brought (85.2), and the Reclaimer
   // takes one from the reinforcements.
-  test.fails('mech:winnu_mech places a PDS from the reinforcements on the planet it took: the warning is waived', () => {
+  test('mech:winnu_mech places a PDS from the reinforcements on the planet it took: the warning is waived', () => {
     const winnu = table('winnu', reclaim([{ planetId: 't1', units: { infantry: 1, mech: 1 }, structures: { pds: 1 } }]));
     quote(winnu.pack, id, 'you may place 1 PDS or 1 Space Dock from your reinforcements on this planet');
     expectWaived(missingStructures(winnu), 'unitsMissing', id);
@@ -62,7 +62,7 @@ describe('mech:winnu_mech Reclaimer', () => {
     expectStanding(missingStructures(winnu), 'unitsMissing');
   });
 
-  test.fails('mech:winnu_mech is a passive effect that waives the structure missing from the space area', () => {
+  test('mech:winnu_mech is a passive effect that waives the structure missing from the space area', () => {
     const { pack } = table('winnu', reclaim([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['unitsMissing']);

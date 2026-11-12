@@ -18,7 +18,7 @@ const table = () => {
 // Checks: I choose Mathis Mathinus in «Used» of Politics' primary; the warning that the card is not mine reads as
 // allowed by the hero.
 // Why the check is redundant here: the hero performs the primary of any card (83.3 gives it to the holder).
-test.fails('leader:winnuhero chosen in «Used», the primary of a card not held reads as allowed by Mathis Mathinus', async () => {
+test('leader:winnuhero chosen in «Used», the primary of a card not held reads as allowed by Mathis Mathinus', async () => {
   const winnu = table();
   quote(winnu.table.pack, id, 'Perform the primary ability of any strategy card');
   showUses(winnu.table, winnu.politics);

@@ -16,7 +16,7 @@ describe('technology:it Instinct Training', () => {
   // Checks: the technology named in «Used» spends 1 strategy token: the pool goes from 2 to 1.
   // Why this is the component's own: no rule spends a strategy token to cancel a card; the card is not planned, the
   // token is.
-  test.fails('technology:it spends 1 strategy token', () => {
+  test('technology:it spends 1 strategy token', () => {
     const xxcha = table([cancel()]);
     quote(xxcha.pack, id, 'exhaust this card and spend 1 token from your strategy pool');
     expect(endOf(xxcha).strategy).toBe(1);
@@ -25,7 +25,7 @@ describe('technology:it Instinct Training', () => {
   // LRR 20.4: tokens are spent from a pool that has them.
   // Checks: with the strategy pool empty the use is still entered and warned of.
   // Why the check is NOT redundant here: the token is the price, nothing pays it in its place.
-  test.fails('technology:it with an empty strategy pool is warned of', () => {
+  test('technology:it with an empty strategy pool is warned of', () => {
     const use = cancel();
     expectStanding(warningsOf(table([adjust({ strategy: -2 }), use]), use), 'shortStrategy');
   });
@@ -42,7 +42,7 @@ describe('technology:it Instinct Training', () => {
     expect(endOf(table([adjust({})])).strategy).toBe(2);
   });
 
-  test.fails('technology:it is a play effect', () => {
+  test('technology:it is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

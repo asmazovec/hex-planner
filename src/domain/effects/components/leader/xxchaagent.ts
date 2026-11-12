@@ -5,11 +5,19 @@
  * Decided: `play` with a waiver. Its component action names the planet (`choices.planet`) and readies it; "any planet"
  * lifts the rule that an effect readies only the player's own planets (`readyNotControlled`, 71 note 3). The infantry
  * removed belongs to another player and is not modelled.
- *
- * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { readyPlanets } from '../../../replay/payment';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:xxchaagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  choose: [{ key: 'planet', kind: 'planet' }],
+  waive: [{ code: 'readyNotControlled', rule: 'Exhaust this card to ready any planet' }],
+  play: ({ held, game, state, choices, warnings }) => {
+    if (!held || game.faction !== 'xxcha' || typeof choices.planet !== 'string') return;
+    readyPlanets(state, [choices.planet], warnings, 'component');
+  },
+};

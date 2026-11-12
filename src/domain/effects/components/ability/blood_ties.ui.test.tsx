@@ -17,7 +17,7 @@ const table = (faction: string) => {
 // Checks: in the landing of the tactical editor I land the infantry on Mecatol Rex; it is written into the entry, and
 // the warning of the custodians token reads as allowed by Blood Ties.
 // Why the check is redundant here: 54.1 asks six influence, which the Winnu do not spend.
-test.fails('ability:blood_ties the infantry lands on Mecatol Rex, and the custodians token reads as allowed by Blood Ties', async () => {
+test('ability:blood_ties the infantry lands on Mecatol Rex, and the custodians token reads as allowed by Blood Ties', async () => {
   const winnu = table('winnu');
   quote(winnu.table.pack, id, 'You do not have to spend influence to remove the custodians token');
   const live = showTactical(winnu.table, winnu.move);

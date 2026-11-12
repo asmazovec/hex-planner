@@ -14,7 +14,7 @@ const table = (strategy: number) => {
 // Checks: with the strategy pool empty I choose Nullification Field in «Used»; the warning that no strategy token is
 // left appears and stands.
 // Why the check is NOT redundant here: the token is the price, nothing pays it in its place.
-test.fails('technology:nf chosen in «Used» with an empty strategy pool, the missing token stands', async () => {
+test('technology:nf chosen in «Used» with an empty strategy pool, the missing token stands', async () => {
   const xxcha = table(-2);
   quote(xxcha.table.pack, id, 'spend 1 token from your strategy pool');
   showUses(xxcha.table, xxcha.mark);

@@ -16,7 +16,7 @@ describe('promissory:acq Acquiescence', () => {
   // Checks: a secondary that names the note in «Used» spends no strategy token: the pool stays at its 2.
   // Why the check is redundant here: the token is the price of a secondary (20.5, 83.4), and the note says that this
   // secondary is resolved without it.
-  test.fails('promissory:acq a secondary that uses the note spends no strategy token', () => {
+  test('promissory:acq a secondary that uses the note spends no strategy token', () => {
     const play = using(politics(), NOTE);
     const sol = table('sol', [play]);
     quote(sol.pack, id, 'You do not have to spend or place a command token to resolve the secondary ability');
@@ -26,7 +26,7 @@ describe('promissory:acq Acquiescence', () => {
   // Checks: with the strategy pool empty the secondary is still entered; the warning that no token is left is listed
   // and lifted by the note.
   // Why the check is redundant here: the note frees the secondary of its token, so an empty pool does not matter.
-  test.fails('promissory:acq with no strategy token left the warning of the secondary is waived', () => {
+  test('promissory:acq with no strategy token left the warning of the secondary is waived', () => {
     const play = using(politics(), NOTE);
     expectWaived(warningsOf(table('sol', [adjust({ strategy: -2 }), play]), play), 'shortStrategy', NOTE);
   });
@@ -51,7 +51,7 @@ describe('promissory:acq Acquiescence', () => {
     expectStanding(warnings, 'shortStrategy');
   });
 
-  test.fails('promissory:acq is a play effect that waives the strategy token of the secondary', () => {
+  test('promissory:acq is a play effect that waives the strategy token of the secondary', () => {
     const { pack } = table('sol', []);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortStrategy']);

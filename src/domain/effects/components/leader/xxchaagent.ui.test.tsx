@@ -9,7 +9,7 @@ uiBench();
 // Checks: the agent's action readies Target One, another player's planet; the warning that an effect readies only
 // one's own planets reads as allowed by Ggrocuto Rinn.
 // Why the check is redundant here: 71 note 3 limits readying to one's planets; the agent readies any planet.
-test.fails('leader:xxchaagent readying another player\'s planet reads as allowed by Ggrocuto Rinn', () => {
+test('leader:xxchaagent readying another player\'s planet reads as allowed by Ggrocuto Rinn', () => {
   const action = componentAction(id, { choices: { planet: 't1' } });
   const xxcha = bench({ faction: 'xxcha', expansions: ['pok'], start: { leaders: { [id]: 'unlocked' } }, entries: [action], game: { planetControl: { t1: 'enemy' } } });
   quote(xxcha.pack, id, 'ready any planet');

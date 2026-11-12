@@ -7,11 +7,22 @@
  * its route by one system (`speedShort`, 58) is not warned of when the active system holds a legendary planet, for
  * one ship only: the +1 is given to 1 ship, so a group of two short ships, or a shortfall of two, still stands. The
  * move value point (`speed`) does not know the active system, hence a waiver narrowed with `when`.
- *
- * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { systemPlanets } from '../../../replay/board';
+import { oneShipShort } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:winnubt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'speedShort',
+    rule: 'After you activate a system that contains a legendary planet, apply +1 to the move value of 1 of your ships during this tactical action',
+    when: (warning, ctx) => {
+      const { entry, game, pack } = ctx;
+      return entry?.type === 'tactical' && entry.systemId !== null && systemPlanets(game, entry.systemId, pack).some(planet => planet.legendary !== undefined) && oneShipShort(warning, ctx);
+    },
+  }],
+};

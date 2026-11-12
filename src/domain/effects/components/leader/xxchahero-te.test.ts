@@ -18,7 +18,7 @@ describe('leader:xxchahero-te Xxekir Grom — Planetary Defense Nexus', () => {
   // Checks: two PDS on h1 and a mech on h2 are placed, and both planets, exhausted before, are readied.
   // Why this is the component's own: PDS are placed by Construction (24) and mechs produced (67); the hero places them
   // from the reinforcements by its own text.
-  test.fails('leader:xxchahero-te places PDS and mechs on planets of the Xxcha and readies them', () => {
+  test('leader:xxchahero-te places PDS and mechs on planets of the Xxcha and readies them', () => {
     const xxcha = table([spendHome(), nexus({ 'pds@h1': 2, 'mech@h2': 1 })]);
     quote(xxcha.pack, id, 'Place any combination of up to 4 PDS or mechs onto planets you control');
     const end = endOf(xxcha);
@@ -31,7 +31,7 @@ describe('leader:xxchahero-te Xxekir Grom — Planetary Defense Nexus', () => {
   // "... up to 4 ..."
   // Checks: five units are one beyond the hero's four, and are warned of.
   // Why the check is NOT redundant here: the text gives four.
-  test.fails('leader:xxchahero-te five units are beyond its four and are warned of', () => {
+  test('leader:xxchahero-te five units are beyond its four and are warned of', () => {
     const action = nexus({ 'pds@h1': 2, 'mech@h2': 3 });
     expectStanding(warningsOf(table([action]), action), OVER);
   });
@@ -39,7 +39,7 @@ describe('leader:xxchahero-te Xxekir Grom — Planetary Defense Nexus', () => {
   // "... onto planets you control ..." LRR 85 with 24.2.
   // Checks: a PDS on t1, a planet the Xxcha do not control, is warned of.
   // Why the check is NOT redundant here: the hero places on the Xxcha's own planets only.
-  test.fails('leader:xxchahero-te a PDS on a planet the Xxcha do not control is warned of', () => {
+  test('leader:xxchahero-te a PDS on a planet the Xxcha do not control is warned of', () => {
     const action = nexus({ 'pds@t1': 1 });
     expectStanding(warningsOf(table([action]), action), 'structureNotControlled');
   });
@@ -47,7 +47,7 @@ describe('leader:xxchahero-te Xxekir Grom — Planetary Defense Nexus', () => {
   // LRR 85.5: "A planet can contain a maximum of two PDS units."
   // Checks: three PDS on h1 are one beyond what a planet holds.
   // Why the check is NOT redundant here: the hero places PDS, it does not change how many a planet holds.
-  test.fails('leader:xxchahero-te three PDS on one planet are beyond what it holds', () => {
+  test('leader:xxchahero-te three PDS on one planet are beyond what it holds', () => {
     const action = nexus({ 'pds@h1': 3 });
     expectStanding(warningsOf(table([action]), action), 'structureLimit');
   });
@@ -59,7 +59,7 @@ describe('leader:xxchahero-te Xxekir Grom — Planetary Defense Nexus', () => {
     expectStanding(warningsOf(table([nexus({ 'mech@h1': 1 }), again]), again), 'componentNotHeld');
   });
 
-  test.fails('leader:xxchahero-te is a play effect', () => {
+  test('leader:xxchahero-te is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

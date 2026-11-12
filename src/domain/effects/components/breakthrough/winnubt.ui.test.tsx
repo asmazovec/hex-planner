@@ -21,7 +21,7 @@ const table = (legendary: boolean) => {
 // Checks: the target holds a legendary planet; I take a carrier (move 1) for a route of two systems; it is written
 // into the move, and the warning that it falls short reads as allowed by Imperator.
 // Why the check is redundant here: that carrier's move value is 2 this action.
-test.fails('breakthrough:winnubt a carrier is taken for a route one system too long, and it reads as allowed by Imperator', async () => {
+test('breakthrough:winnubt a carrier is taken for a route one system too long, and it reads as allowed by Imperator', async () => {
   const winnu = table(true);
   quote(winnu.table.pack, id, 'apply +1 to the move value of 1 of your ships');
   const live = showFlight(winnu.table, winnu.move, HOME);

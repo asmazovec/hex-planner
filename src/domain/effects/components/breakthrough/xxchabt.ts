@@ -6,11 +6,31 @@
  * planets cover when each is spent for its other value: a planet is spent for one or the other, never both (ruling 1),
  * so it is worth the greater of its two values. Nothing else changes (ruling 3): a dock's Production value still counts
  * the resources only.
- *
- * Pass 1: the hint it is today; the tests say what it must do.
  */
+import type { Entry, Warning } from '../../../types';
+import type { WaiverContext } from '../../types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:xxchabt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+/** The planets an entry pays with, whichever kind of entry it is. */
+const paidWith = (entry: Entry | undefined): string[] =>
+  (entry && 'payment' in entry ? entry.payment : entry && 'effects' in entry ? entry.effects?.payment : undefined)?.planets ?? [];
+
+/** What spending each paying planet for its other value adds: a planet is spent for one value or the other, never both (ruling 1). */
+const swapped = (warning: Warning, { entry, pack }: WaiverContext, to: 'resources' | 'influence'): boolean => {
+  const gain = paidWith(entry).reduce((sum, planetId) => {
+    const planet = pack.planets[planetId];
+    return sum + Math.max(0, to === 'resources' ? (planet?.influence ?? 0) - (planet?.resources ?? 0) : (planet?.resources ?? 0) - (planet?.influence ?? 0));
+  }, 0);
+  return Number(warning.params.needed) - Number(warning.params.paid) <= gain;
+};
+
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [
+    { code: 'shortResources', rule: 'You can spend influence as if it were resources.', when: (warning, ctx) => swapped(warning, ctx, 'resources') },
+    { code: 'shortInfluence', rule: 'You can spend resources as if it were influence.', when: (warning, ctx) => swapped(warning, ctx, 'influence') },
+  ],
+};

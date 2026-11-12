@@ -14,7 +14,7 @@ describe('breakthrough:xxchabt Archon\'s Gift', () => {
   // Checks: a cruiser (cost 2) is paid with h2 alone, 1 resource and 2 influence; the warning that a resource falls
   // short is listed and lifted by the breakthrough.
   // Why the check is redundant here: h2 spent for its influence pays 2, the whole cost.
-  test.fails('breakthrough:xxchabt pays a production with a planet\'s influence: shortResources is waived', () => {
+  test('breakthrough:xxchabt pays a production with a planet\'s influence: shortResources is waived', () => {
     const build = produce({ cruiser: 1 }, ['h2']);
     const xxcha = table('xxcha', [build]);
     quote(xxcha.pack, id, 'You can spend influence as if it were resources.');
@@ -25,7 +25,7 @@ describe('breakthrough:xxchabt Archon\'s Gift', () => {
   // Checks: Leadership's one token bought (3 influence) is paid with h1 alone, 3 resources and 1 influence; the
   // warning that influence falls short is listed and lifted.
   // Why the check is redundant here: h1 spent for its resources pays 3, the whole cost.
-  test.fails('breakthrough:xxchabt pays influence with a planet\'s resources: shortInfluence is waived', () => {
+  test('breakthrough:xxchabt pays influence with a planet\'s resources: shortInfluence is waived', () => {
     const buy = primary(CARD.leadership, { boughtTokens: 1, tokens: { tactic: 4 }, payment: { planets: ['h1'], tradeGoods: 0 } });
     expectWaived(warningsOf(table('xxcha', [buy]), buy), 'shortInfluence', id);
   });
@@ -53,7 +53,7 @@ describe('breakthrough:xxchabt Archon\'s Gift', () => {
     expectStanding(warningsOf(table('xxcha', [build], false), build), 'shortResources');
   });
 
-  test.fails('breakthrough:xxchabt is a passive effect that waives a payment short of either value', () => {
+  test('breakthrough:xxchabt is a passive effect that waives a payment short of either value', () => {
     const { pack } = table('xxcha', []);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['shortInfluence', 'shortResources']);
