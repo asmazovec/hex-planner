@@ -1,0 +1,11 @@
+/**
+ * Valkyrie Particle Weave (Sardakk N'orr, faction technology): "After making combat rolls during a round of ground
+ * combat, if your opponent produced 1 or more hits, you produce 1 additional hit."
+ *
+ * A hint in the block of the invasion, where ground combat is fought. Hits are dice, and the plan simulates no combat.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'technology:vpw';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
