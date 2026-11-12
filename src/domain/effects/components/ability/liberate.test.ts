@@ -18,7 +18,7 @@ describe('ability:liberate Liberate', () => {
   // Checks: two infantry take t1, whose resource value is 2; the planet is mine and ready at the end of the plan.
   // Why the check is redundant here: a planet gained enters exhausted (49.5.2), and the ability readies it at once
   // when its infantry reach its resources.
-  test.fails('ability:liberate readies a planet gained with as many infantry as its resources', () => {
+  test('ability:liberate readies a planet gained with as many infantry as its resources', () => {
     const table = invade('bastion', { infantry: 2 }, { infantry: 2 });
     quote(table.pack, id, 'ready that planet if it contains a number of your infantry equal to or greater than that planet\'s resource value');
     const end = endOf(table);
@@ -30,7 +30,7 @@ describe('ability:liberate Liberate', () => {
   // Checks: one infantry takes t1 (resources 2): the planet stays exhausted, and one more infantry stands on it.
   // Why the check is NOT redundant here: too few infantry, so the planet is not readied; the ability gives the infantry
   // instead.
-  test.fails('ability:liberate places one infantry on a planet gained with fewer infantry than its resources', () => {
+  test('ability:liberate places one infantry on a planet gained with fewer infantry than its resources', () => {
     const table = invade('bastion', { infantry: 1 }, { infantry: 1 });
     quote(table.pack, id, 'otherwise, place 1 infantry on that planet.');
     const end = endOf(table);
@@ -42,7 +42,7 @@ describe('ability:liberate Liberate', () => {
   // Checks: one infantry and one mech take t1 (resources 2); only the infantry count, so the planet is not readied and
   // an infantry is placed.
   // Why the check is NOT redundant here: the mech does not count towards the resource value.
-  test.fails('ability:liberate does not count mechs: an infantry and a mech on a planet of 2 resources get one more infantry', () => {
+  test('ability:liberate does not count mechs: an infantry and a mech on a planet of 2 resources get one more infantry', () => {
     const table = invade('bastion', { infantry: 1, mech: 1 }, { infantry: 1, mech: 1 });
     const end = endOf(table);
     expect(end.exhausted).toContain('t1');
@@ -70,7 +70,7 @@ describe('ability:liberate Liberate', () => {
   });
 
   // Checks: the ability is applied by itself, not shown only: its effect is no longer a mere hint.
-  test.fails('ability:liberate is applied by the replay, not a hint', () => {
+  test('ability:liberate is applied by the replay, not a hint', () => {
     const { pack } = invade('bastion', { infantry: 1 }, { infantry: 1 });
     expect(effect(pack, id).tier).not.toBe('hint');
   });

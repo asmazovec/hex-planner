@@ -8,11 +8,23 @@
  * one infantry from the reinforcements on it. The number of mechs does not matter (Last Bastion, Liberate 2). Nothing
  * is waived: the rule of the exhausted planet still holds for every other faction and every other way of gaining one.
  *
- * Pass 1: a hint as it is today. Pass 2 needs a passive trigger at the gain of control (`gainControl` in
- * src/domain/replay/invasion.ts), which the contract does not have yet.
+ * An `onGainControl` hook of a passive ability: it runs for each planet newly gained, after the planet is exhausted.
+ * The resource value is the printed one; only infantry are counted.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:liberate';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  onGainControl: ({ pack, state, planetId }) => {
+    const resources = pack.planets[planetId]?.resources ?? 0;
+    const here = state.ground[planetId] ?? {};
+    if ((here.infantry ?? 0) >= resources) {
+      state.exhausted = state.exhausted.filter(p => p !== planetId);
+    } else {
+      state.ground[planetId] = { ...here, infantry: (here.infantry ?? 0) + 1 };
+    }
+  },
+};
