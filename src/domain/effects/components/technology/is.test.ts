@@ -51,7 +51,7 @@ describe('technology:is Inheritance Systems', () => {
   //  to and separately from any other costs paid to research the technology."
   // Checks: the research costs four, the card two more; four paid is short by two.
   // Why the check is NOT redundant here: the card lifts the prerequisites, not its own cost.
-  test.fails('technology:is used costs two resources more than the research', () => {
+  test('technology:is used costs two resources more than the research', () => {
     const card = using(research(0), id);
     const warnings = warningsOf(table([card]), card);
     expectStanding(warnings, 'shortResources');

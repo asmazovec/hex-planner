@@ -7,8 +7,8 @@
  * research, lifts it for that entry and adds 2 resources to its cost (faction note 1: paid apart from the research).
  *
  * Pass 2: a `play` that waives `prerequisitesMissing` for the entry that names it, while the card is held and ready (a
- * second use finds it exhausted and lifts nothing). The 2 resources more are not counted: `researchCost` is asked
- * without the entry's `uses` (see the report).
+ * second use finds it exhausted and lifts nothing), and adds the 2 resources to the cost of the research (`researchCost`,
+ * asked with the entry by `appliedFor`).
  */
 import { componentById } from '../../../components';
 import { holds, isExhausted } from '../../../replay/holdings';
@@ -20,6 +20,8 @@ export const id = 'technology:is';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
+  // 2 resources for the research, however many technologies it names (faction note 1: paid apart from the rest).
+  modify: { researchCost: (value, ctx) => (ctx.index === 0 ? value + 2 : value) },
   waive: [{
     code: prerequisitesMissing.code,
     rule: "ignore all of that technology's prerequisites",

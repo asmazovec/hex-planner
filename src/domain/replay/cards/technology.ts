@@ -4,9 +4,10 @@
  * research itself, with its prerequisites, is `replay/research.ts`; here stand the card's limit and cost.
  *
  * A component that makes the secondary resolve as the primary (Brilliant) is asked at the point `researchAsPrimary`;
- * one that changes what a technology costs, at `researchCost`.
+ * one that changes what a technology costs, at `researchCost` (`appliedFor`: a component the entry names counts too, Inheritance Systems).
  */
 import { applied } from '../../effects/apply';
+import { appliedFor } from '../../effects/entryApply';
 import '../../effects/points/research';
 import { violation } from '../../rules/registry';
 import type { CardEntry } from '../../strategy';
@@ -38,7 +39,7 @@ export const technology: CardHandler = {
     const asPrimary = researchesAsPrimary(entry, held, who);
     const amount = newResearch(entry, held).reduce((sum, id, index) => {
       const base = asPrimary ? (index === 0 ? 0 : SECOND_RESEARCH) : SECONDARY_RESEARCH;
-      return sum + (who ? applied(who.pack, { holdings: held, faction: who.faction }, 'researchCost', base, { technology: id }).value : base);
+      return sum + (who ? appliedFor(who.pack, { holdings: held, faction: who.faction }, entry, 'researchCost', base, { technology: id, index }).value : base);
     }, 0);
     return { kind: 'resources', amount };
   },

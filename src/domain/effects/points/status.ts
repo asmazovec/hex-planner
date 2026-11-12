@@ -3,7 +3,7 @@
  * `../types` stay as they are: two points of the count, the hooks a law, an objective or a card with a one-time effect
  * needs, and the helpers that ask them. See docs/phase4/infra/status.md.
  *
- * Points (asked with `applied`, or with `appliedFor` when the entry's own components take part):
+ * Points (asked with `applied`, or with `appliedFor` of `../entryApply` when the entry's own components take part):
  *  - `secretLimit`: how many secret objectives a player may have, scored or not (LRR 61.21); base 3.
  *  - `strategyCost`: how many strategy tokens a card's primary (as a token play) or secondary costs (83.3, 83.4, 20.5); base 1.
  *  - `tokensGained` (step `status`), `handLimit` and `vp` were declared before; the first two are asked now.
@@ -13,12 +13,9 @@ import objectiveUnmet from '../../rules/codes/objectiveUnmet';
 import { violation } from '../../rules/registry';
 import type { DataPack, Entry, Game, GameState, Warning } from '../../types';
 import { componentById } from '../../components';
-import { holds, isExhausted } from '../../replay/holdings';
 import { applyPayment, checkPayment } from '../../replay/payment';
 import { playedBy } from '../waivers';
-import type { Applied } from '../apply';
-import { effectOf, orderOf, passivesOf, type Holder } from '../registry';
-import type { ComponentEffect, EffectTurn, Modifiers } from '../types';
+import type { ComponentEffect, EffectTurn } from '../types';
 
 /** What a requirement of an objective is asked with: the owner's board before the status entry that scores it. */
 export interface RequirementContext {
@@ -66,40 +63,6 @@ declare module '../types' {
     /** A law in force: the components of this id that are not in force while it is (Articles of War takes away the mechs). */
     suppresses?: (id: string) => boolean;
   }
-}
-
-/** The component named by the entry takes part in a count only while its owner holds it ready: held and not exhausted. */
-const ready = (pack: DataPack, state: GameState | undefined, id: string): boolean => {
-  const def = componentById(pack, id);
-  return !state || !def || (holds(state.holdings, def) && !isExhausted(state.holdings, def));
-};
-
-/**
- * `applied` with the components the entry plays taking part: the components in force first, as `applied` has them,
- * then each `play`-tier effect with a `modify` of the point that the entry names (its action, its `spends`, its
- * `uses`), if its owner holds it ready (`state`, the owner's board before the entry). All in registry order.
- */
-export function appliedFor<K extends keyof Modifiers>(
-  pack: DataPack, who: Holder, entry: Entry | undefined, state: GameState | undefined, point: K, base: number, ctx: Parameters<Modifiers[K]>[1],
-): Applied {
-  const list = passivesOf(pack, who);
-  if (entry) {
-    for (const id of playedBy(entry)) {
-      const effect = effectOf(pack, id);
-      if (effect?.tier === 'play' && effect.modify?.[point] && !list.some(([other]) => other === id) && ready(pack, state, id)) list.push([id, effect]);
-    }
-    list.sort(([a], [b]) => orderOf(pack, a) - orderOf(pack, b));
-  }
-  let value = base;
-  const by: string[] = [];
-  for (const [id, effect] of list) {
-    const modify = effect.modify?.[point] as ((value: number, ctx: unknown) => number) | undefined;
-    if (!modify) continue;
-    const next = modify(value, ctx);
-    if (next !== value) by.push(id);
-    value = next;
-  }
-  return { value, by };
 }
 
 /** The action cards an entry plays: its component action, what it spends and what it names in `uses`. */

@@ -5,7 +5,7 @@
  */
 import { componentById } from '../components';
 import { choicesFor } from '../effects/choices';
-import { appliedFor } from '../effects/points/status';
+import { appliedFor } from '../effects/entryApply';
 import { effectOf, effectsOf, holderOf, inForceOf } from '../effects/registry';
 import type { EffectTurn } from '../effects/types';
 import handOverLimit from '../rules/codes/handOverLimit';
@@ -73,12 +73,12 @@ export function afterEntry(a: AfterEntry): void {
   const holder = holderOf(game, state, shared);
   // The hand grew: no more action cards than the limit (2.4, 2.4.1).
   if ((entry.gains ?? []).some(id => id.startsWith('actionCard:'))) {
-    const limit = appliedFor(pack, holder, entry, a.before, 'handLimit', HAND_LIMIT, { faction: game.faction }).value;
+    const limit = appliedFor(pack, holder, entry, 'handLimit', HAND_LIMIT, { faction: game.faction }, a.before).value;
     if (state.holdings.hand.length > limit) warnings.push(violation(handOverLimit.code, { cards: state.holdings.hand.length, limit }));
   }
   // A secret objective was drawn: no more than the limit, scored and unscored together (61.21).
   if ((entry.gains ?? []).some(id => id.startsWith('secretObjective:'))) {
-    const limit = appliedFor(pack, holder, entry, a.before, 'secretLimit', SECRET_LIMIT, { faction: game.faction }).value;
+    const limit = appliedFor(pack, holder, entry, 'secretLimit', SECRET_LIMIT, { faction: game.faction }, a.before).value;
     const secrets = state.holdings.secrets.length + state.holdings.scored.filter(id => id.startsWith('secretObjective:')).length;
     if (secrets > limit) warnings.push(violation(secretsOverLimit.code, { secrets, limit }));
   }

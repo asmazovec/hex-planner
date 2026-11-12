@@ -1,5 +1,5 @@
 import { strategyCardSet } from './cards';
-import { appliedFor } from './effects/points/status';
+import { appliedFor } from './effects/entryApply';
 import { holderOf } from './effects/registry';
 import type { Holder } from './effects/registry';
 import { seatSlots } from './mapBuilder';
@@ -96,7 +96,7 @@ export function strategyTokensOwed(
   entry: CardEntry, play: { held?: number[]; free?: boolean }, game: Pick<Game, 'faction'>, state: GameState, shared: GameState, pack: DataPack,
 ): number {
   if (!costsStrategyToken(entry, play)) return 0;
-  return Math.max(0, appliedFor(pack, holderOf(game, state, shared), entry, state, 'strategyCost', 1, { card: entry.card, secondary: entry.type === 'secondary' }).value);
+  return Math.max(0, appliedFor(pack, holderOf(game, state, shared), entry, 'strategyCost', 1, { card: entry.card, secondary: entry.type === 'secondary' }, state).value);
 }
 
 /**
