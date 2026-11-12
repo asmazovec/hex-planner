@@ -14,4 +14,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:war_machine1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  modify: { productionTotal: value => value + 4, productionCost: value => Math.max(0, value - 1) },
+};

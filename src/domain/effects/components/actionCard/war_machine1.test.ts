@@ -17,7 +17,7 @@ describe('actionCard:war_machine1 War Machine', () => {
   // Checks: nine infantry are produced at a dock of Production 5 with War Machine used: no production warning.
   // Why the check is redundant here: the limit (68.1) is the total Production value, and the card raises it to 9 for
   // this use of Production; nine units are within it.
-  test.fails('actionCard:war_machine1 raises the Production value by 4: nine units at a dock of 5 are not over', () => {
+  test('actionCard:war_machine1 raises the Production value by 4: nine units at a dock of 5 are not over', () => {
     const entry = using(produce({ infantry: 9 }), id);
     quote(table(entry).pack, id, 'Apply +4 to the total PRODUCTION value of your units');
     expectNone(warningsOf(table(entry), entry), 'productionOver');
@@ -35,7 +35,7 @@ describe('actionCard:war_machine1 War Machine', () => {
   // "Apply +4 ..."
   // Checks: with the card the tenth unit is over, and the warning names the value 9.
   // Why the check is NOT redundant here: the card adds 4, it does not lift the limit.
-  test.fails('actionCard:war_machine1 the tenth unit is over a Production value of 9', () => {
+  test('actionCard:war_machine1 the tenth unit is over a Production value of 9', () => {
     const entry = using(produce({ infantry: 10 }), id);
     expectStanding(warningsOf(table(entry), entry), 'productionOver');
     expect(of(entry, 'productionOver')[0].params).toMatchObject({ value: 9, count: 10 });
@@ -45,7 +45,7 @@ describe('actionCard:war_machine1 War Machine', () => {
   //  value and/or to reduce the combined cost of the produced units by 2."
   // Checks: with two copies in hand and both used, thirteen units are over a value of 9, not 13.
   // Why the check is NOT redundant here: only one War Machine counts for one use of Production.
-  test.fails('actionCard:war_machine1 a second copy in the same production adds nothing', () => {
+  test('actionCard:war_machine1 a second copy in the same production adds nothing', () => {
     const entry = { ...produce({ infantry: 13 }), uses: [id, id] } as Entry;
     expect(of(entry, 'productionOver', [id, id])[0].params).toMatchObject({ value: 9, count: 13 });
   });
@@ -53,7 +53,7 @@ describe('actionCard:war_machine1 War Machine', () => {
   // "... and reduce the combined cost of the produced units by 1."
   // Checks: a cruiser (cost 2) is paid with Home Two alone (1 resource) and the card used: no shortfall.
   // Why the check is redundant here: the cost asked of the payment is 2 − 1 = 1, which the planet pays.
-  test.fails('actionCard:war_machine1 reduces the cost by 1: a cruiser is paid with one resource', () => {
+  test('actionCard:war_machine1 reduces the cost by 1: a cruiser is paid with one resource', () => {
     const entry = using(produce({ cruiser: 1 }, { planets: ['h2'], tradeGoods: 0 }), id);
     quote(table(entry).pack, id, 'reduce the combined cost of the produced units by 1');
     expectNone(warningsOf(table(entry), entry), 'shortResources');
@@ -75,7 +75,7 @@ describe('actionCard:war_machine1 War Machine', () => {
     expectStanding(warningsOf(table(entry, [id]), entry), 'productionOver');
   });
 
-  test.fails('actionCard:war_machine1 is a play effect that lifts no check', () => {
+  test('actionCard:war_machine1 is a play effect that lifts no check', () => {
     const { pack } = table(produce({}));
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

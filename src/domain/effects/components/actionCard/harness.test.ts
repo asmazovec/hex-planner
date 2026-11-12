@@ -15,7 +15,7 @@ describe('actionCard:harness Harness Energy', () => {
   // the end: the value on their faction sheet.
   // Why it is counted: commodities are part of the plan (what a transaction can give); LRR 21.2 caps them at the
   // faction's value, and to replenish is to fill them to it.
-  test.fails('actionCard:harness fills the commodities up to the faction value', () => {
+  test('actionCard:harness fills the commodities up to the faction value', () => {
     const entry = using(intoNebula(), id);
     const sol = table([entry]);
     quote(sol.pack, id, 'Replenish your commodities.');
@@ -34,7 +34,7 @@ describe('actionCard:harness Harness Energy', () => {
   // Ruling 1: "If a player has their maximum number of commodities, they may still play Harness Energy."
   // Checks: two actions that each replenish leave the commodities at the faction value, not above it.
   // Why the limit is NOT lifted here: the card replenishes up to the value of 21.2; it gives nothing beyond.
-  test.fails('actionCard:harness at the maximum already, the commodities stay at the faction value', () => {
+  test('actionCard:harness at the maximum already, the commodities stay at the faction value', () => {
     const first = using(intoNebula(), id);
     const second = using(tactical(TARGET, { moves: [{ from: NEAR, units: { cruiser: 1 } }] }), 'actionCard:harness');
     const sol = table([first, second], [id, id]);
@@ -52,7 +52,7 @@ describe('actionCard:harness Harness Energy', () => {
 
   test.todo('actionCard:harness used in an action whose system is not an anomaly is warned of: the replay checks no window of an action card yet');
 
-  test.fails('actionCard:harness is a play effect that lifts no check', () => {
+  test('actionCard:harness is a play effect that lifts no check', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

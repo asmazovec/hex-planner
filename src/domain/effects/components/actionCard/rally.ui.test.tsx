@@ -19,7 +19,7 @@ const setup = () => {
 // editor, and the fleet pool warning of the five ships goes away.
 // Why the check is redundant here: the fleet pool now holds 5 tokens, so five ships are within it (a change of the
 // number, not a waiver: nothing is shown as allowed).
-test.fails('actionCard:rally named in «Used», the five ships no longer exceed the fleet pool', async () => {
+test('actionCard:rally named in «Used», the five ships no longer exceed the fleet pool', async () => {
   const { move, table } = setup();
   quote(table.pack, id, 'Place 2 command tokens from your reinforcements in your fleet pool.');
   showTactical(table, move);

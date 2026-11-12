@@ -12,4 +12,10 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:harness';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: ({ game, state, pack }) => {
+    state.commodities = pack.factions[game.faction]?.commodities ?? state.commodities;
+  },
+};

@@ -13,4 +13,11 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:rally';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  playAt: 'activation',
+  play: ({ state }) => {
+    state.fleet += 2;
+  },
+};

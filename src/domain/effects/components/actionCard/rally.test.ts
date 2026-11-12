@@ -18,7 +18,7 @@ describe('actionCard:rally Rally', () => {
   // where a fleet pool of 3 allowed three, and no fleet pool warning is made.
   // Why the check is redundant here: the card raises the fleet pool to 5 right after the activation, before the
   // movement; five ships are within the new limit (37.1 counts the tokens in the pool, whatever brought them).
-  test.fails('actionCard:rally two more fleet pool tokens let five ships arrive in the activated system', () => {
+  test('actionCard:rally two more fleet pool tokens let five ships arrive in the activated system', () => {
     const entry = using(move(5), id);
     quote(table(entry, 5).pack, id, 'Place 2 command tokens from your reinforcements in your fleet pool.');
     expect(fleetWarnings(entry, 5)).toEqual([]);
@@ -37,7 +37,7 @@ describe('actionCard:rally Rally', () => {
   // "Place 2 command tokens ..."
   // Checks: with the card a sixth ship is still warned of, and the warning names the fleet pool of 5.
   // Why the check is NOT redundant here: the card adds exactly two tokens; it does not lift the limit.
-  test.fails('actionCard:rally the sixth ship is warned of against a fleet pool of 5', () => {
+  test('actionCard:rally the sixth ship is warned of against a fleet pool of 5', () => {
     const entry = using(move(6), id);
     expectStanding(warningsOf(table(entry, 6), entry), 'fleetPool');
     expect(fleetWarnings(entry, 6)[0].params).toMatchObject({ ships: 6, fleet: 5 });
@@ -46,7 +46,7 @@ describe('actionCard:rally Rally', () => {
   // "... from your reinforcements in your fleet pool."
   // Checks: the tokens stay in the fleet pool after the action: the plan ends with 5 fleet tokens.
   // Why it matters: the tokens are placed, not lent for the action; later actions count them too.
-  test.fails('actionCard:rally the fleet pool keeps the two tokens after the action', () => {
+  test('actionCard:rally the fleet pool keeps the two tokens after the action', () => {
     const entry = using(move(1), id);
     expect(endOf(table(entry, 1)).fleet).toBe(5);
   });
@@ -59,7 +59,7 @@ describe('actionCard:rally Rally', () => {
 
   test.todo('actionCard:rally played on a system with no other player\'s ships is warned of: the replay checks no window of an action card yet');
 
-  test.fails('actionCard:rally is a play effect that lifts no check', () => {
+  test('actionCard:rally is a play effect that lifts no check', () => {
     const { pack } = table(move(1), 1);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

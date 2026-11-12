@@ -12,4 +12,10 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:impersonation';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  cost: { kind: 'influence', amount: 3 },
+  // The objective drawn is chance: the player enters it as a gain of the action.
+  play: () => {},
+};
