@@ -63,7 +63,7 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
   // Checks: two infantry from n1 at once stand over the card's limit.
   // Why the check is NOT redundant here: the card moves one ground force per planet (G'hom Sek'kus ruling 4: per
   // Invasion step, whatever the number of planets committed to).
-  test.fails('leader:sardakkcommander two ground forces from one planet: the warning stands', () => {
+  test('leader:sardakkcommander two ground forces from one planet: the warning stands', () => {
     const sardakk = table(tactical(TARGET, { landings: [commit('n1', 't1', { infantry: 2 })] }));
     expectStanding(warningsOf(sardakk, sardakk.move), CODE);
   });
@@ -71,14 +71,14 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
   // "... adjacent systems that do not contain 1 of your command tokens."
   // Checks: an earlier action this round put my command token in 1,0; committing from n1 then stands.
   // Why the check is NOT redundant here: the card excludes systems with the player's command token (compare 95.3).
-  test.fails('leader:sardakkcommander a planet in a system with my command token: the warning stands', () => {
+  test('leader:sardakkcommander a planet in a system with my command token: the warning stands', () => {
     const sardakk = table(tactical(TARGET, { landings: [commit('n1', 't1', { infantry: 1 })] }), { before: [tactical(NEAR)] });
     expectStanding(warningsOf(sardakk, sardakk.move), CODE);
   });
 
   // Checks: h1 is two systems from the target, not adjacent: committing from it stands.
   // Why the check is NOT redundant here: only the active system and the systems adjacent to it are named.
-  test.fails('leader:sardakkcommander a planet two systems away: the warning stands', () => {
+  test('leader:sardakkcommander a planet two systems away: the warning stands', () => {
     const sardakk = table(tactical(TARGET, { landings: [commit('h1', 't1', { infantry: 1 })] }));
     expectStanding(warningsOf(sardakk, sardakk.move), CODE);
   });
@@ -87,14 +87,14 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
   //  any number of those ground forces to land on any of the planets in that system."
   // Checks: the commander still locked (not in the start's leaders): the same commit stands.
   // Why the check is NOT redundant here: a locked leader is not in force (51.7 via `inForce`).
-  test.fails('leader:sardakkcommander locked: the warning stands', () => {
+  test('leader:sardakkcommander locked: the warning stands', () => {
     const sardakk = table(tactical(TARGET, { landings: [commit('n1', 't1', { infantry: 1 })] }), { leader: null });
     expectStanding(warningsOf(sardakk, sardakk.move), CODE);
   });
 
   // Checks: another faction committing from a planet is warned of; the infantry still moves, as a warning forbids nothing.
   // Why the check is NOT redundant here: nothing of the Federation of Sol speaks of committing from planets.
-  test.fails('leader:sardakkcommander another faction committing from a planet: the warning stands, the unit still moves', () => {
+  test('leader:sardakkcommander another faction committing from a planet: the warning stands, the unit still moves', () => {
     const sol = table(tactical(TARGET, { landings: [commit('n1', 't1', { infantry: 1 })] }), { faction: 'sol', leader: null });
     expectStanding(warningsOf(sol, sol.move), CODE);
     expect(endOf(sol).ground.t1).toEqual({ infantry: 1 });

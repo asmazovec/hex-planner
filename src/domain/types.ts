@@ -314,6 +314,7 @@ export type EntryBody = (
       moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string;
         /** Structures taken on board with the units: from a planet (`from` is its id) or from the space area of a system. The rules forbid it (85.3); a component may lift that. */ structures?: StructureCounts }[];
       landings: { planetId: string; units: UnitCounts;
+        /** A planet the ground forces are committed from instead of the space area of the active system (49.2); a component may lift the warning. */ from?: string;
         /** Structures put on the planet from the space area of the active system, at the end of the action. */ structures?: StructureCounts }[];
       production: UnitCounts; payment: Payment;
       /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;

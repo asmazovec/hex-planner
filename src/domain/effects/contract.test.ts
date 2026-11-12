@@ -65,6 +65,7 @@ describe('effects registry', () => {
           expect(effect.choose, id).toBeUndefined();
         }
         if (effect.tier !== 'hint') expect(effect.hintAt, id).toBeUndefined();
+        if (effect.tier === 'hint') expect(effect.onGainControl, id).toBeUndefined();
       }
     }
   });
