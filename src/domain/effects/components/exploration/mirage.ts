@@ -1,0 +1,14 @@
+/**
+ * Mirage (frontier exploration): "Place the Mirage planet token in this system. Gain the Mirage planet card and ready
+ * it. Then, purge this card."
+ *
+ * To be a `play` effect: the entry that explores the frontier token names the card in `uses`, and the player gains
+ * control of the planet Mirage (`control.mirage`), readied, so its legendary card Mirage Flight Academy is in force
+ * for them (53.2). The token itself (the planet standing in the active system) is not modelled: the systems of the
+ * board take their planets from their tiles. Pass 1: the hint it is today.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'exploration:mirage';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id };
