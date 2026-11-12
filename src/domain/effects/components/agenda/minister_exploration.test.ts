@@ -20,7 +20,7 @@ describe('agenda:minister_exploration Minister of Exploration', () => {
   // Checks: the owner takes Target One and ends the plan with 1 trade good.
   // Why the check is redundant here: no check is lifted; the law adds to the count of trade goods, which the plan
   // tracks, at the moment control is gained (49.6 for an invasion).
-  test.fails('agenda:minister_exploration gives 1 trade good for a planet taken', () => {
+  test('agenda:minister_exploration gives 1 trade good for a planet taken', () => {
     const minister = table([law(), invade('t1')]);
     quote(minister.pack, id, 'When the owner of this card gains control of a planet, they gain 1 trade good.');
     expect(endOf(minister).control.t1).toBe('me');
@@ -29,13 +29,13 @@ describe('agenda:minister_exploration Minister of Exploration', () => {
 
   // Checks: two planets taken in one action give 2.
   // Why: the law speaks of each planet ("a planet"), once per control gained.
-  test.fails('agenda:minister_exploration gives 1 trade good for each planet taken', () => {
+  test('agenda:minister_exploration gives 1 trade good for each planet taken', () => {
     expect(endOf(table([law(), invade('t1', 't2')])).tradeGoods).toBe(2);
   });
 
   // Checks: landing again on a planet already controlled gives nothing more: 1 for two landings on t1.
   // Why the check is NOT redundant here: control is gained once; a planet already the owner's is not gained again.
-  test.fails('agenda:minister_exploration a planet already controlled gives nothing more', () => {
+  test('agenda:minister_exploration a planet already controlled gives nothing more', () => {
     const first = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, infantry: 2 } }], landings: [{ planetId: 't1', units: { infantry: 1 } }] });
     const second = tactical(TARGET, { landings: [{ planetId: 't1', units: { infantry: 1 } }] });
     const minister = table([law(), first, second]);
@@ -58,7 +58,7 @@ describe('agenda:minister_exploration Minister of Exploration', () => {
     expect(endOf(table([law('x'), invade('t1')], RIVAL)).tradeGoods).toBe(0);
   });
 
-  test.fails('agenda:minister_exploration is a passive effect', () => {
+  test('agenda:minister_exploration is a passive effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
   });

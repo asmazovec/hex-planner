@@ -20,7 +20,7 @@ const editor = (inPlay: boolean) => {
 // Checks: the route through the nebula stays in the entry, and its warning stands in the route block in the allowed
 // look, naming Shared Research.
 // Why the check is redundant here: the law lets every player's units move through nebulae, which 59.1 forbids.
-test.fails('agenda:shared_research a route through a nebula is kept, and the warning reads as allowed by Shared Research', () => {
+test('agenda:shared_research a route through a nebula is kept, and the warning reads as allowed by Shared Research', () => {
   const { table, live } = editor(true);
   quote(table.pack, id, "Each player's units can move through nebulae.");
   expect(live.entry().moves[0].via).toEqual([NEAR]);

@@ -21,7 +21,7 @@ describe('agenda:shared_research Shared Research', () => {
   // route is blocked is still listed and lifted by the law.
   // Why the check is redundant here: LRR 59.1 lets a ship enter a nebula only as the active system, so a route
   // through it is blocked; the law says every player's units can move through nebulae.
-  test.fails('agenda:shared_research in play lifts the blocked route through a nebula', () => {
+  test('agenda:shared_research in play lifts the blocked route through a nebula', () => {
     const move = through();
     const shared = table([law(), move]);
     quote(shared.pack, id, "Each player's units can move through nebulae.");
@@ -61,7 +61,7 @@ describe('agenda:shared_research Shared Research', () => {
     expect(warnings.find(w => w.code === 'routeBlocked')?.params).toMatchObject({ systemId: TARGET });
   });
 
-  test.fails('agenda:shared_research is a passive effect that waives the blocked route', () => {
+  test('agenda:shared_research is a passive effect that waives the blocked route', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);

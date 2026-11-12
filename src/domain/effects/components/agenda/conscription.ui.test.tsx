@@ -18,7 +18,7 @@ const editor = (inPlay: boolean) => {
 // "For: When a player produces units, they produce only 1 fighter and infantry for its cost instead of 2."
 // Checks: the production of two infantry stays as entered, and the payment block warns of the resource missing.
 // Why the check is NOT redundant here: the law raises the cost (a `modify`), it allows nothing; the shortfall stands.
-test.fails('agenda:conscription two infantry paid with 1 resource: the shortfall stands in the payment', () => {
+test('agenda:conscription two infantry paid with 1 resource: the shortfall stands in the payment', () => {
   const { table, live } = editor(true);
   quote(table.pack, id, 'they produce only 1 fighter and infantry for its cost instead of 2');
   expect(live.entry().production).toEqual({ infantry: 2 });

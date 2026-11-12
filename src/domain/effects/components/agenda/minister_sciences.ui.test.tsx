@@ -20,7 +20,7 @@ const technology = (inPlay: boolean) => {
 // Checks: the two technologies stay researched with nothing paid, and the shortfall reads as allowed by Minister of
 // Sciences.
 // Why the check is redundant here: the 6 resources of the second technology (91.2) are not owed by the law's owner.
-test.fails('agenda:minister_sciences two technologies researched for nothing, and the shortfall reads as allowed by Minister of Sciences', () => {
+test('agenda:minister_sciences two technologies researched for nothing, and the shortfall reads as allowed by Minister of Sciences', () => {
   const { table, live } = technology(true);
   quote(table.pack, id, 'they do not need to spend resources to research technology');
   expect(live.entry()).toMatchObject({ effects: { researched: ['technology:gd', 'technology:amd'] } });

@@ -25,7 +25,7 @@ describe('agenda:minister_industry Minister of Industry', () => {
   // Why the check is redundant here: units produce by their PRODUCTION ability in the production step of a tactical
   // action (67.1, 89.5) and Construction only places structures (4.2); the law lets the units of that system produce
   // when the dock is placed.
-  test.fails('agenda:minister_industry lets the units of the system produce when a space dock is placed', () => {
+  test('agenda:minister_industry lets the units of the system produce when a space dock is placed', () => {
     const entry = construct({ fighter: 2 });
     const minister = table(entry, true);
     quote(minister.pack, id, 'their units in that system may use their PRODUCTION abilities');
@@ -65,7 +65,7 @@ describe('agenda:minister_industry Minister of Industry', () => {
     expectStanding(warningsOf(table(entry, true), entry), 'shortResources');
   });
 
-  test.fails('agenda:minister_industry is a passive effect that waives the production of a card that produces nothing', () => {
+  test('agenda:minister_industry is a passive effect that waives the production of a card that produces nothing', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);

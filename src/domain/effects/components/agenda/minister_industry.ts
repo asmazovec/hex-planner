@@ -5,11 +5,22 @@
  * A waiver of a new check: units produce only by a PRODUCTION ability in a tactical action or where a card says so
  * (67.1); Construction places a space dock (4.2/85.2) and produces nothing. With this law the owner's units in the
  * system of the dock just placed may produce, against their PRODUCTION value.
- *
- * Pass 1: written as the hint it is today; the tests beside it say what it must do.
  */
+import { systemOfPlanet } from '../../../stacks';
+import productionNotAllowed from '../../../rules/codes/productionNotAllowed';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:minister_industry';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: productionNotAllowed.code,
+    rule: 'their units in that system may use their PRODUCTION abilities',
+    when: (warning, ctx) => {
+      const docks = ctx.entry && 'effects' in ctx.entry ? ctx.entry.effects?.structures?.filter(s => s.kind === 'spacedock') ?? [] : [];
+      return docks.some(dock => systemOfPlanet(ctx.game, dock.planetId, ctx.pack) === warning.params.systemId);
+    },
+  }],
+};

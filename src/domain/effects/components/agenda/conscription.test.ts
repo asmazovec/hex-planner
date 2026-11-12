@@ -16,7 +16,7 @@ describe('agenda:conscription Regulated Conscription', () => {
   // Why the check is NOT redundant here: the law makes production dearer, it lifts nothing: it is a `modify` of the
   // unit cost (68.1.2 halves it for fighters and infantry, the law takes the halving away), and the payment check
   // then runs against the new number.
-  test.fails('agenda:conscription makes each infantry cost a whole resource: two infantry for 1 resource fall short', () => {
+  test('agenda:conscription makes each infantry cost a whole resource: two infantry for 1 resource fall short', () => {
     const entry = produce({ infantry: 2 });
     const conscription = table(entry, true);
     quote(conscription.pack, id, 'they produce only 1 fighter and infantry for its cost instead of 2');
@@ -27,7 +27,7 @@ describe('agenda:conscription Regulated Conscription', () => {
 
   // Checks: fighters are dearer the same way: three fighters cost 3.
   // Why the check is NOT redundant here: the law names fighters beside infantry; the payment check runs on 3.
-  test.fails('agenda:conscription makes each fighter cost a whole resource too', () => {
+  test('agenda:conscription makes each fighter cost a whole resource too', () => {
     const entry = produce({ fighter: 3 });
     expect(warningsOf(table(entry, true), entry).find(w => w.code === 'shortResources')?.params).toMatchObject({ needed: 3, paid: 1 });
   });
@@ -54,7 +54,7 @@ describe('agenda:conscription Regulated Conscription', () => {
     expect(warningsOf(table(entry, true), entry).find(w => w.code === 'shortResources')?.params).toMatchObject({ needed: 3, paid: 1 });
   });
 
-  test.fails('agenda:conscription is a passive effect that changes the unit cost and waives nothing', () => {
+  test('agenda:conscription is a passive effect that changes the unit cost and waives nothing', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.unitCost?.(0.5, { faction: 'sol', unit: 'infantry' })).toBe(1);

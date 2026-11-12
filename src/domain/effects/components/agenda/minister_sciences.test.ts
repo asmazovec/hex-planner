@@ -18,7 +18,7 @@ describe('agenda:minister_sciences Minister of Sciences', () => {
   // resources is still listed and lifted by the law.
   // Why the check is redundant here: 91.2 makes the second technology of the primary cost 6 resources, and the law
   // says its owner does not need to spend resources to research through Technology.
-  test.fails('agenda:minister_sciences lifts the resources of Technology\'s primary', () => {
+  test('agenda:minister_sciences lifts the resources of Technology\'s primary', () => {
     const entry = research();
     const table = bench({ faction: 'sol', entries: [law(), entry] });
     quote(table.pack, id, 'they do not need to spend resources to research technology');
@@ -29,7 +29,7 @@ describe('agenda:minister_sciences Minister of Sciences', () => {
 
   // Checks: the secondary's 4 resources (91.3) are lifted the same way.
   // Why the check is redundant here: the card names "the primary or secondary ability" alike.
-  test.fails('agenda:minister_sciences lifts the resources of Technology\'s secondary', () => {
+  test('agenda:minister_sciences lifts the resources of Technology\'s secondary', () => {
     const entry = secondary(7, { researched: ['technology:gd'] });
     expectWaived(warningsOf(bench({ faction: 'sol', entries: [law(), entry] }), entry), 'shortResources', id);
   });
@@ -68,7 +68,7 @@ describe('agenda:minister_sciences Minister of Sciences', () => {
     expectNone(warningsOf(bench({ faction: 'sol', entries: [law(), entry] }), entry), 'shortResources');
   });
 
-  test.fails('agenda:minister_sciences is a passive effect that waives the shortfall of resources', () => {
+  test('agenda:minister_sciences is a passive effect that waives the shortfall of resources', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);
