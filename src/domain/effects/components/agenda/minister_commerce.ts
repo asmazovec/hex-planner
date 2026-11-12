@@ -8,8 +8,13 @@
  *
  * Pass 1: written as the hint it is today; the tests beside it say what it must do.
  */
+import '../../points/moments';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:minister_commerce';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { tradeGoodsOnReplenish: (value, ctx) => value + ctx.neighbours },
+};

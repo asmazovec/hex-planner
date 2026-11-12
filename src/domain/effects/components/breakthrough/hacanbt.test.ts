@@ -14,7 +14,7 @@ describe('breakthrough:hacanbt Auto-Factories', () => {
   // Checks: three cruisers produced put a fourth token into the fleet pool.
   // Why the check is redundant here: the fleet pool otherwise grows in the status phase or by Leadership (20.1); the
   // breakthrough adds a token at production.
-  test.fails('breakthrough:hacanbt three non-fighter ships produced add a token to the fleet pool', () => {
+  test('breakthrough:hacanbt three non-fighter ships produced add a token to the fleet pool', () => {
     const hacan = table({ cruiser: 3 });
     quote(hacan.pack, id, 'When you produce 3 or more non-fighter ships, place 1 command token from your reinforcements into your fleet pool.');
     expect(endOf(hacan).fleet).toBe(4);
@@ -31,7 +31,7 @@ describe('breakthrough:hacanbt Auto-Factories', () => {
     expect(endOf(table({ cruiser: 3 }, false)).fleet).toBe(3);
   });
 
-  test.fails('breakthrough:hacanbt is a passive effect', () => {
+  test('breakthrough:hacanbt is a passive effect', () => {
     expect(effect(table({}).pack, id).tier).toBe('passive');
   });
 });

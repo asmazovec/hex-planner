@@ -18,7 +18,7 @@ function gaining(passed: boolean) {
 // "For: Each player cannot have more than 4 tokens in their fleet pool."
 // Checks: under the law the status phase that brings the fleet pool to 5 shows the warning, standing, naming 4.
 // Why the default does not apply: the rules have no limit here; the law sets the number 4.
-test.fails('agenda:regulations a fifth token in the fleet pool under the law shows the limit of 4', () => {
+test('agenda:regulations a fifth token in the fleet pool under the law shows the limit of 4', () => {
   const table = gaining(true);
   quote(table.pack, id, 'cannot have more than 4 tokens in their fleet pool');
   showWarnings(table, table.status);

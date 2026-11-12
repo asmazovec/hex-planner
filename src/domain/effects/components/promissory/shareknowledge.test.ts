@@ -21,7 +21,7 @@ describe('promissory:shareknowledge Share Knowledge', () => {
   // the rest of the round.
   // Why the default count does not apply: a technology is otherwise gained by research (90); the note gives one the
   // Deepwrought player owns, without research and without cost.
-  test.fails('promissory:shareknowledge played, I hold the chosen technology of the Deepwrought player', () => {
+  test('promissory:shareknowledge played, I hold the chosen technology of the Deepwrought player', () => {
     const table = letnev([[play(), adjust({})]]);
     quote(table.pack, id, 'gain 1 non-faction, non-unit upgrade technology that the Deepwrought player owns');
     expect(endOf(table).holdings.technologies).toContain(GRAVITY_DRIVE);
@@ -31,7 +31,7 @@ describe('promissory:shareknowledge Share Knowledge', () => {
   // Checks: in the next round the technology is gone and the note is the Deepwrought player's again.
   // Why the default count does not apply: the note has no "Then, return this card" (69.3) of its own; it stays face up
   // until the end of the status phase and only then goes back, taking the technology with it.
-  test.fails('promissory:shareknowledge at the end of the status phase the technology goes and the note returns', () => {
+  test('promissory:shareknowledge at the end of the status phase the technology goes and the note returns', () => {
     const table = letnev([[play(), statusTokens(0, 0, 0)], [adjust({})]]);
     const end = endOf(table);
     expect(end.holdings.technologies).not.toContain(GRAVITY_DRIVE);
@@ -51,7 +51,7 @@ describe('promissory:shareknowledge Share Knowledge', () => {
 
   test.todo('promissory:shareknowledge a unit upgrade, a faction technology or one the Deepwrought player does not own is not gained: no warning code says so yet (a new code at the step `component`, "not a technology this note gives")');
 
-  test.fails('promissory:shareknowledge is a play effect', () => {
+  test('promissory:shareknowledge is a play effect', () => {
     const { pack } = letnev([[]]);
     expect(effect(pack, id).tier).toBe('play');
   });

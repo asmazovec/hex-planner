@@ -16,7 +16,7 @@ const table = (faction: string, deal: Entry) => bench({
 // "At the start of the strategy phase: Replenish your commodities, then gain 1 trade good."
 // Checks: the turn that gives 2 commodities to a neighbour in round 1 shows no warning of commodities missing.
 // Why the check is redundant here: the Keleres replenished their commodities at the start of the round.
-test.fails('ability:council_patronage the Keleres trade their commodities in round 1 and no warning is shown', () => {
+test('ability:council_patronage the Keleres trade their commodities in round 1 and no warning is shown', () => {
   const deal = giving();
   const keleres = table('keleresm', deal);
   quote(keleres.pack, id, 'Replenish your commodities, then gain 1 trade good.');

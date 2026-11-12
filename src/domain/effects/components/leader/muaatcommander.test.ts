@@ -12,7 +12,7 @@ describe('leader:muaatcommander Magmus', () => {
   // Checks: the Muaat follows Warfare's secondary for a strategy token and gains one trade good after it.
   // Why the check is redundant here: trade goods otherwise come from Trade and from the cards that name them; the
   // commander adds one for each strategy token spent, which the count of the secondary does not know by itself.
-  test.fails('leader:muaatcommander unlocked gives a trade good for a strategy token spent', () => {
+  test('leader:muaatcommander unlocked gives a trade good for a strategy token spent', () => {
     const muaat = table([secondary(CARD.warfare)]);
     quote(muaat.pack, id, 'After you spend a token from your strategy pool: You may gain 1 trade good.');
     const end = endOf(muaat);
@@ -33,7 +33,7 @@ describe('leader:muaatcommander Magmus', () => {
     expect(endOf(table([secondary(CARD.leadership)])).tradeGoods).toBe(0);
   });
 
-  test.fails('leader:muaatcommander is a passive effect', () => {
+  test('leader:muaatcommander is a passive effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('passive');
   });
 });

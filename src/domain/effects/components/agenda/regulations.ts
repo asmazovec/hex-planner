@@ -8,8 +8,13 @@
  * Regulations note 1), so the law does not touch `fleetLimit`. "Against" gives each player a token once, entered by
  * the player. Pass 1: the hint it is today.
  */
+import '../../points/moments';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:regulations';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { fleetPoolMax: value => Math.min(value, 4) },
+};

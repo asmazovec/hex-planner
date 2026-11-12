@@ -16,7 +16,7 @@ describe('agenda:minister_commerce Minister of Commerce', () => {
   // with 4 trade goods.
   // Why the check is redundant here: no check is lifted; the law adds to the trade goods the plan counts, after the
   // replenishing of 92.3.
-  test.fails('agenda:minister_commerce gives 1 trade good per neighbour when Trade replenishes commodities', () => {
+  test('agenda:minister_commerce gives 1 trade good per neighbour when Trade replenishes commodities', () => {
     const minister = table([law(), primary(5)]);
     quote(minister.pack, id, 'they gain 1 trade good for each player that is their neighbor');
     expect(endOf(minister).tradeGoods).toBe(4);
@@ -24,7 +24,7 @@ describe('agenda:minister_commerce Minister of Commerce', () => {
 
   // Checks: Trade's secondary replenishes commodities too (92.5) and brings the trade good as well.
   // Why: the law speaks of replenishing commodities, whichever ability does it.
-  test.fails('agenda:minister_commerce gives the trade good after Trade\'s secondary too', () => {
+  test('agenda:minister_commerce gives the trade good after Trade\'s secondary too', () => {
     expect(endOf(table([law(), secondary(5)])).tradeGoods).toBe(1);
   });
 
@@ -48,7 +48,7 @@ describe('agenda:minister_commerce Minister of Commerce', () => {
     expect(endOf(table([law('x'), primary(5)])).tradeGoods).toBe(3);
   });
 
-  test.fails('agenda:minister_commerce is a passive effect', () => {
+  test('agenda:minister_commerce is a passive effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
   });

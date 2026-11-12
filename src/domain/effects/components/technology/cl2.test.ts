@@ -23,7 +23,7 @@ describe('technology:cl2 Crimson Legionnaire II', () => {
   // Checks: the infantry destroyed on the target comes back on a home planet at the start of my next turn.
   // Why the default count does not apply: a destroyed unit returns to the reinforcements (LRR 33); this one comes
   // back to the board.
-  test.fails('technology:cl2 an infantry destroyed comes back to the home system at my next turn', () => {
+  test('technology:cl2 an infantry destroyed comes back to the home system at my next turn', () => {
     const { pack } = table([]);
     quote(pack, id, 'At the start of your next turn, place each unit that is on this card on a planet you control in your home system.');
     expect(homeInfantry([invade(), tactical(FAR)])).toBe(1);

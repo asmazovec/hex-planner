@@ -19,7 +19,7 @@ const ships = () => endOf(table([], [[statusTokens(1, 1, 0)]])).fleet;
 // Checks: in the round after a status phase with the note held, I take into one system as many cruisers as the fleet
 // pool would hold without it; every press takes a ship, and the fleet pool warning stands on the screen.
 // Why the check is NOT redundant here: the note took a token from the fleet pool, so the last cruiser is beyond it.
-test.fails('promissory:malevolency held, the ship the lost token would have allowed is warned of in the flight', async () => {
+test('promissory:malevolency held, the ship the lost token would have allowed is warned of in the flight', async () => {
   const count = ships();
   const move = tactical(NEAR, { moves: [{ from: HOME, units: {} }] });
   const made = table([`${id}@o1`], [[statusTokens(1, 1, 0)], [move]], count);
