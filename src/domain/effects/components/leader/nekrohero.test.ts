@@ -20,14 +20,14 @@ describe('leader:nekrohero UNIT.DSGN.FLAYESH', () => {
   // "Gain trade goods equal to the planet's combined resource and influence values"
   // Checks: the hero on t1 (2 resources, 1 influence) gives 3 trade goods.
   // Why the default count does not apply: the hero's own action gives the trade goods (a `play` with the planet chosen).
-  test.fails('leader:nekrohero gains trade goods of the planet\'s resources and influence', () => {
+  test('leader:nekrohero gains trade goods of the planet\'s resources and influence', () => {
     const game = table([hero()]);
     quote(game.pack, id, "Gain trade goods equal to the planet's combined resource and influence values");
     expect(endOf(game).tradeGoods).toBe(3);
   });
 
   // Checks: the trade goods follow the planet chosen: t2 (1 resource, 3 influence) gives 4.
-  test.fails('leader:nekrohero on another planet gains that planet\'s value', () => {
+  test('leader:nekrohero on another planet gains that planet\'s value', () => {
     expect(endOf(table([hero('t2', 'technology:nm')])).tradeGoods).toBe(4);
   });
 
@@ -35,13 +35,13 @@ describe('leader:nekrohero UNIT.DSGN.FLAYESH', () => {
   // Checks: the red technology chosen (Plasma Scoring) is held after the action.
   // Why the default count does not apply: the technology is gained by the hero, not researched, so it needs no
   // Technology card and Propagation does not turn it into tokens (Propagation note 1).
-  test.fails('leader:nekrohero gains the technology chosen, not replaced by Propagation', () => {
+  test('leader:nekrohero gains the technology chosen, not replaced by Propagation', () => {
     expect(endOf(table([hero()])).holdings.technologies).toContain('technology:ps');
   });
 
   // "Destroy any other player's units on that planet."
   // Checks: the rival's infantry on t1 is gone after the action.
-  test.fails('leader:nekrohero destroys the other players\' units on the planet', () => {
+  test('leader:nekrohero destroys the other players\' units on the planet', () => {
     expect(endOf(table([hero()])).rivals?.[RIVAL]?.ground.t1?.infantry ?? 0).toBe(0);
   });
 
@@ -63,7 +63,7 @@ describe('leader:nekrohero UNIT.DSGN.FLAYESH', () => {
 
   test.todo('leader:nekrohero a planet without a specialty, or in a system without my units, is warned of: no warning code for the hero\'s choice yet');
 
-  test.fails('leader:nekrohero is a play effect', () => {
+  test('leader:nekrohero is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');
