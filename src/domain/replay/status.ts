@@ -1,6 +1,9 @@
 /** The status phase (LRR 81): tokens gained and redistributed, points scored, then the board cleared and every card readied. */
 import { componentById } from '../components';
+import { applied } from '../effects/apply';
+import { fire } from '../effects/points/moments';
 import { appliedFor } from '../effects/points/status';
+import fleetPoolTokens from '../rules/codes/fleetPoolTokens';
 import { effectOf, holderOf } from '../effects/registry';
 import objectiveRepeated from '../rules/codes/objectiveRepeated';
 import objectivesPerPhase from '../rules/codes/objectivesPerPhase';
@@ -45,14 +48,21 @@ export function checkFleetPool(game: Game, state: GameState, pack: DataPack, ste
   });
 }
 
+/** Check: more tokens in the fleet pool than a game effect allows (the `fleetPoolMax` point; none by itself, Fleet Regulations sets 4). `shared` is mine, which keeps the laws. */
+export function checkFleetPoolMax(game: Game, state: GameState, pack: DataPack, shared: GameState = state, step: RuleStep = 'status'): Warning[] {
+  const limit = applied(pack, holderOf(game, state, shared), 'fleetPoolMax', Number.POSITIVE_INFINITY, { faction: game.faction }).value;
+  return state.fleet > limit ? [violation(fleetPoolTokens.code, { fleet: state.fleet, limit }, step)] : [];
+}
+
 /**
- * Checks of the pools after a card changed them: tokens gained past the sixteen, counting those on the board, and a
- * fleet pool lowered below the ships standing anywhere.
+ * Checks of the pools after a card changed them: tokens gained past the sixteen, counting those on the board, the fleet
+ * pool past what a law allows, and a fleet pool lowered below the ships standing anywhere.
  */
-export function checkPoolChange(game: Game, state: GameState, pack: DataPack, change: Pools | undefined, step?: RuleStep): Warning[] {
+export function checkPoolChange(game: Game, state: GameState, pack: DataPack, change: Pools | undefined, step?: RuleStep, shared: GameState = state): Warning[] {
   const gained = (change?.tactic ?? 0) + (change?.fleet ?? 0) + (change?.strategy ?? 0);
   return [
     ...(gained > 0 ? checkReinforcements(state, true, step) : []),
+    ...((change?.fleet ?? 0) > 0 ? checkFleetPoolMax(game, state, pack, shared, step) : []),
     ...((change?.fleet ?? 0) < 0 ? checkFleetPool(game, state, pack, step) : []),
   ];
 }
@@ -71,6 +81,7 @@ export function applyStatusTokens(
   }
   if (entry.tactic + entry.fleet + entry.strategy > 0) warnings.push(...checkReinforcements(state, false));
   if (entry.fleet < 0) warnings.push(...checkFleetPool(game, state, pack, 'status'));
+  if (entry.fleet > 0) warnings.push(...checkFleetPoolMax(game, state, pack, shared));
   state.vp += entry.vp ?? 0;
   for (const [id, points] of Object.entries(entry.opponentVp ?? {})) {
     if (id in state.opponentVp) state.opponentVp[id] += points;
@@ -117,18 +128,19 @@ export function checkObjectives(
  * and warns as a card does (`checkPoolChange`: more than the sixteen tokens of a faction, a fleet pool below the ships
  * standing) and, for a pool taken below zero, `poolNegative`. The warnings carry `step`, the block the component's tokens are set in.
  */
-export function gainTokens(turn: EffectTurn, change: Pools, step: RuleStep = 'component'): void {
+export function gainTokens(turn: Pick<EffectTurn, 'game' | 'state' | 'shared' | 'pack' | 'warnings'>, change: Pools, step: RuleStep = 'component'): void {
   const { game, state, pack, warnings } = turn;
   for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
     const count = change[pool] ?? 0;
     state[pool] += count;
     if (count < 0 && state[pool] < 0) warnings.push(violation('poolNegative', { pool, have: state[pool] }, step));
   }
-  warnings.push(...checkPoolChange(game, state, pack, change, step));
+  warnings.push(...checkPoolChange(game, state, pack, change, step, turn.shared));
 }
 
 /** For the `play` of a component that costs strategy tokens (Quash, Imperial Talent): takes `count` from the pool, warns `shortStrategy` when it holds fewer (20.5). */
 export function spendStrategyTokens(turn: EffectTurn, count = 1): void {
   if (turn.state.strategy < count) turn.warnings.push(violation('shortStrategy', { have: turn.state.strategy }));
   turn.state.strategy -= count;
+  fire('onTokenSpent', turn, { count, secondary: false });
 }

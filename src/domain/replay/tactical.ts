@@ -3,6 +3,7 @@
  * 89.4 invasion, 89.5 production and its payment, then the system's limits. Each step checks the state it is given, then
  * changes it; the steps themselves live in their own modules.
  */
+import { fire } from '../effects/points/moments';
 import { holderOf } from '../effects/registry';
 import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
@@ -93,6 +94,14 @@ export function applyTactical(
   payProduction(game, state, entry, pack, warnings, producing);
   // The structures a flight brought are put on planets when the action ends, after its production.
   placeCarried(game, state, target, entry.landings, pack, warnings);
+  // What the components in force are told of: a use of PRODUCTION with its units, and the units the action destroyed.
+  const at = { game, state, shared, pack, warnings, entry, player: entry.owner ?? 'me' };
+  if (producing && unitIds(entry.production).length > 0) fire('onProduced', at, { units: entry.production, systemId: target });
+  const losses = [
+    ...Object.entries(entry.losses ?? {}).map(([unit, count]) => ({ unit, count: count ?? 0, systemId: target })),
+    ...Object.entries(entry.groundLosses ?? {}).flatMap(([planetId, units]) => Object.entries(units).map(([unit, count]) => ({ unit, count: count ?? 0, planetId }))),
+  ].filter(loss => loss.count > 0);
+  if (losses.length > 0) fire('onDestroyed', at, { losses });
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));
 }
 

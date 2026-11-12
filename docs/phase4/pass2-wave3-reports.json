@@ -1,0 +1,244 @@
+[
+ {
+  "owner": "rivals",
+  "branch": "worktree-wf_bf515632-84d-3",
+  "commit": "716ee18",
+  "built": [
+   "technology:ng uses the existing onActivate (ng.ts): the activator's fleet pool loses 1 when a rival activates a system with my ships (ground forces and structures do not count)",
+   "stopsPassage hook (src/domain/effects/points/rivals.ts) with passageBarredOf/shipBlockersOf in src/domain/movement.ts: blockersOf = ships + barred systems, so route check, speed and reach treat them like other players' ships; routeBlockKind gives 'structures' so Light/Wave Deflector does not lift it; used by technology:ah",
+   "onLanding hook (points/rivals.ts) with reactToLanding in src/domain/replay/invasion.ts, asked of every other player's components for each landing; landUnits/fightAndLand/landAndBuild take shared; used by mech:keleres_mech (shortInfluence, needed = mechs on the planet)",
+   "Holdings.inPlay (declaration merging) and notesInPlay: a played promissory note lies in the play area; waivers.ts askedFor asks notes in play at any tier/lasts; promissory:convoys plays into inPlay and returns to the Hacan in onActivate when its holder activates a system with Hacan units",
+   "startForFaction (src/domain/holdings.ts) purges the player's own Alliance for a faction with the Hubris ability and restores it when leaving such a faction; ability:hubris",
+   "docs/phase4/infra/rivals.md (and a line in README.md); points/rivals.test.ts"
+  ],
+  "green": [
+   "technology:ng",
+   "mech:keleres_mech",
+   "technology:ah",
+   "promissory:convoys",
+   "ability:hubris"
+  ],
+  "stillRed": [],
+  "testsChanged": [
+   "The 7 test.fails of my five components (ng x2, ah x1, convoys x2, hubris x1, keleres_mech 2 domain + 1 ui... in total those that passed) were turned into test with comments, quotes and checks untouched",
+   "src/domain/effects/apply.test.ts 'a hint changes nothing': used technology:ng as its example of a hint, now passive; it uses technology:asc with toMatchObject({tier:'hint', rule}) and the same applied(...) check"
+  ],
+  "sharedFilesTouched": [
+   "src/domain/movement.ts (blockersOf split into shipBlockersOf + passageBarredOf, import of points/rivals)",
+   "src/domain/effects/helpers/movement.ts (blockedByShips uses shipBlockersOf; BlockKind 'structures')",
+   "src/domain/effects/waivers.ts (asks notes in play)",
+   "src/domain/holdings.ts (startForFaction, Hubris)",
+   "src/domain/replay/invasion.ts (reactToLanding, landUnits shared arg)",
+   "src/domain/replay/tactical.ts (shared passed to fightAndLand/landAndBuild)",
+   "docs/phase4/infra/README.md",
+   "src/domain/effects/apply.test.ts"
+  ],
+  "checks": "npx tsc -b: clean. npm run lint: clean. npm run lint:terms: 0 errors, 123 warnings (run with the main checkout's vale binary because npm ci --ignore-scripts leaves none in the worktree). Full npx vitest run --testTimeout=60000: 5447 passed, 120 expected fail, 1 failed (apply.test.ts, fixed afterwards and re-run alone: 14/14 pass); the full run was not repeated after that one-line fix. npm run build: OK. Playwright not run: no interface change.",
+  "doubts": "No new warning code or LRR rule test, since existing codes (routeBlocked, shortInfluence, noteRefused) were reused; no UI change. The routeBlocked warning for Aerie Hololattice carries no 'structures' context in its params (only routeBlockKind knows), so its text is the generic one. Keleres mech warns once per landing on the planet (a second landing in the same entry would warn again). Hubris is detected by the ability name 'Hubris' in the faction sheet. Neuroglaive changed tier from hint to passive, so its reminder no longer shows as a hint; apply.test.ts was adjusted for that."
+ },
+ {
+  "owner": "contexts",
+  "branch": "worktree-wf_bf515632-84d-5",
+  "commit": "02f4b78",
+  "built": [
+   "One appliedFor(pack, who, entry, point, base, ctx, state?) in src/domain/effects/entryApply.ts; the status variant in points/status.ts is removed and its 4 call sites (afterEntry.ts, replay/status.ts, strategy.ts) pass state last. It skips a promissory note of the entry owner's own (noteAddress equals entry.owner ?? 'me', LRR 69.2), and counts a component only while held ready when state is given.",
+   "productionCost context is now { faction, systemId?, wormholes, holdings, pack } (points/production.ts; replay/production.ts costOf derives the system from the entry via systemOfProduction).",
+   "spaceProduction context gains wormholes, game and pack (points/production.ts, producerList in replay/production.ts); a wormhole can now be a producer.",
+   "planetResources context gains dock? (types.ts); payment.ts appliedToPlanet takes a dock argument, planetValue passes state.docks.includes(planetId), and production.ts dockValue passes true.",
+   "researchCost is asked through appliedFor with the entry and gains index? (replay/cards/technology.ts, types.ts), so a play effect that names the entry counts.",
+   "payment.test.ts registry mock is independent of import order: the cycle is loaded in a vi.hoisted block after vi.mock. Checked with the imports in original and reversed order.",
+   "New test file src/domain/effects/points/contexts.test.ts (4 tests: productionCost context, wormholes, dock, appliedFor own-note and ready gating).",
+   "Docs updated: docs/phase4/infra/README.md (one appliedFor), status.md, production.md, research.md, payment.md."
+  ],
+  "green": [
+   "breakthrough:ghostbt",
+   "promissory:ce",
+   "technology:is",
+   "technology:helios2",
+   "technology:aida"
+  ],
+  "stillRed": [],
+  "testsChanged": [
+   "breakthrough:ghostbt (ghostbt.test.ts, ghostbt.ui.test.tsx): a wormhole is now a producer of the count (spaceProduction), so the noProduction warning is never made, where the old model made it and then lifted it with a waiver. Changed: expectWaived('noProduction') became expectNone('noProduction'). The 'one wormhole produces one unit' test keeps expectStanding('productionOver') for two destroyers. The tier test now expects modify keys productionCost and spaceProduction and no waive (it expected waive on noProduction and productionOver). The ui test expectShownWaived('noProduction') became expectNotShown. Rule quotes, reasoning and the rest of each test are kept. The two waivers were removed from ghostbt.ts, because the productionOver waiver would double-count the wormholes and hide the warning that test 3 requires.",
+   "technology:helios2: the tier test is unchanged. The report suggested it should expect planetResources only, but the generated level II upgrade already gives productionValue, so the test passes as written. The 5 test.fails were turned into test.",
+   "technology:is, technology:aida, promissory:ce: only test.fails turned into test. The stale 'Still red in pass 2' comment in ce.test.ts was removed.",
+   "src/domain/effects/points/production.test.ts: the appliedFor call passes the new required productionCost context fields (wormholes, holdings, pack). The test's meaning is unchanged.",
+   "src/domain/effects/points/status.test.ts: appliedFor call updated to the new argument order (state last)."
+  ],
+  "sharedFilesTouched": [
+   "src/domain/effects/types.ts (researchCost gets index?, planetResources gets dock?; additive)",
+   "src/domain/effects/entryApply.ts (rewritten as the single appliedFor)",
+   "src/domain/effects/points/status.ts (appliedFor removed)",
+   "src/domain/effects/points/production.ts (productionCost and spaceProduction contexts)",
+   "src/domain/effects/points/payment.ts (appliedToPlanet dock argument)",
+   "src/domain/payment.ts",
+   "src/domain/replay/production.ts",
+   "src/domain/replay/status.ts",
+   "src/domain/replay/afterEntry.ts",
+   "src/domain/strategy.ts",
+   "src/domain/replay/cards/technology.ts",
+   "docs/phase4/infra/{README,status,production,research,payment}.md",
+   "No edits to timeline.ts, registry.ts, schema.ts or i18n."
+  ],
+  "checks": "npx tsc -b: 0 errors. npm run lint: 0 errors. npm run build: ok. Full npx vitest run --testTimeout=60000: 1201 files passed, 41 skipped; 5450 tests passed, 118 expected fail (down from 130, the 12 are 3 ghostbt, 1 ce, 1 is, 5 helios2, 2 aida), 1063 todo, 0 failed. npm run lint:terms NOT RUN: the Vale binary is missing because npm ci was run with --ignore-scripts ('Missing Vale binary'). I added no ru/en interface text, only English code comments and docs. Playwright not run: no interface or i18n change.",
+  "doubts": "1) The ghostbt model change means the 'noProduction' warning is absent rather than waived. The tests said 'waived', so I changed their expectations. If the owner prefers the warning shown as allowed, the producer would have to be hidden from producerList and the productionOver value computed separately, which is clumsier. 2) The unified appliedFor puts play effects after passives (the old entryApply order). The old status variant sorted all by registry order; no test depends on the difference, but a later component could. 3) The Inheritance Systems +2 resources is applied once, to the first technology researched anew (ctx.index === 0), because the card says 'a technology'. 4) wormholes in the productionCost and spaceProduction contexts come from state.wormholeTokens of the player's own state, not from shared; for a rival's entry the tokens written to turn.shared may not be seen. 5) Particle Synthesis counts every wormhole type of the system, tokens included, once each. 6) Tooling gotchas I hit: the files are CRLF with autocrlf, so multi-line replacements by script must normalise line endings. The full vitest run took about 18 minutes with five owners running in parallel.\""
+ },
+ {
+  "owner": "fields",
+  "branch": "worktree-wf_bf515632-84d-4",
+  "commit": "1ba2215",
+  "built": [
+   "landingOffer declaration (Reclamation/Reclaimer structures from reinforcements, G'hom Sek'kus ground forces from planets, The Icon shipsAway) + landingOffers(): src/domain/effects/points/landing.ts",
+   "commitSources (planets whose ground forces may be committed): src/domain/commitSources.ts",
+   "LandingBlock offers reinforced structures and per-planet 'Land one X from <planet>'; UnitDraftItem.id; withLandingFrom/landedFrom, landings with/without from kept apart (tactical.ts, combat.ts checkArrival, EntrySteps key): src/ui/plan/blocks/LandingBlock.tsx, src/ui/units/UnitDraft.tsx, src/domain/tactical.ts",
+   "ChoiceSpec kind 'counts' (ChoiceSlot, slots, verb) with ChoicesBlock rendering: src/domain/effects/types.ts, src/ui/plan/blocks/ChoicesBlock.tsx; used by refit and scuttle",
+   "Entry field shipsTo + code productionShipsAway (68.2) + placement in landAndBuild + production-row system buttons + rule tests in lrr/068: src/domain/rules/codes/productionShipsAway.ts, src/domain/replay/tactical.ts, src/ui/plan/editors/TacticalEditor.tsx",
+   "Save schema keeps landings[].from and shipsTo: src/storage/schema.ts",
+   "Docs: docs/phase4/infra/fields.md, README index"
+  ],
+  "green": [
+   "leader:sardakkcommander",
+   "ability:reclamation",
+   "mech:winnu_mech",
+   "actionCard:refit",
+   "actionCard:scuttle",
+   "breakthrough:bastionbt"
+  ],
+  "stillRed": [
+   {
+    "id": "technology:asn",
+    "tests": 1,
+    "reason": "Needs a production block for another system in the tactical editor (system, units, payment, limits): one component and a new editor step, so not built per the 'keep it light' rule. Effect stays a hint; tier test stays test.fails, todo remains."
+   },
+   {
+    "id": "leader:argenthero",
+    "tests": 3,
+    "reason": "Needs moves on the component entry (type, schema, an editor moving any ship from any system to any system), a replay step with no route/speed, and a destination check code. One component, new editor step: not built. Effect stays a hint; 3 test.fails remain (2 behaviour, 1 tier)."
+   }
+  ],
+  "testsChanged": [
+   "actionCard/refit.ui.test.tsx and scuttle.ui.test.tsx: dropped the local TurnEditor harness (it never passed onChoices, so the choices block could not show) for the shared live showTurn helper, and now assert the stored choices (and the minus / no fighter offered); quote, comment and the checked behaviour kept, test.fails turned into test",
+   "sardakkcommander.ui, reclamation.ui, winnu_mech.ui, bastionbt.test and bastionbt.ui: only test.fails turned into test, expectations untouched",
+   "bastionbt.ui.test.tsx: added one test for the new production-row buttons (shipsTo)",
+   "lrr/068-production.test.ts: two new 68.2 tests for productionShipsAway"
+  ],
+  "sharedFilesTouched": [
+   "src/domain/effects/types.ts (ChoiceKind 'counts', ChoiceSlot, ChoiceSpec.slots/verb)",
+   "src/domain/types.ts (tactical shipsTo)",
+   "src/storage/schema.ts (landings.from, shipsTo)",
+   "src/domain/replay/tactical.ts (ship placement away)",
+   "src/domain/replay/combat.ts (checkArrival ignores landings from planets)",
+   "src/domain/tactical.ts",
+   "src/i18n/ru.json and en.json (landOneFrom, giveBackFrom, shipsTo, components.choice.countOn/countIn/countBack)",
+   "src/ui/units/UnitDraft.tsx",
+   "src/ui/plan/EntrySteps.tsx (React key)"
+  ],
+  "checks": "npx tsc -b clean; npm run lint clean; npm run lint:terms NOT RUN (Vale binary missing because npm ci used --ignore-scripts); npm run build ok; full vitest: 5448 passed, 117 expected fail, 0 failed in the final state (the one run showed 2 UnitDraft.test failures caused by my extra callback argument, fixed afterwards and that file re-run 12/12 green; the full suite was not re-run after that one-line fix); Playwright on port 5344: unit-draft, steady-controls, over-limit 37 passed, 1 skipped.",
+  "doubts": "No new e2e steady-controls case was added for the new repeatable controls (counts buttons, 'Land one X from <planet>', shipsTo buttons): they need a faction/hand setup that no existing spec has; they are covered by jsdom UI tests only and the minus button is always rendered so nothing moves. The planet badge distinguishing two infantry buttons in a landing row uses the first 3 letters of the source planet in the price slot, which may need design polish. shipsTo is set in the UI only while a component declaring landingOffer.shipsAway is in force; it does not check the fleet pool or capacity of the destination system. Vale terms check for the new ru texts was not run."
+ },
+ {
+  "owner": "hooks",
+  "branch": "worktree-wf_bf515632-84d-2",
+  "commit": "9282e74",
+  "built": [
+   "src/domain/effects/points/moments.ts: hooks onRoundStart, onStatusStart, onStatusEnd, onTurnStart, onTokenSpent, onProduced, onControlLost, onDestroyed (declaration merging on ComponentEffect); runner fire/run/hooked; points fleetPoolMax and tradeGoodsOnReplenish",
+   "Calls: replay/timeline.ts (round, status and turn moments, onControlLost via rivalLandings), cards.ts and status.ts spendStrategyTokens (token spent), tactical.ts (produced, destroyed), invasion.ts rivalLandings (control lost), cards/trade.ts replenishWith",
+   "src/domain/rules/codes/fleetPoolTokens.ts + checkFleetPoolMax in replay/status.ts (status entry, cards, gainTokens), rule test in rules/lrr/037-fleet-pool.test.ts",
+   "GameState.onCard (units or a lent technology waiting on a component's card)",
+   "src/domain/effects/points/moments.test.ts (throwaway-effect tests of every hook and point), docs/phase4/infra/moments.md, README and skipped.md entries",
+   "Effects of the ten components in their own files; new ui tests for shareknowledge and minister_commerce"
+  ],
+  "green": [
+   "leader:muaatcommander",
+   "breakthrough:hacanbt",
+   "ability:council_patronage",
+   "promissory:malevolency",
+   "promissory:shareknowledge",
+   "legendary:styx",
+   "technology:cl2",
+   "ability:mitosis",
+   "agenda:minister_commerce",
+   "agenda:regulations"
+  ],
+  "stillRed": [],
+  "testsChanged": [
+   "No expectation was changed: every former test.fails of the ten components became test with its body, quote and reasoning untouched (muaatcommander 2, hacanbt 2, council_patronage 5 + 1 ui, malevolency 2 + 1 ui, shareknowledge 3, styx 1, cl2 1, mitosis 2, minister_commerce 3, regulations 2 + 1 ui)."
+  ],
+  "sharedFilesTouched": [
+   "src/domain/types.ts (one optional field GameState.onCard)",
+   "src/domain/replay/timeline.ts (moment calls in step(), finishStatus; rivalLandings call gets game and warnings)",
+   "src/domain/replay/cards.ts (onTokenSpent, shared passed to checkPoolChange)",
+   "src/domain/replay/status.ts (checkFleetPoolMax, checkPoolChange gets an optional shared, gainTokens takes a narrower turn type and passes shared, spendStrategyTokens fires onTokenSpent)",
+   "src/domain/replay/tactical.ts (onProduced, onDestroyed)",
+   "src/domain/replay/invasion.ts (rivalLandings: optional game and warnings, onControlLost)",
+   "src/domain/replay/cards/trade.ts (replenishWith, used by the Trade handler)",
+   "src/domain/rules/lrr/037-fleet-pool.test.ts (one added test and imports)",
+   "docs/phase4/infra/README.md and skipped.md (one line and one section)"
+  ],
+  "checks": "npx tsc -b: clean. npm run lint: clean. npm run build: OK. Full npx vitest run --testTimeout=60000: 1203 files passed, 5475 tests passed, 104 expected fail, 1063 todo, 0 failed (before: 5434 passed, 130 expected fail). npm run lint:terms: NOT RUN, Vale binary is missing because npm ci was run with --ignore-scripts (\"Missing Vale binary\"); new texts are only the ru and en strings of the code fleetPoolTokens and the ChoiceSpec label of shareknowledge. Playwright: not run, no interface component or control was changed or added, so steady-controls.spec.ts is untouched. Nothing merged or pushed.",
+  "doubts": "1) Round-level hooks (onRoundStart, onStatusStart, onStatusEnd) fire only for a round the replay reaches: onRoundStart before the first replayed entry of the round (an all-skipped round in 'now' gives none), the status ones only if the round has a status entry or an agenda entry. They run for me only; the opponents' components are not replayed. 2) Mitosis does not place its infantry when the first status entry names mech:arborec_mech in uses (the mech's DEPLOY says \"instead\"); this keeps the existing arborec_mech tests green and is a string coupling between the two files. 3) Mitosis places the infantry on the first controlled planet, home planets first, with no choice for the player. 4) Share Knowledge: a technology outside the offered candidates is accepted as entered (no warning code); hooks also run for tier 'play' effects held in force (the note stays in holdings after play), so moments.ts accepts any non-hint tier. 5) cl2 keeps the infantry waiting if no home planet is controlled; the commodity gain half stays test.todo. 6) Styx: the opponent who takes it gains no point (test.todo kept). 7) Hooks fire for rivals' own entries (turn start, token spent, produced, destroyed) with the rival's state, following the afterEntry convention. 8) Added to docs only, not to the contract test: no requirement of a ui test for hook-only effects (as for onGainControl).\""
+ },
+ {
+  "owner": "exploration",
+  "branch": "worktree-wf_bf515632-84d-1",
+  "commit": "9b4b9d8",
+  "built": [
+   "Holdings.found (exploration cards kept in play area, with copies; staysInPlay) in src/domain/holdings.ts, replay/holdings.ts (gain/lose/holds/playComponent), types.ts, storage/schema.ts; GainsBlock now offers exploration cards via HOLDING_FIELD; components drawer shows fragments in the relics group with an 'In play area' stepper (ComponentsPanel.tsx, i18n ru/en)",
+   "Transactions of relic fragments: TRANSACTION_KINDS has exploration, acts.ts warns transactionKind for non-fragment exploration cards",
+   "Relic fragment play with relicFragmentsShort check: src/domain/effects/components/exploration/batch33/fragments.ts (crf1, hrf1, irf1; urf1 counts as any type)",
+   "Attachments reach count points: productionValue context 'attached', planetResources/planetInfluence context 'pack'; dockValue in replay/production.ts asks planetValue with attachments",
+   "specialtiesOf in src/domain/specialties.ts, techSlicePlanets reads attached specialty cards; research facilities in exploration/batch33/facility.ts (warfare, biotic, cybernetic, propulsion)",
+   "An attached card in force for restrict: afterEntry.ts asks restrict of cards in shared.attachments; new code src/domain/rules/codes/planetDemilitarized.ts, helper effects/helpers/planetsNamed.ts, exploration:dmz restrict",
+   "Holy Planet of Ixth: productionValue modify and onGainControl +1 VP",
+   "Rule tests in lrr/035-exploration.test.ts and lrr/012-attach.test.ts; docs/phase4/infra/exploration.md"
+  ],
+  "green": [
+   "exploration:dmz",
+   "exploration:pw",
+   "exploration:toe",
+   "exploration:ls",
+   "exploration:rw",
+   "exploration:mw",
+   "exploration:cm1",
+   "exploration:exp1",
+   "exploration:vfs1",
+   "exploration:aw1",
+   "exploration:fb1",
+   "exploration:lf1",
+   "exploration:warfare",
+   "exploration:biotic",
+   "exploration:cybernetic",
+   "exploration:propulsion",
+   "exploration:crf1",
+   "exploration:hrf1",
+   "exploration:irf1",
+   "exploration:ed1",
+   "agenda:holy_planet_of_ixth"
+  ],
+  "stillRed": [],
+  "testsChanged": [
+   "agenda/holy_planet_of_ixth.test.ts 'is a passive effect that changes the production of a dock and the points': expected modify keys ['productionValue','vp'], now ['productionValue'] plus an onGainControl function, because no step asks the point vp and the base has the onGainControl hook that gives the point (the gaining-control test checks the 1 VP); tier and production check kept",
+   "exploration/dmz.ui.test.tsx 'is chosen in Used': the shared use() helper finds two cards named Demilitarized Zone (the agenda too), so the test types 'Demilitarized Zone exploration' in the search and chooses that card; same check",
+   "src/domain/holdings.test.ts 'gains of an entry add...': expected holdings gain found: []",
+   "src/ui/plan/blocks/GainsBlock.test.tsx '+ Took offers the whole catalogue': search 'crown' now also offers exploration:toe (Tomb of Emphidia); expected list is ['relic:thalnos','exploration:toe','relic:emphidia'], order and held-last check kept",
+   "All other test.fails of the 21 components turned into test (no expectation changed)"
+  ],
+  "sharedFilesTouched": [
+   "src/domain/types.ts (Holdings.found, StartHoldings found)",
+   "src/storage/schema.ts (startHoldings found)",
+   "src/domain/effects/types.ts (productionValue ctx attached; planetResources/planetInfluence ctx pack)",
+   "src/domain/effects/points/payment.ts (pack in planet context)",
+   "src/domain/replay/afterEntry.ts (restrict of attached cards)",
+   "src/domain/replay/holdings.ts",
+   "src/domain/replay/acts.ts",
+   "src/domain/replay/production.ts",
+   "src/domain/holdings.ts",
+   "src/domain/payment.ts",
+   "src/ui/drawers/ComponentsPanel.tsx",
+   "src/i18n/ru.json, src/i18n/en.json (components.inPlayArea)",
+   "docs/phase4/infra/README.md, docs/phase4/infra/exploration.md"
+  ],
+  "checks": "npx tsc -b clean; npm run lint clean; npm run lint:terms 0 errors (123 warnings, existing; Vale binary copied from main node_modules because install ran with --ignore-scripts); npx vitest run --testTimeout=60000: 1200 files passed, 5504 passed, 65 expected fail, 1061 todo, 0 failed; npm run build ok; E2E_PORT=5341 playwright components.spec.ts + waivers.spec.ts: 10 passed. steady-controls e2e not changed or run: no new repeatable control (only the existing Stepper primitive reused in the drawer).",
+  "doubts": "1) Attachments stand on my state only, so the Production value of a rival's dock does not count cards attached to its planet (documented). 2) Holy Planet of Ixth: losing control (-1 VP) is not modelled (existing test.todo). 3) Fragments: the ACTION checks held count before the entry; purge is the entry's spends (three copies), not automatic. 4) Exploration cards other than fragments/ed1 chosen in GainsBlock gain nothing into holdings (only their gained hook runs), they just show as taken. 5) Two components named Demilitarized Zone (agenda and exploration) appear in pickers with the same label; users disambiguate by card kind line. 6) A file importing waivers or payment.ts from a component effect file creates a registry import cycle that breaks payment.test mocks; I avoided both (specialties.ts, inline check in dmz). 7) LF line endings were written by scripts; git warns about CRLF conversion only."
+ }
+]

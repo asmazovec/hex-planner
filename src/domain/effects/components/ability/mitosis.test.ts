@@ -51,7 +51,7 @@ describe('ability:mitosis Mitosis', () => {
   // Checks: after a status phase the Arborec have one more infantry on a planet they control.
   // Why the default does not apply: the status phase places no units for anyone (81); the ability adds one, and the
   // placing is mandatory (Arborec note 3), so the replay makes it without a choice of the player.
-  test.fails('ability:mitosis places 1 infantry on a planet I control at the start of the status phase', () => {
+  test('ability:mitosis places 1 infantry on a planet I control at the start of the status phase', () => {
     const table = bench({ faction: 'arborec', expansions: ['pok'], entries: [statusTokens(2, 0, 0)] });
     quote(table.pack, id, 'At the start of the status phase: Place 1 infantry from your reinforcements on any planet you control');
     expect(infantryOnPlanets(endOf(table))).toBe(1);
@@ -59,7 +59,7 @@ describe('ability:mitosis Mitosis', () => {
 
   // Checks: one infantry per status phase: two rounds give two.
   // Why the check is NOT redundant here: "at the start of the status phase" is once a round, not once per entry.
-  test.fails('ability:mitosis places one infantry each round, not more', () => {
+  test('ability:mitosis places one infantry each round, not more', () => {
     const table = bench({ faction: 'arborec', expansions: ['pok'], rounds: [[statusTokens(2, 0, 0)], [statusTokens(1, 0, 0), statusTokens(1, 0, 0)]] });
     expect(infantryOnPlanets(endOf(table))).toBe(2);
   });

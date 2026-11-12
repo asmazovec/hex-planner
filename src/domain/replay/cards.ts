@@ -6,6 +6,7 @@ import type { DataPack, Game, GameState, Round, Warning } from '../types';
 import { handlerOf, type CardRound } from './cards/index';
 import { pay, readyPlanets } from './payment';
 import { checkProduction, costOf, placeProduction, producerList } from './production';
+import { fire } from '../effects/points/moments';
 import { holderOf } from '../effects/registry';
 import { research } from './holdings';
 import { researchTokensGiven } from './research';
@@ -60,6 +61,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   if (owed > 0) {
     if (state.strategy < owed) warnings.push(violation('shortStrategy', { have: state.strategy }));
     state.strategy -= owed;
+    fire('onTokenSpent', { game, state, shared: round.states.me ?? state, pack, warnings, player, states: round.states, entry }, { count: owed, card: entry.card, secondary: !primary });
   }
   const effects = entry.effects ?? {};
   const cost = cardCost(entry, game.faction, holderOf(game, state), pack);
@@ -83,7 +85,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   handlerOf(entry.card).apply?.({ game, state, entry, pack, round, player, primary, warnings });
   // The Technology card researches with every check in its handler; a play with no card chosen only adds what it lists.
   if (entry.card !== CARD.technology) research(state, effects.researched, pack);
-  warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card'));
+  warnings.push(...checkPoolChange(game, state, pack, effects.tokens, 'card', round.states.me));
   buildStructures(game, state, effects.structures ?? [], primary, effects.systemId, pack, warnings);
   warnings.push(...checkStationStructures(effects.structures ?? [], pack));
   if (effects.production) {

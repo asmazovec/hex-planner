@@ -1,6 +1,7 @@
 /** Step 89.4 Invasion: ground forces land on the planets of the active system and take control; an opponent's landings too. */
 import '../effects/points/invasion';
 import { applied } from '../effects/apply';
+import { hooked, run } from '../effects/points/moments';
 import type { ControlTurn } from '../effects/points/invasion';
 import { effectOf, holderOf, inForceOf, orderOf } from '../effects/registry';
 import { playedBy } from '../effects/waivers';
@@ -179,12 +180,15 @@ export function attachCard(
  * and hold with ground forces is theirs, and I and the other opponents lose it with our structures there (25.5, 49.5.1).
  * The custodians token they removed is gone for everyone, with its point to them.
  */
-export function rivalLandings(state: GameState, entry: TacticalEntry, owner: string, pack: DataPack): void {
+export function rivalLandings(state: GameState, entry: TacticalEntry, owner: string, pack: DataPack, game?: Game, warnings: Warning[] = []): void {
   const rival = state.rivals?.[owner];
   if (!rival) return;
   for (const { planetId } of entry.landings) {
     if (rival.control[planetId] !== 'me' || !hasGround(rival.ground[planetId], pack)) continue;
+    // What I lose with the planet is asked before it goes: a legendary planet is in force only while I control it.
+    const lost = game && state.control[planetId] === 'me' ? hooked('onControlLost', { game, state, shared: state, pack }) : [];
     losePlanet(state, planetId);
+    if (game) run('onControlLost', lost, { game, state, shared: state, pack, warnings, entry, states: { me: state, ...state.rivals } }, { planetId, to: owner });
     if (state.rivalHolds) state.rivalHolds[planetId] = owner;
     for (const [id, other] of Object.entries(state.rivals ?? {})) if (id !== owner) losePlanet(other, planetId);
   }

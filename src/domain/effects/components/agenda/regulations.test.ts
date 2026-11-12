@@ -18,7 +18,7 @@ describe('agenda:regulations Fleet Regulations', () => {
   // Checks: under the law the status phase puts two tokens in a fleet pool of 3; the fifth is warned of against 4.
   // Why the default does not apply: the rules put no limit on the fleet pool; the law sets one. It is a number (a
   // `modify` of a new point, `fleetPoolMax`), so the warning names 4 and nothing is listed as waived.
-  test.fails('agenda:regulations in play warns of a fifth token in the fleet pool', () => {
+  test('agenda:regulations in play warns of a fifth token in the fleet pool', () => {
     const table = gaining(2, true);
     quote(table.pack, id, 'Each player cannot have more than 4 tokens in their fleet pool.');
     const warnings = warningsOf(table, table.status);
@@ -55,7 +55,7 @@ describe('agenda:regulations Fleet Regulations', () => {
 
   test.todo('agenda:regulations "Against": each player places 1 token from reinforcements in the fleet pool: a one-off outcome, entered by the player');
 
-  test.fails('agenda:regulations is a passive effect that sets the most tokens of a fleet pool to 4', () => {
+  test('agenda:regulations is a passive effect that sets the most tokens of a fleet pool to 4', () => {
     const { pack } = bench({ faction: 'sol' });
     const modify = effect(pack, id).modify as Record<string, ((value: number, ctx: unknown) => number) | undefined> | undefined;
     expect(effect(pack, id).tier).toBe('passive');

@@ -42,7 +42,7 @@ describe('legendary:styx A Song Like Marrow', () => {
   // "When you lose this card, lose 1 victory point."
   // Checks: an opponent lands on Styx, which I controlled from the start: I lose it, and with it one point.
   // Why nothing is lifted: the card changes the score.
-  test.fails('legendary:styx lost to an opponent takes one victory point away', () => {
+  test('legendary:styx lost to an opponent takes one victory point away', () => {
     const theirs = tactical(TARGET, { landings: [{ planetId: 'styx', units: { infantry: 1 } }] }, { owner: RIVAL.id });
     const end = endOf(table([theirs], { planetControl: { styx: 'me' }, vp: 3, opponents: [RIVAL], enemyUnits: { [TARGET]: { [RIVAL.id]: { infantry: 1 } } } }));
     expect(end.control.styx).toBe('enemy');

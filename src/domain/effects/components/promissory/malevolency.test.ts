@@ -24,7 +24,7 @@ describe('promissory:malevolency Malevolency', () => {
   // and the other pools are as they were.
   // Why the check is redundant here: not a lifted check but a changed number: the fleet pool the count uses (37.1)
   // is one token smaller after the status phase.
-  test.fails('promissory:malevolency held through the status phase takes 1 token from the fleet pool', () => {
+  test('promissory:malevolency held through the status phase takes 1 token from the fleet pool', () => {
     const status = statusTokens(1, 1, 0);
     const held = table([THEIRS], [[status]]);
     quote(held.pack, id, 'you must remove 1 command token from your fleet pool and return it to your reinforcements');
@@ -39,7 +39,7 @@ describe('promissory:malevolency Malevolency', () => {
   // Checks: in the next round as many ships as the fleet pool would have held without the note go into one system:
   // with the note the fleet pool check warns of them, without it nothing is warned.
   // Why the check is NOT redundant here: the note shrinks the fleet pool, so the check runs against a smaller number.
-  test.fails('promissory:malevolency makes the next round\'s fleet pool one ship smaller', () => {
+  test('promissory:malevolency makes the next round\'s fleet pool one ship smaller', () => {
     const ships = fleetAfterStatus([]);
     const move = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: ships } }] });
     const rounds = (): Entry[][] => [[statusTokens(1, 1, 0)], [move]];

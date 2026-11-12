@@ -1,7 +1,10 @@
 /** LRR 37 Fleet Pool. Source: tirules2 rules-reference/fleet-pool.md. Base pack: a carrier I has capacity 4, a fighter II moves by itself. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';
+import { effectsOf } from '../../effects/registry';
+import type { ComponentEffect } from '../../effects/types';
+import '../../effects/points/moments';
+import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();
 const fighterTwo = { start: { me: { technologies: [tech('fighter')] }, opponents: {} } };
@@ -111,6 +114,19 @@ describe('LRR 37 Fleet Pool', () => {
     const move = tactical(NEAR, { moves: [{ from: HOME, units: { destroyer: 2, fighter: 2 } }] });
     const game = rulesGame({ units: { [HOME]: { destroyer: 2, fighter: 2 } }, entries: [move], game: fighterTwo });
     expect(codesOf(game, pack, move)).toContain('fleetPool');
+  });
+
+  test('37.1: the rules put no limit on the tokens of a fleet pool; the `fleetPoolMax` point sets one and `fleetPoolTokens` warns of the excess', () => {
+    const status = statusTokens(0, 2, 0);
+    const plain = forecast(rulesGame({ entries: [status] }), pack).warnings[status.id] ?? [];
+    expect(plain.map(w => w.code)).not.toContain('fleetPoolTokens');
+    const limited = rulesPack();
+    const effects = effectsOf(limited) as Map<string, ComponentEffect>;
+    effects.set('technology:hm', { tier: 'passive', rule: 'technology:hm', modify: { fleetPoolMax: value => Math.min(value, 4) } });
+    const game = rulesGame({ entries: [status], game: { start: { me: { technologies: ['technology:hm'] }, opponents: {} } } });
+    const found = (forecast(game, limited).warnings[status.id] ?? []).find(w => w.code === 'fleetPoolTokens');
+    expect(found?.params).toEqual({ fleet: 5, limit: 4 });
+    expect(found).toMatchObject({ rule: '37.1', step: 'status' });
   });
 
   test('37 note 4: a ship lost on the way does not count toward the fleet pool of the destination', () => {

@@ -1,12 +1,21 @@
 /**
  * "At the start of the strategy phase: Replenish your commodities, then gain 1 trade good."
  *
- * Pass 1: a hint. Pass 2: passive; at the start of every strategy phase the Keleres replenish their commodities
- * and gain 1 trade good, which the count needs (transactions, payment). It asks for a new point at the start of
- * the strategy phase in the round replay.
+ * Passive, on the hook `onRoundStart` (points/moments.ts): at the start of every round the replay reaches, the Keleres
+ * replenish their commodities (with what the components in force add to a replenish) and gain 1 trade good.
  */
+import { replenishWith } from '../../../replay/cards/trade';
+import '../../points/moments';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:council_patronage';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // Mandatory, every round; at full commodities the replenish gives none, the trade good still comes (Keleres, Council Patronage 1).
+  onRoundStart: turn => {
+    replenishWith(turn.game, turn.state, turn.pack, turn.shared, turn.states);
+    turn.state.tradeGoods += 1;
+  },
+};
