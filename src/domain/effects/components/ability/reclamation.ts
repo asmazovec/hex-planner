@@ -16,6 +16,8 @@ export const id = 'ability:reclamation';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
+  // The landing block offers the structures straight from the reinforcements: no flight has to bring them.
+  landingOffer: { structures: ['pds', 'spacedock'] },
   waive: [{
     code: 'unitsMissing',
     rule: 'You may place 1 PDS and 1 space dock from your reinforcements on Mecatol Rex',

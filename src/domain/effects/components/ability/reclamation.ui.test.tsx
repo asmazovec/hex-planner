@@ -23,7 +23,7 @@ const table = (faction: string, structures?: StructureCounts) => {
 // then put both on Mecatol Rex; they are written into the landing, and the warning that they were not in the space
 // area reads as allowed by Reclamation.
 // Why the check is redundant here: Reclamation takes the structures from the reinforcements, not from the space area.
-test.fails('ability:reclamation the landing offers a PDS and a space dock for Mecatol Rex, and they read as allowed by Reclamation', async () => {
+test('ability:reclamation the landing offers a PDS and a space dock for Mecatol Rex, and they read as allowed by Reclamation', async () => {
   const winnu = table('winnu');
   quote(winnu.table.pack, id, 'You may place 1 PDS and 1 space dock from your reinforcements on Mecatol Rex');
   const live = showTactical(winnu.table, winnu.move);

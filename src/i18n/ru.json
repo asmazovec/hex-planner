@@ -331,6 +331,9 @@
       "battle": "Бой",
       "landing": "Высадка",
       "landOne": "Высадить: {{unit}}",
+      "shipsTo": "Корабли ставятся в",
+      "landOneFrom": "Высадить: {{unit}} с планеты {{planet}}",
+      "giveBackFrom": "Вернуть: {{unit}}, с планеты {{planet}}",
       "landingOn": "Высадка на {{planet}}",
       "landingStock": "Прибыли",
       "landed": "Высажены",
@@ -887,7 +890,10 @@
     },
     "choice": {
       "planet": "Планета", "system": "Система", "player": "Игрок", "unit": "Юнит", "number": "Число", "option": "Выбор", "component": "Компонент",
-      "none": "Выбирать не из чего"
+      "none": "Выбирать не из чего",
+      "countOn": "{{verb}}: {{unit}}, {{place}}",
+      "countIn": "{{verb}}: {{unit}}",
+      "countBack": "Убрать: {{label}}"
     },
     "gains": {
       "title": "Взято и сброшено",

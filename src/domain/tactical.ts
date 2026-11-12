@@ -97,10 +97,22 @@ export function withFleetRemoval(entry: TacticalEntry, unit: UnitId, amount: num
 
 /** Sets how many of a unit land on a planet; a planet with nothing left to land leaves the landing. */
 export function withLanding(entry: TacticalEntry, planetId: string, unit: UnitId, count: number): Partial<TacticalEntry> {
-  const known = entry.landings.find(l => l.planetId === planetId);
-  const rest = entry.landings.filter(l => l.planetId !== planetId);
+  const known = entry.landings.find(l => l.planetId === planetId && l.from === undefined);
+  const rest = entry.landings.filter(l => l !== known);
   const units = withCount(known?.units ?? {}, unit, count);
   return { landings: hasUnits(units) || hasStructures(known?.structures) ? [...rest, { ...known, planetId, units }] : rest };
+}
+
+/** How many of a unit are committed to land on `planetId` from the planet `from` (49.2: a component lets it). */
+export const landedFrom = (entry: TacticalEntry, planetId: string, from: string, unit: UnitId): number =>
+  entry.landings.find(l => l.planetId === planetId && l.from === from)?.units[unit] ?? 0;
+
+/** Sets how many of a unit are committed to land on `planetId` from the planet `from`; a landing with nothing left goes. */
+export function withLandingFrom(entry: TacticalEntry, planetId: string, from: string, unit: UnitId, count: number): Partial<TacticalEntry> {
+  const known = entry.landings.find(l => l.planetId === planetId && l.from === from);
+  const rest = entry.landings.filter(l => l !== known);
+  const units = withCount(known?.units ?? {}, unit, count);
+  return { landings: hasUnits(units) ? [...rest, { planetId, units, from }] : rest };
 }
 
 const withStructure = (structures: StructureCounts | undefined, kind: StructureKind, count: number): StructureCounts | undefined => {
@@ -112,8 +124,8 @@ const withStructure = (structures: StructureCounts | undefined, kind: StructureK
 
 /** Sets how many structures of a kind an action puts on a planet from the space area of its system; a planet with nothing left leaves the landing. */
 export function withLandedStructure(entry: TacticalEntry, planetId: string, kind: StructureKind, count: number): Partial<TacticalEntry> {
-  const known = entry.landings.find(l => l.planetId === planetId);
-  const rest = entry.landings.filter(l => l.planetId !== planetId);
+  const known = entry.landings.find(l => l.planetId === planetId && l.from === undefined);
+  const rest = entry.landings.filter(l => l !== known);
   const { structures: old, ...kept } = known ?? { planetId, units: {} };
   const structures = withStructure(old, kind, count);
   return { landings: hasUnits(kept.units) || structures ? [...rest, { ...kept, ...(structures ? { structures } : {}) }] : rest };
@@ -316,7 +328,7 @@ export function afterBattle(pack: DataPack, entry: TacticalEntry, before: GameSt
   const lost = entry.losses ?? {};
   const fighting = order.filter(u => pack.units[u] && ((arrived[u] ?? 0) > 0 || (lost[u] ?? 0) > 0));
   const left = Object.fromEntries(fighting.map(u => [u, Math.max(0, (arrived[u] ?? 0) - (lost[u] ?? 0))])) as UnitCounts;
-  const landed = unitsIn(entry.landings);
+  const landed = unitsIn(entry.landings.filter(l => l.from === undefined));
   const landable = order.filter(u => isGround(pack, u) && ((left[u] ?? 0) > 0 || (landed[u] ?? 0) > 0));
   return { fighting, left, landable };
 }

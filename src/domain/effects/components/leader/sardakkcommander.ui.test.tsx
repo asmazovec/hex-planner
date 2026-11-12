@@ -33,7 +33,7 @@ const committed = (): Entry => tactical(TARGET, { landings: [{ planetId: 't1', u
 // as allowed by G'hom Sek'kus.
 // Why the check is redundant here: LRR 49.2 commits only from the space area of the active system; the commander
 // commits from planets of the adjacent systems, without a ship (G'hom Sek'kus ruling 2).
-test.fails('leader:sardakkcommander the landing offers a ground force of an adjacent planet, and the warning reads as allowed', async () => {
+test('leader:sardakkcommander the landing offers a ground force of an adjacent planet, and the warning reads as allowed', async () => {
   const move = tactical(TARGET);
   const sardakk = table('sardakk', move);
   const live = showTactical(sardakk, move);

@@ -20,7 +20,7 @@ const table = (faction: string, structures?: StructureCounts) => {
 // Checks: I land the infantry and the Reclaimer on Target One; the landing then offers a PDS though no ship brought
 // one; I put it there, it is written into the landing, and the warning reads as allowed by Reclaimer.
 // Why the check is redundant here: the Reclaimer takes the structure from the reinforcements.
-test.fails('mech:winnu_mech the landing offers a PDS for the planet the Reclaimer took, and it reads as allowed by Reclaimer', async () => {
+test('mech:winnu_mech the landing offers a PDS for the planet the Reclaimer took, and it reads as allowed by Reclaimer', async () => {
   const winnu = table('winnu');
   quote(winnu.table.pack, id, 'you may place 1 PDS or 1 Space Dock from your reinforcements on this planet');
   const live = showTactical(winnu.table, winnu.move);

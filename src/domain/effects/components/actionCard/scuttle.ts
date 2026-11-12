@@ -8,7 +8,7 @@
  * missing (`unitsMissing`) and gives nothing; more than two ships warns (`choiceOverLimit`) and is returned all the
  * same. A fighter is no non-fighter ship: it is left where it stands and gives nothing.
  *
- * The choices have no interface yet: their keys are made of a ship and a system, which `ChoiceSpec` cannot declare.
+ * The choices are `counts` slots: one button per non-fighter ship type in each system that holds mine, under the name of the system.
  */
 import choiceOverLimit from '../../../rules/codes/choiceOverLimit';
 import { violation } from '../../../rules/registry';
@@ -16,6 +16,7 @@ import { take } from '../../../replay/state';
 import { productionCost } from '../../../unitStats';
 import type { UnitId } from '../../../types';
 import { holderOf } from '../../registry';
+import { UNIT_ORDER } from '../../../hexLayout';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:scuttle';
@@ -23,6 +24,12 @@ export const id = 'actionCard:scuttle';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
+  choose: [{
+    key: 'ships', kind: 'counts', verb: { ru: 'Вернуть', en: 'Return one' },
+    slots: ({ state, pack }) => Object.keys(state.systems).flatMap(slot => UNIT_ORDER
+      .filter(unit => pack.units[unit] && !pack.units[unit].ground && !pack.units[unit].fighter && (state.systems[slot]?.[unit] ?? 0) > 0)
+      .map(unit => ({ key: unit + '@' + slot, unit, group: slot, max: state.systems[slot]?.[unit] }))),
+  }],
   play: ({ game, state, shared, pack, choices, warnings }) => {
     let total = 0;
     let gain = 0;

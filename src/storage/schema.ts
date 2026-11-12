@@ -46,8 +46,8 @@ const entrySchema = z.discriminatedUnion('type', [
   z.object({
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
     moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional(), structures: structureCounts })),
-    landings: z.array(z.object({ planetId: z.string(), units: unitCounts, structures: structureCounts })),
-    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(), acts,
+    landings: z.array(z.object({ planetId: z.string(), units: unitCounts, from: z.string().optional(), structures: structureCounts })),
+    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), shipsTo: z.string().optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(), acts,
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),

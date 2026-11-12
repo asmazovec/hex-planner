@@ -23,6 +23,8 @@ const RULE = 'You can commit (move) up to 1 ground force from each planet in the
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
+  // The landing block offers the ground forces of the planets around the active system.
+  landingOffer: { fromPlanets: true },
   waive: [{
     code: landingFromPlanet.code,
     rule: RULE,

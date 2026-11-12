@@ -321,6 +321,7 @@ export type EntryBody = (
       /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
       /** Ships I remove from the active system beyond my fleet pool (37.3): gone on arrival, or after the production if built then. */ fleetRemovals?: UnitCounts;
       /** Where the ground forces of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
+      /** The system the ships of `production` are placed in when it is not the active one (68.2 places them there; a component may lift the warning). */ shipsTo?: string;
       /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
       /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string; acts?: Act[] }
   | ({ type: 'strategic'; acts?: Act[] } & CardPlay)

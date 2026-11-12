@@ -26,6 +26,14 @@ export interface LandingBlockProps {
     arrived: StructureCounts;
     landedOn: (planetId: string, kind: StructureKind) => number;
     onLand: (planetId: string, kind: StructureKind, count: number) => void;
+    /** Kinds a component lets the action place from the reinforcements (Reclamation): offered on every planet whether or not a flight brought one, and never short of stock. */
+    reinforced?: StructureKind[];
+  };
+  /** Ground forces committed from planets, not from the space area (a component lets it, 49.2): the planets that hold them, and where they are sent. */
+  from?: {
+    sources: { planet: PlanetDef; units: UnitCounts }[];
+    landedFrom: (planetId: string, from: string, unit: UnitId) => number;
+    onLandFrom: (planetId: string, from: string, unit: UnitId, count: number) => void;
   };
 }
 
@@ -36,19 +44,27 @@ const isStructure = (kind: string): kind is StructureKind => kind === 'pds' || k
  * The landing is one draft with a row per planet: the stock is what arrived, less what landed on every planet, so a
  * kind that ran out changes its look in all the rows at once and counts what lands beyond it (the domain warns, nothing is forbidden); the tray of a row holds what lands there.
  */
-export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, landedOn, onLand, structures }: LandingBlockProps) {
+export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, landedOn, onLand, structures, from }: LandingBlockProps) {
   const { t } = useTranslation();
   const colours = tokenColours(game);
   const colour = playerColour(game.color);
   const unitName = (unit: UnitId) => t(`unit.${unit}`);
   const landedInAll = (unit: UnitId) => planets.reduce((sum, p) => sum + landedOn(p.id, unit), 0);
   /** The kinds of structures to place: those in the space area, and those already assigned to a planet. */
-  const kinds = structures ? STRUCTURES.filter(kind => (structures.arrived[kind] ?? 0) > 0 || planets.some(p => structures.landedOn(p.id, kind) > 0)) : [];
+  const kinds = structures ? STRUCTURES.filter(kind => structures.reinforced?.includes(kind) || (structures.arrived[kind] ?? 0) > 0 || planets.some(p => structures.landedOn(p.id, kind) > 0)) : [];
   const placedInAll = (kind: StructureKind) => planets.reduce((sum, p) => sum + (structures?.landedOn(p.id, kind) ?? 0), 0);
   const stock = Object.fromEntries([
     ...units.map(unit => [unit, (arrived[unit] ?? 0) - landedInAll(unit)]),
-    ...kinds.map(kind => [kind, (structures?.arrived[kind] ?? 0) - placedInAll(kind)]),
+    ...kinds.filter(kind => !structures?.reinforced?.includes(kind)).map(kind => [kind, (structures?.arrived[kind] ?? 0) - placedInAll(kind)]),
   ]);
+  /** What each source planet still holds after what is committed from it to every planet. */
+  const committedFrom = (source: string, unit: UnitId) => planets.reduce((sum, p) => sum + (from?.landedFrom(p.id, source, unit) ?? 0), 0);
+  const fromItems = (planetId: string) => (from?.sources ?? []).filter(source => source.planet.id !== planetId).flatMap(source => (Object.keys(source.units) as UnitId[]).map(unit => ({
+    id: `${source.planet.id}:${unit}`, kind: unit, picked: from?.landedFrom(planetId, source.planet.id, unit) ?? 0,
+    left: (source.units[unit] ?? 0) - committedFrom(source.planet.id, unit), price: source.planet.name.slice(0, 3),
+    takeLabel: t('plan.tactical.landOneFrom', { unit: unitName(unit), planet: source.planet.name }),
+    returnLabel: t('plan.tactical.giveBackFrom', { unit: unitName(unit), planet: source.planet.name }),
+  })));
 
   const rows: UnitDraftRow[] = planets.map(planet => {
     const control = before.control[planet.id];
@@ -70,6 +86,7 @@ export function LandingBlock({ game, planets, before, board, units, arrived, los
           kind: unit, picked: landedOn(planet.id, unit),
           takeLabel: t('plan.tactical.landOne', { unit: unitName(unit) }), returnLabel: t('stage.giveBack', { unit: unitName(unit) }),
         })),
+        ...fromItems(planet.id),
         ...kinds.map(kind => ({
           kind, picked: structures?.landedOn(planet.id, kind) ?? 0,
           takeLabel: t('plan.tactical.landOne', { unit: t(`unit.${kind}`) }), returnLabel: t('stage.giveBack', { unit: t(`unit.${kind}`) }),
@@ -84,14 +101,19 @@ export function LandingBlock({ game, planets, before, board, units, arrived, los
     };
   });
 
+  const takeFrom = (planetId: string, unit: UnitId, item: string, by: number) => {
+    const source = item.slice(0, item.length - unit.length - 1);
+    from?.onLandFrom(planetId, source, unit, from.landedFrom(planetId, source, unit) + by);
+  };
+
   return (
     <div className="landing">
       <UnitDraft
         rows={rows} stock={stock} colour={colour} stockLabel={t('plan.tactical.landingStock')} pickedLabel={t('plan.tactical.landed')}
-        onTake={(planetId, kind) => (isStructure(kind)
+        onTake={(planetId, kind, source) => (source !== undefined ? takeFrom(planetId, kind as UnitId, source, 1) : isStructure(kind)
           ? structures?.onLand(planetId, kind, structures.landedOn(planetId, kind) + 1)
           : onLand(planetId, kind as UnitId, landedOn(planetId, kind as UnitId) + 1))}
-        onReturn={(planetId, kind) => (isStructure(kind)
+        onReturn={(planetId, kind, source) => (source !== undefined ? takeFrom(planetId, kind as UnitId, source, -1) : isStructure(kind)
           ? structures?.onLand(planetId, kind, structures.landedOn(planetId, kind) - 1)
           : onLand(planetId, kind as UnitId, landedOn(planetId, kind as UnitId) - 1))}
       />

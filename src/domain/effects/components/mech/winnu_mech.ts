@@ -13,6 +13,7 @@ export const id = 'mech:winnu_mech';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
+  landingOffer: { structures: ['pds', 'spacedock'] },
   waive: [{
     code: 'unitsMissing',
     rule: 'you may place 1 PDS or 1 Space Dock from your reinforcements on this planet',

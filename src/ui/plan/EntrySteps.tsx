@@ -63,7 +63,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
       after.push(<p key="lost" className="flight-after"><span className="flight-after-label">{t('plan.steps.losses')}</span>{lost.map((units, i) => <UnitPictures key={i} units={units} game={game} t={t} />)}</p>);
     }
     for (const landing of landings) {
-      after.push(<p key={`land:${landing.planetId}`} className="flight-after"><span className="flight-after-label">{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>);
+      after.push(<p key={`land:${landing.planetId}:${landing.from ?? ''}`} className="flight-after"><span className="flight-after-label">{t('plan.steps.landing', { planet: planetName(landing.planetId) })}</span>{pictures(landing.units)}</p>);
     }
     if (hasUnits(e.production)) {
       after.push(<p key="build" className="flight-after"><span className="flight-after-label">{t('plan.steps.build')}</span>{pictures(e.production)}{paid(e.payment) && <small>{paid(e.payment)}</small>}</p>);

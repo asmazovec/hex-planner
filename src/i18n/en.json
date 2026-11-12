@@ -331,6 +331,9 @@
       "battle": "Battle",
       "landing": "Landing",
       "landOne": "Land one {{unit}}",
+      "shipsTo": "Ships are placed in",
+      "landOneFrom": "Land one {{unit}} from {{planet}}",
+      "giveBackFrom": "Give back {{unit}} from {{planet}}",
       "landingOn": "Landing on {{planet}}",
       "landingStock": "Arrived",
       "landed": "Landed",
@@ -885,7 +888,10 @@
     },
     "choice": {
       "planet": "Planet", "system": "System", "player": "Player", "unit": "Unit", "number": "Number", "option": "Choice", "component": "Component",
-      "none": "Nothing to choose from"
+      "none": "Nothing to choose from",
+      "countOn": "{{verb}} {{unit}} on {{place}}",
+      "countIn": "{{verb}} {{unit}}",
+      "countBack": "Take back: {{label}}"
     },
     "gains": {
       "title": "Taken and discarded",

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { choicesFor, optionsOf, shownChoices } from '../../../domain/effects/choices';
 import { effectOf } from '../../../domain/effects/registry';
-import type { ChoiceContext, ChoiceSpec } from '../../../domain/effects/types';
+import type { ChoiceContext, ChoiceSlot, ChoiceSpec } from '../../../domain/effects/types';
 import { systemNameOf } from '../../../domain/systemName';
 import type { DataPack, Entry, Game, GameState } from '../../../domain/types';
 import { opponentShortName, shortName } from '../../players/names';
@@ -45,6 +45,7 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
     for (const name of Object.keys(next)) if (!shown.has(name) && specs.some(spec => spec.key === name)) delete next[name];
     onChange(next);
   };
+  const systemTitleOf = (slot: string): string => { const name = systemNameOf(game, pack, slot); return name.planets.length > 0 ? name.planets.join(' / ') : name.number; };
   const nameOf = (spec: ChoiceSpec, value: string): string => {
     switch (spec.kind) {
       case 'planet': return pack.planets[value]?.name ?? value;
@@ -70,6 +71,37 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
               key={spec.key} name={label} value={Math.min(max, Math.max(min, value))} min={min}
               onChange={next => set(spec.key, Math.min(max, Math.max(min, next)))}
             />
+          );
+        }
+        if (spec.kind === 'counts') {
+          const slots = spec.slots?.(context) ?? [];
+          const verb = spec.verb?.[lang] ?? '';
+          const nameOfSlot = (slot: ChoiceSlot): string => (slot.planet !== undefined
+            ? t('components.choice.countOn', { verb, unit: t(`unit.${slot.unit}`), place: pack.planets[slot.planet]?.name ?? slot.planet })
+            : t('components.choice.countIn', { verb, unit: t(`unit.${slot.unit}`) }));
+          const groups = [...new Set(slots.map(slot => slot.group))];
+          return (
+            <div key={spec.key} className="choice-counts" role="group" aria-label={label}>
+              {groups.map(group => (
+                <div key={group ?? ''} className="segment choice-row" role="group" aria-label={group === undefined ? label : systemTitleOf(group)}>
+                  {group !== undefined && <span className="muted choice-group">{systemTitleOf(group)}</span>}
+                  {slots.filter(slot => slot.group === group).map(slot => {
+                    const n = Number(chosen[slot.key] ?? 0);
+                    const name = nameOfSlot(slot);
+                    return (
+                      <span key={slot.key} className="choice-count">
+                        {/* The button stays where it is as it counts; the minus beside it is always there. */}
+                        <button type="button" aria-pressed={n > 0} aria-label={name} title={name} onClick={() => set(slot.key, n + 1)}>
+                          {t(`unit.${slot.unit}`)}{slot.planet !== undefined && <small> {pack.planets[slot.planet]?.name ?? slot.planet}</small>} <b>×{n}</b>
+                        </button>
+                        <button type="button" aria-label={t('components.choice.countBack', { label: name })} disabled={n <= 0} onClick={() => set(slot.key, n > 1 ? n - 1 : undefined)}>−</button>
+                      </span>
+                    );
+                  })}
+                </div>
+              ))}
+              {slots.length === 0 && <span className="muted">{t('components.choice.none')}</span>}
+            </div>
           );
         }
         const options = optionsOf(spec, context);
