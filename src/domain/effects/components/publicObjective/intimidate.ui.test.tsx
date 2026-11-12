@@ -12,7 +12,7 @@ const CODE = 'objectiveUnmet' as ExtensionCode;
 // "Have 1 or more ships in 2 systems that are adjacent to Mecatol Rex's system."
 // Checks: the status entry scores Intimidate Council with ships in one system adjacent to Mecatol Rex and in Mecatol Rex itself: the warning is on the screen, standing.
 // Why the check is NOT redundant here: the objective is its own requirement (61.5, 61.10); nothing lifts it.
-test.fails('publicObjective:intimidate scored without its requirement shows the warning, standing', () => {
+test('publicObjective:intimidate scored without its requirement shows the warning, standing', () => {
   const scoring: Entry = planned({ type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0, scored: [id] } as EntryBody, 'status');
   const table = bench({
     faction: 'sol', entries: [scoring],

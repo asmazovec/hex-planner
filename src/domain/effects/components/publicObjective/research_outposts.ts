@@ -6,7 +6,16 @@
  * tests mark what it must do.
  */
 import type { ComponentEffect } from '../../types';
+import '../../points/status';
 
 export const id = 'publicObjective:research_outposts';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // One specialty or two on a planet count the same (rulings).
+  requirement: ({ pack, state }) => ({
+    have: Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (pack.planets[planet]?.tech?.length ?? 0) > 0).length,
+    need: 3,
+  }),
+};

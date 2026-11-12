@@ -6,7 +6,20 @@
  * tests mark what it must do.
  */
 import type { ComponentEffect } from '../../types';
+import '../../points/status';
 
 export const id = 'publicObjective:develop';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // Two upgrades of the same unit count once (rulings).
+  requirement: ({ pack, state }) => {
+    const units = new Set<string>();
+    for (const held of state.holdings.technologies) {
+      const upgrade = pack.technologies[held.replace(/^technology:/, '')]?.upgrade;
+      if (upgrade) units.add(upgrade);
+    }
+    return { have: units.size, need: 2 };
+  },
+};

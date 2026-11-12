@@ -19,7 +19,7 @@ describe('agenda:grant_reallocation Research Grant Reallocation', () => {
   //  remove 1 token from their fleet pool and return it to their reinforcements."
   // Checks: E-Res Siphons is gained and its 2 prerequisites take 2 tokens from the fleet pool: 3 becomes 1.
   // Why the check is redundant here: nothing is lifted; the agenda changes the fleet pool, which the plan counts.
-  test.fails('agenda:grant_reallocation takes a fleet pool token for each prerequisite of the technology gained', () => {
+  test('agenda:grant_reallocation takes a fleet pool token for each prerequisite of the technology gained', () => {
     const t = table([elected(ERS)]);
     quote(t.pack, id, 'for each prerequisite on that technology, they remove 1 token from their fleet pool');
     const end = endOf(t);
@@ -30,7 +30,7 @@ describe('agenda:grant_reallocation Research Grant Reallocation', () => {
   // LRR 37.3: ships beyond the fleet pool are removed.
   // Checks: three cruisers at home are beyond the pool of 1 after E-Res Siphons, on the agenda entry.
   // Why the check is NOT redundant here: the agenda lowers the limit, it does not let the ships stay.
-  test.fails('agenda:grant_reallocation ships beyond the lowered fleet pool are warned of', () => {
+  test('agenda:grant_reallocation ships beyond the lowered fleet pool are warned of', () => {
     const agenda = elected(ERS);
     const t = table([agenda], 3);
     expectStanding(warningsOf(t, agenda), 'fleetPool');
@@ -40,7 +40,7 @@ describe('agenda:grant_reallocation Research Grant Reallocation', () => {
   //  command tokens from their fleet pool instead."
   // Checks: with 2 tokens left, Light/Wave Deflector (3 prerequisites) leaves the pool at 0, and no negative pool is warned of.
   // Why the check is redundant here: the pool cannot go below 0, so the negative pool check has nothing to find.
-  test.fails('agenda:grant_reallocation never takes the fleet pool below 0', () => {
+  test('agenda:grant_reallocation never takes the fleet pool below 0', () => {
     const agenda = elected(LWD);
     const t = table([adjust({ fleet: -1 }), agenda]);
     expect(endOf(t).fleet).toBe(0);
@@ -56,7 +56,7 @@ describe('agenda:grant_reallocation Research Grant Reallocation', () => {
   });
 
   // Checks: the card is played by the agenda entry.
-  test.fails('agenda:grant_reallocation is a play effect', () => {
+  test('agenda:grant_reallocation is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

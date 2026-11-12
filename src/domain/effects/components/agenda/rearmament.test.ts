@@ -12,7 +12,7 @@ describe('agenda:rearmament Rearmament Agreement', () => {
   // "For: Each player places 1 mech from their reinforcements on a planet they control in their home system."
   // Checks: "For" with the home planet h1 chosen puts one mech there by itself.
   // Why the check is redundant here: nothing is lifted; the agenda places a unit, which the plan counts.
-  test.fails('agenda:rearmament for places one mech on the chosen planet of the home system', () => {
+  test('agenda:rearmament for places one mech on the chosen planet of the home system', () => {
     const t = table([resolved({ outcome: 'for', planet: 'h1' })]);
     quote(t.pack, id, 'Each player places 1 mech from their reinforcements on a planet they control in their home system');
     expect(endOf(t).ground.h1).toEqual({ mech: 1 });
@@ -20,7 +20,7 @@ describe('agenda:rearmament Rearmament Agreement', () => {
 
   // "Against: Each player replaces each of their mechs with 1 infantry from their reinforcements."
   // Checks: a mech on t1 and one in the home space become infantry; nothing else changes.
-  test.fails('agenda:rearmament against replaces each mech with an infantry', () => {
+  test('agenda:rearmament against replaces each mech with an infantry', () => {
     const t = table([adjust({ ground: { t1: { mech: 1, infantry: 1 } }, units: { systemId: '0,0', units: { carrier: 1, mech: 1 } } }), resolved({ outcome: 'against' })]);
     quote(t.pack, id, 'Each player replaces each of their mechs with 1 infantry');
     const end = endOf(t);
@@ -37,7 +37,7 @@ describe('agenda:rearmament Rearmament Agreement', () => {
   });
 
   // Checks: the card is played by the agenda entry.
-  test.fails('agenda:rearmament is a play effect', () => {
+  test('agenda:rearmament is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

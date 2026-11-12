@@ -16,7 +16,7 @@ describe('publicObjective:sway_council Sway the Council', () => {
   // "Spend 8 influence."
   // Checks: 3 influence of planets and 4 trade goods make 7: scoring is warned of.
   // Why the check is NOT redundant here: LRR 61.10: "To score such an objective, a player must pay the specified cost".
-  test.fails('publicObjective:sway_council scored with 7 influence at hand is warned of', () => {
+  test('publicObjective:sway_council scored with 7 influence at hand is warned of', () => {
     const t = table([adjust({ tradeGoods: 4 })]);
     quote(t.pack, id, 'Spend 8 influence.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -33,7 +33,7 @@ describe('publicObjective:sway_council Sway the Council', () => {
   test.todo('publicObjective:sway_council which planets and trade goods pay the 8 influence is the player\'s choice: the status entry has no payment yet, so trade goods spent are not taken');
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:sway_council is a play effect of the status entry', () => {
+  test('publicObjective:sway_council is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

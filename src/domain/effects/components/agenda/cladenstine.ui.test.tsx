@@ -35,7 +35,7 @@ test('agenda:cladenstine the agenda editor offers the outcomes For and Against',
 // LRR 37.3: ships beyond a lowered fleet pool are removed.
 // Checks: after "Against" the three cruisers at home are beyond the pool of 2, and the warning is on the screen, standing.
 // Why the check is NOT redundant here: the agenda lowers the limit and lets nothing stay beyond it.
-test.fails('agenda:cladenstine against shows the ships beyond the lowered fleet pool, standing', () => {
+test('agenda:cladenstine against shows the ships beyond the lowered fleet pool, standing', () => {
   const agenda = resolved({ outcome: 'against' });
   showWarnings(table(agenda), agenda);
   expectShownStanding('fleetPool');

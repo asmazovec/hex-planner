@@ -15,7 +15,7 @@ const secondaryOf = (card: number, phase: Entry['phase']): Entry => planned({ ty
 // Checks: my second secondary of Politics in the round, after the agenda elected Politics, shows its warning in the
 // allowed look, naming the agenda.
 // Why the check is redundant here: the agenda gives each player a resolution of the elected card's secondary of its own.
-test.fails('agenda:crisis the repeated secondary of the elected card reads as allowed by Galactic Crisis Pact', () => {
+test('agenda:crisis the repeated secondary of the elected card reads as allowed by Galactic Crisis Pact', () => {
   const again = secondaryOf(CARD.politics, 'agenda');
   const t = bench({ faction: 'sol', expansions: ['pok'], entries: [secondaryOf(CARD.politics, 'action'), crisis(CARD.politics), again] });
   quote(t.pack, id, 'Each player may perform the secondary ability of the elected strategy card');

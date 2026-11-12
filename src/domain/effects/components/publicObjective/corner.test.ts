@@ -29,7 +29,7 @@ describe('publicObjective:corner Corner the Market', () => {
   // Checks: four planets controlled, but only three of them industrial (Vefut II is hazardous): scoring is warned of.
   // Why the check is NOT redundant here: the objective is its own requirement (61.5): it is met only by four planets of
   // one trait, so scoring it without them is a breach the plan should show.
-  test.fails('publicObjective:corner scored with four planets of mixed traits is warned of', () => {
+  test('publicObjective:corner scored with four planets of mixed traits is warned of', () => {
     const t = table(['wellon', 'thibah', 'tarmann', 'vefutii']);
     quote(t.pack, id, 'Control 4 planets that each have the same planet trait.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -43,7 +43,7 @@ describe('publicObjective:corner Corner the Market', () => {
   });
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:corner is a play effect of the status entry', () => {
+  test('publicObjective:corner is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

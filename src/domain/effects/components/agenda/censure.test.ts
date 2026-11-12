@@ -22,7 +22,7 @@ describe('agenda:censure Political Censure', () => {
   // "The elected player gains this card and 1 victory point."
   // Checks: I am elected (my agenda entry gains the law): my points go from 0 to 1 by themselves.
   // Why the check is redundant here: nothing is lifted; the law changes the points the plan counts.
-  test.fails('agenda:censure the elected player gains 1 victory point', () => {
+  test('agenda:censure the elected player gains 1 victory point', () => {
     const t = table([[elected()]]);
     quote(t.pack, id, 'The elected player gains this card and 1 victory point.');
     expect(endOf(t).vp).toBe(1);
@@ -31,7 +31,7 @@ describe('agenda:censure Political Censure', () => {
   // "The elected player cannot play action cards."
   // Checks: elected in round 1, I play an action card in round 2: the play is warned of, and nothing lifts it.
   // Why the check is NOT redundant here: the law forbids; it is a new check, not a waiver, and the plan forbids nothing.
-  test.fails('agenda:censure the elected player playing an action card is warned of', () => {
+  test('agenda:censure the elected player playing an action card is warned of', () => {
     const play = componentAction(CARD);
     const t = table([[elected()], [play]]);
     quote(t.pack, id, 'The elected player cannot play action cards.');
@@ -40,7 +40,7 @@ describe('agenda:censure Political Censure', () => {
 
   // Checks: an action card discarded with any entry is a card played, so it is warned of too.
   // Why the check is NOT redundant here: the law speaks of every action card, in any window.
-  test.fails('agenda:censure an action card spent with another entry is warned of as well', () => {
+  test('agenda:censure an action card spent with another entry is warned of as well', () => {
     const spent = planned({ type: 'adjustment', label: '', delta: {} } as EntryBody, 'action', { spends: [CARD] });
     const t = table([[elected()], [spent]]);
     expectStanding(warningsOf(t, spent), CODE);
@@ -57,14 +57,14 @@ describe('agenda:censure Political Censure', () => {
 
   // "If the owner of this card loses this card, they lose 1 victory point."
   // Checks: elected in round 1 and losing the card in round 2 costs the point again: one point fewer than keeping it.
-  test.fails('agenda:censure losing the card loses the victory point', () => {
+  test('agenda:censure losing the card loses the victory point', () => {
     const kept = table([[elected()]]);
     const lost = table([[elected()], [planned({ type: 'adjustment', label: '', delta: {} } as EntryBody, 'agenda', { spends: [id] })]]);
     expect(endOf(kept).vp - endOf(lost).vp).toBe(1);
   });
 
   // Checks: the law is played by the entry that resolves it.
-  test.fails('agenda:censure is a play effect', () => {
+  test('agenda:censure is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

@@ -16,7 +16,7 @@ describe('publicObjective:trade_routes Negotiate Trade Routes', () => {
   // Checks: scoring it with 6 trade goods spends 5 of them: 1 is left.
   // Why the check is redundant here: nothing is lifted; LRR 61.10 has the cost paid, and trade goods spent do not come
   // back with the planets readied at the end of the status phase, so the plan must take them.
-  test.fails('publicObjective:trade_routes scoring spends 5 trade goods', () => {
+  test('publicObjective:trade_routes scoring spends 5 trade goods', () => {
     const t = table(6);
     quote(t.pack, id, 'Spend 5 trade goods.');
     expect(endOf(t).tradeGoods).toBe(1);
@@ -25,13 +25,13 @@ describe('publicObjective:trade_routes Negotiate Trade Routes', () => {
 
   // Checks: 4 trade goods are not enough: scoring is warned of.
   // Why the check is NOT redundant here: LRR 61.10: "To score such an objective, a player must pay the specified cost".
-  test.fails('publicObjective:trade_routes scored with 4 trade goods is warned of', () => {
+  test('publicObjective:trade_routes scored with 4 trade goods is warned of', () => {
     const t = table(4);
     expectStanding(warningsOf(t, t.scoring), CODE);
   });
 
   // Checks: the objective is played by the status entry that scores it, which spends and checks.
-  test.fails('publicObjective:trade_routes is a play effect of the status entry', () => {
+  test('publicObjective:trade_routes is a play effect of the status entry', () => {
     expect(effect(table(0).pack, id).tier).toBe('play');
   });
 });

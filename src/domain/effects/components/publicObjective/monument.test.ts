@@ -16,7 +16,7 @@ describe('publicObjective:monument Erect a Monument', () => {
   // "Spend 8 resources."
   // Checks: the ready home planets give 4 resources and there are no trade goods: scoring is warned of.
   // Why the check is NOT redundant here: LRR 61.10: "To score such an objective, a player must pay the specified cost".
-  test.fails('publicObjective:monument scored with 4 resources at hand is warned of', () => {
+  test('publicObjective:monument scored with 4 resources at hand is warned of', () => {
     const t = table([]);
     quote(t.pack, id, 'Spend 8 resources.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -34,7 +34,7 @@ describe('publicObjective:monument Erect a Monument', () => {
   // Checks: Home One was exhausted to pay for a production in the action phase; at scoring only Home Two and the
   // trade goods are at hand (5), so scoring is warned of.
   // Why the check is NOT redundant here: a planet exhausted in the action phase is still exhausted at Score Objectives.
-  test.fails('publicObjective:monument a planet exhausted in the action phase cannot pay', () => {
+  test('publicObjective:monument a planet exhausted in the action phase cannot pay', () => {
     const build = tactical(HOME, { production: { infantry: 2 }, payment: { ...NO_PAYMENT, planets: ['h1'] } });
     const t = table([adjust({ tradeGoods: 4 }), build]);
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -43,7 +43,7 @@ describe('publicObjective:monument Erect a Monument', () => {
   test.todo('publicObjective:monument which planets and trade goods pay the 8 resources is the player\'s choice: the status entry has no payment yet, so trade goods spent are not taken');
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:monument is a play effect of the status entry', () => {
+  test('publicObjective:monument is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

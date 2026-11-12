@@ -14,7 +14,7 @@ const table = (agenda: Entry) => bench({ faction: 'sol', expansions: ['pok'], un
 // Checks: E-Res Siphons (2 prerequisites) chosen among the gains of the agenda: the pool of 1 is below the three
 // cruisers at home, and the warning stands on the screen of the agenda entry.
 // Why the check is NOT redundant here: the agenda lowers the fleet pool and lets no ship stay beyond it (37.3).
-test.fails('agenda:grant_reallocation the technology chosen lowers the fleet pool below the ships, shown standing', () => {
+test('agenda:grant_reallocation the technology chosen lowers the fleet pool below the ships, shown standing', () => {
   const agenda = elected('technology:ers');
   const t = table(agenda);
   quote(t.pack, id, 'remove 1 token from their fleet pool');

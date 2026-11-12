@@ -28,7 +28,7 @@ describe('publicObjective:expand_borders Expand Borders', () => {
   // "Control 6 planets in non-home systems."
   // Checks: six planets controlled, but two of them are the home planets: four outside home, so scoring is warned of.
   // Why the check is NOT redundant here: the requirement counts planets outside home systems only (61.5).
-  test.fails('publicObjective:expand_borders scored with the home planets among six is warned of', () => {
+  test('publicObjective:expand_borders scored with the home planets among six is warned of', () => {
     const t = table(['h1', 'h2', 't1', 'wellon', 'thibah', 'tarmann']);
     quote(t.pack, id, 'Control 6 planets in non-home systems.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -42,7 +42,7 @@ describe('publicObjective:expand_borders Expand Borders', () => {
   });
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:expand_borders is a play effect of the status entry', () => {
+  test('publicObjective:expand_borders is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

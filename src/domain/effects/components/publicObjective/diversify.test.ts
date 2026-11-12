@@ -15,7 +15,7 @@ describe('publicObjective:diversify Diversify Research', () => {
   // "Own 2 technologies in each of 2 colors."
   // Checks: two propulsion, one biotic, one cybernetic: only one colour has two, so scoring is warned of.
   // Why the check is NOT redundant here: the objective is its own requirement (61.5).
-  test.fails('publicObjective:diversify scored with two technologies in one colour only is warned of', () => {
+  test('publicObjective:diversify scored with two technologies in one colour only is warned of', () => {
     const t = table(['technology:gd', 'technology:amd', 'technology:nm', 'technology:st']);
     quote(t.pack, id, 'Own 2 technologies in each of 2 colors.');
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -31,13 +31,13 @@ describe('publicObjective:diversify Diversify Research', () => {
   // LRR 90.7.2: "Unit upgrades do not have a color and do not satisfy prerequisites."
   // Checks: two propulsion and two unit upgrades: the upgrades are no colour, so scoring is warned of.
   // Why the check is NOT redundant here: only coloured technologies count.
-  test.fails('publicObjective:diversify unit upgrades are of no colour', () => {
+  test('publicObjective:diversify unit upgrades are of no colour', () => {
     const t = table(['technology:gd', 'technology:amd', 'technology:dd2', 'technology:cr2']);
     expectStanding(warningsOf(t, t.scoring), CODE);
   });
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:diversify is a play effect of the status entry', () => {
+  test('publicObjective:diversify is a play effect of the status entry', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

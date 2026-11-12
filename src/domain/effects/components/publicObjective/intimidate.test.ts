@@ -23,7 +23,7 @@ describe('publicObjective:intimidate Intimidate Council', () => {
   // Rulings: "Any ships in the Mecatol Rex system are irrelevant."
   // Checks: ships beside Mecatol Rex and in its own system: one adjacent system only, so scoring is warned of.
   // Why the check is NOT redundant here: the objective is its own requirement (61.5): two adjacent systems.
-  test.fails('publicObjective:intimidate scored with ships in one adjacent system and in Mecatol Rex is warned of', () => {
+  test('publicObjective:intimidate scored with ships in one adjacent system and in Mecatol Rex is warned of', () => {
     const t = table({ [NEAR]: { cruiser: 1 }, [TARGET]: { cruiser: 1 } });
     quote(t.pack, id, "Have 1 or more ships in 2 systems that are adjacent to Mecatol Rex's system.");
     expectStanding(warningsOf(t, t.scoring), CODE);
@@ -37,7 +37,7 @@ describe('publicObjective:intimidate Intimidate Council', () => {
   });
 
   // Checks: the objective is played by the status entry that scores it, which checks its requirement.
-  test.fails('publicObjective:intimidate is a play effect of the status entry', () => {
+  test('publicObjective:intimidate is a play effect of the status entry', () => {
     expect(effect(table({}).pack, id).tier).toBe('play');
   });
 });
