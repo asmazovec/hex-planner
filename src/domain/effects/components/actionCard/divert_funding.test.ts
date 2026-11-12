@@ -17,7 +17,7 @@ describe('actionCard:divert_funding Divert Funding', () => {
   // Checks: Neural Motivator is returned and Gravity Drive researched; at the end I own Gravity Drive and no longer
   // Neural Motivator, with no warning about either.
   // Why it is counted: the holdings are what the plan replays; the card trades one technology for another.
-  test.fails('actionCard:divert_funding returns one technology and researches another', () => {
+  test('actionCard:divert_funding returns one technology and researches another', () => {
     const entry = play('technology:nm', 'technology:gd');
     const sol = table(entry);
     quote(sol.pack, id, 'Return a non-unit upgrade, non-faction technology that you own to your technology deck.');
@@ -31,7 +31,7 @@ describe('actionCard:divert_funding Divert Funding', () => {
   // "Return a non-unit upgrade ... technology"
   // Checks: returning Destroyer II, a unit upgrade, is warned of.
   // Why the check is NOT redundant here: the card names the technologies it may return; a unit upgrade is not one.
-  test.fails('actionCard:divert_funding returning a unit upgrade is warned of', () => {
+  test('actionCard:divert_funding returning a unit upgrade is warned of', () => {
     const entry = play('technology:dd2', 'technology:gd');
     expectStanding(warningsOf(table(entry), entry), RETURNED_INVALID);
   });
@@ -40,7 +40,7 @@ describe('actionCard:divert_funding Divert Funding', () => {
   //  Funding."
   // Checks: returning a technology I do not own is warned of.
   // Why the check is NOT redundant here: only a technology "that you own" can be returned.
-  test.fails('actionCard:divert_funding returning a technology not owned is warned of', () => {
+  test('actionCard:divert_funding returning a technology not owned is warned of', () => {
     const entry = play('technology:st', 'technology:gd');
     expectStanding(warningsOf(table(entry), entry), RETURNED_INVALID);
   });
@@ -49,7 +49,7 @@ describe('actionCard:divert_funding Divert Funding', () => {
   // from the player's own deck, so one already owned cannot be.
   // Checks: researching Antimass Deflectors, which I keep, is warned of as owned.
   // Why the check is NOT redundant here: the card researches "another technology", by the usual rule of research.
-  test.fails('actionCard:divert_funding researching a technology already owned is warned of', () => {
+  test('actionCard:divert_funding researching a technology already owned is warned of', () => {
     const entry = play('technology:nm', 'technology:amd');
     expectStanding(warningsOf(table(entry), entry), 'researchOwned');
   });
@@ -63,7 +63,7 @@ describe('actionCard:divert_funding Divert Funding', () => {
 
   test.todo('actionCard:divert_funding the research must meet its prerequisites without the returned technology (ruling 2): the replay checks no prerequisites for any research yet');
 
-  test.fails('actionCard:divert_funding is a play effect that lifts no check', () => {
+  test('actionCard:divert_funding is a play effect that lifts no check', () => {
     const { pack } = table(play('technology:nm', 'technology:gd'));
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

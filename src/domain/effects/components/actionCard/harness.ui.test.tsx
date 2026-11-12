@@ -15,7 +15,7 @@ const setup = (hand: string[]) => {
 // Checks: in «Used» of the action that activates the nebula the player takes Harness Energy; the entry names it and
 // the plan then ends with the commodities at the Sol value of 4.
 // Why it is counted: the replenish is what the card does, and commodities are counted by the plan.
-test.fails('actionCard:harness named in «Used», the commodities are replenished', async () => {
+test('actionCard:harness named in «Used», the commodities are replenished', async () => {
   const { move, table } = setup([id]);
   quote(table.pack, id, 'Replenish your commodities.');
   const live = showUses(table, move);

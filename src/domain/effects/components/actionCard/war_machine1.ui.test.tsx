@@ -15,7 +15,7 @@ const setup = () => {
 // editor and the production warning goes away.
 // Why the check is redundant here: the Production value is 9 with the card, so nine units are within it (a change of
 // the number: nothing is shown as allowed).
-test.fails('actionCard:war_machine1 named in «Used», nine units are no longer over the Production value', async () => {
+test('actionCard:war_machine1 named in «Used», nine units are no longer over the Production value', async () => {
   const { move, table } = setup();
   quote(table.pack, id, 'Apply +4 to the total PRODUCTION value of your units');
   showTactical(table, move);
