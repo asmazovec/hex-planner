@@ -22,7 +22,7 @@ describe('actionCard:overrule Overrule', () => {
   // card and lifted by the action card.
   // Why the check is redundant here: LRR 82 and 83.3 let only the holder resolve a card's primary; Overrule lets me perform
   // the primary of a card I do not hold, by its own words.
-  test.fails('actionCard:overrule lifts the check of a primary of a card not mine', () => {
+  test('actionCard:overrule lifts the check of a primary of a card not mine', () => {
     const play = using(primary(OTHER), id);
     const overrule = table([play]);
     quote(overrule.pack, id, 'Perform the primary ability of a readied or unchosen strategy card.');
@@ -32,7 +32,7 @@ describe('actionCard:overrule Overrule', () => {
   // Checks: that primary spends no strategy token: the pool keeps its two tokens.
   // Why the check is redundant here: a primary of another's card costs a token only where an ability lets it be
   // resolved for one; Overrule performs it as the effect of the action card, which names no token.
-  test.fails('actionCard:overrule spends no strategy token for the primary', () => {
+  test('actionCard:overrule spends no strategy token for the primary', () => {
     const play = using(primary(OTHER), id);
     const overrule = table([play]);
     expect(standingOf(warningsOf(overrule, play), 'shortStrategy')).toEqual([]);
@@ -69,7 +69,7 @@ describe('actionCard:overrule Overrule', () => {
 
   test.todo('actionCard:overrule "a readied or unchosen strategy card": the plan does not know which cards of the other players are exhausted');
 
-  test.fails('actionCard:overrule is a play effect that waives a primary of another player\'s card', () => {
+  test('actionCard:overrule is a play effect that waives a primary of another player\'s card', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['foreignPrimary', undefined]]);

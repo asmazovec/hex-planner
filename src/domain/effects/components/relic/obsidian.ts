@@ -10,4 +10,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:obsidian';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { secretLimit: value => value + 1 },
+};

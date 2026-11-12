@@ -15,7 +15,7 @@ describe('relic:mawofworlds Maw of Worlds', () => {
   // "At the start of the agenda phase, you may purge this card and exhaust all of your planets to gain any 1 technology."
   // Checks: the entry that uses the Maw exhausts every planet I control.
   // Why it is counted here: a play; the planets exhausted are the board's, and an exhausted planet pays nothing.
-  test.fails('relic:mawofworlds exhausts every planet I control', () => {
+  test('relic:mawofworlds exhausts every planet I control', () => {
     const relic = table([maw()]);
     quote(relic.pack, id, 'you may purge this card and exhaust all of your planets to gain any 1 technology');
     expect([...endOf(relic).exhausted].sort()).toEqual(['h1', 'h2', 't1']);
@@ -33,7 +33,7 @@ describe('relic:mawofworlds Maw of Worlds', () => {
 
   test.todo('relic:mawofworlds "At the start of the agenda phase": the plan does not order the steps of the agenda phase');
 
-  test.fails('relic:mawofworlds is a play effect', () => {
+  test('relic:mawofworlds is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

@@ -6,8 +6,17 @@
  * that names it in `uses`, when one prerequisite is missing. The action card drawn instead is entered as a gain. The
  * replay already exhausts the relic. Pass 1 keeps it the hint it is today.
  */
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:prophetstears';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  waive: [{
+    code: prerequisitesMissing.code,
+    rule: 'you may exhaust this card to ignore 1 prerequisite',
+    when: (warning, ctx) => Number(warning.params.missing) <= 1 && ctx.before.holdings.relics.includes(id),
+  }],
+};

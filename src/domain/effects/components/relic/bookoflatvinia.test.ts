@@ -18,7 +18,7 @@ describe('relic:bookoflatvinia Book of Latvinia', () => {
   //  point."
   // Checks: controlling planets of all four specialties, the action gives 1 victory point and purges the relic.
   // Why it is counted here: a play of the component action; the planets controlled and the points are the board's.
-  test.fails('relic:bookoflatvinia gives 1 victory point with all four specialties controlled', () => {
+  test('relic:bookoflatvinia gives 1 victory point with all four specialties controlled', () => {
     const book = table([componentAction(id)], ALL);
     quote(book.pack, id, 'if you control planets that have all 4 types of technology specialties, gain 1 victory point');
     const end = endOf(book);
@@ -38,7 +38,7 @@ describe('relic:bookoflatvinia Book of Latvinia', () => {
   test.todo('relic:bookoflatvinia "gain the speaker token": the plan does not keep the speaker');
   test.todo('relic:bookoflatvinia "research up to 2 technologies that have no prerequisites": entered as gains, which no rule of the plan checks');
 
-  test.fails('relic:bookoflatvinia is a play effect', () => {
+  test('relic:bookoflatvinia is a play effect', () => {
     expect(effect(table([], []).pack, id).tier).toBe('play');
   });
 });

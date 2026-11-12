@@ -10,4 +10,9 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:emelpar';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // The token comes from the reinforcements, so the strategy pool owes nothing for the entry that names the relic.
+  modify: { strategyCost: () => 0 },
+};

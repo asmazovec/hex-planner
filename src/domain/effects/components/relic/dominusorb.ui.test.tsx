@@ -15,7 +15,7 @@ const table = (move: Entry) =>
 // Checks: the cruiser leaves the home system that holds my token; I choose the Orb in «Used», and the warning reads as
 // allowed by Dominus Orb.
 // Why the check is redundant here: LRR 58.3.3 forbids the move; the Orb lets units in such systems move.
-test.fails('relic:dominusorb chosen in «Used», the move out of a system with my token reads as allowed by Dominus Orb', async () => {
+test('relic:dominusorb chosen in «Used», the move out of a system with my token reads as allowed by Dominus Orb', async () => {
   const move = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }] });
   const orb = table(move);
   quote(orb.pack, id, 'move and transport units that are in systems that contain 1 of your command tokens');

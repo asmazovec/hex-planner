@@ -11,4 +11,14 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:bookoflatvinia';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: ({ state, pack, held }) => {
+    if (!held) return;
+    const types = new Set(Object.keys(state.control)
+      .filter(planetId => state.control[planetId] === 'me')
+      .flatMap(planetId => pack.planets[planetId]?.tech ?? []));
+    if (types.size >= 4) state.vp += 1;
+  },
+};

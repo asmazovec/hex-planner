@@ -13,7 +13,7 @@ const CODE = 'prerequisitesMissing' as AnyWarningCode;
 // Checks: Fleet Logistics (two propulsion prerequisites) is researched with one of them owned; I choose the Tears in
 // «Used», and the warning of the missing prerequisite reads as allowed by The Prophet's Tears.
 // Why the check is redundant here: one prerequisite is missing, and the card ignores one.
-test.fails('relic:prophetstears chosen in «Used», the missing prerequisite reads as allowed by The Prophet\'s Tears', async () => {
+test('relic:prophetstears chosen in «Used», the missing prerequisite reads as allowed by The Prophet\'s Tears', async () => {
   const research = primary(7, { researched: ['technology:fl'] });
   const table = bench({ faction: 'sol', expansions: ['pok'], start: { relics: [id], technologies: ['technology:amd'] }, entries: [research] });
   quote(table.pack, id, 'you may exhaust this card to ignore 1 prerequisite');
