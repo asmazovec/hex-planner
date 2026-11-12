@@ -1,0 +1,12 @@
+/**
+ * Expand Borders (public objective, stage I): "Control 6 planets in non-home systems."
+ *
+ * Decided: play with a new check. A status entry that scores it is checked against its requirement (61.5, 81.1):
+ * control 6 planets outside home systems. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
+ * tests mark what it must do.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'publicObjective:expand_borders';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id };
