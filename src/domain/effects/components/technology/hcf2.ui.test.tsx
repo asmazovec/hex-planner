@@ -20,7 +20,7 @@ const takeAll = async () => {
 // Checks: in the flight step I take a cruiser and four fighters; every press takes a unit, and the four excess fighters
 // weigh two ships, so with the cruiser three stand against the fleet pool of 3 and no warning is shown.
 // Why the default count does not apply: the card halves what the excess fighters weigh against the fleet pool.
-test.fails('technology:hcf2 a cruiser and four fighters fly within the fleet pool: no warning is shown', async () => {
+test('technology:hcf2 a cruiser and four fighters fly within the fleet pool: no warning is shown', async () => {
   const { table, live } = flight('naalu', id);
   quote(table.pack, id, 'count as 1/2 of a ship against your fleet pool');
   await takeAll();

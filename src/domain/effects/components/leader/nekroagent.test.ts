@@ -16,7 +16,7 @@ describe('leader:nekroagent Nekro Malleon', () => {
   // Checks: I choose myself and spend a token of my strategy pool: the pool goes from 2 to 1 and I gain 2 trade goods.
   // Why the default count does not apply: nothing in the rules turns a command token into trade goods; the agent's
   // choices are counted as its text says (a `play`).
-  test.fails('leader:nekroagent on myself: a strategy token is spent for 2 trade goods', () => {
+  test('leader:nekroagent on myself: a strategy token is spent for 2 trade goods', () => {
     const game = table([agent({ player: 'me', pay: 'token', pool: 'strategy' })]);
     quote(game.pack, id, 'spend 1 command token from their command sheet to gain 2 trade goods');
     const end = endOf(game);
@@ -28,7 +28,7 @@ describe('leader:nekroagent Nekro Malleon', () => {
   // Checks: I choose myself and discard the action card in my hand (entered in `spends`): my pools stay and I gain 2
   // trade goods.
   // Why the default count does not apply: the discard pays for the trade goods instead of the token.
-  test.fails('leader:nekroagent on myself: an action card discarded for 2 trade goods, the pools untouched', () => {
+  test('leader:nekroagent on myself: an action card discarded for 2 trade goods, the pools untouched', () => {
     const card = 'actionCard:bribery';
     const play = { ...agent({ player: 'me', pay: 'actionCard' }), spends: [card] };
     const game = bench({ faction: 'nekro', expansions: ['pok'], start: { leaders: { [id]: 'unlocked' }, hand: [card] }, entries: [play] });
@@ -41,7 +41,7 @@ describe('leader:nekroagent Nekro Malleon', () => {
   // "... to choose a player: that player ..."
   // Checks: I choose the rival, who spends a tactic token and gains the 2 trade goods; my own board does not change.
   // Why the default count does not apply: the chosen player is the one who pays and gains.
-  test.fails('leader:nekroagent on a rival: the rival pays the token and gains the trade goods', () => {
+  test('leader:nekroagent on a rival: the rival pays the token and gains the trade goods', () => {
     const game = table([agent({ player: RIVAL, pay: 'token', pool: 'tactic' })]);
     const end = endOf(game);
     expect(end.rivals?.[RIVAL]?.tactic).toBe(2);
@@ -66,7 +66,7 @@ describe('leader:nekroagent Nekro Malleon', () => {
     expectStanding(warningsOf(game, play), 'componentNotHeld');
   });
 
-  test.fails('leader:nekroagent is a play effect', () => {
+  test('leader:nekroagent is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

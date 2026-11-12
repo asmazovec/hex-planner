@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { expectShownStanding, expectShownWaived, showUses, uiBench, use } from '../../../../ui/testing/effects';
+import { expectNotShown, expectShownStanding, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
 import { adjust, bench, quote, secondary } from '../kit';
 import { id } from './naalubt';
@@ -15,16 +15,16 @@ const table = () => {
 // "When you would resolve the secondary ability of another player's strategy card, you may give them a promissory note
 //  to resolve it without spending a command token."
 // Checks: in «Used» of the secondary I choose Mindsieve; it is written into the entry, and the warning that the
-// strategy pool is empty reads as allowed by Mindsieve.
+// strategy pool is empty is no longer made (the cost is gone, not waived).
 // Why the check is redundant here: the secondary is resolved without a command token, so the empty pool is no breach.
-test.fails('breakthrough:naalubt named in «Used» of a secondary, the empty strategy pool reads as allowed by Mindsieve', async () => {
+test('breakthrough:naalubt named in «Used» of a secondary, the empty strategy pool is no longer a breach (no warning)', async () => {
   const { play, table: naalu } = table();
   quote(naalu.pack, id, 'to resolve it without spending a command token');
   const live = showUses(naalu, play);
   expectShownStanding('shortStrategy');
   await use('Mindsieve');
   expect(live.entry().uses).toEqual([id]);
-  expectShownWaived('shortStrategy', 'Mindsieve');
+  expectNotShown('shortStrategy');
 });
 
 // LRR 20.5: "... resolve the secondary ability of that strategy card by spending a command token from their strategy pool."

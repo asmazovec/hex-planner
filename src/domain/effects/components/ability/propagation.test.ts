@@ -16,7 +16,7 @@ describe('ability:propagation Propagation', () => {
   // Why the check is redundant here: the card's tokens are checked against what it gives (none for Technology); the
   // ability turns the research into 3 command tokens, so the 3 given are what the card now gives (a `modify` of the
   // tokens the research gives, nothing waived).
-  test.fails('ability:propagation a research gives 3 command tokens instead: the tokens are not over', () => {
+  test('ability:propagation a research gives 3 command tokens instead: the tokens are not over', () => {
     const nekro = table('nekro');
     quote(nekro.pack, id, 'When you would research a technology: Gain 3 command tokens instead.');
     expectNone(warningsOf(nekro, nekro.play), 'tokensOver');
@@ -26,7 +26,7 @@ describe('ability:propagation Propagation', () => {
   // "You cannot research technology"
   // Checks: the technology entered as researched is not held after the entry.
   // Why the check is redundant here: the research is replaced by the tokens, so nothing joins the holdings.
-  test.fails('ability:propagation the technology researched is not gained', () => {
+  test('ability:propagation the technology researched is not gained', () => {
     const nekro = table('nekro');
     quote(nekro.pack, id, 'You cannot research technology');
     expect(endOf(nekro).holdings.technologies).not.toContain('technology:st');
@@ -36,7 +36,7 @@ describe('ability:propagation Propagation', () => {
   //  Technology strategy card, which will instead gain them command tokens."
   // Checks: the secondary researching one technology gives 3 tokens to the fleet pool without a warning.
   // Why the check is redundant here: the same replacement holds for the secondary.
-  test.fails('ability:propagation the secondary of Technology gives 3 command tokens too', () => {
+  test('ability:propagation the secondary of Technology gives 3 command tokens too', () => {
     const play = secondary(CARD.technology, { researched: ['technology:st'], tokens: { fleet: 3 }, payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
     const nekro = table('nekro', play);
     expectNone(warningsOf(nekro, play), 'tokensOver');
@@ -45,7 +45,7 @@ describe('ability:propagation Propagation', () => {
 
   // Checks: four tokens for one research are one beyond the three, and the warning names 3 as what the card gives.
   // Why the check is NOT redundant here: the ability gives exactly 3 tokens a research, no more.
-  test.fails('ability:propagation a fourth token for one research is over, against three', () => {
+  test('ability:propagation a fourth token for one research is over, against three', () => {
     const nekro = table('nekro', research({ tactic: 4 }));
     const warnings = warningsOf(nekro, nekro.play);
     expectStanding(warnings, 'tokensOver');
@@ -72,7 +72,7 @@ describe('ability:propagation Propagation', () => {
     expect(endOf(bench({ faction: 'nekro', entries: [gain] })).holdings.technologies).toContain('technology:st');
   });
 
-  test.fails('ability:propagation is a passive effect with no waiver', () => {
+  test('ability:propagation is a passive effect with no waiver', () => {
     const { pack } = table('nekro');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive).toBeUndefined();

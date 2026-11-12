@@ -15,7 +15,7 @@ const table = (faction: string) => {
 // Checks: the Nekro player's Technology researches one technology and places 3 tokens; the list of the entry shows no
 // warning that more tokens were given than the card gives.
 // Why the default count does not apply: the research gives 3 command tokens to the Nekro player instead.
-test.fails('ability:propagation the 3 tokens a research gives are shown as within what the card gives', () => {
+test('ability:propagation the 3 tokens a research gives are shown as within what the card gives', () => {
   const nekro = table('nekro');
   quote(nekro.table.pack, id, 'Gain 3 command tokens instead.');
   showWarnings(nekro.table, nekro.play);

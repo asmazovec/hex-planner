@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
 import type { Entry } from '../../../types';
-import { adjust, bench, effect, endOf, expectStanding, expectWaived, primary, quote, secondary, using, warningsOf } from '../kit';
+import { adjust, bench, effect, endOf, expectNone, expectStanding, primary, quote, secondary, using, warningsOf } from '../kit';
 import { id } from './naalubt';
 
 /** The secondary of Technology: one technology for four resources, paid with both home planets. */
@@ -16,19 +16,19 @@ describe('breakthrough:naalubt Mindsieve', () => {
   //  note to resolve it without spending a command token."
   // Checks: the secondary of Technology named with Mindsieve leaves the strategy pool as it was (2).
   // Why the check is redundant here: LRR 20.5 makes a secondary cost a strategy token; the card resolves it without one.
-  test.fails('breakthrough:naalubt resolves a secondary without spending a strategy token', () => {
+  test('breakthrough:naalubt resolves a secondary without spending a strategy token', () => {
     const play = using(research(), id);
     const table = naalu([play]);
     quote(table.pack, id, 'to resolve it without spending a command token');
     expect(endOf(table).strategy).toBe(2);
   });
 
-  // Checks: with the strategy pool empty, the warning that there is no token for the secondary is still listed, and
-  // lifted by Mindsieve.
+  // Checks: with the strategy pool empty, the warning that there is no token for the secondary is not made at all (a
+  // modify of the strategy cost to 0, as Masters of Trade has it: the cost is gone, nothing is waived).
   // Why the check is redundant here: no token is spent, so an empty strategy pool does not stand in the way.
-  test.fails('breakthrough:naalubt with an empty strategy pool: the warning is waived by Mindsieve', () => {
+  test('breakthrough:naalubt with an empty strategy pool: no warning is made, the cost is gone', () => {
     const play = using(research(), id);
-    expectWaived(warningsOf(naalu([empty(), play]), play), 'shortStrategy', id);
+    expectNone(warningsOf(naalu([empty(), play]), play), 'shortStrategy');
   });
 
   // LRR 20.5: "... resolve the secondary ability of that strategy card by spending a command token from their strategy pool."
@@ -67,9 +67,9 @@ describe('breakthrough:naalubt Mindsieve', () => {
 
   test.todo('breakthrough:naalubt the promissory note given to the card\'s owner leaves my hand: giving it is not a transaction (Naalu, Mindsieve 2) and the plan has no field for it yet');
 
-  test.fails('breakthrough:naalubt is a play effect that waives the empty strategy pool for its entry', () => {
+  test('breakthrough:naalubt is a play effect that sets the strategy cost of a secondary to 0 for its entry', () => {
     const { pack } = naalu([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['shortStrategy', undefined]]);
+    expect(Object.keys(effect(pack, id).modify ?? {})).toEqual(['strategyCost']);
   });
 });

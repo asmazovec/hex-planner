@@ -2,15 +2,17 @@
  * Mindsieve (Naalu Collective, breakthrough, Thunder's Edge): "When you would resolve the secondary ability of another
  * player's strategy card, you may give them a promissory note to resolve it without spending a command token."
  *
- * To be a `play` effect, named in the `uses` of a secondary: the strategy token the secondary spends (20.5) is not
- * spent, and the warning that the strategy pool is empty (`shortStrategy`) is lifted for that entry. A primary, or a
- * secondary that costs nothing anyway (Leadership), gains nothing by it. The note given is not a transaction (Naalu,
- * Mindsieve note 2) and is not counted yet.
- *
- * Pass 1: still the hint it is today; the tests beside it say what it must do.
+ * A `play` effect with a `modify` of `strategyCost` (asked for the entry that names it in `uses`): a secondary costs 0
+ * strategy tokens, so the pool is untouched and `shortStrategy` is not made at all (the cost itself is gone, nothing
+ * is waived). A primary played for a token is not a secondary and still costs its token; Leadership's secondary is free
+ * anyway. The note given is not a transaction (Naalu, Mindsieve note 2) and is not counted yet.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:naalubt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  modify: { strategyCost: (value, ctx) => (ctx.secondary ? 0 : value) },
+};

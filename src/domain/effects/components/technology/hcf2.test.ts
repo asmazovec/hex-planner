@@ -28,7 +28,7 @@ describe('technology:hcf2 Hybrid Crystal Fighter II', () => {
   // Checks: one cruiser and four fighters beyond capacity weigh 1 + 4/2 = 3 ships, within the fleet pool of 3.
   // Why the default count does not apply: Fighter II counts each excess fighter as a ship (1 + 4 = 5 over 3); this card
   // changes that number, a `modify`: nothing is listed as waived.
-  test.fails('technology:hcf2 four excess fighters count as two ships: within the fleet pool, no warning', () => {
+  test('technology:hcf2 four excess fighters count as two ships: within the fleet pool, no warning', () => {
     const table = flight(4);
     quote(table.pack, id, "Fighters in excess of your ships' capacity count as 1/2 of a ship against your fleet pool.");
     expectNone(warningsOf(table, table.move), 'fleetPool');
@@ -37,7 +37,7 @@ describe('technology:hcf2 Hybrid Crystal Fighter II', () => {
   // Checks: six excess fighters weigh three ships, so with the cruiser four stand against the pool of 3, and the
   // warning names the halved count.
   // Why the check is NOT redundant here: the card halves the excess fighters, it does not take them out of the count.
-  test.fails('technology:hcf2 six excess fighters still overrun the fleet pool, counted as three ships', () => {
+  test('technology:hcf2 six excess fighters still overrun the fleet pool, counted as three ships', () => {
     const table = flight(6);
     const warnings = warningsOf(table, table.move);
     expectStanding(warnings, 'fleetPool');
@@ -64,7 +64,7 @@ describe('technology:hcf2 Hybrid Crystal Fighter II', () => {
 
   test.todo('technology:hcf2 an odd number of excess fighters weighs half a ship: no ruling found on rounding, the count keeps halves');
 
-  test.fails('technology:hcf2 is a passive effect that changes the count of excess fighters', () => {
+  test('technology:hcf2 is a passive effect that changes the count of excess fighters', () => {
     const { pack } = flight(1);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive).toBeUndefined();
