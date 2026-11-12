@@ -13,7 +13,7 @@ describe('leader:ralnelhero Director Nel — Signal Intrusion', () => {
   // Checks: the hero named in the Ral Nel's pass lifts the warning of a tactical action taken after that pass.
   // Why the check is redundant here: LRR 3.3 ends a player's turns with their pass, and the hero says they are no
   // longer passed; they may take any number of turns before passing again (Director Nel note 2).
-  test.fails('leader:ralnelhero played with the pass lifts the turn-after-pass check for the rest of the round', () => {
+  test('leader:ralnelhero played with the pass lifts the turn-after-pass check for the rest of the round', () => {
     const move = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
     const table = ralnel([[using(pass(), id), move]]);
     quote(table.pack, id, 'You may choose to no longer be passed');
@@ -22,7 +22,7 @@ describe('leader:ralnelhero Director Nel — Signal Intrusion', () => {
 
   // Checks: two turns after the pass are both covered, and the pass that follows them makes no warning of its own.
   // Why the check is redundant here: "no longer passed" lasts until the player passes again.
-  test.fails('leader:ralnelhero covers every turn taken before the player passes again', () => {
+  test('leader:ralnelhero covers every turn taken before the player passes again', () => {
     const first = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
     const second = planned({ type: 'component', note: 'any' } as EntryBody, 'action');
     const again = pass();
@@ -53,7 +53,7 @@ describe('leader:ralnelhero Director Nel — Signal Intrusion', () => {
   // "... gain 2 command tokens ..."
   // Checks: the pass that plays the hero leaves the player with 2 command tokens more than the same pass without it.
   // Why this is counted: command tokens are counted by the plan; the hero gives them, so the count must hold them.
-  test.fails('leader:ralnelhero gives 2 command tokens', () => {
+  test('leader:ralnelhero gives 2 command tokens', () => {
     const played = endOf(ralnel([[using(pass(), id)]]));
     const plain = endOf(ralnel([[pass()]]));
     expect(tokens(played)).toBe(tokens(plain) + 2);
@@ -68,7 +68,7 @@ describe('leader:ralnelhero Director Nel — Signal Intrusion', () => {
     expectStanding(warningsOf(table, again), 'componentNotHeld');
   });
 
-  test.fails('leader:ralnelhero is a play effect that lifts the turn-after-pass check for the round', () => {
+  test('leader:ralnelhero is a play effect that lifts the turn-after-pass check for the round', () => {
     const { pack } = ralnel([[]]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['actionAfterPass', 'round']]);

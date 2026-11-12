@@ -8,11 +8,21 @@
  * before they pass again (note 2). Its `play` gains 2 command tokens. The action card drawn is entered in «Taken and
  * discarded» like any card drawn. "After the last player passes" speaks of the other players' passes, which the plan
  * does not hold, so it is not checked.
- *
- * Pass 1: still the hint it is today; pass 2 writes the waiver and the tokens (see the tests).
+
+ * The tokens go to the tactic pool: the pass has no field for choosing a pool yet.
  */
+import { gainTokens } from '../../../replay/status';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:ralnelhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: turn => gainTokens(turn, { tactic: 2 }),
+  waive: [{
+    code: 'actionAfterPass',
+    rule: 'You may choose to no longer be passed',
+    lasts: 'round',
+  }],
+};

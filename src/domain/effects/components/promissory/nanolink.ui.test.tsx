@@ -21,7 +21,7 @@ const empty = () => tactical(NEAR, { moves: [{ from: HOME, units: {} }] });
 // Checks: with the note named in the action, the source next door offers the PDS of Home One; I take it, it is
 // written into the move, and the warning that structures do not move reads as allowed by Nano-Link Permit.
 // Why the check is redundant here: LRR 85.3 forbids moving a structure, and the note moves it directly.
-test.fails('promissory:nanolink the PDS of an adjacent system is taken, and the warning reads as allowed by Nano-Link Permit', async () => {
+test('promissory:nanolink the PDS of an adjacent system is taken, and the warning reads as allowed by Nano-Link Permit', async () => {
   const move = using(empty(), NOTE);
   const live = showFlight(table([move]), move, HOME);
   await take('PDS', 'Home One');
@@ -44,7 +44,7 @@ test('promissory:nanolink not named, the PDS is still taken and its warning stan
 
 // Checks: the note is chosen in «Used» of the action, and the moved structure's warning at once reads as allowed.
 // Why the check is redundant here: naming the note is what plays it; from then on its waiver covers this action.
-test.fails('promissory:nanolink chosen in «Used», the moved structure is allowed by Nano-Link Permit', async () => {
+test('promissory:nanolink chosen in «Used», the moved structure is allowed by Nano-Link Permit', async () => {
   const move = tactical(NEAR, { moves: [{ from: 'h1', units: {}, structures: { pds: 1 } }], landings: [{ planetId: 't1', units: {}, structures: { pds: 1 } }] });
   const live = showUses(table([move]), move);
   expectShownStanding(CODE);
@@ -56,7 +56,7 @@ test.fails('promissory:nanolink chosen in «Used», the moved structure is allow
 // "... onto planets you control in the active system."
 // Checks: in the tactical editor the landing offers the PDS that was moved in, and I put it on Target One.
 // Why the check is redundant here: the note names its own destination, a planet of the active system I control.
-test.fails('promissory:nanolink the moved PDS is put on a planet of the active system in the landing', async () => {
+test('promissory:nanolink the moved PDS is put on a planet of the active system in the landing', async () => {
   const move = using(tactical(NEAR, { moves: [{ from: 'h1', units: {}, structures: { pds: 1 } }] }), NOTE);
   const live = showTactical(table([move]), move);
   await land('PDS', 'Target One');

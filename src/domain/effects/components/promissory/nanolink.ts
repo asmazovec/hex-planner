@@ -11,10 +11,26 @@
  * Placing only on a planet the holder controls stays checked (`structureNotControlled`); the note goes back to the Ral
  * Nel player after it is played (69.3), which the replay already does for every note that says so.
  *
- * Pass 1: still the hint it is today; pass 2 writes the waiver (see the tests).
  */
+import { joined } from '../../../movement';
+import structureAboard from '../../../rules/codes/structureAboard';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:nanolink';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+const RULE = 'You may move your structures from adjacent systems that do not contain your command tokens onto planets you control in the active system.';
+
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: () => {},
+  waive: [{
+    code: structureAboard.code,
+    rule: RULE,
+    when: (warning, ctx) => {
+      const from = String(warning.params.from);
+      const { entry, game, pack, before } = ctx;
+      return entry?.type === 'tactical' && entry.systemId !== null && from !== entry.systemId && joined(game, from, entry.systemId, pack) && !before.tokensOnMap.includes(from);
+    },
+  }],
+};

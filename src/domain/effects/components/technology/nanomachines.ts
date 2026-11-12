@@ -9,11 +9,20 @@
  * Only one of the three is performed per exhaust (Ral Nel, Nanomachines note 1); the replay exhausts the card, since its
  * text says so. Damage is not counted by the plan, so the repair is a reminder; the discard and the draw are what the
  * player enters in «Taken and discarded».
- *
- * Pass 1: still the hint it is today; pass 2 writes the play (see the tests).
+
  */
+import { buildStructures } from '../../../replay/structures';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:nanomachines';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  choose: [{ key: 'pds', kind: 'planet', label: { ru: 'Планета для PDS', en: 'Planet for the PDS' } }],
+  play: ({ game, state, pack, warnings, choices }) => {
+    const planetId = choices.pds;
+    if (typeof planetId !== 'string' || planetId === '') return;
+    buildStructures(game, state, [{ kind: 'pds', planetId }], false, undefined, pack, warnings);
+  },
+};
