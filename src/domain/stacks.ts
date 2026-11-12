@@ -5,6 +5,7 @@
 import { UNIT_ORDER, type GroundStack, type SpaceStack } from './hexLayout';
 import { opponentsBySeat, planetHolder } from './players';
 import { structuresOn } from './project';
+import { planetsOf, systemSlots, tileAt } from './replay/board';
 import { startingDocks } from './strategy';
 import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitCounts, UnitId } from './types';
 
@@ -58,6 +59,16 @@ export function othersOnPlanet(game: Game, board: GameState | undefined, planetI
     const units = !board?.rivals ? game.enemyGround[planetId]?.[o.id] : o.id === 'me' ? board.ground[planetId] : board.rivals[o.id]?.ground[planetId];
     return unitsOf(units).map(({ unit, count }) => ({ owner: o.id, unit, count }));
   });
+}
+
+/** The slot of the system a planet lies in, on this game's map; none for a planet that is not on it. */
+export const systemOfPlanet = (game: Game, planetId: string, pack: DataPack): string | undefined =>
+  systemSlots(game).find(slot => planetsOf(game, slot, pack).includes(planetId));
+
+/** Whether a planet lies in a home system (a tile of the kind `home`). */
+export function inHomeSystem(game: Game, planetId: string, pack: DataPack): boolean {
+  const slot = systemOfPlanet(game, planetId, pack);
+  return slot !== undefined && tileAt(game, slot, pack)?.kind === 'home';
 }
 
 /** Whether the game itself holds a structure, apart from what entries plan: a PDS set on the map, or a dock of the start. */

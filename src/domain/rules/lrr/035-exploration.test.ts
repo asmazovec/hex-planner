@@ -1,5 +1,8 @@
 /** LRR 35 Exploration. Source: tirules2 rules-reference/exploration.md. */
 import { describe, expect, test } from 'vitest';
+import { exploreCondition } from '../../replay/invasion';
+import type { Warning } from '../../types';
+import { forecast, rulesGame, rulesPack } from '../kit';
 import { loadPack } from '../../../data/loadPack';
 import { MECATOL_PLANET } from '../../mecatol';
 
@@ -40,4 +43,16 @@ describe('LRR 35 Exploration', () => {
   test.todo('35 note 4: transactions may happen between revealing and resolving a card — not modelled: transactions are not planned');
   test.todo('35 note 5: an exploration card is shown to all before it resolves — not modelled: exploration is not planned');
   test.todo('35 note 6: notes on particular cards live on their own page — not modelled: exploration is not planned');
+});
+
+describe('LRR 35.2 a card that asks for a mech or an infantry (explorationCondition)', () => {
+  test('35.2: with neither a mech nor an infantry on the planet the condition is warned of', () => {
+    const state = forecast(rulesGame({ game: { planetControl: { t1: 'me' } } }), rulesPack()).state;
+    const warnings: Warning[] = [];
+    expect(exploreCondition(state, 't1', warnings)).toBe(false);
+    expect(warnings.map(w => w.code)).toEqual(['explorationCondition']);
+    state.ground.t1 = { infantry: 1 };
+    expect(exploreCondition(state, 't1', warnings)).toBe(true);
+    expect(state.ground.t1).toEqual({});
+  });
 });

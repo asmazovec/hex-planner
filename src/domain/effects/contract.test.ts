@@ -61,6 +61,7 @@ describe('effects registry', () => {
         if (effect.tier !== 'passive') expect(effect.modify, id).toBeUndefined();
         if (effect.tier !== 'play') expect(effect.play, id).toBeUndefined();
         if (effect.tier !== 'hint') expect(effect.hintAt, id).toBeUndefined();
+        if (effect.tier === 'hint') expect(effect.onGainControl, id).toBeUndefined();
       }
     }
   });

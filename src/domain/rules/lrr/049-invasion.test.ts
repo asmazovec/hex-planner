@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../mecatol';
 import type { Opponent } from '../../types';
-import { codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { adjust, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
 const rival: Opponent = { id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 };
@@ -218,5 +218,16 @@ describe('LRR 49 Invasion', () => {
     });
     const game = rulesGame({ map: { ...rulesGame().map, [mecatol]: MECATOL_TILE }, units: { [HOME]: { carrier: 1, infantry: 1 } }, entries: [land] });
     expect(codesOf(game, pack, land)).toContain('custodians');
+  });
+});
+
+describe('LRR 49.2 committing from a planet (landingFromPlanet)', () => {
+  test('49.2: ground forces committed from a planet instead of the space area are warned of, and move from that planet', () => {
+    const land = tactical(TARGET, { landings: [{ planetId: 't1', units: { infantry: 1 }, from: 't2' }] });
+    const game = rulesGame({ entries: [adjust({ ground: { t2: { infantry: 1 } } }), land] });
+    expect(codesOf(game, pack, land)).toEqual(['landingFromPlanet']);
+    const { state } = forecast(game, pack);
+    expect(state.ground.t1).toEqual({ infantry: 1 });
+    expect(state.ground.t2 ?? {}).toEqual({});
   });
 });
