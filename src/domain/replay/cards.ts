@@ -1,6 +1,6 @@
 /** Strategy cards: who may resolve which side of which card, its token, payment and distribution; each card's own effects are its handler's. */
 import { violation } from '../rules/registry';
-import { CARD, cardCost, cardsHeld, costsStrategyToken, freeTokens, heldCards, type CardEntry } from '../strategy';
+import { CARD, cardCost, cardsHeld, freeTokens, heldCards, strategyTokensOwed, type CardEntry } from '../strategy';
 import { checkStationStructures } from '../thundersEdge';
 import type { DataPack, Game, GameState, Round, Warning } from '../types';
 import { handlerOf, type CardRound } from './cards/index';
@@ -20,10 +20,10 @@ export const cardRound = (round: Round, playerCount: number, states: Record<stri
  * A primary is the holder's: one of a card not held costs a token and is warned about. A secondary is the other
  * players', once a round. With no card of the round chosen, the entry's own `forToken` stands for the round.
  */
-function checkPlay(game: Game, entry: CardEntry, round: CardRound, player: string, warnings: Warning[]): boolean {
+function checkPlay(game: Game, entry: CardEntry, round: CardRound, player: string, warnings: Warning[]): { held?: number[]; free?: boolean } {
   const card = entry.card;
   // No card chosen yet is no play of anything.
-  if (card === undefined) return costsStrategyToken(entry);
+  if (card === undefined) return {};
   const held = round.held[player] ?? [];
   if (entry.type === 'strategic') {
     const primaries = (round.primaries[player] ??= []);
@@ -34,14 +34,14 @@ function checkPlay(game: Game, entry: CardEntry, round: CardRound, player: strin
       const limit = held.length > 0 ? held.length : cardsHeld(game.playerCount);
       if (repeated || primaries.length > limit) warnings.push(violation('primaryRepeated', { held: limit }));
     }
-    return costsStrategyToken(entry, { held });
+    return { held };
   }
   const secondaries = (round.secondaries[player] ??= []);
   const repeated = secondaries.includes(card);
   secondaries.push(card);
   if (held.includes(card)) warnings.push(violation('ownSecondary', {}));
   if (repeated) warnings.push(violation('secondaryRepeated', {}));
-  return costsStrategyToken(entry, { free: !repeated && (round.freeSecondary[card] ?? []).includes(player) });
+  return { free: !repeated && (round.freeSecondary[card] ?? []).includes(player) };
 }
 
 /** Applies what a strategy card can track; everything else about it is shown only. */
@@ -49,9 +49,11 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   const primary = entry.type === 'strategic';
   // An entry of an opponent no longer in the game is replayed as mine.
   const player = entry.owner && entry.owner in round.states ? entry.owner : 'me';
-  if (checkPlay(game, entry, round, player, warnings)) {
-    if (state.strategy < 1) warnings.push(violation('shortStrategy', { have: state.strategy }));
-    state.strategy -= 1;
+  // The token the card owes: one, or what the components of the player make of it (the `strategyCost` point).
+  const owed = strategyTokensOwed(entry, checkPlay(game, entry, round, player, warnings), game, state, round.states.me ?? state, pack);
+  if (owed > 0) {
+    if (state.strategy < owed) warnings.push(violation('shortStrategy', { have: state.strategy }));
+    state.strategy -= owed;
   }
   const effects = entry.effects ?? {};
   const cost = cardCost(entry, game.faction, state.holdings, pack);

@@ -37,7 +37,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
 // "The elected player place command tokens from their reinforcements"
 // Checks: in the editor of the agenda entry the player elects themselves; the entry keeps it (`choices.elect` is `me`).
 // Why: the command sheet that changes is the elected player's only.
-test.fails('agenda:standardization the elected player is chosen in the agenda entry', async () => {
+test('agenda:standardization the elected player is chosen in the agenda entry', async () => {
   const entry = { ...adjust({}, 'agenda'), gains: [id] } as Entry;
   const table = bench({ faction: 'sol', expansions: ['pok'], rounds: [[entry]] });
   quote(table.pack, id, 'The elected player place command tokens from their reinforcements');

@@ -171,8 +171,6 @@ export interface ComponentEffect {
   play?: (turn: EffectTurn) => void;
   /** What the player chooses when the component is played; the editor of the entry asks it (`ChoicesBlock`). */
   choose?: ChoiceSpec[];
-  /** Runs when an entry's `gains` hands the player this component (a relic that gives a breakthrough). */
-  gained?: (turn: GainTurn) => void;
   /** hint: the steps in whose block the reminder stands; none where the data names no step. */
   hintAt?: RuleStep[];
   /** Any tier: the checks the component lifts (see `EffectTier` for when they hold). */

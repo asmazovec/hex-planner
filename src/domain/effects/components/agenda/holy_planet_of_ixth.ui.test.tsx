@@ -41,7 +41,7 @@ const resolved = (elect: string): Entry => ({ ...adjust({}, 'agenda'), gains: [i
 // Checks: in the editor of the agenda entry the player elects Home One; the entry keeps it (`choices.elect`), and the
 // replay attaches the law to that planet.
 // Why: the planet that loses PRODUCTION and gives the point is the elected one.
-test.fails('agenda:holy_planet_of_ixth the elected planet is chosen in the agenda entry', async () => {
+test('agenda:holy_planet_of_ixth the elected planet is chosen in the agenda entry', async () => {
   const entry = { ...adjust({}, 'agenda'), gains: [id] } as Entry;
   const table = bench({ faction: 'sol', rounds: [[entry]] });
   quote(table.pack, id, 'Units on this planet cannot use PRODUCTION.');

@@ -37,7 +37,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
 // "The elected player gains this card and 1 victory point."
 // Checks: in the editor of the agenda entry the player elects themselves; the entry keeps it (`choices.elect` is `me`).
 // Why: the point goes to the elected player only, so the plan must know who was elected.
-test.fails('agenda:shard_of_the_throne the elected player is chosen in the agenda entry', async () => {
+test('agenda:shard_of_the_throne the elected player is chosen in the agenda entry', async () => {
   const entry = { ...adjust({}, 'agenda'), gains: [id] } as Entry;
   const table = bench({ faction: 'sol', expansions: ['pok'], rounds: [[entry]] });
   quote(table.pack, id, 'The elected player gains this card and 1 victory point.');

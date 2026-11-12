@@ -5,7 +5,7 @@ import { textOf } from '../../../domain/components';
 import { upgradesOf, upgradeTech } from '../../../domain/holdings';
 import { autoPay } from '../../../domain/payment';
 import { opponentsBySeat } from '../../../domain/players';
-import { cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
+import { cardChange, cardCost, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, strategyTokensOwed, type CardEntry, type CardPatch } from '../../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, UpgradeId, Warning } from '../../../domain/types';
 import { opponentName } from '../../players/names';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
@@ -136,10 +136,10 @@ export function StrategyEditor({
   // The card and the turn it is played in; a limit of the system stands with what the card builds.
   const cardWarnings = [...placer.at('card'), ...placer.at('action', w => !limitsSystem(w))];
   /** Whether that side of this card spends a strategy token: the domain decides, from the round's cards for my primary. */
-  const costsOf = (asPrimary: boolean) => card !== undefined && costsStrategyToken(
+  const costsOf = (asPrimary: boolean) => card !== undefined && strategyTokensOwed(
     { ...entry, card: card.initiative, ...playOf(round, game.playerCount, card.initiative, asPrimary, mine) } as CardEntry,
-    { held: mine ? heldCards(round, game.playerCount) : [] },
-  );
+    { held: mine ? heldCards(round, game.playerCount) : [] }, game, before, before, pack,
+  ) > 0;
   const ability = (asPrimary: boolean, text: string, costsToken: boolean) => (
     <button
       type="button" className={`card-ability card-ability-${asPrimary ? 'primary' : 'secondary'}`} aria-pressed={primary === asPrimary}

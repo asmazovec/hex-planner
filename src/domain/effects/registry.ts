@@ -129,15 +129,22 @@ export type Who = Holdings | Holder;
 export const holderFor = (who: Who, faction: string): Holder => ('holdings' in who ? (who.faction === undefined ? { ...who, faction } : who) : { holdings: who, faction });
 
 /** The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. */
-export const holderOf = (game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>, shared: Pick<GameState, 'laws'> | Pick<GameState, 'laws' | 'holdings' | 'rivals'> = state): Holder =>
+export const holderOf = (
+  game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>,
+  shared: Pick<GameState, 'laws' | 'lawOwners'> | Pick<GameState, 'laws' | 'lawOwners' | 'holdings' | 'rivals'> = state,
+): Holder =>
   ({
-    holdings: state.holdings, faction: game.faction, control: state.control, laws: shared.laws,
+    holdings: state.holdings, faction: game.faction, control: state.control, laws: lawsFor(shared, game.faction),
     ...('rivals' in shared || 'holdings' in shared ? { others: othersOf(shared as Pick<GameState, 'holdings' | 'rivals'>) } : {}),
   });
 
 /** Every player's holdings by `me` or opponent id, from my state, which holds the opponents' in `rivals`. */
 const othersOf = (shared: Pick<GameState, 'holdings' | 'rivals'>): Record<string, Holdings> =>
   ({ me: shared.holdings, ...Object.fromEntries(Object.entries(shared.rivals ?? {}).map(([id, rival]) => [id, rival.holdings])) });
+
+/** The laws that bind a faction: those of the whole game, and the `Elect Player` laws only for the player they elected. */
+const lawsFor = (shared: Pick<GameState, 'laws' | 'lawOwners'>, faction: string): readonly string[] | undefined =>
+  (shared.lawOwners && shared.laws ? shared.laws.filter(id => shared.lawOwners![id] === undefined || shared.lawOwners![id] === faction) : shared.laws);
 
 /** What a faction sheet brings by itself: the abilities and the mech; the breakthrough apart, as it must be held. */
 interface Sheet { always: string[]; breakthrough?: string }
@@ -193,6 +200,13 @@ export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Compon
   }
   if (holder.control) for (const planetId in holder.control) if (holder.control[planetId] === 'me') ask(`legendary:${planetId}`);
   for (const id of holder.laws ?? []) ask(id);
+  // A law in force may take other components out of force (Articles of War: the mechs).
+  const suppressors = (holder.laws ?? []).flatMap(id => effects.get(noteBase(id))?.suppresses ?? []);
+  if (suppressors.length > 0) {
+    const kept = found.filter(id => !suppressors.some(suppresses => suppresses(id)));
+    found.length = 0;
+    found.push(...kept);
+  }
   return found.length > 1 ? found.sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!) : found;
 }
 
@@ -228,7 +242,9 @@ export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, player
   for (const player of players) {
     const state = player === 'me' ? board : board.rivals?.[player];
     if (!state) continue;
-    for (const id of readyComponents(pack, state.holdings)) if (asked(id)) ids.add(id);
+    // A secret objective in hand, and a public one revealed and not yet scored by the player, are reminded of at the status step.
+    const objectives = [...state.holdings.secrets, ...(board.revealed ?? []).filter(id => !state.holdings.scored.includes(id))];
+    for (const id of [...readyComponents(pack, state.holdings), ...objectives]) if (asked(id)) ids.add(id);
     for (const id of inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control })) if (SHEET_KIND.test(id) && asked(id)) ids.add(id);
   }
   return [...ids].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!).flatMap(id => componentById(pack, id) ?? []);

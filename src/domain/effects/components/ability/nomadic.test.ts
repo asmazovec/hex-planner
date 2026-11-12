@@ -31,7 +31,7 @@ describe('ability:nomadic Nomadic', () => {
   // Checks: another faction scoring the same objective without its home planet is warned of (the check is new: red
   // until the status step makes it).
   // Why the check is NOT redundant here: nothing this player holds speaks of scoring without the home system.
-  test.fails('ability:nomadic is the Saar\'s own: another faction without its home planet is warned of', () => {
+  test('ability:nomadic is the Saar\'s own: another faction without its home planet is warned of', () => {
     const sol = scoring('sol', PUBLIC, homeLost);
     expectStanding(warningsOf(sol, sol.status), CODE);
   });

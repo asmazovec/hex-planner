@@ -19,6 +19,8 @@ import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { WarningList } from '../feedback/WarningText';
 import { UsesBlock } from '../plan/blocks/UsesBlock';
+import { ScoredBlock } from '../plan/blocks/ScoredBlock';
+import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { TurnEditor } from '../plan/editors/TurnEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
@@ -131,6 +133,27 @@ export function showTurn(bench: Bench, entry: Entry): Live<ComponentEntry> {
 
 /** The same as `showTurn`: the editor of a component action with the choices its component asks. */
 export const showComponent = showTurn;
+
+/** The editor of an agenda entry of the agenda phase, live: the outcome and the election are pressed and the replay answers with the warnings under them. */
+export function showAgenda(bench: Bench, entry: Entry): Live<Extract<Entry, { type: 'adjustment' }>> {
+  const nothing = () => undefined;
+  return live(bench, entry as Extract<Entry, { type: 'adjustment' }>, ({ game, pack, entry: shown, before, warnings, update }) => (
+    <AdjustmentEditor
+      game={game} pack={pack} entry={shown as Extract<Entry, { type: 'adjustment' }>} warnings={warnings} picking={false} laws={before.laws}
+      onPickSystem={nothing} onOpenHex={nothing} onUpdate={patch => update(patch as Partial<EntryBody>)} onDone={nothing} onRemove={nothing}
+    />
+  ));
+}
+
+/** The objectives a status entry scores and what it cost, live, with every warning of the entry under them. */
+export function showScored(bench: Bench, entry: Entry): Live<Extract<Entry, { type: 'statusTokens' }>> {
+  return live(bench, entry as Extract<Entry, { type: 'statusTokens' }>, ({ game, pack, entry: shown, before, warnings, update }) => (
+    <>
+      <ScoredBlock entry={shown as Extract<Entry, { type: 'statusTokens' }>} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <WarningList warnings={warnings} game={game} pack={pack} />
+    </>
+  ));
+}
 
 /** Every warning of an entry as a list, as any block shows its own. */
 export function showWarnings(bench: Bench, entry: Entry): Live {

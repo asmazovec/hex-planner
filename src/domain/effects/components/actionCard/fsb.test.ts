@@ -29,7 +29,7 @@ describe('actionCard:fsb Forward Supply Base', () => {
   // card is played as a component action.
   // Checks: played after I passed, it is no action after passing.
   // Why the check is redundant here: the card is played in its window, not as a turn of mine.
-  test.fails('actionCard:fsb is not a turn: played after I passed it makes no warning of an action after passing', () => {
+  test('actionCard:fsb is not a turn: played after I passed it makes no warning of an action after passing', () => {
     const play = supply();
     expectNone(warningsOf(table([planned({ type: 'pass' }, 'action'), theirs(), play]), play), 'actionAfterPass');
   });

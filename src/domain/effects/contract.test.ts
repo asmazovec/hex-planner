@@ -55,11 +55,12 @@ describe('effects registry', () => {
     expect(applied.filter(id => !titles.some(title => named(id, title)))).toEqual([]);
   });
 
-  test('a passive effect changes the count and a hint does not: only a passive effect has `modify`, only a passive or play effect has `play` or `choose`, only a hint has steps', () => {
+  test('a passive effect changes the count and a hint does not: a hint has no `modify`, `play` or `choose`, and only a hint has steps', () => {
     for (const pack of packs) {
       for (const [id, effect] of effectsOf(pack)) {
-        if (effect.tier !== 'passive') expect(effect.modify, id).toBeUndefined();
+        // A play effect may modify a point too: it counts for the entry that names it (src/domain/effects/points/status.ts).
         if (effect.tier === 'hint') {
+          expect(effect.modify, id).toBeUndefined();
           expect(effect.play, id).toBeUndefined();
           expect(effect.choose, id).toBeUndefined();
         }
@@ -124,7 +125,7 @@ describe('effect files', () => {
 
   test('every component that waives, changes a number or is played has a test of the interface beside it', () => {
     const missing = files
-      .filter(([, file]) => file.effect.waive || file.effect.modify || file.effect.play)
+      .filter(([, file]) => file.effect.waive || file.effect.modify || file.effect.play || file.effect.requirement || file.effect.gained || file.effect.lost || file.effect.restrict || file.effect.suppresses)
       .map(([path]) => path.replace(/\.ts$/, '.ui.test.tsx'))
       .filter(path => uiTests[path] === undefined);
     expect(missing).toEqual([]);

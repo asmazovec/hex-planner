@@ -20,7 +20,12 @@ export interface Asked { id: string; effect: ComponentEffect; by: 'force' | 'ent
 
 /** The components an entry plays, each once: its component action, what it spends, what it uses. */
 export function playedBy(entry: Entry): string[] {
-  const ids = [...(entry.type === 'component' && entry.componentId !== undefined ? [entry.componentId] : []), ...(entry.spends ?? []), ...(entry.uses ?? [])];
+  const ids = [
+    ...(entry.type === 'component' && entry.componentId !== undefined ? [entry.componentId] : []), ...(entry.spends ?? []), ...(entry.uses ?? []),
+    // The objectives a status entry scores are played by it (61.5), and the agenda an entry of the agenda phase resolves is played by that entry.
+    ...(entry.type === 'statusTokens' ? entry.scored ?? [] : []),
+    ...(entry.phase === 'agenda' ? (entry.gains ?? []).filter(id => id.startsWith('agenda:')) : []),
+  ];
   return ids.filter((id, index) => ids.indexOf(id) === index);
 }
 

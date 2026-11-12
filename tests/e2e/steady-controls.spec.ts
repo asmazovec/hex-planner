@@ -191,6 +191,32 @@ test('the steppers of the status tokens and of the points stay under the finger'
   await pressRepeatedly(page, mine.getByRole('button', { name: 'Remove one Argent' }), 11);
 });
 
+test('an objective scored in the status phase, and what it cost, stay under the finger', async ({ page }) => {
+  await page.getByRole('button', { name: 'Tokens and points' }).click();
+  const scored = page.getByRole('group', { name: 'Objectives scored' });
+  await scored.getByRole('button', { name: 'Score an objective' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Choose a component' });
+  await dialog.getByRole('searchbox', { name: 'Search components' }).fill('Centralize Galactic Trade');
+  await dialog.getByRole('button', { name: 'Choose Centralize Galactic Trade' }).click();
+  // The cost of an objective scored by spending: its steppers are pressed up and down at one point.
+  const cost = page.getByRole('group', { name: 'What scoring cost' });
+  for (const field of ['Tactic', 'Strategy', 'trade good']) {
+    await pressRepeatedly(page, cost.getByRole('button', { name: `Add one ${field}` }), 4);
+    await pressRepeatedly(page, cost.getByRole('button', { name: `Remove one ${field}` }), 4);
+  }
+});
+
+test('the outcome of an agenda is chosen and taken back at one point', async ({ page }) => {
+  await page.getByRole('button', { name: '+ Agenda' }).click();
+  await panel(page).getByRole('button', { name: 'Choose the agenda' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Choose a component' });
+  await dialog.getByRole('searchbox', { name: 'Search components' }).fill('Executive Sanctions');
+  await dialog.getByRole('button', { name: 'Choose Executive Sanctions' }).click();
+  const outcome = panel(page).getByRole('group', { name: 'Outcome' }).last();
+  await pressRepeatedly(page, outcome.getByRole('button', { name: 'For', exact: true }), 4);
+  await pressRepeatedly(page, outcome.getByRole('button', { name: 'Against', exact: true }), 4);
+});
+
 test('the steppers of a manual adjustment stay under the finger, below zero too', async ({ page }) => {
   await addAction(page, 'Manual adjustment');
   for (const field of ['Trade goods', 'Tactic', 'Fleet', 'Strategy', 'VP']) {

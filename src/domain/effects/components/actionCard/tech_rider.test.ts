@@ -25,7 +25,7 @@ describe('actionCard:tech_rider Technology Rider', () => {
   // Window "After an agenda is revealed"; LRR 2.6: only an "ACTION" card is played as a component action.
   // Checks: played in the agenda phase it is no action outside the action phase.
   // Why the check is redundant here: a rider is played in the agenda phase by its own window.
-  test.fails('actionCard:tech_rider in the agenda phase is not an action outside the action phase', () => {
+  test('actionCard:tech_rider in the agenda phase is not an action outside the action phase', () => {
     const play = rider({ technology: GRAVITY_DRIVE });
     expectNone(warningsOf(table(play), play), 'actionOutsidePhase');
   });

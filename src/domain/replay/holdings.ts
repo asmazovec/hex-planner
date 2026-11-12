@@ -5,9 +5,8 @@
  */
 import { componentById, componentsOf, noteAddress } from '../components';
 import { HOLDING_FIELD, holdingsOf } from '../holdings';
-import { effectOf } from '../effects/registry';
 import { violation } from '../rules/registry';
-import type { ComponentDef, DataPack, Entry, Game, GameState, Holdings, StartHoldings, Warning } from '../types';
+import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
 
 /** The holdings a game begins with, less what the pack does not know. */
 export function startHoldings(start: StartHoldings | undefined, pack: DataPack): Holdings {
@@ -29,7 +28,7 @@ const removeOne = (list: string[], id: string): void => {
  * resolved and discarded (7.8), so it leaves nothing. An exploration card is not held: an attachment needs its planet,
  * which gains do not name.
  */
-export function gain(own: GameState, shared: GameState, def: ComponentDef): void {
+export function gain(own: GameState, shared: GameState, def: ComponentDef, how: GainHow = {}): void {
   const holdings = own.holdings;
   const field = HOLDING_FIELD[def.kind];
   if (field) {
@@ -37,10 +36,22 @@ export function gain(own: GameState, shared: GameState, def: ComponentDef): void
   } else if (def.kind === 'leader') holdings.leaders[def.id] = 'unlocked';
   else if (def.kind === 'breakthrough') holdings.breakthrough = 'held';
   else if (def.kind === 'agenda' && def.detail?.type !== 'directive') {
+    // A law resolved "against" is not in play (7.6).
+    if (how.outcome === 'against') return;
     const laws = (shared.laws ??= []);
     if (!laws.includes(def.id)) laws.push(def.id);
+    const target = String(def.detail?.target ?? '');
+    // An "Elect Player" law binds the player elected; "Elect Planet" attaches it to the planet elected (7.3.1).
+    if (target.startsWith('Elect Player') && how.elected !== undefined) (shared.lawOwners ??= {})[def.id] = how.elected;
+    if (target.startsWith('Elect Planet') && how.planet !== undefined) {
+      const attached = ((shared.attachments ??= {})[how.planet] ??= []);
+      if (!attached.includes(def.id)) attached.push(def.id);
+    }
   }
 }
+
+/** How an entry's agenda was resolved: its outcome, the faction of the player elected, the planet elected. */
+export interface GainHow { outcome?: string; elected?: string; planet?: string }
 
 /** A player loses a component: one copy leaves its place; a leader is purged, a law repealed. What is not there changes nothing. */
 export function lose(own: GameState, shared: GameState, def: ComponentDef): void {
@@ -50,20 +61,30 @@ export function lose(own: GameState, shared: GameState, def: ComponentDef): void
   else if (def.kind === 'leader') {
     if (holdings.leaders[def.id]) holdings.leaders[def.id] = 'purged';
   } else if (def.kind === 'breakthrough') delete holdings.breakthrough;
-  else if (def.kind === 'agenda') removeOne((shared.laws ??= []), def.id);
+  else if (def.kind === 'agenda') {
+    removeOne((shared.laws ??= []), def.id);
+    if (shared.lawOwners) delete shared.lawOwners[def.id];
+    for (const planetId of Object.keys(shared.attachments ?? {})) removeOne(shared.attachments![planetId], def.id);
+  }
   if (field && !holdings[field].includes(def.id)) removeOne(holdings.exhausted, def.id);
 }
 
 const known = (pack: DataPack, ids: string[] | undefined): ComponentDef[] =>
   (ids ?? []).flatMap(id => componentById(pack, id) ?? []);
 
-/** The `gains` and `spends` of any entry, for its owner. */
-export function applyGains(own: GameState, shared: GameState, entry: Entry, pack: DataPack, game?: Game, warnings: Warning[] = []): void {
-  for (const def of known(pack, entry.gains)) {
-    gain(own, shared, def);
-    // What a component does the moment it is gained (a relic that gives a breakthrough) is its own effect's.
-    if (game) effectOf(pack, def.id)?.gained?.({ game, state: own, shared, pack, id: def.id, entry, warnings });
-  }
+/**
+ * The `gains` and `spends` of any entry, for its owner. An agenda gained by an entry of the agenda phase is resolved by
+ * its `choices` (`outcome`, `elect`); `factionOf` tells the faction of a player id (`me` or an opponent), the entry's owner being elected without one.
+ */
+export function applyGains(own: GameState, shared: GameState, entry: Entry, pack: DataPack, factionOf: (player: string) => string | undefined = () => undefined): void {
+  const choices = entry.type === 'adjustment' ? entry.choices ?? {} : {};
+  const elect = choices.elect === undefined ? undefined : String(choices.elect);
+  const how: GainHow = {
+    outcome: choices.outcome === undefined ? undefined : String(choices.outcome),
+    elected: factionOf(elect === undefined || elect in pack.planets ? entry.owner ?? 'me' : elect) ?? undefined,
+    planet: elect !== undefined && elect in pack.planets ? elect : undefined,
+  };
+  for (const def of known(pack, entry.gains)) gain(own, shared, def, how);
   for (const def of known(pack, entry.spends)) lose(own, shared, def);
 }
 

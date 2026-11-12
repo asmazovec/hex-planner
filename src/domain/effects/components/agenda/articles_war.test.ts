@@ -36,7 +36,7 @@ describe('agenda:articles_war Articles of War', () => {
 
   // LRR 7.6: an "Against" outcome of a law is resolved and the card discarded.
   // Checks: resolved Against, the law is not in play and the mech keeps its ability.
-  test.fails('agenda:articles_war resolved Against is discarded: the mech keeps its ability', () => {
+  test('agenda:articles_war resolved Against is discarded: the mech keeps its ability', () => {
     const t = table(resolved('against'));
     expect(endOf(t).laws ?? []).not.toContain(id);
     expectWaived(warningsOf(t, t.move), 'capacityGroup', AERIE);

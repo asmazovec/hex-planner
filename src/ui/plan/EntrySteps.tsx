@@ -4,7 +4,7 @@ import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
 import { standing, tacticalMeters } from '../../domain/project';
 import { upgradesOf } from '../../domain/holdings';
-import { cardCost, costsStrategyToken } from '../../domain/strategy';
+import { cardCost, strategyTokensOwed } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
 import { flightOf as warningFlightOf, placeWarnings } from '../feedback/warningPlaces';
 import { WarningList } from '../feedback/WarningText';
@@ -126,7 +126,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
     }
     const primary = e.type === 'strategic';
     const mode = e.forToken ? 'forToken' : primary ? 'primary' : 'secondary';
-    steps.push(<><b>{card.name}</b>, {t(`plan.strategy.mode.${mode}`).toLowerCase()}{costsStrategyToken(e) && <small>{t('plan.steps.strategyToken')}</small>}<small>{textOf(pack, primary ? `strategy:${card.id}` : `strategy:${card.id}#secondary`)}</small></>);
+    steps.push(<><b>{card.name}</b>, {t(`plan.strategy.mode.${mode}`).toLowerCase()}{strategyTokensOwed(e, {}, game, before, before, pack) > 0 && <small>{t('plan.steps.strategyToken')}</small>}<small>{textOf(pack, primary ? `strategy:${card.id}` : `strategy:${card.id}#secondary`)}</small></>);
     const effects = e.effects ?? {};
     const cost = cardCost(e, game.faction, before.holdings, pack);
     if (cost.amount > 0) steps.push(<>{t(`plan.steps.cost.${cost.kind}`, { n: cost.amount })}{paid(effects.payment) && <small>{paid(effects.payment)}</small>}</>);

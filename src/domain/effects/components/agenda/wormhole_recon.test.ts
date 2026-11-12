@@ -56,7 +56,7 @@ describe('agenda:wormhole_recon Wormhole Reconstruction', () => {
   // LRR 7.6: "If an "Against" outcome of a law received the most votes, players resolve the outcome and discard the agenda."
   // Checks: resolved Against, the law is not in play and joins nothing.
   // Why the check is NOT redundant here: only the "For" outcome of a law stays in play (8.20).
-  test.fails('agenda:wormhole_recon resolved Against is discarded: nothing is joined', () => {
+  test('agenda:wormhole_recon resolved Against is discarded: nothing is joined', () => {
     const t = table(resolved('against'));
     expect(endOf(t).laws ?? []).not.toContain(id);
     expectStanding(warningsOf(t, t.turn), 'notNeighbor');
