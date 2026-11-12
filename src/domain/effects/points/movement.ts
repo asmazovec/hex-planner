@@ -24,8 +24,6 @@ declare module '../types' {
     nebulaStart: { faction: string; unit?: UnitId; speed: number; from: string; game: Game; pack: DataPack };
     /** A system a path enters counts as a gravity rift when the value is above 0; base 1 for a rift tile. */
     gravityRift: { faction: string; systemId: string; game: Game; pack: DataPack; state?: GameState };
-    /** The fighters one space dock on a planet keeps in the system (base 3). */
-    dockFighters: { faction: string; planetId: string; systemId: string };
     /** The flying fighters beyond the capacity that count against the fleet pool (the base is that number). */
     excessFighters: { faction: string };
   }

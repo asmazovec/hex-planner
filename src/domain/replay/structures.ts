@@ -149,7 +149,7 @@ export function placeCarried(game: Game, state: GameState, target: string, landi
     for (const kind of kinds) {
       const count = landing.structures?.[kind] ?? 0;
       const got = takeStructures(state, target, false, kind, count);
-      if (got < count) warnings.push(violation('unitsMissing', { where: target, unit: kind, missing: count - got }, 'invasion'));
+      if (got < count) warnings.push(violation('unitsMissing', { where: target, unit: kind, missing: count - got, planetId: landing.planetId }, 'invasion'));
       if (countOn(state, kind, landing.planetId) + count > PER_PLANET[kind]) {
         warnings.push(violation('structureLimit', { kind, planetId: landing.planetId, count: PER_PLANET[kind] }, 'invasion'));
       }

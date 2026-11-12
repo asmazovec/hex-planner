@@ -1,3 +1,4 @@
+import { holderOf } from '../../../domain/effects/registry';
 import type { ReactNode } from 'react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -68,7 +69,8 @@ export function TacticalEditor({
   const { t } = useTranslation();
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
-  const priceOf = (units: UnitCounts) => productionCost(units, game.faction, before.holdings, pack);
+  // The price asks the laws in play and the components this entry plays, as the replay does.
+  const priceOf = (units: UnitCounts) => productionCost(units, game.faction, holderOf(game, before), pack, entry);
   const cost = priceOf(entry.production);
   const unitText = (units: UnitCounts): string => unitsText(units, t);
 

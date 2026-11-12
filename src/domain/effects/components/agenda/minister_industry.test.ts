@@ -35,14 +35,14 @@ describe('agenda:minister_industry Minister of Industry', () => {
   // LRR 67.1: "Units with the PRODUCTION ability can produce units during the 'Production' step of a tactical action."
   // Checks: without the law the same production on Construction is warned of.
   // Why the check is NOT redundant here: the law is not in play.
-  test.fails('agenda:minister_industry not in play: a production on Construction is warned of', () => {
+  test('agenda:minister_industry not in play: a production on Construction is warned of', () => {
     const entry = construct({ fighter: 2 });
     expectStanding(warningsOf(table(entry, false), entry), CODE);
   });
 
   // Checks: the production in another system than the one of the dock placed is warned of, law or not.
   // Why the check is NOT redundant here: the law speaks of the units "in that system", the dock's.
-  test.fails('agenda:minister_industry does not let another system produce', () => {
+  test('agenda:minister_industry does not let another system produce', () => {
     const entry = construct({ fighter: 2 }, TARGET);
     expectStanding(warningsOf(table(entry, true), entry), CODE);
   });
@@ -50,7 +50,7 @@ describe('agenda:minister_industry Minister of Industry', () => {
   // Minister of Industry note 1 and LRR 67.2: the units "use their PRODUCTION abilities", so their value limits them.
   // Checks: the new dock on Home Two (1 resource + 2) produces 3 units; four fighters are over that value.
   // Why the check is NOT redundant here: the law allows the ability, it does not raise its value.
-  test.fails('agenda:minister_industry the production is limited by the PRODUCTION value', () => {
+  test('agenda:minister_industry the production is limited by the PRODUCTION value', () => {
     const entry = construct({ fighter: 4 });
     const warnings = warningsOf(table(entry, true), entry);
     expectStanding(warnings, 'productionOver');

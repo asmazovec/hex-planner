@@ -1,14 +1,19 @@
-import { applied } from './effects/apply';
+import { appliedFor } from './effects/entryApply';
 import { holderFor, type Who } from './effects/registry';
 import { holdingRounds, upgradesOf } from './holdings';
-import type { DataPack, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import type { DataPack, Entry, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
 
-/** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
-export function productionCost(units: UnitCounts, factionId: string, holdings: Who, pack: DataPack): number {
+/**
+ * Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. `who` is the holdings
+ * (the cards held) or a `Holder` (`holderOf`: also the faction sheet, the planets controlled and the laws in play); the
+ * `entry` that plays components lets their `play` modifiers of `unitCost` count (Harrugh Gefhara: 0).
+ */
+export function productionCost(units: UnitCounts, factionId: string, who: Who, pack: DataPack, entry?: Entry): number {
   let total = 0;
+  const holder = holderFor(who, factionId);
   for (const id of Object.keys(units) as UnitId[]) {
     if ((units[id] ?? 0) <= 0) continue;
-    const cost = applied(pack, holderFor(holdings, factionId), 'unitCost', unitStats(factionId, id, false, pack)?.cost ?? 0, { faction: factionId, unit: id }).value;
+    const cost = appliedFor(pack, holder, entry, 'unitCost', unitStats(factionId, id, false, pack)?.cost ?? 0, { faction: factionId, unit: id }).value;
     total += Math.ceil((units[id] ?? 0) * cost);
   }
   return total;

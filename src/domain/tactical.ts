@@ -164,8 +164,9 @@ export function withProduction(
   entry: TacticalEntry, before: GameState, faction: string, unit: UnitId, planetId: string | null, amount: 1 | -1, pack: DataPack, manualPayment: boolean,
 ): Partial<TacticalEntry> {
   const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
-  const cost = productionCost(production, faction, holderOf({ faction }, before), pack);
-  const seed = !manualPayment && cost !== productionCost(entry.production, faction, holderOf({ faction }, before), pack);
+  const holder = holderOf({ faction }, before);
+  const cost = productionCost(production, faction, holder, pack, entry);
+  const seed = !manualPayment && cost !== productionCost(entry.production, faction, holder, pack, entry);
   const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
   const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
   const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;

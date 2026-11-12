@@ -33,8 +33,10 @@ function structureModifiers(pack: DataPack, structure: StructureKind): Partial<M
   const two = pack.structures.find(s => s.id === structure)?.levels.two;
   if (two?.production === undefined) return {};
   const production = two.production;
+  const printed = pack.structures.find(s => s.id === structure)?.levels.one.production ?? 0;
   return {
-    productionValue: (value, ctx) => (ctx.structure === structure ? (pack.planets[ctx.planetId]?.resources ?? 0) + production : value),
+    // The resources are already in the value, as the planet's modifiers changed them (Mining World): level II swaps the printed number only.
+    productionValue: (value, ctx) => (ctx.structure === structure ? value - printed + production : value),
   };
 }
 

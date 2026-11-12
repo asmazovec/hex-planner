@@ -325,7 +325,8 @@ export type EntryBody = (
   | { type: 'component';
       /** The component played: an action card leaves the hand, an agent is exhausted, a hero purged. Without it the action is only its note. */ componentId?: string;
       note: string;
-      acts?: Act[] }
+      acts?: Act[];
+      /** What the component produces, as a card's effects do: a hero or a technology that builds units (`production`, paid with `payment`). */ effects?: CardEffects }
   | { type: 'pass'; acts?: Act[] }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind;
       /** An agenda of the agenda phase: its outcome (`for` or `against`) and what was elected (`elect`: a planet id, a law id, `me` or an opponent id), the strategy card elected (`card`, its initiative as text or number). */ choices?: Record<string, string | number> }

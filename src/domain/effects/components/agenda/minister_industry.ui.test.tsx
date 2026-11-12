@@ -32,7 +32,7 @@ test.fails('agenda:minister_industry a production on Construction reads as allow
 // LRR 67.1: production belongs to the production step of a tactical action.
 // Checks: without the law the warning stands on the screen.
 // Why the check is NOT redundant here: the law is not in play.
-test.fails('agenda:minister_industry without the law a production on Construction stands', () => {
+test('agenda:minister_industry without the law a production on Construction stands', () => {
   construction(false);
   expectShownStanding(CODE);
 });

@@ -10,7 +10,7 @@ import { activate, checkActivation, playNamedAt, reactToActivation } from './act
 import { canFight, checkAfterCombat, checkArrival, removeGroundLosses, removeLosses } from './combat';
 import { gainControl, landUnits } from './invasion';
 import { checkEntryRoutes, moveUnits } from './movement';
-import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
+import { checkProduction, payProduction, placeProduction, placesOf, producerList, type ProductionPlace } from './production';
 import { take, unitIds, type TacticalEntry } from './state';
 import { carryStructures, placeCarried } from './structures';
 import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, fleetLimit, overflowLeft, removeFleetExcess } from './transport';
@@ -52,12 +52,15 @@ function fightAndLand(
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
   removeLater: UnitCounts = {}, afterLosses?: () => void,
-): void {
+): boolean {
   fightAndLand(game, state, target, entry, pack, warnings, lossesTaken, afterLosses);
-  warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround));
+  warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround, 'system', undefined, entry));
+  // Whether a unit used PRODUCTION (Sarween Tools asks): the producers stand before the built units do.
+  const producing = producerList(game, state, target, pack).length > 0;
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
   take(state.systems, target, removeLater, warnings, 'production');
   claimStations(game, state, target, pack);
+  return producing;
 }
 
 /** A warning of the final check that the action already gave for the same system, at arrival or after the battle, is not repeated. */
@@ -86,8 +89,8 @@ export function applyTactical(
   // The excess beyond the fleet pool goes at once (37.3), so the arrival counts what is left.
   const removeLater = removeFleetExcess(state, target, entry.fleetRemovals ?? {});
   if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
-  landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, afterLosses);
-  payProduction(game, state, entry, pack, warnings);
+  const producing = landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, afterLosses);
+  payProduction(game, state, entry, pack, warnings, producing);
   // The structures a flight brought are put on planets when the action ends, after its production.
   placeCarried(game, state, target, entry.landings, pack, warnings);
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));

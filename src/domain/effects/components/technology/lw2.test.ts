@@ -43,7 +43,7 @@ describe('technology:lw2 Letani Warrior II', () => {
 
   // Checks: without the upgrade the Letani Warrior I has PRODUCTION 1, so two infantry are one beyond it.
   // Why the check is NOT redundant here: the value of 2 is this card's; level I produces one.
-  test.fails('technology:lw2 without it a Letani Warrior I produces one unit', () => {
+  test('technology:lw2 without it a Letani Warrior I produces one unit', () => {
     const table = build('arborec', { infantry: 2 }, []);
     const warnings = warningsOf(table, table.move);
     expectNone(warnings, 'noProduction');

@@ -22,6 +22,7 @@ import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, checkObjectives, clearBoard } from './status';
 import { keepOwnStructures } from './structures';
 import { applyTactical } from './tactical';
+import { applyComponentProduction } from './production';
 
 /** The hand holds seven action cards (LRR 2.4). */
 
@@ -100,6 +101,7 @@ function applyEntry(
       break;
     case 'component':
       applyComponent(state, entry, pack, warnings, game.faction, acts.states);
+      applyComponentProduction(game, state, entry, pack, warnings);
       break;
     case 'pass':
       break;

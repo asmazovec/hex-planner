@@ -31,7 +31,7 @@ describe('technology:ws War Sun', () => {
   //  war sun on the board for any reason."
   // Checks: the same production without the technology is warned of, and the war sun is built all the same.
   // Why the check is NOT redundant here: nothing this player holds unlocks the war sun.
-  test.fails('technology:ws not held, producing a war sun is warned of', () => {
+  test('technology:ws not held, producing a war sun is warned of', () => {
     const table = build('hacan');
     expectStanding(warningsOf(table, table.entry), CODE);
   });
