@@ -4,7 +4,7 @@
  * use them inside `when`, `modify` and `play` only, never at its top level (see docs/phase4/component-effects.md).
  */
 import { MECATOL_TILE, MECATOL_TILE_TE } from '../../mecatol';
-import { adjacentTo, blockersOf, closedToRoute, fullPath, linksOf, shipSpeed, wormholesOf, type Link } from '../../movement';
+import { adjacentTo, blockersOf, closedToRoute, fullPath, linksOf, passageBarredOf, shipBlockersOf, shipSpeed, wormholesOf, type Link } from '../../movement';
 import { presentNear } from '../../neighbors';
 import { hasAnomaly, planetsOf, systemSlots, tileIdOf } from '../../replay/board';
 import { checkEntryRoutes } from '../../replay/movement';
@@ -64,11 +64,11 @@ export const movingCount = (warning: Warning, ctx: WaiverContext): number =>
 export const shortfall = (warning: Warning): number => Number(warning.params.steps) - Number(warning.params.move);
 
 /** What blocks a system on a route: the kind of anomaly that closes or ends it, or other players' ships, or a hyperlane. */
-export type BlockKind = 'asteroid' | 'supernova' | 'nebula' | 'ships' | 'hyperlane';
+export type BlockKind = 'asteroid' | 'supernova' | 'nebula' | 'ships' | 'structures' | 'hyperlane';
 
 /** The systems that end a route of the entry's owner: other players' ships as the board stands before the entry. */
 export const blockedByShips = (ctx: WaiverContext, systemId: string): boolean =>
-  blockersOf(ctx.game, ctx.shared, ctx.entry?.owner && ctx.shared.rivals?.[ctx.entry.owner] ? ctx.entry.owner : undefined, ctx.pack).has(systemId);
+  shipBlockersOf(ctx.game, ctx.shared, ctx.entry?.owner && ctx.shared.rivals?.[ctx.entry.owner] ? ctx.entry.owner : undefined, ctx.pack).has(systemId);
 
 /** What a routeBlocked warning is about; an anomaly comes before the ships standing in it. */
 export function routeBlockKind(warning: Warning, ctx: WaiverContext): BlockKind | undefined {
@@ -76,7 +76,8 @@ export function routeBlockKind(warning: Warning, ctx: WaiverContext): BlockKind 
   if (warning.params.context === 'hyperlane') return 'hyperlane';
   const slot = String(warning.params.systemId);
   for (const kind of ['asteroid', 'supernova', 'nebula'] as const) if (hasAnomaly(ctx.game, slot, kind, ctx.pack)) return kind;
-  return blockedByShips(ctx, slot) ? 'ships' : undefined;
+  if (blockedByShips(ctx, slot)) return 'ships';
+  return passageBarredOf(ctx.game, ctx.shared, ctx.entry?.owner && ctx.shared.rivals?.[ctx.entry.owner] ? ctx.entry.owner : undefined, ctx.pack).has(slot) ? 'structures' : undefined;
 }
 
 /** Whether the system of the warning is one a route cannot even enter (asteroids, a supernova). */

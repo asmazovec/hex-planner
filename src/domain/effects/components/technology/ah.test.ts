@@ -57,7 +57,7 @@ describe('technology:ah Aerie Hololattice', () => {
   // Checks: an opponent's destroyer flying through the target, where my PDS stands, is warned of in the opponent's entry.
   // Why the check is NOT redundant here: this is a limit the card adds for the other players (58.3.2 stops a route at
   // other players' ships only); nothing lifts it.
-  test.fails('technology:ah an opponent\'s route through a system with my structure is blocked', () => {
+  test('technology:ah an opponent\'s route through a system with my structure is blocked', () => {
     const table = passage([id]);
     quote(table.pack, id, 'Other players cannot move ships through systems that contain your structures');
     expectStanding(warningsOf(table, table.theirs), 'routeBlocked');

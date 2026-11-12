@@ -1,5 +1,6 @@
 /** Step 89.4 Invasion: ground forces land on the planets of the active system and take control; an opponent's landings too. */
 import '../effects/points/invasion';
+import '../effects/points/rivals';
 import { applied } from '../effects/apply';
 import { hooked, run } from '../effects/points/moments';
 import type { ControlTurn } from '../effects/points/invasion';
@@ -7,6 +8,7 @@ import { effectOf, holderOf, inForceOf, orderOf } from '../effects/registry';
 import { playedBy } from '../effects/waivers';
 import { MECATOL_PLANETS } from '../mecatol';
 import { violation } from '../rules/registry';
+import { gameAs } from '../players';
 import { inHomeSystem } from '../stacks';
 import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, UnitCounts, Warning } from '../types';
 import { planetsOf } from './board';
@@ -68,7 +70,7 @@ export function checkLandings(game: Game, state: GameState, target: string, entr
  * returns the planets something landed on. The first to land on Mecatol Rex removes the custodians token: six influence
  * the plan does not record, so it is warned about, and one victory point (27.2, 27.3, 54.1).
  */
-export function landUnits(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): string[] {
+export function landUnits(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], shared: GameState = state): string[] {
   warnings.push(...checkLandings(game, state, target, entry, pack));
   const planets = planetsOf(game, target, pack);
   const landedOn: string[] = [];
@@ -85,6 +87,7 @@ export function landUnits(game: Game, state: GameState, target: string, entry: T
       for (const each of [state, ...Object.values(state.rivals ?? {})]) each.custodiansRemoved = true;
       state.vp += 1;
     }
+    reactToLanding(game, state, shared, entry, landing.planetId, unitIds(landed).reduce((sum, unit) => sum + (landed[unit] ?? 0), 0), pack, warnings);
     add(state.ground, landing.planetId, landed);
     if (!landedOn.includes(landing.planetId)) landedOn.push(landing.planetId);
   }
@@ -173,6 +176,23 @@ export function attachCard(
   if (reason) warnings.push(violation(code('attachTarget'), { planetId, reason }));
   const attached = (state.attachments ??= {});
   attached[planetId] = [...(attached[planetId] ?? []), cardId];
+}
+
+/**
+ * Effect on the way to a landing: every other player's components in force that answer a landing on a planet
+ * (`onLanding`) are asked, the owner of the component being any player but the lander. `shared` is my state, which
+ * holds every player's own. A component may push warnings (a cost its owner imposes) or change a state.
+ */
+export function reactToLanding(game: Game, state: GameState, shared: GameState, entry: TacticalEntry, planetId: string, landed: number, pack: DataPack, warnings: Warning[]): void {
+  const lander = entry.owner ?? 'me';
+  const states: Record<string, GameState> = { ...(shared.rivals ?? {}), me: shared, [lander]: state };
+  for (const [owner, own] of Object.entries(states)) {
+    if (owner === lander) continue;
+    const ownerGame = gameAs(game, owner);
+    for (const id of inForceOf(pack, holderOf(ownerGame, own, shared), effect => effect.onLanding !== undefined)) {
+      effectOf(pack, id)!.onLanding!({ id, game: ownerGame, pack, owner, lander, planetId, landed, state: own, landerState: state, shared, warnings });
+    }
+  }
 }
 
 /**

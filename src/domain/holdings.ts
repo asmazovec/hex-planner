@@ -3,8 +3,12 @@
  * the one bridge from the technologies held to the unit upgrades the counts follow. The replay's side is in
  * `replay/holdings.ts`.
  */
-import { componentById, componentsOf, noteAddress, noteId, textOf } from './components';
+import { componentById, componentsOf, noteAddress, noteBase, noteId, textOf } from './components';
 import type { ComponentDef, ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
+
+/** The ability that purges its player's own Alliance note at setup, and the base id of that note. */
+const HUBRIS = 'Hubris';
+const ALLIANCE = /^promissory:.*_an$/;
 
 export const emptyHoldings = (): Holdings =>
   ({ technologies: [], hand: [], relics: [], promissory: [], leaders: {}, scored: [], secrets: [], found: [], exhausted: [] });
@@ -153,8 +157,13 @@ export function startForFaction(start: StartHoldings = {}, from: string, to: str
   const leaders: Record<string, LeaderState> = Object.fromEntries(Object.entries(start.leaders ?? {}).filter(([id]) => !left.has(id)));
   for (const id of startingAgents(pack, to)) leaders[id] = 'unlocked';
   const lost = factionNotes(pack, from, player);
-  const notes = (start.promissory ?? []).filter(id => !lost.includes(id));
-  const promissory = [...notes, ...factionNotes(pack, to, player).filter(id => !notes.includes(id))];
+  // Hubris (Mahact): the player's own Alliance is purged at setup; leaving that faction brings it back.
+  const purges = (faction: string): boolean => pack.factions[faction]?.abilities.includes(HUBRIS) === true;
+  const alliance = genericNotes(pack, player).filter(id => ALLIANCE.test(noteBase(id)));
+  const purged = purges(to) ? alliance : [];
+  const notes = (start.promissory ?? []).filter(id => !lost.includes(id) && !purged.includes(id));
+  const regained = purges(from) && !purges(to) ? alliance.filter(id => !notes.includes(id)) : [];
+  const promissory = [...notes, ...regained, ...factionNotes(pack, to, player).filter(id => !notes.includes(id))];
   const { technologies: old, leaders: before, promissory: held, ...rest } = start;
   void old;
   void before;
