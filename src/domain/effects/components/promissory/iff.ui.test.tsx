@@ -20,7 +20,7 @@ const show = (systemId: string) => {
 //  player's ships."
 // Checks: the token put into FAR among the Creuss cruiser shows the warning of its place, standing.
 // Why the check is NOT redundant here: the system meets neither condition of the card.
-test.fails('promissory:iff a token put among another player\'s ships shows the warning standing', () => {
+test('promissory:iff a token put among another player\'s ships shows the warning standing', () => {
   const table = show(FAR);
   quote(table.pack, id, 'a non-home system that does not contain another player\'s ships');
   expectShownStanding(PLACE);

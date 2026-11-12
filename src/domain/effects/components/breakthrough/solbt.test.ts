@@ -18,7 +18,7 @@ describe('breakthrough:solbt Bellum Gloriosum', () => {
   // Checks: a carrier and six infantry are seven units against PRODUCTION 5; the warning is listed and lifted.
   // Why the check is redundant here: 68.1 counts every unit produced against the limit; the breakthrough says the six
   // infantry up to the carrier's capacity are not counted, which leaves one unit against five.
-  test.fails('breakthrough:solbt the ground forces up to the capacity of the carrier produced do not count against PRODUCTION', () => {
+  test('breakthrough:solbt the ground forces up to the capacity of the carrier produced do not count against PRODUCTION', () => {
     const table = build('sol', { carrier: 1, infantry: 6 });
     quote(table.pack, id, 'they do not count against your PRODUCTION limit');
     expectWaived(warningsOf(table, table.entry), 'productionOver', id);
@@ -28,7 +28,7 @@ describe('breakthrough:solbt Bellum Gloriosum', () => {
   //  do not count towards the Production limit."
   // Checks: two carriers and twelve fighters and infantry are fourteen units; two carriers count, the rest is free.
   // Why the check is redundant here: the capacity of every ship produced together frees the units carried.
-  test.fails('breakthrough:solbt the capacity of all the ships produced together is counted', () => {
+  test('breakthrough:solbt the capacity of all the ships produced together is counted', () => {
     const table = build('sol', { carrier: 2, infantry: 6, fighter: 6 });
     expectWaived(warningsOf(table, table.entry), 'productionOver', id);
   });
@@ -58,7 +58,7 @@ describe('breakthrough:solbt Bellum Gloriosum', () => {
   });
 
   // Checks: the breakthrough is in force while held and lifts the PRODUCTION limit check.
-  test.fails('breakthrough:solbt is a passive effect that waives the PRODUCTION limit', () => {
+  test('breakthrough:solbt is a passive effect that waives the PRODUCTION limit', () => {
     const { pack } = build('sol', {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionOver']);

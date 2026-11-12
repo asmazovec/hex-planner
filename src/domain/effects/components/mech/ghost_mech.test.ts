@@ -14,7 +14,7 @@ describe('mech:ghost_mech Icarus Drive', () => {
   //  wormhole token into this system."
   // Checks: the activation names the mech; the one mech in FAR leaves the board.
   // Why the check is redundant here: a unit leaves the board when destroyed or by an ability; the mech removes itself.
-  test.fails('mech:ghost_mech named after an activation is removed from the board', () => {
+  test('mech:ghost_mech named after an activation is removed from the board', () => {
     const table = activation(true);
     quote(table.pack, id, 'you may remove this unit from the game board to place or move a Creuss wormhole token into this system');
     expect(endOf(table).systems[FAR]?.mech ?? 0).toBe(0);
@@ -29,7 +29,7 @@ describe('mech:ghost_mech Icarus Drive', () => {
   test.todo('mech:ghost_mech places the alpha or the beta Creuss token in the system the mech was in (Creuss notes, Icarus Drive 2): `choices` exist on a component entry only, not on the activating entry that names the mech in `uses`');
 
   // Checks: the mech changes the board when named: a `play`.
-  test.fails('mech:ghost_mech is a play effect', () => {
+  test('mech:ghost_mech is a play effect', () => {
     expect(effect(activation(false).pack, id).tier).toBe('play');
   });
 });

@@ -12,7 +12,7 @@ describe('ability:versatile Versatile', () => {
   // Checks: the Sol player gains three tokens in the status phase and no warning is made.
   // Why the default limit does not apply: 81.5 gives two tokens; the ability does not lift the check, it changes its
   // number to three (a `modify` of `tokensGained` at the step `status`), so nothing is listed as waived.
-  test.fails('ability:versatile lets the Sol player gain three tokens in the status phase', () => {
+  test('ability:versatile lets the Sol player gain three tokens in the status phase', () => {
     const sol = status('sol', 3);
     quote(sol.pack, id, 'When you gain command tokens during the status phase: Gain 1 additional command token.');
     expectNone(warningsOf(sol, sol.entry), 'tokensOver');
@@ -20,7 +20,7 @@ describe('ability:versatile Versatile', () => {
 
   // Checks: a fourth token is beyond the changed number, and the warning names three free.
   // Why the check is NOT redundant here: Versatile adds one token, it does not remove the limit.
-  test.fails('ability:versatile still warns of a fourth token, against three', () => {
+  test('ability:versatile still warns of a fourth token, against three', () => {
     const sol = status('sol', 4);
     const warnings = warningsOf(sol, sol.entry);
     expectStanding(warnings, 'tokensOver');
@@ -36,7 +36,7 @@ describe('ability:versatile Versatile', () => {
   });
 
   // Checks: the ability changes a number of the count: a passive effect with no waiver.
-  test.fails('ability:versatile is a passive effect that modifies the tokens gained', () => {
+  test('ability:versatile is a passive effect that modifies the tokens gained', () => {
     const { pack } = status('sol', 2);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.tokensGained).toBeDefined();

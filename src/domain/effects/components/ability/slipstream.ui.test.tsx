@@ -16,7 +16,7 @@ const flight = (faction: string) => {
 // Checks: in the flight step I take the carrier (move 1) for a route of two systems out of the home system; no
 // warning about its speed is on the screen.
 // Why the default limit does not apply: the carrier's move value is 2 by the ability (a modify, nothing waived).
-test.fails('ability:slipstream a carrier out of the home system flies two systems with no speed warning', async () => {
+test('ability:slipstream a carrier out of the home system flies two systems with no speed warning', async () => {
   const { table, live } = flight('ghost');
   quote(table.pack, id, 'starts its movement in your home system');
   await take('Carrier');

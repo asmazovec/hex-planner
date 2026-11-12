@@ -15,7 +15,7 @@ const generate = (systemId: string) => componentAction(id, { choices: { token: '
 // Checks: after the token is placed in TARGET, the flight of a carrier (move 1) from TARGET two systems on shows no
 // speed warning: Slipstream counts the token as a wormhole.
 // Why the check is redundant here: the ship starts in a system with an alpha wormhole, so its move value is 2.
-test.fails('technology:wg after the token is placed, a carrier flies two systems from there with no speed warning', async () => {
+test('technology:wg after the token is placed, a carrier flies two systems from there with no speed warning', async () => {
   const move = tactical(FARTHER, { moves: [{ from: TARGET, units: {}, via: [FAR] }] });
   const table = bench({ faction: 'ghost', units: { [TARGET]: { carrier: 1 } }, start: { technologies: [id] }, entries: [generate(TARGET), move] });
   quote(table.pack, id, 'place or move a Creuss wormhole token');
@@ -27,7 +27,7 @@ test.fails('technology:wg after the token is placed, a carrier flies two systems
 // "... or a non-home system that does not contain another player's ships."
 // Checks: the token put into FAR, which holds a Letnev cruiser and no planet of mine, shows the warning standing.
 // Why the check is NOT redundant here: the system meets neither condition of the card.
-test.fails('technology:wg a token put among another player\'s ships shows the warning standing', () => {
+test('technology:wg a token put among another player\'s ships shows the warning standing', () => {
   const entry = generate(FAR);
   showWarnings(bench({ faction: 'ghost', start: { technologies: [id] }, entries: [entry], game: { opponents: [RIVAL], enemyUnits: { [FAR]: { o1: { cruiser: 1 } } } } }), entry);
   expectShownStanding(PLACE);

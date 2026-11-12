@@ -18,7 +18,7 @@ const show = (production: UnitCounts, start: StartHoldings = { breakthrough: 'he
 // Checks: a carrier and six infantry built at the home dock (PRODUCTION 5): the warning of the production limit is
 // on the screen in the allowed look, naming Bellum Gloriosum.
 // Why the check is redundant here: the six infantry carried are not counted; one unit is left against five.
-test.fails('breakthrough:solbt the carrier and its infantry beyond PRODUCTION read as allowed by Bellum Gloriosum', () => {
+test('breakthrough:solbt the carrier and its infantry beyond PRODUCTION read as allowed by Bellum Gloriosum', () => {
   const table = show({ carrier: 1, infantry: 6 });
   quote(table.pack, id, 'they do not count against your PRODUCTION limit');
   expectShownWaived('productionOver', 'Bellum Gloriosum');

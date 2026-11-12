@@ -10,4 +10,11 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:solhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: ({ held, state }) => {
+    if (!held) return;
+    state.tokensOnMap = [];
+  },
+};

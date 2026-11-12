@@ -18,7 +18,7 @@ describe('breakthrough:ghostbt Particle Synthesis', () => {
   // warning that no unit has Production there is listed and lifted.
   // Why the check is redundant here: 67/79 ask for a unit with Production in the system; the breakthrough makes the
   // wormhole one.
-  test.fails('breakthrough:ghostbt a wormhole in a system with my ships produces: the warning is waived', () => {
+  test('breakthrough:ghostbt a wormhole in a system with my ships produces: the warning is waived', () => {
     const table = build(NEAR, { destroyer: 1 });
     quote(table.pack, id, 'Each wormhole in a system that contains your ships gains PRODUCTION 1 as if it were a unit you control.');
     expectWaived(warningsOf(table, table.entry), 'noProduction', id);
@@ -71,7 +71,7 @@ describe('breakthrough:ghostbt Particle Synthesis', () => {
   });
 
   // Checks: the breakthrough is in force while held: a passive effect that lifts the two checks of production.
-  test.fails('breakthrough:ghostbt is a passive effect that waives the production checks', () => {
+  test('breakthrough:ghostbt is a passive effect that waives the production checks', () => {
     const { pack } = build(NEAR, {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['noProduction', 'productionOver']);

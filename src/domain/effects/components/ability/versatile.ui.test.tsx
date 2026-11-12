@@ -15,7 +15,7 @@ const status = (faction: string, tokens: number) => {
 // "When you gain command tokens during the status phase: Gain 1 additional command token."
 // Checks: the Sol player's status entry with three tokens shows no warning.
 // Why the default limit does not apply: the ability makes the tokens of the status phase three (a modify).
-test.fails('ability:versatile three tokens in the status phase show no warning for the Sol player', () => {
+test('ability:versatile three tokens in the status phase show no warning for the Sol player', () => {
   const table = status('sol', 3);
   quote(table.pack, id, 'Gain 1 additional command token.');
   expectNotShown('tokensOver');
@@ -23,7 +23,7 @@ test.fails('ability:versatile three tokens in the status phase show no warning f
 
 // Checks: four tokens show the warning standing, naming three free.
 // Why the check is NOT redundant here: one more token than the ability gives.
-test.fails('ability:versatile a fourth token shows the warning against three', () => {
+test('ability:versatile a fourth token shows the warning against three', () => {
   status('sol', 4);
   expectShownStanding('tokensOver');
   expect(shown('tokensOver')[0].textContent).toContain('with 3 free');

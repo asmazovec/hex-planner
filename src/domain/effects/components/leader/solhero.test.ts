@@ -12,7 +12,7 @@ describe('leader:solhero Jace X, 4th Air Legion — Helio Command Array', () => 
   // Checks: after the hero, the system activated earlier this round is activated again and no warning is made.
   // Why the check is redundant here: 5.2 forbids activating a system that holds the player's command token; the hero
   // took that token off the board, so the system holds none.
-  test.fails('leader:solhero lets a system activated before it be activated again', () => {
+  test('leader:solhero lets a system activated before it be activated again', () => {
     const again = tactical(NEAR);
     const table = sol([first(), componentAction(id), again]);
     quote(table.pack, id, 'Remove each of your command tokens from the game board and return them to your reinforcements.');
@@ -22,7 +22,7 @@ describe('leader:solhero Jace X, 4th Air Legion — Helio Command Array', () => 
   // LRR 58.4: ships in a system that holds the player's command token cannot move.
   // Checks: after the hero the cruiser leaves the system activated before; its move is not warned of.
   // Why the check is redundant here: the token that held the ships is back in reinforcements.
-  test.fails('leader:solhero lets ships leave a system that was activated before it', () => {
+  test('leader:solhero lets ships leave a system that was activated before it', () => {
     const onward = tactical(TARGET, { moves: [{ from: NEAR, units: { cruiser: 1 } }] });
     const table = sol([first(), componentAction(id), onward]);
     expectNone(warningsOf(table, onward), 'sourceActivated');
@@ -53,7 +53,7 @@ describe('leader:solhero Jace X, 4th Air Legion — Helio Command Array', () => 
   });
 
   // Checks: the hero changes the board when it is played: a `play`.
-  test.fails('leader:solhero is a play effect', () => {
+  test('leader:solhero is a play effect', () => {
     expect(effect(sol([]).pack, id).tier).toBe('play');
   });
 });
