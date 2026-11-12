@@ -1,7 +1,7 @@
 # Shared base for component effects (pass 2, wave 1)
 
 One file per subsystem: `play.md`, `movement.md`, `production.md`, `payment.md`, `research.md`, `status.md`,
-`invasion.md`. What no owner built is in `skipped.md`. Read the file of every subsystem your component touches.
+`invasion.md`, and from wave 3 `fields.md` (landing offers, `counts` choices, `shipsTo`). What no owner built is in `skipped.md`. Read the file of every subsystem your component touches.
 
 ## Decided when the seven branches were merged
 

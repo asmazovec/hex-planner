@@ -93,7 +93,7 @@ export function UnitDraft({ rows, layout = 'horizontal', stock, colour, onTake, 
                 return (
                   <button
                     key={item.id ?? item.kind} type="button" className={blocked ? 'draft-take draft-take-out' : out ? 'draft-take draft-take-over' : 'draft-take'} aria-label={item.takeLabel}
-                    title={note ? `${item.takeLabel}: ${note}` : item.takeLabel} disabled={Boolean(blocked)} onClick={() => onTake(row.id, item.kind, item.id)}
+                    title={note ? `${item.takeLabel}: ${note}` : item.takeLabel} disabled={Boolean(blocked)} onClick={() => (item.id === undefined ? onTake(row.id, item.kind) : onTake(row.id, item.kind, item.id))}
                   >
                     <span className="draft-plus" aria-hidden="true">+</span>
                     {over > 0 && <span className="draft-over">+{over}</span>}
@@ -110,7 +110,7 @@ export function UnitDraft({ rows, layout = 'horizontal', stock, colour, onTake, 
               {!vertical && <span className="draft-arrow" aria-hidden="true"><RowIcon name="chevron" /></span>}
               <div className="draft-tray" role="group" aria-label={pickedLabel}>
                 {row.items.map(item => (item.picked > 0 ? (
-                  <button key={item.id ?? item.kind} type="button" className="draft-chip" aria-label={item.returnLabel} title={item.returnLabel} onClick={() => onReturn(row.id, item.kind, item.id)}>
+                  <button key={item.id ?? item.kind} type="button" className="draft-chip" aria-label={item.returnLabel} title={item.returnLabel} onClick={() => (item.id === undefined ? onReturn(row.id, item.kind) : onReturn(row.id, item.kind, item.id))}>
                     <TokenPicture kind={item.kind} colour={colour} px={PICTURE} />
                     <i>×{item.picked}</i>
                   </button>
