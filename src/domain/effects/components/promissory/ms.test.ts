@@ -23,7 +23,7 @@ describe('promissory:ms Military Support', () => {
   // Checks: the holder plays the note naming its home planet h1; two infantry stand there at the end of the plan.
   // Why the check is redundant here: units come onto the board by production (67) or by an ability that says where
   // (67.4); the note is such an ability, so nothing is produced or paid and no production check applies.
-  test.fails('promissory:ms places two infantry on the planet the holder chose', () => {
+  test('promissory:ms places two infantry on the planet the holder chose', () => {
     const ms = table(play('h1'));
     quote(ms.pack, id, 'you may place 2 infantry from your reinforcements on any planet you control');
     expect(endOf(ms).ground.h1?.infantry).toBe(2);
@@ -34,7 +34,7 @@ describe('promissory:ms Military Support', () => {
   // Checks: the Sol opponent's strategy pool loses one of its two tokens.
   // Why the check is redundant here: the token leaves the pool of another player by the card's own words; it is no
   // token the holder spends, so no pool of the holder is checked.
-  test.fails('promissory:ms takes a token from the Sol player\'s strategy pool', () => {
+  test('promissory:ms takes a token from the Sol player\'s strategy pool', () => {
     const ms = table(play('h1'));
     quote(ms.pack, id, 'Remove 1 token from the Sol player\'s strategy pool, if able');
     expect(endOf(ms).rivals?.o1.strategy).toBe(1);
@@ -43,7 +43,7 @@ describe('promissory:ms Military Support', () => {
   // "... on any planet you control."
   // Checks: the infantry placed on t1, a planet nobody of mine holds, is warned of.
   // Why the check is NOT redundant here: the card places on a planet the holder controls only.
-  test.fails('promissory:ms on a planet the holder does not control is warned of', () => {
+  test('promissory:ms on a planet the holder does not control is warned of', () => {
     const ms = table(play('t1'));
     expectStanding(warningsOf(ms, ms.entry), PLACE);
   });
@@ -69,7 +69,7 @@ describe('promissory:ms Military Support', () => {
   });
 
   // Checks: the note is played by its entry, so its effect is a `play`.
-  test.fails('promissory:ms is a play effect', () => {
+  test('promissory:ms is a play effect', () => {
     const { pack } = table(play('h1'));
     expect(effect(pack, id).tier).toBe('play');
   });

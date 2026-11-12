@@ -7,8 +7,38 @@
  * production up to the combined capacity of the ships produced with them are not counted (Sol notes, Bellum Gloriosum 1);
  * the rest must fit the PRODUCTION limit.
  */
-import type { ComponentEffect } from '../../types';
+import { capacity } from '../../../replay/transport';
+import type { UnitCounts, UnitId } from '../../../types';
+import { holderOf } from '../../registry';
+import type { ComponentEffect, WaiverContext } from '../../types';
 
 export const id = 'breakthrough:solbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+/** The units the entry produces: a tactical action's production, or that of a component entry. */
+function producedBy(ctx: WaiverContext): UnitCounts {
+  const entry = ctx.entry;
+  if (entry?.type === 'tactical') return entry.production;
+  if (entry?.type === 'component') return entry.effects?.production?.units ?? {};
+  return {};
+}
+
+/** The fighters and ground forces freed by the combined capacity of the ships produced with them. */
+function freed(ctx: WaiverContext): number {
+  const units = producedBy(ctx);
+  const { pack, game } = ctx;
+  const carried = Object.entries(units).reduce((sum, [unit, n]) => {
+    const def = pack.units[unit as UnitId];
+    return def && (def.ground || def.fighter) ? sum + (n ?? 0) : sum;
+  }, 0);
+  return Math.min(carried, capacity(game, units, holderOf(game, ctx.before, ctx.shared), pack).capacity);
+}
+
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'productionOver',
+    rule: 'they do not count against your PRODUCTION limit',
+    when: (warning, ctx) => Number(warning.params.count) - freed(ctx) <= Number(warning.params.value),
+  }],
+};

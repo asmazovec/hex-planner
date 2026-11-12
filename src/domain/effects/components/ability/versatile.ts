@@ -9,4 +9,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:versatile';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { tokensGained: (value, { step }) => (step === 'status' ? value + 1 : value) },
+};

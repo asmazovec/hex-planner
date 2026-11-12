@@ -15,7 +15,7 @@ const table = (between: Entry[], again: Entry) => bench({
 // Checks: after the hero, the editor of a second tactical action in the system activated before shows no warning
 // about the token already there.
 // Why the check is redundant here: the hero took the token off the board, so the system can be activated (5.2).
-test.fails('leader:solhero a system activated before the hero is activated again with no warning', () => {
+test('leader:solhero a system activated before the hero is activated again with no warning', () => {
   const again = tactical(NEAR);
   const sol = table([componentAction(id)], again);
   quote(sol.pack, id, 'Remove each of your command tokens from the game board');

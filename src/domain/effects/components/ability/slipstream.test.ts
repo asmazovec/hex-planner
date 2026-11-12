@@ -23,7 +23,7 @@ describe('ability:slipstream Slipstream', () => {
   // Checks: a Creuss carrier (move 1) flies two systems out of the home system with no warning.
   // Why the default limit does not apply: 58.3.6 checks the route against the move value; the ability does not lift
   // the check, it raises the value to 2 for this ship (a `modify` of `speed`), so nothing is listed as waived.
-  test.fails('ability:slipstream a carrier starting in the home system flies two systems', () => {
+  test('ability:slipstream a carrier starting in the home system flies two systems', () => {
     const table = flight('ghost', HOME, [NEAR], TARGET);
     quote(table.pack, id, 'Apply +1 to the move value of each of your ships that starts its movement in your home system');
     expectNone(warningsOf(table, table.move), 'speedShort');
@@ -31,14 +31,14 @@ describe('ability:slipstream Slipstream', () => {
 
   // "... or in a system that contains either an alpha or beta wormhole."
   // Checks: the carrier starting in the alpha system NEAR flies two systems with no warning.
-  test.fails('ability:slipstream a carrier starting in an alpha wormhole system flies two systems', () => {
+  test('ability:slipstream a carrier starting in an alpha wormhole system flies two systems', () => {
     const table = flight('ghost', NEAR, [TARGET], FAR);
     expectNone(warningsOf(table, table.move), 'speedShort');
   });
 
   // Checks: three systems from the home system are one too many: the warning names the move of 2.
   // Why the check is NOT redundant here: the ability adds 1, it does not lift the move value.
-  test.fails('ability:slipstream still warns of a route one system beyond the raised move value', () => {
+  test('ability:slipstream still warns of a route one system beyond the raised move value', () => {
     const table = flight('ghost', HOME, [NEAR, TARGET], FAR);
     const warnings = warningsOf(table, table.move);
     expectStanding(warnings, 'speedShort');
@@ -70,7 +70,7 @@ describe('ability:slipstream Slipstream', () => {
   });
 
   // Checks: the ability changes a number of the count: a passive effect that modifies the speed.
-  test.fails('ability:slipstream is a passive effect that modifies the speed', () => {
+  test('ability:slipstream is a passive effect that modifies the speed', () => {
     const { pack } = flight('ghost', HOME, [], NEAR);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.speed).toBeDefined();

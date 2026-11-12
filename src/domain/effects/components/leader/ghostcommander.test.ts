@@ -15,7 +15,7 @@ describe('leader:ghostcommander Sai Seravus', () => {
   // with it at the end.
   // Why the check is redundant here: units come onto the board by production (67) or by an ability that says where;
   // the commander places the fighter itself, with no unit with Production and no payment.
-  test.fails('leader:ghostcommander places a fighter with a carrier that moved through a wormhole', () => {
+  test('leader:ghostcommander places a fighter with a carrier that moved through a wormhole', () => {
     const t = table(using(tactical(FARTHER, { moves: [{ from: NEAR, units: { carrier: 1 } }] }), id), { [NEAR]: { carrier: 1 } });
     quote(t.pack, id, 'you may place 1 fighter from your reinforcements with that ship if you have unused capacity in the active system');
     expect(endOf(t).systems[FARTHER]).toEqual({ carrier: 1, fighter: 1 });
@@ -47,7 +47,7 @@ describe('leader:ghostcommander Sai Seravus', () => {
   });
 
   // Checks: the commander places units when named by the entry: a `play`.
-  test.fails('leader:ghostcommander is a play effect', () => {
+  test('leader:ghostcommander is a play effect', () => {
     expect(effect(table(tactical(NEAR), {}).pack, id).tier).toBe('play');
   });
 });

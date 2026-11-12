@@ -1,19 +1,23 @@
 import { describe, expect, test } from 'vitest';
-import { routeReach } from '../../../movement';
-import { bench, effect, expectNone, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
+import { linksOf, routeReach } from '../../../movement';
+import { bench, effect, endOf, expectNone, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './quantum_entanglement';
 
 /** The test row with an alpha wormhole in NEAR and a beta one in FARTHER (or an alpha one, with `matching`). */
 const map = (matching: boolean) => ({ [HOME]: 'r-home', [NEAR]: 'r-alpha', [TARGET]: 'r-target', [FAR]: 'r-empty', [FARTHER]: matching ? 'r-alpha' : 'r-beta' });
 const board = (faction: string, matching = false) => bench({ faction, game: { map: map(matching) } });
-const reach = (table: ReturnType<typeof board>) => routeReach(table.game, [NEAR], 1, FARTHER, table.pack, new Set());
+/** The reach is asked with the adjacency the player's components join (`linksOf`): the route graph alone knows the board. */
+const reach = (table: ReturnType<typeof board>) => {
+  const state = endOf(table);
+  return routeReach(table.game, [NEAR], 1, FARTHER, table.pack, new Set(), { links: linksOf(table.game, table.pack, { state, during: 'tactical' }) });
+};
 
 describe('ability:quantum_entanglement Quantum Entanglement', () => {
   // "You treat all systems that contain either an alpha or beta wormhole as adjacent to each other."
   // Checks: a Creuss ship with move 1 in the alpha system reaches the beta system three systems away.
   // Why the default adjacency does not apply: 6.1 joins only matching wormholes; the ability joins alpha and beta for
   // the Creuss player, so the reach the plan lights includes the beta system.
-  test.fails('ability:quantum_entanglement joins the alpha and the beta systems for the Creuss player', () => {
+  test('ability:quantum_entanglement joins the alpha and the beta systems for the Creuss player', () => {
     const ghost = board('ghost');
     quote(ghost.pack, id, 'You treat all systems that contain either an alpha or beta wormhole as adjacent to each other.');
     expect(reach(ghost).has(FARTHER)).toBe(true);

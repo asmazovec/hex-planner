@@ -11,7 +11,7 @@ uiBench();
 // Home One in the plain look; I take it aboard the carrier and nothing is missing.
 // Why the check is redundant here: the mech was deployed, not produced, so it stands on the planet without a unit
 // with Production.
-test.fails('mech:sol_mech the mech deployed with Orbital Drop is offered on the planet and taken aboard', async () => {
+test('mech:sol_mech the mech deployed with Orbital Drop is offered on the planet and taken aboard', async () => {
   const drop = using(componentAction('ability:orbital_drop', { choices: { planet: 'h1' } } as Partial<Entry>), id);
   const move = tactical(NEAR, { moves: [{ from: HOME, units: {} }] });
   const table = bench({ faction: 'sol', expansions: ['pok'], units: { [HOME]: { carrier: 1 } }, entries: [drop, move] });

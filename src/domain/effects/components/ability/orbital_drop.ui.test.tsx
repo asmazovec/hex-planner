@@ -19,7 +19,7 @@ const flight = (faction: string) => {
 // plain look (not the dashed «beyond the stock»); I take both aboard the carrier and nothing is missing.
 // Why the check is redundant here: the infantry were placed by the ability, so they stand on the planet and the
 // flight takes units that are there.
-test.fails('ability:orbital_drop the two infantry dropped are offered on the planet and taken aboard', async () => {
+test('ability:orbital_drop the two infantry dropped are offered on the planet and taken aboard', async () => {
   const { table, live } = flight('sol');
   quote(table.pack, id, 'place 2 infantry from your reinforcements on 1 planet you control');
   expect(takeButton('Infantry', 'Home One').className).not.toContain('draft-take-over');
@@ -40,7 +40,7 @@ test('ability:orbital_drop another faction finds no infantry dropped on the plan
 // LRR 20.4 with "Spend 1 token from your strategy pool".
 // Checks: the warnings of the drop with an empty strategy pool show the pool going below zero, standing.
 // Why the check is NOT redundant here: the ability has a cost the pool cannot pay.
-test.fails('ability:orbital_drop with an empty strategy pool shows the pool going below zero', () => {
+test('ability:orbital_drop with an empty strategy pool shows the pool going below zero', () => {
   const entry = drop();
   const table = bench({ faction: 'sol', entries: [adjust({ strategy: -2 }), entry] });
   showWarnings(table, entry);

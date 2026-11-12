@@ -17,7 +17,7 @@ describe('ability:orbital_drop Orbital Drop', () => {
   // Checks: the component action names the ability and h1; two infantry stand on h1 and the strategy pool has 1 of its 2.
   // Why the check is redundant here: the infantry are not produced (67), so no unit with Production, no limit and no
   // payment is asked; the ability itself says where they go and what it costs.
-  test.fails('ability:orbital_drop places two infantry on a planet I control for a strategy token', () => {
+  test('ability:orbital_drop places two infantry on a planet I control for a strategy token', () => {
     const entry = drop('h1');
     const sol = table('sol', [entry]);
     quote(sol.pack, id, 'Spend 1 token from your strategy pool to place 2 infantry from your reinforcements on 1 planet you control');
@@ -30,7 +30,7 @@ describe('ability:orbital_drop Orbital Drop', () => {
   // LRR 20.4 with "Spend 1 token from your strategy pool".
   // Checks: with the strategy pool emptied before, the drop is warned of as a pool going below zero.
   // Why the check is NOT redundant here: the ability has a cost, and the pool cannot pay it.
-  test.fails('ability:orbital_drop with an empty strategy pool is warned of', () => {
+  test('ability:orbital_drop with an empty strategy pool is warned of', () => {
     const entry = drop('h1');
     const sol = table('sol', [adjust({ strategy: -2 }), entry]);
     expectStanding(warningsOf(sol, entry), 'poolNegative');
@@ -39,7 +39,7 @@ describe('ability:orbital_drop Orbital Drop', () => {
   // "... on 1 planet you control."
   // Checks: t1 is nobody's of mine: the drop there is warned of.
   // Why the check is NOT redundant here: the ability places on a planet the player controls only.
-  test.fails('ability:orbital_drop on a planet I do not control is warned of', () => {
+  test('ability:orbital_drop on a planet I do not control is warned of', () => {
     const entry = drop('t1');
     expectStanding(warningsOf(table('sol', [entry]), entry), PLACE);
   });
@@ -53,7 +53,7 @@ describe('ability:orbital_drop Orbital Drop', () => {
   });
 
   // Checks: the ability is played by its component action, so its effect is a `play`.
-  test.fails('ability:orbital_drop is a play effect', () => {
+  test('ability:orbital_drop is a play effect', () => {
     expect(effect(table('sol', []).pack, id).tier).toBe('play');
   });
 });

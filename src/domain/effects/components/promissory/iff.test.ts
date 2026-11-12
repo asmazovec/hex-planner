@@ -27,7 +27,7 @@ describe('promissory:iff Creuss Iff', () => {
   // Checks: the holder places the alpha token into the empty system NEAR; it stands there at the end of the plan.
   // Why the check is redundant here: the board's wormholes are printed on the tiles (6.1); the note puts a wormhole
   // where none is printed, and NEAR meets the card's condition.
-  test.fails('promissory:iff places a Creuss wormhole token into an empty non-home system', () => {
+  test('promissory:iff places a Creuss wormhole token into an empty non-home system', () => {
     const iff = table(play(NEAR));
     quote(iff.pack, id, 'Place or move a Creuss wormhole token into either a system that contains a planet you control');
     expect(tokens(endOf(iff))?.alpha).toBe(NEAR);
@@ -37,7 +37,7 @@ describe('promissory:iff Creuss Iff', () => {
   // "... or a non-home system that does not contain another player's ships."
   // Checks: FAR holds a Creuss cruiser and no planet of mine: the token put there is warned of.
   // Why the check is NOT redundant here: the system meets neither of the card's two conditions.
-  test.fails('promissory:iff into a system with another player\'s ships and no planet of mine is warned of', () => {
+  test('promissory:iff into a system with another player\'s ships and no planet of mine is warned of', () => {
     const iff = table(play(FAR));
     expectStanding(warningsOf(iff, iff.entry), PLACE);
   });
@@ -60,7 +60,7 @@ describe('promissory:iff Creuss Iff', () => {
   });
 
   // Checks: the note changes the board when it is played: a `play`.
-  test.fails('promissory:iff is a play effect', () => {
+  test('promissory:iff is a play effect', () => {
     expect(effect(table(play(NEAR)).pack, id).tier).toBe('play');
   });
 });

@@ -20,7 +20,7 @@ const flight = (before: Entry[]) => {
 // Checks: after Military Support on Home One, the flight out of the home system offers its two infantry in the plain
 // look; I take both aboard the carrier and nothing is missing.
 // Why the check is redundant here: the note placed them, so they stand on the planet the flight takes them from.
-test.fails('promissory:ms the two infantry placed are offered on the planet and taken aboard', async () => {
+test('promissory:ms the two infantry placed are offered on the planet and taken aboard', async () => {
   const { table, live } = flight([play('h1')]);
   quote(table.pack, id, 'you may place 2 infantry from your reinforcements on any planet you control');
   expect(takeButton('Infantry', 'Home One').className).not.toContain('draft-take-over');
@@ -40,7 +40,7 @@ test('promissory:ms not played, the planet has no infantry to take', () => {
 // "... on any planet you control."
 // Checks: the note played on Target One shows the warning of a planet I do not control, standing.
 // Why the check is NOT redundant here: the card places on a planet the holder controls only.
-test.fails('promissory:ms on a planet I do not control shows the warning standing', () => {
+test('promissory:ms on a planet I do not control shows the warning standing', () => {
   const entry = play('t1');
   showWarnings(bench({ faction: 'letnev', start: { promissory: [NOTE] }, entries: [entry], game: { opponents: [SOL] } }), entry);
   expectShownStanding('placeNotControlled' as ExtensionCode);

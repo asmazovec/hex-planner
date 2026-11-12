@@ -13,7 +13,7 @@ const MAP = { [HOME]: 'r-home', [NEAR]: 'r-alpha', [TARGET]: 'r-target', [FAR]: 
 // Checks: in «Used» of a tactical action through the alpha wormholes I choose Sai Seravus; it is written into the
 // entry, and a fighter stands with the carrier at the end of the plan.
 // Why the check is redundant here: the commander places the fighter itself, no production is asked.
-test.fails('leader:ghostcommander named in «Used» of a move through a wormhole places a fighter with the carrier', async () => {
+test('leader:ghostcommander named in «Used» of a move through a wormhole places a fighter with the carrier', async () => {
   const move = tactical(FARTHER, { moves: [{ from: NEAR, units: { carrier: 1 } }] });
   const table = bench({ faction: 'ghost', expansions: ['pok'], units: { [NEAR]: { carrier: 1 } }, start: { leaders: { [id]: 'unlocked' } }, entries: [move], game: { map: MAP } });
   quote(table.pack, id, 'place 1 fighter from your reinforcements with that ship');
