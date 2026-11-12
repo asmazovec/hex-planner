@@ -137,7 +137,7 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 
 /** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
 export function cardCost(entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack): { kind: PaymentKind; amount: number } {
-  return handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who)
+  return handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who, { pack, faction: factionId })
     ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, who, pack, entry) };
 }
 

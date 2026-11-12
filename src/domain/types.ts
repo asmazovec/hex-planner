@@ -262,6 +262,8 @@ export interface CardEffects {
   boughtTokens?: number;
   /** The technologies researched, by component id (`technology:<id>`); a unit upgrade is one of them. */
   researched?: string[];
+  /** Planets exhausted for their technology specialty, each to ignore one prerequisite of its colour (90.14). */
+  specialties?: string[];
   /** The chosen system. */
   systemId?: string;
   /** Planet ids. */

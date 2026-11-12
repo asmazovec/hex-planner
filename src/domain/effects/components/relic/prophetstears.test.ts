@@ -32,14 +32,14 @@ describe('relic:prophetstears The Prophet\'s Tears', () => {
   //  research that technology card."
   // Checks: with no propulsion technology at all, two are missing, and the Tears do not lift the warning.
   // Why the check is NOT redundant here: the card ignores 1 prerequisite, not 2.
-  test.fails('relic:prophetstears does not lift two missing prerequisites', () => {
+  test('relic:prophetstears does not lift two missing prerequisites', () => {
     const play = using(research(), id);
     expectStanding(warningsOf(table([play], []), play), CODE);
   });
 
   // Checks: the same research with one prerequisite missing and the Tears held but not named stands as a breach.
   // Why the check is NOT redundant here: the relic is exhausted to be used; held and not used, it ignores nothing.
-  test.fails('relic:prophetstears held but not used, the missing prerequisite stands', () => {
+  test('relic:prophetstears held but not used, the missing prerequisite stands', () => {
     const play = research();
     expectStanding(warningsOf(table([play], ['technology:amd']), play), CODE);
   });

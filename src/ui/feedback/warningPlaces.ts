@@ -1,5 +1,5 @@
 import { ruleOf } from '../../domain/rules/registry';
-import type { DataPack, Entry, Game, RuleStep, Warning, WarningCode } from '../../domain/types';
+import type { DataPack, Entry, Game, RuleStep, Warning } from '../../domain/types';
 import { groupOf, sourcesOf, type Move } from '../plan/tactical';
 
 /** The block of an editor where the thing a warning speaks of is set up. */
@@ -27,7 +27,7 @@ export const STEP_PLACES: Record<RuleStep, WarningPlace[]> = {
  * Overrides of the step, only where one step speaks to more than one block: `code` at any step, `code@step` at that step.
  * The limits of the system are the result of the whole action, and are said where the ships are chosen too; a card has only its production.
  */
-const PLACES: Partial<Record<WarningCode | `${WarningCode}@${RuleStep}`, WarningPlace[]>> = {
+const PLACES: Partial<Record<string, WarningPlace[]>> = {
   capacitySystem: ['route', 'action', 'production'],
   fleetPool: ['route', 'action', 'production'],
   // A manual change of the units of a system.
@@ -38,6 +38,9 @@ const PLACES: Partial<Record<WarningCode | `${WarningCode}@${RuleStep}`, Warning
   diplomacySystem: ['system'],
   researchOverLimit: ['research'],
   researchOwned: ['research'],
+  // The checks of a research made by a code of its own: they stand in the block of the technologies.
+  prerequisitesMissing: ['research'],
+  researchUnavailable: ['research'],
   expeditionUnpaid: ['payment'],
   stationStructure: ['system'],
 };
@@ -46,13 +49,13 @@ const PLACES: Partial<Record<WarningCode | `${WarningCode}@${RuleStep}`, Warning
 export const stepOf = (warning: Warning): RuleStep => warning.step ?? ruleOf(warning.code).step;
 
 export const placesOf = (warning: Warning): WarningPlace[] => {
-  // A code of a file of its own has no override: its step alone decides its block.
+  // A code of a file of its own is overridden only where its step would put it in the wrong block (the research checks).
   const overrides: Partial<Record<string, WarningPlace[]>> = PLACES;
   return overrides[`${warning.code}@${stepOf(warning)}`] ?? overrides[warning.code] ?? STEP_PLACES[stepOf(warning)];
 };
 
 /** Every place a warning can be given to, for the contract that each of them has a block. */
-export const allPlaces = (): WarningPlace[] => [...new Set([...Object.values(STEP_PLACES), ...Object.values(PLACES)].flat())];
+export const allPlaces = (): WarningPlace[] => [...new Set([...Object.values(STEP_PLACES).flat(), ...Object.values(PLACES).flatMap(places => places ?? [])])];
 
 /** A limit of the whole system: it stands in the result of the action. */
 export const limitsSystem = (warning: Warning): boolean => placesOf(warning).includes('action') && placesOf(warning).includes('route');

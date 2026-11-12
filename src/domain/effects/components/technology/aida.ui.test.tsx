@@ -31,7 +31,7 @@ test.fails('technology:aida chosen in «Used» of a research, the missing prereq
 // LRR 90.9: "that player must own one technology of the matching color for each prerequisite symbol".
 // Checks: without the card chosen, the warning stands.
 // Why the check is NOT redundant here: the card was not exhausted for this research.
-test.fails('technology:aida not chosen, the missing prerequisite stands', () => {
+test('technology:aida not chosen, the missing prerequisite stands', () => {
   const table = research();
   showWarnings(table, table.entry);
   expectShownStanding(CODE);

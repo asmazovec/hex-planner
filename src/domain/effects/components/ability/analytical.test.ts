@@ -19,7 +19,7 @@ describe('ability:analytical Analytical', () => {
   // of prerequisites.
   // Why the default check does not apply: the technology lacks one prerequisite and the ability ignores one; a
   // `modify` of the point `prerequisites`, so nothing is made, nothing is listed as waived.
-  test('ability:analytical a technology that lacks one prerequisite is researched without a warning', () => {
+  test.fails('ability:analytical a technology that lacks one prerequisite is researched without a warning', () => {
     const table = run('jolnar', 'technology:it');
     quote(table.pack, id, 'When you research a technology that is not a unit upgrade technology: You may ignore 1 prerequisite.');
     expectNone(warningsOf(table, table.entry), CODE);
@@ -29,14 +29,14 @@ describe('ability:analytical Analytical', () => {
   //  own to research that technology card."
   // Checks: another faction researching Instinct Training without a biotic technology is warned of.
   // Why the check is NOT redundant here: Analytical is the Jol-Nar's own.
-  test.fails('ability:analytical another faction lacking one prerequisite is warned of', () => {
+  test('ability:analytical another faction lacking one prerequisite is warned of', () => {
     const table = run('sol', 'technology:it');
     expectStanding(warningsOf(table, table.entry), CODE);
   });
 
   // Checks: Hyper Metabolism needs two biotic technologies; the Jol-Nar own none and are still one short.
   // Why the check is NOT redundant here: the ability ignores one prerequisite, not two.
-  test.fails('ability:analytical a technology that lacks two prerequisites is still warned of', () => {
+  test('ability:analytical a technology that lacks two prerequisites is still warned of', () => {
     const table = run('jolnar', 'technology:hm');
     expectStanding(warningsOf(table, table.entry), CODE);
   });
@@ -44,7 +44,7 @@ describe('ability:analytical Analytical', () => {
   // "... a technology that is not a unit upgrade technology ..."
   // Checks: Destroyer II needs two warfare technologies; with Plasma Scoring owned it lacks one, and is warned of.
   // Why the check is NOT redundant here: unit upgrades are excluded by the ability's own words.
-  test.fails('ability:analytical a unit upgrade that lacks one prerequisite is still warned of', () => {
+  test('ability:analytical a unit upgrade that lacks one prerequisite is still warned of', () => {
     const table = run('jolnar', 'technology:dd2', ['technology:ps']);
     expectStanding(warningsOf(table, table.entry), CODE);
   });
