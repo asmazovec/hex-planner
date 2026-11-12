@@ -1,0 +1,11 @@
+/**
+ * X-89 Bacterial Weapon ΩΩ: "Double the hits produced by your units' BOMBARDMENT and ground combat rolls. Exhaust each
+ * planet you use BOMBARDMENT against."
+ *
+ * A hint at the invasion: hits are dice, and the planet exhausted is the opponent's, which my count does not hold.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'technology:x89c4';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
