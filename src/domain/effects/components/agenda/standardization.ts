@@ -11,4 +11,16 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:standardization';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // A directive (7.8): the elected player's command sheet becomes 3 tactic, 3 fleet and 2 strategy tokens, once.
+  play: ({ choices, entry, states, shared }) => {
+    const elected = String(choices.elect ?? entry.owner ?? 'me');
+    const who = states[elected] ?? (elected === 'me' ? shared : shared.rivals?.[elected]);
+    if (!who) return;
+    who.tactic = 3;
+    who.fleet = 3;
+    who.strategy = 2;
+  },
+};

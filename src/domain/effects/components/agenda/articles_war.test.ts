@@ -19,7 +19,7 @@ describe('agenda:articles_war Articles of War', () => {
   // Checks: under the law the Aerie Sentinel no longer leaves the capacity count; the capacity warnings stand.
   // Why the check is NOT redundant here: the mech's ability is what lifted the capacity check (16.1, 16.3); the law
   // takes that ability away, so the rule applies to the mech as to any ground force.
-  test.fails('agenda:articles_war takes the printed ability of a mech away: the Aerie Sentinel counts against capacity again', () => {
+  test('agenda:articles_war takes the printed ability of a mech away: the Aerie Sentinel counts against capacity again', () => {
     const t = table(resolved('for'));
     quote(t.pack, id, 'All mechs lose their printed abilities except for SUSTAIN DAMAGE.');
     const warnings = warningsOf(t, t.move);
@@ -42,7 +42,7 @@ describe('agenda:articles_war Articles of War', () => {
     expectWaived(warningsOf(t, t.move), 'capacityGroup', AERIE);
   });
 
-  test.fails('agenda:articles_war is a passive effect', () => {
+  test('agenda:articles_war is a passive effect', () => {
     expect(effect(table(null).pack, id).tier).toBe('passive');
   });
 

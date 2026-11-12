@@ -35,7 +35,7 @@ describe('agenda:holy_planet_of_ixth Holy Planet of Ixth', () => {
   // "The planet's owner gains 1 victory point."
   // Checks: the law is resolved on Home One, which I control: I have 1 victory point more.
   // Why: a victory point the plan counts (`vp`).
-  test.fails('agenda:holy_planet_of_ixth gives the owner of the elected planet 1 victory point', () => {
+  test('agenda:holy_planet_of_ixth gives the owner of the elected planet 1 victory point', () => {
     const t = bench({ faction: 'sol', rounds: [[resolved('h1')]] });
     expect(endOf(t).vp).toBe(1);
   });

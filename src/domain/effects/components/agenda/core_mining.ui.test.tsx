@@ -53,7 +53,7 @@ test('agenda:core_mining the elected planet is chosen in the agenda entry', asyn
 // "The resource value of this planet is increased by 2."
 // Checks: Home One, under the law, alone pays for two cruisers: the warnings of the entry show no lack of resources.
 // Why the check is redundant here: the planet's value is 5, not 3 (a modify), so the payment is not short.
-test.fails('agenda:core_mining the payment with the elected planet shows no lack of resources', () => {
+test('agenda:core_mining the payment with the elected planet shows no lack of resources', () => {
   const build = tactical(HOME, { production: { cruiser: 2 }, payment: { planets: ['h1'], tradeGoods: 0 } });
   const table = bench({ faction: 'sol', game: { docks: ['h1'] }, rounds: [[resolved('h1')], [build]] });
   showWarnings(table, build);

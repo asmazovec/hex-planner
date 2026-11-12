@@ -15,7 +15,7 @@ describe('agenda:standardization Armed Forces Standardization', () => {
   //  3 tokens in their fleet pool, and 2 tokens in their strategy pool. They return any excess tokens to their reinforcements."
   // Checks: elected, my sheet of 5/1/4 becomes 3/3/2.
   // Why: a directive changes the command sheet once (7.8), and the pools are what the plan counts.
-  test.fails('agenda:standardization sets the command sheet of the elected player to 3, 3 and 2', () => {
+  test('agenda:standardization sets the command sheet of the elected player to 3, 3 and 2', () => {
     const t = table('me');
     quote(t.pack, id, 'so that they have 3 tokens in their tactic pool, 3 tokens in their fleet pool, and 2 tokens in their strategy pool');
     const end = endOf(t);
@@ -33,7 +33,7 @@ describe('agenda:standardization Armed Forces Standardization', () => {
     expect(endOf(table('me')).laws ?? []).not.toContain(id);
   });
 
-  test.fails('agenda:standardization is played by the agenda entry that resolves it', () => {
+  test('agenda:standardization is played by the agenda entry that resolves it', () => {
     expect(effect(table('me').pack, id).tier).toBe('play');
   });
 });

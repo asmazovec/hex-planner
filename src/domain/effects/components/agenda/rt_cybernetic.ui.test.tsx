@@ -1,14 +1,15 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { Entry } from '../../../types';
 import { adjust, bench, quote, secondary } from '../kit';
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './rt_cybernetic';
 
 uiBench();
 
 /** Declared in pass 2 as `src/domain/rules/codes/prerequisiteMissing.ts`; named by its string until then. */
-const CODE = 'prerequisiteMissing' as AnyWarningCode;
+const CODE = prerequisitesMissing.code;
 
 /** The agenda resolved in the agenda phase of round 1, with what was elected. */
 const resolved = (elect: string): Entry => ({ ...adjust({}, 'agenda'), gains: [id], choices: { elect } } as Entry);
@@ -24,7 +25,7 @@ const table = () => {
 // warning then reads as allowed by the card.
 // Why the check is redundant here: the owner of the elected planet ignores one yellow prerequisite by exhausting it,
 // and the one missing is yellow.
-test.fails('agenda:rt_cybernetic chosen in «Used» lets the research go one yellow prerequisite short', async () => {
+test('agenda:rt_cybernetic chosen in «Used» lets the research go one yellow prerequisite short', async () => {
   const t = table();
   quote(t.pack, id, 'they may exhaust this card to ignore 1 yellow prerequisite');
   showUses(t, t.research);

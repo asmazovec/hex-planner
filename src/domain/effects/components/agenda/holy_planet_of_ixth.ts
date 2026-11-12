@@ -12,4 +12,13 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:holy_planet_of_ixth';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // "The planet's owner gains 1 victory point": once, when the law is resolved, if I control the elected planet.
+  // The rest waits for the base: `productionValue` is asked without the attachments of the planet (so the dock cannot
+  // be told apart), and the point `vp` is asked by no step (so a planet taken or lost moves no point).
+  gained: ({ choices, state }) => {
+    if (state.control[String(choices.elect ?? '')] === 'me') state.vp += 1;
+  },
+};

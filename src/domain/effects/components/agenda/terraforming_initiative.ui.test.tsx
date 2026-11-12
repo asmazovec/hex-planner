@@ -54,7 +54,7 @@ test('agenda:terraforming_initiative the elected planet is chosen in the agenda 
 // "The resource and influence values of this planet are increased by 1."
 // Checks: Home Two, under the law, alone buys a command token: the warnings of the entry show no lack of influence.
 // Why the check is redundant here: the planet's influence is 3, not 2 (a modify).
-test.fails('agenda:terraforming_initiative the payment with the elected planet shows no lack of influence', () => {
+test('agenda:terraforming_initiative the payment with the elected planet shows no lack of influence', () => {
   const buy = secondary(CARD.leadership, { tokens: { fleet: 1 }, boughtTokens: 1, payment: { planets: ['h2'], tradeGoods: 0 } });
   const table = bench({ faction: 'sol', rounds: [[resolved('h2')], [buy]] });
   showWarnings(table, buy);

@@ -12,4 +12,9 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:articles_war';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // "All mechs lose their printed abilities": no mech is in force while the law is (SUSTAIN DAMAGE is a unit's own, not a component).
+  suppresses: component => component.startsWith('mech:'),
+};

@@ -8,8 +8,24 @@
  * its `uses`, narrowed to one missing cybernetic prerequisite and to the player who controls the elected planet.
  * Pass 1: still the hint it is today.
  */
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:rt_cybernetic';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // "Exhaust this card": the replay exhausts only what a kind of component has a rule for, so the card does it here;
+  // a second use before the status phase readies it is then warned of as an exhausted component.
+  play: ({ state, id: played }) => {
+    if (!state.holdings.exhausted.includes(played)) state.holdings.exhausted.push(played);
+  },
+  waive: [{
+    code: prerequisitesMissing.code,
+    rule: 'When the owner of this planet researches technology, they may exhaust this card to ignore 1 yellow prerequisite.',
+    // One cybernetic symbol is all that is missing, and the entry's player controls the planet the card is attached to.
+    when: (warning, ctx) => Number(warning.params.missing) === 1 && String(warning.params.symbols) === 'cybernetic ×1'
+      && Object.entries(ctx.shared.attachments ?? {}).some(([planet, cards]) => cards.includes(id) && ctx.before.control[planet] === 'me'),
+  }],
+};

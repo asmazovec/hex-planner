@@ -57,7 +57,7 @@ test('agenda:demilitarized_zone the elected planet is chosen in the agenda entry
 // Checks: in the tactical editor the player lands an infantry on Target One, which the law closes; the landing is
 // taken (the plan forbids nothing) and its warning stands in the landing block.
 // Why the check is NOT redundant here: the law forbids the landing for every player; nothing lifts it.
-test.fails('agenda:demilitarized_zone a landing on the elected planet is taken and warned of', async () => {
+test('agenda:demilitarized_zone a landing on the elected planet is taken and warned of', async () => {
   const move = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, infantry: 1 } }] });
   const table = bench({ faction: 'sol', units: { [NEAR]: { carrier: 1, infantry: 1 } }, rounds: [[resolved('t1')], [move]] });
   const live = showTactical(table, move);

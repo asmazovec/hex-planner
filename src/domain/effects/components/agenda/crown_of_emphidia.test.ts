@@ -12,7 +12,7 @@ describe('agenda:crown_of_emphidia The Crown of Emphidia', () => {
   // "The elected player gains this card and 1 victory point."
   // Checks: elected, I have 1 victory point more, and the law is in play.
   // Why: a victory point the plan counts, gained once when the law is resolved.
-  test.fails('agenda:crown_of_emphidia gives the elected player 1 victory point', () => {
+  test('agenda:crown_of_emphidia gives the elected player 1 victory point', () => {
     const t = table('me');
     quote(t.pack, id, 'The elected player gains this card and 1 victory point.');
     expect(endOf(t).vp).toBe(1);
@@ -28,7 +28,7 @@ describe('agenda:crown_of_emphidia The Crown of Emphidia', () => {
   //  card's owner. Then, the previous owner of this card loses 1 victory point."
   test.todo('agenda:crown_of_emphidia passes with its point to a player who takes a planet of its owner\'s home system: the plan does not track who holds a law after it is resolved');
 
-  test.fails('agenda:crown_of_emphidia is played by the agenda entry that resolves it', () => {
+  test('agenda:crown_of_emphidia is played by the agenda entry that resolves it', () => {
     expect(effect(table('me').pack, id).tier).toBe('play');
   });
 });

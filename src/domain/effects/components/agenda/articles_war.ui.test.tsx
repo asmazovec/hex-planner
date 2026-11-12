@@ -19,7 +19,7 @@ const flight = (law: Entry | null) => {
 // Checks: under the law the player still takes the mech aboard the destroyer beyond its place (the plan forbids
 // nothing), and the capacity warning stands, no longer allowed by Aerie Sentinel.
 // Why the check is NOT redundant here: the law takes away the mech's ability that lifted the check.
-test.fails('agenda:articles_war a mech taken aboard beyond capacity is warned of, no longer allowed by its ability', async () => {
+test('agenda:articles_war a mech taken aboard beyond capacity is warned of, no longer allowed by its ability', async () => {
   const { table, live } = flight(resolved('for'));
   quote(table.pack, id, 'All mechs lose their printed abilities except for SUSTAIN DAMAGE.');
   await take('Destroyer');

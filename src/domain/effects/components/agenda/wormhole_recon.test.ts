@@ -32,7 +32,7 @@ describe('agenda:wormhole_recon Wormhole Reconstruction', () => {
   // a transaction with them is not warned of.
   // Why the check is redundant here: a transaction needs a neighbour (94.1), and systems adjacent through wormholes
   // make neighbours (60.2); the law makes the alpha and the beta systems adjacent, so no warning is made at all.
-  test.fails('agenda:wormhole_recon makes the alpha and beta systems adjacent: players there are neighbours', () => {
+  test('agenda:wormhole_recon makes the alpha and beta systems adjacent: players there are neighbours', () => {
     const t = table(resolved('for'));
     quote(t.pack, id, 'All systems that contain either an alpha or beta wormhole are adjacent to each other.');
     expectNone(warningsOf(t, t.turn), 'notNeighbor');
@@ -62,7 +62,7 @@ describe('agenda:wormhole_recon Wormhole Reconstruction', () => {
     expectStanding(warningsOf(t, t.turn), 'notNeighbor');
   });
 
-  test.fails('agenda:wormhole_recon is a passive effect', () => {
+  test('agenda:wormhole_recon is a passive effect', () => {
     expect(effect(table(null).pack, id).tier).toBe('passive');
   });
 

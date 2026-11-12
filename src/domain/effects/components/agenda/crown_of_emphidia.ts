@@ -12,4 +12,18 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:crown_of_emphidia';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // "The elected player gains this card and 1 victory point": once, when the law is resolved. Its passing after a
+  // planet of the owner's home system is taken is not modelled.
+  gained: ({ choices, entry, states, shared }) => {
+    const elected = String(choices.elect ?? entry.owner ?? 'me');
+    const who = states[elected] ?? (elected === 'me' ? shared : shared.rivals?.[elected]);
+    if (who) who.vp += 1;
+  },
+  // "... the previous owner of this card loses 1 victory point": a law taken out of play by an entry of its owner.
+  lost: ({ state }) => {
+    state.vp -= 1;
+  },
+};

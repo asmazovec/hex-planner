@@ -12,4 +12,26 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:plowshares';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // Each player is every state the replay has: the owner's, mine and the opponents' it keeps.
+  play: ({ choices, states, shared }) => {
+    const everyone = new Set([...Object.values(states), shared, ...Object.values(shared.rivals ?? {})]);
+    for (const who of everyone) {
+      if (choices.outcome === 'for') {
+        let destroyed = 0;
+        for (const units of Object.values(who.ground)) {
+          const half = Math.ceil((units.infantry ?? 0) / 2);
+          if (half > 0) units.infantry = (units.infantry ?? 0) - half;
+          destroyed += half;
+        }
+        who.tradeGoods += destroyed;
+      } else if (choices.outcome === 'against') {
+        for (const [planetId, side] of Object.entries(who.control)) {
+          if (side === 'me') who.ground[planetId] = { ...who.ground[planetId], infantry: (who.ground[planetId]?.infantry ?? 0) + 1 };
+        }
+      }
+    }
+  },
+};
