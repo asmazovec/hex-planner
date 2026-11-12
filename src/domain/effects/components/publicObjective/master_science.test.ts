@@ -33,7 +33,7 @@ describe('publicObjective:master_science Master the Sciences', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: two of three colours and one warfare technology: three colours of four.
   // Why the check is NOT redundant here: one technology of a colour is not two.
-  test.fails('publicObjective:master_science one technology of a colour is warned of', () => {
+  test('publicObjective:master_science one technology of a colour is warned of', () => {
     const t = table([...PROPULSION, ...BIOTIC, ...CYBERNETIC, WARFARE[0]]);
     expectStanding(warningsOf(t, t.status), UNMET);
     expect(unmet(t)).toMatchObject({ objective: id, have: 3, need: 4 });
@@ -42,7 +42,7 @@ describe('publicObjective:master_science Master the Sciences', () => {
   // LRR 90.7.2: "Unit upgrades do not have a color and do not satisfy prerequisites." With the card's "in each of 4 colors".
   // Checks: unit upgrades in place of the warfare technologies add no colour.
   // Why the check is NOT redundant here: a unit upgrade has no colour (TechDef.type is null), so it is in none of the four.
-  test.fails('publicObjective:master_science unit upgrades have no colour', () => {
+  test('publicObjective:master_science unit upgrades have no colour', () => {
     const t = table([...PROPULSION, ...BIOTIC, ...CYBERNETIC, 'technology:cr2', 'technology:dd2', 'technology:ws']);
     quote(t.pack, id, 'in each of 4 colors');
     expect(unmet(t)).toMatchObject({ objective: id, have: 3, need: 4 });

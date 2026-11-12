@@ -43,7 +43,7 @@ describe('publicObjective:subdue Subdue the Galaxy', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: twelve planets controlled, two of them in my home system: ten of eleven.
   // Why the check is NOT redundant here: the planets cannot be in any player's home system (the objective's ruling 1).
-  test.fails('publicObjective:subdue home planets do not count', () => {
+  test('publicObjective:subdue home planets do not count', () => {
     const t = table(['h1', 'h2', 't1', ...MANY]);
     quote(t.pack, id, 'non-home systems');
     expectStanding(warningsOf(t, t.status), UNMET);

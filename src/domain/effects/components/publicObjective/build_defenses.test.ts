@@ -30,7 +30,7 @@ describe('publicObjective:build_defenses Build Defenses', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: three structures are warned of, three of four.
   // Why the check is NOT redundant here: the card asks four or more.
-  test.fails('publicObjective:build_defenses three structures are warned of', () => {
+  test('publicObjective:build_defenses three structures are warned of', () => {
     const t = table({ docks: ['h1'], pds: { h1: 1, t1: 1 } });
     expectStanding(warningsOf(t, t.status), UNMET);
     expect(unmet(t)).toMatchObject({ objective: id, have: 3, need: 4 });
@@ -40,7 +40,7 @@ describe('publicObjective:build_defenses Build Defenses', () => {
   // (src/domain/replay/structures.ts).
   // Checks: two PDS on a planet another player controls are theirs and do not count.
   // Why the check is NOT redundant here: the card counts the player's own structures only.
-  test.fails('publicObjective:build_defenses structures on a planet I do not control are not mine', () => {
+  test('publicObjective:build_defenses structures on a planet I do not control are not mine', () => {
     const t = table({ docks: ['h1'], pds: { h1: 1, t2: 2 }, planetControl: { h1: 'me', h2: 'me', t1: 'me', t2: 'enemy' } });
     expect(unmet(t)).toMatchObject({ objective: id, have: 2, need: 4 });
   });

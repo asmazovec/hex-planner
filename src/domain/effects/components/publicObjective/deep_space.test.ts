@@ -29,7 +29,7 @@ describe('publicObjective:deep_space Explore Deep Space', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: units in two empty systems and in the target, which holds planets: warned of, two of three.
   // Why the check is NOT redundant here: the target system contains planets, so it is outside the card.
-  test.fails('publicObjective:deep_space a system with planets does not count', () => {
+  test('publicObjective:deep_space a system with planets does not count', () => {
     const t = table({ [NEAR]: { destroyer: 1 }, [FAR]: { destroyer: 1 }, [TARGET]: { destroyer: 1 } });
     quote(t.pack, id, 'systems that do not contain planets');
     expectStanding(warningsOf(t, t.status), UNMET);
@@ -38,7 +38,7 @@ describe('publicObjective:deep_space Explore Deep Space', () => {
 
   // Checks: many ships in one empty system are still one system.
   // Why the check is NOT redundant here: the card counts systems, not units.
-  test.fails('publicObjective:deep_space many units in one empty system are one system', () => {
+  test('publicObjective:deep_space many units in one empty system are one system', () => {
     const t = table({ [HOME]: { dreadnought: 2 }, [NEAR]: { destroyer: 5 } });
     expect(unmet(t)).toMatchObject({ objective: id, have: 1, need: 3 });
   });

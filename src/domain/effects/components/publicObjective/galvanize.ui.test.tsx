@@ -25,7 +25,7 @@ test('publicObjective:galvanize six tokens the pools hold, nothing is shown', ()
 // LRR 20.4 with the card's "from your tactic and/or strategy pools".
 // Checks: six tokens from a tactic pool of five are shown as a pool below zero, standing.
 // Why the check is NOT redundant here: a pool cannot give tokens it does not hold.
-test.fails('publicObjective:galvanize more tokens than the pool holds are shown, standing', () => {
+test('publicObjective:galvanize more tokens than the pool holds are shown, standing', () => {
   const t = table(6, 0);
   showWarnings(t, t.status);
   expectShownStanding('poolNegative');

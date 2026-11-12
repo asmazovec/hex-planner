@@ -18,7 +18,7 @@ describe('publicObjective:lost_outposts Discover Lost Outposts', () => {
   // Checks: four planets controlled, none with an attachment: scoring is warned of, none of two; the objective is
   // scored all the same.
   // Why the check is NOT redundant here: planets without attachments are outside the card.
-  test.fails('publicObjective:lost_outposts planets without attachments are warned of', () => {
+  test('publicObjective:lost_outposts planets without attachments are warned of', () => {
     const t = table();
     quote(t.pack, id, 'Control 2 planets that have attachments.');
     expectStanding(warningsOf(t, t.status), UNMET);

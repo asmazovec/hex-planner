@@ -28,7 +28,7 @@ describe('publicObjective:revolutionize Revolutionize Warfare', () => {
   // Checks: two unit upgrades and two technologies of a colour: two of three.
   // Why the check is NOT redundant here: LRR 90.6, "Some technologies are unit upgrades"; Gravity Drive and Assault
   // Cannon are not.
-  test.fails('publicObjective:revolutionize technologies that are not unit upgrades do not count', () => {
+  test('publicObjective:revolutionize technologies that are not unit upgrades do not count', () => {
     const t = table(['technology:cr2', 'technology:dd2', 'technology:gd', 'technology:asc']);
     quote(t.pack, id, 'unit upgrade technologies');
     expectStanding(warningsOf(t, t.status), UNMET);

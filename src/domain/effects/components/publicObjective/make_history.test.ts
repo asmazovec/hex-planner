@@ -35,7 +35,7 @@ describe('publicObjective:make_history Make History', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: units in the Mecatol Rex system and in the ordinary target system: one of two.
   // Why the check is NOT redundant here: the target holds neither a legendary planet, nor Mecatol Rex, nor an anomaly.
-  test.fails('publicObjective:make_history an ordinary system does not count', () => {
+  test('publicObjective:make_history an ordinary system does not count', () => {
     const t = table({ [NEAR]: { cruiser: 1 }, [TARGET]: { cruiser: 1 } });
     expectStanding(warningsOf(t, t.status), UNMET);
     expect(unmet(t)).toMatchObject({ objective: id, have: 1, need: 2 });
@@ -43,7 +43,7 @@ describe('publicObjective:make_history Make History', () => {
 
   // Checks: two systems are needed; units in the rift alone are one.
   // Why the check is NOT redundant here: the card asks two such systems.
-  test.fails('publicObjective:make_history one qualifying system is not enough', () => {
+  test('publicObjective:make_history one qualifying system is not enough', () => {
     const t = table({ [FAR]: { cruiser: 3 } });
     expect(unmet(t)).toMatchObject({ objective: id, have: 1, need: 2 });
   });

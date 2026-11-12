@@ -46,7 +46,7 @@ describe('publicObjective:unify_colonies Unify the Colonies', () => {
   // Checks: five industrial and two hazardous planets, and home planets without traits: five of six.
   // Why the check is NOT redundant here: the six must share one trait; planets of another trait, or of none, do not
   // add to it.
-  test.fails('publicObjective:unify_colonies planets of different traits do not add up', () => {
+  test('publicObjective:unify_colonies planets of different traits do not add up', () => {
     const t = table(['h1', 'h2', 'm1', 'm2', 'm3', 'm4', 'm5', 'm7', 'm8']);
     quote(t.pack, id, 'the same planet trait');
     expectStanding(warningsOf(t, t.status), UNMET);

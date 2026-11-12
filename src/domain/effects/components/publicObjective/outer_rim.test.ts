@@ -41,7 +41,7 @@ describe('publicObjective:outer_rim Populate the Outer Rim', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: units at home, in two edge systems and in a system of the inner ring: two of three.
   // Why the check is NOT redundant here: the card leaves out the home system, and an inner system is not on the edge.
-  test.fails('publicObjective:outer_rim the home system and inner systems do not count', () => {
+  test('publicObjective:outer_rim the home system and inner systems do not count', () => {
     const t = table({ [RING_HOME]: { carrier: 1 }, '-2,0': { destroyer: 1 }, '0,2': { destroyer: 1 }, '1,0': { destroyer: 1 } });
     quote(t.pack, id, 'other than your home system');
     expectStanding(warningsOf(t, t.status), UNMET);
