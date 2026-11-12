@@ -13,7 +13,7 @@ describe('ability:laws_order Law\'s Order', () => {
   // Checks: named in «Used» of a turn, the ability costs one trade good or commodity.
   // Why the default count does not apply: trade goods are otherwise spent only by a payment (93.3); the ability is a
   // spending of its own, which the plan must count so that what follows is paid from what is left.
-  test.fails('ability:laws_order used with a turn costs 1 trade good or commodity', () => {
+  test('ability:laws_order used with a turn costs 1 trade good or commodity', () => {
     const table = keleres(using(tactical(NEAR), id));
     quote(table.pack, id, 'You may spend 1 trade good or 1 commodity to treat all laws as blank until the end of that turn.');
     expect(wealth(endOf(table))).toBe(wealth(before(table.game, table.pack, table.turn)) - 1);
@@ -28,7 +28,7 @@ describe('ability:laws_order Law\'s Order', () => {
 
   test.todo('ability:laws_order the laws are blank for that turn only: no law changes a number of the count or makes a warning yet (laws are asked at fleetLimit and productionValue, and none has an effect file), so there is nothing to blank and nothing to restore');
 
-  test.fails('ability:laws_order is a play effect', () => {
+  test('ability:laws_order is a play effect', () => {
     const { pack } = keleres(tactical(NEAR));
     expect(effect(pack, id).tier).toBe('play');
   });

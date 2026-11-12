@@ -17,7 +17,7 @@ const deal = (): Entry => planned({ type: 'pass', acts: [{ kind: 'transaction', 
 // Checks: a transaction with a player whose cruiser stands beside Mecatol Rex, three systems from me; the warning
 // that we are not neighbours is shown in the allowed look, naming the breakthrough.
 // Why the check is redundant here: the breakthrough makes that player my neighbour (94.1 then holds).
-test.fails('breakthrough:keleresbt the transaction with a player beside Mecatol Rex reads as allowed by I.I.H.Q. Modernization', () => {
+test('breakthrough:keleresbt the transaction with a player beside Mecatol Rex reads as allowed by I.I.H.Q. Modernization', () => {
   const turn = deal();
   const keleres = table({ breakthrough: 'held' }, turn);
   quote(keleres.pack, id, 'You are neighbors with all players');
