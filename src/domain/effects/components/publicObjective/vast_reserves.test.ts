@@ -13,7 +13,7 @@ describe('publicObjective:vast_reserves Hold Vast Reserves', () => {
   // Checks: scoring it with 8 trade goods leaves 2: the 6 trade goods the card asks for are spent by the scoring.
   // Why the check is redundant here: not a check but a cost; the plan counts trade goods, and without the spend the
   //  forecast would keep 6 trade goods the player no longer has.
-  test.fails('publicObjective:vast_reserves scored spends 6 trade goods', () => {
+  test('publicObjective:vast_reserves scored spends 6 trade goods', () => {
     const score = status();
     const plan = table(8, score);
     quote(plan.pack, id, 'Spend 6 influence, 6 resources, and 6 trade goods');
@@ -25,7 +25,7 @@ describe('publicObjective:vast_reserves Hold Vast Reserves', () => {
   // Checks: with 2 trade goods the scoring is warned of as short of trade goods; the plan scores it all the same.
   // Why the check is NOT redundant here: the card lifts no rule; it asks for a spend the player cannot make, the same
   //  check every payment of trade goods makes.
-  test.fails('publicObjective:vast_reserves scored with 2 trade goods is short of trade goods', () => {
+  test('publicObjective:vast_reserves scored with 2 trade goods is short of trade goods', () => {
     const score = status();
     const plan = table(2, score);
     expectStanding(warningsOf(plan, score), 'shortTradeGoods');
@@ -43,7 +43,7 @@ describe('publicObjective:vast_reserves Hold Vast Reserves', () => {
   });
 
   // Checks: the effect is played by the scoring, not a reminder.
-  test.fails('publicObjective:vast_reserves is a play effect of its scoring', () => {
+  test('publicObjective:vast_reserves is a play effect of its scoring', () => {
     const { pack } = table(0, status());
     expect(effect(pack, id).tier).toBe('play');
   });

@@ -7,11 +7,17 @@
  * must be discarded during the status phase; any discarded during the action phase have no effect. Until pass 2 it
  * is the hint every component is by default.
  */
+import { componentById } from '../../../components';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'secretObjective:fsn';
 
 export const effect: ComponentEffect = {
-  tier: 'hint',
+  tier: 'play',
   rule: id,
+  // Only the cards the scoring entry itself discards count (ruling: discarded during the status phase).
+  requirement: ({ pack, entry }) => ({
+    have: (entry.spends ?? []).filter(card => componentById(pack, card)?.kind === 'actionCard').length,
+    need: 5,
+  }),
 };
