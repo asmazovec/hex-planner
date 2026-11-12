@@ -16,7 +16,7 @@ const table = () => {
 // Checks: with my strategy pool empty the secondary warns; I name Jae Mir Kan in «Used», it is written into the entry,
 // and no standing warning of the strategy pool is left on the screen.
 // Why the check is redundant here: the token spent is the active player's, not mine.
-test.fails('leader:mahactagent named in Used on a secondary, no standing warning of the strategy pool is left', async () => {
+test('leader:mahactagent named in Used on a secondary, no standing warning of the strategy pool is left', async () => {
   const agent = table();
   quote(agent.table.pack, id, 'remove 1 of the active player\'s command tokens from the board and use it instead');
   const live = showUses(agent.table, agent.entry);

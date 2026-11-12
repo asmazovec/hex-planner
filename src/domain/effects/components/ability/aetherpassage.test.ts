@@ -23,7 +23,7 @@ describe('ability:aetherpassage Aetherpassage', () => {
   // names in «Used»; the warning that the route is blocked there is listed and lifted by Aetherpassage.
   // Why the check is redundant here: LRR 58.3.2 forbids moving through a system with another player's ships, and the
   // owner of those ships allows it by this ability.
-  test.fails('ability:aetherpassage named by the mover lifts the block of the Empyrean ships on the route', () => {
+  test('ability:aetherpassage named by the mover lifts the block of the Empyrean ships on the route', () => {
     const passage = table(using(through(), id));
     quote(passage.pack, id, 'You may allow that player to move their ships through systems that contain your ships.');
     expectWaived(warningsOf(passage, passage.move), 'routeBlocked', id);

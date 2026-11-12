@@ -16,7 +16,7 @@ const table = (faction: string) => {
 // that the route is blocked reads as allowed by Voidborn.
 // Why the check is redundant here: LRR 59.1.1 forbids moving through a nebula, and nebulae do not affect the
 // Empyrean ships' movement.
-test.fails('ability:voidborn a cruiser is taken on a route through a nebula, and the warning reads as allowed by Voidborn', async () => {
+test('ability:voidborn a cruiser is taken on a route through a nebula, and the warning reads as allowed by Voidborn', async () => {
   const empyrean = table('empyrean');
   quote(empyrean.table.pack, id, 'Nebulae do not affect your ships\' movement');
   const live = showFlight(empyrean.table, empyrean.move, HOME);

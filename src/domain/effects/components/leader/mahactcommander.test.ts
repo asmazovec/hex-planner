@@ -13,7 +13,7 @@ describe('leader:mahactcommander Il Na Viroset', () => {
   // system holds my token is listed and lifted by Il Na Viroset.
   // Why the check is redundant here: LRR 89.1 says the active player must activate a system that does not contain
   // one of their command tokens, and the commander lets the Mahact player activate one that does.
-  test.fails('leader:mahactcommander lets a system with my token be activated: the warning is waived', () => {
+  test('leader:mahactcommander lets a system with my token be activated: the warning is waived', () => {
     const table = twice(using(tactical(NEAR), id));
     quote(table.pack, id, 'you can activate systems that contain your command tokens');
     expectWaived(warningsOf(table, table.second), 'systemHasToken', id);
@@ -23,7 +23,7 @@ describe('leader:mahactcommander Il Na Viroset', () => {
   // Checks: after that action neither token stays in the system.
   // Why the default count does not apply: an activation leaves its token in the system (89.1); this one returns it
   // and the token that was already there.
-  test.fails('leader:mahactcommander returns both tokens of that system to the reinforcements', () => {
+  test('leader:mahactcommander returns both tokens of that system to the reinforcements', () => {
     const table = twice(using(tactical(NEAR), id));
     expect(endOf(table).tokensOnMap).not.toContain(NEAR);
   });

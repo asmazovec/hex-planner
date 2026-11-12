@@ -17,7 +17,7 @@ describe('leader:mahacthero Airo Shir Aur', () => {
   // and the fighter in the home space area end in that system, none is left at home.
   // Why the default count does not apply: units move only in the movement of a tactical action (58); the hero moves
   // them by a component action, with no route, no speed and no token.
-  test.fails('leader:mahacthero moves every unit of a space area to the adjacent system', () => {
+  test('leader:mahacthero moves every unit of a space area to the adjacent system', () => {
     const table_ = table([benediction()]);
     quote(table_.pack, id, 'Move all units in the space area of any system to an adjacent system that contains a different player\'s ships.');
     const end = endOf(table_);

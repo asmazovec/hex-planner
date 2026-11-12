@@ -20,7 +20,7 @@ describe('promissory:dark_pact Dark Pact', () => {
   // the Empyrean player with the 4 commodities turned to trade goods (21.5) plus 1.
   // Why the default count is not enough here: a transaction (94) moves only what each side gives; the note adds a
   // trade good to each side, which the count must add.
-  test.fails('promissory:dark_pact giving all my commodities to the Empyrean player gains each of us 1 trade good', () => {
+  test('promissory:dark_pact giving all my commodities to the Empyrean player gains each of us 1 trade good', () => {
     const { table } = deal(4);
     quote(table.pack, id, 'When you give a number of commodities to the Empyrean player equal to your maximum commodity value, you each gain 1 trade good.');
     const end = endOf(table);

@@ -19,7 +19,7 @@ describe('ability:imperia Imperia', () => {
   // component is not held is listed and lifted by Imperia.
   // Why the check is redundant here: LRR 22.1 lets a player play their own components only, and the ability lets
   // the Mahact player use another player's commander.
-  test.fails('ability:imperia lets the Mahact player use another player\'s unlocked commander: the warning is waived', () => {
+  test('ability:imperia lets the Mahact player use another player\'s unlocked commander: the warning is waived', () => {
     const mahact = table('mahact', COMMANDER);
     quote(mahact.pack, id, 'you can use the ability of that player\'s commander, if it is unlocked');
     expectWaived(warningsOf(mahact, mahact.move), 'componentNotHeld', id);

@@ -40,7 +40,7 @@ describe('ability:hubris Hubris', () => {
   // Checks: the Sol player gives the Mahact player their Alliance in a transaction: it is warned of.
   // Why a check is added here: the transaction rules (94.3) let a note be given; the ability forbids this one to the
   // Mahact player, so the transaction must warn (the plan forbids nothing).
-  test.fails('ability:hubris another player\'s Alliance given to the Mahact player is warned of', () => {
+  test('ability:hubris another player\'s Alliance given to the Mahact player is warned of', () => {
     const mahact = gift('mahact');
     quote(mahact.pack, id, 'Other players cannot give you their \'Alliance" promissory note.');
     expectStanding(warningsOf(mahact, mahact.turn), REFUSED);

@@ -14,7 +14,7 @@ describe('leader:empyreanagent Acamar', () => {
   // Checks: my cruiser moves into the empty system next to home and the action names Acamar: I end with one command
   // token more than the same action without it.
   // Why the default count is not enough here: a tactical action only spends a token (89.1); the agent gives one back.
-  test.fails('leader:empyreanagent used after moving into a system without planets gains a command token', () => {
+  test('leader:empyreanagent used after moving into a system without planets gains a command token', () => {
     const plain = flight(NEAR);
     const used = using(flight(NEAR), id);
     const with_ = table([used]);

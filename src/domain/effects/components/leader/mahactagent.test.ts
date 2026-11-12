@@ -15,7 +15,7 @@ describe('leader:mahactagent Jae Mir Kan', () => {
   // without it.
   // Why the default cost does not apply: the secondary spends a token of my strategy pool (83.7); the agent spends the
   // active player's token instead, so mine is not spent.
-  test.fails('leader:mahactagent used on a secondary spends no token of mine', () => {
+  test('leader:mahactagent used on a secondary spends no token of mine', () => {
     const used = table([using(secondary(TRADE), id)]);
     quote(used.pack, id, 'remove 1 of the active player\'s command tokens from the board and use it instead');
     expect(endOf(used).strategy).toBe(endOf(table([secondary(TRADE)])).strategy + 1);
@@ -23,7 +23,7 @@ describe('leader:mahactagent Jae Mir Kan', () => {
 
   // Checks: with an empty strategy pool the secondary with the agent is no breach of the strategy pool.
   // Why the check is redundant here: the token spent is not mine, so my empty pool does not matter.
-  test.fails('leader:mahactagent used on a secondary with an empty strategy pool leaves no standing shortStrategy', () => {
+  test('leader:mahactagent used on a secondary with an empty strategy pool leaves no standing shortStrategy', () => {
     const secondaryWithAgent = using(secondary(TRADE), id);
     const used = table([adjust({ strategy: -2 }), secondaryWithAgent]);
     expect(warningsOf(used, secondaryWithAgent).filter(w => w.code === 'shortStrategy' && !isWaived(w))).toEqual([]);
@@ -57,7 +57,7 @@ describe('leader:mahactagent Jae Mir Kan', () => {
 
   // Checks: of two secondaries naming the agent, only the first saves its token.
   // Why the check is NOT redundant here: an exhausted agent does nothing, so the second secondary costs my token.
-  test.fails('leader:mahactagent exhausted saves the token of the first secondary only', () => {
+  test('leader:mahactagent exhausted saves the token of the first secondary only', () => {
     const twice = table([using(secondary(TRADE), id), using(secondary(8), id)]);
     expect(endOf(twice).strategy).toBe(endOf(table([secondary(TRADE), secondary(8)])).strategy + 1);
   });
