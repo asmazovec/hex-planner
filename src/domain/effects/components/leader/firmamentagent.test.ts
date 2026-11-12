@@ -17,7 +17,7 @@ describe('leader:firmamentagent Myru Vos', () => {
   // listed and lifted by the agent.
   // Why the check is redundant here: LRR 58.3.2 says "The ship cannot move through a system that contains ships that
   // are controlled by another player", and the card says ships that transport nothing can, once it is exhausted.
-  test.fails('leader:firmamentagent used lets ships that transport nothing move through other players\' ships', () => {
+  test('leader:firmamentagent used lets ships that transport nothing move through other players\' ships', () => {
     const move = using(through({ cruiser: 1 }), id);
     const table = firmament([move], { cruiser: 1 });
     quote(table.pack, id, 'If they are not transporting units, they can also move through other players\' ships.');
@@ -65,7 +65,7 @@ describe('leader:firmamentagent Myru Vos', () => {
 
   test.todo('leader:firmamentagent exhausted on another player\'s move: a component of another player is named in that entry\'s uses, and its exhaustion on my card is not replayed');
 
-  test.fails('leader:firmamentagent waives the route check, and only that', () => {
+  test('leader:firmamentagent waives the route check, and only that', () => {
     const { pack } = firmament([], {});
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
   });
