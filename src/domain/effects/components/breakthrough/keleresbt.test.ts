@@ -27,7 +27,7 @@ describe('breakthrough:keleresbt I.I.H.Q. Modernization', () => {
   // as not between neighbours, and the warning is lifted by the breakthrough.
   // Why the check is redundant here: LRR 94.1 allows transactions with neighbours only, and neighbours are found by
   // the board (60.1); the breakthrough makes this player my neighbour whatever the board says.
-  test.fails('breakthrough:keleresbt a player next to Mecatol Rex is a neighbour: the transaction warning is waived', () => {
+  test('breakthrough:keleresbt a player next to Mecatol Rex is a neighbour: the transaction warning is waived', () => {
     const keleres = table(FAR);
     quote(keleres.pack, id, 'You are neighbors with all players that have units or control planets in or adjacent to the Mecatol Rex system.');
     expectWaived(warningsOf(keleres, keleres.last), 'notNeighbor', id);
@@ -54,7 +54,7 @@ describe('breakthrough:keleresbt I.I.H.Q. Modernization', () => {
   // Checks: an entry that gains the breakthrough gives me control of Custodia Vigilia, exhausted.
   // Why the default count does not apply: a planet is otherwise gained by landing on it (25.1); this one is gained
   // by the card and lies on no tile.
-  test.fails('breakthrough:keleresbt gained, it brings the Custodia Vigilia planet, exhausted', () => {
+  test('breakthrough:keleresbt gained, it brings the Custodia Vigilia planet, exhausted', () => {
     const gaining = { ...planned({ type: 'component', note: '' }, 'action'), gains: [id] } as Entry;
     const end = endOf(table(FAR, {}, [gaining]));
     expect(end.holdings.breakthrough).toBe('held');
@@ -62,7 +62,7 @@ describe('breakthrough:keleresbt I.I.H.Q. Modernization', () => {
     expect(end.exhausted).toContain('custodiavigilia');
   });
 
-  test.fails('breakthrough:keleresbt is a passive effect that waives the neighbour check', () => {
+  test('breakthrough:keleresbt is a passive effect that waives the neighbour check', () => {
     const { pack } = table(FAR);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['notNeighbor']);

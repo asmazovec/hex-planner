@@ -17,7 +17,7 @@ describe('leader:keleresherokuuasi Kuuasi Aun Jalatai', () => {
   // from the reinforcements into the active system.
   // Why the default count does not apply: ships otherwise enter the board only by production (67) or a move; the hero
   // places them, and what it places is counted on the board like any ship.
-  test.fails('leader:keleresherokuuasi places the flagship in the active system', () => {
+  test('leader:keleresherokuuasi places the flagship in the active system', () => {
     const table = keleres(using(attack(), id));
     quote(table.pack, id, 'Place your flagship and up to a total of 2 cruisers and/or destroyers from your reinforcements in the active system.');
     expect(endOf(table).systems[TARGET]?.flagship).toBe(1);
@@ -26,7 +26,7 @@ describe('leader:keleresherokuuasi Kuuasi Aun Jalatai', () => {
   // LRR 37.1: the fleet pool limits the non-fighter ships in a system.
   // Checks: the flagship placed is a fourth ship beside three cruisers, beyond the fleet pool of 3, and is warned of.
   // Why the check is NOT redundant here: the hero places ships; it says nothing of the fleet pool, which still limits them.
-  test.fails('leader:keleresherokuuasi the ships placed count against the fleet pool', () => {
+  test('leader:keleresherokuuasi the ships placed count against the fleet pool', () => {
     const table = keleres(using(attack(), id));
     expectStanding(warningsOf(table, table.last), 'fleetPool');
   });
@@ -50,7 +50,7 @@ describe('leader:keleresherokuuasi Kuuasi Aun Jalatai', () => {
 
   test.todo('leader:keleresherokuuasi the up to 2 cruisers and/or destroyers placed with the flagship: `uses` carries no choices for a component used beside the action');
 
-  test.fails('leader:keleresherokuuasi is a play effect', () => {
+  test('leader:keleresherokuuasi is a play effect', () => {
     const { pack } = keleres();
     expect(effect(pack, id).tier).toBe('play');
   });

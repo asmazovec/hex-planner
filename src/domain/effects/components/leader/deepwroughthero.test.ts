@@ -19,7 +19,7 @@ describe('leader:deepwroughthero Ta Zern', () => {
   // Checks: the component action with the choice of Gravity Drive takes it from my holdings and from the rival's.
   // Why the default count does not apply: a technology owned is otherwise never lost; the hero purges it for every
   // player at once.
-  test.fails('leader:deepwroughthero purges the chosen technology from me and from every other player', () => {
+  test('leader:deepwroughthero purges the chosen technology from me and from every other player', () => {
     const table = deepwrought([play()]);
     quote(table.pack, id, 'purge all cards with the same name owned by other players');
     const end = endOf(table);
@@ -31,7 +31,7 @@ describe('leader:deepwroughthero Ta Zern', () => {
   //  Ta Zern 1): the Deepwrought player researches too if they owned it.
   // Checks: the technology researched instead is entered as a gain of the action and is held.
   // Why nothing more is counted: which technology each player researches is their choice.
-  test.fails('leader:deepwroughthero the technology researched instead, entered as a gain, is held', () => {
+  test('leader:deepwroughthero the technology researched instead, entered as a gain, is held', () => {
     const end = endOf(deepwrought([play({ gains: ['technology:fl'] })]));
     expect(end.holdings.technologies).toEqual(expect.arrayContaining(['technology:fl']));
     expect(end.holdings.technologies).not.toContain(GRAVITY_DRIVE);
@@ -49,7 +49,7 @@ describe('leader:deepwroughthero Ta Zern', () => {
 
   test.todo('leader:deepwroughthero a unit upgrade chosen is not purged: no warning code says so yet (a new code at the step `component`)');
 
-  test.fails('leader:deepwroughthero is a play effect', () => {
+  test('leader:deepwroughthero is a play effect', () => {
     const { pack } = deepwrought([]);
     expect(effect(pack, id).tier).toBe('play');
   });

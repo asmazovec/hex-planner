@@ -15,7 +15,7 @@ const table = (move: ReturnType<typeof attack>) => bench({
 // Checks: three cruisers arrive within the fleet pool; the player names the hero in «Used» and the flagship it places
 // makes a fourth ship, so the result of the action warns of the fleet pool.
 // Why the check is NOT redundant here: the hero places ships, it does not lift the fleet pool.
-test.fails('leader:keleresherokuuasi named in Used, the flagship placed is counted against the fleet pool', async () => {
+test('leader:keleresherokuuasi named in Used, the flagship placed is counted against the fleet pool', async () => {
   const move = attack();
   const keleres = table(move);
   quote(keleres.pack, id, 'Place your flagship');

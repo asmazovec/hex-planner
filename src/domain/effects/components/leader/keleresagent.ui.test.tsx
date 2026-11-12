@@ -15,7 +15,7 @@ const table = (entry: ReturnType<typeof build>) => bench({
 // Checks: a build paid with two trade goods where the Keleres hold at most one; the player names the agent in «Used»
 // and the warning of trade goods missing turns to the allowed look, naming the agent.
 // Why the check is redundant here: the commodities pay as trade goods (21.7 "unless otherwise specified").
-test.fails('leader:keleresagent named in Used, the trade goods missing read as allowed by Xander Alexin Victori III', async () => {
+test('leader:keleresagent named in Used, the trade goods missing read as allowed by Xander Alexin Victori III', async () => {
   const entry = build();
   const keleres = table(entry);
   quote(keleres.pack, id, 'spend commodities as if they were trade goods');

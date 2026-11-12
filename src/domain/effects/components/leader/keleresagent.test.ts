@@ -25,7 +25,7 @@ describe('leader:keleresagent Xander Alexin Victori III', () => {
   // commodities: the warning of trade goods missing is listed and lifted by the agent.
   // Why the check is redundant here: LRR 21.7 "A player cannot spend commodities unless otherwise specified"; the
   // agent is that specification, so trade goods paid within trade goods plus commodities are paid.
-  test.fails('leader:keleresagent lets commodities pay as trade goods: the warning of trade goods missing is waived', () => {
+  test('leader:keleresagent lets commodities pay as trade goods: the warning of trade goods missing is waived', () => {
     const table = keleres(using(build(2), id));
     quote(table.pack, id, 'allow any player to spend commodities as if they were trade goods');
     expectWaived(warningsOf(table, table.last), 'shortTradeGoods', id);
@@ -34,7 +34,7 @@ describe('leader:keleresagent Xander Alexin Victori III', () => {
   // Checks: what the trade goods held do not cover is taken from the commodities: trade goods and commodities
   // together fall by the 2 paid.
   // Why the default count does not apply: the commodities are spent as trade goods, so they leave the sheet.
-  test.fails('leader:keleresagent spends the commodities for the trade goods missing', () => {
+  test('leader:keleresagent spends the commodities for the trade goods missing', () => {
     const table = keleres(using(build(2), id));
     const was = before(table.game, table.pack, table.last);
     const end = endOf(table);
@@ -68,7 +68,7 @@ describe('leader:keleresagent Xander Alexin Victori III', () => {
     expectStanding(warnings, 'shortTradeGoods');
   });
 
-  test.fails('leader:keleresagent is a play effect that waives the trade goods missing', () => {
+  test('leader:keleresagent is a play effect that waives the trade goods missing', () => {
     const { pack } = keleres();
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortTradeGoods']);
