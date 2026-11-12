@@ -1,0 +1,166 @@
+{
+  "batch": 1,
+  "title": "Factions: letnev, saar",
+  "components": [
+    {
+      "id": "promissory:war_funding",
+      "name": "War Funding",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "letnev",
+      "file": "promissory/war_funding"
+    },
+    {
+      "id": "ability:munitions",
+      "name": "Munitions Reserves",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "letnev",
+      "file": "ability/munitions"
+    },
+    {
+      "id": "ability:armada",
+      "name": "Armada",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "letnev",
+      "file": "ability/armada"
+    },
+    {
+      "id": "leader:letnevagent",
+      "name": "Viscount Unlenn",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "letnev",
+      "file": "leader/letnevagent"
+    },
+    {
+      "id": "leader:letnevcommander",
+      "name": "Rear Admiral Farran",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "letnev",
+      "file": "leader/letnevcommander"
+    },
+    {
+      "id": "leader:letnevhero",
+      "name": "Darktalon Treilla",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "letnev",
+      "file": "leader/letnevhero"
+    },
+    {
+      "id": "mech:letnev_mech",
+      "name": "Dunlain Reaper",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "letnev",
+      "file": "mech/letnev_mech"
+    },
+    {
+      "id": "breakthrough:letnevbt",
+      "name": "Gravleash Maneuvers",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "letnev",
+      "file": "breakthrough/letnevbt"
+    },
+    {
+      "id": "technology:l4",
+      "name": "L4 Disruptors",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "letnev",
+      "file": "technology/l4"
+    },
+    {
+      "id": "technology:nes",
+      "name": "Non-Euclidean Shielding",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "letnev",
+      "file": "technology/nes"
+    },
+    {
+      "id": "promissory:ragh",
+      "name": "Raghs Call",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "saar",
+      "file": "promissory/ragh"
+    },
+    {
+      "id": "ability:scavenge",
+      "name": "Scavenge",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "saar",
+      "file": "ability/scavenge"
+    },
+    {
+      "id": "ability:nomadic",
+      "name": "Nomadic",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "saar",
+      "file": "ability/nomadic"
+    },
+    {
+      "id": "leader:saaragent",
+      "name": "Captain Mendosa",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "saar",
+      "file": "leader/saaragent"
+    },
+    {
+      "id": "leader:saarcommander",
+      "name": "Rowl Sarrig",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "saar",
+      "file": "leader/saarcommander"
+    },
+    {
+      "id": "leader:saarhero",
+      "name": "Gurno Aggero",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "saar",
+      "file": "leader/saarhero"
+    },
+    {
+      "id": "mech:saar_mech",
+      "name": "Scavenger Zeta",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "saar",
+      "file": "mech/saar_mech"
+    },
+    {
+      "id": "breakthrough:saarbt",
+      "name": "Deorbit Barrage",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "saar",
+      "file": "breakthrough/saarbt"
+    },
+    {
+      "id": "technology:ffac2",
+      "name": "Floating Factory II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "saar",
+      "file": "technology/ffac2"
+    },
+    {
+      "id": "technology:cm",
+      "name": "Chaos Mapping",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "saar",
+      "file": "technology/cm"
+    }
+  ]
+}

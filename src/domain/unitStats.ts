@@ -7,7 +7,7 @@ export function productionCost(units: UnitCounts, factionId: string, holdings: H
   let total = 0;
   for (const id of Object.keys(units) as UnitId[]) {
     if ((units[id] ?? 0) <= 0) continue;
-    const cost = applied(pack, holdings, 'unitCost', unitStats(factionId, id, false, pack)?.cost ?? 0, { faction: factionId, unit: id }).value;
+    const cost = applied(pack, { holdings, faction: factionId }, 'unitCost', unitStats(factionId, id, false, pack)?.cost ?? 0, { faction: factionId, unit: id }).value;
     total += Math.ceil((units[id] ?? 0) * cost);
   }
   return total;

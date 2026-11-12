@@ -1,0 +1,146 @@
+{
+  "batch": 34,
+  "title": "Common: exploration, promissory notes, legendary planets",
+  "components": [
+    {
+      "id": "exploration:gamma",
+      "name": "Gamma Relay",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/gamma"
+    },
+    {
+      "id": "exploration:ion",
+      "name": "Ion Storm",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/ion"
+    },
+    {
+      "id": "exploration:lc1",
+      "name": "Lost Crew",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/lc1"
+    },
+    {
+      "id": "exploration:ms1",
+      "name": "Merchant Station",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/ms1"
+    },
+    {
+      "id": "exploration:mirage",
+      "name": "Mirage",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/mirage"
+    },
+    {
+      "id": "exploration:urf1",
+      "name": "Unknown Relic Fragment",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/urf1"
+    },
+    {
+      "id": "promissory:<color>_cf",
+      "name": "Ceasefire",
+      "kind": "promissory",
+      "pack": "base",
+      "file": "promissory/color_cf"
+    },
+    {
+      "id": "promissory:<color>_ps",
+      "name": "Political Secret",
+      "kind": "promissory",
+      "pack": "base",
+      "file": "promissory/color_ps"
+    },
+    {
+      "id": "promissory:<color>_sftt",
+      "name": "Support for the Throne",
+      "kind": "promissory",
+      "pack": "base",
+      "file": "promissory/color_sftt"
+    },
+    {
+      "id": "promissory:<color>_ta",
+      "name": "Trade Agreement",
+      "kind": "promissory",
+      "pack": "base",
+      "file": "promissory/color_ta"
+    },
+    {
+      "id": "promissory:<color>_an",
+      "name": "Alliance",
+      "kind": "promissory",
+      "pack": "pok",
+      "file": "promissory/color_an"
+    },
+    {
+      "id": "legendary:primor",
+      "name": "The Atrament",
+      "kind": "legendary",
+      "pack": "pok",
+      "file": "legendary/primor"
+    },
+    {
+      "id": "legendary:hopesend",
+      "name": "Imperial Arms Vault",
+      "kind": "legendary",
+      "pack": "pok",
+      "file": "legendary/hopesend"
+    },
+    {
+      "id": "legendary:lockedmallice",
+      "name": "Exterrix Headquarters",
+      "kind": "legendary",
+      "pack": "pok",
+      "file": "legendary/lockedmallice"
+    },
+    {
+      "id": "legendary:mallice",
+      "name": "Exterrix Headquarters",
+      "kind": "legendary",
+      "pack": "pok",
+      "file": "legendary/mallice"
+    },
+    {
+      "id": "legendary:mirage",
+      "name": "Mirage Flight Academy",
+      "kind": "legendary",
+      "pack": "pok",
+      "file": "legendary/mirage"
+    },
+    {
+      "id": "legendary:custodiavigilia",
+      "name": "Custodian's Favour",
+      "kind": "legendary",
+      "pack": "pok",
+      "file": "legendary/custodiavigilia"
+    },
+    {
+      "id": "legendary:ordinian",
+      "name": "4X41D \"Hyperion\" VI",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/ordinian"
+    },
+    {
+      "id": "legendary:faunus",
+      "name": "Maxis Central Control",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/faunus"
+    },
+    {
+      "id": "legendary:garbozia",
+      "name": "Dok 'N Pic's Salvage Yard",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/garbozia"
+    }
+  ]
+}

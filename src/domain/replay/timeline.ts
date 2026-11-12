@@ -3,6 +3,8 @@
  * entry leaves a frame, the board before and after it, so a question about any point of the plan is a lookup and not
  * another replay. A plan that changed is replayed from its first changed round; the rounds before it keep their frames.
  */
+import { effectOf } from '../effects/registry';
+import { playedBy, waive } from '../effects/waivers';
 import { blockersOf, type Blockers } from '../movement';
 import { gameAs } from '../players';
 import { placeIn } from '../rules/registry';
@@ -12,7 +14,7 @@ import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
 import { rivalLandings } from './invasion';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
-import { applyComponent, applyGains, applyScored, readyCards } from './holdings';
+import { applyComponent, applyGains, applyScored, applyUses, readyCards } from './holdings';
 import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, clearBoard } from './status';
 import { keepOwnStructures } from './structures';
@@ -95,6 +97,11 @@ function applyEntry(
     case 'pass':
       break;
   }
+  // What the entry uses beside its action is played like a component action's own; then each played component does what its effect says.
+  applyUses(state, entry, pack, warnings, game.faction, acts.states);
+  for (const id of playedBy(entry)) {
+    effectOf(pack, id)?.play?.({ game, state, shared, entry, choices: (entry.type === 'component' ? entry.choices : undefined) ?? {}, pack, warnings });
+  }
   // What the entry brings and takes beside its own effect: the owner's holdings, and the laws of the whole game.
   applyGains(state, shared, entry, pack);
   // The acts of a turn come after its action: transactions, then the expedition at its end.
@@ -173,6 +180,8 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
       statusDone = true;
     };
     const cards = cardRound(round, game.playerCount, { me: state, ...rivals });
+    /** The components each player played so far this round: a waiver may last to its end. */
+    const plays: Record<string, string[]> = {};
     const flow = roundFlow(round);
     /** Warfare's free tactical action is part of its card: it comes right after the card, not where it is stored. */
     const linked = (card: Entry) => round.entries.find(e => e.type === 'tactical' && e.fromCard === card.id);
@@ -211,7 +220,14 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
         warnings = [...warnings, ...placeIn(late, entry.id)];
         dirty = true;
       }
-      frames[index] = { entryId: entry.id, before, after: snap(), applied: true, warnings };
+      // The one place a component lifts a check: every warning of the entry is asked of the owner's components.
+      const owner = entry.owner ?? 'me';
+      const after = snap();
+      const side = (board: GameState): GameState => (rival ? board.rivals?.[owner] ?? board : board);
+      waive(warnings, { pack, game: view, entry, before: side(before), after: side(after), shared: before }, plays[owner]);
+      const played = playedBy(entry);
+      if (played.length > 0) plays[owner] = [...(plays[owner] ?? []), ...played];
+      frames[index] = { entryId: entry.id, before, after, applied: true, warnings };
     };
     for (const phase of PHASE_ORDER) {
       for (const entry of round.entries) {

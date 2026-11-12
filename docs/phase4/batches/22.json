@@ -1,0 +1,146 @@
+{
+  "batch": 22,
+  "title": "Common: action cards",
+  "components": [
+    {
+      "id": "actionCard:ghost_squad",
+      "name": "Ghost Squad",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/ghost_squad"
+    },
+    {
+      "id": "actionCard:hack",
+      "name": "Hack Election",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/hack"
+    },
+    {
+      "id": "actionCard:harness",
+      "name": "Harness Energy",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/harness"
+    },
+    {
+      "id": "actionCard:impersonation",
+      "name": "Impersonation",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/impersonation"
+    },
+    {
+      "id": "actionCard:insider",
+      "name": "Insider Information",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/insider"
+    },
+    {
+      "id": "actionCard:master_plan",
+      "name": "Master Plan",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/master_plan"
+    },
+    {
+      "id": "actionCard:plagiarize",
+      "name": "Plagiarize",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/plagiarize"
+    },
+    {
+      "id": "actionCard:rally",
+      "name": "Rally",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/rally"
+    },
+    {
+      "id": "actionCard:reflective",
+      "name": "Reflective Shielding",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/reflective"
+    },
+    {
+      "id": "actionCard:sanction",
+      "name": "Sanction",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/sanction"
+    },
+    {
+      "id": "actionCard:scramble",
+      "name": "Scramble Frequency",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/scramble"
+    },
+    {
+      "id": "actionCard:solar_flare",
+      "name": "Solar Flare",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/solar_flare"
+    },
+    {
+      "id": "actionCard:war_machine1",
+      "name": "War Machine",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/war_machine1"
+    },
+    {
+      "id": "actionCard:arch_expedition",
+      "name": "Archaeological Expedition",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/arch_expedition"
+    },
+    {
+      "id": "actionCard:confounding",
+      "name": "Confounding Legal Text",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/confounding"
+    },
+    {
+      "id": "actionCard:coup",
+      "name": "Coup d'Etat",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/coup"
+    },
+    {
+      "id": "actionCard:deadly_plot",
+      "name": "Deadly Plot",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/deadly_plot"
+    },
+    {
+      "id": "actionCard:decoy",
+      "name": "Decoy Operation",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/decoy"
+    },
+    {
+      "id": "actionCard:dp1",
+      "name": "Diplomatic Pressure",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/dp1"
+    },
+    {
+      "id": "actionCard:divert_funding",
+      "name": "Divert Funding",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/divert_funding"
+    }
+  ]
+}

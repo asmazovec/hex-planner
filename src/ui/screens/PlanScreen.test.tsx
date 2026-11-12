@@ -1928,7 +1928,7 @@ describe('the acts of a turn in its editor', () => {
     return { titles, blocks };
   };
   /** What any turn holds beside its action, in one order in every editor. */
-  const COMMON = ['Transactions', 'Taken and discarded'];
+  const COMMON = ['Transactions', 'Taken and discarded', 'Used'];
   const follows = (first: Element, second: Element) => Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
 
   test('the tactical editor stands in two parts under their headings: its own setup, then what any turn holds', async () => {
@@ -1963,7 +1963,7 @@ describe('the acts of a turn in its editor', () => {
     expect(follows(own, screen.getByRole('group', { name: 'In this turn' }))).toBe(true);
     // Another player's turn holds no acts of mine, and what the secondary brought is still entered.
     await userEvent.click(within(own).getByRole('button', { name: /^Secondary/ }));
-    expect(parts()).toEqual({ titles: ['Leadership · secondary ability', 'In this turn'], blocks: ['Taken and discarded'] });
+    expect(parts()).toEqual({ titles: ['Leadership · secondary ability', 'In this turn'], blocks: ['Taken and discarded', 'Used'] });
   });
 
   test('a card chosen in the strategy editor keeps the common part in its place, whichever side it starts on', async () => {
@@ -1973,7 +1973,7 @@ describe('the acts of a turn in its editor', () => {
     expect(parts().titles).toEqual(['Action setup', 'In this turn']);
     // No card of the round is mine: the card starts as a secondary.
     await userEvent.click(within(screen.getByRole('group', { name: 'Card' })).getByRole('button', { name: /Politics/ }));
-    expect(parts()).toEqual({ titles: ['Politics · secondary ability', 'In this turn'], blocks: ['Taken and discarded'] });
+    expect(parts()).toEqual({ titles: ['Politics · secondary ability', 'In this turn'], blocks: ['Taken and discarded', 'Used'] });
     await userEvent.click(within(screen.getByRole('group', { name: 'In this turn' })).getByRole('button', { name: '+ Took' }));
     expect(screen.getByRole('dialog', { name: 'Choose a component' })).toBeVisible();
   });
@@ -1985,7 +1985,7 @@ describe('the acts of a turn in its editor', () => {
     const titles = [...document.querySelectorAll('.plan-panel .editor-part > .section-title')].map(title => title.textContent);
     expect(titles).toEqual(['Action setup', 'With this entry']);
     const common = screen.getByRole('group', { name: 'With this entry' });
-    expect([...common.querySelectorAll(':scope > [role="group"]')].map(block => block.getAttribute('aria-label'))).toEqual(['Taken and discarded']);
+    expect([...common.querySelectorAll(':scope > [role="group"]')].map(block => block.getAttribute('aria-label'))).toEqual(['Taken and discarded', 'Used']);
     expect(follows(screen.getByRole('group', { name: 'Action setup' }), common)).toBe(true);
   });
 

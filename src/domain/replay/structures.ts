@@ -3,9 +3,11 @@
  * them when a planet changes hands. A structure belongs to the player who controls its planet, so each player's state
  * holds only their own; another player gaining the planet destroys them (49.5.1, 63.4, 79.4).
  */
+import structureAboard from '../rules/codes/structureAboard';
 import { violation } from '../rules/registry';
-import type { DataPack, Game, GameState, StructureKind, Warning } from '../types';
-import { planetsOf } from './board';
+import type { DataPack, Game, GameState, StructureCounts, StructureKind, Warning } from '../types';
+import { planetsOf, sourceSlot } from './board';
+import type { TacticalEntry } from './state';
 
 /** Most of one kind a planet holds (24 notes 1-2, 63.3, 79.3, 85.4, 85.5). */
 const PER_PLANET: Record<StructureKind, number> = { spacedock: 1, pds: 2 };
@@ -82,4 +84,77 @@ export function planetStructureWarnings(state: GameState, planetIds: string[]): 
   return planetIds.flatMap(planetId => holders.some(held => countOn(held, 'pds', planetId) > PER_PLANET.pds)
     ? [violation('structureLimit', { kind: 'pds', planetId, count: PER_PLANET.pds, context: 'planet' }, 'production')]
     : []);
+}
+
+const KINDS: StructureKind[] = ['pds', 'spacedock'];
+const kindsOf = (structures: StructureCounts | undefined): StructureKind[] => KINDS.filter(kind => (structures?.[kind] ?? 0) > 0);
+
+/** Takes up to `count` structures of a kind from a planet, or from the space area of a system; returns how many were there to take. */
+function takeStructures(state: GameState, from: string, onPlanet: boolean, kind: StructureKind, count: number): number {
+  if (!onPlanet) {
+    const here = state.afloat?.[from];
+    const got = Math.min(count, here?.[kind] ?? 0);
+    if (here && got > 0) {
+      if ((here[kind] ?? 0) > got) here[kind] = (here[kind] ?? 0) - got;
+      else delete here[kind];
+      if (kindsOf(here).length === 0) delete state.afloat![from];
+    }
+    return got;
+  }
+  const got = Math.min(count, countOn(state, kind, from));
+  if (got > 0 && kind === 'pds') {
+    if (state.pds[from] > got) state.pds[from] -= got;
+    else delete state.pds[from];
+  } else if (got > 0) state.docks = state.docks.filter(id => id !== from);
+  return got;
+}
+
+/**
+ * Check and effect of the structures a flight takes on board (`moves[].structures`), with its units: structures
+ * cannot move or be transported (85.3), so each place they are taken from is warned about; a component may lift that.
+ * What was entered flies all the same: the structures leave their planet (or the space area they stood in) for the
+ * space area of the active system, and one that is not there is reported as any missing unit. They take no place on
+ * board: capacity counts fighters and ground forces only (16.1).
+ */
+export function carryStructures(game: Game, state: GameState, target: string, moves: TacticalEntry['moves'], pack: DataPack, warnings: Warning[]): void {
+  for (const move of moves) {
+    const onPlanet = move.from in pack.planets;
+    const source = move.pickupOf ?? sourceSlot(game, pack, move.from) ?? move.from;
+    for (const kind of kindsOf(move.structures)) {
+      const count = move.structures?.[kind] ?? 0;
+      warnings.push(violation(structureAboard.code, { from: source, ...(onPlanet ? { planetId: move.from } : {}), unit: kind, count }));
+      const got = takeStructures(state, move.from, onPlanet, kind, count);
+      if (got < count) warnings.push(violation('unitsMissing', { where: move.from, unit: kind, missing: count - got }, 'transport'));
+      const here = ((state.afloat ??= {})[target] ??= {});
+      here[kind] = (here[kind] ?? 0) + count;
+    }
+  }
+}
+
+/**
+ * Check and effect of the structures an action puts on planets from the space area of its system
+ * (`landings[].structures`), at its end: only onto a planet of that system the player controls by then, and within
+ * what a planet holds (85.4, 85.5). What was entered is placed; a second dock on a planet stays one.
+ */
+export function placeCarried(game: Game, state: GameState, target: string, landings: TacticalEntry['landings'], pack: DataPack, warnings: Warning[]): void {
+  const planets = planetsOf(game, target, pack);
+  for (const landing of landings) {
+    const kinds = kindsOf(landing.structures);
+    if (kinds.length === 0) continue;
+    if (!planets.includes(landing.planetId)) {
+      warnings.push(violation('landingOutsideSystem', { planetId: landing.planetId, systemId: target }));
+      continue;
+    }
+    if (state.control[landing.planetId] !== 'me') warnings.push(violation('structureNotControlled', { planetId: landing.planetId }, 'invasion'));
+    for (const kind of kinds) {
+      const count = landing.structures?.[kind] ?? 0;
+      const got = takeStructures(state, target, false, kind, count);
+      if (got < count) warnings.push(violation('unitsMissing', { where: target, unit: kind, missing: count - got }, 'invasion'));
+      if (countOn(state, kind, landing.planetId) + count > PER_PLANET[kind]) {
+        warnings.push(violation('structureLimit', { kind, planetId: landing.planetId, count: PER_PLANET[kind] }, 'invasion'));
+      }
+      if (kind === 'pds') state.pds[landing.planetId] = (state.pds[landing.planetId] ?? 0) + count;
+      else if (!state.docks.includes(landing.planetId)) state.docks.push(landing.planetId);
+    }
+  }
 }

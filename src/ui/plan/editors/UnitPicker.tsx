@@ -1,12 +1,13 @@
 import { useTranslation } from 'react-i18next';
 import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
-import type { DataPack, Game, GameState, PlanetDef, UnitId, Warning } from '../../../domain/types';
+import type { TokenKind } from '../../../domain/hexLayout';
+import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
 import { layoutFor, UnitDraft, type UnitDraftItem, type UnitDraftRow } from '../../units/UnitDraft';
 import { PlanetBadge, SpaceBadge } from '../../map/PlanetBadge';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { UNIT_ORDER } from '../../units/unitOrder';
-import { availableFor, fliesNow, groupOf, hasUnits, pickedFrom, viaOf, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
+import { availableFor, fliesNow, groupOf, hasCargo, pickedFrom, pickedStructures, structuresFor, viaOf, withStructureCount, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
 import { systemName, systemTitle } from '../../map/systemName';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
@@ -34,6 +35,9 @@ export function flightWarnings(warnings: Warning[], game: Game, pack: DataPack, 
   const mine = (w: Warning) => limitsSystem(w) || ofSource(w, game, pack, entry.moves, source);
   return [...placer.at('route', mine), ...placer.at('cargo', mine)];
 }
+
+const STRUCTURES: StructureKind[] = ['pds', 'spacedock'];
+const isStructure = (kind: TokenKind): kind is StructureKind => kind === 'pds' || kind === 'spacedock';
 
 /** More places than this stand as a number: the row never wraps, so nothing under it moves. */
 const PIPS_SHOWN = 16;
@@ -75,7 +79,10 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
   /** What stands there, less what the other routes of this action take. */
   const available = (from: string, unit: UnitId): number => availableFor(game, pack, before, entry, source, from, unit);
   const setCount = (from: string, unit: UnitId, count: number) => onChange(withUnitCount(game, pack, entry.moves, source, from, unit, count));
-  const unitName = (unit: UnitId) => t(`unit.${unit}`);
+  const unitName = (unit: TokenKind) => t(`unit.${unit}`);
+  const pickedOf = (from: string, kind: StructureKind): number => pickedStructures(group, from, kind);
+  /** The structures that stand at a place, less what the other routes take: they are offered like any cargo, and the rules warn (85.3). */
+  const standingAt = (from: string, kind: StructureKind): number => structuresFor(game, pack, before, entry, source, from, kind);
 
   const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
   const offered = flying.filter(u => available(source, u) > 0 || picked(source, u) > 0);
@@ -85,26 +92,34 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
    * The places of a system to take cargo from: its space area and its planets, only what stands there. Where my command
    * token lies the units are still offered: the rules warn (95.3), and an ability may allow it.
    */
-  const placesIn = (slot: string): { from: string; planet: PlanetDef | null; units: UnitId[] }[] => {
+  const placesIn = (slot: string): { from: string; planet: PlanetDef | null; units: TokenKind[] }[] => {
     const planets = systemPlanets(game, slot, pack);
     const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => available(from, u) > 0 || picked(from, u) > 0);
     const ground = known.filter(u => pack.units[u]?.ground);
+    // Structures stand in the row of their place only where there are any: on a planet, or in the space area they were carried to.
+    const structuresAt = (from: string) => STRUCTURES.filter(kind => standingAt(from, kind) > 0 || pickedOf(from, kind) > 0);
     const places = [
-      { from: slot, planet: null, units: offeredAt(slot, cargo) },
-      ...planets.map(planet => ({ from: planet.id, planet, units: offeredAt(planet.id, ground) })),
+      { from: slot, planet: null, units: [...offeredAt(slot, cargo), ...structuresAt(slot)] },
+      ...planets.map(planet => ({ from: planet.id, planet, units: [...offeredAt(planet.id, ground), ...structuresAt(planet.id)] })),
     ];
     return places.filter(place => place.units.length > 0);
   };
 
-  const item = (from: string, unit: UnitId): UnitDraftItem => ({
-    kind: unit, picked: picked(from, unit), left: available(from, unit) - picked(from, unit),
+  const item = (from: string, unit: TokenKind): UnitDraftItem => ({
+    kind: unit,
+    ...(isStructure(unit)
+      ? { picked: pickedOf(from, unit), left: standingAt(from, unit) - pickedOf(from, unit) }
+      : { picked: picked(from, unit), left: available(from, unit) - picked(from, unit) }),
     takeLabel: t('plan.picker.take', { unit: unitName(unit) }), returnLabel: t('plan.picker.put', { unit: unitName(unit) }),
   });
+  const change = (from: string, kind: TokenKind, by: 1 | -1) => (isStructure(kind)
+    ? onChange(withStructureCount(game, pack, entry.moves, source, from, kind, pickedOf(from, kind) + by))
+    : setCount(from, kind, picked(from, kind) + by));
   const draft = (rows: UnitDraftRow[], pickedLabel: string) => (
     <UnitDraft
       rows={rows} colour={colour} stockLabel={t('plan.picker.stock')} pickedLabel={pickedLabel}
-      onTake={(from, unit) => setCount(from, unit as UnitId, picked(from, unit as UnitId) + 1)}
-      onReturn={(from, unit) => setCount(from, unit as UnitId, picked(from, unit as UnitId) - 1)}
+      onTake={(from, unit) => change(from, unit, 1)}
+      onReturn={(from, unit) => change(from, unit, -1)}
     />
   );
   const badge = (planet: PlanetDef | null) => (planet
@@ -159,7 +174,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
       {ships <= fleet && <p className="picker-fleet muted">{t('plan.picker.fleet', { ships, fleet })}</p>}
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
 
-      <button type="button" className="primary" disabled={!group.some(m => hasUnits(m.units))} onClick={onFly}>{t('plan.picker.fly')}</button>
+      <button type="button" className="primary" disabled={!group.some(hasCargo)} onClick={onFly}>{t('plan.picker.fly')}</button>
     </EditorFrame>
   );
 }

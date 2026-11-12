@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { boardSystemWarnings, dockFighterRoom, fleetExcess, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { boardSystemWarnings, dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
 import { timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { unitStats } from '../../../domain/unitStats';
@@ -337,7 +337,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   })).filter(item => item.picked > 0 || (item.left ?? 0) > 0);
   const beforeFight = fightingFor && seenBefore(line, fightingFor.id);
   /** How many ships are still over the fleet pool, as the replay says of the action. */
-  const fleetOver = fightingFor && beforeFight ? fleetExcess(view, fightingFor, beforeFight, pack, projection.warningsByEntry[fightingFor.id] ?? []) : null;
+  const fleetOver = fightingFor && beforeFight ? fleetExcess(view, fightingFor, beforeFight, pack, standing(projection.warningsByEntry[fightingFor.id] ?? [])) : null;
   const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, kind as UnitId, amount)); };
 
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
@@ -351,10 +351,10 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
   const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
   /** Over the limit is what the domain says of the entry. */
-  const breaks = (code: WarningCode, counted: boolean) => (warningEntry ? ownWarnings.some(w => w.code === code) : counted);
+  const breaks = (code: WarningCode, counted: boolean) => (warningEntry ? standing(ownWarnings).some(w => w.code === code) : counted);
   const meterRows: MeterRow[] = [
     { key: 'resources', now: spent, of: spendable, over: breaks('shortResources', spent > spendable) },
-    { key: 'fleet', now: meters.ships, of: acting.fleet, over: breaks('fleetPool', meters.ships > acting.fleet) },
+    { key: 'fleet', now: meters.ships, of: fleetLimit(view, acting, pack), over: breaks('fleetPool', meters.ships > fleetLimit(view, acting, pack)) },
     { key: 'capacity', now: meters.load, of: meters.capacity, over: breaks('capacitySystem', meters.load > meters.capacity) },
   ];
   // The shop answers for what is bought and how it is paid; a route or a landing has its own block in the editor.

@@ -231,7 +231,9 @@
     "destroyer": "Destroyer",
     "fighter": "Fighter",
     "infantry": "Infantry",
-    "mech": "Mech"
+    "mech": "Mech",
+    "pds": "PDS",
+    "spacedock": "Space dock"
   },
   "plan": {
     "noGame": "Start or open a game first.",
@@ -391,6 +393,7 @@
       "cards": "Action cards",
       "tech": "Technology"
     },
+    "warningWaived": "Allowed by: {{list}}",
     "warning": {
       "shortResources": "Not enough resources: need {{needed}}, paid {{paid}}, short by {{short}}.",
       "shortInfluence": "Not enough influence: need {{needed}}, paid {{paid}}, short by {{short}}.",
@@ -856,6 +859,12 @@
     "pickPlayed": "Choose the component",
     "alreadyHeld": "already held",
     "notHeld": "not held",
+    "uses": {
+      "title": "Used",
+      "hint": "What was used this turn beside the action itself: an agent, a technology, an ability. What they allow is marked among the warnings.",
+      "add": "+ Used",
+      "used": "used"
+    },
     "gains": {
       "title": "Taken and discarded",
       "hint": "From a deck or the supply, and to the discard or out of the game. Giving to another player is in a transaction.",

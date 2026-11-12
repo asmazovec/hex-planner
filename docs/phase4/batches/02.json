@@ -1,0 +1,174 @@
+{
+  "batch": 2,
+  "title": "Factions: muaat, hacan",
+  "components": [
+    {
+      "id": "promissory:fires",
+      "name": "Fires of the Gashlai",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "muaat",
+      "file": "promissory/fires"
+    },
+    {
+      "id": "ability:star_forge",
+      "name": "Star Forge",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "muaat",
+      "file": "ability/star_forge"
+    },
+    {
+      "id": "ability:gashlai_physiology",
+      "name": "Gashlai Physiology",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "muaat",
+      "file": "ability/gashlai_physiology"
+    },
+    {
+      "id": "leader:muaatagent",
+      "name": "Umbat",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "muaat",
+      "file": "leader/muaatagent"
+    },
+    {
+      "id": "leader:muaatcommander",
+      "name": "Magmus",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "muaat",
+      "file": "leader/muaatcommander"
+    },
+    {
+      "id": "leader:muaathero",
+      "name": "Adjudicator Ba'al",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "muaat",
+      "file": "leader/muaathero"
+    },
+    {
+      "id": "mech:muaat_mech",
+      "name": "Ember Colossus",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "muaat",
+      "file": "mech/muaat_mech"
+    },
+    {
+      "id": "breakthrough:muaatbt",
+      "name": "Stellar Genesis",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "muaat",
+      "file": "breakthrough/muaatbt"
+    },
+    {
+      "id": "technology:pws2",
+      "name": "Prototype War Sun II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "muaat",
+      "file": "technology/pws2"
+    },
+    {
+      "id": "technology:mr",
+      "name": "Magmus Reactor",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "muaat",
+      "file": "technology/mr"
+    },
+    {
+      "id": "promissory:convoys",
+      "name": "Trade Convoys",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "hacan",
+      "file": "promissory/convoys"
+    },
+    {
+      "id": "ability:master_of_trade",
+      "name": "Masters of Trade",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "hacan",
+      "file": "ability/master_of_trade"
+    },
+    {
+      "id": "ability:guild_ships",
+      "name": "Guild Ships",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "hacan",
+      "file": "ability/guild_ships"
+    },
+    {
+      "id": "ability:arbiters",
+      "name": "Arbiters",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "hacan",
+      "file": "ability/arbiters"
+    },
+    {
+      "id": "leader:hacanagent",
+      "name": "Carth of Golden Sands",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "hacan",
+      "file": "leader/hacanagent"
+    },
+    {
+      "id": "leader:hacancommander",
+      "name": "Gila the Silvertongue",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "hacan",
+      "file": "leader/hacancommander"
+    },
+    {
+      "id": "leader:hacanhero",
+      "name": "Harrugh Gefhara",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "hacan",
+      "file": "leader/hacanhero"
+    },
+    {
+      "id": "mech:hacan_mech",
+      "name": "Pride of Kenara",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "hacan",
+      "file": "mech/hacan_mech"
+    },
+    {
+      "id": "breakthrough:hacanbt",
+      "name": "Auto-Factories",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "hacan",
+      "file": "breakthrough/hacanbt"
+    },
+    {
+      "id": "technology:qdn",
+      "name": "Quantum Datahub Node",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "hacan",
+      "file": "technology/qdn"
+    },
+    {
+      "id": "technology:pm",
+      "name": "Production Biomes",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "hacan",
+      "file": "technology/pm"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "batch": 20,
+  "title": "Common: action cards",
+  "components": [
+    {
+      "id": "actionCard:industrial_initiative",
+      "name": "Industrial Initiative",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/industrial_initiative"
+    },
+    {
+      "id": "actionCard:infiltrate",
+      "name": "Infiltrate",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/infiltrate"
+    },
+    {
+      "id": "actionCard:insub",
+      "name": "Insubordination",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/insub"
+    },
+    {
+      "id": "actionCard:intercept",
+      "name": "Intercept",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/intercept"
+    },
+    {
+      "id": "actionCard:lead_rider",
+      "name": "Leadership Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/lead_rider"
+    },
+    {
+      "id": "actionCard:lost_star",
+      "name": "Lost Star Chart",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/lost_star"
+    },
+    {
+      "id": "actionCard:lucky",
+      "name": "Lucky Shot",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/lucky"
+    },
+    {
+      "id": "actionCard:mjets1",
+      "name": "Maneuvering Jets",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/mjets1"
+    },
+    {
+      "id": "actionCard:mining_initiative",
+      "name": "Mining Initiative",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/mining_initiative"
+    },
+    {
+      "id": "actionCard:mb1",
+      "name": "Morale Boost",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/mb1"
+    },
+    {
+      "id": "actionCard:parley",
+      "name": "Parley",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/parley"
+    },
+    {
+      "id": "actionCard:plague",
+      "name": "Plague",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/plague"
+    },
+    {
+      "id": "actionCard:stability",
+      "name": "Political Stability",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/stability"
+    },
+    {
+      "id": "actionCard:politic_rider",
+      "name": "Politics Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/politic_rider"
+    },
+    {
+      "id": "actionCard:disgrace",
+      "name": "Public Disgrace",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/disgrace"
+    },
+    {
+      "id": "actionCard:meltdown",
+      "name": "Reactor Meltdown",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/meltdown"
+    },
+    {
+      "id": "actionCard:reparations",
+      "name": "Reparations",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/reparations"
+    },
+    {
+      "id": "actionCard:repeal",
+      "name": "Repeal Law",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/repeal"
+    },
+    {
+      "id": "actionCard:messiah",
+      "name": "Rise of a Messiah",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/messiah"
+    },
+    {
+      "id": "actionCard:sabo1",
+      "name": "Sabotage",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/sabo1"
+    }
+  ]
+}

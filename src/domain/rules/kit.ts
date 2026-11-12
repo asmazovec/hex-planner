@@ -9,7 +9,7 @@
 import { loadPack } from '../../data/loadPack';
 import { upgradeTech } from '../holdings';
 import { project, stateBeforeEntry } from '../project';
-import { SAVE_FORMAT, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
+import { SAVE_FORMAT, type ExpansionId, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
 
 export const HOME = '0,0';
 export const NEAR = '1,0';
@@ -46,9 +46,9 @@ export const FACTION = 'rules-tester';
 /** The common technology that upgrades a unit or structure, as a component id: `tech('carrier')` is Carrier II. */
 export const tech = (kind: UpgradeId): string => upgradeTech(loadPack([]), FACTION, kind) ?? `technology:${kind}`;
 
-/** The base pack with the test board and a faction whose home is `r-home` and who starts with no units. */
-export function rulesPack(edit?: (pack: DataPack) => void): DataPack {
-  const base = loadPack([]);
+/** The base pack (or the pack of `expansions`) with the test board and a faction whose home is `r-home` and who starts with no units. */
+export function rulesPack(edit?: (pack: DataPack) => void, expansions: ExpansionId[] = []): DataPack {
+  const base = loadPack(expansions);
   const pack: DataPack = {
     ...base,
     tiles: { ...base.tiles, ...TILES },
@@ -70,7 +70,7 @@ const DEFAULT_MAP: Record<string, string> = {
 /** A six-player game on the test row, with no opponents unless the test adds them. Starting units go in by `units`. */
 export function rulesGame(options: {
   map?: Record<string, string>; units?: Record<string, UnitCounts>; entries?: Entry[]; rounds?: Entry[][];
-  playerCount?: number; game?: Partial<Game>;
+  playerCount?: number; game?: Partial<Game>; expansions?: ExpansionId[];
 } = {}): Game {
   const rounds = options.rounds ?? [options.entries ?? []];
   const start: Entry[] = Object.entries(options.units ?? {}).map(([systemId, units], i) => ({
@@ -78,7 +78,7 @@ export function rulesGame(options: {
     delta: { units: { systemId, units } },
   }));
   return {
-    id: 'rules', format: SAVE_FORMAT, schemaVersion: 1, dataVersion: 'rules', expansions: [], playerCount: options.playerCount ?? 6, layout: 'standard',
+    id: 'rules', format: SAVE_FORMAT, schemaVersion: 1, dataVersion: 'rules', expansions: options.expansions ?? [], playerCount: options.playerCount ?? 6, layout: 'standard',
     faction: FACTION, seat: 1, color: 1, vp: 0,
     map: { ...(options.map ?? DEFAULT_MAP) },
     opponents: [], start: { me: {}, opponents: {} }, enemyUnits: {}, enemyGround: {}, planetControl: {}, planetOwner: {},
@@ -94,6 +94,9 @@ export function rulesGame(options: {
 let next = 0;
 const entry = (body: EntryBody, phase: Phase = 'action', extra: Partial<Entry> = {}): Entry =>
   ({ id: `e${(next += 1)}`, phase, status: 'planned', ...body, ...extra } as Entry);
+
+/** A planned entry of any body, with an id of its own. */
+export const planned = entry;
 
 export const NO_PAYMENT = { planets: [], tradeGoods: 0 };
 

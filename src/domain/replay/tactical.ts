@@ -11,6 +11,7 @@ import { gainControl, landUnits } from './invasion';
 import { checkRoutes, moveUnits } from './movement';
 import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { take, unitIds, type TacticalEntry } from './state';
+import { carryStructures, placeCarried } from './structures';
 import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, fleetLimit, isPickup, overflowLeft, removeFleetExcess } from './transport';
 import type { Blockers } from '../movement';
 
@@ -20,6 +21,7 @@ function movement(game: Game, state: GameState, target: string, entry: TacticalE
   warnings.push(...checkPickups(game, state, target, entry.moves, pack, blockers));
   const over = overflowLeft(game, state, target, entry.moves, pack);
   const groups = moveUnits(game, state, target, entry.moves, pack, warnings);
+  carryStructures(game, state, target, entry.moves, pack, warnings);
   warnings.push(...checkLeftBehind(game, state, over, target, entry.moves, pack));
   return groups;
 }
@@ -75,6 +77,8 @@ export function applyTactical(
   if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
   landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater);
   payProduction(game, state, entry, pack, warnings);
+  // The structures a flight brought are put on planets when the action ends, after its production.
+  placeCarried(game, state, target, entry.landings, pack, warnings);
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));
 }
 
@@ -90,7 +94,7 @@ export function tacticalMeters(
     group: capacity(game, groups[source] ?? {}, before.holdings, pack),
     // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
     ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.holdings, pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
-    fleet: before.fleet,
+    fleet: fleetLimit(game, before, pack),
   };
 }
 

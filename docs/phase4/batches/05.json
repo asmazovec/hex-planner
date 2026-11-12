@@ -1,0 +1,174 @@
+{
+  "batch": 5,
+  "title": "Factions: naalu, nekro",
+  "components": [
+    {
+      "id": "promissory:gift",
+      "name": "Gift of Prescience",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "naalu",
+      "file": "promissory/gift"
+    },
+    {
+      "id": "ability:telepathic",
+      "name": "Telepathic",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "naalu",
+      "file": "ability/telepathic"
+    },
+    {
+      "id": "ability:foresight",
+      "name": "Foresight",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "naalu",
+      "file": "ability/foresight"
+    },
+    {
+      "id": "leader:naaluagent-te",
+      "name": "Z'eu",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "naalu",
+      "file": "leader/naaluagent-te"
+    },
+    {
+      "id": "leader:naalucommander",
+      "name": "M'aban",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "naalu",
+      "file": "leader/naalucommander"
+    },
+    {
+      "id": "leader:naaluhero",
+      "name": "The Oracle",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "naalu",
+      "file": "leader/naaluhero"
+    },
+    {
+      "id": "mech:naalu_mech_te",
+      "name": "Iconoclast TE",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "naalu",
+      "file": "mech/naalu_mech_te"
+    },
+    {
+      "id": "breakthrough:naalubt",
+      "name": "Mindsieve",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "naalu",
+      "file": "breakthrough/naalubt"
+    },
+    {
+      "id": "technology:ng",
+      "name": "Neuroglaive",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "naalu",
+      "file": "technology/ng"
+    },
+    {
+      "id": "technology:hcf2",
+      "name": "Hybrid Crystal Fighter II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "naalu",
+      "file": "technology/hcf2"
+    },
+    {
+      "id": "promissory:antivirus",
+      "name": "Antivirus",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "nekro",
+      "file": "promissory/antivirus"
+    },
+    {
+      "id": "ability:galactic_threat",
+      "name": "Galactic Threat",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "nekro",
+      "file": "ability/galactic_threat"
+    },
+    {
+      "id": "ability:technological_singularity",
+      "name": "Technological Singularity",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "nekro",
+      "file": "ability/technological_singularity"
+    },
+    {
+      "id": "ability:propagation",
+      "name": "Propagation",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "nekro",
+      "file": "ability/propagation"
+    },
+    {
+      "id": "leader:nekroagent",
+      "name": "Nekro Malleon",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nekro",
+      "file": "leader/nekroagent"
+    },
+    {
+      "id": "leader:nekrocommander",
+      "name": "Nekro Acidos",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nekro",
+      "file": "leader/nekrocommander"
+    },
+    {
+      "id": "leader:nekrohero",
+      "name": "UNIT.DSGN.FLAYESH",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nekro",
+      "file": "leader/nekrohero"
+    },
+    {
+      "id": "mech:nekro_mech",
+      "name": "Mordred",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "nekro",
+      "file": "mech/nekro_mech"
+    },
+    {
+      "id": "breakthrough:nekrobt",
+      "name": "Valefar Assimilator Z",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "nekro",
+      "file": "breakthrough/nekrobt"
+    },
+    {
+      "id": "technology:vax",
+      "name": "Valefar Assimilator X",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "nekro",
+      "file": "technology/vax"
+    },
+    {
+      "id": "technology:vay",
+      "name": "Valefar Assimilator Y",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "nekro",
+      "file": "technology/vay"
+    }
+  ]
+}

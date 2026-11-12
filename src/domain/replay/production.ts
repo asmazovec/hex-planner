@@ -2,6 +2,7 @@
 import { violation } from '../rules/registry';
 import { homeSlot } from '../strategy';
 import { applied } from '../effects/apply';
+import { holderOf } from '../effects/registry';
 import { productionCost } from '../unitStats';
 import type { DataPack, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf } from './board';
@@ -20,9 +21,9 @@ export function producers(game: Game, state: GameState, systemId: string, pack: 
 }
 
 /** A dock's Production: its planet's resources plus the dock's printed value (79.1), after what the player holds changed it (Space Dock II). */
-const dockValue = (state: GameState, planetId: string, pack: DataPack): number => {
+const dockValue = (game: Game, state: GameState, planetId: string, pack: DataPack): number => {
   const printed = pack.structures.find(s => s.id === 'spacedock')?.levels.one.production ?? 0;
-  return applied(pack, state.holdings, 'productionValue', (pack.planets[planetId]?.resources ?? 0) + printed, { structure: 'spacedock', planetId }).value;
+  return applied(pack, holderOf(game, state), 'productionValue', (pack.planets[planetId]?.resources ?? 0) + printed, { structure: 'spacedock', planetId }).value;
 };
 
 /** Where my ground forces may stand: a planet I control, and not a space station (space stations 4). */
@@ -106,7 +107,7 @@ export function checkProduction(
   if (hasAnomaly(game, target, 'scar', pack)) warn('scarProduction', { systemId: target });
   else if (docks.length === 0) warn('noProduction', { systemId: target });
   else if (source !== 'card') {
-    const values = docks.map(p => dockValue(state, p, pack));
+    const values = docks.map(p => dockValue(game, state, p, pack));
     const value = source === 'homeDock' ? Math.max(...values) : values.reduce((sum, v) => sum + v, 0);
     // Each fighter or infantry counts, though two cost one (68.1.2).
     const count = built.reduce((sum, id) => sum + (units[id] ?? 0), 0);

@@ -1,0 +1,146 @@
+{
+  "batch": 18,
+  "title": "Common: technologies, action cards",
+  "components": [
+    {
+      "id": "technology:md",
+      "name": "Magen Defense Grid ΩΩ",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/md"
+    },
+    {
+      "id": "technology:ps",
+      "name": "Plasma Scoring",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/ps"
+    },
+    {
+      "id": "technology:aida",
+      "name": "AI Development Algorithm",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/aida"
+    },
+    {
+      "id": "technology:md_base",
+      "name": "Magen Defense Grid",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/md_base"
+    },
+    {
+      "id": "technology:da",
+      "name": "Duranium Armor",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/da"
+    },
+    {
+      "id": "technology:asc",
+      "name": "Assault Cannon",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/asc"
+    },
+    {
+      "id": "technology:sar",
+      "name": "Self-Assembly Routines",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/sar"
+    },
+    {
+      "id": "technology:md_c1",
+      "name": "Magen Defense Grid Ω",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/md_c1"
+    },
+    {
+      "id": "technology:ws",
+      "name": "War Sun",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/ws"
+    },
+    {
+      "id": "technology:sd2",
+      "name": "Space Dock II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/sd2"
+    },
+    {
+      "id": "technology:cr2",
+      "name": "Cruiser II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/cr2"
+    },
+    {
+      "id": "technology:dn2",
+      "name": "Dreadnought II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/dn2"
+    },
+    {
+      "id": "technology:dd2",
+      "name": "Destroyer II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/dd2"
+    },
+    {
+      "id": "technology:pds2",
+      "name": "PDS II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/pds2"
+    },
+    {
+      "id": "technology:cv2",
+      "name": "Carrier II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/cv2"
+    },
+    {
+      "id": "technology:ff2",
+      "name": "Fighter II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/ff2"
+    },
+    {
+      "id": "technology:inf2",
+      "name": "Infantry II",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/inf2"
+    },
+    {
+      "id": "actionCard:abs",
+      "name": "Ancient Burial Sites",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/abs"
+    },
+    {
+      "id": "actionCard:assassin",
+      "name": "Assassinate Representative",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/assassin"
+    },
+    {
+      "id": "actionCard:bribery",
+      "name": "Bribery",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/bribery"
+    }
+  ]
+}

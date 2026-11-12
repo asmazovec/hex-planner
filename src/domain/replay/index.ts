@@ -15,7 +15,9 @@ export { placesOf, productionCost, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
 export { planetStructureWarnings, structureOwner, structuresOn } from './structures';
 export { fleetExcess, productionPlaces, tacticalMeters } from './tactical';
-export { boardSystemWarnings, dockFighterRoom, fightersFly, pickupAllowed, systemMeters } from './transport';
+export { boardSystemWarnings, dockFighterRoom, fightersFly, fleetLimit, pickupAllowed, systemMeters } from './transport';
+export { isWaived, standing } from '../rules/registry';
+export { inForce } from '../effects/registry';
 
 const ownerOf = (plan: Plan, entryId: string): string | undefined =>
   plan.rounds.flatMap(r => r.entries).find(e => e.id === entryId)?.owner;

@@ -1,0 +1,146 @@
+{
+  "batch": 25,
+  "title": "Common: relics, agendas",
+  "components": [
+    {
+      "id": "relic:heartofixth",
+      "name": "Heart of Ixth",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/heartofixth"
+    },
+    {
+      "id": "relic:lightrailordnance",
+      "name": "Lightrail Ordnance",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/lightrailordnance"
+    },
+    {
+      "id": "relic:metalivoidarmaments",
+      "name": "Metali Void Armaments",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/metalivoidarmaments"
+    },
+    {
+      "id": "relic:metalivoidshielding",
+      "name": "Metali Void Shielding",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/metalivoidshielding"
+    },
+    {
+      "id": "relic:quantumcore",
+      "name": "The Quantumcore",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/quantumcore"
+    },
+    {
+      "id": "relic:thesilverflame",
+      "name": "The Silver Flame",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/thesilverflame"
+    },
+    {
+      "id": "relic:thetriad",
+      "name": "The Triad",
+      "kind": "relic",
+      "pack": "te",
+      "file": "relic/thetriad"
+    },
+    {
+      "id": "agenda:revolution",
+      "name": "Anti-Intellectual Revolution",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/revolution"
+    },
+    {
+      "id": "agenda:secret",
+      "name": "Archived Secret",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/secret"
+    },
+    {
+      "id": "agenda:arms_reduction",
+      "name": "Arms Reduction",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/arms_reduction"
+    },
+    {
+      "id": "agenda:classified",
+      "name": "Classified Document Leaks",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/classified"
+    },
+    {
+      "id": "agenda:redistribution",
+      "name": "Colonial Redistribution",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/redistribution"
+    },
+    {
+      "id": "agenda:committee",
+      "name": "Committee Formation",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/committee"
+    },
+    {
+      "id": "agenda:disarmament",
+      "name": "Compensated Disarmament",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/disarmament"
+    },
+    {
+      "id": "agenda:conventions",
+      "name": "Conventions of War",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/conventions"
+    },
+    {
+      "id": "agenda:economic_equality",
+      "name": "Economic Equality",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/economic_equality"
+    },
+    {
+      "id": "agenda:travel_ban",
+      "name": "Enforced Travel Ban",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/travel_ban"
+    },
+    {
+      "id": "agenda:sanctions",
+      "name": "Executive Sanctions",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/sanctions"
+    },
+    {
+      "id": "agenda:regulations",
+      "name": "Fleet Regulations",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/regulations"
+    },
+    {
+      "id": "agenda:defense_act",
+      "name": "Homeland Defense Act",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/defense_act"
+    }
+  ]
+}

@@ -2,16 +2,16 @@ import type { ReactNode } from 'react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../../domain/payment';
-import { fleetExcess, productionCost, routeSteps, systemPlanets } from '../../../domain/project';
+import { fleetExcess, productionCost, routeSteps, standing, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../domain/effects/hints';
-import type { DataPack, Game, GameState, RuleStep, UnitCounts, UnitId, Warning } from '../../../domain/types';
+import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { LandingBlock } from '../blocks/LandingBlock';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { HexRemove } from '../../primitives/Icon';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
-import { addUnits, afterBattle, countOf, groupOf, hasUnits, isUntouched, sourcesOf, splitFlight, unitsIn, viaOf, withLanding, withoutSource, type TacticalEntry } from '../../../domain/tactical';
+import { addUnits, afterBattle, countOf, groupOf, hasStructures, hasUnits, isUntouched, sourcesOf, splitFlight, structuresArrived, unitsIn, viaOf, withLandedStructure, withLanding, withoutSource, type TacticalEntry } from '../../../domain/tactical';
 import { Section } from '../../primitives/Section';
 import { unitsText } from '../../units/unitsText';
 import { systemTitle } from '../../map/systemName';
@@ -78,14 +78,17 @@ export function TacticalEditor({
   /** A source in the list: its ships, then how much rides as cargo. */
   const sourceLine = (source: string): string => {
     const { ships, cargo } = splitFlight(game, pack, before.holdings, unitsIn(groupOf(game, pack, entry.moves, source)));
-    const aboard = countOf(cargo);
+    // A structure taken on board rides with the cargo.
+    const aboard = countOf(cargo) + groupOf(game, pack, entry.moves, source).reduce((sum, m) => sum + Object.values(m.structures ?? {}).reduce((n, count) => n + (count ?? 0), 0), 0);
     return `${unitText(ships) || t('plan.tactical.noShips')}${aboard > 0 ? t('plan.tactical.cargoShort', { n: aboard }) : ''}`;
   };
 
   const lost = entry.losses ?? {};
   /** What the battle leaves, and the ground force types that arrived or are already assigned: only these can land. */
   const { left: here, landable } = afterBattle(pack, entry, before, UNIT_ORDER);
-  const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0);
+  /** The structures a flight brought into the space area: the action puts them on planets at its end. */
+  const afloat = structuresArrived(entry, before);
+  const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0 || hasStructures(afloat));
 
   const landedOn = (planetId: string, unit: UnitId): number => entry.landings.find(l => l.planetId === planetId)?.units[unit] ?? 0;
   const setLanding = (planetId: string, unit: UnitId, count: number) => onUpdate(withLanding(entry, planetId, unit, count));
@@ -106,8 +109,8 @@ export function TacticalEditor({
   const overall = placer.at('action');
   const removed = entry.fleetRemovals ?? {};
   /** How many ships are still to remove, as the replay says of this action. */
-  const stillOver = fleetExcess(game, entry, before, pack, warnings).over;
-  const overFleet = warnings.some(w => w.code === 'fleetPool' && w.params.systemId === target);
+  const stillOver = fleetExcess(game, entry, before, pack, standing(warnings)).over;
+  const overFleet = standing(warnings).some(w => w.code === 'fleetPool' && w.params.systemId === target);
   const battleWarnings = placer.at('battle');
   /** The reminders of a step: what its players hold for it, under the block of the step. */
   const hints = (step: RuleStep) => {
@@ -178,6 +181,11 @@ export function TacticalEditor({
               <LandingBlock
                 game={game} planets={planets} before={before} board={board} units={landable} arrived={here} lost={entry.groundLosses}
                 landedOn={landedOn} onLand={setLanding}
+                structures={hasStructures(afloat) || entry.landings.some(l => hasStructures(l.structures)) ? {
+                  arrived: afloat,
+                  landedOn: (planetId: string, kind: StructureKind) => entry.landings.find(l => l.planetId === planetId)?.structures?.[kind] ?? 0,
+                  onLand: (planetId: string, kind: StructureKind, count: number) => onUpdate(withLandedStructure(entry, planetId, kind, count)),
+                } : undefined}
               />
             </Section>
           )}

@@ -1,0 +1,146 @@
+{
+  "batch": 24,
+  "title": "Common: action cards, relics",
+  "components": [
+    {
+      "id": "actionCard:piratecontract1",
+      "name": "Pirate Contract",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/piratecontract1"
+    },
+    {
+      "id": "actionCard:crashlanding",
+      "name": "Crash Landing",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/crashlanding"
+    },
+    {
+      "id": "actionCard:crisis",
+      "name": "Crisis",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/crisis"
+    },
+    {
+      "id": "actionCard:overrule",
+      "name": "Overrule",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/overrule"
+    },
+    {
+      "id": "relic:dynamiscore",
+      "name": "Dynamis Core",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/dynamiscore"
+    },
+    {
+      "id": "relic:titanprototype",
+      "name": "JR-XS455-O",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/titanprototype"
+    },
+    {
+      "id": "relic:nanoforge",
+      "name": "Nano-Forge",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/nanoforge"
+    },
+    {
+      "id": "relic:neuraloop",
+      "name": "Neuraloop",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/neuraloop"
+    },
+    {
+      "id": "relic:circletofthevoid",
+      "name": "Circlet of the Void",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/circletofthevoid"
+    },
+    {
+      "id": "relic:bookoflatvinia",
+      "name": "Book of Latvinia",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/bookoflatvinia"
+    },
+    {
+      "id": "relic:dominusorb",
+      "name": "Dominus Orb",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/dominusorb"
+    },
+    {
+      "id": "relic:mawofworlds",
+      "name": "Maw of Worlds",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/mawofworlds"
+    },
+    {
+      "id": "relic:emelpar",
+      "name": "Scepter of Emelpar",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/emelpar"
+    },
+    {
+      "id": "relic:shard",
+      "name": "Shard of the Throne",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/shard"
+    },
+    {
+      "id": "relic:stellarconverter",
+      "name": "Stellar Converter",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/stellarconverter"
+    },
+    {
+      "id": "relic:codex",
+      "name": "The Codex",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/codex"
+    },
+    {
+      "id": "relic:emphidia",
+      "name": "The Crown of Emphidia",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/emphidia"
+    },
+    {
+      "id": "relic:thalnos",
+      "name": "The Crown of Thalnos",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/thalnos"
+    },
+    {
+      "id": "relic:obsidian",
+      "name": "The Obsidian",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/obsidian"
+    },
+    {
+      "id": "relic:prophetstears",
+      "name": "The Prophet's Tears",
+      "kind": "relic",
+      "pack": "pok",
+      "file": "relic/prophetstears"
+    }
+  ]
+}

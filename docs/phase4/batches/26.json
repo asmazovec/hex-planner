@@ -1,0 +1,146 @@
+{
+  "batch": 26,
+  "title": "Common: agendas",
+  "components": [
+    {
+      "id": "agenda:arbiter",
+      "name": "Imperial Arbiter",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/arbiter"
+    },
+    {
+      "id": "agenda:incentive",
+      "name": "Incentive Program",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/incentive"
+    },
+    {
+      "id": "agenda:artifact",
+      "name": "Ixthian Artifact",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/artifact"
+    },
+    {
+      "id": "agenda:abolishment",
+      "name": "Judicial Abolishment",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/abolishment"
+    },
+    {
+      "id": "agenda:minister_commerce",
+      "name": "Minister of Commerce",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_commerce"
+    },
+    {
+      "id": "agenda:minister_exploration",
+      "name": "Minister of Exploration",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_exploration"
+    },
+    {
+      "id": "agenda:minister_industry",
+      "name": "Minister of Industry",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_industry"
+    },
+    {
+      "id": "agenda:minister_peace",
+      "name": "Minister of Peace",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_peace"
+    },
+    {
+      "id": "agenda:minister_policy",
+      "name": "Minister of Policy",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_policy"
+    },
+    {
+      "id": "agenda:minister_sciences",
+      "name": "Minister of Sciences",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_sciences"
+    },
+    {
+      "id": "agenda:minister_war",
+      "name": "Minister of War",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/minister_war"
+    },
+    {
+      "id": "agenda:miscount",
+      "name": "Miscount Disclosed",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/miscount"
+    },
+    {
+      "id": "agenda:mutiny",
+      "name": "Mutiny",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/mutiny"
+    },
+    {
+      "id": "agenda:constitution",
+      "name": "New Constitution",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/constitution"
+    },
+    {
+      "id": "agenda:prophecy",
+      "name": "Prophecy of Ixth",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/prophecy"
+    },
+    {
+      "id": "agenda:execution",
+      "name": "Public Execution",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/execution"
+    },
+    {
+      "id": "agenda:schematics",
+      "name": "Publicize Weapon Schematics",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/schematics"
+    },
+    {
+      "id": "agenda:conscription",
+      "name": "Regulated Conscription",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/conscription"
+    },
+    {
+      "id": "agenda:seed_empire",
+      "name": "Seed of an Empire",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/seed_empire"
+    },
+    {
+      "id": "agenda:shared_research",
+      "name": "Shared Research",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/shared_research"
+    }
+  ]
+}

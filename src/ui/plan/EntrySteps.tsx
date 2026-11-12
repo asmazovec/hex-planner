@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
-import { tacticalMeters } from '../../domain/project';
+import { standing, tacticalMeters } from '../../domain/project';
 import { upgradesOf } from '../../domain/holdings';
 import { cardCost, costsStrategyToken } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
@@ -83,7 +83,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
           const placer = placeWarnings(warnings.filter(w => warningFlightOf(w, game, pack, e) === source));
           const cargoWarnings = placer.at('cargo');
           const startWarnings = placer.rest();
-          const over = cargoWarnings.length > 0;
+          const over = standing(cargoWarnings).length > 0;
           // The last flight ends where the action happens: what follows on arrival stands at its end.
           const last = index === sources.length - 1;
           return (

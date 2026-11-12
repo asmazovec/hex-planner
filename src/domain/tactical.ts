@@ -6,13 +6,19 @@
 import { fleetSpeed, routeMove, routeReach, type Blockers } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, UnitCounts, UnitId } from './types';
+import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
 
 export const hasUnits = (units: UnitCounts | undefined): boolean =>
   Object.values(units ?? {}).some(n => (n ?? 0) > 0);
+
+export const hasStructures = (structures: StructureCounts | undefined): boolean =>
+  Object.values(structures ?? {}).some(n => (n ?? 0) > 0);
+
+/** Whether a move carries anything: units, or structures taken on board. */
+export const hasCargo = (move: { units: UnitCounts; structures?: StructureCounts }): boolean => hasUnits(move.units) || hasStructures(move.structures);
 
 /** Sets one unit count, dropping the unit at zero. */
 export function withCount(units: UnitCounts, unit: UnitId, count: number): UnitCounts {
@@ -90,10 +96,63 @@ export function withFleetRemoval(entry: TacticalEntry, unit: UnitId, amount: num
 
 /** Sets how many of a unit land on a planet; a planet with nothing left to land leaves the landing. */
 export function withLanding(entry: TacticalEntry, planetId: string, unit: UnitId, count: number): Partial<TacticalEntry> {
-  const current = entry.landings.find(l => l.planetId === planetId)?.units ?? {};
+  const known = entry.landings.find(l => l.planetId === planetId);
   const rest = entry.landings.filter(l => l.planetId !== planetId);
-  const units = withCount(current, unit, count);
-  return { landings: hasUnits(units) ? [...rest, { planetId, units }] : rest };
+  const units = withCount(known?.units ?? {}, unit, count);
+  return { landings: hasUnits(units) || hasStructures(known?.structures) ? [...rest, { ...known, planetId, units }] : rest };
+}
+
+const withStructure = (structures: StructureCounts | undefined, kind: StructureKind, count: number): StructureCounts | undefined => {
+  const { [kind]: gone, ...rest } = structures ?? {};
+  void gone;
+  const next: StructureCounts = count > 0 ? { ...rest, [kind]: count } : rest;
+  return Object.keys(next).length > 0 ? next : undefined;
+};
+
+/** Sets how many structures of a kind an action puts on a planet from the space area of its system; a planet with nothing left leaves the landing. */
+export function withLandedStructure(entry: TacticalEntry, planetId: string, kind: StructureKind, count: number): Partial<TacticalEntry> {
+  const known = entry.landings.find(l => l.planetId === planetId);
+  const rest = entry.landings.filter(l => l.planetId !== planetId);
+  const { structures: old, ...kept } = known ?? { planetId, units: {} };
+  const structures = withStructure(old, kind, count);
+  return { landings: hasUnits(kept.units) || structures ? [...rest, { ...kept, ...(structures ? { structures } : {}) }] : rest };
+}
+
+/** The structures that stand in the space area of the active system once the flights of an action arrived: those already there and those it brings. */
+export function structuresArrived(entry: TacticalEntry, before: GameState): StructureCounts {
+  const sum: StructureCounts = { ...before.afloat?.[entry.systemId ?? ''] };
+  for (const move of entry.moves) {
+    if (move.from === entry.systemId) continue;
+    for (const kind of Object.keys(move.structures ?? {}) as StructureKind[]) sum[kind] = (sum[kind] ?? 0) + (move.structures?.[kind] ?? 0);
+  }
+  return sum;
+}
+
+/** How many structures of a kind stand at a place before the action: on a planet, or in the space area of a system. */
+export const structuresAt = (before: GameState, pack: DataPack, from: string, kind: StructureKind): number =>
+  (from in pack.planets ? (kind === 'pds' ? before.pds[from] ?? 0 : before.docks.includes(from) ? 1 : 0) : before.afloat?.[from]?.[kind] ?? 0);
+
+/** How many structures of a kind a source's group takes from one place. */
+export const pickedStructures = (group: Move[], from: string, kind: StructureKind): number =>
+  group.filter(m => m.from === from).reduce((sum, m) => sum + (m.structures?.[kind] ?? 0), 0);
+
+/** The structures of a kind at a place before the action, less what the other routes of the action take from it. */
+export function structuresFor(game: Game, pack: DataPack, before: GameState, entry: TacticalEntry, source: string, from: string, kind: StructureKind): number {
+  const group = groupOf(game, pack, entry.moves, source);
+  const elsewhere = entry.moves.filter(m => m.from === from && !group.includes(m)).reduce((sum, m) => sum + (m.structures?.[kind] ?? 0), 0);
+  return structuresAt(before, pack, from, kind) - elsewhere;
+}
+
+/** Sets how many structures of a kind a source's group takes on board at `from`: one of its planets, or a planet or system on its way. */
+export function withStructureCount(game: Game, pack: DataPack, moves: Move[], source: string, from: string, kind: StructureKind, count: number): Move[] {
+  const pickup = sourceSlot(game, pack, from) !== source;
+  const same = (m: Move) => m.from === from && (pickup ? m.pickupOf === source : m.pickupOf === undefined);
+  const known = moves.find(same);
+  const { structures: old, ...kept } = known ?? { from, units: {}, ...(pickup ? { pickupOf: source } : {}) };
+  const structures = withStructure(old, kind, count);
+  const item: Move = { ...kept, ...(structures ? { structures } : {}) };
+  const next = known ? moves.map(m => (m === known ? item : m)) : [...moves, item];
+  return next.filter(m => m !== item || hasCargo(m) || (m.from === source && m.pickupOf === undefined));
 }
 
 /**
@@ -211,7 +270,9 @@ export function availableFor(game: Game, pack: DataPack, before: GameState, entr
 /** Sets the way of a source, adding the source if it is new. What it picked up in systems no longer on the way goes. */
 export function withRoute(game: Game, pack: DataPack, moves: Move[], source: string, via: string[]): Move[] {
   const kept = moves.filter(m => m.pickupOf !== source || via.includes(sourceSlot(game, pack, m.from) ?? ''));
-  const main: Move = { from: source, units: mainMove(moves, source)?.units ?? {}, ...(via.length > 0 ? { via } : {}) };
+  const { via: old, ...known } = mainMove(moves, source) ?? { from: source, units: {} };
+  void old;
+  const main: Move = { ...known, ...(via.length > 0 ? { via } : {}) };
   return mainMove(moves, source) ? kept.map(m => (m.from === source && m.pickupOf === undefined ? main : m)) : [...kept, main];
 }
 
@@ -229,18 +290,18 @@ export function withUnitCount(game: Game, pack: DataPack, moves: Move[], source:
   const item: Move = known ? { ...known, units } : { from, units, ...(pickup ? { pickupOf: source } : {}) };
   const next = known ? moves.map(m => (m === known ? item : m)) : [...moves, item];
   // The source's own move stays even when empty: it holds the arrow and the way.
-  return next.filter(m => m !== item || hasUnits(m.units) || (m.from === source && m.pickupOf === undefined));
+  return next.filter(m => m !== item || hasCargo(m) || (m.from === source && m.pickupOf === undefined));
 }
 
 /** The sources with nothing chosen: no ship flies from them, nothing rides on board and nothing is picked up on their way. */
 export const emptySources = (game: Game, pack: DataPack, entry: TacticalEntry): string[] =>
-  sourcesOf(game, pack, entry).filter(source => !groupOf(game, pack, entry.moves, source).some(m => hasUnits(m.units)));
+  sourcesOf(game, pack, entry).filter(source => !groupOf(game, pack, entry.moves, source).some(hasCargo));
 
 /** When the editor closes: a source with nothing chosen goes, and with it the empty moves. */
 export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): Move[] {
   return moves.filter(m => {
-    if (hasUnits(m.units)) return true;
-    return m.pickupOf === undefined && groupOf(game, pack, moves, m.from).some(other => hasUnits(other.units));
+    if (hasCargo(m)) return true;
+    return m.pickupOf === undefined && groupOf(game, pack, moves, m.from).some(hasCargo);
   });
 }
 

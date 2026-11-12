@@ -1,0 +1,182 @@
+{
+  "batch": 12,
+  "title": "Factions: titans, cabal",
+  "components": [
+    {
+      "id": "promissory:terraform",
+      "name": "Terraform",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "promissory/terraform"
+    },
+    {
+      "id": "ability:terragenesis",
+      "name": "Terragenesis",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "ability/terragenesis"
+    },
+    {
+      "id": "ability:awaken",
+      "name": "Awaken",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "ability/awaken"
+    },
+    {
+      "id": "ability:coalescence",
+      "name": "Coalescence",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "ability/coalescence"
+    },
+    {
+      "id": "leader:titansagent",
+      "name": "Tellurian",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "leader/titansagent"
+    },
+    {
+      "id": "leader:titanscommander",
+      "name": "Tungstantus",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "leader/titanscommander"
+    },
+    {
+      "id": "leader:titanshero",
+      "name": "Ul the Progenitor",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "leader/titanshero"
+    },
+    {
+      "id": "mech:titans_mech",
+      "name": "Hecatoncheires",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "mech/titans_mech"
+    },
+    {
+      "id": "breakthrough:titansbt",
+      "name": "Slumberstate Computing",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "titans",
+      "file": "breakthrough/titansbt"
+    },
+    {
+      "id": "technology:ht2",
+      "name": "Hel-Titan II",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "technology/ht2"
+    },
+    {
+      "id": "technology:se2",
+      "name": "Saturn Engine II",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "titans",
+      "file": "technology/se2"
+    },
+    {
+      "id": "promissory:crucible",
+      "name": "Crucible",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "promissory/crucible"
+    },
+    {
+      "id": "ability:devour",
+      "name": "Devour",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "ability/devour"
+    },
+    {
+      "id": "ability:amalgamation",
+      "name": "Amalgamation",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "ability/amalgamation"
+    },
+    {
+      "id": "ability:riftmeld",
+      "name": "Riftmeld",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "ability/riftmeld"
+    },
+    {
+      "id": "leader:cabalagent",
+      "name": "The Stillness of Stars",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "leader/cabalagent"
+    },
+    {
+      "id": "leader:cabalcommander",
+      "name": "That Which Molds Flesh",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "leader/cabalcommander"
+    },
+    {
+      "id": "leader:cabalhero",
+      "name": "It Feeds on Carrion",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "leader/cabalhero"
+    },
+    {
+      "id": "mech:cabal_mech",
+      "name": "Reanimator",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "mech/cabal_mech"
+    },
+    {
+      "id": "breakthrough:cabalbt",
+      "name": "Al'Raith Ix Ianovar",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "cabal",
+      "file": "breakthrough/cabalbt"
+    },
+    {
+      "id": "technology:dt2",
+      "name": "Dimensional Tear II",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "technology/dt2"
+    },
+    {
+      "id": "technology:vtx",
+      "name": "Vortex",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "cabal",
+      "file": "technology/vtx"
+    }
+  ]
+}

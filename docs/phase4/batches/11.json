@@ -1,0 +1,198 @@
+{
+  "batch": 11,
+  "title": "Factions: naaz, nomad",
+  "components": [
+    {
+      "id": "promissory:bmf",
+      "name": "Black Market Forgery",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "promissory/bmf"
+    },
+    {
+      "id": "ability:distant_suns",
+      "name": "Distant Suns",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "ability/distant_suns"
+    },
+    {
+      "id": "ability:fabrication",
+      "name": "Fabrication",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "ability/fabrication"
+    },
+    {
+      "id": "leader:naazagent",
+      "name": "Garv and Gunn",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "leader/naazagent"
+    },
+    {
+      "id": "leader:naazcommander",
+      "name": "Dart and Tai",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "leader/naazcommander"
+    },
+    {
+      "id": "leader:naazhero",
+      "name": "Hesh and Prit",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "leader/naazhero"
+    },
+    {
+      "id": "mech:naaz_mech",
+      "name": "Eidolon",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "mech/naaz_mech"
+    },
+    {
+      "id": "mech:naaz_mech_space",
+      "name": "Z-Grav Eidolon",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "mech/naaz_mech_space"
+    },
+    {
+      "id": "mech:naaz_voltron",
+      "name": "Eidolon Maximum",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "naaz",
+      "file": "mech/naaz_voltron"
+    },
+    {
+      "id": "breakthrough:naazbt",
+      "name": "Absolute Synergy",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "naaz",
+      "file": "breakthrough/naazbt"
+    },
+    {
+      "id": "technology:pfa",
+      "name": "Pre-Fab Arcologies",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "technology/pfa"
+    },
+    {
+      "id": "technology:sc",
+      "name": "Supercharge",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "naaz",
+      "file": "technology/sc"
+    },
+    {
+      "id": "promissory:cavalry",
+      "name": "The Cavalry",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "promissory/cavalry"
+    },
+    {
+      "id": "ability:the_company",
+      "name": "The Company",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "ability/the_company"
+    },
+    {
+      "id": "ability:future_sight",
+      "name": "Future Sight",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "ability/future_sight"
+    },
+    {
+      "id": "leader:nomadagentmercer",
+      "name": "Field Marshal Mercer",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "leader/nomadagentmercer"
+    },
+    {
+      "id": "leader:nomadagentthundarian",
+      "name": "The Thundarian",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "leader/nomadagentthundarian"
+    },
+    {
+      "id": "leader:nomadagentartuno",
+      "name": "Artuno the Betrayer",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "leader/nomadagentartuno"
+    },
+    {
+      "id": "leader:nomadcommander",
+      "name": "Navarch Feng",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "leader/nomadcommander"
+    },
+    {
+      "id": "leader:nomadhero",
+      "name": "Ahk-Syl Siven",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "leader/nomadhero"
+    },
+    {
+      "id": "mech:nomad_mech",
+      "name": "Quantum Manipulator",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "mech/nomad_mech"
+    },
+    {
+      "id": "breakthrough:nomadbt",
+      "name": "Thunder's Paradox",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "nomad",
+      "file": "breakthrough/nomadbt"
+    },
+    {
+      "id": "technology:m2",
+      "name": "Memoria II",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "technology/m2"
+    },
+    {
+      "id": "technology:tcs",
+      "name": "Temporal Command Suite",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "nomad",
+      "file": "technology/tcs"
+    }
+  ]
+}

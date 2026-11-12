@@ -1,0 +1,190 @@
+{
+  "batch": 10,
+  "title": "Factions: empyrean, mahact",
+  "components": [
+    {
+      "id": "promissory:blood_pact",
+      "name": "Blood Pact",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "promissory/blood_pact"
+    },
+    {
+      "id": "promissory:dark_pact",
+      "name": "Dark Pact",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "promissory/dark_pact"
+    },
+    {
+      "id": "ability:voidborn",
+      "name": "Voidborn",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "ability/voidborn"
+    },
+    {
+      "id": "ability:aetherpassage",
+      "name": "Aetherpassage",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "ability/aetherpassage"
+    },
+    {
+      "id": "ability:dark_whispers",
+      "name": "Dark Whispers",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "ability/dark_whispers"
+    },
+    {
+      "id": "leader:empyreanagent",
+      "name": "Acamar",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "leader/empyreanagent"
+    },
+    {
+      "id": "leader:empyreancommander",
+      "name": "Xuange",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "leader/empyreancommander"
+    },
+    {
+      "id": "leader:empyreanhero",
+      "name": "Conservator Procyon",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "leader/empyreanhero"
+    },
+    {
+      "id": "mech:empyrean_mech",
+      "name": "Watcher",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "mech/empyrean_mech"
+    },
+    {
+      "id": "breakthrough:empyreanbt",
+      "name": "Void Tether",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "empyrean",
+      "file": "breakthrough/empyreanbt"
+    },
+    {
+      "id": "technology:vw",
+      "name": "Voidwatch",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "technology/vw"
+    },
+    {
+      "id": "technology:as",
+      "name": "Aetherstream",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "empyrean",
+      "file": "technology/as"
+    },
+    {
+      "id": "promissory:scepter",
+      "name": "Scepter of Dominion",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "promissory/scepter"
+    },
+    {
+      "id": "ability:edict",
+      "name": "Edict",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "ability/edict"
+    },
+    {
+      "id": "ability:imperia",
+      "name": "Imperia",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "ability/imperia"
+    },
+    {
+      "id": "ability:hubris",
+      "name": "Hubris",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "ability/hubris"
+    },
+    {
+      "id": "leader:mahactagent",
+      "name": "Jae Mir Kan",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "leader/mahactagent"
+    },
+    {
+      "id": "leader:mahactcommander",
+      "name": "Il Na Viroset",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "leader/mahactcommander"
+    },
+    {
+      "id": "leader:mahacthero",
+      "name": "Airo Shir Aur",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "leader/mahacthero"
+    },
+    {
+      "id": "mech:mahact_mech",
+      "name": "Starlancer",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "mech/mahact_mech"
+    },
+    {
+      "id": "breakthrough:mahactbt",
+      "name": "Vaults of the Heir",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "mahact",
+      "file": "breakthrough/mahactbt"
+    },
+    {
+      "id": "technology:cl2",
+      "name": "Crimson Legionnaire II",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "technology/cl2"
+    },
+    {
+      "id": "technology:gr",
+      "name": "Genetic Recombination",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "mahact",
+      "file": "technology/gr"
+    }
+  ]
+}

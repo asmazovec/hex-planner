@@ -3,6 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import ru from './ru.json';
 import en from './en.json';
 import { setTextLanguage } from '../data/loadPack';
+import { EXTENSION_CODES } from '../domain/rules/codes';
 
 export type Language = 'ru' | 'en';
 
@@ -24,8 +25,15 @@ function readStoredLanguage(): Language {
   return 'ru';
 }
 
+/** The texts of a language with those of the warning codes declared in files of their own (src/domain/rules/codes). */
+function withCodes<T extends { plan: { warning: Record<string, string> } }>(texts: T, language: Language): T {
+  const warning = { ...texts.plan.warning };
+  for (const def of EXTENSION_CODES.values()) warning[def.code] = def.text[language];
+  return { ...texts, plan: { ...texts.plan, warning } };
+}
+
 void i18next.use(initReactI18next).init({
-  resources: { ru: { translation: ru }, en: { translation: en } },
+  resources: { ru: { translation: withCodes(ru, 'ru') }, en: { translation: withCodes(en, 'en') } },
   lng: readStoredLanguage(),
   fallbackLng: 'ru',
   interpolation: { escapeValue: false },

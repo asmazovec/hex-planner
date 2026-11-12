@@ -1,0 +1,174 @@
+{
+  "batch": 8,
+  "title": "Factions: yin, yssaril",
+  "components": [
+    {
+      "id": "promissory:greyfire",
+      "name": "Greyfire Mutagen",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "yin",
+      "file": "promissory/greyfire"
+    },
+    {
+      "id": "ability:indoctrination",
+      "name": "Indoctrination",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "yin",
+      "file": "ability/indoctrination"
+    },
+    {
+      "id": "ability:devotion",
+      "name": "Devotion",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "yin",
+      "file": "ability/devotion"
+    },
+    {
+      "id": "leader:yinagent",
+      "name": "Brother Milor",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "yin",
+      "file": "leader/yinagent"
+    },
+    {
+      "id": "leader:yincommander",
+      "name": "Brother Omar",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "yin",
+      "file": "leader/yincommander"
+    },
+    {
+      "id": "leader:yinhero",
+      "name": "Dannel of the Tenth",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "yin",
+      "file": "leader/yinhero"
+    },
+    {
+      "id": "mech:yin_mech",
+      "name": "Moyin's Ashes",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "yin",
+      "file": "mech/yin_mech"
+    },
+    {
+      "id": "breakthrough:yinbt",
+      "name": "Yin Ascendant",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "yin",
+      "file": "breakthrough/yinbt"
+    },
+    {
+      "id": "technology:yso",
+      "name": "Yin Spinner Omega",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "yin",
+      "file": "technology/yso"
+    },
+    {
+      "id": "technology:ic",
+      "name": "Impulse Core",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "yin",
+      "file": "technology/ic"
+    },
+    {
+      "id": "promissory:spynet",
+      "name": "Spy Net",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "yssaril",
+      "file": "promissory/spynet"
+    },
+    {
+      "id": "ability:stall_tactics",
+      "name": "Stall Tactics",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "yssaril",
+      "file": "ability/stall_tactics"
+    },
+    {
+      "id": "ability:scheming",
+      "name": "Scheming",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "yssaril",
+      "file": "ability/scheming"
+    },
+    {
+      "id": "ability:crafty",
+      "name": "Crafty",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "yssaril",
+      "file": "ability/crafty"
+    },
+    {
+      "id": "leader:yssarilagent",
+      "name": "Ssruu",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "yssaril",
+      "file": "leader/yssarilagent"
+    },
+    {
+      "id": "leader:yssarilcommander",
+      "name": "So Ata",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "yssaril",
+      "file": "leader/yssarilcommander"
+    },
+    {
+      "id": "leader:yssarilhero",
+      "name": "Kyver, Blade and Key",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "yssaril",
+      "file": "leader/yssarilhero"
+    },
+    {
+      "id": "mech:yssaril_mech",
+      "name": "Blackshade Infiltrator",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "yssaril",
+      "file": "mech/yssaril_mech"
+    },
+    {
+      "id": "breakthrough:yssarilbt",
+      "name": "Deepgloom Executable",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "yssaril",
+      "file": "breakthrough/yssarilbt"
+    },
+    {
+      "id": "technology:tp",
+      "name": "Transparasteel Plating",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "yssaril",
+      "file": "technology/tp"
+    },
+    {
+      "id": "technology:mi",
+      "name": "Mageon Implants",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "yssaril",
+      "file": "technology/mi"
+    }
+  ]
+}

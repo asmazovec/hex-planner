@@ -1,0 +1,146 @@
+{
+  "batch": 30,
+  "title": "Common: public objectives, secret objectives",
+  "components": [
+    {
+      "id": "publicObjective:supremacy",
+      "name": "Achieve Supremacy",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/supremacy"
+    },
+    {
+      "id": "publicObjective:become_legend",
+      "name": "Become a Legend",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/become_legend"
+    },
+    {
+      "id": "publicObjective:command_armada",
+      "name": "Command an Armada",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/command_armada"
+    },
+    {
+      "id": "publicObjective:massive_cities",
+      "name": "Construct Massive Cities",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/massive_cities"
+    },
+    {
+      "id": "publicObjective:control_borderlands",
+      "name": "Control the Borderlands",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/control_borderlands"
+    },
+    {
+      "id": "publicObjective:vast_reserves",
+      "name": "Hold Vast Reserves",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/vast_reserves"
+    },
+    {
+      "id": "publicObjective:vast_territories",
+      "name": "Patrol Vast Territories",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/vast_territories"
+    },
+    {
+      "id": "publicObjective:protect_border",
+      "name": "Protect the Border",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/protect_border"
+    },
+    {
+      "id": "publicObjective:ancient_monuments",
+      "name": "Reclaim Ancient Monuments",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/ancient_monuments"
+    },
+    {
+      "id": "publicObjective:distant_lands",
+      "name": "Rule Distant Lands",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/distant_lands"
+    },
+    {
+      "id": "secretObjective:ans",
+      "name": "Adapt New Strategies",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/ans"
+    },
+    {
+      "id": "secretObjective:btgk",
+      "name": "Become the Gatekeeper",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/btgk"
+    },
+    {
+      "id": "secretObjective:ctr",
+      "name": "Control the Region",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/ctr"
+    },
+    {
+      "id": "secretObjective:csl",
+      "name": "Cut Supply Lines",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/csl"
+    },
+    {
+      "id": "secretObjective:dtgs",
+      "name": "Destroy Their Greatest Ship",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/dtgs"
+    },
+    {
+      "id": "secretObjective:eap",
+      "name": "Establish a Perimeter",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/eap"
+    },
+    {
+      "id": "secretObjective:faa",
+      "name": "Forge an Alliance",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/faa"
+    },
+    {
+      "id": "secretObjective:fsn",
+      "name": "Form a Spy Network",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/fsn"
+    },
+    {
+      "id": "secretObjective:fwm",
+      "name": "Fuel the War Machine",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/fwm"
+    },
+    {
+      "id": "secretObjective:gamf",
+      "name": "Gather a Mighty Fleet",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/gamf"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "batch": 19,
+  "title": "Common: action cards",
+  "components": [
+    {
+      "id": "actionCard:bunker",
+      "name": "Bunker",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/bunker"
+    },
+    {
+      "id": "actionCard:confusing",
+      "name": "Confusing Legal Text",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/confusing"
+    },
+    {
+      "id": "actionCard:const_rider",
+      "name": "Construction Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/const_rider"
+    },
+    {
+      "id": "actionCard:courageous",
+      "name": "Courageous to the End",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/courageous"
+    },
+    {
+      "id": "actionCard:cripple",
+      "name": "Cripple Defenses",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/cripple"
+    },
+    {
+      "id": "actionCard:diplo_rider",
+      "name": "Diplomacy Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/diplo_rider"
+    },
+    {
+      "id": "actionCard:dh1",
+      "name": "Direct Hit",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/dh1"
+    },
+    {
+      "id": "actionCard:disable",
+      "name": "Disable",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/disable"
+    },
+    {
+      "id": "actionCard:distinguished",
+      "name": "Distinguished Councilor",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/distinguished"
+    },
+    {
+      "id": "actionCard:economic_initiative",
+      "name": "Economic Initiative",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/economic_initiative"
+    },
+    {
+      "id": "actionCard:emergency",
+      "name": "Emergency Repairs",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/emergency"
+    },
+    {
+      "id": "actionCard:experimental",
+      "name": "Experimental Battlestation",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/experimental"
+    },
+    {
+      "id": "actionCard:f_prototype",
+      "name": "Fighter Prototype",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/f_prototype"
+    },
+    {
+      "id": "actionCard:fire_team",
+      "name": "Fire Team",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/fire_team"
+    },
+    {
+      "id": "actionCard:fs1",
+      "name": "Flank Speed",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/fs1"
+    },
+    {
+      "id": "actionCard:f_researched",
+      "name": "Focused Research",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/f_researched"
+    },
+    {
+      "id": "actionCard:f_deployment",
+      "name": "Frontline Deployment",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/f_deployment"
+    },
+    {
+      "id": "actionCard:ghost_ship",
+      "name": "Ghost Ship",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/ghost_ship"
+    },
+    {
+      "id": "actionCard:imp_rider",
+      "name": "Imperial Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/imp_rider"
+    },
+    {
+      "id": "actionCard:silence_space",
+      "name": "In The Silence Of Space",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/silence_space"
+    }
+  ]
+}

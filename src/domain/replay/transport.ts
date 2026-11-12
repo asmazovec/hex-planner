@@ -1,5 +1,7 @@
 /** Transport (LRR 95, 16): pickups, the capacity of each moving group and of a system, and what a system holds against the fleet pool. */
 import { applied } from '../effects/apply';
+import { holderOf } from '../effects/registry';
+import { waive } from '../effects/waivers';
 import { blockersOf, fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
@@ -50,7 +52,7 @@ export const fightersFly = (game: Game, holdings: Holdings, pack: DataPack): boo
 
 /** The ships a system of the player may hold: the fleet pool, after what they hold changed it. */
 export const fleetLimit = (game: Game, state: GameState, pack: DataPack): number =>
-  applied(pack, state.holdings, 'fleetLimit', state.fleet, { faction: game.faction }).value;
+  applied(pack, holderOf(game, state), 'fleetLimit', state.fleet, { faction: game.faction }).value;
 
 /** Fighters each space dock keeps in its system apart from the ships' capacity (Space Dock I and II). */
 export const DOCK_FIGHTERS = 3;
@@ -78,7 +80,7 @@ export function capacity(game: Game, units: UnitCounts, holdings: Holdings, pack
     if (!def) continue;
     const n = (units[id] ?? 0) - (def.fighter ? keptFighters(units, fighterRoom) : 0);
     if (def.ground || (def.fighter && !flying)) load += n * def.capacityUsed;
-    else if (!def.fighter) cap += n * applied(pack, holdings, 'capacity', unitStats(game.faction, id, false, pack)?.capacity ?? 0, { faction: game.faction, unit: id }).value;
+    else if (!def.fighter) cap += n * applied(pack, { holdings, faction: game.faction }, 'capacity', unitStats(game.faction, id, false, pack)?.capacity ?? 0, { faction: game.faction, unit: id }).value;
   }
   return { load, capacity: cap };
 }
@@ -156,7 +158,8 @@ export function removeFleetExcess(state: GameState, target: string, removals: Un
  */
 export function boardSystemWarnings(game: Game, state: GameState, slot: string, pack: DataPack): Warning[] {
   const players: [Game, GameState][] = [[game, state], ...Object.entries(state.rivals ?? {}).map(([id, held]): [Game, GameState] => [gameAs(game, id), held])];
-  return players.flatMap(([view, held]) => checkSystem(view, held, slot, pack));
+  // What a player's components in force lift of it is marked, as for an entry.
+  return players.flatMap(([view, held]) => waive(checkSystem(view, held, slot, pack), { pack, game: view, before: held, after: held, shared: state }));
 }
 
 /** Check: the capacity and the fleet pool of a system after units arrived or were built there. */

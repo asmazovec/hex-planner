@@ -1,0 +1,174 @@
+{
+  "batch": 3,
+  "title": "Factions: sol, ghost",
+  "components": [
+    {
+      "id": "promissory:ms",
+      "name": "Military Support",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "sol",
+      "file": "promissory/ms"
+    },
+    {
+      "id": "ability:orbital_drop",
+      "name": "Orbital Drop",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "sol",
+      "file": "ability/orbital_drop"
+    },
+    {
+      "id": "ability:versatile",
+      "name": "Versatile",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "sol",
+      "file": "ability/versatile"
+    },
+    {
+      "id": "leader:solagent",
+      "name": "Evelyn DeLouis",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "sol",
+      "file": "leader/solagent"
+    },
+    {
+      "id": "leader:solcommander",
+      "name": "Claire Gibson",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "sol",
+      "file": "leader/solcommander"
+    },
+    {
+      "id": "leader:solhero",
+      "name": "Jace X, 4th Air Legion",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "sol",
+      "file": "leader/solhero"
+    },
+    {
+      "id": "mech:sol_mech",
+      "name": "ZS Thunderbolt M2",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "sol",
+      "file": "mech/sol_mech"
+    },
+    {
+      "id": "breakthrough:solbt",
+      "name": "Bellum Gloriosum",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "sol",
+      "file": "breakthrough/solbt"
+    },
+    {
+      "id": "technology:so2",
+      "name": "Spec Ops II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "sol",
+      "file": "technology/so2"
+    },
+    {
+      "id": "technology:ac2",
+      "name": "Advanced Carrier II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "sol",
+      "file": "technology/ac2"
+    },
+    {
+      "id": "promissory:iff",
+      "name": "Creuss Iff",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "ghost",
+      "file": "promissory/iff"
+    },
+    {
+      "id": "ability:quantum_entanglement",
+      "name": "Quantum Entanglement",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "ghost",
+      "file": "ability/quantum_entanglement"
+    },
+    {
+      "id": "ability:slipstream",
+      "name": "Slipstream",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "ghost",
+      "file": "ability/slipstream"
+    },
+    {
+      "id": "ability:creuss_gate",
+      "name": "Creuss Gate",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "ghost",
+      "file": "ability/creuss_gate"
+    },
+    {
+      "id": "leader:ghostagent",
+      "name": "Emissary Taivra",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "ghost",
+      "file": "leader/ghostagent"
+    },
+    {
+      "id": "leader:ghostcommander",
+      "name": "Sai Seravus",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "ghost",
+      "file": "leader/ghostcommander"
+    },
+    {
+      "id": "leader:ghosthero",
+      "name": "Riftwalker Meian",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "ghost",
+      "file": "leader/ghosthero"
+    },
+    {
+      "id": "mech:ghost_mech",
+      "name": "Icarus Drive",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "ghost",
+      "file": "mech/ghost_mech"
+    },
+    {
+      "id": "breakthrough:ghostbt",
+      "name": "Particle Synthesis",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "ghost",
+      "file": "breakthrough/ghostbt"
+    },
+    {
+      "id": "technology:ds",
+      "name": "Dimensional Splicer",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "ghost",
+      "file": "technology/ds"
+    },
+    {
+      "id": "technology:wg",
+      "name": "Wormhole Generator",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "ghost",
+      "file": "technology/wg"
+    }
+  ]
+}
