@@ -1,5 +1,6 @@
 /** LRR 2 Action Cards. Source: tirules2 rules-reference/action-cards.md. The hand is kept by what entries gain and play; there is no deck. */
 import { describe, expect, test } from 'vitest';
+import { componentsOf } from '../../components';
 import type { Entry } from '../../types';
 import { forecast, rulesGame, rulesPack } from '../kit';
 
@@ -12,8 +13,15 @@ describe('LRR 2 Action Cards', () => {
   });
   test.todo('2.2: Politics draws action cards with its primary and secondary — not modelled: Politics is shown only');
   test.todo('2.3: a drawn card comes from the top of the deck into the hand — not modelled: no deck');
-  test.todo('2.4: a hand holds at most seven action cards, the rest is discarded — not modelled: no hand');
-  test.todo('2.4.1: effects can change the hand limit — not modelled: no hand');
+  test('2.4: a hand holds at most seven action cards: an eighth drawn is warned of', () => {
+    const cards = componentsOf(pack).filter(c => c.kind === 'actionCard').slice(0, 8).map(c => c.id);
+    const draw: Entry = { id: 'd8', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: {}, gains: cards };
+    const warnings = forecast(rulesGame({ entries: [draw] }), pack).warnings.d8;
+    expect(warnings.find(w => w.code === 'handOverLimit')).toMatchObject({ params: { cards: 8, limit: 7 }, rule: '2.4' });
+    const seven: Entry = { ...draw, id: 'd7', gains: cards.slice(0, 7) };
+    expect(forecast(rulesGame({ entries: [seven] }), pack).warnings.d7.map(w => w.code)).not.toContain('handOverLimit');
+  });
+  // 2.4.1: a component that changes the limit is tested in src/domain/effects/points/status.test.ts, with a throwaway effect.
   test.todo('2.5: action cards stay hidden until played — not modelled: no hand');
   test.todo('2.6: the bold first paragraph gives the timing — not modelled: cards are not resolved');
   test.todo('2.6.1: an "Action" card takes a component action and must be resolvable in full — not modelled: a component action is a note');

@@ -35,6 +35,7 @@ export const WarningText = memo(function WarningText({ warning, game, pack }: Wa
     system: params.systemId === undefined ? undefined : place(params.systemId),
     where: params.where === undefined ? undefined : place(params.where),
     unit: params.unit === undefined ? undefined : t(`unit.${params.unit}`),
+    objective: params.objective === undefined ? undefined : componentById(pack, String(params.objective))?.name ?? String(params.objective),
     pool: params.pool === undefined ? undefined : t(`plan.summary.${params.pool}`),
     slice: params.sliceId === undefined ? undefined : t(`plan.slice.${params.sliceId}`),
   });
