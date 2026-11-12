@@ -16,7 +16,7 @@ describe('leader:obsidianhero Sharsiss Hollow', () => {
   // Home One makes no warning at all.
   // Why the check is redundant here: LRR 71.4 forbids spending an exhausted planet until it is readied, and the hero
   // readies every planet of its player.
-  test.fails('leader:obsidianhero readies the planets spent earlier: a later payment with them is not warned of', () => {
+  test('leader:obsidianhero readies the planets spent earlier: a later payment with them is not warned of', () => {
     const later = again();
     const table = obsidian([[spend(), componentAction(id), later]]);
     quote(table.pack, id, 'ACTION: Ready all of your planets.');
@@ -25,7 +25,7 @@ describe('leader:obsidianhero Sharsiss Hollow', () => {
 
   // "Ready all of your planets."
   // Checks: right after the hero no planet of mine is left exhausted.
-  test.fails('leader:obsidianhero leaves no planet of its player exhausted', () => {
+  test('leader:obsidianhero leaves no planet of its player exhausted', () => {
     const later = again();
     const table = obsidian([[spend(), componentAction(id), later]]);
     expect(before(table.game, table.pack, later).exhausted).toEqual([]);
@@ -56,7 +56,7 @@ describe('leader:obsidianhero Sharsiss Hollow', () => {
     expectStanding(warningsOf(obsidian([[componentAction(id)], [second]]), second), 'componentNotHeld');
   });
 
-  test.fails('leader:obsidianhero is a play effect', () => {
+  test('leader:obsidianhero is a play effect', () => {
     const { pack } = obsidian([[]]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

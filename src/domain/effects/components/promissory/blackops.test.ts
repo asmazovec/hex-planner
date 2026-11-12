@@ -23,7 +23,7 @@ describe('promissory:blackops Black Ops', () => {
   // Checks: I (Federation of Sol) receive the note from the Firmament in a transaction: I end with 2 trade goods and 2
   // command tokens more than the same transaction without the note.
   // Why the check is redundant here: no check is lifted; the receipt itself is a gain the count must make.
-  test.fails('promissory:blackops received by another player gives 2 trade goods and 2 command tokens', () => {
+  test('promissory:blackops received by another player gives 2 trade goods and 2 command tokens', () => {
     const got = table('sol', 'firmament', deal([FROM_FIRMAMENT]), [], [FROM_FIRMAMENT]);
     quote(got.pack, id, 'Then, gain 2 command tokens, gain 2 trade goods, and purge this card.');
     const plain = endOf(table('sol', 'firmament', deal([]), [], [FROM_FIRMAMENT]));
@@ -35,7 +35,7 @@ describe('promissory:blackops Black Ops', () => {
   // "... and purge this card."
   // Checks: the note received is purged: neither I nor the Firmament hold it afterwards.
   // Why the check is redundant here: the note leaves the game on receipt, so it is no longer anyone's to play or trade.
-  test.fails('promissory:blackops received is purged: nobody holds it afterwards', () => {
+  test('promissory:blackops received is purged: nobody holds it afterwards', () => {
     const after = endOf(table('sol', 'firmament', deal([FROM_FIRMAMENT]), [], [FROM_FIRMAMENT]));
     expect(after.holdings.promissory).not.toContain(FROM_FIRMAMENT);
     expect(after.rivals?.o1.holdings.promissory ?? []).not.toContain(FROM_FIRMAMENT);

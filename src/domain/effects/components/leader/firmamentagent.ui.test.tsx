@@ -29,7 +29,7 @@ test('leader:firmamentagent is chosen in «Used» of the tactical action', async
 // Checks: with the agent chosen in «Used», the route warning stays on the screen in the allowed look and names
 // Myru Vos.
 // Why the check is redundant here: the exhausted agent lets ships that transport nothing pass other players' ships.
-test.fails('leader:firmamentagent chosen in «Used», the route through other players\' ships reads as allowed by Myru Vos', async () => {
+test('leader:firmamentagent chosen in «Used», the route through other players\' ships reads as allowed by Myru Vos', async () => {
   const move = flight({ cruiser: 1 });
   const made = table(move, { cruiser: 1 });
   quote(made.pack, id, 'they can also move through other players\' ships');

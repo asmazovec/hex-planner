@@ -6,10 +6,14 @@
  * the `planetExhausted` warning. Nothing is waived: the planets are ready, so no warning is made. The purge is what
  * the replay already does when a hero is played.
  *
- * Pass 1: still the hint it is today; the play comes in pass 2.
  */
+import { readyPlanets } from '../../../replay/payment';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:obsidianhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: ({ state, warnings }) => readyPlanets(state, state.exhausted.filter(planet => state.control[planet] === 'me'), warnings, 'component'),
+};

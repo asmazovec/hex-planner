@@ -15,7 +15,7 @@ const table = (entries: Entry[]) =>
 // Checks: after the hero's component action the payment of a later action with Home One shows no warning that the
 // planet is exhausted.
 // Why the check is redundant here: the hero readied the planet, so it may be spent again (LRR 71.4).
-test.fails('leader:obsidianhero played, a later payment with a planet spent before shows no exhausted planet', () => {
+test('leader:obsidianhero played, a later payment with a planet spent before shows no exhausted planet', () => {
   const later = again();
   const made = table([spend(), componentAction(id), later]);
   quote(made.pack, id, 'Ready all of your planets.');
