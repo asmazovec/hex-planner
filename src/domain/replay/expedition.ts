@@ -41,7 +41,7 @@ function payPart(
     return;
   }
   const kind = cost?.kind ?? 'resources';
-  const paid = pay(state, part.payment, kind, pack, warnings);
+  const paid = pay(state, part.payment, kind, pack, warnings, { faction: game.faction });
   if (cost && paid < cost.amount) {
     warnings.push(violation(kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
   }

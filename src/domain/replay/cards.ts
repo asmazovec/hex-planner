@@ -62,7 +62,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   if (effects.production && cost.kind === 'resources' && !handlerOf(entry.card).cost) {
     cost.amount = costOf(game, state, effects.production.units, pack, producerList(game, state, effects.production.systemId, pack).length > 0, entry);
   }
-  const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings);
+  const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings, { faction: game.faction, shared: round.states.me });
   if (cost.amount > paid) {
     warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
   }

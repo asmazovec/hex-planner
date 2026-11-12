@@ -27,7 +27,7 @@ test.fails('ability:arbiters an action card in a transaction reads as allowed by
 // LRR 94.3: players "cannot exchange other types of cards or tokens".
 // Checks: another faction's action card in a transaction is shown as a standing warning.
 // Why the check is NOT redundant here: only the Hacan may trade action cards; today nobody is warned (pass 2).
-test.fails('ability:arbiters another faction\'s action card in a transaction stands', () => {
+test('ability:arbiters another faction\'s action card in a transaction stands', () => {
   turn('sol');
   expectShownStanding('transactionKind');
 });

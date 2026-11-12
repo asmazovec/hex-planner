@@ -244,7 +244,7 @@ export function costOf(game: Game, state: GameState, units: UnitCounts, pack: Da
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. `producing`: a unit used PRODUCTION. */
 export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], producing = true): void {
   const cost = costOf(game, state, entry.production, pack, producing, entry);
-  const paid = pay(state, entry.payment, 'resources', pack, warnings);
+  const paid = pay(state, entry.payment, 'resources', pack, warnings, { faction: game.faction });
   if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
 }
 
@@ -262,7 +262,7 @@ export function applyComponentProduction(
   const producing = producerList(game, state, made.systemId, pack).length > 0;
   placeProduction(game, state, made.systemId, made.units, pack, made.ground);
   const cost = costOf(game, state, made.units, pack, producing, entry);
-  const paid = pay(state, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources', pack, warnings);
+  const paid = pay(state, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources', pack, warnings, { faction: game.faction });
   if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
   warnings.push(...checkSystem(game, state, made.systemId, pack));
 }

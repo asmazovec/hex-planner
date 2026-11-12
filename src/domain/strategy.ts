@@ -156,7 +156,7 @@ export function cardChange(
   const was = cardCost(entry, factionId, before.holdings, pack);
   const cost = cardCost(next, factionId, before.holdings, pack);
   if (manual || (cost.amount === was.amount && cost.kind === was.kind)) return patch;
-  return { ...patch, effects: { ...next.effects, payment: autoPay(before, cost.amount, cost.kind, pack) } };
+  return { ...patch, effects: { ...next.effects, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: factionId }) } };
 }
 
 const counted = (units: UnitCounts, unit: UnitId, amount: number): UnitCounts => {

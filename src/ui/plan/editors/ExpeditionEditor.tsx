@@ -68,11 +68,11 @@ export function ExpeditionEditor({
       </Section>
       {paidWith && (
         <PaymentBlock
-          need={paidWith.amount} kind={paidWith.kind} payment={payment} state={before} pack={pack}
+          need={paidWith.amount} kind={paidWith.kind} payment={payment} state={before} pack={pack} faction={game.faction}
           manual={manualPayment}
           onManual={open => {
             onManualPayment(open);
-            if (!open) onChange({ payment: autoPay(before, paidWith.amount, paidWith.kind, pack) });
+            if (!open) onChange({ payment: autoPay(before, paidWith.amount, paidWith.kind, pack, { faction: game.faction }) });
           }}
           onChange={next => onChange({ payment: next })}
         >

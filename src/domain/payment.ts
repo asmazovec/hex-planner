@@ -1,4 +1,7 @@
-import type { DataPack, GameState, Payment } from './types';
+import { applied } from './effects/apply';
+import { appliedToPlanet } from './effects/points/payment';
+import { holderOf } from './effects/registry';
+import type { DataPack, GameState, Payment, RuleStep } from './types';
 
 export type PaymentKind = 'resources' | 'influence';
 
@@ -20,17 +23,48 @@ export const EXPEDITION_SLICES: ExpeditionSlice[] = [
   { id: 'tech', techPlanet: true },
 ];
 
+/**
+ * Who pays, for the components that change what a payment is worth: the faction, my state (laws, attachments) when the
+ * payer is not me, and the step the warnings of the payment carry. Without it the printed values stand.
+ */
+export interface PayView { faction: string; shared?: GameState; step?: RuleStep }
+
+/** Cards that are spent as if they were planets (The Triad), with their printed resources and influence. */
+export const PLANET_CARDS: Readonly<Record<string, number>> = { 'relic:thetriad': 3 };
+export const isPlanetCard = (id: string): boolean => id in PLANET_CARDS;
+
+/** A planet card the player holds and has not exhausted. */
+const readyPlanetCards = (state: GameState): string[] =>
+  Object.keys(PLANET_CARDS).filter(id => state.holdings.relics.includes(id) && !state.holdings.exhausted.includes(id));
+
 /** Planets that can pay the technology part of the expedition: ready, mine, with a technology specialty. */
 export const techSlicePlanets = (state: GameState, pack: DataPack): string[] =>
   readyPlanetIds(state).filter(id => (pack.planets[id]?.tech?.length ?? 0) > 0);
 
-/** Planets the player can still spend: own and not exhausted. */
+/** Planets the player can still spend: own and not exhausted, and the planet cards held and ready. */
 export const readyPlanetIds = (state: GameState): string[] =>
-  Object.keys(state.control).filter(id => state.control[id] === 'me' && !state.exhausted.includes(id));
+  [...Object.keys(state.control).filter(id => state.control[id] === 'me' && !state.exhausted.includes(id)), ...readyPlanetCards(state)];
 
-/** Value of a payment as written; ownership and exhaustion are checked by the projection. A trade good is worth 1. */
-export function paymentValue(payment: Payment, kind: PaymentKind, pack: DataPack): number {
-  return payment.planets.reduce((sum, id) => sum + (pack.planets[id]?.[kind] ?? 0), 0) + payment.tradeGoods;
+/** What a planet (or planet card) gives in `kind`, after the components of its controller and what is attached to it. */
+export function planetValue(pack: DataPack, state: GameState, planetId: string, kind: PaymentKind, view?: PayView): number {
+  const printed = isPlanetCard(planetId) ? PLANET_CARDS[planetId] : pack.planets[planetId]?.[kind] ?? 0;
+  if (!view) return printed;
+  const shared = view.shared ?? state;
+  return appliedToPlanet(
+    pack, holderOf(view, state, shared), shared.attachments?.[planetId] ?? [],
+    kind === 'resources' ? 'planetResources' : 'planetInfluence', printed, planetId,
+  ).value;
+}
+
+/** What one trade good spent is worth in `kind`: 1, or what the components of the payer make it. */
+export const tradeGoodWorth = (pack: DataPack, state: GameState, kind: PaymentKind, view?: PayView): number =>
+  view ? applied(pack, holderOf(view, state, view.shared ?? state), 'tradeGoodValue', 1, { kind, faction: view.faction }).value : 1;
+
+/** Value of a payment as written; ownership and exhaustion are checked by the projection. `at` is the payer's state with who they are. */
+export function paymentValue(payment: Payment, kind: PaymentKind, pack: DataPack, at?: PayView & { state: GameState }): number {
+  const view = at;
+  return payment.planets.reduce((sum, id) => sum + (at ? planetValue(pack, at.state, id, kind, view) : pack.planets[id]?.[kind] ?? 0), 0)
+    + payment.tradeGoods * (at ? tradeGoodWorth(pack, at.state, kind, view) : 1);
 }
 
 interface Pick { count: number; ids: string[]; }
@@ -39,15 +73,16 @@ interface Pick { count: number; ids: string[]; }
  * Cheapest way to cover `need` from ready planets and trade goods: least surplus burned,
  * then fewer trade goods, then fewer planets. Falls short only by giving everything useful.
  */
-export function autoPay(state: GameState, need: number, kind: PaymentKind, pack: DataPack): Payment {
+export function autoPay(state: GameState, need: number, kind: PaymentKind, pack: DataPack, view?: PayView): Payment {
+  const worth = tradeGoodWorth(pack, state, kind, view);
   const items = readyPlanetIds(state)
-    .map(id => ({ id, value: pack.planets[id]?.[kind] ?? 0 }))
+    .map(id => ({ id, value: planetValue(pack, state, id, kind, view) }))
     .filter(p => p.value > 0)
     .sort((a, b) => b.value - a.value || (a.id < b.id ? -1 : 1));
   const order = (ids: string[]): string[] => items.map(p => p.id).filter(id => ids.includes(id));
   if (need <= 0) return { planets: [], tradeGoods: 0 };
   const total = items.reduce((sum, p) => sum + p.value, 0);
-  if (total + state.tradeGoods < need) return { planets: order(items.map(p => p.id)), tradeGoods: state.tradeGoods };
+  if (total + state.tradeGoods * worth < need) return { planets: order(items.map(p => p.id)), tradeGoods: state.tradeGoods };
 
   // best[s]: fewest planets whose values sum to exactly s.
   const best: (Pick | undefined)[] = Array.from({ length: total + 1 }, () => undefined);
@@ -59,11 +94,11 @@ export function autoPay(state: GameState, need: number, kind: PaymentKind, pack:
     }
   }
   let winner: { surplus: number; goods: number; count: number; ids: string[] } | undefined;
-  for (let goods = 0; goods <= Math.min(state.tradeGoods, need); goods++) {
-    for (let s = Math.max(0, need - goods); s <= total; s++) {
+  for (let goods = 0; goods <= Math.min(state.tradeGoods, Math.ceil(need / worth)); goods++) {
+    for (let s = Math.max(0, need - goods * worth); s <= total; s++) {
       const pick = best[s];
       if (!pick) continue;
-      const cand = { surplus: s + goods - need, goods, count: pick.count, ids: pick.ids };
+      const cand = { surplus: s + goods * worth - need, goods, count: pick.count, ids: pick.ids };
       if (!winner || cand.surplus < winner.surplus
         || (cand.surplus === winner.surplus && (cand.goods < winner.goods
           || (cand.goods === winner.goods && cand.count < winner.count)))) winner = cand;

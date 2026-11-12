@@ -1,55 +1,121 @@
 /** Payment: planets are exhausted and trade goods spent for what an entry costs. */
-import { readyPlanetIds, type PaymentKind } from '../payment';
+import { isPlanetCard, planetValue, readyPlanetIds, tradeGoodWorth, type PayView, type PaymentKind } from '../payment';
 import { violation } from '../rules/registry';
-import type { DataPack, GameState, Payment, Warning } from '../types';
+import { effectOf } from '../effects/registry';
+import type { DataPack, Entry, Game, GameState, Payment, RuleStep, Warning } from '../types';
 
-const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind): number =>
-  readyPlanetIds(state).reduce((total, id) => total + (pack.planets[id]?.[field] ?? 0), 0);
+const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind, view?: PayView): number =>
+  readyPlanetIds(state).reduce((total, id) => total + planetValue(pack, state, id, field, view), 0);
 
-export const readyResources = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'resources');
-export const readyInfluence = (state: GameState, pack: DataPack): number => sumPlanets(state, pack, 'influence');
+export const readyResources = (state: GameState, pack: DataPack, view?: PayView): number => sumPlanets(state, pack, 'resources', view);
+export const readyInfluence = (state: GameState, pack: DataPack, view?: PayView): number => sumPlanets(state, pack, 'influence', view);
+
+/** A planet card held: it pays, though it is no planet I control. */
+const heldCard = (state: GameState, id: string): boolean => isPlanetCard(id) && state.holdings.relics.includes(id);
 
 /**
  * Check, over the state before paying: a planet I do not control (34 note 2, 64 note 5), a planet already exhausted, or
- * listed twice, and trade goods beyond those held.
+ * listed twice, and trade goods beyond those held. A planet card (The Triad) is no planet I control, so it is warned
+ * of as one, which its own component lifts; it is exhausted in the holdings, and the second use warns as well.
+ * `view.step` places the warnings (the payment step unless the entry says otherwise).
  */
-export function checkPayment(state: GameState, payment: Payment): Warning[] {
+export function checkPayment(state: GameState, payment: Payment, view?: Pick<PayView, 'step'>): Warning[] {
   const warnings: Warning[] = [];
   const spent = new Set(state.exhausted);
+  const cards = new Set(state.holdings.exhausted);
   for (const planetId of payment.planets) {
-    if (state.control[planetId] !== 'me') warnings.push(violation('planetNotControlled', { planetId }));
-    else if (spent.has(planetId)) warnings.push(violation('planetExhausted', { planetId }));
+    if (isPlanetCard(planetId)) {
+      warnings.push(violation('planetNotControlled', { planetId }, view?.step));
+      if (heldCard(state, planetId) && cards.has(planetId)) warnings.push(violation('planetExhausted', { planetId }, view?.step));
+      cards.add(planetId);
+      continue;
+    }
+    if (state.control[planetId] !== 'me') warnings.push(violation('planetNotControlled', { planetId }, view?.step));
+    else if (spent.has(planetId)) warnings.push(violation('planetExhausted', { planetId }, view?.step));
     spent.add(planetId);
   }
   if (payment.tradeGoods > state.tradeGoods) {
-    warnings.push(violation('shortTradeGoods', { needed: payment.tradeGoods, have: state.tradeGoods }));
+    warnings.push(violation('shortTradeGoods', { needed: payment.tradeGoods, have: state.tradeGoods }, view?.step));
   }
   return warnings;
 }
 
-/** Effect: exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
-export function applyPayment(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack): number {
+/**
+ * Effect: exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`: each
+ * planet by its value after the components of the payer (`view`), each trade good by its worth.
+ */
+export function applyPayment(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, view?: PayView): number {
   let value = 0;
   for (const planetId of payment.planets) {
+    if (isPlanetCard(planetId)) {
+      if (!heldCard(state, planetId) || state.holdings.exhausted.includes(planetId)) continue;
+      state.holdings.exhausted.push(planetId);
+      value += planetValue(pack, state, planetId, kind, view);
+      continue;
+    }
     if (state.exhausted.includes(planetId)) continue;
     state.exhausted.push(planetId);
-    if (state.control[planetId] === 'me') value += pack.planets[planetId]?.[kind] ?? 0;
+    if (state.control[planetId] === 'me') value += planetValue(pack, state, planetId, kind, view);
   }
   const spent = Math.max(0, Math.min(payment.tradeGoods, state.tradeGoods));
+  const worth = tradeGoodWorth(pack, state, kind, view);
   state.tradeGoods -= spent;
-  return value + spent;
+  return value + spent * worth;
 }
 
 /** Exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
-export function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[]): number {
-  warnings.push(...checkPayment(state, payment));
-  return applyPayment(state, payment, kind, pack);
+export function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[], view?: PayView): number {
+  warnings.push(...checkPayment(state, payment, view));
+  return applyPayment(state, payment, kind, pack, view);
 }
 
-/** A game effect readies the listed planets; only those I control can be readied (71 note 3). */
-export function readyPlanets(state: GameState, planets: string[], warnings: Warning[]): void {
+/** Spends `amount` trade goods for an effect: what is not there is warned of and never taken, so the pool stays at zero or above. */
+export function spendTradeGoods(state: GameState, amount: number, warnings: Warning[], step: RuleStep = 'payment'): void {
+  if (amount > state.tradeGoods) warnings.push(violation('shortTradeGoods', { needed: amount, have: state.tradeGoods }, step));
+  state.tradeGoods -= Math.max(0, Math.min(amount, state.tradeGoods));
+}
+
+/**
+ * For the component that lets commodities be spent as if they were trade goods (the Keleres agent): after the entry's
+ * payment, takes from the commodities what the payment lacked in trade goods, as the payment's own warnings say, and
+ * returns it. Whatever the commodities cannot cover stays short.
+ */
+export function commoditiesForShortfall(turn: { state: GameState; warnings: Warning[] }): number {
+  const short = turn.warnings
+    .filter(w => w.code === 'shortTradeGoods' && w.step === 'payment')
+    .reduce((sum, w) => sum + Math.max(0, Number(w.params.needed) - Number(w.params.have)), 0);
+  const covered = Math.min(short, turn.state.commodities);
+  turn.state.commodities -= covered;
+  return covered;
+}
+
+/**
+ * A game effect readies the listed planets; only those I control can be readied (71 note 3). `step` is where the
+ * warning stands: the card's block unless the effect is a component's.
+ */
+export function readyPlanets(state: GameState, planets: string[], warnings: Warning[], step: RuleStep = 'card'): void {
   for (const planetId of planets) {
-    if (state.control[planetId] !== 'me') warnings.push(violation('readyNotControlled', { planetId }, 'card'));
+    if (state.control[planetId] !== 'me') warnings.push(violation('readyNotControlled', { planetId }, step));
   }
   state.exhausted = state.exhausted.filter(id => !planets.includes(id));
+}
+
+/**
+ * The cost a component declares (`ComponentEffect.cost`), paid with the payment of its component entry: the planets
+ * are exhausted, the trade goods spent, and a shortfall warns as shortResources or shortInfluence at the step
+ * `component`. Returns what was paid.
+ */
+export function payComponentCost(
+  state: GameState, cost: { kind: PaymentKind; amount: number }, payment: Payment | undefined, pack: DataPack, warnings: Warning[], view: PayView,
+): number {
+  const paid = pay(state, payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings, { ...view, step: 'component' });
+  if (paid < cost.amount) warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }, 'component'));
+  return paid;
+}
+
+/** The cost of the component a component entry plays, if its effect declares one: paid with the entry's `payment`. */
+export function payPlayedCost(game: Pick<Game, 'faction'>, state: GameState, shared: GameState, entry: Entry, pack: DataPack, warnings: Warning[]): void {
+  if (entry.type !== 'component' || !entry.componentId) return;
+  const cost = effectOf(pack, entry.componentId)?.cost;
+  if (cost) payComponentCost(state, cost, entry.payment, pack, warnings, { faction: game.faction, shared });
 }

@@ -16,6 +16,7 @@ import { afterEntry } from './afterEntry';
 import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
 import { rivalLandings } from './invasion';
+import { payPlayedCost } from './payment';
 import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyComponent, applyGains, applyScored, applyUses, readyCards } from './holdings';
 import { applyAdjustment, initialState } from './state';
@@ -108,6 +109,7 @@ function applyEntry(
   }
   // What the entry uses beside its action is played like a component action's own; then each played component does what its effect says.
   applyUses(state, entry, pack, warnings, game.faction, acts.states);
+  payPlayedCost(game, state, shared, entry, pack, warnings);
   for (const id of playedBy(entry)) {
     const effect = effectOf(pack, id);
     if (!effect?.play) continue;

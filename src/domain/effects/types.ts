@@ -32,8 +32,9 @@ export interface ModifierContext {
   productionValue: { structure: StructureKind; planetId: string };
   /** The cost of one unit; half a resource for a unit built in pairs. */
   unitCost: { faction: string; unit: UnitId };
-  planetResources: { planetId: string };
-  planetInfluence: { planetId: string };
+  /** `attached`: the cards and laws attached to the planet (`attachments`), so a law elected for one planet knows if it is this one. */
+  planetResources: { planetId: string; attached?: readonly string[] };
+  planetInfluence: { planetId: string; attached?: readonly string[] };
   /** What researching one technology costs, by its component id. */
   researchCost: { technology: string };
   /** The prerequisites a technology still lacks, by its component id. */

@@ -581,7 +581,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <TurnEditor
             key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
-            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onDone={toList} onRemove={() => removeEdited(turn.id)}
+            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onPayment={payment => updateEntry(turn.id, { payment })} onDone={toList} onRemove={() => removeEdited(turn.id)}
           />
         );
       }
@@ -597,7 +597,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           return (
             <TransactionStep
               key={`${host.id}-${index}`} game={hostGame} pack={pack} act={act} owner={host.owner ?? 'me'} board={boards.board(host.id)}
-              warnings={all.filter(w => w.step === 'transaction')} onChange={replace} onBack={backTo} onRemove={drop}
+              warnings={all.filter(w => w.step === 'transaction')} uses={host.uses} onChange={replace} onBack={backTo} onRemove={drop}
             />
           );
         }

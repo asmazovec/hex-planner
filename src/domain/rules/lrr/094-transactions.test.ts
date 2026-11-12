@@ -131,16 +131,16 @@ describe('LRR 94 Transactions', () => {
 
   test.todo('94.3 / 35.9.2: relic fragments change hands — not modelled: a relic fragment is an exploration card and no player\'s holdings keep those');
 
-  test('94.3.1: an action card given in a transaction leaves the hand for the other player\'s, one copy, without a warning', () => {
+  test('94.3.1: an action card given in a transaction warns, for only an ability lets it be traded, and still leaves the hand for the other player\'s, one copy', () => {
     const mine = turn([deal('o1', { components: [CARD_IN_HAND] })]);
     const game = table([mine], { me: { hand: [CARD_IN_HAND, CARD_IN_HAND] }, opponents: {} });
-    expect(codesOf(game, pack, mine)).toEqual([]);
+    expect(codesOf(game, pack, mine)).toEqual(['transactionKind']);
     const { state } = forecast(game, pack);
     expect(state.holdings.hand).toEqual([CARD_IN_HAND]);
     expect(state.rivals?.o1.holdings.hand).toEqual([CARD_IN_HAND]);
   });
 
-  test.todo('94.3.1: only the Emirates of Hacan trade action cards — not checked: the app does not know faction abilities, so an action card in a transaction never warns');
+  // The Emirates of Hacan (Arbiters) and Black Market Dealings lift this warning: their files, src/domain/effects/components.
   test.todo('94.4: a transaction need not be even — nothing to check: any amounts are accepted');
   test.todo('94.5: a transaction may be part of a deal — not modelled: deals are not planned');
   test.todo('94.6: during each agenda one transaction with each player, neighbours or not — not modelled: the agenda phase is not planned');

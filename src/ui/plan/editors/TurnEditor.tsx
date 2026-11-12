@@ -1,9 +1,11 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
+import { effectOf } from '../../../domain/effects/registry';
+import { autoPay } from '../../../domain/payment';
 import { readyToPlay } from '../../../domain/project';
 import { playerState } from '../../../domain/stacks';
-import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
+import type { ComponentKind, DataPack, Entry, Game, GameState, Payment, Warning } from '../../../domain/types';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
@@ -15,6 +17,7 @@ import { NoteField } from '../../primitives/NoteField';
 import { Section } from '../../primitives/Section';
 import { ChoicesBlock } from '../blocks/ChoicesBlock';
 import { ComponentSlot } from '../blocks/ComponentSlot';
+import { PaymentBlock } from '../blocks/PaymentBlock';
 
 /** What a component action can play. */
 const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary'];
@@ -36,6 +39,8 @@ export interface TurnEditorProps {
   onComponent: (id: string | undefined) => void;
   /** What the player chose for the component the action plays (`ComponentEffect.choose`); empty when none is left. */
   onChoices?: (choices: Record<string, string | number>) => void;
+  /** What a component with a declared cost is paid with (resources or influence, planets and trade goods). */
+  onPayment?: (payment: Payment) => void;
   onDone: () => void;
   onRemove: () => void;
 }
@@ -44,8 +49,9 @@ export interface TurnEditorProps {
  * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
  * in a part of their own, then what any turn holds; a pass has only that.
  */
-export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
+  const [manualPayment, setManualPayment] = useState(false);
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && entry.type === 'component' && entry.componentId === undefined);
   // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
   const ready = useMemo(() => {
@@ -54,6 +60,9 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
     return readyToPlay(pack, own.holdings, game.faction, own.control);
   }, [board, pack, entry.owner, game.faction]);
   const played = entry.type === 'component' && entry.componentId ? componentById(pack, entry.componentId) : undefined;
+  const cost = played ? effectOf(pack, played.id)?.cost : undefined;
+  const own = board ? playerState(board, entry.owner) : undefined;
+  const payment: Payment = entry.type === 'component' && entry.payment ? entry.payment : { planets: [], tradeGoods: 0 };
   const placer = placeWarnings(warnings);
   // The acts block shows its own; the rest stands first, where it cannot be missed.
   placer.at('deal');
@@ -74,6 +83,13 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
           {played && board && onChoices && (
             <ChoicesBlock id={played.id} entry={entry} game={game} pack={pack} before={playerState(board, entry.owner)} shared={board} onChange={onChoices} />
           )}
+          {cost && own && onPayment && (
+            <PaymentBlock
+              need={cost.amount} kind={cost.kind} payment={payment} state={own} pack={pack} faction={game.faction} manual={manualPayment}
+              onManual={open => { setManualPayment(open); if (!open) onPayment(autoPay(own, cost.amount, cost.kind, pack, { faction: game.faction })); }}
+              onChange={onPayment}
+            />
+          )}
           <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
         </EditorPart>
@@ -82,7 +98,12 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
       {picking && (
         <ComponentPicker
           kinds={PLAYED_KINDS} player={entry.owner ?? 'me'} owned={ready} prefer="owned" onClose={() => setPicking(false)}
-          onPick={id => { onComponent(id); setPicking(false); }}
+          onPick={id => {
+            onComponent(id);
+            const picked = effectOf(pack, id)?.cost;
+            if (picked && own && onPayment) onPayment(autoPay(own, picked.amount, picked.kind, pack, { faction: game.faction }));
+            setPicking(false);
+          }}
         />
       )}
     </EditorFrame>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { notesOfFirst, tradable } from '../../../domain/holdings';
+import { effectOf } from '../../../domain/effects/registry';
+import { notesOfFirst, tradable, TRANSACTION_KINDS } from '../../../domain/holdings';
 import { opponentsBySeat } from '../../../domain/players';
-import type { Act, DataPack, Game, GameState, Goods, Warning } from '../../../domain/types';
+import type { Act, ComponentKind, DataPack, Game, GameState, Goods, Warning } from '../../../domain/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
@@ -28,6 +29,8 @@ export interface TransactionStepProps {
   board: GameState;
   /** The turn's warnings: the step shows those of transactions. */
   warnings: Warning[];
+  /** The components the turn uses beside its action: one that lifts the check of the kind (Black Market Dealings) opens relics and secret objectives to the deal. */
+  uses?: string[];
   onChange: (act: Transaction) => void;
   onBack: () => void;
   onRemove: () => void;
@@ -37,7 +40,7 @@ export interface TransactionStepProps {
  * A transaction with a neighbour (LRR 94): who with, then what is given and what is got. The components of a side are
  * chosen among what the giving side holds and a transaction hands over; nothing else is limited, the replay warns.
  */
-export function TransactionStep({ game, pack, act, owner, board, warnings, onChange, onBack, onRemove }: TransactionStepProps) {
+export function TransactionStep({ game, pack, act, owner, board, warnings, uses = [], onChange, onBack, onRemove }: TransactionStepProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState<Side | null>(null);
   // The game is seen by the turn's owner: its opponents are every other player, me among them in an opponent's turn.
@@ -54,9 +57,12 @@ export function TransactionStep({ game, pack, act, owner, board, warnings, onCha
    * What the giving side of `key` can still add: its notes and action cards before the entry, less those chosen. The
    * notes of the side that gets them stand first: a note goes back to its owner without a search.
    */
+  // A used component that lifts the warning of the kind of a component lets relics and unscored secret objectives be offered as well.
+  const kinds: readonly ComponentKind[] = uses.some(id => effectOf(pack, id)?.waive?.some(w => w.code === 'transactionKind'))
+    ? [...TRANSACTION_KINDS, 'relic', 'secretObjective'] : TRANSACTION_KINDS;
   const offer = (key: Side): string[] => {
     const held = giver(key) === 'me' ? board.holdings : board.rivals?.[giver(key)]?.holdings;
-    return held ? notesOfFirst(tradable(held, act[key].components ?? []), giver(key === 'give' ? 'get' : 'give')) : [];
+    return held ? notesOfFirst(tradable(held, act[key].components ?? [], kinds), giver(key === 'give' ? 'get' : 'give')) : [];
   };
   const side = (key: Side, title: string) => {
     const goods = act[key];
