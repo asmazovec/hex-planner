@@ -45,7 +45,7 @@ test.fails('leader:sardakkcommander the landing offers a ground force of an adja
 
 // Checks: a landing from n1 already entered shows its warning as allowed by the commander in the tactical editor.
 // Why the check is redundant here: as above.
-test.fails('leader:sardakkcommander a landing from an adjacent planet shows its warning as allowed', () => {
+test('leader:sardakkcommander a landing from an adjacent planet shows its warning as allowed', () => {
   const move = committed();
   const sardakk = table('sardakk', move);
   quote(sardakk.pack, id, 'You can commit (move) up to 1 ground force from each planet in the active system');

@@ -40,7 +40,7 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
   // does not come from the space area is listed and lifted by the commander, and the infantry moves from n1 to t1.
   // Why the check is redundant here: LRR 49.2 commits only "ground forces in the space area of the active system",
   // and the commander commits from planets of adjacent systems, without a ship (G'hom Sek'kus ruling 2).
-  test.fails('leader:sardakkcommander commits a ground force from a planet of an adjacent system: the warning is waived', () => {
+  test('leader:sardakkcommander commits a ground force from a planet of an adjacent system: the warning is waived', () => {
     const sardakk = table(tactical(TARGET, { landings: [commit('n1', 't1', { infantry: 1 })] }));
     const warnings = warningsOf(sardakk, sardakk.move);
     expectWaived(warnings, CODE, id);
@@ -53,7 +53,7 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
   // "... from each planet in the active system ..."
   // Checks: one infantry is committed from t2 to t1, both in the active system: waived as well.
   // Why the check is redundant here: the planets of the active system are named by the card besides the adjacent ones.
-  test.fails('leader:sardakkcommander commits a ground force from another planet of the active system: the warning is waived', () => {
+  test('leader:sardakkcommander commits a ground force from another planet of the active system: the warning is waived', () => {
     const sardakk = table(tactical(TARGET, { landings: [commit('t2', 't1', { infantry: 1 })] }));
     expectWaived(warningsOf(sardakk, sardakk.move), CODE, id);
     expect(endOf(sardakk).ground.t2).toEqual({ infantry: 1 });
@@ -110,7 +110,7 @@ describe('leader:sardakkcommander G\'hom Sek\'kus', () => {
     expectStanding(warningsOf(sardakk, sardakk.move), 'landingOverLimit');
   });
 
-  test.fails('leader:sardakkcommander is a passive effect that waives committing from planets', () => {
+  test('leader:sardakkcommander is a passive effect that waives committing from planets', () => {
     const { pack } = table(tactical(TARGET));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);

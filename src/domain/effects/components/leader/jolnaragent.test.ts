@@ -4,48 +4,51 @@ import type { Entry } from '../../../types';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, quote, secondary, using, warningsOf } from '../kit';
 import { id } from './jolnaragent';
 
-/** The secondary of Technology: Gravity Drive for 4 resources, paid with Home Two (1); `remove` is the infantry removed by planet. */
+/**
+ * The secondary of Technology researches two technologies, which for the Jol-Nar (Brilliant: the secondary resolves as the
+ * primary) is one free and one for 6 resources, paid with Home Two (1); `remove` is the infantry removed by planet.
+ */
 const research = (remove?: Record<string, number>): Entry => {
-  const entry = secondary(CARD.technology, { researched: ['technology:gd'], payment: { planets: ['h2'], tradeGoods: 0 } });
+  const entry = secondary(CARD.technology, { researched: ['technology:nm', 'technology:gd'], payment: { planets: ['h2'], tradeGoods: 0 } });
   return remove ? using({ ...entry, choices: remove } as Entry, id) : entry;
 };
-/** Three infantry stand on Home One. */
+/** Five infantry stand on Home One. */
 const jolnar = (entries: Entry[]) => bench({
-  faction: 'jolnar', expansions: ['pok'], start: { leaders: { [id]: 'unlocked' } }, entries: [adjust({ ground: { h1: { infantry: 3 } } }), ...entries],
+  faction: 'jolnar', expansions: ['pok'], start: { leaders: { [id]: 'unlocked' } }, entries: [adjust({ ground: { h1: { infantry: 5 } } }), ...entries],
 });
 
 describe('leader:jolnaragent Doctor Sucaban', () => {
   // "You may exhaust this card to allow that player to remove any number of their infantry from the game board. For
   //  each unit removed, reduce the resources spent by 1."
-  // Checks: the agent removes the three infantry of Home One, so the research costs 1, which Home Two pays: no
+  // Checks: the agent removes the five infantry of Home One, so the research costs 1, which Home Two pays: no
   // warning of resources, and the infantry are gone.
   // Why the default cost does not apply: the card lowers the resources spent by one per infantry removed; the payment
   // is checked against the lower cost (nothing is listed as waived).
-  test.fails('leader:jolnaragent used in a research removes infantry and lowers the cost by one each', () => {
-    const entry = research({ h1: 3 });
+  test('leader:jolnaragent used in a research removes infantry and lowers the cost by one each', () => {
+    const entry = research({ h1: 5 });
     const table = jolnar([entry]);
     expectNone(warningsOf(table, entry), 'shortResources');
     expect(endOf(table).ground.h1?.infantry ?? 0).toBe(0);
   });
 
-  // Checks: two infantry removed lower the cost to 2, and Home Two pays 1: the warning names a cost of 2.
+  // Checks: two infantry removed lower the cost to 4, and Home Two pays 1: the warning names a cost of 4.
   // Why the check is NOT redundant here: the cost falls by the infantry removed, no more.
-  test.fails('leader:jolnaragent lowers the cost only by the infantry removed', () => {
+  test('leader:jolnaragent lowers the cost only by the infantry removed', () => {
     const entry = research({ h1: 2 });
     const table = jolnar([entry]);
-    expect(warningsOf(table, entry).find(w => w.code === 'shortResources')?.params).toMatchObject({ needed: 2, paid: 1 });
-    expect(endOf(table).ground.h1?.infantry).toBe(1);
+    expect(warningsOf(table, entry).find(w => w.code === 'shortResources')?.params).toMatchObject({ needed: 4, paid: 1 });
+    expect(endOf(table).ground.h1?.infantry).toBe(3);
   });
 
-  // LRR 91 (Technology, secondary): one technology for 4 resources.
-  // Checks: without the agent the research costs 4 and Home Two is short of it; the infantry stay.
+  // LRR 91 (Technology, secondary) with Brilliant (the secondary as the primary): two technologies, the second for 6 resources.
+  // Checks: without the agent the research costs 6 and Home Two is short of it; the infantry stay.
   // Why the check is NOT redundant here: the agent acts only when named in the entry.
-  test('leader:jolnaragent not used: the research costs four and the infantry stay', () => {
+  test('leader:jolnaragent not used: the research costs six and the infantry stay', () => {
     const entry = research();
     const table = jolnar([entry]);
     quote(table.pack, id, 'For each unit removed, reduce the resources spent by 1.');
-    expect(warningsOf(table, entry).find(w => w.code === 'shortResources')?.params).toMatchObject({ needed: 4, paid: 1 });
-    expect(endOf(table).ground.h1?.infantry).toBe(3);
+    expect(warningsOf(table, entry).find(w => w.code === 'shortResources')?.params).toMatchObject({ needed: 6, paid: 1 });
+    expect(endOf(table).ground.h1?.infantry).toBe(5);
   });
 
   // "You may exhaust this card ..."
@@ -56,7 +59,7 @@ describe('leader:jolnaragent Doctor Sucaban', () => {
     expectStanding(warningsOf(jolnar([research({ h1: 1 }), second]), second), 'componentExhausted');
   });
 
-  test.fails('leader:jolnaragent is a play effect', () => {
+  test('leader:jolnaragent is a play effect', () => {
     const { pack } = jolnar([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

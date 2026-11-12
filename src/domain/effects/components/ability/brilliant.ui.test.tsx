@@ -15,7 +15,7 @@ const table = (faction: string, entry: ReturnType<typeof secondary>) =>
 // Checks: the warnings of a Jol-Nar secondary of Technology with two technologies and 6 resources paid show neither
 // the research limit nor resources.
 // Why the default limit does not apply: the secondary resolves as the primary (a `modify`, nothing shown as allowed).
-test.fails('ability:brilliant two technologies by the secondary show no warning of limit or resources', () => {
+test('ability:brilliant two technologies by the secondary show no warning of limit or resources', () => {
   const entry = twoResearched();
   showWarnings(table('jolnar', entry), entry);
   expectNotShown('researchOverLimit');

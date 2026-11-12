@@ -7,11 +7,22 @@
  * action: after the landing and the production, so a planet taken by this action counts as controlled. The planet must
  * be in the active system and controlled by the player then; otherwise nothing is placed. Used for another player
  * (an opponent's entry naming my agent) it is not modelled: an opponent's entry does not change my state.
- *
- * Pass 1: a hint, as the guide asks; the play is written in pass 2.
+
  */
+import { add } from '../../../replay/state';
+import { systemOfPlanet } from '../../../stacks';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:sardakkagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  choose: [{ key: 'planet', kind: 'planet' }],
+  play: ({ game, state, entry, choices, held, pack }) => {
+    if (!held || entry.type !== 'tactical') return;
+    const planet = String(choices.planet ?? '');
+    if (!planet || state.control[planet] !== 'me' || systemOfPlanet(game, planet, pack) !== entry.systemId) return;
+    add(state.ground, planet, { infantry: 2 });
+  },
+};
