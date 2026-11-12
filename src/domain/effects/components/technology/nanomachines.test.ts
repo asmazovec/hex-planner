@@ -13,7 +13,7 @@ describe('technology:nanomachines Nanomachines', () => {
   // Checks: the component action with the planet h1 chosen places a PDS on h1.
   // Why this is counted: PDS are counted by the plan (structures, the limits of a planet and of the reinforcements);
   // the technology places one outside the Construction card (24.2), so its play must do it.
-  test.fails('technology:nanomachines places a PDS on the planet chosen', () => {
+  test('technology:nanomachines places a PDS on the planet chosen', () => {
     const table = ralnel([placePds('h1')]);
     quote(table.pack, id, 'Exhaust this card to place 1 PDS on a planet you control');
     expect(endOf(table).pds.h1).toBe(1);
@@ -22,7 +22,7 @@ describe('technology:nanomachines Nanomachines', () => {
   // "... on a planet you control."
   // Checks: a PDS placed on t1, which I do not control, is warned of.
   // Why the check is NOT redundant here: the technology places on a planet the player controls only.
-  test.fails('technology:nanomachines a PDS placed on a planet I do not control is warned of', () => {
+  test('technology:nanomachines a PDS placed on a planet I do not control is warned of', () => {
     const entry = placePds('t1');
     expectStanding(warningsOf(ralnel([entry]), entry), 'structureNotControlled');
   });
@@ -30,7 +30,7 @@ describe('technology:nanomachines Nanomachines', () => {
   // LRR 85.5: a planet holds at most two PDS.
   // Checks: a third PDS on h1 is warned of, and still placed as entered elsewhere would be.
   // Why the check is NOT redundant here: the technology places a PDS, it does not lift the limit of a planet.
-  test.fails('technology:nanomachines a third PDS on a planet is warned of', () => {
+  test('technology:nanomachines a third PDS on a planet is warned of', () => {
     const entry = placePds('h1');
     expectStanding(warningsOf(ralnel([entry], { pds: { h1: 2 } }), entry), 'structureLimit');
   });
@@ -67,9 +67,8 @@ describe('technology:nanomachines Nanomachines', () => {
     expect(end.pds).toEqual({});
   });
 
-  test.todo('technology:nanomachines the component editor offers a choice of the planet for the PDS: the editor of a component action has no field for `choices` yet');
 
-  test.fails('technology:nanomachines is a play effect', () => {
+  test('technology:nanomachines is a play effect', () => {
     const { pack } = ralnel([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

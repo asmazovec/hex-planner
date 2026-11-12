@@ -21,7 +21,7 @@ describe('breakthrough:crimsonbt Resonance Generator', () => {
   // warning is made at all.
   // Why the default limit does not apply: the breakthrough changes the number the route is checked against (58.3: a
   // ship moves up to its move value), so it is a `modify` of `speed`, not a waiver: nothing is listed as waived.
-  test.fails('breakthrough:crimsonbt gives +1 move to a ship that starts in the home system', () => {
+  test('breakthrough:crimsonbt gives +1 move to a ship that starts in the home system', () => {
     const crimson = table(HOME, FAR, 'held');
     quote(crimson.pack, id, 'apply +1 to the move value of each of your ships that starts its movement in your home system');
     expectNone(warningsOf(crimson, crimson.move), 'speedShort');
@@ -31,14 +31,14 @@ describe('breakthrough:crimsonbt Resonance Generator', () => {
   //  when the card is exhausted."
   // Checks: the same flight with the breakthrough exhausted makes no speed warning either.
   // Why the default limit does not apply: an exhausted card keeps its passive abilities (34.4.1).
-  test.fails('breakthrough:crimsonbt exhausted still gives the +1', () => {
+  test('breakthrough:crimsonbt exhausted still gives the +1', () => {
     const crimson = table(HOME, FAR, 'exhausted');
     expectNone(warningsOf(crimson, crimson.move), 'speedShort');
   });
 
   // Checks: the +1 is one: four systems from home are still beyond a cruiser, and the warning names the move of 3.
   // Why the check is NOT redundant here: the breakthrough raises the move value by 1, it does not remove it.
-  test.fails('breakthrough:crimsonbt still warns of a fourth system, against the move of three', () => {
+  test('breakthrough:crimsonbt still warns of a fourth system, against the move of three', () => {
     const crimson = table(HOME, FARTHER, 'held');
     const warnings = warningsOf(crimson, crimson.move);
     expectStanding(warnings, 'speedShort');
@@ -66,7 +66,7 @@ describe('breakthrough:crimsonbt Resonance Generator', () => {
   test.todo('breakthrough:crimsonbt a ship that starts in a system with an active breach gets the +1: breaches are not on the plan\'s board');
   test.todo('breakthrough:crimsonbt ACTION: flip a breach or place an active breach: breaches are not on the plan\'s board');
 
-  test.fails('breakthrough:crimsonbt is a passive effect that changes the move value', () => {
+  test('breakthrough:crimsonbt is a passive effect that changes the move value', () => {
     const { pack } = table(HOME, FAR, 'held');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.speed).toBeTypeOf('function');

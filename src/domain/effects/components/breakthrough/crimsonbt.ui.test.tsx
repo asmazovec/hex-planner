@@ -17,7 +17,7 @@ const table = (breakthrough?: Holdings['breakthrough']) => {
 // Checks: a cruiser leaves the home system for a system three away; the tactical editor shows no speed warning, and
 // the flight stays as entered.
 // Why the default limit does not apply: the move value is 3 with the breakthrough, which reaches the active system.
-test.fails('breakthrough:crimsonbt a cruiser from home reaches a system three away without a speed warning', () => {
+test('breakthrough:crimsonbt a cruiser from home reaches a system three away without a speed warning', () => {
   const crimson = table('held');
   quote(crimson.table.pack, id, 'starts its movement in your home system');
   const live = showTactical(crimson.table, crimson.entry);

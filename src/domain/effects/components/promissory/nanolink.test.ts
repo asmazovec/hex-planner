@@ -31,7 +31,7 @@ describe('promissory:nanolink Nano-Link Permit', () => {
   // is moved onto t1 of the active system, and the warning that structures do not move is listed and lifted by the note.
   // Why the check is redundant here: LRR 85.3 says "Structures cannot move or be transported"; the note moves them
   // directly (Nano-Link Permit note 2), within its own limits: an adjacent system without the holder's tokens.
-  test.fails('promissory:nanolink moves a structure from an adjacent system onto a planet of the active system: the warning is waived', () => {
+  test('promissory:nanolink moves a structure from an adjacent system onto a planet of the active system: the warning is waived', () => {
     const move = using(permit(), NOTE);
     const sol = table('sol', [move]);
     quote(sol.pack, id, 'You may move your structures from adjacent systems that do not contain your command tokens');
@@ -106,7 +106,7 @@ describe('promissory:nanolink Nano-Link Permit', () => {
     expectStanding(warningsOf(ralnel, move), 'ownPromissory');
   });
 
-  test.fails('promissory:nanolink is a play effect that waives the moving of structures for its entry only', () => {
+  test('promissory:nanolink is a play effect that waives the moving of structures for its entry only', () => {
     const { pack } = table('sol', []);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([[CODE, undefined]]);

@@ -25,7 +25,7 @@ test('leader:ralnelhero is chosen in «Used» of the pass', async () => {
 // Checks: a tactical action after the pass that played the hero shows its turn-after-pass warning as allowed by
 // Director Nel.
 // Why the check is redundant here: LRR 3.3 ends the turns of a passed player; the hero unpasses them.
-test.fails('leader:ralnelhero a turn after the pass reads as allowed by Director Nel', () => {
+test('leader:ralnelhero a turn after the pass reads as allowed by Director Nel', () => {
   const move = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
   showWarnings(table([using(pass(), id), move]), move);
   expectShownWaived('actionAfterPass', 'Director Nel');

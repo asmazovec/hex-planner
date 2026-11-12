@@ -11,13 +11,16 @@
  * a start in a system with an active breach is not counted, and the ACTION that flips or places one changes nothing
  * the plan holds.
  *
- * The point `speed` is asked today with the faction and the unit only (`ModifierContext.speed`); the start of the move
- * is a new field of that context, a change of pass 2.
- *
- * Pass 1: still the hint it is today; pass 2 writes the modify (see the tests).
+ * The base asks `speed` with the start of the move (`from`), so `startsAtHome` decides; `plusSpeed` leaves a unit
+ * that does not move by itself alone.
  */
+import { plusSpeed, startsAtHome } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:crimsonbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { speed: (value, ctx) => (startsAtHome(ctx) ? plusSpeed(1)(value) : value) },
+};
