@@ -12,4 +12,14 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:arbiters';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [
+    {
+      code: 'transactionKind',
+      rule: 'When you are negotiating a transaction, action cards can be exchanged as part of that transaction.',
+      when: warning => String(warning.params.id).startsWith('actionCard:'),
+    },
+  ],
+};

@@ -18,7 +18,7 @@ const turn = (faction: string) => {
 // "You can negotiate transactions with players who are not your neighbor."
 // Checks: the transaction with a stranger is listed as allowed by Guild Ships.
 // Why the check is redundant here: 94.1 allows transactions with neighbours only; the Hacan trade with anyone.
-test.fails('ability:guild_ships a transaction with a stranger reads as allowed by Guild Ships', () => {
+test('ability:guild_ships a transaction with a stranger reads as allowed by Guild Ships', () => {
   quote(turn('hacan').pack, id, 'You can negotiate transactions with players who are not your neighbor.');
   expectShownWaived('notNeighbor', 'Guild Ships');
 });

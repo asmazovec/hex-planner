@@ -17,7 +17,7 @@ const follow = (faction: string) => {
 // "You do not have to spend a command token to resolve the secondary ability of the "Trade" strategy card."
 // Checks: the Hacan follow Trade with no strategy token left and no warning about the token is shown.
 // Why the check is redundant here: the secondary of Trade costs the Hacan no token (a `modify` of its cost).
-test.fails('ability:master_of_trade the secondary of Trade with an empty strategy pool shows no warning', () => {
+test('ability:master_of_trade the secondary of Trade with an empty strategy pool shows no warning', () => {
   quote(follow('hacan').pack, id, 'You do not have to spend a command token');
   expectNotShown('shortStrategy');
 });

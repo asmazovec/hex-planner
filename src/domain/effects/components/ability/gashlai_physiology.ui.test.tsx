@@ -16,7 +16,7 @@ const editor = (faction: string) => {
 // "Your ships can move through supernovas"
 // Checks: the route through the supernova stands in the editor, and its warning reads as allowed by Gashlai Physiology.
 // Why the check is redundant here: LRR 86.1 forbids moving through a supernova; the Muaat's ships may.
-test.fails('ability:gashlai_physiology the route through a supernova reads as allowed by Gashlai Physiology', () => {
+test('ability:gashlai_physiology the route through a supernova reads as allowed by Gashlai Physiology', () => {
   const { table } = editor('muaat');
   quote(table.pack, id, 'Your ships can move through supernovas');
   expectShownWaived('routeBlocked', 'Gashlai Physiology');

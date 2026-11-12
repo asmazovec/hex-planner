@@ -22,7 +22,7 @@ const turn = (before: Entry[]) => {
 // "While this card is in your play area, you may negotiate transactions with players who are not your neighbor."
 // Checks: after the note is played, the transaction with the Hacan is listed as allowed by Trade Convoys.
 // Why the check is redundant here: the card in play lifts the neighbour rule of 94.1.
-test.fails('promissory:convoys played, the transaction with a stranger reads as allowed by Trade Convoys', () => {
+test('promissory:convoys played, the transaction with a stranger reads as allowed by Trade Convoys', () => {
   quote(turn([componentAction(NOTE)]).pack, id, 'you may negotiate transactions with players who are not your neighbor');
   expectShownWaived('notNeighbor', 'Trade Convoys');
 });

@@ -17,7 +17,7 @@ const production = () => {
 // Checks: the unpaid production is warned of; I choose the hero in «Used», it is written into the entry, and the
 // warning that resources are short goes.
 // Why the check is redundant here: the units of this production cost 0, so nothing is owed (67.2).
-test.fails('leader:hacanhero chosen in Used, the production owes nothing', async () => {
+test('leader:hacanhero chosen in Used, the production owes nothing', async () => {
   const { table, live } = production();
   quote(table.pack, id, 'reduce the cost of each of your units to 0');
   expectShownStanding('shortResources');

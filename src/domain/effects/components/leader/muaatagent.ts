@@ -11,4 +11,9 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:muaatagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // The player chosen; the production it grants has no block of its own in a component action yet.
+  choose: [{ key: 'player', kind: 'player' }],
+};

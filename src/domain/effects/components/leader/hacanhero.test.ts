@@ -13,7 +13,7 @@ describe('leader:hacanhero Harrugh Gefhara — Galactic Securities Net', () => {
   //  of PRODUCTION."
   // Checks: two cruisers produced with the hero named in the entry owe nothing: no resources are short.
   // Why the check is redundant here: 67.2 asks the cost of the units in resources; the hero makes that cost 0.
-  test.fails('leader:hacanhero used with a production makes the units cost nothing', () => {
+  test('leader:hacanhero used with a production makes the units cost nothing', () => {
     const build = using(produce({ cruiser: 2 }), id);
     const hacan = table([build]);
     quote(hacan.pack, id, 'You may reduce the cost of each of your units to 0 during this use of PRODUCTION.');
@@ -46,7 +46,7 @@ describe('leader:hacanhero Harrugh Gefhara — Galactic Securities Net', () => {
     expectStanding(warningsOf(hacan, again), 'componentNotHeld');
   });
 
-  test.fails('leader:hacanhero is a play effect', () => {
+  test('leader:hacanhero is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

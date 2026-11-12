@@ -17,7 +17,7 @@ describe('promissory:fires Fires of the Gashlai', () => {
   // Checks: Sol plays the Muaat's note by a component action and ends holding War Sun (Sol's own war sun upgrade).
   // Why the check is redundant here: a technology is otherwise gained by research with its prerequisites (90.7); the
   // card gives it outright, so nothing about prerequisites or research is asked.
-  test.fails('promissory:fires played gains the war sun upgrade of the player who plays it', () => {
+  test('promissory:fires played gains the war sun upgrade of the player who plays it', () => {
     const play = componentAction(NOTE);
     const table = sol([play]);
     quote(table.pack, id, 'gain your war sun unit upgrade technology card');
@@ -27,7 +27,7 @@ describe('promissory:fires Fires of the Gashlai', () => {
   // "Remove 1 token from the Muaat player's fleet pool and return it to their reinforcements."
   // Checks: the Muaat's fleet pool goes from 3 to 2.
   // Why the check is redundant here: nothing but the Muaat's own redistribution changes their pools; the card does.
-  test.fails('promissory:fires played removes one token from the Muaat\'s fleet pool', () => {
+  test('promissory:fires played removes one token from the Muaat\'s fleet pool', () => {
     const table = sol([componentAction(NOTE)]);
     quote(table.pack, id, "Remove 1 token from the Muaat player's fleet pool");
     expect(endOf(table).rivals?.o1.fleet).toBe(2);
@@ -48,7 +48,7 @@ describe('promissory:fires Fires of the Gashlai', () => {
   //  they cannot play Fires of the Gashlai."
   // Checks: Sol already holding War Sun plays the note: a technology gained twice is warned of.
   // Why the check is NOT redundant here: the card cannot give what is already owned; the rule stands.
-  test.fails('promissory:fires played while the war sun upgrade is owned is warned of', () => {
+  test('promissory:fires played while the war sun upgrade is owned is warned of', () => {
     const play = componentAction(NOTE);
     const table = sol([play], { promissory: [NOTE], technologies: ['technology:ws'] });
     expectStanding(warningsOf(table, play), 'researchOwned');
@@ -63,7 +63,7 @@ describe('promissory:fires Fires of the Gashlai', () => {
     expectStanding(warningsOf(table, play), 'ownPromissory');
   });
 
-  test.fails('promissory:fires is a play effect', () => {
+  test('promissory:fires is a play effect', () => {
     expect(effect(sol([]).pack, id).tier).toBe('play');
   });
 });

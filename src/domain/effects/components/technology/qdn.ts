@@ -8,8 +8,24 @@
  * have three before spending the token, Hacan note 3). The exchange of strategy cards is not modelled: the other
  * players' cards are not planned. Pass 1: still the hint it is today.
  */
+import { spendTradeGoods } from '../../../replay/payment';
+import { spendStrategyTokens } from '../../../replay/status';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:qdn';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  choose: [{ key: 'player', kind: 'player' }],
+  // The exchange of strategy cards is not replayed: the other players' cards are not planned.
+  play: turn => {
+    const { state, states, choices, warnings, held } = turn;
+    if (!held) return;
+    spendStrategyTokens(turn);
+    const given = Math.min(3, state.tradeGoods);
+    spendTradeGoods(state, 3, warnings, 'component');
+    const other = typeof choices.player === 'string' ? states[choices.player] : undefined;
+    if (other && other !== state) other.tradeGoods += given;
+  },
+};

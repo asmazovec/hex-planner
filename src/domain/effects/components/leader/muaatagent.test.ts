@@ -23,7 +23,7 @@ describe('leader:muaatagent Umbat', () => {
   test.todo('leader:muaatagent a third unit, or a unit costing more than 4, is warned of: needs the production of a component action first');
   test.todo('leader:muaatagent the units are paid for (Umbat note 1): needs the production of a component action first');
 
-  test.fails('leader:muaatagent is a play effect', () => {
+  test('leader:muaatagent is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

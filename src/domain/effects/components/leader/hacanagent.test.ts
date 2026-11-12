@@ -12,7 +12,7 @@ describe('leader:hacanagent Carth of Golden Sands', () => {
   // "During the action phase: You may exhaust this card to gain 2 commodities ..."
   // Checks: named in the uses of a tactical action, the agent gives the Hacan 2 commodities and is exhausted.
   // Why the check is redundant here: commodities are otherwise replenished by Trade (21.3); the agent gives two.
-  test.fails('leader:hacanagent used gains 2 commodities', () => {
+  test('leader:hacanagent used gains 2 commodities', () => {
     const hacan = table('hacan', [using(fly(), id)]);
     quote(hacan.pack, id, 'You may exhaust this card to gain 2 commodities');
     const end = endOf(hacan);
@@ -38,7 +38,7 @@ describe('leader:hacanagent Carth of Golden Sands', () => {
 
   test.todo('leader:hacanagent replenishes another player\'s commodities instead: `uses` carries no choice of a player');
 
-  test.fails('leader:hacanagent is a play effect', () => {
+  test('leader:hacanagent is a play effect', () => {
     expect(effect(table('hacan', []).pack, id).tier).toBe('play');
   });
 });

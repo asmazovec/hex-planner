@@ -25,7 +25,7 @@ describe('leader:muaathero Adjudicator Ba\'al — Nova Seed', () => {
   test.todo('leader:muaathero purges the planet cards of the replaced system: needs the tile replaced first');
   test.todo('leader:muaathero used without a war sun moved into the system, or in a home system or Mecatol Rex, is warned of: needs a code for the condition of a used component');
 
-  test.fails('leader:muaathero is a play effect', () => {
+  test('leader:muaathero is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

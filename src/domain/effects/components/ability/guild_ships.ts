@@ -9,4 +9,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:guild_ships';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{ code: 'notNeighbor', rule: 'You can negotiate transactions with players who are not your neighbor.' }],
+};

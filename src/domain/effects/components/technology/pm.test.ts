@@ -13,7 +13,7 @@ describe('technology:pm Production Biomes', () => {
   //  player; that player gains 2 trade goods."
   // Checks: the component action spends a strategy token, gives the Hacan 4 trade goods and the rival 2.
   // Why the check is redundant here: trade goods otherwise come from Trade's primary (92.3); the card makes them.
-  test.fails('technology:pm gains 4 trade goods for a strategy token, and the chosen player gains 2', () => {
+  test('technology:pm gains 4 trade goods for a strategy token, and the chosen player gains 2', () => {
     const hacan = table([biomes()]);
     quote(hacan.pack, id, 'spend 1 token from your strategy pool to gain 4 trade goods');
     const end = endOf(hacan);
@@ -24,7 +24,7 @@ describe('technology:pm Production Biomes', () => {
 
   // Checks: with an empty strategy pool the play is warned of.
   // Why the check is NOT redundant here: the token is the card's price.
-  test.fails('technology:pm with an empty strategy pool is warned of', () => {
+  test('technology:pm with an empty strategy pool is warned of', () => {
     const play = biomes();
     expectStanding(warningsOf(table([adjust({ strategy: -2 }), play]), play), 'shortStrategy');
   });
@@ -37,7 +37,7 @@ describe('technology:pm Production Biomes', () => {
     expectStanding(warningsOf(table([biomes(), again]), again), 'componentExhausted');
   });
 
-  test.fails('technology:pm is a play effect', () => {
+  test('technology:pm is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

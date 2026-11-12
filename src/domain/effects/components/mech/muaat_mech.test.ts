@@ -14,14 +14,14 @@ describe('mech:muaat_mech Ember Colossus', () => {
   // Checks: an Ember Colossus in the space area next to the system Star Forge places in gets an infantry beside it.
   // Why the check is redundant here: infantry otherwise reaches the board by production (67); the mech places it for
   // free when Star Forge is used near it.
-  test.fails('mech:muaat_mech gets one infantry when Star Forge is used in an adjacent system', () => {
+  test('mech:muaat_mech gets one infantry when Star Forge is used in an adjacent system', () => {
     const muaat = forged('muaat', { [TARGET]: { warsun: 1 }, [NEAR]: { carrier: 1, mech: 1 } });
     quote(muaat.pack, id, 'you may place 1 infantry from your reinforcements with this unit');
     expect(endOf(muaat).systems[NEAR]).toEqual({ carrier: 1, mech: 1, infantry: 1 });
   });
 
   // Checks: in the same system as Star Forge, the infantry is placed with the mech there.
-  test.fails('mech:muaat_mech gets one infantry when Star Forge is used in its own system', () => {
+  test('mech:muaat_mech gets one infantry when Star Forge is used in its own system', () => {
     const muaat = forged('muaat', { [TARGET]: { warsun: 1, mech: 1 } });
     expect(endOf(muaat).systems[TARGET]).toMatchObject({ mech: 1, infantry: 1 });
   });
