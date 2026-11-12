@@ -859,6 +859,7 @@
     "noText": "Текста нет.",
     "fromRound": "с раунда {{n}}",
     "inHand": "На руке",
+    "inPlayArea": "В игровой зоне",
     "scored": "выполнена",
     "leaderState": "{{name}}: состояние",
     "byPlan": "задано планом",

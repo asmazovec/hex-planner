@@ -1,7 +1,7 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById, componentsOf, noteAddress, textOf } from '../../domain/components';
-import { emptyHoldings, HOLDING_FIELD, ownNotes, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
+import { emptyHoldings, HOLDING_FIELD, ownNotes, staysInPlay, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats, upgradableStructures } from '../../domain/unitStats';
 import type { ComponentDef, DataPack, Game, GameState, TechType } from '../../domain/types';
@@ -40,6 +40,9 @@ const GROUP_SECTIONS: Record<ComponentGroup, string[]> = {
   relics: ['relics'],
   objectives: ['objectives', 'laws'],
 };
+
+/** Where a component lies in the holdings: an exploration card that is not kept in the play area is held by no one. */
+const fieldOf = (def: ComponentDef) => (def.kind === 'exploration' && !staysInPlay(def) ? undefined : HOLDING_FIELD[def.kind]);
 
 /** The states a leader of each type can be in: an agent exhausts and readies, a commander only unlocks, a hero is purged once used (LRR 51). */
 const LEADER_STATES: Record<string, CardState[]> = {
@@ -80,7 +83,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     if (def.kind === 'breakthrough') return def.faction === faction && holdings.breakthrough !== undefined;
     if (def.kind === 'agenda') return laws.includes(def.id);
     if (def.kind === 'secretObjective') return holdings.secrets.includes(def.id) || holdings.scored.includes(def.id);
-    const field = HOLDING_FIELD[def.kind];
+    const field = fieldOf(def);
     return field !== undefined && holdings[field].includes(def.id);
   };
 
@@ -118,7 +121,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
         />
       );
     }
-    const field = HOLDING_FIELD[def.kind];
+    const field = fieldOf(def);
     if (!field) return <ComponentCard key={def.id} def={def} pack={pack} held={isHeld(def)} />;
     const count = countIn(holdings[field], def.id);
     const scored = def.kind === 'secretObjective' && holdings.scored.includes(def.id);
@@ -126,12 +129,12 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     const atStart = countIn(start[field], def.id);
     const add = () => setStartHolding(player, def.id, true);
     const note = scored || (held && def.kind === 'publicObjective') ? t('components.scored') : held && def.kind === 'secretObjective' ? t('components.inHand') : undefined;
-    if (field === 'hand' && held) {
+    if ((field === 'hand' || field === 'found') && held) {
       // The copies an entry brought stay: the stepper changes only those held from the start.
       return (
         <ComponentCard key={def.id} def={def} pack={pack} held state={tired} count={count} source={source}>
           <Stepper
-            name={t('components.inHand')} value={count} min={Math.max(0, count - atStart)}
+            name={t(field === 'found' ? 'components.inPlayArea' : 'components.inHand')} value={count} min={Math.max(0, count - atStart)}
             onChange={value => setStartHolding(player, def.id, value > count)}
           />
         </ComponentCard>
@@ -256,7 +259,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     ['ownNotes', ownNotes(game, pack, player, everyHoldings).map(ownNote)],
     ['promissory', known(holdings.promissory).filter(c => noteAddress(c.id) !== player).map(card)],
     ['actionCards', known(holdings.hand).map(card)],
-    ['relics', known(holdings.relics).map(card)],
+    ['relics', known([...holdings.relics, ...holdings.found]).map(card)],
     ['leaders', known([...ownLeaders, ...Object.keys(holdings.leaders)]).map(card)],
     ['breakthrough', breakthrough.map(card)],
     ['objectives', known([...holdings.scored, ...holdings.secrets]).map(card)],

@@ -16,7 +16,7 @@ const table = (entries: Entry[]) => bench({ faction: 'letnev', expansions: ['pok
 // Checks: in «Taken and discarded» the player takes the Hazardous Relic Fragment drawn while exploring.
 // Why the check is redundant here: nothing is lifted; the choice offers only what a player holds as a card today, and
 // a relic fragment is held.
-test.fails('exploration:hrf1 is taken in «Taken and discarded» of the entry that explores', async () => {
+test('exploration:hrf1 is taken in «Taken and discarded» of the entry that explores', async () => {
   const take = adjust({});
   const fragments = table([take]);
   quote(fragments.pack, id, 'ACTION: Purge 3 of your hazardous relic fragments to gain 1 relic.');
@@ -32,7 +32,7 @@ test.fails('exploration:hrf1 is taken in «Taken and discarded» of the entry th
 // "Purge 3 of your hazardous relic fragments"
 // Checks: the action with two fragments shows the warning that three are needed.
 // Why the check is NOT redundant here: the text asks for three.
-test.fails('exploration:hrf1 purged with two fragments shows the warning of fragments', () => {
+test('exploration:hrf1 purged with two fragments shows the warning of fragments', () => {
   const action = componentAction(id, { spends: [id, id, id], gains: ['relic:shard'] });
   showWarnings(table([{ ...adjust({}), gains: [id, id] }, action]), action);
   expectShownStanding('relicFragmentsShort' as AnyWarningCode);

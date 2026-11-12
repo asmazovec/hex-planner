@@ -1,6 +1,7 @@
 import { applied } from './effects/apply';
 import { appliedToPlanet } from './effects/points/payment';
 import { holderOf } from './effects/registry';
+import { specialtiesOf } from './specialties';
 import type { DataPack, GameState, Payment, RuleStep } from './types';
 
 export type PaymentKind = 'resources' | 'influence';
@@ -39,7 +40,7 @@ const readyPlanetCards = (state: GameState): string[] =>
 
 /** Planets that can pay the technology part of the expedition: ready, mine, with a technology specialty. */
 export const techSlicePlanets = (state: GameState, pack: DataPack): string[] =>
-  readyPlanetIds(state).filter(id => (pack.planets[id]?.tech?.length ?? 0) > 0);
+  readyPlanetIds(state).filter(id => specialtiesOf(pack, id, state.attachments?.[id]).length > 0);
 
 /** Planets the player can still spend: own and not exhausted, and the planet cards held and ready. */
 export const readyPlanetIds = (state: GameState): string[] =>

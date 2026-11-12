@@ -7,6 +7,7 @@ import '../effects/points/production';
 import { holderOf } from '../effects/registry';
 import dockInfantry from '../rules/codes/dockInfantry';
 import warSunLocked from '../rules/codes/warSunLocked';
+import { planetValue } from '../payment';
 import { productionCost, unitStats } from '../unitStats';
 import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf, tileAt } from './board';
@@ -43,8 +44,10 @@ const PRINTED_UNIT_PRODUCTION: Record<string, number> = { arborec_infantry: 1 };
 const dockValue = (game: Game, state: GameState, planetId: string, pack: DataPack): number => {
   const holder = holderOf(game, state);
   const printed = pack.structures.find(s => s.id === 'spacedock')?.levels.one.production ?? 0;
-  const resources = applied(pack, holder, 'planetResources', pack.planets[planetId]?.resources ?? 0, { planetId }).value;
-  return applied(pack, holder, 'productionValue', resources + printed, { structure: 'spacedock', planetId }).value;
+  // What is attached to the planet stands on my state (a rival's count asks none: its own state keeps no attachments).
+  const attached = state.attachments?.[planetId] ?? [];
+  const resources = planetValue(pack, state, planetId, 'resources', { faction: game.faction, shared: state });
+  return applied(pack, holder, 'productionValue', resources + printed, { structure: 'spacedock', planetId, attached }).value;
 };
 
 /**
@@ -66,7 +69,7 @@ export function producerList(game: Game, state: GameState, systemId: string, pac
   if (source === 'homeDock') return list;
   for (const planetId of mine) {
     const pds = state.pds[planetId] ?? 0;
-    const each = pds > 0 ? applied(pack, holder, 'productionValue', 0, { structure: 'pds', planetId }).value : 0;
+    const each = pds > 0 ? applied(pack, holder, 'productionValue', 0, { structure: 'pds', planetId, attached: state.attachments?.[planetId] ?? [] }).value : 0;
     if (each > 0) list.push({ kind: 'pds', planetId, value: each * pds, infantry: true });
   }
   for (const planetId of mine) {

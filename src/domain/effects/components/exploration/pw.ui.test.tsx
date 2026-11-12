@@ -21,7 +21,7 @@ const table = (gains: string[]) => {
 // "This planet's influence value is increased by 2." LRR 35.2: the explorer draws and resolves a card of the planet's deck.
 // Checks: in «Taken and discarded» of the landing that gains Target One the player takes Paradise World.
 // Why the check is redundant here: nothing is lifted; the choice must offer an exploration card drawn with a planet.
-test.fails('exploration:pw is taken in «Taken and discarded» of the entry that explores the planet', async () => {
+test('exploration:pw is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const paradise = table([]);
   quote(paradise.pack, id, "This planet's influence value is increased by 2.");
   useGame.setState({ game: paradise.game });

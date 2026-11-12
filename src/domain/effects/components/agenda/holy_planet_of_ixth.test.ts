@@ -17,7 +17,7 @@ describe('agenda:holy_planet_of_ixth Holy Planet of Ixth', () => {
   // Checks: the law is on Home One; its space dock builds one infantry, over a value of 0.
   // Why the check is NOT redundant here: the production check (67, 79) is not lifted but given a new number: a dock on
   // the elected planet produces nothing, so even one unit is over its value (a modify of `productionValue`).
-  test.fails('agenda:holy_planet_of_ixth a dock on the elected planet cannot produce: the production is over its value of 0', () => {
+  test('agenda:holy_planet_of_ixth a dock on the elected planet cannot produce: the production is over its value of 0', () => {
     const t = table(build(), 'h1');
     quote(t.pack, id, 'Units on this planet cannot use PRODUCTION.');
     const warnings = warningsOf(t, t.entry);
@@ -48,16 +48,21 @@ describe('agenda:holy_planet_of_ixth Holy Planet of Ixth', () => {
 
   // "When a player gains control of this planet, they gain 1 victory point."
   // Checks: the law is on Target One; in round 2 my infantry lands there and takes it: 1 victory point.
-  test.fails('agenda:holy_planet_of_ixth gaining control of the elected planet gives 1 victory point', () => {
+  test('agenda:holy_planet_of_ixth gaining control of the elected planet gives 1 victory point', () => {
     const land = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, infantry: 1 } }], landings: [{ planetId: 't1', units: { infantry: 1 } }] });
     const t = table(land, 't1');
     expect(endOf(t).vp).toBe(1);
   });
 
-  test.fails('agenda:holy_planet_of_ixth is a passive effect that changes the production of a dock and the points', () => {
+  // Checks: the effect is passive, changes the Production value of a dock, and hooks the gain of control for its point.
+  // Changed from the pass-1 test: it asked for a `vp` modifier too, but no step asks the point `vp`; the base has the
+  // hook `onGainControl`, and the point is given there (the test above). The check of the tier and of the production
+  // value stays.
+  test('agenda:holy_planet_of_ixth is a passive effect that changes the production of a dock and the points', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
-    expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['productionValue', 'vp']);
+    expect(Object.keys(effect(pack, id).modify ?? {})).toEqual(['productionValue']);
+    expect(effect(pack, id).onGainControl).toBeTypeOf('function');
   });
 
   test.todo('agenda:holy_planet_of_ixth losing control of the elected planet loses 1 victory point: falls out of the vp point counting control (a planet a rival takes by a landing of his entry is no longer mine); to be written with the point in pass 2');

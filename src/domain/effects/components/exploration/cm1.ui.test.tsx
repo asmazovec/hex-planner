@@ -12,7 +12,7 @@ uiBench();
 // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 trade good." LRR 35.2: the explorer draws and resolves a card of the planet's deck.
 // Checks: in В«Taken and discardedВ» of the landing that gains Target One the player takes Core Mine.
 // Why the check is redundant here: nothing is lifted; the choice must offer an exploration card drawn with a planet.
-test.fails('exploration:cm1 is taken in В«Taken and discardedВ» of the entry that explores the planet', async () => {
+test('exploration:cm1 is taken in В«Taken and discardedВ» of the entry that explores the planet', async () => {
   const take = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, mech: 1 } }], landings: [{ planetId: 't1', units: { mech: 1 } }] });
   const explored = bench({ faction: 'letnev', expansions: ['pok'], units: { [NEAR]: { carrier: 1, mech: 1 } }, entries: [take] });
   quote(explored.pack, id, 'If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 trade good.');

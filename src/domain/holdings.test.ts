@@ -117,7 +117,7 @@ describe('holdings derived from entries', () => {
     const { state } = forecast(rulesGame({ entries: [draw, give] }), loadPack(['pok', 'te']));
     expect(state.holdings).toEqual({
       technologies: ['technology:gd'], hand: ['actionCard:bribery'], relics: [], promissory: [], leaders: { 'leader:solhero': 'unlocked' },
-      breakthrough: 'held', scored: ['publicObjective:corner'], secrets: ['secretObjective:ans'], exhausted: [],
+      breakthrough: 'held', scored: ['publicObjective:corner'], secrets: ['secretObjective:ans'], found: [], exhausted: [],
     });
   });
 

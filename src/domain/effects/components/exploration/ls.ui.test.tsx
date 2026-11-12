@@ -21,7 +21,7 @@ const table = (gains: string[]) => {
 // "This planet's resource value is increased by 1 and its influence value is increased by 2." LRR 35.2.
 // Checks: in «Taken and discarded» of the landing that gains Target One the player takes Lazax Survivors.
 // Why the check is redundant here: nothing is lifted; the choice must offer an exploration card drawn with a planet.
-test.fails('exploration:ls is taken in «Taken and discarded» of the entry that explores the planet', async () => {
+test('exploration:ls is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const lazax = table([]);
   quote(lazax.pack, id, 'its influence value is increased by 2');
   useGame.setState({ game: lazax.game });

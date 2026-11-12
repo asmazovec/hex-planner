@@ -25,7 +25,7 @@ describe('exploration:ed1 Enigmatic Device', () => {
   // Checks: the device found is held; its action, paid with six resources, researches Cruiser II and purges the card.
   // Why the check is redundant here: nothing is lifted; research is otherwise the Technology card's (90.9), and the
   // card names its own way, so the plan researches the technology chosen.
-  test.fails('exploration:ed1 found and played for six resources researches a technology and is purged', () => {
+  test('exploration:ed1 found and played for six resources researches a technology and is purged', () => {
     const action = research(SIX);
     const device = table([found(), action]);
     quote(device.pack, id, 'ACTION: You may spend 6 resource and purge this card to research 1 technology.');
@@ -52,7 +52,7 @@ describe('exploration:ed1 Enigmatic Device', () => {
   // LRR 22: a component action is played with a component the player has.
   // Checks: the action without the card found is warned of.
   // Why the check is NOT redundant here: the card was never placed in the play area.
-  test.fails('exploration:ed1 played without being found is warned of as not held', () => {
+  test('exploration:ed1 played without being found is warned of as not held', () => {
     const action = research(SIX);
     expectStanding(warningsOf(table([action]), action), 'componentNotHeld');
   });
@@ -60,7 +60,7 @@ describe('exploration:ed1 Enigmatic Device', () => {
   // "... and purge this card"
   // Checks: a second action after the first is warned of: the card is gone.
   // Why the check is NOT redundant here: a purged card is out of the game.
-  test.fails('exploration:ed1 played a second time is warned of as not held', () => {
+  test('exploration:ed1 played a second time is warned of as not held', () => {
     const again = research(SIX);
     expectStanding(warningsOf(table([found(), research(SIX), again]), again), 'componentNotHeld');
   });

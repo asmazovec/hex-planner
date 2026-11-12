@@ -25,7 +25,7 @@ const table = (gains: string[]) => {
 // Checks: in «Taken and discarded» of the landing that gains Target One the player takes Rich World from the deck.
 // Why the check is redundant here: nothing is lifted; the choice offers only what a player holds as a card today, and
 // an exploration card drawn with a planet must be offered too.
-test.fails('exploration:rw is taken in «Taken and discarded» of the entry that explores the planet', async () => {
+test('exploration:rw is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const rich = table([]);
   quote(rich.pack, id, "This planet's resource value is increased by 1.");
   useGame.setState({ game: rich.game });

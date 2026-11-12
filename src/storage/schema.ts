@@ -72,7 +72,7 @@ const control = z.enum(['me', 'enemy']);
 const startHoldings = z.object({
   technologies: ids.optional(), hand: ids.optional(), relics: ids.optional(), promissory: ids.optional(),
   leaders: z.record(z.string(), z.enum(['unlocked', 'exhausted', 'purged'])).optional(),
-  breakthrough: z.enum(['held', 'exhausted']).optional(), scored: ids.optional(), secrets: ids.optional(),
+  breakthrough: z.enum(['held', 'exhausted']).optional(), scored: ids.optional(), secrets: ids.optional(), found: ids.optional(),
 });
 
 export const gameSchema = z.object({

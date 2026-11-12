@@ -6,7 +6,7 @@ import { linksOf } from '../movement';
 import { areNeighbors } from '../neighbors';
 import { violation } from '../rules/registry';
 import { componentById } from '../components';
-import { TRANSACTION_KINDS } from '../holdings';
+import { staysInPlay, TRANSACTION_KINDS } from '../holdings';
 import { effectOf, holderOf, inForceOf } from '../effects/registry';
 import type { DealTurn } from '../effects/points/payment';
 import { playersOf } from '../players';
@@ -40,7 +40,7 @@ function hand(from: GameState, to: GameState, goods: Goods, pack: DataPack, shar
     const def = componentById(pack, id);
     if (!def) continue;
     const params = { id: def.id, name: def.name };
-    if (!TRANSACTION_KINDS.includes(def.kind) || def.kind === 'actionCard') warnings.push(violation('transactionKind', params));
+    if (!TRANSACTION_KINDS.includes(def.kind) || def.kind === 'actionCard' || (def.kind === 'exploration' && !staysInPlay(def))) warnings.push(violation('transactionKind', params));
     else if (def.kind === 'promissory' && (notes += 1) === 2) warnings.push(violation('transactionNotes', {}));
     if (!holds(from.holdings, def)) {
       warnings.push(violation('componentNotHeld', { ...params, context: 'transaction' }, 'transaction'));

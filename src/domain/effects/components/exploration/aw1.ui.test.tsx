@@ -12,7 +12,7 @@ uiBench();
 // "You may gain 2 commodities, or you may convert up to 2 of your commodities to trade goods." LRR 35.2.
 // Checks: in «Taken and discarded» of the landing that gains Target One the player takes Abandoned Warehouses.
 // Why the check is redundant here: nothing is lifted; the choice must offer an exploration card drawn with a planet.
-test.fails('exploration:aw1 is taken in «Taken and discarded» of the entry that explores the planet', async () => {
+test('exploration:aw1 is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const take = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1, infantry: 1 } }], landings: [{ planetId: 't1', units: { infantry: 1 } }] });
   const explored = bench({ faction: 'letnev', expansions: ['pok'], units: { [NEAR]: { carrier: 1, infantry: 1 } }, entries: [take] });
   quote(explored.pack, id, 'or you may convert up to 2 of your commodities to trade goods');

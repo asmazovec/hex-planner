@@ -1,5 +1,8 @@
 /** LRR 35 Exploration. Source: tirules2 rules-reference/exploration.md. */
 import { describe, expect, test } from 'vitest';
+import { componentById } from '../../components';
+import { emptyHoldings } from '../../holdings';
+import { gain, holds, lose } from '../../replay/holdings';
 import { exploreCondition } from '../../replay/invasion';
 import type { Warning } from '../../types';
 import { forecast, rulesGame, rulesPack } from '../kit';
@@ -34,9 +37,7 @@ describe('LRR 35 Exploration', () => {
   test.todo('35.7: an exploration card resolves and is discarded unless it is a fragment or an attachment — not modelled: exploration is not planned');
   test.todo('35.7.1: an empty exploration deck is reshuffled from its discards — not modelled: no decks');
   test.todo('35.8: an attach card goes on the explored planet\'s card — not modelled: attachments are not in the data');
-  test.todo('35.9: relic fragments stay face up in the play area — not modelled: relics are not planned');
   test.todo('35.9.1: relic fragments are resolved to draw relics — not modelled: relics are not planned');
-  test.todo('35.9.2: relic fragments can be traded — not modelled: transactions are not planned');
   test.todo('35 note 1: a card that purges itself is not discarded — not modelled: exploration is not planned');
   test.todo('35 note 2: Enigmatic Device and Ion Storm go into play — not modelled: exploration is not planned');
   test.todo('35 note 3: several planets gained in a system are gained and explored one at a time — not modelled: exploration is not planned');
@@ -54,5 +55,32 @@ describe('LRR 35.2 a card that asks for a mech or an infantry (explorationCondit
     state.ground.t1 = { infantry: 1 };
     expect(exploreCondition(state, 't1', warnings)).toBe(true);
     expect(state.ground.t1).toEqual({});
+  });
+});
+
+describe('LRR 35.9 relic fragments are kept in the play area (Holdings.found)', () => {
+  const pack = rulesPack(undefined, ['pok']);
+  const state = () => ({ holdings: emptyHoldings() }) as Parameters<typeof gain>[0];
+  test('35.9: a fragment explored stays with the player, one copy for each found, and one copy leaves when it is purged', () => {
+    const own = state();
+    const fragment = componentById(pack, 'exploration:crf1')!;
+    gain(own, own, fragment);
+    gain(own, own, fragment);
+    expect(own.holdings.found).toEqual(['exploration:crf1', 'exploration:crf1']);
+    lose(own, own, fragment);
+    expect(own.holdings.found).toEqual(['exploration:crf1']);
+    expect(holds(own.holdings, fragment)).toBe(true);
+  });
+  test('35.7: a card that attaches or is resolved at once is held by no one, and needs no holding to be played', () => {
+    const own = state();
+    const attach = componentById(pack, 'exploration:pw')!;
+    gain(own, own, attach);
+    expect(own.holdings.found).toEqual([]);
+    expect(holds(own.holdings, attach)).toBe(true);
+  });
+  test('35 note 2: Enigmatic Device goes into the play area', () => {
+    const own = state();
+    gain(own, own, componentById(pack, 'exploration:ed1')!);
+    expect(own.holdings.found).toEqual(['exploration:ed1']);
   });
 });

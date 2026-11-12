@@ -7,17 +7,14 @@
  * (expedition 4.5). Prerequisites are not checked by the plan (LRR 90.12), so the specialty skips nothing there. On a
  * planet that has a specialty it raises `planetResources` and `planetInfluence` by 1 instead. Nothing is waived.
  *
- * Pass 1: still the hint it is today; the attachment, the specialty and the points asked come in pass 2.
  */
-import type { ComponentEffect } from '../../types';
-import { attachExplored } from './batch33/attach';
+import { facilityEffect } from './batch33/facility';
 
 export const id = 'exploration:propulsion';
 
 /**
- * Pass 2: the card is attached to the planet it was explored with (`gained`). Its numbers stay a hint: the count of
- * `planetResources` and `planetInfluence` is not told the printed specialty of the planet, so "if this planet already
- * has a specialty, +1 instead" cannot be decided in a `modify`; and the expedition's payable planets (`techSlicePlanets`)
- * do not read attachments.
+ * Pass 2: attached to the planet it was explored with (`gained`); the specialty it gives is read where a specialty is
+ * spent (`specialtiesOf`), and on a planet that has one the card raises resources and influence by 1 instead (`modify`,
+ * asked with the pack in its context).
  */
-export const effect: ComponentEffect = { tier: 'hint', rule: id, gained: attachExplored };
+export const effect = facilityEffect(id);

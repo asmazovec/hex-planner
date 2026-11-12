@@ -204,7 +204,8 @@ test('«+ Took» offers the whole catalogue; what is held once already stands la
   // The search alone would put it first.
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'crown');
   await screen.findByTestId('component-relic:emphidia');
-  expect(offered()).toEqual(['relic:thalnos', 'relic:emphidia']);
+  // Exploration cards are offered now too: Tomb of Emphidia names the crown. The order is the same: what is held stands last.
+  expect(offered()).toEqual(['relic:thalnos', 'exploration:toe', 'relic:emphidia']);
   expect(within(picker()).getByTestId('component-relic:emphidia')).toHaveTextContent('already held');
 });
 
