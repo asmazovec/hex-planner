@@ -30,7 +30,7 @@ describe('promissory:crucible Crucible', () => {
   // Why the check is redundant here: LRR 41.3 gives +1 per rift left or crossed, and Crucible gives one more to a ship
   // that moves out of or through a gravity rift (Crucible note 2: the rift's own +1 stays). A played note cannot change
   // a number of the count, so the one step it adds is lifted as a waiver.
-  test.fails('promissory:crucible a ship through a gravity rift moves one system further: the speed warning is waived', () => {
+  test('promissory:crucible a ship through a gravity rift moves one system further: the speed warning is waived', () => {
     const table = flight({ cruiser: 1 }, FARTHER);
     quote(table.pack, id, 'apply an additional +1 to the move values of your ships that would move out of or through a gravity rift');
     expectWaived(warningsOf(table, table.entry), 'speedShort', NOTE);
@@ -78,7 +78,7 @@ describe('promissory:crucible Crucible', () => {
     expectStanding(warningsOf(table, table.entry), 'ownPromissory');
   });
 
-  test.fails('promissory:crucible waives the speed of the movement it is played in', () => {
+  test('promissory:crucible waives the speed of the movement it is played in', () => {
     const { pack } = flight({ cruiser: 1 }, FARTHER);
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);
   });

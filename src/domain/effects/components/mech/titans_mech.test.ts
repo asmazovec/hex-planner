@@ -16,7 +16,7 @@ describe('mech:titans_mech Hecatoncheires', () => {
   // card places units is listed and lifted by the mech, and both units stand on h1.
   // Why the check is redundant here: LRR 24 (Construction) places structures only, which the replay checks
   // (`constructionUnits`); the Titans' mech replaces the PDS with exactly these two units.
-  test.fails('mech:titans_mech one mech and one infantry instead of a PDS: the warning is waived and the units stand on the planet', () => {
+  test('mech:titans_mech one mech and one infantry instead of a PDS: the warning is waived and the units stand on the planet', () => {
     const table = instead({ mech: 1, infantry: 1 });
     quote(table.pack, id, 'you may place 1 mech and 1 infantry on that planet instead');
     expectWaived(warningsOf(table, table.entry), 'constructionUnits', id);
@@ -47,7 +47,7 @@ describe('mech:titans_mech Hecatoncheires', () => {
 
   test.todo('mech:titans_mech deploy instead of a PDS placed by Awaken: sleeper tokens are not modelled');
 
-  test.fails('mech:titans_mech is a passive effect that waives the units placed by Construction', () => {
+  test('mech:titans_mech is a passive effect that waives the units placed by Construction', () => {
     const { pack } = instead({});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['constructionUnits']);

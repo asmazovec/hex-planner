@@ -21,7 +21,7 @@ const flight = (held: boolean) => {
 // "Apply +1 to the MOVE value of each of your ships that start their movement in The Fracture."
 // Checks: in the flight step a cruiser (move 2) is taken from The Fracture for a system three away; no speed warning.
 // Why the default limit does not apply: its move value is 3 there (a `modify` of `speed`).
-test.fails('breakthrough:cabalbt a cruiser leaving The Fracture flies three systems without a speed warning', async () => {
+test('breakthrough:cabalbt a cruiser leaving The Fracture flies three systems without a speed warning', async () => {
   const table = flight(true);
   quote(table.pack, id, 'start their movement in The Fracture');
   await take('Cruiser');

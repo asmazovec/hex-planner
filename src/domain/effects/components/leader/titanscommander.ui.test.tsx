@@ -21,7 +21,7 @@ test('leader:titanscommander is chosen in «Used» of a production and written i
 
 // Checks: the production that names Tungstantus ends with one trade good more.
 // Why nothing is waived here: the gain is the commander's `play`.
-test.fails('leader:titanscommander named in «Used», the production gains 1 trade good', async () => {
+test('leader:titanscommander named in «Used», the production gains 1 trade good', async () => {
   const entry = tactical(HOME, { production: { infantry: 1 }, payment: { planets: ['h2'], tradeGoods: 0 } });
   const table = bench({ faction: 'titans', expansions: ['pok'], start: { leaders: { [id]: 'unlocked' } }, entries: [entry], game: { docks: ['h1'] } });
   const live = showUses(table, entry);

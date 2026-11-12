@@ -16,7 +16,7 @@ const show = (technologies: string[]) => {
 // Checks: an infantry bought in the home system, where a Hel-Titan II stands and no space dock; the production block
 // shows no warning that nothing produces there.
 // Why the check is redundant here: the upgraded PDS has PRODUCTION 1 itself (67.1 asks for a unit with Production).
-test.fails('technology:ht2 an infantry bought where only a Hel-Titan stands: no warning that nothing produces', () => {
+test('technology:ht2 an infantry bought where only a Hel-Titan stands: no warning that nothing produces', () => {
   const table = show([id]);
   quote(table.pack, id, 'PRODUCTION 1');
   expectNotShown('noProduction');
