@@ -17,7 +17,7 @@ describe('exploration:pw Paradise World', () => {
   //  attached to the planet card of the planet being explored.
   // Checks: Paradise World explored with Target One is attached to it.
   // Why the check is redundant here: nothing is lifted; the attachment is a fact of the planet the count must know.
-  test.fails('exploration:pw explored with the planet the entry gains is attached to that planet', () => {
+  test('exploration:pw explored with the planet the entry gains is attached to that planet', () => {
     const paradise = table([id], buy(['h1']));
     quote(paradise.pack, id, "This planet's influence value is increased by 2.");
     expect(endOf(paradise).attachments?.t1).toEqual([id]);
@@ -27,7 +27,7 @@ describe('exploration:pw Paradise World', () => {
   // Checks: the next round Target One alone pays the three influence of a token bought on Leadership.
   // Why the check is redundant here: the shortfall check (26, 64.8) sums the printed influence; with the card Target
   // One is worth 3, so no shortInfluence is made at all (a modify, not a waiver).
-  test.fails('exploration:pw raises the influence of its planet: one token is bought with it alone', () => {
+  test('exploration:pw raises the influence of its planet: one token is bought with it alone', () => {
     const paradise = table([id], buy(['t1']));
     expectNone(warningsOf(paradise, paradise.pay), 'shortInfluence');
   });
@@ -47,7 +47,7 @@ describe('exploration:pw Paradise World', () => {
     expectStanding(warningsOf(paradise, paradise.pay), 'shortInfluence');
   });
 
-  test.fails('exploration:pw is a passive effect that changes the influence of a planet', () => {
+  test('exploration:pw is a passive effect that changes the influence of a planet', () => {
     const { pack } = table([], buy([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetInfluence).toBeTypeOf('function');

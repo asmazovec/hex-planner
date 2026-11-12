@@ -17,7 +17,7 @@ describe('exploration:toe Tomb of Emphidia', () => {
   //  attached to the planet card of the planet being explored.
   // Checks: the tomb explored with Target One is attached to it.
   // Why the check is redundant here: nothing is lifted; the attachment is a fact of the planet the count must know.
-  test.fails('exploration:toe explored with the planet the entry gains is attached to that planet', () => {
+  test('exploration:toe explored with the planet the entry gains is attached to that planet', () => {
     const tomb = table([id], buy(['h1']));
     quote(tomb.pack, id, "This planet's influence value is increased by 1.");
     expect(endOf(tomb).attachments?.t1).toEqual([id]);
@@ -27,7 +27,7 @@ describe('exploration:toe Tomb of Emphidia', () => {
   // Checks: the next round Target One (1 + 1) and Home One (1) pay the three influence of a token bought on Leadership.
   // Why the check is redundant here: the shortfall check sums the printed influence; with the card the sum is 3, so
   // no shortInfluence is made at all (a modify, not a waiver).
-  test.fails('exploration:toe raises the influence of its planet by one: the payment is full', () => {
+  test('exploration:toe raises the influence of its planet by one: the payment is full', () => {
     const tomb = table([id], buy(['t1', 'h1']));
     expectNone(warningsOf(tomb, tomb.pay), 'shortInfluence');
   });
@@ -49,7 +49,7 @@ describe('exploration:toe Tomb of Emphidia', () => {
 
   test.todo('exploration:toe the victory point of the Crown of Emphidia on this planet is the relic\'s own ability: the relic\'s batch plays it');
 
-  test.fails('exploration:toe is a passive effect that changes the influence of a planet', () => {
+  test('exploration:toe is a passive effect that changes the influence of a planet', () => {
     const { pack } = table([], buy([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetInfluence).toBeTypeOf('function');

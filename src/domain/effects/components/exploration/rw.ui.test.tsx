@@ -39,7 +39,7 @@ test.fails('exploration:rw is taken in «Taken and discarded» of the entry that
 
 // Checks: with Rich World on Target One the payment of the next round shows no shortfall.
 // Why the check is redundant here: Target One is worth 3 with the card, and 3 + 1 pays the four resources.
-test.fails('exploration:rw attached, the payment of the next round shows no resource shortfall', () => {
+test('exploration:rw attached, the payment of the next round shows no resource shortfall', () => {
   const rich = table([id]);
   showWarnings(rich, rich.pay);
   expectNotShown('shortResources');

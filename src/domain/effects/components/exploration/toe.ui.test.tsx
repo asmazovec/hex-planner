@@ -35,7 +35,7 @@ test.fails('exploration:toe is taken in «Taken and discarded» of the entry tha
 
 // Checks: with the tomb on Target One the token bought next round with Target One and Home One shows no shortfall.
 // Why the check is redundant here: 1 + 1 + 1 pays the three influence.
-test.fails('exploration:toe attached, the payment of the next round shows no influence shortfall', () => {
+test('exploration:toe attached, the payment of the next round shows no influence shortfall', () => {
   const tomb = table([id]);
   showWarnings(tomb, tomb.pay);
   expectNotShown('shortInfluence');

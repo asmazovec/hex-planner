@@ -44,7 +44,7 @@ describe('exploration:ed1 Enigmatic Device', () => {
   // "You may spend 6 resource" — note: a player cannot play the card with fewer than six resources available.
   // Checks: paid with four resources the action is warned of.
   // Why the check is NOT redundant here: the card names six.
-  test.fails('exploration:ed1 paid with four resources is warned of', () => {
+  test('exploration:ed1 paid with four resources is warned of', () => {
     const action = research(['h1', 'h2']);
     expectStanding(warningsOf(table([found(), action]), action), 'shortResources');
   });
@@ -68,12 +68,12 @@ describe('exploration:ed1 Enigmatic Device', () => {
   // LRR 90.10: a technology already owned cannot be researched again.
   // Checks: the device researching Cruiser II, already owned, is warned of.
   // Why the check is NOT redundant here: the card researches as the Technology card does.
-  test.fails('exploration:ed1 researching a technology already owned is warned of', () => {
+  test('exploration:ed1 researching a technology already owned is warned of', () => {
     const action = research(SIX);
     expectStanding(warningsOf(table([found(), action], { technologies: [CRUISER_II] }), action), 'researchOwned');
   });
 
-  test.fails('exploration:ed1 is a played effect', () => {
+  test('exploration:ed1 is a played effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

@@ -9,7 +9,11 @@
  * Pass 1: still the hint it is today; the resolution in the entry that gains the planet comes in pass 2.
  */
 import type { ComponentEffect } from '../../types';
+import { exploredCondition } from './batch33/attach';
 
 export const id = 'exploration:cm1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play', rule: id,
+  gained: turn => { if (exploredCondition(turn)) turn.state.tradeGoods += 1; },
+};

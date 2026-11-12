@@ -8,7 +8,12 @@
  * Pass 1: still the hint it is today; the attachment, the point asked by the payment and the modify come in pass 2.
  */
 import type { ComponentEffect } from '../../types';
+import { attachExplored } from './batch33/attach';
 
 export const id = 'exploration:pw';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive', rule: id,
+  gained: attachExplored,
+  modify: { planetInfluence: value => value + 2 },
+};

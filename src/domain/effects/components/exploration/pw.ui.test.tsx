@@ -35,7 +35,7 @@ test.fails('exploration:pw is taken in «Taken and discarded» of the entry that
 
 // Checks: with Paradise World on Target One the token bought next round shows no influence shortfall.
 // Why the check is redundant here: Target One is worth 3 influence with the card.
-test.fails('exploration:pw attached, the token bought with Target One shows no influence shortfall', () => {
+test('exploration:pw attached, the token bought with Target One shows no influence shortfall', () => {
   const paradise = table([id]);
   showWarnings(paradise, paradise.pay);
   expectNotShown('shortInfluence');

@@ -33,7 +33,7 @@ test.fails('exploration:ed1 is taken in «Taken and discarded» of the entry tha
 // "ACTION: You may spend 6 resource and purge this card to research 1 technology."
 // Checks: the action paid with four resources shows the resource shortfall.
 // Why the check is NOT redundant here: the card names six.
-test.fails('exploration:ed1 played for four resources shows the resource shortfall', () => {
+test('exploration:ed1 played for four resources shows the resource shortfall', () => {
   const action = { ...componentAction(id, { choices: { technology: tech('cruiser') } } as Partial<Entry>), payment: { planets: ['h1', 'h2'], tradeGoods: 0 } } as Entry;
   showWarnings(table([{ ...adjust({}), gains: [id] }, action]), action);
   expectShownStanding('shortResources');

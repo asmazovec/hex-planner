@@ -20,7 +20,7 @@ describe('exploration:ls Lazax Survivors', () => {
   // "This planet's resource value is increased by 1 and its influence value is increased by 2." LRR 35.8.
   // Checks: the card explored with Target One is attached to it.
   // Why the check is redundant here: nothing is lifted; the attachment is a fact of the planet the count must know.
-  test.fails('exploration:ls explored with the planet the entry gains is attached to that planet', () => {
+  test('exploration:ls explored with the planet the entry gains is attached to that planet', () => {
     const lazax = table([id], research(['h1']));
     quote(lazax.pack, id, "This planet's resource value is increased by 1 and its influence value is increased by 2.");
     expect(endOf(lazax).attachments?.t1).toEqual([id]);
@@ -29,7 +29,7 @@ describe('exploration:ls Lazax Survivors', () => {
   // "This planet's resource value is increased by 1"
   // Checks: Target One (2 + 1) and Home Two (1) pay the four resources of the secondary of Technology.
   // Why the check is redundant here: with the card the payment is full; no shortResources is made (a modify).
-  test.fails('exploration:ls raises the resources of its planet by one: the research is paid', () => {
+  test('exploration:ls raises the resources of its planet by one: the research is paid', () => {
     const lazax = table([id], research(['t1', 'h2']));
     expectNone(warningsOf(lazax, lazax.pay), 'shortResources');
   });
@@ -37,7 +37,7 @@ describe('exploration:ls Lazax Survivors', () => {
   // "... and its influence value is increased by 2."
   // Checks: Target One alone (1 + 2) pays a token bought on Leadership.
   // Why the check is redundant here: with the card the payment is full; no shortInfluence is made (a modify).
-  test.fails('exploration:ls raises the influence of its planet by two: the token is bought with it alone', () => {
+  test('exploration:ls raises the influence of its planet by two: the token is bought with it alone', () => {
     const lazax = table([id], buy(['t1']));
     expectNone(warningsOf(lazax, lazax.pay), 'shortInfluence');
   });
@@ -59,7 +59,7 @@ describe('exploration:ls Lazax Survivors', () => {
     expectStanding(warningsOf(lazax, lazax.pay), 'shortResources');
   });
 
-  test.fails('exploration:ls is a passive effect that changes the resources and the influence of a planet', () => {
+  test('exploration:ls is a passive effect that changes the resources and the influence of a planet', () => {
     const { pack } = table([], research([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetResources).toBeTypeOf('function');

@@ -21,7 +21,7 @@ describe('exploration:mw Mining World', () => {
   // "This planet's resource value is increased by 2." LRR 35.8.
   // Checks: the card explored with Target One is attached to it.
   // Why the check is redundant here: nothing is lifted; the attachment is a fact of the planet the count must know.
-  test.fails('exploration:mw explored with the planet the entry gains is attached to that planet', () => {
+  test('exploration:mw explored with the planet the entry gains is attached to that planet', () => {
     const mining = table([id], research(['h1']));
     quote(mining.pack, id, "This planet's resource value is increased by 2.");
     expect(endOf(mining).attachments?.t1).toEqual([id]);
@@ -30,7 +30,7 @@ describe('exploration:mw Mining World', () => {
   // "This planet's resource value is increased by 2."
   // Checks: Target One alone (2 + 2) pays the four resources of the secondary of Technology.
   // Why the check is redundant here: with the card the payment is full; no shortResources is made (a modify).
-  test.fails('exploration:mw raises the resources of its planet by two: Target One alone pays the research', () => {
+  test('exploration:mw raises the resources of its planet by two: Target One alone pays the research', () => {
     const mining = table([id], research(['t1']));
     expectNone(warningsOf(mining, mining.pay), 'shortResources');
   });
@@ -66,7 +66,7 @@ describe('exploration:mw Mining World', () => {
     expectStanding(warningsOf(mining, mining.pay), 'shortResources');
   });
 
-  test.fails('exploration:mw is a passive effect that changes the resources of a planet', () => {
+  test('exploration:mw is a passive effect that changes the resources of a planet', () => {
     const { pack } = table([], research([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetResources).toBeTypeOf('function');

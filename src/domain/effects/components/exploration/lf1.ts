@@ -11,8 +11,42 @@
  *
  * Pass 1: still the hint it is today; the resolution with its choice comes in pass 2.
  */
-import type { ComponentEffect } from '../../types';
+import { gainCommodities } from '../../../replay/cards/trade';
+import { placeOnPlanet, } from '../../../replay/invasion';
+import { spendTradeGoods } from '../../../replay/payment';
+import { unitLimitWarnings } from '../../../replay/production';
+import { violation } from '../../../rules/registry';
+
+import { exploredPlanet } from './batch33/attach';
+import type { ComponentEffect, EffectTurn } from '../../types';
 
 export const id = 'exploration:lf1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+/** What is spent to draw or to place: a trade good, or a commodity the card allows (21.7). Short of it, the payment is warned of as any is. */
+function spend(turn: EffectTurn, commodity: boolean): void {
+  if (!commodity) return spendTradeGoods(turn.state, 1, turn.warnings, 'component');
+  if (turn.state.commodities < 1) turn.warnings.push(violation('shortCommodities', { needed: 1, have: turn.state.commodities }, 'component'));
+  turn.state.commodities -= Math.min(1, turn.state.commodities);
+}
+
+export const effect: ComponentEffect = {
+  tier: 'play', rule: id,
+  choose: [{
+    key: id, kind: 'option', options: () => ['gain', 'place-tradeGood', 'place-commodity'], label: { ru: 'Что сделать', en: 'What to do' },
+    names: {
+      gain: { ru: 'Взять 1 продукцию', en: 'Gain 1 commodity' },
+      'place-tradeGood': { ru: 'Потратить товар и поставить меха', en: 'Spend a trade good to place a mech' },
+      'place-commodity': { ru: 'Потратить продукцию и поставить меха', en: 'Spend a commodity to place a mech' },
+    },
+  }],
+  gained: turn => {
+    const choice = turn.choices[id];
+    if (choice === 'gain') return void gainCommodities(turn.game, turn.state, turn.pack, 1, turn.shared);
+    if (choice !== 'place-tradeGood' && choice !== 'place-commodity') return;
+    spend(turn, choice === 'place-commodity');
+    const planetId = exploredPlanet(turn);
+    if (planetId === undefined) return;
+    turn.warnings.push(...unitLimitWarnings(turn.state, { mech: 1 }, turn.pack, 'component'));
+    placeOnPlanet(turn.state, planetId, { mech: 1 }, turn.warnings, 'component');
+  },
+};

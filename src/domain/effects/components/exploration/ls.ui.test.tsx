@@ -35,7 +35,7 @@ test.fails('exploration:ls is taken in «Taken and discarded» of the entry that
 
 // Checks: with the card on Target One the token bought next round with Target One alone shows no shortfall.
 // Why the check is redundant here: Target One is worth 3 influence with the card.
-test.fails('exploration:ls attached, the token bought with Target One shows no influence shortfall', () => {
+test('exploration:ls attached, the token bought with Target One shows no influence shortfall', () => {
   const lazax = table([id]);
   showWarnings(lazax, lazax.pay);
   expectNotShown('shortInfluence');

@@ -17,7 +17,7 @@ describe('exploration:aw1 Abandoned Warehouses', () => {
   // "You may gain 2 commodities"
   // Checks: the card explored with Target One gives the Letnev two commodities.
   // Why the check is redundant here: nothing is lifted; the plan counts the commodities, so the two gained must be counted.
-  test.fails('exploration:aw1 gains two commodities', () => {
+  test('exploration:aw1 gains two commodities', () => {
     const warehouses = table([[choosing(first([id]), 'gain')]]);
     quote(warehouses.pack, id, 'You may gain 2 commodities');
     expect(endOf(warehouses).commodities).toBe(2);
@@ -27,7 +27,7 @@ describe('exploration:aw1 Abandoned Warehouses', () => {
   //  can have."
   // Checks: with two commodities already, a second card gains none beyond the Letnev value of 2.
   // Why the check is NOT redundant here: the card gains commodities, it does not raise the faction's maximum.
-  test.fails('exploration:aw1 gains no commodities beyond the commodity value', () => {
+  test('exploration:aw1 gains no commodities beyond the commodity value', () => {
     const warehouses = table([[choosing(first([id]), 'gain')], [choosing(second([id]), 'gain')]]);
     expect(endOf(warehouses).commodities).toBe(2);
   });
@@ -35,7 +35,7 @@ describe('exploration:aw1 Abandoned Warehouses', () => {
   // "... or you may convert up to 2 of your commodities to trade goods."
   // Checks: the commodities gained in round 1 become two trade goods in round 2.
   // Why the check is redundant here: commodities are not spent (21.7); the card is what converts them.
-  test.fails('exploration:aw1 converts two commodities to trade goods', () => {
+  test('exploration:aw1 converts two commodities to trade goods', () => {
     const warehouses = table([[choosing(first([id]), 'gain')], [choosing(second([id]), 'convert')]]);
     const plain = table([[choosing(first([id]), 'gain')], [second()]]);
     expect(endOf(warehouses).commodities).toBe(0);
@@ -50,7 +50,7 @@ describe('exploration:aw1 Abandoned Warehouses', () => {
     expect(endOf(warehouses).tradeGoods).toBe(endOf(table([[first()]])).tradeGoods);
   });
 
-  test.fails('exploration:aw1 is a played effect', () => {
+  test('exploration:aw1 is a played effect', () => {
     expect(effect(table([[]]).pack, id).tier).toBe('play');
   });
 });

@@ -20,7 +20,7 @@ describe('exploration:exp1 Expedition', () => {
   // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, ready this planet."
   // Checks: a mech lands on Target One with an infantry; the planet gained is ready after the action, and no infantry is removed.
   // Why the check is redundant here: nothing is lifted; a planet gained is exhausted (49.5.2) and the card readies it.
-  test.fails('exploration:exp1 with a mech on the planet: the planet gained is ready after the action', () => {
+  test('exploration:exp1 with a mech on the planet: the planet gained is ready after the action', () => {
     const entry = landing({ mech: 1, infantry: 1 }, [id]);
     const explored = table([entry]);
     quote(explored.pack, id, 'If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, ready this planet.');
@@ -31,7 +31,7 @@ describe('exploration:exp1 Expedition', () => {
   // "... or if you remove 1 infantry from this planet ..."
   // Checks: two infantry land without a mech; one of them is removed and the planet gained is ready after the action.
   // Why the check is redundant here: the removal is the price the text names, so the plan makes it.
-  test.fails('exploration:exp1 without a mech one infantry is removed from the planet', () => {
+  test('exploration:exp1 without a mech one infantry is removed from the planet', () => {
     const entry = landing({ infantry: 2 }, [id]);
     const explored = table([entry]);
     expect(gained(explored)).toBe(gained(table([landing({ infantry: 2 })])) + 1);
@@ -41,7 +41,7 @@ describe('exploration:exp1 Expedition', () => {
   // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet"
   // Checks: the card named by an entry that has no ground force on a planet is warned of.
   // Why the check is NOT redundant here: neither condition of the text is met.
-  test.fails('exploration:exp1 with no mech and no infantry on the planet is warned of', () => {
+  test('exploration:exp1 with no mech and no infantry on the planet is warned of', () => {
     const entry = planned({ type: 'component', note: '' } as EntryBody, 'action', { gains: [id] });
     expectStanding(warningsOf(table([entry]), entry), CONDITION);
   });
@@ -56,7 +56,7 @@ describe('exploration:exp1 Expedition', () => {
   // Checks: Target One gained this action pays a research later in the same round.
   // Why the check is redundant here: the planetExhausted check asks whether the planet is ready, and the card readied
   // it; nothing is lifted.
-  test.fails('exploration:exp1 a planet readied by the card pays later in the round', () => {
+  test('exploration:exp1 a planet readied by the card pays later in the round', () => {
     const pay = research();
     const ready = table([landing({ mech: 1 }, [id]), pay]);
     expectNone(warningsOf(ready, pay), 'planetExhausted');
@@ -70,7 +70,7 @@ describe('exploration:exp1 Expedition', () => {
     expectStanding(warningsOf(plain, pay), 'planetExhausted');
   });
 
-  test.fails('exploration:exp1 is a played effect', () => {
+  test('exploration:exp1 is a played effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });
