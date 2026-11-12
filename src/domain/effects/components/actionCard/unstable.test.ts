@@ -20,7 +20,7 @@ describe('actionCard:unstable Unstable Planet', () => {
   // Checks: the Hacan planet is exhausted and three of their five infantry there are destroyed.
   // Why the check is redundant here: nothing is lifted; the card exhausts and destroys outside combat, which the count
   // must know for the Hacan's spending and for a later invasion.
-  test.fails('actionCard:unstable exhausts the hazardous planet and destroys three infantry on it', () => {
+  test('actionCard:unstable exhausts the hazardous planet and destroys three infantry on it', () => {
     const play = unstable('t1');
     const card = table(play);
     quote(card.pack, id, 'Exhaust that planet and destroy up to 3 infantry on it.');
@@ -32,7 +32,7 @@ describe('actionCard:unstable Unstable Planet', () => {
 
   // "... destroy up to 3 infantry on it." Note 2 of the card: with three or fewer, all are destroyed.
   // Checks: two infantry are both destroyed, and nothing is reported missing.
-  test.fails('actionCard:unstable with fewer than three infantry destroys them all', () => {
+  test('actionCard:unstable with fewer than three infantry destroys them all', () => {
     const play = unstable('t1');
     const card = table(play, 2);
     expect(endOf(card).rivals?.[RIVAL.id].ground.t1?.infantry ?? 0).toBe(0);
@@ -42,12 +42,12 @@ describe('actionCard:unstable Unstable Planet', () => {
   // "Choose 1 hazardous planet."
   // Checks: Target Two, which is not hazardous, is warned of.
   // Why the check is NOT redundant here: the card names hazardous planets only.
-  test.fails('actionCard:unstable on a planet that is not hazardous is warned of', () => {
+  test('actionCard:unstable on a planet that is not hazardous is warned of', () => {
     const play = unstable('t2');
     expectStanding(warningsOf(table(play), play), PLAY_CONDITION);
   });
 
-  test.fails('actionCard:unstable is a play effect', () => {
+  test('actionCard:unstable is a play effect', () => {
     expect(effect(table(unstable('t1')).pack, id).tier).toBe('play');
   });
 });

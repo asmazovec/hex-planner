@@ -23,7 +23,7 @@ describe('actionCard:s_retreat1 Skilled Retreat', () => {
   // stands there; my pools pay only for the activation.
   // Why the check is redundant here: nothing is lifted; the move is not a movement of a tactical action (not a
   // retreat either, by the card's notes), so no move value or route is asked.
-  test.fails('actionCard:s_retreat1 moves all my ships into the adjacent system and places my token there', () => {
+  test('actionCard:s_retreat1 moves all my ships into the adjacent system and places my token there', () => {
     const play = retreat(FAR);
     const skilled = table([attack(), play]);
     quote(skilled.pack, id, 'Move all of your ships from the active system into an adjacent system that does not contain another player\'s ships.');
@@ -38,7 +38,7 @@ describe('actionCard:s_retreat1 Skilled Retreat', () => {
   // "... into an adjacent system that does not contain another player's ships."
   // Checks: the system I came from, where the Hacan now also stand, is warned of.
   // Why the check is NOT redundant here: the card forbids a system with another player's ships.
-  test.fails('actionCard:s_retreat1 into a system with another player\'s ships is warned of', () => {
+  test('actionCard:s_retreat1 into a system with another player\'s ships is warned of', () => {
     const play = retreat(NEAR);
     expectStanding(warningsOf(table([attack(), play], { near: 1 }), play), PLAY_CONDITION);
   });
@@ -46,7 +46,7 @@ describe('actionCard:s_retreat1 Skilled Retreat', () => {
   // "... into an adjacent system ..."
   // Checks: a system two steps from the active one is warned of.
   // Why the check is NOT redundant here: the card moves the ships one system only.
-  test.fails('actionCard:s_retreat1 into a system that is not adjacent is warned of', () => {
+  test('actionCard:s_retreat1 into a system that is not adjacent is warned of', () => {
     const play = retreat(FARTHER);
     expectStanding(warningsOf(table([attack(), play]), play), PLAY_CONDITION);
   });
@@ -62,7 +62,7 @@ describe('actionCard:s_retreat1 Skilled Retreat', () => {
     expectNone(warningsOf(table([pass, theirs, play]), play), 'actionAfterPass');
   });
 
-  test.fails('actionCard:s_retreat1 is a play effect', () => {
+  test('actionCard:s_retreat1 is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

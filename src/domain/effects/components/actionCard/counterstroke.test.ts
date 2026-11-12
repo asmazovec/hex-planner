@@ -19,7 +19,7 @@ describe('actionCard:counterstroke Counterstroke', () => {
   // Checks: my token leaves the system and my tactic pool is back to three.
   // Why the check is redundant here: nothing is lifted; a token leaves the board otherwise only in the status phase,
   // and here it returns to the tactic pool, which the count must know.
-  test.fails('actionCard:counterstroke returns my token from the activated system to my tactic pool', () => {
+  test('actionCard:counterstroke returns my token from the activated system to my tactic pool', () => {
     const play = counter(NEAR);
     const card = table([mine(), theirs(), play]);
     quote(card.pack, id, 'Return that command token to your tactic pool.');
@@ -41,12 +41,12 @@ describe('actionCard:counterstroke Counterstroke', () => {
   // "... a system that contains 1 of your command tokens ..."
   // Checks: the target, where I have no token, is warned of.
   // Why the check is NOT redundant here: the card returns a token that is in the activated system, and there is none.
-  test.fails('actionCard:counterstroke naming a system without my token is warned of', () => {
+  test('actionCard:counterstroke naming a system without my token is warned of', () => {
     const play = counter(TARGET);
     expectStanding(warningsOf(table([mine(), theirs(), play]), play), PLAY_CONDITION);
   });
 
-  test.fails('actionCard:counterstroke is a play effect', () => {
+  test('actionCard:counterstroke is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

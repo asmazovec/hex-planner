@@ -19,7 +19,7 @@ describe('actionCard:jamming Signal Jamming', () => {
   // pools stay as they were.
   // Why the check is redundant here: nothing is lifted; the card places another player's token, which only Diplomacy
   // does by the rules (32.2), and the plan must count it to warn the Hacan when they activate that system.
-  test.fails('actionCard:jamming places the other player\'s command token in a system next to my ship', () => {
+  test('actionCard:jamming places the other player\'s command token in a system next to my ship', () => {
     const play = jam(NEAR);
     const jamming = table(play);
     quote(jamming.pack, id, 'Place a command token from another player\'s reinforcements in that system.');
@@ -32,7 +32,7 @@ describe('actionCard:jamming Signal Jamming', () => {
   // "Choose 1 non-home system ..."
   // Checks: my home system chosen is warned of.
   // Why the check is NOT redundant here: the card names non-home systems only.
-  test.fails('actionCard:jamming in a home system is warned of', () => {
+  test('actionCard:jamming in a home system is warned of', () => {
     const play = jam(HOME);
     expectStanding(warningsOf(table(play), play), PLAY_CONDITION);
   });
@@ -40,7 +40,7 @@ describe('actionCard:jamming Signal Jamming', () => {
   // "... that contains or is adjacent to 1 of your ships."
   // Checks: the target system, two systems away from my only ship, is warned of.
   // Why the check is NOT redundant here: the card reaches only systems with or next to one of my ships.
-  test.fails('actionCard:jamming in a system neither holding nor next to my ships is warned of', () => {
+  test('actionCard:jamming in a system neither holding nor next to my ships is warned of', () => {
     const play = jam(TARGET);
     expectStanding(warningsOf(table(play), play), PLAY_CONDITION);
   });
@@ -50,7 +50,7 @@ describe('actionCard:jamming Signal Jamming', () => {
     expect(endOf(table(jam(NEAR))).holdings.hand).not.toContain(id);
   });
 
-  test.fails('actionCard:jamming is a play effect', () => {
+  test('actionCard:jamming is a play effect', () => {
     expect(effect(table(jam(NEAR)).pack, id).tier).toBe('play');
   });
 });

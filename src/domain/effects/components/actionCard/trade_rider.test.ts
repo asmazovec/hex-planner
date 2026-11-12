@@ -11,7 +11,7 @@ describe('actionCard:trade_rider Trade Rider', () => {
   //  prediction is correct, gain 5 trade goods."
   // Checks: a correct prediction gives me five trade goods.
   // Why the check is redundant here: nothing is lifted; the plan counts no votes, so the player marks the result.
-  test.fails('actionCard:trade_rider with a correct prediction gains five trade goods', () => {
+  test('actionCard:trade_rider with a correct prediction gains five trade goods', () => {
     const rides = table(rider({ correct: 1 }));
     quote(rides.pack, id, 'If your prediction is correct, gain 5 trade goods.');
     expect(endOf(rides).tradeGoods).toBe(5);
@@ -33,7 +33,7 @@ describe('actionCard:trade_rider Trade Rider', () => {
     expect(end.holdings.hand).not.toContain(id);
   });
 
-  test.fails('actionCard:trade_rider is a play effect', () => {
+  test('actionCard:trade_rider is a play effect', () => {
     expect(effect(table(rider()).pack, id).tier).toBe('play');
   });
 });

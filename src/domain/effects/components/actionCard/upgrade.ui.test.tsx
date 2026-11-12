@@ -17,7 +17,7 @@ const table = (there: UnitCounts) => {
 // Checks: in «Used» of my tactical action I choose Upgrade; the entry names it, and the board after the plan holds a
 // dreadnought in place of one cruiser, with no missing unit shown.
 // Why the check is redundant here: nothing is lifted; the dreadnought is placed, not produced.
-test.fails('actionCard:upgrade chosen in «Used» of the action replaces a cruiser with a dreadnought', async () => {
+test('actionCard:upgrade chosen in «Used» of the action replaces a cruiser with a dreadnought', async () => {
   const upgrade = table({ cruiser: 2 });
   quote(upgrade.pack, id, 'Replace 1 of your cruisers in that system with 1 dreadnought');
   const live = showUses(upgrade, upgrade.move);
@@ -31,7 +31,7 @@ test.fails('actionCard:upgrade chosen in «Used» of the action replaces a cruis
 // Checks: chosen with only a destroyer in the target, the card is still taken, and the missing cruiser is shown as a
 // warning that stands.
 // Why the check is NOT redundant here: the card replaces a cruiser, and there is none.
-test.fails('actionCard:upgrade chosen without a cruiser shows the missing cruiser', async () => {
+test('actionCard:upgrade chosen without a cruiser shows the missing cruiser', async () => {
   const upgrade = table({ destroyer: 1 });
   const live = showUses(upgrade, upgrade.move);
   await use('Upgrade');

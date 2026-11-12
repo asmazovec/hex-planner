@@ -23,7 +23,7 @@ describe('actionCard:tactical Tactical Bombardment', () => {
   // Checks: my dreadnought (BOMBARDMENT 5) stands in the target; both Hacan planets there are exhausted.
   // Why the check is redundant here: nothing is lifted; the card exhausts other players' planets, which the count
   // must know so that the Hacan cannot spend them.
-  test.fails('actionCard:tactical exhausts every planet of other players in a system with my BOMBARDMENT unit', () => {
+  test('actionCard:tactical exhausts every planet of other players in a system with my BOMBARDMENT unit', () => {
     const tactical = table({ dreadnought: 1 });
     quote(tactical.pack, id, 'Exhaust each planet controlled by other players in that system.');
     expect(endOf(tactical).rivals?.[RIVAL.id].exhausted).toEqual(expect.arrayContaining(['t1', 't2']));
@@ -33,7 +33,7 @@ describe('actionCard:tactical Tactical Bombardment', () => {
   // "Choose 1 system that contains 1 or more of your units that have BOMBARDMENT."
   // Checks: with only a cruiser (no BOMBARDMENT) in the target the card is warned of.
   // Why the check is NOT redundant here: the card needs a unit with BOMBARDMENT in the system.
-  test.fails('actionCard:tactical without a unit that has BOMBARDMENT in the system is warned of', () => {
+  test('actionCard:tactical without a unit that has BOMBARDMENT in the system is warned of', () => {
     const tactical = table({ cruiser: 1 });
     expectStanding(warningsOf(tactical, tactical.play), PLAY_CONDITION);
   });
@@ -47,7 +47,7 @@ describe('actionCard:tactical Tactical Bombardment', () => {
     expect(endOf(tactical).exhausted).not.toContain('t1');
   });
 
-  test.fails('actionCard:tactical is a play effect', () => {
+  test('actionCard:tactical is a play effect', () => {
     expect(effect(table({}).pack, id).tier).toBe('play');
   });
 });
