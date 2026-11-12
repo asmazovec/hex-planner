@@ -61,8 +61,10 @@ export const DOCK_FIGHTERS = 3;
  * The fighters a player's space docks keep in a system: 3 for each of their docks on its planets. They count only for
  * what stands in the system after movement: a moving group keeps its fighters on board (79 note 2, 2.1).
  */
-export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks'>, systemId: string, pack: DataPack): number =>
-  DOCK_FIGHTERS * planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId)).length;
+export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks'> & Partial<Pick<GameState, 'holdings'>>, systemId: string, pack: DataPack): number =>
+  planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId)).reduce((sum, planetId) => sum + (state.holdings
+    ? applied(pack, { holdings: state.holdings, faction: game.faction }, 'dockFighters', DOCK_FIGHTERS, { faction: game.faction, planetId, systemId }).value
+    : DOCK_FIGHTERS), 0);
 
 /** Fighters a dock keeps, out of those present: they count neither as load nor as ships. */
 const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.min(units.fighter ?? 0, Math.max(0, fighterRoom));
@@ -96,7 +98,9 @@ export function fleetCount(game: Game, units: UnitCounts, holdings: Holdings, pa
   }, 0);
   if (!fightersFly(game, holdings, pack)) return ships;
   const { load, capacity: cap } = capacity(game, units, holdings, pack);
-  return ships + Math.max(0, (units.fighter ?? 0) - keptFighters(units, fighterRoom) - Math.max(0, cap - load));
+  const excess = Math.max(0, (units.fighter ?? 0) - keptFighters(units, fighterRoom) - Math.max(0, cap - load));
+  // What counts of the excess is a point of the count: Hybrid Crystal Fighter II halves it; a half ship rounds up.
+  return ships + Math.ceil(applied(pack, { holdings, faction: game.faction }, 'excessFighters', excess, { faction: game.faction }).value);
 }
 
 /** What a system's stack holds against the fleet pool and its own capacity, with the fighters its space docks keep. */

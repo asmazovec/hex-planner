@@ -78,7 +78,7 @@ function applyEntry(
   const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? []);
   switch (entry.type) {
     case 'tactical':
-      applyTactical(game, state, entry, pack, warnings, blockers);
+      applyTactical(game, state, entry, pack, warnings, blockers, shared);
       break;
     case 'strategic':
     case 'secondary':
@@ -100,6 +100,8 @@ function applyEntry(
   // What the entry uses beside its action is played like a component action's own; then each played component does what its effect says.
   applyUses(state, entry, pack, warnings, game.faction, acts.states);
   for (const id of playedBy(entry)) {
+    // A play that asked to run in the middle of a tactical action (`playAt`) has run there already.
+    if (entry.type === 'tactical' && effectOf(pack, id)?.playAt) continue;
     effectOf(pack, id)?.play?.({ game, state, shared, entry, choices: (entry.type === 'component' ? entry.choices : undefined) ?? {}, pack, warnings });
   }
   // What the entry brings and takes beside its own effect: the owner's holdings, and the laws of the whole game.

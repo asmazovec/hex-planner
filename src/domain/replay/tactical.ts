@@ -5,19 +5,19 @@
  */
 import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
-import { activate, checkActivation } from './activation';
+import { activate, checkActivation, playNamedAt, reactToActivation } from './activation';
 import { canFight, checkAfterCombat, checkArrival, removeGroundLosses, removeLosses } from './combat';
 import { gainControl, landUnits } from './invasion';
-import { checkRoutes, moveUnits } from './movement';
+import { checkEntryRoutes, moveUnits } from './movement';
 import { checkProduction, payProduction, placeProduction, placesOf, type ProductionPlace } from './production';
 import { take, unitIds, type TacticalEntry } from './state';
 import { carryStructures, placeCarried } from './structures';
-import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, fleetLimit, isPickup, overflowLeft, removeFleetExcess } from './transport';
+import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, fleetLimit, overflowLeft, removeFleetExcess } from './transport';
 import type { Blockers } from '../movement';
 
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
-function movement(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers): Record<string, UnitCounts> {
-  warnings.push(...checkRoutes(game, state, target, entry.moves.filter(move => !isPickup(move, target, pack)), pack, blockers));
+function movement(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers, shared?: GameState): Record<string, UnitCounts> {
+  warnings.push(...checkEntryRoutes(game, state, shared, entry, pack, blockers));
   warnings.push(...checkPickups(game, state, target, entry.moves, pack, blockers));
   const over = overflowLeft(game, state, target, entry.moves, pack);
   const groups = moveUnits(game, state, target, entry.moves, pack, warnings);
@@ -31,9 +31,12 @@ function movement(game: Game, state: GameState, target: string, entry: TacticalE
  * control of the planets still held. What the surviving ships cannot carry is checked between the two (16.3.3).
  */
 function fightAndLand(
-  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false, afterLosses?: () => void,
 ): void {
-  if (!lossesTaken) removeLosses(state, target, entry, warnings);
+  if (!lossesTaken) {
+    removeLosses(state, target, entry, warnings);
+    afterLosses?.();
+  }
   warnings.push(...checkAfterCombat(game, state, target, entry, pack));
   warnings.push(...checkStationLandings(entry, pack));
   const landedOn = landUnits(game, state, target, entry, pack, warnings);
@@ -47,9 +50,9 @@ function fightAndLand(
  */
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
-  removeLater: UnitCounts = {},
+  removeLater: UnitCounts = {}, afterLosses?: () => void,
 ): void {
-  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken);
+  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken, afterLosses);
   warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround));
   placeProduction(game, state, target, entry.production, pack, entry.productionGround);
   take(state.systems, target, removeLater, warnings, 'production');
@@ -61,21 +64,28 @@ const fresh = (found: Warning[], given: Warning[]): Warning[] =>
   found.filter(w => !given.some(g => g.code === w.code && g.params.systemId === w.params.systemId));
 
 export function applyTactical(
-  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers,
+  game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers, shared: GameState = state,
 ): void {
   const target = entry.systemId;
   if (target === null) return;
   warnings.push(...checkActivation(state, target, entry));
   activate(state, target, entry);
-  const groups = movement(game, state, target, entry, pack, warnings, blockers);
+  // Whatever answers the activation, and what a component named by the entry plays at it, comes before the move.
+  reactToActivation(game, state, shared, entry, target, pack, warnings);
+  const groups = movement(game, state, target, entry, pack, warnings, blockers, shared);
   warnings.push(...checkGroups(game, state, groups, pack));
   // Ships lost where nothing could fight them were lost on the way, before the fleet pool counts the arrival.
   const onTheWay = !canFight(game, state, target, pack);
-  if (onTheWay) removeLosses(state, target, entry, warnings);
+  // What a component named by the entry plays once the losses are taken (Salvage) runs once, here or inside the battle.
+  const afterLosses = () => playNamedAt('combat', game, state, shared, entry, pack, warnings);
+  if (onTheWay) {
+    removeLosses(state, target, entry, warnings);
+    afterLosses();
+  }
   // The excess beyond the fleet pool goes at once (37.3), so the arrival counts what is left.
   const removeLater = removeFleetExcess(state, target, entry.fleetRemovals ?? {});
   if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
-  landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater);
+  landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, afterLosses);
   payProduction(game, state, entry, pack, warnings);
   // The structures a flight brought are put on planets when the action ends, after its production.
   placeCarried(game, state, target, entry.landings, pack, warnings);

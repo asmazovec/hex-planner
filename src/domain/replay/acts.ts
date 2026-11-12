@@ -2,6 +2,7 @@
  * The acts of a turn, after its action: the transactions with neighbours (LRR 94) in order, then the expedition at the
  * end of the turn (Thunder's Edge, expedition 2). Nothing is forbidden; what breaks a rule warns.
  */
+import { linksOf } from '../movement';
 import { areNeighbors } from '../neighbors';
 import { violation } from '../rules/registry';
 import { componentById } from '../components';
@@ -65,8 +66,8 @@ export function applyActs(game: Game, state: GameState, entry: Entry, pack: Data
     const other = ctx.states[act.with];
     if (!other || other === state) continue;
     // Only with a neighbour, as the board stands at this point of the turn (94.1, 60).
-    if (!areNeighbors(game, state, other, pack)) warnings.push(violation('notNeighbor', { player: act.with }));
     const shared = ctx.states.me ?? state;
+    if (!areNeighbors(game, state, other, pack, linksOf(game, pack, { state, shared, during: 'neighbors' }))) warnings.push(violation('notNeighbor', { player: act.with }));
     hand(state, other, act.give, pack, shared, warnings);
     hand(other, state, act.get, pack, shared, warnings);
   }
