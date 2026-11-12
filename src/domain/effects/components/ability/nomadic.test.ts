@@ -21,7 +21,7 @@ describe('ability:nomadic Nomadic', () => {
   // lifted by Nomadic.
   // Why the check is redundant here: LRR 61.16 says "A player cannot score public objectives if that player does not
   // control each planet in their home system"; the ability says the Saar can.
-  test.fails('ability:nomadic scores a public objective without the home system: the warning is waived', () => {
+  test('ability:nomadic scores a public objective without the home system: the warning is waived', () => {
     const saar = scoring('saar', PUBLIC, homeLost);
     quote(saar.pack, id, 'You can score objectives even if you do not control the planets in your home system.');
     expectWaived(warningsOf(saar, saar.status), CODE, id);
@@ -50,7 +50,7 @@ describe('ability:nomadic Nomadic', () => {
     expectNone(warningsOf(saar, saar.status), CODE);
   });
 
-  test.fails('ability:nomadic is a passive effect that waives the home system check of scoring', () => {
+  test('ability:nomadic is a passive effect that waives the home system check of scoring', () => {
     const { pack } = scoring('saar', PUBLIC, {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);

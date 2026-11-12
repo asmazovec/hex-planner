@@ -10,10 +10,15 @@
  * and not a waiver. The `speed` point does not know the companions of a ship yet (see the report). The first
  * sentence is a roll of dice: a hint of the combat.
  *
- * Pass 1: the hint it is today.
  */
 import type { ComponentEffect } from '../../types';
+import { fastestOfGroup } from '../../helpers/movement';
 
 export const id = 'breakthrough:letnevbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // Non-fighter ships only: a fighter has no move value of its own to lift and a unit of 0 does not fly.
+  modify: { speed: (value, ctx) => (value > 0 && ctx.unit !== 'fighter' ? Math.max(value, fastestOfGroup(ctx)) : value) },
+};

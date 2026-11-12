@@ -21,7 +21,7 @@ const table = (leaders: Record<string, LeaderState>) => {
 // lets it offer my other docks.)
 // Why the check is redundant here: 68.3 binds produced ground forces to the producing dock's planet; the commander frees
 // infantry to any of my docks.
-test.fails('leader:saarcommander infantry placed at another dock read as allowed by Rowl Sarrig', () => {
+test('leader:saarcommander infantry placed at another dock read as allowed by Rowl Sarrig', () => {
   const saar = table({ [id]: 'unlocked' });
   quote(saar.table.pack, id, 'You may place each of those units at any of your space docks');
   showWarnings(saar.table, saar.build);

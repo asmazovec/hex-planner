@@ -19,7 +19,7 @@ const scoring = (faction: string) => {
 // allowed look, naming Nomadic.
 // Why the check is redundant here: 61.16 forbids scoring a public objective without the home system, and the ability
 // allows it to the Saar.
-test.fails('ability:nomadic the objective scored without the home system reads as allowed by Nomadic', () => {
+test('ability:nomadic the objective scored without the home system reads as allowed by Nomadic', () => {
   const saar = scoring('saar');
   quote(saar.table.pack, id, 'You can score objectives even if you do not control the planets in your home system.');
   showWarnings(saar.table, saar.status);

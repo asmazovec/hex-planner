@@ -16,7 +16,7 @@ describe('technology:ffac2 Floating Factory II', () => {
   // Why the default value does not apply: the generated upgrade gives a space dock its planet's resources plus 4
   // (79.1, Space Dock II); the Floating Factory prints a flat PRODUCTION 7 and stands in no planet. A `modify` of
   // `productionValue`: the number changes, nothing is waived.
-  test.fails('technology:ffac2 the dock produces 7 units, not its planet\'s resources plus 4', () => {
+  test('technology:ffac2 the dock produces 7 units, not its planet\'s resources plus 4', () => {
     const saar = produce(7);
     quote(saar.pack, id, 'PRODUCTION 7.');
     expectNone(warningsOf(saar, saar.build), 'productionOver');
@@ -24,7 +24,7 @@ describe('technology:ffac2 Floating Factory II', () => {
 
   // Checks: the eighth unit is beyond the value, and the warning names 7.
   // Why the check is NOT redundant here: the upgrade changes the value, it does not lift the limit.
-  test.fails('technology:ffac2 still warns of an eighth unit, against the value of 7', () => {
+  test('technology:ffac2 still warns of an eighth unit, against the value of 7', () => {
     const saar = produce(8);
     expectStanding(warningsOf(saar, saar.build), 'productionOver');
     expect(warningsOf(saar, saar.build).find(w => w.code === 'productionOver')?.params).toMatchObject({ value: 7, count: 8 });

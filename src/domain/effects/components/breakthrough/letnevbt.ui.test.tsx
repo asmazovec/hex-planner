@@ -16,7 +16,7 @@ const table = (start: StartHoldings) => {
 // Checks: in the flight step I take the dreadnought (move 1) for a system two away: the route warning shows; then I
 // take the cruiser (move 2) into the same flight and the warning goes, as the dreadnought now moves 2.
 // Why the default check does not apply: the breakthrough changes the move value the route is compared with.
-test.fails('breakthrough:letnevbt taking a fast ship into the flight removes the route warning of the slow one', async () => {
+test('breakthrough:letnevbt taking a fast ship into the flight removes the route warning of the slow one', async () => {
   const letnev = table({ breakthrough: 'held' });
   quote(letnev.table.pack, id, 'highest move value amongst moving ships in the system they started in');
   const live = showFlight(letnev.table, letnev.move, HOME);

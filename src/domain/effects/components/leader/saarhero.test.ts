@@ -19,7 +19,7 @@ describe('leader:saarhero Gurno Aggero', () => {
   // Checks: played on the system next to my home dock, the opponent's fighters and infantry there are gone and the
   // cruiser stays.
   // Why it is counted here: the plan keeps every opponent's units; the hero removes some of them by its play.
-  test.fails('leader:saarhero destroys the other players\' infantry and fighters in the chosen system', () => {
+  test('leader:saarhero destroys the other players\' infantry and fighters in the chosen system', () => {
     const table = relay([play(NEAR)]);
     quote(table.pack, id, "Destroy all other players' infantry and fighters in that system.");
     expect(endOf(table).rivals?.[RIVAL.id]?.systems[NEAR]).toEqual({ cruiser: 1 });
@@ -43,7 +43,7 @@ describe('leader:saarhero Gurno Aggero', () => {
   test.todo('leader:saarhero a system that is not adjacent to one of my docks (a dock\'s own system included: Saar note "A unit is not adjacent to the system it is in") is warned of: no code for the choice of a component yet');
   test.todo('leader:saarhero the infantry on the planets of the chosen system: "in that system" covers its planets too; the plan must remove the opponent\'s ground forces there');
 
-  test.fails('leader:saarhero is a play effect', () => {
+  test('leader:saarhero is a play effect', () => {
     const { pack } = relay([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

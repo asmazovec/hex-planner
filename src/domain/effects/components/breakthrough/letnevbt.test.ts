@@ -16,7 +16,7 @@ describe('breakthrough:letnevbt Gravleash Maneuvers', () => {
   // Why the default check does not apply: the route check (58.2) compares the route with the ship's own move value,
   // and the breakthrough sets that value to the highest of the ships moving from its system. It changes the number,
   // so this is a `modify` and nothing is listed as waived.
-  test.fails('breakthrough:letnevbt a slow ship moves as far as the fastest one leaving its system with it', () => {
+  test('breakthrough:letnevbt a slow ship moves as far as the fastest one leaving its system with it', () => {
     const letnev = table(together(), { [HOME]: { dreadnought: 1, cruiser: 1 } });
     quote(letnev.pack, id, "your non-fighter ships' move values are equal to the highest move value amongst moving ships in the system they started in");
     expectNone(warningsOf(letnev, letnev.move), 'speedShort');
@@ -59,7 +59,7 @@ describe('breakthrough:letnevbt Gravleash Maneuvers', () => {
   // Checks: the effect is passive (in force once the breakthrough is held), it changes the move value and lifts
   // nothing.
   // Why the combat sentence is not validated: it is a roll of dice the plan does not make.
-  test.fails('breakthrough:letnevbt is a passive effect that changes the move value and waives nothing', () => {
+  test('breakthrough:letnevbt is a passive effect that changes the move value and waives nothing', () => {
     const { pack } = table(together(), {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.speed).toBeTypeOf('function');
