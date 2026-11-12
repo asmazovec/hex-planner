@@ -1,0 +1,146 @@
+{
+  "batch": 27,
+  "title": "Common: agendas",
+  "components": [
+    {
+      "id": "agenda:plowshares",
+      "name": "Swords to Plowshares",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/plowshares"
+    },
+    {
+      "id": "agenda:unconventional",
+      "name": "Unconventional Measures",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/unconventional"
+    },
+    {
+      "id": "agenda:wormhole_recon",
+      "name": "Wormhole Reconstruction",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/wormhole_recon"
+    },
+    {
+      "id": "agenda:wormhole_research",
+      "name": "Wormhole Research",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/wormhole_research"
+    },
+    {
+      "id": "agenda:core_mining",
+      "name": "Core Mining",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/core_mining"
+    },
+    {
+      "id": "agenda:demilitarized_zone",
+      "name": "Demilitarized Zone",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/demilitarized_zone"
+    },
+    {
+      "id": "agenda:holy_planet_of_ixth",
+      "name": "Holy Planet of Ixth",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/holy_planet_of_ixth"
+    },
+    {
+      "id": "agenda:representative_government",
+      "name": "Representative Government (Base Game)",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/representative_government"
+    },
+    {
+      "id": "agenda:rt_biotic",
+      "name": "Research Team: Biotic",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/rt_biotic"
+    },
+    {
+      "id": "agenda:rt_cybernetic",
+      "name": "Research Team: Cybernetic",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/rt_cybernetic"
+    },
+    {
+      "id": "agenda:rt_propulsion",
+      "name": "Research Team: Propulsion",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/rt_propulsion"
+    },
+    {
+      "id": "agenda:rt_warfare",
+      "name": "Research Team: Warfare",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/rt_warfare"
+    },
+    {
+      "id": "agenda:senate_sanctuary",
+      "name": "Senate Sanctuary",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/senate_sanctuary"
+    },
+    {
+      "id": "agenda:shard_of_the_throne",
+      "name": "Shard of the Throne",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/shard_of_the_throne"
+    },
+    {
+      "id": "agenda:terraforming_initiative",
+      "name": "Terraforming Initiative",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/terraforming_initiative"
+    },
+    {
+      "id": "agenda:crown_of_emphidia",
+      "name": "The Crown of Emphidia",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/crown_of_emphidia"
+    },
+    {
+      "id": "agenda:crown_of_thalnos",
+      "name": "The Crown of Thalnos",
+      "kind": "agenda",
+      "pack": "base",
+      "file": "agenda/crown_of_thalnos"
+    },
+    {
+      "id": "agenda:standardization",
+      "name": "Armed Forces Standardization",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/standardization"
+    },
+    {
+      "id": "agenda:articles_war",
+      "name": "Articles of War",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/articles_war"
+    },
+    {
+      "id": "agenda:checks",
+      "name": "Checks and Balances",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/checks"
+    }
+  ]
+}

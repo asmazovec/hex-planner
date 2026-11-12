@@ -1,0 +1,166 @@
+{
+  "batch": 6,
+  "title": "Factions: sardakk, jolnar",
+  "components": [
+    {
+      "id": "promissory:tekklar",
+      "name": "Tekklar Legion",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "sardakk",
+      "file": "promissory/tekklar"
+    },
+    {
+      "id": "ability:unrelenting",
+      "name": "Unrelenting",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "sardakk",
+      "file": "ability/unrelenting"
+    },
+    {
+      "id": "leader:sardakkagent",
+      "name": "T'ro",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "sardakk",
+      "file": "leader/sardakkagent"
+    },
+    {
+      "id": "leader:sardakkcommander",
+      "name": "G'hom Sek'kus",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "sardakk",
+      "file": "leader/sardakkcommander"
+    },
+    {
+      "id": "leader:sardakkhero",
+      "name": "Sh'val, Harbinger",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "sardakk",
+      "file": "leader/sardakkhero"
+    },
+    {
+      "id": "mech:sardakk_mech",
+      "name": "Valkyrie Exoskeleton",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "sardakk",
+      "file": "mech/sardakk_mech"
+    },
+    {
+      "id": "breakthrough:sardakkbt",
+      "name": "N'orr Supremacy",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "sardakk",
+      "file": "breakthrough/sardakkbt"
+    },
+    {
+      "id": "technology:exo2",
+      "name": "Exotrireme II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "sardakk",
+      "file": "technology/exo2"
+    },
+    {
+      "id": "technology:vpw",
+      "name": "Valkyrie Particle Weave",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "sardakk",
+      "file": "technology/vpw"
+    },
+    {
+      "id": "promissory:ra",
+      "name": "Research Agreement",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "jolnar",
+      "file": "promissory/ra"
+    },
+    {
+      "id": "ability:fragile",
+      "name": "Fragile",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "jolnar",
+      "file": "ability/fragile"
+    },
+    {
+      "id": "ability:brilliant",
+      "name": "Brilliant",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "jolnar",
+      "file": "ability/brilliant"
+    },
+    {
+      "id": "ability:analytical",
+      "name": "Analytical",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "jolnar",
+      "file": "ability/analytical"
+    },
+    {
+      "id": "leader:jolnaragent",
+      "name": "Doctor Sucaban",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "jolnar",
+      "file": "leader/jolnaragent"
+    },
+    {
+      "id": "leader:jolnarcommander",
+      "name": "Agnlan Oln",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "jolnar",
+      "file": "leader/jolnarcommander"
+    },
+    {
+      "id": "leader:jolnarhero",
+      "name": "Rin, the Master's Legacy",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "jolnar",
+      "file": "leader/jolnarhero"
+    },
+    {
+      "id": "mech:jolnar_mech",
+      "name": "Shield Paling",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "jolnar",
+      "file": "mech/jolnar_mech"
+    },
+    {
+      "id": "breakthrough:jolnarbt",
+      "name": "Specialist Compounds",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "jolnar",
+      "file": "breakthrough/jolnarbt"
+    },
+    {
+      "id": "technology:ers",
+      "name": "E-Res Siphons",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "jolnar",
+      "file": "technology/ers"
+    },
+    {
+      "id": "technology:scc",
+      "name": "Spatial Conduit Cylinder",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "jolnar",
+      "file": "technology/scc"
+    }
+  ]
+}

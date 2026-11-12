@@ -1,0 +1,55 @@
+{
+  "batch": 35,
+  "title": "Common: legendary planets",
+  "components": [
+    {
+      "id": "legendary:emelpar",
+      "name": "The Acropolis",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/emelpar"
+    },
+    {
+      "id": "legendary:tempesta",
+      "name": "Ionian Fuel Refinery",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/tempesta"
+    },
+    {
+      "id": "legendary:mrte",
+      "name": "The Galactic Council",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/mrte"
+    },
+    {
+      "id": "legendary:industrex",
+      "name": "Aeurex Mechanica",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/industrex"
+    },
+    {
+      "id": "legendary:styx",
+      "name": "A Song Like Marrow",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/styx"
+    },
+    {
+      "id": "legendary:thundersedge",
+      "name": "Jupiter Brain",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/thundersedge"
+    },
+    {
+      "id": "legendary:avernus",
+      "name": "The Nucleus",
+      "kind": "legendary",
+      "pack": "te",
+      "file": "legendary/avernus"
+    }
+  ]
+}

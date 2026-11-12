@@ -1,0 +1,146 @@
+{
+  "batch": 32,
+  "title": "Common: secret objectives, exploration",
+  "components": [
+    {
+      "id": "secretObjective:fwp",
+      "name": "Fight with Precision",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/fwp"
+    },
+    {
+      "id": "secretObjective:fc",
+      "name": "Foster Cohesion",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/fc"
+    },
+    {
+      "id": "secretObjective:hrm",
+      "name": "Hoard Raw Materials",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/hrm"
+    },
+    {
+      "id": "secretObjective:mtm",
+      "name": "Mechanize the Military",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/mtm"
+    },
+    {
+      "id": "secretObjective:otf",
+      "name": "Occupy the Fringe",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/otf"
+    },
+    {
+      "id": "secretObjective:pem",
+      "name": "Produce en Masse",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/pem"
+    },
+    {
+      "id": "secretObjective:pe",
+      "name": "Prove Endurance",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/pe"
+    },
+    {
+      "id": "secretObjective:sai",
+      "name": "Seize an Icon",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/sai"
+    },
+    {
+      "id": "secretObjective:syc",
+      "name": "Stake Your Claim",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/syc"
+    },
+    {
+      "id": "secretObjective:sb",
+      "name": "Strengthen Bonds",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/sb"
+    },
+    {
+      "id": "exploration:minent",
+      "name": "Minor Entropic Field",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/minent"
+    },
+    {
+      "id": "exploration:ent",
+      "name": "Entropic Field",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/ent"
+    },
+    {
+      "id": "exploration:majent",
+      "name": "Major Entropic Field",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/majent"
+    },
+    {
+      "id": "exploration:kel1",
+      "name": "Keleres Ship",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/kel1"
+    },
+    {
+      "id": "exploration:dw",
+      "name": "Dead World",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/dw"
+    },
+    {
+      "id": "exploration:frln1",
+      "name": "Freelancers",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/frln1"
+    },
+    {
+      "id": "exploration:mo1",
+      "name": "Mercenary Outfit",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/mo1"
+    },
+    {
+      "id": "exploration:gw",
+      "name": "Gamma Wormhole",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/gw"
+    },
+    {
+      "id": "exploration:dmz",
+      "name": "Demilitarized Zone",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/dmz"
+    },
+    {
+      "id": "exploration:ds",
+      "name": "Dyson Sphere",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/ds"
+    }
+  ]
+}

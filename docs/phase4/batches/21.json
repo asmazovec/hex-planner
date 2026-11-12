@@ -1,0 +1,146 @@
+{
+  "batch": 21,
+  "title": "Common: action cards",
+  "components": [
+    {
+      "id": "actionCard:salvage",
+      "name": "Salvage",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/salvage"
+    },
+    {
+      "id": "actionCard:sh1",
+      "name": "Shields Holding",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/sh1"
+    },
+    {
+      "id": "actionCard:jamming",
+      "name": "Signal Jamming",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/jamming"
+    },
+    {
+      "id": "actionCard:s_retreat1",
+      "name": "Skilled Retreat",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/s_retreat1"
+    },
+    {
+      "id": "actionCard:spy",
+      "name": "Spy",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/spy"
+    },
+    {
+      "id": "actionCard:summit",
+      "name": "Summit",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/summit"
+    },
+    {
+      "id": "actionCard:tactical",
+      "name": "Tactical Bombardment",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/tactical"
+    },
+    {
+      "id": "actionCard:tech_rider",
+      "name": "Technology Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/tech_rider"
+    },
+    {
+      "id": "actionCard:trade_rider",
+      "name": "Trade Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/trade_rider"
+    },
+    {
+      "id": "actionCard:unexpected",
+      "name": "Unexpected Action",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/unexpected"
+    },
+    {
+      "id": "actionCard:unstable",
+      "name": "Unstable Planet",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/unstable"
+    },
+    {
+      "id": "actionCard:upgrade",
+      "name": "Upgrade",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/upgrade"
+    },
+    {
+      "id": "actionCard:uprising",
+      "name": "Uprising",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/uprising"
+    },
+    {
+      "id": "actionCard:veto",
+      "name": "Veto",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/veto"
+    },
+    {
+      "id": "actionCard:war_effort",
+      "name": "War Effort",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/war_effort"
+    },
+    {
+      "id": "actionCard:war_rider",
+      "name": "Warfare Rider",
+      "kind": "actionCard",
+      "pack": "base",
+      "file": "actionCard/war_rider"
+    },
+    {
+      "id": "actionCard:blitz",
+      "name": "Blitz",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/blitz"
+    },
+    {
+      "id": "actionCard:counterstroke",
+      "name": "Counterstroke",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/counterstroke"
+    },
+    {
+      "id": "actionCard:f_conscription",
+      "name": "Fighter Conscription",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/f_conscription"
+    },
+    {
+      "id": "actionCard:fsb",
+      "name": "Forward Supply Base",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/fsb"
+    }
+  ]
+}

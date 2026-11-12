@@ -1,0 +1,174 @@
+{
+  "batch": 14,
+  "title": "Factions: firmament, obsidian",
+  "components": [
+    {
+      "id": "promissory:blackops",
+      "name": "Black Ops",
+      "kind": "promissory",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "promissory/blackops"
+    },
+    {
+      "id": "ability:plotsplots",
+      "name": "Plots Within Plots",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "ability/plotsplots"
+    },
+    {
+      "id": "ability:puppetsoftheblade",
+      "name": "Puppets of the Blade",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "ability/puppetsoftheblade"
+    },
+    {
+      "id": "leader:firmamentagent",
+      "name": "Myru Vos",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "leader/firmamentagent"
+    },
+    {
+      "id": "leader:firmamentcommander",
+      "name": "Captain Aroz",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "leader/firmamentcommander"
+    },
+    {
+      "id": "leader:firmamenthero",
+      "name": "Sharsiss",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "leader/firmamenthero"
+    },
+    {
+      "id": "mech:firmament_mech",
+      "name": "Viper EX-23",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "mech/firmament_mech"
+    },
+    {
+      "id": "breakthrough:firmamentbt",
+      "name": "The Sowing",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "breakthrough/firmamentbt"
+    },
+    {
+      "id": "technology:planesplitter-firm",
+      "name": "Planesplitter (Firmament)",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "technology/planesplitter-firm"
+    },
+    {
+      "id": "technology:parasite-firm",
+      "name": "Neural Parasite (Firmament)",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "firmament",
+      "file": "technology/parasite-firm"
+    },
+    {
+      "id": "promissory:malevolency",
+      "name": "Malevolency",
+      "kind": "promissory",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "promissory/malevolency"
+    },
+    {
+      "id": "ability:nocturne",
+      "name": "Nocturne",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "ability/nocturne"
+    },
+    {
+      "id": "ability:bladesorchestra",
+      "name": "The Blade's Orchestra",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "ability/bladesorchestra"
+    },
+    {
+      "id": "ability:marionettes",
+      "name": "Marionettes",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "ability/marionettes"
+    },
+    {
+      "id": "leader:obsidianagent",
+      "name": "Vos Hollow",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "leader/obsidianagent"
+    },
+    {
+      "id": "leader:obsidiancommander",
+      "name": "Aroz Hollow",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "leader/obsidiancommander"
+    },
+    {
+      "id": "leader:obsidianhero",
+      "name": "Sharsiss Hollow",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "leader/obsidianhero"
+    },
+    {
+      "id": "mech:obsidian_mech",
+      "name": "Viper Hollow",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "mech/obsidian_mech"
+    },
+    {
+      "id": "breakthrough:obsidianbt",
+      "name": "The Reaping",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "breakthrough/obsidianbt"
+    },
+    {
+      "id": "technology:planesplitter-obs",
+      "name": "Planesplitter (Obsidian)",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "technology/planesplitter-obs"
+    },
+    {
+      "id": "technology:parasite-obs",
+      "name": "Neural Parasite (Obsidian)",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "obsidian",
+      "file": "technology/parasite-obs"
+    }
+  ]
+}

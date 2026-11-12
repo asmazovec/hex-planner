@@ -1,0 +1,206 @@
+{
+  "batch": 13,
+  "title": "Factions: keleres, deepwrought",
+  "components": [
+    {
+      "id": "promissory:ridera",
+      "name": "Keleres Rider",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "keleresa",
+      "file": "promissory/ridera"
+    },
+    {
+      "id": "promissory:riderm",
+      "name": "Keleres Rider",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "promissory/riderm"
+    },
+    {
+      "id": "promissory:riderx",
+      "name": "Keleres Rider",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "keleresx",
+      "file": "promissory/riderx"
+    },
+    {
+      "id": "ability:the_tribuni",
+      "name": "The Tribuni",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "ability/the_tribuni"
+    },
+    {
+      "id": "ability:council_patronage",
+      "name": "Council Patronage",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "ability/council_patronage"
+    },
+    {
+      "id": "ability:laws_order",
+      "name": "Law's Order",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "ability/laws_order"
+    },
+    {
+      "id": "leader:keleresagent",
+      "name": "Xander Alexin Victori III",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "leader/keleresagent"
+    },
+    {
+      "id": "leader:kelerescommander",
+      "name": "Suffi An",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "leader/kelerescommander"
+    },
+    {
+      "id": "leader:keleresheroharka",
+      "name": "Harka Leeds",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "leader/keleresheroharka"
+    },
+    {
+      "id": "mech:keleres_mech",
+      "name": "Omniopiares",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "mech/keleres_mech"
+    },
+    {
+      "id": "breakthrough:keleresbt",
+      "name": "I.I.H.Q. Modernization",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "keleresm",
+      "file": "breakthrough/keleresbt"
+    },
+    {
+      "id": "leader:keleresheroodlynn",
+      "name": "Odlynn Myrr",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "keleresx",
+      "file": "leader/keleresheroodlynn"
+    },
+    {
+      "id": "leader:keleresherokuuasi",
+      "name": "Kuuasi Aun Jalatai",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "keleresa",
+      "file": "leader/keleresherokuuasi"
+    },
+    {
+      "id": "technology:asn",
+      "name": "Agency Supply Network",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "keleresm",
+      "file": "technology/asn"
+    },
+    {
+      "id": "technology:executiveorder",
+      "name": "Executive Order",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "keleresm",
+      "file": "technology/executiveorder"
+    },
+    {
+      "id": "promissory:shareknowledge",
+      "name": "Share Knowledge",
+      "kind": "promissory",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "promissory/shareknowledge"
+    },
+    {
+      "id": "ability:researchteam",
+      "name": "Research Team",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "ability/researchteam"
+    },
+    {
+      "id": "ability:oceanbound",
+      "name": "Oceanbound",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "ability/oceanbound"
+    },
+    {
+      "id": "leader:deepwroughtagent",
+      "name": "Doctor Carrina",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "leader/deepwroughtagent"
+    },
+    {
+      "id": "leader:deepwroughtcommander",
+      "name": "Aello",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "leader/deepwroughtcommander"
+    },
+    {
+      "id": "leader:deepwroughthero",
+      "name": "Ta Zern",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "leader/deepwroughthero"
+    },
+    {
+      "id": "mech:deepwrought_mech",
+      "name": "Eanautic",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "mech/deepwrought_mech"
+    },
+    {
+      "id": "breakthrough:deepwroughtbt",
+      "name": "Visionaria Select",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "breakthrough/deepwroughtbt"
+    },
+    {
+      "id": "technology:hydrothermal",
+      "name": "Hydrothermal Mining",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "technology/hydrothermal"
+    },
+    {
+      "id": "technology:radical",
+      "name": "Radical Advancement",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "deepwrought",
+      "file": "technology/radical"
+    }
+  ]
+}

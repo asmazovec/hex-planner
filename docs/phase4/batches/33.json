@@ -1,0 +1,146 @@
+{
+  "batch": 33,
+  "title": "Common: exploration",
+  "components": [
+    {
+      "id": "exploration:pw",
+      "name": "Paradise World",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/pw"
+    },
+    {
+      "id": "exploration:toe",
+      "name": "Tomb of Emphidia",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/toe"
+    },
+    {
+      "id": "exploration:crf1",
+      "name": "Cultural Relic Fragment",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/crf1"
+    },
+    {
+      "id": "exploration:vfs1",
+      "name": "Volatile Fuel Source",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/vfs1"
+    },
+    {
+      "id": "exploration:exp1",
+      "name": "Expedition",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/exp1"
+    },
+    {
+      "id": "exploration:cm1",
+      "name": "Core Mine",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/cm1"
+    },
+    {
+      "id": "exploration:ls",
+      "name": "Lazax Survivors",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/ls"
+    },
+    {
+      "id": "exploration:mw",
+      "name": "Mining World",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/mw"
+    },
+    {
+      "id": "exploration:rw",
+      "name": "Rich World",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/rw"
+    },
+    {
+      "id": "exploration:warfare",
+      "name": "Warfare Research Facility",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/warfare"
+    },
+    {
+      "id": "exploration:hrf1",
+      "name": "Hazardous Relic Fragment",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/hrf1"
+    },
+    {
+      "id": "exploration:aw1",
+      "name": "Abandoned Warehouses",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/aw1"
+    },
+    {
+      "id": "exploration:fb1",
+      "name": "Functioning Base",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/fb1"
+    },
+    {
+      "id": "exploration:lf1",
+      "name": "Local Fabricators",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/lf1"
+    },
+    {
+      "id": "exploration:biotic",
+      "name": "Biotic Research Facility",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/biotic"
+    },
+    {
+      "id": "exploration:cybernetic",
+      "name": "Cybernetic Research Facility",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/cybernetic"
+    },
+    {
+      "id": "exploration:propulsion",
+      "name": "Propulsion Research Facility",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/propulsion"
+    },
+    {
+      "id": "exploration:irf1",
+      "name": "Industrial Relic Fragment",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/irf1"
+    },
+    {
+      "id": "exploration:dv1",
+      "name": "Derelict Vessel",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/dv1"
+    },
+    {
+      "id": "exploration:ed1",
+      "name": "Enigmatic Device",
+      "kind": "exploration",
+      "pack": "pok",
+      "file": "exploration/ed1"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "batch": 23,
+  "title": "Common: action cards",
+  "components": [
+    {
+      "id": "actionCard:probe",
+      "name": "Exploration Probe",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/probe"
+    },
+    {
+      "id": "actionCard:investments",
+      "name": "Manipulate Investments",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/investments"
+    },
+    {
+      "id": "actionCard:nav_suite",
+      "name": "Nav Suite",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/nav_suite"
+    },
+    {
+      "id": "actionCard:refit",
+      "name": "Refit Troops",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/refit"
+    },
+    {
+      "id": "actionCard:reveal_prototype",
+      "name": "Reveal Prototype",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/reveal_prototype"
+    },
+    {
+      "id": "actionCard:reverse_engineer",
+      "name": "Reverse Engineer",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/reverse_engineer"
+    },
+    {
+      "id": "actionCard:rout",
+      "name": "Rout",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/rout"
+    },
+    {
+      "id": "actionCard:scuttle",
+      "name": "Scuttle",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/scuttle"
+    },
+    {
+      "id": "actionCard:seize",
+      "name": "Seize Artifact",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/seize"
+    },
+    {
+      "id": "actionCard:waylay",
+      "name": "Waylay",
+      "kind": "actionCard",
+      "pack": "pok",
+      "file": "actionCard/waylay"
+    },
+    {
+      "id": "actionCard:lieinwait",
+      "name": "Lie in Wait",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/lieinwait"
+    },
+    {
+      "id": "actionCard:exchangeprogram",
+      "name": "Exchange Program",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/exchangeprogram"
+    },
+    {
+      "id": "actionCard:puppetsonastring",
+      "name": "Puppets on a String",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/puppetsonastring"
+    },
+    {
+      "id": "actionCard:extremeduress",
+      "name": "Extreme Duress",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/extremeduress"
+    },
+    {
+      "id": "actionCard:mercenarycontract",
+      "name": "Mercenary Contract",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/mercenarycontract"
+    },
+    {
+      "id": "actionCard:strategize1",
+      "name": "Strategize",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/strategize1"
+    },
+    {
+      "id": "actionCard:rescue",
+      "name": "Rescue",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/rescue"
+    },
+    {
+      "id": "actionCard:piratefleet",
+      "name": "Pirate Fleet",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/piratefleet"
+    },
+    {
+      "id": "actionCard:brilliance",
+      "name": "Brilliance",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/brilliance"
+    },
+    {
+      "id": "actionCard:blackmarketdealing",
+      "name": "Black Market Dealings",
+      "kind": "actionCard",
+      "pack": "te",
+      "file": "actionCard/blackmarketdealing"
+    }
+  ]
+}

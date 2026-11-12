@@ -1,0 +1,174 @@
+{
+  "batch": 15,
+  "title": "Factions: ralnel, crimson",
+  "components": [
+    {
+      "id": "promissory:nanolink",
+      "name": "Nano-Link Permit",
+      "kind": "promissory",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "promissory/nanolink"
+    },
+    {
+      "id": "ability:survivalinstinct",
+      "name": "Survival Instinct",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "ability/survivalinstinct"
+    },
+    {
+      "id": "ability:miniaturization",
+      "name": "Miniaturization",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "ability/miniaturization"
+    },
+    {
+      "id": "leader:ralnelagent",
+      "name": "Kan Kip Rel",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "leader/ralnelagent"
+    },
+    {
+      "id": "leader:ralnelcommander",
+      "name": "Watchful Ojz",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "leader/ralnelcommander"
+    },
+    {
+      "id": "leader:ralnelhero",
+      "name": "Director Nel",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "leader/ralnelhero"
+    },
+    {
+      "id": "mech:ralnel_mech",
+      "name": "Alarum",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "mech/ralnel_mech"
+    },
+    {
+      "id": "breakthrough:ralnelbt",
+      "name": "Data Skimmer",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "breakthrough/ralnelbt"
+    },
+    {
+      "id": "technology:nanomachines",
+      "name": "Nanomachines",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "technology/nanomachines"
+    },
+    {
+      "id": "technology:linkship2",
+      "name": "Linkship II",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "ralnel",
+      "file": "technology/linkship2"
+    },
+    {
+      "id": "promissory:sever",
+      "name": "Sever",
+      "kind": "promissory",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "promissory/sever"
+    },
+    {
+      "id": "ability:sundered",
+      "name": "Sundered",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "ability/sundered"
+    },
+    {
+      "id": "ability:incursion",
+      "name": "Incursion",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "ability/incursion"
+    },
+    {
+      "id": "ability:sorrow",
+      "name": "Sorrow",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "ability/sorrow"
+    },
+    {
+      "id": "leader:crimsonagent",
+      "name": "Ahk Ravin",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "leader/crimsonagent"
+    },
+    {
+      "id": "leader:crimsoncommander",
+      "name": "Ahk Siever",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "leader/crimsoncommander"
+    },
+    {
+      "id": "leader:crimsonhero",
+      "name": "Homesick Phantom",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "leader/crimsonhero"
+    },
+    {
+      "id": "mech:crimson_mech",
+      "name": "Revenant",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "mech/crimson_mech"
+    },
+    {
+      "id": "breakthrough:crimsonbt",
+      "name": "Resonance Generator",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "breakthrough/crimsonbt"
+    },
+    {
+      "id": "technology:subatomic",
+      "name": "Subatomic Splicer",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "technology/subatomic"
+    },
+    {
+      "id": "technology:exile2",
+      "name": "Exile II",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "crimson",
+      "file": "technology/exile2"
+    }
+  ]
+}

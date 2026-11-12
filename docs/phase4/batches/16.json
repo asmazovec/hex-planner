@@ -1,0 +1,94 @@
+{
+  "batch": 16,
+  "title": "Factions: bastion",
+  "components": [
+    {
+      "id": "promissory:raisethestandard",
+      "name": "Raise the Standard",
+      "kind": "promissory",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "promissory/raisethestandard"
+    },
+    {
+      "id": "ability:liberate",
+      "name": "Liberate",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "ability/liberate"
+    },
+    {
+      "id": "ability:galvanize",
+      "name": "Galvanize",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "ability/galvanize"
+    },
+    {
+      "id": "ability:phoenixstandard",
+      "name": "Phoenix Standard",
+      "kind": "ability",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "ability/phoenixstandard"
+    },
+    {
+      "id": "leader:bastionagent",
+      "name": "Dame Briar",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "leader/bastionagent"
+    },
+    {
+      "id": "leader:bastioncommander",
+      "name": "Nip and Tuck",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "leader/bastioncommander"
+    },
+    {
+      "id": "leader:bastionhero",
+      "name": "Lyra Keen",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "leader/bastionhero"
+    },
+    {
+      "id": "mech:bastion_mech",
+      "name": "A3 Valiance",
+      "kind": "mech",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "mech/bastion_mech"
+    },
+    {
+      "id": "breakthrough:bastionbt",
+      "name": "The Icon",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "breakthrough/bastionbt"
+    },
+    {
+      "id": "technology:proxima",
+      "name": "Proxima Targeting VI",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "technology/proxima"
+    },
+    {
+      "id": "technology:helios2",
+      "name": "4X41C \"Helios\" V2",
+      "kind": "technology",
+      "pack": "te",
+      "faction": "bastion",
+      "file": "technology/helios2"
+    }
+  ]
+}

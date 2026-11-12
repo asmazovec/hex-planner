@@ -1,0 +1,158 @@
+{
+  "batch": 9,
+  "title": "Factions: arborec, argent",
+  "components": [
+    {
+      "id": "promissory:stymie",
+      "name": "Stymie",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "arborec",
+      "file": "promissory/stymie"
+    },
+    {
+      "id": "ability:mitosis",
+      "name": "Mitosis",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "arborec",
+      "file": "ability/mitosis"
+    },
+    {
+      "id": "leader:arborecagent",
+      "name": "Letani Ospha",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "arborec",
+      "file": "leader/arborecagent"
+    },
+    {
+      "id": "leader:arboreccommander",
+      "name": "Dirzuga Rophal",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "arborec",
+      "file": "leader/arboreccommander"
+    },
+    {
+      "id": "leader:arborechero",
+      "name": "Letani Miasmiala",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "arborec",
+      "file": "leader/arborechero"
+    },
+    {
+      "id": "mech:arborec_mech",
+      "name": "Letani Behemoth",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "arborec",
+      "file": "mech/arborec_mech"
+    },
+    {
+      "id": "breakthrough:arborecbt",
+      "name": "Psychospore",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "arborec",
+      "file": "breakthrough/arborecbt"
+    },
+    {
+      "id": "technology:bio",
+      "name": "Bioplasmosis",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "arborec",
+      "file": "technology/bio"
+    },
+    {
+      "id": "technology:lw2",
+      "name": "Letani Warrior II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "arborec",
+      "file": "technology/lw2"
+    },
+    {
+      "id": "promissory:ambuscade",
+      "name": "Strike Wing Ambuscade",
+      "kind": "promissory",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "promissory/ambuscade"
+    },
+    {
+      "id": "ability:zeal",
+      "name": "Zeal",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "ability/zeal"
+    },
+    {
+      "id": "ability:raid_formation",
+      "name": "Raid Formation",
+      "kind": "ability",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "ability/raid_formation"
+    },
+    {
+      "id": "leader:argentagent",
+      "name": "Trilossa Aun Mirik",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "leader/argentagent"
+    },
+    {
+      "id": "leader:argentcommander",
+      "name": "Trrakan Aun Zulok",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "leader/argentcommander"
+    },
+    {
+      "id": "leader:argenthero",
+      "name": "Mirik Aun Sissiri",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "leader/argenthero"
+    },
+    {
+      "id": "mech:argent_mech",
+      "name": "Aerie Sentinel",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "mech/argent_mech"
+    },
+    {
+      "id": "breakthrough:argentbt",
+      "name": "Wing Transfer",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "argent",
+      "file": "breakthrough/argentbt"
+    },
+    {
+      "id": "technology:ah",
+      "name": "Aerie Hololattice",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "technology/ah"
+    },
+    {
+      "id": "technology:swa2",
+      "name": "Strike Wing Alpha II",
+      "kind": "technology",
+      "pack": "pok",
+      "faction": "argent",
+      "file": "technology/swa2"
+    }
+  ]
+}

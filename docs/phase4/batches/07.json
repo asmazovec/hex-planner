@@ -1,0 +1,166 @@
+{
+  "batch": 7,
+  "title": "Factions: winnu, xxcha",
+  "components": [
+    {
+      "id": "promissory:acq",
+      "name": "Acquiescence",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "winnu",
+      "file": "promissory/acq"
+    },
+    {
+      "id": "ability:blood_ties",
+      "name": "Blood Ties",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "winnu",
+      "file": "ability/blood_ties"
+    },
+    {
+      "id": "ability:reclamation",
+      "name": "Reclamation",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "winnu",
+      "file": "ability/reclamation"
+    },
+    {
+      "id": "leader:winnuagent",
+      "name": "Berekar Berekon",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "winnu",
+      "file": "leader/winnuagent"
+    },
+    {
+      "id": "leader:winnucommander",
+      "name": "Rickar Rickani",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "winnu",
+      "file": "leader/winnucommander"
+    },
+    {
+      "id": "leader:winnuhero",
+      "name": "Mathis Mathinus",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "winnu",
+      "file": "leader/winnuhero"
+    },
+    {
+      "id": "mech:winnu_mech",
+      "name": "Reclaimer",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "winnu",
+      "file": "mech/winnu_mech"
+    },
+    {
+      "id": "breakthrough:winnubt",
+      "name": "Imperator",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "winnu",
+      "file": "breakthrough/winnubt"
+    },
+    {
+      "id": "technology:lgf",
+      "name": "Lazax Gate Folding",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "winnu",
+      "file": "technology/lgf"
+    },
+    {
+      "id": "technology:htp",
+      "name": "Hegemonic Trade Policy",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "winnu",
+      "file": "technology/htp"
+    },
+    {
+      "id": "promissory:favor",
+      "name": "Political Favor",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "xxcha",
+      "file": "promissory/favor"
+    },
+    {
+      "id": "ability:peace_accords",
+      "name": "Peace Accords",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "xxcha",
+      "file": "ability/peace_accords"
+    },
+    {
+      "id": "ability:quash",
+      "name": "Quash",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "xxcha",
+      "file": "ability/quash"
+    },
+    {
+      "id": "leader:xxchaagent",
+      "name": "Ggrocuto Rinn",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "xxcha",
+      "file": "leader/xxchaagent"
+    },
+    {
+      "id": "leader:xxchacommander",
+      "name": "Elder Qanoj",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "xxcha",
+      "file": "leader/xxchacommander"
+    },
+    {
+      "id": "leader:xxchahero-te",
+      "name": "Xxekir Grom",
+      "kind": "leader",
+      "pack": "te",
+      "faction": "xxcha",
+      "file": "leader/xxchahero-te"
+    },
+    {
+      "id": "mech:xxcha_mech",
+      "name": "Indomitus",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "xxcha",
+      "file": "mech/xxcha_mech"
+    },
+    {
+      "id": "breakthrough:xxchabt",
+      "name": "Archon's Gift",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "xxcha",
+      "file": "breakthrough/xxchabt"
+    },
+    {
+      "id": "technology:it",
+      "name": "Instinct Training",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "xxcha",
+      "file": "technology/it"
+    },
+    {
+      "id": "technology:nf",
+      "name": "Nullification Field",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "xxcha",
+      "file": "technology/nf"
+    }
+  ]
+}

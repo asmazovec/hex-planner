@@ -13,7 +13,8 @@
     "test": "vitest run",
     "preview": "vite preview",
     "e2e": "playwright test",
-    "deploy": "node scripts/deploy-pages.mjs"
+    "deploy": "node scripts/deploy-pages.mjs",
+    "plan:effects": "tsx scripts/effect-batches.ts"
   },
   "dependencies": {
     "i18next": "^26.7.2",

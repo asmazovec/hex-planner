@@ -1,0 +1,146 @@
+{
+  "batch": 17,
+  "title": "Common: technologies",
+  "components": [
+    {
+      "id": "technology:nm",
+      "name": "Neural Motivator",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/nm"
+    },
+    {
+      "id": "technology:dxa",
+      "name": "Dacxive Animators",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/dxa"
+    },
+    {
+      "id": "technology:pa",
+      "name": "Psychoarchaeology",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/pa"
+    },
+    {
+      "id": "technology:hm",
+      "name": "Hyper Metabolism",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/hm"
+    },
+    {
+      "id": "technology:x89_base",
+      "name": "X-89 Bacterial Weapon",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/x89_base"
+    },
+    {
+      "id": "technology:bs",
+      "name": "Bio-Stims",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/bs"
+    },
+    {
+      "id": "technology:x89",
+      "name": "X-89 Bacterial Weapon Ω",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/x89"
+    },
+    {
+      "id": "technology:x89c4",
+      "name": "X-89 Bacterial Weapon ΩΩ",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/x89c4"
+    },
+    {
+      "id": "technology:gd",
+      "name": "Gravity Drive",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/gd"
+    },
+    {
+      "id": "technology:amd",
+      "name": "Antimass Deflectors",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/amd"
+    },
+    {
+      "id": "technology:det",
+      "name": "Dark Energy Tap",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/det"
+    },
+    {
+      "id": "technology:fl",
+      "name": "Fleet Logistics",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/fl"
+    },
+    {
+      "id": "technology:lwd",
+      "name": "Light/Wave Deflector",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/lwd"
+    },
+    {
+      "id": "technology:sr",
+      "name": "Sling Relay",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/sr"
+    },
+    {
+      "id": "technology:st",
+      "name": "Sarween Tools",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/st"
+    },
+    {
+      "id": "technology:sdn",
+      "name": "Scanlink Drone Network",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/sdn"
+    },
+    {
+      "id": "technology:gls",
+      "name": "Graviton Laser System",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/gls"
+    },
+    {
+      "id": "technology:td",
+      "name": "Transit Diodes",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/td"
+    },
+    {
+      "id": "technology:ie",
+      "name": "Integrated Economy",
+      "kind": "technology",
+      "pack": "base",
+      "file": "technology/ie"
+    },
+    {
+      "id": "technology:pi",
+      "name": "Predictive Intelligence",
+      "kind": "technology",
+      "pack": "pok",
+      "file": "technology/pi"
+    }
+  ]
+}

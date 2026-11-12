@@ -1,0 +1,146 @@
+{
+  "batch": 31,
+  "title": "Common: secret objectives",
+  "components": [
+    {
+      "id": "secretObjective:lsc",
+      "name": "Learn the Secrets of the Cosmos",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/lsc"
+    },
+    {
+      "id": "secretObjective:mew",
+      "name": "Make an Example of Their World",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/mew"
+    },
+    {
+      "id": "secretObjective:mlp",
+      "name": "Master the Laws of Physics",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/mlp"
+    },
+    {
+      "id": "secretObjective:mrm",
+      "name": "Mine Rare Metals",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/mrm"
+    },
+    {
+      "id": "secretObjective:mp",
+      "name": "Monopolize Production",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/mp"
+    },
+    {
+      "id": "secretObjective:ose",
+      "name": "Occupy the Seat of the Empire",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/ose"
+    },
+    {
+      "id": "secretObjective:sar",
+      "name": "Spark a Rebellion",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/sar"
+    },
+    {
+      "id": "secretObjective:te",
+      "name": "Threaten Enemies",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/te"
+    },
+    {
+      "id": "secretObjective:ttfd",
+      "name": "Turn Their Fleets to Dust",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/ttfd"
+    },
+    {
+      "id": "secretObjective:uf",
+      "name": "Unveil Flagship",
+      "kind": "secretObjective",
+      "pack": "base",
+      "file": "secretObjective/uf"
+    },
+    {
+      "id": "secretObjective:bam",
+      "name": "Become a Martyr",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/bam"
+    },
+    {
+      "id": "secretObjective:baf",
+      "name": "Betray a Friend",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/baf"
+    },
+    {
+      "id": "secretObjective:btv",
+      "name": "Brave the Void",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/btv"
+    },
+    {
+      "id": "secretObjective:dts",
+      "name": "Darken the Skies",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/dts"
+    },
+    {
+      "id": "secretObjective:dfat",
+      "name": "Defy Space and Time",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/dfat"
+    },
+    {
+      "id": "secretObjective:dyp",
+      "name": "Demonstrate Your Power",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/dyp"
+    },
+    {
+      "id": "secretObjective:dhw",
+      "name": "Destroy Heretical Works",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/dhw"
+    },
+    {
+      "id": "secretObjective:dp",
+      "name": "Dictate Policy",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/dp"
+    },
+    {
+      "id": "secretObjective:dtd",
+      "name": "Drive the Debate",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/dtd"
+    },
+    {
+      "id": "secretObjective:eh",
+      "name": "Establish Hegemony",
+      "kind": "secretObjective",
+      "pack": "pok",
+      "file": "secretObjective/eh"
+    }
+  ]
+}

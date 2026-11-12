@@ -1,0 +1,146 @@
+{
+  "batch": 28,
+  "title": "Common: agendas, public objectives",
+  "components": [
+    {
+      "id": "agenda:cladenstine",
+      "name": "Clandestine Operations",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/cladenstine"
+    },
+    {
+      "id": "agenda:covert",
+      "name": "Covert Legislation",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/covert"
+    },
+    {
+      "id": "agenda:crisis",
+      "name": "Galactic Crisis Pact",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/crisis"
+    },
+    {
+      "id": "agenda:minister_antiquities",
+      "name": "Minister of Antiquities",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/minister_antiquities"
+    },
+    {
+      "id": "agenda:nexus",
+      "name": "Nexus Sovereignty",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/nexus"
+    },
+    {
+      "id": "agenda:censure",
+      "name": "Political Censure",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/censure"
+    },
+    {
+      "id": "agenda:rearmament",
+      "name": "Rearmament Agreement",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/rearmament"
+    },
+    {
+      "id": "agenda:rep_govt",
+      "name": "Representative Government",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/rep_govt"
+    },
+    {
+      "id": "agenda:grant_reallocation",
+      "name": "Research Grant Reallocation",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/grant_reallocation"
+    },
+    {
+      "id": "agenda:warrant",
+      "name": "Search Warrant",
+      "kind": "agenda",
+      "pack": "pok",
+      "file": "agenda/warrant"
+    },
+    {
+      "id": "publicObjective:corner",
+      "name": "Corner the Market",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/corner"
+    },
+    {
+      "id": "publicObjective:develop",
+      "name": "Develop Weaponry",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/develop"
+    },
+    {
+      "id": "publicObjective:diversify",
+      "name": "Diversify Research",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/diversify"
+    },
+    {
+      "id": "publicObjective:monument",
+      "name": "Erect a Monument",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/monument"
+    },
+    {
+      "id": "publicObjective:expand_borders",
+      "name": "Expand Borders",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/expand_borders"
+    },
+    {
+      "id": "publicObjective:research_outposts",
+      "name": "Found Research Outposts",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/research_outposts"
+    },
+    {
+      "id": "publicObjective:intimidate",
+      "name": "Intimidate Council",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/intimidate"
+    },
+    {
+      "id": "publicObjective:lead",
+      "name": "Lead From the Front",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/lead"
+    },
+    {
+      "id": "publicObjective:trade_routes",
+      "name": "Negotiate Trade Routes",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/trade_routes"
+    },
+    {
+      "id": "publicObjective:sway_council",
+      "name": "Sway the Council",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/sway_council"
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "batch": 29,
+  "title": "Common: public objectives",
+  "components": [
+    {
+      "id": "publicObjective:centralize_trade",
+      "name": "Centralize Galactic Trade",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/centralize_trade"
+    },
+    {
+      "id": "publicObjective:conquer",
+      "name": "Conquer the Weak",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/conquer"
+    },
+    {
+      "id": "publicObjective:brain_trust",
+      "name": "Form Galactic Brain Trust",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/brain_trust"
+    },
+    {
+      "id": "publicObjective:golden_age",
+      "name": "Found a Golden Age",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/golden_age"
+    },
+    {
+      "id": "publicObjective:galvanize",
+      "name": "Galvanize the People",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/galvanize"
+    },
+    {
+      "id": "publicObjective:manipulate_law",
+      "name": "Manipulate Galactic Law",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/manipulate_law"
+    },
+    {
+      "id": "publicObjective:master_science",
+      "name": "Master the Sciences",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/master_science"
+    },
+    {
+      "id": "publicObjective:revolutionize",
+      "name": "Revolutionize Warfare",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/revolutionize"
+    },
+    {
+      "id": "publicObjective:subdue",
+      "name": "Subdue the Galaxy",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/subdue"
+    },
+    {
+      "id": "publicObjective:unify_colonies",
+      "name": "Unify the Colonies",
+      "kind": "publicObjective",
+      "pack": "base",
+      "file": "publicObjective/unify_colonies"
+    },
+    {
+      "id": "publicObjective:amass_wealth",
+      "name": "Amass Wealth",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/amass_wealth"
+    },
+    {
+      "id": "publicObjective:build_defenses",
+      "name": "Build Defenses",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/build_defenses"
+    },
+    {
+      "id": "publicObjective:lost_outposts",
+      "name": "Discover Lost Outposts",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/lost_outposts"
+    },
+    {
+      "id": "publicObjective:engineer_marvel",
+      "name": "Engineer a Marvel",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/engineer_marvel"
+    },
+    {
+      "id": "publicObjective:deep_space",
+      "name": "Explore Deep Space",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/deep_space"
+    },
+    {
+      "id": "publicObjective:infrastructure",
+      "name": "Improve Infrastructure",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/infrastructure"
+    },
+    {
+      "id": "publicObjective:make_history",
+      "name": "Make History",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/make_history"
+    },
+    {
+      "id": "publicObjective:outer_rim",
+      "name": "Populate the Outer Rim",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/outer_rim"
+    },
+    {
+      "id": "publicObjective:push_boundaries",
+      "name": "Push Boundaries",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/push_boundaries"
+    },
+    {
+      "id": "publicObjective:raise_fleet",
+      "name": "Raise a Fleet",
+      "kind": "publicObjective",
+      "pack": "pok",
+      "file": "publicObjective/raise_fleet"
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "batch": 4,
+  "title": "Factions: l1z1x, mentak",
+  "components": [
+    {
+      "id": "promissory:ce",
+      "name": "Cybernetic Enhancements",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "l1z1x",
+      "file": "promissory/ce"
+    },
+    {
+      "id": "ability:assimilate",
+      "name": "Assimilate",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "l1z1x",
+      "file": "ability/assimilate"
+    },
+    {
+      "id": "ability:harrow",
+      "name": "Harrow",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "l1z1x",
+      "file": "ability/harrow"
+    },
+    {
+      "id": "leader:l1z1xagent",
+      "name": "I48S",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "l1z1x",
+      "file": "leader/l1z1xagent"
+    },
+    {
+      "id": "leader:l1z1xcommander",
+      "name": "2RAM",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "l1z1x",
+      "file": "leader/l1z1xcommander"
+    },
+    {
+      "id": "leader:l1z1xhero",
+      "name": "The Helmsman",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "l1z1x",
+      "file": "leader/l1z1xhero"
+    },
+    {
+      "id": "mech:l1z1x_mech",
+      "name": "Annihilator",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "l1z1x",
+      "file": "mech/l1z1x_mech"
+    },
+    {
+      "id": "breakthrough:l1z1xbt",
+      "name": "Fealty Uplink",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "l1z1x",
+      "file": "breakthrough/l1z1xbt"
+    },
+    {
+      "id": "technology:is",
+      "name": "Inheritance Systems",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "l1z1x",
+      "file": "technology/is"
+    },
+    {
+      "id": "technology:sdn2",
+      "name": "Super Dreadnought II",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "l1z1x",
+      "file": "technology/sdn2"
+    },
+    {
+      "id": "promissory:pop",
+      "name": "Promise of Protection",
+      "kind": "promissory",
+      "pack": "base",
+      "faction": "mentak",
+      "file": "promissory/pop"
+    },
+    {
+      "id": "ability:ambush",
+      "name": "Ambush",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "mentak",
+      "file": "ability/ambush"
+    },
+    {
+      "id": "ability:pillage",
+      "name": "Pillage",
+      "kind": "ability",
+      "pack": "base",
+      "faction": "mentak",
+      "file": "ability/pillage"
+    },
+    {
+      "id": "leader:mentakagent",
+      "name": "Suffi An",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "mentak",
+      "file": "leader/mentakagent"
+    },
+    {
+      "id": "leader:mentakcommander",
+      "name": "S'ula Mentarion",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "mentak",
+      "file": "leader/mentakcommander"
+    },
+    {
+      "id": "leader:mentakhero",
+      "name": "Ipswitch, Loose Cannon",
+      "kind": "leader",
+      "pack": "pok",
+      "faction": "mentak",
+      "file": "leader/mentakhero"
+    },
+    {
+      "id": "mech:mentak_mech",
+      "name": "Moll Terminus",
+      "kind": "mech",
+      "pack": "pok",
+      "faction": "mentak",
+      "file": "mech/mentak_mech"
+    },
+    {
+      "id": "breakthrough:mentakbt",
+      "name": "The Table's Grace",
+      "kind": "breakthrough",
+      "pack": "te",
+      "faction": "mentak",
+      "file": "breakthrough/mentakbt"
+    },
+    {
+      "id": "technology:mc",
+      "name": "Mirror Computing",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "mentak",
+      "file": "technology/mc"
+    },
+    {
+      "id": "technology:so",
+      "name": "Salvage Operations",
+      "kind": "technology",
+      "pack": "base",
+      "faction": "mentak",
+      "file": "technology/so"
+    }
+  ]
+}
