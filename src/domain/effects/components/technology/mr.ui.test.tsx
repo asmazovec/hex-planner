@@ -17,7 +17,7 @@ const editor = (technologies: string[], production: UnitCounts = {}) => {
 // "Your ships can move into supernovas."
 // Checks: the move into the supernova stands in the editor, and its warning reads as allowed by Magmus Reactor.
 // Why the check is redundant here: LRR 86.1 forbids moving into a supernova; the card allows it.
-test.fails('technology:mr the move into a supernova reads as allowed by Magmus Reactor', () => {
+test('technology:mr the move into a supernova reads as allowed by Magmus Reactor', () => {
   const { table } = editor([id]);
   quote(table.pack, id, 'Your ships can move into supernovas.');
   expectShownWaived('routeBlocked', 'Magmus Reactor');
@@ -26,7 +26,7 @@ test.fails('technology:mr the move into a supernova reads as allowed by Magmus R
 // "Each supernova that contains 1 or more of your units gains the PRODUCTION 5 ability as if it were 1 of your units."
 // Checks: two fighters produced in the supernova show no warning that nothing produces there.
 // Why the check is redundant here: the supernova is itself a unit with PRODUCTION 5 (67.1).
-test.fails('technology:mr production in a supernova with my units shows no missing production', () => {
+test('technology:mr production in a supernova with my units shows no missing production', () => {
   editor([id], { fighter: 2 });
   expectNotShown('noProduction');
 });

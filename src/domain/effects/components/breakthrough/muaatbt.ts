@@ -8,8 +8,17 @@
  * map and its moving with a war sun are not modelled: the replay does not put planets into systems. Pass 1: still the
  * hint it is today.
  */
+import { takeControl } from '../../../replay/invasion';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'breakthrough:muaatbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // The token's place on the map and its moving with a war sun are not replayed; the planet card is.
+  gained: ({ game, state, pack, warnings, entry }) => {
+    takeControl(game, state, 'avernus', pack, warnings, entry);
+    state.exhausted = state.exhausted.filter(planetId => planetId !== 'avernus');
+  },
+};

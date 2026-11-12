@@ -18,7 +18,7 @@ describe('ability:arbiters Arbiters', () => {
   // and lifted by the ability, and the card moves.
   // Why the check is redundant here: 94.3 lets only commodities, trade goods, promissory notes and relic fragments
   // change hands, and 94.3.1 adds action cards for the Hacan, which is this ability.
-  test.fails('ability:arbiters lets the Hacan trade an action card: the warning is waived', () => {
+  test('ability:arbiters lets the Hacan trade an action card: the warning is waived', () => {
     const hacan = table('hacan', CARD_IN_HAND, { hand: [CARD_IN_HAND] });
     quote(hacan.pack, id, 'action cards can be exchanged as part of that transaction');
     expectWaived(warningsOf(hacan, hacan.move), 'transactionKind', id);
@@ -42,7 +42,7 @@ describe('ability:arbiters Arbiters', () => {
     expectStanding(warningsOf(hacan, hacan.move), 'transactionKind');
   });
 
-  test.fails('ability:arbiters is a passive effect that waives the kind of a transaction', () => {
+  test('ability:arbiters is a passive effect that waives the kind of a transaction', () => {
     const { pack } = table('hacan', CARD_IN_HAND, {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['transactionKind']);

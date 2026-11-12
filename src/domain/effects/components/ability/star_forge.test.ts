@@ -16,7 +16,7 @@ describe('ability:star_forge Star Forge', () => {
   // Checks: a destroyer is placed beside the war sun and the strategy pool goes from 2 to 1.
   // Why the check is redundant here: units otherwise reach the board by production (67), paid for and from a space
   // dock; the ability places them for a strategy token, with no dock and no payment, so no production check is made.
-  test.fails('ability:star_forge places a destroyer beside the war sun for one strategy token', () => {
+  test('ability:star_forge places a destroyer beside the war sun for one strategy token', () => {
     const play = forge(HOME, 'destroyer');
     const muaat = table('muaat', [play]);
     quote(muaat.pack, id, 'Spend 1 token from your strategy pool to place either 2 fighters or 1 destroyer');
@@ -27,7 +27,7 @@ describe('ability:star_forge Star Forge', () => {
   });
 
   // Checks: the other choice of the card, two fighters.
-  test.fails('ability:star_forge places two fighters when they are chosen', () => {
+  test('ability:star_forge places two fighters when they are chosen', () => {
     const muaat = table('muaat', [forge(HOME, 'fighter')]);
     expect(endOf(muaat).systems[HOME]).toEqual({ warsun: 1, fighter: 2 });
   });
@@ -36,7 +36,7 @@ describe('ability:star_forge Star Forge', () => {
   //  player cannot use Star Forge if the do not have a war sun on the game board."
   // Checks: aimed at a system without a war sun, the play is warned of, and the destroyer is placed all the same.
   // Why the check is NOT redundant here: the war sun is the ability's own condition.
-  test.fails('ability:star_forge aimed at a system without a war sun is warned of', () => {
+  test('ability:star_forge aimed at a system without a war sun is warned of', () => {
     const play = forge(NEAR, 'destroyer');
     const muaat = table('muaat', [play]);
     expectStanding(warningsOf(muaat, play), NO_WAR_SUN);
@@ -46,7 +46,7 @@ describe('ability:star_forge Star Forge', () => {
   // "Spend 1 token from your strategy pool ..."
   // Checks: with an empty strategy pool the play is warned of as a token not there.
   // Why the check is NOT redundant here: the token is the ability's price.
-  test.fails('ability:star_forge with an empty strategy pool is warned of', () => {
+  test('ability:star_forge with an empty strategy pool is warned of', () => {
     const play = forge(HOME, 'destroyer');
     const muaat = table('muaat', [adjust({ strategy: -2 }), play]);
     expectStanding(warningsOf(muaat, play), 'shortStrategy');
@@ -59,7 +59,7 @@ describe('ability:star_forge Star Forge', () => {
     expect(endOf(sol).systems[HOME]).toEqual({ warsun: 1 });
   });
 
-  test.fails('ability:star_forge is a play effect', () => {
+  test('ability:star_forge is a play effect', () => {
     expect(effect(table('muaat', []).pack, id).tier).toBe('play');
   });
 });

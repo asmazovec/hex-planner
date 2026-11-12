@@ -13,4 +13,12 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:convoys';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // Played, the note stays in the play area: nothing on the board changes, the card itself does the work. The replay
+  // does not tell a note in hand from one in play, so the waiver lasts to the end of the round of the play (a later
+  // round and the return to the Hacan on activation need that difference).
+  play: () => {},
+  waive: [{ code: 'notNeighbor', rule: 'While this card is in your play area, you may negotiate transactions with players who are not your neighbor.', lasts: 'round' }],
+};

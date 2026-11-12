@@ -15,7 +15,7 @@ describe('technology:qdn Quantum Datahub Node', () => {
   // Checks: the Hacan with 3 trade goods spends a strategy token and the trade goods go to the rival.
   // Why the check is redundant here: trade goods otherwise change hands only in a transaction (94), between
   // neighbours and in the action phase; the card gives them at the end of the strategy phase to any player.
-  test.fails('technology:qdn spends a strategy token and gives 3 trade goods to the chosen player', () => {
+  test('technology:qdn spends a strategy token and gives 3 trade goods to the chosen player', () => {
     const hacan = table([adjust({ tradeGoods: 3 }, 'strategy'), swap()]);
     quote(hacan.pack, id, 'spend 1 token from your strategy pool and give another player 3 of your trade goods');
     const end = endOf(hacan);
@@ -27,7 +27,7 @@ describe('technology:qdn Quantum Datahub Node', () => {
   // Ruling (Hacan, Quantum Datahub Node 3): "The Hacan player must have three trade goods before they spend the command token."
   // Checks: with 2 trade goods the use is warned of.
   // Why the check is NOT redundant here: the three trade goods are the card's price.
-  test.fails('technology:qdn with fewer than 3 trade goods is warned of', () => {
+  test('technology:qdn with fewer than 3 trade goods is warned of', () => {
     const use = swap();
     const hacan = table([adjust({ tradeGoods: 2 }, 'strategy'), use]);
     expectStanding(warningsOf(hacan, use), 'shortTradeGoods');
@@ -35,7 +35,7 @@ describe('technology:qdn Quantum Datahub Node', () => {
 
   test.todo('technology:qdn gives one of my strategy cards to that player and takes one of theirs: the other players\' cards are not planned');
 
-  test.fails('technology:qdn is a play effect', () => {
+  test('technology:qdn is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

@@ -19,7 +19,7 @@ describe('ability:gashlai_physiology Gashlai Physiology', () => {
   // ability.
   // Why the check is redundant here: LRR 86.1 says "A ship cannot move through or into a supernova", and the ability
   // allows the Muaat's ships exactly the "through".
-  test.fails('ability:gashlai_physiology lets a ship move through a supernova: the route warning is waived', () => {
+  test('ability:gashlai_physiology lets a ship move through a supernova: the route warning is waived', () => {
     const muaat = table('muaat', through());
     quote(muaat.pack, id, 'Your ships can move through supernovas');
     expectWaived(warningsOf(muaat, muaat.move), 'routeBlocked', id);
@@ -49,7 +49,7 @@ describe('ability:gashlai_physiology Gashlai Physiology', () => {
     expectStanding(warningsOf(muaat, muaat.move), 'routeBlocked');
   });
 
-  test.fails('ability:gashlai_physiology is a passive effect that waives the route check', () => {
+  test('ability:gashlai_physiology is a passive effect that waives the route check', () => {
     const { pack } = table('muaat', through());
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);

@@ -7,8 +7,22 @@
  * holding my units produces with PRODUCTION 5, so `noProduction` is not made there and `productionOver` counts against
  * 5. Pass 1: still the hint it is today.
  */
+import { routeBlockKind } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
+import '../../points/production';
 
 export const id = 'technology:mr';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { spaceProduction: (value, ctx) => (ctx.anomalies.includes('supernova') ? Math.max(value, 5) : value) },
+  waive: [
+    {
+      code: 'routeBlocked',
+      rule: 'Your ships can move into supernovas.',
+      // "into" only: a supernova the route passes through is Gashlai Physiology's.
+      when: (warning, ctx) => routeBlockKind(warning, ctx) === 'supernova' && ctx.entry?.type === 'tactical' && warning.params.systemId === ctx.entry.systemId,
+    },
+  ],
+};

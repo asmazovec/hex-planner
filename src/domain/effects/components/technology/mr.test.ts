@@ -13,7 +13,7 @@ describe('technology:mr Magmus Reactor', () => {
   // "Your ships can move into supernovas."
   // Checks: with the technology a cruiser ends its move in a supernova; the route warning is listed and lifted by it.
   // Why the check is redundant here: LRR 86.1 forbids moving into a supernova, and the card allows exactly that.
-  test.fails('technology:mr lets a ship move into a supernova: the route warning is waived', () => {
+  test('technology:mr lets a ship move into a supernova: the route warning is waived', () => {
     const muaat = table('muaat', into());
     quote(muaat.pack, id, 'Your ships can move into supernovas.');
     expectWaived(warningsOf(muaat, muaat.move), 'routeBlocked', id);
@@ -40,7 +40,7 @@ describe('technology:mr Magmus Reactor', () => {
   // nothing produces there and none that the production is over its limit.
   // Why the check is redundant here: production needs a unit with PRODUCTION in the system (67.1); the supernova
   // itself becomes one, with PRODUCTION 5.
-  test.fails('technology:mr a supernova with my units produces with PRODUCTION 5', () => {
+  test('technology:mr a supernova with my units produces with PRODUCTION 5', () => {
     const muaat = table('muaat', into({ fighter: 2 }));
     quote(muaat.pack, id, 'gains the PRODUCTION 5 ability as if it were 1 of your units');
     const warnings = warningsOf(muaat, muaat.move);
@@ -50,7 +50,7 @@ describe('technology:mr Magmus Reactor', () => {
 
   // Checks: six fighters are beyond the PRODUCTION 5 of the supernova.
   // Why the check is NOT redundant here: the card gives a production value of 5, not an unlimited one.
-  test.fails('technology:mr the supernova\'s production is limited to five units', () => {
+  test('technology:mr the supernova\'s production is limited to five units', () => {
     const muaat = table('muaat', into({ fighter: 6 }));
     const warnings = warningsOf(muaat, muaat.move);
     expectNone(warnings, 'noProduction');
@@ -63,7 +63,7 @@ describe('technology:mr Magmus Reactor', () => {
     expectStanding(warningsOf(muaat, muaat.move), 'noProduction');
   });
 
-  test.fails('technology:mr is a passive effect that waives the route check', () => {
+  test('technology:mr is a passive effect that waives the route check', () => {
     const { pack } = table('muaat', into());
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toContain('routeBlocked');

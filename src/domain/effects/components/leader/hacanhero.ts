@@ -8,7 +8,13 @@
  * Pass 1: still the hint it is today.
  */
 import type { ComponentEffect } from '../../types';
+import '../../points/production';
 
 export const id = 'leader:hacanhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // For the entry that names the hero: every unit of its production costs 0 (a hero is purged by the play, as every hero).
+  modify: { unitCost: () => 0 },
+};

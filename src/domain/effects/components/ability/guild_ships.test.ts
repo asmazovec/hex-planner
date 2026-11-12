@@ -16,7 +16,7 @@ describe('ability:guild_ships Guild Ships', () => {
   // Checks: the Hacan trades with a player two systems away; the warning is listed and lifted by the ability.
   // Why the check is redundant here: 94.1 allows transactions with neighbours only, and the ability removes the
   // condition for the Hacan.
-  test.fails('ability:guild_ships lets the Hacan trade with a player who is not a neighbour: the warning is waived', () => {
+  test('ability:guild_ships lets the Hacan trade with a player who is not a neighbour: the warning is waived', () => {
     const hacan = table('hacan');
     quote(hacan.pack, id, 'You can negotiate transactions with players who are not your neighbor.');
     expectWaived(warningsOf(hacan, hacan.move), 'notNeighbor', id);
@@ -44,7 +44,7 @@ describe('ability:guild_ships Guild Ships', () => {
     expectNone(warningsOf(hacan, hacan.move), 'notNeighbor');
   });
 
-  test.fails('ability:guild_ships is a passive effect that waives the neighbour check', () => {
+  test('ability:guild_ships is a passive effect that waives the neighbour check', () => {
     const { pack } = table('hacan');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['notNeighbor']);

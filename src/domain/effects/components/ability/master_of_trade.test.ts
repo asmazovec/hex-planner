@@ -10,7 +10,7 @@ describe('ability:master_of_trade Masters of Trade', () => {
   // "You do not have to spend a command token to resolve the secondary ability of the "Trade" strategy card."
   // Checks: the Hacan follows Trade's secondary and the strategy pool keeps its 2 tokens.
   // Why the check is redundant here: 83.4 asks a strategy token for a secondary ability; for Trade the Hacan pay none.
-  test.fails('ability:master_of_trade the secondary of Trade spends no strategy token', () => {
+  test('ability:master_of_trade the secondary of Trade spends no strategy token', () => {
     const hacan = table('hacan', [secondary(CARD.trade)]);
     quote(hacan.pack, id, 'You do not have to spend a command token to resolve the secondary ability of the "Trade" strategy card.');
     expect(endOf(hacan).strategy).toBe(2);
@@ -19,7 +19,7 @@ describe('ability:master_of_trade Masters of Trade', () => {
   // Checks: with an empty strategy pool the secondary of Trade makes no warning at all.
   // Why the check is redundant here: no token is owed, so a missing one is no shortfall; the cost changed, nothing is
   // listed as waived (a `modify`).
-  test.fails('ability:master_of_trade with an empty strategy pool the secondary of Trade is not warned of', () => {
+  test('ability:master_of_trade with an empty strategy pool the secondary of Trade is not warned of', () => {
     const follow = secondary(CARD.trade);
     const hacan = table('hacan', [adjust({ strategy: -2 }), follow]);
     expectNone(warningsOf(hacan, follow), 'shortStrategy');
@@ -39,7 +39,7 @@ describe('ability:master_of_trade Masters of Trade', () => {
     expect(endOf(table('sol', [secondary(CARD.trade)])).strategy).toBe(1);
   });
 
-  test.fails('ability:master_of_trade is a passive effect with no waiver', () => {
+  test('ability:master_of_trade is a passive effect with no waiver', () => {
     const { pack } = table('hacan', []);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive).toBeUndefined();

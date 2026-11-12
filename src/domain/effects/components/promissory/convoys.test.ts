@@ -18,7 +18,7 @@ describe('promissory:convoys Trade Convoys', () => {
   // Checks: Sol plays the note, then trades with the Hacan, who is no neighbour; the warning is listed and lifted by
   // the note.
   // Why the check is redundant here: 94.1 limits transactions to neighbours, and the card in play lifts that limit.
-  test.fails('promissory:convoys played lifts the neighbour check of a later transaction', () => {
+  test('promissory:convoys played lifts the neighbour check of a later transaction', () => {
     const move = trade();
     const table = sol([[adjust({ tradeGoods: 1 }), componentAction(NOTE), move]]);
     quote(table.pack, id, 'you may negotiate transactions with players who are not your neighbor');
@@ -64,7 +64,7 @@ describe('promissory:convoys Trade Convoys', () => {
     expectStanding(warningsOf(table, move), 'transactionRepeated');
   });
 
-  test.fails('promissory:convoys is a play effect that waives the neighbour check', () => {
+  test('promissory:convoys is a play effect that waives the neighbour check', () => {
     const { pack } = sol([[]]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['notNeighbor']);

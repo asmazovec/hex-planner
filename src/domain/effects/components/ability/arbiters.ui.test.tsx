@@ -19,7 +19,7 @@ const turn = (faction: string) => {
 // "When you are negotiating a transaction, action cards can be exchanged as part of that transaction."
 // Checks: the action card given in a transaction is listed as allowed by Arbiters.
 // Why the check is redundant here: 94.3 keeps action cards out of transactions, 94.3.1 lets the Hacan trade them.
-test.fails('ability:arbiters an action card in a transaction reads as allowed by Arbiters', () => {
+test('ability:arbiters an action card in a transaction reads as allowed by Arbiters', () => {
   quote(turn('hacan').pack, id, 'action cards can be exchanged as part of that transaction');
   expectShownWaived('transactionKind', 'Arbiters');
 });
