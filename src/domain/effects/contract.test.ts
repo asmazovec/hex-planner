@@ -55,11 +55,14 @@ describe('effects registry', () => {
     expect(applied.filter(id => !titles.some(title => named(id, title)))).toEqual([]);
   });
 
-  test('a passive effect changes the count and a hint does not: only a passive effect has `modify`, only a play effect has `play`, only a hint has steps', () => {
+  test('a passive effect changes the count and a hint does not: only a passive effect has `modify`, only a passive or play effect has `play` or `choose`, only a hint has steps', () => {
     for (const pack of packs) {
       for (const [id, effect] of effectsOf(pack)) {
         if (effect.tier !== 'passive') expect(effect.modify, id).toBeUndefined();
-        if (effect.tier !== 'play') expect(effect.play, id).toBeUndefined();
+        if (effect.tier === 'hint') {
+          expect(effect.play, id).toBeUndefined();
+          expect(effect.choose, id).toBeUndefined();
+        }
         if (effect.tier !== 'hint') expect(effect.hintAt, id).toBeUndefined();
       }
     }

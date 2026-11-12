@@ -17,7 +17,8 @@ const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 
 /** Component ids: `<kind>:<source id>`. One the data no longer has is kept and passed over by the replay. */
 const ids = z.array(z.string());
-const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional(), uses: ids.optional() };
+const choices = z.record(z.string(), z.union([z.string(), z.number()]));
+const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional(), uses: ids.optional(), choices: choices.optional(), useChoices: z.record(z.string(), choices).optional() };
 const cardPlay = {
   card: z.number().int().optional(),
   forToken: z.boolean().optional(),
@@ -50,7 +51,7 @@ const entrySchema = z.discriminatedUnion('type', [
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
-  z.object({ ...base, type: z.literal('component'), componentId: z.string().optional(), note: z.string(), choices: z.record(z.string(), z.union([z.string(), z.number()])).optional(), acts }),
+  z.object({ ...base, type: z.literal('component'), componentId: z.string().optional(), note: z.string(), acts }),
   z.object({ ...base, type: z.literal('pass'), acts }),
   z.object({
     ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),

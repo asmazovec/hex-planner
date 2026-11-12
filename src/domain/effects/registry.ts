@@ -4,7 +4,7 @@
  * upgrades are generated from the unit tables; everything else is a hint, listed by `hintsFor`, so no component is
  * left without an entry. A hint's step comes from the data where the data names one.
  */
-import { componentById, componentsOf, noteBase } from '../components';
+import { componentById, componentsOf, noteAddress, noteBase } from '../components';
 import type { ComponentDef, DataPack, Game, GameState, Holdings, RuleStep } from '../types';
 import type { ComponentEffect, Modifiers } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
@@ -106,7 +106,7 @@ export const orderOf = (pack: DataPack, id: string): number => registryOf(pack).
 export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
   const { effects, order } = registryOf(pack);
   const leaders = Object.keys(holdings.leaders).filter(id => holdings.leaders[id] === 'unlocked');
-  const ids = new Set([...holdings.technologies, ...holdings.relics, ...holdings.promissory, ...holdings.hand, ...leaders]);
+  const ids = new Set([...holdings.technologies, ...holdings.relics, ...holdings.promissory, ...holdings.hand, ...holdings.secrets, ...leaders]);
   for (const id of holdings.exhausted) ids.delete(id);
   return [...ids].filter(id => effects.has(noteBase(id))).sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!);
 }
@@ -116,11 +116,28 @@ export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
  * and the mech of its sheet and its breakthrough, with `control` the legendary planets the player controls (their own
  * state's `control`), with `laws` the laws in play for the whole game.
  */
-export interface Holder { holdings: Holdings; faction?: string; control?: GameState['control']; laws?: readonly string[] }
+export interface Holder {
+  holdings: Holdings; faction?: string; control?: GameState['control']; laws?: readonly string[];
+  /** The holdings of every player by `me` or opponent id: what another player's component lends this one (an Alliance note brings its owner's commander). */
+  others?: Readonly<Record<string, Holdings>>;
+}
+
+/** Whose components a count asks: the cards held alone, or a whole holder (faction sheet, planets controlled, laws in play). */
+export type Who = Holdings | Holder;
+
+/** The holder of `who`: holdings alone take the faction of the game, a holder keeps its own. */
+export const holderFor = (who: Who, faction: string): Holder => ('holdings' in who ? (who.faction === undefined ? { ...who, faction } : who) : { holdings: who, faction });
 
 /** The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. */
-export const holderOf = (game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>, shared: Pick<GameState, 'laws'> = state): Holder =>
-  ({ holdings: state.holdings, faction: game.faction, control: state.control, laws: shared.laws });
+export const holderOf = (game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>, shared: Pick<GameState, 'laws'> | Pick<GameState, 'laws' | 'holdings' | 'rivals'> = state): Holder =>
+  ({
+    holdings: state.holdings, faction: game.faction, control: state.control, laws: shared.laws,
+    ...('rivals' in shared || 'holdings' in shared ? { others: othersOf(shared as Pick<GameState, 'holdings' | 'rivals'>) } : {}),
+  });
+
+/** Every player's holdings by `me` or opponent id, from my state, which holds the opponents' in `rivals`. */
+const othersOf = (shared: Pick<GameState, 'holdings' | 'rivals'>): Record<string, Holdings> =>
+  ({ me: shared.holdings, ...Object.fromEntries(Object.entries(shared.rivals ?? {}).map(([id, rival]) => [id, rival.holdings])) });
 
 /** What a faction sheet brings by itself: the abilities and the mech; the breakthrough apart, as it must be held. */
 interface Sheet { always: string[]; breakthrough?: string }
@@ -167,6 +184,13 @@ export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Compon
     for (const id of sheet.always) ask(id);
     if (sheet.breakthrough && holdings.breakthrough !== undefined) ask(sheet.breakthrough);
   }
+  // An Alliance note held brings its owner's commander, while it is unlocked (the owner's holdings are in `others`).
+  for (const id of holdings.promissory) {
+    const owner = noteAddress(id);
+    if (owner === undefined || !/^promissory:.*_an$/.test(noteBase(id))) continue;
+    const lent = holder.others?.[owner]?.leaders ?? {};
+    for (const leader in lent) if (lent[leader] === 'unlocked' && componentById(pack, leader)?.detail?.type === 'commander') ask(leader);
+  }
   if (holder.control) for (const planetId in holder.control) if (holder.control[planetId] === 'me') ask(`legendary:${planetId}`);
   for (const id of holder.laws ?? []) ask(id);
   return found.length > 1 ? found.sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!) : found;
@@ -186,20 +210,26 @@ export function passivesOf(pack: DataPack, who: Holdings | Holder): [string, Com
   return inForceOf(pack, isHolder(who) ? who : { holdings: who }, isPassive).map(id => [id, effects.get(noteBase(id))!]);
 }
 
+/** The kinds that come with a faction sheet or a planet: they are in force without being held as cards, and their reminders are asked of the holder. */
+const SHEET_KIND = /^(ability|mech|breakthrough|legendary):/;
+
 /**
  * The reminders of a step: the hint components with that step which the named players (`me` or an opponent id) hold
- * ready, in hand or in play. A component held by several of them, or in several copies, is given once.
+ * ready, in hand or in play, hold as a secret objective, or have by their faction sheet (abilities, mech, breakthrough
+ * once held) or a legendary planet they control. A component held by several of them, or in several copies, is given once.
  */
 export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, players: string[]): ComponentDef[] {
   const { order } = registryOf(pack);
   const ids = new Set<string>();
+  const asked = (id: string): boolean => {
+    const effect = effectOf(pack, id);
+    return effect?.tier === 'hint' && effect.hintAt?.includes(step) === true;
+  };
   for (const player of players) {
-    const holdings = player === 'me' ? board.holdings : board.rivals?.[player]?.holdings;
-    if (!holdings) continue;
-    for (const id of readyComponents(pack, holdings)) {
-      const effect = effectOf(pack, id);
-      if (effect?.tier === 'hint' && effect.hintAt?.includes(step)) ids.add(id);
-    }
+    const state = player === 'me' ? board : board.rivals?.[player];
+    if (!state) continue;
+    for (const id of readyComponents(pack, state.holdings)) if (asked(id)) ids.add(id);
+    for (const id of inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control })) if (SHEET_KIND.test(id) && asked(id)) ids.add(id);
   }
   return [...ids].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!).flatMap(id => componentById(pack, id) ?? []);
 }

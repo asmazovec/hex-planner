@@ -1,6 +1,7 @@
 /** LRR 2 Action Cards. Source: tirules2 rules-reference/action-cards.md. The hand is kept by what entries gain and play; there is no deck. */
 import { describe, expect, test } from 'vitest';
 import type { Entry } from '../../types';
+import { effectOf } from '../../effects/registry';
 import { forecast, rulesGame, rulesPack } from '../kit';
 
 const pack = rulesPack();
@@ -12,8 +13,29 @@ describe('LRR 2 Action Cards', () => {
   });
   test.todo('2.2: Politics draws action cards with its primary and secondary — not modelled: Politics is shown only');
   test.todo('2.3: a drawn card comes from the top of the deck into the hand — not modelled: no deck');
-  test.todo('2.4: a hand holds at most seven action cards, the rest is discarded — not modelled: no hand');
-  test.todo('2.4.1: effects can change the hand limit — not modelled: no hand');
+  test('2.4: a hand holds at most seven action cards: an entry that takes it over the limit is warned of', () => {
+    const hand = ['actionCard:abs', 'actionCard:assassin', 'actionCard:bribery', 'actionCard:bunker', 'actionCard:confusing', 'actionCard:courageous', 'actionCard:cripple'];
+    const draw: Entry = { id: 'd', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: {}, gains: ['actionCard:disable'] };
+    const over = forecast(rulesGame({ entries: [draw], game: { start: { me: { hand }, opponents: {} } } }), pack).warnings.d ?? [];
+    expect(over.map(w => w.code)).toEqual(['handOverLimit']);
+    expect(over[0].params).toEqual({ cards: 8, limit: 7 });
+    expect(over[0]).toMatchObject({ rule: '2.4', step: 'round' });
+    const within = forecast(rulesGame({ entries: [draw], game: { start: { me: { hand: hand.slice(1) }, opponents: {} } } }), pack).warnings.d ?? [];
+    expect(within).toEqual([]);
+  });
+  test('2.4.1: effects can change the hand limit: the check asks the `handLimit` point of the count', () => {
+    const hand = ['actionCard:abs', 'actionCard:assassin', 'actionCard:bribery', 'actionCard:bunker', 'actionCard:confusing', 'actionCard:courageous', 'actionCard:cripple'];
+    const draw: Entry = { id: 'd', phase: 'action', status: 'planned', type: 'adjustment', label: '', delta: {}, gains: ['actionCard:disable'] };
+    const game = rulesGame({ entries: [draw], game: { start: { me: { hand, technologies: ['technology:ps'] }, opponents: {} } } });
+    const effect = effectOf(pack, 'technology:ps')!;
+    Object.assign(effect, { tier: 'passive', modify: { handLimit: (value: number) => value + 1 } });
+    try {
+      expect(forecast(game, pack).warnings.d ?? []).toEqual([]);
+    } finally {
+      delete effect.modify;
+      effect.tier = 'hint';
+    }
+  });
   test.todo('2.5: action cards stay hidden until played — not modelled: no hand');
   test.todo('2.6: the bold first paragraph gives the timing — not modelled: cards are not resolved');
   test.todo('2.6.1: an "Action" card takes a component action and must be resolvable in full — not modelled: a component action is a note');

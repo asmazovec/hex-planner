@@ -5,8 +5,9 @@
  */
 import { componentById, componentsOf, noteAddress } from '../components';
 import { HOLDING_FIELD, holdingsOf } from '../holdings';
+import { effectOf } from '../effects/registry';
 import { violation } from '../rules/registry';
-import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
+import type { ComponentDef, DataPack, Entry, Game, GameState, Holdings, StartHoldings, Warning } from '../types';
 
 /** The holdings a game begins with, less what the pack does not know. */
 export function startHoldings(start: StartHoldings | undefined, pack: DataPack): Holdings {
@@ -57,8 +58,12 @@ const known = (pack: DataPack, ids: string[] | undefined): ComponentDef[] =>
   (ids ?? []).flatMap(id => componentById(pack, id) ?? []);
 
 /** The `gains` and `spends` of any entry, for its owner. */
-export function applyGains(own: GameState, shared: GameState, entry: Entry, pack: DataPack): void {
-  for (const def of known(pack, entry.gains)) gain(own, shared, def);
+export function applyGains(own: GameState, shared: GameState, entry: Entry, pack: DataPack, game?: Game, warnings: Warning[] = []): void {
+  for (const def of known(pack, entry.gains)) {
+    gain(own, shared, def);
+    // What a component does the moment it is gained (a relic that gives a breakthrough) is its own effect's.
+    if (game) effectOf(pack, def.id)?.gained?.({ game, state: own, shared, pack, id: def.id, entry, warnings });
+  }
   for (const def of known(pack, entry.spends)) lose(own, shared, def);
 }
 
@@ -100,7 +105,7 @@ export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: strin
   return new Set([...componentsOf(pack), ...notes].filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));
 }
 
-const EXHAUSTS = /\bexhaust this card\b/i;
+const EXHAUSTS = /\bexhaust this (card|agent)\b/i;
 const PURGES = /\bpurge this card\b/i;
 /** A note that goes back once its ability is resolved says so last: "Then, return this card to the ... player." */
 const RETURNS = /\bthen,? return this card to\b/i;
@@ -166,7 +171,7 @@ export function playComponent(
     case 'relic':
     case 'technology':
     case 'legendary':
-      if (def.kind === 'relic' && PURGES.test(def.text)) {
+      if (def.kind === 'relic' && PURGES.test(def.text) && !EXHAUSTS.test(def.text)) {
         removeOne(holdings.relics, def.id);
         removeOne(holdings.exhausted, def.id);
       } else if (EXHAUSTS.test(def.text) && !holdings.exhausted.includes(def.id)) holdings.exhausted.push(def.id);

@@ -81,8 +81,83 @@ export interface EffectTurn {
   shared: GameState;
   /** The entry that plays it: a component action, or any entry that names it in `uses`. */
   entry: Entry;
+  /** The component being played, by id as the entry names it (a note under its address). */
+  id: string;
+  /** Whose entry: `me` or an opponent id. */
+  player: string;
+  /**
+   * Every player's state by `me` or opponent id, the owner's among them (the same object as `state`): what moves a
+   * card or a token from another player (Spy Net, Insubordination) reads and changes them here.
+   */
+  states: Record<string, GameState>;
+  /** What the player chose for this component: the entry's `choices` for its component action, then its `useChoices[id]` (`choicesFor`). */
   choices: Record<string, string | number>;
+  /** False when the replay already warned that the owner does not hold the component or that it is exhausted: a play may then do nothing. */
+  held: boolean;
   pack: DataPack;
+  warnings: Warning[];
+}
+
+/** What a component asks for is named by `ChoiceSpec.kind`; the interface offers the candidates and the entry keeps the value. */
+export type ChoiceKind =
+  /** A planet id. */
+  | 'planet'
+  /** A slot of the map (`Game.map`, the open Fracture). */
+  | 'system'
+  /** `me` or an opponent id. */
+  | 'player'
+  /** A unit id. */
+  | 'unit'
+  /** A whole number between `range`. */
+  | 'number'
+  /** One of `options`, read by `names`. */
+  | 'option'
+  /** A component id. */
+  | 'component';
+
+/** What the interface knows when it offers the candidates of a choice: the board just before the entry. */
+export interface ChoiceContext {
+  game: Game;
+  pack: DataPack;
+  /** The state of the owner of the entry just before it, and mine (laws, objectives). */
+  state: GameState;
+  shared: GameState;
+  /** Whose entry: `me` or an opponent id. */
+  player: string;
+  entry: Entry;
+  /** What is chosen so far for this component, so that a later choice depends on an earlier one. */
+  chosen: Record<string, string | number>;
+}
+
+/**
+ * One thing a component asks the player to choose when it is played, written in the effect file. It shows in the
+ * component action's editor, and under the component in «Used». The value is kept under `key` in the entry's choices.
+ * Nothing is forbidden: the candidates are only what the interface offers first, the effect warns of a bad value.
+ */
+export interface ChoiceSpec {
+  key: string;
+  kind: ChoiceKind;
+  /** The name of the choice in both languages; the kind's own name by default («Planet», «Player»). */
+  label?: { ru: string; en: string };
+  /** The candidates: planet ids, slots, player ids, unit ids, option values, component ids. By kind: every planet or system of the map, every other player, every unit. */
+  options?: (ctx: ChoiceContext) => string[];
+  /** `option` only: how each value reads. */
+  names?: Record<string, { ru: string; en: string }>;
+  /** `number` only: lowest and highest value; the lowest is 0 by default. */
+  range?: [min: number, max: number];
+  /** Shown only while this holds: a choice that depends on an earlier one. */
+  when?: (chosen: Record<string, string | number>) => boolean;
+}
+
+/** What a gain hands a component's effect: the holder's own state and the component just gained. */
+export interface GainTurn {
+  game: Game;
+  state: GameState;
+  shared: GameState;
+  pack: DataPack;
+  /** The component just gained by the entry's `gains`. */
+  id: string;
+  entry: Entry;
   warnings: Warning[];
 }
 
@@ -92,8 +167,12 @@ export interface ComponentEffect {
   rule: string;
   /** passive: the changes to the points of the count, while the component is held. */
   modify?: Partial<Modifiers>;
-  /** play: what happens when an entry plays the component with its choices. */
+  /** What happens when an entry plays the component with its choices. Any tier may have it (a passive ability with an action part). */
   play?: (turn: EffectTurn) => void;
+  /** What the player chooses when the component is played; the editor of the entry asks it (`ChoicesBlock`). */
+  choose?: ChoiceSpec[];
+  /** Runs when an entry's `gains` hands the player this component (a relic that gives a breakthrough). */
+  gained?: (turn: GainTurn) => void;
   /** hint: the steps in whose block the reminder stands; none where the data names no step. */
   hintAt?: RuleStep[];
   /** Any tier: the checks the component lifts (see `EffectTier` for when they hold). */
