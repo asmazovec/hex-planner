@@ -29,7 +29,7 @@ describe('ability:arbiters Arbiters', () => {
   // Checks: another faction trading an action card is warned of, and the card moves all the same.
   // Why the check is NOT redundant here: only the Hacan may trade action cards. Today the replay lets everyone do it
   // without a warning; pass 2 makes the check, and the rules test 94.3.1 changes with it.
-  test.fails('ability:arbiters is the Hacan\'s own: another faction trading an action card is warned of', () => {
+  test('ability:arbiters is the Hacan\'s own: another faction trading an action card is warned of', () => {
     const sol = table('sol', CARD_IN_HAND, { hand: [CARD_IN_HAND] });
     expectStanding(warningsOf(sol, sol.move), 'transactionKind');
     expect(endOf(sol).rivals?.o1.holdings.hand).toEqual([CARD_IN_HAND]);

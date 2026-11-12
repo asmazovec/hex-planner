@@ -19,7 +19,7 @@ const table = (entry: Entry, relics: string[] = [id]) =>
 // Checks: the manual choice of the payment offers The Triad beside the planets, worth 3, and pressing it puts it in
 // the payment.
 // Why the check is redundant here: the payment offers only ready planets I control; the Triad is spent as one.
-test.fails('relic:thetriad is offered in the payment as a planet worth 3', async () => {
+test('relic:thetriad is offered in the payment as a planet worth 3', async () => {
   const carrier = build([]);
   const triad = table(carrier);
   quote(triad.pack, id, 'spent as if it were a planet card');

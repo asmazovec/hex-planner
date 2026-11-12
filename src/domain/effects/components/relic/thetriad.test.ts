@@ -29,7 +29,7 @@ describe('relic:thetriad The Triad', () => {
   // Checks: spending the Triad exhausts it, as paying exhausts a planet card: a second payment in the round is warned of.
   // Why the check is NOT redundant here: a spent planet card is exhausted until it is readied (34.1); the Triad is
   // spent the same way.
-  test.fails('relic:thetriad spent twice in a round: the second payment is warned of as exhausted', () => {
+  test('relic:thetriad spent twice in a round: the second payment is warned of as exhausted', () => {
     const first = build([id]);
     const second = build([id], FAR);
     const triad = table([[first, second]]);
