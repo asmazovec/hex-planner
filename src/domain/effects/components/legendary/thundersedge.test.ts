@@ -17,7 +17,7 @@ describe('legendary:thundersedge Jupiter Brain', () => {
   //  with the control of the planet.
   // Checks: landing on Thunder's Edge and taking it gives the player their breakthrough, ready.
   // Why no check is lifted: the card brings a component, it allows nothing.
-  test.fails('legendary:thundersedge taken by an invasion gives the breakthrough', () => {
+  test('legendary:thundersedge taken by an invasion gives the breakthrough', () => {
     const game = table([invasion('thundersedge')]);
     quote(game.pack, id, 'Gain your breakthrough when you gain this card if you do not already have it.');
     const end = endOf(game);
@@ -54,7 +54,7 @@ describe('legendary:thundersedge Jupiter Brain', () => {
   });
 
   // LRR 53.3 with 53.2: the card is in the play area of the player who controls the planet.
-  test.fails('legendary:thundersedge used without controlling Thunder\'s Edge is warned of as not held', () => {
+  test('legendary:thundersedge used without controlling Thunder\'s Edge is warned of as not held', () => {
     const entry = using(tactical(FAR), id);
     expectStanding(warningsOf(table([entry]), entry), 'componentNotHeld');
   });

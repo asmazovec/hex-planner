@@ -36,7 +36,7 @@ describe('legendary:mrte The Galactic Council', () => {
   //  objective cards in their hand."
   // Checks: a player with no secret objective in hand names the card; the condition is warned of.
   // Why the check is NOT redundant here: the card asks for a secret to discard, and there is none.
-  test.fails('legendary:mrte with no secret objective in hand is warned of', () => {
+  test('legendary:mrte with no secret objective in hand is warned of', () => {
     const entry = council({ gains: [DRAWN] });
     expectStanding(warningsOf(table([entry], { secrets: [] }), entry), CONDITION);
   });
@@ -50,12 +50,12 @@ describe('legendary:mrte The Galactic Council', () => {
 
   // LRR 53.3 with 53.2: the card is in the play area of the player who controls the planet.
   // Checks: named by a player who does not control Mecatol Rex, it is warned of as not held.
-  test.fails('legendary:mrte used without controlling Mecatol Rex is warned of as not held', () => {
+  test('legendary:mrte used without controlling Mecatol Rex is warned of as not held', () => {
     const entry = council();
     expectStanding(warningsOf(table([entry], { control: false }), entry), 'componentNotHeld');
   });
 
-  test.fails('legendary:mrte is a play effect that checks its condition', () => {
+  test('legendary:mrte is a play effect that checks its condition', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

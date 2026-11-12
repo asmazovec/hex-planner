@@ -18,7 +18,7 @@ describe('legendary:styx A Song Like Marrow', () => {
   // "When you gain this card, gain 1 victory point."; LRR 53.2: the card is gained with the control of the planet.
   // Checks: landing on Styx and taking it gives one victory point.
   // Why no check is lifted: the card changes the score, it allows nothing.
-  test.fails('legendary:styx taken by an invasion gives one victory point', () => {
+  test('legendary:styx taken by an invasion gives one victory point', () => {
     const game = table([invasion('styx')]);
     quote(game.pack, id, 'When you gain this card, gain 1 victory point.');
     const end = endOf(game);
