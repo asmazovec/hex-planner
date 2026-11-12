@@ -1,0 +1,39 @@
+# Every push to main is checked, built and published: the build, and only the build, goes to the gh-pages branch,
+# which GitHub Pages serves. The branch keeps no history, as with `npm run deploy`.
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Publish the build to gh-pages
+        working-directory: dist
+        run: |
+          # Without this file GitHub Pages runs Jekyll, which a ready build does not need.
+          touch .nojekyll
+          git init --quiet --initial-branch=main
+          git add --all
+          git -c user.name=deploy -c user.email=deploy@localhost commit --quiet -m "Build of ${GITHUB_SHA}"
+          git push --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" main:gh-pages
