@@ -15,7 +15,7 @@ const table = () => {
 // Checks: the route warning stands until the card is chosen in «Used»; then it is still on the screen, in the allowed
 // look, naming the card.
 // Why the check is redundant here: the card lets these ships through other players' ships (58.3.2 lifted).
-test.fails('actionCard:silence_space chosen in «Used», the blocked route reads as allowed by the card', async () => {
+test('actionCard:silence_space chosen in «Used», the blocked route reads as allowed by the card', async () => {
   const silent = table();
   quote(silent.pack, id, 'can move through systems that contain other players\' ships');
   const live = showUses(silent, silent.entry);

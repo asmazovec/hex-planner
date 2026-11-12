@@ -1,13 +1,14 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, DataPack, Game } from '../../../types';
+import type { DataPack, Game } from '../../../types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
+import ghostShipSystem from '../../../rules/codes/ghostShipSystem';
 import { id } from './ghost_ship';
 
 /**
- * The code pass 2 declares (src/domain/rules/codes/componentTarget.ts): the target a played component names is outside
- * what its text allows. Named here as a string, since pass 1 adds no shared file.
+ * The code pass 2 declares (src/domain/rules/codes/ghostShipSystem.ts): the system Ghost Ship names is outside
+ * what its text allows.
  */
-const TARGET_CODE = 'componentTarget' as AnyWarningCode;
+const TARGET_CODE = ghostShipSystem.code;
 
 /** FAR holds an alpha wormhole; my home system is given a beta one, to test "non-home". */
 const MAP = { [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', [FAR]: 'r-alpha', [FARTHER]: 'r-empty' };
@@ -21,7 +22,7 @@ describe('actionCard:ghost_ship Ghost Ship', () => {
   //  other players' ships."
   // Checks: played on FAR, a system with a wormhole and nobody's ships, a destroyer of mine stands there.
   // Why nothing is waived: a unit placed by an ability breaks no rule; the board changes.
-  test.fails('actionCard:ghost_ship places a destroyer in an empty system with a wormhole', () => {
+  test('actionCard:ghost_ship places a destroyer in an empty system with a wormhole', () => {
     const table1 = table();
     quote(table1.pack, id, 'Place 1 destroyer from your reinforcements in a non-home system that contains a wormhole');
     expect(endOf(table1).systems[FAR]).toEqual({ destroyer: 1 });
@@ -31,7 +32,7 @@ describe('actionCard:ghost_ship Ghost Ship', () => {
   // "... a non-home system that contains a wormhole ..."
   // Checks: a system without a wormhole is warned of; the destroyer is placed all the same.
   // Why the check is NOT redundant here: the card names systems with a wormhole only.
-  test.fails('actionCard:ghost_ship in a system without a wormhole is warned of, and still placed', () => {
+  test('actionCard:ghost_ship in a system without a wormhole is warned of, and still placed', () => {
     const plain = table(ghost(NEAR));
     expectStanding(warningsOf(plain, plain.play), TARGET_CODE);
     expect(endOf(plain).systems[NEAR]).toEqual({ destroyer: 1 });
@@ -40,7 +41,7 @@ describe('actionCard:ghost_ship Ghost Ship', () => {
   // "... a non-home system ..."
   // Checks: my home system, though it holds a wormhole here, is warned of.
   // Why the check is NOT redundant here: the card excludes home systems.
-  test.fails('actionCard:ghost_ship in a home system is warned of', () => {
+  test('actionCard:ghost_ship in a home system is warned of', () => {
     const home = table(ghost(HOME));
     expectStanding(warningsOf(home, home.play), TARGET_CODE);
   });
@@ -48,7 +49,7 @@ describe('actionCard:ghost_ship Ghost Ship', () => {
   // "... and does not contain other players' ships."
   // Checks: the wormhole system holding another player's destroyer is warned of.
   // Why the check is NOT redundant here: the card excludes systems with other players' ships.
-  test.fails('actionCard:ghost_ship in a system with other players\' ships is warned of', () => {
+  test('actionCard:ghost_ship in a system with other players\' ships is warned of', () => {
     const taken = table(ghost(FAR), { enemyUnits: { [FAR]: { o1: { destroyer: 1 } } } });
     expectStanding(warningsOf(taken, taken.play), TARGET_CODE);
   });
@@ -61,7 +62,7 @@ describe('actionCard:ghost_ship Ghost Ship', () => {
     expectStanding(warningsOf(none, none.play), 'componentNotHeld');
   });
 
-  test.fails('actionCard:ghost_ship is a play effect', () => {
+  test('actionCard:ghost_ship is a play effect', () => {
     const { pack } = table();
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

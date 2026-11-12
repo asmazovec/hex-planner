@@ -13,7 +13,7 @@ const table = (entry = move()) => ({ entry, ...bench({ faction: 'sol', units: { 
 // Checks: the speed warning stands until Flank Speed is chosen in «Used»; then it is gone from the screen, and the
 // card is in the entry's uses.
 // Why the check is redundant here: with the card the cruiser's move value is 3, and three systems are reached.
-test.fails('actionCard:fs1 chosen in «Used», the cruiser reaches three systems away and the warning goes', async () => {
+test('actionCard:fs1 chosen in «Used», the cruiser reaches three systems away and the warning goes', async () => {
   const fast = table();
   quote(fast.pack, id, 'Apply +1 to the move value');
   const live = showUses(fast, fast.entry);

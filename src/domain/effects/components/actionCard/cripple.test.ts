@@ -16,7 +16,7 @@ describe('actionCard:cripple Cripple Defenses', () => {
   // Checks: played as a component action on t1, both of the rival's PDS there are destroyed.
   // Why nothing is waived: the card breaks no rule; it changes the board, and the plan counts the PDS of every
   // player (their Space Cannon, the structure limit 85.4).
-  test.fails('actionCard:cripple destroys each PDS on the chosen planet', () => {
+  test('actionCard:cripple destroys each PDS on the chosen planet', () => {
     const table1 = table();
     quote(table1.pack, id, 'Choose 1 planet. Destroy each PDS on that planet.');
     expect(endOf(table1).rivals?.o1.pds.t1 ?? 0).toBe(0);
@@ -25,7 +25,7 @@ describe('actionCard:cripple Cripple Defenses', () => {
   // "Destroy each PDS on that planet."
   // Checks: "each" is whoever's: my own PDS on a chosen planet of mine is destroyed too.
   // Why nothing is waived: the card speaks of each PDS, not of the opponents' only.
-  test.fails('actionCard:cripple destroys my own PDS too when my planet is chosen', () => {
+  test('actionCard:cripple destroys my own PDS too when my planet is chosen', () => {
     expect(endOf(table(cripple('h1'))).pds.h1 ?? 0).toBe(0);
   });
 
@@ -55,7 +55,7 @@ describe('actionCard:cripple Cripple Defenses', () => {
     expectNone(warningsOf(none, none.play), 'componentExhausted');
   });
 
-  test.fails('actionCard:cripple is a play effect', () => {
+  test('actionCard:cripple is a play effect', () => {
     const { pack } = table();
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

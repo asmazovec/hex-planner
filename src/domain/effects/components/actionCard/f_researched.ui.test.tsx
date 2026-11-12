@@ -9,7 +9,7 @@ uiBench();
 // Checks: played with 3 trade goods, the component action shows the trade goods warning.
 // Why the check is NOT redundant here: the card's cost is 4 trade goods and the player has 3 (ruling: it cannot be
 // played then).
-test.fails('actionCard:f_researched with 3 trade goods shows the trade goods warning', () => {
+test('actionCard:f_researched with 3 trade goods shows the trade goods warning', () => {
   const play = componentAction(id, { choices: { technology: 'technology:nm' } } as never);
   const poor = bench({ faction: 'sol', start: { hand: [id] }, entries: [adjust({ tradeGoods: 3 }), play] });
   quote(poor.pack, id, 'Spend 4 trade goods');
