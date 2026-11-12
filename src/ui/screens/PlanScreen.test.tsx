@@ -221,7 +221,7 @@ describe('the system and the sources, chosen from the panel', () => {
     expect(document.querySelector('.picker-distance')).toHaveTextContent('Distance: 2');
     await userEvent.click(screen.getByRole('button', { name: 'Take one Carrier' }));
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(document.querySelector('.source-button')).toHaveTextContent('Distance: 2');
+    expect(document.querySelector('.source-row .source-button')).toHaveTextContent('Distance: 2');
   });
 
   test('a second tap on the button or a tap on the active system adds nothing', async () => {
@@ -1126,7 +1126,7 @@ describe('reading the plan', () => {
 
   test('the flight repeats while shown and stops on closing; under reduced motion there is none', async () => {
     plannedRoute();
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'requestAnimationFrame', 'cancelAnimationFrame', 'performance'] });
     render(<PlanScreen />);
     fireEvent.click(screen.getByRole('button', { name: label }));
     expect(document.querySelector('.flight-layer')).toBeNull();
@@ -1139,8 +1139,8 @@ describe('reading the plan', () => {
     expect(tile(HOME)).toHaveClass('tile-quiet');
     expect(tile(TARGET)).toHaveClass('tile-quiet');
     expect(document.querySelectorAll('.lift-layer .tile-lifted:not(.tile-quiet)').length).toBe(0);
-    // The flight runs on animation frames, which the fake timers leave alone: a few of them pass the short hold.
-    for (const until = Date.now() + 4000; Date.now() < until && tile(HOME)?.classList.contains('tile-quiet');) await act(async () => { await new Promise(r => requestAnimationFrame(r)); });
+    // The frames and the clock of the flight are the fake timers' here: the short hold passes.
+    act(() => { vi.advanceTimersByTime(200); });
     // Once the ships leave, and on landing, only the systems of the action move: the others are quiet, its own are not.
     expect(tile(HOME)).not.toHaveClass('tile-quiet');
     expect(tile(TARGET)).not.toHaveClass('tile-quiet');
@@ -2153,7 +2153,7 @@ describe('a source left with nothing chosen', () => {
     expect(tactical().moves).toEqual([]);
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(tactical().moves).toEqual([{ from: WAY, units: {} }]);
-    await userEvent.click(document.querySelector('.tactical-editor .source-button')!);
+    await userEvent.click(document.querySelector('.tactical-editor .source-row .source-button')!);
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(tactical().moves).toEqual([]);
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
