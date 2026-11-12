@@ -34,7 +34,7 @@ describe('publicObjective:engineer_marvel Engineer a Marvel', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: a fleet of dreadnoughts and carriers, no flagship, no war sun: warned of.
   // Why the check is NOT redundant here: no unit on the board is one the card names.
-  test.fails('publicObjective:engineer_marvel neither a flagship nor a war sun is warned of', () => {
+  test('publicObjective:engineer_marvel neither a flagship nor a war sun is warned of', () => {
     const t = table({ [HOME]: { dreadnought: 3, carrier: 2 } });
     expectStanding(warningsOf(t, t.status), UNMET);
     expect(warningsOf(t, t.status).find(w => w.code === UNMET)?.params).toMatchObject({ objective: id, have: 0, need: 1 });

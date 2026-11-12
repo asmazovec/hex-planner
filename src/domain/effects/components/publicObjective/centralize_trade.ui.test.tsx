@@ -24,7 +24,7 @@ test('publicObjective:centralize_trade paid in full, the status entry shows no s
 // LRR 61.10: "a player must pay the specified cost at the time indicated on the card."
 // Checks: with seven trade goods the status entry shows the shortage, standing: the player may still plan the score.
 // Why the check is NOT redundant here: seven is fewer than ten.
-test.fails('publicObjective:centralize_trade short of ten trade goods, the status entry shows it standing', () => {
+test('publicObjective:centralize_trade short of ten trade goods, the status entry shows it standing', () => {
   const t = table(7);
   showWarnings(t, t.status);
   expectShownStanding('shortTradeGoods');

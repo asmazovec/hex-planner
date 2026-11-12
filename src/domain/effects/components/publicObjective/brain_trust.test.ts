@@ -48,7 +48,7 @@ describe('publicObjective:brain_trust Form Galactic Brain Trust', () => {
   // Checks: eight planets controlled, but only m1-m4 have a specialty: four of five.
   // Why the check is NOT redundant here: planets without a specialty (the home planets, t2, m5) are outside the card,
   // and m1's two specialties are one planet.
-  test.fails('publicObjective:brain_trust planets without a specialty do not count', () => {
+  test('publicObjective:brain_trust planets without a specialty do not count', () => {
     const t = table(['h1', 'h2', 't2', 'm1', 'm2', 'm3', 'm4', 'm5']);
     quote(t.pack, id, 'planets that have technology specialties');
     expectStanding(warningsOf(t, t.status), UNMET);

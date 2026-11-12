@@ -8,7 +8,7 @@ uiBench();
 
 /** `spend` is the field pass 2 adds to the status entry: the cost of the public objective scored. */
 const table = (resources: Payment) => {
-  const status = { ...statusTokens(0, 0, 0), scored: [id], spend: { resources } } as unknown as Entry;
+  const status = { ...statusTokens(0, 0, 0), scored: [id], spend: { resources: { planets: resources.planets, tradeGoods: 0 }, tradeGoods: resources.tradeGoods } } as unknown as Entry;
   return { status, ...bench({ faction: 'sol', entries: [adjust({ tradeGoods: 12 }), status], game: { planetControl: { h1: 'me', t1: 'me' } } }) };
 };
 
@@ -25,7 +25,7 @@ test('publicObjective:golden_age paid in full, the status entry shows no shortag
 // LRR 61.10: "a player must pay the specified cost at the time indicated on the card."
 // Checks: 13 resources shown short, standing: the player may still plan the score.
 // Why the check is NOT redundant here: 13 is less than 16.
-test.fails('publicObjective:golden_age short of sixteen resources, the status entry shows it standing', () => {
+test('publicObjective:golden_age short of sixteen resources, the status entry shows it standing', () => {
   const t = table({ planets: ['h1'], tradeGoods: 10 });
   showWarnings(t, t.status);
   expectShownStanding('shortResources');

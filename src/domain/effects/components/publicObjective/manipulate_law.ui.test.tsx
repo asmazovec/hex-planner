@@ -8,7 +8,7 @@ uiBench();
 
 /** `spend` is the field pass 2 adds to the status entry: the cost of the public objective scored. */
 const table = (influence: Payment) => {
-  const status = { ...statusTokens(0, 0, 0), scored: [id], spend: { influence } } as unknown as Entry;
+  const status = { ...statusTokens(0, 0, 0), scored: [id], spend: { influence: { planets: influence.planets, tradeGoods: 0 }, tradeGoods: influence.tradeGoods } } as unknown as Entry;
   return { status, ...bench({ faction: 'sol', entries: [adjust({ tradeGoods: 12 }), status], game: { planetControl: { h2: 'me', t2: 'me' } } }) };
 };
 
@@ -25,7 +25,7 @@ test('publicObjective:manipulate_law paid in full, the status entry shows no sho
 // LRR 61.10: "a player must pay the specified cost at the time indicated on the card."
 // Checks: 15 influence shown short, standing: the player may still plan the score.
 // Why the check is NOT redundant here: 15 is less than 16.
-test.fails('publicObjective:manipulate_law short of sixteen influence, the status entry shows it standing', () => {
+test('publicObjective:manipulate_law short of sixteen influence, the status entry shows it standing', () => {
   const t = table({ planets: ['h2', 't2'], tradeGoods: 10 });
   showWarnings(t, t.status);
   expectShownStanding('shortInfluence');

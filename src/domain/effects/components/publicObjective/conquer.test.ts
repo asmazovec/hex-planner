@@ -42,7 +42,7 @@ describe('publicObjective:conquer Conquer the Weak', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: my own home planets and both target planets, but nothing of the Hacan home: warned of, none of one.
   // Why the check is NOT redundant here: my own home system is not "another player's", the target is no home system.
-  test.fails('publicObjective:conquer my own home and other systems are warned of', () => {
+  test('publicObjective:conquer my own home and other systems are warned of', () => {
     const t = table({ h1: 'me', h2: 'me', t1: 'me', t2: 'me', o1: 'enemy' });
     quote(t.pack, id, "another player's home system");
     expectStanding(warningsOf(t, t.status), UNMET);

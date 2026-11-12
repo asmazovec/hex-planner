@@ -16,7 +16,7 @@ describe('publicObjective:centralize_trade Centralize Galactic Trade', () => {
   // LRR 61.10: "To score such an objective, a player must pay the specified cost at the time indicated on the card."
   // Checks: with twelve trade goods, scoring the objective spends ten of them: two are left, nothing is warned of.
   // Why the count changes here: the objective is the cost; without it nothing takes trade goods at the status phase.
-  test.fails('publicObjective:centralize_trade scoring spends ten trade goods', () => {
+  test('publicObjective:centralize_trade scoring spends ten trade goods', () => {
     const t = table(12);
     quote(t.pack, id, 'Spend 10 trade goods.');
     expectNone(warningsOf(t, t.status), 'shortTradeGoods');
@@ -28,7 +28,7 @@ describe('publicObjective:centralize_trade Centralize Galactic Trade', () => {
   // Checks: with seven trade goods the cost cannot be paid: the shortage is warned of on the status entry, and the
   // objective is scored all the same, as the plan forbids nothing.
   // Why the check is NOT redundant here: seven trade goods are fewer than the ten the card asks.
-  test.fails('publicObjective:centralize_trade seven trade goods are short of the ten', () => {
+  test('publicObjective:centralize_trade seven trade goods are short of the ten', () => {
     const t = table(7);
     expectStanding(warningsOf(t, t.status), 'shortTradeGoods');
     expect(warningsOf(t, t.status).find(w => w.code === 'shortTradeGoods')).toMatchObject({ params: { needed: 10, have: 7 }, step: 'status' });
@@ -44,7 +44,7 @@ describe('publicObjective:centralize_trade Centralize Galactic Trade', () => {
   });
 
   // Checks: the objective is played by the status entry that scores it.
-  test.fails('publicObjective:centralize_trade is a play effect', () => {
+  test('publicObjective:centralize_trade is a play effect', () => {
     expect(effect(table(0).pack, id).tier).toBe('play');
   });
 });

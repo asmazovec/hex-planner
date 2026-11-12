@@ -19,7 +19,7 @@ describe('publicObjective:amass_wealth Amass Wealth', () => {
   // Checks: h1 pays 3 resources, t2 pays 3 influence, and three trade goods are spent: nothing is warned of, nine
   // trade goods are left.
   // Why the count changes here: the objective is the cost, in three parts.
-  test.fails('publicObjective:amass_wealth each of the three parts is paid', () => {
+  test('publicObjective:amass_wealth each of the three parts is paid', () => {
     const t = table(scoring({ planets: ['h1'], tradeGoods: 0 }, { planets: ['t2'], tradeGoods: 0 }, 3));
     quote(t.pack, id, 'Spend 3 influence, 3 resources, and 3 trade goods.');
     for (const code of ['shortResources', 'shortInfluence', 'shortTradeGoods', 'planetExhausted'] as const) expectNone(warningsOf(t, t.status), code);
@@ -30,7 +30,7 @@ describe('publicObjective:amass_wealth Amass Wealth', () => {
   // The objective's ruling 2: "A planet may be exhausted to spend either its resource or influence value, but not both."
   // Checks: h1 named for the resources and again for the influence is warned of as exhausted, and pays only once.
   // Why the check is NOT redundant here: one planet gives one of its values.
-  test.fails('publicObjective:amass_wealth a planet pays its resources or its influence, not both', () => {
+  test('publicObjective:amass_wealth a planet pays its resources or its influence, not both', () => {
     const t = table(scoring({ planets: ['h1'], tradeGoods: 0 }, { planets: ['h1', 'h2'], tradeGoods: 0 }, 3));
     expectStanding(warningsOf(t, t.status), 'planetExhausted');
     expect(warningsOf(t, t.status).find(w => w.code === 'shortInfluence')?.params).toMatchObject({ needed: 3, paid: 2 });
@@ -40,14 +40,14 @@ describe('publicObjective:amass_wealth Amass Wealth', () => {
   // Checks: h2 alone (1 resource) for the resources part is short, and the shortage is warned of on the status entry.
   // Why the check is NOT redundant here: each part is a cost of its own; the influence paid beyond 3 does not make up
   // for missing resources.
-  test.fails('publicObjective:amass_wealth one part short is warned of', () => {
+  test('publicObjective:amass_wealth one part short is warned of', () => {
     const t = table(scoring({ planets: ['h2'], tradeGoods: 0 }, { planets: ['t2', 'h1'], tradeGoods: 0 }, 3));
     expectStanding(warningsOf(t, t.status), 'shortResources');
     expect(warningsOf(t, t.status).find(w => w.code === 'shortResources')).toMatchObject({ params: { needed: 3, paid: 1 }, step: 'status' });
   });
 
   // Checks: the objective is played by the status entry that scores it.
-  test.fails('publicObjective:amass_wealth is a play effect', () => {
+  test('publicObjective:amass_wealth is a play effect', () => {
     expect(effect(table(scoring({ planets: [], tradeGoods: 0 }, { planets: [], tradeGoods: 0 }, 0)).pack, id).tier).toBe('play');
   });
 });

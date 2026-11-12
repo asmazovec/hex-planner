@@ -28,7 +28,7 @@ describe('publicObjective:raise_fleet Raise a Fleet', () => {
   // Checks: four ships and three fighters in one system: scoring is warned of with what is had and what is needed,
   // and the objective is still scored, as the plan forbids nothing.
   // Why the check is NOT redundant here: fighters are not "non-fighter ships"; four is one short of the card.
-  test.fails('publicObjective:raise_fleet fighters do not count: four ships and three fighters are warned of', () => {
+  test('publicObjective:raise_fleet fighters do not count: four ships and three fighters are warned of', () => {
     const t = table({ [HOME]: { cruiser: 4, fighter: 3 } });
     quote(t.pack, id, 'non-fighter ships');
     expectStanding(warningsOf(t, t.status), UNMET);
@@ -39,7 +39,7 @@ describe('publicObjective:raise_fleet Raise a Fleet', () => {
   // "... in 1 system."
   // Checks: three ships in one system and three in the next are not five in one.
   // Why the check is NOT redundant here: the card counts the ships of a single system, not the whole board.
-  test.fails('publicObjective:raise_fleet ships spread over two systems do not add up', () => {
+  test('publicObjective:raise_fleet ships spread over two systems do not add up', () => {
     const t = table({ [HOME]: { cruiser: 3 }, [NEAR]: { destroyer: 3 } });
     expect(warningsOf(t, t.status).find(w => w.code === UNMET)?.params).toMatchObject({ objective: id, have: 3, need: 5 });
   });

@@ -43,7 +43,7 @@ describe('publicObjective:infrastructure Improve Infrastructure', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: structures on h1, h2 and t1: only t1 is outside the home system, one of three.
   // Why the check is NOT redundant here: the card leaves out the planets of the player's own home system.
-  test.fails('publicObjective:infrastructure planets of the home system do not count', () => {
+  test('publicObjective:infrastructure planets of the home system do not count', () => {
     const t = table({ pds: { h2: 1, t1: 1 }, docks: ['h1'] });
     quote(t.pack, id, 'outside of your home system');
     expectStanding(warningsOf(t, t.status), UNMET);
@@ -52,7 +52,7 @@ describe('publicObjective:infrastructure Improve Infrastructure', () => {
 
   // Checks: four PDS on one planet are one planet with structures.
   // Why the check is NOT redundant here: the card counts planets, not structures.
-  test.fails('publicObjective:infrastructure many structures on one planet are one planet', () => {
+  test('publicObjective:infrastructure many structures on one planet are one planet', () => {
     const t = table({ pds: { t1: 3 }, docks: ['t1'] });
     expect(unmet(t)).toMatchObject({ objective: id, have: 1, need: 3 });
   });

@@ -26,7 +26,7 @@ test('publicObjective:amass_wealth every part paid, the status entry shows no sh
 // The objective's ruling 2: "A planet may be exhausted to spend either its resource or influence value, but not both."
 // Checks: h1 named in both parts is shown as exhausted, standing.
 // Why the check is NOT redundant here: one planet gives one of its values.
-test.fails('publicObjective:amass_wealth a planet named twice is shown exhausted, standing', () => {
+test('publicObjective:amass_wealth a planet named twice is shown exhausted, standing', () => {
   const t = table({ planets: ['h1'], tradeGoods: 0 }, { planets: ['h1', 'h2'], tradeGoods: 0 }, 3);
   showWarnings(t, t.status);
   expectShownStanding('planetExhausted');

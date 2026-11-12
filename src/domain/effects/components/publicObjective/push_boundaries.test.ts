@@ -28,7 +28,7 @@ const table = (jolnarPlanets: string[]) => {
         map: { [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', [FAR]: 'p-far', [FARTHER]: 'r-empty' },
         opponents: [
           { id: 'hacan', faction: 'hacan', vp: 0, seat: 2, color: 2 },
-          { id: 'jolnar', faction: 'jolnar', vp: 0, seat: 3, color: 3 },
+          { id: 'jolnar', faction: 'jolnar', vp: 0, seat: 5, color: 3 },
         ],
         planetControl, planetOwner,
       },
@@ -51,7 +51,7 @@ describe('publicObjective:push_boundaries Push Boundaries', () => {
   // LRR 61.5.1: "they must fulfill the requirement on the card during the Score Objectives step of the status phase".
   // Checks: Jol-Nar controls four planets, more than my three: only one neighbour has fewer, one of two.
   // Why the check is NOT redundant here: the card asks more planets than each of two neighbours.
-  test.fails('publicObjective:push_boundaries a neighbour with more planets does not count', () => {
+  test('publicObjective:push_boundaries a neighbour with more planets does not count', () => {
     const t = table(['f1', 'f2', 'f3', 'f4']);
     expectStanding(warningsOf(t, t.status), UNMET);
     expect(unmet(t)).toMatchObject({ objective: id, have: 1, need: 2 });
@@ -60,7 +60,7 @@ describe('publicObjective:push_boundaries Push Boundaries', () => {
   // "... more planets than ..."
   // Checks: Jol-Nar with three planets, as many as mine, is not fewer.
   // Why the check is NOT redundant here: a tie is not "more".
-  test.fails('publicObjective:push_boundaries a neighbour with as many planets does not count', () => {
+  test('publicObjective:push_boundaries a neighbour with as many planets does not count', () => {
     const t = table(['f1', 'f2', 'f3']);
     expect(unmet(t)).toMatchObject({ objective: id, have: 1, need: 2 });
   });
