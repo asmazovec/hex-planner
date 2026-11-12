@@ -232,6 +232,7 @@ export type Phase = 'strategy' | 'action' | 'status' | 'agenda';
 export interface Payment { planets: string[]; tradeGoods: number; }
 
 export type StructureKind = 'pds' | 'spacedock';
+export type StructureCounts = Partial<Record<StructureKind, number>>;
 /** What a unit upgrade technology improves: a ship or ground force, or a structure (PDS II, Space Dock II). */
 export type UpgradeId = UnitId | StructureKind;
 
@@ -304,8 +305,12 @@ export const TURN_TYPES = ['tactical', 'strategic', 'component', 'pass'] as cons
  * on board on the way: it joins the group of that source slot.
  */
 export type EntryBody = (
-  | { type: 'tactical'; systemId: string | null; moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string }[];
-      landings: { planetId: string; units: UnitCounts }[]; production: UnitCounts; payment: Payment;
+  | { type: 'tactical'; systemId: string | null;
+      moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string;
+        /** Structures taken on board with the units: from a planet (`from` is its id) or from the space area of a system. The rules forbid it (85.3); a component may lift that. */ structures?: StructureCounts }[];
+      landings: { planetId: string; units: UnitCounts;
+        /** Structures put on the planet from the space area of the active system, at the end of the action. */ structures?: StructureCounts }[];
+      production: UnitCounts; payment: Payment;
       /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
       /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
       /** Ships I remove from the active system beyond my fleet pool (37.3): gone on arrival, or after the production if built then. */ fleetRemovals?: UnitCounts;
@@ -329,6 +334,12 @@ export type EntryBody = (
   gains?: string[];
   /** Components the owner loses with it, one copy each. */
   spends?: string[];
+  /**
+   * Components the owner uses with it, by id, that are neither its component action nor spent: an agent or a technology
+   * exhausted, an ability invoked. Each is played as a component action plays its own (exhausted, purged, discarded),
+   * and its waivers hold for this entry (src/domain/effects/waivers.ts).
+   */
+  uses?: string[];
 };
 
 export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
@@ -443,6 +454,8 @@ export interface GameState {
   docks: string[];
   /** Planet id to this player's PDS count, the same way. */
   pds: Record<string, number>;
+  /** This player's structures in the space area of a system, by slot key: carried there by an entry (`moves[].structures`) and not put on a planet yet. */
+  afloat?: Record<string, StructureCounts>;
   /** Someone landed on Mecatol Rex in the entries replayed so far, so the custodians token is gone. */
   custodiansRemoved?: boolean;
   /** Each opponent counted the same way, from what stands on the map for them and their entries replayed so far. */
@@ -472,6 +485,13 @@ export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoo
   'componentNotHeld', 'componentExhausted', 'ownPromissory',
 ] as const;
 export type WarningCode = (typeof WARNING_CODES)[number];
+/**
+ * A warning code declared in a file of its own under src/domain/rules/codes, so that a new rule touches no shared
+ * file. Only `defineCode` (src/domain/rules/codeDef.ts) makes one; a step of the replay and a waiver import it from its file.
+ */
+export type ExtensionCode = string & { readonly __extensionCode: true };
+/** Any code a warning can carry: one of the core list, or one of the files. */
+export type AnyWarningCode = WarningCode | ExtensionCode;
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
 export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition' | 'transaction' | 'component';
 /** Where a violation arose: the entry, and within it the source system or the planet when there is one. */
@@ -481,8 +501,13 @@ export interface ViolationPlace { entryId: string; source?: string; planetId?: s
  * a warning written by hand (tests) may lack them.
  */
 export interface Warning {
-  code: WarningCode;
+  code: AnyWarningCode;
   params: Record<string, string | number>;
+  /**
+   * The components that lift this check for the entry, by id (a note under its address). A waived warning is still
+   * found and still listed; it only stops counting as a breach (`standing` in src/domain/rules/registry.ts).
+   */
+  waivedBy?: string[];
   readonly rule?: string;
   readonly step?: RuleStep;
   readonly place?: ViolationPlace;

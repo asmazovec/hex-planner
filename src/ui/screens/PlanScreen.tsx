@@ -38,6 +38,7 @@ import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
 import { TransactionStep } from '../plan/editors/TransactionStep';
 import { TurnEditor } from '../plan/editors/TurnEditor';
 import { GainsBlock } from '../plan/blocks/GainsBlock';
+import { UsesBlock } from '../plan/blocks/UsesBlock';
 import { TurnActs } from '../plan/blocks/TurnActs';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { EditorFrame } from '../primitives/EditorFrame';
@@ -486,6 +487,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         )}
         {/* What the entry gained and gave stands with what else it holds. */}
         <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+        {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
+        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       </EditorPart>
     );
   };

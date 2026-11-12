@@ -3,7 +3,8 @@
  * tests' names, spaces as dashes) and the step of the round or of the tactical action that checks it.
  * The replay creates every warning through `violation`, so a warning knows its rule, step and place.
  */
-import type { RuleStep, ViolationPlace, Warning, WarningCode } from '../types';
+import type { AnyWarningCode, RuleStep, ViolationPlace, Warning, WarningCode } from '../types';
+import { EXTENSION_CODES } from './codes';
 
 export interface RuleEntry { rules: string[]; step: RuleStep }
 
@@ -79,8 +80,14 @@ export const RULES: Record<WarningCode, RuleEntry> = {
   ownPromissory: { rules: ['69.2'], step: 'component' },
 };
 
-/** The rule and step of a code, from the registry. */
-export const ruleOf = (code: WarningCode): RuleEntry => RULES[code];
+/** The rule and step of a code: of the core registry, or of the code's own file (src/domain/rules/codes). */
+export const ruleOf = (code: AnyWarningCode): RuleEntry => (RULES as Record<string, RuleEntry>)[code] ?? EXTENSION_CODES.get(code)!;
+
+/** Whether a component lifted the check behind a warning for its entry. */
+export const isWaived = (warning: Warning): boolean => (warning.waivedBy?.length ?? 0) > 0;
+
+/** The warnings that still stand: those no component waived. Whatever asks "does this entry break a rule" asks this. */
+export const standing = (warnings: Warning[]): Warning[] => (warnings.some(isWaived) ? warnings.filter(w => !isWaived(w)) : warnings);
 
 const text = (value: string | number | undefined): string | undefined => (typeof value === 'string' ? value : undefined);
 
@@ -89,20 +96,22 @@ const text = (value: string | number | undefined): string | undefined => (typeof
  * `{ code, params }` a test or the UI writes; rule, step and place are read through the registry and the entry.
  */
 class Violation implements Warning {
-  code: WarningCode;
+  code: AnyWarningCode;
   params: Record<string, string | number>;
+  /** Set only on a waived warning, so one that stands still equals its plain `{ code, params }`. */
+  declare waivedBy?: string[];
   #step: RuleStep | undefined;
   #entryId = '';
 
-  constructor(code: WarningCode, params: Record<string, string | number>, step?: RuleStep) {
+  constructor(code: AnyWarningCode, params: Record<string, string | number>, step?: RuleStep) {
     this.code = code;
     this.params = params;
     this.#step = step;
   }
 
-  get rule(): string { return RULES[this.code].rules[0]; }
+  get rule(): string { return ruleOf(this.code).rules[0]; }
 
-  get step(): RuleStep { return this.#step ?? RULES[this.code].step; }
+  get step(): RuleStep { return this.#step ?? ruleOf(this.code).step; }
 
   get place(): ViolationPlace {
     const source = text(this.params.from) ?? text(this.params.systemId);
@@ -114,7 +123,7 @@ class Violation implements Warning {
 }
 
 /** A violation of the rule behind `code`; `step` only when a shared check runs in another step than its registry one. */
-export const violation = (code: WarningCode, params: Record<string, string | number>, step?: RuleStep): Warning =>
+export const violation = (code: AnyWarningCode, params: Record<string, string | number>, step?: RuleStep): Warning =>
   new Violation(code, params, step);
 
 /** Ties the violations of an entry to it. */

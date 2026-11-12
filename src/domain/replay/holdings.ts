@@ -115,7 +115,24 @@ const RETURNS = /\bthen,? return this card to\b/i;
 export function applyComponent(
   own: GameState, entry: Extract<Entry, { type: 'component' }>, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {},
 ): void {
-  const def = entry.componentId === undefined ? undefined : componentById(pack, entry.componentId);
+  if (entry.componentId !== undefined) playComponent(own, entry.componentId, entry.owner ?? 'me', pack, warnings, faction, states);
+}
+
+/**
+ * The components an entry uses beside its action (`uses`): each is played as a component action plays its own, so an
+ * agent or a card that exhausts itself is exhausted, a hero purged, an action card discarded, and one not held or
+ * already exhausted is warned about. The component its own action already plays is not played twice.
+ */
+export function applyUses(own: GameState, entry: Entry, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {}): void {
+  const action = entry.type === 'component' ? entry.componentId : undefined;
+  for (const id of new Set(entry.uses)) if (id !== action) playComponent(own, id, entry.owner ?? 'me', pack, warnings, faction, states);
+}
+
+/** One component played by `player` (`me` or an opponent id), as the rules of its kind have it. */
+export function playComponent(
+  own: GameState, id: string, player: string, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {},
+): void {
+  const def = componentById(pack, id);
   if (!def) return;
   const holdings = own.holdings;
   const params = { id: def.id, name: def.name };
@@ -126,7 +143,7 @@ export function applyComponent(
     case 'promissory': {
       const owner = noteAddress(def.id);
       // A note marked by hand has no address: only its faction tells whose it is.
-      if (owner === undefined ? def.faction !== undefined && def.faction === faction : owner === (entry.owner ?? 'me')) {
+      if (owner === undefined ? def.faction !== undefined && def.faction === faction : owner === player) {
         warnings.push(violation('ownPromissory', params));
         break;
       }

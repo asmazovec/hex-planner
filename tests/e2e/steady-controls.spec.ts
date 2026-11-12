@@ -708,6 +708,26 @@ test('components are added from the search, and a hand is counted, under the fin
   await pressRepeatedly(page, hand.getByRole('button', { name: 'Remove one In hand' }).first(), 3);
 });
 
+test('the components used with a turn are added by a button that stays where it is, and their crosses bring only the next cross', async ({ page }) => {
+  await addAction(page, 'Pass');
+  const used = panel(page).getByRole('group', { name: 'Used' });
+  const add = used.getByRole('button', { name: '+ Used' });
+  const { box } = await centreOf(page, add);
+  for (const name of ['Zeal', 'Raid Formation', 'Aerie Sentinel']) {
+    await add.click();
+    const dialog = page.getByRole('dialog', { name: 'Choose a component' });
+    await dialog.getByRole('searchbox', { name: 'Search components' }).fill(name);
+    await dialog.getByRole('button', { name: `Choose ${name}` }).click();
+    await settle(page);
+    // Each card comes under the button: the button itself has not moved.
+    const now = (await add.boundingBox())!;
+    expect(Math.max(Math.abs(now.x - box.x), Math.abs(now.y - box.y)), `«+ Used» moved after ${name}`).toBeLessThanOrEqual(TOLERANCE);
+  }
+  await expect(used.locator('[data-testid^="component-"]')).toHaveCount(3);
+  await pressUntilGone(page, used.getByRole('button', { name: /^Remove / }).first(), 4, /^Remove /);
+  await expect(used.locator('[data-testid^="component-"]')).toHaveCount(0);
+});
+
 test('the energy settings of the game screen switch under the finger', async ({ page }) => {
   await page.getByRole('button', { name: 'Game', exact: true }).click();
   const chips = page.locator('.energy-settings .chip');

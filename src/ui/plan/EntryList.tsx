@@ -4,6 +4,7 @@ import { strategyCards } from '../../data/loadPack';
 import { CARD, STATUS_TOKENS } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
+import { standing } from '../../domain/project';
 import type { DataPack, Entry, EntryBody, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
@@ -186,7 +187,7 @@ export function EntryList({
                 const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
                 // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
                 const fieldsOpen = entry.id === openId && entry.type === 'statusTokens';
-                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', list.length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
+                const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', standing(list).length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
                 return (
                   <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">

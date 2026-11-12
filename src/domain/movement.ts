@@ -151,7 +151,7 @@ export function routeSteps(game: Game, path: string[], pack: DataPack, blockers:
 /** How far a ship of the player flies, after what they hold changed its printed move; null when it does not move by itself. */
 export function shipSpeed(game: Game, unit: UnitId, holdings: Holdings, pack: DataPack): number | null {
   const printed = unitStats(game.faction, unit, false, pack)?.move ?? 0;
-  const { value } = applied(pack, holdings, 'speed', printed, { faction: game.faction, unit });
+  const { value } = applied(pack, { holdings, faction: game.faction }, 'speed', printed, { faction: game.faction, unit });
   return value > 0 ? value : null;
 }
 

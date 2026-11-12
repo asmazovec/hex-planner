@@ -219,10 +219,10 @@ test('unit names follow the interface language, planet names stay English', () =
   expect(within(planet).getByRole('button', { name: 'Взять: Пехота' })).toBeVisible();
 });
 
-test.each(['en', 'ru'] as const)('every unit id has a %s name', async lang => {
+test.each(['en', 'ru'] as const)('every unit id has a %s name, and both structures, which a flight may take on board', async lang => {
   const dict = (await import(`../../../i18n/${lang}.json`)).default as { unit: Record<string, string> };
   expect(Object.keys(dict.unit).sort()).toEqual(
-    ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'fighter', 'flagship', 'infantry', 'mech', 'warsun'],
+    ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'fighter', 'flagship', 'infantry', 'mech', 'pds', 'spacedock', 'warsun'],
   );
   expect(Object.values(dict.unit).every(name => name.length > 0)).toBe(true);
 });

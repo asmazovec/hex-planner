@@ -8,6 +8,7 @@ export const CURRENT_SCHEMA = 1;
 const count = z.number().int().min(0);
 const unitId = z.enum(['carrier', 'cruiser', 'destroyer', 'dreadnought', 'warsun', 'flagship', 'fighter', 'infantry', 'mech']);
 const unitCounts = z.partialRecord(unitId, count);
+const structureCounts = z.partialRecord(z.enum(['pds', 'spacedock']), count).optional();
 /** An adjustment's change of units. */
 const signedCounts = z.partialRecord(unitId, z.number().int());
 const payment = z.object({ planets: z.array(z.string()), tradeGoods: count });
@@ -16,7 +17,7 @@ const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 
 /** Component ids: `<kind>:<source id>`. One the data no longer has is kept and passed over by the replay. */
 const ids = z.array(z.string());
-const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional() };
+const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional(), uses: ids.optional() };
 const cardPlay = {
   card: z.number().int().optional(),
   forToken: z.boolean().optional(),
@@ -43,8 +44,8 @@ const acts = z.array(act).optional();
 const entrySchema = z.discriminatedUnion('type', [
   z.object({
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
-    moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional() })),
-    landings: z.array(z.object({ planetId: z.string(), units: unitCounts })),
+    moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional(), structures: structureCounts })),
+    landings: z.array(z.object({ planetId: z.string(), units: unitCounts, structures: structureCounts })),
     production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(), acts,
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),

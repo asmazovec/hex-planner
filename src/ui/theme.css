@@ -587,6 +587,11 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 /* A warning inside the block it speaks of: the same edge as a warned entry in the list. */
 .place-warnings { display: block; margin: 0; padding: 3px 0 3px 8px; border-left: 3px solid var(--warning); }
 .warning-list.place-warnings { display: flex; }
+/* A warning a component lifted: still listed, in the look of a thing switched off, with what allows it under it. */
+.place-waived { border-left-color: var(--border-strong); }
+.warning-waived { display: flex; flex-direction: column; gap: 1px; }
+.warning-waived .warning-text { color: var(--text-dim); text-decoration: line-through; }
+.warning-allowed { color: var(--text-muted); font-size: var(--font-xs); padding-left: 1.6em; }
 
 .stepper { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: var(--font-s); }
 .stepper .stepper-name { flex: 1; min-width: 0; }

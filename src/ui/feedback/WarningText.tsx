@@ -1,6 +1,9 @@
 import { memo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { componentById } from '../../domain/components';
+import { isWaived } from '../../domain/rules/registry';
 import type { DataPack, Game, Warning } from '../../domain/types';
+import { noteMark } from '../components/noteMark';
 import { systemTitle } from '../map/systemName';
 
 export interface WarningTextProps {
@@ -38,21 +41,43 @@ export const WarningText = memo(function WarningText({ warning, game, pack }: Wa
   return <span className="warning-text">{text}</span>;
 }, sameWarning);
 
+/** The names of the components that lift a warning; a promissory note says whose card it is. */
+export function waiverNames(warning: Warning, game: Game, pack: DataPack, t: ReturnType<typeof useTranslation>['t']): string {
+  return (warning.waivedBy ?? []).map(id => {
+    const name = componentById(pack, id)?.name ?? id;
+    const owner = noteMark(game, pack, id, t).owner?.name;
+    return owner ? `${name} (${owner})` : name;
+  }).join(', ');
+}
+
 export type WarningListProps = {
   /** `block` stands in a block of an editor with the orange edge; `row` sits in a row that marks itself. */
   variant?: 'block' | 'row';
 } & ({ warnings: Warning[]; game: Game; pack: DataPack } | { message: ReactNode });
 
-/** The warnings of one block, inside that block and marked the same way everywhere; `message` is a free text in the same look. */
+/**
+ * The warnings of one block, inside that block and marked the same way everywhere; `message` is a free text in the same
+ * look. A warning a component lifted is still listed, after those that stand, in the look of a thing switched off:
+ * dimmed and struck through, with the component that allows it named under it. A list of waived warnings alone has no
+ * orange edge.
+ */
 export function WarningList(props: WarningListProps) {
   const { t } = useTranslation();
-  const edge = props.variant === 'row' ? '' : ' place-warnings';
-  if ('message' in props) return <p className={`warning-text${edge}`} role="status">{props.message}</p>;
+  if ('message' in props) return <p className={`warning-text${props.variant === 'row' ? '' : ' place-warnings'}`} role="status">{props.message}</p>;
   const { warnings, game, pack } = props;
   if (warnings.length === 0) return null;
+  const standing = warnings.filter(w => !isWaived(w));
+  const waived = warnings.filter(isWaived);
+  const edge = props.variant === 'row' ? '' : standing.length > 0 ? ' place-warnings' : ' place-warnings place-waived';
   return (
     <ul className={`warning-list${edge}`} aria-label={props.variant === 'row' ? undefined : t('plan.tactical.warnings')}>
-      {warnings.map((warning, i) => <li key={i}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+      {standing.map((warning, i) => <li key={i} data-code={warning.code}><WarningText warning={warning} game={game} pack={pack} /></li>)}
+      {waived.map((warning, i) => (
+        <li key={`waived-${i}`} className="warning-waived" data-code={warning.code}>
+          <WarningText warning={warning} game={game} pack={pack} />
+          <small className="warning-allowed">{t('plan.warningWaived', { list: waiverNames(warning, game, pack, t) })}</small>
+        </li>
+      ))}
     </ul>
   );
 }

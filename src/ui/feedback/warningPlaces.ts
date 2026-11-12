@@ -1,4 +1,4 @@
-import { RULES } from '../../domain/rules/registry';
+import { ruleOf } from '../../domain/rules/registry';
 import type { DataPack, Entry, Game, RuleStep, Warning, WarningCode } from '../../domain/types';
 import { groupOf, sourcesOf, type Move } from '../plan/tactical';
 
@@ -43,10 +43,13 @@ const PLACES: Partial<Record<WarningCode | `${WarningCode}@${RuleStep}`, Warning
 };
 
 /** The step of a warning: its own, or that of its rule when it was written by hand. */
-export const stepOf = (warning: Warning): RuleStep => warning.step ?? RULES[warning.code].step;
+export const stepOf = (warning: Warning): RuleStep => warning.step ?? ruleOf(warning.code).step;
 
-export const placesOf = (warning: Warning): WarningPlace[] =>
-  PLACES[`${warning.code}@${stepOf(warning)}`] ?? PLACES[warning.code] ?? STEP_PLACES[stepOf(warning)];
+export const placesOf = (warning: Warning): WarningPlace[] => {
+  // A code of a file of its own has no override: its step alone decides its block.
+  const overrides: Partial<Record<string, WarningPlace[]>> = PLACES;
+  return overrides[`${warning.code}@${stepOf(warning)}`] ?? overrides[warning.code] ?? STEP_PLACES[stepOf(warning)];
+};
 
 /** Every place a warning can be given to, for the contract that each of them has a block. */
 export const allPlaces = (): WarningPlace[] => [...new Set([...Object.values(STEP_PLACES), ...Object.values(PLACES)].flat())];
