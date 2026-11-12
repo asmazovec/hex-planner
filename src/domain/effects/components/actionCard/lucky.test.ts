@@ -23,7 +23,7 @@ describe('actionCard:lucky Lucky Shot', () => {
   // "Destroy 1 dreadnought, cruiser, or destroyer in a system that contains a planet you control."
   // Checks: the opponent's destroyer in the target system, where I control t1, is destroyed; their carrier stays.
   // Why no check is lifted: destroying another player's ship by a card breaks no rule; the board is what is counted.
-  test.fails('actionCard:lucky destroys the chosen destroyer in a system with a planet I control', () => {
+  test('actionCard:lucky destroys the chosen destroyer in a system with a planet I control', () => {
     const play = shot(TARGET, 'destroyer');
     const card = table([play]);
     quote(card.pack, id, 'Destroy 1 dreadnought, cruiser, or destroyer in a system that contains a planet you control');
@@ -37,7 +37,7 @@ describe('actionCard:lucky Lucky Shot', () => {
   //  completely is not resolved.
   // Checks: a destroyer in the empty system next to home, with no planet at all, is chosen: the play is warned of.
   // Why the check is NOT redundant here: the card reaches only systems with a planet the player controls.
-  test.fails('actionCard:lucky in a system without a planet I control is warned of', () => {
+  test('actionCard:lucky in a system without a planet I control is warned of', () => {
     const play = shot(NEAR, 'destroyer');
     expectStanding(warningsOf(table([play], { [NEAR]: { destroyer: 1 } }), play), UNRESOLVED);
   });
@@ -45,7 +45,7 @@ describe('actionCard:lucky Lucky Shot', () => {
   // "Destroy 1 dreadnought, cruiser, or destroyer ..."
   // Checks: the carrier is chosen: the play is warned of.
   // Why the check is NOT redundant here: the card names three ship types; a carrier is none of them.
-  test.fails('actionCard:lucky on a carrier is warned of: only a dreadnought, cruiser or destroyer', () => {
+  test('actionCard:lucky on a carrier is warned of: only a dreadnought, cruiser or destroyer', () => {
     const play = shot(TARGET, 'carrier');
     expectStanding(warningsOf(table([play]), play), UNRESOLVED);
   });
@@ -56,7 +56,7 @@ describe('actionCard:lucky Lucky Shot', () => {
     expect(endOf(table([])).rivals?.[RIVAL].systems[TARGET]?.destroyer).toBe(1);
   });
 
-  test.fails('actionCard:lucky is a play effect that waives nothing', () => {
+  test('actionCard:lucky is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

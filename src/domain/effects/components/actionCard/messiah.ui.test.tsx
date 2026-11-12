@@ -15,7 +15,7 @@ const table = () => {
 // Checks: I choose Rise of a Messiah in the editor of a component action; the plan then has one infantry on each of
 // my planets h1, h2 and t1, and none on the enemy's t2.
 // Why no check is lifted: placing units by a card breaks no rule; the interface only has to play it.
-test.fails('actionCard:messiah chosen in the component action places 1 infantry on each planet I control', async () => {
+test('actionCard:messiah chosen in the component action places 1 infantry on each planet I control', async () => {
   const card = table();
   quote(card.pack, id, 'Place 1 infantry from your reinforcements on each planet you control');
   const live = showTurn(card, card.turn);

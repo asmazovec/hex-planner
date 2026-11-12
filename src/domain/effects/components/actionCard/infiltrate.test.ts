@@ -25,7 +25,7 @@ describe('actionCard:infiltrate Infiltrate', () => {
   // opponent's stood.
   // Why the default does not apply here: the opponent's structures on a planet taken are destroyed (LRR 49.5.1,
   // 63.4, 79.4); the card replaces them with the player's own instead of leaving the planet bare.
-  test.fails('actionCard:infiltrate replaces the opponent\'s space dock and PDS with mine on the planet taken', () => {
+  test('actionCard:infiltrate replaces the opponent\'s space dock and PDS with mine on the planet taken', () => {
     const card = table(using(invade(), id));
     quote(card.pack, id, 'Replace each PDS and space dock that is on that planet with a matching unit from your reinforcements');
     const end = endOf(card);
@@ -55,7 +55,7 @@ describe('actionCard:infiltrate Infiltrate', () => {
     expect(end.pds.t2 ?? 0).toBe(0);
   });
 
-  test.fails('actionCard:infiltrate is a play effect that waives nothing', () => {
+  test('actionCard:infiltrate is a play effect that waives nothing', () => {
     const { pack } = table(invade());
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

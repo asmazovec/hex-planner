@@ -16,7 +16,7 @@ describe('actionCard:industrial_initiative Industrial Initiative', () => {
   // Checks: the component action that plays the card gains 2 trade goods for t1 and t2, and none for the home
   // planets, which have no trait.
   // Why no check is lifted: the card adds trade goods, it breaks no rule; the play itself is what the plan counts.
-  test.fails('actionCard:industrial_initiative gains 1 trade good for each industrial planet I control', () => {
+  test('actionCard:industrial_initiative gains 1 trade good for each industrial planet I control', () => {
     const play = componentAction(id);
     const card = table([play]);
     quote(card.pack, id, 'Gain 1 trade good for each industrial planet you control');
@@ -26,7 +26,7 @@ describe('actionCard:industrial_initiative Industrial Initiative', () => {
   // "... each industrial planet you control."
   // Checks: an industrial planet of another player does not count: t2 is the enemy's, so 1 trade good.
   // Why the count is NOT wider here: the card counts only the planets the player controls (LRR 25, control).
-  test.fails('actionCard:industrial_initiative counts only the industrial planets I control', () => {
+  test('actionCard:industrial_initiative counts only the industrial planets I control', () => {
     expect(endOf(table([componentAction(id)], { t1: 'me', t2: 'enemy' })).tradeGoods).toBe(1);
   });
 
@@ -46,7 +46,7 @@ describe('actionCard:industrial_initiative Industrial Initiative', () => {
     expect(endOf(table([])).tradeGoods).toBe(0);
   });
 
-  test.fails('actionCard:industrial_initiative is a play effect that waives nothing', () => {
+  test('actionCard:industrial_initiative is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

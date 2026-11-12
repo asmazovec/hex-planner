@@ -25,7 +25,7 @@ const table = (game: Partial<Game>) => {
 // planet and the dock is gone from the plan.
 // Why no check is lifted: destroying another player's structure by a card breaks no rule; the interface has to let
 // me name the dock.
-test.fails('actionCard:meltdown the opponent\'s space dock is chosen in the editor and destroyed', async () => {
+test('actionCard:meltdown the opponent\'s space dock is chosen in the editor and destroyed', async () => {
   const card = table({ docks: ['t1'], planetControl: { t1: 'enemy' }, planetOwner: { t1: RIVAL } });
   quote(card.pack, id, 'Destroy 1 space dock in a non-home system');
   const live = showTurn(card, card.turn);
@@ -38,7 +38,7 @@ test.fails('actionCard:meltdown the opponent\'s space dock is chosen in the edit
 // tirules2, Reactor Meltdown 1: "A player cannot destroy their own space dock with Reactor Meltdown."
 // Checks: my own dock on Target One can still be chosen (a warning forbids nothing), and the warning stands.
 // Why the check is NOT redundant here: the card is for other players' docks.
-test.fails('actionCard:meltdown my own space dock can be chosen, and its warning stands', async () => {
+test('actionCard:meltdown my own space dock can be chosen, and its warning stands', async () => {
   const card = table({ docks: ['t1'], planetControl: { t1: 'me' } });
   showTurn(card, card.turn);
   await play('Reactor Meltdown');

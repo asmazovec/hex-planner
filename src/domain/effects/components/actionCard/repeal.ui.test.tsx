@@ -17,7 +17,7 @@ const table = () => {
 // Checks: I play Repeal Law and choose Conventions of War among the laws in play; the entry keeps the choice and the
 // law leaves play.
 // Why no check is lifted: discarding a law breaks no rule; the interface has to let me name the law.
-test.fails('actionCard:repeal the law is chosen in the editor and leaves play', async () => {
+test('actionCard:repeal the law is chosen in the editor and leaves play', async () => {
   const card = table();
   quote(card.pack, id, 'Discard 1 law from play');
   const live = showTurn(card, card.turn);

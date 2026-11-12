@@ -23,12 +23,12 @@ const table = () => {
 // their tactic pool goes from 3 to 2.
 // Why no check is lifted: the card changes another player's tokens and breaks no rule; the interface has to let me
 // name the player.
-test.fails('actionCard:insub the opponent is chosen in the editor and loses a tactic token', async () => {
+test('actionCard:insub the opponent is chosen in the editor and loses a tactic token', async () => {
   const card = table();
   quote(card.pack, id, 'Remove 1 token from another player\'s tactic pool');
   const live = showTurn(card, card.turn);
   await play('Insubordination');
-  await choose(/Rules Rival/);
+  await choose(/Rules/);
   expect(live.entry().choices).toEqual({ player: RIVAL });
   expect(endOf({ pack: card.pack, game: live.game() }).rivals?.[RIVAL].tactic).toBe(2);
 });

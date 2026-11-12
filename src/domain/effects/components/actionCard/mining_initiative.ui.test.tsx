@@ -17,7 +17,7 @@ const table = () => {
 // Checks: I play the card and choose Home One (3 resources) among the planets it offers; the entry keeps the choice and
 // the plan gains 3 trade goods.
 // Why no check is lifted: the card adds trade goods and breaks no rule; the interface has to let me name the planet.
-test.fails('actionCard:mining_initiative the planet is chosen in the editor and its resources are gained', async () => {
+test('actionCard:mining_initiative the planet is chosen in the editor and its resources are gained', async () => {
   const card = table();
   quote(card.pack, id, 'Gain trade goods equal to the resource value of 1 planet you control');
   const live = showTurn(card, card.turn);
@@ -31,7 +31,7 @@ test.fails('actionCard:mining_initiative the planet is chosen in the editor and 
 // Checks: Target One, which I do not control, can be chosen all the same (a warning forbids nothing), and the warning
 // stands in the block of the component.
 // Why the check is NOT redundant here: the card names only planets the player controls.
-test.fails('actionCard:mining_initiative a planet I do not control can be chosen, and its warning stands', async () => {
+test('actionCard:mining_initiative a planet I do not control can be chosen, and its warning stands', async () => {
   const card = table();
   const live = showTurn(card, card.turn);
   await play('Mining Initiative');

@@ -21,7 +21,7 @@ describe('actionCard:meltdown Reactor Meltdown', () => {
   // "Destroy 1 space dock in a non-home system."
   // Checks: the opponent's space dock on t1 is destroyed.
   // Why no check is lifted: destroying another player's structure by a card breaks no rule.
-  test.fails('actionCard:meltdown destroys the opponent\'s space dock on the planet chosen', () => {
+  test('actionCard:meltdown destroys the opponent\'s space dock on the planet chosen', () => {
     const play = meltdown('t1');
     const card = table([play]);
     quote(card.pack, id, 'Destroy 1 space dock in a non-home system');
@@ -33,7 +33,7 @@ describe('actionCard:meltdown Reactor Meltdown', () => {
   //  targeted.
   // Checks: a dock of the opponent on h2, a planet of the home system, is chosen: the play is warned of.
   // Why the check is NOT redundant here: the card excludes home systems; LRR 2.6.1 then forbids the action.
-  test.fails('actionCard:meltdown on a dock in a home system is warned of', () => {
+  test('actionCard:meltdown on a dock in a home system is warned of', () => {
     const play = meltdown('h2');
     const game: Partial<Game> = { docks: ['h2'], planetControl: { h2: 'enemy' }, planetOwner: { h2: RIVAL } };
     expectStanding(warningsOf(table([play], game), play), UNRESOLVED);
@@ -42,7 +42,7 @@ describe('actionCard:meltdown Reactor Meltdown', () => {
   // tirules2, Reactor Meltdown 1: "A player cannot destroy their own space dock with Reactor Meltdown."
   // Checks: my own dock on t1 is chosen: the play is warned of.
   // Why the check is NOT redundant here: the ruling keeps the card for other players' docks.
-  test.fails('actionCard:meltdown on my own space dock is warned of', () => {
+  test('actionCard:meltdown on my own space dock is warned of', () => {
     const play = meltdown('t1');
     expectStanding(warningsOf(table([play], { docks: ['t1'], planetControl: { t1: 'me' } }), play), UNRESOLVED);
   });
@@ -53,7 +53,7 @@ describe('actionCard:meltdown Reactor Meltdown', () => {
     expect(endOf(table([])).rivals?.[RIVAL].docks).toContain('t1');
   });
 
-  test.fails('actionCard:meltdown is a play effect that waives nothing', () => {
+  test('actionCard:meltdown is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

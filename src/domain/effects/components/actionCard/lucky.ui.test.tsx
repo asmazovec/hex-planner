@@ -26,12 +26,15 @@ const table = () => {
 // keeps the system, the player and the unit, and the destroyer is gone from the plan.
 // Why no check is lifted: destroying another player's ship by a card breaks no rule; the interface has to let me
 // name the ship.
-test.fails('actionCard:lucky the opponent\'s destroyer is chosen in the editor and destroyed', async () => {
+test('actionCard:lucky the opponent\'s destroyer is chosen in the editor and destroyed', async () => {
   const card = table();
   quote(card.pack, id, 'Destroy 1 dreadnought, cruiser, or destroyer');
   const live = showTurn(card, card.turn);
   await play('Lucky Shot');
-  await choose(/Destroyer/);
+  // The card asks the system, the player and the ship: three rows, each named in turn.
+  await choose('Target One / Target Two', 'System');
+  await choose(/Rules/, 'Player');
+  await choose(/Destroyer/, 'Unit');
   expect(live.entry().choices).toEqual({ system: TARGET, player: RIVAL, unit: 'destroyer' });
   expect(endOf({ pack: card.pack, game: live.game() }).rivals?.[RIVAL].systems[TARGET]?.destroyer ?? 0).toBe(0);
 });
