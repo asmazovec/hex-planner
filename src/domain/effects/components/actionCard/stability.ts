@@ -1,0 +1,12 @@
+/**
+ * Political Stability (action card, When you would return your strategy card(s) during the status phase): "Do not
+ * return your strategy card(s). You do not choose strategy cards during the next strategy phase."
+ *
+ * A hint at the status step: no check of the plan asks which strategy card a player has in the next round, so keeping
+ * the cards breaks nothing to lift.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'actionCard:stability';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id };
