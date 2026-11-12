@@ -42,7 +42,7 @@ describe('secretObjective:eap Establish a Perimeter', () => {
   // Checks: the reminder stands in the block of the status step while the player holds the secret objective in hand.
   // Why nothing is validated here: a reminder only shows the text; the hints of a step are asked today of the cards a
   //  player holds ready (technologies, relics, notes, hand, leaders), and a secret objective in hand is not among them yet.
-  test.fails('secretObjective:eap its reminder stands in the status block while the player holds the secret objective in hand', () => {
+  test('secretObjective:eap its reminder stands in the status block while the player holds the secret objective in hand', () => {
     const score = scoring();
     const plan = table(score);
     const board = before(plan.game, plan.pack, score);

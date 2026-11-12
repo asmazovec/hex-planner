@@ -42,7 +42,7 @@ describe('secretObjective:dtgs Destroy Their Greatest Ship', () => {
   // Checks: the reminder stands in the block of the combat step while the player holds the secret objective in hand.
   // Why nothing is validated here: a reminder only shows the text; the hints of a step are asked today of the cards a
   //  player holds ready (technologies, relics, notes, hand, leaders), and a secret objective in hand is not among them yet.
-  test.fails('secretObjective:dtgs its reminder stands in the combat block while the player holds the secret objective in hand', () => {
+  test('secretObjective:dtgs its reminder stands in the combat block while the player holds the secret objective in hand', () => {
     const score = scoring();
     const plan = table(score);
     const board = before(plan.game, plan.pack, score);

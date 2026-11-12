@@ -1,4 +1,5 @@
 /** Step 89.2 Movement: the route checks, and the ships carried into the active system. The route graph lives in src/domain/movement.ts. */
+import { holderOf } from '../effects/registry';
 import { blockersOf, closedToRoute, endsRoute, fullPath, routeMove, routeSteps, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
@@ -24,7 +25,7 @@ export function checkRoutes(game: Game, state: GameState, target: string, moves:
     if (isLane(game, target, pack)) warnings.push(violation('routeBlocked', { from: move.from, systemId: target, context: 'hyperlane' }));
     const steps = routeSteps(game, full, pack, blockers);
     for (const unit of unitIds(move.units)) {
-      const speed = shipSpeed(game, unit, state.holdings, pack);
+      const speed = shipSpeed(game, unit, holderOf(game, state), pack);
       if (speed === null) continue;
       const moves = routeMove(game, left, speed, pack, blockers);
       if (moves < steps) warnings.push(violation('speedShort', { from: move.from, unit, move: moves, steps }));

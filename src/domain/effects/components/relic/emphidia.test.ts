@@ -21,7 +21,7 @@ describe('relic:emphidia The Crown of Emphidia', () => {
   // Checks: the first ability, named in `uses` of the tactical action, exhausts the relic and leaves it held.
   // Why the check is NOT redundant here: the replay purges every relic whose text says "purge this card" when it is
   // played; this card says so only of its second ability, so exploring with it must not lose it.
-  test.fails('relic:emphidia used after a tactical action is exhausted, not purged', () => {
+  test('relic:emphidia used after a tactical action is exhausted, not purged', () => {
     const move = using(tactical(TARGET), id);
     const end = endOf(table([move]));
     expect(end.holdings.relics).toContain(id);

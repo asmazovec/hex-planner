@@ -1,4 +1,5 @@
 /** Step 89.3 Combat: the units lost in space and on the planets are removed, and what the surviving ships carry is checked. */
+import { holderOf } from '../effects/registry';
 import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, Warning } from '../types';
 import { planetsOf } from './board';
@@ -26,7 +27,7 @@ export function checkArrival(game: Game, state: GameState, target: string, entry
   for (const { units } of entry.landings) {
     for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
   }
-  const ships = fleetCount(game, here, state.holdings, pack, dockFighterRoom(game, state, target, pack));
+  const ships = fleetCount(game, here, holderOf(game, state), pack, dockFighterRoom(game, state, target, pack));
   const limit = fleetLimit(game, state, pack);
   return ships > limit ? [violation('fleetPool', { systemId: target, ships, fleet: limit })] : [];
 }
@@ -44,7 +45,7 @@ export function removeLosses(state: GameState, target: string, entry: TacticalEn
  */
 export function checkAfterCombat(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
   if (unitIds(entry.losses ?? {}).length === 0) return [];
-  const left = capacity(game, state.systems[target] ?? {}, state.holdings, pack, dockFighterRoom(game, state, target, pack));
+  const left = capacity(game, state.systems[target] ?? {}, holderOf(game, state), pack, dockFighterRoom(game, state, target, pack));
   return left.load > left.capacity ? [violation('capacitySystem', { systemId: target, load: left.load, capacity: left.capacity }, 'combat')] : [];
 }
 

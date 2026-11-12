@@ -20,9 +20,11 @@ import { useGame } from '../../state/gameStore';
 import { WarningList } from '../feedback/WarningText';
 import { UsesBlock } from '../plan/blocks/UsesBlock';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
+import { TurnEditor } from '../plan/editors/TurnEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
+type ComponentEntry = Extract<Entry, { type: 'component' }>;
 
 /** Once per test file: the interface in English, and the screen cleared after each test. */
 export function uiBench(): void {
@@ -106,6 +108,30 @@ export function showUses(bench: Bench, entry: Entry): Live {
   ));
 }
 
+/**
+ * The whole editor of a component action or a pass (`TurnEditor`) with its choices, the warnings and «Used» as its common part,
+ * replayed anew after every press. Press `play` to name the component, `choose` to answer what it asks.
+ *
+ *   const live = showTurn(table, componentAction(undefined));
+ *   await play('Mining Initiative');
+ *   await choose('Home One');
+ */
+export function showTurn(bench: Bench, entry: Entry): Live<ComponentEntry> {
+  const nothing = () => undefined;
+  return live(bench, entry as ComponentEntry, ({ game, pack, entry: shown, before, warnings, update }) => (
+    <TurnEditor
+      entry={shown as ComponentEntry} game={game} pack={pack} board={before} warnings={warnings}
+      common={<UsesBlock entry={shown} game={game} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />}
+      onNote={note => update({ note } as Partial<EntryBody>)} onComponent={componentId => update({ componentId, choices: undefined } as Partial<EntryBody>)}
+      onChoices={choices => update({ choices: Object.keys(choices).length > 0 ? choices : undefined })}
+      onDone={nothing} onRemove={nothing}
+    />
+  ));
+}
+
+/** The same as `showTurn`: the editor of a component action with the choices its component asks. */
+export const showComponent = showTurn;
+
 /** Every warning of an entry as a list, as any block shows its own. */
 export function showWarnings(bench: Bench, entry: Entry): Live {
   return live(bench, entry, ({ game, pack, warnings }) => <WarningList warnings={warnings} game={game} pack={pack} />);
@@ -119,6 +145,20 @@ export const putBack = (unit: string): Promise<void> => userEvent.click(screen.g
 /** Lands one unit or puts one structure on a planet, in the landing of the tactical editor. */
 export const land = (unit: string, planet: string): Promise<void> =>
   userEvent.click(within(screen.getByRole('group', { name: `Landing on ${planet}` })).getByRole('button', { name: `Land one ${unit}` }));
+
+/** Chooses the component the action plays: opens the choice, finds it by its name, takes it. */
+export async function play(name: string): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: 'Choose the component' }));
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), name);
+  await userEvent.click(await screen.findByRole('button', { name: `Choose ${name}` }));
+}
+
+/**
+ * Answers a choice the played component asks (a planet, a player, a system, a unit, an option, a component) by the name
+ * on its button; `choose('Home One', 'Planet')` within the row named so, when a name stands in two rows. Pressing the chosen one takes it back.
+ */
+export const choose = (name: string | RegExp, row?: string): Promise<void> =>
+  userEvent.click((row ? within(screen.getByRole('group', { name: row })) : screen).getByRole('button', { name }));
 
 /** Chooses a component in «Used»: opens the choice, finds it by its name, takes it. */
 export async function use(name: string): Promise<void> {

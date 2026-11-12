@@ -24,7 +24,7 @@ describe('promissory:<color>_an Alliance', () => {
   // whatever it changes or lifts holds for my entries.
   // Why this matters for the checks: a commander that lifts a check lifts it only for the player it is in force for;
   // the note makes me that player too.
-  test.fails('promissory:<color>_an puts the owner\'s unlocked commander in force for me', () => {
+  test('promissory:<color>_an puts the owner\'s unlocked commander in force for me', () => {
     const an = table([idle()]);
     quote(an.pack, id, 'you can use the <color> player\'s commander ability, if it is unlocked');
     expect(inForce(an.pack, an.game, endOf(an))).toContain(COMMANDER);

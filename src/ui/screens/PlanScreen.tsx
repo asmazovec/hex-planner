@@ -581,7 +581,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <TurnEditor
             key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
-            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId })} onDone={toList} onRemove={() => removeEdited(turn.id)}
+            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onDone={toList} onRemove={() => removeEdited(turn.id)}
           />
         );
       }

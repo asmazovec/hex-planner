@@ -1,9 +1,8 @@
 import { expect, test } from 'vitest';
-import { expectShownStanding, uiBench } from '../../../../ui/testing/effects';
+import { choose, expectShownStanding, play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import type { AnyWarningCode, EntryBody } from '../../../types';
 import { bench, endOf, planned, quote } from '../kit';
 import { id } from './mining_initiative';
-import { choose, play, showTurn } from './turnBench';
 
 uiBench();
 

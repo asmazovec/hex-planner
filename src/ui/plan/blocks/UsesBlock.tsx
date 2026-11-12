@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { readyToPlay } from '../../../domain/project';
@@ -6,10 +6,12 @@ import type { ComponentKind, DataPack, Entry, Game, GameState } from '../../../d
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
+import { withChoices } from '../../../domain/effects/choices';
 import { Section } from '../../primitives/Section';
+import { ChoicesBlock } from './ChoicesBlock';
 
 /** What can be used with an entry: everything a component action can play, and what a faction sheet brings. */
-const USED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'mech', 'legendary', 'agenda'];
+const USED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'mech', 'legendary', 'agenda', 'exploration'];
 
 export interface UsesBlockProps {
   /** Any entry: its owner uses the components. */
@@ -20,7 +22,7 @@ export interface UsesBlockProps {
   /** The state of the entry's owner just before it: what they hold ready then stands first in the choice. */
   before?: GameState;
   /** The new list; without a value when it became empty. */
-  onChange: (patch: { uses?: string[] }) => void;
+  onChange: (patch: { uses?: string[]; choices?: Record<string, string | number>; useChoices?: Record<string, Record<string, string | number>> }) => void;
 }
 
 /**
@@ -34,7 +36,11 @@ export function UsesBlock({ entry, game, pack, before, onChange }: UsesBlockProp
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const list = entry.uses ?? [];
-  const write = (ids: string[]) => onChange({ uses: ids.length > 0 ? ids : undefined });
+  const write = (ids: string[]) => {
+    // What was chosen for a component no longer used goes with it.
+    const kept = Object.fromEntries(Object.entries(entry.useChoices ?? {}).filter(([id]) => ids.includes(id)));
+    onChange({ uses: ids.length > 0 ? ids : undefined, ...(entry.useChoices ? { useChoices: Object.keys(kept).length > 0 ? kept : undefined } : {}) });
+  };
   const ready = useMemo(() => (before ? readyToPlay(pack, before.holdings, game.faction, before.control) : undefined), [before, pack, game.faction]);
   const title = t('components.uses.title');
   return (
@@ -47,10 +53,13 @@ export function UsesBlock({ entry, game, pack, before, onChange }: UsesBlockProp
         const def = componentById(pack, id);
         const mark = def && noteMark(game, pack, def.id, t, entry.owner ?? 'me');
         return def && (
-          <ComponentCard
-            key={`${id}-${index}`} def={def} pack={pack} held note={t('components.uses.used')} owner={mark?.owner} text={mark?.text}
-            onRemove={() => write(list.filter((_, i) => i !== index))}
-          />
+          <Fragment key={`${id}-${index}`}>
+            <ComponentCard
+              def={def} pack={pack} held note={t('components.uses.used')} owner={mark?.owner} text={mark?.text}
+              onRemove={() => write(list.filter((_, i) => i !== index))}
+            />
+            {before && <ChoicesBlock id={id} entry={entry} game={game} pack={pack} before={before} onChange={chosen => onChange(withChoices(entry, id, chosen))} />}
+          </Fragment>
         );
       })}
       {picking && (

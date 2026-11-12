@@ -1,9 +1,8 @@
 import { expect, test } from 'vitest';
-import { uiBench } from '../../../../ui/testing/effects';
+import { choose, play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import type { DataPack, EntryBody } from '../../../types';
 import { bench, endOf, planned, quote, TARGET } from '../kit';
 import { id } from './lucky';
-import { choose, play, showTurn } from './turnBench';
 
 uiBench();
 
