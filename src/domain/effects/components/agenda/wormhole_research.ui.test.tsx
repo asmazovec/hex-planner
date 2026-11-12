@@ -38,7 +38,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
 //  destroy all ships in systems that contain an alpha or beta wormhole."
 // Checks: in the editor of the agenda entry the player chooses the outcome; the entry keeps it (`choices.outcome`).
 // Why: the plan destroys the ships only when the "For" outcome was resolved.
-test.fails('agenda:wormhole_research the outcome is chosen in the agenda entry', async () => {
+test('agenda:wormhole_research the outcome is chosen in the agenda entry', async () => {
   const entry = { ...adjust({}, 'agenda'), gains: [id] } as Entry;
   const table = bench({ faction: 'sol', rounds: [[entry]] });
   quote(table.pack, id, 'Then, destroy all ships in systems that contain an alpha or beta wormhole.');

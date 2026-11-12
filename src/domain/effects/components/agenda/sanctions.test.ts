@@ -45,7 +45,7 @@ describe('agenda:sanctions Executive Sanctions', () => {
     expectNone(warningsOf(table, table.draw), HAND);
   });
 
-  test.fails('agenda:sanctions not in play, an eighth action card is warned of against the limit of 7', () => {
+  test('agenda:sanctions not in play, an eighth action card is warned of against the limit of 7', () => {
     const table = drawing(8, false);
     const warnings = warningsOf(table, table.draw);
     expectStanding(warnings, HAND);

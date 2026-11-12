@@ -28,7 +28,7 @@ describe('secretObjective:dfat Defy Space and Time', () => {
   // the reminders ask only the cards a player holds ready (`readyComponents`), which leaves the secrets in hand out.
   // Why no check is redundant here: none is made; the reminder only keeps the condition in view where it is met,
   //  and units in the wormhole nexus are a condition the player meets, not a rule movement breaks.
-  test.fails('secretObjective:dfat reminds its holder of itself at the status step while it is in hand', () => {
+  test('secretObjective:dfat reminds its holder of itself at the status step while it is in hand', () => {
     const held = table({ secrets: [id] });
     expect(hintsAt(held.pack, endOf(held), 'status', ['me']).map(c => c.id)).toContain(id);
   });

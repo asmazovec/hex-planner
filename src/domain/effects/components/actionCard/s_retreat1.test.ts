@@ -55,7 +55,7 @@ describe('actionCard:s_retreat1 Skilled Retreat', () => {
   // component action).
   // Checks: the Hacan attack my cruisers after I passed; I retreat home as the defender, which is no action after passing.
   // Why the check is redundant here: the card is played in a window of combat, not as a turn of mine.
-  test.fails('actionCard:s_retreat1 is not a turn: played after I passed it makes no warning of an action after passing', () => {
+  test('actionCard:s_retreat1 is not a turn: played after I passed it makes no warning of an action after passing', () => {
     const theirs = tactical(NEAR, { moves: [{ from: TARGET, units: { cruiser: 1 } }] }, { owner: RIVAL.id });
     const play = componentAction(id, { choices: { from: NEAR, to: HOME } });
     const pass = planned({ type: 'pass' }, 'action');

@@ -29,7 +29,7 @@ describe('secretObjective:bam Become a Martyr', () => {
   // the reminders ask only the cards a player holds ready (`readyComponents`), which leaves the secrets in hand out.
   // Why no check is redundant here: none is made; the reminder only keeps the condition in view where it is met,
   //  and losing a planet happens in another player's invasion, which the plan does not decide for me.
-  test.fails('secretObjective:bam reminds its holder of itself at the invasion step while it is in hand', () => {
+  test('secretObjective:bam reminds its holder of itself at the invasion step while it is in hand', () => {
     const held = table({ secrets: [id] });
     expect(hintsAt(held.pack, endOf(held), 'invasion', ['me']).map(c => c.id)).toContain(id);
   });

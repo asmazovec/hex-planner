@@ -27,7 +27,7 @@ describe('ability:crafty Crafty', () => {
   // LRR 2.4: "Each player's hand can have a maximum of seven action cards."
   // Checks: another faction drawing the eighth card is warned of.
   // Why the check is NOT redundant here: the ability is the Yssaril's own.
-  test.fails('ability:crafty is the Yssaril\'s own: another faction with eight cards is warned of', () => {
+  test('ability:crafty is the Yssaril\'s own: another faction with eight cards is warned of', () => {
     const t = table('sol');
     expectStanding(warningsOf(t, t.entry), HAND_LIMIT);
   });

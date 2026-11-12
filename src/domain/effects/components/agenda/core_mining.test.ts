@@ -50,7 +50,7 @@ describe('agenda:core_mining Core Mining', () => {
 
   // LRR 7.2 / 8.20: an "Elect" outcome of a law stays in play.
   // Checks: the law is in play after it is resolved, attached to the elected planet.
-  test.fails('agenda:core_mining stays in play attached to the elected planet', () => {
+  test('agenda:core_mining stays in play attached to the elected planet', () => {
     const t = bench({ faction: 'sol', rounds: [[resolved('h1')]] });
     expect(endOf(t).laws).toContain(id);
     expect(endOf(t).attachments?.h1).toContain(id);

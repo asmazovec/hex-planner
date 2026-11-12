@@ -29,7 +29,7 @@ test.fails('ability:nomadic the objective scored without the home system reads a
 // LRR 61.16: "A player cannot score public objectives if that player does not control each planet in their home system."
 // Checks: another faction's same scoring shows the warning standing (red until the status step makes the check).
 // Why the check is NOT redundant here: nothing this player holds lifts 61.16.
-test.fails('ability:nomadic another faction scoring without its home system sees the warning standing', () => {
+test('ability:nomadic another faction scoring without its home system sees the warning standing', () => {
   const sol = scoring('sol');
   showWarnings(sol.table, sol.status);
   expectShownStanding(CODE);

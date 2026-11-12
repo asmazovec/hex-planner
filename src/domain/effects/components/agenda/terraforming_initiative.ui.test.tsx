@@ -42,7 +42,7 @@ const resolved = (elect: string): Entry => ({ ...adjust({}, 'agenda'), gains: [i
 // Checks: in the editor of the agenda entry the player elects Home One; the entry keeps it (`choices.elect`), and the
 // replay attaches the law to that planet.
 // Why: the values change on the elected planet only.
-test.fails('agenda:terraforming_initiative the elected planet is chosen in the agenda entry', async () => {
+test('agenda:terraforming_initiative the elected planet is chosen in the agenda entry', async () => {
   const entry = { ...adjust({}, 'agenda'), gains: [id] } as Entry;
   const table = bench({ faction: 'sol', rounds: [[entry]] });
   quote(table.pack, id, 'The resource and influence values of this planet are increased by 1.');

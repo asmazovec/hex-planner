@@ -33,7 +33,7 @@ describe('actionCard:counterstroke Counterstroke', () => {
   // card is played as a component action.
   // Checks: played after I passed, it is no action after passing.
   // Why the check is redundant here: the card is played in its window, not as a turn of mine.
-  test.fails('actionCard:counterstroke is not a turn: played after I passed it makes no warning of an action after passing', () => {
+  test('actionCard:counterstroke is not a turn: played after I passed it makes no warning of an action after passing', () => {
     const play = counter(NEAR);
     expectNone(warningsOf(table([mine(), planned({ type: 'pass' }, 'action'), theirs(), play]), play), 'actionAfterPass');
   });

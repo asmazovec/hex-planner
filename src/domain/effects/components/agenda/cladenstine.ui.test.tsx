@@ -18,7 +18,7 @@ const nothing = () => undefined;
 // Checks: the editor of the resolved agenda offers its two outcomes to choose from, so the player does not enter the
 // tokens by hand.
 // Why the check is redundant here: nothing is lifted; the outcome changes the command sheet the plan counts.
-test.fails('agenda:cladenstine the agenda editor offers the outcomes For and Against', () => {
+test('agenda:cladenstine the agenda editor offers the outcomes For and Against', () => {
   const agenda = resolved({});
   const t = table(agenda);
   quote(t.pack, id, 'Each player removes 1 command token from their fleet pool');

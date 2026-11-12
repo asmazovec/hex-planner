@@ -38,7 +38,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
 // Checks: in the editor of the agenda entry the player chooses the outcome that received the most votes; the entry
 // keeps it (`choices.outcome`), which the replay then plays.
 // Why: a directive's outcome is one of two, and the plan cannot count it without knowing which.
-test.fails('agenda:plowshares the outcome is chosen in the agenda entry', async () => {
+test('agenda:plowshares the outcome is chosen in the agenda entry', async () => {
   const entry = { ...adjust({}, 'agenda'), gains: [id] } as Entry;
   const table = bench({ faction: 'sol', rounds: [[entry]] });
   quote(table.pack, id, 'Each player destroys half of their infantry on each planet they control, rounded up.');

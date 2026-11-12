@@ -28,7 +28,7 @@ describe('secretObjective:ttfd Turn Their Fleets to Dust', () => {
   // the reminders ask only the cards a player holds ready (`readyComponents`), which leaves the secrets in hand out.
   // Why no check is redundant here: none is made; the reminder only keeps the condition in view where it is met,
   //  and the plan rolls no Space Cannon and does not know which ships its dice destroy.
-  test.fails('secretObjective:ttfd reminds its holder of itself at the combat step while it is in hand', () => {
+  test('secretObjective:ttfd reminds its holder of itself at the combat step while it is in hand', () => {
     const held = table({ secrets: [id] });
     expect(hintsAt(held.pack, endOf(held), 'combat', ['me']).map(c => c.id)).toContain(id);
   });

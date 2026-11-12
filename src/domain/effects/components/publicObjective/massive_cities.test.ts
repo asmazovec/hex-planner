@@ -41,7 +41,7 @@ describe('publicObjective:massive_cities Construct Massive Cities', () => {
   // Checks: the reminder stands in the block of the status step while the public objective is revealed.
   // Why nothing is validated here: a reminder only shows the text; the hints of a step are asked today of the cards a
   //  player holds ready (technologies, relics, notes, hand, leaders), and a revealed public objective is not among them yet.
-  test.fails('publicObjective:massive_cities its reminder stands in the status block while the public objective is revealed', () => {
+  test('publicObjective:massive_cities its reminder stands in the status block while the public objective is revealed', () => {
     const score = scoring();
     const plan = table(score);
     const board = { ...before(plan.game, plan.pack, score), revealed: [id] };

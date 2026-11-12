@@ -26,7 +26,7 @@ describe('actionCard:summit Summit', () => {
   // Window "At the start of the strategy phase"; LRR 2.6: only an "ACTION" card is played as a component action.
   // Checks: played in the strategy phase it is no action outside the action phase.
   // Why the check is redundant here: the card is played in its own window, not as a turn.
-  test.fails('actionCard:summit in the strategy phase is not an action outside the action phase', () => {
+  test('actionCard:summit in the strategy phase is not an action outside the action phase', () => {
     const play = summit({ tactic: 2 });
     expectNone(warningsOf(table(play), play), 'actionOutsidePhase');
   });

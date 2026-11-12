@@ -28,7 +28,7 @@ describe('secretObjective:btv Brave the Void', () => {
   // the reminders ask only the cards a player holds ready (`readyComponents`), which leaves the secrets in hand out.
   // Why no check is redundant here: none is made; the reminder only keeps the condition in view where it is met,
   //  and the plan simulates no combat and so knows no winner.
-  test.fails('secretObjective:btv reminds its holder of itself at the combat step while it is in hand', () => {
+  test('secretObjective:btv reminds its holder of itself at the combat step while it is in hand', () => {
     const held = table({ secrets: [id] });
     expect(hintsAt(held.pack, endOf(held), 'combat', ['me']).map(c => c.id)).toContain(id);
   });
