@@ -96,7 +96,7 @@ export function TacticalEditor({
 
   const toggleManual = (open: boolean) => {
     onManualPayment(open);
-    if (!open) onUpdate({ payment: autoPay(before, cost, 'resources', pack) });
+    if (!open) onUpdate({ payment: autoPay(before, cost, 'resources', pack, { faction: game.faction }) });
   };
 
   const placer = placeWarnings(warnings);
@@ -203,7 +203,7 @@ export function TacticalEditor({
 
           {(cost > 0 || entry.payment.planets.length > 0 || entry.payment.tradeGoods > 0) && (
             <PaymentBlock
-              need={cost} payment={entry.payment} state={before} pack={pack} manual={manualPayment}
+              need={cost} payment={entry.payment} state={before} pack={pack} manual={manualPayment} faction={game.faction}
               onManual={toggleManual} onChange={payment => onUpdate({ payment })}
             >
               {list(placer.at('payment'))}

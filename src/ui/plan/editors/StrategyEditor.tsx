@@ -130,7 +130,7 @@ export function StrategyEditor({
   const payment = effects.payment ?? { planets: [], tradeGoods: 0 };
   const toggleManual = (open: boolean) => {
     onManualPayment(open);
-    if (!open) onUpdate({ effects: { ...effects, payment: autoPay(before, cost.amount, cost.kind, pack) } });
+    if (!open) onUpdate({ effects: { ...effects, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: game.faction }) } });
   };
 
   // The card and the turn it is played in; a limit of the system stands with what the card builds.
@@ -159,7 +159,7 @@ export function StrategyEditor({
       {sections()}
       {(cost.amount > 0 || payment.planets.length > 0 || payment.tradeGoods > 0) && (
         <PaymentBlock
-          need={cost.amount} payment={payment} state={before} pack={pack} manual={manualPayment} kind={cost.kind}
+          need={cost.amount} payment={payment} state={before} pack={pack} manual={manualPayment} kind={cost.kind} faction={game.faction}
           onManual={toggleManual} onChange={next => onUpdate({ effects: { ...effects, payment: next } })}
         >
           {list(placer.at('payment'))}
