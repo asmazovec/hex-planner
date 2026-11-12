@@ -83,7 +83,7 @@ function applyEntry(
   const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? [], pack);
   switch (entry.type) {
     case 'tactical':
-      applyTactical(game, state, entry, pack, warnings, blockers);
+      applyTactical(game, state, entry, pack, warnings, blockers, shared);
       break;
     case 'strategic':
     case 'secondary':
@@ -109,6 +109,8 @@ function applyEntry(
   for (const id of playedBy(entry)) {
     const effect = effectOf(pack, id);
     if (!effect?.play) continue;
+    // A play that asked to run in the middle of a tactical action (`playAt`) has run there already.
+    if (entry.type === 'tactical' && effect.playAt) continue;
     const lacking = warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
     effect.play({
       game, state, shared, entry, id, player: entry.owner ?? 'me', states: acts.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings, cards,

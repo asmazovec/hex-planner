@@ -4,7 +4,7 @@
  * replay itself lives in src/domain/replay/.
  */
 import { holderOf } from './effects/registry';
-import { fleetSpeed, routeMove, routeReach, type Blockers } from './movement';
+import { fleetSpeed, linksOf, routeMove, routeReach, type Blockers, type MoveView } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
@@ -405,10 +405,16 @@ export const sourceSystems = (game: Game, pack: DataPack, before: GameState): st
 export function routeHint(
   game: Game, path: string[], before: GameState, active: string | null, pack: DataPack, blockers: () => Blockers,
 ): { speed: number | null; steps: number; left: number | null; reach: Set<string> } {
-  const fastest = fleetSpeed(game, before.systems[path[0]] ?? {}, holderOf(game, before), pack);
+  // The components of the player answer for the start, the active system and the group, as in the replay of the move.
+  const group = before.systems[path[0]] ?? {};
+  const view: MoveView = {
+    holder: holderOf(game, before), state: before, from: path[0], target: active ?? undefined, group,
+    links: linksOf(game, pack, { state: before, during: 'tactical' }),
+  };
+  const fastest = fleetSpeed(game, group, holderOf(game, before), pack, view);
   const steps = routeSteps(game, path, pack);
   if (fastest === null) return { speed: null, steps, left: null, reach: new Set() };
-  const speed = routeMove(game, path, fastest, pack);
-  const reach = active === null ? new Set<string>() : routeReach(game, path, fastest, active, pack, blockers());
+  const speed = routeMove(game, path, fastest, pack, undefined, view);
+  const reach = active === null ? new Set<string>() : routeReach(game, path, fastest, active, pack, blockers(), view);
   return { speed, steps, left: Math.max(0, speed - steps), reach };
 }

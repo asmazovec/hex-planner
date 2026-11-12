@@ -9,8 +9,40 @@ import { gridDistance, oppositeEdge, slotAcross } from './route';
 import { offMapHomes } from './strategy';
 import { unitStats } from './unitStats';
 import { applied } from './effects/apply';
-import { holderFor, type Who } from './effects/registry';
+import { effectOf, holderFor, holderOf, inForceOf, type Holder, type Who } from './effects/registry';
+import './effects/points/movement';
+import { noteBase } from './components';
 import type { DataPack, Game, GameState, UnitCounts, UnitId } from './types';
+
+/** Two systems made adjacent beyond the board: a wormhole token, a law, an ability (6, 60.2). */
+export type Link = readonly [string, string];
+
+/**
+ * What a count of movement knows besides the board: who moves, from where and with what, so that the components of
+ * the mover answer (`speed`, `nebulaStart`, `gravityRift`). Every field is optional: without a holder the printed
+ * numbers stand, which is what a drawing of the map asks.
+ */
+export interface MoveView {
+  /** Whose components answer; the holdings of `state` and the faction of the game when only that is given. */
+  holder?: Holder;
+  /** The mover's state before the move, and my state, which holds the laws and the wormhole tokens. */
+  state?: GameState;
+  shared?: GameState;
+  /** The start slot and the active system of the move. */
+  from?: string;
+  target?: string;
+  /** The ship counted; none for a whole group (its fastest ship). */
+  unit?: UnitId;
+  /** The units moving together from the start. */
+  group?: UnitCounts;
+  /** The components the entry names (its uses and spends): their `modifyWhenNamed` holds. */
+  named?: readonly string[];
+  /** The systems made adjacent beyond the board (`linksOf`). */
+  links?: readonly Link[];
+}
+
+const viewHolder = (game: Game, view: MoveView | undefined): Holder | undefined =>
+  view?.holder ?? (view?.state ? holderOf(game, view.state) : undefined);
 
 /** The systems holding ships of players other than the one moving: a route may end there, never pass (58.3.2). */
 export type Blockers = ReadonlySet<string>;
@@ -60,7 +92,7 @@ function systemsAlongLanes(game: Game, slot: string, entry: number | null, pack:
  * What a ship can step to from each system: its neighbours, those a hyperlane's line joins it to, and those sharing a
  * wormhole with it. An off-map home (the Creuss home, 6 note 2) is a system under its tile id, joined by its wormhole alone.
  */
-function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
+function baseGraph(game: Game, pack: DataPack): Map<string, string[]> {
   const cache = graphSlot(game, pack);
   const key = factionsKey(game);
   const known = cache.get(key);
@@ -80,6 +112,58 @@ function routeGraph(game: Game, pack: DataPack): Map<string, string[]> {
   const graph = new Map(slots.map(slot => [slot, [...new Set(stepsOf(slot))].filter(other => other !== slot)]));
   cache.set(key, graph);
   return graph;
+}
+
+/** The graph with the extra adjacency laid over it; the cached one is never changed. */
+function routeGraph(game: Game, pack: DataPack, links: readonly Link[] = []): Map<string, string[]> {
+  const graph = baseGraph(game, pack);
+  if (links.length === 0) return graph;
+  const joined = new Map(graph);
+  for (const [a, b] of links) {
+    if (a === b) continue;
+    if (!joined.get(a)?.includes(b)) joined.set(a, [...(joined.get(a) ?? []), b]);
+    if (!joined.get(b)?.includes(a)) joined.set(b, [...(joined.get(b) ?? []), a]);
+  }
+  return joined;
+}
+
+/** Every slot a ship can be in: the map, the Fracture and an off-map home. */
+export const boardSlots = (game: Game, pack: DataPack): string[] => [...systemSlots(game), ...offMapHomes(game, pack)];
+
+/** The wormholes of a system: its tile's and the tokens put there (Creuss, Gamma Wormhole). */
+export function wormholesOf(game: Game, pack: DataPack, slot: string, tokens: GameState['wormholeTokens'] = {}): string[] {
+  const own = tileAt(game, slot, pack)?.wormholes ?? [];
+  return [...new Set([...own, ...Object.entries(tokens).flatMap(([type, at]) => (at === slot ? [type] : []))])];
+}
+
+/** The systems holding a wormhole of this type, tokens included. */
+export const wormholeSlots = (game: Game, pack: DataPack, type: string, tokens: GameState['wormholeTokens'] = {}): string[] =>
+  boardSlots(game, pack).filter(slot => wormholesOf(game, pack, slot, tokens).includes(type));
+
+/** Wormhole tokens join their system to every system with a matching wormhole (6.1). */
+function tokenLinks(game: Game, pack: DataPack, tokens: GameState['wormholeTokens']): Link[] {
+  return Object.entries(tokens ?? {}).flatMap(([type, at]) => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== at).map((slot): Link => [at, slot]));
+}
+
+/** Who asks for the adjacency beyond the board. */
+export interface LinkWho { holder?: Holder; state?: GameState; shared?: GameState; named?: readonly string[]; during: 'tactical' | 'neighbors' }
+
+/**
+ * The adjacency the board does not draw: the wormhole tokens of the game and what the components of the player join
+ * (in force, or named by the entry). Empty for a board that has none, so the cached graph is used as it is.
+ */
+export function linksOf(game: Game, pack: DataPack, who: LinkWho): Link[] {
+  const tokens = (who.shared ?? who.state)?.wormholeTokens;
+  const links = Object.keys(tokens ?? {}).length > 0 ? tokenLinks(game, pack, tokens) : [];
+  const holder = who.holder ?? (who.state ? holderOf(game, who.state, who.shared) : undefined);
+  const ids = [...(holder ? inForceOf(pack, holder, effect => effect.links !== undefined) : []), ...(who.named ?? []).filter(id => effectOf(pack, id)?.links)];
+  const seen = new Set<string>();
+  for (const id of ids) {
+    if (seen.has(noteBase(id))) continue;
+    seen.add(noteBase(id));
+    links.push(...(effectOf(pack, id)?.links?.({ game, pack, state: who.state, shared: who.shared, during: who.during }) ?? []));
+  }
+  return links;
 }
 
 /** A ship can neither enter nor pass: asteroids and a supernova. */
@@ -114,8 +198,8 @@ export function blockersOf(game: Game, state: Pick<GameState, 'systems' | 'rival
 }
 
 /** Steps from a system to every system joined to it, whatever stands in the way: this measures a route already drawn. */
-export function routeDistances(game: Game, from: string, pack: DataPack): Map<string, number> {
-  const graph = routeGraph(game, pack);
+export function routeDistances(game: Game, from: string, pack: DataPack, links?: readonly Link[]): Map<string, number> {
+  const graph = routeGraph(game, pack, links);
   const steps = new Map([[from, 0]]);
   const queue = [from];
   for (let i = 0; i < queue.length; i += 1) {
@@ -150,37 +234,60 @@ export function routeSteps(game: Game, path: string[], pack: DataPack, blockers:
 }
 
 /** How far a ship of the player flies, after what they hold changed its printed move; null when it does not move by itself. */
-export function shipSpeed(game: Game, unit: UnitId, holdings: Who, pack: DataPack): number | null {
+export function shipSpeed(game: Game, unit: UnitId, holdings: Who, pack: DataPack, view?: MoveView): number | null {
   const printed = unitStats(game.faction, unit, false, pack)?.move ?? 0;
-  const { value } = applied(pack, holderFor(holdings, game.faction), 'speed', printed, { faction: game.faction, unit });
+  const ctx = { faction: game.faction, unit, ...(view ? { from: view.from, systemId: view.target, group: view.group, game, pack, state: view.state, shared: view.shared } : {}) };
+  let { value } = applied(pack, viewHolder(game, view) ?? holderFor(holdings, game.faction), 'speed', printed, ctx);
+  // What the entry names changes the move for it, once for each component however many copies it names.
+  for (const id of new Set((view?.named ?? []).map(noteBase))) value = effectOf(pack, id)?.modifyWhenNamed?.speed?.(value, ctx) ?? value;
   return value > 0 ? value : null;
 }
 
 /** How far the fastest ship among these units flies; null without a ship that flies by itself. */
-export function fleetSpeed(game: Game, units: UnitCounts, holdings: Who, pack: DataPack): number | null {
-  const speeds = unitIds(units).flatMap(id => shipSpeed(game, id, holdings, pack) ?? []);
+export function fleetSpeed(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, view?: MoveView): number | null {
+  const speeds = unitIds(units).flatMap(id => shipSpeed(game, id, holdings, pack, view && { ...view, group: view.group ?? units }) ?? []);
   return speeds.length > 0 ? Math.max(...speeds) : null;
 }
 
 /** The gravity rifts a whole path leaves: each rift and each time adds 1 (41.3, note 6); a system with two rifts is one (41.4). */
-const riftsIn = (game: Game, full: string[], pack: DataPack): number => full.filter(slot => hasAnomaly(game, slot, 'rift', pack)).length;
+const riftsIn = (game: Game, full: string[], pack: DataPack, view?: MoveView): number => full.filter(slot => isRift(game, slot, pack, view)).length;
 
-/** A ship's speed having left these systems, the first its start: a start in a nebula makes it 1, each gravity rift left adds 1. */
-export function routeMove(game: Game, left: string[], speed: number, pack: DataPack, blockers: Blockers = new Set()): number {
+/** Whether a system is a gravity rift for the mover: a rift tile, or what a component of theirs makes one (41.1). */
+function isRift(game: Game, slot: string, pack: DataPack, view?: MoveView): boolean {
+  const base = hasAnomaly(game, slot, 'rift', pack) ? 1 : 0;
+  const holder = viewHolder(game, view);
+  return (holder ? applied(pack, holder, 'gravityRift', base, { faction: game.faction, systemId: slot, game, pack, state: view?.state }).value : base) > 0;
+}
+
+/** The move value of a ship that starts in a nebula: 1, unless a component of the mover says otherwise (59.2). */
+function nebulaSpeed(game: Game, from: string, speed: number, pack: DataPack, view?: MoveView): number {
+  const holder = viewHolder(game, view);
+  if (!holder) return 1;
+  const ask = (unit: UnitId | undefined, own: number): number =>
+    applied(pack, holder, 'nebulaStart', 1, { faction: game.faction, unit, speed: own, from, game, pack }).value;
+  if (view?.unit !== undefined || !view?.group) return ask(view?.unit, speed);
+  return Math.max(...unitIds(view.group).flatMap(unit => { const own = shipSpeed(game, unit, holder.holdings, pack, { ...view, unit }); return own === null ? [] : [ask(unit, own)]; }), 1);
+}
+
+/**
+ * A ship's speed having left these systems, the first its start: a start in a nebula makes it 1 (`nebulaStart`),
+ * each gravity rift left adds 1 (`gravityRift`).
+ */
+export function routeMove(game: Game, left: string[], speed: number, pack: DataPack, blockers: Blockers = new Set(), view?: MoveView): number {
   const full = fullPath(game, left, pack, blockers);
-  return (hasAnomaly(game, full[0], 'nebula', pack) ? 1 : speed) + riftsIn(game, full, pack);
+  return (hasAnomaly(game, full[0], 'nebula', pack) ? nebulaSpeed(game, full[0], speed, pack, view) : speed) + riftsIn(game, full, pack, view);
 }
 
 /**
  * The systems a ship can still go to from the end of a path, by the rules for anomalies, other players' ships and speed.
  * The active system stays among them although the path has passed it: a ship may leave it and come back (58.3.5).
  */
-export function routeReach(game: Game, path: string[], speed: number, active: string, pack: DataPack, blockers: Blockers): Set<string> {
-  const graph = routeGraph(game, pack);
+export function routeReach(game: Game, path: string[], speed: number, active: string, pack: DataPack, blockers: Blockers, view?: MoveView): Set<string> {
+  const graph = routeGraph(game, pack, view?.links);
   const full = fullPath(game, path, pack, blockers);
   const reached = new Set<string>();
   // What is left of the move on arriving in a system; a rift entered on the way gives its 1 as the ship goes on out of it.
-  const queue = [{ slot: full.at(-1)!, left: routeMove(game, full, speed, pack, blockers) - stepsAlong(game, full, pack) }];
+  const queue = [{ slot: full.at(-1)!, left: routeMove(game, full, speed, pack, blockers, view) - stepsAlong(game, full, pack) }];
   const best = new Map<string, number>();
   for (let i = 0; i < queue.length; i += 1) {
     const { slot, left } = queue[i];
@@ -189,7 +296,7 @@ export function routeReach(game: Game, path: string[], speed: number, active: st
       if (closedToRoute(game, next, pack) || (endsRoute(game, next, pack, blockers) && next !== active)) continue;
       reached.add(next);
       if (next === active) continue;
-      const after = left - 1 + (hasAnomaly(game, next, 'rift', pack) ? 1 : 0);
+      const after = left - 1 + (isRift(game, next, pack, view) ? 1 : 0);
       if ((best.get(next) ?? -Infinity) >= after) continue;
       best.set(next, after);
       queue.push({ slot: next, left: after });
@@ -198,3 +305,11 @@ export function routeReach(game: Game, path: string[], speed: number, active: st
   for (const slot of path) if (slot !== active) reached.delete(slot);
   return reached;
 }
+
+/** The systems one step from a system, by the board and the extra adjacency; the system itself is not one. */
+export const adjacentTo = (game: Game, slot: string, pack: DataPack, links?: readonly Link[]): string[] =>
+  [...routeDistances(game, slot, pack, links)].flatMap(([other, steps]) => (steps === 1 ? [other] : []));
+
+/** Whether two systems are adjacent: by a side, a wormhole, a hyperlane's line, or a link. */
+export const joined = (game: Game, a: string, b: string, pack: DataPack, links?: readonly Link[]): boolean =>
+  (routeDistances(game, a, pack, links).get(b) ?? Infinity) === 1;

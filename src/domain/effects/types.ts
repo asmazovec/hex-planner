@@ -2,7 +2,7 @@
  * The contract of a component's effect (design §5.1). A step of the count never names a component: it asks a named
  * point for its value through `applied`, and the components of the player answer.
  */
-import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, UnitId, Warning } from '../types';
+import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../types';
 
 /**
  * `passive` applies by itself while the component is in force (`inForce`), exhausted or not (LRR 34.4.1); `play`
@@ -17,8 +17,13 @@ export type EffectTier = 'passive' | 'play' | 'hint';
 
 /** What each point of the count tells the modifiers about the thing being counted. */
 export interface ModifierContext {
-  /** The move value of one unit of a faction; 0 stands for a unit that does not move by itself. */
-  speed: { faction: string; unit: UnitId };
+  /**
+   * The move value of one unit of a faction; 0 stands for a unit that does not move by itself. Where a route is counted
+   * it also tells the start slot (`from`), the active system (`systemId`), the units moving together from that start
+   * (`group`) and the board; none of them where a speed is only shown. A change that applies to ships leaves a 0 alone:
+   * `plusSpeed` (effects/helpers/movement.ts) does it.
+   */
+  speed: { faction: string; unit: UnitId; from?: string; systemId?: string; group?: UnitCounts; game?: Game; pack?: DataPack; state?: GameState; shared?: GameState };
   /** The capacity of one ship. */
   capacity: { faction: string; unit: UnitId };
   /** The ships a system may hold: the base is the fleet pool. */
