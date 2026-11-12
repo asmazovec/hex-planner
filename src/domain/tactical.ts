@@ -171,7 +171,7 @@ export function withProduction(
   return {
     production,
     ...(planetId === null || !isGround(pack, unit) ? {} : { productionGround: Object.keys(productionGround).length > 0 ? productionGround : undefined }),
-    ...(seed ? { payment: autoPay(before, cost, 'resources', pack) } : {}),
+    ...(seed ? { payment: autoPay(before, cost, 'resources', pack, { faction }) } : {}),
   };
 }
 

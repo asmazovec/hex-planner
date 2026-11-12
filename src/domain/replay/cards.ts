@@ -55,7 +55,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   }
   const effects = entry.effects ?? {};
   const cost = cardCost(entry, game.faction, state.holdings, pack);
-  const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings);
+  const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings, { faction: game.faction, shared: round.states.me });
   if (cost.amount > paid) {
     warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
   }

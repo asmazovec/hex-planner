@@ -133,6 +133,6 @@ export function checkProduction(
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. */
 export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[]): void {
   const cost = productionCost(entry.production, game.faction, state.holdings, pack);
-  const paid = pay(state, entry.payment, 'resources', pack, warnings);
+  const paid = pay(state, entry.payment, 'resources', pack, warnings, { faction: game.faction });
   if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
 }

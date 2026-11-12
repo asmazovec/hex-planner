@@ -6,7 +6,11 @@ import { areNeighbors } from '../neighbors';
 import { violation } from '../rules/registry';
 import { componentById } from '../components';
 import { TRANSACTION_KINDS } from '../holdings';
+import { effectOf, holderOf, inForceOf } from '../effects/registry';
+import type { DealTurn } from '../effects/points/payment';
+import { playersOf } from '../players';
 import type { Act, DataPack, Entry, Game, GameState, Goods, Warning } from '../types';
+import { commodityValueOf } from './cards/trade';
 import { applyExpeditionPart } from './expedition';
 import { gain, holds, lose } from './holdings';
 
@@ -24,16 +28,18 @@ export const actsOf = (entry: Entry): Act[] =>
  * Moves what one side gives to the other: trade goods as trade goods, commodities as trade goods of the receiver
  * (21.5), a component from the holdings of one to those of the other, by its kind. What the giver lacks warns and
  * stays where it is, goods and components alike: nothing goes below zero and nothing comes from nowhere. A component
- * of a kind a transaction does not move (94.3) and a second promissory note (69.5) warn and move all the same.
- * `shared` is my state, where the laws of the whole game lie.
+ * of a kind a transaction does not move (94.3: only promissory notes; an action card needs an ability, 94.3.1, which
+ * lifts the warning) and a second promissory note (69.5) warn and move all the same. `shared` is my state, where the
+ * laws of the whole game lie. Returns what moved, commodities counted as the trade goods they become.
  */
-function hand(from: GameState, to: GameState, goods: Goods, pack: DataPack, shared: GameState, warnings: Warning[]): void {
+function hand(from: GameState, to: GameState, goods: Goods, pack: DataPack, shared: GameState, warnings: Warning[]): Goods {
   let notes = 0;
+  const moved: Goods = {};
   for (const id of goods.components ?? []) {
     const def = componentById(pack, id);
     if (!def) continue;
     const params = { id: def.id, name: def.name };
-    if (!TRANSACTION_KINDS.includes(def.kind)) warnings.push(violation('transactionKind', params));
+    if (!TRANSACTION_KINDS.includes(def.kind) || def.kind === 'actionCard') warnings.push(violation('transactionKind', params));
     else if (def.kind === 'promissory' && (notes += 1) === 2) warnings.push(violation('transactionNotes', {}));
     if (!holds(from.holdings, def)) {
       warnings.push(violation('componentNotHeld', { ...params, context: 'transaction' }, 'transaction'));
@@ -41,6 +47,7 @@ function hand(from: GameState, to: GameState, goods: Goods, pack: DataPack, shar
     }
     lose(from, shared, def);
     gain(to, shared, def);
+    (moved.components ??= []).push(id);
   }
   const tradeGoods = goods.tradeGoods ?? 0;
   if (tradeGoods > from.tradeGoods) warnings.push(violation('shortTradeGoods', { needed: tradeGoods, have: from.tradeGoods }, 'transaction'));
@@ -52,6 +59,31 @@ function hand(from: GameState, to: GameState, goods: Goods, pack: DataPack, shar
   const movedCommodities = Math.min(commodities, from.commodities);
   from.commodities -= movedCommodities;
   to.tradeGoods += movedCommodities;
+  if (movedGoods > 0) moved.tradeGoods = movedGoods;
+  if (movedCommodities > 0) moved.commodities = movedCommodities;
+  return moved;
+}
+
+/**
+ * Asks the components in force of one side of a settled deal for their `dealt` hook. `gave` and `got` are what moved
+ * (commodities that arrived are trade goods of the receiver). Each side is seen with its own faction and holder.
+ */
+function dealt(
+  game: Game, entry: Entry, pack: DataPack, ctx: ActContext, warnings: Warning[],
+  side: 'give' | 'get', self: string, partner: string, gave: Goods, got: Goods,
+): void {
+  const shared = ctx.states.me;
+  const state = ctx.states[self];
+  const other = ctx.states[partner];
+  if (!shared || !state || !other) return;
+  const faction = playersOf(game).find(p => p.id === self)?.faction ?? game.faction;
+  const asked = { faction };
+  for (const id of inForceOf(pack, holderOf(asked, state, shared))) {
+    effectOf(pack, id)?.dealt?.({
+      game, pack, entry, side, self, partner, faction, state, other, shared, gave, got,
+      commodityValue: commodityValueOf(asked, state, pack, shared), warnings,
+    } satisfies DealTurn);
+  }
 }
 
 export function applyActs(game: Game, state: GameState, entry: Entry, pack: DataPack, ctx: ActContext, warnings: Warning[]): void {
@@ -67,8 +99,11 @@ export function applyActs(game: Game, state: GameState, entry: Entry, pack: Data
     // Only with a neighbour, as the board stands at this point of the turn (94.1, 60).
     if (!areNeighbors(game, state, other, pack)) warnings.push(violation('notNeighbor', { player: act.with }));
     const shared = ctx.states.me ?? state;
-    hand(state, other, act.give, pack, shared, warnings);
-    hand(other, state, act.get, pack, shared, warnings);
+    const gave = hand(state, other, act.give, pack, shared, warnings);
+    const got = hand(other, state, act.get, pack, shared, warnings);
+    const owner = entry.owner ?? 'me';
+    dealt(game, entry, pack, ctx, warnings, 'give', owner, act.with, gave, got);
+    dealt(game, entry, pack, ctx, warnings, 'get', act.with, owner, got, gave);
   }
   let expeditions = 0;
   for (const act of acts) {

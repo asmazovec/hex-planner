@@ -201,9 +201,9 @@ export const TRANSACTION_KINDS: readonly ComponentKind[] = ['promissory', 'actio
  * What a player can still hand over in a transaction: the promissory notes held and then the action cards in hand,
  * each id once, less the copies already `chosen` for it.
  */
-export function tradable(holdings: Holdings, chosen: string[] = []): string[] {
+export function tradable(holdings: Holdings, chosen: string[] = [], kinds: readonly ComponentKind[] = TRANSACTION_KINDS): string[] {
   const left = [...chosen];
-  const free = TRANSACTION_KINDS.flatMap(kind => holdings[HOLDING_FIELD[kind]!]).filter(id => {
+  const free = kinds.flatMap(kind => holdings[HOLDING_FIELD[kind]!]).filter(id => {
     const at = left.indexOf(id);
     if (at >= 0) left.splice(at, 1);
     return at < 0;
