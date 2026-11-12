@@ -3,6 +3,7 @@
  * and the production, and what the entry shows on the map. Pure functions of the entry and the state before it; the
  * replay itself lives in src/domain/replay/.
  */
+import { holderOf } from './effects/registry';
 import { fleetSpeed, routeMove, routeReach, type Blockers } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
@@ -163,8 +164,9 @@ export function withProduction(
   entry: TacticalEntry, before: GameState, faction: string, unit: UnitId, planetId: string | null, amount: 1 | -1, pack: DataPack, manualPayment: boolean,
 ): Partial<TacticalEntry> {
   const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
-  const cost = productionCost(production, faction, before.holdings, pack);
-  const seed = !manualPayment && cost !== productionCost(entry.production, faction, before.holdings, pack);
+  const holder = holderOf({ faction }, before);
+  const cost = productionCost(production, faction, holder, pack, entry);
+  const seed = !manualPayment && cost !== productionCost(entry.production, faction, holder, pack, entry);
   const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
   const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
   const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;

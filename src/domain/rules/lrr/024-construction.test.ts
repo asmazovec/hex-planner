@@ -106,5 +106,17 @@ describe('LRR 24 Construction', () => {
     expect(codesOf(rulesGame({ entries: [play] }), pack, play)).toContain('constructionUnits');
   });
 
+  test('24.2, 67.1, 89.5: units entered on the primary, which produces nothing, are warned of and limited by the Production of their system', () => {
+    const play = primary(CARD.construction, { structures: [{ kind: 'spacedock', planetId: 'h2' }], production: { systemId: HOME, units: { fighter: 4 } } });
+    const codes = codesOf(rulesGame({ entries: [play] }), pack, play);
+    expect(codes).toContain('productionNotAllowed');
+    expect(codes).toContain('productionOver');
+  });
+
+  test('24.2: a primary without units is not warned of that', () => {
+    const play = primary(CARD.construction, { structures: [{ kind: 'pds', planetId: 'h1' }] });
+    expect(codesOf(rulesGame({ entries: [play] }), pack, play)).not.toContain('productionNotAllowed');
+  });
+
   test.todo('24 note 3: no structure on a planet with Demilitarized Zone attached — not modelled: attachments are not in the data');
 });

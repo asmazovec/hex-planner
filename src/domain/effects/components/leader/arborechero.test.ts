@@ -42,7 +42,7 @@ describe('leader:arborechero Letani Miasmiala — Ultrasonic Emitter', () => {
   // "... in any number of systems that contain 1 or more of your ground forces."
   // Checks: a production in a system without my ground forces is warned of.
   // Why the check is NOT redundant here: the hero names its own condition, and it is not met.
-  test.fails('leader:arborechero a system without my ground forces is warned of', () => {
+  test('leader:arborechero a system without my ground forces is warned of', () => {
     const play = heroPlay({ production: { systemId: FAR, units: { cruiser: 1 } }, payment: PAID });
     expect(standingOf(warningsOf(table(play), play), 'noProduction')).not.toEqual([]);
   });
@@ -50,7 +50,7 @@ describe('leader:arborechero Letani Miasmiala — Ultrasonic Emitter', () => {
   // Arborec, hero note 2: "A ship may be produced in the system only if no other player currently has ships in that system."
   // Checks: a cruiser produced where an opponent's ships stand is warned of.
   // Why the check is NOT redundant here: 67.6 holds for every production, whatever produces.
-  test.fails('leader:arborechero a ship among other players\' ships is still warned of', () => {
+  test('leader:arborechero a ship among other players\' ships is still warned of', () => {
     const rival = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
     const play = heroPlay({ production: { systemId: TARGET, units: { cruiser: 1 } }, payment: PAID });
     const hero = table(play, { opponents: [rival], enemyUnits: { [TARGET]: { o1: { destroyer: 1 } } } });
@@ -60,7 +60,7 @@ describe('leader:arborechero Letani Miasmiala — Ultrasonic Emitter', () => {
   // Arborec, hero note 1: "The produced units must all be paid for."
   // Checks: the same production unpaid is short of resources.
   // Why the check is NOT redundant here: the hero frees the production from a producing unit, not from its cost (67.1).
-  test.fails('leader:arborechero the units must be paid for', () => {
+  test('leader:arborechero the units must be paid for', () => {
     const play = heroPlay({ production: { systemId: TARGET, units: { cruiser: 1 } }, payment: { planets: [], tradeGoods: 0 } });
     expect(standingOf(warningsOf(table(play), play), 'shortResources')).not.toEqual([]);
   });

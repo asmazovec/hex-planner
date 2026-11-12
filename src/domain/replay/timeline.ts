@@ -19,6 +19,7 @@ import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, clearBoard } from './status';
 import { keepOwnStructures } from './structures';
 import { applyTactical } from './tactical';
+import { applyComponentProduction } from './production';
 
 export type Filter = 'now' | 'forecast';
 
@@ -93,6 +94,7 @@ function applyEntry(
       break;
     case 'component':
       applyComponent(state, entry, pack, warnings, game.faction, acts.states);
+      applyComponentProduction(game, state, entry, pack, warnings);
       break;
     case 'pass':
       break;

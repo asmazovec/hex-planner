@@ -5,7 +5,8 @@ import { checkStationStructures } from '../thundersEdge';
 import type { DataPack, Game, GameState, Round, Warning } from '../types';
 import { handlerOf, type CardRound } from './cards/index';
 import { pay, readyPlanets } from './payment';
-import { checkProduction, placeProduction } from './production';
+import { checkProduction, costOf, placeProduction, producerList } from './production';
+import { holderOf } from '../effects/registry';
 import { research } from './holdings';
 import { checkPoolChange, checkTokensGiven } from './status';
 import { buildStructures } from './structures';
@@ -54,7 +55,11 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     state.strategy -= 1;
   }
   const effects = entry.effects ?? {};
-  const cost = cardCost(entry, game.faction, state.holdings, pack);
+  const cost = cardCost(entry, game.faction, holderOf(game, state), pack);
+  // Units a card produces use a unit's PRODUCTION: the combined cost may be reduced (Sarween Tools), as a tactical action's is.
+  if (effects.production && cost.kind === 'resources' && !handlerOf(entry.card).cost) {
+    cost.amount = costOf(game, state, effects.production.units, pack, producerList(game, state, effects.production.systemId, pack).length > 0, entry);
+  }
   const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings);
   if (cost.amount > paid) {
     warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));
@@ -75,9 +80,10 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   warnings.push(...checkStationStructures(effects.structures ?? [], pack));
   if (effects.production) {
     // Warfare's secondary uses one space dock in the home system (99.3); another card, a dock of its system.
-    const source = !primary && entry.card === CARD.warfare ? 'homeDock' : 'card';
+    // Units entered on Construction (which a law may allow) are limited by the Production of their system, as a tactical action's.
+    const source = !primary && entry.card === CARD.warfare ? 'homeDock' : entry.card === CARD.construction ? 'system' : 'card';
     const { systemId, units, ground } = effects.production;
-    warnings.push(...checkProduction(game, state, systemId, units, pack, ground, source, 'card'));
+    warnings.push(...checkProduction(game, state, systemId, units, pack, ground, source, 'card', entry));
     placeProduction(game, state, effects.production.systemId, effects.production.units, pack, effects.production.ground);
     warnings.push(...checkSystem(game, state, effects.production.systemId, pack));
   }

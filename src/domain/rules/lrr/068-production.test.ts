@@ -3,6 +3,9 @@
  * A space dock I produces its planet's resources + 2: h1 (3) gives 5, h2 (1) gives 3, t1 (2) gives 4, t2 (1) gives 3.
  */
 import { describe, expect, test } from 'vitest';
+import { effectsOf } from '../../effects/registry';
+import type { ComponentEffect } from '../../effects/types';
+import '../../effects/points/production';
 import { emptyHoldings } from '../../holdings';
 import { productionCost } from '../../project';
 import { codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
@@ -10,6 +13,14 @@ import { codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, tactical,
 const pack = rulesPack();
 const atHome = { docks: ['h1'] };
 const bothTargets = { docks: ['t1', 't2'], planetControl: { t1: 'me' as const, t2: 'me' as const } };
+
+/** A throwaway passive effect held through the component `HOLD`, in place of a component's file. */
+const HOLD = 'technology:aida';
+const held = (edited: ReturnType<typeof rulesPack>, modify: ComponentEffect['modify']): void => {
+  (effectsOf(edited) as Map<string, ComponentEffect>).set(HOLD, { tier: 'passive', rule: 'test', modify });
+};
+const withTech = (target: ReturnType<typeof tactical>) =>
+  rulesGame({ entries: [target], game: { ...atHome, start: { me: { technologies: [HOLD] }, opponents: {} } } });
 
 describe('LRR 68 Production', () => {
   test('68.1: the units produced cannot exceed the production value of the active system', () => {
@@ -47,7 +58,27 @@ describe('LRR 68 Production', () => {
     expect(productionCost({ infantry: 1 }, FACTION, emptyHoldings(), pack)).toBe(1);
   });
 
-  test.todo('68.1.4: Arborec space docks give no production value to infantry — not modelled: faction abilities are not applied');
+  test('68.1.4: infantry from space docks that give no value to infantry (a component says so) are warned of; mechs and ships are not', () => {
+    const edited = rulesPack();
+    held(edited, { dockInfantry: () => 0 });
+    const infantry = tactical(HOME, { production: { infantry: 2 } });
+    expect(codesOf(withTech(infantry), edited, infantry)).toContain('dockInfantry');
+    const ships = tactical(HOME, { production: { cruiser: 1, mech: 1 } });
+    expect(codesOf(withTech(ships), edited, ships)).not.toContain('dockInfantry');
+  });
+
+  test('67.1, units War Sun 1: a war sun produced is warned of: the check does not know who owns the unit upgrade, a component lifts it', () => {
+    const build = tactical(HOME, { production: { warsun: 1 }, payment: { planets: ['h1', 'h2'], tradeGoods: 9 } });
+    expect(codesOf(rulesGame({ entries: [build], game: atHome }), pack, build)).toContain('warSunLocked');
+  });
+
+  test('68.1.1: a planet that a component makes a producer adds its value to the system\'s', () => {
+    const build = tactical(HOME, { production: { infantry: 6 } });
+    const edited = rulesPack();
+    held(edited, { planetProduction: (v, ctx) => (ctx.planetId === 'h2' ? 1 : v) });
+    const game = rulesGame({ entries: [build], game: { ...atHome, planetControl: { h2: 'me' }, start: { me: { technologies: [HOLD] }, opponents: {} } } });
+    expect(codesOf(game, edited, build)).not.toContain('productionOver');
+  });
 
   test('68.2: produced ships are placed in the active system\'s space area', () => {
     const build = tactical(HOME, { production: { cruiser: 1 } });

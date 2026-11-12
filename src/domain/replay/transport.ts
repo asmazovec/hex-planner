@@ -1,5 +1,6 @@
 /** Transport (LRR 95, 16): pickups, the capacity of each moving group and of a system, and what a system holds against the fleet pool. */
 import { applied } from '../effects/apply';
+import '../effects/points/production';
 import { holderOf } from '../effects/registry';
 import { waive } from '../effects/waivers';
 import { blockersOf, fullPath, shipSpeed, type Blockers } from '../movement';
@@ -61,8 +62,10 @@ export const DOCK_FIGHTERS = 3;
  * The fighters a player's space docks keep in a system: 3 for each of their docks on its planets. They count only for
  * what stands in the system after movement: a moving group keeps its fighters on board (79 note 2, 2.1).
  */
-export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks'>, systemId: string, pack: DataPack): number =>
-  DOCK_FIGHTERS * planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId)).length;
+export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks' | 'holdings' | 'control' | 'laws'>, systemId: string, pack: DataPack): number =>
+  planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId))
+    // What a dock keeps is the point `dockFighters` (Dimensional Tear II: 12).
+    .reduce((sum, planetId) => sum + applied(pack, holderOf(game, state), 'dockFighters', DOCK_FIGHTERS, { planetId, systemId }).value, 0);
 
 /** Fighters a dock keeps, out of those present: they count neither as load nor as ships. */
 const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.min(units.fighter ?? 0, Math.max(0, fighterRoom));

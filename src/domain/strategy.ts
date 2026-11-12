@@ -1,4 +1,5 @@
 import { strategyCardSet } from './cards';
+import type { Holder } from './effects/registry';
 import { seatSlots } from './mapBuilder';
 import { autoPay, type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
@@ -121,9 +122,9 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 }
 
 /** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
-export function cardCost(entry: CardEntry, factionId: string, holdings: Holdings, pack: DataPack): { kind: PaymentKind; amount: number } {
-  return handlerOf(entry.card).cost?.(entry, holdings)
-    ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, holdings, pack) };
+export function cardCost(entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack): { kind: PaymentKind; amount: number } {
+  return handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who)
+    ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, who, pack, entry) };
 }
 
 /**

@@ -27,7 +27,7 @@ test.fails('technology:ws a war sun produced with the technology reads as allowe
 
 // Checks: without the technology the same warning stands.
 // Why the check is NOT redundant here: nothing this player holds unlocks the war sun.
-test.fails('technology:ws without the technology the war sun warning stands', () => {
+test('technology:ws without the technology the war sun warning stands', () => {
   const table = build([]);
   showWarnings(table, table.entry);
   expectShownStanding(CODE);

@@ -90,7 +90,7 @@ export interface ComponentEffect {
   tier: EffectTier;
   /** The LRR rule the effect stands on, numbered as in the rules tests; the id of the component itself when its printed text is the rule, as for every hint. */
   rule: string;
-  /** passive: the changes to the points of the count, while the component is held. */
+  /** passive: the changes to the points of the count, while the component is held. play: the same points, for the entry that names the component only (`appliedFor`, src/domain/effects/entryApply.ts). */
   modify?: Partial<Modifiers>;
   /** play: what happens when an entry plays the component with its choices. */
   play?: (turn: EffectTurn) => void;

@@ -322,7 +322,8 @@ export type EntryBody = (
   | { type: 'component';
       /** The component played: an action card leaves the hand, an agent is exhausted, a hero purged. Without it the action is only its note. */ componentId?: string;
       note: string;
-      /** What the player chose for the component's effect, by the names its effect asks for. */ choices?: Record<string, string | number>; acts?: Act[] }
+      /** What the player chose for the component's effect, by the names its effect asks for. */ choices?: Record<string, string | number>; acts?: Act[];
+      /** What the component produces, as a card's effects do: a hero or a technology that builds units (`production`, paid with `payment`). */ effects?: CardEffects }
   | { type: 'pass'; acts?: Act[] }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
