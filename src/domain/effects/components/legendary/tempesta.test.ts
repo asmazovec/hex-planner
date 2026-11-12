@@ -20,7 +20,7 @@ describe('legendary:tempesta Ionian Fuel Refinery', () => {
   // Checks: one carrier (move 1) flies two systems with the refinery used; the speed warning is listed and lifted by it.
   // Why the check is redundant here: LRR 58.3 lets a ship enter no more systems than its move value; the card raises
   // that value by one for one ship, so a single ship one system short reaches the active system.
-  test.fails('legendary:tempesta used: one ship one system short is waived', () => {
+  test('legendary:tempesta used: one ship one system short is waived', () => {
     const table = flight({ carrier: 1 });
     quote(table.pack, id, 'apply +1 to the move value of 1 of your ships during this tactical action');
     expectWaived(warningsOf(table, table.move), 'speedShort', id);
@@ -53,7 +53,7 @@ describe('legendary:tempesta Ionian Fuel Refinery', () => {
   // "... of 1 of your ships ..."
   // Checks: a carrier and a dreadnought, each one system short: exactly one of the two warnings is lifted.
   // Why the check is NOT redundant here for the other: the card names one ship.
-  test.fails('legendary:tempesta lifts one of two ships of different types, not both', () => {
+  test('legendary:tempesta lifts one of two ships of different types, not both', () => {
     const table = flight({ carrier: 1, dreadnought: 1 });
     const marks = waivedBy(warningsOf(table, table.move));
     expect(marks).toHaveLength(2);
@@ -64,7 +64,7 @@ describe('legendary:tempesta Ionian Fuel Refinery', () => {
   //  comes with the control of the planet.
   // Checks: the refinery named by a player who does not control Tempesta is warned of as not held.
   // Why the check is NOT redundant here: the card lies in the play area of the controller only.
-  test.fails('legendary:tempesta used without controlling Tempesta is warned of as not held', () => {
+  test('legendary:tempesta used without controlling Tempesta is warned of as not held', () => {
     const table = flight({ carrier: 1 }, { control: false });
     expectStanding(warningsOf(table, table.move), 'componentNotHeld');
   });
@@ -78,7 +78,7 @@ describe('legendary:tempesta Ionian Fuel Refinery', () => {
     expectStanding(warningsOf(table, second), 'componentExhausted');
   });
 
-  test.fails('legendary:tempesta is a play effect that waives the speed check', () => {
+  test('legendary:tempesta is a play effect that waives the speed check', () => {
     const { pack } = flight({ carrier: 1 });
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);

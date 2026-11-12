@@ -17,7 +17,7 @@ const table = (secrets: string[]) => {
 // Checks: with no secret objective in hand I take The Galactic Council in «Used»; it is written into the entry, and
 // the warning of its condition stands on the screen.
 // Why the check is NOT redundant here: the card asks for a secret objective to discard.
-test.fails('legendary:mrte taken in «Used» with no secret objective in hand shows the condition warning', async () => {
+test('legendary:mrte taken in «Used» with no secret objective in hand shows the condition warning', async () => {
   const { entry, game } = table([]);
   quote(game.pack, id, 'discard 1 secret objective to draw 1 secret objective');
   const live = showUses(game, entry);

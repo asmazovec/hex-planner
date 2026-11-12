@@ -14,7 +14,7 @@ const table = (entry: ReturnType<typeof nucleus>) =>
 // Star Forge: "... in a system that contains 1 or more of your war suns."; Muaat notes, Avernus 3.
 // Checks: the Nucleus played for a system without my war sun shows the condition warning, standing.
 // Why the check is NOT redundant here: the card lifts the token Star Forge costs, not where it places.
-test.fails('legendary:avernus played for a system without a war sun shows the condition warning', () => {
+test('legendary:avernus played for a system without a war sun shows the condition warning', () => {
   const entry = nucleus(NEAR);
   quote(table(entry).pack, id, 'use the Embers of Muaat\'s');
   showWarnings(table(entry), entry);

@@ -18,7 +18,7 @@ describe('legendary:avernus The Nucleus', () => {
   // Checks: a Letnev player with a war sun at home plays the Nucleus: one destroyer is placed there and the strategy
   // pool keeps its tokens.
   // Why the cost does not apply: Star Forge spends a token from the strategy pool; the card uses it without one.
-  test.fails('legendary:avernus places a destroyer beside a war sun and spends no strategy token', () => {
+  test('legendary:avernus places a destroyer beside a war sun and spends no strategy token', () => {
     const entry = nucleus('destroyer', HOME);
     const game = table([entry]);
     quote(game.pack, id, 'without spending a command token');
@@ -31,7 +31,7 @@ describe('legendary:avernus The Nucleus', () => {
 
   // Star Forge: "... either 2 fighters or 1 destroyer ..."
   // Checks: the choice of fighters places two of them.
-  test.fails('legendary:avernus the fighters choice places two fighters', () => {
+  test('legendary:avernus the fighters choice places two fighters', () => {
     expect(endOf(table([nucleus('fighter', HOME)])).systems[HOME]).toEqual({ warsun: 1, fighter: 2 });
   });
 
@@ -39,13 +39,13 @@ describe('legendary:avernus The Nucleus', () => {
   //  player controls Avernus, they may use The Nucleus only if they have a war sun on the game board."
   // Checks: a system without a war sun of mine is warned of.
   // Why the check is NOT redundant here: the card lifts the cost of Star Forge, not its condition.
-  test.fails('legendary:avernus a system without my war sun is warned of', () => {
+  test('legendary:avernus a system without my war sun is warned of', () => {
     const entry = nucleus('destroyer', NEAR);
     expectStanding(warningsOf(table([entry]), entry), CONDITION);
   });
 
   // Checks: with no war sun on the board at all the use is warned of.
-  test.fails('legendary:avernus with no war sun on the board is warned of', () => {
+  test('legendary:avernus with no war sun on the board is warned of', () => {
     const entry = nucleus('destroyer', HOME);
     expectStanding(warningsOf(table([entry], { units: { carrier: 1 } }), entry), CONDITION);
   });
@@ -58,12 +58,12 @@ describe('legendary:avernus The Nucleus', () => {
   });
 
   // LRR 53.3 with 53.2: the card is in the play area of the player who controls Avernus.
-  test.fails('legendary:avernus played without controlling Avernus is warned of as not held', () => {
+  test('legendary:avernus played without controlling Avernus is warned of as not held', () => {
     const entry = nucleus('destroyer', HOME);
     expectStanding(warningsOf(table([entry], { control: false }), entry), 'componentNotHeld');
   });
 
-  test.fails('legendary:avernus is a play effect', () => {
+  test('legendary:avernus is a play effect', () => {
     const { pack } = table();
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

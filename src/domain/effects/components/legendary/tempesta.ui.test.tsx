@@ -16,7 +16,7 @@ const table = (move: ReturnType<typeof flight>) =>
 // Checks: a carrier one system short is flown; in «Used» I take the Ionian Fuel Refinery, it is written into the
 // entry, and the speed warning stays on the screen in the allowed look, naming the card.
 // Why the check is redundant here: the card raises the move value of this one ship by one (LRR 58.3.6 counts against it).
-test.fails('legendary:tempesta the refinery is taken in «Used», and the speed warning reads as allowed by it', async () => {
+test('legendary:tempesta the refinery is taken in «Used», and the speed warning reads as allowed by it', async () => {
   const move = flight({ carrier: 1 });
   const refinery = table(move);
   quote(refinery.pack, id, 'apply +1 to the move value of 1 of your ships');
