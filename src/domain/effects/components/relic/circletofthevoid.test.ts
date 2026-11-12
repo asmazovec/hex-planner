@@ -17,7 +17,7 @@ describe('relic:circletofthevoid Circlet of the Void', () => {
   // Checks: the cruiser flies through an asteroid field; the route warning is listed and lifted by the relic.
   // Why the check is redundant here: LRR 11.1 forbids moving through or into an asteroid field; that is an effect of an
   // anomaly on movement, which the holder of the Circlet ignores (Circlet note 1).
-  test.fails('relic:circletofthevoid lifts the route through an asteroid field', () => {
+  test('relic:circletofthevoid lifts the route through an asteroid field', () => {
     const move = through();
     const circlet = table('r-asteroid', { [HOME]: { cruiser: 1 } }, move);
     quote(circlet.pack, id, 'you ignore the effects of all other anomalies on movement');
@@ -26,7 +26,7 @@ describe('relic:circletofthevoid Circlet of the Void', () => {
 
   // Checks: the cruiser moves into a supernova as the active system; the warning is lifted.
   // Why the check is redundant here: LRR 86.1 forbids moving into a supernova; the holder may (Circlet note 1).
-  test.fails('relic:circletofthevoid lifts the move into a supernova', () => {
+  test('relic:circletofthevoid lifts the move into a supernova', () => {
     const move = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
     expectWaived(warningsOf(table('r-supernova', { [HOME]: { cruiser: 1 } }, move), move), 'routeBlocked', id);
   });
@@ -34,7 +34,7 @@ describe('relic:circletofthevoid Circlet of the Void', () => {
   // Checks: the cruiser flies through a nebula on its way to the target; the warning is lifted.
   // Why the check is redundant here: LRR 59.1 lets a ship enter a nebula only as the active system; the holder may
   // move through nebulae (Circlet note 2).
-  test.fails('relic:circletofthevoid lifts the route through a nebula', () => {
+  test('relic:circletofthevoid lifts the route through a nebula', () => {
     const move = through();
     expectWaived(warningsOf(table('r-nebula', { [HOME]: { cruiser: 1 } }, move), move), 'routeBlocked', id);
   });
@@ -42,7 +42,7 @@ describe('relic:circletofthevoid Circlet of the Void', () => {
   // Checks: a cruiser that starts in a nebula moves two systems with its move value of 2: no shortfall stands.
   // Why the check is redundant here: LRR 59.2 sets the move value of a ship starting in a nebula to 1; the holder's
   // ships "in nebulae do not have their movement values reduced" (Circlet note 2).
-  test.fails('relic:circletofthevoid a ship leaving a nebula keeps its move value', () => {
+  test('relic:circletofthevoid a ship leaving a nebula keeps its move value', () => {
     const move = tactical(FAR, { moves: [{ from: NEAR, units: { cruiser: 1 }, via: [TARGET] }] });
     expect(standing(warningsOf(table('r-nebula', { [NEAR]: { cruiser: 1 } }, move), move), 'speedShort')).toEqual([]);
   });
@@ -91,9 +91,11 @@ describe('relic:circletofthevoid Circlet of the Void', () => {
 
   test.todo('relic:circletofthevoid ACTION "explore a frontier token": the plan does not explore');
 
-  test.fails('relic:circletofthevoid is a passive effect that waives anomalies on routes', () => {
+  test('relic:circletofthevoid is a passive effect that waives anomalies on routes', () => {
     const { pack } = table('r-empty', {}, through());
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(expect.arrayContaining(['routeBlocked', 'speedShort']));
+    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    // The nebula's slowing of a ship that starts in it is a modify of the `nebulaStart` point, not a waiver of `speedShort`.
+    expect(effect(pack, id).modify?.nebulaStart).toBeDefined();
   });
 });

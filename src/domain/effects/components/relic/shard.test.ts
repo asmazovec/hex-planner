@@ -11,7 +11,7 @@ describe('relic:shard Shard of the Throne', () => {
   // "When you gain this card, gain 1 victory point"
   // Checks: the entry that gains the relic adds 1 victory point.
   // Why it is counted here: the points are the board's; the relic gives one by being gained.
-  test.fails('relic:shard gained gives 1 victory point', () => {
+  test('relic:shard gained gives 1 victory point', () => {
     const shard = table([gains()]);
     quote(shard.pack, id, 'When you gain this card, gain 1 victory point, when you lose this card, lose 1 victory point.');
     expect(endOf(shard).vp).toBe(1);
@@ -19,7 +19,7 @@ describe('relic:shard Shard of the Throne', () => {
 
   // "when you lose this card, lose 1 victory point."
   // Checks: gained and then lost, the relic leaves the points where they were.
-  test.fails('relic:shard lost takes the victory point away', () => {
+  test('relic:shard lost takes the victory point away', () => {
     const shard = table([gains(), loses()]);
     expect(endOf(shard).vp).toBe(0);
     expect(endOf(table([gains()])).vp).toBe(1);
@@ -33,7 +33,7 @@ describe('relic:shard Shard of the Throne', () => {
 
   test.todo('relic:shard "that player gains this card": the transfer to a player who takes such a planet is not replayed');
 
-  test.fails('relic:shard is counted, not only shown', () => {
+  test('relic:shard is counted, not only shown', () => {
     expect(effect(table([]).pack, id).tier).not.toBe('hint');
   });
 });

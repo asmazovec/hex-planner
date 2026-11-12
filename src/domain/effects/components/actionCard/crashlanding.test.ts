@@ -18,7 +18,7 @@ describe('actionCard:crashlanding Crash Landing', () => {
   // that ground forces stand in space without a ship to hold them is listed and lifted by the card.
   // Why the check is redundant here: LRR 16.3 removes ground forces in a space area beyond the capacity there, so with
   // the last ship gone the infantry could not stay to land; the card places that one ground force on the planet.
-  test.fails('actionCard:crashlanding lets one ground force land after the last ship is lost', () => {
+  test('actionCard:crashlanding lets one ground force land after the last ship is lost', () => {
     const move = using(crash(), id);
     const card = table(move);
     quote(card.pack, id, 'Place 1 of your ground forces from the space area of the active system onto a planet');
@@ -56,7 +56,7 @@ describe('actionCard:crashlanding Crash Landing', () => {
 
   test.todo('actionCard:crashlanding "other than Mecatol Rex" and "into coexistence": the plan models neither');
 
-  test.fails('actionCard:crashlanding waives the ground forces left in space for the entry that plays it', () => {
+  test('actionCard:crashlanding waives the ground forces left in space for the entry that plays it', () => {
     const { pack } = table(crash());
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['capacitySystem', undefined]]);
   });

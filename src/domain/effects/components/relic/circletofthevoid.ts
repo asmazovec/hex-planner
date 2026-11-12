@@ -8,8 +8,19 @@
  * the ship short. The rift still adds 1 (Circlet note 3), and the relic works exhausted too (note 4). The action
  * explores, which the plan does not model. Pass 1 keeps it the hint it is today.
  */
+import { routeBlockKind } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:circletofthevoid';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // A ship that starts in a nebula keeps its own move value (59.2 does not apply).
+  modify: { nebulaStart: (_value, ctx) => ctx.speed },
+  waive: [{
+    code: 'routeBlocked',
+    rule: 'you ignore the effects of all other anomalies on movement',
+    when: (warning, ctx) => ['asteroid', 'supernova', 'nebula'].includes(routeBlockKind(warning, ctx) ?? ''),
+  }],
+};

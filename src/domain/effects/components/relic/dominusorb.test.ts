@@ -17,7 +17,7 @@ describe('relic:dominusorb Dominus Orb', () => {
   // Why the check is redundant here: LRR 58.3.3 ("The ship cannot move if it started its movement in another system
   // that contains one of its faction's command tokens.") is the check; the Orb lets units in such systems move, by its
   // own words.
-  test.fails('relic:dominusorb lifts the move out of a system with my command token', () => {
+  test('relic:dominusorb lifts the move out of a system with my command token', () => {
     const move = using(leaveHome(), id);
     const orb = table([activateHome(), move]);
     quote(orb.pack, id, 'move and transport units that are in systems that contain 1 of your command tokens');
@@ -30,7 +30,7 @@ describe('relic:dominusorb Dominus Orb', () => {
   // Why the check is redundant here: LRR 95.3 forbids transporting units out of a system with my token other than
   // the active one, and an ability that moves ships must "explicitly allow it to transport units" from such systems
   // (Movement, note 2); the Orb names transport as well as movement.
-  test.fails('relic:dominusorb lifts the pickup from a system with my command token', () => {
+  test('relic:dominusorb lifts the pickup from a system with my command token', () => {
     const move = using(tactical(TARGET, {
       moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }, { from: NEAR, units: { infantry: 1 }, pickupOf: HOME }],
     }), id);
@@ -59,7 +59,7 @@ describe('relic:dominusorb Dominus Orb', () => {
     expectStanding(warnings, 'componentNotHeld');
   });
 
-  test.fails('relic:dominusorb is a play effect that waives the move out of a system with my token', () => {
+  test('relic:dominusorb is a play effect that waives the move out of a system with my token', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['sourceActivated', undefined]]);

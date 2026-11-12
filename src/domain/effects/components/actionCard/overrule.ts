@@ -9,4 +9,10 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:overrule';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // The card, not a token, lets the primary be performed.
+  modify: { strategyCost: (value, ctx) => (ctx.secondary ? value : 0) },
+  waive: [{ code: 'foreignPrimary', rule: 'Perform the primary ability of a readied or unchosen strategy card.', when: (_warning, ctx) => ctx.before.holdings.hand.includes(id) }],
+};

@@ -14,7 +14,7 @@ const table = (play: Entry) => bench({ faction: 'sol', expansions: ['pok'], star
 // Checks: with an empty strategy pool I choose the Scepter in «Used» of the secondary; it is named in the entry, and no
 // standing warning says the strategy pool is short.
 // Why the check is redundant here: the token comes from the reinforcements, so the pool is not asked (20.5 otherwise).
-test.fails('relic:emelpar chosen in «Used», the secondary no longer runs the strategy pool short', async () => {
+test('relic:emelpar chosen in «Used», the secondary no longer runs the strategy pool short', async () => {
   const play = secondary(7);
   const scepter = table(play);
   quote(scepter.pack, id, 'you may exhaust this card to spend a token from your reinforcements instead');

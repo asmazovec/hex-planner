@@ -11,4 +11,9 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:shard';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  gained: ({ state }) => { state.vp += 1; },
+  lost: ({ state }) => { state.vp -= 1; },
+};

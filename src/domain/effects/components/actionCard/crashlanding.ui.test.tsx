@@ -17,7 +17,7 @@ const table = (move: ReturnType<typeof crash>) =>
 // is named in the entry, and the warning of ground forces in space without capacity reads as allowed by Crash Landing.
 // Why the check is redundant here: with the last ship gone the ground force would be removed (16.3); the card puts it
 // on the planet.
-test.fails('actionCard:crashlanding chosen in «Used», the landing after the last ship is lost reads as allowed by Crash Landing', async () => {
+test('actionCard:crashlanding chosen in «Used», the landing after the last ship is lost reads as allowed by Crash Landing', async () => {
   const move = crash();
   const card = table(move);
   quote(card.pack, id, 'Place 1 of your ground forces from the space area of the active system onto a planet');

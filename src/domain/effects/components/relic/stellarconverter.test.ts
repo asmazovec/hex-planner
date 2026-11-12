@@ -21,7 +21,7 @@ describe('relic:stellarconverter Stellar Converter', () => {
   // Checks: t1, beside my dreadnought, is converted: o1's infantry there are gone and nobody controls it; the relic is
   // purged.
   // Why it is counted here: a play; the units and the control of the planet are the board's.
-  test.fails('relic:stellarconverter destroys the units on the planet and its control', () => {
+  test('relic:stellarconverter destroys the units on the planet and its control', () => {
     const converter = table([convert('t1')]);
     quote(converter.pack, id, 'destroy all units on that planet and purge its attachments and its planet card');
     const end = endOf(converter);
@@ -34,7 +34,7 @@ describe('relic:stellarconverter Stellar Converter', () => {
   //  a planet they control with Stellar Converter."
   // Checks: aiming it at h1, a planet of my home system that I control, is warned of.
   // Why the check is NOT redundant here: the card names the planets it may destroy, and a home planet is not one.
-  test.fails('relic:stellarconverter aimed at a home planet of mine is warned of', () => {
+  test('relic:stellarconverter aimed at a home planet of mine is warned of', () => {
     const play = convert('h1');
     expectStanding(warningsOf(table([play]), play), CODE);
   });
@@ -42,7 +42,7 @@ describe('relic:stellarconverter Stellar Converter', () => {
   test.todo('relic:stellarconverter "adjacent to 1 or more of your units that have BOMBARDMENT": the check of the target\'s neighbours waits for the target code');
   test.todo('relic:stellarconverter "place the destroyed planet token": no state of the plan keeps a destroyed planet');
 
-  test.fails('relic:stellarconverter is a play effect', () => {
+  test('relic:stellarconverter is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

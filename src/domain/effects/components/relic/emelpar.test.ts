@@ -18,7 +18,7 @@ describe('relic:emelpar Scepter of Emelpar', () => {
   // stays at 0: the token came from the reinforcements.
   // Why the check is redundant here: LRR 20.5 has the secondary paid from the strategy pool; the Scepter pays it from
   // the reinforcements instead, so the pool is never asked.
-  test.fails('relic:emelpar pays the token of a secondary from the reinforcements', () => {
+  test('relic:emelpar pays the token of a secondary from the reinforcements', () => {
     const play = using(secondary(TECHNOLOGY), id);
     const scepter = table([emptyPool(), play]);
     quote(scepter.pack, id, 'you may exhaust this card to spend a token from your reinforcements instead');
@@ -28,7 +28,7 @@ describe('relic:emelpar Scepter of Emelpar', () => {
 
   // Checks: with tokens in the pool, the secondary with the Scepter leaves both of them there.
   // Why the check is redundant here: the token spent is one of the reinforcements, not of the pool.
-  test.fails('relic:emelpar keeps the strategy pool whole', () => {
+  test('relic:emelpar keeps the strategy pool whole', () => {
     expect(endOf(table([using(secondary(TECHNOLOGY), id)])).strategy).toBe(2);
   });
 
@@ -49,7 +49,7 @@ describe('relic:emelpar Scepter of Emelpar', () => {
     expectStanding(warningsOf(scepter, again), 'componentExhausted');
   });
 
-  test.fails('relic:emelpar is a play effect', () => {
+  test('relic:emelpar is a play effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

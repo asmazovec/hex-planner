@@ -10,4 +10,13 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:mawofworlds';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: ({ state, held }) => {
+    if (!held) return;
+    for (const planetId of Object.keys(state.control)) {
+      if (state.control[planetId] === 'me' && !state.exhausted.includes(planetId)) state.exhausted.push(planetId);
+    }
+  },
+};

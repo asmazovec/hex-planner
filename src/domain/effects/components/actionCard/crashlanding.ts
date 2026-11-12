@@ -12,4 +12,14 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:crashlanding';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'hint',
+  rule: id,
+  hintAt: ['combat'],
+  waive: [{
+    code: 'capacitySystem',
+    rule: 'Place 1 of your ground forces from the space area of the active system onto a planet in that system',
+    // One ground force only: what stays beyond the capacity must be that one.
+    when: (warning, ctx) => Number(warning.params.load) - Number(warning.params.capacity) <= 1 && ctx.before.holdings.hand.includes(id),
+  }],
+};

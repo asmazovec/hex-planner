@@ -20,7 +20,7 @@ const flight = (relics: string[]) => {
 // warning reads as allowed by Circlet of the Void.
 // Why the check is redundant here: LRR 11.1 forbids moving through an asteroid field; the holder of the Circlet
 // ignores that effect of an anomaly (Circlet note 1).
-test.fails('relic:circletofthevoid a cruiser flies through an asteroid field, and the warning reads as allowed by Circlet of the Void', async () => {
+test('relic:circletofthevoid a cruiser flies through an asteroid field, and the warning reads as allowed by Circlet of the Void', async () => {
   const { table, live } = flight([id]);
   quote(table.pack, id, 'you ignore the effects of all other anomalies on movement');
   await take('Cruiser');

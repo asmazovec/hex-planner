@@ -19,7 +19,7 @@ describe('relic:obsidian The Obsidian', () => {
   // Checks: two unscored and one scored secret objective, and a fourth drawn: no warning with the relic.
   // Why the default limit does not apply: the limit of three (61.21) is raised by one, a modify of the number; the
   // check runs against four and nothing is listed as waived.
-  test.fails('relic:obsidian lets a fourth secret objective be held', () => {
+  test('relic:obsidian lets a fourth secret objective be held', () => {
     const entry = draw(4);
     const obsidian = table(entry);
     quote(obsidian.pack, id, 'You can have 1 additional scored or unscored secret objective.');
@@ -44,7 +44,7 @@ describe('relic:obsidian The Obsidian', () => {
 
   test.todo('relic:obsidian "When you gain this card, draw 1 secret objective": the objective is entered as a gain of the same entry');
 
-  test.fails('relic:obsidian is a passive effect that changes the secret objective limit', () => {
+  test('relic:obsidian is a passive effect that changes the secret objective limit', () => {
     const { pack } = table(draw(4));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();

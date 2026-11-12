@@ -10,4 +10,13 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:dominusorb';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  waive: [{
+    code: 'sourceActivated',
+    rule: 'you may purge this card to move and transport units that are in systems that contain 1 of your command tokens',
+    // Only an Orb still held: one already purged is a component not held, and lifts nothing.
+    when: (_warning, ctx) => ctx.before.holdings.relics.includes(id),
+  }],
+};

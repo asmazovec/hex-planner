@@ -17,7 +17,7 @@ const table = (entry: Entry) => {
 // Checks: in «Used» of the primary of a card I do not hold I choose Overrule; it is named in the entry, and the warning
 // of a primary of another's card reads as allowed by Overrule.
 // Why the check is redundant here: the card lets me perform the primary of a card I do not hold (LRR 83.3 otherwise).
-test.fails('actionCard:overrule chosen in «Used», the primary of a card not mine reads as allowed by Overrule', async () => {
+test('actionCard:overrule chosen in «Used», the primary of a card not mine reads as allowed by Overrule', async () => {
   const play = primary(5);
   const overrule = table(play);
   quote(overrule.pack, id, 'Perform the primary ability of a readied or unchosen strategy card.');

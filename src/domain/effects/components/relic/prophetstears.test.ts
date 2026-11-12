@@ -21,7 +21,7 @@ describe('relic:prophetstears The Prophet\'s Tears', () => {
   // `uses`; the warning of the missing prerequisite is listed and lifted by the relic.
   // Why the check is redundant here: LRR 90.8 asks one technology of the colour for each prerequisite symbol; the
   // Tears ignore one of them, and only one is missing.
-  test.fails('relic:prophetstears lifts one missing prerequisite of a technology researched', () => {
+  test('relic:prophetstears lifts one missing prerequisite of a technology researched', () => {
     const play = using(research(), id);
     const tears = table([play], ['technology:amd']);
     quote(tears.pack, id, 'you may exhaust this card to ignore 1 prerequisite');
@@ -55,7 +55,7 @@ describe('relic:prophetstears The Prophet\'s Tears', () => {
 
   test.todo('relic:prophetstears "or draw 1 action card": the card drawn is entered as a gain of the entry, nothing to check');
 
-  test.fails('relic:prophetstears is a play effect that waives one missing prerequisite', () => {
+  test('relic:prophetstears is a play effect that waives one missing prerequisite', () => {
     const { pack } = table([], []);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
