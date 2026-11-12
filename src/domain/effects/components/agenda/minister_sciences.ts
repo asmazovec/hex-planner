@@ -5,11 +5,18 @@
  *
  * A waiver: the resources Technology costs (91.2/91.3) are not owed by the owner, so a shortfall on a Technology
  * entry is lifted. Only Technology, only resources; the law is the elected player's only.
- *
- * Pass 1: written as the hint it is today; the tests beside it say what it must do.
  */
+import { CARD } from '../../../replay/cards/ids';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:minister_sciences';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'shortResources',
+    rule: 'they do not need to spend resources to research technology',
+    when: (_warning, ctx) => (ctx.entry?.type === 'strategic' || ctx.entry?.type === 'secondary') && ctx.entry.card === CARD.technology,
+  }],
+};

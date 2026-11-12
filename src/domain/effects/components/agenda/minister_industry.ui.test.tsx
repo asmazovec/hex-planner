@@ -22,7 +22,7 @@ const construction = (inPlay: boolean) => {
 // Checks: the production stays in the Construction entry and its warning reads as allowed by Minister of Industry.
 // Why the check is redundant here: the law lets the units of the dock's system produce when it is placed (67.1
 // keeps production to the tactical action otherwise).
-test.fails('agenda:minister_industry a production on Construction reads as allowed by Minister of Industry', () => {
+test('agenda:minister_industry a production on Construction reads as allowed by Minister of Industry', () => {
   const { table, live } = construction(true);
   quote(table.pack, id, 'their units in that system may use their PRODUCTION abilities');
   expect(live.entry()).toMatchObject({ effects: { production: { systemId: HOME, units: { fighter: 2 } } } });
