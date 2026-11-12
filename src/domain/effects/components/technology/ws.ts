@@ -8,8 +8,13 @@
  * yet; pass 2 adds the check for everyone and this file waives it. The lost PLANETARY SHIELD belongs to the combat.
  * Pass 1: the generated effect as it is today.
  */
+import warSunLocked from '../../../rules/codes/warSunLocked';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:ws';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: '97.4',
+  waive: [{ code: warSunLocked.code, rule: 'tirules2, units, War Sun 1: the technology is what unlocks the war sun' }],
+};

@@ -15,7 +15,7 @@ const production = () => {
 // Checks: in «Used» of a tactical action that produces I choose Self-Assembly Routines; it is named in the entry and
 // the plan then has one mech on a planet of the home system.
 // Why the default does not apply: a mech is otherwise only produced and paid for; the card places one.
-test.fails('technology:sar chosen in «Used» of a production, a mech stands on a planet of that system', async () => {
+test('technology:sar chosen in «Used» of a production, a mech stands on a planet of that system', async () => {
   const table = production();
   quote(table.pack, id, 'place 1 mech from your reinforcements on a planet you control in that system');
   const live = showUses(table, table.entry);

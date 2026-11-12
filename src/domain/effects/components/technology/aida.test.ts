@@ -36,7 +36,7 @@ describe('technology:aida AI Development Algorithm', () => {
   // Checks: Destroyer II needs two red; AIDA is one, and AIDA named in the research entry ignores the other: the
   // prerequisite warning is listed and lifted by AIDA.
   // Why the check is redundant here: 90.9 asks one technology per symbol; the card lets one symbol go unmet.
-  test.fails('technology:aida used, a unit upgrade one prerequisite short is researched: the warning is waived', () => {
+  test('technology:aida used, a unit upgrade one prerequisite short is researched: the warning is waived', () => {
     const table = research('technology:dd2', true);
     quote(table.pack, id, 'When you research a unit upgrade technology, you may exhaust this card to ignore any 1 prerequisite.');
     expectWaived(warningsOf(table, table.entry), CODE, id);
@@ -104,7 +104,7 @@ describe('technology:aida AI Development Algorithm', () => {
     expectStanding(warningsOf(table, second), 'componentExhausted');
   });
 
-  test.fails('technology:aida is a play effect that waives the missing prerequisite', () => {
+  test('technology:aida is a play effect that waives the missing prerequisite', () => {
     const { pack } = research('technology:dd2', true);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);

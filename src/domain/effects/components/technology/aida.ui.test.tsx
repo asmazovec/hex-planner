@@ -19,7 +19,7 @@ const research = () => {
 // Checks: in «Used» of the research I choose AI Development Algorithm; it is named in the entry and the missing
 // prerequisite reads as allowed by it.
 // Why the check is redundant here: the card lets one prerequisite symbol of a unit upgrade go unmet.
-test.fails('technology:aida chosen in «Used» of a research, the missing prerequisite reads as allowed by it', async () => {
+test('technology:aida chosen in «Used» of a research, the missing prerequisite reads as allowed by it', async () => {
   const table = research();
   quote(table.pack, id, 'you may exhaust this card to ignore any 1 prerequisite');
   const live = showUses(table, table.entry);
