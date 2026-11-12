@@ -57,7 +57,7 @@ test.fails('leader:sardakkcommander a landing from an adjacent planet shows its 
 //  any number of those ground forces to land on any of the planets in that system."
 // Checks: the same landing of another faction shows its warning standing.
 // Why the check is NOT redundant here: nothing of the Federation of Sol commits from planets.
-test.fails('leader:sardakkcommander another faction landing from an adjacent planet: the warning stands', () => {
+test('leader:sardakkcommander another faction landing from an adjacent planet: the warning stands', () => {
   const move = committed();
   showTactical(table('sol', move), move);
   expectShownStanding(CODE);
