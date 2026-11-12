@@ -17,7 +17,7 @@ describe('technology:helios2 4X41C "Helios" V2', () => {
   // Checks: the dock on h1 (resources 3) produces 3 + 2 + 4 = 9 units: nine infantry make no productionOver warning.
   // Why the default limit does not apply: Space Dock II gives resources + 4 = 7 (79.1); Helios raises the resources
   // themselves, so the check runs against 9. A modify, not a waiver: nothing is listed as waived.
-  test.fails('technology:helios2 produces 4 more than the planet\'s resources raised by 2: nine units on a planet of 3', () => {
+  test('technology:helios2 produces 4 more than the planet\'s resources raised by 2: nine units on a planet of 3', () => {
     const table = build('bastion', [id], { infantry: 9 });
     quote(table.pack, id, 'This unit\'s PRODUCTION value is equal to 4 more than the resource value of this planet.');
     quote(table.pack, id, 'The resource value of this planet is increased by 2.');
@@ -26,7 +26,7 @@ describe('technology:helios2 4X41C "Helios" V2', () => {
 
   // Checks: the tenth unit is beyond the raised limit, and the warning names the value of 9.
   // Why the check is NOT redundant here: Helios raises the Production value, it does not remove it.
-  test.fails('technology:helios2 still warns of a tenth unit, against the value of nine', () => {
+  test('technology:helios2 still warns of a tenth unit, against the value of nine', () => {
     const table = build('bastion', [id], { infantry: 10 });
     expectStanding(warningsOf(table, table.move), 'productionOver');
     expect(over(table)).toMatchObject({ value: 9, count: 10 });
@@ -35,7 +35,7 @@ describe('technology:helios2 4X41C "Helios" V2', () => {
   // "The resource value of this planet is increased by 2."
   // Checks: nine infantry cost 5 (two for 1, 4.5 rounded up); h1 alone pays them: 3 printed + 2.
   // Why the check is redundant here: the payment counts the printed resources of h1 (3); Helios makes them 5.
-  test.fails('technology:helios2 raises the resources of the dock\'s planet by 2 when it is spent', () => {
+  test('technology:helios2 raises the resources of the dock\'s planet by 2 when it is spent', () => {
     const table = build('bastion', [id], { infantry: 9 }, { planets: ['h1'], tradeGoods: 0 });
     expectNone(warningsOf(table, table.move), 'shortResources');
   });
@@ -80,7 +80,7 @@ describe('technology:helios2 4X41C "Helios" V2', () => {
     expectStanding(warningsOf(table, table.move), 'capacitySystem');
   });
 
-  test.fails('technology:helios2 is a passive effect that changes the Production value and the resources of its planet', () => {
+  test('technology:helios2 is a passive effect that changes the Production value and the resources of its planet', () => {
     const { pack } = build('bastion', [id], {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['planetResources', 'productionValue']);

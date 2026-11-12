@@ -72,7 +72,7 @@ describe('technology:aida AI Development Algorithm', () => {
   // Checks: two cruisers cost 4; I own one unit upgrade (Destroyer II), so with AIDA used they cost 3, which h1 pays.
   // Why the shortfall is not made here: the payment check (26, 75) compares the cost with the resources spent, and the
   // card lowers the cost of this production.
-  test.fails('technology:aida used in a production takes one off the cost per unit upgrade owned', () => {
+  test('technology:aida used in a production takes one off the cost per unit upgrade owned', () => {
     const entry = using(production(), id);
     const table = factory([entry], ['technology:dd2']);
     expect(warningsOf(table, entry).filter(w => w.code === 'shortResources')).toEqual([]);

@@ -42,8 +42,8 @@ objective's name.
 
 `modify` is no longer only for `tier: 'passive'`. On a `play` effect it counts for the entry that names the component (its
 action, its `spends`, its `uses`) while its owner holds it ready (held and not exhausted before the entry); a `hint` has none.
-`appliedFor(pack, holder, entry, state, point, base, ctx)` asks the components in force and those the entry names, in registry order;
-the status points above use it. The contract test now says "only a passive or a play effect has `modify`" and asks a test of the
+`appliedFor(pack, holder, entry, point, base, ctx, state)` (`src/domain/effects/entryApply.ts`, the one of the program) asks the components in force, then those the entry names, ready in `state`;
+the status points above use it. A promissory note of the entry owner's own is skipped (69.2: Cybernetic Enhancements). The contract test now says "only a passive or a play effect has `modify`" and asks a test of the
 interface for an effect with `requirement`, `gained`, `lost`, `restrict` or `suppresses`.
 
 ## Hooks on `ComponentEffect` (merged)

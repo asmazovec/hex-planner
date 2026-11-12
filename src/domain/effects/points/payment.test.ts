@@ -4,7 +4,6 @@
  * the cost of a component action. A component's own file is never touched.
  */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-// Loaded first: the components the registry loads import this module, and it must see the mocked registry (a cycle).
 import { applyPayment, checkPayment, commoditiesForShortfall, pay, readyInfluence, readyResources, spendTradeGoods } from '../../replay/payment';
 import { autoPay, paymentValue } from '../../payment';
 import { commodityValueOf, gainCommodities, replenish } from '../../replay/cards/trade';
@@ -15,6 +14,9 @@ import { alwaysInForce, throwaway } from './throwaway';
 import { violation } from '../../rules/registry';
 
 vi.mock('../registry', async original => (await import('./throwaway')).mockRegistry(await original()));
+// The components the registry loads import the payment module and need the mocked registry (a cycle): load it first,
+// here, so that the order of the imports above does not matter.
+await vi.hoisted(async () => { await import('../../replay/payment'); });
 
 const pack = rulesPack();
 const view = { faction: 'rules-tester' };

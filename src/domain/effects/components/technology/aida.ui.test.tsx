@@ -42,7 +42,7 @@ test('technology:aida not chosen, the missing prerequisite stands', () => {
 // Checks: two cruisers (4) paid with h1 (3) are short; I choose the card in «Used», own one unit upgrade, and the
 // shortfall is gone.
 // Why the shortfall is not made: the card lowers the cost of this production by one.
-test.fails('technology:aida chosen in «Used» of a production, the cost falls and the shortfall goes', async () => {
+test('technology:aida chosen in «Used» of a production, the cost falls and the shortfall goes', async () => {
   const entry = tactical(HOME, { production: { cruiser: 2 }, payment: { planets: ['h1'], tradeGoods: 0 } });
   const table = bench({ faction: 'hacan', expansions: ['pok'], start: { technologies: [id, 'technology:dd2'] }, entries: [entry], game: { docks: ['h1'] } });
   const live = showUses(table, entry);

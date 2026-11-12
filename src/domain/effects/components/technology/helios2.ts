@@ -8,11 +8,15 @@
  * "Helios" 1), so the dock produces resources + 2 + 4, and the planet is worth 2 more resources when spent. The three
  * fighters are what every space dock keeps (`dockFighterRoom`), already counted.
  *
- * Pass 1: the generated numbers only (a unit upgrade's file is always passive); pass 2 adds `productionValue` +2 and
- * `planetResources` +2 on a planet holding the player's dock.
+  * Pass 2: `planetResources` +2 on a planet holding the player's dock (`ctx.dock`). The dock's Production is taken from the
+ * raised resources (`dockValue`), so `productionValue` is not raised again.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:helios2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: '97.4',
+  modify: { planetResources: (value, ctx) => (ctx.dock ? value + 2 : value) },
+};

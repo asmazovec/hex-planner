@@ -14,10 +14,10 @@ Where a subsystem file disagrees with this list, this list is right.
 - `gained` and `lost` are called in one place, `src/domain/replay/afterEntry.ts`, after the entry's gains. There is no
   `GainTurn` hook.
 - `handOverLimit` is checked once, in `afterEntry.ts`, for an entry that gains action cards; its step is `round`.
-- Two helpers are named `appliedFor`, and both let a play effect's `modify` count for the entry that names it:
-  `src/domain/effects/entryApply.ts` — `(pack, holder, entry, point, base, ctx)`, used by production and unit costs;
-  `src/domain/effects/points/status.ts` — `(pack, holder, entry, before, point, base, ctx)`, which also asks that the
-  owner holds the component ready. Use the one the step you touch already uses.
+- There is one `appliedFor`, in `src/domain/effects/entryApply.ts`: `(pack, holder, entry, point, base, ctx, state?)`. It lets a
+  play effect's `modify` count for the entry that names it (after the passive ones). With `state` (the owner's board before
+  the entry) the component counts only while held ready (status points); without it, it need not be held. A note of the
+  entry owner's own never counts (69.2). Production, unit costs, research costs and the status points all use it.
 - The point `dockFighters` is declared in `points/production.ts` (`faction` optional).
 - `holderOf(game, state, shared)` gives the laws that bind the player (`lawOwners`) and the other players' holdings
   (`others`, for an Alliance note). A law reaches a rival's count only through `shared`.

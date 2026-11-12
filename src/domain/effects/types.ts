@@ -32,11 +32,14 @@ export interface ModifierContext {
   productionValue: { structure: StructureKind; planetId: string };
   /** The cost of one unit; half a resource for a unit built in pairs. */
   unitCost: { faction: string; unit: UnitId };
-  /** `attached`: the cards and laws attached to the planet (`attachments`), so a law elected for one planet knows if it is this one. */
-  planetResources: { planetId: string; attached?: readonly string[] };
+  /**
+   * `attached`: the cards and laws attached to the planet (`attachments`), so a law elected for one planet knows if it is this one.
+   * `dock`: the player has a space dock on the planet (Helios V2 raises the resources of its own planet only).
+   */
+  planetResources: { planetId: string; attached?: readonly string[]; dock?: boolean };
   planetInfluence: { planetId: string; attached?: readonly string[] };
-  /** What researching one technology costs, by its component id. */
-  researchCost: { technology: string };
+  /** What researching one technology costs, by its component id. `index`: the place of the technology among those the entry researches anew (0 is the first), when the entry is known. */
+  researchCost: { technology: string; index?: number };
   /**
    * The prerequisites a technology still lacks, by its component id: the base is the number of symbols no technology
    * owned covers (a specialty planet exhausted for it has covered its own). `upgrade` is whether it is a unit upgrade,
