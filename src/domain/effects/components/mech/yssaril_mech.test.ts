@@ -14,7 +14,7 @@ describe('mech:yssaril_mech Blackshade Infiltrator', () => {
   // Checks: after Stall Tactics a mech from the reinforcements stands on Home One.
   // Why the check is redundant here: a mech otherwise enters the board only by production (67, 68.3); the deploy
   // places it without a unit with Production, a cost or an activation.
-  test.fails('mech:yssaril_mech after Stall Tactics a mech is placed on a planet the Yssaril control', () => {
+  test('mech:yssaril_mech after Stall Tactics a mech is placed on a planet the Yssaril control', () => {
     const t = table(stall('h1'));
     quote(t.pack, id, 'After you use your Stall Tactics faction ability, you may place 1 mech on a planet you control.');
     expect(endOf(t).ground.h1?.mech).toBe(1);
@@ -33,7 +33,7 @@ describe('mech:yssaril_mech Blackshade Infiltrator', () => {
     expect(endOf(t).ground.h1?.mech ?? 0).toBe(0);
   });
 
-  test.fails('mech:yssaril_mech is a play effect', () => {
+  test('mech:yssaril_mech is a play effect', () => {
     const { pack } = table(stall('h1'));
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

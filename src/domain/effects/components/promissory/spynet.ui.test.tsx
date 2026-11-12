@@ -1,0 +1,32 @@
+import { expect, test } from 'vitest';
+import { choose, showUses, uiBench } from '../../../../ui/testing/effects';
+import { componentById } from '../../../components';
+import type { Opponent } from '../../../types';
+import { bench, endOf, NEAR, quote, tactical, using } from '../kit';
+import { id } from './spynet';
+
+uiBench();
+
+const YSSARIL: Opponent = { id: 'o1', faction: 'yssaril', vp: 0, seat: 2, color: 2 };
+const NOTE = `${id}@o1`;
+const CARD = 'actionCard:abs';
+
+// "Choose 1 of those cards and add it to your hand."
+// Checks: Spy Net named in «Used» of my turn offers the cards of the Yssaril player's hand; I press one, the entry
+// keeps it for the note alone, and the card is in my hand and out of theirs.
+// Why the check is redundant here: an action card otherwise changes hands only in a transaction (94.3); the note
+// moves it, so the interface has to let the player name the card.
+test('promissory:spynet offers the Yssaril hand in «Used» and moves the chosen card', async () => {
+  const entry = using(tactical(NEAR), NOTE);
+  const table = bench({
+    faction: 'sol', units: { [NEAR]: { carrier: 1 } }, entries: [entry],
+    game: { opponents: [YSSARIL], start: { me: { promissory: [NOTE] }, opponents: { o1: { hand: [CARD] } } } },
+  });
+  quote(table.pack, id, 'Choose 1 of those cards and add it to your hand.');
+  const live = showUses(table, entry);
+  await choose(componentById(table.pack, CARD)!.name, 'Card from the hand');
+  expect((live.entry() as { useChoices?: unknown }).useChoices).toEqual({ [NOTE]: { card: CARD } });
+  const end = endOf({ pack: table.pack, game: live.game() });
+  expect(end.holdings.hand).toContain(CARD);
+  expect(end.rivals?.o1.holdings.hand).not.toContain(CARD);
+});

@@ -20,7 +20,7 @@ describe('technology:yso Yin Spinner Omega', () => {
   // Why the check is redundant here: units otherwise enter the board only by production at a unit with Production
   // (67.1, 68.3: on the dock's planet), and these two are placed, not produced: no cost, no Production value, and on
   // any planet the Yin control (Yin notes, Yin Spinner 1).
-  test.fails('technology:yso places two infantry on a planet the Yin control after producing', () => {
+  test('technology:yso places two infantry on a planet the Yin control after producing', () => {
     const t = table(produce({ place: 'h2', count: 2 }));
     quote(t.pack, id, 'place up to 2 infantry from your reinforcements on any planet you control');
     const end = endOf(t);
@@ -31,7 +31,7 @@ describe('technology:yso Yin Spinner Omega', () => {
   // "... or in any space area that contains 1 or more of your ships."
   // Checks: the two infantry go into the space area of the next system, where a Yin cruiser stands.
   // Why the check is redundant here: the card names any space area with the Yin's ships, not only the active system.
-  test.fails('technology:yso places the infantry in a space area with a Yin ship', () => {
+  test('technology:yso places the infantry in a space area with a Yin ship', () => {
     const end = endOf(table(produce({ place: NEAR, count: 2 })));
     expect(end.systems[NEAR]?.infantry).toBe(2);
   });
@@ -58,7 +58,7 @@ describe('technology:yso Yin Spinner Omega', () => {
     expectStanding(warningsOf(table(entry, {}), entry), 'componentNotHeld');
   });
 
-  test.fails('technology:yso is a play effect', () => {
+  test('technology:yso is a play effect', () => {
     const { pack } = table(produce(null));
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

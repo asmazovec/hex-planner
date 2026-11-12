@@ -3,14 +3,25 @@
  * faction abilities; when you do, you may resolve a transaction with that player. During the action phase, that
  * transaction does not count against the once-per-player transaction limit for that turn."
  *
- * Pass 2: a waiver of `transactionRepeated` (94.1) and of `notNeighbor` (ruling 1) for the turn of another player
- * who uses Stall Tactics or Scheming, named in that entry's `uses`. Today a hint.
+ * Decided: a waiver of `transactionRepeated` (94.1) and of `notNeighbor` (Yssaril notes, Deepgloom Executable 1: the
+ * transaction needs no neighbours) for the entry of another player that names the breakthrough in `uses` together
+ * with Stall Tactics or Scheming ("when you do" ties the transaction to their use). The warnings are still made and
+ * listed, lifted by the card. The Yssaril's own turn is not covered: the card speaks of other players.
  */
-import type { ComponentEffect } from '../../types';
+import type { ComponentEffect, Waiver } from '../../types';
 
 export const id = 'breakthrough:yssarilbt';
+
+/** The entry is another player's and uses one of the two abilities the card lends. */
+const lent: Waiver['when'] = (_warning, ctx) =>
+  ctx.entry?.owner !== undefined && ctx.entry.owner !== 'me'
+  && (ctx.entry.uses ?? []).some(used => used === 'ability:stall_tactics' || used === 'ability:scheming');
 
 export const effect: ComponentEffect = {
   tier: 'hint',
   rule: id,
+  waive: [
+    { code: 'transactionRepeated', rule: 'During the action phase, that transaction does not count against the once-per-player transaction limit for that turn.', when: lent },
+    { code: 'notNeighbor', rule: 'The Yssaril player may perform a transaction with another player without being neighbors with that player.', when: lent },
+  ],
 };

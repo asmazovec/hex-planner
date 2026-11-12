@@ -2,14 +2,37 @@
  * Mageon Implants (Yssaril, faction technology): "ACTION: Exhaust this card to look at another player's hand of
  * action cards. Choose 1 of those cards and add it to your hand."
  *
- * Pass 2: a `play`: the component action exhausts it (its text) and moves the action card of its choices from the
- * chosen player's hand to the player's. Today a hint.
+ * Decided: a `play`: the component action exhausts it (its text, the replay does that) and the action card of the
+ * choice `card` moves from the hand of the player of the choice `from` to the player's. Any player, not only a
+ * neighbour, so no transaction is made. A card not in that hand is warned of (`componentUnresolved`) and not moved.
  */
+import { componentById } from '../../../components';
+import componentUnresolved from '../../../rules/codes/componentUnresolved';
+import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:mi';
 
 export const effect: ComponentEffect = {
-  tier: 'hint',
+  tier: 'play',
   rule: id,
+  choose: [
+    { key: 'from', kind: 'player', label: { ru: 'Чья рука', en: 'Whose hand' } },
+    {
+      key: 'card', kind: 'component', label: { ru: 'Карта из руки', en: 'Card from the hand' }, when: chosen => chosen.from !== undefined,
+      options: ({ shared, chosen }) => [...((chosen.from === 'me' ? shared : shared.rivals?.[String(chosen.from)])?.holdings.hand ?? [])],
+    },
+  ],
+  play: ({ states, state, player, pack, choices, warnings, held }) => {
+    const { from: whose, card } = choices;
+    if (!held || whose === undefined || card === undefined || String(whose) === player) return;
+    const hand = states[String(whose)]?.holdings.hand;
+    const index = hand?.indexOf(String(card)) ?? -1;
+    if (!hand || index < 0) {
+      warnings.push(violation(componentUnresolved.code, { id, name: componentById(pack, id)?.name ?? id, reason: 'the card is not in that hand' }));
+      return;
+    }
+    hand.splice(index, 1);
+    state.holdings.hand.push(String(card));
+  },
 };

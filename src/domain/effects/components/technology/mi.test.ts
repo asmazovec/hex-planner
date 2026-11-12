@@ -18,7 +18,7 @@ describe('technology:mi Mageon Implants', () => {
   // Checks: the card chosen leaves the Sol player's hand and joins the Yssaril's.
   // Why the check is redundant here: an action card otherwise changes hands only in a transaction (94.3), with a
   // neighbour; the technology takes it from any player, so no transaction is made or warned of.
-  test.fails('technology:mi takes the chosen action card from another player\'s hand', () => {
+  test('technology:mi takes the chosen action card from another player\'s hand', () => {
     const action = look();
     const t = table([action]);
     quote(t.pack, id, 'Choose 1 of those cards and add it to your hand.');
@@ -45,7 +45,7 @@ describe('technology:mi Mageon Implants', () => {
     expectStanding(warningsOf(table([action], {}), action), 'componentNotHeld');
   });
 
-  test.fails('technology:mi is a play effect', () => {
+  test('technology:mi is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');
