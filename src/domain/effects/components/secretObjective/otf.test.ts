@@ -33,7 +33,7 @@ describe('secretObjective:otf Occupy the Fringe', () => {
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective".
   // Checks: eight ground forces on Target One; scoring is warned of.
   // Why the check is NOT redundant here: one ground force short of nine.
-  test.fails('secretObjective:otf eight ground forces: scoring it is warned of', () => {
+  test('secretObjective:otf eight ground forces: scoring it is warned of', () => {
     const short = table({ t1: { infantry: 8 } });
     expectStanding(warningsOf(short, short.entry), UNMET);
   });
@@ -41,14 +41,14 @@ describe('secretObjective:otf Occupy the Fringe', () => {
   // "... on a planet that does not contain 1 of your space docks."
   // Checks: nine infantry on Home One, where my space dock stands; scoring is warned of.
   // Why the check is NOT redundant here: the planet holds a dock of the player, which the card excludes.
-  test.fails('secretObjective:otf nine ground forces on a planet with my space dock do not count', () => {
+  test('secretObjective:otf nine ground forces on a planet with my space dock do not count', () => {
     const docked = table({ h1: { infantry: 9 } });
     expectStanding(warningsOf(docked, docked.entry), UNMET);
   });
 
   // Checks: nine ground forces split over two planets do not meet it.
   // Why the check is NOT redundant here: the card asks for nine on one planet.
-  test.fails('secretObjective:otf nine ground forces over two planets do not count', () => {
+  test('secretObjective:otf nine ground forces over two planets do not count', () => {
     const split = table({ t1: { infantry: 5 }, h2: { infantry: 4 } });
     expectStanding(warningsOf(split, split.entry), UNMET);
   });

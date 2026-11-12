@@ -5,10 +5,26 @@
  * Decided: `play` that attaches, then a change of numbers. Played in the `uses` of the tactical action whose landing
  * takes control of the planet, it is attached to that planet (`attachments`, 35.8, 12.2: it stays with the planet
  * whoever controls it). The planet's values are then two resources and one influence higher wherever the count asks
- * them (`planetResources`, `planetInfluence`): a payment, a dock's Production, Hoard Raw Materials. Pass 1: the hint it was.
+ * them (`planetResources`, `planetInfluence`): a payment, a dock's Production, Hoard Raw Materials. Pass 2: written.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:ds';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+/**
+ * Passive, because only a passive `modify` is asked of a card attached to a planet (`appliedToPlanet`); it attaches in
+ * `play`, which runs for any tier when the entry names the card. "This planet" is the planet of the entry's landing
+ * that is now mine and has no Dyson Sphere yet (`onGainControl` is not asked of a passive effect that is only named).
+ */
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  play: ({ entry, state }) => {
+    if (entry.type !== 'tactical') return;
+    const planetId = entry.landings.map(landing => landing.planetId).find(p => state.control[p] === 'me' && !state.attachments?.[p]?.includes(id));
+    if (planetId === undefined) return;
+    const attached = (state.attachments ??= {});
+    attached[planetId] = [...(attached[planetId] ?? []), id];
+  },
+  modify: { planetResources: value => value + 2, planetInfluence: value => value + 1 },
+};

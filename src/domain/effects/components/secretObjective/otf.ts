@@ -5,10 +5,19 @@
  * Decided: played when a status entry scores it (`scored`). The requirement is something the plan counts: nine ground
  * forces (infantry and mechs) on one planet without a space dock of the player. Scoring it while the board does not meet
  * it breaks LRR 61.5 and is warned of with the common code `objectiveUnmet` that pass 2 adds; the warning forbids
- * nothing. Until then the card is the hint it was.
+ * nothing. Pass 2: the requirement is written.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'secretObjective:otf';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  requirement: ({ state, pack }) => ({
+    have: Math.max(0, ...Object.entries(state.ground)
+      .filter(([planetId]) => !state.docks.includes(planetId))
+      .map(([, units]) => Object.entries(units).reduce((sum, [unit, count]) => sum + (pack.units[unit as keyof typeof pack.units]?.ground ? count ?? 0 : 0), 0))),
+    need: 9,
+  }),
+};

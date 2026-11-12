@@ -31,7 +31,7 @@ describe('secretObjective:mtm Mechanize the Military', () => {
   // Checks: four mechs, two of them on one planet, stand on three planets only; scoring is warned of.
   // Why the check is NOT redundant here: the card counts planets, not mechs (objectives notes, Mechanize the Military 1:
   // all four mechs "on separate planets").
-  test.fails('secretObjective:mtm four mechs on three planets: scoring it is warned of', () => {
+  test('secretObjective:mtm four mechs on three planets: scoring it is warned of', () => {
     const short = table({ h1: { mech: 2 }, t1: { mech: 1 }, t2: { mech: 1 } });
     expectStanding(warningsOf(short, short.entry), UNMET);
   });
@@ -39,7 +39,7 @@ describe('secretObjective:mtm Mechanize the Military', () => {
   // "Have 1 mech ..." — only this unit type.
   // Checks: infantry on the fourth planet does not stand in for a mech.
   // Why the check is NOT redundant here: the card names mechs; other ground forces do not count.
-  test.fails('secretObjective:mtm infantry does not count as a mech', () => {
+  test('secretObjective:mtm infantry does not count as a mech', () => {
     const short = table({ h1: { mech: 1 }, h2: { mech: 1 }, t1: { mech: 1 }, t2: { infantry: 3 } });
     expectStanding(warningsOf(short, short.entry), UNMET);
   });

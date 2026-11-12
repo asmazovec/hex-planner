@@ -15,7 +15,7 @@ describe('exploration:dmz Demilitarized Zone', () => {
   // Checks: two infantry take Target One, which is explored with this card: they go back up to the space area, the
   // planet stays mine (12.2) and has the card attached (35.8).
   // Why nothing is waived here: the card moves units and attaches itself; it lifts no check.
-  test.fails('exploration:dmz the ground forces return to space, the planet stays controlled, the card is attached', () => {
+  test('exploration:dmz the ground forces return to space, the planet stays controlled, the card is attached', () => {
     const dmz = table([[using(land(2), id)]]);
     quote(dmz.pack, id, 'return all ground forces on this planet to the space area');
     const end = endOf(dmz);

@@ -15,7 +15,7 @@ describe('exploration:frln1 Freelancers', () => {
   // Checks: one cruiser produced in a system without a unit with Production; the warning is listed and lifted by the card.
   // Why the check is redundant here: LRR 67.1 lets a player produce only with a unit's Production ability, and the card
   // lets them produce one unit in this system without one.
-  test.fails('exploration:frln1 one unit produced in a system without a space dock: the warning is waived', () => {
+  test('exploration:frln1 one unit produced in a system without a space dock: the warning is waived', () => {
     const move = using(produce({ cruiser: 1 }), id);
     const freelancers = table(move);
     quote(freelancers.pack, id, 'You may produce 1 unit in this system.');
@@ -26,7 +26,7 @@ describe('exploration:frln1 Freelancers', () => {
   // Checks: the cruiser costs 2; Home Two gives 1 resource but 2 influence; the shortfall is listed and lifted.
   // Why the check is redundant here: the payment is short of resources only because it counts resources, and the card
   // lets the influence of the planet pay instead.
-  test.fails('exploration:frln1 influence pays the unit: the shortfall of resources is waived', () => {
+  test('exploration:frln1 influence pays the unit: the shortfall of resources is waived', () => {
     const move = using(produce({ cruiser: 1 }), id);
     expectWaived(warningsOf(table(move), move), 'shortResources', id);
   });

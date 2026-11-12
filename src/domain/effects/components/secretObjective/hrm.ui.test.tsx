@@ -11,7 +11,7 @@ uiBench();
 // requirement stands on the screen.
 // Why the check is NOT redundant here: LRR 61.5 lets a player score an objective whose requirement they fulfil, and
 // four resources are short of twelve.
-test.fails('secretObjective:hrm scored short of twelve resources is shown warned of', () => {
+test('secretObjective:hrm scored short of twelve resources is shown warned of', () => {
   const entry = { ...statusTokens(0, 0, 0), scored: [id] } as Entry;
   const table = bench({ faction: 'sol', expansions: ['pok'], start: { secrets: [id] }, entries: [entry] });
   quote(table.pack, id, 'combined resource value of at least 12');
