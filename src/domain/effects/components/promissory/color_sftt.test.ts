@@ -26,7 +26,7 @@ describe('promissory:<color>_sftt Support for the Throne', () => {
   // Checks: the note received in a transaction gives me 1 victory point.
   // Why this is automated: the plan counts victory points, and the note gives the point by itself, at once (promissory
   // notes, Support for the Throne 1: it cannot be kept secret).
-  test.fails('promissory:<color>_sftt received from another player gives 1 victory point', () => {
+  test('promissory:<color>_sftt received from another player gives 1 victory point', () => {
     const sftt = table([receive()]);
     quote(sftt.pack, id, 'place it faceup in your play area and gain 1 victory point');
     expect(endOf(sftt).holdings.promissory).toContain(NOTE);
@@ -36,7 +36,7 @@ describe('promissory:<color>_sftt Support for the Throne', () => {
   // "When you activate a system that contains 1 or more of the <color> player's units, ... lose 1 victory point and
   //  return this card to the <color> player."
   // Checks: activating the system where the owner has an infantry takes the point back and returns the card.
-  test.fails('promissory:<color>_sftt activating a system with the owner\'s units loses the point and returns the card', () => {
+  test('promissory:<color>_sftt activating a system with the owner\'s units loses the point and returns the card', () => {
     const sftt = table([receive(), activate()], { theirs: true });
     const end = endOf(sftt);
     expect(end.vp).toBe(0);
@@ -46,7 +46,7 @@ describe('promissory:<color>_sftt Support for the Throne', () => {
 
   // Checks: activating a system with none of the owner's units keeps the card and the point.
   // Why the return does NOT apply here: the card names the owner's units only.
-  test.fails('promissory:<color>_sftt activating a system without the owner\'s units keeps the point', () => {
+  test('promissory:<color>_sftt activating a system without the owner\'s units keeps the point', () => {
     const end = endOf(table([receive(), activate()]));
     expect(end.vp).toBe(1);
     expect(end.holdings.promissory).toContain(NOTE);
@@ -59,7 +59,7 @@ describe('promissory:<color>_sftt Support for the Throne', () => {
     expect(endOf(table([tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] })], { mine: [`${id}@me`] })).vp).toBe(0);
   });
 
-  test.fails('promissory:<color>_sftt is not a hint any more', () => {
+  test('promissory:<color>_sftt is not a hint any more', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).not.toBe('hint');
   });

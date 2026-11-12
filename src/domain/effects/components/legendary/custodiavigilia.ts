@@ -7,10 +7,17 @@
  * PRODUCTION 3 for the production step: production in its system is no longer "without a unit with Production" (67.1),
  * and is limited to 3 units (as using a unit on Mecatol Rex, Council Keleres, Custodia Vigilia 9). SPACE CANNON is a
  * roll (combat), and the command tokens come from another player's strategy card, which the plan does not have:
- * both stay reminders. Pass 1: the hint it is today.
+ * both stay reminders.
  */
+import '../../points/production';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:custodiavigilia';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // PRODUCTION 3 of Mecatol Rex, asked only for a planet the holder controls (`planetProduction`). The Space Cannon and
+  // the command tokens are reminders the plan does not count.
+  modify: { planetProduction: (value, ctx) => (ctx.planetId === 'mr' ? 3 : value) },
+};

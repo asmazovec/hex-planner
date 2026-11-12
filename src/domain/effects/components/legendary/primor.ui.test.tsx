@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
-import { expectNotShown, expectShownStanding, showUses, take, uiBench, use } from '../../../../ui/testing/effects';
+import { expectNotShown, expectShownStanding, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import type { Entry, EntryBody } from '../../../types';
 import { bench, HOME, planned, quote, using } from '../kit';
 import { id } from './primor';
@@ -28,19 +28,19 @@ test('legendary:primor The Atrament is named in «Used» of my turn', async () =
 
 // Checks: the card in «Used» asks where its infantry go: I press Home One and take two infantry; the entry keeps them.
 // Why this is needed: the card places units by itself, and the plan must know the planet and how many.
-test.fails('legendary:primor the card asks for the planet and the infantry it places', async () => {
+test('legendary:primor the card asks for the planet and the infantry it places', async () => {
   const turn = using(pass(), id);
   const live = showUses(table(turn), turn);
   await userEvent.click(screen.getByRole('button', { name: 'Home One' }));
-  await take('Infantry');
-  await take('Infantry');
-  expect(live.entry()).toMatchObject({ choices: { primorPlanet: 'h1', primorInfantry: 2 } });
+  await userEvent.click(screen.getByRole('button', { name: 'Add one Infantry' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Add one Infantry' }));
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { primorPlanet: 'h1', primorInfantry: 2 } } });
 });
 
 // LRR 53.3: "Players can use the abilities on the legendary planet ability cards in their play area."
 // Checks: named without control of Primor, the card is taken all the same and its use is warned of.
 // Why the check is NOT redundant here: the card lies with whoever controls Primor.
-test.fails('legendary:primor named without control of Primor, the warning stands', async () => {
+test('legendary:primor named without control of Primor, the warning stands', async () => {
   const turn = pass();
   const live = showUses(table(turn, false), turn);
   await use('The Atrament');
