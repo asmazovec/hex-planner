@@ -10,4 +10,12 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:terraforming_initiative';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // A law is asked for every planet: it adds 1 only where it is attached (`ctx.attached`).
+  modify: {
+    planetResources: (value, ctx) => (ctx.attached?.includes(id) ? value + 1 : value),
+    planetInfluence: (value, ctx) => (ctx.attached?.includes(id) ? value + 1 : value),
+  },
+};

@@ -9,4 +9,9 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:senate_sanctuary';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // A law is asked for every planet: it adds 2 only where it is attached (`ctx.attached`).
+  modify: { planetInfluence: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value) },
+};

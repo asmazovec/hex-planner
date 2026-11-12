@@ -20,7 +20,7 @@ describe('agenda:terraforming_initiative Terraforming Initiative', () => {
   // Checks: with the law on Home One it gives 4 resources, enough for two cruisers.
   // Why the check is redundant here: the resources check adds up the values of the planets spent; the law changes the
   // value of the elected planet (a modify), so no warning is made.
-  test.fails('agenda:terraforming_initiative the elected planet gives 1 resource more', () => {
+  test('agenda:terraforming_initiative the elected planet gives 1 resource more', () => {
     const t = table(build(), 'h1');
     quote(t.pack, id, 'The resource and influence values of this planet are increased by 1.');
     expectNone(warningsOf(t, t.entry), 'shortResources');
@@ -28,7 +28,7 @@ describe('agenda:terraforming_initiative Terraforming Initiative', () => {
 
   // Checks: with the law on Home Two it gives 3 influence, enough to buy one command token.
   // Why the check is redundant here: the same for influence (47.2): the elected planet's value is 1 more.
-  test.fails('agenda:terraforming_initiative the elected planet gives 1 influence more', () => {
+  test('agenda:terraforming_initiative the elected planet gives 1 influence more', () => {
     const t = table(buyOne('h2'), 'h2');
     expectNone(warningsOf(t, t.entry), 'shortInfluence');
   });
@@ -47,7 +47,7 @@ describe('agenda:terraforming_initiative Terraforming Initiative', () => {
     expectStanding(warningsOf(t, t.entry), 'shortResources');
   });
 
-  test.fails('agenda:terraforming_initiative is a passive effect that changes both values of a planet', () => {
+  test('agenda:terraforming_initiative is a passive effect that changes both values of a planet', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(Object.keys(effect(pack, id).modify ?? {}).sort()).toEqual(['planetInfluence', 'planetResources']);

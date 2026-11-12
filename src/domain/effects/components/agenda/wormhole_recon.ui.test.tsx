@@ -27,7 +27,7 @@ const table = (law: Entry | null) => {
 // "For: All systems that contain either an alpha or beta wormhole are adjacent to each other."
 // Checks: the transaction with a rival in the beta system shows no warning about neighbours.
 // Why the check is redundant here: the law makes the two systems adjacent, so the players are neighbours (60.2).
-test.fails('agenda:wormhole_recon a transaction across the alpha and beta systems is shown with no neighbour warning', () => {
+test('agenda:wormhole_recon a transaction across the alpha and beta systems is shown with no neighbour warning', () => {
   const t = table(resolved('for'));
   quote(t.pack, id, 'All systems that contain either an alpha or beta wormhole are adjacent to each other.');
   showWarnings(t, t.turn);

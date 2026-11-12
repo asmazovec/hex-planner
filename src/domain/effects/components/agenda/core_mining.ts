@@ -11,4 +11,14 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:core_mining';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // A law is asked for every planet: it adds 2 only where it is attached (`ctx.attached`).
+  modify: { planetResources: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value) },
+  // "Then, destroy 1 infantry on the planet": once, when the law is resolved on the elected planet.
+  gained: ({ state, choices }) => {
+    const here = state.ground[String(choices.elect ?? '')];
+    if (here?.infantry) here.infantry -= 1;
+  },
+};

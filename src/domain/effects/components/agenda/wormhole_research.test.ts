@@ -19,7 +19,7 @@ describe('agenda:wormhole_research Wormhole Research', () => {
   // "For: ... Then, destroy all ships in systems that contain an alpha or beta wormhole."
   // Checks: my ships in the alpha and the beta systems are destroyed; those elsewhere stay.
   // Why: a directive changes the board once (7.8), and the ships are what the plan counts.
-  test.fails('agenda:wormhole_research For destroys every ship in the alpha and beta systems', () => {
+  test('agenda:wormhole_research For destroys every ship in the alpha and beta systems', () => {
     const t = table(resolved('for'));
     quote(t.pack, id, 'Then, destroy all ships in systems that contain an alpha or beta wormhole.');
     const end = endOf(t);
@@ -49,7 +49,7 @@ describe('agenda:wormhole_research Wormhole Research', () => {
     expect(endOf(table(resolved('for'))).laws ?? []).not.toContain(id);
   });
 
-  test.fails('agenda:wormhole_research is played by the agenda entry that resolves it', () => {
+  test('agenda:wormhole_research is played by the agenda entry that resolves it', () => {
     expect(effect(table(resolved('for')).pack, id).tier).toBe('play');
   });
 });

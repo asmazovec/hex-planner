@@ -28,7 +28,7 @@ describe('agenda:demilitarized_zone Demilitarized Zone', () => {
   // Checks: an infantry lands on Target One under the law; the landing is entered and the plan warns of it, standing.
   // Why the check is NOT redundant here: the law forbids what the rules allow (a landing, 89.4); nothing lifts it, so
   // the replay is to make the warning for everyone while the law is in play.
-  test.fails('agenda:demilitarized_zone a landing on the elected planet is warned of', () => {
+  test('agenda:demilitarized_zone a landing on the elected planet is warned of', () => {
     const t = table(landOn('t1'), 't1');
     quote(t.pack, id, "Player's units cannot land, be produced, or be placed on this planet.");
     expectStanding(warningsOf(t, t.entry), CODE);
@@ -51,7 +51,7 @@ describe('agenda:demilitarized_zone Demilitarized Zone', () => {
   // "... cannot ... be produced ... on this planet."
   // Checks: two infantry built at the dock of Home One are put on Home Two, which the law closes.
   // Why the check is NOT redundant here: units produced go on a planet (68.3); the law forbids that planet.
-  test.fails('agenda:demilitarized_zone ground forces produced onto the elected planet are warned of', () => {
+  test('agenda:demilitarized_zone ground forces produced onto the elected planet are warned of', () => {
     const build = tactical(HOME, { production: { infantry: 2 }, productionGround: { h2: { infantry: 2 } }, payment: { planets: ['h1'], tradeGoods: 0 } });
     const t = table(build, 'h2');
     expectStanding(warningsOf(t, build), CODE);
@@ -60,7 +60,7 @@ describe('agenda:demilitarized_zone Demilitarized Zone', () => {
   // "Then, destroy all units on that planet."
   // Checks: two infantry and a PDS of mine on Home Two are destroyed when the law is resolved on it.
   // Why: a one-time change of the board when the law is resolved, which the plan counts.
-  test.fails('agenda:demilitarized_zone destroys every unit on the elected planet when it is resolved', () => {
+  test('agenda:demilitarized_zone destroys every unit on the elected planet when it is resolved', () => {
     const t = bench({ faction: 'sol', game: { pds: { h2: 1 } }, rounds: [[adjust({ ground: { h2: { infantry: 2 } } }, 'strategy'), resolved('h2')]] });
     const end = endOf(t);
     expect(end.ground.h2 ?? {}).toEqual({});

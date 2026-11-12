@@ -10,8 +10,17 @@
  * `passive` effect asked at a new point of adjacency. The "Against" outcome (tokens in wormhole systems) is a one-time
  * change entered by hand, and the card is then discarded (7.6). Pass 1: still the hint it is today.
  */
+import { wormholeSlots } from '../../../movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:wormhole_recon';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  // "All systems that contain either an alpha or beta wormhole are adjacent to each other."
+  links: ({ game, pack, shared }) => {
+    const holes = [...new Set([...wormholeSlots(game, pack, 'alpha', shared?.wormholeTokens), ...wormholeSlots(game, pack, 'beta', shared?.wormholeTokens)])];
+    return holes.flatMap((a, i) => holes.slice(i + 1).map((b): readonly [string, string] => [a, b]));
+  },
+};

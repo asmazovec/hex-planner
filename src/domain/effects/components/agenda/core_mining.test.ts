@@ -18,7 +18,7 @@ describe('agenda:core_mining Core Mining', () => {
   // Checks: with Core Mining on Home One, the planet alone pays the 4 resources of two cruisers.
   // Why the check is redundant here: the resources check (65, 67.4) adds up the resource values of the planets spent;
   // the law does not lift it, it changes the value of the elected planet to 5, so no warning is made at all (a modify).
-  test.fails('agenda:core_mining the elected planet gives 2 resources more: the payment covers the cost', () => {
+  test('agenda:core_mining the elected planet gives 2 resources more: the payment covers the cost', () => {
     const t = table(build('h1'), 'h1');
     quote(t.pack, id, 'The resource value of this planet is increased by 2.');
     expectNone(warningsOf(t, t.entry), 'shortResources');
@@ -43,7 +43,7 @@ describe('agenda:core_mining Core Mining', () => {
   // "Then, destroy 1 infantry on the planet."
   // Checks: two of my infantry stand on Home One; resolving the law destroys one of them.
   // Why: a one-time change of the board when the law is resolved, which the plan counts.
-  test.fails('agenda:core_mining destroys one infantry on the elected planet when it is resolved', () => {
+  test('agenda:core_mining destroys one infantry on the elected planet when it is resolved', () => {
     const t = bench({ faction: 'sol', rounds: [[adjust({ ground: { h1: { infantry: 2 } } }, 'strategy'), resolved('h1')]] });
     expect(endOf(t).ground.h1?.infantry ?? 0).toBe(1);
   });
@@ -56,7 +56,7 @@ describe('agenda:core_mining Core Mining', () => {
     expect(endOf(t).attachments?.h1).toContain(id);
   });
 
-  test.fails('agenda:core_mining is a passive effect that changes the resources of a planet', () => {
+  test('agenda:core_mining is a passive effect that changes the resources of a planet', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetResources).toBeDefined();

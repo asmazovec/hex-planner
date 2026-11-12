@@ -12,7 +12,7 @@ describe('agenda:shard_of_the_throne Shard of the Throne', () => {
   // "The elected player gains this card and 1 victory point."
   // Checks: elected, I have 1 victory point more, and the law is in play.
   // Why: a victory point the plan counts, gained once when the law is resolved.
-  test.fails('agenda:shard_of_the_throne gives the elected player 1 victory point', () => {
+  test('agenda:shard_of_the_throne gives the elected player 1 victory point', () => {
     const t = table('me');
     quote(t.pack, id, 'The elected player gains this card and 1 victory point.');
     expect(endOf(t).vp).toBe(1);
@@ -29,7 +29,7 @@ describe('agenda:shard_of_the_throne Shard of the Throne', () => {
   // the card is a reminder at the combat; the points it moves are entered by hand.
   test.todo('agenda:shard_of_the_throne passes with its point to the winner of a combat against its owner: who wins a combat is not modelled');
 
-  test.fails('agenda:shard_of_the_throne is played by the agenda entry that resolves it', () => {
+  test('agenda:shard_of_the_throne is played by the agenda entry that resolves it', () => {
     expect(effect(table('me').pack, id).tier).toBe('play');
   });
 });

@@ -18,7 +18,7 @@ describe('agenda:senate_sanctuary Senate Sanctuary', () => {
   // Checks: with the law on Home One it gives 3 influence and alone buys a command token.
   // Why the check is redundant here: the influence check (47.2) adds up the values of the planets spent; the law
   // changes the value of the elected planet (a modify), so no warning is made.
-  test.fails('agenda:senate_sanctuary the elected planet gives 2 influence more: the token is paid', () => {
+  test('agenda:senate_sanctuary the elected planet gives 2 influence more: the token is paid', () => {
     const t = table(buyOne('h1'), 'h1');
     quote(t.pack, id, 'The influence value of this planet is increased by 2.');
     expectNone(warningsOf(t, t.entry), 'shortInfluence');
@@ -39,7 +39,7 @@ describe('agenda:senate_sanctuary Senate Sanctuary', () => {
     expectStanding(warningsOf(t, t.entry), 'shortInfluence');
   });
 
-  test.fails('agenda:senate_sanctuary is a passive effect that changes the influence of a planet', () => {
+  test('agenda:senate_sanctuary is a passive effect that changes the influence of a planet', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(Object.keys(effect(pack, id).modify ?? {})).toEqual(['planetInfluence']);

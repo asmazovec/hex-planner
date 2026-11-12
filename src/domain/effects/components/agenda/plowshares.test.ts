@@ -15,7 +15,7 @@ describe('agenda:plowshares Swords to Plowshares', () => {
   //  trade goods equal to the number of their infantry that were destroyed."
   // Checks: Home One loses 2 of its 3 infantry, Home Two its only one; I gain 3 trade goods.
   // Why: a directive changes the board once (7.8); the infantry and the trade goods are what the plan counts.
-  test.fails('agenda:plowshares For destroys half the infantry of each planet, rounded up, for as many trade goods', () => {
+  test('agenda:plowshares For destroys half the infantry of each planet, rounded up, for as many trade goods', () => {
     const t = table('for');
     quote(t.pack, id, 'Each player destroys half of their infantry on each planet they control, rounded up.');
     const end = endOf(t);
@@ -26,7 +26,7 @@ describe('agenda:plowshares Swords to Plowshares', () => {
 
   // "Against: Each player places 1 infantry from their reinforcements on each planet they control."
   // Checks: each of my two home planets gains one infantry; no trade goods.
-  test.fails('agenda:plowshares Against places one infantry on each planet I control', () => {
+  test('agenda:plowshares Against places one infantry on each planet I control', () => {
     const t = table('against');
     quote(t.pack, id, 'Each player places 1 infantry from their reinforcements on each planet they control.');
     const end = endOf(t);
@@ -41,7 +41,7 @@ describe('agenda:plowshares Swords to Plowshares', () => {
     expect(endOf(table('for')).laws ?? []).not.toContain(id);
   });
 
-  test.fails('agenda:plowshares is played by the agenda entry that resolves it', () => {
+  test('agenda:plowshares is played by the agenda entry that resolves it', () => {
     expect(effect(table('for').pack, id).tier).toBe('play');
   });
 
