@@ -10,7 +10,7 @@ uiBench();
 // taken (and not the legendary card of the same planet).
 // Why this is needed: the card gives control of a planet, which the plan counts, so the entry that explores must be
 // able to name it; exploration cards are not offered in «Used» yet.
-test.fails('exploration:mirage the card is named in «Used» of the action that explores', async () => {
+test('exploration:mirage the card is named in «Used» of the action that explores', async () => {
   const move = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] });
   const mirage = bench({ faction: 'sol', expansions: ['pok'], units: { [HOME]: { carrier: 1 } }, entries: [move] });
   quote(mirage.pack, id, 'Gain the Mirage planet card and ready it.');

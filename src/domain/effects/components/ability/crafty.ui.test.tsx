@@ -28,7 +28,7 @@ test.fails('ability:crafty the eighth action card shows its warning as allowed b
 // LRR 2.4: "Each player's hand can have a maximum of seven action cards."
 // Checks: another faction's eighth card shows the warning standing.
 // Why the check is NOT redundant here: the ability is printed on the Yssaril sheet alone.
-test.fails('ability:crafty another faction\'s eighth card shows the warning standing', () => {
+test('ability:crafty another faction\'s eighth card shows the warning standing', () => {
   show('sol');
   expectShownStanding(HAND_LIMIT);
 });

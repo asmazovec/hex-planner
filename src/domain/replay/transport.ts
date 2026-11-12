@@ -1,11 +1,11 @@
 /** Transport (LRR 95, 16): pickups, the capacity of each moving group and of a system, and what a system holds against the fleet pool. */
 import { applied } from '../effects/apply';
-import { holderOf } from '../effects/registry';
+import { holderFor, holderOf, type Who } from '../effects/registry';
 import { waive } from '../effects/waivers';
 import { blockersOf, fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
-import type { DataPack, Game, GameState, Holdings, UnitCounts, Warning } from '../types';
+import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { planetsOf, sourceSlot } from './board';
 import { gameAs } from '../players';
 import { take, unitIds, type Move } from './state';
@@ -47,7 +47,7 @@ export function checkPickups(game: Game, state: GameState, target: string, moves
 }
 
 /** Whether my fighters move by themselves at this point of the replay: they have a move value. */
-export const fightersFly = (game: Game, holdings: Holdings, pack: DataPack): boolean =>
+export const fightersFly = (game: Game, holdings: Who, pack: DataPack): boolean =>
   shipSpeed(game, 'fighter', holdings, pack) !== null;
 
 /** The ships a system of the player may hold: the fleet pool, after what they hold changed it. */
@@ -71,7 +71,7 @@ const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.mi
  * Cargo against the capacity of my ships at my current levels: only ground forces and fighters that do not fly count as
  * load. `fighterRoom` is what the system's space docks keep (`dockFighterRoom`): up to that many fighters are no load.
  */
-export function capacity(game: Game, units: UnitCounts, holdings: Holdings, pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
+export function capacity(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
   const flying = fightersFly(game, holdings, pack);
   let load = 0;
   let cap = 0;
@@ -80,7 +80,7 @@ export function capacity(game: Game, units: UnitCounts, holdings: Holdings, pack
     if (!def) continue;
     const n = (units[id] ?? 0) - (def.fighter ? keptFighters(units, fighterRoom) : 0);
     if (def.ground || (def.fighter && !flying)) load += n * def.capacityUsed;
-    else if (!def.fighter) cap += n * applied(pack, { holdings, faction: game.faction }, 'capacity', unitStats(game.faction, id, false, pack)?.capacity ?? 0, { faction: game.faction, unit: id }).value;
+    else if (!def.fighter) cap += n * applied(pack, holderFor(holdings, game.faction), 'capacity', unitStats(game.faction, id, false, pack)?.capacity ?? 0, { faction: game.faction, unit: id }).value;
   }
   return { load, capacity: cap };
 }
@@ -89,7 +89,7 @@ export function capacity(game: Game, units: UnitCounts, holdings: Holdings, pack
  * Ships for the fleet pool: flying fighters beyond the capacity left after the ground forces count as ships; those the
  * system's space docks keep (`fighterRoom`) do not.
  */
-export function fleetCount(game: Game, units: UnitCounts, holdings: Holdings, pack: DataPack, fighterRoom = 0): number {
+export function fleetCount(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): number {
   const ships = unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
@@ -100,14 +100,14 @@ export function fleetCount(game: Game, units: UnitCounts, holdings: Holdings, pa
 }
 
 /** What a system's stack holds against the fleet pool and its own capacity, with the fighters its space docks keep. */
-export function systemMeters(game: Game, units: UnitCounts, holdings: Holdings, pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
+export function systemMeters(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
   return { ...capacity(game, units, holdings, pack, fighterRoom), ships: fleetCount(game, units, holdings, pack, fighterRoom) };
 }
 
 /** Check: each group that left a system carries no more than its ships' capacity. */
 export function checkGroups(game: Game, state: GameState, groups: Record<string, UnitCounts>, pack: DataPack): Warning[] {
   return Object.entries(groups).flatMap(([from, units]) => {
-    const group = capacity(game, units, state.holdings, pack);
+    const group = capacity(game, units, holderOf(game, state), pack);
     return group.load > group.capacity ? [violation('capacityGroup', { from, load: group.load, capacity: group.capacity })] : [];
   });
 }
@@ -116,7 +116,7 @@ export function checkGroups(game: Game, state: GameState, groups: Record<string,
 export function overflowLeft(game: Game, state: GameState, target: string, moves: Move[], pack: DataPack): Map<string, number> {
   const left = new Set(moves.filter(move => !(move.from in pack.planets) && move.from !== target).map(move => move.from));
   return new Map([...left].map(slot => {
-    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, state.holdings, pack, dockFighterRoom(game, state, slot, pack));
+    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, holderOf(game, state), pack, dockFighterRoom(game, state, slot, pack));
     return [slot, load - room];
   }));
 }
@@ -129,7 +129,7 @@ export function overflowLeft(game: Game, state: GameState, target: string, moves
 export function checkLeftBehind(game: Game, state: GameState, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] {
   return [...overflowLeft(game, state, target, moves, pack)].flatMap(([slot, over]) => {
     if (over <= 0 || over <= (before.get(slot) ?? 0)) return [];
-    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, state.holdings, pack, dockFighterRoom(game, state, slot, pack));
+    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, holderOf(game, state), pack, dockFighterRoom(game, state, slot, pack));
     return [violation('capacitySystem', { systemId: slot, load, capacity: room })];
   });
 }
@@ -167,11 +167,11 @@ export function checkSystem(game: Game, state: GameState, target: string, pack: 
   const warnings: Warning[] = [];
   const here = state.systems[target] ?? {};
   const room = dockFighterRoom(game, state, target, pack);
-  const load = capacity(game, here, state.holdings, pack, room);
+  const load = capacity(game, here, holderOf(game, state), pack, room);
   if (load.load > load.capacity) {
     warnings.push(violation('capacitySystem', { systemId: target, load: load.load, capacity: load.capacity }));
   }
-  const ships = fleetCount(game, here, state.holdings, pack, room);
+  const ships = fleetCount(game, here, holderOf(game, state), pack, room);
   const limit = fleetLimit(game, state, pack);
   if (ships > limit) warnings.push(violation('fleetPool', { systemId: target, ships, fleet: limit }));
   return warnings;

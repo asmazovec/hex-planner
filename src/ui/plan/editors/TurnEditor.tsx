@@ -13,6 +13,7 @@ import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
 import { NoteField } from '../../primitives/NoteField';
 import { Section } from '../../primitives/Section';
+import { ChoicesBlock } from '../blocks/ChoicesBlock';
 import { ComponentSlot } from '../blocks/ComponentSlot';
 
 /** What a component action can play. */
@@ -33,6 +34,8 @@ export interface TurnEditorProps {
   onNote: (note: string) => void;
   /** The component the action plays; none takes it off. */
   onComponent: (id: string | undefined) => void;
+  /** What the player chose for the component the action plays (`ComponentEffect.choose`); empty when none is left. */
+  onChoices?: (choices: Record<string, string | number>) => void;
   onDone: () => void;
   onRemove: () => void;
 }
@@ -41,7 +44,7 @@ export interface TurnEditorProps {
  * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
  * in a part of their own, then what any turn holds; a pass has only that.
  */
-export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && entry.type === 'component' && entry.componentId === undefined);
   // What the owner holds ready just before the entry stands first in the choice; the rest can be played too, and the plan warns.
@@ -68,6 +71,9 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
               onPick={() => setPicking(true)} onRemove={() => onComponent(undefined)}
             />
           </Section>
+          {played && board && onChoices && (
+            <ChoicesBlock id={played.id} entry={entry} game={game} pack={pack} before={playerState(board, entry.owner)} shared={board} onChange={onChoices} />
+          )}
           <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
         </EditorPart>

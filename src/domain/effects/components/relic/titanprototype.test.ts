@@ -35,7 +35,7 @@ describe('relic:titanprototype JR-XS455-O', () => {
   // JR-XS455-O note 1: "JR-XS455-O is an agent. All rules that apply to agents (and leaders) apply to JR-XS455-O."
   // Checks: "Exhaust this agent": the relic is exhausted by its action, so a second action in the round is warned of.
   // Why the check is NOT redundant here: an exhausted agent cannot be used until it is readied (51.4, 34).
-  test.fails('relic:titanprototype is exhausted by its action: a second one in the round is warned of', () => {
+  test('relic:titanprototype is exhausted by its action: a second one in the round is warned of', () => {
     const again = place('pds', 'h2');
     const jr = table([place('pds', 'h1'), again]);
     expect(endOf(jr).holdings.relics).toContain(id);

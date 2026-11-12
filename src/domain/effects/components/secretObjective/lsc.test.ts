@@ -30,7 +30,7 @@ describe('secretObjective:lsc Learn the Secrets of the Cosmos', () => {
   // Why no check is redundant here: none is made; the reminder only keeps the condition in view where it is met,
   //  and whether three systems with my ships each touch an anomaly is a question of the board at the status phase,
   //  not a rule the plan breaks.
-  test.fails('secretObjective:lsc reminds its holder of itself at the status step while it is in hand', () => {
+  test('secretObjective:lsc reminds its holder of itself at the status step while it is in hand', () => {
     const held = table({ secrets: [id] });
     expect(hintsAt(held.pack, endOf(held), 'status', ['me']).map(c => c.id)).toContain(id);
   });

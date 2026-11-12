@@ -322,7 +322,7 @@ export type EntryBody = (
   | { type: 'component';
       /** The component played: an action card leaves the hand, an agent is exhausted, a hero purged. Without it the action is only its note. */ componentId?: string;
       note: string;
-      /** What the player chose for the component's effect, by the names its effect asks for. */ choices?: Record<string, string | number>; acts?: Act[] }
+      acts?: Act[] }
   | { type: 'pass'; acts?: Act[] }
   | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind }
   | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
@@ -340,6 +340,14 @@ export type EntryBody = (
    * and its waivers hold for this entry (src/domain/effects/waivers.ts).
    */
   uses?: string[];
+  /**
+   * What the player chose for the component the entry plays (its component action), by the names its effect asks for
+   * (`ComponentEffect.choose`): a planet id, a system slot, a player (`me` or an opponent id), a unit type, a number.
+   * On an entry with no component action it goes to the components it uses.
+   */
+  choices?: Record<string, string | number>;
+  /** The same for a component named in `uses`, by component id; it wins over `choices`, and is the one the editor writes. */
+  useChoices?: Record<string, Record<string, string | number>>;
 };
 
 export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
@@ -426,6 +434,8 @@ export interface Game {
 }
 
 export interface GameState {
+  /** The faction of the player this state is, set by the replay: what a faction sheet brings (abilities, mech) is asked of it without a `Game`. */
+  faction?: string;
   /** The player's units in each system's space, by slot key. */
   systems: Record<string, UnitCounts>;
   /** The player's ground forces on each planet, by planet id. */

@@ -14,7 +14,7 @@ const table = (move: ReturnType<typeof tactical>) =>
 // Checks: after a tactical action that explores a frontier token, I name Merchant Station in «Used»; it is taken.
 // Why this is needed: the card changes counts the plan keeps, so the entry that explores must be able to name it;
 // exploration cards are not offered in «Used» yet.
-test.fails('exploration:ms1 Merchant Station is named in «Used» of the action that explores', async () => {
+test('exploration:ms1 Merchant Station is named in «Used» of the action that explores', async () => {
   const move = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] });
   const ms = table(move);
   quote(ms.pack, id, 'You may replenish your commodities');

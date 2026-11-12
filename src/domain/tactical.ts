@@ -3,6 +3,7 @@
  * and the production, and what the entry shows on the map. Pure functions of the entry and the state before it; the
  * replay itself lives in src/domain/replay/.
  */
+import { holderOf } from './effects/registry';
 import { fleetSpeed, routeMove, routeReach, type Blockers } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
@@ -163,8 +164,8 @@ export function withProduction(
   entry: TacticalEntry, before: GameState, faction: string, unit: UnitId, planetId: string | null, amount: 1 | -1, pack: DataPack, manualPayment: boolean,
 ): Partial<TacticalEntry> {
   const production = withCount(entry.production, unit, (entry.production[unit] ?? 0) + amount);
-  const cost = productionCost(production, faction, before.holdings, pack);
-  const seed = !manualPayment && cost !== productionCost(entry.production, faction, before.holdings, pack);
+  const cost = productionCost(production, faction, holderOf({ faction }, before), pack);
+  const seed = !manualPayment && cost !== productionCost(entry.production, faction, holderOf({ faction }, before), pack);
   const { [planetId ?? '']: onPlanet = {}, ...others } = entry.productionGround ?? {};
   const units = withCount(onPlanet, unit, (onPlanet[unit] ?? 0) + amount);
   const productionGround = Object.keys(units).length > 0 ? { ...others, [planetId ?? '']: units } : others;
@@ -404,7 +405,7 @@ export const sourceSystems = (game: Game, pack: DataPack, before: GameState): st
 export function routeHint(
   game: Game, path: string[], before: GameState, active: string | null, pack: DataPack, blockers: () => Blockers,
 ): { speed: number | null; steps: number; left: number | null; reach: Set<string> } {
-  const fastest = fleetSpeed(game, before.systems[path[0]] ?? {}, before.holdings, pack);
+  const fastest = fleetSpeed(game, before.systems[path[0]] ?? {}, holderOf(game, before), pack);
   const steps = routeSteps(game, path, pack);
   if (fastest === null) return { speed: null, steps, left: null, reach: new Set() };
   const speed = routeMove(game, path, fastest, pack);

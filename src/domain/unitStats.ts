@@ -1,13 +1,14 @@
 import { applied } from './effects/apply';
+import { holderFor, type Who } from './effects/registry';
 import { holdingRounds, upgradesOf } from './holdings';
-import type { DataPack, Holdings, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import type { DataPack, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
 
 /** Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. */
-export function productionCost(units: UnitCounts, factionId: string, holdings: Holdings, pack: DataPack): number {
+export function productionCost(units: UnitCounts, factionId: string, holdings: Who, pack: DataPack): number {
   let total = 0;
   for (const id of Object.keys(units) as UnitId[]) {
     if ((units[id] ?? 0) <= 0) continue;
-    const cost = applied(pack, { holdings, faction: factionId }, 'unitCost', unitStats(factionId, id, false, pack)?.cost ?? 0, { faction: factionId, unit: id }).value;
+    const cost = applied(pack, holderFor(holdings, factionId), 'unitCost', unitStats(factionId, id, false, pack)?.cost ?? 0, { faction: factionId, unit: id }).value;
     total += Math.ceil((units[id] ?? 0) * cost);
   }
   return total;

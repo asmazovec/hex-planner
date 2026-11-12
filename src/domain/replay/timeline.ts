@@ -3,11 +3,15 @@
  * entry leaves a frame, the board before and after it, so a question about any point of the plan is a lookup and not
  * another replay. A plan that changed is replayed from its first changed round; the rounds before it keep their frames.
  */
-import { effectOf } from '../effects/registry';
+import { applied } from '../effects/apply';
+import { choicesFor } from '../effects/choices';
+import { effectOf, holderOf } from '../effects/registry';
 import { playedBy, waive } from '../effects/waivers';
 import { blockersOf, type Blockers } from '../movement';
 import { gameAs } from '../players';
-import { placeIn } from '../rules/registry';
+import { noteBase } from '../components';
+import handOverLimit from '../rules/codes/handOverLimit';
+import { placeIn, violation } from '../rules/registry';
 import type { DataPack, Entry, Game, GameState, Plan, Round, Warning } from '../types';
 import { applyActs, type ActContext } from './acts';
 import { applyCard, cardRound } from './cards';
@@ -19,6 +23,9 @@ import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, clearBoard } from './status';
 import { keepOwnStructures } from './structures';
 import { applyTactical } from './tactical';
+
+/** The hand holds seven action cards (LRR 2.4). */
+const HAND_LIMIT = 7;
 
 export type Filter = 'now' | 'forecast';
 
@@ -75,6 +82,7 @@ function applyEntry(
   game: Game, state: GameState, shared: GameState, entry: Entry, pack: DataPack, acts: ActContext, cards: CardRound, flow: RoundFlow, blockers: Blockers | undefined,
   withActs: boolean,
 ): Warning[] {
+  const handSize = state.holdings.hand.length;
   const warnings: Warning[] = checkFlow(game, entry, flow, cards.primaries[entry.owner ?? 'me'] ?? []);
   switch (entry.type) {
     case 'tactical':
@@ -100,10 +108,21 @@ function applyEntry(
   // What the entry uses beside its action is played like a component action's own; then each played component does what its effect says.
   applyUses(state, entry, pack, warnings, game.faction, acts.states);
   for (const id of playedBy(entry)) {
-    effectOf(pack, id)?.play?.({ game, state, shared, entry, choices: (entry.type === 'component' ? entry.choices : undefined) ?? {}, pack, warnings });
+    const effect = effectOf(pack, id);
+    if (!effect?.play) continue;
+    const lacking = warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
+    effect.play({
+      game, state, shared, entry, id, player: entry.owner ?? 'me', states: acts.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings,
+    });
   }
   // What the entry brings and takes beside its own effect: the owner's holdings, and the laws of the whole game.
-  applyGains(state, shared, entry, pack);
+  const handBefore = handSize;
+  applyGains(state, shared, entry, pack, game, warnings);
+  // A hand over its limit (2.4): asked of the entry that added cards to it, with the limit the owner's components give (2.4.1).
+  if (state.holdings.hand.length > handBefore) {
+    const limit = applied(pack, holderOf(game, state, shared), 'handLimit', HAND_LIMIT, { faction: game.faction }).value;
+    if (state.holdings.hand.length > limit) warnings.push(violation(handOverLimit.code, { cards: state.holdings.hand.length, limit }));
+  }
   // The acts of a turn come after its action: transactions, then the expedition at its end.
   if (withActs) applyActs(game, state, entry, pack, acts, warnings);
   return placeIn(warnings, entry.id);
@@ -115,13 +134,14 @@ function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameSta
   // The laws, the revealed objectives and the attachments are the whole game's: they stand on my state only.
   const { laws, revealed, attachments, ...own } = initialState(view, pack);
   void laws; void revealed; void attachments;
-  const state: GameState = { ...own, systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
+  const state: GameState = { ...own, faction: view.faction, systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
   keepOwnStructures(state, false);
   return state;
 }
 
 function startOf(game: Game, pack: DataPack): GameState {
   const state = initialState(game, pack);
+  state.faction = game.faction;
   keepOwnStructures(state, true);
   if (game.opponents.length > 0) {
     state.rivals = Object.fromEntries(game.opponents.map(o => [o.id, rivalState(game, gameAs(game, o.id), o.id, pack)]));

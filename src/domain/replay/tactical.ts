@@ -3,6 +3,7 @@
  * 89.4 invasion, 89.5 production and its payment, then the system's limits. Each step checks the state it is given, then
  * changes it; the steps themselves live in their own modules.
  */
+import { holderOf } from '../effects/registry';
 import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { activate, checkActivation } from './activation';
@@ -91,9 +92,9 @@ export function tacticalMeters(
   const groups = target === null ? {} : moveUnits(game, state, target, entry.moves, pack, []);
   if (target !== null) landAndBuild(game, state, target, entry, pack, [], false, removeFleetExcess(state, target, entry.fleetRemovals ?? {}));
   return {
-    group: capacity(game, groups[source] ?? {}, before.holdings, pack),
+    group: capacity(game, groups[source] ?? {}, holderOf(game, before), pack),
     // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
-    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, before.holdings, pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
+    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, holderOf(game, before), pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
     fleet: fleetLimit(game, before, pack),
   };
 }

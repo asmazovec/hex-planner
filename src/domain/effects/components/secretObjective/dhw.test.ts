@@ -29,7 +29,7 @@ describe('secretObjective:dhw Destroy Heretical Works', () => {
   // the reminders ask only the cards a player holds ready (`readyComponents`), which leaves the secrets in hand out.
   // Why no check is redundant here: none is made; the reminder only keeps the condition in view where it is met,
   //  and purging two fragments is the cost of the point, paid by hand in «Gained and discarded»; it lifts no rule.
-  test.fails('secretObjective:dhw reminds its holder of itself at the status step while it is in hand', () => {
+  test('secretObjective:dhw reminds its holder of itself at the status step while it is in hand', () => {
     const held = table({ secrets: [id] });
     expect(hintsAt(held.pack, endOf(held), 'status', ['me']).map(c => c.id)).toContain(id);
   });
