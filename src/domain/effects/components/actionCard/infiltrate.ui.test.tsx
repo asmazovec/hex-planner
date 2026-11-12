@@ -24,7 +24,7 @@ const table = (entry: Entry) => bench({
 // then has my space dock and PDS on t1 where the opponent's stood.
 // Why the default does not apply here: the opponent's structures on a planet taken are destroyed (LRR 49.5.1); the
 // card puts the player's own in their place.
-test.fails('actionCard:infiltrate named in «Used» of the invasion gives me the structures of the planet taken', async () => {
+test('actionCard:infiltrate named in «Used» of the invasion gives me the structures of the planet taken', async () => {
   const move = invade();
   const card = table(move);
   quote(card.pack, id, 'Replace each PDS and space dock that is on that planet');

@@ -14,7 +14,7 @@ describe('actionCard:mining_initiative Mining Initiative', () => {
   // "Gain trade goods equal to the resource value of 1 planet you control."
   // Checks: played with the choice of h1 (3 resources), the card gains 3 trade goods.
   // Why no check is lifted: the card adds trade goods, it breaks no rule.
-  test.fails('actionCard:mining_initiative gains trade goods equal to the resources of the planet chosen', () => {
+  test('actionCard:mining_initiative gains trade goods equal to the resources of the planet chosen', () => {
     const mine = play('h1');
     const card = table([mine]);
     quote(card.pack, id, 'Gain trade goods equal to the resource value of 1 planet you control');
@@ -25,7 +25,7 @@ describe('actionCard:mining_initiative Mining Initiative', () => {
   // tirules2, Mining Initiative 2: "Mining Initiative does not exhaust the chosen planet."
   // Checks: h1 stays ready and pays a later entry.
   // Why the planet is NOT exhausted: the card reads the planet's value; it does not spend it (LRR 71.2 is spending).
-  test.fails('actionCard:mining_initiative leaves the chosen planet ready', () => {
+  test('actionCard:mining_initiative leaves the chosen planet ready', () => {
     const end = endOf(table([play('h1')]));
     expect(end.tradeGoods).toBe(3);
     expect(end.exhausted).not.toContain('h1');
@@ -35,7 +35,7 @@ describe('actionCard:mining_initiative Mining Initiative', () => {
   //  resolve its ability."
   // Checks: t1, which I do not control, is chosen: the play is warned of and gains nothing.
   // Why the check is NOT redundant here: the card names a planet the player controls; any other cannot be chosen.
-  test.fails('actionCard:mining_initiative on a planet I do not control is warned of and gains nothing', () => {
+  test('actionCard:mining_initiative on a planet I do not control is warned of and gains nothing', () => {
     const theirs = play('t1');
     const card = table([theirs]);
     expectStanding(warningsOf(card, theirs), UNRESOLVED);
@@ -50,7 +50,7 @@ describe('actionCard:mining_initiative Mining Initiative', () => {
     expect(end.holdings.hand).not.toContain(id);
   });
 
-  test.fails('actionCard:mining_initiative is a play effect that waives nothing', () => {
+  test('actionCard:mining_initiative is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

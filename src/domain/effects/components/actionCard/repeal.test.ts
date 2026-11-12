@@ -16,7 +16,7 @@ describe('actionCard:repeal Repeal Law', () => {
   // "Discard 1 law from play."
   // Checks: played with the choice of Conventions of War, the law leaves play for the whole game.
   // Why no check is lifted: discarding a law breaks no rule; the laws in play are what the plan counts.
-  test.fails('actionCard:repeal discards the law chosen from play', () => {
+  test('actionCard:repeal discards the law chosen from play', () => {
     const play = repeal(LAW);
     const card = table([enacted(), play]);
     quote(card.pack, id, 'Discard 1 law from play');
@@ -28,7 +28,7 @@ describe('actionCard:repeal Repeal Law', () => {
   // Checks: with no law in play the play is warned of.
   // Why the check is NOT redundant here: LRR 2.6.1, a component action that cannot be resolved completely is not
   // resolved; the card does not say otherwise.
-  test.fails('actionCard:repeal without a law in play is warned of', () => {
+  test('actionCard:repeal without a law in play is warned of', () => {
     const play = repeal(LAW);
     expectStanding(warningsOf(table([play]), play), UNRESOLVED);
   });
@@ -46,7 +46,7 @@ describe('actionCard:repeal Repeal Law', () => {
     expect(endOf(table([enacted(), repeal()])).laws).toContain(LAW);
   });
 
-  test.fails('actionCard:repeal is a play effect that waives nothing', () => {
+  test('actionCard:repeal is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();

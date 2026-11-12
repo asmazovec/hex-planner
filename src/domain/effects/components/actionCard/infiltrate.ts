@@ -11,4 +11,13 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:infiltrate';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  onGainControl: ({ state, planetId, lost }) => {
+    for (const structure of lost) {
+      if (structure.kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + structure.count;
+      else if (!state.docks.includes(planetId)) state.docks.push(planetId);
+    }
+  },
+};

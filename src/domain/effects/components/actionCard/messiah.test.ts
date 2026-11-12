@@ -11,7 +11,7 @@ describe('actionCard:messiah Rise of a Messiah', () => {
   // "Place 1 infantry from your reinforcements on each planet you control."
   // Checks: the component action puts one infantry on h1, h2 and t1.
   // Why no check is lifted: placing units from the reinforcements by a card breaks no rule; the plan counts the board.
-  test.fails('actionCard:messiah places 1 infantry on each planet I control', () => {
+  test('actionCard:messiah places 1 infantry on each planet I control', () => {
     const card = table([componentAction(id)]);
     quote(card.pack, id, 'Place 1 infantry from your reinforcements on each planet you control');
     const { ground } = endOf(card);
@@ -31,7 +31,7 @@ describe('actionCard:messiah Rise of a Messiah', () => {
     expect(endOf(table([])).ground.h1?.infantry ?? 0).toBe(0);
   });
 
-  test.fails('actionCard:messiah is a play effect that waives nothing', () => {
+  test('actionCard:messiah is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive).toBeUndefined();
