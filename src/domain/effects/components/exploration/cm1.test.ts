@@ -16,7 +16,7 @@ describe('exploration:cm1 Core Mine', () => {
   // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 trade good."
   // Checks: a mech lands on Target One with an infantry; one trade good is gained, and no infantry is removed.
   // Why the check is redundant here: nothing is lifted; the plan counts the trade goods, so the one gained must be counted.
-  test.fails('exploration:cm1 with a mech on the planet: one trade good is gained', () => {
+  test('exploration:cm1 with a mech on the planet: one trade good is gained', () => {
     const entry = landing({ mech: 1, infantry: 1 }, [id]);
     const explored = table([entry]);
     quote(explored.pack, id, 'If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 trade good.');
@@ -27,7 +27,7 @@ describe('exploration:cm1 Core Mine', () => {
   // "... or if you remove 1 infantry from this planet ..."
   // Checks: two infantry land without a mech; one of them is removed and one trade good is gained.
   // Why the check is redundant here: the removal is the price the text names, so the plan makes it.
-  test.fails('exploration:cm1 without a mech one infantry is removed from the planet', () => {
+  test('exploration:cm1 without a mech one infantry is removed from the planet', () => {
     const entry = landing({ infantry: 2 }, [id]);
     const explored = table([entry]);
     expect(gained(explored)).toBe(gained(table([landing({ infantry: 2 })])) + 1);
@@ -37,7 +37,7 @@ describe('exploration:cm1 Core Mine', () => {
   // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet"
   // Checks: the card named by an entry that has no ground force on a planet is warned of.
   // Why the check is NOT redundant here: neither condition of the text is met.
-  test.fails('exploration:cm1 with no mech and no infantry on the planet is warned of', () => {
+  test('exploration:cm1 with no mech and no infantry on the planet is warned of', () => {
     const entry = planned({ type: 'component', note: '' } as EntryBody, 'action', { gains: [id] });
     expectStanding(warningsOf(table([entry]), entry), CONDITION);
   });
@@ -48,7 +48,7 @@ describe('exploration:cm1 Core Mine', () => {
     expect(endOf(table([landing({ infantry: 2 })])).ground.t1).toEqual({ infantry: 2 });
   });
 
-  test.fails('exploration:cm1 is a played effect', () => {
+  test('exploration:cm1 is a played effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

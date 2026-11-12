@@ -18,7 +18,7 @@ describe('exploration:rw Rich World', () => {
   //  “attach” header, they attach that card to the planet card of the planet being explored."
   // Checks: Rich World explored with Target One is attached to it.
   // Why the check is redundant here: nothing is lifted; the attachment is a fact of the planet the count must know.
-  test.fails('exploration:rw explored with the planet the entry gains is attached to that planet', () => {
+  test('exploration:rw explored with the planet the entry gains is attached to that planet', () => {
     const rich = table([id], research(['h1']));
     quote(rich.pack, id, "This planet's resource value is increased by 1.");
     expect(endOf(rich).attachments?.t1).toEqual([id]);
@@ -28,7 +28,7 @@ describe('exploration:rw Rich World', () => {
   // Checks: the next round Target One (2) and Home Two (1) pay the four resources of the secondary of Technology.
   // Why the check is redundant here: the shortfall check (26, 64.8) sums the printed resources; with the card Target
   // One is worth 3, so the payment is full and no shortResources is made at all (a modify, not a waiver).
-  test.fails('exploration:rw raises the resources of its planet: the payment is full', () => {
+  test('exploration:rw raises the resources of its planet: the payment is full', () => {
     const rich = table([id], research(['t1', 'h2']));
     expectNone(warningsOf(rich, rich.pay), 'shortResources');
   });
@@ -51,7 +51,7 @@ describe('exploration:rw Rich World', () => {
 
   test.todo('exploration:rw stays with the planet when another player takes it (12.2): the rivals\' payments are not checked against attachments yet');
 
-  test.fails('exploration:rw is a passive effect that changes the resources of a planet', () => {
+  test('exploration:rw is a passive effect that changes the resources of a planet', () => {
     const { pack } = table([], research([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetResources).toBeTypeOf('function');

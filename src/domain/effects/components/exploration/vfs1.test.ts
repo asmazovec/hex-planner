@@ -18,7 +18,7 @@ describe('exploration:vfs1 Volatile Fuel Source', () => {
   // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 command token."
   // Checks: a mech lands on Target One with an infantry; one command token goes to the strategy pool chosen, and no infantry is removed.
   // Why the check is redundant here: nothing is lifted; the plan counts the command tokens, so the token gained must be counted.
-  test.fails('exploration:vfs1 with a mech on the planet: one command token goes to the strategy pool chosen', () => {
+  test('exploration:vfs1 with a mech on the planet: one command token goes to the strategy pool chosen', () => {
     const entry = landing({ mech: 1, infantry: 1 }, [id]);
     const explored = table([choosing(entry, 'strategy')]);
     quote(explored.pack, id, 'If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 command token.');
@@ -29,7 +29,7 @@ describe('exploration:vfs1 Volatile Fuel Source', () => {
   // "... or if you remove 1 infantry from this planet ..."
   // Checks: two infantry land without a mech; one of them is removed and one command token goes to the strategy pool chosen.
   // Why the check is redundant here: the removal is the price the text names, so the plan makes it.
-  test.fails('exploration:vfs1 without a mech one infantry is removed from the planet', () => {
+  test('exploration:vfs1 without a mech one infantry is removed from the planet', () => {
     const entry = landing({ infantry: 2 }, [id]);
     const explored = table([choosing(entry, 'strategy')]);
     expect(gained(explored)).toBe(gained(table([landing({ infantry: 2 })])) + 1);
@@ -39,7 +39,7 @@ describe('exploration:vfs1 Volatile Fuel Source', () => {
   // "If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet"
   // Checks: the card named by an entry that has no ground force on a planet is warned of.
   // Why the check is NOT redundant here: neither condition of the text is met.
-  test.fails('exploration:vfs1 with no mech and no infantry on the planet is warned of', () => {
+  test('exploration:vfs1 with no mech and no infantry on the planet is warned of', () => {
     const entry = planned({ type: 'component', note: '' } as EntryBody, 'action', { gains: [id] });
     expectStanding(warningsOf(table([choosing(entry, 'strategy')]), entry), CONDITION);
   });
@@ -50,7 +50,7 @@ describe('exploration:vfs1 Volatile Fuel Source', () => {
     expect(endOf(table([landing({ infantry: 2 })])).ground.t1).toEqual({ infantry: 2 });
   });
 
-  test.fails('exploration:vfs1 is a played effect', () => {
+  test('exploration:vfs1 is a played effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

@@ -27,7 +27,7 @@ describe('exploration:biotic Biotic Research Facility', () => {
   //  being explored.
   // Checks: the card explored with Target One is attached to it.
   // Why the check is redundant here: nothing is lifted; the attachment is a fact of the planet the count must know.
-  test.fails('exploration:biotic explored with the planet the entry gains is attached to that planet', () => {
+  test('exploration:biotic explored with the planet the entry gains is attached to that planet', () => {
     const facility = table([id], expedition());
     quote(facility.pack, id, 'This planet has a green technology specialty.');
     expect(endOf(facility).attachments?.t1).toEqual([id]);

@@ -9,7 +9,26 @@
  * Pass 1: still the hint it is today; the resolution in the entry that gains the planet comes in pass 2.
  */
 import type { ComponentEffect } from '../../types';
+import { exploredCondition } from './batch33/attach';
 
 export const id = 'exploration:vfs1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+const POOLS = ['tactic', 'fleet', 'strategy'] as const;
+
+export const effect: ComponentEffect = {
+  tier: 'play', rule: id,
+  choose: [{
+    key: id, kind: 'option', options: () => [...POOLS], label: { ru: 'Жетон в', en: 'Token to' },
+    names: {
+      tactic: { ru: 'Тактический резерв', en: 'Tactic pool' },
+      fleet: { ru: 'Резерв флота', en: 'Fleet pool' },
+      strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
+    },
+  }],
+  gained: turn => {
+    if (!exploredCondition(turn)) return;
+    const chosen = turn.choices[id];
+    const pool = POOLS.find(each => each === chosen) ?? 'tactic';
+    turn.state[pool] += 1;
+  },
+};
