@@ -22,7 +22,7 @@ describe('promissory:spynet Spy Net', () => {
   // Checks: the card chosen leaves the Yssaril player's hand and joins mine.
   // Why the check is redundant here: an action card otherwise changes hands only in a transaction (94.3) or comes
   // from the deck (2.3); the note moves it without either, so no transaction is made or warned of.
-  test.fails('promissory:spynet takes the chosen action card from the Yssaril player\'s hand', () => {
+  test('promissory:spynet takes the chosen action card from the Yssaril player\'s hand', () => {
     const entry = turn();
     const t = table(entry);
     quote(t.pack, id, 'Choose 1 of those cards and add it to your hand.');
@@ -52,7 +52,7 @@ describe('promissory:spynet Spy Net', () => {
     expectStanding(warningsOf(t, entry), 'ownPromissory');
   });
 
-  test.fails('promissory:spynet is a play effect', () => {
+  test('promissory:spynet is a play effect', () => {
     const { pack } = table(turn());
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

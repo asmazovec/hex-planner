@@ -19,7 +19,7 @@ const show = (faction: string) => {
 // "You can have any number of action cards in your hand."
 // Checks: the turn that draws the eighth card shows the warning of the hand limit in the allowed look, naming Crafty.
 // Why the check is redundant here: Crafty lifts the limit of seven cards for the Yssaril.
-test.fails('ability:crafty the eighth action card shows its warning as allowed by Crafty', () => {
+test('ability:crafty the eighth action card shows its warning as allowed by Crafty', () => {
   const table = show('yssaril');
   quote(table.pack, id, 'You can have any number of action cards in your hand.');
   expectShownWaived(HAND_LIMIT, 'Crafty');

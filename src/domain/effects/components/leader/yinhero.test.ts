@@ -17,7 +17,7 @@ describe('leader:yinhero Dannel of the Tenth', () => {
   // Why the check is redundant here: infantry otherwise reach a planet only by landing from ships in the active
   // system (89.4, `landingOutsideSystem`); the hero commits them from the reinforcements without any activation
   // (Yin notes, Quantum Dissemination 4.1 and 6), so nothing of the landing is checked for them.
-  test.fails('leader:yinhero commits infantry from the reinforcements to non-home planets and takes the empty ones', () => {
+  test('leader:yinhero commits infantry from the reinforcements to non-home planets and takes the empty ones', () => {
     const hero = commit({ t1: 2, t2: 1 });
     const t = table([hero]);
     quote(t.pack, id, 'Commit up to 3 infantry from your reinforcements to any non-home planets');
@@ -32,7 +32,7 @@ describe('leader:yinhero Dannel of the Tenth', () => {
   // "... to any non-home planets ..."
   // Checks: an infantry chosen for a home planet is not committed; the one for Target One is.
   // Why the check is NOT redundant here: the card names non-home planets only.
-  test.fails('leader:yinhero commits nothing to a home planet', () => {
+  test('leader:yinhero commits nothing to a home planet', () => {
     const t = table([commit({ h1: 1, t1: 1 })]);
     const end = endOf(t);
     expect(end.ground.t1?.infantry).toBe(1);
@@ -44,7 +44,7 @@ describe('leader:yinhero Dannel of the Tenth', () => {
   // change: the outcome of the ground combat is not known to the plan and is entered by the player.
   // Why the check is NOT redundant here: control is established only after a ground combat is won (89.4, 25), and the
   // plan simulates no combat.
-  test.fails('leader:yinhero on a defended planet commits the infantry but takes no control', () => {
+  test('leader:yinhero on a defended planet commits the infantry but takes no control', () => {
     const t = table([commit({ t1: 1 })], { opponents: [RIVAL], enemyGround: { t1: { o1: { infantry: 1 } } }, planetControl: { t1: 'enemy' }, planetOwner: { t1: 'o1' } });
     const end = endOf(t);
     expect(end.ground.t1?.infantry).toBe(1);
@@ -61,7 +61,7 @@ describe('leader:yinhero Dannel of the Tenth', () => {
     expectStanding(warningsOf(table([commit({ t1: 1 }), again]), again), 'componentNotHeld');
   });
 
-  test.fails('leader:yinhero is a play effect', () => {
+  test('leader:yinhero is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

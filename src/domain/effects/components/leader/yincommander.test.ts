@@ -1,14 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry, ExtensionCode, Opponent, StartHoldings } from '../../../types';
+import type { Entry, Opponent, StartHoldings } from '../../../types';
 import { bench, effect, expectNone, expectStanding, expectWaived, quote, secondary, warningsOf } from '../kit';
+import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './yincommander';
 
-/**
- * The check pass 2 adds for everyone (LRR 90.12): a technology researched without its prerequisites. The code does not
- * exist yet, so it is named here as the extension code it will be.
- */
-const PREREQUISITES = 'researchPrerequisites' as ExtensionCode;
+/** The check of prerequisites (LRR 90.12): a technology researched without them. */
+const PREREQUISITES = prerequisitesMissing.code;
 
 /** Instinct Training needs one green technology, Bioplasmosis two; the Yin seated on the bench own none. */
 const ONE_GREEN = 'technology:it';
@@ -30,27 +28,29 @@ describe('leader:yincommander Brother Omar', () => {
   // Why the check is redundant here: 90.12 asks one owned technology of the colour for each symbol; the commander
   // stands in for one green one. It is a `modify` of `prerequisites`: the check runs against one green less, nothing
   // is listed as waived.
-  test.fails('leader:yincommander satisfies one green prerequisite, and only one', () => {
+  test('leader:yincommander satisfies one green prerequisite, and only one', () => {
     const one = research(ONE_GREEN);
     const two = research(TWO_GREEN);
-    const t = table([one, two]);
+    // Two boards: researching Instinct Training first would give the Yin a green technology of their own.
+    const t = table([one]);
+    const t2 = table([two]);
     quote(t.pack, id, 'This card satisfies a green technology prerequisite.');
     expectNone(warningsOf(t, one), PREREQUISITES);
-    expectStanding(warningsOf(t, two), PREREQUISITES);
+    expectStanding(warningsOf(t2, two), PREREQUISITES);
   });
 
   // LRR 90.12: "a player must own one technology of the matching color for each prerequisite symbol on the technology
   //  card they wish to research."
   // Checks: a commander not unlocked satisfies nothing: the same research is warned of.
   // Why the check is NOT redundant here: a locked leader is not in force (51.5, `inForce`).
-  test.fails('leader:yincommander locked satisfies nothing: the research is warned of', () => {
+  test('leader:yincommander locked satisfies nothing: the research is warned of', () => {
     const one = research(ONE_GREEN);
     expectStanding(warningsOf(table([one], {}), one), PREREQUISITES);
   });
 
   // Checks: another faction without the commander is warned of the same research.
   // Why the check is NOT redundant here: the commander is the Yin's own, so the rule stands as written.
-  test.fails('leader:yincommander is the Yin\'s own: another faction is warned of the research', () => {
+  test('leader:yincommander is the Yin\'s own: another faction is warned of the research', () => {
     const one = research(ONE_GREEN);
     const sol = bench({ faction: 'sol', entries: [one] });
     expectStanding(warningsOf(sol, one), PREREQUISITES);
@@ -62,7 +62,7 @@ describe('leader:yincommander Brother Omar', () => {
   // prerequisites is listed and lifted by the commander.
   // Why the check is redundant here: the card lets the Yin ignore every prerequisite of a technology another player
   // owns; the infantry it costs is the player's own choice and does not bring the rule back.
-  test.fails('leader:yincommander a technology another player owns is researched without its prerequisites: the warning is waived', () => {
+  test('leader:yincommander a technology another player owns is researched without its prerequisites: the warning is waived', () => {
     const two = research(TWO_GREEN);
     const t = table([two], { leaders: { [id]: 'unlocked' } }, { technologies: [TWO_GREEN] });
     quote(t.pack, id, 'When you research a tech owned by another player');
@@ -71,7 +71,7 @@ describe('leader:yincommander Brother Omar', () => {
 
   // Checks: Bioplasmosis owned by nobody still lacks a green prerequisite beyond the one the commander gives.
   // Why the check is NOT redundant here: "owned by another player" is the condition of the second sentence.
-  test.fails('leader:yincommander a technology nobody else owns keeps its prerequisites', () => {
+  test('leader:yincommander a technology nobody else owns keeps its prerequisites', () => {
     const two = research(TWO_GREEN);
     const t = table([two], { leaders: { [id]: 'unlocked' } }, {});
     expectStanding(warningsOf(t, two), PREREQUISITES);
@@ -79,7 +79,7 @@ describe('leader:yincommander Brother Omar', () => {
 
   test.todo('leader:yincommander the infantry returned to the reinforcements: a research has no choice of which infantry, from where');
 
-  test.fails('leader:yincommander is a passive effect that modifies prerequisites and waives them for a technology another player owns', () => {
+  test('leader:yincommander is a passive effect that modifies prerequisites and waives them for a technology another player owns', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.prerequisites).toBeTypeOf('function');

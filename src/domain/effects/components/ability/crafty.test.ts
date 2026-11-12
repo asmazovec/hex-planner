@@ -18,7 +18,7 @@ describe('ability:crafty Crafty', () => {
   // Checks: the Yssaril draw an eighth action card; the warning of the hand limit is listed and lifted by Crafty.
   // Why the check is redundant here: 2.4 limits a hand to seven cards and lets a game effect change that (2.4.1);
   // Crafty removes the limit altogether, so it is a waiver, not a new number.
-  test.fails('ability:crafty an eighth action card is kept: the warning of the hand limit is waived', () => {
+  test('ability:crafty an eighth action card is kept: the warning of the hand limit is waived', () => {
     const t = table('yssaril');
     quote(t.pack, id, 'You can have any number of action cards in your hand.');
     expectWaived(warningsOf(t, t.entry), HAND_LIMIT, id);
@@ -40,7 +40,7 @@ describe('ability:crafty Crafty', () => {
 
   // "Game effects cannot prevent you from using this ability."
   // Checks: the ability is passive: it waives whatever the player holds, with no entry naming it.
-  test.fails('ability:crafty is a passive effect that waives the hand limit', () => {
+  test('ability:crafty is a passive effect that waives the hand limit', () => {
     const { pack } = table('yssaril');
     quote(pack, id, 'Game effects cannot prevent you from using this ability.');
     expect(effect(pack, id).tier).toBe('passive');

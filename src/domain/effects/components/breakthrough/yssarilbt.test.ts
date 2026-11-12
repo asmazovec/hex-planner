@@ -22,7 +22,7 @@ describe('breakthrough:yssarilbt Deepgloom Executable', () => {
   // the second one's warning is listed and lifted by Deepgloom Executable.
   // Why the check is redundant here: 94.1 allows one transaction with each player per turn; the card says the
   // transaction it brings does not count against that limit.
-  test.fails('breakthrough:yssarilbt a second transaction with the Yssaril in a turn that used Stall Tactics is waived', () => {
+  test('breakthrough:yssarilbt a second transaction with the Yssaril in a turn that used Stall Tactics is waived', () => {
     const entry = theirs([deal('me'), deal('me')], [STALL, id]);
     const t = table(entry);
     quote(t.pack, id, 'that transaction does not count against the once-per-player transaction limit for that turn');
@@ -34,7 +34,7 @@ describe('breakthrough:yssarilbt Deepgloom Executable', () => {
   // Checks: the Sol player, with no ship near me, makes the transaction the breakthrough brings: the warning that we
   // are not neighbours is lifted by it.
   // Why the check is redundant here: 94.1 asks neighbours; the transaction of the card is not limited by it.
-  test.fails('breakthrough:yssarilbt the transaction it brings needs no neighbours: the warning is waived', () => {
+  test('breakthrough:yssarilbt the transaction it brings needs no neighbours: the warning is waived', () => {
     const entry = theirs([deal('me')], [STALL, id]);
     const t = table(entry, true);
     expectWaived(warningsOf(t, entry), 'notNeighbor', id);
@@ -55,7 +55,7 @@ describe('breakthrough:yssarilbt Deepgloom Executable', () => {
     expectStanding(warningsOf(table(entry), entry), 'transactionRepeated');
   });
 
-  test.fails('breakthrough:yssarilbt waives the transaction limit and the neighbours for the entry that names it', () => {
+  test('breakthrough:yssarilbt waives the transaction limit and the neighbours for the entry that names it', () => {
     const { pack } = table(theirs([], []));
     expect(effect(pack, id).tier).not.toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['notNeighbor', 'transactionRepeated']);

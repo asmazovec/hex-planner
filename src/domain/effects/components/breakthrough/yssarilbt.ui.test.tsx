@@ -22,7 +22,7 @@ const show = (uses: string[]) => {
 // Checks: the Sol player's turn that uses Stall Tactics by the breakthrough shows the warning of the second transaction
 // with me in the allowed look, naming Deepgloom Executable.
 // Why the check is redundant here: the transaction the card brings is outside the limit of one per player (94.1).
-test.fails('breakthrough:yssarilbt the second transaction shows its warning as allowed by Deepgloom Executable', () => {
+test('breakthrough:yssarilbt the second transaction shows its warning as allowed by Deepgloom Executable', () => {
   const table = show(['ability:stall_tactics', id]);
   quote(table.pack, id, 'that transaction does not count against the once-per-player transaction limit');
   expectShownWaived('transactionRepeated', 'Deepgloom Executable');
