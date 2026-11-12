@@ -225,6 +225,10 @@ test('the upgrades of Technology and the free secondaries of Trade stay under th
   expect(kinds.length).toBeGreaterThan(2);
   for (const kind of kinds) await pressRepeatedly(page, panel(page).locator('.entry-upgrades').getByRole('button', { name: kind, exact: true }), 4);
 
+  // The planets with a technology specialty (exhausted for a prerequisite) toggle in place, when the player has any.
+  const specialties = panel(page).getByRole('group', { name: 'Technology specialties' }).getByRole('button');
+  for (let i = 0; i < await specialties.count(); i += 1) await pressRepeatedly(page, specialties.nth(i), 4);
+
   await cards.getByRole('button', { name: '5 Trade' }).click();
   await panel(page).locator('.card-ability-primary').click();
   const free = panel(page).getByRole('group', { name: 'Who uses the secondary for free' }).getByRole('button');

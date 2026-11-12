@@ -508,6 +508,8 @@
       "upgrades": "Upgrades",
       "techPrimary": "The first is free, the second costs 6 resources. To pay: {{n}}.",
       "techSecondary": "4 resources per technology. To pay: {{n}}.",
+      "specialties": "Technology specialties",
+      "specialtiesNote": "Exhaust a planet to ignore one prerequisite of its colour.",
       "mecatol": "I control Mecatol Rex: +1 point",
       "mecatolNone": "Mecatol Rex is not under your control: no point.",
       "imperialNote": "Otherwise draw a secret objective. A public objective is marked in the status phase.",

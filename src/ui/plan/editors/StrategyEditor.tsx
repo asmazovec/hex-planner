@@ -5,7 +5,8 @@ import { textOf } from '../../../domain/components';
 import { upgradesOf, upgradeTech } from '../../../domain/holdings';
 import { autoPay } from '../../../domain/payment';
 import { opponentsBySeat } from '../../../domain/players';
-import { cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
+import { researchTokensGiven } from '../../../domain/replay/research';
+import { CARD, cardChange, cardCost, costsStrategyToken, freeTokens, freshPlay, heldCards, playOf, startsAsPrimary, type CardEntry, type CardPatch } from '../../../domain/strategy';
 import type { CardEffects, DataPack, Game, GameState, Round, UpgradeId, Warning } from '../../../domain/types';
 import { opponentName } from '../../players/names';
 import { EntryUpgrades } from '../blocks/EntryUpgrades';
@@ -88,7 +89,7 @@ export function StrategyEditor({
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
     <Section warnings={list(placer.at('tokens'))}>
       <TokenTiles
-        free={freeTokens(entry, game.expansions, before)} values={effects.tokens ?? {}} onChange={onTokens}
+        free={freeTokens(entry, game.expansions, before) + (entry.card === CARD.technology ? researchTokensGiven(pack, game, before, before, effects.researched) : 0)} values={effects.tokens ?? {}} onChange={onTokens}
         pools={rearrange ? { tactic: before.tactic, fleet: before.fleet, strategy: before.strategy } : undefined}
       />
     </Section>
