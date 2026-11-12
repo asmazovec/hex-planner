@@ -15,7 +15,7 @@ describe('mech:naaz_voltron Eidolon Maximum', () => {
   // the group and of the system are listed and lifted by Eidolon Maximum.
   // Why the check is redundant here: the capacity check (16.1, 16.3) counts a mech as a ground force that must be
   // transported; Eidolon Maximum is a ship and moves by itself (Move 3 on the flipped card), so it takes no place.
-  test.fails('mech:naaz_voltron flies by itself with no ship to carry it: the capacity warnings are waived', () => {
+  test('mech:naaz_voltron flies by itself with no ship to carry it: the capacity warnings are waived', () => {
     const table = flight({ mech: 1 });
     quote(table.pack, id, 'This unit is both a ship and ground force.');
     const warnings = warningsOf(table, table.move);
@@ -26,7 +26,7 @@ describe('mech:naaz_voltron Eidolon Maximum', () => {
   // Checks: a carrier with four infantry and the Eidolon Maximum: the load beside the mech fits the carrier's 4, so
   // the warning is lifted.
   // Why the check is redundant here: the one mech that is a ship is not transported.
-  test.fails('mech:naaz_voltron beside a full carrier takes no place on board', () => {
+  test('mech:naaz_voltron beside a full carrier takes no place on board', () => {
     const table = flight({ carrier: 1, infantry: 4, mech: 1 });
     expectWaived(warningsOf(table, table.move), 'capacityGroup', id);
   });
@@ -57,7 +57,7 @@ describe('mech:naaz_voltron Eidolon Maximum', () => {
 
   test.todo('mech:naaz_voltron counts towards either capacity or the fleet pool, and moves 3: the plan does not tell the Eidolon Maximum from the other mechs');
 
-  test.fails('mech:naaz_voltron is a passive effect that waives both capacity checks', () => {
+  test('mech:naaz_voltron is a passive effect that waives both capacity checks', () => {
     const { pack } = flight({ mech: 1 });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['capacityGroup', 'capacitySystem']);

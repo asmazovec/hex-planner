@@ -14,7 +14,7 @@ const table = (leaders: Record<string, 'unlocked'>) => {
 // "When you produce: You can produce your flagship without spending resources."
 // Checks: the tactical editor of a production of the flagship with nothing paid shows no shortage of resources.
 // Why the check is redundant here: with the commander unlocked the flagship costs no resources, so nothing is short.
-test.fails('leader:nomadcommander the flagship produced with nothing paid shows no shortage', () => {
+test('leader:nomadcommander the flagship produced with nothing paid shows no shortage', () => {
   const nomad = table({ [id]: 'unlocked' });
   quote(nomad.pack, id, 'You can produce your flagship without spending resources.');
   showTactical(nomad, nomad.move);
