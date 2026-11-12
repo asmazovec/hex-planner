@@ -15,7 +15,7 @@ describe('actionCard:refit Refit Troops', () => {
   // Checks: the component action with two infantry chosen on Home One leaves one infantry and two mechs there.
   // Why the check is redundant here: nothing is lifted; the card changes the board, which the replay must do itself
   // (a mech is otherwise only produced, LRR 67, or deployed by an ability).
-  test.fails('actionCard:refit replaces two infantry with two mechs on the chosen planet', () => {
+  test('actionCard:refit replaces two infantry with two mechs on the chosen planet', () => {
     const refitted = table([refit({ h1: 2 })]);
     quote(refitted.pack, id, 'Replace each of those infantry with mechs.');
     expect(endOf(refitted).ground.h1).toEqual({ infantry: 1, mech: 2 });
@@ -24,7 +24,7 @@ describe('actionCard:refit Refit Troops', () => {
   // "Choose 1 or 2 of your infantry on the game board."
   // Checks: one infantry chosen where none stands is reported missing, and no mech appears there.
   // Why the check is NOT redundant here: the card replaces infantry that are on the board; it makes none.
-  test.fails('actionCard:refit an infantry chosen where there is none is missing and nothing is replaced', () => {
+  test('actionCard:refit an infantry chosen where there is none is missing and nothing is replaced', () => {
     const entry = refit({ h2: 1 });
     const refitted = table([entry]);
     expectStanding(warningsOf(refitted, entry), 'unitsMissing');
@@ -34,7 +34,7 @@ describe('actionCard:refit Refit Troops', () => {
   // "Choose 1 or 2 ..."
   // Checks: three infantry chosen is beyond the card's limit and warned of (a new code), the plan forbidding nothing.
   // Why the check is NOT redundant here: the card names at most two infantry.
-  test.fails('actionCard:refit three infantry are more than the card allows: warned', () => {
+  test('actionCard:refit three infantry are more than the card allows: warned', () => {
     const entry = refit({ h1: 3 });
     expectStanding(warningsOf(table([entry]), entry), 'choiceOverLimit' as AnyWarningCode);
   });
@@ -45,7 +45,7 @@ describe('actionCard:refit Refit Troops', () => {
     expect(endOf(table([])).ground.h1).toEqual({ infantry: 3 });
   });
 
-  test.fails('actionCard:refit is a play effect', () => {
+  test('actionCard:refit is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

@@ -17,7 +17,7 @@ const table = (entry: Entry) => {
 // Checks: the secondary of my own Trade is warned of; I name Strategize in «Used», it is written into the entry, and
 // the warning reads as allowed by Strategize.
 // Why the check is redundant here: LRR 83.4 keeps my own card's secondary from me; the card lets me perform it.
-test.fails('actionCard:strategize1 named in «Used» of my own secondary, the warning reads as allowed by Strategize', async () => {
+test('actionCard:strategize1 named in «Used» of my own secondary, the warning reads as allowed by Strategize', async () => {
   const own = secondary(CARD.trade);
   const mine = table(own);
   quote(mine.pack, id, 'Perform the secondary ability of any readied or unchosen strategy card.');

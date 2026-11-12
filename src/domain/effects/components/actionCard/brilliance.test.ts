@@ -18,7 +18,7 @@ describe('actionCard:brilliance Brilliance', () => {
   // Checks: Home One, exhausted by the purchase before, is ready after the card.
   // Why the check is redundant here: nothing is lifted; the card readies a planet, which the replay must do itself
   // (a planet is otherwise readied in the status phase, LRR 71.5, or by a strategy card).
-  test.fails('actionCard:brilliance readies a planet with a technology specialty', () => {
+  test('actionCard:brilliance readies a planet with a technology specialty', () => {
     const ready = table([brilliance('h1')]);
     quote(ready.pack, id, 'Ready 1 of your planets that has a technology specialty');
     expect(endOf(ready).exhausted).not.toContain('h1');
@@ -28,7 +28,7 @@ describe('actionCard:brilliance Brilliance', () => {
   // "... 1 of your planets that has a technology specialty ..."
   // Checks: Home Two has no specialty; choosing it is warned of (a new code).
   // Why the check is NOT redundant here: the card readies only a planet with a technology specialty.
-  test.fails('actionCard:brilliance a planet without a technology specialty is warned of', () => {
+  test('actionCard:brilliance a planet without a technology specialty is warned of', () => {
     const entry = brilliance('h2');
     expectStanding(warningsOf(table([entry]), entry), 'playTargetInvalid' as AnyWarningCode);
   });
@@ -36,7 +36,7 @@ describe('actionCard:brilliance Brilliance', () => {
   // "... 1 of your planets ..." LRR 71 with the check of strategy cards: a planet I do not control is not mine to ready.
   // Checks: Target One, not mine, is warned of as any planet readied without control.
   // Why the check is NOT redundant here: the card readies my own planets only.
-  test.fails('actionCard:brilliance a planet I do not control is warned of', () => {
+  test('actionCard:brilliance a planet I do not control is warned of', () => {
     const entry = brilliance('t1');
     expectStanding(warningsOf(table([entry]), entry), 'readyNotControlled');
   });
@@ -49,7 +49,7 @@ describe('actionCard:brilliance Brilliance', () => {
 
   test.todo('actionCard:brilliance "choose 1 player to gain their breakthrough": a player holds only their own faction\'s breakthrough, another one cannot be held yet');
 
-  test.fails('actionCard:brilliance is a play effect', () => {
+  test('actionCard:brilliance is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
   });
