@@ -21,8 +21,8 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [
-    { key: 'systemId', kind: 'system', label: { ru: 'Ñèñòåìà', en: 'System' } },
-    { key: 'unit', kind: 'unit', options: () => ['fighter', 'destroyer'], label: { ru: 'Þíèòû', en: 'Units' } },
+    { key: 'systemId', kind: 'system', label: { ru: 'Ð¡Ð¸ÑÑ‚ÐµÐ¼Ð°', en: 'System' } },
+    { key: 'unit', kind: 'unit', options: () => ['fighter', 'destroyer'], label: { ru: 'Ð®Ð½Ð¸Ñ‚Ñ‹', en: 'Units' } },
   ],
   play: turn => {
     const { game, state, choices, warnings, held } = turn;
