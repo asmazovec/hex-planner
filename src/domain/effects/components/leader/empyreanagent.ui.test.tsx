@@ -17,7 +17,7 @@ const tokens = (game: Game, pack: Parameters<typeof project>[3]): number => {
 // Checks: my cruiser moves into the empty system next to home; I name Acamar in «Used», it is written into the entry,
 // and the plan counts one command token more than before.
 // Why the default count is not enough here: the tactical action only spends its token; the agent gives one.
-test.fails('leader:empyreanagent named in Used after a move into an empty system, the plan counts one command token more', async () => {
+test('leader:empyreanagent named in Used after a move into an empty system, the plan counts one command token more', async () => {
   const move = tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } }] });
   const table = bench({ faction: 'empyrean', expansions: ['pok'], units: { [HOME]: { cruiser: 1 } }, start: { leaders: { [id]: 'unlocked' } }, entries: [move] });
   quote(table.pack, id, 'that player gains 1 command token');

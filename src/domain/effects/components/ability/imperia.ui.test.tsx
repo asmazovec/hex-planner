@@ -21,7 +21,7 @@ const table = (faction: string) => {
 // Checks: I name Claire Gibson, the Sol commander, in «Used»; it is written into the entry, and the warning that the
 // component is not held reads as allowed by Imperia.
 // Why the check is redundant here: the Mahact player may use another player's unlocked commander.
-test.fails('ability:imperia another player\'s commander is used, and the warning reads as allowed by Imperia', async () => {
+test('ability:imperia another player\'s commander is used, and the warning reads as allowed by Imperia', async () => {
   const mahact = table('mahact');
   quote(mahact.table.pack, id, 'you can use the ability of that player\'s commander, if it is unlocked');
   const live = showUses(mahact.table, mahact.move);

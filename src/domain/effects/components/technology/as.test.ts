@@ -22,7 +22,7 @@ describe('technology:as Aetherstream', () => {
   // warning is made.
   // Why the default limit does not apply: the move value of every ship is 1 more during this action; this changes
   // the number the check compares with (a `modify` of `speed`), nothing is listed as waived.
-  test.fails('technology:as adds 1 to the move value when the active system is adjacent to an anomaly', () => {
+  test('technology:as adds 1 to the move value when the active system is adjacent to an anomaly', () => {
     const stream = table(two(), { [NEAR]: { carrier: 1 } });
     quote(stream.pack, id, 'you may apply +1 to the move value of all of that player\'s ships during this tactical action');
     expectNone(warningsOf(stream, stream.move), 'speedShort');
@@ -30,7 +30,7 @@ describe('technology:as Aetherstream', () => {
 
   // Checks: three systems are still too far for a carrier of move 2, and the warning names the move of 2.
   // Why the check is NOT redundant here: the technology adds 1, it does not remove the limit.
-  test.fails('technology:as still warns beyond the raised move value, against 2', () => {
+  test('technology:as still warns beyond the raised move value, against 2', () => {
     const stream = table(three(), { [HOME]: { carrier: 1 } });
     const warnings = warningsOf(stream, stream.move);
     expectStanding(warnings, 'speedShort');

@@ -16,7 +16,7 @@ const table = (map: Record<string, string>) => {
 // Checks: the active system lies next to an asteroid field; I take the carrier (move 1) on a route of two systems, it
 // is written into the move, and no speed warning is shown.
 // Why the default limit does not apply: the carrier's move value is 2 during this action (a modify, nothing waived).
-test.fails('technology:as a carrier is taken two systems toward an anomaly, and no speed warning is shown', async () => {
+test('technology:as a carrier is taken two systems toward an anomaly, and no speed warning is shown', async () => {
   const stream = table(ANOMALY);
   quote(stream.table.pack, id, 'you may apply +1 to the move value of all of that player\'s ships during this tactical action');
   const live = showFlight(stream.table, stream.move, NEAR);

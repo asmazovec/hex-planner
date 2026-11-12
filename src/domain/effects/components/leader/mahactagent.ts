@@ -5,9 +5,17 @@
  *
  * A play, red in pass 1: named in `uses` of a secondary, the agent is exhausted (already) and the strategy token of the
  * secondary is not spent: the active player's token is used instead.
+ * Decided (pass 2): a `modify` of `strategyCost` held for the entry that names the agent while it is ready: the secondary
+ * owes none of my strategy tokens (the cost is 0, so no `shortStrategy` is made either). An exhausted agent is not
+ * ready, so a second secondary pays its token again. The token removed from the active player is not modelled: the
+ * secondary entry does not know who the active player is.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:mahactagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  modify: { strategyCost: (value, ctx) => (ctx.secondary ? 0 : value) },
+};

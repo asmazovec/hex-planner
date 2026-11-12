@@ -20,7 +20,7 @@ describe('ability:voidborn Voidborn', () => {
   // lifted by Voidborn.
   // Why the check is redundant here: LRR 59.1.1 says "A ship cannot move through a nebula", and the ability says that
   // nebulae do not affect the Empyrean ships' movement at all.
-  test.fails('ability:voidborn lets a ship pass through a nebula: the warning is waived', () => {
+  test('ability:voidborn lets a ship pass through a nebula: the warning is waived', () => {
     const empyrean = table('empyrean', through(), { [HOME]: { cruiser: 1 } });
     quote(empyrean.pack, id, 'Nebulae do not affect your ships\' movement');
     expectWaived(warningsOf(empyrean, empyrean.move), 'routeBlocked', id);
@@ -48,14 +48,14 @@ describe('ability:voidborn Voidborn', () => {
   // Checks: an Empyrean cruiser that starts in the nebula still flies its move value of 2: no speed warning.
   // Why the check is redundant here: the nebula does not affect the Empyrean ships' movement, so the move value of 1
   // does not apply; this is the ship's own number, nothing is listed as waived.
-  test.fails('ability:voidborn a ship starting in a nebula keeps its move value', () => {
+  test('ability:voidborn a ship starting in a nebula keeps its move value', () => {
     const empyrean = table('empyrean', outOf(2), { [NEAR]: { cruiser: 1 } });
     expectNone(warningsOf(empyrean, empyrean.move), 'speedShort');
   });
 
   // Checks: three systems are still beyond a cruiser's move value of 2, and the warning names 2, not 1.
   // Why the check is NOT redundant here: Voidborn removes the nebula's limit, not the ship's own move value.
-  test.fails('ability:voidborn a ship starting in a nebula is still warned beyond its own move value', () => {
+  test('ability:voidborn a ship starting in a nebula is still warned beyond its own move value', () => {
     const empyrean = table('empyrean', outOf(3), { [NEAR]: { cruiser: 1 } });
     const warnings = warningsOf(empyrean, empyrean.move);
     expectStanding(warnings, 'speedShort');

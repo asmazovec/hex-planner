@@ -21,7 +21,7 @@ const table = () => {
 // Checks: my route passes an Empyrean destroyer; I name Aetherpassage in «Used», it is written into the entry, and the
 // warning that the route is blocked reads as allowed by Aetherpassage.
 // Why the check is redundant here: LRR 58.3.2 forbids passing another player's ships, and their owner allows it.
-test.fails('ability:aetherpassage named in Used, the route through Empyrean ships reads as allowed by Aetherpassage', async () => {
+test('ability:aetherpassage named in Used, the route through Empyrean ships reads as allowed by Aetherpassage', async () => {
   const passage = table();
   quote(passage.table.pack, id, 'You may allow that player to move their ships through systems that contain your ships.');
   const live = showUses(passage.table, passage.move);

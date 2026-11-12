@@ -14,7 +14,7 @@ const table = () => {
 // Checks: my second action into the same system warns of my token there; I name Il Na Viroset in «Used», it is written
 // into the entry, and the warning reads as allowed by Il Na Viroset.
 // Why the check is redundant here: LRR 89.1 forbids activating a system with my token, and the commander allows it.
-test.fails('leader:mahactcommander named in Used, the activation of a system with my token reads as allowed by Il Na Viroset', async () => {
+test('leader:mahactcommander named in Used, the activation of a system with my token reads as allowed by Il Na Viroset', async () => {
   const commander = table();
   quote(commander.table.pack, id, 'you can activate systems that contain your command tokens');
   const live = showUses(commander.table, commander.second);
