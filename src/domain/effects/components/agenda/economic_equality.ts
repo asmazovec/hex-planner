@@ -4,10 +4,12 @@
  *
  * Decided: play. The "For" outcome sets the trade goods the plan counts to 5, whatever there were; an agenda entry
  * that resolves it (gains the directive) does it. "Against" sets them to 0 and needs the outcome chosen, which an entry
- * has no field for yet. Pass 1: the hint it is today.
+ * has no field for yet.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:economic_equality';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+const equalize = ({ state }: { state: { tradeGoods: number } }): void => { state.tradeGoods = 5; };
+
+export const effect: ComponentEffect = { tier: 'play', rule: id, play: equalize, gained: equalize };

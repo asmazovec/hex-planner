@@ -16,7 +16,7 @@ describe('agenda:defense_act Homeland Defense Act', () => {
   // lifted by the law, and the PDS stands there.
   // Why the check is redundant here: LRR 63.3 ("Each planet can have a maximum of two PDS units") is the very number the
   // law removes for PDS on a planet the player controls.
-  test.fails('agenda:defense_act in play lifts the two-PDS limit of a planet', () => {
+  test('agenda:defense_act in play lifts the two-PDS limit of a planet', () => {
     const third = build();
     const defended = table([[law()], [third]]);
     quote(defended.pack, id, 'Each player can have any number of PDS units on planets they control.');
@@ -65,7 +65,7 @@ describe('agenda:defense_act Homeland Defense Act', () => {
 
   test.todo('agenda:defense_act "Against": each player destroys 1 PDS: a one-off outcome and a choice an entry cannot name');
 
-  test.fails('agenda:defense_act is a passive effect that waives the PDS limit of a planet', () => {
+  test('agenda:defense_act is a passive effect that waives the PDS limit of a planet', () => {
     const { pack } = table([[]]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['structureLimit']);

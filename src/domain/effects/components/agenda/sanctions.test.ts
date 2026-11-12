@@ -22,7 +22,7 @@ describe('agenda:sanctions Executive Sanctions', () => {
   // Why the default limit does not apply: LRR 2.4.1 "A game effect can increase or decrease the number of cards a
   // player's hand can have"; the law changes the number (a `modify` of `handLimit`), it does not lift the check, so
   // nothing is listed as waived and the warning names 3.
-  test.fails('agenda:sanctions in play warns of a fourth action card against the limit of 3', () => {
+  test('agenda:sanctions in play warns of a fourth action card against the limit of 3', () => {
     const table = drawing(4, true);
     quote(table.pack, id, 'Each player can have a maximum of 3 action cards in their hand.');
     const warnings = warningsOf(table, table.draw);
@@ -54,7 +54,7 @@ describe('agenda:sanctions Executive Sanctions', () => {
 
   test.todo('agenda:sanctions "Against": each player discards 1 random action card: entered by the player, the plan draws no card at random');
 
-  test.fails('agenda:sanctions is a passive effect that changes the hand limit to 3', () => {
+  test('agenda:sanctions is a passive effect that changes the hand limit to 3', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.handLimit?.(7, { faction: 'sol' })).toBe(3);

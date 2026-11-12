@@ -6,10 +6,18 @@
  * Decided: a waiver. Relics cannot be exchanged in a transaction (94.3, Transactions note 1: "Relics themselves cannot
  * be"); the replay warns of it (`transactionKind`) and this card lifts that for itself only. The ACTION is a roll of a
  * die: the replay already purges the relic when its component action plays it ("purge this card"); what the die
- * decides is not modelled. Pass 1: the hint it is today.
+ * decides is not modelled.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:thesilverflame';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'transactionKind',
+    rule: 'The Silver Flame may be exchanged as part of a transaction.',
+    when: warning => warning.params?.id === id,
+  }],
+};

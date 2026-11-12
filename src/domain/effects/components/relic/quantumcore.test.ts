@@ -10,7 +10,7 @@ describe('relic:quantumcore The Quantumcore', () => {
   // Checks: an entry that gains the relic gives the player their faction's breakthrough as well.
   // Why the check is redundant here: a breakthrough is otherwise gained by its own condition (TE, Breakthroughs);
   // the relic gives it on being gained, so the holdings must show it held without a gain of its own.
-  test.fails('relic:quantumcore gained brings the faction\'s breakthrough', () => {
+  test('relic:quantumcore gained brings the faction\'s breakthrough', () => {
     const table = bench({ faction: 'sol', expansions: ['te'], entries: [gaining()] });
     quote(table.pack, id, 'When you gain this card, gain your breakthrough.');
     expect(table.pack.factions.sol.sheet?.breakthrough).toBeDefined();

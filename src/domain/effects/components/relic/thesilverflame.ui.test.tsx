@@ -16,7 +16,7 @@ const table = (entry: Entry, relics: string[]) => bench({
 // "The Silver Flame may be exchanged as part of a transaction."
 // Checks: a deal that gives the Silver Flame keeps it in the deal, and its warning reads as allowed by the card.
 // Why the check is redundant here: relics are not exchanged (94.3), except this one by its own text.
-test.fails('relic:thesilverflame given in a deal reads as allowed by The Silver Flame', () => {
+test('relic:thesilverflame given in a deal reads as allowed by The Silver Flame', () => {
   const give = giving(id);
   const flame = table(give, [id]);
   quote(flame.pack, id, 'may be exchanged as part of a transaction');

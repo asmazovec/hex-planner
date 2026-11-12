@@ -16,7 +16,7 @@ describe('relic:thetriad The Triad', () => {
   // planet I control is listed and lifted by the card, and the payment is worth 3, so nothing is short.
   // Why the check is redundant here: a payment spends planet cards the player controls (34 note 2); the Triad is spent
   // "as if it were a planet card", by its own text.
-  test.fails('relic:thetriad pays as a planet card worth 3', () => {
+  test('relic:thetriad pays as a planet card worth 3', () => {
     const carrier = build([id]);
     const triad = table([[carrier]]);
     quote(triad.pack, id, 'This card can be readied and spent as if it were a planet card.');
@@ -40,7 +40,7 @@ describe('relic:thetriad The Triad', () => {
   // "This card can be readied ... as if it were a planet card." LRR 81.6: each player readies their exhausted cards.
   // Checks: spent in round 1, the Triad is ready again in round 2 and pays without a warning of exhaustion.
   // Why the check is redundant here: the status phase readies it with the planets.
-  test.fails('relic:thetriad is readied by the status phase and pays again the next round', () => {
+  test('relic:thetriad is readied by the status phase and pays again the next round', () => {
     const later = build([id]);
     const triad = table([[build([id]), statusTokens(1, 1, 0)], [later]]);
     const warnings = warningsOf(triad, later);
@@ -60,7 +60,7 @@ describe('relic:thetriad The Triad', () => {
 
   test.todo('relic:thetriad is worth 3 plus each type of relic fragment owned: the replay holds no relic fragments yet');
 
-  test.fails('relic:thetriad is a passive effect that waives the payment check for itself', () => {
+  test('relic:thetriad is a passive effect that waives the payment check for itself', () => {
     const { pack } = table([[]]);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['planetNotControlled']);

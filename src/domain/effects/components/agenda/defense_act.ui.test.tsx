@@ -14,7 +14,7 @@ const build = (): Entry => primary(CARD.construction, { structures: [{ kind: 'pd
 // Checks: Construction puts a third PDS on Home One under the law; the card's warnings show the limit of a planet in
 // the allowed look, naming the law.
 // Why the check is redundant here: the law removes the two-PDS limit of a planet (63.3) for planets the player controls.
-test.fails('agenda:defense_act a third PDS on a planet reads as allowed by Homeland Defense Act', () => {
+test('agenda:defense_act a third PDS on a planet reads as allowed by Homeland Defense Act', () => {
   const third = build();
   const table = bench({ faction: 'sol', rounds: [[law()], [third]], game: { pds: { h1: 2 } } });
   quote(table.pack, id, 'any number of PDS units on planets they control');

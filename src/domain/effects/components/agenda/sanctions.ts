@@ -11,4 +11,8 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:sanctions';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  modify: { handLimit: value => Math.min(value, 3) },
+};
