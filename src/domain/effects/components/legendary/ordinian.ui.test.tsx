@@ -27,9 +27,9 @@ test('legendary:ordinian the card is named in «Used» of my pass', async () => 
 
 // Checks: the card in «Used» asks where the command token goes; I press «Tactic pool» and the entry keeps it.
 // Why this is needed: the token lands in a pool the player chooses, and the plan counts each pool.
-test.fails('legendary:ordinian the card asks for the pool of the command token', async () => {
+test('legendary:ordinian the card asks for the pool of the command token', async () => {
   const turn = using(pass(), id);
   const live = showUses(table(turn), turn);
   await userEvent.click(screen.getByRole('button', { name: 'Tactic pool' }));
-  expect(live.entry()).toMatchObject({ choices: { ordinianPool: 'tactic' } });
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { ordinianPool: 'tactic' } } });
 });

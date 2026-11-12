@@ -18,7 +18,7 @@ describe('legendary:primor The Atrament', () => {
   // Checks: I control Primor and use the card at the end of my turn for 2 infantry on Home One; they stand there.
   // Why this is automated: the plan counts the ground forces on planets, and the card places them by itself, without
   // production or landing, so no check of those steps is asked and none is waived.
-  test.fails('legendary:primor places 2 infantry on a planet I control', () => {
+  test('legendary:primor places 2 infantry on a planet I control', () => {
     const turn = atEnd(TWO_ON_H1);
     const primor = table([turn]);
     quote(primor.pack, id, 'place up to 2 infantry from your reinforcements on any planet you control');
@@ -45,14 +45,14 @@ describe('legendary:primor The Atrament', () => {
   // Checks: without control of Primor, using the card is warned of.
   // Why the check is NOT redundant here: the card lies in the play area of the player who controls Primor only
   // (53.2); the replay passes every legendary card as held today.
-  test.fails('legendary:primor without control of Primor its use is warned of', () => {
+  test('legendary:primor without control of Primor its use is warned of', () => {
     const turn = atEnd(TWO_ON_H1);
     expectStanding(warningsOf(table([turn], false), turn), 'componentNotHeld');
   });
 
   test.todo('legendary:primor infantry put on a planet I do not control, or more than 2, are warned of: no warning code for a placement by an ability yet');
 
-  test.fails('legendary:primor is a play effect', () => {
+  test('legendary:primor is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
   });

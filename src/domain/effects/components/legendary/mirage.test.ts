@@ -16,7 +16,7 @@ describe('legendary:mirage Mirage Flight Academy', () => {
   // Checks: I control Mirage and use the card for 2 fighters in the home system, where my carrier is; they stand there.
   // Why this is automated: the plan counts the units in space areas; the card places them by itself, with no
   // production, so the checks of production are not asked and none is waived.
-  test.fails('legendary:mirage places 2 fighters in a system with my ships', () => {
+  test('legendary:mirage places 2 fighters in a system with my ships', () => {
     const mirage = table([atEnd(TWO_AT_HOME)]);
     quote(mirage.pack, id, 'place up to 2 fighters from your reinforcements in any system that contains 1 or more of your ships');
     expect(endOf(mirage).systems[HOME]?.fighter).toBe(2);
@@ -25,7 +25,7 @@ describe('legendary:mirage Mirage Flight Academy', () => {
   // LRR 53.3: "Players can use the abilities on the legendary planet ability cards in their play area."
   // Checks: without control of Mirage, using the card is warned of.
   // Why the check is NOT redundant here: the card belongs to whoever controls the planet (53.2).
-  test.fails('legendary:mirage without control of Mirage its use is warned of', () => {
+  test('legendary:mirage without control of Mirage its use is warned of', () => {
     const turn = atEnd(TWO_AT_HOME);
     expectStanding(warningsOf(table([turn], false), turn), 'componentNotHeld');
   });
@@ -37,7 +37,7 @@ describe('legendary:mirage Mirage Flight Academy', () => {
 
   test.todo('legendary:mirage fighters put in a system without my ships, or more than 2, are warned of: no warning code for a placement by an ability yet');
 
-  test.fails('legendary:mirage is a play effect', () => {
+  test('legendary:mirage is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
   });

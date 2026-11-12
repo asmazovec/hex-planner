@@ -1,5 +1,7 @@
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
-import { expectNotShown, showUses, take, uiBench, use } from '../../../../ui/testing/effects';
+import { expectNotShown, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import type { Entry, EntryBody } from '../../../types';
 import { bench, HOME, planned, quote, using } from '../kit';
 import { id } from './mirage';
@@ -26,10 +28,10 @@ test('legendary:mirage Mirage Flight Academy is named in «Used» of my turn', a
 
 // Checks: the card in «Used» lets me take its fighters, two of them; the entry keeps how many.
 // Why this is needed: the card places units by itself, and the plan must know how many and where.
-test.fails('legendary:mirage the card lets me take up to 2 fighters', async () => {
+test('legendary:mirage the card lets me take up to 2 fighters', async () => {
   const turn = using(pass(), id);
   const live = showUses(table(turn), turn);
-  await take('Fighter');
-  await take('Fighter');
-  expect(live.entry()).toMatchObject({ choices: { mirageFighters: 2 } });
+  await userEvent.click(screen.getByRole('button', { name: 'Add one Fighter' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Add one Fighter' }));
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { mirageFighters: 2 } } });
 });

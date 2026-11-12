@@ -25,9 +25,9 @@ test('exploration:ms1 Merchant Station is named in «Used» of the action that e
 
 // Checks: the card in «Used» offers its two branches; I press «Replenish commodities» and the entry keeps the choice.
 // Why this is needed: the plan must know which of the two counts the card changes.
-test.fails('exploration:ms1 the card asks which branch is taken', async () => {
+test('exploration:ms1 the card asks which branch is taken', async () => {
   const move = using(tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] }), id);
   const live = showUses(table(move), move);
   await userEvent.click(screen.getByRole('button', { name: 'Replenish commodities' }));
-  expect(live.entry()).toMatchObject({ choices: { merchantStation: 'replenish' } });
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { merchantStation: 'replenish' } } });
 });

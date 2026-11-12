@@ -19,7 +19,7 @@ describe('legendary:lockedmallice Exterrix Headquarters (Mallice before the nexu
   //  trade goods."
   // Checks: the first branch gives 2 trade goods.
   // Why this is automated: trade goods are counted by the plan, and the card gives them by itself.
-  test.fails('legendary:lockedmallice gives 2 trade goods', () => {
+  test('legendary:lockedmallice gives 2 trade goods', () => {
     const mallice = table(atEnd('tradeGoods'));
     quote(mallice.pack, id, 'gain 2 trade goods or convert all of your commodities to trade goods');
     expect(endOf(mallice).tradeGoods).toBe(endOf(table(atEnd())).tradeGoods + 2);
@@ -27,7 +27,7 @@ describe('legendary:lockedmallice Exterrix Headquarters (Mallice before the nexu
 
   // "... or convert all of your commodities to trade goods."
   // Checks: the second branch turns every commodity into a trade good (21.4).
-  test.fails('legendary:lockedmallice converts every commodity into a trade good', () => {
+  test('legendary:lockedmallice converts every commodity into a trade good', () => {
     const without = endOf(table(atEnd()));
     const end = endOf(table(atEnd('convert')));
     expect(without.commodities).toBeGreaterThan(0);
@@ -44,12 +44,12 @@ describe('legendary:lockedmallice Exterrix Headquarters (Mallice before the nexu
   // LRR 53.3: "Players can use the abilities on the legendary planet ability cards in their play area."
   // Checks: without control of Locked Mallice, using the card is warned of.
   // Why the check is NOT redundant here: the card belongs to whoever controls the planet (53.2).
-  test.fails('legendary:lockedmallice without control of Locked Mallice its use is warned of', () => {
+  test('legendary:lockedmallice without control of Locked Mallice its use is warned of', () => {
     const turn = atEnd('tradeGoods');
     expectStanding(warningsOf(table(turn, false), turn), 'componentNotHeld');
   });
 
-  test.fails('legendary:lockedmallice is a play effect', () => {
+  test('legendary:lockedmallice is a play effect', () => {
     const { pack } = table(atEnd());
     expect(effect(pack, id).tier).toBe('play');
   });

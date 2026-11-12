@@ -15,7 +15,7 @@ describe('exploration:mirage Mirage', () => {
   // Checks: after the explore that names the card, I control the planet Mirage, readied.
   // Why this is automated: control of planets is what the plan counts for resources, influence and legendary cards;
   // the card gives control by itself, without a landing (no check of the landing applies, none is waived).
-  test.fails('exploration:mirage gives control of the planet Mirage, readied', () => {
+  test('exploration:mirage gives control of the planet Mirage, readied', () => {
     const mirage = table(explore());
     quote(mirage.pack, id, 'Gain the Mirage planet card and ready it.');
     const end = endOf(mirage);
@@ -26,7 +26,7 @@ describe('exploration:mirage Mirage', () => {
   // LRR 53.2: "When a player gains control of a legendary planet, they also place its legendary planet ability card in
   //  their play area."
   // Checks: with the planet comes Mirage Flight Academy, in force for me.
-  test.fails('exploration:mirage brings Mirage Flight Academy into force', () => {
+  test('exploration:mirage brings Mirage Flight Academy into force', () => {
     const mirage = table(explore());
     expect(inForce(mirage.pack, mirage.game, endOf(mirage))).toContain('legendary:mirage');
   });
@@ -41,7 +41,7 @@ describe('exploration:mirage Mirage', () => {
 
   test.todo('exploration:mirage the Mirage token stands in the explored system, so units can land on it: the systems take their planets from their tiles only');
 
-  test.fails('exploration:mirage is a play effect', () => {
+  test('exploration:mirage is a play effect', () => {
     const { pack } = table(explore());
     expect(effect(pack, id).tier).toBe('play');
   });

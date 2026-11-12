@@ -20,15 +20,15 @@ test('legendary:lockedmallice Exterrix Headquarters stands in «Used» with no w
   const mallice = table(turn);
   quote(mallice.pack, id, 'gain 2 trade goods or convert all of your commodities to trade goods');
   showUses(mallice, turn);
-  expect(screen.getByText('Exterrix Headquarters')).toBeVisible();
+  expect(screen.getAllByText('Exterrix Headquarters')[0]).toBeVisible();
   expectNotShown('componentNotHeld');
 });
 
 // Checks: the card in «Used» offers its two branches; I press «Gain 2 trade goods» and the entry keeps the choice.
 // Why this is needed: the card changes the trade goods or the commodities, and the plan must know which.
-test.fails('legendary:lockedmallice the card asks which branch is taken', async () => {
+test('legendary:lockedmallice the card asks which branch is taken', async () => {
   const turn = using(planned({ type: 'pass' } as EntryBody), id);
   const live = showUses(table(turn), turn);
   await userEvent.click(screen.getByRole('button', { name: 'Gain 2 trade goods' }));
-  expect(live.entry()).toMatchObject({ choices: { exterrix: 'tradeGoods' } });
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { exterrix: 'tradeGoods' } } });
 });

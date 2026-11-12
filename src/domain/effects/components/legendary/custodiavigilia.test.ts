@@ -19,7 +19,7 @@ describe('legendary:custodiavigilia Custodian\'s Favour', () => {
   // neither "no unit with Production" nor "over the Production value" stands.
   // Why the check is redundant here: production needs a unit with Production in the system (67.1); Mecatol Rex is
   // one by the card, used as a unit on Mecatol Rex (Council Keleres, Custodia Vigilia 9).
-  test.fails('legendary:custodiavigilia Mecatol Rex produces 3 units with no space dock', () => {
+  test('legendary:custodiavigilia Mecatol Rex produces 3 units with no space dock', () => {
     const cv = table(produce({ infantry: 3 }), BOTH);
     quote(cv.pack, id, 'While you control Mecatol Rex, it gains SPACE CANNON 5 and PRODUCTION 3.');
     const codes = standing(warningsOf(cv, cv.move)).map(w => w.code);
@@ -30,7 +30,7 @@ describe('legendary:custodiavigilia Custodian\'s Favour', () => {
   // "... PRODUCTION 3."
   // Checks: a fourth unit is over the value of 3, and the warning names that value.
   // Why the check is NOT redundant here: the card gives a Production value, not unlimited production.
-  test.fails('legendary:custodiavigilia a fourth unit is over the Production value of 3', () => {
+  test('legendary:custodiavigilia a fourth unit is over the Production value of 3', () => {
     const cv = table(produce({ infantry: 4 }), BOTH);
     const warnings = warningsOf(cv, cv.move);
     expectNone(warnings, 'noProduction');
@@ -56,7 +56,7 @@ describe('legendary:custodiavigilia Custodian\'s Favour', () => {
 
   test.todo('legendary:custodiavigilia SPACE CANNON 5 of Mecatol Rex and the 2 command tokens when another player scores with Imperial: a roll and another player\'s strategy card, reminders only (the hint of a legendary planet is not shown yet)');
 
-  test.fails('legendary:custodiavigilia is a passive effect', () => {
+  test('legendary:custodiavigilia is a passive effect', () => {
     const { pack } = table(produce({}), BOTH);
     expect(effect(pack, id).tier).toBe('passive');
   });

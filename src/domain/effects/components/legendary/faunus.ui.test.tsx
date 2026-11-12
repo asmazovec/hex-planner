@@ -27,9 +27,9 @@ test('legendary:faunus Maxis Central Control is named in «Used» of my pass', a
 
 // Checks: the card in «Used» asks for the planet; I press Target One and the entry keeps it.
 // Why this is needed: the card gives control of a planet by itself, and the plan must know which.
-test.fails('legendary:faunus the card asks for the planet it takes', async () => {
+test('legendary:faunus the card asks for the planet it takes', async () => {
   const turn = using(pass(), id);
   const live = showUses(table(turn), turn);
   await userEvent.click(screen.getByRole('button', { name: 'Target One' }));
-  expect(live.entry()).toMatchObject({ choices: { faunusPlanet: 't1' } });
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { faunusPlanet: 't1' } } });
 });

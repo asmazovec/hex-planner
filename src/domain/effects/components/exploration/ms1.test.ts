@@ -17,7 +17,7 @@ describe('exploration:ms1 Merchant Station', () => {
   // Checks: the explore names the card and chooses to replenish; the commodities are filled up to the faction's value.
   // Why this is automated: the plan counts commodities (21.3), and the card changes them by itself; a check stands
   // as it was, nothing is waived.
-  test.fails('exploration:ms1 replenishes the commodities up to the faction value', () => {
+  test('exploration:ms1 replenishes the commodities up to the faction value', () => {
     const table = sol(explore('replenish'));
     quote(table.pack, id, 'You may replenish your commodities, or you may convert your commodities to trade goods.');
     expect(endOf(table).commodities).toBe(table.pack.factions.sol.commodities);
@@ -26,7 +26,7 @@ describe('exploration:ms1 Merchant Station', () => {
   // "... or you may convert your commodities to trade goods."
   // Checks: after Trade filled the commodities, the explore converts every one of them into a trade good.
   // Why this is automated: converting commodities (21.4) is a change of the two counts the plan keeps.
-  test.fails('exploration:ms1 converts every commodity into a trade good', () => {
+  test('exploration:ms1 converts every commodity into a trade good', () => {
     const table = sol(explore('convert'), true);
     const without = endOf(sol(explore(), true));
     const end = endOf(table);
@@ -51,7 +51,7 @@ describe('exploration:ms1 Merchant Station', () => {
     expect(endOf(sol(move)).commodities).toBe(0);
   });
 
-  test.fails('exploration:ms1 is a play effect', () => {
+  test('exploration:ms1 is a play effect', () => {
     const { pack } = sol(explore());
     expect(effect(pack, id).tier).toBe('play');
   });

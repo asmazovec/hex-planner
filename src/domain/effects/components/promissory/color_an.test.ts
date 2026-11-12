@@ -48,14 +48,14 @@ describe('promissory:<color>_an Alliance', () => {
   // "When you activate a system that contains 1 or more of the <color> player's units, return this card to the
   //  <color> player."
   // Checks: activating the system where the owner has an infantry returns the card, and the commander is mine no more.
-  test.fails('promissory:<color>_an activating a system with the owner\'s units returns the card', () => {
+  test('promissory:<color>_an activating a system with the owner\'s units returns the card', () => {
     const an = table([tactical(TARGET)], { theirs: true });
     const end = endOf(an);
     expect(end.holdings.promissory).not.toContain(NOTE);
     expect(end.rivals?.a.holdings.promissory).toContain(NOTE);
   });
 
-  test.fails('promissory:<color>_an is not a hint any more', () => {
+  test('promissory:<color>_an is not a hint any more', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).not.toBe('hint');
   });

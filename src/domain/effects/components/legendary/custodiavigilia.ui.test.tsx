@@ -17,7 +17,7 @@ const show = (control: Record<string, 'me' | 'enemy'>) => {
 // Checks: the tactical editor of an action in the Mecatol Rex system, with 3 infantry produced and no space dock,
 // shows no warning that the system has no unit with Production, while I control Custodia Vigilia and Mecatol Rex.
 // Why the check is redundant here: Mecatol Rex has PRODUCTION 3 by the card.
-test.fails('legendary:custodiavigilia production on Mecatol Rex with no space dock shows no missing Production', () => {
+test('legendary:custodiavigilia production on Mecatol Rex with no space dock shows no missing Production', () => {
   const { table, live } = show({ mr: 'me', custodiavigilia: 'me' });
   quote(table.pack, id, 'it gains SPACE CANNON 5 and PRODUCTION 3');
   expect(live.entry().production).toEqual({ infantry: 3 });

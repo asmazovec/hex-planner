@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
-import { expectNotShown, showUses, take, uiBench, use } from '../../../../ui/testing/effects';
+import { expectNotShown, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import type { Entry, EntryBody } from '../../../types';
 import { bench, HOME, planned, quote, using } from '../kit';
 import { id } from './hopesend';
@@ -28,10 +28,10 @@ test('legendary:hopesend Imperial Arms Vault is named in «Used» of my turn', a
 
 // Checks: the card in «Used» asks for the planet of the mech: I press Home One and take the mech; the entry keeps it.
 // Why this is needed: the card places a unit by itself, and the plan must know where.
-test.fails('legendary:hopesend the card asks for the planet of the mech', async () => {
+test('legendary:hopesend the card asks for the planet of the mech', async () => {
   const turn = using(pass(), id);
   const live = showUses(table(turn), turn);
   await userEvent.click(screen.getByRole('button', { name: 'Home One' }));
-  await take('Mech');
-  expect(live.entry()).toMatchObject({ choices: { hopesend: 'mech', hopesendPlanet: 'h1' } });
+  await userEvent.click(screen.getByRole('button', { name: 'Mech' }));
+  expect(live.entry()).toMatchObject({ useChoices: { [id]: { hopesend: 'mech', hopesendPlanet: 'h1' } } });
 });
