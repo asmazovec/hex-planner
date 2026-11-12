@@ -7,14 +7,14 @@ import { componentById, componentsOf, noteAddress, noteId, textOf } from './comp
 import type { ComponentDef, ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
 
 export const emptyHoldings = (): Holdings =>
-  ({ technologies: [], hand: [], relics: [], promissory: [], leaders: {}, scored: [], secrets: [], exhausted: [] });
+  ({ technologies: [], hand: [], relics: [], promissory: [], leaders: {}, scored: [], secrets: [], found: [], exhausted: [] });
 
 /** The holdings a start gives, as a copy the replay may change. */
 export function holdingsOf(start: StartHoldings = {}): Holdings {
   return {
     technologies: [...(start.technologies ?? [])], hand: [...(start.hand ?? [])], relics: [...(start.relics ?? [])],
     promissory: [...(start.promissory ?? [])], leaders: { ...start.leaders }, scored: [...(start.scored ?? [])],
-    secrets: [...(start.secrets ?? [])], exhausted: [],
+    secrets: [...(start.secrets ?? [])], found: [...(start.found ?? [])], exhausted: [],
     ...(start.breakthrough ? { breakthrough: start.breakthrough } : {}),
   };
 }
@@ -22,7 +22,7 @@ export function holdingsOf(start: StartHoldings = {}): Holdings {
 /** How many components a player holds: every list with its repeats, the leaders that are not locked, the breakthrough. */
 export const holdingCount = (holdings: Holdings): number =>
   holdings.technologies.length + holdings.hand.length + holdings.relics.length + holdings.promissory.length
-  + Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0) + holdings.scored.length + holdings.secrets.length;
+  + Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0) + holdings.scored.length + holdings.secrets.length + holdings.found.length;
 
 /** The groups the components drawer shows a player's holdings in, in the order of its tabs. */
 export const COMPONENT_GROUPS = ['technologies', 'cards', 'faction', 'relics', 'objectives'] as const;
@@ -33,7 +33,7 @@ export const groupCounts = (holdings: Holdings, laws: string[] = []): Record<Com
   technologies: holdings.technologies.length,
   cards: holdings.hand.length + holdings.promissory.length,
   faction: Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0),
-  relics: holdings.relics.length,
+  relics: holdings.relics.length + holdings.found.length,
   objectives: holdings.scored.length + holdings.secrets.length + laws.length,
 });
 
@@ -165,13 +165,26 @@ export function startForFaction(start: StartHoldings = {}, from: string, to: str
   };
 }
 
-type ListField = 'technologies' | 'hand' | 'relics' | 'promissory' | 'scored' | 'secrets';
+type ListField = 'technologies' | 'hand' | 'relics' | 'promissory' | 'scored' | 'secrets' | 'found';
 /** Where a component of a kind lies in the holdings; kinds not listed are not held as a list. */
 export const HOLDING_FIELD: Partial<Record<ComponentKind, ListField>> = {
-  technology: 'technologies', actionCard: 'hand', relic: 'relics', promissory: 'promissory', secretObjective: 'secrets', publicObjective: 'scored',
+  technology: 'technologies', actionCard: 'hand', relic: 'relics', promissory: 'promissory', secretObjective: 'secrets', publicObjective: 'scored', exploration: 'found',
 };
 
-const LIST_FIELDS: ListField[] = ['technologies', 'hand', 'relics', 'promissory', 'scored', 'secrets'];
+const LIST_FIELDS: ListField[] = ['technologies', 'hand', 'relics', 'promissory', 'scored', 'secrets', 'found'];
+
+/** The lists that keep repeats: a hand of action cards, and the relic fragments found. */
+const COPIED: ListField[] = ['hand', 'found'];
+
+/** The exploration cards that are not resolved and discarded but kept faceup in the play area, besides the fragments. */
+const FACEUP = ['exploration:ed1'];
+
+/**
+ * Whether an exploration card stays with the player who explored: a relic fragment (35.9) or a card that says so. The
+ * rest attach to a planet, become a token or are resolved at once, so no player holds them.
+ */
+export const staysInPlay = (def: Pick<ComponentDef, 'id' | 'kind' | 'detail'>): boolean =>
+  def.kind === 'exploration' && (def.detail?.resolution === 'fragment' || FACEUP.includes(def.id));
 
 /**
  * What an entry can discard or lose: everything its owner held as a card before it, a hand with its repeats, and what
@@ -188,14 +201,14 @@ export function losable(holdings: Holdings, entry: { gains?: string[]; spends?: 
 
 /** What a player holds and cannot hold twice: everything held as a card but the hand of action cards. */
 export const heldOnce = (holdings: Holdings): Set<string> =>
-  new Set(LIST_FIELDS.filter(field => field !== 'hand').flatMap(field => holdings[field]));
+  new Set(LIST_FIELDS.filter(field => !COPIED.includes(field)).flatMap(field => holdings[field]));
 
 /**
  * The kinds of component a transaction hands over (94.3): promissory notes, and action cards, which only an ability
- * lets a player trade (94.3.1) and the app does not know abilities. A relic fragment is an exploration card, which no
- * player's holdings keep, so it is not here.
+ * lets a player trade (94.3.1) and the app does not know abilities. Relic fragments are exploration cards kept in the
+ * play area and may be exchanged (35.9.2); the other exploration cards are held by no one.
  */
-export const TRANSACTION_KINDS: readonly ComponentKind[] = ['promissory', 'actionCard'];
+export const TRANSACTION_KINDS: readonly ComponentKind[] = ['promissory', 'actionCard', 'exploration'];
 
 /**
  * What a player can still hand over in a transaction: the promissory notes held and then the action cards in hand,
@@ -228,7 +241,7 @@ const withStart = (game: Game, player: string, start: StartHoldings): Game => ({
 
 /**
  * Marks by hand what a player (`me` or an opponent id) held when the plan begins. The kind of the id decides the place:
- * a hand of action cards keeps repeats and loses one copy at a time, everything else is held once. Leaders have `setLeader`.
+ * a hand of action cards and the relic fragments keep repeats and lose one copy at a time, everything else is held once. Leaders have `setLeader`.
  * A promissory note is one card: marked with a player, it leaves whoever else had it, and taken off a player who is not
  * its owner, it is back with its owner.
  */
@@ -246,7 +259,7 @@ export function setStartHolding(game: Game, player: string, id: string, present:
   if (!field) return game;
   const list = start[field] ?? [];
   const at = list.indexOf(id);
-  if (present ? at >= 0 && field !== 'hand' : at < 0) return game;
+  if (present ? at >= 0 && !COPIED.includes(field) : at < 0) return game;
   const next = withStart(game, player, { ...start, [field]: present ? [...list, id] : list.filter((_, i) => i !== at) });
   const owner = field === 'promissory' ? noteAddress(id) : undefined;
   if (owner === undefined) return next;

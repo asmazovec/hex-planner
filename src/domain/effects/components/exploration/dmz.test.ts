@@ -29,7 +29,7 @@ describe('exploration:dmz Demilitarized Zone', () => {
   // Checks: in round 2 an infantry lands on the demilitarized planet; it is warned of with a new code, and lands all
   // the same, as a warning forbids nothing.
   // Why the check is NOT redundant here: the card adds a prohibition the rules do not have; nothing of this player lifts it.
-  test.fails('exploration:dmz a later landing on the planet is warned of', () => {
+  test('exploration:dmz a later landing on the planet is warned of', () => {
     const again = land(1);
     expectStanding(warningsOf(table([[using(land(2), id)], [again]]), again), DEMILITARIZED);
   });

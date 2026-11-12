@@ -29,12 +29,13 @@ export interface ModifierContext {
   /** The ships a system may hold: the base is the fleet pool. */
   fleetLimit: { faction: string };
   /** The Production value of one producing unit on a planet: the base is the planet's resources plus the unit's value. */
-  productionValue: { structure: StructureKind; planetId: string };
+  productionValue: { structure: StructureKind; planetId: string; /** The cards and laws attached to the planet (`attachments`). */ attached?: readonly string[] };
   /** The cost of one unit; half a resource for a unit built in pairs. */
   unitCost: { faction: string; unit: UnitId };
   /** `attached`: the cards and laws attached to the planet (`attachments`), so a law elected for one planet knows if it is this one. */
-  planetResources: { planetId: string; attached?: readonly string[] };
-  planetInfluence: { planetId: string; attached?: readonly string[] };
+  /** `pack`: the data, for a card that reads what the planet prints (a technology specialty). */
+  planetResources: { planetId: string; attached?: readonly string[]; pack?: DataPack };
+  planetInfluence: { planetId: string; attached?: readonly string[]; pack?: DataPack };
   /** What researching one technology costs, by its component id. */
   researchCost: { technology: string };
   /**

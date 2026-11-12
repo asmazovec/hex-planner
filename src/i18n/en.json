@@ -857,6 +857,7 @@
     "noText": "No printed text.",
     "fromRound": "from round {{n}}",
     "inHand": "In hand",
+    "inPlayArea": "In play area",
     "scored": "scored",
     "leaderState": "{{name}}: state",
     "byPlan": "set by the plan",

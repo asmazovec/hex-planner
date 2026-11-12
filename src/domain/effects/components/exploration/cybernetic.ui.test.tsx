@@ -21,7 +21,7 @@ const table = (gains: string[]) => {
 // "This planet has a yellow technology specialty." LRR 35.2: the explorer draws and resolves a card of the planet's deck.
 // Checks: in «Taken and discarded» of the landing that gains Target One the player takes the Cybernetic Research Facility.
 // Why the check is redundant here: nothing is lifted; the choice must offer an exploration card drawn with a planet.
-test.fails('exploration:cybernetic is taken in «Taken and discarded» of the entry that explores the planet', async () => {
+test('exploration:cybernetic is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const facility = table([]);
   quote(facility.pack, id, 'This planet has a yellow technology specialty.');
   useGame.setState({ game: facility.game });
@@ -35,7 +35,7 @@ test.fails('exploration:cybernetic is taken in «Taken and discarded» of the en
 
 // Checks: with the card on Target One the technology part of the next round's expedition is shown as paid.
 // Why the check is redundant here: Target One has the specialty the part asks for.
-test.fails('exploration:cybernetic attached, the technology part paid with its planet shows no warning', () => {
+test('exploration:cybernetic attached, the technology part paid with its planet shows no warning', () => {
   const facility = table([id]);
   showWarnings(facility, facility.claim);
   expectNotShown('expeditionUnpaid');

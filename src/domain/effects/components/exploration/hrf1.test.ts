@@ -21,7 +21,7 @@ describe('exploration:hrf1 Hazardous Relic Fragment', () => {
   //  faceup in their play area." "ACTION: Purge 3 of your hazardous relic fragments to gain 1 relic."
   // Checks: three fragments found are held before the action, and the action purges all three.
   // Why the check is redundant here: nothing is lifted; the fragments are what the action spends, so they must be held.
-  test.fails('exploration:hrf1 found fragments are held in the play area and the action purges three of them', () => {
+  test('exploration:hrf1 found fragments are held in the play area and the action purges three of them', () => {
     const action = purge();
     const fragments = table([found(3), action]);
     quote(fragments.pack, id, 'ACTION: Purge 3 of your hazardous relic fragments to gain 1 relic.');
@@ -47,7 +47,7 @@ describe('exploration:hrf1 Hazardous Relic Fragment', () => {
   // "Purge 3 of your hazardous relic fragments"
   // Checks: with two fragments the action is warned of; it still gains the relic, as the plan forbids nothing.
   // Why the check is NOT redundant here: the text asks for three.
-  test.fails('exploration:hrf1 with two fragments the action is warned of', () => {
+  test('exploration:hrf1 with two fragments the action is warned of', () => {
     const action = purge();
     expectStanding(warningsOf(table([found(2), action]), action), FRAGMENTS_SHORT);
   });
@@ -55,7 +55,7 @@ describe('exploration:hrf1 Hazardous Relic Fragment', () => {
   // "Purge 3 of your hazardous relic fragments"
   // Checks: three industrial fragments do not pay the hazardous action.
   // Why the check is NOT redundant here: the text names fragments of its own type.
-  test.fails('exploration:hrf1 fragments of another type do not pay its action', () => {
+  test('exploration:hrf1 fragments of another type do not pay its action', () => {
     const action = purge();
     expectStanding(warningsOf(table([found(3, OTHER), action]), action), FRAGMENTS_SHORT);
   });
@@ -63,7 +63,7 @@ describe('exploration:hrf1 Hazardous Relic Fragment', () => {
   // LRR 35.9.2: "Relic fragments can be exchanged as part of transactions."
   // Checks: a fragment given to a neighbour is no transactionKind breach.
   // Why the check is redundant here: LRR 94.3 lists what changes hands, and relic fragments are among them.
-  test.fails('exploration:hrf1 is given in a transaction without a warning of its kind', () => {
+  test('exploration:hrf1 is given in a transaction without a warning of its kind', () => {
     const rival: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
     const deal: Act = { kind: 'transaction', with: 'o1', give: { components: [id] }, get: {} };
     const turn = tactical(NEAR, { acts: [deal] });
@@ -71,7 +71,7 @@ describe('exploration:hrf1 Hazardous Relic Fragment', () => {
     expectNone(warningsOf(trade, turn), 'transactionKind');
   });
 
-  test.fails('exploration:hrf1 is a played effect', () => {
+  test('exploration:hrf1 is a played effect', () => {
     expect(effect(table([]).pack, id).tier).toBe('play');
   });
 });

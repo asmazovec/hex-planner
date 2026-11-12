@@ -8,10 +8,14 @@
  * planet: the player's structures there go back, the ground forces go up to the space area of the system (control of
  * the planet stays, 12.2), and the card is attached to the planet (`attachments`, 35.8). From then on a landing or a
  * production onto that planet is warned of for everyone with a new code (`planetDemilitarized`, the card's own text;
- * step invasion). Trading the planet card in the agenda phase is not modelled (no agenda phase). Pass 2: written.
+ * step invasion, asked of the attachments of the planets by `afterEntry`). Trading the planet card in the agenda phase is
+ * not modelled (no agenda phase). Pass 2: written.
  */
 import { attachCard } from '../../../replay/invasion';
+import planetDemilitarized from '../../../rules/codes/planetDemilitarized';
+import { violation } from '../../../rules/registry';
 import { systemOfPlanet } from '../../../stacks';
+import { planetsNamed } from '../../helpers/planetsNamed';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:dmz';
@@ -33,5 +37,15 @@ export const effect: ComponentEffect = {
     }
     delete state.ground[planetId];
     attachCard(turn.game, state, planetId, id, turn.pack, turn.warnings);
+  },
+  // "Units cannot be committed to, produced on, or placed on this planet": an attached card is in force for its planet
+  // (`afterEntry` asks the attachments), for every player. The entry that plays the card has just cleared the planet.
+  restrict: ({ entry, shared, warnings }) => {
+    // The card names itself in `uses` (or as the action); `playedBy` is not imported, as the waivers load the registry that loads this file.
+    if ((entry.type === 'component' && entry.componentId === id) || entry.uses?.includes(id) || entry.spends?.includes(id)) return;
+    const named = planetsNamed(entry);
+    for (const [planetId, cards] of Object.entries(shared.attachments ?? {})) {
+      if (cards.includes(id) && named.has(planetId)) warnings.push(violation(planetDemilitarized.code, { planetId }));
+    }
   },
 };

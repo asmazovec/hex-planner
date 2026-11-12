@@ -47,7 +47,7 @@ describe('exploration:mw Mining World', () => {
   // Checks: the dock on Target One produces six units with the card (2 + 2 + 2), so five fighters are within it.
   // Why the check is redundant here: the Production value is counted from the planet's resources, which the card
   // raises; the productionOver check then runs against the higher number (a modify, not a waiver).
-  test.fails('exploration:mw raises the Production value of a space dock on its planet', () => {
+  test('exploration:mw raises the Production value of a space dock on its planet', () => {
     const mining = table([id], build(), { docks: ['t1'] });
     expectNone(warningsOf(mining, mining.pay), 'productionOver');
   });

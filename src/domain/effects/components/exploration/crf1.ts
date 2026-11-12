@@ -7,10 +7,11 @@
  * player draws (entered in the entry's gains, 73.2). Fewer than three fragments of the type is warned of with a new
  * code (relicFragmentsShort, LRR 73.1, step component); nothing is waived.
  *
- * Pass 1: still the hint it is today; the fragments held, the check and the purge come in pass 2.
+ * Pass 2: the fragments are held in `Holdings.found`; the play checks three of the type (the unknown fragment counts as
+ * any type) and the purge is the entry's `spends`.
  */
-import type { ComponentEffect } from '../../types';
+import { fragmentEffect } from './batch33/fragments';
 
 export const id = 'exploration:crf1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect = fragmentEffect(id);

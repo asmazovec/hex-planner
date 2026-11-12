@@ -21,7 +21,7 @@ const table = (gains: string[]) => {
 // "This planet's influence value is increased by 1." LRR 35.2: the explorer draws and resolves a card of the planet's deck.
 // Checks: in «Taken and discarded» of the landing that gains Target One the player takes the Tomb of Emphidia.
 // Why the check is redundant here: nothing is lifted; the choice must offer an exploration card drawn with a planet.
-test.fails('exploration:toe is taken in «Taken and discarded» of the entry that explores the planet', async () => {
+test('exploration:toe is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const tomb = table([]);
   quote(tomb.pack, id, "This planet's influence value is increased by 1.");
   useGame.setState({ game: tomb.game });

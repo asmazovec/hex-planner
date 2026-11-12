@@ -53,7 +53,7 @@ test('agenda:holy_planet_of_ixth the elected planet is chosen in the agenda entr
 // "Units on this planet cannot use PRODUCTION."
 // Checks: the dock of Home One, under the law, builds one infantry; the production is shown over its value, standing.
 // Why the check is NOT redundant here: the law takes the dock's PRODUCTION away; nothing lifts that.
-test.fails('agenda:holy_planet_of_ixth a production at a dock on the elected planet is shown over its value', () => {
+test('agenda:holy_planet_of_ixth a production at a dock on the elected planet is shown over its value', () => {
   const build = tactical(HOME, { production: { infantry: 1 }, payment: { planets: ['h1'], tradeGoods: 0 } });
   const table = bench({ faction: 'sol', game: { docks: ['h1'] }, rounds: [[resolved('h1')], [build]] });
   showWarnings(table, build);

@@ -391,12 +391,17 @@ export interface Holdings {
   scored: string[];
   /** Secret objectives in hand. */
   secrets: string[];
+  /**
+   * Exploration cards found and kept in the play area, with repeats: the relic fragments (35.9) and the cards that
+   * say so (Enigmatic Device). An exploration card that attaches, is a token or is resolved at once is held by no one.
+   */
+  found: string[];
   /** Exhausted components the status phase readies: technologies, relics, legendary planet cards. */
   exhausted: string[];
 }
 export type LeaderState = 'unlocked' | 'exhausted' | 'purged';
 /** What a player held when the plan begins: the faction's starting technologies, and what was marked by hand. */
-export type StartHoldings = Partial<Pick<Holdings, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets'>>;
+export type StartHoldings = Partial<Pick<Holdings, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets' | 'found'>>;
 
 /** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
 export const SAVE_FORMAT = 'ti4-planner/2';

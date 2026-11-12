@@ -17,7 +17,7 @@ const table = (entries: Entry[]) => bench({ faction: 'letnev', expansions: ['pok
 // Checks: in «Taken and discarded» the player takes the Enigmatic Device explored from a frontier token.
 // Why the check is redundant here: nothing is lifted; the choice offers only what a player holds as a card today, and
 // the device is held.
-test.fails('exploration:ed1 is taken in «Taken and discarded» of the entry that explores', async () => {
+test('exploration:ed1 is taken in «Taken and discarded» of the entry that explores', async () => {
   const take = adjust({});
   const device = table([take]);
   quote(device.pack, id, 'Place this card faceup in your play area.');

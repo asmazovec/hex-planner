@@ -73,5 +73,5 @@ export function appliedToPlanet(
     return effect ? [[id, effect]] : [];
   });
   const all = [...own, ...extra].sort((a, b) => orderOf(pack, a[0]) - orderOf(pack, b[0]));
-  return stacked(all, point, base, { planetId, attached });
+  return stacked(all, point, base, { planetId, attached, pack });
 }

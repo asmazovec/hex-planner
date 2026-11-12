@@ -4,7 +4,7 @@
  * switched off, data rebuilt) is passed over everywhere, silently.
  */
 import { componentById, componentsOf, noteAddress } from '../components';
-import { HOLDING_FIELD, holdingsOf } from '../holdings';
+import { HOLDING_FIELD, holdingsOf, staysInPlay } from '../holdings';
 import { violation } from '../rules/registry';
 import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
 
@@ -12,7 +12,7 @@ import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings,
 export function startHoldings(start: StartHoldings | undefined, pack: DataPack): Holdings {
   const holdings = holdingsOf(start);
   const known = (id: string) => componentById(pack, id) !== undefined;
-  for (const field of ['technologies', 'hand', 'relics', 'promissory', 'scored', 'secrets'] as const) holdings[field] = holdings[field].filter(known);
+  for (const field of ['technologies', 'hand', 'relics', 'promissory', 'scored', 'secrets', 'found'] as const) holdings[field] = holdings[field].filter(known);
   holdings.leaders = Object.fromEntries(Object.entries(holdings.leaders).filter(([id]) => known(id)));
   return holdings;
 }
@@ -25,13 +25,16 @@ const removeOne = (list: string[], id: string): void => {
 /**
  * A player gains a component: its kind decides where it lies. An action card joins the hand as one more copy, the rest
  * is held once. An agenda that is a law becomes a law of the whole game (`shared` is my state, 7.3); a directive is
- * resolved and discarded (7.8), so it leaves nothing. An exploration card is not held: an attachment needs its planet,
- * which gains do not name.
+ * resolved and discarded (7.8), so it leaves nothing. An exploration card is held only when it stays in the play area
+ * (a relic fragment, 35.9, with as many copies as were found); the others attach to a planet, which the `gained` hook
+ * of the card knows, or are resolved at once.
  */
 export function gain(own: GameState, shared: GameState, def: ComponentDef, how: GainHow = {}): void {
   const holdings = own.holdings;
   const field = HOLDING_FIELD[def.kind];
-  if (field) {
+  if (def.kind === 'exploration') {
+    if (staysInPlay(def)) holdings.found.push(def.id);
+  } else if (field) {
     if (field === 'hand' || !holdings[field].includes(def.id)) holdings[field].push(def.id);
   } else if (def.kind === 'leader') holdings.leaders[def.id] = 'unlocked';
   else if (def.kind === 'breakthrough') holdings.breakthrough = 'held';
@@ -98,6 +101,8 @@ export function research(own: GameState, ids: string[] | undefined, pack: DataPa
  * a planet and are not held as cards, so they always pass; a purged leader is held no more.
  */
 export function holds(holdings: Holdings, def: ComponentDef): boolean {
+  // An exploration card that does not stay in the play area is held by no one: what it does is played where it was explored.
+  if (def.kind === 'exploration' && !staysInPlay(def)) return true;
   const field = HOLDING_FIELD[def.kind];
   if (field) return holdings[field].includes(def.id);
   if (def.kind === 'leader') return holdings.leaders[def.id] !== undefined && holdings.leaders[def.id] !== 'purged';
@@ -181,6 +186,10 @@ export function playComponent(
     }
     case 'actionCard':
       removeOne(holdings.hand, def.id);
+      break;
+    case 'exploration':
+      // "Purge this card" (Enigmatic Device); a relic fragment is purged with its relic's other fragments, in `spends`.
+      if (PURGES.test(pack.originalTexts?.[def.id] ?? def.text)) removeOne(holdings.found, def.id);
       break;
     case 'leader':
       if (def.detail?.type === 'agent') holdings.leaders[def.id] = 'exhausted';

@@ -37,7 +37,7 @@ describe('exploration:biotic Biotic Research Facility', () => {
   // Checks: the next round Target One, which has no specialty of its own, pays the technology part of an expedition.
   // Why the check is redundant here: the expeditionUnpaid check asks for a planet with a specialty, and the card gives
   // Target One one; nothing is lifted, the planet simply qualifies.
-  test.fails('exploration:biotic gives its planet a specialty: the technology part of an expedition is paid with it', () => {
+  test('exploration:biotic gives its planet a specialty: the technology part of an expedition is paid with it', () => {
     const facility = table([id], expedition());
     expectNone(warningsOf(facility, facility.pay), 'expeditionUnpaid');
   });
@@ -55,7 +55,7 @@ describe('exploration:biotic Biotic Research Facility', () => {
   // Checks: on a Target One that has a warfare specialty the card adds a resource: Target One (3) and Home Two (1) pay
   // the four resources of the secondary of Technology.
   // Why the check is redundant here: the shortfall check sums the resources, which the card raises (a modify).
-  test.fails('exploration:biotic on a planet that has a specialty raises its resources by one instead', () => {
+  test('exploration:biotic on a planet that has a specialty raises its resources by one instead', () => {
     const facility = table([id], research(['t1', 'h2']), 'warfare', ['pok']);
     quote(facility.pack, id, 'this planet\'s resource and influence values are each increased by 1 instead');
     expectNone(warningsOf(facility, facility.pay), 'shortResources');
@@ -68,7 +68,7 @@ describe('exploration:biotic Biotic Research Facility', () => {
     expectStanding(warningsOf(facility, facility.pay), 'shortResources');
   });
 
-  test.fails('exploration:biotic is a passive effect that changes its planet', () => {
+  test('exploration:biotic is a passive effect that changes its planet', () => {
     const { pack } = table([], research([]));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.planetResources).toBeTypeOf('function');

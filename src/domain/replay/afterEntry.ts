@@ -68,7 +68,11 @@ export function afterEntry(a: AfterEntry): void {
   if (hooks.has('gained')) for (const id of known(entry.gains)) effectOf(pack, id)?.gained?.(turnOf(a, id));
   if (hooks.has('lost')) for (const id of known(entry.spends)) effectOf(pack, id)?.lost?.(turnOf(a, id));
   if (hooks.has('restrict')) {
-    for (const id of inForceOf(pack, holderOf(game, state, shared), effect => effect.restrict !== undefined)) effectOf(pack, id)?.restrict?.(turnOf(a, id));
+    const forced = inForceOf(pack, holderOf(game, state, shared), effect => effect.restrict !== undefined);
+    for (const id of forced) effectOf(pack, id)?.restrict?.(turnOf(a, id));
+    // A card attached to a planet (an exploration card) is in force for that planet, whoever the entry's owner is.
+    const attached = new Set(Object.values(shared.attachments ?? {}).flat());
+    for (const id of attached) if (!forced.includes(id)) effectOf(pack, id)?.restrict?.(turnOf(a, id));
   }
   const holder = holderOf(game, state, shared);
   // The hand grew: no more action cards than the limit (2.4, 2.4.1).
