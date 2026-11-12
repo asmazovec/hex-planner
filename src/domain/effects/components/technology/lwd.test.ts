@@ -23,7 +23,7 @@ describe('technology:lwd Light/Wave Deflector', () => {
   // Checks: a cruiser passes a system holding another player's cruiser; the route warning is listed and lifted.
   // Why the check is redundant here: LRR 58.3.2 says "The ship cannot move through a system that contains ships that
   // are controlled by another player", and the card says this player's ships can.
-  test.fails('technology:lwd lets a ship move through other players\' ships: the route warning is waived', () => {
+  test('technology:lwd lets a ship move through other players\' ships: the route warning is waived', () => {
     const table = flight();
     quote(table.pack, id, 'Your ships can move through systems that contain other players\' ships.');
     expectWaived(warningsOf(table, table.move), 'routeBlocked', id);
@@ -62,7 +62,7 @@ describe('technology:lwd Light/Wave Deflector', () => {
     expectNone(warningsOf(table, move), 'routeBlocked');
   });
 
-  test.fails('technology:lwd is a passive effect that waives the route check', () => {
+  test('technology:lwd is a passive effect that waives the route check', () => {
     const { pack } = flight();
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);

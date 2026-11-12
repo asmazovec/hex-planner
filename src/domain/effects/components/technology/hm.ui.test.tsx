@@ -14,7 +14,7 @@ const status = (tactic: number, fleet: number, strategy: number, technologies: s
 // Checks: the warnings of a status entry that takes three tokens show nothing about tokens gained.
 // Why the check is redundant here: with the card the status phase gives three tokens; the number changes (a modify),
 // so the warning is not made at all rather than shown as allowed.
-test.fails('technology:hm three tokens of the status phase show no warning', () => {
+test('technology:hm three tokens of the status phase show no warning', () => {
   const { entry, table } = status(1, 1, 1, [id]);
   quote(table.pack, id, 'gain 3 command tokens instead of 2');
   showWarnings(table, entry);

@@ -19,7 +19,7 @@ const flight = (technologies: string[]) => {
 // Checks: in the flight step I take the cruiser for a route through an asteroid field; it is taken, and the route
 // warning reads as allowed by Antimass Deflectors.
 // Why the check is redundant here: LRR 11.1 closes asteroid fields, and the card opens them to this player's ships.
-test.fails('technology:amd a ship is taken for a route through an asteroid field, and the warning reads as allowed by Antimass Deflectors', async () => {
+test('technology:amd a ship is taken for a route through an asteroid field, and the warning reads as allowed by Antimass Deflectors', async () => {
   const { table, live } = flight([id]);
   quote(table.pack, id, 'Your ships can move into and through asteroid fields.');
   await take('Cruiser');

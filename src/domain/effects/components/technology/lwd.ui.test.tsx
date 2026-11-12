@@ -19,7 +19,7 @@ const flight = (technologies: string[]) => {
 // Checks: in the flight step I take the cruiser for a route past another player's ships; it is taken, and the route
 // warning reads as allowed by Light/Wave Deflector.
 // Why the check is redundant here: LRR 58.3.2 forbids moving through such a system, and the card allows it.
-test.fails('technology:lwd a ship is taken for a route past other players\' ships, and the warning reads as allowed by Light/Wave Deflector', async () => {
+test('technology:lwd a ship is taken for a route past other players\' ships, and the warning reads as allowed by Light/Wave Deflector', async () => {
   const { table, live } = flight([id]);
   quote(table.pack, id, 'Your ships can move through systems that contain other players\' ships.');
   await take('Cruiser');

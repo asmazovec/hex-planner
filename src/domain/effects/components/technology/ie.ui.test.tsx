@@ -20,7 +20,7 @@ const editor = (technologies: string[]) => {
 // same warning now reads as allowed by Integrated Economy.
 // Why the check is redundant here: the landing gains control of a planet of 2 resources, and the card produces there
 // units of a combined cost of 1 without a unit with PRODUCTION.
-test.fails('technology:ie landing on a planet turns the production without a space dock into one allowed by Integrated Economy', async () => {
+test('technology:ie landing on a planet turns the production without a space dock into one allowed by Integrated Economy', async () => {
   const { table, live } = editor([id]);
   quote(table.pack, id, 'you may produce any number of units on that planet');
   expectShownStanding('noProduction');

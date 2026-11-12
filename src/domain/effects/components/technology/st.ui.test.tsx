@@ -16,7 +16,7 @@ const editor = (technologies: string[]) => {
 // Checks: the editor of a production of a cruiser paid with 1 resource shows no shortfall of resources.
 // Why the check is redundant here: the card makes the combined cost 1; the number changes (a modify), so no warning
 // is made at all.
-test.fails('technology:st a cruiser paid with 1 resource shows no shortfall in the editor', () => {
+test('technology:st a cruiser paid with 1 resource shows no shortfall in the editor', () => {
   const { table } = editor([id]);
   quote(table.pack, id, 'reduce the combined cost of the produced units by 1');
   expectNotShown('shortResources');

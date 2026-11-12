@@ -15,7 +15,7 @@ describe('technology:gd Gravity Drive', () => {
   // Checks: one cruiser (move 2) flies 3 systems to the active system; the speed warning is listed and lifted by the card.
   // Why the check is redundant here: 58.3.6 lets a ship enter no more systems than its move value, and the card adds 1
   // to the move value of one ship of this tactical action: 2 + 1 covers the 3 systems.
-  test.fails('technology:gd lets one ship fly one system beyond its move value: the speed warning is waived', () => {
+  test('technology:gd lets one ship fly one system beyond its move value: the speed warning is waived', () => {
     const table = flight({ cruiser: 1 }, FAR);
     quote(table.pack, id, 'apply +1 to the move value of 1 of your ships during this tactical action');
     expectWaived(warningsOf(table, table.move), 'speedShort', id);
@@ -47,7 +47,7 @@ describe('technology:gd Gravity Drive', () => {
     expectStanding(warningsOf(table, table.move), 'speedShort');
   });
 
-  test.fails('technology:gd is a passive effect that waives the speed check', () => {
+  test('technology:gd is a passive effect that waives the speed check', () => {
     const { pack } = flight({ cruiser: 1 }, FAR);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);
