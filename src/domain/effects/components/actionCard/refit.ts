@@ -8,7 +8,7 @@
  * nothing replaces it; more than two warns (`choiceOverLimit`) and is replaced all the same, as the plan forbids
  * nothing. Mechs exist only with Prophecy of Kings, which this card needs anyway.
  *
- * The choices have no interface yet: their keys are planets, which `ChoiceSpec` cannot declare (see the report).
+ * The choices are `counts` slots: one button per planet that holds my infantry (`ChoiceSpec.slots`).
  */
 import choiceOverLimit from '../../../rules/codes/choiceOverLimit';
 import { violation } from '../../../rules/registry';
@@ -20,6 +20,11 @@ export const id = 'actionCard:refit';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
+  choose: [{
+    key: 'infantry', kind: 'counts', verb: { ru: 'Заменить', en: 'Replace one' },
+    slots: ({ state }) => Object.keys(state.ground).filter(planetId => (state.ground[planetId]?.infantry ?? 0) > 0)
+      .map(planetId => ({ key: planetId, unit: 'infantry' as const, planet: planetId, max: state.ground[planetId]?.infantry })),
+  }],
   play: ({ state, choices, warnings }) => {
     const chosen = Object.entries(choices).filter(([, count]) => Number(count) > 0);
     const total = chosen.reduce((sum, [, count]) => sum + Number(count), 0);

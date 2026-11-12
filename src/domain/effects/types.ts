@@ -124,7 +124,24 @@ export type ChoiceKind =
   /** One of `options`, read by `names`. */
   | 'option'
   /** A component id. */
-  | 'component';
+  | 'component'
+  /** Counts at places known only at run time (a planet, a unit in a system): `ChoiceSpec.slots` names them, each is kept under its own key. */
+  | 'counts';
+
+/**
+ * One place of a `counts` choice: its `key` in the entry's choices, kept as the number chosen there. The button reads
+ * "<verb> <unit>" and, with a `planet`, "... on <planet>"; slots with the same `group` (a system) stand under its name.
+ */
+export interface ChoiceSlot {
+  key: string;
+  unit: UnitId;
+  /** A planet id the unit stands on, named in the button. */
+  planet?: string;
+  /** A slot of the map the slots are grouped by. */
+  group?: string;
+  /** The most there is to choose here; the effect warns of more, nothing is forbidden. */
+  max?: number;
+}
 
 /** What the interface knows when it offers the candidates of a choice: the board just before the entry. */
 export interface ChoiceContext {
@@ -154,6 +171,10 @@ export interface ChoiceSpec {
   options?: (ctx: ChoiceContext) => string[];
   /** `option` only: how each value reads. */
   names?: Record<string, { ru: string; en: string }>;
+  /** `counts` only: the places to choose at, computed from the board just before the entry; the choice's own `key` is not used. */
+  slots?: (ctx: ChoiceContext) => ChoiceSlot[];
+  /** `counts` only: what the button does, one unit at a time ("Replace one", "Return one"). */
+  verb?: { ru: string; en: string };
   /** `number` only: lowest and highest value; the lowest is 0 by default. */
   range?: [min: number, max: number];
   /** Shown only while this holds: a choice that depends on an earlier one. */

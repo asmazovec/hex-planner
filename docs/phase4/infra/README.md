@@ -5,6 +5,8 @@ One file per subsystem: `play.md`, `movement.md`, `production.md`, `payment.md`,
 `invasion.md`. What no owner built is in `skipped.md`. Read the file of every subsystem your component touches.
 One file per subsystem: `play.md`, `movement.md`, `production.md`, `payment.md`, `research.md`, `status.md`,
 `invasion.md`, and `rivals.md` (a component of one player acting on another player's entry). What no owner built is in `skipped.md`. Read the file of every subsystem your component touches.
+One file per subsystem: `play.md`, `movement.md`, `production.md`, `payment.md`, `research.md`, `status.md`,
+`invasion.md`, and from wave 3 `fields.md` (landing offers, `counts` choices, `shipsTo`). What no owner built is in `skipped.md`. Read the file of every subsystem your component touches.
 
 ## Decided when the seven branches were merged
 

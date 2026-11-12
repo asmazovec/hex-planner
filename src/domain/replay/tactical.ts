@@ -5,6 +5,8 @@
  */
 import { fire } from '../effects/points/moments';
 import { holderOf } from '../effects/registry';
+import productionShipsAway from '../rules/codes/productionShipsAway';
+import { violation } from '../rules/registry';
 import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { activate, checkActivation, playNamedAt, reactToActivation } from './activation';
@@ -59,7 +61,16 @@ function landAndBuild(
   warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround, 'system', undefined, entry));
   // Whether a unit used PRODUCTION (Sarween Tools asks): the producers stand before the built units do.
   const producing = producerList(game, state, target, pack).length > 0;
-  placeProduction(game, state, target, entry.production, pack, entry.productionGround);
+  const away = entry.shipsTo !== undefined && entry.shipsTo !== target && game.map[entry.shipsTo] !== undefined ? entry.shipsTo : undefined;
+  const ships = Object.fromEntries(unitIds(entry.production).filter(id => !pack.units[id]?.ground).map(id => [id, entry.production[id]])) as UnitCounts;
+  if (away && unitIds(ships).length > 0) {
+    // 68.2: the ships belong in the active system; they stand where the player placed them, and a component may lift the warning.
+    warnings.push(violation(productionShipsAway.code, { systemId: target, to: away }, 'production'));
+    const rest = { ...entry.production };
+    for (const id of unitIds(ships)) delete rest[id];
+    placeProduction(game, state, target, rest, pack, entry.productionGround);
+    placeProduction(game, state, away, ships, pack);
+  } else placeProduction(game, state, target, entry.production, pack, entry.productionGround);
   take(state.systems, target, removeLater, warnings, 'production');
   claimStations(game, state, target, pack);
   return producing;

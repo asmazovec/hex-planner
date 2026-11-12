@@ -85,6 +85,20 @@ describe('LRR 68 Production', () => {
     expect(forecast(rulesGame({ entries: [build], game: atHome }), pack).state.systems[HOME]).toEqual({ cruiser: 1 });
   });
 
+  test('68.2: ships produced and placed in another system than the active one are warned of (productionShipsAway), and stand where they were placed', () => {
+    const build = { ...tactical(HOME, { production: { cruiser: 1 } }), shipsTo: TARGET };
+    const game = rulesGame({ entries: [build], game: atHome });
+    expect(codesOf(game, pack, build)).toContain('productionShipsAway');
+    const { state } = forecast(game, pack);
+    expect(state.systems[TARGET]).toEqual({ cruiser: 1 });
+    expect(state.systems[HOME]?.cruiser ?? 0).toBe(0);
+  });
+
+  test('68.2: ground forces built are not ships: naming another system for them changes nothing', () => {
+    const build = { ...tactical(HOME, { production: { infantry: 1 } }), shipsTo: TARGET };
+    expect(codesOf(rulesGame({ entries: [build], game: atHome }), pack, build)).not.toContain('productionShipsAway');
+  });
+
   test('68.2: a ship bought on a planet still goes to the space area', () => {
     const build = tactical(HOME, { production: { cruiser: 1 }, productionGround: { h1: { cruiser: 1 } } });
     const { state } = forecast(rulesGame({ entries: [build], game: atHome }), pack);

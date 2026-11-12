@@ -24,7 +24,8 @@ export function canFight(game: Game, state: GameState, target: string, pack: Dat
  */
 export function checkArrival(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
   const here = { ...state.systems[target] };
-  for (const { units } of entry.landings) {
+  // Ground forces committed from a planet never stood in the space area.
+  for (const { units } of entry.landings.filter(landing => landing.from === undefined)) {
     for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
   }
   const ships = fleetCount(game, here, holderOf(game, state), pack, dockFighterRoom(game, state, target, pack));

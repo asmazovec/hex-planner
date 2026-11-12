@@ -30,7 +30,7 @@ describe('breakthrough:bastionbt The Icon', () => {
   // other ship; the warning that ships leave the active system is listed and lifted by The Icon, and they stand there.
   // Why the check is redundant here: LRR 68.2 places ships produced in the active system; The Icon names another
   // system for them, under its own three conditions, which all hold.
-  test.fails('breakthrough:bastionbt places the ships built in a system with my token and ground forces: the warning is waived', () => {
+  test('breakthrough:bastionbt places the ships built in a system with my token and ground forces: the warning is waived', () => {
     const move = build(TARGET, [id]);
     const bastion = table([liberate(), move]);
     quote(bastion.pack, id, 'you may exhaust this card to place those ships in a system that contains 1 of your command tokens');
@@ -45,7 +45,7 @@ describe('breakthrough:bastionbt The Icon', () => {
   // Checks: the same placement without The Icon in «Used» is warned of, and the ships still go where the player put
   // them, as the plan forbids nothing.
   // Why the check is NOT redundant here: the card is used by exhausting it; not named, it is not used.
-  test.fails('breakthrough:bastionbt not used, the ships placed away from the active system are warned of', () => {
+  test('breakthrough:bastionbt not used, the ships placed away from the active system are warned of', () => {
     const move = build(TARGET);
     const bastion = table([liberate(), move]);
     expectStanding(warningsOf(bastion, move), CODE);
@@ -55,7 +55,7 @@ describe('breakthrough:bastionbt The Icon', () => {
   // "... at least 1 of your ground forces ..."
   // Checks: a cruiser alone took the target: my command token is there, no ground force; the warning stands.
   // Why the check is NOT redundant here: the second condition of the card fails.
-  test.fails('breakthrough:bastionbt does not lift the warning for a system without my ground forces', () => {
+  test('breakthrough:bastionbt does not lift the warning for a system without my ground forces', () => {
     const arrive = tactical(TARGET, { moves: [{ from: NEAR, units: { cruiser: 1 } }] });
     const move = build(TARGET, [id]);
     expectStanding(warningsOf(table([arrive, move], { units: { [NEAR]: { cruiser: 1 } } }), move), CODE);
@@ -64,7 +64,7 @@ describe('breakthrough:bastionbt The Icon', () => {
   // "... 1 of your command tokens ..."
   // Checks: one infantry stands in the space area of the target, which holds no command token of mine; the warning stands.
   // Why the check is NOT redundant here: the first condition of the card fails.
-  test.fails('breakthrough:bastionbt does not lift the warning for a system without my command token', () => {
+  test('breakthrough:bastionbt does not lift the warning for a system without my command token', () => {
     const move = build(TARGET, [id]);
     expectStanding(warningsOf(table([move], { units: { [TARGET]: { infantry: 1 } } }), move), CODE);
   });
@@ -73,7 +73,7 @@ describe('breakthrough:bastionbt The Icon', () => {
   // Checks: an opponent's cruiser stands in the target beside my token and my infantry; the warning stands.
   // Why the check is NOT redundant here: the third condition of the card fails (as 67.6 for a system with other
   // players' ships).
-  test.fails('breakthrough:bastionbt does not lift the warning for a system with another player\'s ships', () => {
+  test('breakthrough:bastionbt does not lift the warning for a system with another player\'s ships', () => {
     const move = build(TARGET, [id]);
     const blocked = table([liberate(), move], { game: { enemyUnits: { [TARGET]: { rival: { cruiser: 1 } } } } });
     expectStanding(warningsOf(blocked, move), CODE);
@@ -97,7 +97,7 @@ describe('breakthrough:bastionbt The Icon', () => {
     expectNone(warningsOf(table([move]), move), CODE);
   });
 
-  test.fails('breakthrough:bastionbt is a play effect that waives the placement of ships away from the active system', () => {
+  test('breakthrough:bastionbt is a play effect that waives the placement of ships away from the active system', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);

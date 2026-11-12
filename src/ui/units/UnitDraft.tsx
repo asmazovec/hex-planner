@@ -6,6 +6,8 @@ import { TokenPicture } from './UnitToken';
 
 export interface UnitDraftItem {
   kind: TokenKind;
+  /** Tells apart two items of one kind in a row (the same unit taken from two places); the callbacks get it as their third argument. */
+  id?: string;
   /** How many of the kind this row has taken. */
   picked: number;
   /** What is left for this row alone, below zero by what was taken beyond it; without it the shared `stock` counts, and with neither the stock never ends. */
@@ -49,8 +51,8 @@ export interface UnitDraftProps {
   /** What is left of each kind for all the rows together, below zero by what was taken beyond it: the caller counts it, and a kind that ran out changes its look in every row. */
   stock?: Partial<Record<TokenKind, number>>;
   colour: string;
-  onTake: (rowId: string, kind: TokenKind) => void;
-  onReturn: (rowId: string, kind: TokenKind) => void;
+  onTake: (rowId: string, kind: TokenKind, itemId?: string) => void;
+  onReturn: (rowId: string, kind: TokenKind, itemId?: string) => void;
   /** The names of the two zones of a row for a screen reader. */
   stockLabel: string;
   pickedLabel: string;
@@ -90,8 +92,8 @@ export function UnitDraft({ rows, layout = 'horizontal', stock, colour, onTake, 
                 const note = blocked ?? (out ? [t('draft.over'), ...(over > 0 ? [t('draft.overBy', { n: over })] : [])].join(' · ') : undefined);
                 return (
                   <button
-                    key={item.kind} type="button" className={blocked ? 'draft-take draft-take-out' : out ? 'draft-take draft-take-over' : 'draft-take'} aria-label={item.takeLabel}
-                    title={note ? `${item.takeLabel}: ${note}` : item.takeLabel} disabled={Boolean(blocked)} onClick={() => onTake(row.id, item.kind)}
+                    key={item.id ?? item.kind} type="button" className={blocked ? 'draft-take draft-take-out' : out ? 'draft-take draft-take-over' : 'draft-take'} aria-label={item.takeLabel}
+                    title={note ? `${item.takeLabel}: ${note}` : item.takeLabel} disabled={Boolean(blocked)} onClick={() => (item.id === undefined ? onTake(row.id, item.kind) : onTake(row.id, item.kind, item.id))}
                   >
                     <span className="draft-plus" aria-hidden="true">+</span>
                     {over > 0 && <span className="draft-over">+{over}</span>}
@@ -108,12 +110,12 @@ export function UnitDraft({ rows, layout = 'horizontal', stock, colour, onTake, 
               {!vertical && <span className="draft-arrow" aria-hidden="true"><RowIcon name="chevron" /></span>}
               <div className="draft-tray" role="group" aria-label={pickedLabel}>
                 {row.items.map(item => (item.picked > 0 ? (
-                  <button key={item.kind} type="button" className="draft-chip" aria-label={item.returnLabel} title={item.returnLabel} onClick={() => onReturn(row.id, item.kind)}>
+                  <button key={item.id ?? item.kind} type="button" className="draft-chip" aria-label={item.returnLabel} title={item.returnLabel} onClick={() => (item.id === undefined ? onReturn(row.id, item.kind) : onReturn(row.id, item.kind, item.id))}>
                     <TokenPicture kind={item.kind} colour={colour} px={PICTURE} />
                     <i>×{item.picked}</i>
                   </button>
                 ) : (
-                  <span key={item.kind} className="draft-slot" aria-hidden="true">
+                  <span key={item.id ?? item.kind} className="draft-slot" aria-hidden="true">
                     <TokenPicture kind={item.kind} colour={colour} px={PICTURE} />
                   </span>
                 )))}

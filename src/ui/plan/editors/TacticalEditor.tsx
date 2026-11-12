@@ -7,12 +7,14 @@ import { fleetExcess, productionCost, routeSteps, standing, systemPlanets } from
 import { stepPlayers } from '../../../domain/effects/hints';
 import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
+import { commitSources } from '../../../domain/commitSources';
+import { landingOffers } from '../../../domain/effects/points/landing';
 import { LandingBlock } from '../blocks/LandingBlock';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import { HexRemove } from '../../primitives/Icon';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
-import { addUnits, afterBattle, countOf, groupOf, hasStructures, hasUnits, isUntouched, sourcesOf, splitFlight, structuresArrived, unitsIn, viaOf, withLandedStructure, withLanding, withoutSource, type TacticalEntry } from '../../../domain/tactical';
+import { addUnits, afterBattle, countOf, landedFrom, groupOf, hasStructures, hasUnits, isUntouched, sourcesOf, splitFlight, structuresArrived, unitsIn, viaOf, withLandedStructure, withLanding, withLandingFrom, withoutSource, type TacticalEntry } from '../../../domain/tactical';
 import { Section } from '../../primitives/Section';
 import { unitsText } from '../../units/unitsText';
 import { systemTitle } from '../../map/systemName';
@@ -90,9 +92,12 @@ export function TacticalEditor({
   const { left: here, landable } = afterBattle(pack, entry, before, UNIT_ORDER);
   /** The structures a flight brought into the space area: the action puts them on planets at its end. */
   const afloat = structuresArrived(entry, before);
-  const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0 || hasStructures(afloat));
+  /** What the components in force let the landing offer beyond what the flights brought. */
+  const offers = landingOffers(pack, holderOf(game, before));
+  const fromSources = offers.fromPlanets && target !== null ? commitSources(game, pack, before, target).map(source => ({ planet: pack.planets[source.planetId], units: source.units })).filter(source => source.planet) : [];
+  const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0 || hasStructures(afloat) || fromSources.length > 0);
 
-  const landedOn = (planetId: string, unit: UnitId): number => entry.landings.find(l => l.planetId === planetId)?.units[unit] ?? 0;
+  const landedOn = (planetId: string, unit: UnitId): number => entry.landings.find(l => l.planetId === planetId && l.from === undefined)?.units[unit] ?? 0;
   const setLanding = (planetId: string, unit: UnitId, count: number) => onUpdate(withLanding(entry, planetId, unit, count));
   const lostAnywhere = unitText(Object.values(entry.groundLosses ?? {}).reduce(addUnits, lost));
 
@@ -183,10 +188,15 @@ export function TacticalEditor({
               <LandingBlock
                 game={game} planets={planets} before={before} board={board} units={landable} arrived={here} lost={entry.groundLosses}
                 landedOn={landedOn} onLand={setLanding}
-                structures={hasStructures(afloat) || entry.landings.some(l => hasStructures(l.structures)) ? {
-                  arrived: afloat,
-                  landedOn: (planetId: string, kind: StructureKind) => entry.landings.find(l => l.planetId === planetId)?.structures?.[kind] ?? 0,
+                structures={hasStructures(afloat) || offers.structures.length > 0 || entry.landings.some(l => hasStructures(l.structures)) ? {
+                  arrived: afloat, reinforced: offers.structures,
+                  landedOn: (planetId: string, kind: StructureKind) => entry.landings.find(l => l.planetId === planetId && l.from === undefined)?.structures?.[kind] ?? 0,
                   onLand: (planetId: string, kind: StructureKind, count: number) => onUpdate(withLandedStructure(entry, planetId, kind, count)),
+                } : undefined}
+                from={fromSources.length > 0 ? {
+                  sources: fromSources,
+                  landedFrom: (planetId: string, from: string, unit: UnitId) => landedFrom(entry, planetId, from, unit),
+                  onLandFrom: (planetId: string, from: string, unit: UnitId, count: number) => onUpdate(withLandingFrom(entry, planetId, from, unit, count)),
                 } : undefined}
               />
             </Section>
@@ -200,6 +210,15 @@ export function TacticalEditor({
               <small>{hasUnits(entry.production) ? unitText(entry.production) : t('plan.tactical.productionOffer')}</small>
             </button>
           </div>
+          {offers.shipsAway && Object.keys(entry.production).some(unit => !pack.units[unit as UnitId]?.ground) && (
+            <div className="segment choice-row" role="group" aria-label={t('plan.tactical.shipsTo')}>
+              {[...new Set([...before.tokensOnMap.filter(slot => slot !== target), ...(entry.shipsTo ? [entry.shipsTo] : [])])].map(slot => (
+                <button key={slot} type="button" aria-pressed={entry.shipsTo === slot} onClick={() => onUpdate({ shipsTo: entry.shipsTo === slot ? undefined : slot })}>
+                  {systemTitle(game, pack, slot, t)}
+                </button>
+              ))}
+            </div>
+          )}
           {list(placer.at('production', w => !limitsSystem(w)))}
           {hints('production')}
 
