@@ -4,6 +4,7 @@
  * another replay. A plan that changed is replayed from its first changed round; the rounds before it keep their frames.
  */
 import { choicesFor } from '../effects/choices';
+import { fire, type Moment } from '../effects/points/moments';
 import { effectOf } from '../effects/registry';
 import { playedBy, waive } from '../effects/waivers';
 import { blockersOf, type Blockers } from '../movement';
@@ -17,7 +18,7 @@ import { applyCard, cardRound } from './cards';
 import type { CardRound } from './cards/index';
 import { rivalLandings } from './invasion';
 import { payPlayedCost } from './payment';
-import { checkFlow, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
+import { checkFlow, isTurn, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyComponent, applyGains, applyScored, applyUses, readyCards } from './holdings';
 import { applyAdjustment, initialState } from './state';
 import { applyStatusTokens, checkObjectives, clearBoard } from './status';
@@ -191,10 +192,23 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
     dirty = true;
     // The status phase clears the board (81.4) and readies the planets (81.6) once, after its tokens are gained, and in any case before the agenda phase.
     let statusDone = false;
+    /** The moments of the round the components are told of (points/moments.ts): once each, for me; the warnings they make go to the entry replayed next. */
+    let roundStarted = false;
+    let statusStarted = false;
+    const lead: Warning[] = [];
+    const mine = (entry?: Entry): Moment => ({ game, state, shared: state, pack, warnings: lead, states: { me: state, ...rivals }, ...(entry ? { entry } : {}) });
+    /** `entry`: the first status entry, which may name what takes the place of the start's effect (Letani Behemoth for Mitosis). */
+    const startStatus = (entry?: Entry) => {
+      if (statusStarted) return;
+      statusStarted = true;
+      if (fire('onStatusStart', mine(entry), {}) > 0) dirty = true;
+    };
     const finishStatus = () => {
       if (!statusDone) {
+        startStatus();
         clearBoard(everyone);
         readyCards(everyone);
+        fire('onStatusEnd', mine(), {});
         dirty = true;
       }
       statusDone = true;
@@ -222,19 +236,31 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
         return;
       }
       if (phase === 'agenda') finishStatus();
-      const before = snap();
-      const index = frames.push({ entryId: entry.id, before, after: before, applied: true, warnings: [] }) - 1;
       const rival = entry.owner ? rivals[entry.owner] : undefined;
       const view = rival && entry.owner ? views.get(entry.owner)! : game;
       const own = rival ?? state;
+      // The moments that come before the entry: the round and the status phase begin, a turn of the action phase begins.
+      let ran = 0;
+      if (!roundStarted) {
+        roundStarted = true;
+        ran += fire('onRoundStart', mine(), {});
+      }
+      if (phase === 'status') startStatus(entry);
+      if (phase === 'action' && isTurn(entry, pack)) {
+        ran += fire('onTurnStart', { game: view, state: own, shared: state, pack, warnings: lead, player: entry.owner ?? 'me', states: acts.states, entry }, {});
+      }
+      if (ran > 0) dirty = true;
+      const before = snap();
+      const index = frames.push({ entryId: entry.id, before, after: before, applied: true, warnings: [] }) - 1;
       // The ships of everyone else as the replay has them now end the routes of this entry's owner (58.3.2).
       const blockers = entry.type === 'tactical' ? blockersOf(game, state, rival ? entry.owner : undefined, pack) : undefined;
       // A card with Warfare's free action plays it before the acts of its turn.
       const free = entry.type === 'strategic' ? linked(entry) : undefined;
       let warnings = applyEntry(view, own, state, entry, pack, acts, cards, flow, blockers, free === undefined, factionOf);
-      if (rival && entry.owner && entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack);
+      if (rival && entry.owner && entry.type === 'tactical') rivalLandings(state, entry, entry.owner, pack, game, warnings);
       dirty = true;
       if (entry.type === 'statusTokens') finishStatus();
+      if (lead.length > 0) warnings = [...warnings, ...placeIn(lead.splice(0), entry.id)];
       if (free !== undefined) {
         step(free, phase, status);
         const late: Warning[] = [];

@@ -484,6 +484,8 @@ export interface GameState {
   rivals?: Record<string, GameState>;
   /** Planet id to the opponent whose entries landed there, ahead of the owner set by hand. */
   rivalHolds?: Record<string, string>;
+  /** What waits on a component's card, by the component id as held: units placed on it (Crimson Legionnaire II), a technology lent with it (Share Knowledge). */
+  onCard?: Record<string, { units?: UnitCounts; technology?: string }>;
 }
 
 /** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */

@@ -3,7 +3,10 @@
  * primary and the secondary replenish commodities up to the faction's value (21.3, 92.3, 92.5).
  */
 import { applied } from '../../effects/apply';
+import '../../effects/points/moments';
 import { holderOf } from '../../effects/registry';
+import { linksOf } from '../../movement';
+import { areNeighbors } from '../../neighbors';
 import type { DataPack, Game, GameState } from '../../types';
 import type { CardHandler } from './handler';
 import { CARD } from './ids';
@@ -20,6 +23,17 @@ export function replenish(game: Pick<Game, 'faction'>, state: GameState, pack: D
   state.commodities = Math.max(state.commodities, commodityValueOf(game, state, pack, shared));
 }
 
+/**
+ * A replenish with what follows it: the trade goods the components in force give after the owner replenishes commodities
+ * (the `tradeGoodsOnReplenish` point, Minister of Commerce: one for each neighbour). `states` is every player's, to count the neighbours (LRR 60).
+ */
+export function replenishWith(game: Game, state: GameState, pack: DataPack, shared: GameState, states: Record<string, GameState>): void {
+  replenish(game, state, pack, shared);
+  const neighbours = (): number => Object.values(states).filter(other => other !== state
+    && areNeighbors(game, state, other, pack, linksOf(game, pack, { state, shared, during: 'neighbors' }))).length;
+  state.tradeGoods += applied(pack, holderOf(game, state, shared), 'tradeGoodsOnReplenish', 0, { faction: game.faction, get neighbours() { return neighbours(); } }).value;
+}
+
 /** Gains commodities, no more than the commodity value allows (21.2); returns what was gained. */
 export function gainCommodities(game: Pick<Game, 'faction'>, state: GameState, pack: DataPack, amount: number, shared: GameState = state): number {
   const gained = Math.max(0, Math.min(amount, commodityValueOf(game, state, pack, shared) - state.commodities));
@@ -29,7 +43,7 @@ export function gainCommodities(game: Pick<Game, 'faction'>, state: GameState, p
 
 export const trade: CardHandler = {
   apply: ({ game, state, entry, pack, round, primary }) => {
-    replenish(game, state, pack, round.states.me);
+    replenishWith(game, state, pack, round.states.me ?? state, round.states);
     if (!primary) return;
     state.tradeGoods += 3;
     const chosen = entry.effects?.freeSecondary ?? [];

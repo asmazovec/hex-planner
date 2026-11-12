@@ -80,3 +80,11 @@ Each line is a need of pass 1 an owner left out, with the reason. A batch agent 
 - Steady-controls e2e spec: no real component declares a number choice yet, and the stepper is the already covered Stepper primitive
 - Count points planetResources, planetInfluence, researchCost, prerequisites, tokensGained, vp are asked by no step; owners of payment, research and status call applied with holderOf
 - Laws for a rival's state at speed, capacity, unitCost: a rival's state keeps no laws, so a law reaches these points for me only
+
+## moments (wave 3)
+
+- The opponents' round-level moments (`onRoundStart`, `onStatusStart`, `onStatusEnd`): their components are not replayed.
+- A strategy token spent through a status entry's `spend`, and units destroyed outside a tactical action: no hook.
+- The opponent who takes Styx gains its point: opponents' scores move only by their status entries.
+- Crimson Legionnaire II's commodity gain or conversion, Fleet Regulations "Against", Malevolency's hand-over: the player's choice or a one-off outcome, entered by hand.
+- Share Knowledge: a technology outside the note's candidates is taken as entered; no warning code.
