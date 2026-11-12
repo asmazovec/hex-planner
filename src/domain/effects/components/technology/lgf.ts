@@ -7,11 +7,34 @@
  * Mecatol Rex system to every alpha and beta wormhole while Mecatol Rex is not theirs; this reaches the highlight of
  * where ships can fly (`routeReach`), not a warning, as a jump between marked systems is never warned of. The ACTION is
  * a `play`: one infantry on Mecatol Rex when the player controls it (the replay exhausts the card).
- *
- * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { componentById } from '../../../components';
+import { MECATOL_PLANET } from '../../../mecatol';
+import { wormholeSlots } from '../../../movement';
+import { violation } from '../../../rules/registry';
+import componentCondition from '../../../rules/codes/componentCondition';
+import { mecatolSlot } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:lgf';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  // Mecatol Rex joins every alpha and beta wormhole in the Winnu's tactical actions while they do not control it (40, 101).
+  links: ({ game, pack, state, shared, during }) => {
+    const mecatol = mecatolSlot(game);
+    if (during !== 'tactical' || game.faction !== 'winnu' || mecatol === undefined || state?.control[MECATOL_PLANET] === 'me') return [];
+    const tokens = shared?.wormholeTokens ?? state?.wormholeTokens;
+    return ['alpha', 'beta'].flatMap(type => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== mecatol).map((slot): [string, string] => [mecatol, slot]));
+  },
+  play: ({ game, state, pack, warnings, held }) => {
+    if (!held || game.faction !== 'winnu') return;
+    if (state.control[MECATOL_PLANET] !== 'me') {
+      warnings.push(violation(componentCondition.code, { id, name: componentById(pack, id)?.name ?? id, condition: 'Mecatol Rex' }));
+      return;
+    }
+    const here = (state.ground[MECATOL_PLANET] ??= {});
+    here.infantry = (here.infantry ?? 0) + 1;
+  },
+};

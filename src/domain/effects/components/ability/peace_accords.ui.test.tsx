@@ -16,7 +16,7 @@ const MAP = { [HOME]: 'r-home', [NEAR]: 'r-target', [TARGET]: 'r-empty', [FAR]: 
 // it and the choice is written into the entry.
 // Why this is the component's own: no rule gains a planet without a landing; the planner must let the player name it.
 // Pass 2 builds the choice (a group named after the ability with a button per planet) and the field `useChoices`.
-test.fails('ability:peace_accords chosen in «Used» of Diplomacy, it asks for the planet and writes it into the entry', async () => {
+test('ability:peace_accords chosen in «Used» of Diplomacy, it asks for the planet and writes it into the entry', async () => {
   const diplomacy = primary(CARD.diplomacy, { systemId: HOME });
   const xxcha = bench({ faction: 'xxcha', entries: [diplomacy], game: { map: MAP } });
   quote(xxcha.pack, id, 'You may gain control of 1 planet');

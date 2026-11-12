@@ -23,7 +23,7 @@ describe('ability:reclamation Reclamation', () => {
   // they are missing from the space area are listed and lifted by the ability, and both structures stand on Mecatol Rex.
   // Why the check is redundant here: a structure is placed by Construction or carried by an ability (85.2), and the
   // landing finds none in the space area; Reclamation takes them from the reinforcements instead.
-  test.fails('ability:reclamation puts a PDS and a space dock from the reinforcements on Mecatol Rex just taken', () => {
+  test('ability:reclamation puts a PDS and a space dock from the reinforcements on Mecatol Rex just taken', () => {
     const winnu = table('winnu', reclaim({ pds: 1, spacedock: 1 }));
     quote(winnu.pack, id, 'You may place 1 PDS and 1 space dock from your reinforcements on Mecatol Rex');
     expect(missingStructures(winnu)).toHaveLength(2);
@@ -69,7 +69,7 @@ describe('ability:reclamation Reclamation', () => {
     expectStanding(missingStructures(table('winnu', move)), 'unitsMissing');
   });
 
-  test.fails('ability:reclamation is a passive effect that waives the structures missing from the space area', () => {
+  test('ability:reclamation is a passive effect that waives the structures missing from the space area', () => {
     const { pack } = table('winnu', reclaim({}));
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['unitsMissing']);

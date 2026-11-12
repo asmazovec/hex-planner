@@ -19,7 +19,7 @@ describe('ability:blood_ties Blood Ties', () => {
   // that of the six influence unpaid are both listed and lifted by the ability.
   // Why the check is redundant here: 54.1 asks six influence to remove the token, and the ability says the Winnu do
   // not spend it.
-  test.fails('ability:blood_ties the landing on Mecatol Rex needs no influence: custodians and its six influence are waived', () => {
+  test('ability:blood_ties the landing on Mecatol Rex needs no influence: custodians and its six influence are waived', () => {
     const move = land();
     const winnu = table('winnu', [move]);
     quote(winnu.pack, id, 'You do not have to spend influence to remove the custodians token from Mecatol Rex');
@@ -63,7 +63,7 @@ describe('ability:blood_ties Blood Ties', () => {
     expectStanding(warningsOf(table('winnu', [buy]), buy), 'shortInfluence');
   });
 
-  test.fails('ability:blood_ties is a passive effect that waives the custodians token and its influence', () => {
+  test('ability:blood_ties is a passive effect that waives the custodians token and its influence', () => {
     const { pack } = table('winnu', []);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['custodians', 'shortInfluence']);

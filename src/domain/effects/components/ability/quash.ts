@@ -4,11 +4,16 @@
  *
  * Decided: `play`. Agendas are not planned, but the token is: an agenda-phase entry that plays Quash spends 1 strategy
  * token, warned of when the pool has none (`shortStrategy`). It may be used again on the replacement agenda (ruling 3).
- *
- * Pass 1: the hint it is today; the tests say what it must do.
  */
+import { spendStrategyTokens } from '../../../replay/status';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:quash';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  play: turn => {
+    if (turn.held && turn.game.faction === 'xxcha') spendStrategyTokens(turn);
+  },
+};

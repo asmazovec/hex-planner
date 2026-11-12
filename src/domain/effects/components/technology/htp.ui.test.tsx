@@ -15,7 +15,7 @@ const table = () => {
 // Checks: a cruiser is paid with Home Two (1 resource, 2 influence); I choose Hegemonic Trade Policy in «Used»; the
 // warning that a resource falls short reads as allowed by the technology.
 // Why the check is redundant here: Home Two swapped pays 2 resources.
-test.fails('technology:htp chosen in «Used», the shortfall a swapped planet covers reads as allowed by Hegemonic Trade Policy', async () => {
+test('technology:htp chosen in «Used», the shortfall a swapped planet covers reads as allowed by Hegemonic Trade Policy', async () => {
   const winnu = table();
   quote(winnu.table.pack, id, 'swap the resource and influence values of 1 planet you control');
   showTactical(winnu.table, winnu.build);

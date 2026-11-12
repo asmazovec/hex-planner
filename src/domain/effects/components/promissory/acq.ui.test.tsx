@@ -16,7 +16,7 @@ const table = () => {
 // Checks: with the strategy pool empty, I choose Acquiescence in «Used» of Politics' secondary; the warning that no
 // strategy token is left reads as allowed by the note.
 // Why the check is redundant here: the note frees the secondary of its token (20.5, 83.4).
-test.fails('promissory:acq chosen in «Used» of a secondary, the empty strategy pool reads as allowed by Acquiescence', async () => {
+test('promissory:acq chosen in «Used» of a secondary, the empty strategy pool reads as allowed by Acquiescence', async () => {
   const { politics, table: sol } = table();
   quote(sol.pack, id, 'You do not have to spend or place a command token');
   showUses(sol, politics);

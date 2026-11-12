@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
-import { routeReach } from '../../../movement';
+import { linksOf, routeReach } from '../../../movement';
 import type { Entry, Game } from '../../../types';
-import { bench, componentAction, effect, endOf, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
+import { bench, type Bench, componentAction, effect, endOf, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
 import { id } from './lgf';
 
 /** An alpha wormhole next to home, Mecatol Rex at the far end of the row, four systems from it by its edges. */
@@ -10,7 +10,11 @@ const MAP = { [HOME]: 'r-home', [NEAR]: 'r-alpha', [TARGET]: 'r-target', [FAR]: 
 const table = (faction: string, entries: Entry[] = [], game: Partial<Game> = {}) =>
   bench({ faction, start: { technologies: [id] }, entries, game: { map: MAP, ...game } });
 /** Where a ship of move 1 can still fly from the alpha wormhole, with Mecatol Rex as the active system. */
-const reach = ({ game, pack }: ReturnType<typeof table>) => routeReach(game, [NEAR], 1, FARTHER, pack, new Set());
+const reach = (winnu: Bench) => {
+  const { game, pack } = winnu;
+  const state = endOf(winnu);
+  return routeReach(game, [NEAR], 1, FARTHER, pack, new Set(), { state, shared: state, links: linksOf(game, pack, { state, shared: state, during: 'tactical' }) });
+};
 
 describe('technology:lgf Lazax Gate Folding', () => {
   // "During your tactical actions, if you do not control Mecatol Rex, treat its system as if it has both an α and β
@@ -19,8 +23,8 @@ describe('technology:lgf Lazax Gate Folding', () => {
   // now joins (40.1, 101.1).
   // Why the default adjacency does not apply: Mecatol Rex has no wormhole of its own; the technology gives it both
   // while the Winnu do not control it. Nothing is warned of either way: a jump between marked systems is never warned
-  // of, so the technology shows in where ships can fly. Pass 2 gives `routeReach` the player's holdings and control.
-  test.fails('technology:lgf the Mecatol Rex system is reached through an alpha wormhole', () => {
+  // of, so the technology shows in where ships can fly. The route graph is given the player's links (`linksOf`, the `links` of the technology), which read the holdings and the control of the board.
+  test('technology:lgf the Mecatol Rex system is reached through an alpha wormhole', () => {
     const winnu = table('winnu');
     quote(winnu.pack, id, 'if you do not control Mecatol Rex, treat its system as if it has both an');
     expect(reach(winnu).has(FARTHER)).toBe(true);
@@ -43,7 +47,7 @@ describe('technology:lgf Lazax Gate Folding', () => {
   // "ACTION: If you control Mecatol Rex, exhaust this card to place 1 infantry from your reinforcements on Mecatol Rex."
   // Checks: the component action of the technology with Mecatol Rex controlled places 1 infantry on it.
   // Why this is the component's own: no rule places ground forces outside production (67) and invasion (49).
-  test.fails('technology:lgf its ACTION places 1 infantry on Mecatol Rex the Winnu control', () => {
+  test('technology:lgf its ACTION places 1 infantry on Mecatol Rex the Winnu control', () => {
     const winnu = table('winnu', [componentAction(id)], { planetControl: { [MECATOL_PLANET]: 'me' } });
     expect(endOf(winnu).ground[MECATOL_PLANET]).toEqual({ infantry: 1 });
   });
@@ -62,7 +66,7 @@ describe('technology:lgf Lazax Gate Folding', () => {
     expectStanding(warningsOf(table('winnu', [componentAction(id), again], { planetControl: { [MECATOL_PLANET]: 'me' } }), again), 'componentExhausted');
   });
 
-  test.fails('technology:lgf is a play effect for its ACTION', () => {
+  test('technology:lgf is a play effect for its ACTION', () => {
     const { pack } = table('winnu');
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

@@ -20,7 +20,7 @@ describe('breakthrough:winnubt Imperator', () => {
   // Checks: the target holds a legendary planet; one carrier flies two systems on its move of 1; the warning that it
   // falls short is listed and lifted by the breakthrough.
   // Why the check is redundant here: the move value (58.1) of that ship is 2 this action, enough for the route.
-  test.fails('breakthrough:winnubt one ship flies one system more into a legendary system: speedShort is waived', () => {
+  test('breakthrough:winnubt one ship flies one system more into a legendary system: speedShort is waived', () => {
     const winnu = table(fly());
     quote(winnu.pack, id, 'apply +1 to the move value of 1 of your ships during this tactical action');
     expectWaived(warningsOf(winnu, winnu.move), 'speedShort', id);
@@ -58,7 +58,7 @@ describe('breakthrough:winnubt Imperator', () => {
 
   test.todo('breakthrough:winnubt +1 to combat rolls for each Support for the Throne in the opponent\'s play area: no dice are rolled, and a passive effect has no step to remind at');
 
-  test.fails('breakthrough:winnubt is a passive effect that waives a ship one system short', () => {
+  test('breakthrough:winnubt is a passive effect that waives a ship one system short', () => {
     const { pack } = table(fly());
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);

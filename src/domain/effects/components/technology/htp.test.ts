@@ -14,7 +14,7 @@ describe('technology:htp Hegemonic Trade Policy', () => {
   // Checks: a cruiser (cost 2) is paid with h2 alone (1 resource, 2 influence) and the technology named in «Used»;
   // the warning that 1 resource falls short is listed and lifted by the technology.
   // Why the check is redundant here: with h2's values swapped it gives 2 resources, the whole cost.
-  test.fails('technology:htp swaps a paying planet\'s values: the shortfall it covers is waived', () => {
+  test('technology:htp swaps a paying planet\'s values: the shortfall it covers is waived', () => {
     const build = using(produce({ cruiser: 1 }, ['h2']), id);
     const winnu = table('winnu', [build]);
     quote(winnu.pack, id, 'swap the resource and influence values of 1 planet you control during that use of Production');
@@ -45,7 +45,7 @@ describe('technology:htp Hegemonic Trade Policy', () => {
     expectStanding(warnings, 'shortResources');
   });
 
-  test.fails('technology:htp is a play effect that waives the shortfall a swapped planet covers', () => {
+  test('technology:htp is a play effect that waives the shortfall a swapped planet covers', () => {
     const { pack } = table('winnu', []);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);

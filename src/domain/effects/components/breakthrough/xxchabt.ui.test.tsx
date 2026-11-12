@@ -14,7 +14,7 @@ const table = (faction: string) => {
 // Checks: a cruiser is paid with Home Two, 1 resource and 2 influence; the tactical editor shows the warning that a
 // resource falls short as allowed by Archon's Gift.
 // Why the check is redundant here: Home Two spent for its influence pays 2.
-test.fails('breakthrough:xxchabt a production paid with influence reads as allowed by Archon\'s Gift', () => {
+test('breakthrough:xxchabt a production paid with influence reads as allowed by Archon\'s Gift', () => {
   const xxcha = table('xxcha');
   quote(xxcha.table.pack, id, 'You can spend influence as if it were resources.');
   showTactical(xxcha.table, xxcha.build);

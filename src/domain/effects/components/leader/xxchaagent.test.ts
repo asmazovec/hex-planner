@@ -13,7 +13,7 @@ describe('leader:xxchaagent Ggrocuto Rinn', () => {
   // "ACTION: Exhaust this card to ready any planet"
   // Checks: h1, exhausted by a payment, is readied by the agent's component action.
   // Why this is the component's own: a planet is readied in the status phase (81.6) or by an effect that says so.
-  test.fails('leader:xxchaagent readies the planet chosen', () => {
+  test('leader:xxchaagent readies the planet chosen', () => {
     const xxcha = table([spendH1(), ready('h1')]);
     quote(xxcha.pack, id, 'Exhaust this card to ready any planet');
     expect(endOf(xxcha).exhausted).not.toContain('h1');
@@ -24,7 +24,7 @@ describe('leader:xxchaagent Ggrocuto Rinn', () => {
   // lifted by the agent.
   // Why the check is redundant here: LRR 71 note 3 limits a readying effect to the player's planets, the agent says
   // any planet (ruling 2: a planet that is exhausted).
-  test.fails('leader:xxchaagent readies another player\'s planet: readyNotControlled is waived', () => {
+  test('leader:xxchaagent readies another player\'s planet: readyNotControlled is waived', () => {
     const action = ready('t1');
     expectWaived(warningsOf(table([action], { planetControl: { t1: 'enemy' } }), action), 'readyNotControlled', id);
   });
@@ -43,7 +43,7 @@ describe('leader:xxchaagent Ggrocuto Rinn', () => {
 
   test.todo('leader:xxchaagent the infantry removed from a planet adjacent to the Xxcha: another player\'s ground forces on a planet are set by hand, not replayed');
 
-  test.fails('leader:xxchaagent is a play effect that waives readying another player\'s planet', () => {
+  test('leader:xxchaagent is a play effect that waives readying another player\'s planet', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['readyNotControlled']);

@@ -27,7 +27,7 @@ describe('ability:peace_accords Peace Accords', () => {
   // exhausted (ruling 3).
   // Why this is the component's own: a planet is gained by landing ground forces on it (49.5) and in no other way the
   // rules give; the ability gives one without a landing.
-  test.fails('ability:peace_accords gains an empty planet next to the Xxcha after Diplomacy\'s primary', () => {
+  test('ability:peace_accords gains an empty planet next to the Xxcha after Diplomacy\'s primary', () => {
     const xxcha = table('xxcha', [accords('t2')]);
     quote(xxcha.pack, id, 'You may gain control of 1 planet other than Mecatol Rex that does not contain any units');
     const end = endOf(xxcha);
@@ -37,14 +37,14 @@ describe('ability:peace_accords Peace Accords', () => {
 
   // "... the primary or secondary ability ..."
   // Checks: after Diplomacy's secondary it gains the planet too.
-  test.fails('ability:peace_accords gains the planet after Diplomacy\'s secondary too', () => {
+  test('ability:peace_accords gains the planet after Diplomacy\'s secondary too', () => {
     expect(endOf(table('xxcha', [accords('t1', secondary(CARD.diplomacy))])).control.t1).toBe('me');
   });
 
   // "... other than Mecatol Rex ..."
   // Checks: Mecatol Rex, beside the home system and empty, is warned of when chosen.
   // Why the check is NOT redundant here: the text leaves Mecatol Rex out.
-  test.fails('ability:peace_accords Mecatol Rex chosen is warned of', () => {
+  test('ability:peace_accords Mecatol Rex chosen is warned of', () => {
     const use = accords(MECATOL_PLANET);
     expectStanding(warningsOf(table('xxcha', [use]), use), NOT_GAINABLE);
   });
@@ -57,7 +57,7 @@ describe('ability:peace_accords Peace Accords', () => {
 
   test.todo('ability:peace_accords an uncontrolled planet gained is explored (ruling 2): exploration is not planned');
 
-  test.fails('ability:peace_accords is a play effect', () => {
+  test('ability:peace_accords is a play effect', () => {
     const { pack } = table('xxcha', []);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

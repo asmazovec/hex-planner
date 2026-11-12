@@ -15,7 +15,7 @@ describe('leader:winnuagent Berekar Berekon', () => {
   // resources fall short is listed and lifted by the agent.
   // Why the check is redundant here: the cost the payment must meet (67.3) is 2 less with the agent, so a shortfall of
   // 2 is no shortfall.
-  test.fails('leader:winnuagent used with a production, a shortfall of 2 resources is waived', () => {
+  test('leader:winnuagent used with a production, a shortfall of 2 resources is waived', () => {
     const build = using(produce({ cruiser: 1 }), id);
     const winnu = table([build]);
     quote(winnu.pack, id, 'reduce the combined cost of the produced units by 2');
@@ -55,7 +55,7 @@ describe('leader:winnuagent Berekar Berekon', () => {
     expectStanding(warningsOf(table([build]), build), 'productionOver');
   });
 
-  test.fails('leader:winnuagent is a play effect that waives a shortfall of resources', () => {
+  test('leader:winnuagent is a play effect that waives a shortfall of resources', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);

@@ -14,7 +14,7 @@ const table = (choices: Record<string, number>) => {
 // Checks: a PDS placed by the hero on Target One, which the Xxcha do not control, shows that structures go only on
 // one's own planets.
 // Why the check is NOT redundant here: the hero places on planets the Xxcha control only.
-test.fails('leader:xxchahero-te a PDS on a planet not controlled shows its warning standing', () => {
+test('leader:xxchahero-te a PDS on a planet not controlled shows its warning standing', () => {
   const xxcha = table({ 'pds@t1': 1 });
   quote(xxcha.table.pack, id, 'onto planets you control');
   showWarnings(xxcha.table, xxcha.action);
