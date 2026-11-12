@@ -16,7 +16,7 @@ describe('agenda:disarmament Compensated Disarmament', () => {
   // Checks: two infantry and a mech of mine on Home One are destroyed and I, who control it, gain 3 trade goods.
   // Why the check is redundant here: there is no check; the directive changes the ground forces and the trade goods
   // the plan counts.
-  test.fails('agenda:disarmament destroys my ground forces on the elected planet and pays a trade good for each', () => {
+  test('agenda:disarmament destroys my ground forces on the elected planet and pays a trade good for each', () => {
     const table = bench({ faction: 'sol', entries: [onHomeOne(), elect('h1')] });
     quote(table.pack, id, 'Destroy each ground force on the elected planet.');
     const end = endOf(table);
@@ -27,7 +27,7 @@ describe('agenda:disarmament Compensated Disarmament', () => {
   // Compensated Disarmament note 4: "Structures are unaffected by Compensated Disarmament."
   // Checks: a PDS and a space dock on the elected planet stay.
   // Why the check is NOT redundant here: the directive speaks of ground forces only.
-  test.fails('agenda:disarmament leaves the structures of the planet', () => {
+  test('agenda:disarmament leaves the structures of the planet', () => {
     const table = bench({ faction: 'sol', entries: [onHomeOne(), elect('h1')], game: { pds: { h1: 1 }, docks: ['h1'] } });
     const end = endOf(table);
     expect(end.ground.h1 ?? {}).toEqual({});
@@ -38,7 +38,7 @@ describe('agenda:disarmament Compensated Disarmament', () => {
   // "... on the elected planet."
   // Checks: the ground forces on another planet stay.
   // Why the check is NOT redundant here: only the elected planet is disarmed.
-  test.fails('agenda:disarmament leaves the ground forces of other planets', () => {
+  test('agenda:disarmament leaves the ground forces of other planets', () => {
     const table = bench({ faction: 'sol', entries: [adjust({ ground: { h1: { infantry: 1 }, h2: { infantry: 2 } } }), elect('h1')] });
     const end = endOf(table);
     expect(end.ground.h2).toEqual({ infantry: 2 });
@@ -47,7 +47,7 @@ describe('agenda:disarmament Compensated Disarmament', () => {
 
   test.todo('agenda:disarmament on a planet another player controls pays them, and destroys their ground forces: a directive on my entry reaches only my state');
 
-  test.fails('agenda:disarmament is a play effect', () => {
+  test('agenda:disarmament is a play effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('play');
   });

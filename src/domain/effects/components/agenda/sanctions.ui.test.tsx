@@ -19,7 +19,7 @@ function drawing(n: number, passed: boolean) {
 // "For: Each player can have a maximum of 3 action cards in their hand."
 // Checks: under the law the entry that brings a fourth action card shows the hand limit warning, standing, naming 3.
 // Why the default limit does not apply: the law changes the number of the hand limit (2.4.1); it does not lift it.
-test.fails('agenda:sanctions a fourth action card under the law shows the hand limit of 3', () => {
+test('agenda:sanctions a fourth action card under the law shows the hand limit of 3', () => {
   const table = drawing(4, true);
   quote(table.pack, id, 'a maximum of 3 action cards');
   showWarnings(table, table.draw);

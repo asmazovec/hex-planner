@@ -11,7 +11,7 @@ describe('agenda:arms_reduction Arms Reduction', () => {
   // Checks: three dreadnoughts and six cruisers in one system become two and four; the carrier stays.
   // Why the check is redundant here: there is no check; the directive removes units the plan counts (fleet pool,
   // capacity, what can fly next round), so the board after it must show them gone.
-  test.fails('agenda:arms_reduction "For" leaves two dreadnoughts and four cruisers', () => {
+  test('agenda:arms_reduction "For" leaves two dreadnoughts and four cruisers', () => {
     const table = bench({ faction: 'sol', units: { [HOME]: { dreadnought: 3, cruiser: 6, carrier: 1 } }, entries: [resolved()] });
     quote(table.pack, id, 'destroys all but 2 of their dreadnoughts and all but 4 of their cruisers');
     expect(endOf(table).systems[HOME]).toEqual({ dreadnought: 2, cruiser: 4, carrier: 1 });
@@ -29,7 +29,7 @@ describe('agenda:arms_reduction Arms Reduction', () => {
   test.todo('agenda:arms_reduction the same for every opponent: a directive played on my entry reaches only my state');
   test.todo('agenda:arms_reduction "Against" exhausts every planet with a technology specialty at the next strategy phase: an entry cannot name the outcome');
 
-  test.fails('agenda:arms_reduction is a play effect', () => {
+  test('agenda:arms_reduction is a play effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('play');
   });

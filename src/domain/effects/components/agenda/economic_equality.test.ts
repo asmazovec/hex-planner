@@ -11,7 +11,7 @@ describe('agenda:economic_equality Economic Equality', () => {
   // Checks: with 2 trade goods before, the resolved directive leaves me with exactly 5.
   // Why the check is redundant here: there is no check; the directive changes a number the plan counts, so the plan
   // must count it or every later payment with trade goods is wrong.
-  test.fails('agenda:economic_equality "For" sets my trade goods to 5', () => {
+  test('agenda:economic_equality "For" sets my trade goods to 5', () => {
     const table = bench({ faction: 'sol', entries: [adjust({ tradeGoods: 2 }), resolved()] });
     quote(table.pack, id, 'Then, each player gains 5 trade goods.');
     expect(endOf(table).tradeGoods).toBe(5);
@@ -19,7 +19,7 @@ describe('agenda:economic_equality Economic Equality', () => {
 
   // "Each player returns all of their trade goods to the supply. Then, ..."
   // Checks: with 8 trade goods before, the result is still 5: the old ones are returned, not added to.
-  test.fails('agenda:economic_equality "For" returns the trade goods beyond 5', () => {
+  test('agenda:economic_equality "For" returns the trade goods beyond 5', () => {
     const table = bench({ faction: 'sol', entries: [adjust({ tradeGoods: 8 }), resolved()] });
     expect(endOf(table).tradeGoods).toBe(5);
   });
@@ -34,7 +34,7 @@ describe('agenda:economic_equality Economic Equality', () => {
   test.todo('agenda:economic_equality "For" gives every opponent 5 trade goods too: a directive played on my entry reaches only my state');
   test.todo('agenda:economic_equality "Against" returns every trade good: an entry cannot name the outcome of a directive yet');
 
-  test.fails('agenda:economic_equality is a play effect', () => {
+  test('agenda:economic_equality is a play effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

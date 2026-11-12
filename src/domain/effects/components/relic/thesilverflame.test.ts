@@ -18,7 +18,7 @@ describe('relic:thesilverflame The Silver Flame', () => {
   // the card, and the relic changes hands.
   // Why the check is redundant here: LRR 94.3 lets only commodities, trade goods, promissory notes and relic fragments
   // change hands (Transactions note 1: "Relics themselves cannot be"); the card names itself as the exception.
-  test.fails('relic:thesilverflame given in a transaction: the warning is waived and the relic changes hands', () => {
+  test('relic:thesilverflame given in a transaction: the warning is waived and the relic changes hands', () => {
     const give = turn([deal({ components: [id] })]);
     const flame = table([give], { relics: [id] });
     quote(flame.pack, id, 'The Silver Flame may be exchanged as part of a transaction.');
@@ -31,7 +31,7 @@ describe('relic:thesilverflame The Silver Flame', () => {
   // "The Silver Flame may be exchanged ..." read from the other side: the rival's turn gives it to me.
   // Checks: the rival holds the card and gives it in their turn; the warning of their entry is lifted.
   // Why the check is redundant here: the card held by the giver says it may be exchanged.
-  test.fails('relic:thesilverflame given to me in a rival\'s turn: their warning is waived', () => {
+  test('relic:thesilverflame given to me in a rival\'s turn: their warning is waived', () => {
     const theirs = turn([deal({ components: [id] }, {}, 'me')], { owner: 'o1' });
     const flame = table([theirs], {}, { relics: [id] });
     expectWaived(warningsOf(flame, theirs), 'transactionKind', id);
@@ -59,7 +59,7 @@ describe('relic:thesilverflame The Silver Flame', () => {
   test.todo('relic:thesilverflame a 10 gains 1 victory point, any other result purges the home system and puts the Fracture into play: the plan rolls no die');
   test.todo('relic:thesilverflame received in my own turn from a rival who holds it: a waiver is asked of the owner of the entry only, who does not hold the card yet (foundation limit)');
 
-  test.fails('relic:thesilverflame is a passive effect that waives the exchange of itself', () => {
+  test('relic:thesilverflame is a passive effect that waives the exchange of itself', () => {
     const { pack } = table([], {});
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['transactionKind']);

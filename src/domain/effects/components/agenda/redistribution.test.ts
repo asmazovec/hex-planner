@@ -14,7 +14,7 @@ describe('agenda:redistribution Colonial Redistribution', () => {
   // Checks: my infantry, mech and PDS on Target One, elected, are destroyed.
   // Why the check is redundant here: there is no check; the directive removes units the plan counts, structures among
   // them (85: a structure is a unit).
-  test.fails('agenda:redistribution destroys each unit of mine on the elected planet', () => {
+  test('agenda:redistribution destroys each unit of mine on the elected planet', () => {
     const table = bench({
       faction: 'sol', entries: [adjust({ ground: { t1: { infantry: 2, mech: 1 } } }), elect('t1')],
       game: { planetControl: { t1: 'me' }, pds: { t1: 1 } },
@@ -28,7 +28,7 @@ describe('agenda:redistribution Colonial Redistribution', () => {
   // "... on the elected planet."
   // Checks: the units on the other planet of the system stay.
   // Why the check is NOT redundant here: only the elected planet is cleared.
-  test.fails('agenda:redistribution leaves the units of other planets', () => {
+  test('agenda:redistribution leaves the units of other planets', () => {
     const table = bench({
       faction: 'sol', entries: [adjust({ ground: { t1: { infantry: 1 }, t2: { infantry: 2 } } }), elect('t1')],
       game: { planetControl: { t1: 'me', t2: 'me' } },
@@ -41,7 +41,7 @@ describe('agenda:redistribution Colonial Redistribution', () => {
   test.todo('agenda:redistribution the player with the fewest victory points may then place 1 infantry there: another player\'s choice, not modelled');
   test.todo('agenda:redistribution the units of other players on the planet are destroyed too: a directive on my entry reaches only my state');
 
-  test.fails('agenda:redistribution is a play effect', () => {
+  test('agenda:redistribution is a play effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('play');
   });

@@ -5,10 +5,19 @@
  * Decided: a waiver. A planet holds at most two PDS (63.3, 85.5); the replay warns of a third (`structureLimit` with
  * the planet). While the law is in play that check is lifted for PDS on a planet, for every player; the limit of the
  * reinforcements (six PDS, 24.4) and the number Construction places stand. "Against" is a one-off choice of a PDS to
- * destroy, entered by the player. Pass 1: the hint it is today.
+ * destroy, entered by the player.
  */
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:defense_act';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'structureLimit',
+    rule: 'Each player can have any number of PDS units on planets they control.',
+    // Only the count of PDS on one planet (63.3); the reinforcements' limit names no planet and stands.
+    when: warning => warning.params?.kind === 'pds' && typeof warning.params?.planetId === 'string',
+  }],
+};

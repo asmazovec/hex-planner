@@ -36,7 +36,7 @@ test('relic:thetriad is offered in the payment as a planet worth 3', async () =>
 
 // Checks: paid with the Triad, the entry's payment warning reads as allowed by The Triad.
 // Why the check is redundant here: the Triad held is a planet card for the payment.
-test.fails('relic:thetriad in a payment reads as allowed by The Triad', () => {
+test('relic:thetriad in a payment reads as allowed by The Triad', () => {
   const carrier = build([id]);
   showWarnings(table(carrier), carrier);
   expectShownWaived('planetNotControlled', 'The Triad');
