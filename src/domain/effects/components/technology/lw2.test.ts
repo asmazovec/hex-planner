@@ -23,7 +23,7 @@ describe('technology:lw2 Letani Warrior II', () => {
   // producing unit nor the Production value is warned of.
   // Why the check is redundant here: 67/68 ask for a unit with Production, and for the Arborec the infantry is one,
   // of value 2 with this upgrade (68.1); the replay counts space docks only.
-  test.fails('technology:lw2 a Letani Warrior II produces two infantry without a space dock', () => {
+  test('technology:lw2 a Letani Warrior II produces two infantry without a space dock', () => {
     const table = build('arborec', { infantry: 2 }, [id]);
     quote(table.pack, id, 'PRODUCTION 2');
     const warnings = warningsOf(table, table.move);
@@ -34,7 +34,7 @@ describe('technology:lw2 Letani Warrior II', () => {
 
   // Checks: a third infantry is beyond the Production value of 2.
   // Why the check is NOT redundant here: the upgrade sets the value to 2, it does not lift the limit (68.1).
-  test.fails('technology:lw2 a third unit is beyond the Production value of 2', () => {
+  test('technology:lw2 a third unit is beyond the Production value of 2', () => {
     const table = build('arborec', { infantry: 3 }, [id]);
     const warnings = warningsOf(table, table.move);
     expectStanding(warnings, 'productionOver');

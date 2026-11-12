@@ -27,7 +27,7 @@ describe('leader:argentagent Trilossa Aun Mirik', () => {
   // next to the active one; the placement warning is listed and lifted by the agent, and the infantry stands on t1.
   // Why the check is redundant here: 68.3 puts ground forces on the planets of the producing units; the agent opens
   // every planet the producer controls in that system and the adjacent ones.
-  test.fails('leader:argentagent lets produced infantry go on a planet I control in an adjacent system', () => {
+  test('leader:argentagent lets produced infantry go on a planet I control in an adjacent system', () => {
     const table = produce({ t1: { infantry: 1 } });
     quote(table.pack, id, 'place those units on any planets they control in that system and any adjacent systems');
     expectWaived(warningsOf(table, table.move), 'productionPlace', id);
@@ -36,7 +36,7 @@ describe('leader:argentagent Trilossa Aun Mirik', () => {
 
   // Checks: the same with h2, a planet of the active system without a space dock.
   // Why the check is redundant here: "any planets they control in that system".
-  test.fails('leader:argentagent lets produced infantry go on a planet without a dock in the same system', () => {
+  test('leader:argentagent lets produced infantry go on a planet without a dock in the same system', () => {
     const table = produce({ h2: { infantry: 1 } });
     expectWaived(warningsOf(table, table.move), 'productionPlace', id);
   });
@@ -64,7 +64,7 @@ describe('leader:argentagent Trilossa Aun Mirik', () => {
     expectStanding(warningsOf(table, table.move), 'componentExhausted');
   });
 
-  test.fails('leader:argentagent is a play effect that waives the placement of produced ground forces', () => {
+  test('leader:argentagent is a play effect that waives the placement of produced ground forces', () => {
     const { pack } = produce({ t1: { infantry: 1 } });
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['productionPlace']);

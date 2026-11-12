@@ -21,7 +21,7 @@ const production = () => {
 // infantry on t1 reads as allowed by Trilossa Aun Mirik.
 // Why the check is redundant here: 68.3 puts ground forces on planets with a producing unit; the agent opens the
 // planets I control in the active and the adjacent systems.
-test.fails('leader:argentagent chosen in «Used», the infantry placed in the next system reads as allowed by Trilossa Aun Mirik', async () => {
+test('leader:argentagent chosen in «Used», the infantry placed in the next system reads as allowed by Trilossa Aun Mirik', async () => {
   const { move, table } = production();
   quote(table.pack, id, 'place those units on any planets they control in that system and any adjacent systems');
   const live = showUses(table, move);

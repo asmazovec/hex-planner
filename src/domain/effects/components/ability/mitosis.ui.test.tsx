@@ -18,7 +18,7 @@ const production = (faction: string) => {
 // Checks: the tactical editor of two infantry produced by the Arborec dock shows the warning that the dock cannot
 // produce them, standing: the production is entered all the same.
 // Why the check is NOT redundant here: the ability adds a limit for the Arborec; nothing lifts it.
-test.fails('ability:mitosis infantry from an Arborec space dock are shown with a standing warning', () => {
+test('ability:mitosis infantry from an Arborec space dock are shown with a standing warning', () => {
   const { move, table } = production('arborec');
   quote(table.pack, id, 'Your space docks cannot produce infantry');
   showTactical(table, move);

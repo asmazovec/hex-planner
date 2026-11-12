@@ -29,7 +29,7 @@ describe('breakthrough:arborecbt Psychospore', () => {
   // Checks: after Psychospore the target, where my infantry stands, holds no token of mine, so activating it again is
   // not warned of.
   // Why the check is redundant here: 5.2 forbids activating a system that holds my command token; the token is gone.
-  test.fails('breakthrough:arborecbt removes my command token: the system may be activated again', () => {
+  test('breakthrough:arborecbt removes my command token: the system may be activated again', () => {
     const table = round(true);
     quote(table.pack, id, 'remove a command token from a system that contains 1 or more of your infantry');
     expectNone(warningsOf(table, table.again), 'systemHasToken');
@@ -38,7 +38,7 @@ describe('breakthrough:arborecbt Psychospore', () => {
   // "Then, place 1 infantry in that system."
   // Checks: one more infantry stands in the system after the action.
   // Why the default does not apply: infantry enter the board by production only (67); the card places one unpaid.
-  test.fails('breakthrough:arborecbt places 1 infantry in that system', () => {
+  test('breakthrough:arborecbt places 1 infantry in that system', () => {
     const table = round(true);
     quote(table.pack, id, 'Then, place 1 infantry in that system');
     expect(infantryIn(endOf(table), TARGET, ['t1', 't2'])).toBe(2);
@@ -60,7 +60,7 @@ describe('breakthrough:arborecbt Psychospore', () => {
     expectStanding(warningsOf(table, table.play), 'componentExhausted');
   });
 
-  test.fails('breakthrough:arborecbt is a play effect', () => {
+  test('breakthrough:arborecbt is a play effect', () => {
     expect(effect(round(true).pack, id).tier).toBe('play');
   });
 });
