@@ -16,7 +16,7 @@ const invade = (): Entry => tactical(TARGET, {
 // Checks: in «Used» of my tactical action I choose the hero; the entry names it, the infantry stay on Target One and
 // no cruiser is left in the target.
 // Why nothing is waived here: the hero changes the board, which the plan counts; the steps it skips are combat.
-test.fails('leader:sardakkhero chosen in «Used» returns the ships of the active system after the landing', async () => {
+test('leader:sardakkhero chosen in «Used» returns the ships of the active system after the landing', async () => {
   const move = invade();
   const table = bench({ faction: 'sardakk', expansions: ['pok'], units: { [HOME]: { cruiser: 2, infantry: 2 } }, start: { leaders: { [id]: 'unlocked' } }, entries: [move] });
   quote(table.pack, id, 'return each of your ships in the active system to your reinforcements');

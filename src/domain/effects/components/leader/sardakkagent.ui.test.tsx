@@ -19,7 +19,7 @@ const sardakk = (move: Entry) =>
 // Checks: in «Used» of my tactical action I choose T'ro; the entry names it, and the plan then has three infantry on
 // Target One.
 // Why nothing is waived here: the agent adds units, which the plan counts; it lifts no check.
-test.fails('leader:sardakkagent chosen in «Used» places 2 infantry on the planet taken', async () => {
+test('leader:sardakkagent chosen in «Used» places 2 infantry on the planet taken', async () => {
   const move = invade();
   const table = sardakk(move);
   quote(table.pack, id, 'that player may place 2 infantry from their reinforcements');

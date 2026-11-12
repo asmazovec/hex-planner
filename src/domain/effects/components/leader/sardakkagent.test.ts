@@ -19,7 +19,7 @@ describe('leader:sardakkagent T\'ro', () => {
   // Checks: my action takes t1 with one infantry and uses the agent on t1: at the end of the plan t1 holds three.
   // Why nothing is waived here: the card breaks no rule, it adds units to the board; the planner counts the units on
   // each planet, so the two infantry must appear there (a `play` effect).
-  test.fails('leader:sardakkagent used at the end of my tactical action places 2 infantry on the planet I took', () => {
+  test('leader:sardakkagent used at the end of my tactical action places 2 infantry on the planet I took', () => {
     const move = invade('t1');
     expect(endOf(sardakk([move])).ground.t1).toEqual({ infantry: 3 });
   });
@@ -50,7 +50,7 @@ describe('leader:sardakkagent T\'ro', () => {
     expectStanding(warningsOf(sardakk([invade('t1'), second]), second), 'componentExhausted');
   });
 
-  test.fails('leader:sardakkagent is a play effect', () => {
+  test('leader:sardakkagent is a play effect', () => {
     const { pack } = sardakk([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');

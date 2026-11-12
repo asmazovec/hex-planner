@@ -19,7 +19,7 @@ describe('ability:analytical Analytical', () => {
   // of prerequisites.
   // Why the default check does not apply: the technology lacks one prerequisite and the ability ignores one; a
   // `modify` of the point `prerequisites`, so nothing is made, nothing is listed as waived.
-  test.fails('ability:analytical a technology that lacks one prerequisite is researched without a warning', () => {
+  test('ability:analytical a technology that lacks one prerequisite is researched without a warning', () => {
     const table = run('jolnar', 'technology:it');
     quote(table.pack, id, 'When you research a technology that is not a unit upgrade technology: You may ignore 1 prerequisite.');
     expectNone(warningsOf(table, table.entry), CODE);
@@ -49,10 +49,10 @@ describe('ability:analytical Analytical', () => {
     expectStanding(warningsOf(table, table.entry), CODE);
   });
 
-  test.fails('ability:analytical is a passive effect that lowers the prerequisites of a technology', () => {
+  test('ability:analytical is a passive effect that lowers the prerequisites of a technology', () => {
     const { pack } = run('jolnar', 'technology:it');
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.prerequisites?.(2, { technology: 'technology:hm' })).toBe(1);
-    expect(effect(pack, id).modify?.prerequisites?.(1, { technology: 'technology:dd2' })).toBe(1);
+    expect(effect(pack, id).modify?.prerequisites?.(1, { technology: 'technology:dd2', upgrade: true })).toBe(1);
   });
 });

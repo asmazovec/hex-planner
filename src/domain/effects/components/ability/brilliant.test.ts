@@ -18,7 +18,7 @@ describe('ability:brilliant Brilliant', () => {
   // research limit, none of resources.
   // Why the default limit does not apply: the secondary is resolved as the primary (91.2: one free, a second for 6),
   // so its limit and cost are the primary's; a `modify` of the card's numbers, nothing is listed as waived.
-  test.fails('ability:brilliant the secondary of Technology researches two technologies at the primary\'s cost', () => {
+  test('ability:brilliant the secondary of Technology researches two technologies at the primary\'s cost', () => {
     const entry = research(['technology:gd', 'technology:nm']);
     const warnings = warningsOf(table('jolnar', [entry]), entry);
     expectNone(warnings, 'researchOverLimit');
@@ -27,7 +27,7 @@ describe('ability:brilliant Brilliant', () => {
 
   // Checks: one technology by the secondary costs nothing for the Jol-Nar.
   // Why the default cost does not apply: the first technology of the primary is free.
-  test.fails('ability:brilliant one technology by the secondary costs nothing', () => {
+  test('ability:brilliant one technology by the secondary costs nothing', () => {
     const entry = research(['technology:gd'], NO_PAYMENT);
     expectNone(warningsOf(table('jolnar', [entry]), entry), 'shortResources');
   });
@@ -46,7 +46,7 @@ describe('ability:brilliant Brilliant', () => {
 
   // Checks: a third technology is over the primary's limit of two, and the warning names that limit.
   // Why the check is NOT redundant here: the primary researches two technologies at most.
-  test.fails('ability:brilliant a third technology is warned of against the primary\'s limit of two', () => {
+  test('ability:brilliant a third technology is warned of against the primary\'s limit of two', () => {
     const entry = research(['technology:gd', 'technology:nm', 'technology:st']);
     const warnings = warningsOf(table('jolnar', [entry]), entry);
     expectStanding(warnings, 'researchOverLimit');
@@ -61,7 +61,7 @@ describe('ability:brilliant Brilliant', () => {
     expect(endOf(table('jolnar', [entry])).strategy).toBe(endOf(table('jolnar', [])).strategy - 1);
   });
 
-  test.fails('ability:brilliant is a passive effect that changes numbers and waives nothing', () => {
+  test('ability:brilliant is a passive effect that changes numbers and waives nothing', () => {
     const { pack } = table('jolnar', []);
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify).toBeDefined();

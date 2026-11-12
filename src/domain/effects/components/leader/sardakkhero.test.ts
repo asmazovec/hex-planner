@@ -16,7 +16,7 @@ describe('leader:sardakkhero Sh\'val, Harbinger', () => {
   // Checks: used in the action, the infantry lands on t1 and both cruisers leave the board: none stands in the target.
   // Why nothing is waived here: the card skips steps the plan does not simulate (space cannon, space combat,
   // bombardment: tirules2, Sardakk N'orr, Tekklar Conditioning 2) and then changes the board, which the plan counts.
-  test.fails('leader:sardakkhero used in a tactical action returns the ships of the active system after the landing', () => {
+  test('leader:sardakkhero used in a tactical action returns the ships of the active system after the landing', () => {
     const move = using(invade(), id);
     const end = endOf(sardakk([move]));
     expect(end.ground.t1).toEqual({ infantry: 2 });
@@ -33,7 +33,7 @@ describe('leader:sardakkhero Sh\'val, Harbinger', () => {
 
   // Checks: the ships the player has in other systems stay where they are.
   // Why the play does NOT apply there: the card returns the ships "in the active system" only.
-  test.fails('leader:sardakkhero returns only the ships of the active system', () => {
+  test('leader:sardakkhero returns only the ships of the active system', () => {
     const move = using(tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1, infantry: 1 }, via: [NEAR] }], landings: [{ planetId: 't1', units: { infantry: 1 } }] }), id);
     const end = endOf(sardakk([move]));
     expect(end.systems[HOME]?.cruiser).toBe(1);
@@ -48,7 +48,7 @@ describe('leader:sardakkhero Sh\'val, Harbinger', () => {
     expectStanding(warningsOf(sardakk([using(invade(), id), again]), again), 'componentNotHeld');
   });
 
-  test.fails('leader:sardakkhero is a play effect', () => {
+  test('leader:sardakkhero is a play effect', () => {
     const { pack } = sardakk([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');
