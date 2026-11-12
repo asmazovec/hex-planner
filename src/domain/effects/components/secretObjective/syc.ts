@@ -1,0 +1,14 @@
+/**
+ * Stake Your Claim (secret objective, Prophecy of Kings): "Control a planet in a system that contains a planet
+ * controlled by another player."
+ *
+ * Decided: played when a status entry scores it (`scored`). The requirement is something the plan counts: a planet the
+ * player controls in a system where another player controls a planet (`control`, 'enemy'). Scoring it while the board
+ * does not meet it breaks LRR 61.5 and is warned of with the common code `objectiveUnmet` that pass 2 adds; the warning
+ * forbids nothing. Until then the card is the hint it was.
+ */
+import type { ComponentEffect } from '../../types';
+
+export const id = 'secretObjective:syc';
+
+export const effect: ComponentEffect = { tier: 'hint', rule: id };
