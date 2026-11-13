@@ -283,3 +283,10 @@ test('a six-player string of rings 1 to 3 is complete at 36 tokens and so is the
   expect(parseMapString('25 26 27', 6, full, OTHERS).tokensComplete).toBe(false);
   expect(parseMapString(`${MILTY_36} 25`, 6, full, OTHERS).tokensComplete).toBe(false);
 });
+
+test('a double-sided home written by its printed number is read as its first side (firmament: 96 placed nothing)', () => {
+  const tokens = Array.from({ length: 60 }, (_, i) => (i === 18 ? '96' : '0'));
+  const result = parseMapString(tokens.join(' '), 6, full, OTHERS);
+  expect(result.map['0,-3']).toBe('96A');
+  expect(result.unknown).toEqual([]);
+});

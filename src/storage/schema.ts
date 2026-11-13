@@ -19,13 +19,11 @@ const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 const ids = z.array(z.string());
 const choices = z.record(z.string(), z.union([z.string(), z.number()]));
 const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional(), uses: ids.optional(), choices: choices.optional(), useChoices: z.record(z.string(), choices).optional() };
-const cardPlay = {
-  card: z.number().int().optional(),
-  forToken: z.boolean().optional(),
-  effects: z.object({
+const cardEffects = z.object({
     tokens: z.object({ tactic: z.number().int().optional(), fleet: z.number().int().optional(), strategy: z.number().int().optional() }).optional(),
     boughtTokens: count.optional(),
     researched: ids.optional(),
+    specialties: ids.optional(),
     systemId: z.string().optional(),
     readied: z.array(z.string()).optional(),
     speaker: z.string().optional(),
@@ -34,8 +32,16 @@ const cardPlay = {
     production: z.object({ systemId: z.string(), units: unitCounts, ground: z.record(z.string(), unitCounts).optional() }).optional(),
     structures: z.array(z.object({ kind: z.enum(['pds', 'spacedock']), planetId: z.string() })).optional(),
     payment: payment.optional(),
-  }).optional(),
+});
+const cardPlay = {
+  card: z.number().int().optional(),
+  forToken: z.boolean().optional(),
+  effects: cardEffects.optional(),
 };
+const statusSpend = z.object({
+  tactic: z.number().optional(), fleet: z.number().optional(), strategy: z.number().optional(), tradeGoods: z.number().optional(),
+  resources: payment.optional(), influence: payment.optional(),
+});
 const goods = z.object({ tradeGoods: count.optional(), commodities: count.optional(), components: z.array(z.string()).optional() });
 const act = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
@@ -51,7 +57,7 @@ const entrySchema = z.discriminatedUnion('type', [
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
-  z.object({ ...base, type: z.literal('component'), componentId: z.string().optional(), note: z.string(), acts }),
+  z.object({ ...base, type: z.literal('component'), componentId: z.string().optional(), note: z.string(), acts, effects: cardEffects.optional(), payment: payment.optional() }),
   z.object({ ...base, type: z.literal('pass'), acts }),
   z.object({
     ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),
@@ -64,7 +70,7 @@ const entrySchema = z.discriminatedUnion('type', [
   }),
   z.object({
     ...base, type: z.literal('statusTokens'), tactic: z.number(), fleet: z.number(), strategy: z.number(),
-    vp: z.number().optional(), opponentVp: z.record(z.string(), z.number()).optional(), scored: ids.optional(),
+    vp: z.number().optional(), opponentVp: z.record(z.string(), z.number()).optional(), scored: ids.optional(), spend: statusSpend.optional(),
   }),
 ]);
 

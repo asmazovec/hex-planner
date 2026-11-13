@@ -9,7 +9,7 @@ import { startingDocks, withForTokenOfRound } from '../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
 import { setLeader, setStartHolding } from '../domain/holdings';
 import { slotKeyOf } from '../domain/layouts';
-import { placeStartUnits, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
+import { placeStartUnits, withSeatHomes, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, Entry, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, Plan, Round, UnitCounts,
 } from '../domain/types';
@@ -462,9 +462,11 @@ export const useGame = create<GameStore>((set, get) => {
       for (const slot of slotsFor(g.playerCount, pack, layout ?? g.layout)) {
         if (slot.fixed && !next[slotKeyOf(slot.q, slot.r)]) next[slotKeyOf(slot.q, slot.r)] = slot.fixed;
       }
-      const same = Object.keys(next).length === Object.keys(g.map).length && Object.entries(next).every(([k, v]) => g.map[k] === v);
       const nextLayout = layout ?? g.layout;
-      return same && nextLayout === g.layout ? g : { ...g, map: next, layout: nextLayout };
+      // A 0 on a home slot leaves it to the faction seated there.
+      const placed = withSeatHomes({ ...g, map: next, layout: nextLayout }, pack);
+      const same = Object.keys(placed.map).length === Object.keys(g.map).length && Object.entries(placed.map).every(([k, v]) => g.map[k] === v);
+      return same && nextLayout === g.layout ? g : placed;
     }),
     setLayout: layout => commitPlayers((g, pack) => changeLayout(g, layout, pack)),
     setOpponent: (index, { faction }) => commitPlayers((g, pack) => setPlayerFaction(g, index + 1, faction, pack)),
