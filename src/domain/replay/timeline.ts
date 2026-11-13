@@ -140,7 +140,7 @@ function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameSta
   return state;
 }
 
-function startOf(game: Game, pack: DataPack): GameState {
+export function startOf(game: Game, pack: DataPack): GameState {
   const state = initialState(game, pack);
   state.faction = game.faction;
   keepOwnStructures(state, true);

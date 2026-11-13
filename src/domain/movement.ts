@@ -3,7 +3,7 @@
  * the speed of a ship and the systems it still reaches. Pure: the replay checks routes with it, the plan lights the reach.
  */
 import { rotateLanes } from './lanes';
-import { hasAnomaly, isLane, isOnMap, systemsAdjacent, systemSlots, tileAt } from './replay/board';
+import { hasAnomaly, isLane, isOnMap, systemsAdjacent, systemSlots, tileAt, type MapSource } from './replay/board';
 import { unitIds } from './replay/state';
 import { gridDistance, oppositeEdge, slotAcross } from './route';
 import { offMapHomes } from './strategy';
@@ -52,9 +52,9 @@ export type Blockers = ReadonlySet<string>;
  * Route graphs by what they are made of: the map, the Fracture, the pack and the factions at the table. The game as an
  * opponent plays it (`gameAs`) is a new object with the same map, so it shares the graph of the game.
  */
-const routeGraphs = new WeakMap<Game['map'], WeakMap<Game['fracture'], WeakMap<DataPack, Map<string, Map<string, string[]>>>>>();
+const routeGraphs = new WeakMap<MapSource['map'], WeakMap<MapSource['fracture'], WeakMap<DataPack, Map<string, Map<string, string[]>>>>>();
 
-function graphSlot(game: Game, pack: DataPack): Map<string, Map<string, string[]>> {
+function graphSlot(game: MapSource, pack: DataPack): Map<string, Map<string, string[]>> {
   let byFracture = routeGraphs.get(game.map);
   if (!byFracture) routeGraphs.set(game.map, byFracture = new WeakMap());
   let byPack = byFracture.get(game.fracture);
@@ -64,10 +64,10 @@ function graphSlot(game: Game, pack: DataPack): Map<string, Map<string, string[]
   return byFactions;
 }
 
-const factionsKey = (game: Game): string => [game.faction, ...(game.opponents ?? []).map(o => o.faction)].sort().join(',');
+const factionsKey = (game: MapSource): string => [game.faction, ...(game.opponents ?? []).map(o => o.faction)].sort().join(',');
 
 /** The edges a line of this hyperlane leads to from one edge, or from any with none given. A tile whose lines the data lacks joins all its sides. */
-function laneExits(game: Game, slot: string, entry: number | null, pack: DataPack): number[] {
+function laneExits(game: MapSource, slot: string, entry: number | null, pack: DataPack): number[] {
   const known = tileAt(game, slot, pack)?.lanes;
   if (!known) return [0, 1, 2, 3, 4, 5].filter(edge => edge !== entry);
   const turns = Number((game.map[slot] ?? '').split('@')[1] ?? 0) % 6 || 0;
@@ -77,7 +77,7 @@ function laneExits(game: Game, slot: string, entry: number | null, pack: DataPac
 }
 
 /** The systems at the far ends of the lines leaving a hyperlane, through any hyperlanes that follow it. */
-function systemsAlongLanes(game: Game, slot: string, entry: number | null, pack: DataPack, seen = new Set<string>()): string[] {
+function systemsAlongLanes(game: MapSource, slot: string, entry: number | null, pack: DataPack, seen = new Set<string>()): string[] {
   return laneExits(game, slot, entry, pack).flatMap(edge => {
     const next = slotAcross(slot, edge);
     if (next === null || !isOnMap(game, next)) return [];
@@ -93,7 +93,7 @@ function systemsAlongLanes(game: Game, slot: string, entry: number | null, pack:
  * What a ship can step to from each system: its neighbours, those a hyperlane's line joins it to, and those sharing a
  * wormhole with it. An off-map home (the Creuss home, 6 note 2) is a system under its tile id, joined by its wormhole alone.
  */
-function baseGraph(game: Game, pack: DataPack): Map<string, string[]> {
+function baseGraph(game: MapSource, pack: DataPack): Map<string, string[]> {
   const cache = graphSlot(game, pack);
   const key = factionsKey(game);
   const known = cache.get(key);
@@ -116,7 +116,7 @@ function baseGraph(game: Game, pack: DataPack): Map<string, string[]> {
 }
 
 /** The graph with the extra adjacency laid over it; the cached one is never changed. */
-function routeGraph(game: Game, pack: DataPack, links: readonly Link[] = []): Map<string, string[]> {
+function routeGraph(game: MapSource, pack: DataPack, links: readonly Link[] = []): Map<string, string[]> {
   const graph = baseGraph(game, pack);
   if (links.length === 0) return graph;
   const joined = new Map(graph);
@@ -129,20 +129,20 @@ function routeGraph(game: Game, pack: DataPack, links: readonly Link[] = []): Ma
 }
 
 /** Every slot a ship can be in: the map, the Fracture and an off-map home. */
-export const boardSlots = (game: Game, pack: DataPack): string[] => [...systemSlots(game), ...offMapHomes(game, pack)];
+export const boardSlots = (game: MapSource, pack: DataPack): string[] => [...systemSlots(game), ...offMapHomes(game, pack)];
 
 /** The wormholes of a system: its tile's and the tokens put there (Creuss, Gamma Wormhole). */
-export function wormholesOf(game: Game, pack: DataPack, slot: string, tokens: GameState['wormholeTokens'] = {}): string[] {
+export function wormholesOf(game: MapSource, pack: DataPack, slot: string, tokens: GameState['wormholeTokens'] = {}): string[] {
   const own = tileAt(game, slot, pack)?.wormholes ?? [];
   return [...new Set([...own, ...Object.entries(tokens).flatMap(([type, at]) => (at === slot ? [type] : []))])];
 }
 
 /** The systems holding a wormhole of this type, tokens included. */
-export const wormholeSlots = (game: Game, pack: DataPack, type: string, tokens: GameState['wormholeTokens'] = {}): string[] =>
+export const wormholeSlots = (game: MapSource, pack: DataPack, type: string, tokens: GameState['wormholeTokens'] = {}): string[] =>
   boardSlots(game, pack).filter(slot => wormholesOf(game, pack, slot, tokens).includes(type));
 
 /** Wormhole tokens join their system to every system with a matching wormhole (6.1). */
-function tokenLinks(game: Game, pack: DataPack, tokens: GameState['wormholeTokens']): Link[] {
+function tokenLinks(game: MapSource, pack: DataPack, tokens: GameState['wormholeTokens']): Link[] {
   return Object.entries(tokens ?? {}).flatMap(([type, at]) => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== at).map((slot): Link => [at, slot]));
 }
 
@@ -168,14 +168,14 @@ export function linksOf(game: Game, pack: DataPack, who: LinkWho): Link[] {
 }
 
 /** A ship can neither enter nor pass: asteroids and a supernova. */
-export const closedToRoute = (game: Game, slot: string, pack: DataPack): boolean =>
+export const closedToRoute = (game: MapSource, slot: string, pack: DataPack): boolean =>
   hasAnomaly(game, slot, 'asteroid', pack) || hasAnomaly(game, slot, 'supernova', pack);
 
 /** A ship can enter only to end its move, so only as the active system: a nebula, or a system holding other players' ships. */
-export const endsRoute = (game: Game, slot: string, pack: DataPack, blockers: Blockers): boolean =>
+export const endsRoute = (game: MapSource, slot: string, pack: DataPack, blockers: Blockers): boolean =>
   hasAnomaly(game, slot, 'nebula', pack) || blockers.has(slot);
 
-const holdsShips = (units: UnitCounts, pack: DataPack): boolean => unitIds(units).some(id => !pack.units[id]?.ground);
+export const holdsShips = (units: UnitCounts, pack: DataPack): boolean => unitIds(units).some(id => !pack.units[id]?.ground);
 
 /**
  * The systems that end a route of `mover` (undefined or `me` for me): the ships of every other player. Over the replayed
@@ -226,7 +226,7 @@ export function shipBlockersOf(game: Game, state: Pick<GameState, 'systems' | 'r
 }
 
 /** Steps from a system to every system joined to it, whatever stands in the way: this measures a route already drawn. */
-export function routeDistances(game: Game, from: string, pack: DataPack, links?: readonly Link[]): Map<string, number> {
+export function routeDistances(game: MapSource, from: string, pack: DataPack, links?: readonly Link[]): Map<string, number> {
   const graph = routeGraph(game, pack, links);
   const steps = new Map([[from, 0]]);
   const queue = [from];
@@ -245,19 +245,19 @@ export function routeDistances(game: Game, from: string, pack: DataPack, links?:
  * are not joined (neighbours, a wormhole, a hyperlane's line) are a jump: the player marks a move the board does not
  * give, through the Fracture, a portal or an ability the rules here do not count, so nothing in between is entered.
  */
-export function fullPath(game: Game, path: string[], pack: DataPack, _blockers: Blockers = new Set()): string[] {
+export function fullPath(game: MapSource, path: string[], pack: DataPack, _blockers: Blockers = new Set()): string[] {
   void _blockers;
   return path.filter(slot => !isLane(game, slot, pack));
 }
 
 /** How many systems a whole path enters: one a step, a jump between systems that are not joined included. */
-function stepsAlong(game: Game, full: string[], pack: DataPack): number {
+function stepsAlong(game: MapSource, full: string[], pack: DataPack): number {
   void game; void pack;
   return Math.max(0, full.length - 1);
 }
 
 /** The length of a drawn route: one step a marked system it enters, a jump included; a hyperlane takes no step. */
-export function routeSteps(game: Game, path: string[], pack: DataPack, blockers: Blockers = new Set()): number {
+export function routeSteps(game: MapSource, path: string[], pack: DataPack, blockers: Blockers = new Set()): number {
   return stepsAlong(game, fullPath(game, path, pack, blockers), pack);
 }
 
@@ -335,9 +335,9 @@ export function routeReach(game: Game, path: string[], speed: number, active: st
 }
 
 /** The systems one step from a system, by the board and the extra adjacency; the system itself is not one. */
-export const adjacentTo = (game: Game, slot: string, pack: DataPack, links?: readonly Link[]): string[] =>
+export const adjacentTo = (game: MapSource, slot: string, pack: DataPack, links?: readonly Link[]): string[] =>
   [...routeDistances(game, slot, pack, links)].flatMap(([other, steps]) => (steps === 1 ? [other] : []));
 
 /** Whether two systems are adjacent: by a side, a wormhole, a hyperlane's line, or a link. */
-export const joined = (game: Game, a: string, b: string, pack: DataPack, links?: readonly Link[]): boolean =>
+export const joined = (game: MapSource, a: string, b: string, pack: DataPack, links?: readonly Link[]): boolean =>
   (routeDistances(game, a, pack, links).get(b) ?? Infinity) === 1;

@@ -120,8 +120,24 @@ export function adjust(delta: Extract<EntryBody, { type: 'adjustment' }>['delta'
   return entry({ type: 'adjustment', label: 'test', delta }, phase);
 }
 
+/**
+ * A watcher is told once of every game a rules test asks the replay about, with its pack: the differential test of the
+ * game kernel (src/game/resolve/differential.test.ts) registers one, so that every tactical action the LRR tests build
+ * is also resolved on the kernel and compared. Nothing watches in an ordinary run.
+ */
+export type GameWatcher = (game: Game, pack: DataPack) => void;
+let watcher: GameWatcher | undefined;
+export const watchGames = (next: GameWatcher | undefined): void => { watcher = next; };
+const watched = new WeakSet<Game>();
+function watch(game: Game, pack: DataPack): void {
+  if (!watcher || watched.has(game)) return;
+  watched.add(game);
+  watcher(game, pack);
+}
+
 /** The forecast of the active plan: every planned entry counts. */
 export function forecast(game: Game, pack: DataPack): { state: GameState; warnings: Record<string, Warning[]> } {
+  watch(game, pack);
   const { state, warningsByEntry } = project(game, game.plans[0], 'forecast', pack);
   return { state, warnings: warningsByEntry };
 }
@@ -131,7 +147,10 @@ export function codesOf(game: Game, pack: DataPack, target: Entry): string[] {
   return (forecast(game, pack).warnings[target.id] ?? []).map(w => w.code as string);
 }
 
-export const before = (game: Game, pack: DataPack, target: Entry): GameState => stateBeforeEntry(game, game.plans[0], target.id, pack);
+export const before = (game: Game, pack: DataPack, target: Entry): GameState => {
+  watch(game, pack);
+  return stateBeforeEntry(game, game.plans[0], target.id, pack);
+};
 
 /** The main LRR rule of each warning of one entry, from the rule registry. */
 export function rulesOf(game: Game, pack: DataPack, target: Entry): string[] {

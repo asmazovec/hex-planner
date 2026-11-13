@@ -114,6 +114,19 @@ export function takeControl(game: Game, state: GameState, planetId: string, pack
   state.control[planetId] = 'me';
   for (const rival of Object.values(state.rivals ?? {})) losePlanet(rival, planetId);
   if (state.rivalHolds) delete state.rivalHolds[planetId];
+  afterControl(game, state, planetId, pack, warnings, entry, fromPlayer, lost);
+  return true;
+}
+
+/**
+ * What follows a planet changing hands to the player of `state`, whose control of it is set already: each component
+ * hooked on the gain runs, and the trade goods `tradeGoodsOnControl` asks are added. `lost` are the structures of the
+ * others that stood on it. The game kernel (src/game) calls this after it has changed hands itself.
+ */
+export function afterControl(
+  game: Game, state: GameState, planetId: string, pack: DataPack, warnings: Warning[], entry: Entry | undefined,
+  fromPlayer: boolean, lost: ControlTurn['lost'],
+): void {
   const holder = holderOf(game, state);
   const ids = new Set([
     ...inForceOf(pack, holder, effect => effect.tier === 'passive' && effect.onGainControl !== undefined),
@@ -125,7 +138,6 @@ export function takeControl(game: Game, state: GameState, planetId: string, pack
   };
   for (const id of [...ids].sort((a, b) => orderOf(pack, a) - orderOf(pack, b))) effectOf(pack, id)?.onGainControl?.(turn);
   state.tradeGoods += applied(pack, holder, 'tradeGoodsOnControl', 0, { planetId }).value;
-  return true;
 }
 
 /** Effect after the ground combat (49.5): each planet landed on that still holds the active player's ground forces is theirs (`takeControl`). */

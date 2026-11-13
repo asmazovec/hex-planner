@@ -261,7 +261,7 @@ export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(ga
  * The off-map homes of the players whose gate stands on the map (the Creuss home, LRR 6 note 2): each is a system of its
  * own under its tile id, which the route graph joins to the board by its wormhole alone.
  */
-export function offMapHomes(game: Game, pack: DataPack): string[] {
+export function offMapHomes(game: Pick<Game, 'map' | 'faction' | 'opponents'>, pack: DataPack): string[] {
   const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
   const factions = [game.faction, ...(game.opponents ?? []).map(o => o.faction)];
   return [...new Set(factions.flatMap(id => {
