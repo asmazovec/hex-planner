@@ -166,7 +166,7 @@ export function compareTimelines(game: Game, pack: DataPack, label: string, plan
       if (set.every(Boolean)) { for (const t of set) taints.add(t!.taint); outcome.excluded = set[0]!.reason; }
       else outcome.diffs.push('state');
     }
-    if (JSON.stringify(oldWarnings) !== JSON.stringify(newWarnings) && !(taints.size > 0 && outcome.diffs.length === 0 && warningsOnlyOfTaint(oldWarnings, newWarnings))) outcome.diffs.push('warnings');
+    if (JSON.stringify(oldWarnings) !== JSON.stringify(newWarnings) && !(taints.size > 0 && outcome.diffs.length === 0 && warningsOnlyOfTaint(oldWarnings, newWarnings, taints))) outcome.diffs.push('warnings');
     details.set(outcome, { oldState: deleteWhere(oldState, taints), newState: deleteWhere(newState, taints), oldWarnings, newWarnings });
     outcome.agree = outcome.diffs.length === 0;
     // What follows a difference is its consequence: the rest of the plan is not compared.
@@ -175,8 +175,14 @@ export function compareTimelines(game: Game, pack: DataPack, label: string, plan
   return { outcomes, details };
 }
 
-/** After a taint the pool and shortfall warnings follow the pools the old model let go below zero. */
-const warningsOnlyOfTaint = (a: string[], b: string[]): boolean => {
-  const rest = (list: string[]): string[] => list.filter(w => !/^\["(poolNegative|shortStrategy|shortTactic|shortFleet)"/.test(w));
+/**
+ * After a taint the warnings that follow what the old model kept differently are not compared: the pool and shortfall
+ * ones follow a pool below zero, the production and capacity ones follow a structure on a planet no one controlled
+ * (a dock placed by hand on a planet taken later: the kernel has none there, so the system has no PRODUCTION; 8.4).
+ */
+const warningsOnlyOfTaint = (a: string[], b: string[], taints: Set<Taint>): boolean => {
+  const codes = [...(taints.has('pools') ? ['poolNegative', 'shortStrategy', 'shortTactic', 'shortFleet'] : []), ...(taints.has('structures') ? ['productionOver', 'noProduction', 'capacitySystem'] : [])];
+  if (codes.length === 0) return false;
+  const rest = (list: string[]): string[] => list.filter(w => !codes.some(code => w.startsWith(`["${code}"`)));
   return JSON.stringify(rest(a)) === JSON.stringify(rest(b));
 };

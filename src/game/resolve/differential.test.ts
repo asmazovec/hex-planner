@@ -30,12 +30,7 @@ export const EXCLUSIONS: Exclusion[] = [
   { reason: 'an exhausted technology that is not held', matches: (_, d) => onlyIn(d, /^.(rivals.[^.]+.)?holdings.exhausted:/) },
 ];
 
-/**
- * Differences found and not explained yet, counted so that nothing new slips in: the notes of other players the viewer holds
- * (`rivalHolds`, which the board does not carry), a waiver of a secondary that names an action card, a strategy token a note
- * gives, the status end of a note shared with a rival, ground forces lost on a planet in one whole plan. The list is in
- * docs/superpowers/specs/2026-11-13-game-model-differences.md and is step 3's work.
- */
+/** Differences found and not explained: none. A new one must be explained (a kernel fix, or an entry in EXCLUSIONS / TAINTS with the rule) and listed in docs/superpowers/specs/2026-11-13-game-model-differences.md. */
 const KNOWN_OPEN = { entry: 0, whole: 0 };
 
 interface Result { outcome: Outcome; detail?: Detail }
