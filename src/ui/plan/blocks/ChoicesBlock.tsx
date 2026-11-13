@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { choicesFor, optionsOf, shownChoices } from '../../../domain/effects/choices';
@@ -6,9 +7,14 @@ import type { ChoiceContext, ChoiceSlot, ChoiceSpec } from '../../../domain/effe
 import { systemNameOf } from '../../../domain/systemName';
 import type { DataPack, Entry, Game, GameState } from '../../../domain/types';
 import { opponentShortName, shortName } from '../../players/names';
+import { ComponentPicker } from '../../components/ComponentPicker';
 import { playerStyle } from '../../primitives/player';
 import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
+import { ComponentSlot } from './ComponentSlot';
+
+/** More candidates than this are not laid out as buttons: a component is found through the picker. */
+const MANY = 12;
 
 export interface ChoicesBlockProps {
   /** The component whose choices these are: the entry's component action or one of its `uses`. */
@@ -83,7 +89,7 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
           return (
             <div key={spec.key} className="choice-counts" role="group" aria-label={label}>
               {groups.map(group => (
-                <div key={group ?? ''} className="segment choice-row" role="group" aria-label={group === undefined ? label : systemTitleOf(group)}>
+                <div key={group ?? ''} className="choice-wrap" role="group" aria-label={group === undefined ? label : systemTitleOf(group)}>
                   {group !== undefined && <span className="muted choice-group">{systemTitleOf(group)}</span>}
                   {slots.filter(slot => slot.group === group).map(slot => {
                     const n = Number(chosen[slot.key] ?? 0);
@@ -105,8 +111,16 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
           );
         }
         const options = optionsOf(spec, context);
+        if (spec.kind === 'component' && options.length > MANY) {
+          return (
+            <ManyComponents
+              key={spec.key} label={label} options={options} value={typeof chosen[spec.key] === 'string' ? String(chosen[spec.key]) : undefined}
+              pack={pack} player={owner} onChange={value => set(spec.key, value)}
+            />
+          );
+        }
         return (
-          <div key={spec.key} className="segment choice-row" role="group" aria-label={label}>
+          <div key={spec.key} className="choice-wrap" role="group" aria-label={label}>
             {options.map(value => (
               <button
                 key={value} type="button" aria-pressed={chosen[spec.key] === value} style={playerStyle('--owner', colorOf(spec, value))}
@@ -120,5 +134,26 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
         );
       })}
     </Section>
+  );
+}
+
+interface ManyComponentsProps {
+  label: string;
+  options: string[];
+  value?: string;
+  pack: DataPack;
+  player: string;
+  onChange: (value: string | undefined) => void;
+}
+
+/** A choice among many components: the place of the chosen one, which opens the same picker as everywhere else. */
+function ManyComponents({ label, options, value, pack, player, onChange }: ManyComponentsProps) {
+  const [picking, setPicking] = useState(false);
+  const known = options.filter(id => componentById(pack, id));
+  return (
+    <div className="choice-many" role="group" aria-label={label}>
+      <ComponentSlot label={label} def={value ? componentById(pack, value) : undefined} pack={pack} onPick={() => setPicking(true)} onRemove={() => onChange(undefined)} />
+      {picking && <ComponentPicker ids={known} player={player} onPick={id => { onChange(id); setPicking(false); }} onClose={() => setPicking(false)} />}
+    </div>
   );
 }
