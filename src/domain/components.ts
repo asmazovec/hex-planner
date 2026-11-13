@@ -20,9 +20,15 @@ function addressOf(id: string): { at: number; end: number } | undefined {
 export function noteBase(id: string): string {
   // Only a note has an address, and every other id is its own base: the check that costs nothing comes first, for the many asks of a replay.
   if (!id.startsWith(NOTE)) return id;
-  const address = addressOf(id);
-  return address ? id.slice(0, address.at) + id.slice(address.end) : id;
+  let base = BASES.get(id);
+  if (base === undefined) {
+    const address = addressOf(id);
+    base = address ? id.slice(0, address.at) + id.slice(address.end) : id;
+    if (BASES.size < 5000) BASES.set(id, base);
+  }
+  return base;
 }
+const BASES = new Map<string, string>();
 
 /**
  * A promissory note a player holds is one card of one player: its id is the catalogue id with the address of the

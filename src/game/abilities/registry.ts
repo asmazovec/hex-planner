@@ -16,6 +16,9 @@ import type { Board, DataPack, PlayerId, Table } from '../types';
 
 /** The holder a player is, read from the board: their cards and faction, the planets they control, the laws that bind them. */
 export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
+  const cards = board.players[player]?.cards;
+  const kept = cards && HOLDERS.get(cards);
+  if (kept && kept.table === table && kept.planets === board.planets && kept.laws === board.common.laws && kept.player === player) return kept.holder;
   const faction = table.players.find(p => p.id === player)?.faction;
   const control: Record<string, 'me'> = {};
   for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) control[id] = 'me';
@@ -23,17 +26,31 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   // An Alliance note lends its owner's commander: every player's holdings, under their id and under the key notes are addressed by.
   const others: Record<string, Holdings> = {};
   for (const p of table.players) others[legacyKey(table, p.id)] = others[p.id] = holdingsOf(board, p.id);
-  return { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
+  const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
+  if (cards) HOLDERS.set(cards, { table, planets: board.planets, laws: board.common.laws, player, holder });
+  return holder;
 }
+/** A holder is a function of the board's immutable parts, so it is kept while they are the same objects. */
+const HOLDERS = new WeakMap<object, { table: Table; planets: Board['planets']; laws: Board['common']['laws']; player: PlayerId; holder: Holder }>();
+const PASSIVES = new WeakMap<Holder, { pack: DataPack; list: ReturnType<typeof passivesOf> }>();
+const FORCED = new WeakMap<Holder, { pack: DataPack; found: string[] }>();
 
 /** The components in force for a player without being played, in registry order. */
-export const inForce = (table: Table, board: Board, pack: DataPack, player: PlayerId): string[] => inForceOf(pack, holderIn(table, board, player));
+export function inForce(table: Table, board: Board, pack: DataPack, player: PlayerId): string[] {
+  const holder = holderIn(table, board, player);
+  let kept = FORCED.get(holder);
+  if (!kept || kept.pack !== pack) FORCED.set(holder, kept = { pack, found: inForceOf(pack, holder) });
+  return kept.found;
+}
 
 /** A point of the count for a player: the base, changed by each component of theirs in force, in registry order. */
 export function appliedOn<K extends keyof Modifiers>(
   table: Table, board: Board, pack: DataPack, player: PlayerId, point: K, base: number, ctx: ModifierContext[K],
 ): Applied {
-  return stacked(passivesOf(pack, holderIn(table, board, player)), point, base, ctx);
+  const holder = holderIn(table, board, player);
+  let kept = PASSIVES.get(holder);
+  if (!kept || kept.pack !== pack) PASSIVES.set(holder, kept = { pack, list: passivesOf(pack, holder) });
+  return stacked(kept.list, point, base, ctx);
 }
 
 /** The players a step of an action concerns, the actor first: a battle and an invasion also concern whoever stands in the active system. */
@@ -98,7 +115,7 @@ const holdingsOf = (board: Board, player: PlayerId): Holdings => {
 export function anyInForce(table: Table, board: Board, pack: DataPack, has: (effect: ComponentEffect) => boolean, named: readonly string[] = []): boolean {
   if (named.some(id => { const effect = effectOf(pack, id); return effect !== undefined && has(effect); })) return true;
   for (const player of table.players) {
-    if (inForceOf(pack, holderIn(table, board, player.id), has).length > 0) return true;
+    if (inForce(table, board, pack, player.id).some(id => { const effect = effectOf(pack, id); return effect !== undefined && has(effect); })) return true;
   }
   return false;
 }
