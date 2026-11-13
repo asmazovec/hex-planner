@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
+import { MECATOL_PLANET, MECATOL_TILE, MECATOL_TILE_TE } from '../../../mecatol';
 import { linksOf, routeReach } from '../../../movement';
 import type { Entry, Game } from '../../../types';
 import { bench, type Bench, componentAction, effect, endOf, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
@@ -50,6 +50,19 @@ describe('technology:lgf Lazax Gate Folding', () => {
   test('technology:lgf its ACTION places 1 infantry on Mecatol Rex the Winnu control', () => {
     const winnu = table('winnu', [componentAction(id)], { planetControl: { [MECATOL_PLANET]: 'me' } });
     expect(endOf(winnu).ground[MECATOL_PLANET]).toEqual({ infantry: 1 });
+  });
+
+  // Same card text, Thunder's Edge: the centre tile is 112, its planet `mrte`.
+  // Checks: the ACTION with that planet controlled places the infantry on it and warns of nothing.
+  // Why the check is NOT redundant here: the technology compared the planet with `mr` only.
+  test('technology:lgf its ACTION places 1 infantry on the Mecatol Rex of Thunder\'s Edge', () => {
+    const action = componentAction(id);
+    const winnu = bench({
+      faction: 'winnu', expansions: ['pok', 'te'], start: { technologies: [id] }, entries: [action],
+      game: { map: { ...MAP, [FARTHER]: MECATOL_TILE_TE }, planetControl: { mrte: 'me' } },
+    });
+    expect(endOf(winnu).ground.mrte).toEqual({ infantry: 1 });
+    expect(warningsOf(winnu, action).filter(w => w.code === 'componentCondition')).toEqual([]);
   });
 
   // "If you control Mecatol Rex ..."

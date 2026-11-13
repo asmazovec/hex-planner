@@ -10,11 +10,16 @@
  */
 import { componentById } from '../../../components';
 import { MECATOL_PLANET } from '../../../mecatol';
+import { planetsOf } from '../../../replay/board';
 import { wormholeSlots } from '../../../movement';
 import { violation } from '../../../rules/registry';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { mecatolSlot } from '../../helpers/movement';
+import type { DataPack, Game } from '../../../types';
 import type { ComponentEffect } from '../../types';
+
+/** The planet of the Mecatol Rex system on this map: `mr`, or `mrte` when Thunder's Edge replaced the tile. */
+const mecatolPlanet = (game: Game, pack: DataPack, slot = mecatolSlot(game)): string => (slot === undefined ? MECATOL_PLANET : planetsOf(game, slot, pack)[0] ?? MECATOL_PLANET);
 
 export const id = 'technology:lgf';
 
@@ -24,17 +29,18 @@ export const effect: ComponentEffect = {
   // Mecatol Rex joins every alpha and beta wormhole in the Winnu's tactical actions while they do not control it (40, 101).
   links: ({ game, pack, state, shared, during }) => {
     const mecatol = mecatolSlot(game);
-    if (during !== 'tactical' || game.faction !== 'winnu' || mecatol === undefined || state?.control[MECATOL_PLANET] === 'me') return [];
+    if (during !== 'tactical' || game.faction !== 'winnu' || mecatol === undefined || state?.control[mecatolPlanet(game, pack, mecatol)] === 'me') return [];
     const tokens = shared?.wormholeTokens ?? state?.wormholeTokens;
     return ['alpha', 'beta'].flatMap(type => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== mecatol).map((slot): [string, string] => [mecatol, slot]));
   },
   play: ({ game, state, pack, warnings, held }) => {
     if (!held || game.faction !== 'winnu') return;
-    if (state.control[MECATOL_PLANET] !== 'me') {
+    const planet = mecatolPlanet(game, pack);
+    if (state.control[planet] !== 'me') {
       warnings.push(violation(componentCondition.code, { id, name: componentById(pack, id)?.name ?? id, condition: 'Mecatol Rex' }));
       return;
     }
-    const here = (state.ground[MECATOL_PLANET] ??= {});
+    const here = (state.ground[planet] ??= {});
     here.infantry = (here.infantry ?? 0) + 1;
   },
 };

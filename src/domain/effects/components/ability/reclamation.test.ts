@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
+import { MECATOL_PLANET, MECATOL_TILE, MECATOL_TILE_TE } from '../../../mecatol';
 import type { Entry, Game, StructureCounts } from '../../../types';
 import { bench, type Bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './reclamation';
@@ -31,6 +31,16 @@ describe('ability:reclamation Reclamation', () => {
     const end = endOf(winnu);
     expect(end.pds[MECATOL_PLANET]).toBe(1);
     expect(end.docks).toContain(MECATOL_PLANET);
+  });
+
+  // Same card text, Thunder's Edge: the centre tile is 112 and its planet `mrte`.
+  // Checks: the structures put on that planet are waived the same way.
+  // Why the check is NOT redundant here: the ability compared the planet with `mr` only.
+  test('ability:reclamation puts the structures on Mecatol Rex of Thunder\'s Edge (mrte)', () => {
+    const move = reclaim({ pds: 1, spacedock: 1 }, 'mrte');
+    const winnu = { move, ...bench({ faction: 'winnu', expansions: ['pok', 'te'], units: { [HOME]: { carrier: 1, infantry: 1 } }, entries: [move], game: { map: { ...MAP, [MECATOL]: MECATOL_TILE_TE } } }) };
+    expectWaived(missingStructures(winnu), 'unitsMissing', id);
+    expect(endOf(winnu).docks).toContain('mrte');
   });
 
   // LRR 85.2 with the landing's structures: what no flight brought is missing from the space area.
