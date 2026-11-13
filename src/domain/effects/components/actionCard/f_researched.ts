@@ -1,3 +1,4 @@
+import { componentById } from '../../../components';
 /**
  * Focused Research (action card; "Action"): "Spend 4 trade goods to research 1 technology"
  *
@@ -15,7 +16,7 @@ export const id = 'actionCard:f_researched';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  choose: [{ key: 'technology', kind: 'component', options: ({ pack }) => Object.keys(pack.technologies).map(tech => `technology:${tech}`) }],
+  choose: [{ key: 'technology', kind: 'component', options: ({ pack }) => Object.keys(pack.technologies).map(tech => `technology:${tech}`).filter(tech => componentById(pack, tech) !== undefined) }],
   play: ({ game, state, shared, choices, pack, warnings }) => {
     if (state.tradeGoods < 4) warnings.push(violation('shortTradeGoods', { needed: 4, have: state.tradeGoods }, 'component'));
     state.tradeGoods = Math.max(0, state.tradeGoods - 4);

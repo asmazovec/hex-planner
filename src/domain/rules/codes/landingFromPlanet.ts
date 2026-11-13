@@ -9,7 +9,7 @@ export default defineCode('landingFromPlanet', {
   rules: ['49.2'],
   step: 'invasion',
   text: {
-    ru: 'Наземные войска высаживаются из космоса активной системы, а {{unit}} взят с планеты {{from}}.',
+    ru: 'Наземные войска высаживаются из космоса активной системы, а с планеты {{from}} взято: {{unit}}.',
     en: 'Ground forces are committed from the space area of the active system, and {{unit}} comes from {{from}}.',
   },
 });

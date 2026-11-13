@@ -166,6 +166,8 @@ export function playComponent(
   const def = componentById(pack, id);
   if (!def) return;
   const holdings = own.holdings;
+  // The rules are read from the text as printed (English), never from its translation: the language must not change the replay.
+  const printed = pack.originalTexts?.[def.id] ?? def.text;
   const params = { id: def.id, name: def.name };
   const held = holds(holdings, def);
   if (!held) warnings.push(violation('componentNotHeld', params));
@@ -180,8 +182,8 @@ export function playComponent(
       }
       if (!held) break;
       const back = owner === undefined ? undefined : states[owner]?.holdings;
-      if (PURGES.test(def.text) || (back && RETURNS.test(def.text))) removeOne(holdings.promissory, def.id);
-      if (back && RETURNS.test(def.text) && !back.promissory.includes(def.id)) back.promissory.push(def.id);
+      if (PURGES.test(printed) || (back && RETURNS.test(printed))) removeOne(holdings.promissory, def.id);
+      if (back && RETURNS.test(printed) && !back.promissory.includes(def.id)) back.promissory.push(def.id);
       break;
     }
     case 'actionCard':
@@ -189,22 +191,22 @@ export function playComponent(
       break;
     case 'exploration':
       // "Purge this card" (Enigmatic Device); a relic fragment is purged with its relic's other fragments, in `spends`.
-      if (PURGES.test(pack.originalTexts?.[def.id] ?? def.text)) removeOne(holdings.found, def.id);
+      if (PURGES.test(printed)) removeOne(holdings.found, def.id);
       break;
     case 'leader':
       if (def.detail?.type === 'agent') holdings.leaders[def.id] = 'exhausted';
       else if (def.detail?.type === 'hero') holdings.leaders[def.id] = 'purged';
       break;
     case 'breakthrough':
-      if (EXHAUSTS.test(def.text)) holdings.breakthrough = 'exhausted';
+      if (EXHAUSTS.test(printed)) holdings.breakthrough = 'exhausted';
       break;
     case 'relic':
     case 'technology':
     case 'legendary':
-      if (def.kind === 'relic' && PURGES.test(def.text) && !EXHAUSTS.test(def.text)) {
+      if (def.kind === 'relic' && PURGES.test(printed) && !EXHAUSTS.test(printed)) {
         removeOne(holdings.relics, def.id);
         removeOne(holdings.exhausted, def.id);
-      } else if (EXHAUSTS.test(def.text) && !holdings.exhausted.includes(def.id)) holdings.exhausted.push(def.id);
+      } else if (EXHAUSTS.test(printed) && !holdings.exhausted.includes(def.id)) holdings.exhausted.push(def.id);
       break;
   }
 }

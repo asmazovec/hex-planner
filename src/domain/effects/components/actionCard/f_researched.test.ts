@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { componentById } from '../../../components';
 import type { StartHoldings } from '../../../types';
 import { adjust, bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './f_researched';
@@ -54,5 +55,17 @@ describe('actionCard:f_researched Focused Research', () => {
     const { pack } = table(4);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');
+  });
+});
+
+// The card researches any technology of the catalogue: with Thunder's Edge on, I.I.H.Q. Modernization is replaced by
+// Executive Order, and with it off Executive Order is not in the game; the list must offer neither by a raw id.
+describe('actionCard:f_researched the technologies it offers', () => {
+  test.each([[['pok', 'te'] as const], [['pok'] as const]])('every one offered with %j is a component of the catalogue', expansions => {
+    const { pack } = bench({ faction: 'sol', expansions: [...expansions], start: { hand: [id] }, entries: [] });
+    const spec = effect(pack, id).choose![0];
+    const offered = spec.options!({ pack } as never);
+    expect(offered.length).toBeGreaterThan(0);
+    expect(offered.filter(tech => componentById(pack, tech) === undefined)).toEqual([]);
   });
 });

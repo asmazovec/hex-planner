@@ -16,6 +16,8 @@ test('actionCard:refit the component action offers the infantry of Home One to r
   const table = bench({ faction: 'sol', expansions: ['pok'], start: { hand: [id] }, entries: [adjust({ ground: { h1: { infantry: 2 } } }), entry], game: { planetControl: { h1: 'me' } } });
   quote(table.pack, id, 'Choose 1 or 2 of your infantry on the game board.');
   const live = showTurn(table, entry);
+  expect(screen.queryByRole('group', { name: 'components.choice.counts' })).toBeNull();
+  expect(screen.getAllByRole('group', { name: 'Units' }).length).toBeGreaterThan(0);
   await userEvent.click(screen.getByRole('button', { name: 'Replace one Infantry on Home One' }));
   expect(live.entry().choices).toEqual({ h1: 1 });
   await userEvent.click(screen.getByRole('button', { name: 'Take back: Replace one Infantry on Home One' }));
