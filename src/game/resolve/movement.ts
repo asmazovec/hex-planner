@@ -11,7 +11,7 @@ import { violation } from '../../domain/rules/registry';
 import type { StructureKind, UnitCounts } from '../../domain/types';
 import type { Flight } from '../actions';
 import type { GameEvent } from '../events';
-import { viewFor } from '../legacyViews';
+import { mapSource } from '../space';
 import { begin, checkView, emit, warn, type Ctx } from './context';
 
 const KINDS: StructureKind[] = ['pds', 'spacedock'];
@@ -25,11 +25,10 @@ const add = (target: Record<string, UnitCounts>, key: string, units: UnitCounts)
 };
 
 function carryStructures(ctx: Ctx, target: string, flights: Flight[]): void {
-  const v = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player);
   for (const flight of flights) {
     const onPlanet = 'planet' in flight.from;
     const from = 'planet' in flight.from ? flight.from.planet : flight.from.slot;
-    const source = flight.pickupOf ?? sourceSlot(v.game, ctx.pack, from) ?? from;
+    const source = flight.pickupOf ?? sourceSlot(mapSource(ctx.table, ctx.board), ctx.pack, from) ?? from;
     for (const kind of KINDS.filter(k => (flight.structures?.[k] ?? 0) > 0)) {
       const count = flight.structures?.[kind] ?? 0;
       warn(ctx, violation(structureAboard.code, { from: source, ...(onPlanet ? { planetId: from } : {}), unit: kind, count }));
@@ -57,7 +56,7 @@ export function movement(ctx: Ctx, target: string): Flown {
     for (const s of short) if (s.what === 'units') lacking[s.key as keyof UnitCounts] = (lacking[s.key as keyof UnitCounts] ?? 0) + s.missing;
     if (Object.keys(lacking).length > 0) emit(ctx, [{ type: 'UnitsPlaced', player: ctx.player, at: { slot: target }, units: lacking }], { quiet: true });
     const from = 'planet' in flight.from ? flight.from.planet : flight.from.slot;
-    const slot = flight.pickupOf ?? sourceSlot(v.game, ctx.pack, from);
+    const slot = flight.pickupOf ?? sourceSlot(mapSource(ctx.table, ctx.board), ctx.pack, from);
     if (slot !== null && slot !== target) add(groups, slot, flight.units);
   }
   carryStructures(ctx, target, flights);
