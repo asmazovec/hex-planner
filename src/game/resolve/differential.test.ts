@@ -12,6 +12,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { watchProjects } from '../../domain/replay';
 import { watchGames } from '../../domain/rules/kit';
+import { boardOf } from '../fromLegacy';
 import type { DataPack, Game } from '../../domain/types';
 import { compareGame, compareTimelines, whereDiffers, type Detail, type Exclusion, type Outcome } from './differential';
 
@@ -38,12 +39,15 @@ const single: Result[] = [];
 const whole: Result[] = [];
 const seen = new WeakSet<Game>();
 let games = 0;
+/** The games whose board does not hold the Thunder's Edge system the game names. */
+const slotMismatch: string[] = [];
 
 function onGame(game: Game, pack: DataPack): void {
   if (seen.has(game)) return;
   seen.add(game);
   games += 1;
   const label = `g${games}`;
+  if ((boardOf(game, pack).common.thundersEdge ?? null) !== game.expedition.thundersEdgeSystem) slotMismatch.push(label);
   const one = compareGame(game, pack, label);
   for (const outcome of one.outcomes) single.push({ outcome, detail: one.details.get(outcome) });
   for (const plan of game.plans) {
@@ -117,6 +121,10 @@ describe('what the two models agree on', () => {
     const set = whole.filter(r => r.outcome.excluded);
     console.log(`differential, whole plans: ${whole.length} entries (${byType(whole)}); ${whole.filter(r => r.outcome.agree).length} agree, ${set.length} of them with a known difference set aside, ${open.length} open`);
     expect(open.length, lines).toBeLessThanOrEqual(KNOWN_OPEN.whole);
+  });
+
+  test("the board holds the Thunder's Edge system of the game", () => {
+    expect(slotMismatch).toEqual([]);
   });
 
   test('the corpus is the whole of what the tests and the real game hold', () => {

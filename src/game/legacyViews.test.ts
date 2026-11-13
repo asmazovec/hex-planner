@@ -6,7 +6,8 @@ import { startOf } from '../domain/replay/timeline';
 import { applyAll } from './apply';
 import { normalState } from './compare';
 import { boardFromLegacy, boardOf, legacyState, tableOf } from './fromLegacy';
-import { legacyKey } from './legacyViews';
+import { legacyEvents, legacyGame, legacyKey, legacyViews } from './legacyViews';
+
 
 const pack = loadPack(['pok', 'te']);
 const FACTIONS = ['sol', 'hacan', 'arborec', 'letnev'];
@@ -61,5 +62,32 @@ describe('a note laid in the play area (LRR 69.3)', () => {
     expect(held.players[table.viewer].cards[note]).toEqual({ state: 'inPlay', count: 1 });
     const back = applyAll(held, [{ type: 'CardTakenBack', player: table.viewer, card: note }]);
     expect(back.players[table.viewer].cards[note]).toEqual({ state: 'ready', count: 1 });
+  });
+});
+
+describe('the wormhole tokens and the Thunder\'s Edge slot, as the old replay changes them', () => {
+  const game = fourPlayers();
+  const table = tableOf(game);
+  const slots = Object.keys(game.map).filter(s => s !== '0,0');
+
+  test('a token that changes system is one move, not a new token beside the old', () => {
+    const start = boardOf(game, pack);
+    const old = legacyViews(table, start, pack);
+    const first = structuredClone(old);
+    (first.states.me as { wormholeTokens?: Record<string, string> }).wormholeTokens = { gamma: slots[0] };
+    const placed = applyAll(start, legacyEvents(table, pack, old, first, table.viewer));
+    expect(placed.common.wormholeTokens).toEqual({ [slots[0]]: ['gamma'] });
+    const second = structuredClone(first);
+    (second.states.me as { wormholeTokens?: Record<string, string> }).wormholeTokens = { gamma: slots[1] };
+    const events = legacyEvents(table, pack, first, second, table.viewer);
+    expect(events.map(e => e.type)).toEqual(['WormholeTokenMoved']);
+    expect(applyAll(placed, events).common.wormholeTokens).toEqual({ [slots[1]]: ['gamma'] });
+  });
+
+  test('the Thunder\'s Edge slot of the game is a fact of the board it begins from', () => {
+    const placed = { ...game, expedition: { ...game.expedition, thundersEdgeSystem: slots[2] } };
+    const board = boardOf(placed, pack);
+    expect(board.common.thundersEdge).toBe(slots[2]);
+    expect(legacyGame(tableOf(placed), board).expedition.thundersEdgeSystem).toBe(slots[2]);
   });
 });

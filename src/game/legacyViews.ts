@@ -58,7 +58,7 @@ export function legacyGame(table: Table, board: Board): Game {
     })),
     start: source?.start ?? { me: {}, opponents: {} }, enemyUnits: {}, enemyGround: {}, planetControl: control, planetOwner: owners,
     docks: [], pds: {},
-    expedition: { slices, thundersEdgeSystem: source?.expedition.thundersEdgeSystem ?? null }, fracture,
+    expedition: { slices, thundersEdgeSystem: board.common.thundersEdge ?? source?.expedition.thundersEdgeSystem ?? null }, fracture,
     plans: [], activePlanId: '',
   };
 }
@@ -427,7 +427,10 @@ export function legacyEvents(table: Table, pack: DataPack, before: LegacyViews, 
   if (me(after).custodiansRemoved && !me(before).custodiansRemoved) out.push({ type: 'CustodiansRemoved', player: actor, ...c });
   const tokensWas = (me(before) as GameState & { wormholeTokens?: Record<string, string> }).wormholeTokens ?? {};
   const tokensNow = (me(after) as GameState & { wormholeTokens?: Record<string, string> }).wormholeTokens ?? {};
-  for (const [wormhole, system] of Object.entries(tokensNow)) if (tokensWas[wormhole] !== system) out.push({ type: 'WormholeTokenPlaced', system, wormhole, ...c });
+  for (const [wormhole, system] of Object.entries(tokensNow)) {
+    if (tokensWas[wormhole] === system) continue;
+    out.push(tokensWas[wormhole] === undefined ? { type: 'WormholeTokenPlaced', system, wormhole, ...c } : { type: 'WormholeTokenMoved', from: tokensWas[wormhole], to: system, wormhole, ...c });
+  }
   return out;
 }
 

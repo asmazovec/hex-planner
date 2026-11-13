@@ -85,6 +85,7 @@ export function boardOf(game: Game, pack: DataPack): Board {
     const taker = by === 'me' ? table.viewer : table.players.find(p => p.id !== table.viewer)?.id ?? 'other';
     if (by) events.push({ type: 'ExpeditionSliceTaken', player: taker, slice });
   }
+  if (game.expedition.thundersEdgeSystem !== null) events.push({ type: 'ThundersEdgeSlotSet', system: game.expedition.thundersEdgeSystem });
   board = applyAll(board, events);
   return board;
 }
