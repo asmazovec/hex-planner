@@ -4,11 +4,11 @@
  * within what a planet holds and what the reinforcements hold (24.4). A structure beyond a limit is warned about and
  * still placed where the board can count it. The placing is events; the board is read through queries.
  */
-import { planetsOf as planetsOfSystem } from '../../domain/replay/board';
 import { violation } from '../../domain/rules/registry';
 import type { StructureKind } from '../../domain/types';
 import { ownerOf, planetsOf } from '../queries';
-import { checkView, emit, warn, type Ctx } from './context';
+import { planetsIn } from '../space';
+import { emit, warn, type Ctx } from './context';
 
 /** Most of one kind a planet holds (24 notes 1-2, 63.3, 79.3, 85.4, 85.5). */
 export const PER_PLANET: Record<StructureKind, number> = { spacedock: 1, pds: 2 };
@@ -26,7 +26,7 @@ export function buildStructures(
   if (structures.length > (primary ? 2 : 1) || docks > 1) {
     warn(ctx, violation('structureLimit', { kind: docks > 1 ? 'spacedock' : 'pds', count: structures.length }));
   }
-  const inSystem = !primary && systemId !== undefined ? planetsOfSystem(checkView(ctx).game, systemId, ctx.pack) : null;
+  const inSystem = !primary && systemId !== undefined ? planetsIn(ctx.table, ctx.board, ctx.pack, systemId) : null;
   for (const { kind, planetId } of structures) {
     if (ownerOf(ctx.board, planetId) !== ctx.player) warn(ctx, violation('structureNotControlled', { planetId }));
     if (inSystem && !inSystem.includes(planetId)) warn(ctx, violation('structureOutsideSystem', { planetId, systemId: systemId ?? '' }));

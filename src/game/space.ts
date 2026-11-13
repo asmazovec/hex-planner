@@ -7,7 +7,7 @@ import {
   adjacentTo, boardSlots, closedToRoute, endsRoute, fullPath, holdsShips, joined, passageBarredOf, routeDistances, routeReach, routeSteps,
   type Blockers, type Link, type MoveView,
 } from '../domain/movement';
-import type { MapSource } from '../domain/replay/board';
+import { planetsOf as planetsOfSystem, type MapSource } from '../domain/replay/board';
 import type { DataPack } from '../domain/types';
 import { legacyViews, SOURCES } from './legacyViews';
 import type { Board, PlayerId, Slot, Table } from './types';
@@ -31,8 +31,13 @@ export function mapSource(table: Table, board: Board): MapSource {
     };
     byFracture.set(board.common.fracture, found);
   }
-  return found;
+  // The Thunder's Edge slot is a fact of the board once it is set; before that, the game it was made from says.
+  const slot = board.common.thundersEdge ?? found.expedition.thundersEdgeSystem;
+  return slot === found.expedition.thundersEdgeSystem ? found : { ...found, expedition: { ...found.expedition, thundersEdgeSystem: slot } };
 }
+
+/** The planets of a system, the Thunder's Edge planet in the system the expedition put it in. */
+export const planetsIn = (table: Table, board: Board, pack: DataPack, slot: Slot): string[] => planetsOfSystem(mapSource(table, board), slot, pack);
 
 /** Every slot a ship can be in: the map, the Fracture and an off-map home. */
 export const slotsOf = (table: Table, board: Board, pack: DataPack): Slot[] => boardSlots(mapSource(table, board), pack);

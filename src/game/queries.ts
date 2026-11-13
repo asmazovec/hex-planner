@@ -41,7 +41,7 @@ import { applied } from '../domain/effects/apply';
 import { holderOf } from '../domain/effects/registry';
 import { productionDue, systemProduction } from '../domain/replay/production';
 import { capacity, dockFighterRoom, fleetCount, fleetLimit as fleetLimitOf } from '../domain/replay/transport';
-import { planetValue as valueOf, readyPlanetIds, type PaymentKind } from '../domain/payment';
+import { planetValue as valueOf, readyPlanetIds, tradeGoodWorth as worthOf, type PaymentKind } from '../domain/payment';
 import type { DataPack, UpgradeId } from '../domain/types';
 import { linksOf } from '../domain/movement';
 import { areNeighbors } from '../domain/neighbors';
@@ -88,6 +88,12 @@ export function planetValue(table: Table, board: Board, pack: DataPack, player: 
 export function tradeGoodsOnControl(table: Table, board: Board, pack: DataPack, player: PlayerId, planet: PlanetId): number {
   const v = viewFor(table, board, pack, player);
   return applied(pack, holderOf(v.game, v.state), 'tradeGoodsOnControl', 0, { planetId: planet }).value;
+}
+
+/** What a trade good is worth to its player for a payment, after what they hold changed it. */
+export function tradeGoodWorth(table: Table, board: Board, pack: DataPack, player: PlayerId, kind: PaymentKind): number {
+  const v = viewFor(table, board, pack, player);
+  return worthOf(pack, v.state, kind, { faction: v.game.faction, shared: v.shared });
 }
 
 /** The planets a player holds that are ready: those that can pay. */

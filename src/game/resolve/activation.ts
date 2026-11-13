@@ -1,14 +1,16 @@
 /** Step 89.1 Activation: a command token from the tactic pool goes to the active system; whatever answers the activation follows. */
-import { checkActivation } from '../../domain/replay/activation';
-import { viewFor } from '../legacyViews';
+import { violation } from '../../domain/rules/registry';
+import { poolsOf, tokensOnMap } from '../queries';
 import { begin, emit, warn, type Ctx } from './context';
 import { reactActivation } from './legacyEffects';
 
 export function activation(ctx: Ctx, target: string): void {
   begin(ctx, 'activation');
-  const v = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player);
-  warn(ctx, checkActivation(v.state, target, ctx.entry as never));
   if (!ctx.tactical.free) {
+    // The system already holds my token (5.2), or the tactic pool is empty (20.4).
+    if (tokensOnMap(ctx.board, ctx.player).includes(target)) warn(ctx, violation('systemHasToken', { systemId: target }));
+    const tactic = poolsOf(ctx.board, ctx.player).tactic;
+    if (tactic < 1) warn(ctx, violation('poolNegative', { pool: 'tactic', have: tactic - 1 }, 'activation'));
     emit(ctx, [
       { type: 'TokensChanged', player: ctx.player, delta: { tactic: -1 } },
       { type: 'SystemActivated', player: ctx.player, system: target },

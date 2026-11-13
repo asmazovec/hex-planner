@@ -4,11 +4,11 @@
  * mine in that system.
  */
 import { MECATOL_PLANETS } from '../../../domain/mecatol';
-import { systemPlanets } from '../../../domain/replay/board';
 import { readyLimit } from '../../../domain/replay/cards/diplomacy';
 import { violation } from '../../../domain/rules/registry';
 import { ownerOf } from '../../queries';
-import { checkView, emit, warn } from '../context';
+import { planetsIn } from '../../space';
+import { emit, warn } from '../context';
 import type { CardRule } from './rule';
 
 export const diplomacy: CardRule = {
@@ -18,8 +18,8 @@ export const diplomacy: CardRule = {
     if (limit !== null && readied > limit) warn(ctx, violation('readyOverLimit', { limit, readied }));
     const systemId = effects.systemId;
     if (!primary || !systemId) return;
-    const planets = systemPlanets(checkView(ctx).game, systemId, ctx.pack);
-    if (planets.some(p => MECATOL_PLANETS.includes(p.id)) || !planets.some(p => ownerOf(ctx.board, p.id) === ctx.player)) {
+    const planets = planetsIn(ctx.table, ctx.board, ctx.pack, systemId);
+    if (planets.some(id => MECATOL_PLANETS.includes(id)) || !planets.some(id => ownerOf(ctx.board, id) === ctx.player)) {
       warn(ctx, violation('diplomacySystem', { systemId }));
     }
     // The other players' tokens come from reinforcements, not their pools; one who already has a token there places none.
