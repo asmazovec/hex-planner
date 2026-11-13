@@ -16,7 +16,7 @@ import { afterEntryHooks } from '../../domain/replay/afterEntry';
 import { reactToLanding, runControlHooks } from '../../domain/replay/invasion';
 import type { Entry, Game, GameState, Goods, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { legacyEvents, legacyKey, legacyViews, viewFor, type LegacyViews } from '../legacyViews';
+import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, viewFor, type LegacyViews } from '../legacyViews';
 import { ACQUIESCENCE } from './natives';
 import { emit, warn, type Ctx } from './context';
 import { cardRoundOf, keepRound } from './track';
@@ -36,7 +36,21 @@ export interface Run {
   warnings: Warning[];
 }
 
+/** Whether two plain values hold the same: the cheap way to know that an effect changed nothing, before its changes are read as events. */
+function same(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const x = a as Record<string, unknown>;
+  const y = b as Record<string, unknown>;
+  const keys = Object.keys(x);
+  if (keys.length !== Object.keys(y).length) return false;
+  for (const key of keys) if (!(key in y) || !same(x[key], y[key])) return false;
+  return true;
+}
+
 function emitChanges(ctx: Ctx, before: LegacyViews, after: LegacyViews): GameEvent[] {
+  if (same(before.states, after.states) && same(before.game, after.game)) return [];
   const events = legacyEvents(ctx.table, ctx.pack, before, after, ctx.player, { step: ctx.cur.step });
   emit(ctx, events, { quiet: true });
   return events;
@@ -45,7 +59,7 @@ function emitChanges(ctx: Ctx, before: LegacyViews, after: LegacyViews): GameEve
 /** Runs `effect` on a copy of the board's views and applies what it changed. */
 export function viaLegacy(ctx: Ctx, effect: (r: Run) => void): void {
   const before = legacyViews(ctx.table, ctx.board, ctx.pack);
-  const work = legacyViews(ctx.table, ctx.board, ctx.pack);
+  const work = legacyViewsFresh(ctx.table, ctx.board, ctx.pack);
   const v = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, work);
   // An effect may take back a warning an earlier step gave (Doctor Sucaban lowers a cost already checked): it is given the turn's list.
   const known = [...ctx.warnings];
@@ -107,6 +121,8 @@ export function controlLostHooks(ctx: Ctx, lost: { planetId: string; to: string 
 
 /** The play of the components the entry names, run where they have an effect: the hooks of the components, not the rules of playing them. */
 export function playHooks(ctx: Ctx): void {
+  // Nothing named, nothing played, and the round's cards stay as they are.
+  if (playedBy(ctx.entry).length === 0) return;
   viaLegacy(ctx, r => {
     const { entry, pack } = ctx;
     const cards = cardRoundOf(ctx.table, ctx.track, r.states);

@@ -4,7 +4,7 @@
  * uses. Each step builds events, applies them and reports what it found; nothing here forbids anything. Only the
  * tactical action is resolved so far; the other actions are declared and wait for step 2b.
  */
-import { hintsAt } from '../../domain/effects/registry';
+import { hintsAtSteps } from '../../domain/effects/registry';
 import { playedBy } from '../../domain/effects/waivers';
 import { placeIn } from '../../domain/rules/registry';
 import type { Warning } from '../../domain/types';
@@ -146,7 +146,8 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   const played = playedBy(ctx.entry);
   if (played.length > 0) ctx.track.plays[turn.player] = [...(ctx.track.plays[turn.player] ?? []), ...played];
   const key = legacyKey(table, turn.player);
-  for (const result of ctx.steps) result.hints = hintsAt(pack, after.states.me, result.step, [key]);
+  const hints = hintsAtSteps(pack, after.states.me, ctx.steps.map(s => s.step), [key]);
+  for (const result of ctx.steps) result.hints = hints.get(result.step) ?? [];
   const steps = [...ctx.steps, ...nested.flatMap(n => n.steps)].filter(s => s.events.length > 0 || s.violations.length > 0 || s.hints.length > 0);
   return { steps, board: ctx.board, track: ctx.track };
 }

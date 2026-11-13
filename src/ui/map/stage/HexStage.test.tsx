@@ -645,6 +645,8 @@ describe('build', () => {
   });
 
   test('a bought structure goes with a tap on its token; an old one does nothing', async () => {
+    // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
+    store().setPlanetControl(quann(), 'me');
     store().setPds(quann(), 1);
     open({ initialMode: 'build' });
     await tap('PDS ×1');
@@ -664,6 +666,8 @@ describe('build', () => {
   const pdsStack = () => document.querySelector('[data-stack="me|pds|0"] .token-hit');
 
   test('in battle a stack with a planned PDS loses the baseline one first; the planned one then takes no tap', async () => {
+    // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
+    store().setPlanetControl(quann(), 'me');
     useGame.getState().setPds(quann(), 1);
     planPds();
     open({ initialMode: 'battle' });
@@ -678,6 +682,8 @@ describe('build', () => {
   });
 
   test('in setup a stack follows what is visible: the baseline PDS comes off, then a planned one alone takes no tap', async () => {
+    // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
+    store().setPlanetControl(quann(), 'me');
     useGame.getState().setPds(quann(), 1);
     planPds();
     open({});
@@ -689,6 +695,8 @@ describe('build', () => {
   });
 
   test('a tap on a structure only planned says where it lives, and the next tap clears that', async () => {
+    // LRR 8.4, 77.1: a structure belongs to the player who controls its planet, so the planet is mine first (a structure on an unowned planet is not kept).
+    store().setPlanetControl(quann(), 'me');
     planPds();
     open({});
     expect(screen.queryByRole('status')).toBeNull();

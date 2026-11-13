@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { componentById } from '../../domain/components';
 import { CARD } from '../../domain/strategy';
-import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
 import { standing, statusTokensFree } from '../../domain/project';
 import type { DataPack, Entry, EntryBody, Game, GameState, Phase, Round, Warning } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
+import { turnsOf } from '../../state/projection';
+import { turnNumbers } from '../../game/numbering';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
@@ -174,7 +175,7 @@ export function EntryList({
       if (phase) moveEntry(id, phase, toIndex);
     },
   });
-  const numbers = tacticalNumbers(round.entries);
+  const numbers = turnNumbers(turnsOf(game, round, pack));
 
   return (
     <div className="plan-entries" ref={listRef}>

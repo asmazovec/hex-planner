@@ -4,7 +4,7 @@
  * `legacyViews.ts`). Goes with the old code (step 5 of the move).
  */
 import { playersOf } from '../domain/players';
-import { startOf } from '../domain/replay/timeline';
+import { startOf } from '../domain/replay/start';
 import type { Act, DataPack, Entry, Game, GameState, UnitCounts } from '../domain/types';
 import type { Action, ComponentUse, Expedition, Transaction, Turn } from './actions';
 import { applyAll } from './apply';

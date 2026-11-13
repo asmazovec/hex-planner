@@ -1,4 +1,7 @@
 /**
+ * THE ORACLE ONLY: the old replay, kept so that the differential test (src/game/resolve/differential.test.ts) has something to
+ * compare the kernel with. No code of the app reaches it (src/state/projection.contract.test.ts); it goes in step 5.
+ *
  * The replay of a plan in one pass: rounds in order, each by its phases (LRR 40), each entry by its own steps. Every
  * entry leaves a frame, the board before and after it, so a question about any point of the plan is a lookup and not
  * another replay. A plan that changed is replayed from its first changed round; the rounds before it keep their frames.
@@ -20,11 +23,13 @@ import { rivalLandings } from './invasion';
 import { payPlayedCost } from './payment';
 import { checkFlow, isTurn, PHASE_ORDER, roundFlow, type RoundFlow } from './round';
 import { applyComponent, applyGains, applyScored, applyUses, readyCards } from './holdings';
-import { applyAdjustment, initialState } from './state';
+import { applyAdjustment } from './state';
 import { applyStatusTokens, checkObjectives, clearBoard } from './status';
-import { keepOwnStructures } from './structures';
 import { applyTactical } from './tactical';
 import { applyComponentProduction } from './production';
+import { startOf } from './start';
+
+export { startOf };
 
 /** The hand holds seven action cards (LRR 2.4). */
 
@@ -127,28 +132,6 @@ function applyEntry(
   // The acts of a turn come after its action: transactions, then the expedition at its end.
   if (withActs) applyActs(game, state, entry, pack, acts, warnings);
   return placeIn(warnings, entry.id);
-}
-
-/** An opponent counted like me: what stands on the map for them is where they begin. */
-function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameState {
-  const pick = (record: Game['enemyUnits']) => Object.fromEntries(Object.entries(record).flatMap(([place, byOwner]) => (byOwner[id] ? [[place, { ...byOwner[id] }]] : [])));
-  // The laws, the revealed objectives and the attachments are the whole game's: they stand on my state only.
-  const { laws, revealed, attachments, ...own } = initialState(view, pack);
-  void laws; void revealed; void attachments;
-  const state: GameState = { ...own, faction: view.faction, systems: pick(game.enemyUnits), ground: pick(game.enemyGround) };
-  keepOwnStructures(state, false);
-  return state;
-}
-
-export function startOf(game: Game, pack: DataPack): GameState {
-  const state = initialState(game, pack);
-  state.faction = game.faction;
-  keepOwnStructures(state, true);
-  if (game.opponents.length > 0) {
-    state.rivals = Object.fromEntries(game.opponents.map(o => [o.id, rivalState(game, gameAs(game, o.id), o.id, pack)]));
-    state.rivalHolds = {};
-  }
-  return state;
 }
 
 /**

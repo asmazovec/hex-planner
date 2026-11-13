@@ -92,11 +92,10 @@ export function emit(ctx: Ctx, events: GameEvent[], options: EmitOptions = {}): 
 /** The board from one player's side as the old checks want it. For a rival owner, the state also sees the others (`rivals`), as mine does. */
 export function checkView(ctx: Ctx, player: PlayerId = ctx.player): PlayerView {
   const v = viewFor(ctx.table, ctx.board, ctx.pack, player);
-  if (v.key !== 'me') {
-    const others = Object.fromEntries(Object.entries(v.views.states).filter(([key]) => key !== v.key));
-    v.state.rivals = others;
-  }
-  return v;
+  if (v.key === 'me') return v;
+  // The views are shared: the state the rival sees is a copy of its own.
+  const others = Object.fromEntries(Object.entries(v.views.states).filter(([key]) => key !== v.key));
+  return { ...v, state: { ...v.state, rivals: others } };
 }
 
 /** What stands in for the tactical action while the turn holds another one. */

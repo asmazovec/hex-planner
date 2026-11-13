@@ -13,7 +13,7 @@ import type { Turn } from './actions';
 import { applyAll } from './apply';
 import type { GameEvent } from './events';
 import { legacyEntry } from './fromLegacy';
-import { legacyEvents, legacyViews, viewFor } from './legacyViews';
+import { legacyEvents, legacyViews, legacyViewsFresh, viewFor } from './legacyViews';
 import type { Board, PlayerId, Table } from './types';
 
 /** The phases of a round in the order they are played, whatever the order of the plan's list. */
@@ -29,7 +29,7 @@ const noMoment = (board: Board): Moment => ({ board, events: [], violations: [] 
 /** Asks the components of `players` for the hook, and applies what they changed. `turn` is the turn the moment belongs to, when there is one. */
 function ask(table: Table, board: Board, pack: DataPack, hook: MomentHook, players: PlayerId[], turn?: Turn, entry?: Entry): Moment {
   const before = legacyViews(table, board, pack);
-  const work = legacyViews(table, board, pack);
+  const work = legacyViewsFresh(table, board, pack);
   const violations: Warning[] = [];
   let ran = 0;
   for (const player of players) {
@@ -45,7 +45,7 @@ const everyone = (table: Table): PlayerId[] => table.players.map(p => p.id);
 
 /** The round begins with the board clear and its planets ready (81.4, 81.6: the agenda phase has ended); cards are readied too when the status phase before it was not replayed. */
 export function roundClear(table: Table, board: Board, pack: DataPack, cardsDue: boolean): Moment {
-  const work = legacyViews(table, board, pack);
+  const work = legacyViewsFresh(table, board, pack);
   const before = legacyViews(table, board, pack);
   const states = Object.values(work.states);
   if (cardsDue) readyCards(states);
@@ -63,7 +63,7 @@ export const statusStart = (table: Table, board: Board, pack: DataPack, turn?: T
 
 /** The status phase ends, once: the board is cleared, the cards readied, and every player's components are told. */
 export function statusEnd(table: Table, board: Board, pack: DataPack): Moment {
-  const work = legacyViews(table, board, pack);
+  const work = legacyViewsFresh(table, board, pack);
   const before = legacyViews(table, board, pack);
   clearBoard(Object.values(work.states));
   readyCards(Object.values(work.states));

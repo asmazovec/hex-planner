@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { seenAfter } from '../../../domain/project';
-import { timelineOf } from '../../../state/projection';
+import { seenAfter, timelineOf } from '../../../state/projection';
 import { gameAs } from '../../../domain/players';
 import { entrySystems, flies, stateInFlight, type TacticalEntry } from '../../../domain/tactical';
 import type { DataPack, Entry, Game, GameState, Plan } from '../../../domain/types';

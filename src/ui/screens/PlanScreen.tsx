@@ -5,10 +5,10 @@ import { emptySlots } from '../../domain/mapBuilder';
 import { blockersOf } from '../../domain/movement';
 import { newEntryBody, tacticalBody, tacticalOwner } from '../../domain/newEntry';
 import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
-import { isOnMap, projectionAtRound, systemSlots } from '../../domain/project';
-import { timelineOf } from '../../state/projection';
+import { isOnMap, systemSlots } from '../../domain/project';
+import { projectionAtRound, tacticalEntries, tacticalNumbers, timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
-import { pausedPath, tacticalNumbers, tacticalsOf, tapStep, type RouteDraft } from '../../domain/route';
+import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
 import { cardChange, repaid, withSystem } from '../../domain/strategy';
@@ -376,14 +376,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const rivalUpgraded = Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, upgradesOf(rival.holdings, pack)]));
   const heldCount = holdingCount(shownState.holdings);
   // Warfare's free action has its card's status: the card marked done turns its arrow done.
-  const tacticals: (Entry & TacticalEntry)[] = tacticalsOf(round.entries);
+  const tacticals: (Entry & TacticalEntry)[] = tacticalEntries(game, round, pack);
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
   // Lines and flights need to know where the off-map homes stand before the map draws them.
   const offMap = placeOffMap(game, pack);
   /** A system ships can be in: a tile of the map or an off-map home beside it. */
   const onBoard = (slot: string): boolean => slot in offMap || isOnMap(game, slot);
-  const arrows = planArrows(game, pack, tacticals, tacticalNumbers(round.entries), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
+  const arrows = planArrows(game, pack, tacticals, tacticalNumbers(game, round, pack), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
   const entryGame = gameAs(game, entry?.owner);

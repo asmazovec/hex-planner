@@ -233,19 +233,21 @@ const SHEET_KIND = /^(ability|mech|breakthrough|legendary):/;
  * once held) or a legendary planet they control. A component held by several of them, or in several copies, is given once.
  */
 export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, players: string[]): ComponentDef[] {
+  return hintsAtSteps(pack, board, [step], players).get(step) ?? [];
+}
+
+/** The reminders of several steps at once: what the players hold is looked through once, not once for each step. */
+export function hintsAtSteps(pack: DataPack, board: GameState, steps: RuleStep[], players: string[]): Map<RuleStep, ComponentDef[]> {
   const { order } = registryOf(pack);
-  const ids = new Set<string>();
-  const asked = (id: string): boolean => {
-    const effect = effectOf(pack, id);
-    return effect?.tier === 'hint' && effect.hintAt?.includes(step) === true;
-  };
+  const held = new Set<string>();
   for (const player of players) {
     const state = player === 'me' ? board : board.rivals?.[player];
     if (!state) continue;
     // A secret objective in hand, and a public one revealed and not yet scored by the player, are reminded of at the status step.
     const objectives = [...state.holdings.secrets, ...(board.revealed ?? []).filter(id => !state.holdings.scored.includes(id))];
-    for (const id of [...readyComponents(pack, state.holdings), ...objectives]) if (asked(id)) ids.add(id);
-    for (const id of inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control })) if (SHEET_KIND.test(id) && asked(id)) ids.add(id);
+    const sheet = inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control }).filter(id => SHEET_KIND.test(id));
+    for (const id of [...readyComponents(pack, state.holdings), ...objectives, ...sheet]) if (effectOf(pack, id)?.tier === 'hint') held.add(id);
   }
-  return [...ids].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!).flatMap(id => componentById(pack, id) ?? []);
+  const sorted = [...held].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!);
+  return new Map(steps.map(step => [step, sorted.filter(id => effectOf(pack, id)?.hintAt?.includes(step) === true).flatMap(id => componentById(pack, id) ?? [])]));
 }

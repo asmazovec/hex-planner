@@ -141,8 +141,12 @@ export interface LegacyViews {
   states: Record<string, GameState>;
 }
 
-const countsOf = <T extends object>(units: T | undefined): T => Object.fromEntries(Object.entries(units ?? {}).filter(([, n]) => ((n as number | undefined) ?? 0) > 0)) as T;
-const nonEmpty = (counts: object | undefined): boolean => Object.keys(counts ?? {}).length > 0;
+const countsOf = <T extends object>(units: T | undefined): T => {
+  const out: Record<string, unknown> = {};
+  for (const key in units) if (((units as Record<string, number | undefined>)[key] ?? 0) > 0) out[key] = (units as Record<string, number>)[key];
+  return out as T;
+};
+const nonEmpty = (counts: object | undefined): boolean => { for (const _ in counts) return true; return false; };
 
 /** One player's state of the board. The viewer's carries the rivals and what belongs to the whole game. */
 export function legacyState(table: Table, board: Board, pack: DataPack, player: PlayerId): GameState {
@@ -153,7 +157,28 @@ export function legacyState(table: Table, board: Board, pack: DataPack, player: 
   return views.states[key];
 }
 
+/** The views of a board for the one who reads them: built once for a board and shared, so no one may change them (they are frozen). */
+const shared = new WeakMap<Board, { table: Table; pack: DataPack; views: LegacyViews }>();
 export function legacyViews(table: Table, board: Board, pack: DataPack): LegacyViews {
+  const known = shared.get(board);
+  if (known && known.table === table && known.pack === pack) return known.views;
+  const built = legacyViewsFresh(table, board, pack);
+  // In a build nothing watches; in development and in the tests a change of shared views fails where it is made.
+  const views = import.meta.env.PROD ? built : deepFreeze(built);
+  shared.set(board, { table, pack, views });
+  return views;
+}
+
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === 'object' && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const key of Object.keys(value)) deepFreeze((value as Record<string, unknown>)[key]);
+  }
+  return value;
+}
+
+/** The views of a board that the caller may change: a copy of its own, for what the legacy effects work on. */
+export function legacyViewsFresh(table: Table, board: Board, pack: DataPack): LegacyViews {
   const game = legacyGame(table, board);
   const states: Record<string, GameState> = {};
   for (const p of table.players) states[legacyKey(table, p.id)] = ownState(table, board, p.id);
@@ -182,8 +207,10 @@ function ownState(table: Table, board: Board, player: PlayerId): GameState {
   const afloat: Record<string, StructureCounts> = {};
   const tokensOnMap: string[] = [];
   for (const [slot, system] of Object.entries(board.systems)) {
-    if (nonEmpty(countsOf(system.ships[player]))) systems[slot] = countsOf(system.ships[player]);
-    if (nonEmpty(countsOf(system.afloat[player]))) afloat[slot] = { ...countsOf(system.afloat[player]) };
+    const ships = countsOf(system.ships[player]);
+    if (nonEmpty(ships)) systems[slot] = ships;
+    const floating = countsOf(system.afloat[player]);
+    if (nonEmpty(floating)) afloat[slot] = floating;
     if (system.tokens.includes(player)) tokensOnMap.push(slot);
   }
   const ground: Record<string, UnitCounts> = {};
@@ -192,7 +219,8 @@ function ownState(table: Table, board: Board, player: PlayerId): GameState {
   const docks: string[] = [];
   const pds: Record<string, number> = {};
   for (const [id, planet] of Object.entries(board.planets)) {
-    if (nonEmpty(countsOf(planet.ground[player]))) ground[id] = countsOf(planet.ground[player]);
+    const standing = countsOf(planet.ground[player]);
+    if (nonEmpty(standing)) ground[id] = standing;
     if (planet.owner !== undefined) control[id] = planet.owner === player ? 'me' : 'enemy';
     if (planet.exhausted && (planet.owner === player || (planet.owner === undefined && key === 'me'))) exhausted.push(id);
     if (planet.owner === player) {

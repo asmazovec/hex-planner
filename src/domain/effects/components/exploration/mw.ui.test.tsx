@@ -9,12 +9,13 @@ import { id } from './mw';
 
 uiBench();
 
+// LRR 8.4: a dock stands on a planet its owner controls, so Target One is mine from the start (the kernel keeps no dock on an unowned planet).
 const table = (gains: string[]) => {
   const take = tactical(TARGET, {
     moves: [{ from: NEAR, units: { carrier: 1, infantry: 1 } }], landings: [{ planetId: 't1', units: { infantry: 1 } }],
   }, gains.length > 0 ? { gains } : {});
   const build = tactical(TARGET, { production: { fighter: 5 }, payment: { planets: ['h1'], tradeGoods: 0 } });
-  return { build, take, ...bench({ faction: 'letnev', expansions: ['pok'], units: { [NEAR]: { carrier: 1, infantry: 1 } }, rounds: [[take], [build]], game: { docks: ['t1'] } }) };
+  return { build, take, ...bench({ faction: 'letnev', expansions: ['pok'], units: { [NEAR]: { carrier: 1, infantry: 1 } }, rounds: [[take], [build]], game: { docks: ['t1'], planetControl: { t1: 'me' } } }) };
 };
 
 // "This planet's resource value is increased by 2." LRR 35.2: the explorer draws and resolves a card of the planet's deck.

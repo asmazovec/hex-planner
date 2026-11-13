@@ -18,6 +18,8 @@ function addressOf(id: string): { at: number; end: number } | undefined {
 
 /** The catalogue id of a note, without the address; any other id as it is. */
 export function noteBase(id: string): string {
+  // Only a note has an address, and every other id is its own base: the check that costs nothing comes first, for the many asks of a replay.
+  if (!id.startsWith(NOTE)) return id;
   const address = addressOf(id);
   return address ? id.slice(0, address.at) + id.slice(address.end) : id;
 }
