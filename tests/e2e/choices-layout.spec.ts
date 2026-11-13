@@ -65,11 +65,12 @@ test('with two plans and many rounds the plan tabs do not run under the round bu
     const list = document.querySelector('.plan-tabs')!;
     const tabs = list.getBoundingClientRect();
     const rounds = document.querySelector('.plan-rounds-group')!.getBoundingClientRect();
+    const copy = document.querySelector('.plan-copy')!.getBoundingClientRect();
     return {
+      copyBeyondTabs: copy.left < tabs.left - 1 || copy.right > tabs.right + 1,
       sideBySide: tabs.right > rounds.left + 1 && tabs.left < rounds.right - 1 && tabs.bottom > rounds.top + 1 && tabs.top < rounds.bottom - 1,
-      hidden: list.scrollWidth > list.clientWidth,
     };
   });
   expect(state.sideBySide).toBe(false);
-  expect(state.hidden).toBe(false);
+  expect(state.copyBeyondTabs).toBe(false);
 });
