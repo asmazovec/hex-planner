@@ -20,7 +20,7 @@ import { ComponentSlot } from '../blocks/ComponentSlot';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 
 /** What a component action can play. */
-const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary'];
+const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary', 'exploration'];
 
 export interface TurnEditorProps {
   entry: Extract<Entry, { type: 'component' | 'pass' }>;
