@@ -11,7 +11,16 @@ import type { Game } from '../../domain/types';
 import { compareGame, whereDiffers, type Detail, type Exclusion, type Outcome } from './differential';
 
 /** Cases where the old replay is wrong by the rules, each with its reason; the same list is in docs/superpowers/specs/2026-11-13-game-model-differences.md. */
-export const EXCLUSIONS: Exclusion[] = [];
+const onlyIn = (detail: Detail, path: RegExp): boolean => {
+  const diffs = whereDiffers(detail.oldState, detail.newState, '', []);
+  return diffs.length > 0 && diffs.every(d => path.test(d));
+};
+export const EXCLUSIONS: Exclusion[] = [
+  // A structure belongs to the owner of its planet (the kernel); the old state keeps the one a card built on a planet no one holds.
+  { reason: 'structure on a planet no one controls (Construction)', matches: (o, d) => (o.type === 'strategic' || o.type === 'secondary') && onlyIn(d, /^.(pds|docks)./) },
+  // The old model keeps a rival's points twice (my opponentVp, its own vp) and a status entry moves only the first.
+  { reason: 'a rival has its points in two places (status entry)', matches: (o, d) => o.type === 'statusTokens' && onlyIn(d, /^.rivals.[^.]+.vp:/) },
+];
 
 const results: { outcome: Outcome; detail?: Detail }[] = [];
 let games = 0;
@@ -42,10 +51,10 @@ describe('the real game', () => {
 });
 
 describe('what the two models agree on', () => {
-  test('every tactical entry resolves to the old frame after it, with the same warnings', () => {
+  test('every entry resolves to the old frame after it, with the same warnings', () => {
     const open = results.filter(r => !r.outcome.agree && !EXCLUSIONS.some(e => r.detail && e.matches(r.outcome, r.detail)));
     const lines = open.slice(0, 12).map(({ outcome, detail }) => [
-      `${outcome.game} ${outcome.entry}: ${outcome.diffs.join(', ')}`,
+      `${outcome.game} ${outcome.entry} (${outcome.type}): ${outcome.diffs.join(', ')}`,
       outcome.detail ?? '',
       ...(outcome.diffs.includes('state') && detail ? whereDiffers(detail.oldState, detail.newState) : []),
       ...(outcome.diffs.includes('warnings') && detail ? [`old warnings ${JSON.stringify(detail.oldWarnings)}`, `new warnings ${JSON.stringify(detail.newWarnings)}`] : []),

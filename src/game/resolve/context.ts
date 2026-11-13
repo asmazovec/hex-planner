@@ -12,6 +12,7 @@ import type { GameEvent } from '../events';
 import { legacyEntry } from '../fromLegacy';
 import { viewFor, type PlayerView } from '../legacyViews';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
+import type { RoundTrack } from './track';
 
 export interface StepResult {
   step: RuleStep;
@@ -21,13 +22,16 @@ export interface StepResult {
   hints: ComponentDef[];
 }
 
-export interface Resolution { steps: StepResult[]; board: Board }
+export interface Resolution { steps: StepResult[]; board: Board; /** What the round remembers after this turn. */ track: RoundTrack }
 
 export interface Ctx {
   table: Table;
   pack: DataPack;
   turn: Turn;
+  /** The tactical action; an empty one while the turn holds another action. */
   tactical: Tactical;
+  /** What the round remembers, as this turn changes it. */
+  track: RoundTrack;
   player: PlayerId;
   /** The turn as the old checks read it. */
   entry: Entry;
@@ -40,9 +44,9 @@ export interface Ctx {
   warnings: Warning[];
 }
 
-export function newCtx(table: Table, board: Board, turn: Turn, tactical: Tactical, pack: DataPack, blockers: Blockers): Ctx {
+export function newCtx(table: Table, board: Board, turn: Turn, tactical: Tactical, pack: DataPack, blockers: Blockers, track: RoundTrack): Ctx {
   return {
-    table, pack, turn, tactical, player: turn.player, entry: legacyEntry(table, turn), board, blockers, steps: [],
+    table, pack, turn, tactical, track, player: turn.player, entry: legacyEntry(table, turn), board, blockers, steps: [],
     cur: { step: 'activation', events: [], violations: [], hints: [] }, warnings: [],
   };
 }
@@ -94,3 +98,6 @@ export function checkView(ctx: Ctx, player: PlayerId = ctx.player): PlayerView {
   }
   return v;
 }
+
+/** What stands in for the tactical action while the turn holds another one. */
+export const NO_TACTICAL: Tactical = { kind: 'tactical', system: null, movement: [], invasion: [] };

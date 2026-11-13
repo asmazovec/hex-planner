@@ -51,7 +51,7 @@ export function legacyGame(table: Table, board: Board): Game {
   const vpOf = (key: string): number => source?.opponents.find(o => o.id === key)?.vp ?? 0;
   return {
     id: table.id, name: table.name, format: SAVE_FORMAT, schemaVersion: 1, dataVersion: source?.dataVersion ?? '', expansions: table.expansions,
-    playerCount: table.players.length, layout: table.layout, faction: viewer.faction, seat: viewer.seat, color: viewer.color, vp: source?.vp ?? 0,
+    playerCount: source?.playerCount ?? table.players.length, layout: table.layout, faction: viewer.faction, seat: viewer.seat, color: viewer.color, vp: source?.vp ?? 0,
     map: table.map,
     opponents: table.players.filter(p => p.id !== table.viewer).map(p => ({
       id: legacyKey(table, p.id), faction: p.faction, vp: vpOf(legacyKey(table, p.id)), seat: p.seat, color: p.color,

@@ -18,6 +18,7 @@ import type { Entry, Game, GameState, UnitCounts, Warning } from '../../domain/t
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, viewFor, type LegacyViews } from '../legacyViews';
 import { emit, warn, type Ctx } from './context';
+import { cardRoundOf, keepRound } from './track';
 
 type Tactic = Extract<Entry, { type: 'tactical' }>;
 
@@ -97,6 +98,7 @@ export function controlLostHooks(ctx: Ctx, lost: { planetId: string; to: string 
 export function turnTail(ctx: Ctx): void {
   viaLegacy(ctx, r => {
     const { entry, pack } = ctx;
+    const cards = cardRoundOf(ctx.table, ctx.track, r.states);
     applyUses(r.state, entry, pack, r.warnings, r.game.faction, r.states);
     payPlayedCost(r.game, r.state, r.shared, entry, pack, r.warnings);
     for (const id of playedBy(entry)) {
@@ -105,12 +107,13 @@ export function turnTail(ctx: Ctx): void {
       if (!effect?.play || effect.playAt) continue;
       const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
       effect.play({
-        game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings,
+        game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards,
       });
     }
     const factionOf = (key: string): string | undefined => ctx.table.players.find(p => legacyKey(ctx.table, p.id) === key)?.faction;
     applyGains(r.state, r.shared, entry, pack, factionOf);
-    afterEntry({ game: r.game, state: r.state, shared: r.shared, entry, pack, warnings: r.warnings, states: r.states });
+    afterEntry({ game: r.game, state: r.state, shared: r.shared, entry, pack, cards, warnings: r.warnings, states: r.states });
+    keepRound(ctx.table, ctx.track, cards);
   });
 }
 

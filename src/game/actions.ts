@@ -1,10 +1,9 @@
 /**
  * The language of a plan: a turn of a player, and what a turn holds. A tactical action is described by what the player
  * says happened (the route of each flight, who was lost, where the landing and the production went), and the resolver
- * turns that into events and violations. The other actions are declared so that the type is whole; the resolver does
- * not resolve them yet (step 2b).
+ * turns that into events and violations.
  */
-import type { Payment, StructureCounts, UnitCounts } from '../domain/types';
+import type { AdjustmentDelta, AdjustmentKind, CardEffects, Payment, Phase, StatusSpend, StructureCounts, UnitCounts } from '../domain/types';
 import type { Place } from './events';
 import type { ComponentId, PlanetId, PlayerId, Slot } from './types';
 
@@ -73,20 +72,29 @@ export interface Expedition { kind: 'expedition'; slice: string | null; payment:
 /** A component applied in a turn besides its action, with what the player chose for it. */
 export interface ComponentUse { component: ComponentId; choices?: Record<string, string | number> }
 
-// Declared, not resolved yet.
-export interface Strategic { kind: 'strategic'; card: number; forToken?: boolean; effects?: unknown }
-export interface Secondary { kind: 'secondary'; card: number; effects?: unknown }
-export interface ComponentPlay { kind: 'component'; component?: ComponentId; note: string; effects?: unknown; payment?: Payment }
+/** A strategy card played in a turn; with Warfare in Thunder's Edge the free tactical action is `nested`, part of the card (it has no status or place of its own). */
+export interface Strategic { kind: 'strategic'; card?: number; forToken?: boolean; effects?: CardEffects; nested?: Turn[] }
+/** The secondary of a card, in the turn of another player. */
+export interface Secondary { kind: 'secondary'; card?: number; effects?: CardEffects }
+export interface ComponentPlay { kind: 'component'; component?: ComponentId; note: string; effects?: CardEffects; payment?: Payment }
 export interface Pass { kind: 'pass' }
-export interface StatusPhase { kind: 'status'; tokens: { tactic: number; fleet: number; strategy: number }; vp?: number; scored?: ComponentId[] }
-export interface Agenda { kind: 'agenda'; card?: ComponentId; choices?: Record<string, string | number> }
-export interface Correction { kind: 'correction'; label: string; delta?: unknown }
+/** The tokens, points and objectives of the status phase; `opponentVp` is by player. */
+export interface StatusPhase {
+  kind: 'status'; tactic: number; fleet: number; strategy: number; vp?: number;
+  opponentVp?: Record<PlayerId, number>; scored?: ComponentId[]; spend?: StatusSpend;
+}
+/** A card of the agenda phase and what it changed, as numbers; `choices` names the outcome and what was elected. */
+export interface Agenda { kind: 'agenda'; label: string; delta: AdjustmentDelta; choices?: Record<string, string | number> }
+/** A set of events the rules do not model, with its label. `purpose` keeps the meaning of the kinds `losses`, `build` and `setup`. */
+export interface Correction { kind: 'correction'; label: string; delta: AdjustmentDelta; purpose?: AdjustmentKind }
 
 export type Action = Tactical | Strategic | Secondary | ComponentPlay | Pass | StatusPhase | Agenda | Correction;
 
 export interface Turn {
   id: string;
   player: PlayerId;
+  /** The phase of the round the turn belongs to; the action phase when absent. */
+  phase?: Phase;
   status: 'planned' | 'done' | 'cancelled';
   action: Action;
   /** Transactions, then the expedition at the end of the turn. */
