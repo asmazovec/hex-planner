@@ -45,7 +45,7 @@ export function IngressMark() {
 }
 
 /** The number of an arrow in its hexagon; on the map a casing parts it from what lies under it. */
-export function RouteBadge({ number, casing }: { number: number | string; casing?: boolean }) {
+export function RouteBadge({ number, casing }: { number: number; casing?: boolean }) {
   return (
     <>
       {casing && <polygon points={BADGE_HEX} className="route-badge-casing" />}

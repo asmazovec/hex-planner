@@ -7,7 +7,7 @@ import { BADGE_CUT, PickupTag, RouteBadge } from './marks';
 import { playerStyle } from '../primitives/player';
 
 /** A drawn route. `number` is its action's place in the round; `active` is the action being edited, shown or played. */
-export interface Arrow extends RouteArrow { key: string; /** None for an action taken from a strategy card: the badge says so. */ number: number | undefined; tone: 'planned' | 'done' | 'active'; shape: RouteShape;
+export interface Arrow extends RouteArrow { key: string; number: number; tone: 'planned' | 'done' | 'active'; shape: RouteShape;
   /** The colour of the opponent whose action this is. */ player?: number;
   /** Its source is on its way out of the plan: the arrow fades. */ leaving?: boolean }
 
@@ -94,7 +94,7 @@ export const RouteArrows = memo(function RouteArrows({ arrows, bounds }: { arrow
       </g>
       {arrows.map(a => (
         <g key={a.key} className={`route route-badge ${tone(a)}`} style={playerStyle('--route', a.player || undefined)} transform={`translate(${a.shape.badge.x.toFixed(1)} ${a.shape.badge.y.toFixed(1)})`}>
-          <RouteBadge number={a.number ?? t('map.arrowOfCard')} casing />
+          <RouteBadge number={a.number} casing />
         </g>
       ))}
       {arrows.flatMap(a => a.pickups.map(({ slot, count }) => {

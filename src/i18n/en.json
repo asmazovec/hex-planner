@@ -168,7 +168,6 @@
       }
     },
     "arrow": "Move from {{from}} to {{to}}",
-    "arrowOfCard": "S",
     "sheet": {
       "title": "Tile {{number}}",
       "unknown": "This tile number is not in the game data.",
