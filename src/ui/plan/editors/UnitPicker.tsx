@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { shownPlanetValues } from '../../../domain/payment';
 import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
 import type { TokenKind } from '../../../domain/hexLayout';
 import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitId, Warning } from '../../../domain/types';
@@ -123,7 +124,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
     />
   );
   const badge = (planet: PlanetDef | null) => (planet
-    ? <PlanetBadge planet={planet} control={before.control[planet.id]} exhausted={before.exhausted.includes(planet.id)} compact />
+    ? <PlanetBadge planet={planet} control={before.control[planet.id]} exhausted={before.exhausted.includes(planet.id)} values={shownPlanetValues(pack, before, planet.id, game.faction)} compact />
     : <SpaceBadge label={t('draft.space')} />);
 
   const line = (slot: string, role: 'start' | 'transit') => {

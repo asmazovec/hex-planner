@@ -224,6 +224,7 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .value-resources { color: var(--gold); fill: var(--gold); font-weight: 700; }
 .value-influence { color: var(--accent); fill: var(--accent); font-weight: 700; }
+.value-changed { color: var(--gold); fill: var(--gold); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
 /* Joined buttons for one choice among a few. */
 .segment, .map-mode, .plan-rounds { display: flex; }

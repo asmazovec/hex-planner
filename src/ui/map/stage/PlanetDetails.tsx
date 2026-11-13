@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { textOf } from '../../../domain/components';
+import type { PlanetValues } from '../../../domain/payment';
 import type { DataPack, PlanetDef } from '../../../domain/types';
 import { LEGENDARY_SHAPE, TECH_SHAPES } from '../marks';
 import { PlanetBadge } from '../PlanetBadge';
@@ -14,6 +15,8 @@ export interface PlanetDetailsProps {
   /** Whose it is, for the edge of its picture. */
   control?: 'me' | 'enemy';
   holderColor?: number;
+  /** What the components make of its resources and influence. */
+  values?: PlanetValues;
 }
 
 /** A mark in the box of the technology shapes, named for the screen reader and under the finger. */
@@ -30,15 +33,15 @@ function Mark({ d, className, label }: { d: string; className: string; label: st
  * All printed parameters of one planet: one line with its picture as the map draws it and its name, resources/influence and the marks
  * (traits, technology specialties, legendary), then what its card says in words. Control is chosen beside it.
  */
-export function PlanetDetails({ planet, pack, relic, exhausted, control, holderColor }: PlanetDetailsProps) {
+export function PlanetDetails({ planet, pack, relic, exhausted, control, holderColor, values }: PlanetDetailsProps) {
   const { t } = useTranslation();
   const summary = planet.legendary ? textOf(pack, `legendary:${planet.id}`) : '';
   return (
     <div className="planet-details">
       <div className="planet-head">
-        <PlanetBadge planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} />
+        <PlanetBadge planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} values={values} />
         <span className="planet-values">
-          <span className="value-resources">{planet.resources}</span>/<span className="value-influence">{planet.influence}</span>
+          <span className={`value-resources${values?.changed ? ' value-changed' : ''}`}>{values?.resources ?? planet.resources}</span>/<span className={`value-influence${values?.changed ? ' value-changed' : ''}`}>{values?.influence ?? planet.influence}</span>
         </span>
         <span className="planet-marks">
           {(planet.traits ?? []).map(trait => (

@@ -7,6 +7,7 @@
  * (its influence less its resources, for the best planet of the payment). Ruling 1 (it changes the Production value
  * of a dock on that planet) is not modelled.
  */
+import { planetValue } from '../../../payment';
 import { readyToPlay } from '../../../replay/holdings';
 import type { ComponentEffect } from '../../types';
 
@@ -19,10 +20,12 @@ export const effect: ComponentEffect = {
     code: 'shortResources',
     rule: 'swap the resource and influence values of 1 planet you control during that use of Production',
     // The swap of the one best paying planet (its influence less its resources) must cover what is short.
-    when: ({ params }, { entry, game, pack, before }) => {
+    when: ({ params }, { entry, game, pack, before, shared }) => {
       if (!readyToPlay(pack, before.holdings, game.faction, before.control).has(id)) return false;
+      const view = { faction: game.faction, shared };
+      const valueOf = (planetId: string, kind: 'resources' | 'influence') => planetValue(pack, before, planetId, kind, view);
       const planets = entry && 'payment' in entry ? entry.payment?.planets ?? [] : [];
-      const gain = Math.max(0, ...planets.map(planetId => (pack.planets[planetId]?.influence ?? 0) - (pack.planets[planetId]?.resources ?? 0)));
+      const gain = Math.max(0, ...planets.map(planetId => valueOf(planetId, 'influence') - valueOf(planetId, 'resources')));
       return Number(params.needed) - Number(params.paid) <= gain;
     },
   }],

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CUSTODIANS_COST } from '../../../domain/mecatol';
-import { autoPay } from '../../../domain/payment';
+import { autoPay, shownPlanetValues } from '../../../domain/payment';
 import { fleetExcess, productionCost, routeSteps, standing, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../domain/effects/hints';
 import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
@@ -195,6 +195,7 @@ export function TacticalEditor({
             <Section title={t('plan.tactical.landing')} optional collapsible warnings={list(placer.at('landing'))}>
               <LandingBlock
                 game={game} planets={planets} before={before} board={board} units={landable} arrived={here} lost={entry.groundLosses}
+                valuesOf={planetId => shownPlanetValues(pack, before, planetId, game.faction)}
                 landedOn={landedOn} onLand={setLanding}
                 structures={hasStructures(afloat) || offers.structures.length > 0 || entry.landings.some(l => hasStructures(l.structures)) ? {
                   arrived: afloat, reinforced: offers.structures,
