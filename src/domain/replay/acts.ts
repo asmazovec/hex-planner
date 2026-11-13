@@ -9,7 +9,6 @@ import { componentById, noteBase } from '../components';
 import { staysInPlay, TRANSACTION_KINDS } from '../holdings';
 import { effectOf, holderOf, inForceOf } from '../effects/registry';
 import type { DealTurn } from '../effects/points/payment';
-import { playersOf } from '../players';
 import type { Act, DataPack, Entry, Game, GameState, Goods, Warning } from '../types';
 import { commodityValueOf } from './cards/trade';
 import { applyExpeditionPart } from './expedition';
@@ -78,7 +77,7 @@ function dealt(
   const other = ctx.states[partner];
   if (!shared || !state || !other) return;
   // In an opponent's entry the game is seen through their eyes: `game.faction` is theirs and I am among its opponents under `me`.
-  const faction = self === (entry.owner ?? 'me') ? game.faction : playersOf(game).find(p => p.id === self)?.faction ?? game.faction;
+  const faction = self === (entry.owner ?? 'me') ? game.faction : game.opponents.find(p => p.id === self)?.faction ?? game.faction;
   const asked = { faction };
   // A card is asked once however many copies of it are in play (my own Support for the Throne beside a received one).
   const forced = inForceOf(pack, holderOf(asked, state, shared));

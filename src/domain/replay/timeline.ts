@@ -116,8 +116,6 @@ function applyEntry(
     if (!effect?.play) continue;
     // A play that asked to run in the middle of a tactical action (`playAt`) has run there already.
     if (entry.type === 'tactical' && effect.playAt) continue;
-    // An activation or a combat exists only in a tactical action: a card of that window named elsewhere (discarded as a cost) is not played.
-    if (effect.playAt) continue;
     const lacking = warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
     effect.play({
       game, state, shared, entry, id, player: entry.owner ?? 'me', states: acts.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings, cards,
