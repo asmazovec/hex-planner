@@ -52,6 +52,16 @@ test('«+ Took» opens the choice and writes the component into the gains of the
   expect(screen.queryByRole('dialog', { name: 'Choose a component' })).toBeNull();
 });
 
+test('a breakthrough is taken like any component, in the round it is gained', async () => {
+  const tePack = loadPack(['pok', 'te']);
+  useGame.getState().newGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'yin' }, tePack);
+  const onChange = vi.fn();
+  render(<GainsBlock entry={turn()} pack={tePack} onChange={onChange} />);
+  await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
+  await find('yin ascendant', 'Yin Ascendant');
+  expect(onChange).toHaveBeenCalledWith({ gains: ['breakthrough:yinbt'] });
+});
+
 test('«+ Discarded» writes the spends, and a cross takes a component back out; an empty list leaves no key', async () => {
   const onChange = vi.fn();
   render(<GainsBlock entry={turn({ gains: ['relic:shard'] })} pack={pack} before={holding({ hand: ['actionCard:sabo1'] })} onChange={onChange} />);

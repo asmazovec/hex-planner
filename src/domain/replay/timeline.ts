@@ -209,6 +209,11 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
         clearBoard(everyone);
         readyCards(everyone);
         fire('onStatusEnd', mine(), {});
+        // The end of the status phase is every player's: a card an opponent played for the phase (Share Knowledge) ends with it.
+        for (const { id } of game.opponents) {
+          const rival = rivals[id];
+          if (rival) fire('onStatusEnd', { game: views.get(id)!, state: rival, shared: state, pack, warnings: lead, player: id, states: { me: state, ...rivals } }, {});
+        }
         dirty = true;
       }
       statusDone = true;

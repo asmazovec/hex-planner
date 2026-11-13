@@ -8,8 +8,8 @@ import { ComponentPicker } from '../../components/ComponentPicker';
 import { Section } from '../../primitives/Section';
 
 type Side = 'gains' | 'spends';
-/** What a player holds as a list: only these can be taken or discarded. */
-const HELD_KINDS = Object.keys(HOLDING_FIELD) as ComponentKind[];
+/** What a player holds as a list, and the breakthrough of the faction: only these can be taken or discarded. */
+const HELD_KINDS = [...(Object.keys(HOLDING_FIELD) as ComponentKind[]), 'breakthrough' as ComponentKind];
 
 export interface GainsBlockProps {
   /** Any entry: its owner gains and gives. */

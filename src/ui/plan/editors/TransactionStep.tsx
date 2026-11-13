@@ -10,6 +10,7 @@ import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
+import { StepHints } from '../../feedback/StepHints';
 import { opponentName } from '../../players/names';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { PlayerChoice, playerOptions } from '../../primitives/player';
@@ -96,6 +97,7 @@ export function TransactionStep({ game, pack, act, owner, board, warnings, uses 
       {side('get', t('plan.acts.get'))}
       {/* Under the goods: a warning above them would push the counters from under the finger. */}
       <WarningList warnings={placeWarnings(warnings).at('deal')} game={game} pack={pack} />
+      <StepHints pack={pack} board={board} step="transaction" players={[owner, act.with]} />
       {picking && (
         <ComponentPicker
           ids={offer(picking)} player={giver(picking)} onClose={() => setPicking(null)}

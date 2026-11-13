@@ -78,4 +78,17 @@ describe('ability:mitosis Mitosis', () => {
     expect(effect(pack, id).modify).toBeDefined();
     expect(effect(pack, id).waive).toBeUndefined();
   });
+
+  // "At the start of the status phase: Place 1 infantry" - once, whatever else the round holds.
+  // Checks: a round with a tactical action and a status entry gives one infantry, not two.
+  // Why the check is NOT redundant here: the moment is fired from the status entry and from the end of the phase.
+  test('ability:mitosis a round with an action and a status entry places one infantry', () => {
+    const table = bench({ faction: 'arborec', expansions: ['pok'], entries: [tactical(HOME, {}), statusTokens(2, 0, 0)] });
+    expect(infantryOnPlanets(endOf(table))).toBe(1);
+  });
+
+  test('ability:mitosis a round with only an action (no status entry) places none yet', () => {
+    const table = bench({ faction: 'arborec', expansions: ['pok'], entries: [tactical(HOME, {})] });
+    expect(infantryOnPlanets(endOf(table))).toBe(0);
+  });
 });

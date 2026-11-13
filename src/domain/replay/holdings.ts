@@ -5,6 +5,7 @@
  */
 import { componentById, componentsOf, noteAddress, ownedBy } from '../components';
 import { HOLDING_FIELD, holdingsOf, staysInPlay } from '../holdings';
+import { breakthroughOf } from '../effects/breakthrough';
 import { violation } from '../rules/registry';
 import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
 
@@ -87,7 +88,10 @@ export function applyGains(own: GameState, shared: GameState, entry: Entry, pack
     elected: factionOf(elect === undefined || elect in pack.planets ? entry.owner ?? 'me' : elect) ?? undefined,
     planet: elect !== undefined && elect in pack.planets ? elect : undefined,
   };
-  for (const def of known(pack, entry.gains)) gain(own, shared, def, how);
+  // A breakthrough is the player's own: one of another faction's is not held by gaining it.
+  const mine = factionOf(entry.owner ?? 'me');
+  const theirs = (def: ComponentDef) => def.kind === 'breakthrough' && mine !== undefined && def.id !== breakthroughOf(pack, mine);
+  for (const def of known(pack, entry.gains)) if (!theirs(def)) gain(own, shared, def, how);
   for (const def of known(pack, entry.spends)) lose(own, shared, def);
 }
 

@@ -57,6 +57,7 @@ import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
 import { leaveKey, useLeavingSources } from './plan/useLeavingSources';
+import { StepHints } from '../feedback/StepHints';
 import { EditorPart } from '../primitives/EditorPart';
 import { PlayerChoice, PlayerDot, playerStyle, playerTag } from '../primitives/player';
 
@@ -485,6 +486,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel.kind === 'turn' ? { kind: 'turn', entryId: entry.id } : state.panel }, next: IDLE }))}
           />
         )}
+        {/* The reminders of the round: what its player holds ready that speaks of the round as a whole, stated in every turn. */}
+        {turn && <StepHints pack={pack} board={boards.board(entry.id)} step="round" players={[entry.owner ?? 'me']} />}
         {/* What the entry gained and gave stands with what else it holds. */}
         <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
         {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
@@ -544,7 +547,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const played = slot.entry;
         return (
           <StrategyEditor
-            game={cardGame} pack={pack} round={round} entry={played} before={boards.before(played.id)}
+            game={cardGame} pack={pack} round={round} entry={played} before={boards.before(played.id)} board={boards.board(played.id)}
             warnings={forecast.warningsByEntry[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
             onUpdate={patch => updateEntry(played.id, patch)}
             onManualPayment={open => toggleManualPayment(played.id, open)}
