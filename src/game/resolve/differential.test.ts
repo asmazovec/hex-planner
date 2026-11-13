@@ -36,7 +36,7 @@ export const EXCLUSIONS: Exclusion[] = [
  * gives, the status end of a note shared with a rival, ground forces lost on a planet in one whole plan. The list is in
  * docs/superpowers/specs/2026-11-13-game-model-differences.md and is step 3's work.
  */
-const KNOWN_OPEN = { entry: 4, whole: 6 };
+const KNOWN_OPEN = { entry: 0, whole: 0 };
 
 interface Result { outcome: Outcome; detail?: Detail }
 const single: Result[] = [];

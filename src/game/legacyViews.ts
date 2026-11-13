@@ -90,7 +90,7 @@ export function holdingsOfCards(cards: Record<ComponentId, CardHold>): Holdings 
 }
 
 /** The cards a `Holdings` is: the inverse of `holdingsOfCards`. */
-export function cardsOfHoldings(h: Holdings, breakthrough?: ComponentId): Record<ComponentId, CardHold> {
+export function cardsOfHoldings(h: Holdings, breakthrough?: ComponentId, onCard?: GameState['onCard']): Record<ComponentId, CardHold> {
   const cards: Record<ComponentId, CardHold> = {};
   const put = (id: string, state: CardHold['state'], count = 1): void => {
     cards[id] = { state: cards[id]?.state === 'exhausted' ? 'exhausted' : state, count: (cards[id]?.count ?? 0) + count };
@@ -107,7 +107,23 @@ export function cardsOfHoldings(h: Holdings, breakthrough?: ComponentId): Record
   if (h.breakthrough && breakthrough) cards[breakthrough] = { state: h.breakthrough === 'exhausted' ? 'exhausted' : 'ready', count: 1 };
   // A technology exhausted without being held (a component played that was not there) is nothing on a board: the warning stays, the card does not appear.
   for (const id of h.exhausted) if (!cards[id] && !id.startsWith('technology:')) cards[id] = { state: 'exhausted', count: 1 };
+  for (const [id, on] of Object.entries(onCard ?? {})) {
+    const units = countsOf(on.units);
+    if (cards[id] && (nonEmpty(units) || on.technology)) cards[id] = { ...cards[id], onCard: { units, technologies: on.technology ? [on.technology] : [] } };
+  }
   return cards;
+}
+
+/** What the cards of a board carry on them, as the old `onCard`. */
+export function onCardOfCards(cards: Record<ComponentId, CardHold>): GameState['onCard'] {
+  const out: NonNullable<GameState['onCard']> = {};
+  for (const [id, hold] of Object.entries(cards)) {
+    const on = hold.onCard;
+    if (!on) continue;
+    const units = countsOf(on.units);
+    if (nonEmpty(units) || on.technologies.length > 0) out[id] = { ...(nonEmpty(units) ? { units } : {}), ...(on.technologies[0] ? { technology: on.technologies[0] } : {}) };
+  }
+  return out;
 }
 
 /** The planet's owner as the old states say it: mine, else whoever says `me`, else the first rival for an enemy planet with no owner. */
@@ -192,6 +208,7 @@ function ownState(table: Table, board: Board, player: PlayerId): GameState {
     tactic: p?.pools.tactic ?? 0, fleet: p?.pools.fleet ?? 0, strategy: p?.pools.strategy ?? 0, vp: p?.vp ?? 0,
     opponentVp: Object.fromEntries(others.map(o => [legacyKey(table, o.id) === 'me' ? 'me' : legacyKey(table, o.id), board.players[o.id]?.vp ?? 0])),
     holdings: holdingsOfCards(p?.cards ?? {}),
+    ...(nonEmpty(onCardOfCards(p?.cards ?? {})) ? { onCard: onCardOfCards(p?.cards ?? {}) } : {}),
     docks, pds,
     ...(nonEmpty(afloat) ? { afloat } : {}),
     ...(board.common.custodians ? {} : { custodiansRemoved: true }),
@@ -212,7 +229,27 @@ export function blankViews(table: Table, game: Game): LegacyViews {
 
 /** The cards of a player as a view holds them, the breakthrough under the id of its faction's. */
 function cardsIn(state: GameState, pack: DataPack): Record<ComponentId, CardHold> {
-  return cardsOfHoldings(state.holdings, state.faction === undefined ? undefined : breakthroughOf(pack, state.faction));
+  return cardsOfHoldings(state.holdings, state.faction === undefined ? undefined : breakthroughOf(pack, state.faction), state.onCard);
+}
+
+/** What was put on a card and taken off it, as events. */
+function loadEvents(player: PlayerId, card: ComponentId, was: CardHold['onCard'], now: CardHold['onCard'], cause: Cause | undefined): GameEvent[] {
+  const c = cause ? { cause } : {};
+  const onWas = was ?? { units: {}, technologies: [] };
+  const onNow = now ?? { units: {}, technologies: [] };
+  const loaded: UnitCounts = {};
+  const unloaded: UnitCounts = {};
+  for (const unit of new Set([...Object.keys(onWas.units), ...Object.keys(onNow.units)]) as Set<keyof UnitCounts>) {
+    const d = (onNow.units[unit] ?? 0) - (onWas.units[unit] ?? 0);
+    if (d > 0) loaded[unit] = d;
+    if (d < 0) unloaded[unit] = -d;
+  }
+  const out: GameEvent[] = [];
+  for (const technology of onNow.technologies.filter(t => !onWas.technologies.includes(t))) out.push({ type: 'CardLoaded', player, card, technology, ...c });
+  for (const technology of onWas.technologies.filter(t => !onNow.technologies.includes(t))) out.push({ type: 'CardUnloaded', player, card, technology, ...c });
+  if (nonEmpty(loaded)) out.push({ type: 'CardLoaded', player, card, units: loaded, ...c });
+  if (nonEmpty(unloaded)) out.push({ type: 'CardUnloaded', player, card, units: unloaded, ...c });
+  return out;
 }
 
 const placeOf = (key: string, isPlanet: boolean): Place => (isPlanet ? { planet: key } : { slot: key });
@@ -351,11 +388,13 @@ export function legacyEvents(table: Table, pack: DataPack, before: LegacyViews, 
         out.push({ type: 'CardGained', player, card: real, count: b.count, ...(b.state === 'inPlay' || b.state === 'locked' ? { state: b.state } : {}), ...c });
         if (b.state === 'exhausted') out.push({ type: 'CardExhausted', player, card: real, ...c });
         if (b.state === 'purged') out.push({ type: 'CardPurged', player, card: real, ...c });
+        out.push(...loadEvents(player, real, undefined, b.onCard, cause));
       }
       else if (a && !b) out.push({ type: 'CardLost', player, card: real, count: a.count, ...c });
       else if (a && b) {
         if (b.count > a.count) out.push({ type: 'CardGained', player, card: real, count: b.count - a.count, ...c });
         if (b.count < a.count) out.push({ type: 'CardLost', player, card: real, count: a.count - b.count, ...c });
+        out.push(...loadEvents(player, real, a.onCard, b.onCard, cause));
         if (a.state !== b.state) {
           if (b.state === 'exhausted') out.push({ type: 'CardExhausted', player, card: real, ...c });
           else if (b.state === 'purged') out.push({ type: 'CardPurged', player, card: real, ...c });
