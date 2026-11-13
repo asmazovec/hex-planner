@@ -37,11 +37,13 @@ export type NextTap =
   | { kind: 'choose'; what: 'system' | 'source' }
   | { kind: 'card'; pick: CardMapPick }
   | { kind: 'adjustmentSystem' }
+  /** The system a component action produces in. */
+  | { kind: 'produce' }
   | { kind: 'placeTe' }
   | { kind: 'markIngress' };
 
 /** Whom the big hex serves: the map itself, the card being played, a tactical action or a manual adjustment. */
-export type StageFor = { kind: 'map' } | { kind: 'card' } | { kind: 'tactical'; id: string } | { kind: 'adjustment'; id: string };
+export type StageFor = { kind: 'map' } | { kind: 'card' } | { kind: 'component'; id: string } | { kind: 'tactical'; id: string } | { kind: 'adjustment'; id: string };
 
 export interface Stage { slot: string; mode: StageMode; only?: 'build' | 'units'; for: StageFor }
 
@@ -69,6 +71,10 @@ export const tacticalIn = (round: Round | undefined, id: string | null | undefin
 export const cardIn = (round: Round | undefined, id: string | null | undefined) => {
   const found = find(round, id);
   return found?.type === 'strategic' || found?.type === 'secondary' ? found as CardEntry : undefined;
+};
+export const turnIn = (round: Round | undefined, id: string | null | undefined) => {
+  const found = find(round, id);
+  return found?.type === 'component' ? found as Extract<Entry, { type: 'component' }> : undefined;
 };
 export const adjustmentIn = (round: Round | undefined, id: string | null | undefined) => {
   const found = find(round, id);
@@ -98,7 +104,8 @@ export function resolvePick(state: PickState, round: Round | undefined): PickSta
   const { next } = state;
   const fits = next.kind === 'route' || next.kind === 'choose' ? panel.kind === 'tactical' && panel.entryId !== null
     : next.kind === 'card' ? panel.kind === 'card'
-      : next.kind === 'adjustmentSystem' ? panel.kind === 'adjustment' : true;
+      : next.kind === 'adjustmentSystem' ? panel.kind === 'adjustment'
+        : next.kind === 'produce' ? panel.kind === 'turn' : true;
   if (panel === state.panel && fits) return state;
   return { ...state, panel, next: fits ? next : IDLE };
 }
@@ -112,6 +119,7 @@ export function hintKey(state: PickState): string | null {
   switch (next.kind) {
     case 'card':
     case 'adjustmentSystem':
+    case 'produce':
       return 'plan.strategy.mapHint';
     case 'markIngress':
       return 'fracture.markHint';

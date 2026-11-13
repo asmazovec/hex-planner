@@ -37,7 +37,7 @@ export function optionsOf(spec: ChoiceSpec, ctx: ChoiceContext): string[] {
   switch (spec.kind) {
     case 'planet': return [...new Set(systemSlots(ctx.game).flatMap(slot => planetsOf(ctx.game, slot, ctx.pack)))];
     case 'system': return systemSlots(ctx.game);
-    case 'player': return playersOf(ctx.game).map(player => player.id).filter(id => id !== ctx.player);
+    case 'player': return playersOf(ctx.game).map(player => player.id).filter(id => spec.self || id !== ctx.player);
     case 'unit': return [...UNIT_ORDER];
     case 'number': {
       const [min, max] = spec.range ?? [0, 0];

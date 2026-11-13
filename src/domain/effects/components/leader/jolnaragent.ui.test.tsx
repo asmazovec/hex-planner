@@ -1,4 +1,6 @@
 import { expect, test } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { expectNotShown, expectShownStanding, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
 import { CARD } from '../../../strategy';
@@ -30,6 +32,22 @@ test('leader:jolnaragent chosen in «Used» removes infantry and the shortfall o
   expectShownStanding('shortResources');
   await use(componentById(table.pack, id)!.name);
   expect(live.entry().uses).toEqual([id]);
+  expectNotShown('shortResources');
+  expect(endOf({ pack: table.pack, game: live.game() }).ground.h1?.infantry ?? 0).toBe(0);
+});
+
+// "You may allow that player to remove any number of their infantry from the game board."
+// Checks: the editor itself offers the infantry of each planet to remove, and the number pressed lowers the cost.
+// Why not seeded: the pressed number is what the replay then reads from the entry's choices.
+test('leader:jolnaragent the number of infantry removed is pressed in the editor, one for each resource', async () => {
+  const entry = { ...research(), choices: undefined } as Entry;
+  const table = jolnar(entry);
+  const live = showUses(table, entry);
+  await use(componentById(table.pack, id)!.name);
+  expectShownStanding('shortResources');
+  const remove = screen.getByRole('button', { name: 'Remove one Infantry on Home One' });
+  for (let i = 0; i < 5; i += 1) await userEvent.click(remove);
+  expect(live.entry().useChoices?.[id]).toEqual({ h1: 5 });
   expectNotShown('shortResources');
   expect(endOf({ pack: table.pack, game: live.game() }).ground.h1?.infantry ?? 0).toBe(0);
 });

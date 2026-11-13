@@ -40,6 +40,8 @@ export interface CardHandler {
   freeSecondary?: boolean;
   /** What it owes in resources or influence, given what the player already holds; without it, what its production costs. */
   cost?: (entry: CardEntry, held: Holdings, who?: CardWho) => CardCost;
+  /** What it places is placed, not produced: the units entered on it are paid for with nothing (Titans, Hecatoncheires). */
+  placesFree?: (entry: CardEntry, who: CardWho) => boolean;
   /** The tokens it gives to distribute; `before`, the state before the entry, when the board is known. */
   freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: GameState) => number;
   /** Its own effects and checks, after the common steps (token, payment, distribution, readying). */

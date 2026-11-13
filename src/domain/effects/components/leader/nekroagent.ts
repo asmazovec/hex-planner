@@ -16,7 +16,7 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [
-    { key: 'player', kind: 'player' },
+    { key: 'player', kind: 'player', self: true },
     {
       key: 'pay', kind: 'option', label: { ru: 'Платёж', en: 'Payment' }, options: () => ['token', 'actionCard'],
       names: { token: { ru: 'Жетон', en: 'Command token' }, actionCard: { ru: 'Карта действия', en: 'Action card' } },

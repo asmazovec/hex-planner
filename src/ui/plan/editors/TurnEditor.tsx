@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { effectOf } from '../../../domain/effects/registry';
 import { autoPay } from '../../../domain/payment';
+import { productionCost } from '../../../domain/unitStats';
 import { readyToPlay } from '../../../domain/project';
 import { playerState } from '../../../domain/stacks';
-import type { ComponentKind, DataPack, Entry, Game, GameState, Payment, Warning } from '../../../domain/types';
+import type { CardEffects, ComponentKind, DataPack, Entry, Game, GameState, Payment, Warning } from '../../../domain/types';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { placeWarnings } from '../../feedback/warningPlaces';
@@ -13,6 +14,10 @@ import { WarningList } from '../../feedback/WarningText';
 import { StepHints } from '../../feedback/StepHints';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
+import { HexRemove } from '../../primitives/Icon';
+import { MapPickButton } from '../../primitives/MapPickButton';
+import { systemTitle } from '../../map/systemName';
+import { unitsText } from '../../units/unitsText';
 import { NoteField } from '../../primitives/NoteField';
 import { Section } from '../../primitives/Section';
 import { ChoicesBlock } from '../blocks/ChoicesBlock';
@@ -20,7 +25,20 @@ import { ComponentSlot } from '../blocks/ComponentSlot';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 
 /** What a component action can play. */
-const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary'];
+const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary', 'exploration'];
+
+/** The production a component action makes (`ComponentEffect.produces`): the system on the map, the shop of the big hex, the payment. */
+export interface TurnProduction {
+  /** The next tap on the map chooses the system. */
+  picking: boolean;
+  onPick: () => void;
+  onOpenShop: (slot: string) => void;
+  /** The entry's effects as they stand after a change. */
+  onChange: (effects: CardEffects | undefined) => void;
+  /** The payment is the player's own choice. */
+  manual: boolean;
+  onManual: (open: boolean) => void;
+}
 
 export interface TurnEditorProps {
   entry: Extract<Entry, { type: 'component' | 'pass' }>;
@@ -41,6 +59,8 @@ export interface TurnEditorProps {
   onChoices?: (choices: Record<string, string | number>) => void;
   /** What a component with a declared cost is paid with (resources or influence, planets and trade goods). */
   onPayment?: (payment: Payment) => void;
+  /** The production of a component whose effect produces; the block is shown only then. */
+  production?: TurnProduction;
   onDone: () => void;
   onRemove: () => void;
 }
@@ -49,7 +69,7 @@ export interface TurnEditorProps {
  * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
  * in a part of their own, then what any turn holds; a pass has only that.
  */
-export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, production, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [manualPayment, setManualPayment] = useState(false);
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && entry.type === 'component' && entry.componentId === undefined);
@@ -63,12 +83,16 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
   const cost = played ? effectOf(pack, played.id)?.cost : undefined;
   const own = board ? playerState(board, entry.owner) : undefined;
   const payment: Payment = entry.type === 'component' && entry.payment ? entry.payment : { planets: [], tradeGoods: 0 };
+  const makes = entry.type === 'component' && played ? effectOf(pack, played.id)?.produces === true : false;
+  const made = entry.type === 'component' ? entry.effects?.production : undefined;
+  const producedPayment: Payment = entry.type === 'component' && entry.effects?.payment ? entry.effects.payment : { planets: [], tradeGoods: 0 };
   const placer = placeWarnings(warnings, entry);
   // The acts block shows its own; the rest stands first, where it cannot be missed.
   placer.at('deal');
   placer.at('slice');
   // What the component itself breaks stands with the component, under the rest.
   const ofComponent = placer.at('component');
+  const ofProduction = makes ? placer.at('production') : [];
   return (
     <EditorFrame title={t(`plan.menu.${entry.type}`)} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       <WarningList warnings={placer.rest()} game={game} pack={pack} />
@@ -89,6 +113,28 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
               onManual={open => { setManualPayment(open); if (!open) onPayment(autoPay(own, cost.amount, cost.kind, pack, { faction: game.faction })); }}
               onChange={onPayment}
             />
+          )}
+          {makes && production && own && (
+            <Section label={t('components.produce')} title={t('components.produce')} warnings={<WarningList warnings={ofProduction} game={game} pack={pack} />}>
+              {made
+                ? (
+                  <div className="source-row in-card">
+                    <button type="button" className="source-button" onClick={() => production.onOpenShop(made.systemId)}>
+                      {systemTitle(game, pack, made.systemId, t)}
+                      <small>{unitsText(made.units, t)}</small>
+                    </button>
+                    <HexRemove label={t('components.produceClear')} onClick={() => production.onChange(undefined)} />
+                  </div>
+                )
+                : <MapPickButton className="option" active={production.picking} onToggle={production.onPick}>{t('components.pickProduce')}</MapPickButton>}
+              {made && (
+                <PaymentBlock
+                  need={productionCost(made.units, game.faction, own, pack, entry)} payment={producedPayment} state={own} pack={pack} faction={game.faction}
+                  manual={production.manual} onManual={production.onManual}
+                  onChange={next => production.onChange({ ...entry.effects, payment: next })}
+                />
+              )}
+            </Section>
           )}
           <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />

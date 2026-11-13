@@ -515,6 +515,7 @@
       "freeTacticalOpen": "Tactical action without a token",
       "freeTacticalNote": "Opens the usual flight. Tokens can be rearranged before and after.",
       "homeProduction": "Production in the home system",
+      "mechInstead": "A mech and an infantry instead of a PDS",
       "shopNote": "Opens the shop on the big hex.",
       "noHome": "The home system is not on the map.",
       "upgrades": "Upgrades",
@@ -881,6 +882,9 @@
     "researched": "Researched",
     "played": "Component",
     "pickPlayed": "Choose the component",
+    "produce": "Production",
+    "pickProduce": "Choose a system to produce in",
+    "produceClear": "Clear the production",
     "alreadyHeld": "already held",
     "notHeld": "not held",
     "uses": {
