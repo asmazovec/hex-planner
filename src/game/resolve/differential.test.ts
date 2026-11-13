@@ -14,6 +14,9 @@ import { watchProjects } from '../../domain/replay';
 import { watchGames } from '../../domain/rules/kit';
 import { boardOf } from '../fromLegacy';
 import type { DataPack, Game } from '../../domain/types';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
+import { packOf, packBaseOf, fixtureOf, marksOf, type Case } from './oracle';
 import { compareGame, compareTimelines, whereDiffers, type Detail, type Exclusion, type Outcome } from './differential';
 
 const onlyIn = (detail: Detail, path: RegExp): boolean => {
@@ -50,13 +53,26 @@ function onGame(game: Game, pack: DataPack): void {
   if ((boardOf(game, pack).common.thundersEdge ?? null) !== game.expedition.thundersEdgeSystem) slotMismatch.push(label);
   const one = compareGame(game, pack, label);
   for (const outcome of one.outcomes) single.push({ outcome, detail: one.details.get(outcome) });
+  const item: Case = { expansions: game.expansions, ...(process.env.ORACLE_RECORD ? packBaseOf(pack) : { packExpansions: [], packDelta: {} }), game: process.env.ORACLE_RECORD ? (JSON.parse(JSON.stringify(game)) as Game) : game, runs: [] };
   for (const plan of game.plans) {
     for (const filter of ['forecast', 'now'] as const) {
       const all = compareTimelines(game, pack, `${label}/${plan.name}`, plan, filter);
       for (const outcome of all.outcomes) whole.push({ outcome, detail: all.details.get(outcome) });
+      if (process.env.ORACLE_RECORD) {
+        const flag = new Map(all.outcomes.map(o => [o.entry, o.agree && !o.excluded]));
+        item.runs.push({ plan: plan.id, filter, marks: marksOf(item.game, pack, item.game.plans.find(p => p.id === plan.id)!, filter, id => flag.get(id) === true) });
+      }
     }
   }
+  if (process.env.ORACLE_RECORD) {
+    // A test may give its pack an effect of its own through the registry (not data): such a game cannot be rebuilt from data, and is left out.
+    const rebuilt = packOf(item);
+    const same = (run: (typeof item.runs)[number]): boolean => JSON.stringify(marksOf(item.game, rebuilt, item.game.plans.find(p => p.id === run.plan)!, run.filter).map(m => m.slice(0, 3))) === JSON.stringify(run.marks.map(m => m.slice(0, 3)));
+    const again = item.runs.every(same);
+    if (again) recorded.push(item);
+  }
 }
+const recorded: Case[] = [];
 watchGames(onGame);
 watchProjects(onGame);
 
@@ -110,6 +126,12 @@ const byType = (results: Result[]): string => {
 };
 
 describe('what the two models agree on', () => {
+  test.runIf(process.env.ORACLE_RECORD)('record the oracle', () => {
+    const dir = 'src/game/resolve/__oracle__';
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(dir + '/corpus.json.gz', gzipSync(JSON.stringify(fixtureOf(recorded.filter(c => c.runs.length > 0)))));
+  });
+
   test('every entry, on a board rebuilt from the old frame before it, resolves to the old frame after it', () => {
     const { open, lines } = describeOpen(single);
     console.log(`differential, entry by entry: ${games} games, ${single.length} entries (${byType(single)}); ${single.filter(r => r.outcome.agree).length} agree, ${open.length} open`);
