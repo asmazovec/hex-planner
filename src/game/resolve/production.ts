@@ -13,7 +13,8 @@ import { pay, checkPay, shortOf } from './payment';
 
 const ids = (units: UnitCounts): (keyof UnitCounts)[] => (Object.keys(units) as (keyof UnitCounts)[]).filter(id => (units[id] ?? 0) > 0);
 
-function place(ctx: Ctx, target: string, units: UnitCounts, onPlanets?: Record<string, UnitCounts>): void {
+/** Puts built units where the rules place them. */
+export function place(ctx: Ctx, target: string, units: UnitCounts, onPlanets?: Record<string, UnitCounts>): void {
   const v = checkView(ctx);
   const events: GameEvent[] = placesOf(v.game, v.state, target, units, ctx.pack, onPlanets).map(({ unit, planetId, count }) => ({
     type: 'UnitsPlaced', player: ctx.player, at: planetId === null ? { slot: target } : { planet: planetId }, units: { [unit]: count },

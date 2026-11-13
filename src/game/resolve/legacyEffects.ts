@@ -139,3 +139,9 @@ export function waived(ctx: Ctx, warnings: Warning[], before: LegacyViews, after
   const prior = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, before);
   return waive(warnings, { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me }, earlier);
 }
+
+/** The components in force told that command tokens were spent from the strategy pool. */
+export const tokenSpent = (ctx: Ctx, count: number, card: number | undefined, secondary: boolean): void =>
+  viaLegacy(ctx, r => fire('onTokenSpent', {
+    game: r.game, state: r.state, shared: r.shared, pack: ctx.pack, warnings: r.warnings, player: legacyKey(ctx.table, ctx.player), states: r.states, entry: r.entry,
+  }, { count, card, secondary }));
