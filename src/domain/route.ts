@@ -88,12 +88,17 @@ export function tapStep(path: string[] | null, slot: string, active: string): { 
 export function tacticalNumbers(entries: Entry[]): Record<string, number> {
   const numbers: Record<string, number> = {};
   const counted = new Map<string | undefined, number>();
+  const count = (entry: Entry): void => {
+    const next = (counted.get(entry.owner) ?? 0) + 1;
+    counted.set(entry.owner, next);
+    numbers[entry.id] = next;
+  };
   for (const entry of entries) {
-    if (entry.type === 'tactical' && entry.status !== 'cancelled') {
-      const next = (counted.get(entry.owner) ?? 0) + 1;
-      counted.set(entry.owner, next);
-      numbers[entry.id] = next;
-    }
+    if (entry.status === 'cancelled') continue;
+    // The free action of a card is taken right after the card, wherever its entry is stored: it is counted there.
+    const free = entries.find(e => e.type === 'tactical' && e.fromCard === entry.id);
+    if (free) count(free);
+    if (entry.type === 'tactical' && !(entry.fromCard && entries.some(e => e.id === entry.fromCard))) count(entry);
   }
   return numbers;
 }

@@ -122,3 +122,11 @@ test('a tactical action taken from a strategy card has the status of its card', 
   // An action whose card is gone keeps its own status.
   expect(tacticalsOf([free]).map(e => e.status)).toEqual(['planned']);
 });
+
+// The replay takes the free action right after its card, wherever the entry is stored: the number follows the card's place.
+test('Warfare\'s free tactical action is numbered at the place of its card, not where its entry is stored', () => {
+  const card: Entry = { id: 'w', status: 'planned', phase: 'action', type: 'strategic', card: 6 };
+  const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
+  expect(tacticalNumbers([card, tacticalEntry('t'), free])).toEqual({ f: 1, t: 2 });
+  expect(tacticalNumbers([tacticalEntry('t'), free, card])).toEqual({ t: 1, f: 2 });
+});
