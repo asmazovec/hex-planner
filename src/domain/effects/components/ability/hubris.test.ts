@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { genericNotes, startForFaction } from '../../../holdings';
-import type { AnyWarningCode, Opponent } from '../../../types';
+import type { AnyWarningCode, Entry, Opponent } from '../../../types';
 import { bench, expectStanding, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './hubris';
 
@@ -47,6 +47,14 @@ describe('ability:hubris Hubris', () => {
   });
 
   // LRR 94.3: promissory notes can be exchanged in a transaction.
+  // Same card text. Checks: the gift written as the Sol player's own entry (they give, I am the Mahact player) is warned of too.
+  // Why the check is NOT redundant here: the receiver is the Mahact player whoever's entry the deal stands in.
+  test('ability:hubris the Alliance given to me in a rival\'s entry is warned of', () => {
+    const turn = { ...tactical(NEAR, { acts: [{ kind: 'transaction', with: 'me', give: { components: [`${ALLIANCE}@sol1`] }, get: {} }] }), owner: 'sol1' } as Entry;
+    const mahact = bench({ faction: 'mahact', expansions: ['pok'], entries: [turn], game: { opponents: [SOL], start: { me: {}, opponents: { sol1: { promissory: [`${ALLIANCE}@sol1`] } } } } });
+    expectStanding(warningsOf(mahact, turn), REFUSED);
+  });
+
   // Checks: the same gift to another faction is no breach.
   test('ability:hubris another faction may receive the Alliance', () => {
     const letnev = gift('letnev');

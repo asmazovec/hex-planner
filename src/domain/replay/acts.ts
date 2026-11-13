@@ -77,7 +77,8 @@ function dealt(
   const state = ctx.states[self];
   const other = ctx.states[partner];
   if (!shared || !state || !other) return;
-  const faction = playersOf(game).find(p => p.id === self)?.faction ?? game.faction;
+  // In an opponent's entry the game is seen through their eyes: `game.faction` is theirs and I am among its opponents under `me`.
+  const faction = self === (entry.owner ?? 'me') ? game.faction : playersOf(game).find(p => p.id === self)?.faction ?? game.faction;
   const asked = { faction };
   // A card is asked once however many copies of it are in play (my own Support for the Throne beside a received one).
   const forced = inForceOf(pack, holderOf(asked, state, shared));

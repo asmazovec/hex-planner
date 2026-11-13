@@ -4,7 +4,7 @@
  * another replay. A plan that changed is replayed from its first changed round; the rounds before it keep their frames.
  */
 import { choicesFor } from '../effects/choices';
-import { fire, type Moment } from '../effects/points/moments';
+import { fire, run, type Moment } from '../effects/points/moments';
 import { effectOf } from '../effects/registry';
 import { playedBy, waive } from '../effects/waivers';
 import { blockersOf, type Blockers } from '../movement';
@@ -211,6 +211,11 @@ export function timeline(game: Game, plan: Plan, filter: Filter, pack: DataPack,
         clearBoard(everyone);
         readyCards(everyone);
         fire('onStatusEnd', mine(), {});
+        // The promissory notes a rival holds end with the phase too (Share Knowledge lent to them), asked as that player's own.
+        for (const rival of game.opponents) {
+          const held = (rivals[rival.id]?.holdings.promissory ?? []).filter(note => effectOf(pack, note)?.onStatusEnd !== undefined && effectOf(pack, note)?.tier !== 'hint');
+          run('onStatusEnd', held, { ...mine(), game: gameAs(game, rival.id), state: rivals[rival.id], player: rival.id }, {});
+        }
         dirty = true;
       }
       statusDone = true;
