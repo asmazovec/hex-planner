@@ -10,7 +10,10 @@ import type { DataPack, Entry, Game, Plan, Round } from '../../domain/types';
 import { applyAll } from '../apply';
 import type { GameEvent } from '../events';
 import { normalState, normalWarnings } from '../compare';
-import { boardFromLegacy, legacyState, tableOf, turnOf } from '../fromLegacy';
+import { boardFromLegacy, boardOf, legacyState, tableOf, turnOf } from '../fromLegacy';
+import { placeIn } from '../../domain/rules/registry';
+import { statusEnd } from '../round';
+import { planOf, timeline as kernelTimeline } from '../timeline';
 import { resolveTurn } from './index';
 import { newTrack } from './track';
 
@@ -62,10 +65,13 @@ export function compareGame(game: Game, pack: DataPack, label = game.id, plan: P
       const resolution = resolveTurn(table, board, turnOf(table, entry, pack, linked), pack, { track });
       track = resolution.track;
       taken = Object.entries(resolution.board.common.expedition).map(([slice, player]) => ({ type: 'ExpeditionSliceTaken' as const, player, slice }));
+      // The status phase ends with its entry (81.4, 81.6); the timeline does it once, here it is done for the entry.
+      const ended = entry.type === 'statusTokens' ? statusEnd(table, resolution.board, pack) : undefined;
+      const finished = ended?.board ?? resolution.board;
       const oldState = normalState(frame.after);
-      const newState = normalState(legacyState(table, resolution.board, pack, table.viewer));
+      const newState = normalState(legacyState(table, finished, pack, table.viewer));
       const oldWarnings = normalWarnings([...frame.warnings, ...(linked ? frameOf.get(linked.id)?.warnings ?? [] : [])]);
-      const newWarnings = normalWarnings(resolution.steps.flatMap(s => s.violations));
+      const newWarnings = normalWarnings([...resolution.steps.flatMap(s => s.violations), ...placeIn(ended?.violations ?? [], entry.id)]);
       if (canon(oldState) !== canon(newState)) outcome.diffs.push('state');
       // The old replay lets a pool go below zero (20.4, 81.5); the kernel stops at zero, so a board rebuilt from such a frame starts higher.
       const negative = [frame.before, ...Object.values(frame.before.rivals ?? {})].some(st => st.tactic < 0 || st.fleet < 0 || st.strategy < 0);
@@ -93,3 +99,84 @@ export function whereDiffers(a: unknown, b: unknown, path = '', out: string[] = 
   } else out.push(`${path}: old ${JSON.stringify(a)} new ${JSON.stringify(b)}`);
   return out;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Whole plans: the kernel's timeline (the board flowing from turn to turn) against the old one, after every entry.
+
+/** What the old model keeps differently, so that a difference once seen there goes on through the rest of the plan. */
+type Taint = 'pools' | 'structures' | 'vp' | 'exhausted' | 'rivalGoods';
+const TAINTS: { taint: Taint; reason: string; matches: RegExp }[] = [
+  { taint: 'pools', reason: 'a pool below zero in the old replay (20.4, 81.5); the kernel stops at zero', matches: /^\.(tactic|fleet|strategy)$|^\.rivals\.[^.]+\.(tactic|fleet|strategy)$/ },
+  { taint: 'structures', reason: 'a structure on a planet no one controls stays in the old state; in the kernel a structure belongs to its planet\'s owner', matches: /^\.(pds|docks)\b|^\.rivals\.[^.]+\.(pds|docks)\b/ },
+  { taint: 'vp', reason: 'the old model keeps a rival\'s points twice (my opponentVp, its own vp) and a status entry moves only the first', matches: /^\.rivals\.[^.]+\.vp$|^\.opponentVp\b/ },
+  { taint: 'exhausted', reason: 'a technology the player does not hold stays in the old exhausted list; a board holds no card that is not there', matches: /^.(rivals.[^.]+.)?holdings.exhausted$/ },
+  { taint: 'rivalGoods', reason: 'round-start abilities of a rival fire in the kernel (the rules apply to every player); the old replay asked only the viewer', matches: /^.rivals.[^.]+.(tradeGoods|commodities)$/ },
+];
+
+const deleteWhere = (state: Record<string, unknown>, taints: Set<Taint>): Record<string, unknown> => {
+  const copy = JSON.parse(JSON.stringify(state)) as Record<string, Record<string, unknown>>;
+  const strip = (s: Record<string, unknown>, own: boolean): void => {
+    if (taints.has('pools')) for (const key of ['tactic', 'fleet', 'strategy']) delete s[key];
+    if (taints.has('structures')) { delete s.pds; delete s.docks; }
+    if (taints.has('vp') && own) delete s.vp;
+    if (taints.has('rivalGoods') && own) { delete s.tradeGoods; delete s.commodities; }
+    if (taints.has('exhausted')) delete (s.holdings as Record<string, unknown>).exhausted;
+  };
+  strip(copy, false);
+  if (taints.has('vp')) delete copy.opponentVp;
+  for (const rival of Object.values(copy.rivals ?? {})) strip(rival as unknown as Record<string, unknown>, true);
+  return copy;
+};
+
+/** Every path where two plain values differ. */
+function allDiffs(a: unknown, b: unknown, path = '', out: string[] = []): string[] {
+  if (canon(a) === canon(b)) return out;
+  if (a && b && typeof a === 'object' && typeof b === 'object' && !Array.isArray(a)) {
+    for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) allDiffs((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key], `${path}.${key}`, out);
+  } else out.push(path);
+  return out;
+}
+
+export function compareTimelines(game: Game, pack: DataPack, label: string, plan: Plan, filter: Filter): { outcomes: Outcome[]; details: Map<Outcome, Detail> } {
+  const outcomes: Outcome[] = [];
+  const details = new Map<Outcome, Detail>();
+  const table = tableOf(game);
+  const old = timeline(game, plan, filter, pack);
+  const line = kernelTimeline(table, pack, planOf(table, plan, pack), filter, { start: boardOf(game, pack) });
+  const entries = new Map<string, Entry>();
+  for (const round of plan.rounds) for (const entry of round.entries) entries.set(entry.id, entry);
+  const frameOf = new Map(old.frames.map(f => [f.entryId, f]));
+  const taints = new Set<Taint>();
+  for (const frame of old.frames) {
+    const entry = entries.get(frame.entryId);
+    if (!entry || !frame.applied) continue;
+    if (entry.type === 'tactical' && entry.fromCard && entries.has(entry.fromCard)) continue;
+    const outcome: Outcome = { game: `${label}/${filter}`, entry: entry.id, agree: true, type: entry.type, diffs: [] };
+    outcomes.push(outcome);
+    const kernel = line.byTurn.get(entry.id);
+    if (!kernel) { outcome.diffs.push('error'); outcome.detail = 'no frame'; outcome.agree = false; break; }
+    const linked = entry.type === 'strategic' ? [...entries.values()].find(e => e.type === 'tactical' && e.fromCard === entry.id) : undefined;
+    const oldState = normalState(frame.after);
+    const newState = normalState(legacyState(table, kernel.after, pack, table.viewer));
+    const oldWarnings = normalWarnings([...frame.warnings, ...(linked ? frameOf.get(linked.id)?.warnings ?? [] : [])]);
+    const newWarnings = normalWarnings(kernel.violations);
+    const paths = allDiffs(deleteWhere(oldState, taints), deleteWhere(newState, taints));
+    if (paths.length > 0) {
+      const set = paths.map(p => TAINTS.find(t => t.matches.test(p)));
+      if (set.every(Boolean)) { for (const t of set) taints.add(t!.taint); outcome.excluded = set[0]!.reason; }
+      else outcome.diffs.push('state');
+    }
+    if (JSON.stringify(oldWarnings) !== JSON.stringify(newWarnings) && !(taints.size > 0 && outcome.diffs.length === 0 && warningsOnlyOfTaint(oldWarnings, newWarnings))) outcome.diffs.push('warnings');
+    details.set(outcome, { oldState: deleteWhere(oldState, taints), newState: deleteWhere(newState, taints), oldWarnings, newWarnings });
+    outcome.agree = outcome.diffs.length === 0;
+    // What follows a difference is its consequence: the rest of the plan is not compared.
+    if (!outcome.agree) break;
+  }
+  return { outcomes, details };
+}
+
+/** After a taint the pool and shortfall warnings follow the pools the old model let go below zero. */
+const warningsOnlyOfTaint = (a: string[], b: string[]): boolean => {
+  const rest = (list: string[]): string[] => list.filter(w => !/^\["(poolNegative|shortStrategy|shortTactic|shortFleet)"/.test(w));
+  return JSON.stringify(rest(a)) === JSON.stringify(rest(b));
+};

@@ -105,7 +105,8 @@ export function cardsOfHoldings(h: Holdings, breakthrough?: ComponentId): Record
   for (const id of h.found) put(id, 'ready');
   for (const [id, leader] of Object.entries(h.leaders)) cards[id] = { state: leader === 'unlocked' ? 'ready' : leader, count: 1 };
   if (h.breakthrough && breakthrough) cards[breakthrough] = { state: h.breakthrough === 'exhausted' ? 'exhausted' : 'ready', count: 1 };
-  for (const id of h.exhausted) if (!cards[id]) cards[id] = { state: 'exhausted', count: 1 };
+  // A technology exhausted without being held (a component played that was not there) is nothing on a board: the warning stays, the card does not appear.
+  for (const id of h.exhausted) if (!cards[id] && !id.startsWith('technology:')) cards[id] = { state: 'exhausted', count: 1 };
   return cards;
 }
 
@@ -359,6 +360,7 @@ export function legacyEvents(table: Table, pack: DataPack, before: LegacyViews, 
           if (b.state === 'exhausted') out.push({ type: 'CardExhausted', player, card: real, ...c });
           else if (b.state === 'purged') out.push({ type: 'CardPurged', player, card: real, ...c });
           else if (a.state === 'locked') out.push({ type: 'CardUnlocked', player, card: real, ...c });
+          else if (b.state === 'inPlay') out.push({ type: 'ObjectiveScored', player, objective: real, ...c });
           else if (a.state === 'exhausted') out.push({ type: 'CardReadied', player, card: real, ...c });
         }
       }

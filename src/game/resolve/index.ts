@@ -6,8 +6,6 @@
  */
 import { hintsAt } from '../../domain/effects/registry';
 import { playedBy } from '../../domain/effects/waivers';
-import { readyCards } from '../../domain/replay/holdings';
-import { clearBoard } from '../../domain/replay/status';
 import { placeIn } from '../../domain/rules/registry';
 import type { Warning } from '../../domain/types';
 import type { Turn } from '../actions';
@@ -22,7 +20,7 @@ import { cloneTrack, newTrack, type RoundTrack } from './track';
 import { cardAction } from './strategic';
 import { componentAction, correctionAction, passAction, statusAction } from './others';
 import { claimStations, gainControl, landUnits, placeCarried, type Lost } from './invasion';
-import { controlLostHooks, momentsAfter, playNamed, turnActs, turnTail, viaLegacy, waived } from './legacyEffects';
+import { controlLostHooks, momentsAfter, playNamed, turnActs, turnTail, waived } from './legacyEffects';
 import { movement } from './movement';
 import { payProduction, produce } from './production';
 import { afterFlights, arrival, finalCheck, removeFleetExcess } from './transport';
@@ -84,15 +82,6 @@ function tacticalAction(ctx: Ctx, target: string): Lost {
   return landed.lost;
 }
 
-/** The status phase ends with its entry (81.4, 81.6): the command tokens leave the board and every exhausted planet and card is readied. */
-function finishStatus(ctx: Ctx): void {
-  begin(ctx, 'round');
-  viaLegacy(ctx, r => {
-    clearBoard(Object.values(r.states));
-    readyCards(Object.values(r.states));
-  });
-}
-
 /** Resolves a turn: the events it brings, the violations it finds, per step, and the board after it. */
 export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPack, options: ResolveOptions = {}): Resolution {
   const action = turn.action;
@@ -135,7 +124,6 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   // A rival's landing takes planets of the viewer's: what the viewer's components hooked on the loss are asked, once the turn is over.
   begin(ctx, 'invasion');
   controlLostHooks(ctx, lost.planets, lost.hooked);
-  if (action.kind === 'status') finishStatus(ctx);
   const after = legacyViews(table, ctx.board, pack);
   placeIn(ctx.warnings, turn.id);
   waived(ctx, ctx.warnings, before, after, ctx.track.plays[turn.player]);

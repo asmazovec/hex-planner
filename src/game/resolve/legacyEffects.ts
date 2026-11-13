@@ -43,10 +43,17 @@ export function viaLegacy(ctx: Ctx, effect: (r: Run) => void): void {
   const before = legacyViews(ctx.table, ctx.board, ctx.pack);
   const work = legacyViews(ctx.table, ctx.board, ctx.pack);
   const v = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, work);
-  const warnings: Warning[] = [];
+  // An effect may take back a warning an earlier step gave (Doctor Sucaban lowers a cost already checked): it is given the turn's list.
+  const known = [...ctx.warnings];
+  const warnings: Warning[] = [...known];
   effect({ game: v.game, state: v.state, shared: v.shared, states: work.states, entry: ctx.entry, warnings });
   emitChanges(ctx, before, work);
-  warn(ctx, warnings);
+  const gone = known.filter(w => !warnings.includes(w));
+  if (gone.length > 0) {
+    ctx.warnings = ctx.warnings.filter(w => !gone.includes(w));
+    for (const step of ctx.steps) step.violations = step.violations.filter(w => !gone.includes(w));
+  }
+  warn(ctx, warnings.filter(w => !known.includes(w)));
 }
 
 /** Whatever answers the activation: every player's components in force, then those the entry names for it. */

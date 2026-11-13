@@ -25,7 +25,14 @@ const ownerOf = (plan: Plan, entryId: string): string | undefined =>
 /** The board as its owner's entry sees it: the opponent's own state for an opponent's entry. */
 const seenBy = (board: GameState, owner: string | undefined): GameState => (owner && board.rivals?.[owner]) || board;
 
-export const project = (game: Game, plan: Plan, filter: Filter, pack: DataPack): Projection => projectionOf(timeline(game, plan, filter, pack));
+/** Test hook: told of every game a plan of which is projected (the differential test of the game kernel registers one). Nothing watches in an ordinary run. */
+let projectWatcher: ((game: Game, pack: DataPack) => void) | undefined;
+export const watchProjects = (next: typeof projectWatcher): void => { projectWatcher = next; };
+
+export const project = (game: Game, plan: Plan, filter: Filter, pack: DataPack): Projection => {
+  projectWatcher?.(game, pack);
+  return projectionOf(timeline(game, plan, filter, pack));
+};
 
 export const projectionOf = (line: Timeline): Projection => ({ state: line.end, warningsByEntry: warningsOf(line) });
 

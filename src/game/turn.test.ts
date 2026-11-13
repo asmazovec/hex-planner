@@ -1,6 +1,7 @@
 /** The tactical entry of the old plan as a turn, and back. */
 import { describe, expect, test } from 'vitest';
 import { FAR, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../domain/rules/kit';
+import type { Entry } from '../domain/types';
 import { legacyEntry, legacyPlayer, playerOfLegacy, tableOf, turnOf } from './fromLegacy';
 
 const pack = rulesPack();
@@ -37,7 +38,9 @@ describe('turnOf', () => {
     expect(legacyPlayer(table, turn.player)).toBe('o1');
   });
 
-  test('only a tactical entry becomes a turn here', () => {
-    expect(() => turnOf(table, { id: 'x', phase: 'action', status: 'planned', type: 'pass' }, pack)).toThrow();
+  test('every kind of entry becomes a turn and comes back as the entry it was', () => {
+    const pass: Entry = { id: 'x', phase: 'action', status: 'planned', type: 'pass' };
+    expect(turnOf(table, pass, pack).action).toEqual({ kind: 'pass' });
+    expect(legacyEntry(table, turnOf(table, pass, pack))).toMatchObject({ type: 'pass', phase: 'action' });
   });
 });

@@ -100,10 +100,10 @@ describe('a tactical turn on the kernel', () => {
     expect(r.steps.find(s => s.step === 'movement')!.events[0]).toMatchObject({ type: 'UnitsMoved', from: { slot: HOME }, to: { slot: TARGET } });
   });
 
-  test('an action that is not tactical is not resolved yet', () => {
+  test('a pass has no tactical step: it records the pass', () => {
     const board = boardWith([]);
     const turn = { ...turnOf(table, tactical(TARGET), pack), action: { kind: 'pass' as const } };
-    expect(() => resolveTurn(table, board, turn, pack)).toThrow(/not resolved yet/);
+    expect(resolveTurn(table, board, turn, pack).board.players[me].passed).toBe(true);
   });
 
   test('the rival\'s turn is resolved for the rival', () => {
