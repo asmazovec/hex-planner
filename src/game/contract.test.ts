@@ -102,3 +102,23 @@ describe('every event is handled', () => {
     expect(text).toMatch(/const never: never = event/);
   });
 });
+
+describe('abilities', () => {
+  const abilityFiles = import.meta.glob<string>(['../domain/effects/components/*/*.ts', '!../domain/effects/components/*/*.test.ts'], { query: '?raw', import: 'default', eager: true });
+  const native = Object.entries(abilityFiles).filter(([, text]) => /export const ability: Ability\b/.test(text));
+  const old = /\b(GameState|Holdings|Entry|Game|EffectTurn|WaiverContext)\b/;
+
+  test('a component written for the kernel declares whose action it speaks in and imports nothing of the old state', () => {
+    expect(native.length).toBeGreaterThan(300);
+    for (const [path, text] of native) {
+      expect(text, `${path} declares a holder`).toMatch(/holder: '(self|others|anyone)'/);
+      const imported = [...text.matchAll(/import (?:type )?\{([^}]*)\} from/g)].flatMap(m => m[1].split(',').map(s => s.trim()));
+      expect(imported.filter(name => old.test(name)), `${path} imports the old state`).toEqual([]);
+    }
+  });
+
+  test('the native registry builds nothing of the old per-player state', () => {
+    const text = (import.meta.glob<string>('./abilities/registry.ts', { query: '?raw', import: 'default', eager: true }))['./abilities/registry.ts'];
+    expect(text).not.toMatch(/legacyViews\b|viewFor|legacyState|checkView/);
+  });
+});

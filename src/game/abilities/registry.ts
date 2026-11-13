@@ -8,12 +8,11 @@ import { componentById, noteAddress } from '../../domain/components';
 import { stacked, type Applied } from '../../domain/effects/apply';
 import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf, inForceOf, orderOf, passivesOf, readyComponents, type Holder } from '../../domain/effects/registry';
-import type { ModifierContext, Modifiers } from '../../domain/effects/types';
+import type { ComponentEffect, ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { ComponentDef, Holdings, RuleStep } from '../../domain/types';
-import { holdingsOfCards, legacyKey } from '../legacyViews';
+import { holdingsOfCards, legacyKey } from '../keys';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 
-const holdingsIn = (board: Board, player: PlayerId): Holdings => holdingsOfCards(board.players[player]?.cards ?? {});
 
 /** The holder a player is, read from the board: their cards and faction, the planets they control, the laws that bind them. */
 export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
@@ -23,8 +22,8 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   const laws = board.common.laws.filter(law => law.elected === undefined || law.elected === player).map(law => law.id);
   // An Alliance note lends its owner's commander: every player's holdings, under their id and under the key notes are addressed by.
   const others: Record<string, Holdings> = {};
-  for (const p of table.players) others[legacyKey(table, p.id)] = others[p.id] = holdingsIn(board, p.id);
-  return { holdings: holdingsIn(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
+  for (const p of table.players) others[legacyKey(table, p.id)] = others[p.id] = holdingsOf(board, p.id);
+  return { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
 }
 
 /** The components in force for a player without being played, in registry order. */
@@ -82,3 +81,24 @@ export function hintsAtSteps(table: Table, board: Board, pack: DataPack, actor: 
   }));
 }
 
+
+const HOLDINGS = new WeakMap<object, Holdings>();
+const holdingsOf = (board: Board, player: PlayerId): Holdings => {
+  const cards = board.players[player]?.cards ?? {};
+  let known = HOLDINGS.get(cards);
+  if (!known) HOLDINGS.set(cards, known = holdingsOfCards(cards));
+  return known;
+};
+
+/**
+ * Whether any component in force for any player has an effect `has` says yes to, or one of the `named` components (the
+ * ones an entry plays) has. The one question a step asks before it asks the components anything: where nothing answers,
+ * nothing is built to ask.
+ */
+export function anyInForce(table: Table, board: Board, pack: DataPack, has: (effect: ComponentEffect) => boolean, named: readonly string[] = []): boolean {
+  if (named.some(id => { const effect = effectOf(pack, id); return effect !== undefined && has(effect); })) return true;
+  for (const player of table.players) {
+    if (inForceOf(pack, holderIn(table, board, player.id), has).length > 0) return true;
+  }
+  return false;
+}

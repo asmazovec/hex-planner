@@ -17,6 +17,7 @@ import { reactToLanding, runControlHooks } from '../../domain/replay/invasion';
 import type { Entry, Game, GameState, Goods, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, viewFor, type LegacyViews } from '../legacyViews';
+import { anyInForce } from '../abilities/registry';
 import { ACQUIESCENCE } from './natives';
 import { emit, warn, type Ctx } from './context';
 import { cardRoundOf, keepRound } from './track';
@@ -74,22 +75,26 @@ export function viaLegacy(ctx: Ctx, effect: (r: Run) => void): void {
   warn(ctx, warnings.filter(w => !known.includes(w)));
 }
 
+/** Whether anything answers: a component in force with the hook, or one the entry names. The old state is built only if so. */
+const answers = (ctx: Ctx, has: Parameters<typeof anyInForce>[3], named: readonly string[] = playedBy(ctx.entry)): boolean => anyInForce(ctx.table, ctx.board, ctx.pack, has, named);
+
 /** Whatever answers the activation: every player's components in force, then those the entry names for it. */
 export const reactActivation = (ctx: Ctx, target: string): void =>
-  viaLegacy(ctx, r => reactToActivation(r.game, r.state, r.shared, r.entry as Tactic, target, ctx.pack, r.warnings));
+  !answers(ctx, e => e.onActivate !== undefined || e.playAt === 'activation') ? undefined : viaLegacy(ctx, r => reactToActivation(r.game, r.state, r.shared, r.entry as Tactic, target, ctx.pack, r.warnings));
 
 export const reactLanding = (ctx: Ctx, planetId: string, landed: number): void =>
-  viaLegacy(ctx, r => reactToLanding(r.game, r.state, r.shared, r.entry as Tactic, planetId, landed, ctx.pack, r.warnings));
+  !answers(ctx, e => e.onLanding !== undefined, []) ? undefined : viaLegacy(ctx, r => reactToLanding(r.game, r.state, r.shared, r.entry as Tactic, planetId, landed, ctx.pack, r.warnings));
 
 /** What a component the entry names plays at a step of the action (Salvage, once the losses are taken). */
 export const playNamed = (ctx: Ctx, at: 'activation' | 'combat'): void =>
-  viaLegacy(ctx, r => playNamedAt(at, r.game, r.state, r.shared, r.entry as Tactic, ctx.pack, r.warnings));
+  !playedBy(ctx.entry).some(id => effectOf(ctx.pack, id)?.playAt === at) ? undefined : viaLegacy(ctx, r => playNamedAt(at, r.game, r.state, r.shared, r.entry as Tactic, ctx.pack, r.warnings));
 
 /** The components in force told of what the action produced and destroyed. */
 export function momentsAfter(
   ctx: Ctx, produced: { units: UnitCounts; systemId: string } | null, losses: { unit: string; count: number; planetId?: string; systemId?: string }[],
 ): void {
   if (!produced && losses.length === 0) return;
+  if (!answers(ctx, e => e.onProduced !== undefined || e.onDestroyed !== undefined, [])) return;
   viaLegacy(ctx, r => {
     const at = { game: r.game, state: r.state, shared: r.shared, pack: ctx.pack, warnings: r.warnings, entry: r.entry, player: legacyKey(ctx.table, ctx.player) };
     if (produced) fire('onProduced', at, produced);
@@ -101,7 +106,7 @@ export type LostStructures = { kind: 'pds' | 'spacedock'; owner: string; count: 
 
 /** The components hooked on a planet gained, once it is the player's; the trade goods it brings are the step's own. */
 export const controlHooks = (ctx: Ctx, planetId: string, fromPlayer: boolean, lost: LostStructures): void =>
-  viaLegacy(ctx, r => runControlHooks(r.game, r.state, planetId, ctx.pack, r.warnings, r.entry, fromPlayer, lost));
+  !answers(ctx, e => e.onGainControl !== undefined) ? undefined : viaLegacy(ctx, r => runControlHooks(r.game, r.state, planetId, ctx.pack, r.warnings, r.entry, fromPlayer, lost));
 
 /** Which components of the viewer's are hooked on losing a planet, asked before it goes. */
 export function controlLostBefore(ctx: Ctx): string[] {
@@ -141,6 +146,9 @@ export function playHooks(ctx: Ctx): void {
 
 /** The hooks of the components the entry gained or lost, and the checks the components in force add after it. */
 export function gainHooks(ctx: Ctx): void {
+  const { entry } = ctx;
+  const touched = (entry.gains?.length ?? 0) > 0 || (entry.spends?.length ?? 0) > 0 || Object.values(ctx.board.planets).some(p => p.attached.length > 0);
+  if (!touched && !answers(ctx, e => e.restrict !== undefined, [])) return;
   viaLegacy(ctx, r => {
     const cards = cardRoundOf(ctx.table, ctx.track, r.states);
     afterEntryHooks({ game: r.game, state: r.state, shared: r.shared, entry: ctx.entry, pack: ctx.pack, cards, warnings: r.warnings, states: r.states });
@@ -152,6 +160,7 @@ export function gainHooks(ctx: Ctx): void {
  * (commodities that arrived are trade goods of the receiver). Each side is seen with its own faction and holder.
  */
 export function dealtHooks(ctx: Ctx, side: 'give' | 'get', self: string, partner: string, gave: Goods, got: Goods): void {
+  if (!answers(ctx, e => e.dealt !== undefined, [])) return;
   viaLegacy(ctx, r => {
     const shared = r.states.me;
     const state = r.states[self];
@@ -173,7 +182,7 @@ export function dealtHooks(ctx: Ctx, side: 'give' | 'get', self: string, partner
 
 /** The `gained` hook of a component the player has just been given (a breakthrough from an expedition). */
 export const gainedHook = (ctx: Ctx, id: string): void =>
-  viaLegacy(ctx, r => effectOf(ctx.pack, id)?.gained?.({
+  effectOf(ctx.pack, id)?.gained === undefined ? undefined : viaLegacy(ctx, r => effectOf(ctx.pack, id)?.gained?.({
     game: r.game, state: r.state, shared: r.shared, entry: r.entry, id, player: ctx.entry.owner ?? 'me', states: r.states, choices: {}, held: true, pack: ctx.pack, warnings: r.warnings,
   }));
 
@@ -186,6 +195,6 @@ export function waived(ctx: Ctx, warnings: Warning[], before: LegacyViews, after
 
 /** The components in force told that command tokens were spent from the strategy pool. */
 export const tokenSpent = (ctx: Ctx, count: number, card: number | undefined, secondary: boolean): void =>
-  viaLegacy(ctx, r => fire('onTokenSpent', {
+  !answers(ctx, e => e.onTokenSpent !== undefined, []) ? undefined : viaLegacy(ctx, r => fire('onTokenSpent', {
     game: r.game, state: r.state, shared: r.shared, pack: ctx.pack, warnings: r.warnings, player: legacyKey(ctx.table, ctx.player), states: r.states, entry: r.entry,
   }, { count, card, secondary }));

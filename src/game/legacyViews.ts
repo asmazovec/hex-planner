@@ -7,24 +7,20 @@
 import { componentById, noteAddress } from '../domain/components';
 import { gameAs } from '../domain/players';
 import { breakthroughOf } from '../domain/effects/breakthrough';
-import { emptyHoldings } from '../domain/holdings';
+
 import type {
   DataPack, Game, GameState, Holdings, StructureCounts, UnitCounts,
 } from '../domain/types';
 import { SAVE_FORMAT } from '../domain/types';
 import { emptyBoard } from './board';
+import { holdingsOfCards, kindOf, legacyKey, playerOfKey } from './keys';
+
+export { holdingsOfCards, legacyKey, playerOfKey };
 import type { Cause, GameEvent, Place } from './events';
 import type { Board, CardHold, ComponentId, PlayerId, Table } from './types';
 
 /** The game a table came from, kept for the fields the table and board have no place for yet (ingress, the Thunder's Edge system). */
 export const SOURCES = new WeakMap<Table, Game>();
-
-/** The id the old model gives a player: `me` for the viewer, the opponent's own id for the rest. */
-export const legacyKey = (table: Table, player: PlayerId): string =>
-  player === table.viewer ? 'me' : table.players.find(p => p.id === player)?.legacyId ?? player;
-
-export const playerOfKey = (table: Table, key: string): PlayerId | undefined =>
-  key === 'me' ? table.viewer : table.players.find(p => (p.legacyId ?? p.id) === key)?.id;
 
 const EMPTY_FRACTURE = { active: false, ingress: [] as string[], seat: null as number | null };
 const fractures = new WeakMap<object, Game['fracture']>();
@@ -61,32 +57,6 @@ export function legacyGame(table: Table, board: Board): Game {
     expedition: { slices, thundersEdgeSystem: board.common.thundersEdge ?? source?.expedition.thundersEdgeSystem ?? null }, fracture,
     plans: [], activePlanId: '',
   };
-}
-
-const kindOf = (id: ComponentId): string => id.slice(0, id.indexOf(':'));
-
-/** What a player's cards are as the old `Holdings`. */
-export function holdingsOfCards(cards: Record<ComponentId, CardHold>): Holdings {
-  const h = emptyHoldings();
-  for (const [id, hold] of Object.entries(cards)) {
-    const exhausted = hold.state === 'exhausted';
-    switch (kindOf(id)) {
-      case 'technology': h.technologies.push(id); break;
-      case 'actionCard': for (let i = 0; i < hold.count; i += 1) h.hand.push(id); break;
-      case 'relic': h.relics.push(id); break;
-      case 'promissory': h.promissory.push(id); if (hold.state === 'inPlay') (h.inPlay ??= []).push(id); break;
-      case 'secretObjective': (hold.state === 'inPlay' ? h.scored : h.secrets).push(id); break;
-      case 'publicObjective': h.scored.push(id); break;
-      case 'exploration': for (let i = 0; i < hold.count; i += 1) h.found.push(id); break;
-      case 'leader':
-        if (hold.state !== 'locked') h.leaders[id] = hold.state === 'exhausted' ? 'exhausted' : hold.state === 'purged' ? 'purged' : 'unlocked';
-        break;
-      case 'breakthrough': h.breakthrough = exhausted ? 'exhausted' : 'held'; break;
-      default: break;
-    }
-    if (exhausted && kindOf(id) !== 'leader' && kindOf(id) !== 'breakthrough') h.exhausted.push(id);
-  }
-  return h;
 }
 
 /** The cards a `Holdings` is: the inverse of `holdingsOfCards`. */
