@@ -57,5 +57,20 @@ describe('promissory:dark_pact Dark Pact', () => {
     expectStanding(warningsOf(table, play), 'ownPromissory');
   });
 
+  // Same card text. Checks: the Empyrean player (me) takes Sol's whole commodity value in my own entry: the deal is the
+  // same as the one written as Sol's entry, so each of us gains the 1 trade good (the 4 commodities arrive as trade goods, 21.5).
+  // Why the side of the entry is not the side of the card: the holder gives in both writings.
+  test('promissory:dark_pact commodities taken from the holder in my own entry gain each of us 1 trade good', () => {
+    const SOL: Opponent = { id: 'sol', faction: 'sol', vp: 0, seat: 2, color: 2 };
+    const take = tactical(NEAR, { acts: [{ kind: 'transaction', with: 'sol', give: {}, get: { commodities: 4 } }] });
+    const table = bench({
+      faction: 'empyrean', expansions: ['pok'], entries: [{ ...secondary(5), owner: 'sol' }, take],
+      game: { opponents: [SOL], start: { me: {}, opponents: { sol: { promissory: [`${id}@me`] } } } },
+    });
+    const end = endOf(table);
+    expect(end.tradeGoods).toBe(5);
+    expect(end.rivals?.sol.tradeGoods).toBe(1);
+  });
+
   test.todo('promissory:dark_pact has no effect while in hand and goes back on activating a system with Empyrean units: the holdings do not tell a note played face up from one in hand');
 });

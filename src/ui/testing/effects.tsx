@@ -13,7 +13,7 @@ import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { afterEach, beforeEach, expect } from 'vitest';
 import type { Bench } from '../../domain/effects/components/kit';
-import { project, stateBeforeEntry } from '../../domain/project';
+import { boardBeforeEntry, project, stateBeforeEntry } from '../../domain/project';
 import type { AnyWarningCode, DataPack, Entry, EntryBody, Game, GameState, Warning } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -104,7 +104,7 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
 export function showUses(bench: Bench, entry: Entry): Live {
   return live(bench, entry, ({ game, pack, entry: shown, before, warnings, update }) => (
     <>
-      <UsesBlock entry={shown} game={game} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <UsesBlock entry={shown} game={game} pack={pack} before={before} shared={boardBeforeEntry(game, game.plans[0], shown.id, pack)} onChange={patch => update(patch as Partial<EntryBody>)} />
       <WarningList warnings={warnings} game={game} pack={pack} />
     </>
   ));

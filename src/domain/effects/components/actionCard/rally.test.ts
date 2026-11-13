@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { Entry } from '../../../types';
-import { bench, effect, endOf, expectStanding, HOME, NEAR, quote, tactical, using, warningsOf } from '../kit';
+import { bench, componentAction, effect, endOf, expectStanding, HOME, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './rally';
 
 /** `count` cruisers fly from home into the near system, where an opponent's destroyer stands. */
@@ -55,6 +55,14 @@ describe('actionCard:rally Rally', () => {
   // Why the check is NOT redundant here: no card, no tokens.
   test('actionCard:rally not played, the fleet pool stays at 3', () => {
     expect(endOf(table(move(1), 1)).fleet).toBe(3);
+  });
+
+  // Rally: "After you activate a system ..." (an activation happens only in a tactical action).
+  // Checks: the card discarded as the cost of a component action (Nanomachines: discard 1 action card to draw 1) is not played: no tokens.
+  // Why the check is NOT redundant here: discarding is not playing; the playthroughs found +2 fleet tokens.
+  test('actionCard:rally discarded outside a tactical action gives no tokens', () => {
+    const entry = { ...componentAction('ability:nanomachines'), spends: [id] } as Entry;
+    expect(endOf(table(entry, 1)).fleet).toBe(3);
   });
 
   test.todo('actionCard:rally played on a system with no other player\'s ships is warned of: the replay checks no window of an action card yet');

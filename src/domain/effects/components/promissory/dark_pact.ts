@@ -19,7 +19,8 @@ export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
   dealt: turn => {
-    if (turn.side !== 'give' || turn.self === turn.partner) return;
+    // `side` is the side of the entry, not of the card: the holder gives in an entry of its own and in one of mine.
+    if (turn.self === turn.partner) return;
     if (!turn.state.holdings.promissory.includes(`${id}@${turn.partner}`)) return;
     const gave = turn.gave.commodities ?? 0;
     if (gave <= 0 || gave < turn.commodityValue) return;
