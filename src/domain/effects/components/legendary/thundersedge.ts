@@ -12,6 +12,9 @@
 import { componentById } from '../../../components';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { card } from '../../../../game/abilities/emit';
+import { breakthroughOf } from '../../breakthrough';
 
 export const id = 'legendary:thundersedge';
 const planet = 'thundersedge';
@@ -19,11 +22,18 @@ const planet = 'thundersedge';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  onGainControl: turn => {
-    if (turn.planetId !== planet || turn.state.holdings.breakthrough !== undefined) return;
-    turn.state.holdings.breakthrough = 'held';
-  },
   play: turn => {
     if (turn.state.control[planet] !== 'me') turn.warnings.push(violation('componentNotHeld', { id, name: componentById(turn.pack, id)?.name ?? id }));
+  },
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onGainControl: (ctx, got) => {
+      const breakthrough = breakthroughOf(ctx.pack, ctx.my.faction);
+      return got.planetId !== planet || breakthrough === undefined || ctx.my.holds(breakthrough) ? undefined : [card.gain(ctx.holder, breakthrough)];
+    },
   },
 };

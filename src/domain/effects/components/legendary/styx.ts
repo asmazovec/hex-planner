@@ -19,15 +19,13 @@ export const id = 'legendary:styx';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  onGainControl: turn => {
-    if (turn.planetId === 'styx') turn.state.vp += 1;
-  },
 };
 
 /** Losing the planet is a hook of the kernel; gaining it (`onGainControl`) is still written for the old state. */
 export const ability: Hooked = {
   holder: 'anyone',
   on: {
+    onGainControl: (ctx, got) => (got.planetId === 'styx' ? [gain.points(ctx.holder, 1)] : undefined),
     onControlLost: (ctx, lost) => (lost.planetId === 'styx' ? [gain.points(ctx.holder, -1)] : undefined),
   },
 };

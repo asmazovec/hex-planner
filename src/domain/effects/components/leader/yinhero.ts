@@ -35,7 +35,7 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [slot('planet', 1), slot('planet2', 2, 'planet'), slot('planet3', 3, 'planet2')],
-  play: ({ game, state, player, pack, choices, entry, warnings, held }) => {
+  play: ({ game, state, player, pack, choices, held }) => {
     if (!held) return;
     const committed: Record<string, number> = {};
     for (const [key, value] of Object.entries(choices)) {
@@ -48,7 +48,7 @@ export const effect: ComponentEffect = {
       // Taken only where nobody else stands: the outcome of a ground combat is entered by the player.
       const defended = state.control[planetId] === 'enemy'
         || othersOnPlanet(game, state, planetId).some(other => other.owner !== player);
-      if (!defended) takeControl(game, state, planetId, pack, warnings, entry);
+      if (!defended) takeControl(game, state, planetId, pack);
     }
   },
 };

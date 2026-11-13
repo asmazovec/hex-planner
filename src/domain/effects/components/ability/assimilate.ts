@@ -11,16 +11,20 @@
  * Reinforcement limits are not counted by the replay.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { keepStructures } from '../../helpers/structures';
 
 export const id = 'ability:assimilate';
 
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  onGainControl: ({ state, planetId, lost }) => {
-    for (const { kind, count } of lost) {
-      if (kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + count;
-      else if (!state.docks.includes(planetId)) state.docks.push(planetId);
-    }
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onGainControl: (ctx, got) => keepStructures(ctx, got.planetId, got.lost),
   },
 };

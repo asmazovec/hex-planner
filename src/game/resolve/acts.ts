@@ -2,7 +2,7 @@
  * The acts of a turn, after its action: the transactions with neighbours in order (LRR 94), then the expedition at the
  * end of the turn (Thunder's Edge, expedition 2). Nothing is forbidden; what breaks a rule warns. What changes hands is
  * an event (`GoodsTransferred`, a card lost and gained); only what the components in force answer to a settled deal
- * (the `dealt` hook) and to a card gained (`gainedHook`) is asked of the adapter.
+ * (the `dealt` hook) and to a card gained (the `gained` hook) is asked of the adapter.
  */
 import { componentById } from '../../domain/components';
 import { breakthroughOf } from '../../domain/effects/breakthrough';
@@ -17,7 +17,6 @@ import type { PlayerId } from '../types';
 import { begin, checkView, emit, warn, type Ctx } from './context';
 import { gain, lose } from './holdings';
 import { hook } from './hooks';
-import { gainedHook } from './legacyEffects';
 import { checkedPay, shortOf } from './payment';
 
 const actsOf = (ctx: Ctx): Act[] => ('acts' in ctx.entry && Array.isArray(ctx.entry.acts) ? ctx.entry.acts : []);
@@ -123,6 +122,6 @@ export function turnActs(ctx: Ctx): void {
     const id = breakthroughOf(ctx.pack, faction);
     if (id === undefined || ctx.board.players[ctx.player]?.cards[id] !== undefined) return;
     emit(ctx, [{ type: 'CardGained', player: ctx.player, card: id }], { quiet: true });
-    gainedHook(ctx, id);
+    hook(ctx, 'gained', [ctx.player], {}, { only: [id] });
   });
 }

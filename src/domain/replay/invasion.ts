@@ -3,18 +3,16 @@ import '../effects/points/invasion';
 import '../effects/points/rivals';
 import { applied } from '../effects/apply';
 import { hooked, run } from '../effects/points/moments';
-import type { ControlTurn } from '../effects/points/invasion';
-import { effectOf, holderOf, inForceOf, orderOf } from '../effects/registry';
-import { playedBy } from '../effects/waivers';
+import { effectOf, holderOf, inForceOf } from '../effects/registry';
 import { CUSTODIANS_COST, MECATOL_PLANETS } from '../mecatol';
 import { violation } from '../rules/registry';
 import { gameAs } from '../players';
 import { inHomeSystem } from '../stacks';
-import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, UnitCounts, Warning } from '../types';
+import type { AnyWarningCode, DataPack, Game, GameState, RuleStep, UnitCounts, Warning } from '../types';
 import { planetsOf } from './board';
 import { add, missingUnits, removeUnits, unitIds, type TacticalEntry } from './state';
 import { applyPayment, checkPayment } from './payment';
-import { losePlanet, structuresOn } from './structures';
+import { losePlanet } from './structures';
 
 const code = (name: string): AnyWarningCode => name as AnyWarningCode;
 
@@ -96,9 +94,6 @@ export function landUnits(game: Game, state: GameState, target: string, entry: T
   return landedOn;
 }
 
-/** The ids of the components an entry names: what it plays, spends, uses and gains. */
-const namedBy = (entry: Entry | undefined): string[] => (entry ? [...playedBy(entry), ...(entry.gains ?? [])] : []);
-
 /**
  * Effect: the player of `state` gains control of one planet (25.1, 49.5): it is theirs and, newly gained, exhausted
  * (49.5.2); every opponent counted in this state loses it with their structures there (49.5.1). Then each component
@@ -106,52 +101,28 @@ const namedBy = (entry: Entry | undefined): string[] => (entry ? [...playedBy(en
  * trade goods the point `tradeGoodsOnControl` asks are added. A planet already theirs changes nothing; returns whether
  * it was newly gained. Used by the landing and by every component that gives a planet.
  */
-export function takeControl(game: Game, state: GameState, planetId: string, pack: DataPack, warnings: Warning[], entry?: Entry): boolean {
+export function takeControl(game: Game, state: GameState, planetId: string, pack: DataPack): boolean {
   if (state.control[planetId] === 'me') return false;
-  const fromPlayer = state.control[planetId] === 'enemy';
-  const lost = structuresOn(state, planetId).filter(s => s.owner !== 'me');
   if (!state.exhausted.includes(planetId)) state.exhausted.push(planetId);
   state.control[planetId] = 'me';
   for (const rival of Object.values(state.rivals ?? {})) losePlanet(rival, planetId);
   if (state.rivalHolds) delete state.rivalHolds[planetId];
-  afterControl(game, state, planetId, pack, warnings, entry, fromPlayer, lost);
+  afterControl(game, state, planetId, pack);
   return true;
 }
 
 /**
- * What follows a planet changing hands to the player of `state`, whose control of it is set already: each component
- * hooked on the gain runs, and the trade goods `tradeGoodsOnControl` asks are added. `lost` are the structures of the
- * others that stood on it. The game kernel (src/game) calls this after it has changed hands itself.
+ * What follows a planet changing hands to the player of `state`, whose control of it is set already: the trade goods
+ * `tradeGoodsOnControl` asks are added. The components hooked on the gain (`onGainControl`) run on the kernel's runner.
  */
-export function afterControl(
-  game: Game, state: GameState, planetId: string, pack: DataPack, warnings: Warning[], entry: Entry | undefined,
-  fromPlayer: boolean, lost: ControlTurn['lost'],
-): void {
-  runControlHooks(game, state, planetId, pack, warnings, entry, fromPlayer, lost);
+export function afterControl(game: Game, state: GameState, planetId: string, pack: DataPack): void {
   state.tradeGoods += applied(pack, holderOf(game, state), 'tradeGoodsOnControl', 0, { planetId }).value;
 }
 
-/** Each component hooked on a planet gained runs (`onGainControl`): the passive ones in force, and the play ones the entry names. The game kernel calls this alone and adds the trade goods itself. */
-export function runControlHooks(
-  game: Game, state: GameState, planetId: string, pack: DataPack, warnings: Warning[], entry: Entry | undefined,
-  fromPlayer: boolean, lost: ControlTurn['lost'],
-): void {
-  const holder = holderOf(game, state);
-  const ids = new Set([
-    ...inForceOf(pack, holder, effect => effect.tier === 'passive' && effect.onGainControl !== undefined),
-    ...namedBy(entry).filter(id => effectOf(pack, id)?.tier === 'play' && effectOf(pack, id)?.onGainControl !== undefined),
-  ]);
-  const turn: ControlTurn = {
-    game, state, pack, warnings, planetId, entry, fromPlayer, explores: !fromPlayer, lost,
-    choices: (entry as { choices?: Record<string, string | number> } | undefined)?.choices ?? {},
-  };
-  for (const id of [...ids].sort((a, b) => orderOf(pack, a) - orderOf(pack, b))) effectOf(pack, id)?.onGainControl?.(turn);
-}
-
 /** Effect after the ground combat (49.5): each planet landed on that still holds the active player's ground forces is theirs (`takeControl`). */
-export function gainControl(game: Game, state: GameState, landedOn: string[], pack: DataPack, warnings: Warning[], entry?: Entry): void {
+export function gainControl(game: Game, state: GameState, landedOn: string[], pack: DataPack): void {
   for (const planetId of landedOn) {
-    if (hasGround(state.ground[planetId], pack)) takeControl(game, state, planetId, pack, warnings, entry);
+    if (hasGround(state.ground[planetId], pack)) takeControl(game, state, planetId, pack);
   }
 }
 

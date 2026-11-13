@@ -10,6 +10,8 @@
  */
 import type { ComponentEffect } from '../../types';
 import { exploredCondition } from './batch33/attach';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'exploration:vfs1';
 
@@ -25,10 +27,18 @@ export const effect: ComponentEffect = {
       strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
     },
   }],
-  gained: turn => {
-    if (!exploredCondition(turn)) return;
-    const chosen = turn.choices[id];
-    const pool = POOLS.find(each => each === chosen) ?? 'tactic';
-    turn.state[pool] += 1;
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => {
+      const taken = exploredCondition(ctx);
+      if (taken === undefined) return;
+      const chosen = ctx.choices[id];
+      const pool = POOLS.find(each => each === chosen) ?? 'tactic';
+      return [...taken, gain.tokens(ctx.holder, { [pool]: 1 })];
+    },
   },
 };

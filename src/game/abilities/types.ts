@@ -40,6 +40,14 @@ export interface HookPayloads {
   onActivate: { activator: PlayerId; systemId: string; planets: string[] };
   /** Ground forces land on a planet. */
   onLanding: { planetId: string; landed: number };
+  /** The card the entry just gained (its `gains`), read as `ctx.id`; what the player chose for it is `ctx.choices`. */
+  gained: Record<string, never>;
+  /** The card the entry just let go (its `spends`): `ctx.id`. */
+  lost: Record<string, never>;
+  /** The checks a component in force adds after an entry; its warnings go through `ctx.warn`, the entry is `ctx.entry`. */
+  restrict: Record<string, never>;
+  /** The holder has just taken a planet: `fromPlayer` whether another player held it, `explores` that it was newly gained (35.1), `lost` the structures of the old owner that went with it. */
+  onGainControl: { planetId: string; fromPlayer: boolean; explores: boolean; lost: { kind: 'pds' | 'spacedock'; owner: string; count: number }[] };
   onRoundStart: Record<string, never>;
   onStatusStart: Record<string, never>;
   onStatusEnd: Record<string, never>;
@@ -86,6 +94,12 @@ export interface AbilityContext {
   neighbours(a: PlayerId, b: PlayerId): boolean;
   /** A point of the count for the holder: the base changed by their components in force. */
   applied<K extends keyof Modifiers>(point: K, base: number, ctx: ModifierContext[K]): number;
+  /** The reinforcement-limit warnings of putting `units` on the board for the holder (72.1): one for each unit whose limit is passed. */
+  unitLimit(units: UnitCounts, step?: RuleStep): Warning[];
+  /** The planets of a slot of the map. */
+  planetsIn(slot: string): string[];
+  /** The slot of the map a planet lies in. */
+  systemOf(planet: string): string | undefined;
   /** Adds a warning of the turn. */
   warn(warning: Warning): void;
 }

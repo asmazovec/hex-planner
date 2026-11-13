@@ -4,7 +4,8 @@
  */
 import { describe, expect, test } from 'vitest';
 import { effectsOf } from '../effects/registry';
-import type { ControlTurn } from '../effects/points/invasion';
+import { place } from '../../game/abilities/emit';
+import type { HookPayloads } from '../../game/abilities/types';
 import type { ComponentEffect } from '../effects/types';
 import { bench, endOf, expectStanding, NEAR, TARGET, adjust, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
 import type { AnyWarningCode, Entry, Opponent } from '../types';
@@ -26,21 +27,21 @@ const invade = (planets: string[], extra: Partial<Entry> = {}) => tactical(TARGE
 
 describe('onGainControl', () => {
   test('a passive hook runs once for each planet newly gained, with control already changed', () => {
-    const seen: ControlTurn[] = [];
+    const seen: HookPayloads['onGainControl'][] = [];
+    let exhausted: boolean | undefined;
     const move = invade(['t1', 't2']);
     const table = bench({ faction: 'saar', units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [move], game: { planetControl: { t2: 'me' } } });
-    give(table, 'ability:scavenge', { tier: 'passive', rule: 'x', onGainControl: turn => { seen.push({ ...turn }); } });
+    give(table, 'ability:scavenge', { tier: 'passive', rule: 'x', holder: 'anyone', on: { onGainControl: (ctx, got) => { seen.push(got); exhausted = ctx.board.planets.t1?.exhausted; } } });
     endOf(table);
-    expect(seen.map(turn => turn.planetId)).toEqual(['t1']);
-    expect(seen[0]).toEqual(expect.objectContaining({ fromPlayer: false, explores: true, choices: {}, lost: [] }));
-    expect(seen[0].state.control.t1).toBe('me');
-    expect(seen[0].state.exhausted).toContain('t1');
+    expect(seen.map(got => got.planetId)).toEqual(['t1']);
+    expect(seen[0]).toEqual({ planetId: 't1', fromPlayer: false, explores: true, lost: [] });
+    expect(exhausted).toBe(true);
   });
 
   test('a hook of a component the player does not have does not run', () => {
     let ran = 0;
     const table = bench({ faction: 'sol', units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [invade(['t1'])] });
-    give(table, 'ability:scavenge', { tier: 'passive', rule: 'x', onGainControl: () => { ran += 1; } });
+    give(table, 'ability:scavenge', { tier: 'passive', rule: 'x', holder: 'anyone', on: { onGainControl: () => { ran += 1; } } });
     endOf(table);
     expect(ran).toBe(0);
   });
@@ -48,7 +49,7 @@ describe('onGainControl', () => {
   test('the hook of a play effect runs when the entry names it in uses, and not otherwise', () => {
     const ran: string[] = [];
     const id = 'exploration:mo1';
-    const play: ComponentEffect = { tier: 'play', rule: 'x', onGainControl: turn => { ran.push(turn.planetId); placeOnPlanet(turn.state, turn.planetId, { infantry: 1 }, turn.warnings); } };
+    const play: ComponentEffect = { tier: 'play', rule: 'x', holder: 'anyone', on: { onGainControl: (ctx, got) => { ran.push(got.planetId); return [place.units(ctx.holder, { planet: got.planetId }, { infantry: 1 })]; } } };
     const used = bench({ faction: 'sol', expansions: ['pok'], units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [using(invade(['t1']), id)] });
     give(used, id, play);
     expect(endOf(used).ground.t1).toEqual({ infantry: 2 });
@@ -59,13 +60,13 @@ describe('onGainControl', () => {
   });
 
   test('a card in the gains of the entry hooks too, and the hook sees the structures of the previous holder', () => {
-    const lost: ControlTurn['lost'][] = [];
+    const lost: HookPayloads['onGainControl']['lost'][] = [];
     const id = 'actionCard:infiltrate';
     const table = bench({
       faction: 'sol', start: { hand: [id] }, units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [using(invade(['t1']), id)],
       game: { opponents: [RIVAL], docks: ['t1'], pds: { t1: 1 }, planetControl: { t1: 'enemy' }, planetOwner: { t1: 'o1' } },
     });
-    give(table, id, { tier: 'play', rule: 'x', onGainControl: turn => { lost.push(turn.lost); expect(turn.fromPlayer).toBe(true); expect(turn.explores).toBe(false); } });
+    give(table, id, { tier: 'play', rule: 'x', holder: 'anyone', on: { onGainControl: (_ctx, got) => { lost.push(got.lost); expect(got.fromPlayer).toBe(true); expect(got.explores).toBe(false); } } });
     endOf(table);
     expect(lost).toEqual([[{ kind: 'pds', owner: 'o1', count: 1 }, { kind: 'spacedock', owner: 'o1', count: 1 }]]);
   });

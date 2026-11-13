@@ -12,19 +12,25 @@
  * The resource value is the printed one; only infantry are counted.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { place } from '../../../../game/abilities/emit';
 
 export const id = 'ability:liberate';
 
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  onGainControl: ({ pack, state, planetId }) => {
-    const resources = pack.planets[planetId]?.resources ?? 0;
-    const here = state.ground[planetId] ?? {};
-    if ((here.infantry ?? 0) >= resources) {
-      state.exhausted = state.exhausted.filter(p => p !== planetId);
-    } else {
-      state.ground[planetId] = { ...here, infantry: (here.infantry ?? 0) + 1 };
-    }
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onGainControl: (ctx, got) => {
+      const resources = ctx.pack.planets[got.planetId]?.resources ?? 0;
+      const here = ctx.my.unitsOn(got.planetId);
+      if ((here.infantry ?? 0) >= resources) return [{ type: 'PlanetReadied', player: ctx.holder, planet: got.planetId }];
+      return [place.units(ctx.holder, { planet: got.planetId }, { infantry: 1 })];
+    },
   },
 };

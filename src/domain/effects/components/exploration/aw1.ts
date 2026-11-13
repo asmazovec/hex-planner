@@ -9,8 +9,9 @@
  *
  * Pass 1: still the hint it is today; the resolution with its choice comes in pass 2.
  */
-import { gainCommodities } from '../../../replay/cards/trade';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gainCommodities } from './batch33/attach';
 
 export const id = 'exploration:aw1';
 
@@ -20,13 +21,18 @@ export const effect: ComponentEffect = {
     key: id, kind: 'option', options: () => ['gain', 'convert'], label: { ru: 'Что сделать', en: 'What to do' },
     names: { gain: { ru: 'Взять 2 продукции', en: 'Gain 2 commodities' }, convert: { ru: 'Обменять до 2 продукции на товары', en: 'Convert up to 2 commodities' } },
   }],
-  gained: turn => {
-    const choice = turn.choices[id];
-    if (choice === 'gain') gainCommodities(turn.game, turn.state, turn.pack, 2, turn.shared);
-    else if (choice === 'convert') {
-      const converted = Math.min(2, turn.state.commodities);
-      turn.state.commodities -= converted;
-      turn.state.tradeGoods += converted;
-    }
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => {
+      const choice = ctx.choices[id];
+      if (choice === 'gain') return gainCommodities(ctx, 2);
+      if (choice !== 'convert') return;
+      const converted = Math.min(2, ctx.my.commodities);
+      return converted === 0 ? [] : [{ type: 'CommoditiesChanged', player: ctx.holder, delta: -converted }, { type: 'TradeGoodsChanged', player: ctx.holder, delta: converted }];
+    },
   },
 };

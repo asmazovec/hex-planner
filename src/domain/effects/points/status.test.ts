@@ -10,6 +10,7 @@ import { CARD } from '../../strategy';
 import { adjust, codesOf, forecast, mutable, planned, rulesGame, rulesPack, secondary, statusTokens } from '../../rules/kit';
 import type { Entry, EntryBody, ExpansionId, Opponent } from '../../types';
 import { hintsAt, holderOf, inForceOf } from '../registry';
+import { gain } from '../../../game/abilities/emit';
 import type { ComponentEffect } from '../types';
 import { gainTokens, spendStrategyTokens } from '../../replay/status';
 import { appliedFor } from '../entryApply';
@@ -159,7 +160,8 @@ describe('laws: outcome, the player elected, the planet elected', () => {
     const own = pack();
     withEffect(own, 'agenda:censure', {
       tier: 'passive', rule: 'agenda:censure',
-      restrict: turn => { if (turn.entry.spends?.some(id => id.startsWith('actionCard:'))) turn.warnings.push({ code: 'actionCardBarred' as never, params: { id: 'x', name: 'x' } }); },
+      holder: 'anyone',
+      on: { restrict: ctx => { if (ctx.entry?.spends?.some(id => id.startsWith('actionCard:'))) ctx.warn({ code: 'actionCardBarred' as never, params: { id: 'x', name: 'x' } }); } },
     });
     const card = componentsOf(own).find(c => c.kind === 'actionCard')!.id;
     const spend = (): Entry => planned({ type: 'adjustment', label: '', delta: {} } as EntryBody, 'action', { spends: [card] });
@@ -175,7 +177,7 @@ describe('gained and lost: hooks of a component an entry gains or spends', () =>
   const RELIC = 'relic:shard';
   const own = () => {
     const pack = rulesPack(undefined, ['pok']);
-    withEffect(pack, RELIC, { tier: 'play', rule: RELIC, gained: turn => { turn.state.vp += 1; }, lost: turn => { turn.state.vp -= 1; } });
+    withEffect(pack, RELIC, { tier: 'play', rule: RELIC, holder: 'anyone', on: { gained: ctx => [gain.points(ctx.holder, 1)], lost: ctx => [gain.points(ctx.holder, -1)] } });
     return pack;
   };
   const gains: Entry = { ...adjust({}), gains: [RELIC] };

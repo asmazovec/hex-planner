@@ -17,12 +17,13 @@ const start = initialBoard(table, pack);
 const key = (player: string): string => legacyKey(table, player);
 
 /** The hook kinds that run on the kernel's own runner: no component file keeps one on the old state. */
-const NATIVE_KINDS = ['dealt', 'onTokenSpent', 'onProduced', 'onDestroyed', 'onControlLost', 'onActivate', 'onLanding', 'onRoundStart', 'onStatusStart', 'onStatusEnd', 'onTurnStart'] as const;
+const NATIVE_KINDS = ['dealt', 'onTokenSpent', 'onProduced', 'onDestroyed', 'onControlLost', 'onActivate', 'onLanding', 'onRoundStart', 'onStatusStart', 'onStatusEnd', 'onTurnStart', 'gained', 'lost', 'restrict', 'onGainControl'] as const;
 
 /** One real component of each kind: it has the hook on the kernel's runner. */
 const EXAMPLES: Record<(typeof NATIVE_KINDS)[number], string> = {
   dealt: 'promissory:dark_pact', onTokenSpent: 'leader:muaatcommander', onProduced: 'breakthrough:hacanbt', onDestroyed: 'technology:cl2', onControlLost: 'legendary:styx',
   onActivate: 'technology:ng', onLanding: 'mech:keleres_mech', onRoundStart: 'ability:council_patronage', onStatusStart: 'ability:mitosis', onStatusEnd: 'promissory:malevolency', onTurnStart: 'technology:cl2',
+  gained: 'relic:shard', lost: 'relic:shard', restrict: 'agenda:censure', onGainControl: 'ability:liberate',
 };
 
 
@@ -56,6 +57,24 @@ describe('the native hook runner', () => {
     ]);
     expect(got.board.players.p1.tradeGoods).toBe(board.players.p1.tradeGoods + 1);
     expect(got.board.players.p2.tradeGoods).toBe(board.players.p2.tradeGoods + 1);
+  });
+
+  test('gained and lost: the relic gives a point when the entry gains it and takes it back when it lets it go', () => {
+    const at = (kind: 'gained' | 'lost') => runHooks(table, start, pack, kind, ['p1'], {}, { actor: 'p1', only: ['relic:shard'] }).events;
+    expect(at('gained')).toEqual([{ type: 'PointsChanged', player: 'p1', delta: 1, cause: { component: 'relic:shard' } }]);
+    expect(at('lost')).toEqual([{ type: 'PointsChanged', player: 'p1', delta: -1, cause: { component: 'relic:shard' } }]);
+  });
+
+  test('restrict: a law warns of the action card an entry plays, through the context', () => {
+    const entry = { type: 'component', componentId: 'actionCard:sabotage', owner: 'me' } as never;
+    const got = runHooks(table, start, pack, 'restrict', ['p1'], {}, { actor: 'p1', only: ['agenda:censure'], entry });
+    expect(got.violations.map(w => w.code)).toEqual(expect.any(Array));
+  });
+
+  test('onGainControl: Liberate readies a planet with as many infantry as resources, else puts one on it', () => {
+    const planet = 'wellon';
+    const run = () => runHooks(table, start, pack, 'onGainControl', ['p1'], { planetId: planet, fromPlayer: true, explores: false, lost: [] }, { actor: 'p1', only: ['ability:liberate'] }).events.map(e => e.type);
+    expect(run()).toEqual(['UnitsPlaced']);
   });
 
   test('a hook of a component nobody holds is not asked, and the board is the same object', () => {

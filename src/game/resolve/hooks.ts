@@ -14,7 +14,8 @@ import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
 import { appliedOn, inForce } from '../abilities/registry';
-import { areNeighbours } from '../queries';
+import { areNeighbours, reinforcementsOf } from '../queries';
+import { planetsIn } from '../space';
 import { homeOf } from '../setup';
 import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
 import { applyChecked } from '../apply';
@@ -36,6 +37,8 @@ export interface HookOptions {
   once?: boolean;
   /** Asks these components (found before the moment, as a planet lost takes a legendary one with it) instead of those in force now. */
   only?: readonly string[];
+  /** What the player chose for the component (`choicesFor`). */
+  choices?: Readonly<Record<string, string | number>>;
 }
 
 /** The pool warnings of tokens just changed: a pool below zero, more than the tokens of a faction, a fleet pool under the ships standing (the checks of the old `gainTokens`). */
@@ -72,7 +75,7 @@ export function runHooks<K extends HookKind>(
       const at = board;
       const made: GameEvent[] = [];
       const context: AbilityContext = {
-        board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), choices: {}, own: player === options.actor,
+        board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), choices: options.choices ?? {}, own: player === options.actor,
         get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
         key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
         commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },
@@ -80,6 +83,16 @@ export function runHooks<K extends HookKind>(
         home: other => homeOf(table, table.players.find(p => p.id === other)!, pack)?.planets ?? [],
         neighbours: (a, b) => areNeighbours(table, at, pack, a, b),
         applied: (point, base, extra) => appliedOn(table, at, pack, player, point, base, extra).value,
+        unitLimit: (units, step) => {
+          const left = reinforcementsOf(at, pack, player);
+          return (Object.keys(units) as (keyof typeof units)[]).flatMap(unit => {
+            const limit = pack.units[unit]?.limit;
+            const free = left[unit];
+            return limit === null || limit === undefined || free === undefined || (units[unit] ?? 0) <= free ? [] : [violation('reinforcementsOut', { unit, limit, have: limit - free }, step)];
+          });
+        },
+        planetsIn: slot => planetsIn(table, at, pack, slot),
+        systemOf: planet => Object.keys({ ...table.map, ...at.common.fracture.tiles }).find(slot => planetsIn(table, at, pack, slot).includes(planet)),
         warn: warning => { violations.push(warning); },
       };
       const returned = (hook as (ctx: AbilityContext, payload: HookPayloads[K]) => GameEvent[] | void)(context, payload);
@@ -90,6 +103,13 @@ export function runHooks<K extends HookKind>(
         if (stamped.type === 'TokensChanged' && event.cause?.step !== undefined) violations.push(...poolWarnings(table, board, applied.board, pack, stamped, event.cause?.step));
         board = applied.board;
         made.push(stamped);
+        // A card a `gained` hook gives (the Quantum Core's breakthrough) is gained like any other: what it does when gained runs too.
+        if (kind === 'gained' && stamped.type === 'CardGained' && effectOf(pack, stamped.card)?.on?.gained !== undefined) {
+          const nested = runHooks(table, board, pack, 'gained', [stamped.player], {}, { ...options, only: [stamped.card], choices: {} });
+          board = nested.board;
+          made.push(...nested.events);
+          violations.push(...nested.violations);
+        }
       }
       events.push(...made);
     }

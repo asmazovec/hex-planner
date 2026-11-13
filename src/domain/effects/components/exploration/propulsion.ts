@@ -8,7 +8,7 @@
  * planet that has a specialty it raises `planetResources` and `planetInfluence` by 1 instead. Nothing is waived.
  *
  */
-import { facilityEffect } from './batch33/facility';
+import { facilityAbility, facilityEffect } from './batch33/facility';
 
 export const id = 'exploration:propulsion';
 
@@ -18,3 +18,4 @@ export const id = 'exploration:propulsion';
  * asked with the pack in its context).
  */
 export const effect = facilityEffect(id);
+export const ability = facilityAbility;

@@ -11,24 +11,17 @@
  *
  * Pass 1: still the hint it is today; the resolution with its choice comes in pass 2.
  */
-import { gainCommodities } from '../../../replay/cards/trade';
-import { placeOnPlanet, } from '../../../replay/invasion';
-import { spendTradeGoods } from '../../../replay/payment';
-import { unitLimitWarnings } from '../../../replay/production';
-import { violation } from '../../../rules/registry';
 
 import { exploredPlanet } from './batch33/attach';
-import type { ComponentEffect, EffectTurn } from '../../types';
+import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { code, gainCommodities, spendOne } from './batch33/attach';
+import { place } from '../../../../game/abilities/emit';
+import { violation } from '../../../rules/registry';
 
 export const id = 'exploration:lf1';
 
 /** What is spent to draw or to place: a trade good, or a commodity the card allows (21.7). Short of it, the payment is warned of as any is. */
-function spend(turn: EffectTurn, commodity: boolean): void {
-  if (!commodity) return spendTradeGoods(turn.state, 1, turn.warnings, 'component');
-  if (turn.state.commodities < 1) turn.warnings.push(violation('shortCommodities', { needed: 1, have: turn.state.commodities }, 'component'));
-  turn.state.commodities -= Math.min(1, turn.state.commodities);
-}
-
 export const effect: ComponentEffect = {
   tier: 'play', rule: id,
   choose: [{
@@ -39,14 +32,22 @@ export const effect: ComponentEffect = {
       'place-commodity': { ru: 'Потратить продукцию и поставить меха', en: 'Spend a commodity to place a mech' },
     },
   }],
-  gained: turn => {
-    const choice = turn.choices[id];
-    if (choice === 'gain') return void gainCommodities(turn.game, turn.state, turn.pack, 1, turn.shared);
-    if (choice !== 'place-tradeGood' && choice !== 'place-commodity') return;
-    spend(turn, choice === 'place-commodity');
-    const planetId = exploredPlanet(turn);
-    if (planetId === undefined) return;
-    turn.warnings.push(...unitLimitWarnings(turn.state, { mech: 1 }, turn.pack, 'component'));
-    placeOnPlanet(turn.state, planetId, { mech: 1 }, turn.warnings, 'component');
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => {
+      const choice = ctx.choices[id];
+      if (choice === 'gain') return gainCommodities(ctx, 1);
+      if (choice !== 'place-tradeGood' && choice !== 'place-commodity') return;
+      const spent = spendOne(ctx, choice === 'place-commodity');
+      const planetId = exploredPlanet(ctx);
+      if (planetId === undefined) return spent;
+      for (const warning of ctx.unitLimit({ mech: 1 }, 'component')) ctx.warn(warning);
+      if (!ctx.my.planets().some(planet => planet.id === planetId)) ctx.warn(violation(code('placeNotControlled'), { planetId }, 'component'));
+      return [...spent, place.units(ctx.holder, { planet: planetId }, { mech: 1 })];
+    },
   },
 };

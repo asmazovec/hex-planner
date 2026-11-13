@@ -7,14 +7,26 @@
  * Synergy 2) lets a technology of one colour stand for another when researching; the replay checks no prerequisites
  * yet, so that half has nothing to change until it does.
  */
-import { gainBreakthrough } from '../../breakthrough';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { card } from '../../../../game/abilities/emit';
+import { breakthroughOf } from '../../breakthrough';
 
 export const id = 'relic:quantumcore';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  // Through the one gain of a breakthrough: its own "when you gain this card" runs too (Stellar Genesis gives Avernus).
-  gained: turn => { gainBreakthrough(turn); },
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    // Through the one gain of a breakthrough: its own "when you gain this card" runs too (Stellar Genesis gives Avernus).
+    gained: ctx => {
+      const breakthrough = breakthroughOf(ctx.pack, ctx.my.faction);
+      return breakthrough === undefined || ctx.my.holds(breakthrough) ? undefined : [card.gain(ctx.holder, breakthrough)];
+    },
+  },
 };

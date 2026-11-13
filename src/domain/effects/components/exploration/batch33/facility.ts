@@ -5,6 +5,7 @@
  */
 import { specialtiesOf } from '../../../../specialties';
 import type { ComponentEffect, ModifierContext } from '../../../types';
+import type { Hooked } from '../../../../../game/abilities/types';
 import { attachExplored } from './attach';
 
 /**
@@ -16,9 +17,11 @@ function alreadySpecialized(ctx: ModifierContext['planetResources'], id: string)
 }
 
 /** A research facility: attached where explored; +1 resource and +1 influence instead of its specialty on a planet that has one. */
+/** What a facility does when explored: it joins the planet's attachments. */
+export const facilityAbility: Hooked = { holder: 'anyone', on: { gained: attachExplored } };
+
 export const facilityEffect = (id: string): ComponentEffect => ({
   tier: 'passive', rule: id,
-  gained: attachExplored,
   modify: {
     planetResources: (value, ctx) => (alreadySpecialized(ctx, id) ? value + 1 : value),
     planetInfluence: (value, ctx) => (alreadySpecialized(ctx, id) ? value + 1 : value),

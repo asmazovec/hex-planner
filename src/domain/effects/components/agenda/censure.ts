@@ -11,17 +11,27 @@ import { violation } from '../../../rules/registry';
 import { componentById } from '../../../components';
 import { actionCardsPlayed } from '../../points/status';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:censure';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  gained: turn => { turn.state.vp += 1; },
-  lost: turn => { turn.state.vp -= 1; },
-  restrict: turn => {
-    for (const card of actionCardsPlayed(turn.entry, turn.pack)) {
-      turn.warnings.push(violation(actionCardBarred.code, { id: card, name: componentById(turn.pack, card)?.name ?? card }));
-    }
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => [gain.points(ctx.holder, 1)],
+    lost: ctx => [gain.points(ctx.holder, -1)],
+    restrict: ctx => {
+      if (ctx.entry === undefined) return;
+      for (const card of actionCardsPlayed(ctx.entry, ctx.pack)) {
+        ctx.warn(violation(actionCardBarred.code, { id: card, name: componentById(ctx.pack, card)?.name ?? card }));
+      }
+    },
   },
 };

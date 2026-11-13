@@ -5,6 +5,7 @@
  * `components/`; a throwaway effect stands in for them here and is taken away after each test.
  */
 import { afterEach, describe, expect, test, vi } from 'vitest';
+import { gain } from '../../game/abilities/emit';
 import { EXTENSION_CODES } from '../rules/codes';
 import { forecast } from '../rules/kit';
 import componentUnresolved from '../rules/codes/componentUnresolved';
@@ -114,7 +115,7 @@ describe('`gained` hook', () => {
     const relic = 'relic:quantumcore';
     const entry = tactical(NEAR, {}, { gains: [relic] });
     const table = bench({ faction: 'sol', expansions: ['pok', 'te'], entries: [entry] });
-    lend(effectOf(table.pack, relic)!, { gained: turn => { turn.state.tradeGoods += 5; } });
+    lend(effectOf(table.pack, relic)!, { holder: 'anyone', on: { gained: ctx => [gain.tradeGoods(ctx.holder, 5)] } });
     expect(endOf(table).tradeGoods).toBe(5);
     expect(endOf(table).holdings.relics).toContain(relic);
   });

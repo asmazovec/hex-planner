@@ -11,6 +11,8 @@
  * hooks that.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:holy_planet_of_ixth';
 
@@ -19,12 +21,15 @@ export const effect: ComponentEffect = {
   rule: id,
   // "Units on this planet cannot use PRODUCTION": the dock of the elected planet is worth nothing, so any unit built is over it.
   modify: { productionValue: (value, ctx) => (ctx.attached?.includes(id) ? 0 : value) },
-  // "The planet's owner gains 1 victory point": once, when the law is resolved, if I control the elected planet.
-  gained: ({ choices, state }) => {
-    if (state.control[String(choices.elect ?? '')] === 'me') state.vp += 1;
-  },
-  // "When a player gains control of this planet, they gain 1 victory point."
-  onGainControl: ({ state, planetId }) => {
-    if (state.attachments?.[planetId]?.includes(id)) state.vp += 1;
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    // "The planet's owner gains 1 victory point": once, when the law is resolved, if I control the elected planet.
+    gained: ctx => (ctx.my.planets().some(planet => planet.id === String(ctx.choices.elect ?? '')) ? [gain.points(ctx.holder, 1)] : undefined),
+    // "When a player gains control of this planet, they gain 1 victory point."
+    onGainControl: (ctx, got) => (ctx.board.planets[got.planetId]?.attached.includes(id) ? [gain.points(ctx.holder, 1)] : undefined),
   },
 };

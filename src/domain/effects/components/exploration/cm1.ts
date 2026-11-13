@@ -10,10 +10,22 @@
  */
 import type { ComponentEffect } from '../../types';
 import { exploredCondition } from './batch33/attach';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'exploration:cm1';
 
 export const effect: ComponentEffect = {
   tier: 'play', rule: id,
-  gained: turn => { if (exploredCondition(turn)) turn.state.tradeGoods += 1; },
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => {
+      const taken = exploredCondition(ctx);
+      return taken === undefined ? undefined : [...taken, gain.tradeGoods(ctx.holder, 1)];
+    },
+  },
 };

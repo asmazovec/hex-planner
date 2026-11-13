@@ -8,16 +8,24 @@
  *
  * Pass 2: `onGainControl`: infantry equal to the printed influence of the planet are placed on it (`placeOnPlanet`).
  */
-import { placeOnPlanet } from '../../../replay/invasion';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { place } from '../../../../game/abilities/emit';
 
 export const id = 'breakthrough:l1z1xbt';
 
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  onGainControl: ({ pack, state, warnings, planetId }) => {
-    const influence = pack.planets[planetId]?.influence ?? 0;
-    if (influence > 0) placeOnPlanet(state, planetId, { infantry: influence }, warnings);
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onGainControl: (ctx, got) => {
+      const influence = ctx.pack.planets[got.planetId]?.influence ?? 0;
+      return influence > 0 ? [place.units(ctx.holder, { planet: got.planetId }, { infantry: influence })] : undefined;
+    },
   },
 };

@@ -9,21 +9,27 @@
  * not modelled: the plan does not track who holds the card after it is resolved. Pass 1: still the hint it is today.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:crown_of_emphidia';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  // "The elected player gains this card and 1 victory point": once, when the law is resolved. Its passing after a
-  // planet of the owner's home system is taken is not modelled.
-  gained: ({ choices, entry, states, shared }) => {
-    const elected = String(choices.elect ?? entry.owner ?? 'me');
-    const who = states[elected] ?? (elected === 'me' ? shared : shared.rivals?.[elected]);
-    if (who) who.vp += 1;
-  },
-  // "... the previous owner of this card loses 1 victory point": a law taken out of play by an entry of its owner.
-  lost: ({ state }) => {
-    state.vp -= 1;
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    // "The elected player gains this card and 1 victory point": once, when the law is resolved. Its passing after a
+    // planet of the owner's home system is taken is not modelled.
+    gained: ctx => {
+      const who = ctx.playerOf(String(ctx.choices.elect ?? ctx.key(ctx.holder)));
+      return who === undefined ? undefined : [gain.points(who, 1)];
+    },
+    // "... the previous owner of this card loses 1 victory point": a law taken out of play by an entry of its owner.
+    lost: ctx => [gain.points(ctx.holder, -1)],
   },
 };

@@ -62,7 +62,7 @@ describe('agenda:holy_planet_of_ixth Holy Planet of Ixth', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
     expect(Object.keys(effect(pack, id).modify ?? {})).toEqual(['productionValue']);
-    expect(effect(pack, id).onGainControl).toBeTypeOf('function');
+    expect(effect(pack, id).on?.onGainControl).toBeTypeOf('function');
   });
 
   test.todo('agenda:holy_planet_of_ixth losing control of the elected planet loses 1 victory point: falls out of the vp point counting control (a planet a rival takes by a landing of his entry is no longer mine); to be written with the point in pass 2');

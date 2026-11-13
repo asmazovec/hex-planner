@@ -46,7 +46,7 @@ function fightAndLand(
   warnings.push(...checkStationLandings(entry, pack));
   const landedOn = landUnits(game, state, target, entry, pack, warnings, shared);
   removeGroundLosses(state, entry, warnings);
-  gainControl(game, state, landedOn, pack, warnings, entry);
+  gainControl(game, state, landedOn, pack);
 }
 
 /**

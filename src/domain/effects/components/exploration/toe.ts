@@ -10,11 +10,19 @@
  */
 import type { ComponentEffect } from '../../types';
 import { attachExplored } from './batch33/attach';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'exploration:toe';
 
 export const effect: ComponentEffect = {
   tier: 'passive', rule: id,
-  gained: attachExplored,
   modify: { planetInfluence: value => value + 1 },
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: attachExplored,
+  },
 };

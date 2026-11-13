@@ -6,10 +6,18 @@
  * that resolves it (gains the directive) does it. "Against" sets them to 0 and needs the outcome chosen, which an entry
  * has no field for yet.
  */
+import { gain } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:economic_equality';
 
 const equalize = ({ state }: { state: { tradeGoods: number } }): void => { state.tradeGoods = 5; };
 
-export const effect: ComponentEffect = { tier: 'play', rule: id, play: equalize, gained: equalize };
+export const effect: ComponentEffect = { tier: 'play', rule: id, play: equalize };
+
+/** Every player has 5 trade goods when the law is resolved: the owner of the entry is brought to 5. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: { gained: ctx => (ctx.my.tradeGoods === 5 ? undefined : [gain.tradeGoods(ctx.holder, 5 - ctx.my.tradeGoods)]) },
+};

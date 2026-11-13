@@ -29,12 +29,4 @@ declare module '../types' {
     /** The trade goods a player gains with each planet they gain control of; the base is 0 (Scavenge). */
     tradeGoodsOnControl: { planetId: string };
   }
-  interface ComponentEffect {
-    /**
-     * A trigger on gaining control of a planet, run once for each planet newly gained, after control is changed and
-     * the structures of the previous holder are gone, in registry order. Asked of a `passive` effect in force, and of
-     * a `play` effect whose component the entry names (`componentId`, `uses`, `spends`, `gains`). A hint has none.
-     */
-    onGainControl?: (turn: ControlTurn) => void;
-  }
 }

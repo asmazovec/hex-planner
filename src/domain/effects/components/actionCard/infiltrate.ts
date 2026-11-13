@@ -8,16 +8,20 @@
  * must do.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { keepStructures } from '../../helpers/structures';
 
 export const id = 'actionCard:infiltrate';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  onGainControl: ({ state, planetId, lost }) => {
-    for (const structure of lost) {
-      if (structure.kind === 'pds') state.pds[planetId] = (state.pds[planetId] ?? 0) + structure.count;
-      else if (!state.docks.includes(planetId)) state.docks.push(planetId);
-    }
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onGainControl: (ctx, got) => keepStructures(ctx, got.planetId, got.lost),
   },
 };

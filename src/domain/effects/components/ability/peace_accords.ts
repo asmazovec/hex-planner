@@ -38,6 +38,6 @@ export const effect: ComponentEffect = {
     const near = slot !== null && adjacentTo(game, slot, pack).some(next => planetsOf(game, next, pack).some(id => state.control[id] === 'me'));
     if (isMecatol(planet) || occupied || !near) warnings.push(violation(planetNotGainable.code, { planet }));
     // Ruling 3: gained exhausted, which `takeControl` does.
-    takeControl(game, state, planet, pack, warnings, entry);
+    takeControl(game, state, planet, pack);
   },
 };

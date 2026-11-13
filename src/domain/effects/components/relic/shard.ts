@@ -8,12 +8,21 @@
  * takes such a planet is not replayed. Pass 1 keeps it the hint it is today.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'relic:shard';
 
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  gained: ({ state }) => { state.vp += 1; },
-  lost: ({ state }) => { state.vp -= 1; },
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => [gain.points(ctx.holder, 1)],
+    lost: ctx => [gain.points(ctx.holder, -1)],
+  },
 };

@@ -10,21 +10,14 @@
  *
  * Pass 1: still the hint it is today; the resolution with its choice comes in pass 2.
  */
-import { gainCommodities } from '../../../replay/cards/trade';
-import { spendTradeGoods } from '../../../replay/payment';
-import { violation } from '../../../rules/registry';
 
-import type { ComponentEffect, EffectTurn } from '../../types';
+import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import { gainCommodities, spendOne } from './batch33/attach';
 
 export const id = 'exploration:fb1';
 
 /** What is spent to draw or to place: a trade good, or a commodity the card allows (21.7). Short of it, the payment is warned of as any is. */
-function spend(turn: EffectTurn, commodity: boolean): void {
-  if (!commodity) return spendTradeGoods(turn.state, 1, turn.warnings, 'component');
-  if (turn.state.commodities < 1) turn.warnings.push(violation('shortCommodities', { needed: 1, have: turn.state.commodities }, 'component'));
-  turn.state.commodities -= Math.min(1, turn.state.commodities);
-}
-
 export const effect: ComponentEffect = {
   tier: 'play', rule: id,
   choose: [{
@@ -35,10 +28,17 @@ export const effect: ComponentEffect = {
       'draw-commodity': { ru: 'Потратить продукцию и взять карту действия', en: 'Spend a commodity to draw an action card' },
     },
   }],
-  // The action card drawn is in the entry's gains: only the player knows which it is.
-  gained: turn => {
-    const choice = turn.choices[id];
-    if (choice === 'gain') gainCommodities(turn.game, turn.state, turn.pack, 1, turn.shared);
-    else if (choice === 'draw-tradeGood' || choice === 'draw-commodity') spend(turn, choice === 'draw-commodity');
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    // The action card drawn is in the entry's gains: only the player knows which it is.
+    gained: ctx => {
+      const choice = ctx.choices[id];
+      if (choice === 'gain') return gainCommodities(ctx, 1);
+      if (choice === 'draw-tradeGood' || choice === 'draw-commodity') return spendOne(ctx, choice === 'draw-commodity');
+    },
   },
 };

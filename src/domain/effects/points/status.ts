@@ -51,15 +51,6 @@ declare module '../types' {
      * `objectiveUnmet`. Asked against the owner's board before the entry (LRR 81.1 note 1).
      */
     requirement?: (ctx: RequirementContext) => { have: number; need: number };
-    /** Any tier: runs when an entry of a player gains the component (a relic's point, a law's resolution with the entry's `choices`). */
-    gained?: (turn: EffectTurn) => void;
-    /** Any tier: runs when an entry loses the component (`spends`). */
-    lost?: (turn: EffectTurn) => void;
-    /**
-     * Passive: a check this component adds. Run for every entry of the player it is in force for (a law only for the
-     * player it binds), after the entry's own steps, on the state after it. Pushes warnings with `violation`.
-     */
-    restrict?: (turn: EffectTurn) => void;
     /** A law in force: the components of this id that are not in force while it is (Articles of War takes away the mechs). */
     suppresses?: (id: string) => boolean;
   }

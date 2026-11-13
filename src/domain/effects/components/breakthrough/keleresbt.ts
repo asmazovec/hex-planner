@@ -8,6 +8,8 @@
  */
 import { mecatolSlot, playerNear } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:keleresbt';
 
@@ -24,8 +26,17 @@ export const effect: ComponentEffect = {
       return slot !== undefined && playerNear(ctx, String(warning.params.player), slot);
     },
   }],
-  gained: turn => {
-    turn.state.control[CUSTODIA] = 'me';
-    if (!turn.state.exhausted.includes(CUSTODIA)) turn.state.exhausted.push(CUSTODIA);
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => {
+      const held = ctx.my.planets().find(planet => planet.id === CUSTODIA);
+      const events: GameEvent[] = held === undefined ? [{ type: 'PlanetGained', player: ctx.holder, planet: CUSTODIA }] : [];
+      if (!held?.exhausted) events.push({ type: 'PlanetExhausted', player: ctx.holder, planet: CUSTODIA });
+      return events;
+    },
   },
 };

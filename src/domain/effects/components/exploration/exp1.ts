@@ -10,14 +10,22 @@
  */
 import type { ComponentEffect } from '../../types';
 import { exploredCondition, exploredPlanet } from './batch33/attach';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'exploration:exp1';
 
 export const effect: ComponentEffect = {
   tier: 'play', rule: id,
-  gained: turn => {
-    if (!exploredCondition(turn)) return;
-    const planetId = exploredPlanet(turn);
-    if (planetId !== undefined) turn.state.exhausted = turn.state.exhausted.filter(each => each !== planetId);
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    gained: ctx => {
+      const taken = exploredCondition(ctx);
+      const planet = exploredPlanet(ctx);
+      return taken === undefined || planet === undefined ? undefined : [...taken, { type: 'PlanetReadied', player: ctx.holder, planet }];
+    },
   },
 };

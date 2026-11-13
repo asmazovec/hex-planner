@@ -11,41 +11,49 @@
  * step invasion, asked of the attachments of the planets by `afterEntry`). Trading the planet card in the agenda phase is
  * not modelled (no agenda phase). Pass 2: written.
  */
-import { attachCard } from '../../../replay/invasion';
 import planetDemilitarized from '../../../rules/codes/planetDemilitarized';
 import { violation } from '../../../rules/registry';
-import { systemOfPlanet } from '../../../stacks';
 import { planetsNamed } from '../../helpers/planetsNamed';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/abilities/types';
 
 export const id = 'exploration:dmz';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  onGainControl: turn => {
-    if (!turn.explores) return;
-    const { state, planetId } = turn;
-    // Structures go back to the reinforcements; the ground forces go up to the space area, and control stays (12.2).
-    state.docks = state.docks.filter(dock => dock !== planetId);
-    delete state.pds[planetId];
-    const slot = systemOfPlanet(turn.game, planetId, turn.pack);
-    const ground = state.ground[planetId] ?? {};
-    if (slot !== undefined) {
-      const space = (state.systems[slot] ??= {});
-      for (const [unit, count] of Object.entries(ground)) space[unit as keyof typeof space] = (space[unit as keyof typeof space] ?? 0) + (count ?? 0);
-    }
-    delete state.ground[planetId];
-    attachCard(turn.game, state, planetId, id, turn.pack, turn.warnings);
-  },
-  // "Units cannot be committed to, produced on, or placed on this planet": an attached card is in force for its planet
-  // (`afterEntry` asks the attachments), for every player. The entry that plays the card has just cleared the planet.
-  restrict: ({ entry, shared, warnings }) => {
-    // The card names itself in `uses` (or as the action); `playedBy` is not imported, as the waivers load the registry that loads this file.
-    if ((entry.type === 'component' && entry.componentId === id) || entry.uses?.includes(id) || entry.spends?.includes(id)) return;
-    const named = planetsNamed(entry);
-    for (const [planetId, cards] of Object.entries(shared.attachments ?? {})) {
-      if (cards.includes(id) && named.has(planetId)) warnings.push(violation(planetDemilitarized.code, { planetId }));
-    }
+};
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onGainControl: (ctx, got) => {
+      if (!got.explores) return;
+      const { planetId } = got;
+      const events: GameEvent[] = [];
+      // Structures go back to the reinforcements; the ground forces go up to the space area, and control stays (12.2).
+      const held = ctx.board.planets[planetId];
+      if (held !== undefined && Object.values(held.structures).some(count => count)) events.push({ type: 'StructureRemoved', player: ctx.holder, at: { planet: planetId }, structures: held.structures });
+      const ground = ctx.my.unitsOn(planetId);
+      if (Object.values(ground).some(count => count)) {
+        const slot = ctx.systemOf(planetId);
+        events.push(slot === undefined ? { type: 'UnitsRemoved', player: ctx.holder, at: { planet: planetId }, units: ground } : { type: 'UnitsMoved', player: ctx.holder, from: { planet: planetId }, to: { slot }, units: ground });
+      }
+      return [...events, { type: 'CardAttached', planet: planetId, card: id }];
+    },
+    // "Units cannot be committed to, produced on, or placed on this planet": an attached card is in force for its planet
+    // (`afterEntry` asks the attachments), for every player. The entry that plays the card has just cleared the planet.
+    restrict: ctx => {
+      const entry = ctx.entry;
+      if (entry === undefined) return;
+      // The card names itself in `uses` (or as the action); `playedBy` is not imported, as the waivers load the registry that loads this file.
+      if ((entry.type === 'component' && entry.componentId === id) || entry.uses?.includes(id) || entry.spends?.includes(id)) return;
+      const named = planetsNamed(entry);
+      for (const [planetId, held] of Object.entries(ctx.board.planets)) {
+        if (held.attached.includes(id) && named.has(planetId)) ctx.warn(violation(planetDemilitarized.code, { planetId }));
+      }
+    },
   },
 };
