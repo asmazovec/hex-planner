@@ -5,7 +5,7 @@ import { applyAll } from './apply';
 import { emptyBoard } from './board';
 import { tableOf } from './fromLegacy';
 import {
-  capacityIn, costOf, fleetIn, fleetLimit, planetValue, productionLimit, readyPlanets, reinforcementsOf, tokensOnMap, upgradesOf,
+  capacityIn, costOf, fleetIn, fleetLimit, planetValue, productionLimit, readyPlanets, reinforcementsOf, tokensOnMap, tradeGoodsOnControl, upgradesOf,
 } from './queries';
 
 const pack = rulesPack();
@@ -66,5 +66,16 @@ describe('what a player holds against the limits', () => {
   test('upgradesOf: the technologies that improve a unit', () => {
     expect(upgradesOf(board, pack, me)).toEqual(['carrier']);
     expect(upgradesOf(emptyBoard(table), pack, me)).toEqual([]);
+  });
+});
+
+describe('the number a component adds where a planet is gained', () => {
+  // Scavenge (Clan of Saar): "After you gain control of a planet: Gain 1 trade good."
+  test('tradeGoodsOnControl is zero for a faction with nothing there and one for the Saar', () => {
+    expect(tradeGoodsOnControl(table, board, pack, me, 'h1')).toBe(0);
+    const saarGame = rulesGame({ game: { faction: 'saar' } });
+    const saar = tableOf(saarGame);
+    const start = applyAll(emptyBoard(saar), []);
+    expect(tradeGoodsOnControl(saar, start, rulesPack(), saar.viewer, 'h1')).toBe(1);
   });
 });

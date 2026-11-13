@@ -13,7 +13,7 @@ import { inForceOf, holderOf } from '../../domain/effects/registry';
 import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { playNamedAt, reactToActivation } from '../../domain/replay/activation';
 import { afterEntryHooks } from '../../domain/replay/afterEntry';
-import { afterControl, reactToLanding } from '../../domain/replay/invasion';
+import { reactToLanding, runControlHooks } from '../../domain/replay/invasion';
 import type { Entry, Game, GameState, Goods, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, viewFor, type LegacyViews } from '../legacyViews';
@@ -85,9 +85,9 @@ export function momentsAfter(
 
 export type LostStructures = { kind: 'pds' | 'spacedock'; owner: string; count: number }[];
 
-/** What follows a planet gained, once it is the player's: the components hooked on the gain and the trade goods it brings. */
+/** The components hooked on a planet gained, once it is the player's; the trade goods it brings are the step's own. */
 export const controlHooks = (ctx: Ctx, planetId: string, fromPlayer: boolean, lost: LostStructures): void =>
-  viaLegacy(ctx, r => afterControl(r.game, r.state, planetId, ctx.pack, r.warnings, r.entry, fromPlayer, lost));
+  viaLegacy(ctx, r => runControlHooks(r.game, r.state, planetId, ctx.pack, r.warnings, r.entry, fromPlayer, lost));
 
 /** Which components of the viewer's are hooked on losing a planet, asked before it goes. */
 export function controlLostBefore(ctx: Ctx): string[] {

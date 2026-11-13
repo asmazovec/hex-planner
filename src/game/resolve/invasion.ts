@@ -15,6 +15,7 @@ import type { GameEvent } from '../events';
 import { viewFor } from '../legacyViews';
 import { checkView, emit, warn, type Ctx } from './context';
 import { controlHooks, controlLostBefore, reactLanding } from './legacyEffects';
+import { tradeGoodsOnControl } from '../queries';
 import { checkedPay, checkPay, pay } from './payment';
 
 const PER_PLANET: Record<StructureKind, number> = { spacedock: 1, pds: 2 };
@@ -78,6 +79,9 @@ export function gainControl(ctx: Ctx, landed: Landed): void {
       { type: 'PlanetExhausted', player: ctx.player, planet: planetId },
     ], { quiet: true });
     controlHooks(ctx, planetId, fromPlayer, lost);
+    // What the components of the player add with a planet gained (Scavenge): the rules themselves bring none.
+    const goods = tradeGoodsOnControl(ctx.table, ctx.board, ctx.pack, ctx.player, planetId);
+    if (goods !== 0) emit(ctx, [{ type: 'TradeGoodsChanged', player: ctx.player, delta: goods }], { quiet: true });
     if (viewerLoses) landed.lost.planets.push({ planetId, to: ctx.table.players.find(p => p.id === ctx.player)?.legacyId ?? ctx.player });
   }
 }

@@ -127,6 +127,15 @@ export function afterControl(
   game: Game, state: GameState, planetId: string, pack: DataPack, warnings: Warning[], entry: Entry | undefined,
   fromPlayer: boolean, lost: ControlTurn['lost'],
 ): void {
+  runControlHooks(game, state, planetId, pack, warnings, entry, fromPlayer, lost);
+  state.tradeGoods += applied(pack, holderOf(game, state), 'tradeGoodsOnControl', 0, { planetId }).value;
+}
+
+/** Each component hooked on a planet gained runs (`onGainControl`): the passive ones in force, and the play ones the entry names. The game kernel calls this alone and adds the trade goods itself. */
+export function runControlHooks(
+  game: Game, state: GameState, planetId: string, pack: DataPack, warnings: Warning[], entry: Entry | undefined,
+  fromPlayer: boolean, lost: ControlTurn['lost'],
+): void {
   const holder = holderOf(game, state);
   const ids = new Set([
     ...inForceOf(pack, holder, effect => effect.tier === 'passive' && effect.onGainControl !== undefined),
@@ -137,7 +146,6 @@ export function afterControl(
     choices: (entry as { choices?: Record<string, string | number> } | undefined)?.choices ?? {},
   };
   for (const id of [...ids].sort((a, b) => orderOf(pack, a) - orderOf(pack, b))) effectOf(pack, id)?.onGainControl?.(turn);
-  state.tradeGoods += applied(pack, holder, 'tradeGoodsOnControl', 0, { planetId }).value;
 }
 
 /** Effect after the ground combat (49.5): each planet landed on that still holds the active player's ground forces is theirs (`takeControl`). */
