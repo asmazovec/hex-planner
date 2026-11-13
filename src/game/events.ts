@@ -68,6 +68,12 @@ export type GameEvent =
   | PlayerFact<'CustodiansRemoved'>
   | PlayerFact<'ExpeditionSliceTaken', { slice: string }>
   | Fact<'FractureOpened', { tiles: Record<Slot, TileRef> }>
-  | Fact<'WormholeTokenPlaced', { system: Slot; wormhole: string }>;
+  | Fact<'WormholeTokenPlaced', { system: Slot; wormhole: string }>
+  | Fact<'WormholeTokenMoved', { from: Slot; to: Slot; wormhole: string }>
+  | Fact<'ThundersEdgeSlotSet', { system: Slot }>
+  | Fact<'AnomalyTokenPlaced', { system: Slot; anomaly: string }>
+  // What stands on a component's own card.
+  | PlayerFact<'CardLoaded', { card: ComponentId; units?: UnitCounts; technology?: ComponentId }>
+  | PlayerFact<'CardUnloaded', { card: ComponentId; units?: UnitCounts; technology?: ComponentId }>;
 
 export type EventType = GameEvent['type'];

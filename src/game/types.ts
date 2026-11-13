@@ -53,7 +53,12 @@ export interface Table {
 /** `ready` is the normal state; `locked` is a leader not yet unlocked; `inPlay` a card kept face up (a scored objective, a note played). */
 export type CardState = 'ready' | 'exhausted' | 'locked' | 'purged' | 'inPlay';
 /** A held card with its state; `count` is above 1 only for what comes in copies (action cards, relic fragments). */
-export interface CardHold { state: CardState; count: number }
+export interface CardHold {
+  state: CardState;
+  count: number;
+  /** What stands on the component's own card: units placed on it, a technology it carries (Nekro, the Ghosts of Creuss and the like). */
+  onCard?: { units: UnitCounts; technologies: ComponentId[] };
+}
 
 export interface Pools { tactic: number; fleet: number; strategy: number }
 
@@ -98,6 +103,10 @@ export interface CommonState {
   fracture: { open: boolean; tiles: Record<Slot, TileRef> };
   /** Wormhole tokens by system. */
   wormholeTokens: Record<Slot, string[]>;
+  /** The system the Thunder's Edge slot holds, once it is set. */
+  thundersEdge?: Slot;
+  /** Anomaly tokens by system (the tokens beyond what the tile itself shows). */
+  anomalyTokens?: Record<Slot, string[]>;
 }
 
 export interface Board {

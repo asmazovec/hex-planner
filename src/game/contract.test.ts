@@ -81,6 +81,11 @@ describe('every event is handled', () => {
     ExpeditionSliceTaken: { type: 'ExpeditionSliceTaken', player: 'p1', slice: 'a' },
     FractureOpened: { type: 'FractureOpened', tiles: {} },
     WormholeTokenPlaced: { type: 'WormholeTokenPlaced', system: 's', wormhole: 'alpha' },
+    WormholeTokenMoved: { type: 'WormholeTokenMoved', from: 's', to: 't', wormhole: 'alpha' },
+    ThundersEdgeSlotSet: { type: 'ThundersEdgeSlotSet', system: 's' },
+    AnomalyTokenPlaced: { type: 'AnomalyTokenPlaced', system: 's', anomaly: 'scar' },
+    CardLoaded: { type: 'CardLoaded', player: 'p1', card: 'c', units: { mech: 1 } },
+    CardUnloaded: { type: 'CardUnloaded', player: 'p1', card: 'c', units: { mech: 1 } },
   };
 
   test.each(Object.keys(SAMPLES) as EventType[])('%s changes the board or reports why not', type => {

@@ -251,6 +251,41 @@ function step(board: Board, event: GameEvent, out: Shortfall[]): Board {
         const here = c.wormholeTokens[event.system] ?? [];
         return here.includes(event.wormhole) ? c : { ...c, wormholeTokens: { ...c.wormholeTokens, [event.system]: [...here, event.wormhole] } };
       });
+    case 'WormholeTokenMoved':
+      return patchCommon(board, c => {
+        const from = c.wormholeTokens[event.from] ?? [];
+        if (!from.includes(event.wormhole)) { missing('card', event.wormhole, 1, undefined, event.from); return c; }
+        const to = c.wormholeTokens[event.to] ?? [];
+        const { [event.from]: gone, ...rest } = c.wormholeTokens;
+        void gone;
+        const left = from.filter(w => w !== event.wormhole);
+        return { ...c, wormholeTokens: { ...rest, ...(left.length > 0 ? { [event.from]: left } : {}), [event.to]: to.includes(event.wormhole) ? to : [...to, event.wormhole] } };
+      });
+    case 'ThundersEdgeSlotSet': return patchCommon(board, c => (c.thundersEdge === event.system ? c : { ...c, thundersEdge: event.system }));
+    case 'AnomalyTokenPlaced':
+      return patchCommon(board, c => {
+        const here = c.anomalyTokens?.[event.system] ?? [];
+        return here.includes(event.anomaly) ? c : { ...c, anomalyTokens: { ...c.anomalyTokens, [event.system]: [...here, event.anomaly] } };
+      });
+    case 'CardLoaded':
+      return cardChange(event.player, event.card, hold => {
+        const on = hold.onCard ?? { units: {}, technologies: [] };
+        return { ...hold, onCard: {
+          units: event.units ? shiftCounts(on.units, event.units).counts : on.units,
+          technologies: event.technology && !on.technologies.includes(event.technology) ? [...on.technologies, event.technology] : on.technologies,
+        } };
+      });
+    case 'CardUnloaded':
+      return cardChange(event.player, event.card, hold => {
+        const on = hold.onCard ?? { units: {}, technologies: [] };
+        const taken = event.units ? takable(on.units as Record<string, number>, event.units as Record<string, number>) as UnitCounts : {};
+        for (const key of Object.keys(event.units ?? {})) {
+          const gap = (event.units?.[key as keyof UnitCounts] ?? 0) - (taken[key as keyof UnitCounts] ?? 0);
+          if (gap > 0) missing('units', key, gap, event.player, event.card);
+        }
+        if (event.technology && !on.technologies.includes(event.technology)) missing('card', event.technology, 1, event.player, event.card);
+        return { ...hold, onCard: { units: shiftCounts(on.units, negate(taken)).counts, technologies: on.technologies.filter(t => t !== event.technology) } };
+      });
     default: {
       const never: never = event;
       return never;

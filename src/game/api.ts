@@ -8,3 +8,6 @@ export { initialBoard, setup } from './setup';
 export { legacyPlayer, playerOfLegacy, tableOf } from './fromLegacy';
 export { cardsOf, groundOn, ownerOf, planetsOf, poolsOf, shipsIn, structuresOf } from './queries';
 export type { HeldCard } from './queries';
+export { statusOf, turnNumber, turnNumbers } from './numbering';
+export { playerView, seenBy, tableView } from './views';
+export type { CardKind, PlanetView, PlayerView, TableView } from './views';
