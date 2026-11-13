@@ -7,10 +7,9 @@
  * nothing; and only while the agent is ready before the entry (an exhausted card cannot be exhausted again). The SPACE
  * CANNON part is a reminder of the combat: the plan rolls no dice.
  */
-import { holds, isExhausted } from '../../../replay/holdings';
 import { componentById } from '../../../components';
-import { routeBlockKind, shipsOnly } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:firmamentagent';
 
@@ -18,13 +17,17 @@ export const effect: ComponentEffect = {
   tier: 'hint',
   rule: id,
   hintAt: ['combat'],
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: 'routeBlocked',
     rule: "If they are not transporting units, they can also move through other players' ships.",
     when: (warning, ctx) => {
       const def = componentById(ctx.pack, id);
-      const ready = !def || (holds(ctx.before.holdings, def) && !isExhausted(ctx.before.holdings, def));
-      return ready && routeBlockKind(warning, ctx) === 'ships' && shipsOnly(warning, ctx);
+      const ready = !def || ctx.had.card(id) === 'ready';
+      return ready && ctx.routeBlockKind(warning) === 'ships' && ctx.shipsOnly(warning);
     },
   }],
 };

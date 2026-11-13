@@ -56,6 +56,6 @@ describe('actionCard:silence_space In The Silence Of Space', () => {
 
   test('actionCard:silence_space waives the blocked route and nothing else', () => {
     const { pack } = table([]);
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['routeBlocked']);
   });
 });

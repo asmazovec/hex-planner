@@ -115,6 +115,6 @@ describe('breakthrough:mentakbt The Table\'s Grace', () => {
     const { pack } = raid({ cruiser: 1 });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).modify?.capacity).toBeDefined();
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['routeBlocked']);
   });
 });

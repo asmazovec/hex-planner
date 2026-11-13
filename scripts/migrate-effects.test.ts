@@ -112,7 +112,7 @@ describe('the waiver codemod', () => {
 
   test.each([
     ['reads the old state of the owner', PLAYING.replace('{ entry }', '{ shared }').replace("entry?.type === 'tactical' && warning.params.systemId === entry.systemId", 'shared.holdings.hand.length > 0'), '`when` reads `shared`'],
-    ['hands the whole context to a helper', PLAYING.replace('(warning, { entry })', '(warning, ctx)').replace("entry?.type === 'tactical' && warning.params.systemId === entry.systemId", 'routeBlockKind(warning, ctx) === "ships"'), '`when` uses the whole context'],
+    ['hands the whole context to a helper', PLAYING.replace('(warning, { entry })', '(warning, ctx)').replace("entry?.type === 'tactical' && warning.params.systemId === entry.systemId", 'helper(warning, ctx)'), '`when` uses the whole context'],
     ['has a typed `when`', PLAYING.replace('(warning, { entry })', '(warning: Warning, { entry })'), '`when` is typed'],
     ['has nothing to convert', "export const id = 'x';\nexport const effect: ComponentEffect = { tier: 'hint', rule: id };\n", 'no `waive`'],
   ])('a file that %s is left, with the reason', (_, source, reason) => {
@@ -136,5 +136,38 @@ describe('the waiver codemod: what the owner held before the turn', () => {
 
   test('what the old state holds beyond these is left', () => {
     expect(convertWaivers(held('ctx.shared.holdings.technologies.length > 0'), () => 'self')).toEqual({ left: '`when` reads `shared`' });
+  });
+});
+
+const SHIPS = `import { oneShipShort, routeBlockKind } from '../../helpers/movement';
+import type { ComponentEffect } from '../../types';
+
+export const id = 'technology:lwd';
+
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{
+    code: 'routeBlocked',
+    rule: 'Your ships can move through systems that contain other ships.',
+    when: (warning, ctx) => routeBlockKind(warning, ctx) === 'ships' && oneShipShort(warning, ctx, 2) && hasAnomaly(ctx.game, String(warning.params.systemId), 'nebula', ctx.pack),
+  }],
+};
+`;
+
+describe('the waiver codemod: the questions about the map', () => {
+  test('a helper asked with the context is asked of the context, and the import it leaves is dropped', () => {
+    const output = (convertWaivers(SHIPS, () => 'self') as { output: string }).output;
+    expect(output).toContain("when: (warning, ctx) => ctx.routeBlockKind(warning) === 'ships' && ctx.oneShipShort(warning, 2) && ctx.hasAnomaly(String(warning.params.systemId), 'nebula'),");
+    expect(output).not.toContain("helpers/movement");
+  });
+
+  test('a helper that stays in use keeps its import', () => {
+    const output = (convertWaivers(SHIPS.replace('routeBlockKind(warning, ctx) === \'ships\' && ', "routeBlockKind(warning, ctx) === 'ships' && other(warning) && "), () => 'self') as { output: string }).output;
+    expect(output).toContain('ctx.routeBlockKind(warning)');
+  });
+
+  test('a helper of the file that takes the whole context is left', () => {
+    expect(convertWaivers(SHIPS.replace('ctx.game, String(warning.params.systemId), \'nebula\', ctx.pack', 'ctx'), () => 'self')).toEqual({ left: '`when` uses the whole context' });
   });
 });

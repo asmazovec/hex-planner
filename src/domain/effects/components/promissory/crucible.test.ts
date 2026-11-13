@@ -80,6 +80,6 @@ describe('promissory:crucible Crucible', () => {
 
   test('promissory:crucible waives the speed of the movement it is played in', () => {
     const { pack } = flight({ cruiser: 1 }, FARTHER);
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['speedShort']);
   });
 });

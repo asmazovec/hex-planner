@@ -63,6 +63,6 @@ describe('technology:amd Antimass Deflectors', () => {
   test('technology:amd is a passive effect that waives the route check', () => {
     const { pack } = flight('r-asteroid');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['routeBlocked']);
   });
 });

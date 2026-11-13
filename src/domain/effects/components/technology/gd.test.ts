@@ -50,6 +50,6 @@ describe('technology:gd Gravity Drive', () => {
   test('technology:gd is a passive effect that waives the speed check', () => {
     const { pack } = flight({ cruiser: 1 }, FAR);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['speedShort']);
   });
 });

@@ -7,18 +7,18 @@
  * crosses a gravity rift and which fall short by no more than 1 (the +1 does not grow with more rifts, Crucible note
  * 2). A played card cannot change a number (`modify` is passive), so the shortfall it covers is lifted instead. The
  * rolls are not simulated; the return to its owner is done by the replay (69.3). */
-import { crossesRift, oneShipShort } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:crucible';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'speedShort',
     rule: 'apply an additional +1 to the move values of your ships that would move out of or through a gravity rift',
     // The +1 is one step and does not grow with more rifts: a ship short by one, on a route that leaves or crosses a rift.
-    when: (warning, ctx) => crossesRift(warning, ctx) && oneShipShort(warning, ctx, 1),
+    when: (warning, ctx) => ctx.crossesRift(warning) && ctx.oneShipShort(warning, 1),
   }],
 };

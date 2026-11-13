@@ -66,6 +66,6 @@ describe('technology:mr Magmus Reactor', () => {
   test('technology:mr is a passive effect that waives the route check', () => {
     const { pack } = table('muaat', into());
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toContain('routeBlocked');
+    expect(effect(pack, id).permit?.map(w => w.code)).toContain('routeBlocked');
   });
 });

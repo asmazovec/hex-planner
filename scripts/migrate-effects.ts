@@ -102,7 +102,7 @@ export function convertFile(source: string, holderFor: (id: string) => HolderRul
 // Waivers: `waive` of an effect on the old state becomes `permit` of an ability on the kernel.
 
 /** What a `when` may read of the old context and still mean the same on the native one: the entry, the pack, the round's primaries. */
-const SAME_CONTEXT = new Set(['entry', 'pack', 'primaries', 'had', 'before', 'holder', 'id']);
+const SAME_CONTEXT = new Set(['entry', 'pack', 'primaries', 'had', 'routeBlockKind', 'oneShipShort', 'speedWithoutAnomalies', 'crossesRift', 'hasAnomaly', 'blockedByShips', 'othersShipsIn', 'onlyUnits', 'shipsOnly', 'playerNear', 'mecatolSlot', 'routeBlockKind', 'oneShipShort', 'speedWithoutAnomalies', 'crossesRift', 'hasAnomaly', 'blockedByShips', 'othersShipsIn', 'onlyUnits', 'shipsOnly', 'playerNear', 'mecatolSlot', 'before', 'holder', 'id']);
 
 /** What a `when` asks of the owner's old state before the turn, in the words of the board before it (`ctx.had`, `ctx.before`). */
 const BEFORE_READS: [RegExp, string][] = [
@@ -112,6 +112,42 @@ const BEFORE_READS: [RegExp, string][] = [
   [/ctx\.before\.control\[([^\]]+)\] === 'me'/g, 'ctx.before.planets[$1]?.owner === ctx.holder'],
 ];
 
+/** The helpers of `domain/effects/helpers/movement` a `when` called with the old context, and the same question asked of the native one. */
+const MAP_READS: [RegExp, string][] = [
+  [/\brouteBlockKind\((\w+), ctx\)/g, 'ctx.routeBlockKind($1)'],
+  [/\boneShipShort\((\w+), ctx\)/g, 'ctx.oneShipShort($1)'],
+  [/\boneShipShort\((\w+), ctx, ([^)]+)\)/g, 'ctx.oneShipShort($1, $2)'],
+  [/\bspeedWithoutAnomalies\((\w+), ctx\)/g, 'ctx.speedWithoutAnomalies($1)'],
+  [/\bcrossesRift\((\w+), ctx\)/g, 'ctx.crossesRift($1)'],
+  [/\bhasAnomaly\(ctx\.game, ([^,]+(?:\([^)]*\))?), ('\w+'), ctx\.pack\)/g, 'ctx.hasAnomaly($1, $2)'],
+  [/\bblockedByShips\(ctx, ([^)]+(?:\([^)]*\))?)\)/g, 'ctx.blockedByShips($1)'],
+  [/\bothersShipsIn\(ctx, (\w+)\)/g, 'ctx.othersShipsIn($1)'],
+  [/\bonlyUnits\((\w+), ctx, (\[[^\]]*\])\)/g, 'ctx.onlyUnits($1, $2)'],
+  [/\bshipsOnly\((\w+), ctx\)/g, 'ctx.shipsOnly($1)'],
+  [/\bplayerNear\(ctx, ([^,]+), (\w+)\)/g, 'ctx.playerNear($1, $2)'],
+  [/\bmecatolSlot\(ctx\.game\)/g, 'ctx.mecatolSlot()'],
+];
+const MAP_NAMES = ['routeBlockKind', 'oneShipShort', 'speedWithoutAnomalies', 'crossesRift', 'hasAnomaly', 'blockedByShips', 'othersShipsIn', 'onlyUnits', 'shipsOnly', 'playerNear', 'mecatolSlot'];
+const MAP_HELPERS = MAP_NAMES;
+/** Whether a `when` may read this of the context: it means the same on the native one. */
+const allowed = (name: string): boolean => SAME_CONTEXT.has(name) || MAP_NAMES.includes(name);
+
+/** Drops the named imports the text no longer uses, and an import left empty. */
+function dropUnusedImports(text: string, names: readonly string[]): string {
+  const body = text.replace(/^import [^;]*;\n/gm, '');
+  let out = text;
+  for (const name of names) {
+    if (new RegExp(`(?<![.\\w])${name}\\b`).test(body)) continue;
+    out = out.replace(/^(import (?:type )?\{)([^}]*)(\} from [^;]*;\n)/gm, (line, open: string, list: string, close: string) => {
+      const all = list.split(',').map(item => item.trim()).filter(item => item !== '');
+      const kept = all.filter(item => item !== name);
+      if (kept.length === all.length) return line;
+      return kept.length === 0 ? '' : `${open} ${kept.join(', ')} ${close}`;
+    });
+  }
+  return out;
+}
+
 /** Why a `when` is not a mechanical move (it reads the old state), or undefined when it is. */
 function whenProblem(when: ts.Expression, file: ts.SourceFile): string | undefined {
   if (!ts.isArrowFunction(when)) return '`when` is not an arrow function';
@@ -119,7 +155,7 @@ function whenProblem(when: ts.Expression, file: ts.SourceFile): string | undefin
   const second = when.parameters[1];
   if (second === undefined) return undefined;
   if (ts.isObjectBindingPattern(second.name)) {
-    const bad = second.name.elements.find(element => element.dotDotDotToken !== undefined || !SAME_CONTEXT.has((element.propertyName ?? element.name).getText(file)));
+    const bad = second.name.elements.find(element => element.dotDotDotToken !== undefined || !allowed((element.propertyName ?? element.name).getText(file)));
     return bad ? `\`when\` reads \`${(bad.propertyName ?? bad.name).getText(file)}\`` : undefined;
   }
   const name = second.name.getText(file);
@@ -127,7 +163,7 @@ function whenProblem(when: ts.Expression, file: ts.SourceFile): string | undefin
   const visit = (node: ts.Node): void => {
     if (problem) return;
     if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === name) {
-      if (!SAME_CONTEXT.has(node.name.text)) problem = `\`when\` reads \`${node.name.text}\``;
+      if (!allowed(node.name.text)) problem = `\`when\` reads \`${node.name.text}\``;
       return;
     }
     if (ts.isIdentifier(node) && node.text === name) { problem = '`when` uses the whole context'; return; }
@@ -140,7 +176,7 @@ function whenProblem(when: ts.Expression, file: ts.SourceFile): string | undefin
 /** Converts the waivers of one file: a file that only waives becomes an `Ability`, one that also plays exports both shapes. */
 export function convertWaivers(source: string, holderFor: (id: string) => HolderRule): { output: string; holder: string } | { left: string } {
   const crlf = source.includes('\r\n');
-  const text = BEFORE_READS.reduce((made, [from, to]) => made.replace(from, to), source.replace(/\r\n/g, '\n'));
+  const text = MAP_READS.reduce((made, [from, to]) => made.replace(from, to), BEFORE_READS.reduce((made, [from, to]) => made.replace(from, to), source.replace(/\r\n/g, '\n')));
   const file = ts.createSourceFile('component.ts', text, ts.ScriptTarget.ES2022, true);
   let statement: ts.VariableStatement | undefined;
   let declaration: ts.VariableDeclaration | undefined;
@@ -216,6 +252,7 @@ export function convertWaivers(source: string, holderFor: (id: string) => Holder
   }
   let output = text;
   for (const edit of edits.sort((a, b) => b.start - a.start)) output = output.slice(0, edit.start) + edit.text + output.slice(edit.end);
+  output = dropUnusedImports(output, MAP_HELPERS);
   return { output: crlf ? output.replace(/\n/g, '\r\n') : output, holder: holder.replace(/'/g, '') };
 }
 

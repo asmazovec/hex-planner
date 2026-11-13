@@ -81,6 +81,6 @@ describe('legendary:tempesta Ionian Fuel Refinery', () => {
   test('legendary:tempesta is a play effect that waives the speed check', () => {
     const { pack } = flight({ carrier: 1 });
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['speedShort']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['speedShort']);
   });
 });

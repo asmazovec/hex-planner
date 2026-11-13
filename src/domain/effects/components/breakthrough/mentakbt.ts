@@ -14,9 +14,8 @@
  * cruisers alone while Cruiser II is owned and the active system holds another player's non-fighter ships.
  */
 import { componentById } from '../../../components';
-import { holds } from '../../../replay/holdings';
-import { onlyUnits, othersShipsIn, routeBlockKind } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 
 export const id = 'breakthrough:mentakbt';
@@ -25,16 +24,20 @@ export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
   modify: { capacity: (value, ctx) => (ctx.unit === 'cruiser' && value >= 1 ? 2 : value) },
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: 'routeBlocked',
     rule: "If the active system contains another player's non-fighter ships, this unit can move through systems that contain other players' ships.",
     when: (warning, ctx) => {
       const upgrade = componentById(ctx.pack, 'technology:cr2');
       const active = ctx.entry?.type === 'tactical' ? ctx.entry.systemId ?? undefined : undefined;
-      return upgrade !== undefined && active !== undefined && holds(ctx.before.holdings, upgrade)
-        && routeBlockKind(warning, ctx) === 'ships'
-        && onlyUnits(warning, ctx, ['cruiser'])
-        && Object.keys(othersShipsIn(ctx, active)).length > 0;
+      return upgrade !== undefined && active !== undefined && ctx.had.holds(upgrade.id)
+        && ctx.routeBlockKind(warning) === 'ships'
+        && ctx.onlyUnits(warning, ['cruiser'])
+        && Object.keys(ctx.othersShipsIn(active)).length > 0;
     },
   }],
 };

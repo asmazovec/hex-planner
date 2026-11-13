@@ -77,6 +77,7 @@ function permitContext(ctx: Ctx, before: Board, earlier: readonly string[], old:
     routeBlockKind: (warning: Warning) => movement.routeBlockKind(warning, old()),
     oneShipShort: (warning: Warning, by?: number) => movement.oneShipShort(warning, old(), by),
     speedWithoutAnomalies: (warning: Warning) => movement.speedWithoutAnomalies(warning, old()),
+    crossesRift: (warning: Warning) => movement.crossesRift(warning, old()),
     hasAnomaly: (slot: string, kind: 'asteroid' | 'nebula' | 'rift' | 'supernova') => hasAnomaly(old().game, slot, kind, ctx.pack),
     blockedByShips: (slot: string) => movement.blockedByShips(old(), slot),
     othersShipsIn: (slot: string) => movement.othersShipsIn(old(), slot),

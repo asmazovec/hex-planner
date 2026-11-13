@@ -64,6 +64,6 @@ describe('agenda:shared_research Shared Research', () => {
   test('agenda:shared_research is a passive effect that waives the blocked route', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['routeBlocked']);
   });
 });

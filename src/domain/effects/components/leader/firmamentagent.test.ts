@@ -67,6 +67,6 @@ describe('leader:firmamentagent Myru Vos', () => {
 
   test('leader:firmamentagent waives the route check, and only that', () => {
     const { pack } = firmament([], {});
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['routeBlocked']);
   });
 });

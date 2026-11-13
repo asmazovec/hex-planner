@@ -94,7 +94,7 @@ describe('relic:circletofthevoid Circlet of the Void', () => {
   test('relic:circletofthevoid is a passive effect that waives anomalies on routes', () => {
     const { pack } = table('r-empty', {}, through());
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['routeBlocked']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['routeBlocked']);
     // The nebula's slowing of a ship that starts in it is a modify of the `nebulaStart` point, not a waiver of `speedShort`.
     expect(effect(pack, id).modify?.nebulaStart).toBeDefined();
   });

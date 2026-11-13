@@ -91,6 +91,6 @@ describe('actionCard:nav_suite Nav Suite', () => {
 
   test('actionCard:nav_suite waives routeBlocked and speedShort for its own action only', () => {
     const { pack } = table([], row('r-empty'));
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['routeBlocked', undefined], ['speedShort', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['routeBlocked', undefined], ['speedShort', undefined]]);
   });
 });

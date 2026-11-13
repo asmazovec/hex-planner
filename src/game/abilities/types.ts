@@ -61,6 +61,8 @@ export interface PermitContext extends AbilityContext {
   oneShipShort(warning: Warning, by?: number): boolean;
   /** The move value of the warning's ship by the printed rules and its upgrades alone. */
   speedWithoutAnomalies(warning: Warning): number;
+  /** Whether the route of a speedShort warning leaves or crosses a gravity rift (41.3). */
+  crossesRift(warning: Warning): boolean;
   /** Whether a system holds an anomaly of the kind. */
   hasAnomaly(slot: string, kind: 'asteroid' | 'nebula' | 'rift' | 'supernova'): boolean;
   /** Whether other players' ships end a route in the system, as the board stood before the turn. */

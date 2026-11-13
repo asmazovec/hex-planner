@@ -9,20 +9,24 @@
  */
 import { componentById } from '../../../components';
 import { violation } from '../../../rules/registry';
-import { oneShipShort } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'legendary:tempesta';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  waive: [{
-    code: 'speedShort',
-    rule: 'apply +1 to the move value of 1 of your ships during this tactical action',
-    when: (warning, ctx) => oneShipShort(warning, ctx, 1),
-  }],
   play: turn => {
     if (turn.state.control.tempesta !== 'me') turn.warnings.push(violation('componentNotHeld', { id, name: componentById(turn.pack, id)?.name ?? id }));
   },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
+    code: 'speedShort',
+    rule: 'apply +1 to the move value of 1 of your ships during this tactical action',
+    when: (warning, ctx) => ctx.oneShipShort(warning, 1),
+  }],
 };

@@ -6,7 +6,6 @@
  * system (94.1, 60.1), and gaining it gains the Custodia Vigilia planet card, exhausted (ruling: Custodia Vigilia 1),
  * with its legendary ability.
  */
-import { mecatolSlot, playerNear } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 import type { Hooked } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/abilities/types';
@@ -18,18 +17,18 @@ const CUSTODIA = 'custodiavigilia';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  waive: [{
-    code: 'notNeighbor',
-    rule: 'You are neighbors with all players that have units or control planets in or adjacent to the Mecatol Rex system.',
-    when: (warning, ctx) => {
-      const slot = mecatolSlot(ctx.game);
-      return slot !== undefined && playerNear(ctx, String(warning.params.player), slot);
-    },
-  }],
 };
 
 /** The hooks written for the kernel: they read the board and return events. */
 export const ability: Hooked = {
+  permit: [{
+    code: 'notNeighbor',
+    rule: 'You are neighbors with all players that have units or control planets in or adjacent to the Mecatol Rex system.',
+    when: (warning, ctx) => {
+      const slot = ctx.mecatolSlot();
+      return slot !== undefined && ctx.playerNear(String(warning.params.player), slot);
+    },
+  }],
   holder: 'anyone',
   on: {
     gained: ctx => {
