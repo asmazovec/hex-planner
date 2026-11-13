@@ -34,6 +34,10 @@ export interface ResolveOptions {
   earlier?: readonly string[];
   /** What the round remembers of its earlier turns; none for the first. */
   track?: RoundTrack;
+  /** The warnings of the moments right before the turn (the round or the phase began, the turn started): they stand in a step of their own and the waivers of the turn lift them like its own. */
+  moments?: readonly Warning[];
+  /** What ends with the turn (the status phase ends with its status entry, 81.4, 81.6): asked once the steps are done, its warnings stand in a step of their own and are waived like the turn's. */
+  closing?: (board: Board) => { board: Board; violations: readonly Warning[] };
 }
 
 /** The tactical action itself (89.1-89.5). */
@@ -91,6 +95,10 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   if (options.earlier) track.plays[turn.player] = [...(track.plays[turn.player] ?? []), ...options.earlier];
   const before = legacyViews(table, board, pack);
   const ctx = newCtx(table, board, turn, action.kind === 'tactical' ? action : NO_TACTICAL, pack, blockersOf(table, board, turn.player, pack), track);
+  if ((options.moments?.length ?? 0) > 0) {
+    begin(ctx, 'round');
+    warn(ctx, [...options.moments!]);
+  }
   begin(ctx, 'round');
   warn(ctx, checkFlow(ctx));
   let lost: Lost = { planets: [], hooked: [] };
@@ -126,6 +134,12 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   // A rival's landing takes planets of the viewer's: what the viewer's components hooked on the loss are asked, once the turn is over.
   begin(ctx, 'invasion');
   controlLostHooks(ctx, lost.planets, lost.hooked);
+  if (options.closing) {
+    const closed = options.closing(ctx.board);
+    ctx.board = closed.board;
+    begin(ctx, 'round');
+    warn(ctx, [...closed.violations]);
+  }
   const after = legacyViews(table, ctx.board, pack);
   placeIn(ctx.warnings, turn.id);
   waived(ctx, ctx.warnings, before, after, ctx.track.plays[turn.player]);

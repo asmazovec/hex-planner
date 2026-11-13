@@ -6,7 +6,6 @@
  * flows from turn to turn; nothing is rebuilt from an old state.
  */
 import { isTurn } from '../domain/replay/round';
-import { placeIn } from '../domain/rules/registry';
 import { heldCards } from '../domain/strategy';
 import type { ComponentDef, DataPack, Plan, Warning } from '../domain/types';
 import type { Turn } from './actions';
@@ -135,12 +134,12 @@ export function timeline(table: Table, pack: DataPack, rounds: Round[], filter: 
       if (phase === 'status') beginStatus(turn);
       if (phase === 'action' && isTurn(legacyEntry(table, turn), pack)) take(turnStart(table, board, pack, turn));
       const before = board;
-      const resolution = resolveTurn(table, board, turn, pack, { track });
+      // The status phase ends with its status entry (81.4, 81.6), and what its end brings is part of that turn.
+      const closing = turn.action.kind === 'status' ? (b: Board) => { board = b; finishStatus(); return { board, violations: lead.splice(0) }; } : undefined;
+      const resolution = resolveTurn(table, board, turn, pack, { track, moments: lead.splice(0), ...(closing ? { closing } : {}) });
       board = resolution.board;
       track = resolution.track;
-      // The status phase ends with its status entry (81.4, 81.6), and what its end brings is part of that turn.
-      if (turn.action.kind === 'status') finishStatus();
-      const violations = [...resolution.steps.flatMap(s => s.violations), ...placeIn(lead.splice(0), turn.id)];
+      const violations = resolution.steps.flatMap(s => s.violations);
       const after = board;
       frames.push({
         turnId: turn.id, before, after, applied: true, moments, steps: resolution.steps, violations,
