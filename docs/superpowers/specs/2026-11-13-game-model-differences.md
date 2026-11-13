@@ -72,3 +72,30 @@ Edge и жетоны аномалий в `CommonState`, шаг `setup` в `RuleS
 Не сделано: шаг `setup` в `RuleStep`, снятие `KNOWN_OPEN` (8 и 10 без изменений), сверка каждой строки этого документа с
 корпусом knowledge-rag (две пробные выборки номеров 49.5 и 63.3 подтвердили только то, что здание стоит на планете;
 остальное не проверялось), привязка предупреждений момента к снятию запрета.
+
+## Шаг 2d: закрытие расхождений
+
+`KNOWN_OPEN` = 0 (было 8 по записям и 10 целыми планами). Причины и починки:
+
+- Обязательство «в игре» (`Holdings.inPlay`, Trade Convoys) теперь состояние карты `inPlay` на доске; события `CardLaidInPlay`/`CardTakenBack`; закрыло 5 записей (convoys, shareknowledge: возврат, waivedBy).
+- Что лежит на карте (Share Knowledge, Crimson Legionnaire II): `onCard` на доске, `CardLoaded`/`CardUnloaded` выпускает мост; сверка теперь сравнивает `onCard` и `inPlay`. Закрыло конец статуса Share Knowledge и потерю наземных войск (g2247, причина была в `onCard` у cl2).
+- Acquiescence: токен стратегии при второстепенной не тратится (родное правило в `resolve/cards/play.ts`, хук `play` для него отключён в адаптере, `natives.ts`); предупреждение `shortStrategy` остаётся и снимается как раньше. Старое «потратить и вернуть» уходило ниже нуля.
+- Strategize: вопрос «карта готова» решает трек раунда ядра (`WaiverContext.primaries`); у ядра пустого плана не было, и запрет снимался всегда.
+- `noProduction`/`productionOver`/`capacitySystem` в двух планах: следствие уже записанного исключения «здание на планете, которую никто не держит» (док, поставленный вручную на планету, которую потом берут); сверка после такого расхождения эти коды не сравнивает (`warningsOnlyOfTaint`, 8.4).
+
+Сверка с корпусом knowledge-rag (`tirules2/rules-reference`), что нашлось:
+
+| Строка | Корпус |
+| --- | --- |
+| Резерв жетонов, нехватка | command-tokens: «If a player would gain a command token but has none available in their reinforcements, that player cannot gain that command token»; о резерве ниже нуля (20.4, 81.5) прямого пункта не нашлось, зажим в ноль и предупреждение остаются решением ядра |
+| Оплата чужой планетой | exhausted 34.3: «A player exhausts their planet cards to spend either the resources or influence»; пункта о чужой планете (примечание 2) в выдаче нет, не проверено |
+| Планета у двоих, взятие, истощение при взятии | control 25.1: «When a player gains control of a planet, they take the planet card ... that card is exhausted»; invasion 49.5: «gains control of each planet they committed ground forces to if that planet still contains at least one of their ground forces» (ядро согласно) |
+| Здание без владельца планеты (8.4) | construction 24: структуры строятся «on planets they control»; пункта 8.4 в выдаче нет, ядро согласно по смыслу 24 |
+| Очки соперника (61, 98) | выдача не дала пункта, не проверено |
+| Моменты начала раунда и статуса (40, 81) | выдача не дала пункта, не проверено |
+| Второстепенная без жетона | trade 92.4: «Those players use the secondary ability of this card without spending a command token» (то же по смыслу, что Acquiescence) |
+| Обязательство в зоне игры | promissory-notes 69.5.1: «Promissory notes in the play area cannot be traded». Ядро и старый повтор такую сделку не предупреждают: пробел обеих сторон, код предупреждения не заведён |
+
+Исправлений ядра по итогам сверки не потребовалось; пробел 69.5.1 записан выше, а не исправлен (нужен новый код предупреждения, коды по условию шага не менялись).
+
+Шаг 2d, остальное: сделки и экспедиция родные (`resolve/acts.ts`, события `GoodsTransferred`, `ExpeditionSliceTaken`, `CardGained`; шаг `expedition` получил собственный результат); товары за взятую планету (`tradeGoodsOnControl`) родные, через запрос; предупреждения моментов стоят в шаге `round` кадра и снимаются запретами хода, как и конец статуса (`closing`); `'setup'` стал шагом правил; жетон червоточины переносится событием `WormholeTokenMoved`, слот Thunder's Edge берётся с доски (`ThundersEdgeSlotSet` в стартовой доске). Жетонов аномалий старый повтор не знает (шрам берётся с тайла), `AnomalyTokenPlaced` выпускать нечему.
