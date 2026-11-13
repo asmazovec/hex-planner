@@ -189,7 +189,9 @@ export function TileView({
   const planets = fracture
     ? (tile?.planetIds ?? []).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined)
     : systemPlanets(game, slotKey, pack);
-  const worm = (tile?.wormholes ?? []).map(w => WORMHOLE_SIGNS[w] ?? w).join(' ');
+  // A wormhole token put on the system (Creuss, Gamma Wormhole) shows like a printed wormhole (6.1).
+  const placed = Object.entries(state.wormholeTokens ?? {}).filter(([, at]) => at === slotKey).map(([type]) => type);
+  const worm = [...new Set([...(tile?.wormholes ?? []), ...placed])].map(w => WORMHOLE_SIGNS[w] ?? w).join(' ');
   const anomalies = [tile?.anomaly, tile?.secondAnomaly].filter(a => a !== undefined);
   const hexKind = !tile ? 'hex-free' : tile.planetIds.some(id => MECATOL_PLANETS.includes(id)) ? 'hex-mecatol' : tile.kind !== 'system' ? `hex-${tile.kind}`
     : anomalies.length > 0 ? 'hex-anomaly' : tile.wormholes.length > 0 ? 'hex-wormhole' : 'hex-system';

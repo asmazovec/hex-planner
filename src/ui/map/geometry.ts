@@ -10,10 +10,18 @@ export function hexToPixel(q: number, r: number, size: number = HEX_SIZE): Point
   return { x: size * 1.5 * q, y: size * Math.sqrt(3) * (q / 2 + r) };
 }
 
-/** The centre of a slot; a slot key that is no `q,r`, like an off-map tile's id, stands at the origin. */
+/** Where the off-map homes of the game on screen stand, by tile id; set by `placeOffMapHomes` before anything is drawn. */
+let offMapSpots: Record<string, Point> = {};
+
+/** An off-map home stands beside the map, outside the ring of the slots on the bearing of its gate. */
+export function placeOffMapHomes(spots: Record<string, Point>): void {
+  offMapSpots = spots;
+}
+
+/** The centre of a slot; an off-map home (the Creuss home) stands beside the map, any other key that is no `q,r` at the origin. */
 export function slotToPixel(slot: string): Point {
   const at = parseSlot(slot);
-  return at ? hexToPixel(at.q, at.r) : { x: 0, y: 0 };
+  return at ? hexToPixel(at.q, at.r) : offMapSpots[slot] ?? { x: 0, y: 0 };
 }
 
 /** Corners of a hex centred on the origin, starting at the east corner and going clockwise on screen. */

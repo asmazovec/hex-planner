@@ -10,6 +10,7 @@ import { timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
+import { placeOffMap } from '../map/offMapHomes';
 import { cardChange, withSystem } from '../../domain/strategy';
 import { emptySources, entrySystems, hasUnits, isUntouched, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
@@ -146,7 +147,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   /** A finished route keeps the earlier ones: it adds its source, or gives a known source a new way. */
   const openRoute = ({ from, via }: RouteDraft) => {
-    if (!game || !entry || !isOnMap(game, from)) return;
+    if (!game || !entry || !onBoard(from)) return;
     const known = sourcesOf(game, pack, entry).includes(from);
     if (!known || viaOf(entry, from).join() !== via.join()) updateEntry(entry.id, { moves: withRoute(game, pack, entry.moves, from, via) });
     // A source drawn again while it was on its way out stays; the one whose flight step this route replaces goes if nothing was chosen there.
@@ -159,7 +160,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** The map under a route being drawn: a finger near the edge of its area moves it. */
   const mapPan = useRef<MapPan>(null);
   const arrow = useArrowDrag({
-    activeSystem, onComplete: openRoute, onCancel: () => undefined, isSystem: slot => game !== null && isOnMap(game, slot),
+    activeSystem, onComplete: openRoute, onCancel: () => undefined, isSystem: slot => game !== null && onBoard(slot),
     onPause: path => update(state => ({ ...state, next: { kind: 'route', path: pausedPath(path, activeSystem ?? '') } })),
     pan: mapPan,
   });
@@ -242,7 +243,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     const onMap = isOnMap(game, slot);
     switch (next.kind) {
       case 'adjustmentSystem':
-        if (!adjustPick || !onMap) return;
+        if (!adjustPick || !onBoard(slot)) return;
         updateEntry(adjustPick.id, { delta: { ...adjustPick.delta, units: { systemId: slot, units: adjustPick.delta.units?.units ?? {} } } });
         update(state => ({ ...state, next: IDLE, stage: { slot, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjustPick.id } } }));
         setView('plan');
@@ -278,7 +279,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         break;
     }
     if (tactical) {
-      if (!onMap) return;
+      if (!onBoard(slot)) return;
       if (tactical.entryId === null) {
         const id = addEntry(round.number, tacticalBody(slot, tactical.fromCard), 'action', handOwner);
         update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: tactical.card }, next: IDLE }));
@@ -314,7 +315,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       if (step.route) openRoute(step.route);
       return;
     }
-    if (!onMap) return;
+    if (!onBoard(slot)) return;
     flight.stop();
     update(state => ({ ...state, panel: state.panel.kind === 'list' ? LIST : state.panel, stage: { slot, mode: 'control', for: { kind: 'map' } } }));
   };
@@ -375,6 +376,10 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
+  // Lines and flights need to know where the off-map homes stand before the map draws them.
+  const offMap = placeOffMap(game, pack);
+  /** A system ships can be in: a tile of the map or an off-map home beside it. */
+  const onBoard = (slot: string): boolean => slot in offMap || isOnMap(game, slot);
   const arrows = planArrows(game, pack, tacticals, tacticalNumbers(round.entries), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
@@ -418,7 +423,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const startsArrow = (slot: string): boolean => {
     if (activeSystem === null || !entryBefore || choosing !== null) return false;
     if (tapPath !== null) return slot === tapPath.at(-1);
-    return isOnMap(game, slot);
+    return onBoard(slot);
   };
 
   const key = hintKey(pick);
