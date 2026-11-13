@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import type { Entry } from '../../../types';
-import { bench, componentAction, effect, endOf, quote } from '../kit';
+import { bench, componentAction, effect, endOf, quote, warningsOf } from '../kit';
 import { id } from './fabrication';
 
 const naaz = (entries: Entry[]) => bench({ faction: 'naaz', expansions: ['pok'], entries });
@@ -44,6 +44,16 @@ describe('ability:fabrication Fabrication', () => {
   // Why nothing is counted here: the player has not said what the fragments buy.
   test('ability:fabrication with no choice gives nothing', () => {
     expect(tokens([componentAction(id)])).toEqual(tokens([]));
+  });
+
+  // "Either purge 2 of your relic fragments of the same type to gain 1 relic; or purge 1 of your relic fragments to gain 1 command token."
+  // Checks: one fragment held and purged for a token, then two for a relic: no "not enough fragments" warning.
+  // Why the check is NOT the fragment's own: the three-fragment rule (LRR 73.1) belongs to the fragment's action, not to its purge by another card.
+  test('ability:fabrication a fragment purged by it is no action of the fragment: no relicFragmentsShort', () => {
+    const token = componentAction(id, { choices: { gain: 'token', pool: 'tactic' }, spends: ['exploration:crf1'] } as Partial<Entry>);
+    const relic = componentAction(id, { choices: { gain: 'relic' }, spends: ['exploration:crf1', 'exploration:crf1'] } as Partial<Entry>);
+    const table = bench({ faction: 'naaz', expansions: ['pok'], start: { found: ['exploration:crf1', 'exploration:crf1', 'exploration:crf1'] }, entries: [token, relic] });
+    for (const entry of [token, relic]) expect(warningsOf(table, entry).map(w => w.code)).not.toContain('relicFragmentsShort');
   });
 
   test.todo('ability:fabrication the relic fragments purged: exploration cards are not held by the plan');

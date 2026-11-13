@@ -506,7 +506,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const flown = slot.entry;
         return (
           <UnitPicker
-            game={entryGame} pack={pack} before={boards.before(flown.id)} entry={flown} source={slot.source}
+            game={entryGame} pack={pack} before={boards.before(flown.id)} shared={boards.board(flown.id)} entry={flown} source={slot.source}
             warnings={flightWarnings(forecast.warningsByEntry[flown.id] ?? [], entryGame, pack, flown, slot.source)}
             onChange={moves => updateEntry(flown.id, { moves })} onClose={() => closePicker(flown, slot.source)}
             onFly={() => {

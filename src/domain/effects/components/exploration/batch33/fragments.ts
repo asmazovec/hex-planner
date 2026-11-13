@@ -15,6 +15,8 @@ const UNKNOWN = 'exploration:urf1';
  * the relic drawn its `gains`, as only the player knows which.
  */
 export function fragmentsPlay(turn: EffectTurn): void {
+  // Purged by another component (Fabrication: 2 of a type for a relic, 1 for a command token) it is no action of its own: the three are its own action's.
+  if (turn.entry.type !== 'component' || turn.entry.componentId !== turn.id) return;
   const held = turn.state.holdings.found.filter(card => card === turn.id || card === UNKNOWN).length;
   if (held < 3) turn.warnings.push(violation(relicFragmentsShort.code, { have: held }));
 }

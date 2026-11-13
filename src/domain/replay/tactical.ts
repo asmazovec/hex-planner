@@ -119,17 +119,22 @@ export function applyTactical(
 
 /** The numbers behind `capacityGroup` and `fleetPool`, for the source being edited. */
 export function tacticalMeters(
-  game: Game, entry: TacticalEntry, source: string, before: GameState, pack: DataPack,
+  game: Game, entry: TacticalEntry, source: string, before: GameState, pack: DataPack, shared: GameState = before,
 ): { group: { load: number; capacity: number }; ships: number; fleet: number } {
   const state = structuredClone(before);
   const target = entry.systemId;
+  // What the activation does to the pool (Neuroglaive takes a token) stands in the number the warning gives; `shared` is mine, with the rivals.
+  if (target !== null) {
+    activate(state, target, entry);
+    reactToActivation(game, state, structuredClone(shared), entry, target, pack, []);
+  }
   const groups = target === null ? {} : moveUnits(game, state, target, entry.moves, pack, []);
   if (target !== null) landAndBuild(game, state, target, entry, pack, [], false, removeFleetExcess(state, target, entry.fleetRemovals ?? {}));
   return {
     group: capacity(game, groups[source] ?? {}, holderOf(game, before), pack),
     // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
     ships: fleetCount(game, state.systems[target ?? ''] ?? {}, holderOf(game, before), pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
-    fleet: fleetLimit(game, before, pack),
+    fleet: fleetLimit(game, state, pack),
   };
 }
 

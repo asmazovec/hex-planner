@@ -18,6 +18,8 @@ export interface UnitPickerProps {
   pack: DataPack;
   /** The state just before the entry. */
   before: GameState;
+  /** The whole board just before the entry (mine, with the rivals): what an activation does to the fleet pool is read from it. */
+  shared?: GameState;
   /** Only the moves of `source` are edited here. */
   entry: TacticalEntry;
   source: string;
@@ -63,7 +65,7 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
  * Every place a unit is taken from is a row of a `UnitDraft`: a button to take per kind, and the tray of what was taken.
  */
-export function UnitPicker({ game, pack, before, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
+export function UnitPicker({ game, pack, before, shared, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
   const colour = playerColour(game.color);
   const target = entry.systemId ?? '';
@@ -86,7 +88,7 @@ export function UnitPicker({ game, pack, before, entry, source, warnings = [], o
 
   const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
   const offered = flying.filter(u => available(source, u) > 0 || picked(source, u) > 0);
-  const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack);
+  const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack, shared);
 
   /**
    * The places of a system to take cargo from: its space area and its planets, only what stands there. Where my command
