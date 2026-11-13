@@ -106,7 +106,7 @@ export function TacticalEditor({
     if (!open) onUpdate({ payment: autoPay(before, cost, 'resources', pack, { faction: game.faction }) });
   };
 
-  const placer = placeWarnings(warnings);
+  const placer = placeWarnings(warnings, entry);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
   /** The warnings of the flight from one source: its route and its cargo. */
   const flight = (source: string) => {

@@ -95,7 +95,7 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
       game={game} pack={pack} entry={shown as TacticalEntry} before={before} warnings={warnings} manualPayment={false} choosing={null}
       onChoose={nothing} onUpdate={patch => update(patch as Partial<EntryBody>)} onOpenPicker={nothing} onManualPayment={nothing}
       onOpenShop={nothing} onOpenBattle={nothing} onOpenFleet={nothing} onDone={nothing} onRemove={nothing}
-      common={<UsesBlock entry={shown} game={game} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />}
+      common={<UsesBlock entry={shown} game={game} pack={pack} before={before} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
     />
   ));
 }
@@ -104,7 +104,7 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
 export function showUses(bench: Bench, entry: Entry): Live {
   return live(bench, entry, ({ game, pack, entry: shown, before, warnings, update }) => (
     <>
-      <UsesBlock entry={shown} game={game} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <UsesBlock entry={shown} game={game} pack={pack} before={before} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />
       <WarningList warnings={warnings} game={game} pack={pack} />
     </>
   ));
@@ -123,7 +123,7 @@ export function showTurn(bench: Bench, entry: Entry): Live<ComponentEntry> {
   return live(bench, entry as ComponentEntry, ({ game, pack, entry: shown, before, warnings, update }) => (
     <TurnEditor
       entry={shown as ComponentEntry} game={game} pack={pack} board={before} warnings={warnings}
-      common={<UsesBlock entry={shown} game={game} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />}
+      common={<UsesBlock entry={shown} game={game} pack={pack} before={before} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
       onNote={note => update({ note } as Partial<EntryBody>)} onComponent={componentId => update({ componentId, choices: undefined } as Partial<EntryBody>)}
       onChoices={choices => update({ choices: Object.keys(choices).length > 0 ? choices : undefined })}
       onDone={nothing} onRemove={nothing}

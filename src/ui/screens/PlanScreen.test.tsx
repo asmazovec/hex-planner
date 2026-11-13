@@ -1847,6 +1847,14 @@ describe('one slot of the panel, one head for every editor', () => {
     expect(entries()).toEqual([]);
   });
 
+  test('a component action is named by its component in the list, so several of a round can be told apart', () => {
+    useGame.getState().addEntry(1, { type: 'component', note: '', componentId: 'actionCard:bribery' }, 'action');
+    useGame.getState().addEntry(1, { type: 'component', note: '' }, 'action');
+    render(<PlanScreen />);
+    expect(screen.getByRole('listitem', { name: 'Component action: Bribery' })).toBeVisible();
+    expect(screen.getByRole('listitem', { name: 'Component action' })).toBeVisible();
+  });
+
   test('the expedition of a turn opens as a step of its editor; the closed row reads out the part and the payment', async () => {
     useGame.getState().addEntry(1, { type: 'component', note: '', acts: [{ kind: 'expedition', sliceId: 'res5', payment: { planets: ['nestphar'], tradeGoods: 1 } }] }, 'action');
     render(<PlanScreen />);

@@ -60,7 +60,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, laws, c
     ...Object.entries(delta.ground ?? {}).filter(([, units]) => signed(units)).map(([planetId, units]) => `${pack.planets[planetId]?.name ?? planetId}: ${signed(units)}`),
   ].filter(Boolean);
   // The units of the system change in its block; the rest has no block here.
-  const placer = placeWarnings(warnings);
+  const placer = placeWarnings(warnings, entry);
   const systemWarnings = [...placer.at('units'), ...placer.at('system')];
 
   const ofAgenda = entry.phase === 'agenda';

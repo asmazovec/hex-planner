@@ -2,11 +2,13 @@ import { Fragment, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { readyToPlay } from '../../../domain/project';
-import type { ComponentKind, DataPack, Entry, Game, GameState } from '../../../domain/types';
+import type { ComponentKind, DataPack, Entry, Game, GameState, Warning } from '../../../domain/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
 import { withChoices } from '../../../domain/effects/choices';
+import { usesWarnings } from '../../feedback/warningPlaces';
+import { WarningList } from '../../feedback/WarningText';
 import { Section } from '../../primitives/Section';
 import { ChoicesBlock } from './ChoicesBlock';
 
@@ -21,6 +23,8 @@ export interface UsesBlockProps {
   pack: DataPack;
   /** The state of the entry's owner just before it: what they hold ready then stands first in the choice. */
   before?: GameState;
+  /** The warnings of the entry: those of the components named here stand in this block. */
+  warnings?: Warning[];
   /** The new list; without a value when it became empty. */
   onChange: (patch: { uses?: string[]; choices?: Record<string, string | number>; useChoices?: Record<string, Record<string, string | number>> }) => void;
 }
@@ -32,7 +36,7 @@ export interface UsesBlockProps {
  * is marked, and the plan warns of a component not held or exhausted. What a component used here allows is listed
  * among the warnings of the entry as allowed.
  */
-export function UsesBlock({ entry, game, pack, before, onChange }: UsesBlockProps) {
+export function UsesBlock({ entry, game, pack, before, warnings = [], onChange }: UsesBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const list = entry.uses ?? [];
@@ -44,7 +48,7 @@ export function UsesBlock({ entry, game, pack, before, onChange }: UsesBlockProp
   const ready = useMemo(() => (before ? readyToPlay(pack, before.holdings, game.faction, before.control) : undefined), [before, pack, game.faction]);
   const title = t('components.uses.title');
   return (
-    <Section label={title} title={title}>
+    <Section label={title} title={title} warnings={<WarningList warnings={usesWarnings(entry, warnings)} game={game} pack={pack} />}>
       <span className="muted">{t('components.uses.hint')}</span>
       <div className="side-actions">
         <button type="button" onClick={() => setPicking(true)}>{t('components.uses.add')}</button>
