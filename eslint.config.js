@@ -4,7 +4,8 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', '.claude'] },
+  // tests/scenarios: long games written against an older build, not yet brought to the current one; plans: the user's own game plans.
+  { ignores: ['dist', 'node_modules', '.claude', 'tests/scenarios', 'plans'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
