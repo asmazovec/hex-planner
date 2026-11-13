@@ -33,7 +33,9 @@ describe('speed: the context of a route', () => {
     give(table, { modify: { speed: (value, ctx) => { seen.push(ctx); return value; } } });
     warningsOf(table, move);
     expect(seen.length).toBeGreaterThan(0);
-    expect(seen[0]).toMatchObject({ faction: 'sol', from: HOME, systemId: TARGET, group: { carrier: 1, dreadnought: 1 }, game: table.game, pack: table.pack });
+    expect(seen[0]).toMatchObject({ faction: 'sol', from: HOME, systemId: TARGET, group: { carrier: 1, dreadnought: 1 }, pack: table.pack });
+    // The game a component is given by the kernel is the table's setup as the old code reads it: the map and the seats, without the plans (the plan's turns come as `primaries`, `entry`).
+    expect((seen[0] as { game: unknown }).game).toMatchObject({ map: table.game.map, seat: table.game.seat, faction: table.game.faction });
   });
 
   test('a speed asked for a display only carries no start: the old context still works', () => {

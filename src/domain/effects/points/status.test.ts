@@ -7,7 +7,7 @@
 import { describe, expect, test } from 'vitest';
 import { componentsOf } from '../../components';
 import { CARD } from '../../strategy';
-import { adjust, codesOf, forecast, planned, rulesGame, rulesPack, secondary, statusTokens } from '../../rules/kit';
+import { adjust, codesOf, forecast, mutable, planned, rulesGame, rulesPack, secondary, statusTokens } from '../../rules/kit';
 import type { Entry, EntryBody, ExpansionId, Opponent } from '../../types';
 import { hintsAt, holderOf, inForceOf } from '../registry';
 import type { ComponentEffect } from '../types';
@@ -253,7 +253,7 @@ describe('hintsAt: the objectives', () => {
   test('a public objective revealed and not yet scored by the player is reminded of at the status step', () => {
     const own = rulesPack();
     withEffect(own, PUBLIC, { ...hint, rule: PUBLIC });
-    const state = forecast(rulesGame(), own).state;
+    const state = mutable(forecast(rulesGame(), own).state);
     state.revealed = [PUBLIC];
     expect(hintsAt(own, state, 'status', ['me']).map(def => def.id)).toEqual([PUBLIC]);
     state.holdings.scored.push(PUBLIC);

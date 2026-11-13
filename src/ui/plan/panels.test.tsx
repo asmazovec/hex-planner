@@ -62,7 +62,7 @@ test('the fact shows what is, without the arrows of the plan', () => {
 });
 
 test('the summary totals count the planets as a card attached to them makes them', () => {
-  const state = project(game(), plan(), 'now', pack).state;
+  const state = structuredClone(project(game(), plan(), 'now', pack).state); // the state of the kernel is read-only
   const printed = pack.planets.nestphar;
   state.attachments = { nestphar: ['relic:nanoforge'] };
   render(<SummaryBar now={state} forecast={state} pack={pack} view={{ faction: game().faction }} factOnly />);

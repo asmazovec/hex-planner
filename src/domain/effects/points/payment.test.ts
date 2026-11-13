@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { applyPayment, checkPayment, commoditiesForShortfall, pay, readyInfluence, readyResources, spendTradeGoods } from '../../replay/payment';
 import { autoPay, paymentValue } from '../../payment';
 import { commodityValueOf, gainCommodities, replenish } from '../../replay/cards/trade';
-import { forecast, rulesGame, rulesPack, tactical } from '../../rules/kit';
+import { forecast, mutable, rulesGame, rulesPack, tactical } from '../../rules/kit';
 import type { Entry, GameState, Opponent, Warning } from '../../types';
 import { componentAction } from '../components/kit';
 import { alwaysInForce, throwaway } from './throwaway';
@@ -23,7 +23,7 @@ const view = { faction: 'rules-tester' };
 const NEAR = '1,0';
 
 const freshState = (): GameState => {
-  const state = forecast(rulesGame({ entries: [] }), pack).state;
+  const state = mutable(forecast(rulesGame({ entries: [] }), pack).state);
   state.control = { h1: 'me', h2: 'me' };
   state.exhausted = [];
   state.tradeGoods = 0;

@@ -154,7 +154,8 @@ export function legacyViewsFresh(table: Table, board: Board, pack: DataPack): Le
   for (const p of table.players) states[legacyKey(table, p.id)] = ownState(table, board, p.id);
   const me = states.me;
   me.rivals = Object.fromEntries(Object.entries(states).filter(([key]) => key !== 'me'));
-  me.rivalHolds = {};
+  // Who holds each planet another player has (LRR 25.1): the screens colour a planet by it (`holderIn`), so a planet taken in the plan names its taker.
+  me.rivalHolds = Object.fromEntries(Object.entries(board.planets).flatMap(([id, planet]) => (planet.owner !== undefined && planet.owner !== table.viewer ? [[id, legacyKey(table, planet.owner)]] : [])));
   me.opponentVp = Object.fromEntries(table.players.filter(p => p.id !== table.viewer).map(p => [legacyKey(table, p.id), board.players[p.id]?.vp ?? 0]));
   me.laws = board.common.laws.map(l => l.id);
   me.revealed = [...board.common.revealed];

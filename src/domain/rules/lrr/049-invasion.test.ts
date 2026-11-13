@@ -108,7 +108,8 @@ describe('LRR 49 Invasion', () => {
 
   test('49.5: a landing with no ground force entered gains no control', () => {
     const land = tactical(TARGET, { moves: [{ from: NEAR, units: { carrier: 1 } }], landings: [{ planetId: 't1', units: {} }] });
-    const game = rulesGame({ units: { [NEAR]: { carrier: 1 } }, entries: [land], game: { planetControl: { t1: 'enemy' } } });
+    const game = rulesGame({ units: { [NEAR]: { carrier: 1 } }, entries: [land], game: { planetControl: { t1: 'enemy' }, planetOwner: { t1: 'rival' } } });
+    // Control by another player always names the player (planetOwner): the kernel's board holds an owner, not an anonymous 'enemy'.
     expect(forecast(game, pack).state.control.t1).toBe('enemy');
   });
 

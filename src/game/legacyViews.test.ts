@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import { setPlayerFaction } from '../domain/players';
-import { startOf } from '../domain/replay/timeline';
+import { startOf } from '../domain/replay/start';
 import { applyAll } from './apply';
 import { normalState } from './compare';
 import { boardFromLegacy, boardOf, legacyState, tableOf } from './fromLegacy';

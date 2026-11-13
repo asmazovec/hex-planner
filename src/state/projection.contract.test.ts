@@ -37,3 +37,19 @@ describe('the app computes with the kernel through one module', () => {
     expect(oracle.slice(0, 600)).toMatch(/oracle/i);
   });
 });
+
+describe('the tests of rules and components compute with the kernel too', () => {
+  // Every file, tests included: only the oracle (src/game/resolve/differential*) and the old replay itself reach the old timeline.
+  const all: Record<string, string> = import.meta.glob(['/src/**/*.{ts,tsx}', '!/src/domain/replay/**', '!/src/**/*.bench.ts', '!/src/game/resolve/differential*', '!/src/state/projection.contract.test.ts'], { query: '?raw', import: 'default', eager: true });
+
+  test('no file outside the oracle imports the old replay timeline', () => {
+    const bad = Object.keys(all).filter(f => importsOf(all[f]).some(i => /replay\/timeline$/.test(i.from)));
+    expect(bad).toEqual([]);
+  });
+
+  test('no file outside the oracle asks the old replay index for a state', () => {
+    const bad = Object.keys(all).flatMap(f =>
+      importsOf(all[f]).filter(i => /(^|\/)replay(\/index)?$/.test(i.from) && i.names.some(n => REPLAYS.includes(n))).map(i => `${f}: ${i.names.filter(n => REPLAYS.includes(n)).join(', ')}`));
+    expect(bad).toEqual([]);
+  });
+});

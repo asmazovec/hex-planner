@@ -8,7 +8,7 @@
  */
 import { loadPack } from '../../data/loadPack';
 import { upgradeTech } from '../holdings';
-import { project, stateBeforeEntry } from '../project';
+import { forgetTimelines, project, stateBeforeEntry } from '../project';
 import { SAVE_FORMAT, type ExpansionId, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
 
 export const HOME = '0,0';
@@ -138,6 +138,9 @@ function watch(game: Game, pack: DataPack): void {
 /** The forecast of the active plan: every planned entry counts. */
 export function forecast(game: Game, pack: DataPack): { state: GameState; warnings: Record<string, Warning[]> } {
   watch(game, pack);
+  // A test may change the component registry (or the pack) between two asks about one game: the kernel keeps the
+  // timeline of an unchanged game and plan, so every ask here starts over, as a replay of the plan always did.
+  forgetTimelines();
   const { state, warningsByEntry } = project(game, game.plans[0], 'forecast', pack);
   return { state, warnings: warningsByEntry };
 }
@@ -147,8 +150,15 @@ export function codesOf(game: Game, pack: DataPack, target: Entry): string[] {
   return (forecast(game, pack).warnings[target.id] ?? []).map(w => w.code as string);
 }
 
+/**
+ * A board the test may write to: the states the kernel gives are frozen readings. For the tests of the helpers that
+ * take a state and change it (src/domain/effects/points/*), which build their own input from the plan's result.
+ */
+export const mutable = <T>(state: T): T => structuredClone(state);
+
 export const before = (game: Game, pack: DataPack, target: Entry): GameState => {
   watch(game, pack);
+  forgetTimelines();
   return stateBeforeEntry(game, game.plans[0], target.id, pack);
 };
 

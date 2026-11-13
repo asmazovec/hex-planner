@@ -10,7 +10,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { watchProjects } from '../../domain/replay';
+import { watchProjects } from '../../domain/project';
 import { watchGames } from '../../domain/rules/kit';
 import { boardOf } from '../fromLegacy';
 import type { DataPack, Game } from '../../domain/types';

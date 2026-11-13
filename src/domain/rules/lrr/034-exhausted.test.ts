@@ -47,7 +47,8 @@ describe('LRR 34 Exhausted', () => {
 
   test('34.3: spending a planet\'s influence exhausts it', () => {
     const play = primary(CARD.leadership, { tokens: { tactic: 4 }, boughtTokens: 1, payment: { planets: ['h2', 'h1'], tradeGoods: 0 } });
-    expect(forecast(rulesGame({ entries: [play] }), pack).state.exhausted).toEqual(['h2', 'h1']);
+    // 34.3 gives the planet cards no order: the board lists them in its own, so the set is compared.
+    expect([...forecast(rulesGame({ entries: [play] }), pack).state.exhausted].sort()).toEqual(['h1', 'h2']);
   });
 
   test('34.4 / 71.4: a card exhausted for its ability cannot be exhausted again until readied: componentExhausted', () => {

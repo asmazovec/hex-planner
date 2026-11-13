@@ -165,7 +165,7 @@ describe('a removal must count at the place of its entry', () => {
     const { game, round } = start([later]);
     const next = remove(game, round, 'carrier');
     expect(mergedEntry(next, 'losses', SLOT)?.phase).toBe('status');
-    expect(forecast(game, next).systems[SLOT]).toEqual({});
+    expect(forecast(game, next).systems[SLOT] ?? {}).toEqual({}); // an emptied system is absent from the board
   });
 
   test('a ground unit landed later: its removal counts as well', () => {
@@ -178,7 +178,7 @@ describe('a removal must count at the place of its entry', () => {
     const { game, round } = start([fleet, fighters, earlier, land]);
     const next = remove(game, round, 'infantry', planet);
     expect(next.entries.map(e => e.id)).toEqual(['fleet', 'fighters', 'move', 'merged']);
-    expect(forecast(game, next).ground[planet]).toEqual({});
+    expect(forecast(game, next).ground[planet] ?? {}).toEqual({}); // an emptied planet is absent from the board
   });
 
   test('a removal that already counts leaves the entry where it is', () => {

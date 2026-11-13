@@ -385,7 +385,7 @@ describe('project', () => {
     const s = run(g).state;
     expect(s.control.lazar).toBe('me');
     expect(s.ground.lazar.infantry).toBe(2);
-    expect(s.systems.B.infantry).toBeUndefined();
+    expect(s.systems.B?.infantry).toBeUndefined();
   });
 
   test('начало раунда: планеты готовы, жетоны с карты снимаются', () => {
@@ -488,7 +488,7 @@ describe('project', () => {
     expect(lossFirst.state.systems.B.cruiser).toBe(1);
     const arrivalFirst = run(gameWith([start, arrival, loss]));
     expect(codes(arrivalFirst.warningsByEntry.l)).not.toContain('unitsMissing');
-    expect(arrivalFirst.state.systems.B.cruiser ?? 0).toBe(0);
+    expect(arrivalFirst.state.systems.B?.cruiser ?? 0).toBe(0);
   });
 
   test('записи идут по фазам внутри раунда, а не по массиву', () => {
@@ -537,7 +537,8 @@ describe('project', () => {
       withId('p', entry(tactical({ systemId: 'H', production: { cruiser: 1 }, payment: { planets, tradeGoods: 0 } })));
     const enemy = run(gameWith([build(['arc', 'lazar'])], { planetControl: { arc: 'enemy' } }));
     expect(enemy.warningsByEntry.p).toContainEqual({ code: 'shortResources', params: { needed: 2, paid: 0 } });
-    expect(enemy.state.exhausted).toEqual(['arc', 'lazar']);
+    // A planet another player holds is not exhausted by the payer (LRR 34 note 2, 64 note 5; the differences document): only lazar is.
+    expect(enemy.state.exhausted).toEqual(['lazar']);
   });
 
   test('экспедиция без части: оплата расходует планеты', () => {
@@ -907,7 +908,7 @@ describe('adjustment with ground units by planet', () => {
   test('a stack cannot go below nothing, and an empty stack leaves the planet', () => {
     const add = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: 1 } } } }, 'strategy');
     const lost = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: -5, mech: -1 } } } });
-    expect(run(game([add, lost])).state.ground.jord).toEqual({});
+    expect(run(game([add, lost])).state.ground.jord ?? {}).toEqual({}); // no empty stack on the board: the planet is absent
   });
 
   test('space and ground of one delta both apply', () => {
@@ -999,7 +1000,7 @@ describe('pickups on the way', () => {
       { from: 'M', units: { fighter: 2 }, pickupOf: 'A' },
     ] })]);
     const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
-    expect(state.systems.M).toEqual({});
+    expect(state.systems.M ?? {}).toEqual({}); // an emptied system is absent from the board
     expect(state.systems.T).toEqual({ carrier: 1, fighter: 2 });
     expect(warningsByEntry.r).toEqual([]);
   });
@@ -1022,7 +1023,7 @@ describe('pickups on the way', () => {
     const e = withId('r', entry(body));
     const g = game([withId('g', entry({ type: 'adjustment', label: '', delta: { ground: { lazar: { infantry: 3 } } } }, 'strategy', 'done')), e]);
     const { state, warningsByEntry } = project(g, g.plans[0], 'forecast', pack);
-    expect(state.ground.lazar).toEqual({});
+    expect(state.ground.lazar ?? {}).toEqual({}); // an emptied planet is absent from the board
     expect(state.systems.T).toEqual({ carrier: 1, infantry: 3 });
     expect(warningsByEntry.r).toEqual([]);
     const before = stateBeforeEntry(g, g.plans[0], 'r', pack);

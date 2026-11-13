@@ -133,8 +133,8 @@ export function playHooks(ctx: Ctx): void {
     const cards = cardRoundOf(ctx.table, ctx.track, r.states);
     for (const id of playedBy(entry)) {
       const effect = effectOf(pack, id);
-      // A play that asked to run in the middle of a tactical action has run there already.
-      if (!effect?.play || effect.playAt || NATIVE_PLAYS.includes(noteBase(id))) continue;
+      // A play that asked to run in the middle of a tactical action has run there already; in any other entry (a component action) it runs here, once.
+      if (!effect?.play || (effect.playAt && entry.type === 'tactical') || NATIVE_PLAYS.includes(noteBase(id))) continue;
       const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
       effect.play({
         game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards,

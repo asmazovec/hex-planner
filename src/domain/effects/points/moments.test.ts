@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import { adjust, forecast, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, HOME, NEAR, TARGET } from '../../rules/kit';
+import { adjust, forecast, mutable, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, HOME, NEAR, TARGET } from '../../rules/kit';
 import type { Entry } from '../../types';
 import type { ComponentEffect } from '../types';
 import { spendStrategyTokens } from '../../replay/status';
@@ -75,7 +75,7 @@ describe('onTokenSpent', () => {
     const pack = rulesPack();
     const seen: number[] = [];
     withEffect(pack, TECH, hooked({ onTokenSpent: ({ count }) => { seen.push(count); } }));
-    const turn = { game: rulesGame({ ...held }), state: forecast(rulesGame({ ...held }), pack).state, pack, warnings: [], id: 'x' };
+    const turn = { game: rulesGame({ ...held }), state: mutable(forecast(rulesGame({ ...held }), pack).state), pack, warnings: [], id: 'x' };
     spendStrategyTokens({ ...turn, shared: turn.state } as never, 1);
     expect(seen).toEqual([1]);
   });

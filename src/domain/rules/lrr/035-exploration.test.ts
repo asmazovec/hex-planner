@@ -3,9 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { componentById } from '../../components';
 import { emptyHoldings } from '../../holdings';
 import { gain, holds, lose } from '../../replay/holdings';
-import { exploreCondition } from '../../replay/invasion';
-import type { Warning } from '../../types';
-import { forecast, rulesGame, rulesPack } from '../kit';
+import { rulesPack } from '../kit';
 import { loadPack } from '../../../data/loadPack';
 import { MECATOL_PLANET } from '../../mecatol';
 
@@ -46,17 +44,8 @@ describe('LRR 35 Exploration', () => {
   test.todo('35 note 6: notes on particular cards live on their own page — not modelled: exploration is not planned');
 });
 
-describe('LRR 35.2 a card that asks for a mech or an infantry (explorationCondition)', () => {
-  test('35.2: with neither a mech nor an infantry on the planet the condition is warned of', () => {
-    const state = forecast(rulesGame({ game: { planetControl: { t1: 'me' } } }), rulesPack()).state;
-    const warnings: Warning[] = [];
-    expect(exploreCondition(state, 't1', warnings)).toBe(false);
-    expect(warnings.map(w => w.code)).toEqual(['explorationCondition']);
-    state.ground.t1 = { infantry: 1 };
-    expect(exploreCondition(state, 't1', warnings)).toBe(true);
-    expect(state.ground.t1).toEqual({});
-  });
-});
+// The condition of a card that asks for a mech or an infantry (explorationCondition) is tested through the cards that ask it:
+// src/domain/effects/components/exploration/exp1.test.ts, cm1.test.ts and vfs1.test.ts.
 
 describe('LRR 35.9 relic fragments are kept in the play area (Holdings.found)', () => {
   const pack = rulesPack(undefined, ['pok']);

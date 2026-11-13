@@ -6,8 +6,7 @@ import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from '../../holdings';
 import { productionCost } from '../../project';
 import { CARD } from '../../strategy';
-import { placeOnPlanet } from '../../replay/invasion';
-import type { Game, Warning } from '../../types';
+import type { Game } from '../../types';
 import { adjust, codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();
@@ -190,13 +189,5 @@ describe('LRR 67 Producing Units', () => {
   test.todo('67 note 4: a unit taken back from the board to be produced comes undamaged — not modelled: damage is not tracked');
 });
 
-describe('LRR 67.4.1 units an ability places (placeNotControlled)', () => {
-  test('67.4.1: units placed on a planet the player does not control are warned of, and still placed', () => {
-    const state = forecast(rulesGame({ game: { planetControl: { h1: 'me' } } }), pack).state;
-    const warnings: Warning[] = [];
-    placeOnPlanet(state, 'h1', { infantry: 1 }, warnings);
-    placeOnPlanet(state, 't1', { infantry: 1 }, warnings);
-    expect(warnings.map(w => [w.code, w.params.planetId])).toEqual([['placeNotControlled', 't1']]);
-    expect(state.ground.t1).toEqual({ infantry: 1 });
-  });
-});
+// Units an ability places on a planet the player does not control (placeNotControlled) are tested through the abilities that place them:
+// src/domain/effects/components/ability/orbital_drop.test.ts and actionCard/f_deployment.test.ts.

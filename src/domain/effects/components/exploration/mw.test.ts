@@ -14,6 +14,8 @@ const research = (planets: string[]) => secondary(CARD.technology, { researched:
 const table = (gains: string[], pay: Entry, game = {}) =>
   ({ pay, ...bench({ faction: 'letnev', expansions: ['pok'], units: { [NEAR]: { carrier: 1, infantry: 1 } }, rounds: [[landing(gains)], [pay]], game }) });
 
+// A structure belongs to the controller of its planet (LRR 24, 49.5.1; the differences document): the dock stands on a planet held from the start,
+// not on one nobody holds until round 1 takes it, where the game model drops it.
 /** Round 2: the dock on Target One builds five fighters in the target system, paid with the home planets. */
 const build = () => tactical(TARGET, { production: { fighter: 5 }, payment: { planets: ['h1'], tradeGoods: 0 } });
 
@@ -48,14 +50,14 @@ describe('exploration:mw Mining World', () => {
   // Why the check is redundant here: the Production value is counted from the planet's resources, which the card
   // raises; the productionOver check then runs against the higher number (a modify, not a waiver).
   test('exploration:mw raises the Production value of a space dock on its planet', () => {
-    const mining = table([id], build(), { docks: ['t1'] });
+    const mining = table([id], build(), { docks: ['t1'], planetControl: { h1: 'me', h2: 'me', t1: 'me' } });
     expectNone(warningsOf(mining, mining.pay), 'productionOver');
   });
 
   // Checks: without the card the dock produces four (2 + 2), so the fifth fighter is over.
   // Why the check is NOT redundant here: nothing raises Target One.
   test('exploration:mw not explored, the dock on Target One produces four and the fifth fighter is over', () => {
-    const plain = table([], build(), { docks: ['t1'] });
+    const plain = table([], build(), { docks: ['t1'], planetControl: { h1: 'me', h2: 'me', t1: 'me' } });
     expectStanding(warningsOf(plain, plain.pay), 'productionOver');
   });
 

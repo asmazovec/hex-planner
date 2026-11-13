@@ -7,7 +7,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { boardBefore, project, timeline } from '../../domain/project';
+import { boardBefore, project, timelineOf as timeline } from '../../domain/project';
 import { withEffect } from '../../domain/effects/points/status.kit';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';

@@ -117,7 +117,8 @@ describe('controlGained', () => {
 });
 
 describe('placeOnPlanet, exploreCondition, attachCard', () => {
-  const board = () => endOf(bench({ faction: 'sol', game: { planetControl: { h1: 'me', t1: 'me' } } }));
+  // The kernel's state is read-only; these helpers of the old replay write to theirs.
+  const board = () => structuredClone(endOf(bench({ faction: 'sol', game: { planetControl: { h1: 'me', t1: 'me' } } })));
 
   test('placeOnPlanet adds the units and warns placeNotControlled for a planet that is not mine', () => {
     const state = board();
@@ -146,7 +147,7 @@ describe('placeOnPlanet, exploreCondition, attachCard', () => {
 
   test('attachCard records the card on the planet and warns attachTarget for a planet not mine, a home planet, a legendary one', () => {
     const table = bench({ faction: 'sol', game: { planetControl: { h1: 'me', t1: 'me' } } });
-    const state = endOf(table);
+    const state = structuredClone(endOf(table));
     const warnings: { code: string; params: Record<string, unknown> }[] = [];
     attachCard(table.game, state, 't1', 'relic:nanoforge', table.pack, warnings as never, { notHome: true });
     attachCard(table.game, state, 't2', 'relic:nanoforge', table.pack, warnings as never, { notHome: true });

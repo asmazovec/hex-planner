@@ -466,7 +466,7 @@ describe('battle', () => {
     await tap('Carrier ×2');
     await tap('Infantry ×1');
     expect(merged('losses')?.delta).toEqual({ units: { systemId: SLOT, units: { carrier: -1 } }, ground: { [quann()]: { infantry: -1 } } });
-    expect(forecast().ground[quann()]).toEqual({});
+    expect(forecast().ground[quann()] ?? {}).toEqual({}); // an emptied planet is absent from the board
     const strip = within(screen.getByRole('group', { name: 'Losses, mine' }));
     await userEvent.click(strip.getByRole('button', { name: 'Give back Carrier' }));
     await userEvent.click(strip.getByRole('button', { name: 'Give back Infantry' }));

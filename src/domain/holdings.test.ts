@@ -4,8 +4,7 @@ import { componentById, noteAddress, noteBase, noteId, textOf } from './componen
 import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, notesOfFirst, noteText, ownNotes, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from './newGame';
 import { addPlayer, draftWithExpansions, gameAs, removePlayer, setPlayerFaction } from './players';
-import { project, readyToPlay } from './project';
-import { timeline } from './replay/timeline';
+import { forgetTimelines, project, readyToPlay, timelineOf } from './project';
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';
 import type { Entry, Game, Opponent } from './types';
@@ -254,10 +253,12 @@ describe('a component action names its component', () => {
     const start = { me: { leaders: { 'leader:solagent': 'unlocked' as const } }, opponents: {} };
     const game = rulesGame({ rounds: [[component('leader:solagent')], [component('leader:solagent')], [component('leader:solagent')]], game: { start } });
     const plan = game.plans[0];
-    const kept = timeline(game, plan, 'forecast', pok);
+    timelineOf(game, plan, 'forecast', pok);
     const edited = { ...plan, rounds: [plan.rounds[0], plan.rounds[1], { ...plan.rounds[2], entries: [...plan.rounds[2].entries, component('leader:solagent')] }] };
-    const resumed = timeline(game, edited, 'forecast', pok, kept);
-    const full = timeline(game, edited, 'forecast', pok);
+    // The timeline of the edited plan resumes from the kept one; a fresh calculation must agree.
+    const resumed = timelineOf(game, edited, 'forecast', pok);
+    forgetTimelines();
+    const full = timelineOf(game, edited, 'forecast', pok);
     expect(resumed.frames).toEqual(full.frames);
     expect(resumed.frames.map(f => f.warnings.map(w => w.code))).toEqual([[], [], [], ['componentExhausted']]);
   });

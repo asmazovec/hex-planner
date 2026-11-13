@@ -17,7 +17,7 @@ describe('leader:jolnarhero Rin, the Master\'s Legacy', () => {
     const swap = componentAction(id, { spends: ['technology:gd'], gains: ['technology:amd'] });
     const table = jolnar([swap]);
     quote(table.pack, id, 'you may replace that technology with any technology of the same color from the deck');
-    expect(endOf(table).holdings.technologies.sort()).toEqual(['technology:amd', 'technology:nm']);
+    expect([...endOf(table).holdings.technologies].sort()).toEqual(['technology:amd', 'technology:nm']);
     expect(effect(table.pack, id)).toMatchObject({ tier: 'hint', hintAt: ['component'] });
   });
 

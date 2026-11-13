@@ -195,7 +195,7 @@ describe('the checks of production', () => {
   test('unitLimitWarnings: the pieces of the game for units a step puts on the board', () => {
     const entry = produce({});
     const table = build(entry, { game: {} });
-    const state = endOf(table);
+    const state = structuredClone(endOf(table)); // the kernel's state is read-only; this helper writes to its input
     state.systems[HOME] = { cruiser: 8 };
     expect(unitLimitWarnings(state, { cruiser: 1 }, table.pack).map(w => w.code)).toEqual(['reinforcementsOut']);
     expect(unitLimitWarnings(state, { cruiser: 1, infantry: 99, fighter: 99 }, table.pack)).toHaveLength(1);

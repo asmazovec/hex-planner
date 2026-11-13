@@ -45,7 +45,8 @@ describe('the three modes', () => {
     // One card's secondary is resolved once a round (83.7), so each one here is of another card.
     const third = secondary(5);
     const game = start([secondary(3), secondary(8), third]);
-    expect(stateOf(game).state.strategy).toBe(-1);
+    // The pool stops at zero; the shortfall is the warning `poolNegative` (LRR 20.4, 81.5; the differences document).
+    expect(stateOf(game).state.strategy).toBe(0);
     expect(stateOf(game).warningsByEntry[third.id]).toEqual([{ code: 'shortStrategy', params: { have: 0 } }]);
   });
 
@@ -222,7 +223,7 @@ describe('Diplomacy', () => {
     const later = secondary(6, { production: { systemId: HOME, units: { carrier: 1 } }, payment: pay([JOL]) });
     const game = start([spendAll(), primary(2, { systemId: HOME, readied: [JOL] }), later]);
     expect(codes(stateOf(game).warningsByEntry[later.id])).not.toContain('planetExhausted');
-    expect(stateOf(game).state.exhausted).toEqual([NAR, JOL]);
+    expect([...stateOf(game).state.exhausted].sort()).toEqual([JOL, NAR].sort()); // the board gives no order to exhausted planets (34.3)
   });
 
   test('a secondary costs its token and readies too', () => {
@@ -440,7 +441,7 @@ describe('choices and changes', () => {
     expect(warningsOf(start([fine]), fine)).toEqual([]);
     const over = primary(6, { tokens: { strategy: -3, fleet: 3 } });
     const result = stateOf(start([over]));
-    expect(result.state.strategy).toBe(-1);
+    expect(result.state.strategy).toBe(0); // the pool stops at zero, the warning says how far it went (LRR 20.4, 81.5)
     expect(result.warningsByEntry[over.id]).toEqual([{ code: 'poolNegative', params: { pool: 'strategy', have: -1 } }]);
   });
 
