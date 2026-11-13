@@ -3,7 +3,7 @@
  * landing), and what the surviving ships carry is checked. The battle itself is the player's: only its losses are entered.
  */
 import { holdsShips } from '../../domain/movement';
-import { planetsOf } from '../../domain/replay/board';
+import { planetsIn } from '../space';
 import { checkAfterCombat } from '../../domain/replay/combat';
 import type { UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
@@ -14,8 +14,7 @@ import { checkView, emit, warn, type Ctx } from './context';
  * or planets (space cannon). Losses where nothing can were taken on the way, in a gravity rift (37 note 4).
  */
 export function canFight(ctx: Ctx, target: string): boolean {
-  const v = checkView(ctx);
-  if (planetsOf(v.game, target, ctx.pack).length > 0) return true;
+  if (planetsIn(ctx.table, ctx.board, ctx.pack, target).length > 0) return true;
   return Object.entries(ctx.board.systems[target]?.ships ?? {}).some(([player, units]) => player !== ctx.player && holdsShips(units, ctx.pack));
 }
 

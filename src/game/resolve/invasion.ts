@@ -5,14 +5,15 @@
  * their planets at the end of the action.
  */
 import { CUSTODIANS_COST, MECATOL_PLANETS } from '../../domain/mecatol';
-import { isStation, planetsOf } from '../../domain/replay/board';
+import { isStation } from '../../domain/replay/board';
 import { checkLandings } from '../../domain/replay/invasion';
-import { structuresOn } from '../../domain/replay/structures';
 import { checkStationLandings } from '../../domain/thundersEdge';
 import { violation } from '../../domain/rules/registry';
 import type { StructureKind, UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { viewFor } from '../legacyViews';
+import { legacyKey } from '../legacyViews';
+import { groundOn, ownerOf } from '../queries';
+import { planetsIn } from '../space';
 import { checkView, emit, warn, type Ctx } from './context';
 import { controlHooks, controlLostBefore, reactLanding } from './legacyEffects';
 import { tradeGoodsOnControl } from '../queries';
@@ -35,7 +36,7 @@ export function landUnits(ctx: Ctx, target: string): Landed {
   const v0 = checkView(ctx);
   warn(ctx, checkStationLandings(ctx.entry as never, ctx.pack));
   warn(ctx, checkLandings(v0.game, v0.state, target, ctx.entry as never, ctx.pack));
-  const planets = planetsOf(v0.game, target, ctx.pack);
+  const planets = planetsIn(ctx.table, ctx.board, ctx.pack, target);
   const on: string[] = [];
   for (const landing of ctx.tactical.invasion) {
     if (!planets.includes(landing.planet)) continue;
@@ -43,8 +44,7 @@ export function landUnits(ctx: Ctx, target: string): Landed {
     // What was entered lands: a shortfall is `landingOverLimit` and forbids nothing, the stack it comes from only ends empty.
     emit(ctx, [{ type: 'UnitsRemoved', player: ctx.player, at: landing.from === undefined ? { slot: target } : { planet: landing.from }, units: landed }], { quiet: true });
     if (!some(landed)) continue;
-    const v = checkView(ctx);
-    const custodians = MECATOL_PLANETS.includes(landing.planet) && v.state.control[landing.planet] === undefined && ctx.board.common.custodians;
+    const custodians = MECATOL_PLANETS.includes(landing.planet) && ownerOf(ctx.board, landing.planet) === undefined && ctx.board.common.custodians;
     if (custodians) {
       // The six influence come from the turn's own payment; one warning says what is lacking.
       const payment = ctx.tactical.custodians ?? { planets: [], tradeGoods: 0 };
@@ -67,11 +67,12 @@ export function landUnits(ctx: Ctx, target: string): Landed {
  */
 export function gainControl(ctx: Ctx, landed: Landed): void {
   for (const planetId of landed.on) {
-    const v = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player);
-    if (!some(groundOf(v.state.ground[planetId] ?? {}, ctx))) continue;
+    if (!some(groundOf(groundOn(ctx.board, planetId, ctx.player), ctx))) continue;
     if (ctx.board.planets[planetId]?.owner === ctx.player) continue;
-    const fromPlayer = v.state.control[planetId] === 'enemy';
-    const lost = structuresOn(v.state, planetId).filter(s => s.owner !== 'me');
+    const was = ownerOf(ctx.board, planetId);
+    const fromPlayer = was !== undefined;
+    // The structures of the old owner go with the change (49.5.1).
+    const lost = was === undefined ? [] : KINDS.map(kind => ({ kind, owner: legacyKey(ctx.table, was), count: ctx.board.planets[planetId]?.structures[kind] ?? 0 })).filter(s => s.count > 0);
     const viewerLoses = ctx.board.planets[planetId]?.owner === ctx.table.viewer && ctx.player !== ctx.table.viewer;
     if (viewerLoses && landed.lost.hooked.length === 0) landed.lost.hooked = controlLostBefore(ctx);
     emit(ctx, [
@@ -88,10 +89,9 @@ export function gainControl(ctx: Ctx, landed: Landed): void {
 
 /** Being the only player with units in a system gives control of its space stations (space stations 2). */
 export function claimStations(ctx: Ctx, target: string): void {
-  const v = checkView(ctx);
-  const stations = planetsOf(v.game, target, ctx.pack).filter(id => isStation(ctx.pack, id));
+  const here = planetsIn(ctx.table, ctx.board, ctx.pack, target);
+  const stations = here.filter(id => isStation(ctx.pack, id));
   if (stations.length === 0) return;
-  const here = planetsOf(v.game, target, ctx.pack);
   const others = ctx.table.players.some(p => p.id !== ctx.player && (some(ctx.board.systems[target]?.ships[p.id]) || here.some(id => some(ctx.board.planets[id]?.ground[p.id]))));
   if (others) return;
   const mine = some(ctx.board.systems[target]?.ships[ctx.player]) || here.some(id => some(ctx.board.planets[id]?.ground[ctx.player]));
@@ -103,7 +103,7 @@ export function claimStations(ctx: Ctx, target: string): void {
  * the system the player controls by then, within what a planet holds (85.4, 85.5). What was entered is placed.
  */
 export function placeCarried(ctx: Ctx, target: string): void {
-  const planets = planetsOf(checkView(ctx).game, target, ctx.pack);
+  const planets = planetsIn(ctx.table, ctx.board, ctx.pack, target);
   for (const landing of ctx.tactical.invasion) {
     const kinds = KINDS.filter(kind => (landing.structures?.[kind] ?? 0) > 0);
     if (kinds.length === 0) continue;
