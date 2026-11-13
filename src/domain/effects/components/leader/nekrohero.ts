@@ -7,6 +7,7 @@
  * and structures on the planet are removed, the trade goods of its resources plus influence are gained and the
  * technology is gained (not researched, so Propagation does not replace it). The hero is purged by the replay.
  */
+import { componentsOf } from '../../../components';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:nekrohero';
@@ -16,7 +17,17 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [
     { key: 'planet', kind: 'planet', options: ({ pack }) => Object.values(pack.planets).filter(planet => planet.tech?.length).map(planet => planet.id) },
-    { key: 'technology', kind: 'component' },
+    {
+      // The technologies of the colour of the planet's specialty that the player can gain: no faction card, no unit upgrade, none held yet.
+      key: 'technology', kind: 'component', label: { ru: 'Технология', en: 'Technology' }, when: chosen => chosen.planet !== undefined,
+      options: ({ pack, state, chosen }) => {
+        const colours = pack.planets[String(chosen.planet ?? '')]?.tech ?? [];
+        return componentsOf(pack)
+          .filter(def => def.kind === 'technology' && !def.faction && !state.holdings.technologies.includes(def.id))
+          .filter(def => { const tech = pack.technologies[def.id.slice('technology:'.length)]; return !!tech?.type && !tech.upgrade && colours.includes(tech.type); })
+          .map(def => def.id);
+      },
+    },
   ],
   play: ({ choices, states, state, player, pack, held }) => {
     if (!held) return;
