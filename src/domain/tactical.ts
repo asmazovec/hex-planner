@@ -4,6 +4,7 @@
  * replay itself lives in src/domain/replay/.
  */
 import { holderOf } from './effects/registry';
+import { CUSTODIANS_COST, MECATOL_PLANETS } from './mecatol';
 import { fleetSpeed, linksOf, routeMove, routeReach, type Blockers, type MoveView } from './movement';
 import { autoPay } from './payment';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
@@ -430,4 +431,22 @@ export function routeHint(
   const speed = routeMove(game, path, fastest, pack, undefined, view);
   const reach = active === null ? new Set<string>() : routeReach(game, path, fastest, active, pack, blockers(), view);
   return { speed, steps, left: Math.max(0, speed - steps), reach };
+}
+
+/**
+ * The Mecatol Rex planet this entry lands ground forces on while the custodians token still stands on it (the state
+ * before the entry: no one controls it, no one has removed the token), or undefined. Its removal is paid in
+ * `custodiansPayment`.
+ */
+export function custodiansLanding(before: Pick<GameState, 'control' | 'custodiansRemoved'>, entry: TacticalEntry, pack: DataPack): string | undefined {
+  if (before.custodiansRemoved) return undefined;
+  return entry.landings.find(l => MECATOL_PLANETS.includes(l.planetId) && before.control[l.planetId] === undefined
+    && (Object.keys(l.units) as UnitId[]).some(unit => l.units[unit] && isGround(pack, unit)))?.planetId;
+}
+
+/** The entry with the payment of the custodians token seeded or dropped to follow its landing: automatic unless the ability frees the price. */
+export function withCustodiansPayment(entry: TacticalEntry, before: GameState, faction: string, pack: DataPack, free: boolean): Partial<TacticalEntry> {
+  if (custodiansLanding(before, entry, pack) === undefined) return entry.custodiansPayment ? { custodiansPayment: undefined } : {};
+  if (entry.custodiansPayment !== undefined || free) return {};
+  return { custodiansPayment: autoPay(before, CUSTODIANS_COST, 'influence', pack, { faction }) };
 }

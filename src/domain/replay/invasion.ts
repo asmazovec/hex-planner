@@ -6,19 +6,18 @@ import { hooked, run } from '../effects/points/moments';
 import type { ControlTurn } from '../effects/points/invasion';
 import { effectOf, holderOf, inForceOf, orderOf } from '../effects/registry';
 import { playedBy } from '../effects/waivers';
-import { MECATOL_PLANETS } from '../mecatol';
+import { CUSTODIANS_COST, MECATOL_PLANETS } from '../mecatol';
 import { violation } from '../rules/registry';
 import { gameAs } from '../players';
 import { inHomeSystem } from '../stacks';
 import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, UnitCounts, Warning } from '../types';
 import { planetsOf } from './board';
 import { add, missingUnits, removeUnits, unitIds, type TacticalEntry } from './state';
+import { applyPayment, checkPayment } from './payment';
 import { losePlanet, structuresOn } from './structures';
 
 const code = (name: string): AnyWarningCode => name as AnyWarningCode;
 
-/** Influence spent to remove the custodians token (27.2). */
-const CUSTODIANS_COST = 6;
 
 const groundOf = (units: UnitCounts, pack: DataPack): UnitCounts =>
   Object.fromEntries(unitIds(units).filter(id => pack.units[id]?.ground).map(id => [id, units[id]]));
@@ -68,7 +67,7 @@ export function checkLandings(game: Game, state: GameState, target: string, entr
 /**
  * Effect: the ground forces of each landing go from the active system's space onto its planet, as many as were entered;
  * returns the planets something landed on. The first to land on Mecatol Rex removes the custodians token: six influence
- * the plan does not record, so it is warned about, and one victory point (27.2, 27.3, 54.1).
+ * paid with `custodiansPayment` (a shortfall is warned about), and one victory point (27.2, 27.3, 54.1).
  */
 export function landUnits(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], shared: GameState = state): string[] {
   warnings.push(...checkLandings(game, state, target, entry, pack));
@@ -82,8 +81,11 @@ export function landUnits(game: Game, state: GameState, target: string, entry: T
     else removeUnits(state.systems, target, landed);
     if (unitIds(landed).length === 0) continue;
     if (custodiansOn(state, landing.planetId)) {
-      warnings.push(violation('custodians', { planetId: landing.planetId }));
-      warnings.push(violation('shortInfluence', { needed: CUSTODIANS_COST, paid: 0 }, 'invasion'));
+      // The six influence come from the entry's own payment; one warning says what is lacking.
+      const payment = entry.custodiansPayment ?? { planets: [], tradeGoods: 0 };
+      warnings.push(...checkPayment(state, payment, { step: 'invasion' }));
+      const paid = applyPayment(state, payment, 'influence', pack, { faction: game.faction, shared });
+      if (paid < CUSTODIANS_COST) warnings.push(violation('custodians', { planetId: landing.planetId, needed: CUSTODIANS_COST, paid }));
       for (const each of [state, ...Object.values(state.rivals ?? {})]) each.custodiansRemoved = true;
       state.vp += 1;
     }

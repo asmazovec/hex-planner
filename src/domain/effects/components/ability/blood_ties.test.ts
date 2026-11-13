@@ -19,13 +19,12 @@ describe('ability:blood_ties Blood Ties', () => {
   // that of the six influence unpaid are both listed and lifted by the ability.
   // Why the check is redundant here: 54.1 asks six influence to remove the token, and the ability says the Winnu do
   // not spend it.
-  test('ability:blood_ties the landing on Mecatol Rex needs no influence: custodians and its six influence are waived', () => {
+  test('ability:blood_ties the landing on Mecatol Rex needs no influence: its six influence are waived with the custodians warning', () => {
     const move = land();
     const winnu = table('winnu', [move]);
     quote(winnu.pack, id, 'You do not have to spend influence to remove the custodians token from Mecatol Rex');
     const warnings = warningsOf(winnu, move);
     expectWaived(warnings, 'custodians', id);
-    expectWaived(warnings, 'shortInfluence', id);
   });
 
   // LRR 54.1: "This token prevents a player from committing ground forces to land on the planet unless they spend six
@@ -36,7 +35,6 @@ describe('ability:blood_ties Blood Ties', () => {
     const move = land();
     const warnings = warningsOf(table('sol', [move]), move);
     expectStanding(warnings, 'custodians');
-    expectStanding(warnings, 'shortInfluence');
   });
 
   // LRR 27.3: "When a player removes the custodians token from Mecatol Rex, ... they gain one victory point."
@@ -66,6 +64,6 @@ describe('ability:blood_ties Blood Ties', () => {
   test('ability:blood_ties is a passive effect that waives the custodians token and its influence', () => {
     const { pack } = table('winnu', []);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['custodians', 'shortInfluence']);
+    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['custodians']);
   });
 });

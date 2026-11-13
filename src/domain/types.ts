@@ -317,6 +317,7 @@ export type EntryBody = (
         /** A planet the ground forces are committed from instead of the space area of the active system (49.2); a component may lift the warning. */ from?: string;
         /** Structures put on the planet from the space area of the active system, at the end of the action. */ structures?: StructureCounts }[];
       production: UnitCounts; payment: Payment;
+      /** The six influence that remove the custodians token when the landing is the first on Mecatol Rex (27.2): planets exhausted, trade goods spent. */ custodiansPayment?: Payment;
       /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
       /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
       /** Ships I remove from the active system beyond my fleet pool (37.3): gone on arrival, or after the production if built then. */ fleetRemovals?: UnitCounts;

@@ -1,7 +1,8 @@
-import { holderOf } from '../../../domain/effects/registry';
+import { holderOf, inForceOf } from '../../../domain/effects/registry';
 import type { ReactNode } from 'react';
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CUSTODIANS_COST } from '../../../domain/mecatol';
 import { autoPay } from '../../../domain/payment';
 import { fleetExcess, productionCost, routeSteps, standing, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../domain/effects/hints';
@@ -14,7 +15,7 @@ import { PaymentBlock } from '../blocks/PaymentBlock';
 import { HexRemove } from '../../primitives/Icon';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
-import { addUnits, afterBattle, countOf, landedFrom, groupOf, hasStructures, hasUnits, isUntouched, sourcesOf, splitFlight, structuresArrived, unitsIn, viaOf, withLandedStructure, withLanding, withLandingFrom, withoutSource, type TacticalEntry } from '../../../domain/tactical';
+import { addUnits, afterBattle, countOf, custodiansLanding, withCustodiansPayment, landedFrom, groupOf, hasStructures, hasUnits, isUntouched, sourcesOf, splitFlight, structuresArrived, unitsIn, viaOf, withLandedStructure, withLanding, withLandingFrom, withoutSource, type TacticalEntry } from '../../../domain/tactical';
 import { Section } from '../../primitives/Section';
 import { unitsText } from '../../units/unitsText';
 import { systemTitle } from '../../map/systemName';
@@ -98,7 +99,14 @@ export function TacticalEditor({
   const showLanding = planets.length > 0 && (landable.length > 0 || entry.landings.length > 0 || hasStructures(afloat) || fromSources.length > 0);
 
   const landedOn = (planetId: string, unit: UnitId): number => entry.landings.find(l => l.planetId === planetId && l.from === undefined)?.units[unit] ?? 0;
-  const setLanding = (planetId: string, unit: UnitId, count: number) => onUpdate(withLanding(entry, planetId, unit, count));
+  /** The ability that frees the price of the custodians token (Blood Ties): the payment is then not seeded. */
+  const custodiansFree = inForceOf(pack, holderOf(game, before), effect => effect.waive?.some(w => w.code === 'custodians') ?? false).length > 0;
+  const custodiansAt = custodiansLanding(before, entry, pack);
+  const [custodiansManual, setCustodiansManual] = useState(false);
+  const setLanding = (planetId: string, unit: UnitId, count: number) => {
+    const patch = withLanding(entry, planetId, unit, count);
+    onUpdate({ ...patch, ...withCustodiansPayment({ ...entry, ...patch }, before, game.faction, pack, custodiansFree) });
+  };
   const lostAnywhere = unitText(Object.values(entry.groundLosses ?? {}).reduce(addUnits, lost));
 
   const toggleManual = (open: boolean) => {
@@ -199,6 +207,17 @@ export function TacticalEditor({
                   onLandFrom: (planetId: string, from: string, unit: UnitId, count: number) => onUpdate(withLandingFrom(entry, planetId, from, unit, count)),
                 } : undefined}
               />
+              {custodiansAt !== undefined && (
+                <PaymentBlock
+                  label={t('plan.tactical.custodians')} need={CUSTODIANS_COST} kind="influence" payment={entry.custodiansPayment ?? { planets: [], tradeGoods: 0 }}
+                  state={before} pack={pack} manual={custodiansManual} faction={game.faction}
+                  onManual={open => {
+                    setCustodiansManual(open);
+                    if (!open) onUpdate({ custodiansPayment: autoPay(before, CUSTODIANS_COST, 'influence', pack, { faction: game.faction }) });
+                  }}
+                  onChange={custodiansPayment => onUpdate({ custodiansPayment })}
+                />
+              )}
             </Section>
           )}
           {showLanding && hints('invasion')}

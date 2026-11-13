@@ -22,7 +22,6 @@ describe('LRR 54 Mecatol Rex', () => {
     expect(codesOf(game, pack, land)).toContain('custodians');
   });
 
-  test.todo('54.1: spending six influence removes the custodians token — not modelled: the plan has no way to record that payment');
 
   test('54 note 1: Mecatol Rex of tile 18 is not legendary, that of tile 112 is', () => {
     const te = loadPack(['pok', 'te']);

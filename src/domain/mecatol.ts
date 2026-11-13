@@ -7,6 +7,9 @@ export const MECATOL_PLANET = 'mr';
 export const MECATOL_PLANET_TE = 'mrte';
 export const MECATOL_PLANETS = [MECATOL_PLANET, MECATOL_PLANET_TE];
 
+/** The influence that removes the custodians token (27.2). */
+export const CUSTODIANS_COST = 6;
+
 const toTe = (id: string): string => (id === MECATOL_PLANET ? MECATOL_PLANET_TE : id);
 
 function migrateEntry(entry: Entry): Entry {
