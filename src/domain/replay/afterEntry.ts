@@ -61,9 +61,9 @@ const turnOf = (a: AfterEntry, id: string): EffectTurn => ({
   ...(a.cards ? { cards: a.cards } : {}),
 });
 
-/** The hooks, checks and limits that follow an entry. */
-export function afterEntry(a: AfterEntry): void {
-  const { game, state, shared, entry, pack, warnings } = a;
+/** The hooks and the checks the components in force add that follow an entry; the limits are `entryLimits`. */
+export function afterEntryHooks(a: AfterEntry): void {
+  const { game, state, shared, entry, pack } = a;
   const hooks = hooked(pack);
   const known = (ids: string[] | undefined): string[] => (ids ?? []).filter(id => componentById(pack, id) !== undefined);
   // The breakthrough of another faction is not gained by the owner: nothing it says when gained runs.
@@ -77,6 +77,12 @@ export function afterEntry(a: AfterEntry): void {
     const attached = new Set(Object.values(shared.attachments ?? {}).flat());
     for (const id of attached) if (!forced.includes(id)) effectOf(pack, id)?.restrict?.(turnOf(a, id));
   }
+}
+
+/** The limits of the hand and of the secret objectives, asked once the entry has gained what it gains. */
+export function entryLimits(a: AfterEntry): Warning[] {
+  const { game, state, shared, entry, pack } = a;
+  const warnings: Warning[] = [];
   const holder = holderOf(game, state, shared);
   // The hand grew: no more action cards than the limit (2.4, 2.4.1).
   if ((entry.gains ?? []).some(id => id.startsWith('actionCard:'))) {
@@ -89,4 +95,11 @@ export function afterEntry(a: AfterEntry): void {
     const secrets = state.holdings.secrets.length + state.holdings.scored.filter(id => id.startsWith('secretObjective:')).length;
     if (secrets > limit) warnings.push(violation(secretsOverLimit.code, { secrets, limit }));
   }
+  return warnings;
+}
+
+/** The hooks, checks and limits that follow an entry. */
+export function afterEntry(a: AfterEntry): void {
+  afterEntryHooks(a);
+  a.warnings.push(...entryLimits(a));
 }

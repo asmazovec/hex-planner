@@ -10,10 +10,8 @@ import { effectOf } from '../../domain/effects/registry';
 import { playedBy, waive } from '../../domain/effects/waivers';
 import { applyActs } from '../../domain/replay/acts';
 import { playNamedAt, reactToActivation } from '../../domain/replay/activation';
-import { afterEntry } from '../../domain/replay/afterEntry';
-import { applyGains, applyUses } from '../../domain/replay/holdings';
+import { afterEntryHooks } from '../../domain/replay/afterEntry';
 import { afterControl, reactToLanding } from '../../domain/replay/invasion';
-import { payPlayedCost } from '../../domain/replay/payment';
 import type { Entry, Game, GameState, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, viewFor, type LegacyViews } from '../legacyViews';
@@ -101,13 +99,11 @@ export function controlLostHooks(ctx: Ctx, lost: { planetId: string; to: string 
   });
 }
 
-/** What follows the action of a turn: what it uses, what a played component costs and does, what it gains and loses, the hooks after. */
-export function turnTail(ctx: Ctx): void {
+/** The play of the components the entry names, run where they have an effect: the hooks of the components, not the rules of playing them. */
+export function playHooks(ctx: Ctx): void {
   viaLegacy(ctx, r => {
     const { entry, pack } = ctx;
     const cards = cardRoundOf(ctx.table, ctx.track, r.states);
-    applyUses(r.state, entry, pack, r.warnings, r.game.faction, r.states);
-    payPlayedCost(r.game, r.state, r.shared, entry, pack, r.warnings);
     for (const id of playedBy(entry)) {
       const effect = effectOf(pack, id);
       // A play that asked to run in the middle of a tactical action has run there already.
@@ -117,10 +113,15 @@ export function turnTail(ctx: Ctx): void {
         game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards,
       });
     }
-    const factionOf = (key: string): string | undefined => ctx.table.players.find(p => legacyKey(ctx.table, p.id) === key)?.faction;
-    applyGains(r.state, r.shared, entry, pack, factionOf);
-    afterEntry({ game: r.game, state: r.state, shared: r.shared, entry, pack, cards, warnings: r.warnings, states: r.states });
     keepRound(ctx.table, ctx.track, cards);
+  });
+}
+
+/** The hooks of the components the entry gained or lost, and the checks the components in force add after it. */
+export function gainHooks(ctx: Ctx): void {
+  viaLegacy(ctx, r => {
+    const cards = cardRoundOf(ctx.table, ctx.track, r.states);
+    afterEntryHooks({ game: r.game, state: r.state, shared: r.shared, entry: ctx.entry, pack: ctx.pack, cards, warnings: r.warnings, states: r.states });
   });
 }
 

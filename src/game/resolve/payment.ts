@@ -52,6 +52,6 @@ export function checkedPay(ctx: Ctx, payment: Payment, kind: PaymentKind, step?:
 }
 
 /** The shortfall of a payment against a price, as the old replay words it. */
-export function shortOf(ctx: Ctx, kind: PaymentKind, needed: number, paid: number): void {
-  if (paid < needed) warn(ctx, violation(kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed, paid }));
+export function shortOf(ctx: Ctx, kind: PaymentKind, needed: number, paid: number, step?: RuleStep): void {
+  if (paid < needed) warn(ctx, violation(kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed, paid }, step));
 }

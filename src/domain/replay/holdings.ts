@@ -135,10 +135,10 @@ export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: strin
   return new Set([...componentsOf(pack), ...notes].filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));
 }
 
-const EXHAUSTS = /\bexhaust this (card|agent)\b/i;
-const PURGES = /\bpurge this card\b/i;
+export const EXHAUSTS = /\bexhaust this (card|agent)\b/i;
+export const PURGES = /\bpurge this card\b/i;
 /** A note that goes back once its ability is resolved says so last: "Then, return this card to the ... player." */
-const RETURNS = /\bthen,? return this card to\b/i;
+export const RETURNS = /\bthen,? return this card to\b/i;
 
 /**
  * A component action names its component (22.1). One not held, or exhausted (71.4), is warned about and still played.
