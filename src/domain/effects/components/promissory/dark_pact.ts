@@ -11,20 +11,23 @@
  * address the note bears, and the commodities handed over reach the holder's commodity value (as the holder's
  * components make it). Both sides then gain a trade good, the Empyrean player on top of the commodities that arrived.
  */
-import type { ComponentEffect } from '../../types';
+import { gain } from '../../../../game/abilities/emit';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:dark_pact';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  dealt: turn => {
-    // `side` is the side of the entry, not of the card: the holder gives in an entry of its own and in one of mine.
-    if (turn.self === turn.partner) return;
-    if (!turn.state.holdings.promissory.includes(`${id}@${turn.partner}`)) return;
-    const gave = turn.gave.commodities ?? 0;
-    if (gave <= 0 || gave < turn.commodityValue) return;
-    turn.state.tradeGoods += 1;
-    turn.other.tradeGoods += 1;
+  holder: 'anyone',
+  on: {
+    dealt: (ctx, deal) => {
+      // `side` is the side of the entry, not of the card: the holder gives in an entry of its own and in one of mine.
+      if (deal.self === deal.partner) return;
+      if (!ctx.my.holds(`${id}@${ctx.key(deal.partner)}`)) return;
+      const gave = deal.gave.commodities ?? 0;
+      if (gave <= 0 || gave < ctx.commodityValue(deal.self)) return;
+      return [gain.tradeGoods(deal.self, 1), gain.tradeGoods(deal.partner, 1)];
+    },
   },
 };

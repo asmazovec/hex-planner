@@ -2,7 +2,7 @@
  * The acts of a turn, after its action: the transactions with neighbours in order (LRR 94), then the expedition at the
  * end of the turn (Thunder's Edge, expedition 2). Nothing is forbidden; what breaks a rule warns. What changes hands is
  * an event (`GoodsTransferred`, a card lost and gained); only what the components in force answer to a settled deal
- * (`dealtHooks`) and to a card gained (`gainedHook`) is asked of the adapter.
+ * (the `dealt` hook) and to a card gained (`gainedHook`) is asked of the adapter.
  */
 import { componentById } from '../../domain/components';
 import { breakthroughOf } from '../../domain/effects/breakthrough';
@@ -16,7 +16,8 @@ import { areNeighbours } from '../queries';
 import type { PlayerId } from '../types';
 import { begin, checkView, emit, warn, type Ctx } from './context';
 import { gain, lose } from './holdings';
-import { dealtHooks, gainedHook } from './legacyEffects';
+import { hook } from './hooks';
+import { gainedHook } from './legacyEffects';
 import { checkedPay, shortOf } from './payment';
 
 const actsOf = (ctx: Ctx): Act[] => ('acts' in ctx.entry && Array.isArray(ctx.entry.acts) ? ctx.entry.acts : []);
@@ -73,9 +74,9 @@ function transactions(ctx: Ctx, acts: Act[]): void {
     if (!areNeighbours(ctx.table, ctx.board, ctx.pack, ctx.player, other)) warn(ctx, violation('notNeighbor', { player: act.with }));
     const gave = hand(ctx, ctx.player, other, act.give);
     const got = hand(ctx, other, ctx.player, act.get);
-    const owner = legacyKey(ctx.table, ctx.player);
-    dealtHooks(ctx, 'give', owner, act.with, gave, got);
-    dealtHooks(ctx, 'get', act.with, owner, got, gave);
+    // A card is asked once however many copies of it are in play (my own Support for the Throne beside a received one).
+    hook(ctx, 'dealt', [ctx.player], { side: 'give', self: ctx.player, partner: other, gave, got }, { once: true });
+    hook(ctx, 'dealt', [other], { side: 'get', self: other, partner: ctx.player, gave: got, got: gave }, { once: true });
   }
 }
 

@@ -6,16 +6,18 @@
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
 import type { ComponentDef, DataPack, Game, GameState, Holdings, RuleStep } from '../types';
-import type { Ability } from '../../game/abilities/types';
+import type { Ability, Hooked } from '../../game/abilities/types';
 import { defaultHolder, speaksIn, type HolderRule } from './holder';
 import type { ComponentEffect, Modifiers } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
 
 /** What the file of a component exports: its catalogue id and its effect, written for the old per-player state (`effect`) or for the kernel (`ability`, with its `holder`). */
-export interface ComponentFile { id: string; effect?: ComponentEffect; ability?: Ability }
+export interface ComponentFile { id: string; effect?: ComponentEffect; ability?: Ability | Hooked }
 
 /** The effect a file exports, in whichever shape. */
-export const effectOfFile = (file: ComponentFile): ComponentEffect => (file.ability ?? file.effect)!;
+/** A file with both is a component whose hooks are native and whose other parts are not: one effect, the hooks and the holder of the first. */
+export const effectOfFile = (file: ComponentFile): ComponentEffect =>
+  file.effect && file.ability ? { ...file.effect, holder: file.ability.holder, ...('on' in file.ability ? { on: file.ability.on } : {}) } : (file.ability ?? file.effect) as ComponentEffect;
 
 const files = import.meta.glob<ComponentFile>(['./components/*/*.ts', '!./components/*/*.test.ts'], { eager: true });
 

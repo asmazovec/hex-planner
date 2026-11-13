@@ -8,13 +8,10 @@ import { choicesFor } from '../../domain/effects/choices';
 import { fire, hooked, run } from '../../domain/effects/points/moments';
 import { effectOf } from '../../domain/effects/registry';
 import { playedBy, waive } from '../../domain/effects/waivers';
-import type { DealTurn } from '../../domain/effects/points/payment';
-import { inForceOf, holderOf } from '../../domain/effects/registry';
-import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { playNamedAt, reactToActivation } from '../../domain/replay/activation';
 import { afterEntryHooks } from '../../domain/replay/afterEntry';
 import { reactToLanding, runControlHooks } from '../../domain/replay/invasion';
-import type { Entry, Game, GameState, Goods, UnitCounts, Warning } from '../../domain/types';
+import type { Entry, Game, GameState, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, viewFor, type LegacyViews } from '../legacyViews';
 import { anyInForce } from '../abilities/registry';
@@ -152,31 +149,6 @@ export function gainHooks(ctx: Ctx): void {
   viaLegacy(ctx, r => {
     const cards = cardRoundOf(ctx.table, ctx.track, r.states);
     afterEntryHooks({ game: r.game, state: r.state, shared: r.shared, entry: ctx.entry, pack: ctx.pack, cards, warnings: r.warnings, states: r.states });
-  });
-}
-
-/**
- * The components in force of one side of a settled deal asked for their `dealt` hook. `gave` and `got` are what moved
- * (commodities that arrived are trade goods of the receiver). Each side is seen with its own faction and holder.
- */
-export function dealtHooks(ctx: Ctx, side: 'give' | 'get', self: string, partner: string, gave: Goods, got: Goods): void {
-  if (!answers(ctx, e => e.dealt !== undefined, [])) return;
-  viaLegacy(ctx, r => {
-    const shared = r.states.me;
-    const state = r.states[self];
-    const other = r.states[partner];
-    if (!shared || !state || !other) return;
-    // In an opponent's entry the game is seen through their eyes: `game.faction` is theirs and I am among its opponents under `me`.
-    const faction = self === (r.entry.owner ?? 'me') ? r.game.faction : r.game.opponents.find(p => p.id === self)?.faction ?? r.game.faction;
-    const asked = { faction };
-    // A card is asked once however many copies of it are in play (my own Support for the Throne beside a received one).
-    const forced = inForceOf(ctx.pack, holderOf(asked, state, shared));
-    for (const id of forced.filter((found, index) => forced.findIndex(next => noteBase(next) === noteBase(found)) === index)) {
-      effectOf(ctx.pack, id)?.dealt?.({
-        game: r.game, pack: ctx.pack, entry: r.entry, side, self, partner, faction, state, other, shared, gave, got,
-        commodityValue: commodityValueOf(asked, state, ctx.pack, shared), warnings: r.warnings,
-      } satisfies DealTurn);
-    }
   });
 }
 

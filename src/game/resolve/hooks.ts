@@ -1,0 +1,99 @@
+/**
+ * The one runner of the hooks written for the kernel (`on` of a component's ability). For a kind of hook it finds the
+ * components in force for the players it is asked of (`inForce`, in registry order), keeps those whose `holder`
+ * declaration speaks in this action, gives each a context over the board as it stands, applies the events it returns
+ * with the component as their cause, and collects the warnings. A later component sees what an earlier one did. The old
+ * per-player state is not built here: where a pool warning needs it (tokens gained), it is read from the board once.
+ */
+import { speaksIn } from '../../domain/effects/holder';
+import { effectOf, holderRuleOf } from '../../domain/effects/registry';
+import { checkPoolChange } from '../../domain/replay/status';
+import { commodityValueOf } from '../../domain/replay/cards/trade';
+import { violation } from '../../domain/rules/registry';
+import { noteBase } from '../../domain/components';
+import type { Entry, Warning } from '../../domain/types';
+import { readerOf, type Reader } from '../abilities/facade';
+import { inForce } from '../abilities/registry';
+import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
+import { applyChecked } from '../apply';
+import type { GameEvent } from '../events';
+import { legacyKey, viewFor } from '../legacyViews';
+import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
+import { warn, type Ctx } from './context';
+
+export interface HookResult { board: Board; events: GameEvent[]; violations: Warning[] }
+
+export interface HookOptions {
+  /** Whose turn or action it is. */
+  actor: PlayerId;
+  step?: RuleStep;
+  /** The turn the moment belongs to; stamped on the events. */
+  turn?: string;
+  entry?: Entry;
+  /** A component held in several copies (notes) is asked once. */
+  once?: boolean;
+}
+
+/** The pool warnings of tokens just changed: a pool below zero, more than the tokens of a faction, a fleet pool under the ships standing (the checks of the old `gainTokens`). */
+function poolWarnings(table: Table, before: Board, board: Board, pack: DataPack, event: Extract<GameEvent, { type: 'TokensChanged' }>, step: RuleStep | undefined): Warning[] {
+  const found: Warning[] = [];
+  const pools = { tactic: event.delta.tactic ?? 0, fleet: event.delta.fleet ?? 0, strategy: event.delta.strategy ?? 0 };
+  for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
+    const had = before.players[event.player]?.pools[pool] ?? 0;
+    if (pools[pool] < 0 && had + pools[pool] < 0) found.push(violation('poolNegative', { pool, have: had + pools[pool] }, step));
+  }
+  const v = viewFor(table, board, pack, event.player);
+  found.push(...checkPoolChange(v.game, v.state, pack, pools, step, v.shared));
+  return found;
+}
+
+/** Asks the components in force of `players` for the hook, in order, and applies what they return. */
+export function runHooks<K extends HookKind>(
+  table: Table, start: Board, pack: DataPack, kind: K, players: readonly PlayerId[], payload: HookPayloads[K], options: HookOptions,
+): HookResult {
+  let board = start;
+  const events: GameEvent[] = [];
+  const violations: Warning[] = [];
+  for (const player of players) {
+    const asked = new Set<string>();
+    const ids = inForce(table, board, pack, player).filter(id => {
+      const effect = effectOf(pack, id);
+      if (effect?.on?.[kind] === undefined || !speaksIn(holderRuleOf(pack, id), player === options.actor, false)) return false;
+      if (options.once && asked.has(noteBase(id))) return false;
+      asked.add(noteBase(id));
+      return true;
+    });
+    for (const id of ids) {
+      const hook = effectOf(pack, id)!.on![kind]!;
+      const at = board;
+      const made: GameEvent[] = [];
+      const context: AbilityContext = {
+        board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), choices: {}, own: player === options.actor,
+        get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
+        key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
+        commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },
+        warn: warning => { violations.push(warning); },
+      };
+      const returned = (hook as (ctx: AbilityContext, payload: HookPayloads[K]) => GameEvent[] | void)(context, payload);
+      for (const event of returned ?? []) {
+        const step = event.cause?.step ?? options.step;
+        const stamped: GameEvent = { ...event, cause: { ...(options.turn ? { turn: options.turn } : {}), ...event.cause, ...(step ? { step } : {}), component: id } };
+        const applied = applyChecked(board, stamped);
+        if (stamped.type === 'TokensChanged') violations.push(...poolWarnings(table, board, applied.board, pack, stamped, event.cause?.step));
+        board = applied.board;
+        made.push(stamped);
+      }
+      events.push(...made);
+    }
+  }
+  return { board, events, violations };
+}
+
+/** The hook of the turn being resolved: the board, the step's events and the turn's warnings take what the components did. */
+export function hook<K extends HookKind>(ctx: Ctx, kind: K, players: readonly PlayerId[], payload: HookPayloads[K], options: Partial<HookOptions> = {}): void {
+  const result = runHooks(ctx.table, ctx.board, ctx.pack, kind, players, payload, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, ...options });
+  if (result.events.length === 0 && result.violations.length === 0) return;
+  ctx.board = result.board;
+  ctx.cur.events.push(...result.events);
+  if (result.violations.length > 0) warn(ctx, result.violations);
+}

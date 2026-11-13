@@ -11,6 +11,8 @@
  */
 import { noteAddress, noteBase } from '../../../components';
 import { planetsOf } from '../../../replay/board';
+import { gain } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect, EffectTurn } from '../../types';
 
 /** Whether the player of `owner` has a unit, a structure included, in the system activated: ships, ground forces, docks or PDS. */
@@ -43,12 +45,15 @@ export const id = 'promissory:<color>_sftt';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  // Received in a transaction, from another player: faceup in my play area, and 1 victory point.
-  dealt: turn => {
-    for (const note of turn.got.components ?? []) {
-      if (noteBase(note) === id && noteAddress(note) !== turn.self) turn.state.vp += 1;
-    }
-  },
   // Activating a system with the owner's units: lose the point and return the card.
   restrict: turn => returnOnActivation(turn, () => { turn.state.vp -= 1; }),
+};
+
+/** The hook of the note on the kernel; its return on activation (`restrict`) is still written for the old state. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    // Received in a transaction, from another player: faceup in my play area, and 1 victory point.
+    dealt: (ctx, deal) => (deal.got.components ?? []).filter(note => noteBase(note) === id && noteAddress(note) !== ctx.key(deal.self)).map(() => gain.points(deal.self, 1)),
+  },
 };

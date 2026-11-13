@@ -9,22 +9,25 @@
  * the Mahact player got is warned of with `noteRefused` (it still changes hands: the plan forbids nothing). The setup
  * purge is the deal of the start (`startForFaction`, a shared file): it is left to the holdings.
  */
-import noteRefused from '../../../rules/codes/noteRefused';
 import { componentById, noteAddress, noteBase } from '../../../components';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
+import noteRefused from '../../../rules/codes/noteRefused';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:hubris';
 
 const ALLIANCE = 'promissory:<color>_an';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  dealt: turn => {
-    for (const note of turn.got.components ?? []) {
-      if (noteBase(note) !== ALLIANCE || noteAddress(note) === turn.self) continue;
-      turn.warnings.push(violation(noteRefused.code, { id: note, name: componentById(turn.pack, note)?.name ?? note }));
-    }
+  holder: 'anyone',
+  on: {
+    dealt: (ctx, deal) => {
+      for (const note of deal.got.components ?? []) {
+        if (noteBase(note) !== ALLIANCE || noteAddress(note) === ctx.key(deal.self)) continue;
+        ctx.warn(violation(noteRefused.code, { id: note, name: componentById(ctx.pack, note)?.name ?? note }));
+      }
+    },
   },
 };
