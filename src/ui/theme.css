@@ -226,6 +226,11 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .value-influence { color: var(--accent); fill: var(--accent); font-weight: 700; }
 .value-changed { color: var(--gold); fill: var(--gold); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 2px; }
 
+/* The candidates of a component's choice: they wrap inside the panel, never run past it. */
+.choice-wrap { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.choice-wrap > button { flex: 0 1 auto; min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.choice-wrap > .muted, .choice-group { flex: none; }
+
 /* Joined buttons for one choice among a few. */
 .segment, .map-mode, .plan-rounds { display: flex; }
 .segment > button, .map-mode > button, .plan-rounds > button { border-radius: 0; margin-left: -1px; flex: 1 1 auto; }
@@ -456,18 +461,19 @@ input[type='checkbox'] { accent-color: var(--accent-solid); }
 .plan-screen { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .plan-header { flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 12px 0; background: var(--surface); border-bottom: 1px solid var(--border); min-height: 56px; }
 .plan-top { display: contents; }
-.plan-tabs { order: 1; flex: 1 1 0; align-self: flex-end; display: flex; align-items: flex-end; gap: 4px; min-width: 0; overflow-x: auto; scrollbar-width: none; padding-top: 2px; position: relative; z-index: 1; margin-bottom: -1px; }
+/* The tabs keep a width of their own and scroll beyond it; the rounds give way to them (they scroll too), so nothing runs under anything. The header never changes height: a press on Copy must not move it. */
+.plan-tabs { order: 1; flex: 1 1 0; min-width: 190px; align-self: flex-end; display: flex; align-items: flex-end; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-top: 2px; position: relative; z-index: 1; margin-bottom: -1px; }
 .plan-tab { flex: none; max-width: 180px; min-height: 48px; padding: 5px 14px; text-align: left; white-space: nowrap; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; font-size: var(--font-m); color: var(--text-muted); background: var(--bg); border: 1px solid var(--border-strong); border-top: 3px solid var(--border-strong); border-bottom-color: var(--border); border-radius: var(--radius-s) var(--radius-s) 0 0; touch-action: none; cursor: grab; }
 /* The chosen plan speaks as an open drawer's tab does: the same frame, blue on the free edge, and no line between it and the map. */
 .plan-tab[aria-selected='true'] { background: var(--bg); color: var(--text-strong); font-weight: 600; box-shadow: none; border-top-color: var(--accent); border-bottom-color: var(--bg); }
 .plan-tab small { font-weight: 400; overflow: hidden; text-overflow: ellipsis; }
 .plan-tab:active:not(:disabled) { transform: none; }
-.plan-copy { flex: none; align-self: center; margin-bottom: 4px; background: transparent; border-color: transparent; color: var(--accent); font-weight: 600; font-size: var(--font-s); padding: 4px 10px; }
+.plan-copy { position: sticky; left: 0; z-index: 2; flex: none; align-self: center; margin-bottom: 4px; background: var(--surface); border-color: transparent; color: var(--accent); font-weight: 600; font-size: var(--font-s); padding: 4px 10px; }
 /* The selected plan holds its cross inside the tab, at its right edge. */
 .plan-tabs > .plan-tab-card { flex: none; align-self: flex-end; }
 .plan-tab-card > .plan-tab { max-width: 230px; }
 .plan-rounds-group { order: 2; flex: none; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.plan-rounds { flex: none; max-width: 280px; overflow-x: auto; scrollbar-width: none; scroll-padding-right: var(--touch); }
+.plan-rounds { flex: none; max-width: 150px; overflow-x: auto; scrollbar-width: none; scroll-padding-right: var(--touch); }
 /* The plus stays at the right edge while the rounds scroll under it: a new round must not push it from under the finger. */
 .plan-rounds > button:last-child { position: sticky; right: 0; z-index: 2; }
 .plan-rounds button { padding: 0; font-weight: 600; flex: none; }
