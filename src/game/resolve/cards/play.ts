@@ -17,6 +17,9 @@ import { checkView, emit, warn, type Ctx } from '../context';
 import { checkedPay, shortOf } from '../payment';
 import { place } from '../production';
 import { tokenSpent } from '../legacyEffects';
+import { noteAddress, noteBase } from '../../../domain/components';
+import { legacyKey } from '../../legacyViews';
+import { ACQUIESCENCE } from '../natives';
 import { buildStructures } from '../structures';
 import { ruleOf } from './index';
 
@@ -49,6 +52,12 @@ function checkPlay(ctx: Ctx, entry: CardEntry): { held?: number[]; free?: boolea
   return { free: !repeated && (track.freeSecondary[card] ?? []).includes(player) };
 }
 
+/** The secondary names a held note of Acquiescence that is another player's (69.2: its owner cannot play it). */
+function acquiesced(ctx: Ctx, entry: CardEntry): boolean {
+  const mine = legacyKey(ctx.table, ctx.player);
+  return (entry.uses ?? []).some(used => noteBase(used) === ACQUIESCENCE && noteAddress(used) !== mine && ctx.board.players[ctx.player]?.cards[used] !== undefined);
+}
+
 const POOLS = ['tactic', 'fleet', 'strategy'] as const;
 
 export function playCard(ctx: Ctx): void {
@@ -61,8 +70,12 @@ export function playCard(ctx: Ctx): void {
   if (owed > 0) {
     const have = ctx.board.players[ctx.player]?.pools.strategy ?? 0;
     if (have < owed) warn(ctx, violation('shortStrategy', { have }));
-    emit(ctx, [{ type: 'TokensChanged', player: ctx.player, delta: { strategy: -owed } }], { quiet: true });
-    tokenSpent(ctx, owed, entry.card, !primary);
+    // Acquiescence: "You do not have to spend or place a command token to resolve the secondary ability of that strategy card".
+    // The check above still counts the token; the note is why none is spent.
+    if (primary || !acquiesced(ctx, entry)) {
+      emit(ctx, [{ type: 'TokensChanged', player: ctx.player, delta: { strategy: -owed } }], { quiet: true });
+      tokenSpent(ctx, owed, entry.card, !primary);
+    }
   }
   // Units a card produces use a unit's PRODUCTION: the combined cost may be reduced (Sarween Tools), as a tactical action's is.
   v = checkView(ctx);

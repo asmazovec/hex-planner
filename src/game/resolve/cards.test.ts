@@ -41,4 +41,18 @@ describe('a strategy card rule', () => {
     const over = run(primary(CARD.leadership, { tokens: { tactic: 4 } }), [CARD.leadership]);
     expect(over.steps.flatMap(s => s.violations.map(v => v.code))).toContain('tokensOver');
   });
+
+  // 83.4: a secondary costs a strategy token; the note of the Winnu: "You do not have to spend or place a command token to
+  // resolve the secondary ability of that strategy card." The token is not spent: with none left the pool stays at zero.
+  test('a secondary that uses a note of Acquiescence spends no token, and the lack of one is still told', () => {
+    const note = 'promissory:acq@o1';
+    const board = applyAll(start(), [{ type: 'CardGained', player: me, card: note }]);
+    const entry = { ...secondary(CARD.trade), uses: [note] };
+    const spent = resolveTurn(table, board, turnOf(table, entry, pack), pack, { track: newTrack({ [me]: [] }) });
+    expect(poolsOf(spent.board, me).strategy).toBe(2);
+    const empty = applyAll(board, [{ type: 'TokensChanged', player: me, delta: { strategy: -2 } }]);
+    const none = resolveTurn(table, empty, turnOf(table, entry, pack), pack, { track: newTrack({ [me]: [] }) });
+    expect(poolsOf(none.board, me).strategy).toBe(0);
+    expect(none.steps.flatMap(st => st.violations.map(v => v.code))).toContain('shortStrategy');
+  });
 });

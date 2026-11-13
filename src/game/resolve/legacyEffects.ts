@@ -15,8 +15,12 @@ import { afterControl, reactToLanding } from '../../domain/replay/invasion';
 import type { Entry, Game, GameState, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, viewFor, type LegacyViews } from '../legacyViews';
+import { ACQUIESCENCE } from './natives';
 import { emit, warn, type Ctx } from './context';
 import { cardRoundOf, keepRound } from './track';
+
+/** Components whose play is a rule of the kernel (resolved natively), not a hook. */
+const NATIVE_PLAYS: readonly string[] = [ACQUIESCENCE];
 
 type Tactic = Extract<Entry, { type: 'tactical' }>;
 
@@ -107,7 +111,7 @@ export function playHooks(ctx: Ctx): void {
     for (const id of playedBy(entry)) {
       const effect = effectOf(pack, id);
       // A play that asked to run in the middle of a tactical action has run there already.
-      if (!effect?.play || effect.playAt) continue;
+      if (!effect?.play || effect.playAt || NATIVE_PLAYS.includes(noteBase(id))) continue;
       const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
       effect.play({
         game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards,
