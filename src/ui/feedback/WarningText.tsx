@@ -37,6 +37,7 @@ export const WarningText = memo(function WarningText({ warning, game, pack }: Wa
     unit: params.unit === undefined ? undefined : t(`unit.${params.unit}`),
     objective: params.objective === undefined ? undefined : componentById(pack, String(params.objective))?.name ?? String(params.objective),
     pool: params.pool === undefined ? undefined : t(`plan.summary.${params.pool}`),
+    symbols: params.symbols === undefined ? undefined : String(params.symbols).replace(/(propulsion|biotic|cybernetic|warfare) ×/g, (_, colour: string) => `${t(`map.tech.${colour}`)} ×`),
     slice: params.sliceId === undefined ? undefined : t(`plan.slice.${params.sliceId}`),
   });
   return <span className="warning-text">{text}</span>;

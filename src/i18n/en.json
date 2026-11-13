@@ -892,7 +892,8 @@
       "none": "Nothing to choose from",
       "countOn": "{{verb}} {{unit}} on {{place}}",
       "countIn": "{{verb}} {{unit}}",
-      "countBack": "Take back: {{label}}"
+      "countBack": "Take back: {{label}}",
+      "counts": "Units"
     },
     "gains": {
       "title": "Taken and discarded",

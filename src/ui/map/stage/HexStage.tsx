@@ -135,7 +135,7 @@ export function HexStage(props: HexStageProps) {
           )}
           {mode === 'battle' && (
             <BattlePanel
-              players={[{ id: 'me', heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: o.name }) }))].filter(p => stage.fights(p.id))}
+              players={[{ id: 'me', heading: t('stage.lossesMine') }, ...seated.map(o => ({ id: o.id, heading: t('stage.lossesOf', { name: seatName(o) }) }))].filter(p => stage.fights(p.id))}
               colours={colours} lossesFor={stage.lossesFor} planets={planets} kindName={stage.kindName}
             />
           )}
