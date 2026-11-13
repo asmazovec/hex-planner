@@ -97,3 +97,14 @@ export function tacticalNumbers(entries: Entry[]): Record<string, number> {
   }
   return numbers;
 }
+
+/**
+ * The tactical actions of a round as the map shows them. Warfare's free one has the status of its card, as the replay
+ * takes it: the card done is its arrow done.
+ */
+export function tacticalsOf(entries: Entry[]): Extract<Entry, { type: 'tactical' }>[] {
+  return entries.filter((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical').map(entry => {
+    const card = entry.fromCard ? entries.find(e => e.id === entry.fromCard) : undefined;
+    return card && card.status !== entry.status ? { ...entry, status: card.status } : entry;
+  });
+}

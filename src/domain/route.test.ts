@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { areAdjacent, extendPath, routeFromPath, strokeStep, tacticalNumbers, tapStep } from './route';
+import { areAdjacent, extendPath, routeFromPath, strokeStep, tacticalNumbers, tacticalsOf, tapStep } from './route';
 import type { Entry } from './types';
 
 test('plain grid neighbours are adjacent, wormholes and hyperlanes mean nothing', () => {
@@ -109,4 +109,16 @@ describe('the next hex under a stroke', () => {
     expect(strokeStep(path, 'a')).toEqual({ kind: 'none', path });
     expect(strokeStep([], 'a')).toEqual({ kind: 'add', path: ['a'] });
   });
+});
+
+// The replay takes Warfare's free tactical action with its card (timeline: «status being its card's»), so the map does too:
+// marking the card done marks the arrow of its action done, and a cancelled card draws none.
+test('a tactical action taken from a strategy card has the status of its card', () => {
+  const card: Entry = { id: 'w', status: 'done', phase: 'action', type: 'strategic', card: 6 };
+  const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
+  const own = tacticalEntry('t');
+  expect(tacticalsOf([card, free, own]).map(e => [e.id, e.status])).toEqual([['f', 'done'], ['t', 'planned']]);
+  expect(tacticalsOf([{ ...card, status: 'cancelled' }, free]).map(e => e.status)).toEqual(['cancelled']);
+  // An action whose card is gone keeps its own status.
+  expect(tacticalsOf([free]).map(e => e.status)).toEqual(['planned']);
 });
