@@ -59,6 +59,12 @@ describe('promissory:<color>_sftt Support for the Throne', () => {
     expect(endOf(table([tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] })], { mine: [`${id}@me`] })).vp).toBe(0);
   });
 
+  // Checks: holding my own copy does not double the point: one card received is 1 victory point.
+  // Why the check is NOT redundant here: the effect runs once for the card received, not once per copy in play.
+  test('promissory:<color>_sftt received while holding my own copy gives 1 victory point', () => {
+    expect(endOf(table([receive()], { mine: [`${id}@me`] })).vp).toBe(1);
+  });
+
   test('promissory:<color>_sftt is not a hint any more', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).not.toBe('hint');

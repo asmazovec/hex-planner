@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Opponent } from '../../../types';
-import { bench, componentAction, endOf, expectStanding, HOME, NEAR, quote, warningsOf } from '../kit';
+import type { AnyWarningCode, Entry, Opponent } from '../../../types';
+import { bench, componentAction, endOf, expectStanding, FAR, HOME, NEAR, quote, warningsOf } from '../kit';
 import { id } from './mahacthero';
 
+const CONDITION = 'componentCondition' as AnyWarningCode;
 const SOL: Opponent = { id: 'sol1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const table = (entries: Entry[]) => bench({
   faction: 'mahact', expansions: ['pok'], units: { [HOME]: { cruiser: 2, fighter: 1 } }, start: { leaders: { [id]: 'unlocked' } }, entries,
@@ -32,6 +33,19 @@ describe('leader:mahacthero Airo Shir Aur', () => {
     expectStanding(warningsOf(table([benediction(), again]), again), 'componentNotHeld');
   });
 
-  test.todo('leader:mahacthero a target system not adjacent, or without another player\'s ships, is warned of: no code for the choice of a component yet');
+  // Same card text. Checks: a target system where nobody has ships is warned of (the units still move).
+  // Why the check is NOT redundant here: the hero moves only to a system that contains a different player's ships.
+  test('leader:mahacthero a target system without another player\'s ships is warned of', () => {
+    const empty = componentAction(id, { choices: { from: HOME, to: FAR } });
+    expectStanding(warningsOf(table([empty]), empty), CONDITION);
+  });
+
+  // Checks: the target with the Sol destroyer raises no such warning.
+  test('leader:mahacthero a target system with another player\'s ships is not warned of', () => {
+    const fine = benediction();
+    expect(warningsOf(table([fine]), fine).map(w => w.code)).not.toContain(CONDITION);
+  });
+
+  test.todo('leader:mahacthero a target system not adjacent is warned of: no code for the choice of a component yet');
   test.todo('leader:mahacthero moves another player\'s units: units of a rival moved by my component action are not modelled');
 });

@@ -5,12 +5,11 @@
 import { linksOf } from '../movement';
 import { areNeighbors } from '../neighbors';
 import { violation } from '../rules/registry';
-import { componentById } from '../components';
+import { componentById, noteBase } from '../components';
 import { staysInPlay, TRANSACTION_KINDS } from '../holdings';
 import { gainBreakthrough } from '../effects/breakthrough';
 import { effectOf, holderOf, inForceOf } from '../effects/registry';
 import type { DealTurn } from '../effects/points/payment';
-import { playersOf } from '../players';
 import type { Act, DataPack, Entry, Game, GameState, Goods, Warning } from '../types';
 import { commodityValueOf } from './cards/trade';
 import { applyExpeditionPart } from './expedition';
@@ -78,9 +77,12 @@ function dealt(
   const state = ctx.states[self];
   const other = ctx.states[partner];
   if (!shared || !state || !other) return;
-  const faction = playersOf(game).find(p => p.id === self)?.faction ?? game.faction;
+  // In an opponent's entry the game is seen through their eyes: `game.faction` is theirs and I am among its opponents under `me`.
+  const faction = self === (entry.owner ?? 'me') ? game.faction : game.opponents.find(p => p.id === self)?.faction ?? game.faction;
   const asked = { faction };
-  for (const id of inForceOf(pack, holderOf(asked, state, shared))) {
+  // A card is asked once however many copies of it are in play (my own Support for the Throne beside a received one).
+  const forced = inForceOf(pack, holderOf(asked, state, shared));
+  for (const id of forced.filter((found, index) => forced.findIndex(other => noteBase(other) === noteBase(found)) === index)) {
     effectOf(pack, id)?.dealt?.({
       game, pack, entry, side, self, partner, faction, state, other, shared, gave, got,
       commodityValue: commodityValueOf(asked, state, pack, shared), warnings,

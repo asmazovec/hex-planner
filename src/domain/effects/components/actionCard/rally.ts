@@ -17,7 +17,9 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   playAt: 'activation',
-  play: ({ state }) => {
+  play: ({ state, entry }) => {
+    // An activation exists only in a tactical action: the card discarded as a cost elsewhere (Nanomachines) places nothing.
+    if (entry.type !== 'tactical') return;
     state.fleet += 2;
   },
 };
