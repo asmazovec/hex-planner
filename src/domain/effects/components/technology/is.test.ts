@@ -77,6 +77,6 @@ describe('technology:is Inheritance Systems', () => {
   test('technology:is is a play effect that waives the prerequisites', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

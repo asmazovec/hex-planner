@@ -58,6 +58,6 @@ describe('leader:letnevhero Darktalon Treilla — Dark Matter Affinity', () => {
   test('leader:letnevhero is a play effect that waives for the round', () => {
     const { pack } = letnev([[]]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['fleetPool', 'round']]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['fleetPool', 'round']]);
   });
 });

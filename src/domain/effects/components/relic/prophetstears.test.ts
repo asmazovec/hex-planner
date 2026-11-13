@@ -58,6 +58,6 @@ describe('relic:prophetstears The Prophet\'s Tears', () => {
   test('relic:prophetstears is a play effect that waives one missing prerequisite', () => {
     const { pack } = table([], []);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

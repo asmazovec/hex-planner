@@ -12,20 +12,25 @@
 import { techOf } from '../../../replay/research';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'technology:aida';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  waive: [{
+  // The production half: the combined cost falls by the unit upgrades the owner holds (asked when a unit used PRODUCTION).
+  modify: {
+    productionCost: (value, { holdings, pack }) => Math.max(0, value - holdings.technologies.filter(tech => techOf(pack, tech)?.upgrade !== undefined).length),
+  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: prerequisitesMissing.code,
     rule: 'When you research a unit upgrade technology, you may exhaust this card to ignore any 1 prerequisite.',
     // One symbol only, and only of a unit upgrade.
     when: (warning, { pack }) => Number(warning.params.missing) <= 1 && techOf(pack, String(warning.params.id))?.upgrade !== undefined,
   }],
-  // The production half: the combined cost falls by the unit upgrades the owner holds (asked when a unit used PRODUCTION).
-  modify: {
-    productionCost: (value, { holdings, pack }) => Math.max(0, value - holdings.technologies.filter(tech => techOf(pack, tech)?.upgrade !== undefined).length),
-  },
 };

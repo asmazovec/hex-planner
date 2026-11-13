@@ -17,7 +17,7 @@ export interface ComponentFile { id: string; effect?: ComponentEffect; ability?:
 /** The effect a file exports, in whichever shape. */
 /** A file with both is a component whose hooks are native and whose other parts are not: one effect, the hooks and the holder of the first. */
 export const effectOfFile = (file: ComponentFile): ComponentEffect =>
-  file.effect && file.ability ? { ...file.effect, holder: file.ability.holder, ...('on' in file.ability ? { on: file.ability.on } : {}) } : (file.ability ?? file.effect) as ComponentEffect;
+  file.effect && file.ability ? { ...file.effect, holder: file.ability.holder, ...('on' in file.ability && file.ability.on ? { on: file.ability.on } : {}), ...('permit' in file.ability && file.ability.permit ? { permit: file.ability.permit } : {}) } : (file.ability ?? file.effect) as ComponentEffect;
 
 const files = import.meta.glob<ComponentFile>(['./components/*/*.ts', '!./components/*/*.test.ts'], { eager: true });
 

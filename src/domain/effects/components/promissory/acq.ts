@@ -10,21 +10,26 @@
  */
 import { noteAddress, noteBase } from '../../../components';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'promissory:acq';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  waive: [{
-    code: 'shortStrategy',
-    rule: 'You do not have to spend or place a command token to resolve the secondary ability of that strategy card',
-    // Only a note of another player's: the owner cannot play their own (69.2).
-    when: (_warning, { entry }) => (entry?.uses ?? []).some(used => noteBase(used) === id && noteAddress(used) !== (entry?.owner ?? 'me')),
-  }],
   // The replay took the token the secondary costs (and warned when the pool was empty); the note gives it back.
   play: ({ entry, state, held, player, id: noteInstance }) => {
     if (!held || entry.type !== 'secondary' || noteAddress(noteInstance) === player) return;
     state.strategy += 1;
   },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
+    code: 'shortStrategy',
+    rule: 'You do not have to spend or place a command token to resolve the secondary ability of that strategy card',
+    // Only a note of another player's: the owner cannot play their own (69.2).
+    when: (_warning, { entry }) => (entry?.uses ?? []).some(used => noteBase(used) === id && noteAddress(used) !== (entry?.owner ?? 'me')),
+  }],
 };

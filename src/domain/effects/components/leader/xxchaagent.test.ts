@@ -46,6 +46,6 @@ describe('leader:xxchaagent Ggrocuto Rinn', () => {
   test('leader:xxchaagent is a play effect that waives readying another player\'s planet', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['readyNotControlled']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['readyNotControlled']);
   });
 });

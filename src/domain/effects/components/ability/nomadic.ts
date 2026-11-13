@@ -7,12 +7,13 @@
  * everyone first (a new code, `scoreWithoutHome`, step `status`), and Nomadic then lifts it without condition.
  */
 import type { AnyWarningCode } from '../../../types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:nomadic';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{ code: 'scoreWithoutHome' as AnyWarningCode, rule: 'You can score objectives even if you do not control the planets in your home system.' }],
+  permit: [{ code: 'scoreWithoutHome' as AnyWarningCode, rule: 'You can score objectives even if you do not control the planets in your home system.' }],
 };

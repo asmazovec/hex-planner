@@ -51,6 +51,6 @@ describe('breakthrough:nomadbt Thunder\'s Paradox', () => {
   test('breakthrough:nomadbt is named in an entry and waives an exhausted agent', () => {
     const { pack } = nomad([]);
     expect(effect(pack, id).tier).toBe('hint');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['componentExhausted']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['componentExhausted']);
   });
 });

@@ -7,16 +7,17 @@
  * replay already exhausts the relic. Pass 1 keeps it the hint it is today.
  */
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:prophetstears';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
-  waive: [{
+  permit: [{
     code: prerequisitesMissing.code,
     rule: 'you may exhaust this card to ignore 1 prerequisite',
-    when: (warning, ctx) => Number(warning.params.missing) <= 1 && ctx.before.holdings.relics.includes(id),
+    when: (warning, ctx) => Number(warning.params.missing) <= 1 && ctx.had.holds(id),
   }],
 };

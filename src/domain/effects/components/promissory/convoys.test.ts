@@ -68,6 +68,6 @@ describe('promissory:convoys Trade Convoys', () => {
   test('promissory:convoys is a play effect that waives the neighbour check', () => {
     const { pack } = sol([[]]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['notNeighbor']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['notNeighbor']);
   });
 });

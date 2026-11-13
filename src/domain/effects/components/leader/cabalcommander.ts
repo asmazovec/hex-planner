@@ -5,14 +5,15 @@
  * Decided: `passive` waiver of `productionOver`, narrowed with `when`: the production without up to 2 of its fighters
  * and infantry must fit the value. It is a waiver and not a modify: the limit stays, fewer units are counted against it.
  * */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:cabalcommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'productionOver',
     rule: 'Up to 2 of those units do not count against your PRODUCTION limit.',
     // Up to 2 of the fighters and infantry are left out of the count; what remains must fit.

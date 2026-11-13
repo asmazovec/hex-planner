@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { convertFile } from './migrate-effects';
+import { convertFile, convertWaivers } from './migrate-effects';
 
 const HINT = `/** Harrow. */
 import type { ComponentEffect } from '../../types';
@@ -55,5 +55,86 @@ describe('the effect codemod', () => {
     ['has no effect', 'export const id = "x";', 'no `effect`'],
   ])('a file that %s is left, with the reason', (_, source, reason) => {
     expect(convertFile(source, self)).toEqual({ left: reason });
+  });
+});
+
+const CRAFTY = `import handOverLimit from '../../../rules/codes/handOverLimit';
+import type { ComponentEffect } from '../../types';
+
+export const id = 'ability:crafty';
+
+export const effect: ComponentEffect = {
+  tier: 'passive',
+  rule: id,
+  waive: [{ code: handOverLimit.code, rule: 'You can have any number of action cards in your hand.' }],
+};
+`;
+
+const PLAYING = `import type { ComponentEffect } from '../../types';
+
+export const id = 'leader:mahactcommander';
+
+export const effect: ComponentEffect = {
+  tier: 'play',
+  rule: id,
+  waive: [{
+    code: 'systemHasToken',
+    rule: 'you can activate systems that contain your command tokens.',
+    when: (warning, { entry }) => entry?.type === 'tactical' && warning.params.systemId === entry.systemId,
+  }],
+  play: ({ state }) => { state.tokensOnMap = []; },
+};
+`;
+
+describe('the waiver codemod', () => {
+  test('a file that only waives becomes an ability with `permit`, the waivers unchanged', () => {
+    const done = convertWaivers(CRAFTY, () => 'self');
+    expect(done).toMatchObject({ holder: 'self' });
+    const output = (done as { output: string }).output;
+    expect(output).toContain("import type { Ability } from '../../../../game/abilities/types';");
+    expect(output).toContain("export const ability: Ability = {\n  holder: 'self',\n  tier: 'passive',\n  rule: id,\n  permit: [{ code: handOverLimit.code,");
+    expect(output).not.toContain('waive');
+    expect(output).not.toContain('ComponentEffect');
+  });
+
+  test('a file that also plays keeps `play` in its effect and exports both shapes; a `when` of the entry and the warning is moved as it is', () => {
+    const output = (convertWaivers(PLAYING, () => 'self') as { output: string }).output;
+    expect(output).toContain("import type { Hooked } from '../../../../game/abilities/types';");
+    expect(output).toContain('export const effect: ComponentEffect = {\n  tier: \'play\',\n  rule: id,\n  play:');
+    expect(output).toContain("export const ability: Hooked = {\n  holder: 'self',\n  permit: [{");
+    expect(output).toContain('when: (warning, { entry }) => entry?.type');
+  });
+
+  test('line endings are kept', () => {
+    const output = (convertWaivers(PLAYING.replace(/\n/g, '\r\n'), () => 'self') as { output: string }).output;
+    expect(output.replace(/\r\n/g, '').includes('\n')).toBe(false);
+  });
+
+  test.each([
+    ['reads the old state of the owner', PLAYING.replace('{ entry }', '{ shared }').replace("entry?.type === 'tactical' && warning.params.systemId === entry.systemId", 'shared.holdings.hand.length > 0'), '`when` reads `shared`'],
+    ['hands the whole context to a helper', PLAYING.replace('(warning, { entry })', '(warning, ctx)').replace("entry?.type === 'tactical' && warning.params.systemId === entry.systemId", 'routeBlockKind(warning, ctx) === "ships"'), '`when` uses the whole context'],
+    ['has a typed `when`', PLAYING.replace('(warning, { entry })', '(warning: Warning, { entry })'), '`when` is typed'],
+    ['has nothing to convert', "export const id = 'x';\nexport const effect: ComponentEffect = { tier: 'hint', rule: id };\n", 'no `waive`'],
+  ])('a file that %s is left, with the reason', (_, source, reason) => {
+    expect(convertWaivers(source, () => 'self')).toEqual({ left: reason });
+  });
+});
+
+describe('the waiver codemod: what the owner held before the turn', () => {
+  const held = (when: string): string => PLAYING.replace("when: (warning, { entry }) => entry?.type === 'tactical' && warning.params.systemId === entry.systemId,", `when: (warning, ctx) => ${when},`);
+
+  test.each([
+    ["ctx.before.holdings.leaders[id] === 'unlocked'", "ctx.had.card(id) === 'ready'"],
+    ['ctx.before.holdings.hand.includes(id)', 'ctx.had.holds(id)'],
+    ['ctx.before.holdings.relics.includes(id)', 'ctx.had.holds(id)'],
+    ['Number(warning.params.needed) <= ctx.before.commodities', 'Number(warning.params.needed) <= ctx.had.commodities'],
+    ["ctx.before.control[String(warning.params.planetId)] === 'me'", 'ctx.before.planets[String(warning.params.planetId)]?.owner === ctx.holder'],
+  ])('%s is read from the board before the turn', (from, to) => {
+    const output = (convertWaivers(held(from), () => 'self') as { output: string }).output;
+    expect(output).toContain(`when: (warning, ctx) => ${to},`);
+  });
+
+  test('what the old state holds beyond these is left', () => {
+    expect(convertWaivers(held('ctx.shared.holdings.technologies.length > 0'), () => 'self')).toEqual({ left: '`when` reads `shared`' });
   });
 });

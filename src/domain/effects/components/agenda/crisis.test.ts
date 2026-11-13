@@ -65,6 +65,6 @@ describe('agenda:crisis Galactic Crisis Pact', () => {
   test('agenda:crisis is a play effect that waives the repeated and the own secondary for the round', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['secondaryRepeated', 'round'], ['ownSecondary', 'round']]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['secondaryRepeated', 'round'], ['ownSecondary', 'round']]);
   });
 });

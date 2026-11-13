@@ -64,6 +64,6 @@ describe('ability:blood_ties Blood Ties', () => {
   test('ability:blood_ties is a passive effect that waives the custodians token and its influence', () => {
     const { pack } = table('winnu', []);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['custodians']);
+    expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['custodians']);
   });
 });

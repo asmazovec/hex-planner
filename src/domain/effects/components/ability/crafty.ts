@@ -7,12 +7,13 @@
  * prevent you" needs nothing more: no effect of the plan lowers the limit below what a waiver lifts.
  */
 import handOverLimit from '../../../rules/codes/handOverLimit';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:crafty';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{ code: handOverLimit.code, rule: 'You can have any number of action cards in your hand.' }],
+  permit: [{ code: handOverLimit.code, rule: 'You can have any number of action cards in your hand.' }],
 };

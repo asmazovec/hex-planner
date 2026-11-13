@@ -3,7 +3,7 @@
  * the context and returns events (or warnings); `apply` is the only thing that changes a board. `holder` (who holds the
  * component) and `actor` (whose turn it is) are both in the context, so a file never has to find out whose it is.
  */
-import type { ComponentDef, Entry, Goods, RuleStep, UnitCounts, Warning } from '../../domain/types';
+import type { AnyWarningCode, ComponentDef, Entry, Goods, RuleStep, UnitCounts, Warning } from '../../domain/types';
 import type { ComponentEffect, ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { HolderRule } from '../../domain/effects/holder';
 import type { Cause, GameEvent } from '../events';
@@ -22,7 +22,60 @@ export interface Ability extends ComponentEffect {
  * The hooks of a component written for the kernel, with the declaration of whose action they speak in. A file whose
  * other parts (play, waive, choose) are still written for the old state exports this as `ability` beside its `effect`.
  */
-export interface Hooked { holder: HolderRule; on: Hooks }
+export interface Hooked { holder: HolderRule; on?: Hooks; permit?: Permit[] }
+
+/**
+ * A check a component lifts, in the words of the kernel. The warning is still made and listed; it is marked with the
+ * component (`Warning.waivedBy`) and no longer counts as a breach. Asked by `game/resolve/waive.ts`: a `passive`
+ * ability for the player whose action it is while it is in force, any other for the turn that names it (component
+ * action, `spends`, `uses`), and with `lasts: 'round'` until the end of the round. A permit never changes a number:
+ * that is a `modify`.
+ */
+export interface Permit {
+  /** The code of the warning lifted. */
+  code: AnyWarningCode;
+  /** What lifts it: the sentence of the component's own text, or the LRR point. */
+  rule: string;
+  /** Narrows the permit to the warnings the component's text covers; without it every warning of the code is lifted. */
+  when?: (warning: Warning, ctx: PermitContext) => boolean;
+  /** `play` and `hint` only: the permit holds from the turn that names the component to the end of that round, for the same player. */
+  lasts?: 'round';
+  /** `passive` only: it also lifts the checks of a transaction whose other side holds the component, not only those of its holder. */
+  partner?: boolean;
+}
+
+export type RouteBlockKind = 'asteroid' | 'supernova' | 'nebula' | 'ships' | 'structures' | 'hyperlane';
+
+/** What a permit's `when` is given: the context of any ability (the board after the turn's step) and what the turn and the round add. */
+export interface PermitContext extends AbilityContext {
+  /** The board before the turn, and the holder read from it. */
+  readonly before: Board;
+  readonly had: Reader;
+  /** The strategy cards whose primary the actor resolved earlier this round, when the round keeps them. */
+  readonly primaries?: readonly number[];
+  /** The components the actor played earlier in the round. */
+  readonly plays: readonly string[];
+  /** What a route warning is about: the anomaly that closes or ends the system, other players' ships, a hyperlane, or none. */
+  routeBlockKind(warning: Warning): RouteBlockKind | undefined;
+  /** Whether a speedShort warning is one ship's shortfall of at most `by` steps (the first of the turn that fits). */
+  oneShipShort(warning: Warning, by?: number): boolean;
+  /** The move value of the warning's ship by the printed rules and its upgrades alone. */
+  speedWithoutAnomalies(warning: Warning): number;
+  /** Whether a system holds an anomaly of the kind. */
+  hasAnomaly(slot: string, kind: 'asteroid' | 'nebula' | 'rift' | 'supernova'): boolean;
+  /** Whether other players' ships end a route in the system, as the board stood before the turn. */
+  blockedByShips(slot: string): boolean;
+  /** The ships (not fighters, not ground forces) other players have in a system. */
+  othersShipsIn(slot: string): UnitCounts;
+  /** Whether every unit the move of the warning carried is one of these. */
+  onlyUnits(warning: Warning, kinds: readonly string[]): boolean;
+  /** Whether the move of the warning carried ships alone. */
+  shipsOnly(warning: Warning): boolean;
+  /** Whether another player (as the warning names them) is present in the system or next to it. */
+  playerNear(player: string, slot: string): boolean;
+  /** The slot of Mecatol Rex on the map. */
+  mecatolSlot(): string | undefined;
+}
 
 /** What each hook kind is told besides the context: the moment's facts, in the words of the kernel. */
 export interface HookPayloads {

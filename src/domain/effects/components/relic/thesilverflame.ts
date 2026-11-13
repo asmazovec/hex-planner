@@ -8,14 +8,15 @@
  * die: the replay already purges the relic when its component action plays it ("purge this card"); what the die
  * decides is not modelled.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:thesilverflame';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'transactionKind',
     rule: 'The Silver Flame may be exchanged as part of a transaction.',
     when: warning => warning.params?.id === id,

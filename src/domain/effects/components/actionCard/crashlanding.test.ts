@@ -58,6 +58,6 @@ describe('actionCard:crashlanding Crash Landing', () => {
 
   test('actionCard:crashlanding waives the ground forces left in space for the entry that plays it', () => {
     const { pack } = table(crash());
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['capacitySystem', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['capacitySystem', undefined]]);
   });
 });

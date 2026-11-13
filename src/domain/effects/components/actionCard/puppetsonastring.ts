@@ -6,12 +6,13 @@
  * player performs one more action. The rulings (tirules2 components/action-cards.md, Puppets On A String 6) keep the
  * player passed, so a later action without the card is warned of as before. Only the entry: no `lasts`.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:puppetsonastring';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
-  waive: [{ code: 'actionAfterPass', rule: 'Perform 1 action.' }],
+  permit: [{ code: 'actionAfterPass', rule: 'Perform 1 action.' }],
 };

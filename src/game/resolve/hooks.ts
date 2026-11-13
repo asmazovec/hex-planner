@@ -54,6 +54,33 @@ function poolWarnings(table: Table, before: Board, board: Board, pack: DataPack,
   return found;
 }
 
+/** The context a component is asked with: the board as it stands, the holder and the actor, the readers and the questions of the game. */
+export function contextOf(
+  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry'>, warn: (warning: Warning) => void,
+): AbilityContext {
+  return {
+    board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), choices: options.choices ?? {}, own: player === options.actor,
+    get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
+    key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
+    commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },
+    playerOf: key => playerOfKey(table, key),
+    home: other => homeOf(table, table.players.find(p => p.id === other)!, pack)?.planets ?? [],
+    neighbours: (a, b) => areNeighbours(table, at, pack, a, b),
+    applied: (point, base, extra) => appliedOn(table, at, pack, player, point, base, extra).value,
+    unitLimit: (units, step) => {
+      const left = reinforcementsOf(at, pack, player);
+      return (Object.keys(units) as (keyof typeof units)[]).flatMap(unit => {
+        const limit = pack.units[unit]?.limit;
+        const free = left[unit];
+        return limit === null || limit === undefined || free === undefined || (units[unit] ?? 0) <= free ? [] : [violation('reinforcementsOut', { unit, limit, have: limit - free }, step)];
+      });
+    },
+    planetsIn: slot => planetsIn(table, at, pack, slot),
+    systemOf: planet => Object.keys({ ...table.map, ...at.common.fracture.tiles }).find(slot => planetsIn(table, at, pack, slot).includes(planet)),
+    warn,
+  };
+}
+
 /** Asks the components in force of `players` for the hook, in order, and applies what they return. */
 export function runHooks<K extends HookKind>(
   table: Table, start: Board, pack: DataPack, kind: K, players: readonly PlayerId[], payload: HookPayloads[K], options: HookOptions,
@@ -74,27 +101,7 @@ export function runHooks<K extends HookKind>(
       const hook = effectOf(pack, id)!.on![kind]!;
       const at = board;
       const made: GameEvent[] = [];
-      const context: AbilityContext = {
-        board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), choices: options.choices ?? {}, own: player === options.actor,
-        get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
-        key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
-        commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },
-        playerOf: key => playerOfKey(table, key),
-        home: other => homeOf(table, table.players.find(p => p.id === other)!, pack)?.planets ?? [],
-        neighbours: (a, b) => areNeighbours(table, at, pack, a, b),
-        applied: (point, base, extra) => appliedOn(table, at, pack, player, point, base, extra).value,
-        unitLimit: (units, step) => {
-          const left = reinforcementsOf(at, pack, player);
-          return (Object.keys(units) as (keyof typeof units)[]).flatMap(unit => {
-            const limit = pack.units[unit]?.limit;
-            const free = left[unit];
-            return limit === null || limit === undefined || free === undefined || (units[unit] ?? 0) <= free ? [] : [violation('reinforcementsOut', { unit, limit, have: limit - free }, step)];
-          });
-        },
-        planetsIn: slot => planetsIn(table, at, pack, slot),
-        systemOf: planet => Object.keys({ ...table.map, ...at.common.fracture.tiles }).find(slot => planetsIn(table, at, pack, slot).includes(planet)),
-        warn: warning => { violations.push(warning); },
-      };
+      const context = contextOf(table, at, pack, player, id, options, warning => { violations.push(warning); });
       const returned = (hook as (ctx: AbilityContext, payload: HookPayloads[K]) => GameEvent[] | void)(context, payload);
       for (const event of returned ?? []) {
         const step = event.cause?.step ?? options.step;

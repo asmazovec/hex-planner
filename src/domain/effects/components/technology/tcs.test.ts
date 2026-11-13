@@ -94,6 +94,6 @@ describe('technology:tcs Temporal Command Suite', () => {
     const { pack } = nomad([]);
     expect(effect(pack, id).tier).toBe('play');
     expect(effect(pack, id).play).toBeTypeOf('function');
-    expect(effect(pack, id).waive?.map(w => w.code).sort()).toEqual(['notNeighbor', 'transactionRepeated']);
+    expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['notNeighbor', 'transactionRepeated']);
   });
 });

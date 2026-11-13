@@ -8,14 +8,15 @@
  * everyone, then the ability lifts it for the Hacan's own transactions. Any other kind (a technology) still stands.
  * Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:arbiters';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [
+  permit: [
     {
       code: 'transactionKind',
       rule: 'When you are negotiating a transaction, action cards can be exchanged as part of that transaction.',

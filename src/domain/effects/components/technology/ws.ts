@@ -9,12 +9,13 @@
  * Pass 1: the generated effect as it is today.
  */
 import warSunLocked from '../../../rules/codes/warSunLocked';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:ws';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: '97.4',
-  waive: [{ code: warSunLocked.code, rule: 'tirules2, units, War Sun 1: the technology is what unlocks the war sun' }],
+  permit: [{ code: warSunLocked.code, rule: 'tirules2, units, War Sun 1: the technology is what unlocks the war sun' }],
 };

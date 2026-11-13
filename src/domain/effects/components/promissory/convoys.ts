@@ -24,12 +24,12 @@ export const effect: ComponentEffect = {
     const { holdings } = turn.state;
     if (!(holdings.inPlay ??= []).includes(turn.id)) holdings.inPlay.push(turn.id);
   },
-  waive: [{ code: 'notNeighbor', rule: 'While this card is in your play area, you may negotiate transactions with players who are not your neighbor.' }],
 };
 
 /** Returning to the Hacan player is a hook of the kernel; the play (the note lying in the play area) is still written for the old state. */
 export const ability: Hooked = {
   holder: 'self',
+  permit: [{ code: 'notNeighbor', rule: 'While this card is in your play area, you may negotiate transactions with players who are not your neighbor.' }],
   on: {
     onActivate: (ctx, activation) => {
       const hacanKey = noteAddress(ctx.id);

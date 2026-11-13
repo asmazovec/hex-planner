@@ -47,7 +47,7 @@ describe('ability:guild_ships Guild Ships', () => {
   test('ability:guild_ships is a passive effect that waives the neighbour check', () => {
     const { pack } = table('hacan');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['notNeighbor']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['notNeighbor']);
   });
 });
 

@@ -6,12 +6,13 @@
  * today. Ruling (Hacan, Guild Ships 2): either player may initiate the negotiation, so a deal with the Hacan is lifted too
  * (`partner`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:guild_ships';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{ code: 'notNeighbor', rule: 'You can negotiate transactions with players who are not your neighbor.', partner: true }],
+  permit: [{ code: 'notNeighbor', rule: 'You can negotiate transactions with players who are not your neighbor.', partner: true }],
 };

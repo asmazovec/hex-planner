@@ -71,6 +71,6 @@ describe('agenda:minister_sciences Minister of Sciences', () => {
   test('agenda:minister_sciences is a passive effect that waives the shortfall of resources', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['shortResources']);
   });
 });

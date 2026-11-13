@@ -68,6 +68,6 @@ describe('agenda:defense_act Homeland Defense Act', () => {
   test('agenda:defense_act is a passive effect that waives the PDS limit of a planet', () => {
     const { pack } = table([[]]);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['structureLimit']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['structureLimit']);
   });
 });

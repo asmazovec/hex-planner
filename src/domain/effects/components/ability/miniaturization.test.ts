@@ -89,6 +89,6 @@ describe('ability:miniaturization Miniaturization', () => {
   test('ability:miniaturization is a passive effect that waives the transport of structures', () => {
     const { pack } = table('ralnel', carry());
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

@@ -6,17 +6,18 @@
  * from one, 95.3) for the tactical action that names it in `uses`; the replay already purges the relic. Pass 1 keeps
  * it the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:dominusorb';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'play',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'sourceActivated',
     rule: 'you may purge this card to move and transport units that are in systems that contain 1 of your command tokens',
     // Only an Orb still held: one already purged is a component not held, and lifts nothing.
-    when: (_warning, ctx) => ctx.before.holdings.relics.includes(id),
+    when: (_warning, ctx) => ctx.had.holds(id),
   }],
 };

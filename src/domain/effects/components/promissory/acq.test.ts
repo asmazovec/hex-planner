@@ -54,6 +54,6 @@ describe('promissory:acq Acquiescence', () => {
   test('promissory:acq is a play effect that waives the strategy token of the secondary', () => {
     const { pack } = table('sol', []);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortStrategy']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['shortStrategy']);
   });
 });

@@ -11,9 +11,9 @@
  * asked with the entry by `appliedFor`).
  */
 import { componentById } from '../../../components';
-import { holds, isExhausted } from '../../../replay/holdings';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'technology:is';
 
@@ -22,12 +22,16 @@ export const effect: ComponentEffect = {
   rule: id,
   // 2 resources for the research, however many technologies it names (faction note 1: paid apart from the rest).
   modify: { researchCost: (value, ctx) => (ctx.index === 0 ? value + 2 : value) },
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: prerequisitesMissing.code,
     rule: "ignore all of that technology's prerequisites",
     when: (_warning, ctx) => {
       const def = componentById(ctx.pack, id);
-      return !def || (holds(ctx.before.holdings, def) && !isExhausted(ctx.before.holdings, def));
+      return !def || ctx.had.card(id) === 'ready';
     },
   }],
 };

@@ -6,14 +6,15 @@
  * (`constructionUnits`); for the Titans one mech and one infantry instead of each PDS is what the card allows, so the
  * check is lifted when the units are mechs and infantry one for one, and nothing else.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:titans_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'constructionUnits',
     rule: 'When you would place a PDS on a planet, you may place 1 mech and 1 infantry on that planet instead.',
     // One mech and one infantry for each PDS, and nothing else.

@@ -76,6 +76,6 @@ describe('breakthrough:jolnarbt Specialist Compounds', () => {
   test('breakthrough:jolnarbt is a passive effect that waives the resources of the research', () => {
     const { pack } = table(research(BIOTIC));
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['shortResources']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['shortResources']);
   });
 });

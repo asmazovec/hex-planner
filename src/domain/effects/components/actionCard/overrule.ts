@@ -6,6 +6,7 @@
  * since the card, not a faction ability, lets the primary be performed. Pass 1 keeps it the hint it is today.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:overrule';
 
@@ -14,5 +15,9 @@ export const effect: ComponentEffect = {
   rule: id,
   // The card, not a token, lets the primary be performed.
   modify: { strategyCost: (value, ctx) => (ctx.secondary ? value : 0) },
-  waive: [{ code: 'foreignPrimary', rule: 'Perform the primary ability of a readied or unchosen strategy card.', when: (_warning, ctx) => ctx.before.holdings.hand.includes(id) }],
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{ code: 'foreignPrimary', rule: 'Perform the primary ability of a readied or unchosen strategy card.', when: (_warning, ctx) => ctx.had.holds(id) }],
 };

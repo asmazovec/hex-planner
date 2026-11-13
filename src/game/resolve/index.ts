@@ -23,7 +23,8 @@ import { claimStations, gainControl, landUnits, placeCarried, type Lost } from '
 import { turnActs } from './acts';
 import { playerOfKey } from '../keys';
 import { hook } from './hooks';
-import { playNamed, waived } from './legacyEffects';
+import { legacyWaiverContext, playNamed } from './legacyEffects';
+import { waive } from './waive';
 import { turnTail } from './tail';
 import { movement } from './movement';
 import { payProduction, produce } from './production';
@@ -146,7 +147,7 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   }
   const after = legacyViews(table, ctx.board, pack);
   placeIn(ctx.warnings, turn.id);
-  waived(ctx, ctx.warnings, before, after, ctx.track.plays[turn.player]);
+  waive(ctx, ctx.warnings, board, ctx.track.plays[turn.player] ?? [], () => legacyWaiverContext(ctx, before, after));
   const played = playedBy(ctx.entry);
   if (played.length > 0) ctx.track.plays[turn.player] = [...(ctx.track.plays[turn.player] ?? []), ...played];
   const hints = hintsAtSteps(table, ctx.board, pack, turn.player, ctx.steps.map(s => s.step));

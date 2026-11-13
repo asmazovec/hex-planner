@@ -107,6 +107,6 @@ describe('technology:aida AI Development Algorithm', () => {
   test('technology:aida is a play effect that waives the missing prerequisite', () => {
     const { pack } = research('technology:dd2', true);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

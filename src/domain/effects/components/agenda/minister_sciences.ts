@@ -7,14 +7,15 @@
  * entry is lifted. Only Technology, only resources; the law is the elected player's only.
  */
 import { CARD } from '../../../replay/cards/ids';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:minister_sciences';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'shortResources',
     rule: 'they do not need to spend resources to research technology',
     when: (_warning, ctx) => (ctx.entry?.type === 'strategic' || ctx.entry?.type === 'secondary') && ctx.entry.card === CARD.technology,

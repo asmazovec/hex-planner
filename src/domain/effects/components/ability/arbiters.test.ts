@@ -45,6 +45,6 @@ describe('ability:arbiters Arbiters', () => {
   test('ability:arbiters is a passive effect that waives the kind of a transaction', () => {
     const { pack } = table('hacan', CARD_IN_HAND, {});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['transactionKind']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['transactionKind']);
   });
 });

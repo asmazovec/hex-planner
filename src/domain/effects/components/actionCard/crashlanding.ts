@@ -9,6 +9,7 @@
  * Coexistence and Mecatol Rex are not modelled. Pass 1 keeps it the hint it is today.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:crashlanding';
 
@@ -16,10 +17,14 @@ export const effect: ComponentEffect = {
   tier: 'hint',
   rule: id,
   hintAt: ['combat'],
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: 'capacitySystem',
     rule: 'Place 1 of your ground forces from the space area of the active system onto a planet in that system',
     // One ground force only: what stays beyond the capacity must be that one.
-    when: (warning, ctx) => Number(warning.params.load) - Number(warning.params.capacity) <= 1 && ctx.before.holdings.hand.includes(id),
+    when: (warning, ctx) => Number(warning.params.load) - Number(warning.params.capacity) <= 1 && ctx.had.holds(id),
   }],
 };

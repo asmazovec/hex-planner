@@ -9,6 +9,7 @@
  * a hint; the tests mark what it must do.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'agenda:crisis';
 
@@ -21,7 +22,11 @@ export const effect: ComponentEffect = {
     if (!card || !cards) return;
     cards.freeSecondary[card] = [...new Set([...(cards.freeSecondary[card] ?? []), ...Object.keys(cards.states)])];
   },
-  waive: [
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [
     { code: 'secondaryRepeated', rule: 'Each player may perform the secondary ability of the elected strategy card', lasts: 'round' },
     { code: 'ownSecondary', rule: 'Each player may perform the secondary ability of the elected strategy card', lasts: 'round' },
   ],

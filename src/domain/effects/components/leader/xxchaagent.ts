@@ -8,6 +8,7 @@
  */
 import { readyPlanets } from '../../../replay/payment';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:xxchaagent';
 
@@ -15,9 +16,13 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  waive: [{ code: 'readyNotControlled', rule: 'Exhaust this card to ready any planet' }],
   play: ({ held, game, state, choices, warnings }) => {
     if (!held || game.faction !== 'xxcha' || typeof choices.planet !== 'string') return;
     readyPlanets(state, [choices.planet], warnings, 'component');
   },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{ code: 'readyNotControlled', rule: 'Exhaust this card to ready any planet' }],
 };

@@ -62,6 +62,6 @@ describe('relic:dominusorb Dominus Orb', () => {
   test('relic:dominusorb is a play effect that waives the move out of a system with my token', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['sourceActivated', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['sourceActivated', undefined]]);
   });
 });

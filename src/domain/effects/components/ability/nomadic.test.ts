@@ -53,6 +53,6 @@ describe('ability:nomadic Nomadic', () => {
   test('ability:nomadic is a passive effect that waives the home system check of scoring', () => {
     const { pack } = scoring('saar', PUBLIC, {});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

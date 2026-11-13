@@ -2,7 +2,7 @@
  * The contract of a component's effect (design §5.1). A step of the count never names a component: it asks a named
  * point for its value through `applied`, and the components of the player answer.
  */
-import type { Hooks } from '../../game/abilities/types';
+import type { Hooks, Permit } from '../../game/abilities/types';
 import type { HolderRule } from './holder';
 import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
 
@@ -226,4 +226,6 @@ export interface ComponentEffect {
   waive?: Waiver[];
   /** The hooks written for the kernel (`game/abilities/types.ts`): they read the board and return events; the others of this interface run on the old state. */
   on?: Hooks;
+  /** The checks the component lifts, written for the kernel (`game/abilities/types.ts`): the native form of `waive`, run by `game/resolve/waive.ts`. */
+  permit?: Permit[];
 }

@@ -50,7 +50,7 @@ describe('mech:titans_mech Hecatoncheires', () => {
   test('mech:titans_mech is a passive effect that waives the units placed by Construction', () => {
     const { pack } = instead({});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['constructionUnits']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['constructionUnits']);
   });
   // The mech and the infantry are placed instead of a PDS, not produced: Construction asks no resources for them.
   // Checks: the pair of the Titans with nothing paid raises no shortage of resources; for another faction the units are priced and short.

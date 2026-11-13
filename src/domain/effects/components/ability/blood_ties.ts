@@ -7,16 +7,17 @@
  * token is still removed by the landing and the victory point still gained (27.3). Ruling (Winnu, Blood Ties 1): the
  * Winnu must still commit at least one ground force, which the landing is.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:blood_ties';
 
 const RULE = 'You do not have to spend influence to remove the custodians token from Mecatol Rex';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [
+  permit: [
     { code: 'custodians', rule: RULE },
   ],
 };

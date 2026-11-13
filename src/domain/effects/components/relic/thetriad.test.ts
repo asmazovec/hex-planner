@@ -63,6 +63,6 @@ describe('relic:thetriad The Triad', () => {
   test('relic:thetriad is a passive effect that waives the payment check for itself', () => {
     const { pack } = table([[]]);
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['planetNotControlled']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['planetNotControlled']);
   });
 });

@@ -62,6 +62,6 @@ describe('relic:thesilverflame The Silver Flame', () => {
   test('relic:thesilverflame is a passive effect that waives the exchange of itself', () => {
     const { pack } = table([], {});
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['transactionKind']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['transactionKind']);
   });
 });

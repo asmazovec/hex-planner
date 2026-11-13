@@ -48,6 +48,6 @@ describe('actionCard:puppetsonastring Puppets on a String', () => {
 
   test('actionCard:puppetsonastring waives actionAfterPass for its own entry only', () => {
     const { pack } = table([]);
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['actionAfterPass', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['actionAfterPass', undefined]]);
   });
 });

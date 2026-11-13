@@ -6,7 +6,8 @@
 import { noteBase } from '../../domain/components';
 import { choicesFor } from '../../domain/effects/choices';
 import { effectOf } from '../../domain/effects/registry';
-import { playedBy, waive } from '../../domain/effects/waivers';
+import { playedBy } from '../../domain/effects/waivers';
+import type { WaiverContext } from '../../domain/effects/types';
 import { playNamedAt } from '../../domain/replay/activation';
 import type { Entry, Game, GameState, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
@@ -96,10 +97,9 @@ export function playHooks(ctx: Ctx): void {
   for (const each of spent) hook(ctx, 'onTokenSpent', [ctx.player], each);
 }
 
-/** Marks the warnings of the turn with the components whose waivers cover them (the one place a component lifts a check). */
-export function waived(ctx: Ctx, warnings: Warning[], before: LegacyViews, after: LegacyViews, earlier: readonly string[] = []): Warning[] {
+/** The turn's waiver context on the old state, for the components still written for it (`waive`) and the map questions of the native permits; built only when asked. */
+export function legacyWaiverContext(ctx: Ctx, before: LegacyViews, after: LegacyViews): WaiverContext {
   const now = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, after);
   const prior = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, before);
-  return waive(warnings, { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me, primaries: ctx.track.primaries[ctx.player] ?? [] }, earlier);
+  return { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me, primaries: ctx.track.primaries[ctx.player] ?? [] };
 }
-

@@ -13,6 +13,7 @@
  */
 import { gainTokens } from '../../../replay/status';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:ralnelhero';
 
@@ -20,7 +21,11 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   play: turn => gainTokens(turn, { tactic: 2 }),
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: 'actionAfterPass',
     rule: 'You may choose to no longer be passed',
     lasts: 'round',

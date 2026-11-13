@@ -44,6 +44,6 @@ describe('ability:crafty Crafty', () => {
     const { pack } = table('yssaril');
     quote(pack, id, 'Game effects cannot prevent you from using this ability.');
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([HAND_LIMIT]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([HAND_LIMIT]);
   });
 });

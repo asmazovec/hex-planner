@@ -10,6 +10,7 @@
  * entry only.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'technology:tcs';
 
@@ -26,7 +27,11 @@ export const effect: ComponentEffect = {
       if (agent !== undefined && isAgent(agent) && state.holdings.leaders[agent] === 'exhausted') state.holdings.leaders[agent] = 'unlocked';
     }
   },
-  waive: [
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [
     { code: 'notNeighbor', rule: "if you ready another player's agent, you may perform a transaction with that player" },
     { code: 'transactionRepeated', rule: "if you ready another player's agent, you may perform a transaction with that player" },
   ],

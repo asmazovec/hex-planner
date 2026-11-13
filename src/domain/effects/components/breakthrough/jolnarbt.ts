@@ -11,16 +11,17 @@
  */
 import { colourOf } from '../../../replay/research';
 import { CARD } from '../../../strategy';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:jolnarbt';
 
 const RULE = 'you may exhaust a planet that has a technology specialty instead of spending resources; if you do, you must research a technology of that color';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{
+  permit: [{
     code: 'shortResources',
     rule: RULE,
     when: (_warning, { entry, pack }) => {

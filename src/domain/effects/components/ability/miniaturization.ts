@@ -9,12 +9,13 @@
  * one left in a space area is not a dock or a PDS of any planet, and the entry itself puts it on a planet at its end.
  */
 import structureAboard from '../../../rules/codes/structureAboard';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:miniaturization';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
-  waive: [{ code: structureAboard.code, rule: 'Your structures can be transported by any ship; this does not require or count against capacity.' }],
+  permit: [{ code: structureAboard.code, rule: 'Your structures can be transported by any ship; this does not require or count against capacity.' }],
 };

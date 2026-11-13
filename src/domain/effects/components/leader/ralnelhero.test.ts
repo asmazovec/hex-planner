@@ -71,6 +71,6 @@ describe('leader:ralnelhero Director Nel — Signal Intrusion', () => {
   test('leader:ralnelhero is a play effect that lifts the turn-after-pass check for the round', () => {
     const { pack } = ralnel([[]]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['actionAfterPass', 'round']]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['actionAfterPass', 'round']]);
   });
 });

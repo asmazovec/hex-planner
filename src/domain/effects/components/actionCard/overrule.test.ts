@@ -72,6 +72,6 @@ describe('actionCard:overrule Overrule', () => {
   test('actionCard:overrule is a play effect that waives a primary of another player\'s card', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => [w.code, w.lasts])).toEqual([['foreignPrimary', undefined]]);
+    expect(effect(pack, id).permit?.map(w => [w.code, w.lasts])).toEqual([['foreignPrimary', undefined]]);
   });
 });

@@ -11,21 +11,26 @@
  * entry of the board). "End your turn" is not modelled: no code says an action after it is out of turn.
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'leader:mahactcommander';
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  waive: [{
-    code: 'systemHasToken',
-    rule: 'you can activate systems that contain your command tokens.',
-    when: (_warning, ctx) => ctx.before.holdings.leaders[id] === 'unlocked',
-  }],
   play: ({ entry, state, held, warnings }) => {
     if (!held || entry.type !== 'tactical' || entry.systemId === null) return;
     const slot = entry.systemId;
     if (!warnings.some(w => w.code === 'systemHasToken' && w.params.systemId === slot)) return;
     state.tokensOnMap = state.tokensOnMap.filter(token => token !== slot);
   },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
+    code: 'systemHasToken',
+    rule: 'you can activate systems that contain your command tokens.',
+    when: (_warning, ctx) => ctx.had.card(id) === 'ready',
+  }],
 };
