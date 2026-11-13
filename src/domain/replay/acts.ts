@@ -7,6 +7,7 @@ import { areNeighbors } from '../neighbors';
 import { violation } from '../rules/registry';
 import { componentById } from '../components';
 import { staysInPlay, TRANSACTION_KINDS } from '../holdings';
+import { gainBreakthrough } from '../effects/breakthrough';
 import { effectOf, holderOf, inForceOf } from '../effects/registry';
 import type { DealTurn } from '../effects/points/payment';
 import { playersOf } from '../players';
@@ -113,5 +114,10 @@ export function applyActs(game: Game, state: GameState, entry: Entry, pack: Data
     // No more than one slice per turn (expedition 5).
     if (expeditions > 1 && act.sliceId) warnings.push(violation('expeditionTwicePerTurn', { sliceId: act.sliceId }));
     applyExpeditionPart(game, state, act, pack, ctx.taken, warnings);
+    // Whoever performs an expedition gains their faction's breakthrough, if they do not have it (Thunder's Edge, expedition 3).
+    if (act.sliceId) {
+      const player = entry.owner ?? 'me';
+      gainBreakthrough({ game, state, shared: ctx.states.me ?? state, entry, id: '', player, states: ctx.states, choices: {}, held: true, pack, warnings });
+    }
   }
 }

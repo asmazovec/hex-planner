@@ -22,6 +22,7 @@ import { CardGrid } from '../blocks/CardGrid';
 import { MapPickButton } from '../../primitives/MapPickButton';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { EditorPart } from '../../primitives/EditorPart';
+import { StepHints } from '../../feedback/StepHints';
 
 /** What the next tap on the map chooses. */
 export type MapPick = 'system' | 'build' | 'dock';
@@ -33,6 +34,8 @@ export interface StrategyEditorProps {
   entry: CardEntry;
   /** The state just before the entry. */
   before: GameState;
+  /** The whole board just before the entry, every opponent in `rivals`: the reminders of the card step are read from it. */
+  board?: GameState;
   warnings: Warning[];
   manualPayment: boolean;
   /** What the next tap on the map will choose. */
@@ -58,7 +61,7 @@ export interface StrategyEditorProps {
 
 /** A strategy card played: first the card, then its primary or secondary; either stays open, and a switch starts the play over. */
 export function StrategyEditor({
-  game, pack, round, entry, before, warnings, manualPayment, picking,
+  game, pack, round, entry, before, board, warnings, manualPayment, picking,
   onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, common,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
@@ -181,6 +184,8 @@ export function StrategyEditor({
         {list([...cardWarnings, ...placer.rest()])}
         {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
         {cardBlocks}
+        {/* The reminders of a card played concern everyone at the table: the researcher, the one who may react. */}
+        <StepHints pack={pack} board={board} step="card" players={['me', ...opponents.map(o => o.id)]} />
       </EditorPart>
       {common}
     </EditorFrame>

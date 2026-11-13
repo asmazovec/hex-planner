@@ -6,6 +6,7 @@
 import { componentById } from '../components';
 import { choicesFor } from '../effects/choices';
 import { appliedFor } from '../effects/entryApply';
+import { breakthroughOf } from '../effects/breakthrough';
 import { effectOf, effectsOf, holderOf, inForceOf } from '../effects/registry';
 import type { EffectTurn } from '../effects/types';
 import handOverLimit from '../rules/codes/handOverLimit';
@@ -65,7 +66,9 @@ export function afterEntry(a: AfterEntry): void {
   const { game, state, shared, entry, pack, warnings } = a;
   const hooks = hooked(pack);
   const known = (ids: string[] | undefined): string[] => (ids ?? []).filter(id => componentById(pack, id) !== undefined);
-  if (hooks.has('gained')) for (const id of known(entry.gains)) effectOf(pack, id)?.gained?.(turnOf(a, id));
+  // The breakthrough of another faction is not gained by the owner: nothing it says when gained runs.
+  const gainable = (id: string): boolean => !id.startsWith('breakthrough:') || id === breakthroughOf(pack, game.faction);
+  if (hooks.has('gained')) for (const id of known(entry.gains).filter(gainable)) effectOf(pack, id)?.gained?.(turnOf(a, id));
   if (hooks.has('lost')) for (const id of known(entry.spends)) effectOf(pack, id)?.lost?.(turnOf(a, id));
   if (hooks.has('restrict')) {
     const forced = inForceOf(pack, holderOf(game, state, shared), effect => effect.restrict !== undefined);

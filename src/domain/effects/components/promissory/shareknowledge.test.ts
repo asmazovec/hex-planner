@@ -40,6 +40,27 @@ describe('promissory:shareknowledge Share Knowledge', () => {
     expect(end.rivals?.o1?.holdings.technologies).toContain(GRAVITY_DRIVE);
   });
 
+  // "Return that technology to the deck and this card to the Deepwrought player at the end of the status phase."
+  // Checks: the same when an opponent plays my note: the status phase takes the technology from them and the note comes back to me.
+  // Why the check is NOT redundant here: the end of the status phase is every player's, not only mine.
+  test('promissory:shareknowledge played by an opponent ends with the status phase too', () => {
+    const hacan: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+    const theirs = componentAction(note('me'), { owner: 'o1', choices: { technology: GRAVITY_DRIVE } } as Partial<Entry>);
+    const table = bench({
+      faction: 'deepwrought', expansions: ['pok', 'te'], rounds: [[theirs, statusTokens(0, 0, 0)], [adjust({})]],
+      game: { opponents: [hacan], start: { me: { technologies: [GRAVITY_DRIVE] }, opponents: { o1: { promissory: [note('me')] } } } },
+    });
+    const during = bench({
+      faction: 'deepwrought', expansions: ['pok', 'te'], rounds: [[theirs, adjust({})]],
+      game: { opponents: [hacan], start: { me: { technologies: [GRAVITY_DRIVE] }, opponents: { o1: { promissory: [note('me')] } } } },
+    });
+    expect(endOf(during).rivals?.o1?.holdings.technologies).toContain(GRAVITY_DRIVE);
+    const end = endOf(table);
+    expect(end.rivals?.o1?.holdings.technologies).not.toContain(GRAVITY_DRIVE);
+    expect(end.rivals?.o1?.holdings.promissory).not.toContain(note('me'));
+    expect(end.holdings.promissory).toContain(note('me'));
+  });
+
   // LRR 69.2: "A player cannot play their own promissory note."
   // Checks: the Deepwrought player playing their own note is warned of.
   // Why the check is NOT redundant here: the note gives technologies to other players only.

@@ -26,6 +26,8 @@ const combat = cardOf('combat');
 // No action card is a reminder for the production step now: Chaos Mapping is.
 const production = cardOf('production', 'technology');
 const played = cardOf('component');
+/** A technology that speaks of the card step and of the round as a whole. */
+const PSYCHOARCHAEOLOGY = 'technology:pa';
 
 const board = (hand: string[], rivalHand: string[] = []): GameState => {
   const state = (cards: string[]): GameState => ({
@@ -104,5 +106,34 @@ describe('the reminders in the editors', () => {
     expect(hints).toHaveTextContent(played.name);
     expect(hints).not.toHaveTextContent(combat.name);
     expect(componentById(pack, played.id)?.detail?.window).toBe('Action');
+  });
+
+  test('a strategy card shows the reminders of its step, the card', async () => {
+    useGame.getState().setStartHolding('me', PSYCHOARCHAEOLOGY, true);
+    useGame.getState().addEntry(1, { type: 'strategic', card: 4 }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
+    expect(effectOf(pack, PSYCHOARCHAEOLOGY)?.hintAt).toContain('card');
+    // The card step has its group, and the round's, which every turn of the round has, stands in the common part.
+    const groups = screen.getAllByRole('group', { name: 'Reminders for this step' });
+    expect(groups).toHaveLength(2);
+    for (const hints of groups) expect(hints).toHaveTextContent(componentById(pack, PSYCHOARCHAEOLOGY)!.name);
+  });
+
+  test('a turn of the round shows the reminders of the round among what the entry brings', async () => {
+    useGame.getState().setStartHolding('me', PSYCHOARCHAEOLOGY, true);
+    useGame.getState().addEntry(1, { type: 'pass' }, 'action');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit/ }));
+    expect(effectOf(pack, PSYCHOARCHAEOLOGY)?.hintAt).toContain('round');
+    const hints = screen.getByRole('group', { name: 'Reminders for this step' });
+    expect(hints).toHaveTextContent(componentById(pack, PSYCHOARCHAEOLOGY)!.name);
+  });
+
+  test('the status entry holds a Used block, where Mitosis can name Letani Behemoth', async () => {
+    useGame.getState().addEntry(1, { type: 'statusTokens', tactic: 0, fleet: 0, strategy: 0 }, 'status');
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: /^Edit: Tokens and points/ }));
+    expect(screen.getByRole('button', { name: '+ Used' })).toBeInTheDocument();
   });
 });

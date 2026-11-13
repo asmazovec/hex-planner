@@ -4,8 +4,8 @@
  * one place that asks them.
  *
  * A hook belongs to a `passive` effect (or a `play` one, for a component held and not yet played out) and runs for the player whose moment it is while the component is in force
- * (`inForceOf`), in registry order. The round-level moments (`onRoundStart`, `onStatusStart`, `onStatusEnd`) run for me
- * only: the opponents' components are not replayed.
+ * (`inForceOf`), in registry order. The round-level moments (`onRoundStart`, `onStatusStart`) run for me only: the
+ * opponents' components are not replayed; `onStatusEnd` runs for every player, for a card an opponent played for the phase.
  */
 import type { DataPack, Entry, Game, GameState, UnitCounts, Warning } from '../../types';
 import { effectOf, holderOf, inForceOf, orderOf } from '../registry';
@@ -53,7 +53,7 @@ declare module '../types' {
     onRoundStart?: (turn: MomentTurn) => void;
     /** Passive: at the start of the status phase, once a round, before its first entry (or when the agenda begins). */
     onStatusStart?: (turn: MomentTurn) => void;
-    /** Passive: at the end of the status phase, once a round, after its tokens are gained and the board is cleared. */
+    /** Passive: at the end of the status phase, once a round, for each player, after its tokens are gained and the board is cleared. */
     onStatusEnd?: (turn: MomentTurn) => void;
     /** Passive: at the start of each turn of the action phase of the player, before the entry that is the turn. */
     onTurnStart?: (turn: MomentTurn) => void;

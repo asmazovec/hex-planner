@@ -12,6 +12,7 @@ import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
 import { actLines, insideCard } from './actLines';
 import { GainsBlock } from './blocks/GainsBlock';
+import { UsesBlock } from './blocks/UsesBlock';
 import { ScoredBlock } from './blocks/ScoredBlock';
 import { StepHints } from '../feedback/StepHints';
 import { agendaOf } from './editors/AdjustmentEditor';
@@ -95,6 +96,8 @@ function StatusFields({ entry, game, pack, state, before, warnings }: {
       <ScoredBlock entry={entry} pack={pack} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       {/* Last: a card taken stands under its buttons and moves nothing above. */}
       <GainsBlock entry={entry} pack={pack} before={before} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      {/* What the status phase uses: Letani Behemoth replaces the infantry of Mitosis, an agent is readied there. */}
+      <UsesBlock entry={entry} game={game} pack={pack} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
     </>
   );
 }

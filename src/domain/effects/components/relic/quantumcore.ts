@@ -7,6 +7,7 @@
  * Synergy 2) lets a technology of one colour stand for another when researching; the replay checks no prerequisites
  * yet, so that half has nothing to change until it does.
  */
+import { gainBreakthrough } from '../../breakthrough';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:quantumcore';
@@ -14,7 +15,6 @@ export const id = 'relic:quantumcore';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  gained: ({ state, pack, game }) => {
-    if (pack.factions[game.faction]?.sheet?.breakthrough) state.holdings.breakthrough = 'held';
-  },
+  // Through the one gain of a breakthrough: its own "when you gain this card" runs too (Stellar Genesis gives Avernus).
+  gained: turn => { gainBreakthrough(turn); },
 };
