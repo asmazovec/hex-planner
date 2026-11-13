@@ -10,7 +10,7 @@ export interface RuleEntry { rules: string[]; step: RuleStep }
 
 /** Steps in the order the replay goes through them. */
 export const STEPS: readonly RuleStep[] = [
-  'round', 'card', 'activation', 'movement', 'transport', 'combat', 'invasion', 'production', 'payment', 'status', 'expedition', 'transaction', 'component',
+  'setup', 'round', 'card', 'activation', 'movement', 'transport', 'combat', 'invasion', 'production', 'payment', 'status', 'expedition', 'transaction', 'component',
 ];
 
 export const RULES: Record<WarningCode, RuleEntry> = {

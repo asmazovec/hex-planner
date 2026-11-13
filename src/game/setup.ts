@@ -11,7 +11,7 @@ import { emptyBoard, START_POOLS } from './board';
 import type { Cause, GameEvent } from './events';
 import type { Board, DataPack, Player, PlanetId, Slot, Table } from './types';
 
-const SETUP: Cause = { step: 'round' };
+const SETUP: Cause = { step: 'setup' };
 /** The ability that purges its player's own Alliance note at setup. */
 const HUBRIS = 'Hubris';
 const ALLIANCE = /^promissory:.*_an$/;

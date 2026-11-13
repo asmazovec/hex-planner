@@ -112,6 +112,6 @@ describe('setup is a list of events that carry their cause', () => {
   test('every event of setup says it comes from the setup step', () => {
     const events = setup(tableFor(['sol', 'hacan', 'arborec']), pack);
     expect(events.length).toBeGreaterThan(30);
-    expect(events.every(e => e.cause?.step === 'round')).toBe(true);
+    expect(events.every(e => e.cause?.step === 'setup')).toBe(true);
   });
 });

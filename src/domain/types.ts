@@ -529,7 +529,7 @@ export type ExtensionCode = string & { readonly __extensionCode: true };
 /** Any code a warning can carry: one of the core list, or one of the files. */
 export type AnyWarningCode = WarningCode | ExtensionCode;
 /** The part of a round or of a tactical action (89.1-89.5) a violation comes from. */
-export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'expedition' | 'transaction' | 'component';
+export type RuleStep = 'activation' | 'movement' | 'transport' | 'combat' | 'invasion' | 'production' | 'payment' | 'card' | 'status' | 'round' | 'setup' | 'expedition' | 'transaction' | 'component';
 /** Where a violation arose: the entry, and within it the source system or the planet when there is one. */
 export interface ViolationPlace { entryId: string; source?: string; planetId?: string }
 /**

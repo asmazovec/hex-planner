@@ -8,6 +8,7 @@ export type WarningPlace =
 
 /** Where the warnings of a step stand: the step of the domain decides the block, so a new rule needs no edit here. */
 export const STEP_PLACES: Record<RuleStep, WarningPlace[]> = {
+  setup: ['action'],
   round: ['action'],
   card: ['card'],
   activation: ['system'],
