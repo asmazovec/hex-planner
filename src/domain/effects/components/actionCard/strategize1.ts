@@ -22,7 +22,8 @@ export const effect: ComponentEffect = {
     code: 'ownSecondary',
     rule: 'Perform the secondary ability of any readied or unchosen strategy card.',
     // Readied: the primary of this card has not been resolved by the player earlier in the round.
-    when: (_warning, { game, entry }) => {
+    when: (_warning, { game, entry, primaries }) => {
+      if (entry?.type === 'secondary' && primaries) return entry.card === undefined || !primaries.includes(entry.card);
       if (entry?.type !== 'secondary') return true;
       const plan = game.plans.find(candidate => candidate.id === game.activePlanId);
       const round = plan?.rounds.find(candidate => candidate.entries.some(other => other.id === entry.id));

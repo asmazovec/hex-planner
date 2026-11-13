@@ -142,7 +142,7 @@ export function turnActs(ctx: Ctx): void {
 export function waived(ctx: Ctx, warnings: Warning[], before: LegacyViews, after: LegacyViews, earlier: readonly string[] = []): Warning[] {
   const now = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, after);
   const prior = viewFor(ctx.table, ctx.board, ctx.pack, ctx.player, before);
-  return waive(warnings, { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me }, earlier);
+  return waive(warnings, { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me, primaries: ctx.track.primaries[ctx.player] ?? [] }, earlier);
 }
 
 /** The components in force told that command tokens were spent from the strategy pool. */

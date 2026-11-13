@@ -68,6 +68,8 @@ export interface WaiverContext {
   after: GameState;
   /** My state, which holds what belongs to the whole game: laws, revealed objectives, attachments. */
   shared: GameState;
+  /** The strategy cards whose primary the owner resolved earlier this round, when the caller keeps them (the kernel's round track); absent, the active plan says. */
+  primaries?: readonly number[];
 }
 
 /**
