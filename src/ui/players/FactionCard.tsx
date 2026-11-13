@@ -60,14 +60,17 @@ function HomeHex({ faction, pack }: { faction: FactionDef; pack: DataPack }) {
   );
 }
 
-function Tech({ id, pack }: { id: string; pack: DataPack }) {
+function Tech({ id, pack, chosen, onPick }: { id: string; pack: DataPack; chosen?: boolean; onPick?: () => void }) {
   const tech = pack.technologies[id];
-  return (
-    <div className={`tech tech-${tech.type}`}>
+  const body = (
+    <>
       <b>{tech.name}</b>
       <p>{textOf(pack, `technology:${id}`)}</p>
-    </div>
+    </>
   );
+  // A technology of a choice at setup is a toggle: the one the player took is chosen.
+  if (onPick) return <button type="button" className={`tech tech-pick tech-${tech.type}`} aria-pressed={chosen === true} onClick={onPick}>{body}</button>;
+  return <div className={`tech tech-${tech.type}`}>{body}</div>;
 }
 
 export interface FactionCardProps {
@@ -77,10 +80,13 @@ export interface FactionCardProps {
   expansions: ExpansionId[];
   /** Current values on the plan screen; without it the table shows base values, read only. */
   live?: Pick<ShipStatsProps, 'upgraded' | 'locked'>;
+  /** The technologies of the faction's choice that the player took, and what a press on one does: with it the choice is made here. */
+  chosen?: readonly string[];
+  onChoose?: (id: string, take: boolean) => void;
 }
 
 /** What a faction starts with, all visible at once. Colours come from `--player` of the surrounding card. */
-export function FactionCard({ faction, pack, expansions, live }: FactionCardProps) {
+export function FactionCard({ faction, pack, expansions, live, chosen, onChoose }: FactionCardProps) {
   const { t } = useTranslation();
   const ships = UNIT_ORDER.filter((unit: UnitId) => (faction.startUnits[unit] ?? 0) > 0);
   const choice = faction.startingTechChoice;
@@ -113,7 +119,9 @@ export function FactionCard({ faction, pack, expansions, live }: FactionCardProp
               : t('players.techChoiceAny', { amount: choice.amount })}
           </p>
         )}
-        {choice?.options.map(id => <Tech key={id} id={id} pack={pack} />)}
+        {choice?.options.map(id => (
+          <Tech key={id} id={id} pack={pack} chosen={chosen?.includes(id)} onPick={onChoose && (() => onChoose(id, !chosen?.includes(id)))} />
+        ))}
         {faction.startingTech.length === 0 && !choice && <p className="tech-choice">{t('players.techNone')}</p>}
       </div>
       <div className="player-ships">

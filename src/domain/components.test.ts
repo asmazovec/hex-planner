@@ -1,6 +1,7 @@
-import { expect, test } from 'vitest';
+import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { componentById, componentsOf, textOf } from './components';
+import { componentById, componentsOf, ownedBy, textOf } from './components';
+import { startingAgents } from './holdings';
 import { factionSheet } from './factionSheet';
 import type { ExpansionId } from './types';
 
@@ -78,4 +79,20 @@ test('textOf gives the printed text by id, also for what is no component, and an
   expect(textOf(pack, 'unit:arborec_flagship')).toMatch(/\w/);
   expect(textOf(pack, 'nope:nothing')).toBe('');
   expect(textOf(loadPack([]), 'leader:arborecagent')).toBe('');
+});
+
+describe('the Council Keleres variants share one sheet', () => {
+  const shared = loadPack(['pok', 'te']);
+  test('each variant owns the shared abilities, agent, commander, mech and technologies', () => {
+    for (const id of ['ability:the_tribuni', 'leader:keleresagent', 'leader:kelerescommander', 'mech:keleres_mech', 'technology:asn']) {
+      const def = componentById(shared, id)!;
+      for (const faction of ['keleresm', 'keleresx', 'keleresa']) expect(ownedBy(def, faction), `${id} of ${faction}`).toBe(true);
+      expect(ownedBy(def, 'sol')).toBe(false);
+    }
+  });
+
+  test('the agent starts unlocked for every variant, the hero only for its own', () => {
+    for (const faction of ['keleresm', 'keleresx', 'keleresa']) expect(startingAgents(shared, faction)).toEqual(['leader:keleresagent']);
+    expect(ownedBy(componentById(shared, 'leader:keleresherokuuasi')!, 'keleresm')).toBe(false);
+  });
 });

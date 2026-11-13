@@ -343,3 +343,9 @@ describe('the texts of components in the language of the interface', () => {
     }
   });
 });
+
+test('технологии с одним требованием, которые фракция берёт на старте, не теряют его (Gravity Drive и другие)', () => {
+  const pack = loadPack(['pok']);
+  const colours: Record<string, string> = { gd: 'propulsion', sar: 'warfare', dxa: 'biotic', bs: 'biotic', gls: 'cybernetic', pi: 'cybernetic', sr: 'propulsion' };
+  for (const [id, colour] of Object.entries(colours)) expect(pack.technologies[id]?.requires, id).toEqual({ [colour]: 1 });
+});

@@ -4040,6 +4040,9 @@
       "id": "sar",
       "name": "Self-Assembly Routines",
       "type": "warfare",
+      "requires": {
+        "warfare": 1
+      },
       "pack": "pok"
     },
     "dt2": {
@@ -4089,12 +4092,18 @@
       "id": "pi",
       "name": "Predictive Intelligence",
       "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      },
       "pack": "pok"
     },
     "bs": {
       "id": "bs",
       "name": "Bio-Stims",
       "type": "biotic",
+      "requires": {
+        "biotic": 1
+      },
       "pack": "pok"
     },
     "cl2": {
@@ -4120,6 +4129,9 @@
       "id": "sr",
       "name": "Sling Relay",
       "type": "propulsion",
+      "requires": {
+        "propulsion": 1
+      },
       "pack": "pok"
     },
     "m2": {

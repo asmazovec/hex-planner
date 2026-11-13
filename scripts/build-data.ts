@@ -736,7 +736,7 @@ function buildTechnologies(all: SourceTech[], factions: Record<PackId, Record<st
       for (const id of [...faction.startingTech, ...(faction.startingTechChoice?.options ?? [])]) {
         const tech = known.get(id);
         if (!tech) throw new Error(`Faction ${faction.id} names unknown technology ${id}`);
-        result[pack][id] = readTech(tech);
+        result[pack][id] = readFactionTech(tech, upgradedBy);
       }
       for (const { id } of faction.sheet?.techs ?? []) result[pack][id] = readFactionTech(known.get(id)!, upgradedBy);
     }

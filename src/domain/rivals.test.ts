@@ -7,6 +7,8 @@ import { seatSlots } from './mapBuilder';
 import type { Entry, Game } from './types';
 
 const pack = loadPack(['pok', 'te']);
+/** The start units that stand in space: the ground forces stand on the home planet (LRR 43.1). */
+const shipsOf = (units: Record<string, number | undefined>) => Object.fromEntries(Object.entries(units).filter(([id]) => id !== 'infantry'));
 const noPay = { planets: [], tradeGoods: 0 };
 
 function started(): Game {
@@ -28,8 +30,8 @@ describe('the start of a game', () => {
   test('each opponent stands at their seat with their faction\'s start units', () => {
     const game = started();
     const [arborec, hacan] = game.opponents;
-    expect(game.enemyUnits[slotOf(game, arborec.seat)][arborec.id]).toEqual(pack.factions.arborec.startUnits);
-    expect(game.enemyUnits[slotOf(game, hacan.seat)][hacan.id]).toEqual(pack.factions.hacan.startUnits);
+    expect(game.enemyUnits[slotOf(game, arborec.seat)][arborec.id]).toEqual(shipsOf(pack.factions.arborec.startUnits));
+    expect(game.enemyUnits[slotOf(game, hacan.seat)][hacan.id]).toEqual(shipsOf(pack.factions.hacan.startUnits));
   });
 
   test('my own units stay out of it, and an opponent with no faction stands nowhere', () => {
@@ -121,7 +123,7 @@ describe('an opponent\'s action in my plan', () => {
       { type: 'tactical', owner: id, systemId: '0,0', moves: [], landings: [], production: {}, payment: noPay },
     ]);
     expect(stateBeforeEntry(game, planOf(game), 'e1', pack).tactic).toBe(3);
-    expect(stateBeforeEntry(game, planOf(game), 'e1', pack).systems[slotOf(game, game.opponents[0].seat)]).toEqual(pack.factions.arborec.startUnits);
+    expect(stateBeforeEntry(game, planOf(game), 'e1', pack).systems[slotOf(game, game.opponents[0].seat)]).toEqual(shipsOf(pack.factions.arborec.startUnits));
   });
 
   test('marked as planned it is out of the fact', () => {
@@ -140,5 +142,27 @@ describe('an opponent\'s action in my plan', () => {
     const after = removePlayer(game, 1, pack);
     expect(after.plans[0].rounds[0].entries.map(e => e.id)).toEqual(['e1']);
     expect(playersOf(after)).toHaveLength(3);
+  });
+});
+
+describe('the start of a game: where the units stand (LRR 43.1)', () => {
+  test('a rival starts with ground forces on the home planet and a space dock there', () => {
+    const game = started();
+    const [arborec] = game.opponents;
+    const [planet] = pack.tiles[pack.factions.arborec.homeTile].planetIds;
+    const { infantry, ...ships } = pack.factions.arborec.startUnits;
+    expect(game.enemyUnits[slotOf(game, arborec.seat)][arborec.id]).toEqual(ships);
+    expect(game.enemyGround[planet][arborec.id]).toEqual({ infantry });
+    expect(game.docks).toContain(planet);
+  });
+
+  test('so does my own board, and no ground force is left in space', () => {
+    const game = started();
+    const state = project(game, game.plans[0], 'forecast', pack).state;
+    const [planet] = pack.tiles[pack.factions.sol.homeTile].planetIds;
+    expect(state.ground[planet]).toEqual({ infantry: pack.factions.sol.startUnits.infantry });
+    expect(Object.values(state.systems).flatMap(units => Object.keys(units))).not.toContain('infantry');
+    const rival = state.rivals![rivalId(game)];
+    expect(rival.docks).toContain(pack.tiles[pack.factions.arborec.homeTile].planetIds[0]);
   });
 });

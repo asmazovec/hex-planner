@@ -1,6 +1,6 @@
 import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { componentById, componentsOf, noteAddress, textOf } from '../../domain/components';
+import { componentById, componentsOf, noteAddress, ownedBy, textOf } from '../../domain/components';
 import { emptyHoldings, HOLDING_FIELD, ownNotes, staysInPlay, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats, upgradableStructures } from '../../domain/unitStats';
@@ -80,7 +80,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
   const countIn = (list: string[] | undefined, id: string): number => (list ?? []).filter(other => other === id).length;
   const isHeld = (def: ComponentDef): boolean => {
     if (def.kind === 'leader') return holdings.leaders[def.id] !== undefined;
-    if (def.kind === 'breakthrough') return def.faction === faction && holdings.breakthrough !== undefined;
+    if (def.kind === 'breakthrough') return ownedBy(def, faction) && holdings.breakthrough !== undefined;
     if (def.kind === 'agenda') return laws.includes(def.id);
     if (def.kind === 'secretObjective') return holdings.secrets.includes(def.id) || holdings.scored.includes(def.id);
     const field = fieldOf(def);
@@ -117,7 +117,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
         <ComponentCard
           key={def.id} def={def} pack={pack} held={held} state={holdings.breakthrough === 'exhausted' && held ? 'exhausted' : undefined} source={source}
           onRemove={held && start.breakthrough ? () => setStartHolding(player, def.id, false) : undefined}
-          onAdd={!held && def.faction === faction ? () => setStartHolding(player, def.id, true) : undefined}
+          onAdd={!held && ownedBy(def, faction) ? () => setStartHolding(player, def.id, true) : undefined}
         />
       );
     }
@@ -242,8 +242,8 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
   // A unit card stands for its upgrade technology: that one is not listed a second time.
   const onUnitCards = new Set([...unitCards, ...structureCards].map(unit => unit.technology));
 
-  const ownLeaders = componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === faction).map(c => c.id);
-  const breakthrough = holdings.breakthrough ? componentsOf(pack).filter(c => c.kind === 'breakthrough' && c.faction === faction) : [];
+  const ownLeaders = componentsOf(pack).filter(c => c.kind === 'leader' && ownedBy(c, faction)).map(c => c.id);
+  const breakthrough = holdings.breakthrough ? componentsOf(pack).filter(c => c.kind === 'breakthrough' && ownedBy(c, faction)) : [];
   // The technologies in one list: by type in the order of the deck, then as they were researched; each card marks its type itself.
   // An upgrade that has no unit card here stands with the unit cards.
   const techOf = (def: ComponentDef) => pack.technologies[def.id.slice(TECH.length)];

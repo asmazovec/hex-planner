@@ -10,6 +10,7 @@
  * both stay reminders.
  */
 import '../../points/production';
+import { isMecatol } from '../../../mecatol';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:custodiavigilia';
@@ -19,5 +20,5 @@ export const effect: ComponentEffect = {
   rule: id,
   // PRODUCTION 3 of Mecatol Rex, asked only for a planet the holder controls (`planetProduction`). The Space Cannon and
   // the command tokens are reminders the plan does not count.
-  modify: { planetProduction: (value, ctx) => (ctx.planetId === 'mr' ? 3 : value) },
+  modify: { planetProduction: (value, ctx) => (isMecatol(ctx.planetId) ? 3 : value) },
 };

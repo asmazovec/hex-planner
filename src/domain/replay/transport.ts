@@ -131,7 +131,7 @@ export function overflowLeft(game: Game, state: GameState, target: string, moves
 /**
  * Check: what stays in the systems units left, against the capacity of the ships still there (16.3, 43.1, 95 note 4):
  * fighters and ground forces left in space without room on board are removed, which the plan must show. Only what the
- * leaving adds is warned about: ground forces of a start stand in the space of the home system.
+ * leaving adds is warned about.
  */
 export function checkLeftBehind(game: Game, state: GameState, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] {
   return [...overflowLeft(game, state, target, moves, pack)].flatMap(([slot, over]) => {

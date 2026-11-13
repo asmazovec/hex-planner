@@ -1,5 +1,5 @@
-import { cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { componentsOf, textOf } from '../../domain/components';
 import type { ComponentKind, DataPack, ExpansionId } from '../../domain/types';
@@ -175,4 +175,15 @@ test('a structure upgrade is a unit upgrade without the ship table; Keleres gets
   show('keleresa', ['pok']);
   expect(techGroup().getByText('I.I.H.Q. Modernization')).toBeInTheDocument();
   expect(techGroup().queryByText('Executive Order')).toBeNull();
+});
+
+test('the technology of a choice at setup is pressed to be taken, and pressed again to be given back', () => {
+  const onChoose = vi.fn();
+  render(<FactionCard faction={pack.factions.winnu} pack={pack} expansions={['pok', 'te']} chosen={['st']} onChoose={onChoose} />);
+  const taken = screen.getByText('Sarween Tools').closest('button')!;
+  expect(taken).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(taken);
+  expect(onChoose).toHaveBeenLastCalledWith('st', false);
+  fireEvent.click(screen.getByText('Antimass Deflectors').closest('button')!);
+  expect(onChoose).toHaveBeenLastCalledWith('amd', true);
 });

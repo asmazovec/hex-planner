@@ -29,6 +29,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
   const setOpponent = useGame(s => s.setOpponent);
   const addOpponent = useGame(s => s.addOpponent);
   const removeOpponent = useGame(s => s.removeOpponent);
+  const setStartHolding = useGame(s => s.setStartHolding);
   const started = useGame(s => s.game !== null);
   const pack = usePack(game.expansions);
   const factions = useMemo(
@@ -123,6 +124,8 @@ export function PlayerList({ drag, live }: PlayerListProps) {
             {faction && (
               <FactionCard
                 faction={faction} pack={pack} expansions={game.expansions}
+                chosen={(index === 0 ? game.start.me : game.start.opponents[player.id])?.technologies?.map(id => id.slice('technology:'.length))}
+                onChoose={(id, take) => setStartHolding(index === 0 ? 'me' : player.id, `technology:${id}`, take)}
                 live={live && {
                   upgraded: index === 0 ? live.upgraded : live.rivalUpgraded?.[player.id] ?? upgradesOf(holdingsOf(game.start.opponents[player.id]), pack),
                   locked: index === 0 ? live.locked : undefined,

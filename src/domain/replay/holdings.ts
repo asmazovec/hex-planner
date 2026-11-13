@@ -3,7 +3,7 @@
  * the objectives a status entry scores, and the Ready Cards step. A component id the pack does not know (an expansion
  * switched off, data rebuilt) is passed over everywhere, silently.
  */
-import { componentById, componentsOf, noteAddress } from '../components';
+import { componentById, componentsOf, noteAddress, ownedBy } from '../components';
 import { HOLDING_FIELD, holdingsOf, staysInPlay } from '../holdings';
 import { violation } from '../rules/registry';
 import type { ComponentDef, DataPack, Entry, GameState, Holdings, StartHoldings, Warning } from '../types';
@@ -125,7 +125,7 @@ export function isExhausted(holdings: Holdings, def: ComponentDef): boolean {
 export function readyToPlay(pack: DataPack, holdings: Holdings, factionId: string, control: GameState['control'] = {}): Set<string> {
   const mine = (def: ComponentDef) => (def.kind === 'legendary'
     ? control[def.id.slice(def.id.indexOf(':') + 1)] === 'me'
-    : HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || def.faction === factionId);
+    : HOLDING_FIELD[def.kind] !== undefined || def.faction === undefined || ownedBy(def, factionId));
   // The notes held are cards of their own, each under its address: the catalogue does not list them.
   const notes = holdings.promissory.flatMap(id => (noteAddress(id) === undefined ? [] : componentById(pack, id) ?? []));
   return new Set([...componentsOf(pack), ...notes].filter(def => mine(def) && holds(holdings, def) && !isExhausted(holdings, def)).map(def => def.id));

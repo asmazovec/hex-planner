@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
+import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE, MECATOL_TILE_TE } from '../../../mecatol';
 import { linksOf, routeReach } from '../../../movement';
 import type { Entry, Game } from '../../../types';
 import { bench, type Bench, componentAction, effect, endOf, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
@@ -50,6 +50,15 @@ describe('technology:lgf Lazax Gate Folding', () => {
   test('technology:lgf its ACTION places 1 infantry on Mecatol Rex the Winnu control', () => {
     const winnu = table('winnu', [componentAction(id)], { planetControl: { [MECATOL_PLANET]: 'me' } });
     expect(endOf(winnu).ground[MECATOL_PLANET]).toEqual({ infantry: 1 });
+  });
+
+  // Thunder's Edge: tile 112 with the planet `mrte` stands in the centre; it is Mecatol Rex all the same.
+  test('technology:lgf with the Thunder\'s Edge Mecatol Rex controlled its ACTION is not warned of and places the infantry', () => {
+    const action = componentAction(id);
+    const winnu = table('winnu', [action], { map: { ...MAP, [FARTHER]: MECATOL_TILE_TE }, planetControl: { [MECATOL_PLANET_TE]: 'me' } });
+    expect(warningsOf(winnu, action).filter(w => w.code === 'componentCondition')).toEqual([]);
+    expect(endOf(winnu).ground[MECATOL_PLANET_TE]).toEqual({ infantry: 1 });
+    expect(reach(winnu).has(FARTHER)).toBe(false);
   });
 
   // "If you control Mecatol Rex ..."

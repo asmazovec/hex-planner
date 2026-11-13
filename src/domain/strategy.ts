@@ -263,6 +263,16 @@ export function startingDocks(game: Game, pack: DataPack): string[] {
   return [...new Set(game.docks.flatMap(id => (absent.includes(id) ? (first === undefined ? [] : [first]) : [id])))];
 }
 
+/** A faction's start units split by where they stand: ships in the space of the home system, ground forces on its planet (LRR 43.1; the one with the space dock). */
+export function splitStartUnits(units: UnitCounts, planetId: string | undefined, pack: DataPack): { space: UnitCounts; ground: UnitCounts } {
+  const space: UnitCounts = {};
+  const ground: UnitCounts = {};
+  for (const id of Object.keys(units) as UnitId[]) {
+    (planetId !== undefined && pack.units[id]?.ground ? ground : space)[id] = units[id];
+  }
+  return { space, ground };
+}
+
 export type HomeNote =
   | { kind: 'foreign'; seat: number; other: string; mine: string }
   | { kind: 'noHome'; seat: number };

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
+import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE, MECATOL_TILE_TE } from '../../../mecatol';
 import type { Entry, Game, StructureCounts } from '../../../types';
 import { bench, type Bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './reclamation';
@@ -40,6 +40,13 @@ describe('ability:reclamation Reclamation', () => {
     const sol = table('sol', reclaim({ pds: 1, spacedock: 1 }));
     expectStanding(missingStructures(sol), 'unitsMissing');
     expect(endOf(sol).pds[MECATOL_PLANET]).toBe(1);
+  });
+
+  // Thunder's Edge: the centre tile 112 holds the planet `mrte`, which is Mecatol Rex all the same.
+  test('ability:reclamation works on the Thunder\'s Edge Mecatol Rex (planet mrte)', () => {
+    const move = tactical(MECATOL, { moves: [{ from: HOME, units: { carrier: 1, infantry: 1 } }], landings: [{ planetId: MECATOL_PLANET_TE, units: { infantry: 1 }, structures: { pds: 1, spacedock: 1 } }] });
+    const winnu = { move, ...bench({ faction: 'winnu', expansions: ['pok', 'te'], units: { [HOME]: { carrier: 1, infantry: 1 } }, entries: [move], game: { map: { ...MAP, [MECATOL]: MECATOL_TILE_TE } } }) };
+    expectWaived(missingStructures(winnu), 'unitsMissing', id);
   });
 
   // "... during which you gained control of Mecatol Rex"

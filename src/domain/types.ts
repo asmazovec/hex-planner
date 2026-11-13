@@ -204,6 +204,8 @@ export interface ComponentDef {
   copies?: number;
   /** The owning faction: a faction technology, leader, ability, breakthrough, mech, promissory note. */
   faction?: string;
+  /** The other factions that own the same card as `faction`: the three Council Keleres variants share their sheet. */
+  sharedBy?: string[];
   /** Fields of the kind: an action card's phase and window, an objective's stage and points, an agenda's type and target, an exploration card's trait, a leader's type. */
   detail?: Record<string, string | number>;
 }

@@ -45,7 +45,14 @@ const CATALOGS = new WeakMap<DataPack, Catalog>();
 
 function build(pack: DataPack): Catalog {
   const byId = new Map<string, ComponentDef>();
-  const add = (component: ComponentDef) => { if (!byId.has(component.id)) byId.set(component.id, component); };
+  const add = (component: ComponentDef) => {
+    const known = byId.get(component.id);
+    if (!known) byId.set(component.id, component);
+    // The same sheet item of another faction (Keleres): one card, owned by each of them.
+    else if (known.faction !== undefined && component.faction !== undefined && known.faction !== component.faction && !known.sharedBy?.includes(component.faction)) {
+      known.sharedBy = [...(known.sharedBy ?? []), component.faction];
+    }
+  };
   for (const component of pack.components) add(component);
 
   // A sheet item is in play when its expansion is: its text is loaded with that expansion. Leaders and mechs also need
@@ -57,6 +64,7 @@ function build(pack: DataPack): Catalog {
     return loaded.filter(item => !replaced.has(item.id));
   };
   const techOwner = new Map<string, string>();
+  const techSharers = new Map<string, string[]>();
   const techOut = new Set<string>();
   for (const faction of Object.values(pack.factions)) {
     const sheet = faction.sheet;
@@ -73,7 +81,10 @@ function build(pack: DataPack): Catalog {
     if (sheet.breakthrough) for (const breakthrough of present('breakthrough', [sheet.breakthrough])) item('breakthrough', breakthrough);
     const techs = present('technology', sheet.techs ?? []);
     for (const tech of sheet.techs ?? []) {
-      if (techs.includes(tech)) { if (!techOwner.has(tech.id)) techOwner.set(tech.id, faction.id); } else techOut.add(tech.id);
+      if (techs.includes(tech)) {
+        if (!techOwner.has(tech.id)) techOwner.set(tech.id, faction.id);
+        else if (techOwner.get(tech.id) !== faction.id) techSharers.set(tech.id, [...(techSharers.get(tech.id) ?? []), faction.id]);
+      } else techOut.add(tech.id);
     }
   }
   for (const tech of Object.values(pack.technologies)) {
@@ -81,7 +92,7 @@ function build(pack: DataPack): Catalog {
     if (pack.texts[id] === undefined || (techOut.has(tech.id) && !techOwner.has(tech.id))) continue;
     const owner = techOwner.get(tech.id);
     add({
-      id, kind: 'technology', name: tech.name, pack: tech.pack ?? 'base', text: textOf(pack, id), ...(owner ? { faction: owner } : {}),
+      id, kind: 'technology', name: tech.name, pack: tech.pack ?? 'base', text: textOf(pack, id), ...(owner ? { faction: owner } : {}), ...(techSharers.has(tech.id) ? { sharedBy: techSharers.get(tech.id) } : {}),
       detail: { type: tech.type ?? (tech.upgrade ? 'unitUpgrade' : 'none'), ...(tech.upgrade ? { upgrade: tech.upgrade } : {}) },
     });
   }
@@ -101,11 +112,15 @@ const catalogOf = (pack: DataPack): Catalog => {
 /**
  * Every component of the pack as one flat list: the cards of `pack.components`, then the technologies, the abilities,
  * leaders, mechs and breakthroughs of the faction sheets, and the legendary planets. Ids are `<kind>:<source id>`.
- * A component shared by several factions (Keleres) is listed once, under the first of them.
+ * A component shared by several factions (Keleres) is listed once, under the first of them (`sharedBy` names the others).
  */
 export function componentsOf(pack: DataPack): ComponentDef[] {
   return catalogOf(pack).list;
 }
+
+/** Whether a faction owns the component: it is on its sheet, or on the sheet it shares (the Council Keleres variants). */
+export const ownedBy = (def: ComponentDef, factionId: string): boolean =>
+  def.faction === factionId || (def.sharedBy?.includes(factionId) ?? false);
 
 /** The component under an id. An addressed note is its catalogue card under its own id: it is held and handed over as that one card. */
 export function componentById(pack: DataPack, id: string): ComponentDef | undefined {

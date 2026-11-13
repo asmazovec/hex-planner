@@ -9,7 +9,7 @@
  * a `play`: one infantry on Mecatol Rex when the player controls it (the replay exhausts the card).
  */
 import { componentById } from '../../../components';
-import { MECATOL_PLANET } from '../../../mecatol';
+import { mecatolPlanetOf } from '../../../mecatol';
 import { wormholeSlots } from '../../../movement';
 import { violation } from '../../../rules/registry';
 import componentCondition from '../../../rules/codes/componentCondition';
@@ -24,17 +24,17 @@ export const effect: ComponentEffect = {
   // Mecatol Rex joins every alpha and beta wormhole in the Winnu's tactical actions while they do not control it (40, 101).
   links: ({ game, pack, state, shared, during }) => {
     const mecatol = mecatolSlot(game);
-    if (during !== 'tactical' || game.faction !== 'winnu' || mecatol === undefined || state?.control[MECATOL_PLANET] === 'me') return [];
+    if (during !== 'tactical' || game.faction !== 'winnu' || mecatol === undefined || state?.control[mecatolPlanetOf(game)] === 'me') return [];
     const tokens = shared?.wormholeTokens ?? state?.wormholeTokens;
     return ['alpha', 'beta'].flatMap(type => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== mecatol).map((slot): [string, string] => [mecatol, slot]));
   },
   play: ({ game, state, pack, warnings, held }) => {
     if (!held || game.faction !== 'winnu') return;
-    if (state.control[MECATOL_PLANET] !== 'me') {
+    if (state.control[mecatolPlanetOf(game)] !== 'me') {
       warnings.push(violation(componentCondition.code, { id, name: componentById(pack, id)?.name ?? id, condition: 'Mecatol Rex' }));
       return;
     }
-    const here = (state.ground[MECATOL_PLANET] ??= {});
+    const here = (state.ground[mecatolPlanetOf(game)] ??= {});
     here.infantry = (here.infantry ?? 0) + 1;
   },
 };

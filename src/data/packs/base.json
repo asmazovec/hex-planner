@@ -3752,6 +3752,9 @@
       "id": "md",
       "name": "Magen Defense Grid ΩΩ",
       "type": "warfare",
+      "requires": {
+        "warfare": 1
+      },
       "pack": "pok"
     },
     "bio": {
@@ -3777,6 +3780,9 @@
       "id": "gd",
       "name": "Gravity Drive",
       "type": "propulsion",
+      "requires": {
+        "propulsion": 1
+      },
       "pack": "base"
     },
     "ds": {
@@ -3957,6 +3963,9 @@
       "id": "dxa",
       "name": "Dacxive Animators",
       "type": "biotic",
+      "requires": {
+        "biotic": 1
+      },
       "pack": "base"
     },
     "vax": {
@@ -4076,6 +4085,9 @@
       "id": "gls",
       "name": "Graviton Laser System",
       "type": "cybernetic",
+      "requires": {
+        "cybernetic": 1
+      },
       "pack": "base"
     },
     "it": {

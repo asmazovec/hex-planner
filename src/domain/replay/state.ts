@@ -1,6 +1,6 @@
 /** The replayed state: where it begins, and the helpers every step uses to change its counts. */
 import { violation } from '../rules/registry';
-import { absentHomePlanets, homePlanets, homeSlot, startingDocks } from '../strategy';
+import { absentHomePlanets, homePlanets, homeSlot, splitStartUnits, startingDocks } from '../strategy';
 import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning } from '../types';
 import { startHoldings } from './holdings';
 
@@ -66,15 +66,19 @@ export function shiftUnits(target: Record<string, UnitCounts>, key: string, unit
 export function initialState(game: Game, pack: DataPack): GameState {
   const faction = pack.factions[game.faction];
   const systems: Record<string, UnitCounts> = {};
+  const ground: Record<string, UnitCounts> = {};
   const control: GameState['control'] = {};
   if (faction) {
-    add(systems, homeSlot(game, pack) ?? faction.homeTile, faction.startUnits);
+    const [home] = homePlanets(game, pack);
+    const split = splitStartUnits(faction.startUnits, home, pack);
+    add(systems, homeSlot(game, pack) ?? faction.homeTile, split.space);
+    if (home !== undefined && unitIds(split.ground).length > 0) add(ground, home, split.ground);
     for (const planetId of homePlanets(game, pack)) control[planetId] = 'me';
   }
   Object.assign(control, game.planetControl);
   for (const planetId of absentHomePlanets(game, pack)) delete control[planetId];
   return {
-    systems, ground: {}, exhausted: [], control, tokensOnMap: [],
+    systems, ground, exhausted: [], control, tokensOnMap: [],
     tradeGoods: 0, commodities: 0, ...START_TOKENS, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), 
     holdings: startHoldings(game.start.me, pack), laws: [], revealed: [], attachments: {},
     docks: startingDocks(game, pack), pds: { ...game.pds },

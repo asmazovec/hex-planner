@@ -2,6 +2,7 @@ import { noteAddress } from './components';
 import { genericNotes, startForFaction, withoutNotesOf } from './holdings';
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor, withPlacedTiles } from './mapBuilder';
 import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
+import { splitStartUnits } from './strategy';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
 /** An opponent, or me under the id `me`. */
@@ -86,10 +87,14 @@ export function placeStartUnits(game: Game, pack: DataPack): Game {
     if (!def || !slot) return next;
     const homes = pack.tiles[def.homeTile]?.planetIds ?? [];
     const onMap = [def.homeTile, def.gateTile].includes(next.map[slot]?.split('@')[0]);
+    const [home] = homes;
+    const split = splitStartUnits(def.startUnits, onMap ? home : undefined, pack);
     return {
       ...next,
-      enemyUnits: { ...next.enemyUnits, [slot]: { ...next.enemyUnits[slot], [id]: def.startUnits } },
+      enemyUnits: { ...next.enemyUnits, [slot]: { ...next.enemyUnits[slot], [id]: split.space } },
       ...(onMap ? {
+        enemyGround: home === undefined || Object.keys(split.ground).length === 0 ? next.enemyGround : { ...next.enemyGround, [home]: { ...next.enemyGround[home], [id]: split.ground } },
+        docks: home === undefined || next.docks.includes(home) ? next.docks : [...next.docks, home],
         planetControl: { ...next.planetControl, ...Object.fromEntries(homes.map(planet => [planet, 'enemy' as const])) },
         planetOwner: { ...next.planetOwner, ...Object.fromEntries(homes.map(planet => [planet, id])) },
       } : {}),

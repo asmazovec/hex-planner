@@ -3,7 +3,7 @@
  * the one bridge from the technologies held to the unit upgrades the counts follow. The replay's side is in
  * `replay/holdings.ts`.
  */
-import { componentById, componentsOf, noteAddress, noteBase, noteId, textOf } from './components';
+import { componentById, componentsOf, noteAddress, noteBase, noteId, ownedBy, textOf } from './components';
 import type { ComponentDef, ComponentKind, DataPack, Game, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
 
 /** The ability that purges its player's own Alliance note at setup, and the base id of that note. */
@@ -81,7 +81,7 @@ export const startingTechnologies = (pack: DataPack, factionId: string): string[
   (pack.factions[factionId]?.startingTech ?? []).map(id => TECH + id);
 
 const leadersOf = (pack: DataPack, factionId: string): ComponentDef[] =>
-  componentsOf(pack).filter(c => c.kind === 'leader' && c.faction === factionId);
+  componentsOf(pack).filter(c => c.kind === 'leader' && ownedBy(c, factionId));
 
 /** The agents of a faction, as component ids: an agent needs no unlocking and begins the game readied (LRR 51.4). None without Prophecy of Kings. */
 export const startingAgents = (pack: DataPack, factionId: string): string[] =>

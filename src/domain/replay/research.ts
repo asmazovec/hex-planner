@@ -5,11 +5,12 @@
  * changes the numbers through the points `prerequisites`, `researchTokens` and `researchAsPrimary`, or waives the warning.
  * Gaining a technology is not researching it (90.5) and passes none of this.
  */
-import { componentById } from '../components';
+import { componentById, ownedBy } from '../components';
 import { applied } from '../effects/apply';
 import '../effects/points/research';
 import { holderOf } from '../effects/registry';
 import prerequisitesMissing from '../rules/codes/prerequisitesMissing';
+import researchForeign from '../rules/codes/researchForeign';
 import researchUnavailable from '../rules/codes/researchUnavailable';
 import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, TechDef, TechType, Warning } from '../types';
@@ -102,6 +103,8 @@ export function researchTechnologies(
       continue;
     }
     if (unresearchable(pack, id)) warnings.push(violation(researchUnavailable.code, { id, name }));
+    // 90.10: the card comes from the player's own technology deck, which holds only their faction's technologies of the kind.
+    if (def.faction !== undefined && !ownedBy(def, game.faction)) warnings.push(violation(researchForeign.code, { id, name }));
     // Propagation: the research is not made and the tokens come instead; nothing else of it is asked.
     const tokens = researchTokensOf(pack, game, state, shared, id);
     if (tokens > 0) { result.tokens += tokens; continue; }

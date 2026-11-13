@@ -134,3 +134,20 @@ describe('research: the points of the count', () => {
     expectStanding(warningsOf(table([entry]), entry), 'shortResources' as AnyWarningCode);
   });
 });
+
+describe('research: the player\'s own technology deck (LRR 90.10)', () => {
+  test('90.10: a technology of another faction is warned of when researched, the own one is not', () => {
+    const foreign = research('technology:l4');
+    const own = research('technology:qdn');
+    const made = table([foreign, own], { faction: 'hacan' });
+    expectStanding(warningsOf(made, foreign), 'researchForeign' as AnyWarningCode);
+    expectNone(warningsOf(made, own), 'researchForeign' as AnyWarningCode);
+  });
+
+  test('90.10: a technology of the Keleres sheet is the own of each variant', () => {
+    const entry = research('technology:asn');
+    for (const faction of ['keleresm', 'keleresx', 'keleresa']) {
+      expectNone(warningsOf(table([entry], { faction }), entry), 'researchForeign' as AnyWarningCode);
+    }
+  });
+});

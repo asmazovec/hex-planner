@@ -8,7 +8,7 @@
  * the player) is warned of with a new code and gained all the same.
  */
 import { componentById } from '../../../components';
-import { MECATOL_PLANET } from '../../../mecatol';
+import { isMecatol } from '../../../mecatol';
 import { adjacentTo } from '../../../movement';
 import { planetsOf, sourceSlot } from '../../../replay/board';
 import { CARD } from '../../../replay/cards/ids';
@@ -36,7 +36,7 @@ export const effect: ComponentEffect = {
     const slot = sourceSlot(game, pack, planet);
     // In a system adjacent to one that holds a planet of the player's.
     const near = slot !== null && adjacentTo(game, slot, pack).some(next => planetsOf(game, next, pack).some(id => state.control[id] === 'me'));
-    if (planet === MECATOL_PLANET || occupied || !near) warnings.push(violation(planetNotGainable.code, { planet }));
+    if (isMecatol(planet) || occupied || !near) warnings.push(violation(planetNotGainable.code, { planet }));
     // Ruling 3: gained exhausted, which `takeControl` does.
     takeControl(game, state, planet, pack, warnings, entry);
   },

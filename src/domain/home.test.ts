@@ -15,6 +15,8 @@ function pasted(faction: string): Game {
   game.map = parseMapString(MAP_STRING, 6, pack).map;
   return game;
 }
+/** The start units that stand in space: the ground forces stand on the home planet (LRR 43.1). */
+const shipsOf = (units: Record<string, number | undefined>) => Object.fromEntries(Object.entries(units).filter(([id]) => id !== 'infantry'));
 const startUnits = (game: Game) => project(game, game.plans[0], 'forecast', pack).state.systems;
 
 describe('where my start units stand', () => {
@@ -22,7 +24,7 @@ describe('where my start units stand', () => {
     const game = pasted('sol');
     expect(game.map['0,-3']).toBe('58');
     expect(homeSlot(game, pack)).toBe('0,-3');
-    expect(startUnits(game)['0,-3']).toEqual(pack.factions.sol.startUnits);
+    expect(startUnits(game)['0,-3']).toEqual({ carrier: 2, destroyer: 1, fighter: 3 });
   });
 
   test('a faction whose tile is on the map keeps the slot of its tile, whatever the seat', () => {
@@ -30,7 +32,7 @@ describe('where my start units stand', () => {
     expect(game.map['-3,0']).toBe('4');
     expect(homeSlot(game, pack)).not.toBe('0,-3');
     expect(game.map[homeSlot(game, pack)!]).toBe('4');
-    expect(startUnits(game)[homeSlot(game, pack)!]).toEqual(pack.factions.muaat.startUnits);
+    expect(startUnits(game)[homeSlot(game, pack)!]).toEqual(shipsOf(pack.factions.muaat.startUnits));
   });
 
   test('Creuss keeps its home tile id while only the gate stands on the map', () => {

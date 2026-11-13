@@ -41,6 +41,7 @@ const PLACES: Partial<Record<string, WarningPlace[]>> = {
   // The checks of a research made by a code of its own: they stand in the block of the technologies.
   prerequisitesMissing: ['research'],
   researchUnavailable: ['research'],
+  researchForeign: ['research'],
   expeditionUnpaid: ['payment'],
   stationStructure: ['system'],
 };

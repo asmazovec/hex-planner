@@ -8,7 +8,7 @@
  * on Mecatol Rex, and only when the action gained control of it. Ruling (Winnu, Reclamation 1): the structure is
  * placed after the Production step, so a dock placed does not produce in that action.
  */
-import { MECATOL_PLANET } from '../../../mecatol';
+import { isMecatol } from '../../../mecatol';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:reclamation';
@@ -23,7 +23,7 @@ export const effect: ComponentEffect = {
     rule: 'You may place 1 PDS and 1 space dock from your reinforcements on Mecatol Rex',
     // One PDS and one space dock, on Mecatol Rex, in the action that gained control of it.
     when: ({ params, step }, { before, after }) =>
-      step === 'invasion' && params.planetId === MECATOL_PLANET && (params.unit === 'pds' || params.unit === 'spacedock')
-      && Number(params.missing) <= 1 && before.control[MECATOL_PLANET] !== 'me' && after.control[MECATOL_PLANET] === 'me',
+      step === 'invasion' && isMecatol(String(params.planetId)) && (params.unit === 'pds' || params.unit === 'spacedock')
+      && Number(params.missing) <= 1 && before.control[String(params.planetId)] !== 'me' && after.control[String(params.planetId)] === 'me',
   }],
 };
