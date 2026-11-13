@@ -11,7 +11,7 @@ export { isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileI
 export { fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed } from '../movement';
 export { readyToPlay } from './holdings';
 export { statusTokensFree } from './status';
-export { playedCost, readyInfluence, readyResources } from './payment';
+export { readyInfluence, readyResources } from './payment';
 export { placesOf, productionCost, productionDue, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
 export { planetStructureWarnings, structureOwner, structuresOn } from './structures';

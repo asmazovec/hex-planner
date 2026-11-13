@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { effectOf } from '../../../domain/effects/registry';
 import { autoPay } from '../../../domain/payment';
-import { playedCost, readyToPlay } from '../../../domain/project';
+import { playedCost } from '../../../domain/effects/playedCost';
+import { readyToPlay } from '../../../domain/project';
 import { playerState } from '../../../domain/stacks';
 import type { ComponentKind, DataPack, Entry, Game, GameState, Payment, Warning } from '../../../domain/types';
 import { ComponentPicker } from '../../components/ComponentPicker';
@@ -60,7 +61,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
     return readyToPlay(pack, own.holdings, game.faction, own.control);
   }, [board, pack, entry.owner, game.faction]);
   const played = entry.type === 'component' && entry.componentId ? componentById(pack, entry.componentId) : undefined;
-  const cost = playedCost(pack, entry);
+  const cost = playedCost(pack, entry, effectOf);
   const own = board ? playerState(board, entry.owner) : undefined;
   const payment: Payment = entry.type === 'component' && entry.payment ? entry.payment : { planets: [], tradeGoods: 0 };
   const placer = placeWarnings(warnings);

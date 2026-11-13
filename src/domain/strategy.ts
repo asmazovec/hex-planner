@@ -1,12 +1,12 @@
 import { strategyCardSet } from './cards';
 import { appliedFor } from './effects/entryApply';
-import { holderOf } from './effects/registry';
+import { effectOf, holderOf } from './effects/registry';
 import type { Holder } from './effects/registry';
 import { seatSlots } from './mapBuilder';
 import { autoPay, type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
-import { playedCost } from './replay/payment';
+import { playedCost } from './effects/playedCost';
 import { productionDue } from './replay/production';
 import { productionCost } from './unitStats';
 import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Holdings, Payment, Round, StructureKind, UnitCounts, UnitId } from './types';
@@ -181,8 +181,8 @@ export function repaid<P extends object>(entry: Entry, patch: P, before: GameSta
     return cost === was ? patch : { ...patch, payment: autoPay(before, cost, 'resources', pack, { faction: game.faction }) };
   }
   if (entry.type === 'component' && next.type === 'component') {
-    const was = playedCost(pack, entry);
-    const cost = playedCost(pack, next);
+    const was = playedCost(pack, entry, effectOf);
+    const cost = playedCost(pack, next, effectOf);
     return was?.amount === cost?.amount && was?.kind === cost?.kind || !cost ? patch : { ...patch, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: game.faction }) };
   }
   if (entry.type === 'strategic' || entry.type === 'secondary') return cardChange(entry, patch as CardPatch, before, game.faction, pack, manual, game) as P & { effects: CardEffects };

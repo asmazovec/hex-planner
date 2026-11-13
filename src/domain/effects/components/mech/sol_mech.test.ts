@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import type { Entry } from '../../../types';
 import { bench, componentAction, effect, endOf, expectStanding, HOME, NEAR, quote, tactical, using, warningsOf } from '../kit';
-import { playedCost } from '../../../replay/payment';
+import { playedCost } from '../../playedCost';
+import { effectOf as effectOf } from '../../registry';
 import { id } from './sol_mech';
 
 const ORBITAL_DROP = 'ability:orbital_drop';
@@ -41,7 +42,7 @@ describe('mech:sol_mech ZS Thunderbolt M2', () => {
   // "you may spend 3 resources": the entry owes them, and a payment of 3 settles it.
   test('mech:sol_mech the deploy costs 3 resources: owed by the entry, settled by its payment', () => {
     const unpaid = dropWithMech();
-    expect(playedCost(sol([unpaid]).pack, unpaid)).toEqual({ kind: 'resources', amount: 3 });
+    expect(playedCost(sol([unpaid]).pack, unpaid, effectOf)).toEqual({ kind: 'resources', amount: 3 });
     expectStanding(warningsOf(sol([unpaid]), unpaid), 'shortResources');
     const paid = { ...dropWithMech(), payment: { planets: ['h1', 'h2'], tradeGoods: 0 } } as Entry;
     const table = sol([paid]);
@@ -50,7 +51,7 @@ describe('mech:sol_mech ZS Thunderbolt M2', () => {
 
   test('mech:sol_mech without Orbital Drop owes nothing', () => {
     const move = using(tactical(NEAR, { moves: [{ from: HOME, units: { cruiser: 1 } }] }), id);
-    expect(playedCost(sol([move]).pack, move)).toBeUndefined();
+    expect(playedCost(sol([move]).pack, move, effectOf)).toBeUndefined();
   });
 
   // Checks: the deploy changes the board when Orbital Drop is played with it: a `play`.

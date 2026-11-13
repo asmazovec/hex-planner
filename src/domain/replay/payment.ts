@@ -1,6 +1,7 @@
 /** Payment: planets are exhausted and trade goods spent for what an entry costs. */
 import { isPlanetCard, planetValue, readyPlanetIds, tradeGoodWorth, type PayView, type PaymentKind } from '../payment';
 import { violation } from '../rules/registry';
+import { playedCost } from '../effects/playedCost';
 import { effectOf } from '../effects/registry';
 import type { DataPack, Entry, Game, GameState, Payment, RuleStep, Warning } from '../types';
 
@@ -113,22 +114,8 @@ export function payComponentCost(
   return paid;
 }
 
-/**
- * What a component entry costs to play: the cost its component declares (`cost`) and what the components it names in
- * `uses` declare for following it (`useCost`, a mech that deploys after an ability), in one kind (the first one's).
- * The editor's label, the automatic payment and the replay's check all ask this.
- */
-export function playedCost(pack: DataPack, entry: Entry): { kind: PaymentKind; amount: number } | undefined {
-  if (entry.type !== 'component') return undefined;
-  const own = entry.componentId ? effectOf(pack, entry.componentId)?.cost : undefined;
-  const followed = (entry.uses ?? []).flatMap(id => effectOf(pack, id)?.useCost?.(entry) ?? []);
-  const all = [...(own ? [own] : []), ...followed];
-  const first = all[0];
-  return first && { kind: first.kind, amount: all.filter(c => c.kind === first.kind).reduce((sum, c) => sum + c.amount, 0) };
-}
-
 /** The cost of what a component entry plays, with what it names in `uses`: paid with the entry's `payment`. */
 export function payPlayedCost(game: Pick<Game, 'faction'>, state: GameState, shared: GameState, entry: Entry, pack: DataPack, warnings: Warning[]): void {
-  const cost = playedCost(pack, entry);
+  const cost = playedCost(pack, entry, effectOf);
   if (cost && entry.type === 'component') payComponentCost(state, cost, entry.payment, pack, warnings, { faction: game.faction, shared });
 }
