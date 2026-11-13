@@ -27,3 +27,16 @@ Rules of the work:
   `Co-Authored-By: Claude Fable 5.2 <noreply@anthropic.com>`. Do not push, do not merge.
 - Final answer: branch name; per finding: fixed (test file) / not a bug (why) / left (why); what the scenario
   specs in `tests/scenarios` now assert wrongly because of your fix (file and the `// BUG` step), so they can be updated.
+
+## Second wave (after the first was merged and published)
+
+Same rules, with these changes:
+- Many findings of the reports are ALREADY FIXED by the first wave: read `docs/phase4/fix-wave-changes.md` and check
+  each finding against the current code before touching it. Only what still reproduces is yours.
+- Do NOT run the whole `npx vitest run` or `npm run e2e`: twelve agents doing that at once made the machine unusable.
+  Run `npx tsc -b`, `npx eslint` on the files you changed, `npm run lint:terms`, and vitest only for the files and
+  folders you touched plus the contract tests (`src/domain/effects/contract.test.ts`, `src/domain/rules/contract.test.ts`,
+  `src/storage/schema.contract.test.ts`, `src/domain/startStructures.test.ts`). The full suite and e2e are run once after the merge.
+- Never run `npm run build` in the main checkout. Save every file as UTF-8 (two files of the first wave were written
+  in cp1251 and broke the build): no PowerShell `Set-Content`/`Out-File` without `-Encoding utf8`, prefer the Edit/Write tools.
+- A new field of an entry or of the game must be added to `src/storage/schema.ts` (the contract test will tell).
