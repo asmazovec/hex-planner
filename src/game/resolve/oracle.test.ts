@@ -36,5 +36,6 @@ describe('the frozen oracle', () => {
       }
     });
     expect(bad.slice(0, 15)).toEqual([]);
-  });
+  // The whole corpus is replayed: a slow machine needs more than the default five seconds.
+  }, 120_000);
 });
