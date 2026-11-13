@@ -17,6 +17,13 @@ export const id = 'leader:jolnaragent';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
+  // The infantry removed, by planet: one button for each planet that holds some, as many presses as units removed.
+  choose: [{
+    key: 'infantry', kind: 'counts', verb: { ru: 'Убрать', en: 'Remove one' },
+    slots: ({ state }) => Object.entries(state.ground)
+      .filter(([, units]) => (units.infantry ?? 0) > 0)
+      .map(([planet, units]) => ({ key: planet, unit: 'infantry' as const, planet, max: units.infantry })),
+  }],
   play: ({ state, choices, held, warnings }) => {
     if (!held) return;
     // The infantry chosen by planet are removed, never more than stand there; each lowers the resources spent by 1.

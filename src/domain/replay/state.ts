@@ -85,6 +85,7 @@ export function initialState(game: Game, pack: DataPack): GameState {
 export function applyAdjustment(state: GameState, entry: Extract<Entry, { type: 'adjustment' }>, warnings: Warning[]): void {
   const d = entry.delta;
   state.tradeGoods += d.tradeGoods ?? 0;
+  state.commodities += d.commodities ?? 0;
   state.tactic += d.tactic ?? 0;
   state.fleet += d.fleet ?? 0;
   state.strategy += d.strategy ?? 0;

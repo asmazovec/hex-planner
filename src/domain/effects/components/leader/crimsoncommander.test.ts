@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { bench, effect, quote } from '../kit';
+import { bench, effect, endOf, planned, quote } from '../kit';
 import { id } from './crimsoncommander';
 
 describe('leader:crimsoncommander Ahk Siever', () => {
@@ -12,5 +12,14 @@ describe('leader:crimsoncommander Ahk Siever', () => {
     quote(pack, id, 'Gain 1 commodity or convert 1 of your commodities to a trade good.');
     expect(effect(pack, id).tier).toBe('hint');
     expect(effect(pack, id).hintAt).toEqual(['combat']);
+  });
+  // The result of the commander is entered by a manual adjustment, which changes commodities as well as trade goods.
+  test('leader:crimsoncommander a manual adjustment gains a commodity and converts one to a trade good', () => {
+    const gain = planned({ type: 'adjustment', label: 'Ahk Siever', delta: { commodities: 1 } }, 'action');
+    expect(endOf(bench({ faction: 'sol', expansions: ['pok'], entries: [gain] })).commodities).toBe(1);
+    const convert = planned({ type: 'adjustment', label: 'Ahk Siever', delta: { commodities: -1, tradeGoods: 1 } }, 'action');
+    const both = endOf(bench({ faction: 'sol', expansions: ['pok'], entries: [gain, convert] }));
+    expect(both.commodities).toBe(0);
+    expect(both.tradeGoods).toBe(1);
   });
 });

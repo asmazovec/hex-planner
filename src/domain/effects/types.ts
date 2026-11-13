@@ -172,6 +172,8 @@ export interface ChoiceSpec {
   label?: { ru: string; en: string };
   /** The candidates: planet ids, slots, player ids, unit ids, option values, component ids. By kind: every planet or system of the map, every other player, every unit. */
   options?: (ctx: ChoiceContext) => string[];
+  /** `player` only: the player of the entry is offered too, for «choose a player» that does not say another. */
+  self?: boolean;
   /** `option` only: how each value reads. */
   names?: Record<string, { ru: string; en: string }>;
   /** `counts` only: the places to choose at, computed from the board just before the entry; the choice's own `key` is not used. */

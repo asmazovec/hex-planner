@@ -15,5 +15,5 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   // The player chosen; the production it grants has no block of its own in a component action yet.
-  choose: [{ key: 'player', kind: 'player' }],
+  choose: [{ key: 'player', kind: 'player', self: true }],
 };

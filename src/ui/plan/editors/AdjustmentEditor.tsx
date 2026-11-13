@@ -17,7 +17,7 @@ import { Section } from '../../primitives/Section';
 import { AgendaChoices } from '../blocks/AgendaChoices';
 import { ComponentSlot } from '../blocks/ComponentSlot';
 
-const DELTA_FIELDS = ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const;
+const DELTA_FIELDS = ['tradeGoods', 'commodities', 'tactic', 'fleet', 'strategy', 'vp'] as const;
 
 /** The agenda an entry of the agenda phase names, among what it gains. */
 export const agendaOf = (entry: Pick<Entry, 'gains'>, pack: DataPack) =>

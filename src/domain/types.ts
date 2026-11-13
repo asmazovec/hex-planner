@@ -238,6 +238,7 @@ export type UpgradeId = UnitId | StructureKind;
 
 export interface AdjustmentDelta {
   tradeGoods?: number;
+  commodities?: number;
   tactic?: number;
   fleet?: number;
   strategy?: number;
