@@ -491,7 +491,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         {/* What the entry gained and gave stands with what else it holds. */}
         <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
         {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} shared={boards.board(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} shared={boards.board(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       </EditorPart>
     );
   };
@@ -509,7 +509,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         const flown = slot.entry;
         return (
           <UnitPicker
-            game={entryGame} pack={pack} before={boards.before(flown.id)} entry={flown} source={slot.source}
+            game={entryGame} pack={pack} before={boards.before(flown.id)} shared={boards.board(flown.id)} entry={flown} source={slot.source}
             warnings={flightWarnings(forecast.warningsByEntry[flown.id] ?? [], entryGame, pack, flown, slot.source)}
             onChange={moves => updateEntry(flown.id, { moves })} onClose={() => closePicker(flown, slot.source)}
             onFly={() => {

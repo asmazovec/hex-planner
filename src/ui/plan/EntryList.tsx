@@ -1,6 +1,7 @@
 import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
+import { componentById } from '../../domain/components';
 import { CARD } from '../../domain/strategy';
 import { tacticalNumbers } from '../../domain/route';
 import { gameAs, playersOf } from '../../domain/players';
@@ -127,7 +128,8 @@ function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) =>
       if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemTitle(game, pack, entry.delta.units?.systemId ?? '', t)}`;
       return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
     case 'component':
-      return entry.note ? `${t('plan.menu.component')}: ${entry.note}` : t('plan.menu.component');
+      // The component it plays names the entry, so that several actions of a round can be told apart; the note comes second.
+      return [t('plan.menu.component'), (entry.componentId ? componentById(pack, entry.componentId)?.name : undefined) ?? entry.note].filter(Boolean).join(': ');
     case 'statusTokens':
       return t('plan.entries.statusTokens');
     default:

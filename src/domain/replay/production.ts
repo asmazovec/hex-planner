@@ -41,6 +41,22 @@ export type ProductionSource = 'system' | 'homeDock' | 'card';
  */
 const PRINTED_UNIT_PRODUCTION: Record<string, number> = { arborec_infantry: 1 };
 
+/**
+ * The printed Production of ships of a faction that the pack does not carry as a number, by the source id of the unit:
+ * Duha Menaimon (Arborec flagship): "After you activate this system, you may produce up to 5 units in this system."
+ * A flagship's ability is no component, so the replay counts it here as a producer of its own.
+ */
+const PRINTED_SHIP_PRODUCTION: Record<string, number> = { arborec_flagship: 5 };
+
+/** What the ships standing in a system produce by their own text (`PRINTED_SHIP_PRODUCTION`). */
+function shipProduction(game: Game, state: GameState, systemId: string, pack: DataPack): number {
+  let value = 0;
+  for (const unit of unitIds(state.systems[systemId] ?? {})) {
+    value += (state.systems[systemId]?.[unit] ?? 0) > 0 ? PRINTED_SHIP_PRODUCTION[unitStats(game.faction, unit, false, pack)?.id ?? ''] ?? 0 : 0;
+  }
+  return value;
+}
+
 /** A dock's Production: its planet's resources plus the dock's printed value (79.1), after what the player holds changed both (Space Dock II, Mining World). */
 const dockValue = (game: Game, state: GameState, planetId: string, pack: DataPack): number => {
   const holder = holderOf(game, state);
@@ -94,6 +110,8 @@ export function producerList(game: Game, state: GameState, systemId: string, pac
     const value = applied(pack, holder, 'spaceProduction', 0, { systemId, anomalies, units: state.systems[systemId] ?? {}, wormholes: wormholesOf(game, pack, systemId, state.wormholeTokens), game, pack }).value;
     if (value > 0) list.push({ kind: 'space', planetId: null, value, infantry: true });
   }
+  const ships = shipProduction(game, state, systemId, pack);
+  if (ships > 0) list.push({ kind: 'space', planetId: null, value: ships, infantry: true });
   return list;
 }
 
@@ -228,7 +246,9 @@ export function checkProduction(
   }
   warnings.push(...unitLimitWarnings(state, units, pack, step));
   for (const [planetId, counts] of Object.entries(onPlanets)) {
-    if (unitIds(counts).some(id => pack.units[id]?.ground) && !docks.includes(planetId)) warn('productionPlace', { planetId });
+    // A Floating Factory, which every Saar space dock is, places its ground forces on any planet of its system (Saar, Floating Factory 2); so does a producing flagship in space.
+    const floating = (game.faction === 'saar' || shipProduction(game, state, target, pack) > 0) && planetsOf(game, target, pack).includes(planetId);
+    if (unitIds(counts).some(id => pack.units[id]?.ground) && !docks.includes(planetId) && !floating) warn('productionPlace', { planetId });
   }
   return warnings;
 }

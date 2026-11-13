@@ -50,3 +50,15 @@ describe('ability:guild_ships Guild Ships', () => {
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['notNeighbor']);
   });
 });
+
+describe('ability:guild_ships with the Hacan on the other side', () => {
+  // Ruling (Hacan, Guild Ships 2): either player may initiate negotiations, so the Hacan's partner may trade with them too.
+  // Checks: a Sol player trades with the Hacan two systems away; the warning is listed and lifted by the Hacan's ability.
+  // Why the check is NOT redundant for a neighbour: only the distance is lifted (the test above).
+  test('ability:guild_ships lifts the neighbour warning of a non-Hacan who trades with the Hacan', () => {
+    const hacan: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+    const move = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }], acts: [deal()] });
+    const sol = bench({ faction: 'sol', units: { [HOME]: { carrier: 1 } }, entries: [adjust({ tradeGoods: 2 }), move], game: { opponents: [hacan], enemyUnits: { [FAR]: { o1: { carrier: 1 } } } } });
+    expectWaived(warningsOf(sol, move), 'notNeighbor', id);
+  });
+});

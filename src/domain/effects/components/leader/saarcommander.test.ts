@@ -36,12 +36,12 @@ describe('leader:saarcommander Rowl Sarrig', () => {
     expectStanding(warningsOf(saar, saar.build), 'productionPlace');
   });
 
-  // "... at any of your space docks ..."
-  // Checks: infantry placed on Home Two, which holds no dock, are still warned of.
-  // Why the check is NOT redundant here: the commander names space docks; a planet without one is not covered.
-  test('leader:saarcommander infantry placed on a planet without a dock stay warned of', () => {
-    const saar = produce({ infantry: 2 }, 'h2');
-    expectStanding(warningsOf(saar, saar.build), 'productionPlace');
+  // Saar, Floating Factory 2: "When a Floating Factory produces ground forces, they may be placed in the space area or on a planet they control in that system."
+  // Checks: infantry produced at the dock of t1 and placed on t2, the other planet of that system, are not warned of at all.
+  // Why the check is redundant here: every Saar space dock is a Floating Factory, so the placement is no breach, with or without the commander.
+  test('leader:saarcommander the other planet of the producing system is no breach for the Saar', () => {
+    const saar = produce({ infantry: 2 }, 't2', {});
+    expect(warningsOf(saar, saar.build).some(w => w.code === 'productionPlace')).toBe(false);
   });
 
   // LRR 68.3: produced ground forces are placed on the planet of the producing unit.
@@ -50,6 +50,15 @@ describe('leader:saarcommander Rowl Sarrig', () => {
   test('leader:saarcommander locked, the infantry placed at another dock are warned of', () => {
     const saar = produce({ infantry: 2 }, 'h1', {});
     expectStanding(warningsOf(saar, saar.build), 'productionPlace');
+  });
+
+  // Checks: the dock stands on h1 and the infantry are placed on h2, the other planet of the same system (the Saar home
+  // system holds the dock on one planet and the infantry go to the other); the warning is lifted by the commander.
+  // Why the check is redundant here: the commander lets the infantry go to a space dock of mine, and that dock is in the system.
+  test('leader:saarcommander infantry placed on another planet of a system with a dock of mine: the warning is waived', () => {
+    const saar = produce({ infantry: 1 }, 'h2');
+    quote(saar.pack, id, 'You may place each of those units at any of your space docks that are not blockaded.');
+    expectWaived(warningsOf(saar, saar.build), 'productionPlace', id);
   });
 
   test.todo('leader:saarcommander fighters placed in the space area of another dock: the entry has no field for produced ships placed outside the active system');

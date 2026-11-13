@@ -81,15 +81,29 @@ export interface WarningPlacer {
   rest: () => Warning[];
 }
 
-/** Hands the warnings of an editor out to its blocks, and keeps what is left so that no warning gets lost. */
-export function placeWarnings(warnings: Warning[]): WarningPlacer {
+/**
+ * The warnings of the components an entry names in «Used»: what the component breaks (not held, exhausted) stands in that
+ * block, whatever the entry is, and the component the action itself plays keeps its own.
+ */
+export function usesWarnings(entry: Entry, warnings: Warning[]): Warning[] {
+  const used = new Set(entry.uses);
+  const played = entry.type === 'component' ? entry.componentId : undefined;
+  return warnings.filter(w => stepOf(w) === 'component' && typeof w.params.id === 'string' && used.has(w.params.id) && w.params.id !== played);
+}
+
+/**
+ * Hands the warnings of an editor out to its blocks, and keeps what is left so that no warning gets lost. Given the
+ * entry, what concerns a component of its «Used» block is taken out: that block shows it.
+ */
+export function placeWarnings(warnings: Warning[], entry?: Entry): WarningPlacer {
   const given = new Map<WarningPlace, Set<Warning>>();
-  const placed = new Set<Warning>();
+  const taken = new Set<Warning>(entry ? usesWarnings(entry, warnings) : []);
+  const placed = new Set<Warning>(taken);
   return {
     at: (place, filter = () => true) => {
       const here = given.get(place) ?? new Set<Warning>();
       given.set(place, here);
-      const list = warnings.filter(w => placesOf(w).includes(place) && !here.has(w) && filter(w));
+      const list = warnings.filter(w => placesOf(w).includes(place) && !here.has(w) && !taken.has(w) && filter(w));
       for (const warning of list) {
         here.add(warning);
         placed.add(warning);

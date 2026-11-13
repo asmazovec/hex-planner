@@ -17,7 +17,13 @@ import { effectOf, effectsOf, holderOf, inForceOf } from './registry';
 import type { ComponentEffect, WaiverContext } from './types';
 
 /** One component asked for its waivers, and how it came to be asked. */
-export interface Asked { id: string; effect: ComponentEffect; by: 'force' | 'entry' | 'round' }
+export interface Asked {
+  id: string;
+  effect: ComponentEffect;
+  by: 'force' | 'entry' | 'round';
+  /** Held by this other side of a transaction of the entry, not by the owner: only a waiver marked `partner` is asked, and only of that deal. */
+  partner?: string;
+}
 
 /** The components an entry plays, each once: its component action, what it spends, what it uses. */
 export function playedBy(entry: Entry): string[] {
@@ -34,9 +40,10 @@ export function playedBy(entry: Entry): string[] {
 export function marked(warnings: Warning[], asked: Asked[], ctx: WaiverContext): Warning[] {
   for (const warning of warnings) {
     const by: string[] = [];
-    for (const { id, effect, by: how } of asked) {
+    for (const { id, effect, by: how, partner } of asked) {
       if (by.includes(id) || (how === 'force' && effect.tier !== 'passive')) continue;
-      const lifts = effect.waive?.some(waiver => waiver.code === warning.code && (how !== 'round' || waiver.lasts === 'round') && (waiver.when?.(warning, ctx) ?? true));
+      const lifts = effect.waive?.some(waiver => waiver.code === warning.code && (how !== 'round' || waiver.lasts === 'round')
+        && (partner === undefined || (waiver.partner === true && warning.params.player === partner)) && (waiver.when?.(warning, ctx) ?? true));
       if (lifts) by.push(id);
     }
     if (by.length > 0) warning.waivedBy = by;
@@ -61,6 +68,17 @@ export function askedFor(ctx: WaiverContext, earlier: readonly string[] = []): A
     for (const id of ids) if (known.has(noteBase(id))) asked.push({ id, effect: effectOf(pack, id)!, by });
   };
   ask(inForceOf(pack, holderOf(ctx.game, ctx.before, ctx.shared)), 'force');
+  // What the other side of a deal holds lifts the checks of that deal, where its text says so (Guild Ships: either may start negotiating).
+  for (const act of ctx.entry && 'acts' in ctx.entry ? ctx.entry.acts ?? [] : []) {
+    if (act.kind !== 'transaction') continue;
+    const faction = ctx.game.opponents.find(o => o.id === act.with)?.faction;
+    const state = ctx.shared.rivals?.[act.with];
+    if (faction === undefined || !state) continue;
+    for (const id of inForceOf(pack, holderOf({ faction }, state, ctx.shared))) {
+      const effect = known.has(noteBase(id)) ? effectOf(pack, id) : undefined;
+      if (effect?.waive?.some(waiver => waiver.partner)) asked.push({ id, effect, by: 'force', partner: act.with });
+    }
+  }
   if (ctx.entry) ask(playedBy(ctx.entry), 'entry');
   // A promissory note in the play area acts in every entry of its holder, whatever its tier, until it is returned.
   ask(notesInPlay(ctx.before.holdings), 'entry');

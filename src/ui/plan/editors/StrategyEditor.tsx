@@ -86,7 +86,7 @@ export function StrategyEditor({
     change(freshPlay(play));
   };
 
-  const placer = placeWarnings(warnings);
+  const placer = placeWarnings(warnings, entry);
   const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
 
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (

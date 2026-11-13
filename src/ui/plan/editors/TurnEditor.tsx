@@ -63,7 +63,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
   const cost = played ? effectOf(pack, played.id)?.cost : undefined;
   const own = board ? playerState(board, entry.owner) : undefined;
   const payment: Payment = entry.type === 'component' && entry.payment ? entry.payment : { planets: [], tradeGoods: 0 };
-  const placer = placeWarnings(warnings);
+  const placer = placeWarnings(warnings, entry);
   // The acts block shows its own; the rest stands first, where it cannot be missed.
   placer.at('deal');
   placer.at('slice');

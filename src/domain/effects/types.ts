@@ -84,6 +84,8 @@ export interface Waiver {
   when?: (warning: Warning, ctx: WaiverContext) => boolean;
   /** `play` and `hint` only: the waiver holds from the entry that names the component to the end of that round, for the same player. */
   lasts?: 'round';
+  /** `passive` only: it also lifts the checks of a transaction whose other side holds the component, not only those of its holder. */
+  partner?: boolean;
 }
 
 /** One component being played by an entry, with what the player chose for it. */
