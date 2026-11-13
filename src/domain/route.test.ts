@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { areAdjacent, extendPath, routeFromPath, strokeStep, tacticalNumbers, tacticalsOf, tapStep } from './route';
-import type { Entry } from './types';
+import { areAdjacent, extendPath, routeFromPath, strokeStep, tapStep } from './route';
 
 test('plain grid neighbours are adjacent, wormholes and hyperlanes mean nothing', () => {
   expect(areAdjacent('0,0', '1,0')).toBe(true);
@@ -47,32 +46,6 @@ test('a tap on the active system with no route under way says so', () => {
   expect(tapStep(null, 'X', 'X')).toEqual({ path: null, onActive: true });
 });
 
-const tacticalEntry = (id: string, status: Entry['status'] = 'planned'): Entry => ({
-  id, status, phase: 'action', type: 'tactical', systemId: '0,0', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
-});
-const pass = (id: string): Entry => ({ id, status: 'planned', phase: 'action', type: 'pass' });
-
-test('numbering counts tactical actions only, in entry order; a cancelled one keeps no number', () => {
-  const list = [tacticalEntry('a'), pass('p'), tacticalEntry('b', 'cancelled'), tacticalEntry('c', 'done'), tacticalEntry('d')];
-  expect(tacticalNumbers(list)).toEqual({ a: 1, c: 2, d: 3 });
-  expect(tacticalNumbers([list[4], list[1], list[3], list[0]])).toEqual({ d: 1, c: 2, a: 3 });
-  expect(tacticalNumbers([])).toEqual({});
-});
-
-test('each player counts their own turns: the first action of everyone is 1, wherever it stands in the plan', () => {
-  const action = (id: string, owner?: string, status = 'planned') => ({ id, type: 'tactical', status, owner }) as Entry;
-  const list = [action('a'), action('b', 'hacan'), action('c', 'muaat'), action('d', 'hacan'), action('e'), action('f', 'hacan', 'cancelled'), action('g', 'hacan')];
-  expect(tacticalNumbers(list)).toEqual({ a: 1, b: 1, c: 1, d: 2, e: 2, g: 3 });
-  expect(tacticalNumbers([list[3], list[0], list[1]])).toEqual({ d: 1, a: 1, b: 2 });
-});
-
-// Its arrow stands on the map among the others, so it is counted among them: the map never shows an arrow without a number.
-test('Warfare\'s free tactical action is numbered with the player\'s other tactical actions, in entry order', () => {
-  const card: Entry = { id: 'w', status: 'planned', phase: 'action', type: 'strategic', card: 6 };
-  const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
-  expect(tacticalNumbers([card, free, tacticalEntry('t')])).toEqual({ f: 1, t: 2 });
-});
-
 describe('the next hex under a stroke', () => {
   test('a hex ahead is added, next to the last one or not: a jump is a step like any other', () => {
     expect(strokeStep(['0,0'], '1,0')).toEqual({ kind: 'add', path: ['0,0', '1,0'] });
@@ -111,22 +84,3 @@ describe('the next hex under a stroke', () => {
   });
 });
 
-// The replay takes Warfare's free tactical action with its card (timeline: «status being its card's»), so the map does too:
-// marking the card done marks the arrow of its action done, and a cancelled card draws none.
-test('a tactical action taken from a strategy card has the status of its card', () => {
-  const card: Entry = { id: 'w', status: 'done', phase: 'action', type: 'strategic', card: 6 };
-  const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
-  const own = tacticalEntry('t');
-  expect(tacticalsOf([card, free, own]).map(e => [e.id, e.status])).toEqual([['f', 'done'], ['t', 'planned']]);
-  expect(tacticalsOf([{ ...card, status: 'cancelled' }, free]).map(e => e.status)).toEqual(['cancelled']);
-  // An action whose card is gone keeps its own status.
-  expect(tacticalsOf([free]).map(e => e.status)).toEqual(['planned']);
-});
-
-// The replay takes the free action right after its card, wherever the entry is stored: the number follows the card's place.
-test('Warfare\'s free tactical action is numbered at the place of its card, not where its entry is stored', () => {
-  const card: Entry = { id: 'w', status: 'planned', phase: 'action', type: 'strategic', card: 6 };
-  const free: Entry = { ...tacticalEntry('f'), free: true, fromCard: 'w' } as Entry;
-  expect(tacticalNumbers([card, tacticalEntry('t'), free])).toEqual({ f: 1, t: 2 });
-  expect(tacticalNumbers([tacticalEntry('t'), free, card])).toEqual({ t: 1, f: 2 });
-});

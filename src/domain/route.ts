@@ -1,5 +1,3 @@
-import type { Entry } from './types';
-
 /** Slots are `q,r` keys of flat-top hexes on axial coordinates: north is r - 1, north-east is q + 1, r - 1. */
 export const parseSlot = (slot: string): { q: number; r: number } | null => {
   const [q, r] = slot.split(',').map(Number);
@@ -79,37 +77,4 @@ export function tapStep(path: string[] | null, slot: string, active: string): { 
   if (slot === active) return { path: null, route: { from: path[0], via: path.slice(1) } };
   if (path.at(-1) === slot) return { path: path.length > 1 ? path.slice(0, -1) : null };
   return { path: path.includes(slot) ? path : [...path, slot] };
-}
-
-/**
- * The order number of each tactical action of a round, in entry order. A cancelled one keeps no number. Warfare's
- * free one is counted with the rest: its arrow stands on the map among them, and its card's row carries the number.
- */
-export function tacticalNumbers(entries: Entry[]): Record<string, number> {
-  const numbers: Record<string, number> = {};
-  const counted = new Map<string | undefined, number>();
-  const count = (entry: Entry): void => {
-    const next = (counted.get(entry.owner) ?? 0) + 1;
-    counted.set(entry.owner, next);
-    numbers[entry.id] = next;
-  };
-  for (const entry of entries) {
-    if (entry.status === 'cancelled') continue;
-    // The free action of a card is taken right after the card, wherever its entry is stored: it is counted there.
-    const free = entries.find(e => e.type === 'tactical' && e.fromCard === entry.id);
-    if (free) count(free);
-    if (entry.type === 'tactical' && !(entry.fromCard && entries.some(e => e.id === entry.fromCard))) count(entry);
-  }
-  return numbers;
-}
-
-/**
- * The tactical actions of a round as the map shows them. Warfare's free one has the status of its card, as the replay
- * takes it: the card done is its arrow done.
- */
-export function tacticalsOf(entries: Entry[]): Extract<Entry, { type: 'tactical' }>[] {
-  return entries.filter((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical').map(entry => {
-    const card = entry.fromCard ? entries.find(e => e.id === entry.fromCard) : undefined;
-    return card && card.status !== entry.status ? { ...entry, status: card.status } : entry;
-  });
 }
