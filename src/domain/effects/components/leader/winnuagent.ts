@@ -8,6 +8,7 @@
  * Berekon 1): production limits still apply.
  */
 import { readyToPlay } from '../../../replay/holdings';
+import { coverOf } from '../../shortfall';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:winnuagent';
@@ -19,7 +20,8 @@ export const effect: ComponentEffect = {
     code: 'shortResources',
     rule: 'You may exhaust this card to reduce the combined cost of the produced units by 2',
     // The cost is 2 less: a shortfall of 2 or less is none. An agent not ready (exhausted, locked) reduces nothing.
-    when: ({ params }, { game, pack, before }) =>
-      Number(params.needed) - Number(params.paid) <= 2 && readyToPlay(pack, before.holdings, game.faction, before.control).has(id),
+    // Together with the other components that cover a shortfall (`coverOf`).
+    when: ({ params }, ctx) =>
+      Number(params.needed) - Number(params.paid) <= coverOf(ctx) && readyToPlay(ctx.pack, ctx.before.holdings, ctx.game.faction, ctx.before.control).has(id),
   }],
 };

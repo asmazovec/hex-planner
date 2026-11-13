@@ -1,13 +1,15 @@
 import { strategyCardSet } from './cards';
 import { appliedFor } from './effects/entryApply';
-import { holderOf } from './effects/registry';
+import { effectOf, holderOf } from './effects/registry';
 import type { Holder } from './effects/registry';
 import { seatSlots } from './mapBuilder';
 import { autoPay, type PaymentKind } from './payment';
 import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
+import { playedCost } from './effects/playedCost';
+import { productionDue } from './replay/production';
 import { productionCost } from './unitStats';
-import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Holdings, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { CardEffects, CardPlay, DataPack, Entry, ExpansionId, Game, GameState, Holdings, Payment, Round, StructureKind, UnitCounts, UnitId } from './types';
 
 export { diplomacySystemAllowed, readyChoices, readyLimit } from './replay/cards/diplomacy';
 export { controlsMecatol } from './replay/cards/imperial';
@@ -136,10 +138,15 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 }
 
 /** What the entry owes in resources or influence: Leadership's bought tokens, Technology's research, or the units it produces. */
-export function cardCost(entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack): { kind: PaymentKind; amount: number } {
+export function cardCost(
+  entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack, at?: { game: Game; state: GameState },
+): { kind: PaymentKind; amount: number } {
   if (handlerOf(entry.card).placesFree?.(entry, { pack, faction: factionId })) return { kind: 'resources', amount: 0 };
-  return handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who, { pack, faction: factionId })
-    ?? { kind: 'resources', amount: productionCost(entry.effects?.production?.units ?? {}, factionId, who, pack, entry) };
+  const own = handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who, { pack, faction: factionId });
+  if (own) return own;
+  const units = entry.effects?.production?.units ?? {};
+  // With the board, the units are asked as the check asks them: the combined cost (Sarween Tools, Particle Synthesis) counts.
+  return { kind: 'resources', amount: at ? productionDue(at.game, at.state, units, pack, entry) : productionCost(units, factionId, who, pack, entry) };
 }
 
 /**
@@ -151,13 +158,36 @@ export const freshPlay = (patch: CardPatch): CardPatch =>
 
 /** The patch for a change to the entry: a new cost pays automatically unless the payment was chosen by hand. */
 export function cardChange(
-  entry: CardEntry, patch: CardPatch, before: GameState, factionId: string, pack: DataPack, manual: boolean,
+  entry: CardEntry, patch: CardPatch, before: GameState, factionId: string, pack: DataPack, manual: boolean, game?: Game,
 ): CardPatch {
   const next = { ...entry, ...patch } as CardEntry;
-  const was = cardCost(entry, factionId, before.holdings, pack);
-  const cost = cardCost(next, factionId, before.holdings, pack);
+  const at = game && { game, state: before };
+  const was = cardCost(entry, factionId, before.holdings, pack, at);
+  const cost = cardCost(next, factionId, before.holdings, pack, at);
   if (manual || (cost.amount === was.amount && cost.kind === was.kind)) return patch;
   return { ...patch, effects: { ...next.effects, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: factionId }) } };
+}
+
+/**
+ * A change to what an entry uses (an agent, a technology, a hero) may change its price: unless the payment was chosen by
+ * hand, a new price pays anew from the ready planets, as a change of the units does. A tactical action's production and
+ * a card's research or purchase are repriced; any other entry keeps its patch.
+ */
+export function repaid<P extends object>(entry: Entry, patch: P, before: GameState, game: Game, pack: DataPack, manual: boolean): P | (P & { payment: Payment }) | (P & { effects: CardEffects }) {
+  const next = { ...entry, ...patch } as Entry;
+  if (manual) return patch;
+  if (entry.type === 'tactical' && next.type === 'tactical') {
+    const was = productionDue(game, before, entry.production, pack, entry);
+    const cost = productionDue(game, before, next.production, pack, next);
+    return cost === was ? patch : { ...patch, payment: autoPay(before, cost, 'resources', pack, { faction: game.faction }) };
+  }
+  if (entry.type === 'component' && next.type === 'component') {
+    const was = playedCost(pack, entry, effectOf);
+    const cost = playedCost(pack, next, effectOf);
+    return was?.amount === cost?.amount && was?.kind === cost?.kind || !cost ? patch : { ...patch, payment: autoPay(before, cost.amount, cost.kind, pack, { faction: game.faction }) };
+  }
+  if (entry.type === 'strategic' || entry.type === 'secondary') return cardChange(entry, patch as CardPatch, before, game.faction, pack, manual, game) as P & { effects: CardEffects };
+  return patch;
 }
 
 const counted = (units: UnitCounts, unit: UnitId, amount: number): UnitCounts => {

@@ -4,6 +4,7 @@ import { componentById } from '../../../domain/components';
 import { effectOf } from '../../../domain/effects/registry';
 import { autoPay } from '../../../domain/payment';
 import { productionCost } from '../../../domain/unitStats';
+import { playedCost } from '../../../domain/effects/playedCost';
 import { readyToPlay } from '../../../domain/project';
 import { playerState } from '../../../domain/stacks';
 import type { CardEffects, ComponentKind, DataPack, Entry, Game, GameState, Payment, Warning } from '../../../domain/types';
@@ -80,7 +81,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
     return readyToPlay(pack, own.holdings, game.faction, own.control);
   }, [board, pack, entry.owner, game.faction]);
   const played = entry.type === 'component' && entry.componentId ? componentById(pack, entry.componentId) : undefined;
-  const cost = played ? effectOf(pack, played.id)?.cost : undefined;
+  const cost = playedCost(pack, entry, effectOf);
   const own = board ? playerState(board, entry.owner) : undefined;
   const payment: Payment = entry.type === 'component' && entry.payment ? entry.payment : { planets: [], tradeGoods: 0 };
   const makes = entry.type === 'component' && played ? effectOf(pack, played.id)?.produces === true : false;

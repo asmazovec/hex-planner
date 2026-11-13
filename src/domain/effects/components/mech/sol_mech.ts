@@ -14,6 +14,8 @@ export const id = 'mech:sol_mech';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
+  // The 3 resources are the cost of this use, paid with the payment of the Orbital Drop entry.
+  useCost: entry => (entry.type === 'component' && entry.componentId === 'ability:orbital_drop' ? { kind: 'resources', amount: 3 } : undefined),
   play: ({ game, entry, state, warnings, pack }) => {
     // The deploy follows the use of Orbital Drop: the entry is that component action, and the planet is its choice.
     if (game.faction !== 'sol' || entry.type !== 'component' || entry.componentId !== 'ability:orbital_drop') return;

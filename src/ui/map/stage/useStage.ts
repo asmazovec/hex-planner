@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { boardSystemWarnings, dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { boardSystemWarnings, dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionDue, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
 import { timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { unitStats } from '../../../domain/unitStats';
@@ -132,7 +132,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const beforeTactical = tactical && seenBefore(line, tactical.id);
   const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
   const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
-    updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id)));
+    updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id), view));
   const purchases: PurchaseTarget = onPurchase ?? {
     bought: [...produced, ...mergedCounts(round, 'build', slot)],
     change: (unit, planetId, amount) => {
@@ -345,7 +345,9 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   // TODO(P2-210) #ws:ui-warnings #type:dup #size:m #warning-channel #duplicate-of-domain — Перебор ресурсов, флота и мест на борту решает сам (over, класс stage-meter-over): красить счётчики по кодам shortResources/fleetPool/capacitySystem записи — P2 note: an entry's meters now read its codes; a manual build (adjustment of kind build) has no rule check in the domain (applyAdjustment checks no fleet pool, capacity or cost), so without an entry the counters still compare themselves until the domain checks a manual build
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
-  const spent = productionCost(sideUnits, sideFaction, sideHoldings, pack);
+  /** What the purchase owes as the check asks it (the combined cost, a hero's free units); a purchase with no entry has the sum of its units. */
+  const ownEntry = onPurchase ? round.entries.find(e => e.id === onPurchase.entryId) : tactical;
+  const spent = ownEntry && side === mine ? productionDue(view, payer, sideUnits, pack, ownEntry) : productionCost(sideUnits, sideFaction, sideHoldings, pack);
   const spendable = readyResources(payer, pack, { faction: view.faction }) + payer.tradeGoods;
   const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.holdings, pack, dockFighterRoom(view, acting, slot, pack));
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;

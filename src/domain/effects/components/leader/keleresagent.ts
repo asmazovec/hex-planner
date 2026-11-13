@@ -7,6 +7,7 @@
  * the warnings the commodities cover while the agent is ready.
  */
 import { commoditiesForShortfall } from '../../../replay/payment';
+import { coverOf } from '../../shortfall';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'leader:keleresagent';
@@ -20,5 +21,10 @@ export const effect: ComponentEffect = {
     rule: 'allow any player to spend commodities as if they were trade goods',
     when: (w, ctx) => ctx.before.holdings.leaders[id] === 'unlocked'
       && Number(w.params.needed) <= Number(w.params.have) + ctx.before.commodities,
+  }, {
+    // The commodities spent as trade goods count as paid, so what they cover of a resource shortfall is none.
+    code: 'shortResources',
+    rule: 'allow any player to spend commodities as if they were trade goods',
+    when: (w, ctx) => ctx.before.holdings.leaders[id] === 'unlocked' && Number(w.params.needed) - Number(w.params.paid) <= coverOf(ctx),
   }],
 };

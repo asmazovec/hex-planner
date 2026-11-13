@@ -11,7 +11,7 @@ import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
-import { cardChange, withSystem } from '../../domain/strategy';
+import { cardChange, repaid, withSystem } from '../../domain/strategy';
 import { emptySources, entrySystems, hasUnits, isUntouched, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
 import { emptyHoldings, groupCounts, holdingCount, holdingRounds, upgradesOf, type ComponentGroup } from '../../domain/holdings';
@@ -467,7 +467,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const inHand = game.opponents.find(o => o.id === handOwner);
   /** A card's purchases on the big hex change its effects, paid anew unless paid by hand. */
   const onCardEffects = (effects: CardEffects) => {
-    if (cardEntry && cardBefore) updateEntry(cardEntry.id, cardChange(cardEntry, { effects }, cardBefore, cardGame.faction, pack, manualPayments.includes(cardEntry.id)));
+    if (cardEntry && cardBefore) updateEntry(cardEntry.id, cardChange(cardEntry, { effects }, cardBefore, cardGame.faction, pack, manualPayments.includes(cardEntry.id), cardGame));
   };
   const stageFor = stage?.for;
   const stagedTurn = stageFor?.kind === 'component' ? turnIn(round, stageFor.id) : undefined;
@@ -511,7 +511,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         {/* What the entry gained and gave stands with what else it holds. */}
         <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
         {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} shared={boards.board(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} shared={boards.board(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, repaid(entry, patch, boards.before(entry.id), gameAs(game, entry.owner), pack, manualPayments.includes(entry.id)) as Partial<EntryBody>)} />
       </EditorPart>
     );
   };

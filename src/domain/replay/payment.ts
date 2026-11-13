@@ -1,6 +1,7 @@
 /** Payment: planets are exhausted and trade goods spent for what an entry costs. */
 import { isPlanetCard, planetValue, readyPlanetIds, tradeGoodWorth, type PayView, type PaymentKind } from '../payment';
 import { violation } from '../rules/registry';
+import { playedCost } from '../effects/playedCost';
 import { effectOf } from '../effects/registry';
 import type { DataPack, Entry, Game, GameState, Payment, RuleStep, Warning } from '../types';
 
@@ -113,9 +114,8 @@ export function payComponentCost(
   return paid;
 }
 
-/** The cost of the component a component entry plays, if its effect declares one: paid with the entry's `payment`. */
+/** The cost of what a component entry plays, with what it names in `uses`: paid with the entry's `payment`. */
 export function payPlayedCost(game: Pick<Game, 'faction'>, state: GameState, shared: GameState, entry: Entry, pack: DataPack, warnings: Warning[]): void {
-  if (entry.type !== 'component' || !entry.componentId) return;
-  const cost = effectOf(pack, entry.componentId)?.cost;
-  if (cost) payComponentCost(state, cost, entry.payment, pack, warnings, { faction: game.faction, shared });
+  const cost = playedCost(pack, entry, effectOf);
+  if (cost && entry.type === 'component') payComponentCost(state, cost, entry.payment, pack, warnings, { faction: game.faction, shared });
 }

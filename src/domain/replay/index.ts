@@ -12,7 +12,7 @@ export { fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed } from '..
 export { readyToPlay } from './holdings';
 export { statusTokensFree } from './status';
 export { readyInfluence, readyResources } from './payment';
-export { placesOf, productionCost, type ProductionPlace } from './production';
+export { placesOf, productionCost, productionDue, type ProductionPlace } from './production';
 export { START_TOKENS } from './state';
 export { planetStructureWarnings, structureOwner, structuresOn } from './structures';
 export { fleetExcess, productionPlaces, tacticalMeters } from './tactical';
