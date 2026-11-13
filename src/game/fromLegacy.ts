@@ -81,8 +81,9 @@ export function boardOf(game: Game, pack: DataPack): Board {
   const events: GameEvent[] = [];
   if (game.fracture.tiles && Object.keys(game.fracture.tiles).length > 0) events.push({ type: 'FractureOpened', tiles: { ...game.fracture.tiles } });
   for (const [slice, by] of Object.entries(game.expedition.slices)) {
-    const taker = by === 'me' ? table.viewer : table.players.find(p => p.id !== table.viewer)?.id;
-    if (by && taker !== undefined) events.push({ type: 'ExpeditionSliceTaken', player: taker, slice });
+    // Someone who is not at the table took it (written by hand): the slice is theirs all the same.
+    const taker = by === 'me' ? table.viewer : table.players.find(p => p.id !== table.viewer)?.id ?? 'other';
+    if (by) events.push({ type: 'ExpeditionSliceTaken', player: taker, slice });
   }
   board = applyAll(board, events);
   return board;

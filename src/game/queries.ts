@@ -41,7 +41,9 @@ import { productionDue, systemProduction } from '../domain/replay/production';
 import { capacity, dockFighterRoom, fleetCount, fleetLimit as fleetLimitOf } from '../domain/replay/transport';
 import { planetValue as valueOf, readyPlanetIds, type PaymentKind } from '../domain/payment';
 import type { DataPack, UpgradeId } from '../domain/types';
-import { viewFor } from './legacyViews';
+import { linksOf } from '../domain/movement';
+import { areNeighbors } from '../domain/neighbors';
+import { legacyKey, viewFor } from './legacyViews';
 import type { Table } from './types';
 
 /** The load of a player's units in a system against the capacity of their ships there, the system's space docks counted. */
@@ -88,6 +90,13 @@ export function readyPlanets(board: Board, player: PlayerId): PlanetId[] {
 /** The same through the old rule for what may pay (a planet card counts), for the view of a player. */
 export const payingPlanets = (table: Table, board: Board, pack: DataPack, player: PlayerId): PlanetId[] =>
   readyPlanetIds(viewFor(table, board, pack, player).state);
+
+/** Whether two players are neighbours as the board stands: one is in a system or next to a system the other is in (60, 94.1). The components that change the links are asked. */
+export function areNeighbours(table: Table, board: Board, pack: DataPack, a: PlayerId, b: PlayerId): boolean {
+  const v = viewFor(table, board, pack, a);
+  const other = v.views.states[legacyKey(table, b)];
+  return other !== undefined && areNeighbors(v.game, v.state, other, pack, linksOf(v.game, pack, { state: v.state, shared: v.shared, during: 'neighbors' }));
+}
 
 /** The units of each kind a player still has in the reinforcements: the limit less what stands on the board. Fighters and infantry have none (tokens stand in). */
 export function reinforcementsOf(board: Board, pack: DataPack, player: PlayerId): Partial<Record<UnitId, number>> {

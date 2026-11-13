@@ -108,8 +108,8 @@ function howOf(ctx: Ctx, entry: Entry): { outcome?: string; elected?: PlayerId; 
   };
 }
 
-function gain(ctx: Ctx, def: ComponentDef, how: ReturnType<typeof howOf>): void {
-  const player = ctx.player;
+/** A player gains a component, by its kind (`player` is the owner of the entry unless a transaction hands it over). */
+export function gain(ctx: Ctx, def: ComponentDef, how: ReturnType<typeof howOf>, player: PlayerId = ctx.player): void {
   const field = HOLDING_FIELD[def.kind];
   const events: GameEvent[] = [];
   const have = holdOf(ctx, player, def.id);
@@ -140,8 +140,8 @@ function gain(ctx: Ctx, def: ComponentDef, how: ReturnType<typeof howOf>): void 
 
 const targetOf = (def: ComponentDef): string => String(def.detail?.target ?? '');
 
-function lose(ctx: Ctx, def: ComponentDef): void {
-  const player = ctx.player;
+/** A player loses a component: one copy leaves, a leader is purged, a law repealed. */
+export function lose(ctx: Ctx, def: ComponentDef, player: PlayerId = ctx.player): void {
   const have = holdOf(ctx, player, def.id);
   const events: GameEvent[] = [];
   if (HOLDING_FIELD[def.kind]) {

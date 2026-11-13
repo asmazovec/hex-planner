@@ -8,11 +8,13 @@ import { choicesFor } from '../../domain/effects/choices';
 import { fire, hooked, run } from '../../domain/effects/points/moments';
 import { effectOf } from '../../domain/effects/registry';
 import { playedBy, waive } from '../../domain/effects/waivers';
-import { applyActs } from '../../domain/replay/acts';
+import type { DealTurn } from '../../domain/effects/points/payment';
+import { inForceOf, holderOf } from '../../domain/effects/registry';
+import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { playNamedAt, reactToActivation } from '../../domain/replay/activation';
 import { afterEntryHooks } from '../../domain/replay/afterEntry';
 import { afterControl, reactToLanding } from '../../domain/replay/invasion';
-import type { Entry, Game, GameState, UnitCounts, Warning } from '../../domain/types';
+import type { Entry, Game, GameState, Goods, UnitCounts, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, viewFor, type LegacyViews } from '../legacyViews';
 import { ACQUIESCENCE } from './natives';
@@ -129,14 +131,35 @@ export function gainHooks(ctx: Ctx): void {
   });
 }
 
-/** The transactions and the expedition at the end of a turn. */
-export function turnActs(ctx: Ctx): void {
-  const taken = new Set(Object.keys(ctx.board.common.expedition));
-  const was = new Set(taken);
-  viaLegacy(ctx, r => applyActs(r.game, r.state, r.entry, ctx.pack, { taken, states: r.states }, r.warnings));
-  const events: GameEvent[] = [...taken].filter(slice => !was.has(slice)).map(slice => ({ type: 'ExpeditionSliceTaken', player: ctx.player, slice }));
-  emit(ctx, events, { quiet: true });
+/**
+ * The components in force of one side of a settled deal asked for their `dealt` hook. `gave` and `got` are what moved
+ * (commodities that arrived are trade goods of the receiver). Each side is seen with its own faction and holder.
+ */
+export function dealtHooks(ctx: Ctx, side: 'give' | 'get', self: string, partner: string, gave: Goods, got: Goods): void {
+  viaLegacy(ctx, r => {
+    const shared = r.states.me;
+    const state = r.states[self];
+    const other = r.states[partner];
+    if (!shared || !state || !other) return;
+    // In an opponent's entry the game is seen through their eyes: `game.faction` is theirs and I am among its opponents under `me`.
+    const faction = self === (r.entry.owner ?? 'me') ? r.game.faction : r.game.opponents.find(p => p.id === self)?.faction ?? r.game.faction;
+    const asked = { faction };
+    // A card is asked once however many copies of it are in play (my own Support for the Throne beside a received one).
+    const forced = inForceOf(ctx.pack, holderOf(asked, state, shared));
+    for (const id of forced.filter((found, index) => forced.findIndex(next => noteBase(next) === noteBase(found)) === index)) {
+      effectOf(ctx.pack, id)?.dealt?.({
+        game: r.game, pack: ctx.pack, entry: r.entry, side, self, partner, faction, state, other, shared, gave, got,
+        commodityValue: commodityValueOf(asked, state, ctx.pack, shared), warnings: r.warnings,
+      } satisfies DealTurn);
+    }
+  });
 }
+
+/** The `gained` hook of a component the player has just been given (a breakthrough from an expedition). */
+export const gainedHook = (ctx: Ctx, id: string): void =>
+  viaLegacy(ctx, r => effectOf(ctx.pack, id)?.gained?.({
+    game: r.game, state: r.state, shared: r.shared, entry: r.entry, id, player: ctx.entry.owner ?? 'me', states: r.states, choices: {}, held: true, pack: ctx.pack, warnings: r.warnings,
+  }));
 
 /** Marks the warnings of the turn with the components whose waivers cover them (the one place a component lifts a check). */
 export function waived(ctx: Ctx, warnings: Warning[], before: LegacyViews, after: LegacyViews, earlier: readonly string[] = []): Warning[] {

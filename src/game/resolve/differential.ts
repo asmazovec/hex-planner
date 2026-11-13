@@ -46,7 +46,7 @@ export function compareGame(game: Game, pack: DataPack, label = game.id, plan: P
   let track = newTrack();
   let current: Round | undefined;
   /** The expedition slices taken so far: a board rebuilt from the old frame does not know them (the kernel timeline carries them). */
-  let taken: GameEvent[] = [];
+  let taken: GameEvent[] = Object.entries(boardOf(game, pack).common.expedition).map(([slice, player]) => ({ type: 'ExpeditionSliceTaken' as const, player, slice }));
   for (const frame of line.frames) {
     const found = entries.get(frame.entryId);
     if (!found || !frame.applied) continue;
