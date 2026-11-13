@@ -18,7 +18,7 @@ const effects: Required<CardEffects> = {
   production: { systemId: '1,0', units, ground: { a: { infantry: 1 } } }, structures: [{ kind: 'pds', planetId: 'a' }], payment: pay,
 };
 const spend: Required<StatusSpend> = { tactic: 1, fleet: 1, strategy: 1, tradeGoods: 1, resources: pay, influence: pay };
-const delta: Required<AdjustmentDelta> = { tradeGoods: -1, tactic: 1, fleet: 1, strategy: 1, vp: 1, units: { systemId: '1,0', units: { mech: -1 } }, ground: { a: { infantry: -1 } } };
+const delta: Required<AdjustmentDelta> = { tradeGoods: -1, commodities: 1, tactic: 1, fleet: 1, strategy: 1, vp: 1, units: { systemId: '1,0', units: { mech: -1 } }, ground: { a: { infantry: -1 } } };
 const acts: Act[] = [
   { kind: 'expedition', sliceId: 'slice', payment: pay },
   { kind: 'transaction', with: 'opp', give: { tradeGoods: 1, commodities: 1, components: ['promissory:x'] }, get: { tradeGoods: 1, commodities: 1, components: ['actionCard:y'] } },
@@ -34,7 +34,7 @@ const common = {
 const tactical: Variant<'tactical'> = {
   ...common, type: 'tactical', systemId: '1,0', moves: [move], landings: [landing], production: units, payment: pay,
   losses: { fighter: 1 }, groundLosses: { a: { infantry: 1 } }, fleetRemovals: { fighter: 1 }, productionGround: { a: { infantry: 1 } },
-  shipsTo: '1,1', free: true, fromCard: 'card', acts,
+  shipsTo: '1,1', custodiansPayment: pay, free: true, fromCard: 'card', acts,
 };
 const strategic: Variant<'strategic'> = { ...common, type: 'strategic', card: 7, forToken: true, effects, acts };
 const secondary: Variant<'secondary'> = { ...common, type: 'secondary', card: 7, forToken: true, effects };

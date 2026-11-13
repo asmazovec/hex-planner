@@ -7,7 +7,6 @@
  * (its influence less its resources, for the best planet of the payment). Ruling 1 (it changes the Production value
  * of a dock on that planet) is not modelled.
  */
-import { planetValue } from '../../../payment';
 import { readyToPlay } from '../../../replay/holdings';
 import { coverOf } from '../../shortfall';
 import type { ComponentEffect } from '../../types';

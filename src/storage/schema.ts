@@ -53,7 +53,7 @@ const entrySchema = z.discriminatedUnion('type', [
     ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
     moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional(), structures: structureCounts })),
     landings: z.array(z.object({ planetId: z.string(), units: unitCounts, from: z.string().optional(), structures: structureCounts })),
-    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), shipsTo: z.string().optional(), payment, free: z.boolean().optional(), fromCard: z.string().optional(), acts,
+    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), shipsTo: z.string().optional(), payment, custodiansPayment: payment.optional(), free: z.boolean().optional(), fromCard: z.string().optional(), acts,
   }),
   z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
   z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
@@ -62,7 +62,7 @@ const entrySchema = z.discriminatedUnion('type', [
   z.object({
     ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),
     delta: z.object({
-      tradeGoods: z.number().optional(), tactic: z.number().optional(), fleet: z.number().optional(),
+      tradeGoods: z.number().optional(), commodities: z.number().optional(), tactic: z.number().optional(), fleet: z.number().optional(),
       strategy: z.number().optional(), vp: z.number().optional(),
       units: z.object({ systemId: z.string(), units: signedCounts }).optional(),
       ground: z.record(z.string(), signedCounts).optional(),
