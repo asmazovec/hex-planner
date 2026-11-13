@@ -58,6 +58,6 @@ describe('actionCard:cripple Cripple Defenses', () => {
   test('actionCard:cripple is a play effect', () => {
     const { pack } = table();
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

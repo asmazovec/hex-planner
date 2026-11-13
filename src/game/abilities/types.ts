@@ -22,7 +22,16 @@ export interface Ability extends ComponentEffect {
  * The hooks of a component written for the kernel, with the declaration of whose action they speak in. A file whose
  * other parts (play, waive, choose) are still written for the old state exports this as `ability` beside its `effect`.
  */
-export interface Hooked { holder: HolderRule; on?: Hooks; permit?: Permit[] }
+export interface Hooked {
+  holder: HolderRule;
+  on?: Hooks;
+  permit?: Permit[];
+  /** What playing the component does (a component action, or named in `uses`): reads through the context (`held`, `choices`) and returns events; violations go through `ctx.warn`. */
+  play?: Play;
+}
+
+/** The play of a component on the kernel. */
+export type Play = (ctx: AbilityContext) => Effects | void;
 
 /**
  * A check a component lifts, in the words of the kernel. The warning is still made and listed; it is marked with the
@@ -125,6 +134,8 @@ export interface AbilityContext {
   readonly actor: PlayerId;
   /** The step of the action being resolved. */
   readonly step?: RuleStep;
+  /** Whether the holder held the component, ready, when it was played (false: the replay has already warned and a play may do nothing). */
+  readonly held: boolean;
   /** What the player chose for the component (`ChoiceSpec`). */
   readonly choices: Readonly<Record<string, string | number>>;
   /** The holder, read from the board. */

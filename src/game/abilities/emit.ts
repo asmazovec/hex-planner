@@ -3,7 +3,7 @@
  * runner applies them (`resolve/hooks.ts`) and `apply` is the only thing that changes a board.
  */
 import type { Delta, GameEvent, Place } from '../events';
-import type { ComponentId, PlayerId, RuleStep, UnitCounts } from '../types';
+import type { ComponentId, PlayerId, RuleStep, StructureCounts, UnitCounts } from '../types';
 
 /** Trade goods gained (or, negative, spent). */
 export const tradeGoods = (player: PlayerId, delta: number): GameEvent => ({ type: 'TradeGoodsChanged', player, delta });
@@ -24,3 +24,25 @@ export const card = {
 
 export const gain = { tradeGoods, points, tokens };
 export const place = { units: placeUnits };
+
+/** Structures of a player taken off a planet (back to the reinforcements) or put on it. */
+export const structures = {
+  remove: (player: PlayerId, planet: string, units: StructureCounts): GameEvent => ({ type: 'StructureRemoved', player, at: { planet }, structures: units }),
+  place: (player: PlayerId, planet: string, units: StructureCounts): GameEvent => ({ type: 'StructurePlaced', player, at: { planet }, structures: units }),
+};
+
+/** Units of a player taken off the board. */
+export const removeUnits = (player: PlayerId, at: Place, units: UnitCounts, reason?: 'combat' | 'limit' | 'cost' | 'capture'): GameEvent => ({ type: 'UnitsRemoved', player, at, units, ...(reason ? { reason } : {}) });
+
+/** A planet of the player's exhausted or readied. */
+export const planet = {
+  exhaust: (player: PlayerId, id: string): GameEvent => ({ type: 'PlanetExhausted', player, planet: id }),
+  ready: (player: PlayerId, id: string): GameEvent => ({ type: 'PlanetReadied', player, planet: id }),
+  gain: (player: PlayerId, id: string): GameEvent => ({ type: 'PlanetGained', player, planet: id }),
+};
+
+/** Commodities gained or lost. */
+export const commodities = (player: PlayerId, delta: number): GameEvent => ({ type: 'CommoditiesChanged', player, delta });
+
+/** A technology researched. */
+export const researched = (player: PlayerId, technology: ComponentId): GameEvent => ({ type: 'TechnologyResearched', player, technology });

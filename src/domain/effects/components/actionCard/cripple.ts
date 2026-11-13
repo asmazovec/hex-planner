@@ -5,6 +5,8 @@
  * (`choices.planet`), whoever's, is destroyed and goes back to its owner's reinforcements. The planet may hold no PDS
  * (ruling): then nothing happens and nothing is warned of.
  */
+import { structures } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:cripple';
@@ -13,9 +15,15 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  play: ({ choices, states }) => {
-    const planet = String(choices.planet ?? '');
-    if (!planet) return;
-    for (const state of Object.values(states)) delete state.pds[planet];
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planet = String(ctx.choices.planet ?? '');
+    // The structures stand with whoever controls the planet; nothing to destroy is no warning (ruling).
+    const owner = ctx.board.planets[planet]?.owner;
+    const pds = ctx.board.planets[planet]?.structures.pds ?? 0;
+    return planet && owner && pds > 0 ? [structures.remove(owner, planet, { pds })] : [];
   },
 };

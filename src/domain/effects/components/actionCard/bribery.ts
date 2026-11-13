@@ -7,7 +7,9 @@
  * goods, and spending more than they have is a `shortTradeGoods`.
  * Pass 2: written as decided.
  */
-import { spendTradeGoods } from '../../../replay/payment';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:bribery';
@@ -15,8 +17,16 @@ export const id = 'actionCard:bribery';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  choose: [{ key: 'tradeGoods', kind: 'number', range: [0, 20], label: { ru: 'Товаров потрачено', en: 'Trade goods spent' } }],
-  play: ({ state, choices, warnings }) => {
-    spendTradeGoods(state, Math.max(0, Number(choices.tradeGoods) || 0), warnings, 'component');
+  choose: [{ key: 'tradeGoods', kind: 'number', range: [0, 20], label: { ru: 'Товаров потрачено', en: 'Trade goods spent' } }]
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const spent = Math.max(0, Number(ctx.choices.tradeGoods) || 0);
+    const have = ctx.my.tradeGoods;
+    if (spent > have) ctx.warn(violation('shortTradeGoods', { needed: spent, have }, 'component'));
+    const paid = Math.min(spent, have);
+    return paid > 0 ? [tradeGoods(ctx.holder, -paid)] : [];
   },
 };

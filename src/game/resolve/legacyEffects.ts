@@ -15,6 +15,7 @@ import { legacyEvents, legacyViews, legacyViewsFresh, viewFor, type LegacyViews 
 import { ACQUIESCENCE } from './natives';
 import { emit, warn, type Ctx } from './context';
 import { hook } from './hooks';
+import { playNative } from './play';
 import { cardRoundOf, keepRound } from './track';
 
 /** Components whose play is a rule of the kernel (resolved natively), not a hook. */
@@ -78,6 +79,7 @@ export const playNamed = (ctx: Ctx, at: 'activation' | 'combat'): void =>
 export function playHooks(ctx: Ctx): void {
   // Nothing named, nothing played, and the round's cards stay as they are.
   if (playedBy(ctx.entry).length === 0) return;
+  playNative(ctx);
   const spent: { count: number; secondary: boolean }[] = [];
   viaLegacy(ctx, r => {
     const { entry, pack } = ctx;
@@ -85,7 +87,7 @@ export function playHooks(ctx: Ctx): void {
     for (const id of playedBy(entry)) {
       const effect = effectOf(pack, id);
       // A play that asked to run in the middle of a tactical action has run there already; in any other entry (a component action) it runs here, once.
-      if (!effect?.play || (effect.playAt && entry.type === 'tactical') || NATIVE_PLAYS.includes(noteBase(id))) continue;
+      if (!effect?.play || effect.nativePlay || (effect.playAt && entry.type === 'tactical') || NATIVE_PLAYS.includes(noteBase(id))) continue;
       const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
       effect.play({
         game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards, spent,

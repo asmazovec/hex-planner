@@ -39,6 +39,8 @@ export interface HookOptions {
   only?: readonly string[];
   /** What the player chose for the component (`choicesFor`). */
   choices?: Readonly<Record<string, string | number>>;
+  /** `play` only: whether the component was held and ready when it was played. */
+  held?: boolean;
 }
 
 /** The pool warnings of tokens just changed: a pool below zero, more than the tokens of a faction, a fleet pool under the ships standing (the checks of the old `gainTokens`). */
@@ -56,10 +58,10 @@ function poolWarnings(table: Table, before: Board, board: Board, pack: DataPack,
 
 /** The context a component is asked with: the board as it stands, the holder and the actor, the readers and the questions of the game. */
 export function contextOf(
-  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry'>, warn: (warning: Warning) => void,
+  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held'>, warn: (warning: Warning) => void,
 ): AbilityContext {
   return {
-    board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), choices: options.choices ?? {}, own: player === options.actor,
+    board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), held: options.held ?? true, choices: options.choices ?? {}, own: player === options.actor,
     get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
     key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
     commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },

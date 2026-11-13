@@ -16,7 +16,7 @@ import { choicesFor, optionsOf, shownChoices, withChoices } from './choices';
 import { effectOf, hintsAt, inForce } from './registry';
 import type { ComponentEffect } from './types';
 
-const CARD = 'actionCard:bribery';
+const CARD = 'actionCard:assassin';
 const SEVEN = ['actionCard:abs', 'actionCard:assassin', 'actionCard:bribery', 'actionCard:bunker', 'actionCard:confusing', 'actionCard:courageous', 'actionCard:cripple'];
 
 /** Puts fields on the real effect of a component for one test; `restore` takes them away. */
@@ -104,7 +104,7 @@ describe('what `play` is given', () => {
   test('a play may make a warning of its own, which the entry then lists', () => {
     const entry = componentAction(CARD);
     const table = bench({ faction: 'sol', start: { hand: [CARD] }, entries: [entry] });
-    lend(effectOf(table.pack, CARD)!, { play: turn => turn.warnings.push(violation(componentUnresolved.code, { id: CARD, name: 'Bribery', reason: 'nothing to take' })) });
+    lend(effectOf(table.pack, CARD)!, { play: turn => turn.warnings.push(violation(componentUnresolved.code, { id: CARD, name: 'Assassinate', reason: 'nothing to take' })) });
     expect(warningsOf(table, entry).map(w => w.code)).toEqual(['componentUnresolved']);
     expect(warningsOf(table, entry)[0]).toMatchObject({ step: 'component', rule: '2.6.1' });
   });
