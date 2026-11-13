@@ -4,7 +4,7 @@
  * component) and `actor` (whose turn it is) are both in the context, so a file never has to find out whose it is.
  */
 import type { ComponentDef, Entry, Goods, RuleStep, UnitCounts, Warning } from '../../domain/types';
-import type { ComponentEffect } from '../../domain/effects/types';
+import type { ComponentEffect, ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { HolderRule } from '../../domain/effects/holder';
 import type { Cause, GameEvent } from '../events';
 import type { Board, ComponentId, DataPack, PlayerId, Table } from '../types';
@@ -78,6 +78,14 @@ export interface AbilityContext {
   readonly entry?: Entry;
   /** The commodity value of a player: the faction's printed value after the components that change it (21.1). */
   commodityValue(player: PlayerId): number;
+  /** The player an old-model key (`me`, an opponent id; a note's address) names. */
+  playerOf(key: string): PlayerId | undefined;
+  /** The planets of a player's home system (where their faction, or their seat, puts them). */
+  home(player: PlayerId): string[];
+  /** Whether two players are neighbours (LRR 60). */
+  neighbours(a: PlayerId, b: PlayerId): boolean;
+  /** A point of the count for the holder: the base changed by their components in force. */
+  applied<K extends keyof Modifiers>(point: K, base: number, ctx: ModifierContext[K]): number;
   /** Adds a warning of the turn. */
   warn(warning: Warning): void;
 }

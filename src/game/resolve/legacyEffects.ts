@@ -5,18 +5,18 @@
  */
 import { noteBase } from '../../domain/components';
 import { choicesFor } from '../../domain/effects/choices';
-import { fire, hooked, run } from '../../domain/effects/points/moments';
 import { effectOf } from '../../domain/effects/registry';
 import { playedBy, waive } from '../../domain/effects/waivers';
-import { playNamedAt, reactToActivation } from '../../domain/replay/activation';
+import { playNamedAt } from '../../domain/replay/activation';
 import { afterEntryHooks } from '../../domain/replay/afterEntry';
-import { reactToLanding, runControlHooks } from '../../domain/replay/invasion';
-import type { Entry, Game, GameState, UnitCounts, Warning } from '../../domain/types';
+import { runControlHooks } from '../../domain/replay/invasion';
+import type { Entry, Game, GameState, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, viewFor, type LegacyViews } from '../legacyViews';
+import { legacyEvents, legacyViews, legacyViewsFresh, viewFor, type LegacyViews } from '../legacyViews';
 import { anyInForce } from '../abilities/registry';
 import { ACQUIESCENCE } from './natives';
 import { emit, warn, type Ctx } from './context';
+import { hook } from './hooks';
 import { cardRoundOf, keepRound } from './track';
 
 /** Components whose play is a rule of the kernel (resolved natively), not a hook. */
@@ -75,29 +75,9 @@ export function viaLegacy(ctx: Ctx, effect: (r: Run) => void): void {
 /** Whether anything answers: a component in force with the hook, or one the entry names. The old state is built only if so. */
 const answers = (ctx: Ctx, has: Parameters<typeof anyInForce>[3], named: readonly string[] = playedBy(ctx.entry)): boolean => anyInForce(ctx.table, ctx.board, ctx.pack, has, named);
 
-/** Whatever answers the activation: every player's components in force, then those the entry names for it. */
-export const reactActivation = (ctx: Ctx, target: string): void =>
-  !answers(ctx, e => e.onActivate !== undefined || e.playAt === 'activation') ? undefined : viaLegacy(ctx, r => reactToActivation(r.game, r.state, r.shared, r.entry as Tactic, target, ctx.pack, r.warnings));
-
-export const reactLanding = (ctx: Ctx, planetId: string, landed: number): void =>
-  !answers(ctx, e => e.onLanding !== undefined, []) ? undefined : viaLegacy(ctx, r => reactToLanding(r.game, r.state, r.shared, r.entry as Tactic, planetId, landed, ctx.pack, r.warnings));
-
 /** What a component the entry names plays at a step of the action (Salvage, once the losses are taken). */
 export const playNamed = (ctx: Ctx, at: 'activation' | 'combat'): void =>
   !playedBy(ctx.entry).some(id => effectOf(ctx.pack, id)?.playAt === at) ? undefined : viaLegacy(ctx, r => playNamedAt(at, r.game, r.state, r.shared, r.entry as Tactic, ctx.pack, r.warnings));
-
-/** The components in force told of what the action produced and destroyed. */
-export function momentsAfter(
-  ctx: Ctx, produced: { units: UnitCounts; systemId: string } | null, losses: { unit: string; count: number; planetId?: string; systemId?: string }[],
-): void {
-  if (!produced && losses.length === 0) return;
-  if (!answers(ctx, e => e.onProduced !== undefined || e.onDestroyed !== undefined, [])) return;
-  viaLegacy(ctx, r => {
-    const at = { game: r.game, state: r.state, shared: r.shared, pack: ctx.pack, warnings: r.warnings, entry: r.entry, player: legacyKey(ctx.table, ctx.player) };
-    if (produced) fire('onProduced', at, produced);
-    if (losses.length > 0) fire('onDestroyed', at, { losses });
-  });
-}
 
 export type LostStructures = { kind: 'pds' | 'spacedock'; owner: string; count: number }[];
 
@@ -105,26 +85,11 @@ export type LostStructures = { kind: 'pds' | 'spacedock'; owner: string; count: 
 export const controlHooks = (ctx: Ctx, planetId: string, fromPlayer: boolean, lost: LostStructures): void =>
   !answers(ctx, e => e.onGainControl !== undefined) ? undefined : viaLegacy(ctx, r => runControlHooks(r.game, r.state, planetId, ctx.pack, r.warnings, r.entry, fromPlayer, lost));
 
-/** Which components of the viewer's are hooked on losing a planet, asked before it goes. */
-export function controlLostBefore(ctx: Ctx): string[] {
-  const v = viewFor(ctx.table, ctx.board, ctx.pack, ctx.table.viewer);
-  return hooked('onControlLost', { game: v.game, state: v.shared, shared: v.shared, pack: ctx.pack });
-}
-
-/** What the viewer's components hooked on the loss of a planet are asked, for each planet a rival's invasion took. */
-export function controlLostHooks(ctx: Ctx, lost: { planetId: string; to: string }[], ids: string[]): void {
-  if (lost.length === 0 || ids.length === 0) return;
-  viaLegacy(ctx, r => {
-    for (const { planetId, to } of lost) {
-      run('onControlLost', ids, { game: r.game, state: r.shared, shared: r.shared, pack: ctx.pack, warnings: r.warnings, entry: r.entry, states: r.states }, { planetId, to });
-    }
-  });
-}
-
 /** The play of the components the entry names, run where they have an effect: the hooks of the components, not the rules of playing them. */
 export function playHooks(ctx: Ctx): void {
   // Nothing named, nothing played, and the round's cards stay as they are.
   if (playedBy(ctx.entry).length === 0) return;
+  const spent: { count: number; secondary: boolean }[] = [];
   viaLegacy(ctx, r => {
     const { entry, pack } = ctx;
     const cards = cardRoundOf(ctx.table, ctx.track, r.states);
@@ -134,11 +99,13 @@ export function playHooks(ctx: Ctx): void {
       if (!effect?.play || (effect.playAt && entry.type === 'tactical') || NATIVE_PLAYS.includes(noteBase(id))) continue;
       const lacking = r.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
       effect.play({
-        game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards,
+        game: r.game, state: r.state, shared: r.shared, entry, id, player: entry.owner ?? 'me', states: r.states, choices: choicesFor(entry, id), held: !lacking, pack, warnings: r.warnings, cards, spent,
       });
     }
     keepRound(ctx.table, ctx.track, cards);
   });
+  // The components in force are told of the strategy tokens the play spent.
+  for (const each of spent) hook(ctx, 'onTokenSpent', [ctx.player], each);
 }
 
 /** The hooks of the components the entry gained or lost, and the checks the components in force add after it. */
@@ -165,8 +132,3 @@ export function waived(ctx: Ctx, warnings: Warning[], before: LegacyViews, after
   return waive(warnings, { pack: ctx.pack, game: now.game, entry: ctx.entry, before: prior.state, after: now.state, shared: before.states.me, primaries: ctx.track.primaries[ctx.player] ?? [] }, earlier);
 }
 
-/** The components in force told that command tokens were spent from the strategy pool. */
-export const tokenSpent = (ctx: Ctx, count: number, card: number | undefined, secondary: boolean): void =>
-  !answers(ctx, e => e.onTokenSpent !== undefined, []) ? undefined : viaLegacy(ctx, r => fire('onTokenSpent', {
-    game: r.game, state: r.state, shared: r.shared, pack: ctx.pack, warnings: r.warnings, player: legacyKey(ctx.table, ctx.player), states: r.states, entry: r.entry,
-  }, { count, card, secondary }));

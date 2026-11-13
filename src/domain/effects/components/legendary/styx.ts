@@ -9,6 +9,8 @@
  * The loss is the hook `onControlLost` (points/moments.ts): an opponent's landing takes Styx from me, and one point goes.
  * The opponent's own point is not modelled: their scores move by their status entries.
  */
+import { gain } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import '../../points/moments';
 import type { ComponentEffect } from '../../types';
 
@@ -20,7 +22,12 @@ export const effect: ComponentEffect = {
   onGainControl: turn => {
     if (turn.planetId === 'styx') turn.state.vp += 1;
   },
-  onControlLost: turn => {
-    if (turn.planetId === 'styx') turn.state.vp -= 1;
+};
+
+/** Losing the planet is a hook of the kernel; gaining it (`onGainControl`) is still written for the old state. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onControlLost: (ctx, lost) => (lost.planetId === 'styx' ? [gain.points(ctx.holder, -1)] : undefined),
   },
 };

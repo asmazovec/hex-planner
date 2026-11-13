@@ -12,6 +12,7 @@ import type { Entry, GameState, Opponent, Warning } from '../../types';
 import { componentAction } from '../components/kit';
 import { alwaysInForce, throwaway } from './throwaway';
 import { violation } from '../../rules/registry';
+import { gain } from '../../../game/abilities/emit';
 
 vi.mock('../registry', async original => (await import('./throwaway')).mockRegistry(await original()));
 // The components the registry loads import the payment module and need the mocked registry (a cycle): load it first,
@@ -152,8 +153,8 @@ describe('transactions: the hook of a deal', () => {
   test('dealt is asked of the components in force of both sides, with what moved', () => {
     const seen: string[] = [];
     throwaway['technology:deal'] = {
-      tier: 'passive', rule: 'x',
-      dealt: turn => { seen.push(`${turn.side}:${turn.self}->${turn.partner} gave ${turn.gave.tradeGoods ?? 0} got ${turn.got.tradeGoods ?? 0}`); turn.state.tradeGoods += 10; },
+      tier: 'passive', rule: 'x', holder: 'anyone',
+      on: { dealt: (ctx, deal) => { seen.push(`${deal.side}:${ctx.key(deal.self)}->${ctx.key(deal.partner)} gave ${deal.gave.tradeGoods ?? 0} got ${deal.got.tradeGoods ?? 0}`); return [gain.tradeGoods(deal.self, 10)]; } },
     };
     alwaysInForce.push('technology:deal');
     const turn = tactical(NEAR, { acts: [{ kind: 'transaction', with: 'o1', give: { tradeGoods: 2 }, get: {} }] });

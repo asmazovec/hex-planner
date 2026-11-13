@@ -7,16 +7,18 @@
  * at the invasion), since the plan records no influence spent on a landing. The owner's own landings cost nothing.
  */
 import { violation } from '../../../rules/registry';
-import '../../points/rivals';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:keleres_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  onLanding: ({ planetId, landed, state, warnings }) => {
-    const mechs = state.ground[planetId]?.mech ?? 0;
-    if (landed > 0 && mechs > 0) warnings.push(violation('shortInfluence', { needed: mechs, paid: 0, planetId }, 'invasion'));
+  holder: 'others',
+  on: {
+    onLanding: (ctx, landing) => {
+      const mechs = ctx.my.unitsOn(landing.planetId).mech ?? 0;
+      if (landing.landed > 0 && mechs > 0) ctx.warn(violation('shortInfluence', { needed: mechs, paid: 0, planetId: landing.planetId }, 'invasion'));
+    },
   },
 };

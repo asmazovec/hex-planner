@@ -10,15 +10,11 @@
  * taken as entered (no warning code says "not a technology this note gives" yet).
  */
 import { componentById, noteAddress } from '../../../components';
-import '../../points/moments';
+import { card } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:shareknowledge';
-
-const without = (list: string[], item: string): void => {
-  const index = list.indexOf(item);
-  if (index >= 0) list.splice(index, 1);
-};
 
 export const effect: ComponentEffect = {
   tier: 'play',
@@ -41,15 +37,23 @@ export const effect: ComponentEffect = {
     if (!state.holdings.technologies.includes(String(technology))) state.holdings.technologies.push(String(technology));
     (state.onCard ??= {})[note] = { technology: String(technology) };
   },
-  onStatusEnd: ({ id: note, state, states }) => {
-    const lent = state.onCard?.[note]?.technology;
-    if (lent === undefined) return;
-    without(state.holdings.technologies, lent);
-    without(state.holdings.exhausted, lent);
-    without(state.holdings.promissory, note);
-    delete state.onCard![note];
-    const owner = noteAddress(note);
-    const back = owner === undefined ? undefined : states[owner]?.holdings;
-    if (back && !back.promissory.includes(note)) back.promissory.push(note);
+};
+
+/** The loan ends with the status phase: a hook of the kernel; the play and its choice are still written for the old state. */
+export const ability: Hooked = {
+  holder: 'anyone',
+  on: {
+    onStatusEnd: ctx => {
+      const lent = ctx.board.players[ctx.holder]?.cards[ctx.id]?.onCard?.technologies[0];
+      if (lent === undefined) return;
+      const owner = noteAddress(ctx.id);
+      const back = owner === undefined ? undefined : ctx.playerOf(owner);
+      return [
+        card.lose(ctx.holder, lent),
+        { type: 'CardUnloaded' as const, player: ctx.holder, card: ctx.id, technology: lent },
+        card.lose(ctx.holder, ctx.id),
+        ...(back !== undefined && !ctx.of(back).holds(ctx.id) ? [card.gain(back, ctx.id)] : []),
+      ];
+    },
   },
 };

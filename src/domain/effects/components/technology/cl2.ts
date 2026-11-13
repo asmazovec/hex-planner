@@ -8,30 +8,28 @@
  * infantry destroyed waits on the card and comes back on a controlled planet of the home system at the start of my
  * next turn; with none controlled it keeps waiting. The commodity gained or converted is the player's choice (not counted).
  */
-import { placeOnPlanet } from '../../../replay/invasion';
-import { homePlanets } from '../../../strategy';
-import '../../points/moments';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:cl2';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: '97.4',
-  // After this unit is destroyed, the unit is placed on this card (`GameState.onCard`)...
-  onDestroyed: ({ state, losses, id: card }) => {
-    for (const loss of losses) {
-      if (loss.unit !== 'infantry') continue;
-      const waiting = ((state.onCard ??= {})[card] ??= {});
-      waiting.units = { ...waiting.units, infantry: (waiting.units?.infantry ?? 0) + loss.count };
-    }
-  },
-  // ...and at the start of the next turn each unit on it is placed on a planet in the home system that the player controls.
-  onTurnStart: ({ game, state, pack, warnings, id: card }) => {
-    const waiting = state.onCard?.[card]?.units;
-    const planetId = homePlanets(game, pack).find(home => state.control[home] === 'me');
-    if (!waiting || planetId === undefined) return;
-    placeOnPlanet(state, planetId, waiting, warnings);
-    delete state.onCard![card];
+  holder: 'self',
+  on: {
+    // After this unit is destroyed, the unit is placed on this card (`CardHold.onCard`)...
+    onDestroyed: (ctx, destroyed) => destroyed.losses
+      .filter(loss => loss.unit === 'infantry')
+      .map(loss => ({ type: 'CardLoaded' as const, player: ctx.holder, card: ctx.id, units: { infantry: loss.count } })),
+    // ...and at the start of the next turn each unit on it is placed on a planet in the home system that the player controls.
+    onTurnStart: ctx => {
+      const waiting = ctx.board.players[ctx.holder]?.cards[ctx.id]?.onCard?.units;
+      const planet = ctx.home(ctx.holder).find(candidate => ctx.board.planets[candidate]?.owner === ctx.holder);
+      if (!waiting || planet === undefined || !Object.values(waiting).some(count => (count ?? 0) > 0)) return;
+      return [
+        { type: 'UnitsPlaced' as const, player: ctx.holder, at: { planet }, units: waiting },
+        { type: 'CardUnloaded' as const, player: ctx.holder, card: ctx.id, units: waiting },
+      ];
+    },
   },
 };

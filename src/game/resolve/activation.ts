@@ -2,7 +2,9 @@
 import { violation } from '../../domain/rules/registry';
 import { poolsOf, tokensOnMap } from '../queries';
 import { begin, emit, warn, type Ctx } from './context';
-import { reactActivation } from './legacyEffects';
+import { hook } from './hooks';
+import { playNamed } from './legacyEffects';
+import { planetsIn } from '../space';
 
 export function activation(ctx: Ctx, target: string): void {
   begin(ctx, 'activation');
@@ -16,5 +18,7 @@ export function activation(ctx: Ctx, target: string): void {
       { type: 'SystemActivated', player: ctx.player, system: target },
     ], { quiet: true });
   }
-  reactActivation(ctx, target);
+  // Whatever answers the activation: every player's components in force, then those the entry names for it.
+  hook(ctx, 'onActivate', ctx.table.players.map(p => p.id), { activator: ctx.player, systemId: target, planets: planetsIn(ctx.table, ctx.board, ctx.pack, target) });
+  playNamed(ctx, 'activation');
 }

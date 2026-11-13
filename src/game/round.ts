@@ -5,7 +5,6 @@
  * the round's flow (a turn out of its phase, after a pass, a pass before the primaries) are `resolve/flow.ts`, over the
  * turns of the round the track holds.
  */
-import { fire, type MomentHook } from '../domain/effects/points/moments';
 import { readyCards } from '../domain/replay/holdings';
 import { clearBoard } from '../domain/replay/status';
 import type { DataPack, Entry, Phase, Warning } from '../domain/types';
@@ -13,7 +12,9 @@ import type { Turn } from './actions';
 import { applyAll } from './apply';
 import type { GameEvent } from './events';
 import { legacyEntry } from './fromLegacy';
-import { legacyEvents, legacyViews, legacyViewsFresh, viewFor } from './legacyViews';
+import { legacyEvents, legacyViews, legacyViewsFresh } from './legacyViews';
+import { runHooks } from './resolve/hooks';
+import type { HookKind } from './abilities/types';
 import type { Board, PlayerId, Table } from './types';
 
 /** The phases of a round in the order they are played, whatever the order of the plan's list. */
@@ -26,19 +27,9 @@ export interface Moment { board: Board; events: GameEvent[]; violations: Warning
 
 const noMoment = (board: Board): Moment => ({ board, events: [], violations: [] });
 
-/** Asks the components of `players` for the hook, and applies what they changed. `turn` is the turn the moment belongs to, when there is one. */
-function ask(table: Table, board: Board, pack: DataPack, hook: MomentHook, players: PlayerId[], turn?: Turn, entry?: Entry): Moment {
-  const before = legacyViews(table, board, pack);
-  const work = legacyViewsFresh(table, board, pack);
-  const violations: Warning[] = [];
-  let ran = 0;
-  for (const player of players) {
-    const v = viewFor(table, board, pack, player, work);
-    ran += fire(hook, { game: v.game, state: v.state, shared: v.shared, pack, warnings: violations, player: v.key, states: work.states, ...(entry ? { entry } : {}) }, {});
-  }
-  if (ran === 0) return { board, events: [], violations };
-  const events = legacyEvents(table, pack, before, work, table.viewer, { ...(turn ? { turn: turn.id } : {}), step: 'round' });
-  return { board: applyAll(board, events), events, violations };
+/** Asks the components of `players` for the hook, and applies what they returned. `turn` is the turn the moment belongs to, when there is one. */
+function ask(table: Table, board: Board, pack: DataPack, hook: HookKind, players: PlayerId[], turn?: Turn, entry?: Entry): Moment {
+  return runHooks(table, board, pack, hook, players, {}, { actor: turn?.player ?? table.viewer, step: 'round', ...(turn ? { turn: turn.id } : {}), ...(entry ? { entry } : {}) });
 }
 
 const everyone = (table: Table): PlayerId[] => table.players.map(p => p.id);

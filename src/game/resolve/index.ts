@@ -21,7 +21,9 @@ import { cardAction } from './strategic';
 import { componentAction, correctionAction, passAction, statusAction } from './others';
 import { claimStations, gainControl, landUnits, placeCarried, type Lost } from './invasion';
 import { turnActs } from './acts';
-import { controlLostHooks, momentsAfter, playNamed, waived } from './legacyEffects';
+import { playerOfKey } from '../keys';
+import { hook } from './hooks';
+import { playNamed, waived } from './legacyEffects';
 import { turnTail } from './tail';
 import { movement } from './movement';
 import { payProduction, produce } from './production';
@@ -82,7 +84,9 @@ function tacticalAction(ctx: Ctx, target: string): Lost {
     ...Object.entries(entry.losses ?? {}).map(([unit, count]) => ({ unit, count, systemId: target })),
     ...Object.entries(entry.groundLosses ?? {}).flatMap(([planetId, units]) => Object.entries(units).map(([unit, count]) => ({ unit, count, planetId }))),
   ].filter(loss => loss.count > 0);
-  momentsAfter(ctx, producing && built ? { units: entry.production, systemId: target } : null, losses);
+  // The components in force told of what the action produced and destroyed.
+  if (producing && built) hook(ctx, 'onProduced', [ctx.player], { units: entry.production, systemId: target });
+  if (losses.length > 0) hook(ctx, 'onDestroyed', [ctx.player], { losses });
   begin(ctx, 'transport');
   finalCheck(ctx, target);
   return landed.lost;
@@ -133,7 +137,7 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   turnActs(ctx);
   // A rival's landing takes planets of the viewer's: what the viewer's components hooked on the loss are asked, once the turn is over.
   begin(ctx, 'invasion');
-  controlLostHooks(ctx, lost.planets, lost.hooked);
+  if (lost.hooked.length > 0) for (const { planetId, to } of lost.planets) hook(ctx, 'onControlLost', [ctx.table.viewer], { planetId, to: playerOfKey(ctx.table, to) ?? to }, { only: lost.hooked });
   if (options.closing) {
     const closed = options.closing(ctx.board);
     ctx.board = closed.board;

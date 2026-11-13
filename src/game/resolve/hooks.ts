@@ -13,11 +13,13 @@ import { violation } from '../../domain/rules/registry';
 import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
-import { inForce } from '../abilities/registry';
+import { appliedOn, inForce } from '../abilities/registry';
+import { areNeighbours } from '../queries';
+import { homeOf } from '../setup';
 import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
 import { applyChecked } from '../apply';
 import type { GameEvent } from '../events';
-import { legacyKey, viewFor } from '../legacyViews';
+import { legacyKey, playerOfKey, viewFor } from '../legacyViews';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
 import { warn, type Ctx } from './context';
 
@@ -32,6 +34,8 @@ export interface HookOptions {
   entry?: Entry;
   /** A component held in several copies (notes) is asked once. */
   once?: boolean;
+  /** Asks these components (found before the moment, as a planet lost takes a legendary one with it) instead of those in force now. */
+  only?: readonly string[];
 }
 
 /** The pool warnings of tokens just changed: a pool below zero, more than the tokens of a faction, a fleet pool under the ships standing (the checks of the old `gainTokens`). */
@@ -56,9 +60,9 @@ export function runHooks<K extends HookKind>(
   const violations: Warning[] = [];
   for (const player of players) {
     const asked = new Set<string>();
-    const ids = inForce(table, board, pack, player).filter(id => {
+    const ids = (options.only ?? inForce(table, board, pack, player)).filter(id => {
       const effect = effectOf(pack, id);
-      if (effect?.on?.[kind] === undefined || !speaksIn(holderRuleOf(pack, id), player === options.actor, false)) return false;
+      if (effect?.on?.[kind] === undefined || !speaksIn(effect.holder ?? holderRuleOf(pack, id), player === options.actor, false)) return false;
       if (options.once && asked.has(noteBase(id))) return false;
       asked.add(noteBase(id));
       return true;
@@ -72,6 +76,10 @@ export function runHooks<K extends HookKind>(
         get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
         key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
         commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },
+        playerOf: key => playerOfKey(table, key),
+        home: other => homeOf(table, table.players.find(p => p.id === other)!, pack)?.planets ?? [],
+        neighbours: (a, b) => areNeighbours(table, at, pack, a, b),
+        applied: (point, base, extra) => appliedOn(table, at, pack, player, point, base, extra).value,
         warn: warning => { violations.push(warning); },
       };
       const returned = (hook as (ctx: AbilityContext, payload: HookPayloads[K]) => GameEvent[] | void)(context, payload);
@@ -79,7 +87,7 @@ export function runHooks<K extends HookKind>(
         const step = event.cause?.step ?? options.step;
         const stamped: GameEvent = { ...event, cause: { ...(options.turn ? { turn: options.turn } : {}), ...event.cause, ...(step ? { step } : {}), component: id } };
         const applied = applyChecked(board, stamped);
-        if (stamped.type === 'TokensChanged') violations.push(...poolWarnings(table, board, applied.board, pack, stamped, event.cause?.step));
+        if (stamped.type === 'TokensChanged' && event.cause?.step !== undefined) violations.push(...poolWarnings(table, board, applied.board, pack, stamped, event.cause?.step));
         board = applied.board;
         made.push(stamped);
       }

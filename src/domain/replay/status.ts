@@ -142,5 +142,7 @@ export function gainTokens(turn: Pick<EffectTurn, 'game' | 'state' | 'shared' | 
 export function spendStrategyTokens(turn: EffectTurn, count = 1): void {
   if (turn.state.strategy < count) turn.warnings.push(violation('shortStrategy', { have: turn.state.strategy }));
   turn.state.strategy -= count;
-  fire('onTokenSpent', turn, { count, secondary: false });
+  // The kernel collects what a played component spent and tells the components in force once the play is done (`spent`).
+  if (turn.spent) turn.spent.push({ count, secondary: false });
+  else fire('onTokenSpent', turn, { count, secondary: false });
 }

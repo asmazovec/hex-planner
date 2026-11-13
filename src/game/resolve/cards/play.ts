@@ -16,7 +16,7 @@ import type { Delta } from '../../events';
 import { checkView, emit, warn, type Ctx } from '../context';
 import { checkedPay, shortOf } from '../payment';
 import { place } from '../production';
-import { tokenSpent } from '../legacyEffects';
+import { hook } from '../hooks';
 import { noteAddress, noteBase } from '../../../domain/components';
 import { legacyKey } from '../../legacyViews';
 import { ACQUIESCENCE } from '../natives';
@@ -74,7 +74,7 @@ export function playCard(ctx: Ctx): void {
     // The check above still counts the token; the note is why none is spent.
     if (primary || !acquiesced(ctx, entry)) {
       emit(ctx, [{ type: 'TokensChanged', player: ctx.player, delta: { strategy: -owed } }], { quiet: true });
-      tokenSpent(ctx, owed, entry.card, !primary);
+      hook(ctx, 'onTokenSpent', [ctx.player], { count: owed, ...(entry.card === undefined ? {} : { card: entry.card }), secondary: !primary });
     }
   }
   // Units a card produces use a unit's PRODUCTION: the combined cost may be reduced (Sarween Tools), as a tactical action's is.

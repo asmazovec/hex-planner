@@ -10,23 +10,24 @@
  * hit in a combat the plan does not fight.
  * Pass 2: passive, with the activation hook (`onActivate`).
  */
-import { planetsOf } from '../../../replay/board';
-import type { ComponentEffect } from '../../types';
-import '../../points/movement';
+import { place } from '../../../../game/abilities/emit';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:md';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  // Any player's activation reaches the owner's card; the infantry stand with the owner's own structures there.
-  onActivate: ({ game, pack, systemId, state }) => {
-    for (const planetId of planetsOf(game, systemId, pack)) {
-      const structures = (state.docks.includes(planetId) ? 1 : 0) + (state.pds[planetId] ?? 0);
-      if (structures > 0) {
-        const here = state.ground[planetId] ?? {};
-        state.ground[planetId] = { ...here, infantry: (here.infantry ?? 0) + structures };
-      }
-    }
+  holder: 'anyone',
+  on: {
+    // Any player's activation reaches the owner's card; the infantry stand with the owner's own structures there.
+    onActivate: (ctx, activation) => {
+      const mine = ctx.my.structures();
+      return activation.planets.flatMap(planet => {
+        const here = mine.find(item => item.planet === planet)?.structures ?? {};
+        const structures = (here.spacedock ? 1 : 0) + (here.pds ?? 0);
+        return structures > 0 ? [place.units(ctx.holder, { planet }, { infantry: structures })] : [];
+      });
+    },
   },
 };

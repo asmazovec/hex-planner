@@ -116,6 +116,8 @@ export interface EffectTurn {
   held: boolean;
   pack: DataPack;
   warnings: Warning[];
+  /** Set by the game kernel: the strategy tokens this play spent, told to the components in force when the play is done. */
+  spent?: { count: number; secondary: boolean }[];
 }
 
 /** What a component asks for is named by `ChoiceSpec.kind`; the interface offers the candidates and the entry keeps the value. */

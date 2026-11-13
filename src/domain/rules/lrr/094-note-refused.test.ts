@@ -28,9 +28,11 @@ beforeEach(() => {
 describe('LRR 94.3 / 69.5 a note the receiver refuses', () => {
   test('94.3: the receiver\'s component pushes noteRefused at the step transaction, and the note still changes hands', () => {
     throwaway['technology:refuse'] = {
-      tier: 'passive', rule: 'x',
-      dealt: turn => {
-        for (const id of turn.got.components ?? []) turn.warnings.push(violation(noteRefused.code, { id, name: id }));
+      tier: 'passive', rule: 'x', holder: 'anyone',
+      on: {
+        dealt: (ctx, deal) => {
+          for (const id of deal.got.components ?? []) ctx.warn(violation(noteRefused.code, { id, name: id }));
+        },
       },
     };
     alwaysInForce.push('technology:refuse');

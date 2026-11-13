@@ -6,18 +6,20 @@
  * owner has a ship (not ground forces, not a structure) in the system, the activator's fleet pool loses one token. My own
  * activations are untouched.
  */
+import { gain } from '../../../../game/abilities/emit';
+import type { Ability } from '../../../../game/abilities/types';
 import type { UnitId } from '../../../types';
-import type { ComponentEffect } from '../../types';
-import '../../points/movement';
 
 export const id = 'technology:ng';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  onActivate: ({ owner, activator, state, activeState, systemId, pack }) => {
-    if (owner === activator) return;
-    const ships = Object.entries(state.systems[systemId] ?? {}).some(([unit, count]) => (count ?? 0) > 0 && pack.units[unit as UnitId]?.ground === false);
-    if (ships) activeState.fleet -= 1;
+  holder: 'others',
+  on: {
+    onActivate: (ctx, activation) => {
+      const ships = Object.entries(ctx.my.unitsIn(activation.systemId)).some(([unit, count]) => (count ?? 0) > 0 && ctx.pack.units[unit as UnitId]?.ground === false);
+      if (ships) return [gain.tokens(activation.activator, { fleet: -1 })];
+    },
   },
 };

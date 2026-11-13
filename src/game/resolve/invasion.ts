@@ -15,7 +15,10 @@ import { legacyKey } from '../legacyViews';
 import { groundOn, ownerOf } from '../queries';
 import { planetsIn } from '../space';
 import { checkView, emit, warn, type Ctx } from './context';
-import { controlHooks, controlLostBefore, reactLanding } from './legacyEffects';
+import { controlHooks } from './legacyEffects';
+import { hook } from './hooks';
+import { effectOf } from '../../domain/effects/registry';
+import { inForce } from '../abilities/registry';
 import { tradeGoodsOnControl } from '../queries';
 import { checkedPay, checkPay, pay } from './payment';
 
@@ -26,7 +29,7 @@ const groundOf = (units: UnitCounts, ctx: Ctx): UnitCounts =>
   Object.fromEntries(Object.entries(units).filter(([id, n]) => (n ?? 0) > 0 && ctx.pack.units[id as keyof UnitCounts]?.ground)) as UnitCounts;
 const some = (units: UnitCounts | undefined): boolean => Object.values(units ?? {}).some(n => (n ?? 0) > 0);
 
-/** The planets of mine the viewer lost to a rival's landing, and the hooks of the viewer's components asked before the loss (`controlLostHooks`). */
+/** The planets of mine the viewer lost to a rival's landing, and the hooks of the viewer's components asked before the loss (the `onControlLost` hook). */
 export interface Lost { planets: { planetId: string; to: string }[]; hooked: string[] }
 
 /** What the action did to the planets: which ones got ground forces (they may change hands), which of the viewer's were lost. */
@@ -53,7 +56,7 @@ export function landUnits(ctx: Ctx, target: string): Landed {
       if (paid < CUSTODIANS_COST) warn(ctx, violation('custodians', { planetId: landing.planet, needed: CUSTODIANS_COST, paid }));
       emit(ctx, [{ type: 'CustodiansRemoved', player: ctx.player }, { type: 'PointsChanged', player: ctx.player, delta: 1 }], { quiet: true });
     }
-    reactLanding(ctx, landing.planet, Object.values(landed).reduce((sum, n) => sum + (n ?? 0), 0));
+    hook(ctx, 'onLanding', ctx.table.players.map(p => p.id), { planetId: landing.planet, landed: Object.values(landed).reduce((sum, n) => sum + (n ?? 0), 0) });
     emit(ctx, [{ type: 'UnitsPlaced', player: ctx.player, at: { planet: landing.planet }, units: landed }], { quiet: true });
     if (!on.includes(landing.planet)) on.push(landing.planet);
   }
@@ -63,7 +66,7 @@ export function landUnits(ctx: Ctx, target: string): Landed {
 /**
  * Each planet landed on that still holds the active player's ground forces is theirs (49.5): the structures of the old
  * owner go with it, it is exhausted, and the components hooked on the gain run. A planet of the viewer's lost to a
- * rival is told to `controlLostHooks`, once the action is over.
+ * rival is told to the `onControlLost` hook, once the action is over.
  */
 export function gainControl(ctx: Ctx, landed: Landed): void {
   for (const planetId of landed.on) {
@@ -74,7 +77,7 @@ export function gainControl(ctx: Ctx, landed: Landed): void {
     // The structures of the old owner go with the change (49.5.1).
     const lost = was === undefined ? [] : KINDS.map(kind => ({ kind, owner: legacyKey(ctx.table, was), count: ctx.board.planets[planetId]?.structures[kind] ?? 0 })).filter(s => s.count > 0);
     const viewerLoses = ctx.board.planets[planetId]?.owner === ctx.table.viewer && ctx.player !== ctx.table.viewer;
-    if (viewerLoses && landed.lost.hooked.length === 0) landed.lost.hooked = controlLostBefore(ctx);
+    if (viewerLoses && landed.lost.hooked.length === 0) landed.lost.hooked = inForce(ctx.table, ctx.board, ctx.pack, ctx.table.viewer).filter(id => effectOf(ctx.pack, id)?.on?.onControlLost !== undefined);
     emit(ctx, [
       { type: 'PlanetGained', player: ctx.player, planet: planetId },
       { type: 'PlanetExhausted', player: ctx.player, planet: planetId },

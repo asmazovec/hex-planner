@@ -6,16 +6,20 @@
  * secondary that costs no token gives none. Gaining a trade good is never a loss, so "may" is taken as used. It needs
  * a point of the count asked where a strategy token is spent. Built on the hook `onTokenSpent` (points/moments.ts), asked where a strategy card or a component spends a token.
  */
-import '../../points/moments';
-import type { ComponentEffect } from '../../types';
+import { gain } from '../../../../game/abilities/emit';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:muaatcommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  // Only while unlocked: a locked leader has no ability (51.1).
-  onTokenSpent: turn => {
-    if (turn.state.holdings.leaders[id] === 'unlocked') turn.state.tradeGoods += turn.count;
+  holder: 'self',
+  on: {
+    // Only while unlocked: a locked leader has no ability (51.1).
+    onTokenSpent: (ctx, spent) => {
+      const state = ctx.my.card(id);
+      if (state !== undefined && state !== 'locked' && state !== 'exhausted') return [gain.tradeGoods(ctx.holder, spent.count)];
+    },
   },
 };

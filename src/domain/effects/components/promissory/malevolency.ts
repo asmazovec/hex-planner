@@ -10,16 +10,16 @@
  *
  * Built on the hook `onStatusEnd` (points/moments.ts), asked once when the status phase ends.
  */
-import { gainTokens } from '../../../replay/status';
-import '../../points/moments';
-import type { ComponentEffect } from '../../types';
+import { gain } from '../../../../game/abilities/emit';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:malevolency';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  onStatusEnd: turn => {
-    if (turn.game.faction !== 'obsidian') gainTokens(turn, { fleet: -1 }, 'status');
+  holder: 'anyone',
+  on: {
+    onStatusEnd: ctx => (ctx.my.faction !== 'obsidian' ? [gain.tokens(ctx.holder, { fleet: -1 }, 'status')] : undefined),
   },
 };
