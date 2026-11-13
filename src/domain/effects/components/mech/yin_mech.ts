@@ -4,11 +4,12 @@
  *
  * A hint at the invasion: it rides on Indoctrination, at the start of a ground combat.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:yin_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
   hintAt: ['invasion'],

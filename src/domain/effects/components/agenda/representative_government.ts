@@ -7,8 +7,8 @@
  * Hint only: "For" changes how votes are cast, and the plan counts no votes; "Against" exhausts the
  * cultural planets of those who voted against, which depends on the votes and is entered by hand. Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:representative_government';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

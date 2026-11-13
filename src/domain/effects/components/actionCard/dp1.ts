@@ -6,8 +6,8 @@
  * the note received in «Взято» of an agenda-phase entry. The gift is not a transaction (ruling 2), so no transaction
  * check (neighbours, once per player) is involved and none needs lifting.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:dp1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

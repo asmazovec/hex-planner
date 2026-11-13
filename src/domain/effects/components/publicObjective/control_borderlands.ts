@@ -5,11 +5,12 @@
  * is recorded by the status entry (`scored`, LRR 61.5, 81.1); whether its condition held is
  * left to the player, as the plan checks no scoring condition. Its text is a reminder in the block of the status step.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:control_borderlands';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
   hintAt: ['status'],

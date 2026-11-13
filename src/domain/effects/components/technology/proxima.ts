@@ -6,8 +6,8 @@
  *
  * A hint: Bombardment and ground combat are fought in the invasion (89.4) with dice, which the plan does not roll.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:proxima';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

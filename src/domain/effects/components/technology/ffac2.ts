@@ -9,12 +9,13 @@
  * Floating Factory a ship (space area, move, capacity, destroyed when blockaded) is not modelled: the app keeps docks
  * on planets only (85.1.1 and 79.4.1 are test.todo in the rules tests).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import '../../points/production';
 
 export const id = 'technology:ffac2';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: '97.4',
   // The printed PRODUCTION 7 is flat: the dock of this player is worth 7 whatever its planet gives.

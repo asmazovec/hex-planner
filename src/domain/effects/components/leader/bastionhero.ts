@@ -6,8 +6,8 @@
  * A hint: dice decide which units are destroyed, and the plan rolls none; the other players' losses are entered by
  * hand. Purging the hero is the common play of a hero named in `uses`.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:bastionhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };

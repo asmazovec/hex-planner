@@ -8,8 +8,8 @@
  * none, so there is nothing to lift. "Of the same color" is the card's own limit on the player's choice, not a rule
  * the plan validates.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:jolnarhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

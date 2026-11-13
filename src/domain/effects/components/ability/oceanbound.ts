@@ -4,8 +4,8 @@
  *
  * Hint. Ocean cards and coexistence are not counted by the plan.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:oceanbound';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

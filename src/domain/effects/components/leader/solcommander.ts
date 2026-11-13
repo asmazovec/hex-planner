@@ -6,8 +6,8 @@
  * A waiver or a play is asked of the owner of the entry only (the known limits of the foundation), and the plan does not
  * model the defence of a planet; the reminder stands in the block of the invasion.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:solcommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

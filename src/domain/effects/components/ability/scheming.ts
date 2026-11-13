@@ -4,11 +4,12 @@
  *
  * A hint: the cards drawn and discarded are entered by the player as gains and spends; the plan counts no draws.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:scheming';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
   hintAt: ['status', 'card'],

@@ -6,8 +6,8 @@
  * lifted. A relic fragment is an exploration card, and no player's holdings keep exploration cards (as LRR 94.3 is
  * tested: relic fragments in a transaction are not modelled), so there is nothing to move from the neighbour to me.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:seize';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

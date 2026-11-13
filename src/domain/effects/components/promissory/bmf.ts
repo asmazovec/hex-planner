@@ -7,8 +7,8 @@
  * in «Взято и сброшено». What the plan does count already holds without a file: the note is played by a component
  * action, its own owner is warned (69.2), and another player's play returns it to the Naaz-Rokha player (69.3).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:bmf';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

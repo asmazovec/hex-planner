@@ -6,11 +6,12 @@
  * trade good. Pass 2: the step that sets control asks a point for the trade goods gained; the law is the elected
  * player's only.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:minister_exploration';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { tradeGoodsOnControl: value => value + 1 },

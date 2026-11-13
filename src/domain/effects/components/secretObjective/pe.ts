@@ -5,8 +5,8 @@
  * guessed them, so it cannot know who passes last. It is scored when its owner passes (objectives notes, Prove
  * Endurance 1), so it stands with the round's flow.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:pe';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['round'] };

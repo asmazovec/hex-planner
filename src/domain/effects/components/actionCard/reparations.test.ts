@@ -23,7 +23,7 @@ describe('actionCard:reparations Reparations', () => {
   // Checks: the reminder stands at its step while the card is in hand, and not once it is not.
   // Why the reminder is NOT shown without the card: a hint is asked of what the player holds ready (`hintsAt`).
   test('actionCard:reparations is reminded of at the invasion step while it is in hand, and only then', () => {
-    expect(hintsAt(table().pack, endOf(table()), 'invasion', ['me']).map(def => def.id)).toContain(id);
-    expect(hintsAt(table().pack, endOf(table([])), 'invasion', ['me']).map(def => def.id)).not.toContain(id);
+    expect(hintsAt(table().pack, endOf(table()), 'invasion', ['rival']).map(def => def.id)).toContain(id);
+    expect(hintsAt(table().pack, endOf(table([])), 'invasion', ['rival']).map(def => def.id)).not.toContain(id);
   });
 });

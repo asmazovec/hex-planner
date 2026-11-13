@@ -5,8 +5,8 @@
  * A hint: damage and its repair belong to the combat, which the plan does not fight; it stands in the battle in space
  * and in the ground combat of the invasion.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:da';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };

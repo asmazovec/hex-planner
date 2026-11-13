@@ -7,8 +7,8 @@
  * A hint: frontier tokens and exploration are not tracked by the plan; the replay already purges the hero when it is
  * played.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:empyreanhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

@@ -6,8 +6,8 @@
  * nothing is counted or lifted. Another player's discard is not planned, and the card taken is entered in «Gained and
  * discarded» like any card drawn; nothing is checked.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:reverse_engineer';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

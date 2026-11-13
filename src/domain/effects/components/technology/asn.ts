@@ -5,8 +5,8 @@
  * Pass 1: a hint. Pass 2: play; a second PRODUCTION in any system once per action. A tactical entry produces in
  * its active system only, so this needs a new field of the entry (a production elsewhere).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:asn';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

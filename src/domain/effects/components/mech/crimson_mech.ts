@@ -6,8 +6,8 @@
  * of a tactical action could hold, but its condition is an active breach in the active system and breaches are not on
  * the plan's board. Only one mech is deployed per tactical action (Revenant note 1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:crimson_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

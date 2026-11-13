@@ -7,8 +7,8 @@
  * A hint at the combat: it only stops another player's ability that fires on units destroyed in combat, and the plan
  * fights no combat. The return on an activation is not replayed.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:antivirus';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

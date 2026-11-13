@@ -5,8 +5,8 @@
  * A hint: the component action already exhausts the breakthrough (its text says so), and the technology purged and the
  * relic gained are the entry's `spends` and `gains`.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:mahactbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

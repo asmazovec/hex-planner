@@ -5,8 +5,8 @@
  * A hint: Space Cannon is a roll of dice (77), and the plan neither rolls nor checks who may fire at whom; only the
  * losses of a battle are entered. The text stands in the block of the battle.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:lightrailordnance';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

@@ -5,8 +5,8 @@
  * A hint. Exploration is not planned, so what the agent allows is not counted; exhausting it is what any agent named
  * in an entry's «Used» does already (51.4).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:naazagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

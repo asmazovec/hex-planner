@@ -4,8 +4,8 @@
  *
  * A hint: votes are not counted by the plan. The agenda phase has no step of its own: no steps.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:assassin';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

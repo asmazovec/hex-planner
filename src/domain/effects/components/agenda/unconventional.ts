@@ -6,8 +6,8 @@
  * Hint only: both outcomes depend on who voted "For", and the plan counts no votes; the action cards
  * drawn are unknown cards, entered by hand in the entry's `gains` and `spends`. Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:unconventional';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

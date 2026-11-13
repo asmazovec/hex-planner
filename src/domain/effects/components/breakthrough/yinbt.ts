@@ -4,11 +4,12 @@
  *
  * A hint: the alliance ability gained is random, so the plan cannot know it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:yinbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
   hintAt: ['status'],

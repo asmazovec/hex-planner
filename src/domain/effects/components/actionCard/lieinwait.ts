@@ -6,8 +6,8 @@
  * lifted. It answers a transaction between two other players, which the plan does not hold in my entries, and the
  * cards taken are another player's choice made at the table; they are entered in «Gained and discarded» by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:lieinwait';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -6,8 +6,8 @@
  * Hint only, at the combat: rerolls and the units destroyed by them belong to the dice, which the plan
  * does not roll; the losses of a battle are entered by hand (`losses`). Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:crown_of_thalnos';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

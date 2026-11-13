@@ -7,8 +7,8 @@
  * no fields for it, and the player enters the new positions by hand. A swap is not a move (Ahk Ravin note 1), so no
  * check of movement would apply to it anyway.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:crimsonagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

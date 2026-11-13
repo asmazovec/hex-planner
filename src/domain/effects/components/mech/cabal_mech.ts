@@ -4,8 +4,8 @@
  *
  * Decided: hint. Ground combat losses are not rolled and captured units are not kept.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:cabal_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

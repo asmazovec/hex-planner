@@ -7,8 +7,8 @@
  * Mecatol Rex are a condition the player meets, not a rule movement or the fleet pool breaks. Scoring stays the
  * player's choice in the status entry (`scored`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:ose';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

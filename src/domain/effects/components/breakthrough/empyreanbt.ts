@@ -6,8 +6,8 @@
  *
  * A hint: Void Tether tokens are not tracked, and the adjacency they cut is other players', on their routes.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:empyreanbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

@@ -4,8 +4,8 @@
  *
  * Decided: a hint at the invasion. Bombardment is a roll of dice the plan does not count.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:l1z1x_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

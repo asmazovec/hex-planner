@@ -6,8 +6,8 @@
  * player, and units of two players on one planet are already allowed to stand there, so there is no check to lift.
  * The flip follows a change of faction, which the plan does not model.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:firmament_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

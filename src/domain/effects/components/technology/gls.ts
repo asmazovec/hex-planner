@@ -4,8 +4,8 @@
  *
  * A hint at the combat: SPACE CANNON is dice and the assignment of hits, neither of which the plan simulates.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:gls';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

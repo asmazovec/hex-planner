@@ -5,8 +5,8 @@
  * Decided: a hint at the transactions. Whether a neighbour has 3 trade goods and whether the Mentak take one is
  * another player's state and a choice; a trade good taken is entered by hand as a gain.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:pillage';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['transaction'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['transaction'] };

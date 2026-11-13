@@ -6,8 +6,8 @@
  * destinations (Argent notes 4, 1, 2), so neither speed nor the route counts, and a destination without my command
  * token or with other players' ships is warned of. The replay purges the hero.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:argenthero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

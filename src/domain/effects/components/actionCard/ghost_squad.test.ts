@@ -22,8 +22,8 @@ describe('actionCard:ghost_squad Ghost Squad', () => {
   // Why nothing is validated here: a reminder is all the plan can give for a reaction in another player's turn.
   test('actionCard:ghost_squad held in hand is reminded at the invasion, not held it is not', () => {
     const held = holding([id]);
-    expect(hintsAt(held.pack, endOf(held), 'invasion', ['me']).map(c => c.id)).toContain(id);
+    expect(hintsAt(held.pack, endOf(held), 'invasion', ['rival']).map(c => c.id)).toContain(id);
     const none = holding([]);
-    expect(hintsAt(none.pack, endOf(none), 'invasion', ['me']).map(c => c.id)).not.toContain(id);
+    expect(hintsAt(none.pack, endOf(none), 'invasion', ['rival']).map(c => c.id)).not.toContain(id);
   });
 });

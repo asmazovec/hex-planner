@@ -5,8 +5,8 @@
  * by hand in «Taken and discarded» of the status entry, and nothing checks how many are drawn, so there is no check to
  * lift and no number to change. The reminder stands in the block of the status phase.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:nm';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

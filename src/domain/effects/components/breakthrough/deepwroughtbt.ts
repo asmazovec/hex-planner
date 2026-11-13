@@ -6,8 +6,8 @@
  * Hint. What the other players pay, give and research is their choice; the notes and technologies gained are
  * entered as gains. Exhausting it is the common rule of "Exhaust this card", already replayed.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:deepwroughtbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

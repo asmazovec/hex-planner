@@ -7,8 +7,8 @@
  * its reminder stands in the block of the battle. Nothing is validated: the plan rolls no Space Cannon and does not
  * know which ships its dice destroy. Scoring stays the player's choice in the status entry (`scored`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:ttfd';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

@@ -5,8 +5,8 @@
  * A hint in the invasion block: Planetary Shield stops Bombardment and Space Cannon defence fires dice, and the plan
  * rolls neither. The landing itself is never forbidden by a PDS, so there is no check to lift.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:disable';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

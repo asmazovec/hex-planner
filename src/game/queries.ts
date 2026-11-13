@@ -37,7 +37,6 @@ export const poolsOf = (board: Board, player: PlayerId): Pools => board.players[
 // What the rules add to what the board says: the numbers an effect may change. They are read through the components in
 // force, so they take the table and the pack; the old per-player functions do the counting until the effects move over.
 import '../domain/effects/points/invasion';
-import { applied } from '../domain/effects/apply';
 import { holderOf } from '../domain/effects/registry';
 import { productionDue, systemProduction } from '../domain/replay/production';
 import { capacity, dockFighterRoom, fleetCount, fleetLimit as fleetLimitOf } from '../domain/replay/transport';
@@ -45,6 +44,7 @@ import { planetValue as valueOf, readyPlanetIds, tradeGoodWorth as worthOf, type
 import type { DataPack, UpgradeId } from '../domain/types';
 import { linksOf } from '../domain/movement';
 import { areNeighbors } from '../domain/neighbors';
+import { appliedOn } from './abilities/registry';
 import { legacyKey, viewFor } from './legacyViews';
 import type { Table } from './types';
 
@@ -86,8 +86,7 @@ export function planetValue(table: Table, board: Board, pack: DataPack, player: 
 
 /** The trade goods the components of a player add with each planet they gain control of (Scavenge); the rules themselves add none. */
 export function tradeGoodsOnControl(table: Table, board: Board, pack: DataPack, player: PlayerId, planet: PlanetId): number {
-  const v = viewFor(table, board, pack, player);
-  return applied(pack, holderOf(v.game, v.state), 'tradeGoodsOnControl', 0, { planetId: planet }).value;
+  return appliedOn(table, board, pack, player, 'tradeGoodsOnControl', 0, { planetId: planet }).value;
 }
 
 /** What a trade good is worth to its player for a payment, after what they hold changed it. */

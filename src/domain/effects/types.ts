@@ -2,6 +2,7 @@
  * The contract of a component's effect (design §5.1). A step of the count never names a component: it asks a named
  * point for its value through `applied`, and the components of the player answer.
  */
+import type { HolderRule } from './holder';
 import type { AnyWarningCode, DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
 
 /**
@@ -204,6 +205,8 @@ export interface GainTurn {
 
 export interface ComponentEffect {
   tier: EffectTier;
+  /** On whose action it speaks (`holder.ts`); a file that says nothing is read from its printed trigger (`defaultHolder`). */
+  holder?: HolderRule;
   /** The LRR rule the effect stands on, numbered as in the rules tests; the id of the component itself when its printed text is the rule, as for every hint. */
   rule: string;
   /** passive: the changes to the points of the count, while the component is held. play: the same points, for the entry that names the component only (`appliedFor`, src/domain/effects/entryApply.ts). */

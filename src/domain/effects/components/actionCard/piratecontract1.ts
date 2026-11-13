@@ -5,8 +5,8 @@
  * A hint: the plan does not count neutral units (no state holds them), so there is nothing to place or to check. The
  * card is played as a component action; its reminder stands in that block (the data's window "Action").
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:piratecontract1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -7,8 +7,8 @@
  * of the pools with a choice: a `play` once an entry can carry the choices of a component it uses (see the
  * test.todo). Votes are not counted by the plan.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:pi';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['round'] };

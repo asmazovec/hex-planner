@@ -6,8 +6,8 @@
  * Hint. A choice of setup: the home system and the hero are chosen when the game is created, not by an entry of
  * the plan, so there is no step to show it at.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:the_tribuni';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

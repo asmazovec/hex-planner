@@ -5,8 +5,8 @@
  * Decided: a reminder of combat. The combats of any players are not simulated, and their end is not an entry of the
  * plan; the commodity or trade good gained is entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:crimsoncommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

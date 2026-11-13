@@ -5,8 +5,8 @@
  * A hint: the cards taken are entered as gains of the component action, and the replay already purges a relic whose
  * text purges it. The plan keeps no discard pile, so "up to 3" of it cannot be checked.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:codex';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

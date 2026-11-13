@@ -5,8 +5,8 @@
  * A hint. The replay checks no movement of ground forces outside a tactical action, so there is nothing to lift, and the
  * status entry holds no ground forces to move: the move is entered by hand. The reminder stands in the status block.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:bio';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

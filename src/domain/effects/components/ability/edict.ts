@@ -7,8 +7,8 @@
  * A hint: other players' tokens on the Mahact command sheet are not tracked; a token gained after a combat is added to
  * the fleet pool by hand and then raises the fleet limit as any token does.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:edict';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

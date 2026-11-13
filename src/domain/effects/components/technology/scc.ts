@@ -9,8 +9,8 @@
  * entry, which the replay plays for any component. A gravity rift left on the way still counts (tirules2, Jol-Nar,
  * Spatial Conduit Cylinder 2), as it does for every route.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:scc';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

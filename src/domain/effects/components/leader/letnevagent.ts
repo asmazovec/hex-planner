@@ -5,8 +5,8 @@
  * A hint of the combat: one more die is nothing the plan counts. Naming the agent in an entry's «Used» exhausts it,
  * as for any agent, so a second use in the round is warned of by the replay itself.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:letnevagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

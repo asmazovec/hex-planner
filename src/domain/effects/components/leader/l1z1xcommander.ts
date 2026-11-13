@@ -4,8 +4,8 @@
  *
  * Decided: a hint at the invasion. Planetary Shield and Bombardment are rolls of combat the plan does not count.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:l1z1xcommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

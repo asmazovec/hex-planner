@@ -9,11 +9,12 @@
  * the player. Pass 1: the hint it is today.
  */
 import '../../points/moments';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:regulations';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { fleetPoolMax: value => Math.min(value, 4) },

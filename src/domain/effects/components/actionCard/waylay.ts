@@ -5,8 +5,8 @@
  * A hint: the text is shown in the block of its step (combat, from the card's window), and nothing is counted or
  * lifted. Anti-fighter barrage is a roll; the plan simulates no combat and the losses are entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:waylay';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

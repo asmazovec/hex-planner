@@ -6,8 +6,8 @@
  * A hint with no step. The discard pile is not kept by the plan, and an action card played from this card is named in
  * the entry like any other card. Nothing is validated. (A `hintAt` on a legendary planet is not shown yet anyway.)
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'legendary:garbozia';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -6,8 +6,8 @@
  * Decided: a reminder of combat. Retreats are part of a combat the plan does not simulate; the losses of a battle are
  * entered by hand and the ships that leave it are not an entry the plan has.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:ralnelcommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

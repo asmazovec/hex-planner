@@ -7,8 +7,8 @@
  * nothing is counted or lifted. Whether it does anything depends on another player's next action, a choice the plan
  * does not make for them; the trade goods received are entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:extremeduress';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

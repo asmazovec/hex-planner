@@ -9,11 +9,12 @@
  * Pass 1: written as the hint it is today; the tests beside it say what it must do.
  */
 import '../../points/moments';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:minister_commerce';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { tradeGoodsOnReplenish: (value, ctx) => value + ctx.neighbours },

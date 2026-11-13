@@ -7,8 +7,8 @@
  * warned of (`fullPath` in src/domain/movement.ts). So no check is redundant or broken by the token; only the
  * highlight of reachable systems would change, and that needs wormhole tokens on the board first.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:gamma';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

@@ -8,8 +8,8 @@
  * plan does not know (the cards of my round are set by hand); "Against" readies only 3 planets once, entered by hand.
  * Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:checks';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

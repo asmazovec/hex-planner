@@ -7,8 +7,8 @@
  * beta wormhole raises no warning to lift. Only the highlight of what can still be reached ignores the card; it asks
  * no holdings.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:lost_star';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

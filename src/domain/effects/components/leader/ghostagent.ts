@@ -6,8 +6,8 @@
  * A hint: the agent makes systems adjacent after the activation. The plan already lets a route step between systems that
  * are not joined (a jump, one step, not warned of), so no check is lifted; the reminder stands in the block of the activation.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:ghostagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

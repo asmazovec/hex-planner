@@ -9,7 +9,7 @@ import { componentsOf } from '../components';
 import { EXTENSION_CODES } from '../rules/codes';
 import { STEPS } from '../rules/registry';
 import { WARNING_CODES } from '../types';
-import { COMPONENT_FILES, effectOf, effectsOf, fileOf } from './registry';
+import { COMPONENT_FILES, effectOf, effectOfFile, effectsOf, fileOf } from './registry';
 
 const full = loadPack(['pok', 'te']);
 /** Every set of expansions: a component one expansion replaces is in the catalogue only without it. */
@@ -104,11 +104,12 @@ describe('effect files', () => {
       expect(typeof file.id, path).toBe('string');
       expect(everyId, `${path} names ${file.id}`).toContain(file.id);
       expect(path).toBe(`./components/${fileOf(file.id)}.ts`);
-      expect(file.effect, path).toBeDefined();
+      expect(file.ability ?? file.effect, path).toBeDefined();
+      if (file.ability) expect(['self', 'others', 'anyone'], `${path} declares whose action it speaks in`).toContain(file.ability.holder);
       // The registry holds what the file wrote; a hint keeps the steps of the data unless the file gives its own.
       const pack = packs.find(candidate => effectOf(candidate, file.id) !== undefined)!;
-      expect(effectOf(pack, file.id)?.tier, path).toBe(file.effect.tier);
-      expect(effectOf(pack, file.id)?.waive, path).toBe(file.effect.waive);
+      expect(effectOf(pack, file.id)?.tier, path).toBe(effectOfFile(file).tier);
+      expect(effectOf(pack, file.id)?.waive, path).toBe(effectOfFile(file).waive);
     }
   });
 
@@ -126,7 +127,7 @@ describe('effect files', () => {
 
   test('every component that waives, changes a number or is played has a test of the interface beside it', () => {
     const missing = files
-      .filter(([, file]) => file.effect.waive || file.effect.modify || file.effect.play || file.effect.requirement || file.effect.gained || file.effect.lost || file.effect.restrict || file.effect.suppresses)
+      .filter(([, file]) => effectOfFile(file).waive || effectOfFile(file).modify || effectOfFile(file).play || effectOfFile(file).requirement || effectOfFile(file).gained || effectOfFile(file).lost || effectOfFile(file).restrict || effectOfFile(file).suppresses)
       .map(([path]) => path.replace(/\.ts$/, '.ui.test.tsx'))
       .filter(path => uiTests[path] === undefined);
     expect(missing).toEqual([]);

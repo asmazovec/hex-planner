@@ -3,8 +3,8 @@
  *
  * A hint without a step: it cancels another player's action card, whose entry is then entered without it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:sabo1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

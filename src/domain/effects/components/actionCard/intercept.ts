@@ -5,8 +5,8 @@
  * A hint at the combat step: retreats are part of the space combat, which the plan does not simulate; whether the
  * opponent retreats is entered by the moves of the next entries.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:intercept';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

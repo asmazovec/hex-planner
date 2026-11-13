@@ -5,8 +5,8 @@
  * Decided: hint. Sleeper tokens are not on the board of the plan, so there is nothing to replace; the reminder stands
  * at the activation.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:awaken';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

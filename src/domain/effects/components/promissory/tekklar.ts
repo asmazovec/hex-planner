@@ -7,8 +7,8 @@
  * counts or checks depends on them. Played, it is entered in the `spends` of the entry; its return to the N'orr player
  * (69.3) is done by the replay for every note whose text says so.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:tekklar';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

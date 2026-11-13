@@ -10,12 +10,13 @@
  * die and is not counted.
  */
 import '../../points/production';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:lw2';
 
 /** The infantry's PRODUCTION: 1 printed on the Arborec sheet (the replay), 2 with this card; only the Arborec infantry has one. */
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: '97.4',
   modify: { unitProduction: (value, ctx) => (ctx.unit === 'infantry' && value > 0 ? value + 1 : value) },

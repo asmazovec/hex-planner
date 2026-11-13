@@ -6,8 +6,8 @@
  * Decided: a hint with no step. Votes and outcomes are not counted; the planets exhausted in the agenda phase are
  * readied at its end (Exhausted, note 1: "Planets will also ready at the end of each agenda phase") before the next action phase, so nothing the plan counts changes.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:deadly_plot';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

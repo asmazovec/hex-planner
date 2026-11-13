@@ -5,8 +5,8 @@
  * A hint with no step: a definition for the other Obsidian components. Plot cards are not tracked; nothing is counted
  * or lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:marionettes';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

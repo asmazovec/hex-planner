@@ -5,8 +5,8 @@
  * A hint: Bombardment is a roll of dice in the invasion, which the plan does not simulate; the reminder stands in the
  * block of the landing. "Against" depends on the votes, which the plan does not count.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:conventions';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

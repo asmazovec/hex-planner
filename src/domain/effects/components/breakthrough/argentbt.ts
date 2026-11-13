@@ -8,8 +8,8 @@
  * ships move after the production), but a tactical entry holds neither tokens put down beside its active system nor
  * moves after its production; see the todos of its test.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:argentbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

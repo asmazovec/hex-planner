@@ -4,8 +4,8 @@
  * Decided: hint. The relic is drawn at random; the player enters it among what the agenda entry gains, which the
  * plan already counts. Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:minister_antiquities';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

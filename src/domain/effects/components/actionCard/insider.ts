@@ -4,8 +4,8 @@
  *
  * Decided: a hint with no step. Looking at cards changes nothing the plan counts; the agenda deck is not modelled.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:insider';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

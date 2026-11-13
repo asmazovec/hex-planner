@@ -6,8 +6,8 @@
  * holder's choice in another player's turn, and the opponents' strategy cards are not planned; the commodities it
  * moves can be entered as a transaction by hand. Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:<color>_ta';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card'] };

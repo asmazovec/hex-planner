@@ -5,8 +5,8 @@
  * A hint with no step: it answers another player's relic, which the plan does not follow; the mech placed is entered
  * by hand. Nothing it does lifts a check of the plan.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:naalu_mech_te';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

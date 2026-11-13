@@ -7,8 +7,8 @@
  * no place off the board to hold them; they come back at the start of a space combat, which is not simulated. When
  * they are placed, the fleet pool applies again (Homesick Phantom note 2), as the replay already checks.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:crimsonhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['production', 'combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['production', 'combat'] };

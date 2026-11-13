@@ -5,8 +5,8 @@
  * A hint at the combat step: the hits of a SPACE CANNON roll are dice the plan does not roll; the ship that survives
  * stays in the plan as entered.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:mjets1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

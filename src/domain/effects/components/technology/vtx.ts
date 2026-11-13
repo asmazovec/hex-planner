@@ -5,8 +5,8 @@
  * Decided: hint. Captured units and other players' reinforcements are not counted; the replay already exhausts the
  * card when its action is played.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:vtx';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

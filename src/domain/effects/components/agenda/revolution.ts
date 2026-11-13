@@ -7,8 +7,8 @@
  * (the losses of an adjustment), and it forbids nothing, so the reminder stands where research is chosen. "Against" is
  * a one-off choice of planets at the next strategy phase, made at the table.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:revolution';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card'] };

@@ -5,8 +5,8 @@
  *
  * A hint with no step: the plan does not keep where the token lies, so it cannot know whose text the card copies.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:vay';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

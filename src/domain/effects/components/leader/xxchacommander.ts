@@ -4,8 +4,8 @@
  *
  * Decided: a hint with no step. Votes are not planned, so nothing is counted or validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:xxchacommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

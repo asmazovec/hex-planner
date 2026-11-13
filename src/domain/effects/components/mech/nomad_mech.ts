@@ -5,8 +5,8 @@
  * A hint at the combat step: it cancels hits, and the plan does not play out combat. The adjacency of the Memoria to a
  * system with this mech is the flagship's own printed ability (and Memoria II's), not this card's.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:nomad_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

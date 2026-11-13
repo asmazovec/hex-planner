@@ -5,8 +5,8 @@
  * A hint for the combat. The plan rolls no dice: the losses of a combat are entered by the player (`losses`), so the
  * second ship destroyed is entered as a loss too. Nothing is checked, so nothing is lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:obsidianagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

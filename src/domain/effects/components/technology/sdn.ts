@@ -4,8 +4,8 @@
  *
  * A hint at the activation: the plan holds no exploration decks; what an exploration brings is entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:sdn';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

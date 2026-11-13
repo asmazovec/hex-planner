@@ -11,11 +11,12 @@
   * Pass 2: `planetResources` +2 on a planet holding the player's dock (`ctx.dock`). The dock's Production is taken from the
  * raised resources (`dockValue`), so `productionValue` is not raised again.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:helios2';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: '97.4',
   modify: { planetResources: (value, ctx) => (ctx.dock ? value + 2 : value) },

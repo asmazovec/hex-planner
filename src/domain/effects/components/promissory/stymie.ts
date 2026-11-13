@@ -7,8 +7,8 @@
  * plan has no entry of the holder for that moment and keeps no tokens of the other players in their reinforcements. Its
  * return to the Arborec player (69.3) is the replay's own, as for every note whose text returns it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:stymie';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['movement'] };

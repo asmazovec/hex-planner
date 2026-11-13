@@ -7,8 +7,8 @@
  * (Subatomic Splicer note 2) and cannot be produced into a home system under another player's ships in a space combat
  * (note 1), none of which the plan can check without that entry.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:subatomic';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

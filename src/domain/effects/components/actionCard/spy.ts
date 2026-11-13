@@ -4,8 +4,8 @@
  * A hint: the card taken is random and another player's hand is not known to the plan; the card received is entered
  * as a gain. Playing Spy itself discards it as any component action does.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:spy';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

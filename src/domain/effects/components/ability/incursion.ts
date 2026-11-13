@@ -8,8 +8,8 @@
  * active breaches is entered today as a jump, which is drawn and counted as one step and not warned of, so the
  * movement it gives already passes. Breaches are not wormholes (Incursion note 1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:incursion';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation', 'movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation', 'movement'] };

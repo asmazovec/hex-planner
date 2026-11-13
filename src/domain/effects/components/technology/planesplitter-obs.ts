@@ -9,8 +9,8 @@
  * researches the card. The replay does not make it yet (no warning for a technology that cannot be researched); its
  * test is red until the research step warns of it (see the test file).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:planesplitter-obs';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card'] };

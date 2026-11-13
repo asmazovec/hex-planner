@@ -7,11 +7,12 @@
  * space dock, its value pooled with the docks' (Titans of Ul, Hel-Titan note 2). "It cannot be transported" is the
  * check every structure already has (`structureAboard`); the cannon is combat.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:ht2';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: '97.4',
   // A PDS asks with a base of 0: the upgraded one produces 1, and the replay pools it with the docks' value.

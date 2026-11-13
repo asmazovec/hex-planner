@@ -4,8 +4,8 @@
  * A hint. In the plan every action is an entry of its own and no check counts the actions of a turn, so two actions in
  * a row are two entries and nothing is warned of; there is nothing to lift.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:fl';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['round'] };

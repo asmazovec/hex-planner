@@ -23,7 +23,7 @@ describe('promissory:stymie Stymie', () => {
   // so holding it changes nothing of the count.
   test('promissory:stymie held shows its reminder at movement and changes nothing of the board', () => {
     const table = bench({ faction: 'sol', start: { promissory: [`${id}@o1`] } });
-    expect(hintsAt(table.pack, endOf(table), 'movement', ['me']).map(c => c.id)).toContain(`${id}@o1`);
+    expect(hintsAt(table.pack, endOf(table), 'movement', ['rival']).map(c => c.id)).toContain(`${id}@o1`);
     expect(endOf(table).tokensOnMap).toEqual([]);
   });
 });

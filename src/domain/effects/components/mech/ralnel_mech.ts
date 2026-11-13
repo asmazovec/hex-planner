@@ -5,8 +5,8 @@
  * Decided: a reminder of the invasion. Rounds of ground combat are not simulated, so the moment the mech speaks of is
  * not an entry of the plan.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:ralnel_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

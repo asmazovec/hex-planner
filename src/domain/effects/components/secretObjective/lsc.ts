@@ -7,8 +7,8 @@
  * systems with my ships each touch an anomaly is a question of the board at the status phase, not a rule the plan
  * breaks. Scoring stays the player's choice in the status entry (`scored`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:lsc';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

@@ -6,8 +6,8 @@
  * A hint of its component action: the hits are dice, which the plan does not roll, and the amount spent is the
  * player's free choice. Playing it exhausts the breakthrough (the replay's own: "Exhaust this card").
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:saarbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

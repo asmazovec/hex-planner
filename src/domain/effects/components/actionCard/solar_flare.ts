@@ -5,8 +5,8 @@
  * Decided: a hint in the activation block (the step its window names). Space Cannon rolls are dice, which the plan does
  * not simulate; no movement rule of the replay speaks of Space Cannon, so nothing is lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:solar_flare';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

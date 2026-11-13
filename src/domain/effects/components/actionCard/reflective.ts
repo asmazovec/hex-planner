@@ -5,8 +5,8 @@
  * Decided: a hint in the combat block (the step its window names). Hits are dice and combat, which the plan does not
  * simulate; the losses are entered by the player.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:reflective';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

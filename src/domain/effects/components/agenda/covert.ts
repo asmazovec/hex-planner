@@ -7,8 +7,8 @@
  * Decided: hint. It is about the vote only (which card is voted on, unseen); the plan counts no votes, so nothing is
  * validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:covert';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

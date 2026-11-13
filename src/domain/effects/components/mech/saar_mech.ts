@@ -5,8 +5,8 @@
  * Today a hint of the invasion. The deploy changes what the plan counts (a mech from reinforcements on the planet, one
  * trade good spent), but an entry has no field for a deploy yet, so it is not replayed (see the test.todo of its test).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:saar_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

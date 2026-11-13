@@ -7,8 +7,8 @@
  * for the technology researched by a card nor a payment beside its production. The technology is entered in «Gained
  * and discarded» by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:reveal_prototype';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

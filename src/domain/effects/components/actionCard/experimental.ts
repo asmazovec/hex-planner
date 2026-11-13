@@ -6,8 +6,8 @@
  * A hint in the movement block, where its window is: Space Cannon fires dice, and the plan rolls none; the ships it
  * destroys are entered as losses.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:experimental';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

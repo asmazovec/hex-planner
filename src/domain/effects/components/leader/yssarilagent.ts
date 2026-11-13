@@ -4,11 +4,12 @@
  *
  * A hint: it borrows the text of another player's agent, which is chosen at the table.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:yssarilagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
 };

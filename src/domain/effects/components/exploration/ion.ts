@@ -8,8 +8,8 @@
  * warns of. The flip depends on which wormhole a ship chose (exploration cards, Ion Storm notes 2-3), which the plan
  * does not record either.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:ion';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

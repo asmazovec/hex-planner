@@ -6,8 +6,8 @@
  * A hint: the setup is the map's own: the map builder places the gate, and the off-map home is a system joined by its
  * wormhole alone (`offMapHomes`). Nothing is left to count when a plan is replayed.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:creuss_gate';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

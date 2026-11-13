@@ -8,8 +8,8 @@
  * only lifts checks, it adds none), the second is a production outside a tactical action, paid (Saar, Chaos Mapping
  * note 1), once on each of my turns, for which no entry has a field (see the test.todo of its test).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:cm';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['production'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['production'] };

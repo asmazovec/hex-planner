@@ -6,8 +6,8 @@
  * or a play is asked of the owner of the entry, and the entry is the other player's); the board change is entered by
  * hand. The reminder stands in the production block.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:arboreccommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['production'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['production'] };

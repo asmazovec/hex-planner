@@ -6,8 +6,8 @@
  * A hint. Dice and galvanize tokens are not counted by the plan (no combat is simulated), so nothing is validated or
  * lifted. The reminder stands in the battle in space and in the invasion (ground combat, Bombardment).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:galvanize';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };

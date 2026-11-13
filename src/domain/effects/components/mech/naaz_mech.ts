@@ -5,8 +5,8 @@
  * A hint at the combat step: the card turns into Z-Grav Eidolon only for the space combat, which the plan does not
  * play out.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:naaz_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

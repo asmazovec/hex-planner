@@ -6,11 +6,12 @@
  * by a new warning of the secret objectives held and scored beyond it. The objective drawn is entered as a gain. Pass 1
  * keeps it the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:obsidian';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { secretLimit: value => value + 1 },

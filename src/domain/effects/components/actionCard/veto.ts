@@ -4,8 +4,8 @@
  *
  * A hint: the agenda deck and the votes are not counted by the plan; nothing of the board changes.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:veto';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

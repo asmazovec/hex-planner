@@ -7,8 +7,8 @@
  * lifted. The outcome is an agreement with another player, unknown when planning, and coexistence of ground forces on
  * one planet is not modelled; the token discarded from the fleet pool is an adjustment entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:exchangeprogram';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

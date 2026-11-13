@@ -5,8 +5,8 @@
  * A hint. The plan holds a breakthrough as held or exhausted, not flipped, and an entry that uses a component names no
  * system, so the three mechs returned are removed by hand. The flipped side, Eidolon Maximum, is `mech:naaz_voltron`.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:naazbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

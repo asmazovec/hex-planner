@@ -5,11 +5,12 @@
  * A hint at combat: a hit after a round of space combat; the ships destroyed are entered as the losses of the
  * action.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:devotion';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
   hintAt: ['combat'],

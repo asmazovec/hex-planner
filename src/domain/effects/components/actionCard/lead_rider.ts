@@ -5,8 +5,8 @@
  * A hint without a step: votes and predictions are cast in the agenda phase, which the plan does not replay; the 3
  * command tokens a correct prediction gains are entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:lead_rider';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

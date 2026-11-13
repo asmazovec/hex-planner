@@ -5,8 +5,8 @@
  * Decided: a `hint`. Votes are cast in the agenda phase, which the plan does not replay; the trade goods spent there
  * are entered by hand. No step of a tactical action or of the round speaks of votes, so it has no `hintAt`.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:hacancommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

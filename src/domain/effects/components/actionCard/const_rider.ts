@@ -7,8 +7,8 @@
  * model, and the agenda phase has no block. A space dock it brings is entered by hand like any other structure placed
  * outside the rules' own moments.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:const_rider';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

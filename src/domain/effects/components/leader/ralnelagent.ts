@@ -6,8 +6,8 @@
  * cards drawn are unknown until drawn, so the player enters the one kept in «Taken and discarded»; the one given away
  * (it must be one of the two drawn, Kan Kip Rel note 1) never reaches the player's hand, and the plan does not check it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:ralnelagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

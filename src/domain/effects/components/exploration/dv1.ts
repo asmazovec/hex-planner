@@ -6,8 +6,8 @@
  * Tap or another effect (LRR 35.4), which the plan does not model, and the limit of three secrets scored (its note: a
  * fourth is drawn and shuffled back) is not counted. Nothing is validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:dv1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

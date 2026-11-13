@@ -5,11 +5,12 @@
  * where a production that uses PRODUCTION is paid. Not `unitCost`, which is per unit. Ruling: no reduction when no
  * unit uses its Production ability (Integrated Economy). Today a hint.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:st';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { productionCost: value => Math.max(0, value - 1) },

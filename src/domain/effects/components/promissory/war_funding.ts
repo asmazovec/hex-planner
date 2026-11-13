@@ -6,8 +6,8 @@
  * A hint of the combat: the plan rolls no dice, so nothing is counted or validated. Playing the note is the replay's
  * own business already: the Letnev cannot play their own note (69.2), another player returns it after use (69.3).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:war_funding';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

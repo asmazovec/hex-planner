@@ -6,11 +6,12 @@
  * warning of a sixth ship names the limit of five and nothing is listed as waived. Compare `leader/letnevhero.ts`,
  * which lifts the check itself.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:armada';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { fleetLimit: value => value + 2 },

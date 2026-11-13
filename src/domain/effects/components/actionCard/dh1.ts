@@ -5,8 +5,8 @@
  * A hint in the combat block: hits and Sustain Damage belong to the combat the plan does not simulate; a ship
  * destroyed is entered as a loss.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:dh1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

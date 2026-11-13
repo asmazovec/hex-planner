@@ -6,11 +6,12 @@
  * A hint at combat: it answers a unit destroyed in combat, which the plan does not simulate; named in `uses` it is
  * exhausted as any agent.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:yinagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
   hintAt: ['combat'],

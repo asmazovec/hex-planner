@@ -4,8 +4,8 @@
  *
  * A hint without a step: the plan does not order the turns of the players, so a skipped turn changes nothing it counts.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:crisis';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

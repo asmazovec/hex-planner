@@ -4,8 +4,8 @@
  *
  * A hint: votes are not planned. The agenda phase has no step of the replay, so the reminder has no block.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:zeal';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -7,8 +7,8 @@
  * technologies of a colour is a condition the player meets, not a rule research breaks. Scoring stays the player's
  * choice in the status entry (`scored`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:mlp';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

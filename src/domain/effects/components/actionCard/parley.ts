@@ -5,8 +5,8 @@
  * A hint at the invasion step: it undoes another player's commitment to land; that player's entry is entered with the
  * landing it ends with, so nothing is counted here.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:parley';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

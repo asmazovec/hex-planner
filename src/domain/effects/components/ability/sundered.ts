@@ -8,8 +8,8 @@
  * entered today as a jump and not warned of (src/domain/movement.ts), so a route through an alpha wormhole would have
  * no check to fall under. The home system of the Rebellion lies off the board (Sorrow).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:sundered';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

@@ -7,8 +7,8 @@
  * A hint: the tokens on the Mahact command sheet are not tracked. Its return to the Mahact player once played is the
  * replay's own (69.3, "Then, return this card").
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:scepter';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['round'] };

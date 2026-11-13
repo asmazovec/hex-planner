@@ -6,8 +6,8 @@
  * A hint with no step: the assimilator token is not kept by the plan, and a flagship's printed ability is not a
  * component of the catalogue (a known limit of the foundation).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:nekrobt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

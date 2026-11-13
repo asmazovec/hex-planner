@@ -5,8 +5,8 @@
  * Hint. The swap is entered as a spend and a gain of the status entry; prerequisites and colours are not checked
  * by the plan.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:radical';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

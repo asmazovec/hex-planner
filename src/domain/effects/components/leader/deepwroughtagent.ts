@@ -6,8 +6,8 @@
  * Hint. Prerequisites are not checked by the plan, so there is nothing to ignore, and it acts in another player's
  * research; the infantry placed into coexistence is not modelled.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:deepwroughtagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['card'] };

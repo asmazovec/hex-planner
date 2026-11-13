@@ -4,8 +4,8 @@
  *
  * A hint for the combat: the plan rolls no dice, so a bonus to combat rolls changes nothing it counts.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:obsidiancommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

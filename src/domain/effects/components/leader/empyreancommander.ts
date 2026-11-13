@@ -5,8 +5,8 @@
  *
  * A hint: it reacts to another player's move in that player's turn, which a waiver of one entry does not reach.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:empyreancommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['movement'] };

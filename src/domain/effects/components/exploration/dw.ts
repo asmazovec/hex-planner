@@ -5,8 +5,8 @@
  * card drawn; with the relic deck empty the card does nothing (exploration notes, Dead World 1). Frontier tokens are
  * explored with the ships that moved into the system, so the reminder stands with the movement.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:dw';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

@@ -9,8 +9,8 @@
  * and not warned of (src/domain/movement.ts), so a severed wormhole would have no check to fall under. The note is not
  * returned by the replay either: its text returns it at the end of the status phase, not "Then" after it is resolved.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:sever';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

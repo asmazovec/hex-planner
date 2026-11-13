@@ -13,7 +13,7 @@ describe('leader:cabalagent The Stillness of Stars', () => {
     quote(table.pack, id, 'convert their commodities to trade goods');
     expect(effect(table.pack, id).tier).toBe('hint');
     expect(effect(table.pack, id).hintAt).toEqual(['card']);
-    expect(hintsAt(table.pack, endOf(table), 'card', ['me']).map(c => c.id)).toContain(id);
+    expect(hintsAt(table.pack, endOf(table), 'card', ['rival']).map(c => c.id)).toContain(id);
   });
 
   test.todo('leader:cabalagent converts another player\'s commodities and captures a unit: other players\' replenishing and captured units are not modelled');

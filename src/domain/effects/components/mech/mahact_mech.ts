@@ -5,8 +5,8 @@
  *
  * A hint: it ends another player's turn in that player's turn, and the tokens in the fleet pool are not tracked by owner.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:mahact_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

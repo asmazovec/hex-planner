@@ -96,8 +96,8 @@ describe('hints: where a component the app does not count is shown', () => {
       const steps = stepsOfWindow(String(card.detail?.phase), String(card.detail?.window));
       expect(effect?.hintAt, card.id).toEqual(steps.length > 0 ? steps : undefined);
     }
-    expect(effectOf(pok, 'actionCard:veto')).toEqual({ tier: 'hint', rule: 'actionCard:veto' });
-    expect(effectOf(pok, 'relic:codex')).toEqual({ tier: 'hint', rule: 'relic:codex' });
+    expect(effectOf(pok, 'actionCard:veto')).toMatchObject({ tier: 'hint', rule: 'actionCard:veto' });
+    expect(effectOf(pok, 'relic:codex')).toMatchObject({ tier: 'hint', rule: 'relic:codex' });
   });
 
   describe('hintsAt', () => {

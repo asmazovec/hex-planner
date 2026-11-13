@@ -5,8 +5,8 @@
  * Hint. It acts in another player's activation, and its move is a choice of the Deepwrought player that the plan
  * does not replay.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:deepwrought_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['activation'] };

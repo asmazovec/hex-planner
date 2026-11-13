@@ -6,8 +6,8 @@
  * lifted. The plan simulates no combat and no retreat: a retreat is the other player's move, entered by hand as their
  * losses or their entry.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:rout';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

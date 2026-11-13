@@ -6,8 +6,8 @@
  * entry names only its owner's components, so the card has no entry of mine to be played by (a limit of the
  * foundation). The planets readied and exhausted are entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:reparations';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

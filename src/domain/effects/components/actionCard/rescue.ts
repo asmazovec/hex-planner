@@ -6,8 +6,8 @@
  * lifted. The move happens inside another player's tactical action; my ships move only in my own entries, and the
  * replay asks waivers of the owner of an entry only, so the card has nothing to lift or count yet.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:rescue';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

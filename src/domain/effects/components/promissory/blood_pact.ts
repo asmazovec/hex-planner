@@ -8,8 +8,8 @@
  * Empyrean player's units is a change of holdings, but only of a card played face up, and the holdings do not tell a
  * note in hand from one in a play area (69.5.1 is not modelled): the reminder stands at the activation.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:blood_pact';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

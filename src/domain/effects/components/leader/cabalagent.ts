@@ -6,8 +6,8 @@
  * Decided: hint. Another player's commodities and captured units are not counted; the reminder stands with the
  * strategy card that replenishes (Trade).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:cabalagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['card'] };

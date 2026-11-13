@@ -7,11 +7,12 @@
  * card's tokens are checked against those (`tokensOver`). Gaining a technology is not researching it (Nekro Virus,
  * Propagation note 1), so a technology entered as a gain is still held.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:propagation';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { researchTokens: () => 3 },

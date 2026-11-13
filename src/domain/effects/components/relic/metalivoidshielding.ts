@@ -5,8 +5,8 @@
  * A hint: Sustain Damage decides which hits destroy a ship (87), and the plan does not assign hits; the player enters
  * the ships lost in the battle as they fell. The text stands in the block of the battle.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:metalivoidshielding';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

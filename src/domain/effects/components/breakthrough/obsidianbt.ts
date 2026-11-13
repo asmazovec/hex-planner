@@ -7,8 +7,8 @@
  * from plot cards, which are not tracked; the trade goods gained in the status phase are entered by hand. Nothing is
  * checked, so nothing is lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:obsidianbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'status'] };

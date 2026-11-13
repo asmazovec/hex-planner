@@ -7,8 +7,8 @@
  * general rule of a note played (69.3), which the replay already applies to any "return this card" text. The reminder
  * stands in the battle in space and in the invasion, where a ground combat is fought.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:raisethestandard';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };

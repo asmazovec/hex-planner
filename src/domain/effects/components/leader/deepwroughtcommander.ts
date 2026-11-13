@@ -5,8 +5,8 @@
  * Hint. It lowers the cost of another player's research and pays the Deepwrought player for it; the plan does not
  * carry an effect across players in another player's entry.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:deepwroughtcommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['card'] };

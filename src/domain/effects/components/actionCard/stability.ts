@@ -5,8 +5,8 @@
  * A hint at the status step: no check of the plan asks which strategy card a player has in the next round, so keeping
  * the cards breaks nothing to lift.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:stability';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

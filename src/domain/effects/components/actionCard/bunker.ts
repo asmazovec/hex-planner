@@ -5,8 +5,8 @@
  * A hint in the invasion block (the step the data gives its window): it changes dice, and the plan rolls none. What
  * Bombardment destroys is entered by hand as losses, so there is nothing of the card to count or to check.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:bunker';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -5,8 +5,8 @@
  * A hint: one more die in a ground combat round. The plan rolls no dice, so nothing is counted or validated; the reminder
  * stands in the block of the invasion, where ground combat is fought.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:solagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

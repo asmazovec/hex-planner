@@ -5,8 +5,8 @@
  * A hint. Exploration is not planned (no entry explores and the exploration decks are not counted), so there is
  * nothing to check; the reminder has no step of its own.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:distant_suns';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

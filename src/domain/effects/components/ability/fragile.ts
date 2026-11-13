@@ -4,8 +4,8 @@
  * A hint in the blocks of the battle in space and of the invasion. The ability changes combat rolls only, and the plan
  * rolls no dice. (A `hintAt` on an ability is kept by the registry but not shown yet: a known limit of the foundation.)
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:fragile';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };

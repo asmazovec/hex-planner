@@ -7,8 +7,8 @@
  * is no holding of a player (LRR 35, 38; a relic fragment is an exploration card). What the exploration gives (a
  * relic, trade goods) is entered in «Gained and discarded» by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:probe';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -4,8 +4,8 @@
  *
  * A hint: hits and damaged ships come from dice the plan does not roll. The reminder stands in the block of the battle.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:raid_formation';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

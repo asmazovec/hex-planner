@@ -6,8 +6,8 @@
  * its reminder stands in the block of the invasion. Nothing is validated: the plan rolls no Bombardment and does
  * not know which ground forces its dice destroy. Scoring stays the player's choice in the status entry (`scored`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:mew';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

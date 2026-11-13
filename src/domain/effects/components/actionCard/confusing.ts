@@ -6,8 +6,8 @@
  * an election, which the plan does not model (votes and outcomes are not counted; a law that results is entered with
  * the entry's gains).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:confusing';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

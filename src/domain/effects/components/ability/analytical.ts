@@ -8,11 +8,12 @@
  * A technology that lacks two is still warned of, and so is a unit upgrade that lacks one.
 
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:analytical';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { prerequisites: (value, ctx) => (ctx.upgrade ? value : Math.max(0, value - 1)) },

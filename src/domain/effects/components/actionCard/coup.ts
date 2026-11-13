@@ -5,8 +5,8 @@
  * Decided: a hint with no step. It cancels another player's strategic action; the strategy cards of opponents are not
  * planned, so there is no entry it could cancel and no check it could lift.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:coup';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

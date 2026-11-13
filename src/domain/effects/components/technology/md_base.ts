@@ -6,8 +6,8 @@
  * A hint: it takes away the opponent's combat rolls, and the plan rolls no dice; ground combat is fought in the
  * invasion step, so the reminder stands there.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:md_base';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

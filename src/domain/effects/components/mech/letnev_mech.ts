@@ -6,8 +6,8 @@
  * resources are paid), which the plan counts; but it happens inside a round of ground combat and an entry has no
  * field for a deploy yet, so it is not replayed (see the test.todo of its test).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:letnev_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

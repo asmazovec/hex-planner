@@ -4,8 +4,8 @@
  *
  * A hint in the combat block: the plan keeps no damaged state of units, so there is nothing to repair in the count.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:emergency';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

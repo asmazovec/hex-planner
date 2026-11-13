@@ -8,8 +8,8 @@
  * takes it whenever Brilliant is in force. Nothing is listed as waived: a third technology is warned of against the
  * limit of 2. The point is `researchAsPrimary` of the research base.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:brilliant';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: id, modify: { researchAsPrimary: () => 1 } };
+export const ability: Ability = { holder: 'self', tier: 'passive', rule: id, modify: { researchAsPrimary: () => 1 } };

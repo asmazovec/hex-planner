@@ -5,8 +5,8 @@
  * A hint: a hit in ground combat is a loss of the opponent, which the plan neither fights nor counts among my losses.
  * Ground combat is fought in the invasion step.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:md_c1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

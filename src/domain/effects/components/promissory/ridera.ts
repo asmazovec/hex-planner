@@ -6,8 +6,8 @@
  * no step, so no block shows it. Its return to the Keleres player is the common rule of notes (69.3), already
  * replayed.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:ridera';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -5,8 +5,8 @@
  *
  * A hint: votes are not counted, and the token removed from a fleet pool is the other player's choice.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:gr';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

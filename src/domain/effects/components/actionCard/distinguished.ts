@@ -4,8 +4,8 @@
  *
  * A hint with no step: votes are not counted by the plan, and the agenda phase has no block.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:distinguished';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -6,8 +6,8 @@
  * A hint. The plan holds no frontier tokens and no exploration decks (what an exploration brings is entered by hand),
  * and a retreat is part of the combat it does not simulate.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:det';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation', 'combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation', 'combat'] };

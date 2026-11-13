@@ -5,8 +5,8 @@
  * one victory point (LRR 61.4), and it is scored in the agenda phase on the outcome of a vote, and the plan counts
  * no votes.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:dtd';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

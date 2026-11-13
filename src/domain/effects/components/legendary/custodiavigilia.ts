@@ -11,11 +11,12 @@
  */
 import '../../points/production';
 import { isMecatol } from '../../../mecatol';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'legendary:custodiavigilia';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   // PRODUCTION 3 of Mecatol Rex, asked only for a planet the holder controls (`planetProduction`). The Space Cannon and

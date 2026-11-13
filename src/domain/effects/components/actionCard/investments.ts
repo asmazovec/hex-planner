@@ -8,8 +8,8 @@
  * so what lies on a card and who picks it up is not counted. The strategy phase has no step, so the reminder has no
  * block.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:investments';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

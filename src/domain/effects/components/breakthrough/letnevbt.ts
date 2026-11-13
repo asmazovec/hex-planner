@@ -11,12 +11,13 @@
  * sentence is a roll of dice: a hint of the combat.
  *
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import { fastestOfGroup } from '../../helpers/movement';
 
 export const id = 'breakthrough:letnevbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   // Non-fighter ships only: a fighter has no move value of its own to lift and a unit of 0 does not fly.

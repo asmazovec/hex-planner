@@ -5,8 +5,8 @@
  *
  * A hint with no step: the plan holds no votes and no agenda outcome. The technology gained is entered as a gain.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:galactic_threat';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

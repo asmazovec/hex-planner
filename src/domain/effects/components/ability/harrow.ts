@@ -5,8 +5,8 @@
  * Decided: a hint at the invasion. Bombardment is a roll of dice in ground combat; the plan simulates no combat, so
  * nothing is counted or validated.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:harrow';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

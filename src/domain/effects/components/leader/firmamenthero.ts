@@ -6,8 +6,8 @@
  * A hint for the component action. Plot cards and the control tokens on them are not tracked, so nothing is counted;
  * the purge of the hero is what the replay already does when a hero is played.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:firmamenthero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

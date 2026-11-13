@@ -6,8 +6,8 @@
  * some infantry changes nothing the plan counts. (A `hintAt` on a mech is kept by the registry but not shown yet: a
  * known limit of the foundation.)
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:jolnar_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

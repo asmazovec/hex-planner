@@ -5,8 +5,8 @@
  * A hint: Anti-Fighter Barrage is a roll of dice in space combat (9, 78.3); the plan rolls none and enters only the
  * losses. The text stands in the block of the battle.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:metalivoidarmaments';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

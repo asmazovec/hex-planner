@@ -8,8 +8,8 @@
  * gained) done outside any action, with a choice of planets: a `play` once an entry can carry the choices of a
  * component it uses (see the test.todo).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:pa';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card', 'round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card', 'round'] };

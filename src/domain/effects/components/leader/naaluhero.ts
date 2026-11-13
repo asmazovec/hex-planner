@@ -5,8 +5,8 @@
  * A hint at the status phase: each other player chooses the note they give, so the plan cannot pick it; the notes
  * received are entered by the player. Named in `uses`, the hero is purged as every hero is (51.12).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:naaluhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

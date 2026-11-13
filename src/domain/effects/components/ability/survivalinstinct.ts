@@ -7,8 +7,8 @@
  * of mine outside my own tactical action (a rival's tactical action moves the rival's units only), so there is nothing
  * to check it against. The ships moved out of a gravity rift roll for removal (Survival Instinct note 1): a roll.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:survivalinstinct';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['activation'] };

@@ -7,11 +7,12 @@
  * ingress tokens are set on the map by hand.
  */
 import { startsInFracture } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:cabalbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { speed: (value, ctx) => (value > 0 && startsInFracture(ctx) ? value + 1 : value) },

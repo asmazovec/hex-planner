@@ -7,8 +7,8 @@
  * when it counts against capacity again (note 6). The plan does not play out combat, so outside it the mech is the
  * ground force the capacity and fleet pool checks count: nothing is lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:naaz_mech_space';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

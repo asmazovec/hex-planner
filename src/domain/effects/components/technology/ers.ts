@@ -6,8 +6,8 @@
  * entered in the plan do not change my totals (only the control of a planet they land on does), so the 4 trade goods
  * are not counted by the replay; the player enters them by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:ers';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id, hintAt: ['activation'] };

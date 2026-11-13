@@ -5,8 +5,8 @@
  * Decided: hint. The plan counts neither exploration nor sleeper tokens; the reminder stands where a planet is gained,
  * in the invasion.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:terragenesis';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

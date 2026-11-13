@@ -6,8 +6,8 @@
  * places in, or in a system adjacent to it, gets one infantry placed with it. The mech itself stays a hint: nothing is
  * counted when Star Forge is not used. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:muaat_mech';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

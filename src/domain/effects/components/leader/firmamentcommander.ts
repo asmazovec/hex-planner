@@ -6,8 +6,8 @@
  * hand, so there is nothing to count or to lift. The control of planets the plan does count (payment, production) is
  * untouched by the card: it speaks of scoring only (Firmament, Captain Aroz note 1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:firmamentcommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

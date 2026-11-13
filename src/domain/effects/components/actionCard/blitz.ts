@@ -5,8 +5,8 @@
  * A hint: BOMBARDMENT is a roll of the invasion, which the plan does not simulate. Its step, the invasion, comes from
  * the card's window.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:blitz';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

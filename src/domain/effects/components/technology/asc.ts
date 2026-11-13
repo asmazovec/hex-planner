@@ -5,8 +5,8 @@
  * A hint: the ship the opponent destroys is their loss in the battle, which the plan does not fight and which is not
  * counted among my losses (`losses` are mine only). The reminder stands in the combat block.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:asc';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

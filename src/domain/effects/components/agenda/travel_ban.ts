@@ -7,8 +7,8 @@
  * through a wormhole costs the same with the law as without. Only the highlight of where ships can reach
  * (`routeReach`) would change, and it knows no laws. "Against" is a one-off destruction of PDS, not modelled.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:travel_ban';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

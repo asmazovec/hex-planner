@@ -4,12 +4,12 @@
  * uses. Each step builds events, applies them and reports what it found; nothing here forbids anything. Only the
  * tactical action is resolved so far; the other actions are declared and wait for step 2b.
  */
-import { hintsAtSteps } from '../../domain/effects/registry';
+import { hintsAtSteps } from '../abilities/registry';
 import { playedBy } from '../../domain/effects/waivers';
 import { placeIn } from '../../domain/rules/registry';
 import type { Warning } from '../../domain/types';
 import type { Turn } from '../actions';
-import { legacyKey, legacyViews } from '../legacyViews';
+import { legacyViews } from '../legacyViews';
 import { blockersOf } from '../space';
 import type { Board, DataPack, Table } from '../types';
 import { activation } from './activation';
@@ -145,8 +145,7 @@ export function resolveTurn(table: Table, board: Board, turn: Turn, pack: DataPa
   waived(ctx, ctx.warnings, before, after, ctx.track.plays[turn.player]);
   const played = playedBy(ctx.entry);
   if (played.length > 0) ctx.track.plays[turn.player] = [...(ctx.track.plays[turn.player] ?? []), ...played];
-  const key = legacyKey(table, turn.player);
-  const hints = hintsAtSteps(pack, after.states.me, ctx.steps.map(s => s.step), [key]);
+  const hints = hintsAtSteps(table, ctx.board, pack, turn.player, ctx.steps.map(s => s.step));
   for (const result of ctx.steps) result.hints = hints.get(result.step) ?? [];
   const steps = [...ctx.steps, ...nested.flatMap(n => n.steps)].filter(s => s.events.length > 0 || s.violations.length > 0 || s.hints.length > 0);
   return { steps, board: ctx.board, track: ctx.track };

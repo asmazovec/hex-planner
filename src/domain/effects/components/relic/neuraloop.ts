@@ -6,8 +6,8 @@
  * A hint at the status step, where public objectives are revealed: the objective drawn is random and entered by hand,
  * and the relic purged is entered as spent. Nothing the plan counts is validated by it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:neuraloop';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

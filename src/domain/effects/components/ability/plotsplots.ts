@@ -8,8 +8,8 @@
  * limit, nor how many objectives are scored in a round, so there is no check to lift; the points scored are entered by
  * hand in the status entry, and plot cards are not tracked.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:plotsplots';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

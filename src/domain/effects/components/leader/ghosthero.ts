@@ -5,8 +5,8 @@
  *
  * A hint: the swap of two systems changes the map, and the replay keeps the map of the game fixed; nothing of it is counted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:ghosthero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

@@ -6,8 +6,8 @@
  * lifted. Neutral units are not modelled (no neutral player on the board), and a component action has no payment of
  * resources yet, so neither the cost nor the ships can be counted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:piratefleet';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

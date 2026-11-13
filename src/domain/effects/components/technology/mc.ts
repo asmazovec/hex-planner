@@ -8,11 +8,12 @@
  *
  * Pass 2: `modify` of `tradeGoodValue` (src/domain/effects/points/payment.ts): 2 instead of 1, for resources and influence.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:mc';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { tradeGoodValue: () => 2 },

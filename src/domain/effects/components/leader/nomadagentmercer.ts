@@ -8,8 +8,8 @@
  * player's agent at the end of a turn, so they are moved by hand. Exhausting the agent is what naming it in «Used»
  * does already (51.4).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:nomadagentmercer';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

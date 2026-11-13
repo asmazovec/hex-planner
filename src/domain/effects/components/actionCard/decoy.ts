@@ -7,8 +7,8 @@
  * action, which the plan does not open to my moves; the ground forces moved are entered by hand. Placing my ground
  * forces on a planet I control breaks no rule the replay checks.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:decoy';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'others', tier: 'hint', rule: id };

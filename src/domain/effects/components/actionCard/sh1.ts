@@ -4,8 +4,8 @@
  * A hint: cancelling hits belongs to the space combat, whose rolls the plan does not simulate (the losses are entered
  * by hand). Its step, the combat, comes from the card's window.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:sh1';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

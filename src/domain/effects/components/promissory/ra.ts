@@ -8,8 +8,8 @@
  * (90.5) and the return to the Jol-Nar player (69.3) is done by the replay for every note whose text says so; the
  * Jol-Nar player cannot play their own note (69.2, `ownPromissory`). Nothing else is checked.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:ra';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card'] };

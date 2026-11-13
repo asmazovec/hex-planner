@@ -6,8 +6,8 @@
  * after a change of faction, which the plan does not model; the trade goods set aside are entered by hand. Nothing is
  * checked, so nothing is lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:firmamentbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

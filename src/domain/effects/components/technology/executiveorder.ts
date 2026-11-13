@@ -6,8 +6,8 @@
  * Hint. The agenda and its vote are not counted. Exhausting it is the common rule of a card whose text says
  * "Exhaust this card", already replayed.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:executiveorder';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

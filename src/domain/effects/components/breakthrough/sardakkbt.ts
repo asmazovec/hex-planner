@@ -8,8 +8,8 @@
  * unit upgrade (tirules2, Sardakk N'orr, N'orr Supremacy 1), a check the plan does not make yet for any research.
  * (A `hintAt` on a breakthrough is kept by the registry but not shown yet: a known limit of the foundation.)
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:sardakkbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat', 'invasion'] };

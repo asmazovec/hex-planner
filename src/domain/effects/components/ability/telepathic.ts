@@ -4,8 +4,8 @@
  *
  * A hint at the round: the plan keeps no initiative order, so there is nothing to count or to check.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:telepathic';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['round'] };

@@ -7,8 +7,8 @@
  * condition "a planet you control" of a matching trait is not checked: which deck was used is not part of the entry,
  * and the plan counts no relic fragments, so there is nothing to validate.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:arch_expedition';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

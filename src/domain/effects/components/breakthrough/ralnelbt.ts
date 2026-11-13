@@ -6,8 +6,8 @@
  * Decided: a reminder of the round's flow (the pass). The cards other players discard are not known to the plan, and
  * the one taken when passing is entered by the player in «Taken and discarded» of the pass.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:ralnelbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['round'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['round'] };

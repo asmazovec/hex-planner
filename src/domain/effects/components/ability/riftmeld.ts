@@ -4,8 +4,8 @@
  *
  * Decided: hint. The plan keeps no captured units and does not check prerequisites yet.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:riftmeld';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card'] };

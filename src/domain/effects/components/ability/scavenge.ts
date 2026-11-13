@@ -6,12 +6,13 @@
  * number of an existing point: it needs a point asked where control is gained (see the report). Passive: the ability
  * is on the faction sheet and needs no mark in the entry.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import '../../points/invasion';
 
 export const id = 'ability:scavenge';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   // The point is asked once for each planet newly gained (invasion base), so two planets bring two trade goods.

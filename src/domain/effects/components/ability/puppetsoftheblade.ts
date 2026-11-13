@@ -7,8 +7,8 @@
  * another one mid-plan (the faction is fixed when the game starts, its home system and sheet with it), so nothing is
  * counted or checked; the player enters the change of components by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:puppetsoftheblade';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

@@ -7,8 +7,8 @@
  * The replay purges a relic whose text says "purge this card" whenever it is played, so using its first ability would
  * purge it: pass 2 must tell the two abilities apart (see the red test).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:emphidia';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

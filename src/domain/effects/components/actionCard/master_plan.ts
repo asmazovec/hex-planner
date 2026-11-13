@@ -6,8 +6,8 @@
  * to pass in the same turn, effects at the start or end of a turn do not trigger between the two actions) speak of
  * turns, which the replay does not track either.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:master_plan';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

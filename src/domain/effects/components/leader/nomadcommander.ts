@@ -7,11 +7,12 @@
  * Economy: Nomad, Navarch Feng note 2), and the flagship still counts towards the Production limit (note 1), which
  * `productionOver` checks by units, not by cost.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:nomadcommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { unitCost: (value, ctx) => (ctx.unit === 'flagship' ? 0 : value) },

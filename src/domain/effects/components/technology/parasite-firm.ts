@@ -6,8 +6,8 @@
  * place for it, so the player enters it by hand (an adjustment of the status phase). Nothing is checked, so nothing is
  * lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:parasite-firm';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['status'] };

@@ -8,8 +8,8 @@
  * landing; neither exists yet (see the test.todo of its test). Playing the note is already the replay's: the Saar
  * cannot play their own (69.2), another player gives it back after use (69.3).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:ragh';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion'] };

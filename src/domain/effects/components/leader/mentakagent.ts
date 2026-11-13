@@ -4,8 +4,8 @@
  *
  * Decided: a hint: it follows Pillage, which the plan does not count; the action card drawn is entered as a gain.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:mentakagent';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['transaction'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['transaction'] };

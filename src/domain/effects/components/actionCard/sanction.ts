@@ -6,8 +6,8 @@
  * Decided: a hint with no step. Votes and outcomes are not counted by the plan; the tokens other players lose depend
  * on how they voted, which the plan does not know. A player who loses a token enters it by hand (an adjustment).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:sanction';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

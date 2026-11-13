@@ -7,8 +7,8 @@
  * into the active system simply do not happen. Its return to the owner after it is played (69.3) is already done by
  * the replay for any note whose text returns it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:<color>_cf';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

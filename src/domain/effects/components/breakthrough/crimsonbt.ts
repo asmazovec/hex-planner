@@ -15,11 +15,12 @@
  * that does not move by itself alone.
  */
 import { plusSpeed, startsAtHome } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:crimsonbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { speed: (value, ctx) => (startsAtHome(ctx) ? plusSpeed(1)(value) : value) },

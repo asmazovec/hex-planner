@@ -6,8 +6,8 @@
  * Decided: a reminder with no step. It speaks of building the map before the game, which the plan does not replay;
  * the map is built on the «Game» screen, and breaches are not on the plan's board.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:sorrow';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

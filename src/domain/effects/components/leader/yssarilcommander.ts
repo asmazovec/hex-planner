@@ -4,11 +4,12 @@
  *
  * A hint: looking at another player's cards changes nothing the plan counts.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:yssarilcommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'others',
   tier: 'hint',
   rule: id,
 };

@@ -6,11 +6,12 @@
  * A hint: which card each player shows and the random discards are not known to the plan; the cards taken are
  * entered by hand. Played, it is purged as any hero.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:yssarilhero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'hint',
   rule: id,
 };

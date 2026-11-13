@@ -8,11 +8,12 @@
  * move by itself (value 0) stays as it is.
  */
 import { startsAtHome, startWormholes } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:slipstream';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: {

@@ -5,8 +5,8 @@
  *
  * Hint. Votes, predictions and what the other players vote are not counted; the agenda phase has no step.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:keleresheroodlynn';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

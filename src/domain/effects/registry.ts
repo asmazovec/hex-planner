@@ -6,11 +6,16 @@
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
 import type { ComponentDef, DataPack, Game, GameState, Holdings, RuleStep } from '../types';
+import type { Ability } from '../../game/abilities/types';
+import { defaultHolder, speaksIn, type HolderRule } from './holder';
 import type { ComponentEffect, Modifiers } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
 
-/** What the file of a component exports: its catalogue id and its effect. */
-export interface ComponentFile { id: string; effect: ComponentEffect }
+/** What the file of a component exports: its catalogue id and its effect, written for the old per-player state (`effect`) or for the kernel (`ability`, with its `holder`). */
+export interface ComponentFile { id: string; effect?: ComponentEffect; ability?: Ability }
+
+/** The effect a file exports, in whichever shape. */
+export const effectOfFile = (file: ComponentFile): ComponentEffect => (file.ability ?? file.effect)!;
 
 const files = import.meta.glob<ComponentFile>(['./components/*/*.ts', '!./components/*/*.test.ts'], { eager: true });
 
@@ -76,7 +81,8 @@ function registryOf(pack: DataPack): Registry {
     const written = new Map(unitUpgradeEffects(pack).filter(([id]) => defaults.has(id)));
     // The files follow in the order of their paths, the same on every machine.
     for (const path of Object.keys(files).sort()) {
-      const { id, effect } = files[path];
+      const id = files[path].id;
+      const effect = effectOfFile(files[path]);
       if (!defaults.has(id)) continue;
       const generated = written.get(id);
       // A file of a unit upgrade adds to its generated numbers; a hint written without steps keeps those of the data.
@@ -236,18 +242,39 @@ export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, player
   return hintsAtSteps(pack, board, [step], players).get(step) ?? [];
 }
 
-/** The reminders of several steps at once: what the players hold is looked through once, not once for each step. */
+/** On whose action a component speaks: what its file declares, else what its card prints (`holder.ts`). */
+export function holderRuleOf(pack: DataPack, id: string): HolderRule {
+  const declared = effectOf(pack, id)?.holder;
+  if (declared) return declared;
+  const def = componentById(pack, id);
+  return def ? defaultHolder(def) : 'self';
+}
+
+/**
+ * The reminders of several steps at once: what the players hold is looked through once, not once for each step. `players`
+ * are those the steps concern, the actor first (`stepPlayers`); a component that speaks in another player's action
+ * (`holder: 'others'`) is reminded of through every other player who holds it, whether or not they stand in the step.
+ */
 export function hintsAtSteps(pack: DataPack, board: GameState, steps: RuleStep[], players: string[]): Map<RuleStep, ComponentDef[]> {
   const { order } = registryOf(pack);
-  const held = new Set<string>();
-  for (const player of players) {
+  const actor = players[0];
+  const holders = new Map<string, Set<string>>();
+  for (const player of ['me', ...Object.keys(board.rivals ?? {})]) {
     const state = player === 'me' ? board : board.rivals?.[player];
     if (!state) continue;
     // A secret objective in hand, and a public one revealed and not yet scored by the player, are reminded of at the status step.
     const objectives = [...state.holdings.secrets, ...(board.revealed ?? []).filter(id => !state.holdings.scored.includes(id))];
     const sheet = inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control }).filter(id => SHEET_KIND.test(id));
-    for (const id of [...readyComponents(pack, state.holdings), ...objectives, ...sheet]) if (effectOf(pack, id)?.tier === 'hint') held.add(id);
+    for (const id of [...readyComponents(pack, state.holdings), ...objectives, ...sheet]) {
+      // A note of one's own is not played from one's own hand (LRR 69.2).
+      if (noteAddress(id) === player) continue;
+      if (effectOf(pack, id)?.tier === 'hint') (holders.get(id) ?? holders.set(id, new Set()).get(id)!).add(player);
+    }
   }
-  const sorted = [...held].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!);
-  return new Map(steps.map(step => [step, sorted.filter(id => effectOf(pack, id)?.hintAt?.includes(step) === true).flatMap(id => componentById(pack, id) ?? [])]));
+  const sorted = [...holders.keys()].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!);
+  const speaks = (id: string): boolean => {
+    const rule = holderRuleOf(pack, id);
+    return [...holders.get(id)!].some(player => speaksIn(rule, player === actor, players.includes(player)));
+  };
+  return new Map(steps.map(step => [step, sorted.filter(id => effectOf(pack, id)?.hintAt?.includes(step) === true && speaks(id)).flatMap(id => componentById(pack, id) ?? [])]));
 }

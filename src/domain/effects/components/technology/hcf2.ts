@@ -7,12 +7,13 @@
  * card halves that excess: a `modify` of `excessFighters`, so two excess fighters weigh as one ship and the warning
  * names the halved number. The count rounds a half up.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:hcf2';
 
 /** The rule of the generated unit upgrade (LRR 97.4) stays: the merged effect keeps the file's `rule`. */
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: '97.4',
   modify: { excessFighters: value => value / 2 },

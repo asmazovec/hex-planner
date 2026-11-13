@@ -7,8 +7,8 @@
  * purged by it (51.12), and the relic is entered in «Взято и сброшено». The two secondary abilities performed within
  * this one action, paid from the reinforcements, are not modelled: a secondary is an entry of its own, a turn apart.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:naazhero';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

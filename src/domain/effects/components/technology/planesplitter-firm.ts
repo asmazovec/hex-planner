@@ -6,8 +6,8 @@
  * plan, so the plan cannot open it from an entry; if it is open already the card does nothing (Firmament, Planesplitter
  * note 1). No check is lifted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:planesplitter-firm';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['card'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['card'] };

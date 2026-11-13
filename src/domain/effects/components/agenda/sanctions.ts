@@ -7,11 +7,12 @@
  * first, then the law changes its number. "Against" discards a random card, entered by the player. Pass 1: the hint it
  * is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:sanctions';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { handLimit: value => Math.min(value, 3) },

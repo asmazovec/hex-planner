@@ -6,8 +6,8 @@
  * A hint in the combat block: dice and the opponent's choice. The plan simulates no combat; what is destroyed is
  * entered as losses.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:courageous';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

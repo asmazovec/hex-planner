@@ -9,11 +9,12 @@
  * warns `noProduction`, and `productionOver` counts the wormholes. `productionCost` (the combined cost, asked when a
  * unit used PRODUCTION) falls by 1 per wormhole of the system.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:ghostbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: {

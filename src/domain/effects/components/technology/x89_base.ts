@@ -6,8 +6,8 @@
  * says "Exhaust this card"). What it destroys are other players' infantry, which my count knows only by hand and which
  * matter only to a ground combat the plan does not simulate.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:x89_base';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

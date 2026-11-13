@@ -21,7 +21,7 @@ describe('leader:arboreccommander Dirzuga Rophal', () => {
   // Checks: the unlocked commander is shown in the production block of its player.
   test('leader:arboreccommander unlocked is shown at production', () => {
     const table = bench({ faction: 'arborec', expansions: ['pok'], start: { leaders: { [id]: 'unlocked' } } });
-    expect(hintsAt(table.pack, endOf(table), 'production', ['me']).map(c => c.id)).toContain(id);
+    expect(hintsAt(table.pack, endOf(table), 'production', ['rival']).map(c => c.id)).toContain(id);
   });
 
   test.todo('leader:arboreccommander produces 1 unit in another player\'s turn: the plan has no entry of mine inside another player\'s tactical action to hold it');

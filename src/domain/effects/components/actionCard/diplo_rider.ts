@@ -6,8 +6,8 @@
  * A hint with no step: whether the prediction is correct depends on the votes, which the plan does not model, and the
  * agenda phase has no block. The tokens it puts down are the other players'.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:diplo_rider';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

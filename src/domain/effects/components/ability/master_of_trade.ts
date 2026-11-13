@@ -7,12 +7,13 @@
  * secondary still costs its token. Pass 1: still the hint it is today.
  */
 import { CARD } from '../../../strategy';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import '../../points/status';
 
 export const id = 'ability:master_of_trade';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { strategyCost: (value, ctx) => (ctx.secondary && ctx.card === CARD.trade ? 0 : value) },

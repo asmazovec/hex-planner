@@ -7,8 +7,8 @@
  * the map only. An unjoined step of a route is a jump the route check does not warn of, so no warning changes; the
  * reach is a test.todo until the movement graph knows the laws.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:nexus';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['movement'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['movement'] };

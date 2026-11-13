@@ -7,8 +7,8 @@
  * Decided: a hint. It stops Pillage, which takes another player's trade goods after their transaction: the plan does
  * not count Pillage, so there is nothing to lift. Its return to the Mentak player on activation is not modelled.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:pop';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['transaction'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['transaction'] };

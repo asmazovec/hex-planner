@@ -6,8 +6,8 @@
  * the plan does not model: no check of the replay speaks of a card cancelled or of an assimilator token. The reminder
  * stands where my action cards are played (`component`).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:bastioncommander';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['component'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['component'] };

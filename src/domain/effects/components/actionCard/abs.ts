@@ -6,8 +6,8 @@
  * end (LRR 8.4), so nothing the plan counts in the next round changes. The agenda phase has no step of its own, so the
  * card keeps the steps of its data: none.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:abs';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

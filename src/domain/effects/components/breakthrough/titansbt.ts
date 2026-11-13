@@ -6,8 +6,8 @@
  *
  * Decided: hint. Coexistence, action card draws and sleeper tokens are not counted by the plan.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:titansbt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['invasion', 'status'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['invasion', 'status'] };

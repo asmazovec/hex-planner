@@ -6,8 +6,8 @@
  * Decided: a hint at the space combat: who wins and what was destroyed are outcomes the plan does not simulate; the
  * trade good and the ship are entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:so';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['combat'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['combat'] };

@@ -7,7 +7,7 @@ import { id } from './dh1';
 const table = (hand: string[] = [id]) => bench({ faction: 'sol', start: { hand } });
 const reminders = (hand: string[], step: Parameters<typeof hintsAt>[2]) => {
   const game = table(hand);
-  return hintsAt(game.pack, endOf(game), step, ['me']).map(component => component.id);
+  return hintsAt(game.pack, endOf(game), step, ['rival']).map(component => component.id);
 };
 
 describe('actionCard:dh1 Direct Hit', () => {

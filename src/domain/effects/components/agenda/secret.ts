@@ -4,8 +4,8 @@
  * A hint: the vote is at the table, and the secret objective drawn is entered as any card drawn, in the entry's
  * `gains`; nothing is counted or checked by the card itself.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:secret';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

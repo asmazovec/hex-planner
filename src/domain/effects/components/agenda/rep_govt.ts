@@ -6,8 +6,8 @@
  * Decided: hint. "For" is about votes, which the plan does not count. "Against" exhausts the cultural planets of those
  * who voted against, and the plan does not know the votes; the player marks them exhausted by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:rep_govt';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };

@@ -10,11 +10,12 @@
  * (`activeNextToAnomaly`: the system itself does not count, note 2). A unit with no move value of its own is left alone.
  */
 import { activeNextToAnomaly, plusSpeed } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:as';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
+  holder: 'self',
   tier: 'passive',
   rule: id,
   modify: { speed: (value, ctx) => (activeNextToAnomaly(ctx) ? plusSpeed(1)(value) : value) },

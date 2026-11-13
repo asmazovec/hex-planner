@@ -8,8 +8,8 @@
  * "This technology cannot be researched" lifts nothing: it is a restriction, a check that holds for everyone who
  * researches the card. The replay does not make it yet; its test is red until the research step warns of it.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:parasite-obs';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id, hintAt: ['activation'] };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id, hintAt: ['activation'] };

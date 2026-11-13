@@ -5,8 +5,8 @@
  * A hint: it changes who may score an objective, and the plan does not check which objectives a player may score;
  * the points scored are entered by the player.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:classified';
 
-export const effect: ComponentEffect = { tier: 'hint', rule: id };
+export const ability: Ability = { holder: 'self', tier: 'hint', rule: id };
