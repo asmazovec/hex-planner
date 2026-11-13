@@ -15,6 +15,8 @@ export interface PaymentBlockProps {
   manual: boolean;
   /** What the payment must cover; resources unless an expedition part costs influence. */
   kind?: PaymentKind;
+  /** The block's name when it is not the payment of the action. */
+  label?: string;
   /** The payer's faction: values are then counted after their components (attachments, a trade good worth more); without it the printed ones. */
   faction?: string;
   onManual: (open: boolean) => void;
@@ -24,7 +26,7 @@ export interface PaymentBlockProps {
 }
 
 /** Shows the automatic payment; the manual choice of planets and trade goods opens on request. */
-export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resources', faction, onManual, onChange, children }: PaymentBlockProps) {
+export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resources', label, faction, onManual, onChange, children }: PaymentBlockProps) {
   const { t } = useTranslation();
   const view = faction === undefined ? undefined : { faction };
   const value = (id: string): number => planetValue(pack, state, id, kind, view);
@@ -45,7 +47,7 @@ export function PaymentBlock({ need, payment, state, pack, manual, kind = 'resou
 
   return (
     <Section
-      label={t('plan.payment.title')} title={t('plan.payment.summary', { need, paid })} warnings={children}
+      label={label ?? t('plan.payment.title')} title={t('plan.payment.summary', { need, paid })} warnings={children}
       headAction={<button type="button" onClick={() => onManual(!manual)}>{manual ? t('plan.payment.auto') : t('plan.payment.manual')}</button>}
     >
       {!manual && <span className="muted">{parts.join(', ') || t('plan.payment.nothing')}</span>}

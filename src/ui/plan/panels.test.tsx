@@ -287,7 +287,7 @@ const CASES: Record<WarningCode, Warning['params']> = {
   // combat-order, invasion, structures
   shipOnPlanet: { planetId: 'nestphar', unit: 'cruiser' },
   landingOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },
-  custodians: { planetId: 'nestphar' },
+  custodians: { planetId: 'nestphar', needed: 6, paid: 0 },
   structureLimit: { kind: 'pds', planetId: 'nestphar', count: 2 },
   structureNotControlled: { planetId: 'nestphar' },
   structureOutsideSystem: { planetId: 'nestphar', systemId: '1,0' },

@@ -10,6 +10,9 @@ export const isMecatol = (planetId: string): boolean => MECATOL_PLANETS.includes
 /** The planet id of Mecatol Rex that stands on this map: the Thunder's Edge one when its tile is in the centre. */
 export const mecatolPlanetOf = (game: Game): string => (Object.values(game.map).some(tile => tile.split('@')[0] === MECATOL_TILE_TE) ? MECATOL_PLANET_TE : MECATOL_PLANET);
 
+/** The influence that removes the custodians token (27.2). */
+export const CUSTODIANS_COST = 6;
+
 const toTe = (id: string): string => (id === MECATOL_PLANET ? MECATOL_PLANET_TE : id);
 
 function migrateEntry(entry: Entry): Entry {
