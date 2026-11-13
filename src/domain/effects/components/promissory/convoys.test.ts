@@ -3,7 +3,8 @@ import type { Act, Entry, Opponent } from '../../../types';
 import { adjust, bench, componentAction, effect, endOf, expectStanding, expectWaived, FAR, HOME, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './convoys';
 
-const HACAN: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
+// Not a Hacan: Guild Ships (their ability) lifts a deal with them for anyone (Hacan, Guild Ships 2).
+const HACAN: Opponent = { id: 'o1', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@o1`;
 const deal = (): Act => ({ kind: 'transaction', with: 'o1', give: { tradeGoods: 1 }, get: {} });
 /** A tactical action into the empty system next to home, with a transaction with the Hacan, who sits far away: no neighbours. */
