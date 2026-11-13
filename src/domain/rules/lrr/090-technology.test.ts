@@ -148,6 +148,15 @@ describe('LRR 90 Technology', () => {
   test.todo('90.21: Nekro upgrades units by type — not modelled: faction technologies are not tracked');
   test.todo('90.22: an assimilated technology counts for objectives — not modelled: objectives are not tracked');
 
+  test('90.10: a technology of another faction is warned of when researched, the own one is not', () => {
+    const real = loadPack(['pok', 'te']);
+    const foreign = secondary(CARD.technology, { researched: ['technology:l4'], payment: { planets: [], tradeGoods: 0 } });
+    const own = secondary(CARD.technology, { researched: ['technology:qdn'], payment: { planets: [], tradeGoods: 0 } });
+    const game = rulesGame({ entries: [foreign, own], game: { faction: 'hacan' } });
+    expect(codesOf(game, real, foreign)).toContain('researchForeign');
+    expect(codesOf(game, real, own)).not.toContain('researchForeign');
+  });
+
   test('90 note 3: a faction with its own unit upgrade gets that one, never the generic upgrade', () => {
     const base = loadPack([]);
     expect(unitStats('sol', 'carrier', true, base)?.name).toBe('Advanced Carrier II');

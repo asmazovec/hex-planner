@@ -22,10 +22,10 @@ test('agenda:grant_reallocation the technology chosen lowers the fleet pool belo
   expectShownStanding('fleetPool');
 });
 
-// Checks: Gravity Drive has no prerequisite: no fleet pool warning on the screen.
+// Checks: Sarween Tools has no prerequisite: no fleet pool warning on the screen.
 // Why the check is NOT redundant here: no prerequisite, no token removed.
 test('agenda:grant_reallocation a technology with no prerequisite shows no fleet pool warning', () => {
-  const agenda = elected('technology:gd');
+  const agenda = elected('technology:st');
   showWarnings(table(agenda), agenda);
   expectNotShown('fleetPool');
 });

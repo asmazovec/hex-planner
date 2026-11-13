@@ -253,7 +253,7 @@ describe('Construction', () => {
     const before = stateOf(start([])).state;
     const { state, warningsByEntry } = stateOf(start([entry]));
     expect(state.systems[HOME].cruiser).toBe((before.systems[HOME].cruiser ?? 0) + 1);
-    expect(Object.values(state.ground).reduce((sum, units) => sum + (units.infantry ?? 0), 0)).toBe(3);
+    expect(Object.values(state.ground).reduce((sum, units) => sum + (units.infantry ?? 0), 0)).toBe(3 + (pack.factions.jolnar.startUnits.infantry ?? 0)); // bought plus the start infantry on the home planets
     // A cruiser and three infantry cost 4; Jol-Nar starts with Sarween Tools, which takes 1 off the combined cost.
     expect(warningsByEntry[entry.id]).toContainEqual({ code: 'shortResources', params: { needed: 3, paid: pack.planets[NAR].resources } });
   });
@@ -322,7 +322,7 @@ describe('Warfare', () => {
     const planet = pack.tiles[home].planetIds[0];
     const entry = secondary(6, { production: { systemId: home, units: { infantry: 2 } } });
     const { state } = stateOf(start([entry], { extra: { faction: 'ghost', map: { '2,2': pack.factions.ghost.gateTile! } } }));
-    expect(state.ground[planet]?.infantry).toBe(2);
+    expect(state.ground[planet]?.infantry).toBe(2 + (pack.factions.ghost.startUnits.infantry ?? 0)); // bought plus the start infantry
     expect(state.ground['2,2']).toBeUndefined();
   });
 
@@ -330,7 +330,7 @@ describe('Warfare', () => {
     const entry = secondary(6, { production: { systemId: HOME, units: { infantry: 3 }, ground: { [NAR]: { infantry: 2 } } } });
     const { state } = stateOf(start([entry]));
     expect(state.ground[NAR]?.infantry).toBe(2);
-    expect(state.ground[JOL]?.infantry).toBe(1);
+    expect(state.ground[JOL]?.infantry).toBe(1 + (pack.factions.jolnar.startUnits.infantry ?? 0)); // the rest plus the start infantry
   });
 
   test('the home slot is the home tile: found on the map, or by its own id when only the gate stands there', () => {

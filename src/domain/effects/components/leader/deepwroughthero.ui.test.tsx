@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { choose, play, showTurn, uiBench } from '../../../../ui/testing/effects';
+import { chooseFromSlot, play, showTurn, uiBench } from '../../../../ui/testing/effects';
 import type { Entry, EntryBody, Opponent } from '../../../types';
 import { bench, endOf, planned, quote } from '../kit';
 import { id } from './deepwroughthero';
@@ -26,7 +26,7 @@ test('leader:deepwroughthero the technology to purge is chosen in the editor and
   quote(deepwrought.pack, id, 'purge all cards with the same name owned by other players');
   const live = showTurn(deepwrought, turn);
   await play('Ta Zern');
-  await choose('Gravity Drive');
+  await chooseFromSlot('Technology', 'Gravity Drive');
   expect(live.entry().choices).toEqual({ technology: GRAVITY_DRIVE });
   const end = endOf({ pack: deepwrought.pack, game: live.game() });
   expect(end.holdings.technologies).not.toContain(GRAVITY_DRIVE);

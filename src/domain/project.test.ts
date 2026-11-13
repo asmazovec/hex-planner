@@ -289,7 +289,8 @@ describe('project', () => {
       withId('m', entry(tactical({ moves: [{ from: 'jord', units: { infantry: 1 } }] }))),
     ]);
     const r = run(g);
-    expect(r.state.ground.jord.infantry).toBe(1);
+    // Sol's own two start infantry already stand on Jord (LRR 43.1): 2 + 2 landed - 1 picked up.
+    expect(r.state.ground.jord.infantry).toBe(3);
     expect(r.state.systems.B.infantry).toBe(1);
   });
 
@@ -345,11 +346,12 @@ describe('project', () => {
     });
 
     test('over the limit across two planets: one warning with totals, and both landings stand as entered', () => {
-      const g = gameWith([ // Sol starts with two infantry at home
+      const g = gameWith([ // Sol's start infantry stand on Jord, so the two that arrive are set up in space
+        setup('H', { infantry: 2 }),
         withId('l', entry(tactical({ systemId: 'H', landings: [landing('jord', 2), landing('arc', 1)] })))]);
       const r = run(g);
       expect(landWarnings(r.warningsByEntry.l)).toEqual([{ code: 'landingOverLimit', params: { unit: 'infantry', wanted: 3, available: 2 } }]);
-      expect(r.state.ground.jord.infantry).toBe(2);
+      expect(r.state.ground.jord.infantry).toBe(4); // the two start infantry and the two landed
       expect(r.state.ground.arc?.infantry).toBe(1);
       expect(r.state.systems.H?.infantry).toBeUndefined();
     });
@@ -499,7 +501,8 @@ describe('project', () => {
     const g = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, pack);
     g.map = { H: 'home@2' };
     const s = run(g).state;
-    expect(s.systems.H).toEqual({ carrier: 1, infantry: 2 });
+    expect(s.systems.H).toEqual({ carrier: 1 });
+    expect(s.ground.jord).toEqual({ infantry: 2 }); // ground forces stand on the home planet (LRR 43.1)
     expect([s.tactic, s.fleet, s.strategy, s.tradeGoods, s.vp]).toEqual([3, 3, 2, 0, 0]);
     expect(readyResources(s, pack)).toBe(5);
     expect(readyInfluence(s, pack)).toBe(3);
@@ -897,7 +900,7 @@ describe('adjustment with ground units by planet', () => {
     const add = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: 3 }, arc: { infantry: 1 } } } }, 'strategy');
     const lost = entry({ type: 'adjustment', label: '', kind: 'losses', delta: { ground: { jord: { infantry: -1 } } } });
     const s = run(game([add, lost])).state;
-    expect(s.ground.jord).toEqual({ infantry: 2 });
+    expect(s.ground.jord).toEqual({ infantry: 4 }); // two start infantry + 3 - 1
     expect(s.ground.arc).toEqual({ infantry: 1 });
   });
 
@@ -918,8 +921,8 @@ describe('adjustment with ground units by planet', () => {
     const add = entry({ type: 'adjustment', label: '', delta: { ground: { jord: { infantry: 2 } } } }, 'strategy', 'done');
     const lost = entry({ type: 'adjustment', label: '', kind: 'losses', delta: { ground: { jord: { infantry: -1 } } } });
     const g = game([add, lost]);
-    expect(project(g, g.plans[0], 'now', pack).state.ground.jord).toEqual({ infantry: 2 });
-    expect(project(g, g.plans[0], 'forecast', pack).state.ground.jord).toEqual({ infantry: 1 });
+    expect(project(g, g.plans[0], 'now', pack).state.ground.jord).toEqual({ infantry: 4 });
+    expect(project(g, g.plans[0], 'forecast', pack).state.ground.jord).toEqual({ infantry: 3 }); // two start infantry on Jord
   });
 });
 
@@ -939,14 +942,14 @@ describe('production on a chosen planet', () => {
   test('ground units go to the planet they were bought on', () => {
     const s = run(homeGame(build({ arc: { infantry: 2 } }))).state;
     expect(s.ground.arc).toEqual({ infantry: 2 });
-    expect(s.ground.jord ?? {}).toEqual({});
+    expect(s.ground.jord).toEqual({ infantry: 2 }); // only Sol's start infantry
   });
 
   test('what has no planet goes to the first planet I control, as before', () => {
     const s = run(homeGame(build({ arc: { infantry: 1 } }))).state;
     expect(s.ground.arc).toEqual({ infantry: 1 });
-    expect(s.ground.jord).toEqual({ infantry: 1 });
-    expect(run(homeGame(build())).state.ground.jord).toEqual({ infantry: 2 });
+    expect(s.ground.jord).toEqual({ infantry: 3 }); // two start infantry and the one bought
+    expect(run(homeGame(build())).state.ground.jord).toEqual({ infantry: 4 });
   });
 
   test('a planet list beyond the production places only what was produced', () => {

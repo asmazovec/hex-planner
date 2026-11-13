@@ -215,3 +215,10 @@ export function expectShownStanding(code: AnyWarningCode): void {
 export function expectNotShown(code: AnyWarningCode): void {
   expect(shown(code)).toEqual([]);
 }
+
+/** Answers a long choice of components (a technology among all): opens the slot of that name, finds the component by its name, takes it. */
+export async function chooseFromSlot(slot: string, name: string): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: slot }));
+  await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), name);
+  await userEvent.click(await screen.findByRole('button', { name: `Choose ${name}` }));
+}

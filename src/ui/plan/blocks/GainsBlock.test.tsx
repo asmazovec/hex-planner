@@ -244,7 +244,8 @@ test('a component action offers first what its owner holds ready; the rest says 
   // The search alone would put the other crown first.
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'crown');
   await screen.findByTestId('component-relic:thalnos');
-  expect(offered()).toEqual(['relic:thalnos', 'relic:emphidia']);
+  // Exploration cards are offered too (Tomb of Emphidia names the crown): the held relic stands first, the rest after it.
+  expect(offered()).toEqual(['relic:thalnos', 'exploration:toe', 'relic:emphidia']);
   expect(within(picker()).getByTestId('component-relic:thalnos')).not.toHaveTextContent('not held');
   const other = within(picker()).getByTestId(`component-${offered().at(-1)}`);
   expect(other).toHaveTextContent('not held');

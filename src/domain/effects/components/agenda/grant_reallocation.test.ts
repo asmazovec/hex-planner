@@ -9,10 +9,10 @@ const elected = (technology: string): Entry =>
 const table = (entries: Entry[], cruisers = 0) =>
   bench({ faction: 'sol', expansions: ['pok'], units: cruisers ? { [HOME]: { cruiser: cruisers } } : {}, entries });
 
-/** E-Res Siphons asks for 2 cybernetic technologies, Light/Wave Deflector for 3 propulsion, Gravity Drive for none. */
+/** E-Res Siphons asks for 2 cybernetic technologies, Light/Wave Deflector for 3 propulsion, Sarween Tools for none (Gravity Drive asks for 1 propulsion). */
 const ERS = 'technology:ers';
 const LWD = 'technology:lwd';
-const GD = 'technology:gd';
+const ST = 'technology:st';
 
 describe('agenda:grant_reallocation Research Grant Reallocation', () => {
   // "The elected player gains any 1 technology of their choice. Then, for each prerequisite on that technology, they
@@ -47,12 +47,12 @@ describe('agenda:grant_reallocation Research Grant Reallocation', () => {
     expectNone(warningsOf(t, agenda), 'poolNegative');
   });
 
-  // Checks: Gravity Drive has no prerequisite, so the fleet pool keeps its 3 tokens.
+  // Checks: Sarween Tools has no prerequisite, so the fleet pool keeps its 3 tokens.
   // Why the check is NOT redundant here: the number of tokens is the number of prerequisites, which here is none.
   test('agenda:grant_reallocation a technology with no prerequisite costs no token', () => {
-    const t = table([elected(GD)]);
+    const t = table([elected(ST)]);
     expect(endOf(t).fleet).toBe(3);
-    expect(endOf(t).holdings.technologies).toContain(GD);
+    expect(endOf(t).holdings.technologies).toContain(ST);
   });
 
   // Checks: the card is played by the agenda entry.

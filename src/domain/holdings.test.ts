@@ -114,7 +114,8 @@ describe('holdings derived from entries', () => {
   test('gains of an entry add to the owner\'s holdings by kind, and spends remove one copy', () => {
     const draw = change({ gains: ['actionCard:bribery', 'actionCard:bribery', 'relic:nanoforge', 'technology:gd', 'secretObjective:ans', 'publicObjective:corner', 'promissory:<color>_cf', 'leader:solhero', 'breakthrough:solbt'] });
     const give = change({ spends: ['actionCard:bribery', 'relic:nanoforge', 'promissory:<color>_cf'] });
-    const { state } = forecast(rulesGame({ entries: [draw, give] }), loadPack(['pok', 'te']));
+    // The breakthrough is the player's own faction's: one of another faction is not held by gaining it.
+    const { state } = forecast(rulesGame({ entries: [draw, give], game: { faction: 'sol' } }), loadPack(['pok', 'te']));
     expect(state.holdings).toEqual({
       technologies: ['technology:gd'], hand: ['actionCard:bribery'], relics: [], promissory: [], leaders: { 'leader:solhero': 'unlocked' },
       breakthrough: 'held', scored: ['publicObjective:corner'], secrets: ['secretObjective:ans'], found: [], exhausted: [],
