@@ -1,7 +1,7 @@
 /**
  * The board seen through the old model, and back: every player's `GameState` of a board (mine with the rivals, laws and
  * the rest "on my state only"), the `Game` those states are asked with, and the events that take one set of states to
- * another. While the old code lives the existing component effects run on these views, and the differential test
+ * another. While the old code lives the existing component effects run on these views, and the oracle
  * compares the two models through them. Goes with the old code (step 5 of the move).
  */
 import { componentById, noteAddress } from '../domain/components';

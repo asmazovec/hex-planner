@@ -2,7 +2,7 @@
  * The calculation of a game's state, as the domain and its tests ask for it. The state is computed by the game kernel
  * (src/game, entered through src/state/projection.ts): there is one implementation. What does not compute a state (the
  * measures of a board, the costs of production, the routes) is re-exported from src/domain/replay/ as before. The old
- * replay's timeline is only the oracle of src/game/resolve/differential*.
+ * old replay is gone: its last record is the frozen oracle of src/game/resolve (oracle.test.ts, recorded by record.test.ts).
  */
 import { blockersOf, routeReach as reachOf, type Blockers } from './movement';
 import { boardBefore, project as kernelProject, type Timeline } from '../state/projection';
@@ -20,7 +20,7 @@ export {
   timelineOf, forgetTimelines, tacticalNumbers, type Filter, type Frame, type Timeline,
 } from '../state/projection';
 
-/** Test hook: told of every game a plan of which is projected (the differential test of the game kernel registers one). Nothing watches in an ordinary run. */
+/** Test hook: told of every game a plan of which is projected (the oracle recorder registers one). Nothing watches in an ordinary run. */
 let projectWatcher: ((game: Game, pack: DataPack) => void) | undefined;
 export const watchProjects = (next: typeof projectWatcher): void => { projectWatcher = next; };
 

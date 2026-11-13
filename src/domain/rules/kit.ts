@@ -121,8 +121,8 @@ export function adjust(delta: Extract<EntryBody, { type: 'adjustment' }>['delta'
 }
 
 /**
- * A watcher is told once of every game a rules test asks the replay about, with its pack: the differential test of the
- * game kernel (src/game/resolve/differential.test.ts) registers one, so that every tactical action the LRR tests build
+ * A watcher is told once of every game a rules test asks the replay about, with its pack: the oracle recorder of the
+ * game kernel (src/game/resolve/record.test.ts) registers one, so that every tactical action the LRR tests build
  * is also resolved on the kernel and compared. Nothing watches in an ordinary run.
  */
 export type GameWatcher = (game: Game, pack: DataPack) => void;

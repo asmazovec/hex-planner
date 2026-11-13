@@ -1,10 +1,8 @@
 /**
- * The frozen oracle of the kernel: what the old replay and the kernel agreed on, recorded once for the whole corpus of
- * games the tests build, so that the old replay (and the component files written for it) can go. For every plan and
- * filter, each entry gets the hash of the board after it (read through the old model, every player) and of its
- * warnings. An entry whose old frame and kernel frame agreed is flagged `1`; a few differ by a documented exclusion
- * and are flagged `0` (their hash is the kernel's). The fixture is `__oracle__/corpus.json`, written by
- * `ORACLE_RECORD=1 npx vitest run src/game/resolve/differential.test.ts` while the old replay still exists.
+ * The frozen oracle of the kernel: for the whole corpus of games the tests build, for every plan and filter, each entry gets the
+ * hash of the board after it (read through the old model, every player) and of its warnings. The fixture is
+ * `__oracle__/corpus.json.gz`, written by `ORACLE_RECORD=1 npx vitest run src/game/resolve/record.test.ts` from the kernel itself
+ * (the old replay is gone; the first recording was checked against it). Flag `1` marks an entry on which the old replay agreed.
  */
 import { createHash } from 'node:crypto';
 import { loadPack } from '../../data/loadPack';

@@ -1,6 +1,5 @@
 import { bench, describe } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { timeline as oldTimeline } from '../domain/replay/timeline';
 import type { Game } from '../domain/types';
 import { forgetTimelines, projectionOf, timelineOf } from './projection';
 
@@ -17,11 +16,9 @@ if (raw) {
     ...game,
     plans: game.plans.map(p => (p.id === plan.id ? { ...p, rounds: p.rounds.map(r => (r === last ? { ...r, entries: r.entries.map(e => ({ ...e, label: `${n}` })) } : r)) } : p)),
   } as Game);
-  const oldWhole = oldTimeline(game, plan, 'forecast', pack);
   let n = 0;
 
   describe(`the real game, plan "${plan.name}", ${plan.rounds.flatMap(r => r.entries).length} entries`, () => {
-    bench('old replay: the whole plan', () => { oldTimeline(game, plan, 'forecast', pack); });
     bench('kernel: the whole plan, states of every frame read', () => {
       forgetTimelines();
       const line = timelineOf(game, plan, 'forecast', pack);
@@ -29,10 +26,6 @@ if (raw) {
       for (const f of line.frames) { void f.before; void f.after; }
     });
     bench('kernel: the whole plan, end and warnings only (what the screens read first)', () => { forgetTimelines(); projectionOf(timelineOf(game, plan, 'forecast', pack)); });
-    bench('old replay: after an edit of the last round', () => {
-      const edited = edit(++n);
-      oldTimeline(edited, edited.plans.find(p => p.id === plan.id)!, 'forecast', pack, oldWhole);
-    });
     forgetTimelines();
     timelineOf(game, plan, 'forecast', pack);
     bench('kernel: after an edit of the last round (the timeline of the open game kept)', () => {
