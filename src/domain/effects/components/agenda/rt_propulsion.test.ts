@@ -83,6 +83,6 @@ describe('agenda:rt_propulsion Research Team: Propulsion', () => {
   test('agenda:rt_propulsion is played with an entry and waives one missing prerequisite', () => {
     const { pack } = table(research('technology:fl'));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

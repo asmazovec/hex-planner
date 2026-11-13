@@ -127,6 +127,7 @@ describe('the waiver codemod: what the owner held before the turn', () => {
     ["ctx.before.holdings.leaders[id] === 'unlocked'", "ctx.had.card(id) === 'ready'"],
     ['ctx.before.holdings.hand.includes(id)', 'ctx.had.holds(id)'],
     ['ctx.before.holdings.relics.includes(id)', 'ctx.had.holds(id)'],
+    ["Object.entries(ctx.shared.attachments ?? {}).some(([planet, cards]) => cards.includes(id) && ctx.before.control[planet] === 'me')", 'ctx.had.planets().some(planet => planet.attached.includes(id))'],
     ['Number(warning.params.needed) <= ctx.before.commodities', 'Number(warning.params.needed) <= ctx.had.commodities'],
     ["ctx.before.control[String(warning.params.planetId)] === 'me'", 'ctx.before.planets[String(warning.params.planetId)]?.owner === ctx.holder'],
   ])('%s is read from the board before the turn', (from, to) => {

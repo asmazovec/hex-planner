@@ -10,6 +10,7 @@
  */
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'agenda:rt_warfare';
 
@@ -21,11 +22,15 @@ export const effect: ComponentEffect = {
   play: ({ state, id: played }) => {
     if (!state.holdings.exhausted.includes(played)) state.holdings.exhausted.push(played);
   },
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: prerequisitesMissing.code,
     rule: 'When the owner of this planet researches technology, they may exhaust this card to ignore 1 red prerequisite.',
     // One warfare symbol is all that is missing, and the entry's player controls the planet the card is attached to.
     when: (warning, ctx) => Number(warning.params.missing) === 1 && String(warning.params.symbols) === 'warfare ×1'
-      && Object.entries(ctx.shared.attachments ?? {}).some(([planet, cards]) => cards.includes(id) && ctx.before.control[planet] === 'me'),
+      && ctx.had.planets().some(planet => planet.attached.includes(id)),
   }],
 };

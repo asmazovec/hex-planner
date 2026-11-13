@@ -83,6 +83,6 @@ describe('agenda:rt_cybernetic Research Team: Cybernetic', () => {
   test('agenda:rt_cybernetic is played with an entry and waives one missing prerequisite', () => {
     const { pack } = table(research('technology:td'));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

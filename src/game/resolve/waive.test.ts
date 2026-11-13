@@ -55,3 +55,20 @@ describe('the native waiver pass', () => {
     expect(effect(make('hacan').pack, 'ability:guild_ships').permit?.[0]).toMatchObject({ code: 'notNeighbor', partner: true });
   });
 });
+
+/** The files whose `when` still reads the old per-player state: they are asked through the bridge until they are moved. The list only shrinks. */
+const OLD_SHAPE = [
+  'ability/aetherpassage', 'ability/imperia', 'actionCard/blackmarketdealing', 'actionCard/strategize1', 'agenda/minister_industry', 'agenda/schematics', 'breakthrough/bastionbt',
+  'breakthrough/solbt', 'breakthrough/winnubt', 'breakthrough/xxchabt', 'breakthrough/yssarilbt', 'exploration/frln1', 'leader/arborechero', 'leader/argentagent', 'leader/keleresagent',
+  'leader/nomadhero', 'leader/saaragent', 'leader/saarcommander', 'leader/sardakkcommander', 'leader/winnuagent', 'leader/winnuhero', 'leader/yincommander', 'mech/argent_mech',
+  'mech/naaz_voltron', 'promissory/nanolink', 'publicObjective/vast_reserves', 'technology/htp', 'technology/ie',
+];
+
+describe('the files that waive', () => {
+  test('no component file keeps a waiver on the old state except the ones listed, which the bridge still serves', async () => {
+    const { COMPONENT_FILES } = await import('../../domain/effects/registry');
+    const old = Object.entries(COMPONENT_FILES).filter(([, file]) => (file.effect?.waive?.length ?? 0) > 0).map(([path]) => path.replace(/^.*components\//, '').replace(/\.ts$/, '')).sort();
+    expect(old).toEqual([...OLD_SHAPE].sort().filter(name => old.includes(name)));
+    expect(old.filter(name => !OLD_SHAPE.includes(name))).toEqual([]);
+  });
+});

@@ -102,10 +102,11 @@ export function convertFile(source: string, holderFor: (id: string) => HolderRul
 // Waivers: `waive` of an effect on the old state becomes `permit` of an ability on the kernel.
 
 /** What a `when` may read of the old context and still mean the same on the native one: the entry, the pack, the round's primaries. */
-const SAME_CONTEXT = new Set(['entry', 'pack', 'primaries', 'had', 'routeBlockKind', 'oneShipShort', 'speedWithoutAnomalies', 'crossesRift', 'hasAnomaly', 'blockedByShips', 'othersShipsIn', 'onlyUnits', 'shipsOnly', 'playerNear', 'mecatolSlot', 'routeBlockKind', 'oneShipShort', 'speedWithoutAnomalies', 'crossesRift', 'hasAnomaly', 'blockedByShips', 'othersShipsIn', 'onlyUnits', 'shipsOnly', 'playerNear', 'mecatolSlot', 'before', 'holder', 'id']);
+const SAME_CONTEXT = new Set(['entry', 'pack', 'primaries', 'had', 'before', 'board', 'my', 'of', 'key', 'playerOf', 'home', 'neighbours', 'commodityValue', 'planetsIn', 'systemOf', 'holder', 'id']);
 
 /** What a `when` asks of the owner's old state before the turn, in the words of the board before it (`ctx.had`, `ctx.before`). */
 const BEFORE_READS: [RegExp, string][] = [
+  [/Object\.entries\(ctx\.shared\.attachments \?\? \{\}\)\.some\(\(\[planet, cards\]\) => cards\.includes\((\w+)\) && ctx\.before\.control\[planet\] === 'me'\)/g, 'ctx.had.planets().some(planet => planet.attached.includes($1))'],
   [/ctx\.before\.holdings\.leaders\[(\w+)\] === 'unlocked'/g, "ctx.had.card($1) === 'ready'"],
   [/ctx\.before\.holdings\.(?:hand|relics)\.includes\((\w+)\)/g, 'ctx.had.holds($1)'],
   [/ctx\.before\.commodities/g, 'ctx.had.commodities'],

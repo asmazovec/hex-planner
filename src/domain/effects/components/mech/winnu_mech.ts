@@ -7,6 +7,7 @@
  * the action gained, where a Reclaimer stands at the end of the action (ruling 4), one per Reclaimer (ruling 3).
  */
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'mech:winnu_mech';
 
@@ -14,18 +15,22 @@ export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
   landingOffer: { structures: ['pds', 'spacedock'] },
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: 'unitsMissing',
     rule: 'you may place 1 PDS or 1 Space Dock from your reinforcements on this planet',
     // One structure per Reclaimer standing on the planet at the end of an action that gained it.
-    when: ({ params, step }, { entry, before, after }) => {
+    when: ({ params, step }, ctx) => {
       const planetId = String(params.planetId ?? '');
       if (step !== 'invasion' || !planetId || (params.unit !== 'pds' && params.unit !== 'spacedock')) return false;
-      if (before.control[planetId] === 'me' || after.control[planetId] !== 'me') return false;
-      const placed = entry?.type === 'tactical'
-        ? entry.landings.filter(landing => landing.planetId === planetId).reduce((sum, landing) => sum + (landing.structures?.pds ?? 0) + (landing.structures?.spacedock ?? 0), 0)
+      if (ctx.before.planets[planetId]?.owner === ctx.holder || ctx.board.planets[planetId]?.owner !== ctx.holder) return false;
+      const placed = ctx.entry?.type === 'tactical'
+        ? ctx.entry.landings.filter(landing => landing.planetId === planetId).reduce((sum, landing) => sum + (landing.structures?.pds ?? 0) + (landing.structures?.spacedock ?? 0), 0)
         : 0;
-      return placed <= (after.ground[planetId]?.mech ?? 0);
+      return placed <= (ctx.my.unitsOn(planetId).mech ?? 0);
     },
   }],
 };

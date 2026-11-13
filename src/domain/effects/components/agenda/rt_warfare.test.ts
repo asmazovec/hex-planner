@@ -83,6 +83,6 @@ describe('agenda:rt_warfare Research Team: Warfare', () => {
   test('agenda:rt_warfare is played with an entry and waives one missing prerequisite', () => {
     const { pack } = table(research('technology:da'));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual([CODE]);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual([CODE]);
   });
 });

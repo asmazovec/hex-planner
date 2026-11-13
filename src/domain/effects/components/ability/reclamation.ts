@@ -10,6 +10,7 @@
  */
 import { isMecatol } from '../../../mecatol';
 import type { ComponentEffect } from '../../types';
+import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'ability:reclamation';
 
@@ -18,12 +19,16 @@ export const effect: ComponentEffect = {
   rule: id,
   // The landing block offers the structures straight from the reinforcements: no flight has to bring them.
   landingOffer: { structures: ['pds', 'spacedock'] },
-  waive: [{
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  permit: [{
     code: 'unitsMissing',
     rule: 'You may place 1 PDS and 1 space dock from your reinforcements on Mecatol Rex',
     // One PDS and one space dock, on Mecatol Rex, in the action that gained control of it.
-    when: ({ params, step }, { before, after }) =>
+    when: ({ params, step }, ctx) =>
       step === 'invasion' && isMecatol(String(params.planetId)) && (params.unit === 'pds' || params.unit === 'spacedock')
-      && Number(params.missing) <= 1 && before.control[String(params.planetId)] !== 'me' && after.control[String(params.planetId)] === 'me',
+      && Number(params.missing) <= 1 && ctx.before.planets[String(params.planetId)]?.owner !== ctx.holder && ctx.board.planets[String(params.planetId)]?.owner === ctx.holder,
   }],
 };

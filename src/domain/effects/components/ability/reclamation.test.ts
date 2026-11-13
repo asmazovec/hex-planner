@@ -79,6 +79,6 @@ describe('ability:reclamation Reclamation', () => {
   test('ability:reclamation is a passive effect that waives the structures missing from the space area', () => {
     const { pack } = table('winnu', reclaim({}));
     expect(effect(pack, id).tier).toBe('passive');
-    expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['unitsMissing']);
+    expect(effect(pack, id).permit?.map(w => w.code)).toEqual(['unitsMissing']);
   });
 });
