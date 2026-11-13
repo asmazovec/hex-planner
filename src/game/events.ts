@@ -52,6 +52,9 @@ export type GameEvent =
   | PlayerFact<'CardExhausted', { card: ComponentId }>
   | PlayerFact<'CardReadied', { card: ComponentId }>
   | PlayerFact<'CardUnlocked', { card: ComponentId }>
+  /** A note laid faceup in its holder's play area, and taken back from it (69.3). */
+  | PlayerFact<'CardLaidInPlay', { card: ComponentId }>
+  | PlayerFact<'CardTakenBack', { card: ComponentId }>
   | PlayerFact<'CardPurged', { card: ComponentId }>
   | PlayerFact<'TechnologyResearched', { technology: ComponentId }>
   // Objectives, points, laws.

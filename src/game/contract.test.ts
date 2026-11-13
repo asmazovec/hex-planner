@@ -67,6 +67,8 @@ describe('every event is handled', () => {
     CardExhausted: { type: 'CardExhausted', player: 'p1', card: 'c' },
     CardReadied: { type: 'CardReadied', player: 'p1', card: 'c' },
     CardUnlocked: { type: 'CardUnlocked', player: 'p1', card: 'c' },
+    CardLaidInPlay: { type: 'CardLaidInPlay', player: 'p1', card: 'c' },
+    CardTakenBack: { type: 'CardTakenBack', player: 'p1', card: 'c' },
     CardPurged: { type: 'CardPurged', player: 'p1', card: 'c' },
     TechnologyResearched: { type: 'TechnologyResearched', player: 'p1', technology: 't' },
     ObjectiveRevealed: { type: 'ObjectiveRevealed', objective: 'o' },

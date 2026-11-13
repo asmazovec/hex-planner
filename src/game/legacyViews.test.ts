@@ -3,6 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import { setPlayerFaction } from '../domain/players';
 import { startOf } from '../domain/replay/timeline';
+import { applyAll } from './apply';
 import { normalState } from './compare';
 import { boardFromLegacy, boardOf, legacyState, tableOf } from './fromLegacy';
 import { legacyKey } from './legacyViews';
@@ -37,5 +38,28 @@ describe('a board in the old model and back', () => {
 
   test('every player is seen under the old key: me for the viewer', () => {
     expect(table.players.map(p => legacyKey(table, p.id))).toEqual(['me', ...game.opponents.map(o => o.id)]);
+  });
+});
+
+describe('a note laid in the play area (LRR 69.3)', () => {
+  const game = fourPlayers();
+  const table = tableOf(game);
+  const note = 'promissory:convoys@o1';
+
+  test('the play area of the old holdings is a state of the card on the board, both ways', () => {
+    const state = startOf(game, pack);
+    state.holdings.promissory.push(note);
+    state.holdings.inPlay = [note];
+    const board = boardFromLegacy(table, state, pack);
+    expect(board.players[table.viewer].cards[note]?.state).toBe('inPlay');
+    expect(legacyState(table, board, pack, table.viewer).holdings.inPlay).toEqual([note]);
+  });
+
+  test('a note played from the hand is an event: it lies in the play area, it is not exhausted and not lost', () => {
+    const board = boardFromLegacy(table, startOf(game, pack), pack);
+    const held = applyAll(board, [{ type: 'CardGained', player: table.viewer, card: note }, { type: 'CardLaidInPlay', player: table.viewer, card: note }]);
+    expect(held.players[table.viewer].cards[note]).toEqual({ state: 'inPlay', count: 1 });
+    const back = applyAll(held, [{ type: 'CardTakenBack', player: table.viewer, card: note }]);
+    expect(back.players[table.viewer].cards[note]).toEqual({ state: 'ready', count: 1 });
   });
 });

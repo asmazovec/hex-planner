@@ -211,6 +211,8 @@ function step(board: Board, event: GameEvent, out: Shortfall[]): Board {
     case 'CardExhausted': return cardChange(event.player, event.card, hold => ({ ...hold, state: 'exhausted' }));
     case 'CardReadied': return cardChange(event.player, event.card, hold => (hold.state === 'exhausted' ? { ...hold, state: 'ready' } : hold));
     case 'CardUnlocked': return cardChange(event.player, event.card, hold => (hold.state === 'locked' ? { ...hold, state: 'ready' } : hold));
+    case 'CardLaidInPlay': return cardChange(event.player, event.card, hold => ({ ...hold, state: 'inPlay' }));
+    case 'CardTakenBack': return cardChange(event.player, event.card, hold => (hold.state === 'inPlay' ? { ...hold, state: 'ready' } : hold));
     case 'CardPurged': return cardChange(event.player, event.card, hold => ({ ...hold, state: 'purged' }));
 
     case 'ObjectiveRevealed':

@@ -74,7 +74,7 @@ export function holdingsOfCards(cards: Record<ComponentId, CardHold>): Holdings 
       case 'technology': h.technologies.push(id); break;
       case 'actionCard': for (let i = 0; i < hold.count; i += 1) h.hand.push(id); break;
       case 'relic': h.relics.push(id); break;
-      case 'promissory': h.promissory.push(id); break;
+      case 'promissory': h.promissory.push(id); if (hold.state === 'inPlay') (h.inPlay ??= []).push(id); break;
       case 'secretObjective': (hold.state === 'inPlay' ? h.scored : h.secrets).push(id); break;
       case 'publicObjective': h.scored.push(id); break;
       case 'exploration': for (let i = 0; i < hold.count; i += 1) h.found.push(id); break;
@@ -99,7 +99,7 @@ export function cardsOfHoldings(h: Holdings, breakthrough?: ComponentId): Record
   for (const id of h.technologies) put(id, state(id));
   for (const id of h.hand) put(id, 'ready');
   for (const id of h.relics) put(id, state(id));
-  for (const id of h.promissory) put(id, 'ready');
+  for (const id of h.promissory) put(id, h.inPlay?.includes(id) ? 'inPlay' : 'ready');
   for (const id of h.secrets) put(id, 'ready');
   for (const id of h.scored) put(id, 'inPlay');
   for (const id of h.found) put(id, 'ready');
@@ -360,6 +360,8 @@ export function legacyEvents(table: Table, pack: DataPack, before: LegacyViews, 
           if (b.state === 'exhausted') out.push({ type: 'CardExhausted', player, card: real, ...c });
           else if (b.state === 'purged') out.push({ type: 'CardPurged', player, card: real, ...c });
           else if (a.state === 'locked') out.push({ type: 'CardUnlocked', player, card: real, ...c });
+          else if (b.state === 'inPlay' && kindOf(id) === 'promissory') out.push({ type: 'CardLaidInPlay', player, card: real, ...c });
+          else if (a.state === 'inPlay' && kindOf(id) === 'promissory') out.push({ type: 'CardTakenBack', player, card: real, ...c });
           else if (b.state === 'inPlay') out.push({ type: 'ObjectiveScored', player, objective: real, ...c });
           else if (a.state === 'exhausted') out.push({ type: 'CardReadied', player, card: real, ...c });
         }
