@@ -59,3 +59,28 @@ describe('the Technology editor: prerequisites and specialties', () => {
     expect(screen.getByText(/prerequisites of Instinct Training are not met/)).toBeVisible();
   });
 });
+
+describe('the second technology and its payment (argent playthrough)', () => {
+  const choose = async (query: string, name: string) => {
+    await userEvent.click(screen.getByRole('button', { name: /Research a technology/ }));
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), query);
+    await userEvent.click(await screen.findByRole('button', { name: `Choose ${name}` }));
+  };
+
+  test('taking the paid second technology back takes its payment back too', async () => {
+    const pack = loadPack(['pok', 'te']);
+    store().newGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'argent' }, pack);
+    const mine = strategyCards(store().game!.expansions).find(c => c.name === 'Technology')!;
+    store().setStrategyCard(1, mine.initiative);
+    store().setStrategyCard(1, mine.initiative);
+    render(<PlanScreen />);
+    await userEvent.click(screen.getByRole('button', { name: 'Add action' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Strategy' }));
+    await choose('aerie', 'Aerie Hololattice');
+    await choose('strike wing alpha', 'Strike Wing Alpha II');
+    expect(cardEntry().effects?.payment?.planets.length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole('button', { name: 'Remove Strike Wing Alpha II' }));
+    expect(cardEntry().effects?.researched).toEqual(['technology:ah']);
+    expect(cardEntry().effects?.payment ?? { planets: [] }).toEqual({ planets: [], tradeGoods: 0 });
+  }, 30000);
+});

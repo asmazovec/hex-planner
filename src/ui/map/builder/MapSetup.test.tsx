@@ -280,7 +280,8 @@ test('the result warns about a wrong token count, dropped tiles and homes', asyn
   await userEvent.paste('25 26');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(screen.getByText(/String has 2 tokens, Milty writes 60/)).toBeTruthy();
-  expect(screen.getByText(/Home systems stay empty/)).toBeTruthy();
+  // The seated factions' homes go to their empty seats (a 0 on a home slot keeps the home).
+  expect(screen.getByText(/Home systems of the seated factions put on their empty seats/)).toBeTruthy();
 });
 
 test('a home system in the string is reported as placed', async () => {

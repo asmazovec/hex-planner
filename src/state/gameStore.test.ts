@@ -323,9 +323,25 @@ describe('setMap', () => {
   test('replaces the map in one undo step and keeps the centre', () => {
     const before = game().map;
     act().setMap({ '1,0': '25', '0,0': '99' });
-    expect(game().map).toEqual({ '0,0': before['0,0'], '1,0': '25' });
+    const home = Object.entries(before).find(([slot]) => slot === seatSlots(4, pack, game().layout)[0])!;
+    expect(game().map).toEqual({ '0,0': before['0,0'], '1,0': '25', [home[0]]: home[1] });
     act().undo();
     expect(game().map).toEqual(before);
+  });
+
+  test('a 0 on a home slot of the string leaves the home system of the seated faction there (naalu: pasting a Milty string erased it)', () => {
+    const [mine] = seatSlots(4, pack, game().layout);
+    const tile = game().map[mine];
+    expect(tile).toBeTruthy();
+    act().setMap({ '1,0': '25' });
+    expect(game().map[mine]).toBe(tile);
+    expect(game().map['1,0']).toBe('25');
+  });
+
+  test('a tile the string puts on a seat slot stays', () => {
+    const [mine] = seatSlots(4, pack, game().layout);
+    act().setMap({ [mine]: '25' });
+    expect(game().map[mine]).toBe('25');
   });
 
   test('an identical map leaves no undo step', () => {

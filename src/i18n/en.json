@@ -663,6 +663,7 @@
     "mismatch": "Expected {{expected}} tiles outside the home systems, found {{found}}.",
     "homesEmpty": "Home systems stay empty: place them by seat.",
     "homesPlaced": "Home systems placed: {{n}}.",
+    "homesSeated": "Home systems of the seated factions put on their empty seats: {{n}}.",
     "dropped": "Skipped {{n}} tiles that have no slot in this layout.",
     "tokens": "String has {{n}} tokens, Milty writes 60. A leading 18 or a missing token shifts every tile.",
     "layout": "Map layout: {{name}}.",

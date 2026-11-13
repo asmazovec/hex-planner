@@ -106,6 +106,27 @@ const homeTileOnMap = (faction: string, pack: DataPack): string | undefined => {
   return def?.gateTile ?? def?.homeTile;
 };
 
+/**
+ * The slots of the seats that hold no tile while their player has a faction: each takes that faction's home tile. A map
+ * pasted from a Milty string leaves the home slots at 0, and the homes are placed by themselves.
+ */
+export function emptySeatHomes(game: Game, pack: DataPack): Record<string, string> {
+  const slots = seatSlots(game.playerCount, pack, game.layout);
+  const homes: Record<string, string> = {};
+  for (const player of playersOf(game)) {
+    const slot = slots[player.seat - 1];
+    const tile = homeTileOnMap(player.faction, pack);
+    if (slot && tile && !game.map[slot]) homes[slot] = tile;
+  }
+  return homes;
+}
+
+/** The game with the home tile of each seated faction on its empty seat. */
+export const withSeatHomes = (game: Game, pack: DataPack): Game => {
+  const homes = emptySeatHomes(game, pack);
+  return Object.keys(homes).length === 0 ? game : { ...game, map: { ...game.map, ...homes } };
+};
+
 /** The tiles the player placed: not fixed by the template and not a player's home tile at that player's seat. */
 const userTiles = (game: Game, pack: DataPack): string[] => {
   const fixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));

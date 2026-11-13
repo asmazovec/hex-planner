@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { mapIsEmpty } from '../../../domain/mapBuilder';
 import { loadPack } from '../../../data/loadPack';
+import { emptySeatHomes } from '../../../domain/players';
 import { arrangeSet, parseMapString, type MapStringResult, type OtherPacks } from '../../../domain/mapString';
 import type { DataPack, ExpansionId, Game } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -30,7 +31,7 @@ export function MapStringImport({ game, pack, started = false, onClose }: MapStr
   const turnOn = (id: ExpansionId) => (started ? addExpansion(id) : setDraftExpansions([...game.expansions, id]));
   const [text, setText] = useState('');
   const [confirming, setConfirming] = useState(false);
-  const [result, setResult] = useState<MapStringResult | null>(null);
+  const [result, setResult] = useState<(MapStringResult & { seated: number }) | null>(null);
   const parsed = parseMapString(text, game.playerCount, pack, OTHER_PACKS);
   const off = (Object.keys(parsed.offExpansion) as ExpansionId[]).filter(id => parsed.offExpansion[id]);
   const isSet = parsed.kind === 'set';
@@ -39,8 +40,9 @@ export function MapStringImport({ game, pack, started = false, onClose }: MapStr
   const otherLayout = started && !nothing && arranged.layout !== game.layout;
 
   const apply = () => {
+    const seated = Object.keys(emptySeatHomes({ ...game, map: arranged.map, layout: arranged.layout }, pack)).length;
     setMap(arranged.map, arranged.layout);
-    setResult({ ...arranged, unknown: parsed.unknown, offExpansion: parsed.offExpansion });
+    setResult({ ...arranged, seated, unknown: parsed.unknown, offExpansion: parsed.offExpansion });
     setConfirming(false);
     setText('');
   };
@@ -86,7 +88,8 @@ export function MapStringImport({ game, pack, started = false, onClose }: MapStr
           {!result.tokensComplete && <p>{t('mapImport.tokens', { n: result.tokens })}</p>}
           {result.found !== result.expected && <p>{t('mapImport.mismatch', { found: result.found, expected: result.expected })}</p>}
           {result.homes > 0 && <p>{t('mapImport.homesPlaced', { n: result.homes })}</p>}
-          {result.homes === 0 && <p>{t('mapImport.homesEmpty')}</p>}
+          {result.seated > 0 && <p>{t('mapImport.homesSeated', { n: result.seated })}</p>}
+          {result.homes === 0 && result.seated === 0 && <p>{t('mapImport.homesEmpty')}</p>}
         </div>
       )}
     </div>

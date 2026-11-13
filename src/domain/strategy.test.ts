@@ -500,3 +500,16 @@ describe('Leadership as tapped', () => {
     expect(withLeadershipTokens({ boughtTokens: 4 }, { tactic: 1 }, true).boughtTokens).toBeUndefined();
   });
 });
+
+describe('payment after the thing it paid for is removed (argent playthrough)', () => {
+  test('taking the paid second technology back leaves nothing exhausted', () => {
+    const ARG = pack.tiles[pack.factions.argent.homeTile].planetIds;
+    const researched = ['technology:ah', 'technology:swa2'];
+    const entry = primary(7, { researched, payment: pay(ARG) });
+    const before = stateOf(start([], { faction: 'argent' })).state;
+    const patch = cardChange(entry, { effects: { researched: [researched[0]], payment: pay(ARG) } }, before, 'argent', pack, false);
+    const game = start([{ ...entry, ...patch } as Entry], { faction: 'argent' });
+    expect(patch.effects?.payment).toEqual(pay([]));
+    expect(stateOf(game).state.exhausted).toEqual([]);
+  });
+});

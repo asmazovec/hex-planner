@@ -131,7 +131,9 @@ export function parseMapString(text: string, playerCount: number, pack: DataPack
     const token = raw.toUpperCase();
     if (token === '0' || token === '-1') return;
     const lane = HYPERLANE.exec(token);
-    const tile = lane ? `${lane[1]}@${lane[2]}` : token;
+    // A double-sided tile written by its printed number (96 for Firmament) is its first side.
+    const exact = !lane && !pack.tiles[token] && pack.tiles[`${token}A`]?.kind !== 'hyperlane' && pack.tiles[`${token}A`] ? `${token}A` : token;
+    const tile = lane ? `${lane[1]}@${lane[2]}` : exact;
     const def = pack.tiles[tile.split('@')[0]];
     if (!def) {
       const owner = (Object.keys(others) as ExpansionId[]).find(id => others[id]?.tiles[tile.split('@')[0]]);
