@@ -9,8 +9,7 @@ import { componentById } from '../../../components';
 import { violation } from '../../../rules/registry';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import type { ComponentEffect, EffectTurn } from '../../types';
-import { applied } from '../../apply';
-import { holderOf } from '../../registry';
+import { planetValue } from '../../../payment';
 
 export const id = 'actionCard:mining_initiative';
 
@@ -23,8 +22,7 @@ export const effect: ComponentEffect = {
     const planetId = String(turn.choices.planet);
     if (turn.state.control[planetId] !== 'me') return unresolved(turn, 'the planet must be one you control');
     // tirules2, Mining Initiative 2: the planet is read, not exhausted.
-    const base = turn.pack.planets[planetId]?.resources ?? 0;
-    const resources = applied(turn.pack, holderOf(turn.game, turn.state, turn.shared), 'planetResources', base, { planetId, attached: turn.shared.attachments?.[planetId] }).value;
+    const resources = planetValue(turn.pack, turn.state, planetId, 'resources', { faction: turn.game.faction, shared: turn.shared });
     turn.state.tradeGoods += resources;
   },
 };

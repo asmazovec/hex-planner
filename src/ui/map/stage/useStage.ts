@@ -346,7 +346,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** My shop counts along: what it costs against what I can pay, and what the system holds after it. */
   const payer = onPurchase?.before ?? beforeTactical ?? acting;
   const spent = productionCost(sideUnits, sideFaction, sideHoldings, pack);
-  const spendable = readyResources(payer, pack) + payer.tradeGoods;
+  const spendable = readyResources(payer, pack, { faction: view.faction }) + payer.tradeGoods;
   const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.holdings, pack, dockFighterRoom(view, acting, slot, pack));
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
   const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];

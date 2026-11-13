@@ -61,6 +61,15 @@ test('the fact shows what is, without the arrows of the plan', () => {
   expect(screen.getByRole('group', { name: 'Totals, now and forecast' })).not.toHaveTextContent('→');
 });
 
+test('the summary totals count the planets as a card attached to them makes them', () => {
+  const state = project(game(), plan(), 'now', pack).state;
+  const printed = pack.planets.nestphar;
+  state.attachments = { nestphar: ['relic:nanoforge'] };
+  render(<SummaryBar now={state} forecast={state} pack={pack} view={{ faction: game().faction }} factOnly />);
+  expect(screen.getByRole('group', { name: 'Resources' })).toHaveTextContent(`Resources${printed.resources + 2}`);
+  expect(screen.getByRole('group', { name: 'Influence' })).toHaveTextContent(`Influence${printed.influence + 2}`);
+});
+
 const grid = () => within(screen.getByRole('group', { name: 'Strategy' })).getAllByRole('button');
 
 test('all eight cards stay in the grid, a tap opens the details and takes nothing, then backup, main, none', async () => {

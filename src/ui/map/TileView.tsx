@@ -7,6 +7,7 @@ import { opponentsBySeat } from '../../domain/players';
 import { holderIn, stacksOf } from '../../domain/stacks';
 import { rotateLanes } from '../../domain/lanes';
 import { isOnMap, systemPlanets, tileIdOf } from '../../domain/project';
+import { shownPlanetValues, type PlanetValues } from '../../domain/payment';
 import type { DataPack, Game, GameState, PlanetDef } from '../../domain/types';
 import { tokenColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
@@ -139,7 +140,7 @@ function useHexLayout(input: HexLayoutInput) {
 }
 
 /** A planet as the map draws it: its disc, the numbers, the marks of its traits and technology, and the strike when exhausted. */
-export function PlanetMark({ planet, control, holderColor, exhausted }: { planet: PlanetDef; control?: 'me' | 'enemy'; holderColor?: number; exhausted: boolean }) {
+export function PlanetMark({ planet, control, holderColor, exhausted, values }: { planet: PlanetDef; control?: 'me' | 'enemy'; holderColor?: number; exhausted: boolean; values?: PlanetValues }) {
   return (
     <>
       <circle
@@ -153,9 +154,9 @@ export function PlanetMark({ planet, control, holderColor, exhausted }: { planet
         />
       ))}
       <text y={3.2} className="planet-values">
-        <tspan className="value-resources">{planet.resources}</tspan>
+        <tspan className={`value-resources${values?.changed ? ' value-changed' : ''}`}>{values?.resources ?? planet.resources}</tspan>
         <tspan className="value-slash">/</tspan>
-        <tspan className="value-influence">{planet.influence}</tspan>
+        <tspan className={`value-influence${values?.changed ? ' value-changed' : ''}`}>{values?.influence ?? planet.influence}</tspan>
       </text>
       {(planet.tech ?? []).map((tech, n) => (
         <path
@@ -246,7 +247,8 @@ export function TileView({
         const holder = holderOf(planet.id);
         const holderColor = game.opponents.find(o => o.id === holder)?.color;
         const exhausted = state.exhausted.includes(planet.id);
-        const parts = [`${planet.name}: ${planet.resources}/${planet.influence}`];
+        const values = shownPlanetValues(pack, state, planet.id, game.faction);
+        const parts = [`${planet.name}: ${values.resources}/${values.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (planet.legendary) parts.push(t('map.legendary'));
         if (control) parts.push(`${t(`map.control.${control}`)}${holder ? ` (${opponentName(game, pack, holder, t)})` : ''}`);
@@ -262,7 +264,7 @@ export function TileView({
             } : { role: 'group' })}
           >
             {stage && planets.length > 1 && stage.target === i && <circle r={PLANET_BASE + 1.4} className="planet-target" />}
-            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} />
+            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} values={values} />
           </g>
         );
       })}

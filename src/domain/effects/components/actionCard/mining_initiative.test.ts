@@ -50,6 +50,27 @@ describe('actionCard:mining_initiative Mining Initiative', () => {
     expect(end.holdings.hand).not.toContain(id);
   });
 
+  // LRR planet values include attached cards: Nano-Forge's +2 is part of "the resource value" of t1 (2 printed).
+  test('actionCard:mining_initiative reads the value an attached card gives the planet', () => {
+    const card = bench({
+      faction: 'sol', expansions: ['pok'], start: { hand: [id], relics: ['relic:nanoforge'] },
+      entries: [componentAction('relic:nanoforge', { choices: { planetId: 't1' } }), play('t1')],
+      game: { planetControl: { h1: 'me', h2: 'me', t1: 'me' } },
+    });
+    expect(endOf(card).tradeGoods).toBe(4);
+  });
+
+  // The hero is purged once played, so only the attachment list still names it: Mining Initiative reads it all the same.
+  test('actionCard:mining_initiative reads the value of a card attached by a leader that is gone', () => {
+    const hero = 'leader:titanshero';
+    const card = bench({
+      faction: 'titans', expansions: ['pok'], start: { hand: [id], leaders: { [hero]: 'unlocked' } },
+      entries: [componentAction(hero), play('elysium')],
+      edit: pack => { pack.tiles['r-home'] = { ...pack.tiles['r-home'], planetIds: ['elysium', 'h2'] }; },
+    });
+    expect(endOf(card).tradeGoods).toBe(card.pack.planets.elysium.resources + 3);
+  });
+
   test('actionCard:mining_initiative is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');

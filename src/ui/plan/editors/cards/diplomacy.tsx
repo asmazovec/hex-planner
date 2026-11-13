@@ -1,3 +1,4 @@
+import { shownPlanetValues } from '../../../../domain/payment';
 import { readyChoices, readyLimit } from '../../../../domain/strategy';
 import type { CardBlocks } from './kit';
 import { Section } from '../../../primitives/Section';
@@ -20,7 +21,7 @@ export const diplomacyBlocks: CardBlocks = ({ t, game, pack, entry, before, effe
                 key={planet.id} type="button" aria-pressed={readied.includes(planet.id)}
                 onClick={() => setEffects({ readied: toggled(readied, planet.id) })}
               >
-                {planet.name} {planet.resources}/{planet.influence}{before.exhausted.includes(planet.id) ? ` · ${t('plan.strategy.exhausted')}` : ''}
+                {planet.name} {shownPlanetValues(pack, before, planet.id, game.faction).resources}/{shownPlanetValues(pack, before, planet.id, game.faction).influence}{before.exhausted.includes(planet.id) ? ` · ${t('plan.strategy.exhausted')}` : ''}
               </button>
             ))}
           </div>

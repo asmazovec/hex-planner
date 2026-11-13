@@ -5,6 +5,7 @@ import type { Game, GameState, PlanetDef, StructureCounts, StructureKind, UnitCo
 import { PlanetBadge } from '../../map/PlanetBadge';
 import { playerColour, tokenColours } from '../../units/sprites';
 import { UnitDraft, type UnitDraftRow } from '../../units/UnitDraft';
+import type { PlanetValues } from '../../../domain/payment';
 import { UnitTile } from '../../units/UnitTile';
 
 export interface LandingBlockProps {
@@ -19,6 +20,8 @@ export interface LandingBlockProps {
   arrived: UnitCounts;
   /** Who fell in the battle among those already standing there, by planet: the stacks show who is left. */
   lost?: Record<string, UnitCounts>;
+  /** What the components make of a planet's resources and influence. */
+  valuesOf?: (planetId: string) => PlanetValues;
   landedOn: (planetId: string, unit: UnitId) => number;
   onLand: (planetId: string, unit: UnitId, count: number) => void;
   /** The structures that stand in the space area after the flights, and where the action puts them at its end; without it the rows hold ground forces only. */
@@ -44,7 +47,7 @@ const isStructure = (kind: string): kind is StructureKind => kind === 'pds' || k
  * The landing is one draft with a row per planet: the stock is what arrived, less what landed on every planet, so a
  * kind that ran out changes its look in all the rows at once and counts what lands beyond it (the domain warns, nothing is forbidden); the tray of a row holds what lands there.
  */
-export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, landedOn, onLand, structures, from }: LandingBlockProps) {
+export function LandingBlock({ game, planets, before, board, units, arrived, lost = {}, valuesOf, landedOn, onLand, structures, from }: LandingBlockProps) {
   const { t } = useTranslation();
   const colours = tokenColours(game);
   const colour = playerColour(game.color);
@@ -80,7 +83,7 @@ export function LandingBlock({ game, planets, before, board, units, arrived, los
     return {
       id: planet.id,
       label: t('plan.tactical.landingOn', { planet: planet.name }),
-      place: <PlanetBadge planet={planet} control={control} exhausted={exhausted} facts={facts} compact />,
+      place: <PlanetBadge planet={planet} control={control} exhausted={exhausted} values={valuesOf?.(planet.id)} facts={facts} compact />,
       items: [
         ...units.map(unit => ({
           kind: unit, picked: landedOn(planet.id, unit),

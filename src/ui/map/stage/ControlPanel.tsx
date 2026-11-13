@@ -4,6 +4,7 @@ import { planetHolder } from '../../../domain/players';
 import type { DataPack, Game, GameState, PlanetDef, TileDef } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { PlayerChoice, type PlayerOption } from '../../primitives/player';
+import { shownPlanetValues } from '../../../domain/payment';
 import { PlanetDetails } from './PlanetDetails';
 
 export interface ControlPanelProps {
@@ -65,6 +66,7 @@ export function ControlPanel({ game, pack, tile, rotation, planets, shown, seate
             <PlanetDetails
               planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)}
               control={control} holderColor={game.opponents.find(o => o.id === holder)?.color}
+              values={shownPlanetValues(pack, shown, planet.id, game.faction)}
             />
             <PlayerChoice
               label={t('map.sheet.controlLabel', { planet: planet.name })} options={owners}

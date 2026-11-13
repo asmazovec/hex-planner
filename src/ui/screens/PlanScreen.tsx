@@ -644,7 +644,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             </div>
           )}
         />
-        <SummaryBar now={now.state} forecast={forecast.state} pack={pack} factOnly={shownFilter === 'now'} />
+        <SummaryBar now={now.state} forecast={forecast.state} pack={pack} view={{ faction: game.faction }} factOnly={shownFilter === 'now'} />
       </header>
       <div className="plan-body">
         <Drawer open={leftOpen} className={`drawer-left drawer-${leftDrawer}`} onDismiss={closeDrawer}>

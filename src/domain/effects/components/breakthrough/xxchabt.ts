@@ -7,6 +7,7 @@
  * so it is worth the greater of its two values. Nothing else changes (ruling 3): a dock's Production value still counts
  * the resources only.
  */
+import { planetValue } from '../../../payment';
 import type { Entry, Warning } from '../../../types';
 import type { WaiverContext } from '../../types';
 import type { ComponentEffect } from '../../types';
@@ -18,10 +19,12 @@ const paidWith = (entry: Entry | undefined): string[] =>
   (entry && 'payment' in entry ? entry.payment : entry && 'effects' in entry ? entry.effects?.payment : undefined)?.planets ?? [];
 
 /** What spending each paying planet for its other value adds: a planet is spent for one value or the other, never both (ruling 1). */
-const swapped = (warning: Warning, { entry, pack }: WaiverContext, to: 'resources' | 'influence'): boolean => {
+const swapped = (warning: Warning, { entry, pack, game, before, shared }: WaiverContext, to: 'resources' | 'influence'): boolean => {
   const gain = paidWith(entry).reduce((sum, planetId) => {
-    const planet = pack.planets[planetId];
-    return sum + Math.max(0, to === 'resources' ? (planet?.influence ?? 0) - (planet?.resources ?? 0) : (planet?.resources ?? 0) - (planet?.influence ?? 0));
+    const view = { faction: game.faction, shared };
+    const resources = planetValue(pack, before, planetId, 'resources', view);
+    const influence = planetValue(pack, before, planetId, 'influence', view);
+    return sum + Math.max(0, to === 'resources' ? influence - resources : resources - influence);
   }, 0);
   return Number(warning.params.needed) - Number(warning.params.paid) <= gain;
 };

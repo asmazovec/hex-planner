@@ -1,3 +1,4 @@
+import type { PlanetValues } from '../../domain/payment';
 import type { PlanetDef } from '../../domain/types';
 import { PlanetMark } from './TileView';
 
@@ -7,6 +8,8 @@ export interface PlanetBadgeProps {
   /** The colour number of the player who holds it, where the edge shows the holder and not only mine or theirs. */
   holderColor?: number;
   exhausted: boolean;
+  /** Resources and influence after the components that change them; the printed ones without it. */
+  values?: PlanetValues;
   /** A small line under the name: ready or exhausted, whose it is. */
   facts?: string;
   /** The place of a row: a smaller picture and a narrow name. */
@@ -23,7 +26,7 @@ const COMPACT_PX = 36;
  * marks of technology and legend, the strike when exhausted, the edge of who controls it. The one way to name a planet
  * beside a choice.
  */
-export function PlanetBadge({ planet, control, holderColor, exhausted, facts, compact, bare }: PlanetBadgeProps) {
+export function PlanetBadge({ planet, control, holderColor, exhausted, values, facts, compact, bare }: PlanetBadgeProps) {
   const px = compact ? COMPACT_PX : PX;
   return (
     <span className={`planet-badge${compact ? ' planet-badge-compact' : ''}`}>
@@ -31,7 +34,7 @@ export function PlanetBadge({ planet, control, holderColor, exhausted, facts, co
         {/* The numbers of a planet take their size from the tile they stand on. */}
         <g className="tile">
           <g className={`planet${exhausted ? ' planet-exhausted' : ''}`} data-control={control ?? 'none'} data-exhausted={exhausted ? 'true' : 'false'}>
-            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} />
+            <PlanetMark planet={planet} control={control} holderColor={holderColor} exhausted={exhausted} values={values} />
           </g>
         </g>
       </svg>

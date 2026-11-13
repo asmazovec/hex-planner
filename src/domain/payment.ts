@@ -57,6 +57,24 @@ export function planetValue(pack: DataPack, state: GameState, planetId: string, 
   ).value;
 }
 
+/** A planet's resources and influence as the screens show them, and whether a component changed either. */
+export interface PlanetValues { resources: number; influence: number; changed: boolean }
+
+/**
+ * What the screens show of a planet: its resources and influence as planetValue gives them (the components of its
+ * controller and what is attached), and whether either differs from the printed numbers. Only a planet I control is
+ * asked, any other shows the printed values.
+ */
+export function shownPlanetValues(pack: DataPack, state: GameState, planetId: string, faction: string): PlanetValues {
+  const printed = pack.planets[planetId];
+  const base = { resources: printed?.resources ?? 0, influence: printed?.influence ?? 0 };
+  if (state.control[planetId] !== 'me') return { ...base, changed: false };
+  const view = { faction, shared: state };
+  const resources = planetValue(pack, state, planetId, 'resources', view);
+  const influence = planetValue(pack, state, planetId, 'influence', view);
+  return { resources, influence, changed: resources !== base.resources || influence !== base.influence };
+}
+
 /** What one trade good spent is worth in `kind`: 1, or what the components of the payer make it. */
 export const tradeGoodWorth = (pack: DataPack, state: GameState, kind: PaymentKind, view?: PayView): number =>
   view ? applied(pack, holderOf(view, state, view.shared ?? state), 'tradeGoodValue', 1, { kind, faction: view.faction }).value : 1;
