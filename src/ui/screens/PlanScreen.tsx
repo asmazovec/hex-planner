@@ -4,7 +4,7 @@ import { loadPack } from '../../data/loadPack';
 import { emptySlots } from '../../domain/mapBuilder';
 import { blockersOf } from '../../domain/movement';
 import { newEntryBody, tacticalBody, tacticalOwner } from '../../domain/newEntry';
-import { EXPEDITION_SLICES } from '../../domain/payment';
+import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, projectionAtRound, systemSlots } from '../../domain/project';
 import { timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
@@ -14,7 +14,7 @@ import { cardChange, withSystem } from '../../domain/strategy';
 import { emptySources, entrySystems, hasUnits, isUntouched, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
 import { emptyHoldings, groupCounts, holdingCount, holdingRounds, upgradesOf, type ComponentGroup } from '../../domain/holdings';
-import { entryUpgradeRounds } from '../../domain/unitStats';
+import { entryUpgradeRounds, productionCost } from '../../domain/unitStats';
 import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { componentsTab, lastView } from '../common/preferences';
@@ -52,7 +52,7 @@ import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { mapHighlights, planArrows, shownSystemsOf } from './plan/mapMarks';
-import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, type PickState, type Slot } from './plan/pick';
+import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, turnIn, type PickState, type Slot } from './plan/pick';
 import { useBoards } from './plan/useBoards';
 import { useDrawers } from './plan/useDrawers';
 import { useFlightLoop } from './plan/useFlightLoop';
@@ -257,6 +257,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         setView('plan');
         return;
       }
+      case 'produce': {
+        const turn = turnIn(round, panel.kind === 'turn' ? panel.entryId : undefined);
+        if (!turn || !onMap) return;
+        update(state => ({ ...state, next: IDLE, stage: { slot, mode: 'build', only: 'units', for: { kind: 'component', id: turn.id } } }));
+        setView('plan');
+        return;
+      }
       case 'markIngress':
         toggleIngress(slot);
         return;
@@ -346,6 +353,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     }
   };
 
+  /** What a component's production pays, anew for the units it now holds, unless the player chose the planets. */
+  const producedEffects = (turn: Extract<Entry, { type: 'component' }>, effects: CardEffects | undefined): CardEffects | undefined => {
+    if (!effects?.production || manualPayments.includes(turn.id)) return effects;
+    const own = boards.before(turn.id);
+    const faction = gameAs(game, turn.owner).faction;
+    return { ...effects, payment: autoPay(own, productionCost(effects.production.units, faction, own, pack, { ...turn, effects }), 'resources', pack, { faction }) };
+  };
   const toggleManualPayment = (id: string, open: boolean) => setManualPayments(ids => (open ? [...ids, id] : ids.filter(other => other !== id)));
 
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
@@ -450,6 +464,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     if (cardEntry && cardBefore) updateEntry(cardEntry.id, cardChange(cardEntry, { effects }, cardBefore, cardGame.faction, pack, manualPayments.includes(cardEntry.id)));
   };
   const stageFor = stage?.for;
+  const stagedTurn = stageFor?.kind === 'component' ? turnIn(round, stageFor.id) : undefined;
 
   /** Back to the list, or to the card a tactical action was opened from. */
   const toList = () => update(state => ({ ...state, panel: state.panel.kind === 'tactical' ? backFrom(state.panel) : LIST, next: IDLE }));
@@ -581,7 +596,16 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <TurnEditor
             key={turn.id} entry={turn} game={gameAs(game, turn.owner)} pack={pack} board={boards.board(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
-            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onPayment={payment => updateEntry(turn.id, { payment })} onDone={toList} onRemove={() => removeEdited(turn.id)}
+            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onPayment={payment => updateEntry(turn.id, { payment })}
+            production={{
+              picking: next.kind === 'produce',
+              onPick: () => { update(state => ({ ...state, next: state.next.kind === 'produce' ? IDLE : { kind: 'produce' } })); if (next.kind !== 'produce') { drawers.closeRight(); setView('map'); } },
+              onOpenShop: at => update(state => ({ ...state, stage: { slot: at, mode: 'build', only: 'units', for: { kind: 'component', id: turn.id } } })),
+              onChange: effects => updateEntry(turn.id, { effects: effects === undefined ? undefined : effects }),
+              manual: manualPayments.includes(turn.id),
+              onManual: open => { toggleManualPayment(turn.id, open); if (!open && turn.type === 'component') updateEntry(turn.id, { effects: producedEffects(turn, turn.effects) }); },
+            }}
+            onDone={toList} onRemove={() => removeEdited(turn.id)}
           />
         );
       }
@@ -752,8 +776,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       {stage && stageFor && (
         <HexStage
           key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}
-          owner={stageFor.kind === 'card' ? cardEntry?.owner : undefined}
-          onPurchase={stageFor.kind === 'card' && cardEntry && cardBefore ? cardPurchases(cardGame, pack, cardEntry, stage.slot, cardBefore, onCardEffects) : undefined}
+          owner={stageFor.kind === 'card' ? cardEntry?.owner : stageFor.kind === 'component' ? stagedTurn?.owner : undefined}
+          onPurchase={stageFor.kind === 'card' && cardEntry && cardBefore ? cardPurchases(cardGame, pack, cardEntry, stage.slot, cardBefore, onCardEffects)
+            : stageFor.kind === 'component' && stagedTurn ? cardPurchases(gameAs(game, stagedTurn.owner), pack, stagedTurn, stage.slot, boards.before(stagedTurn.id), effects => updateEntry(stagedTurn.id, { effects: producedEffects(stagedTurn, effects) })) : undefined}
           manualPayments={manualPayments}
           tacticalId={stageFor.kind === 'tactical' ? stageFor.id : undefined} adjustmentId={stageFor.kind === 'adjustment' ? stageFor.id : undefined}
           shownState={shownState} onClose={closeStage}

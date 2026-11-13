@@ -25,6 +25,7 @@ const producedIn = (ctx: WaiverContext): string | undefined => (ctx.entry?.type 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
+  produces: true,
   waive: [
     { code: 'noProduction', rule: RULE, when: (warning, ctx) => hasGround(String(warning.params.systemId), ctx) },
     { code: 'productionOver', rule: RULE, when: (_warning, ctx) => { const system = producedIn(ctx); return system !== undefined && hasGround(system, ctx); } },

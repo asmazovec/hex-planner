@@ -31,4 +31,4 @@ test('mech:titans_mech another faction placing units by Construction is warned o
   expectShownStanding('constructionUnits');
 });
 
-test.todo('mech:titans_mech Construction\'s block offers the Titans a mech and an infantry instead of a PDS: the editor offers structures only');
+// The editor's own button is tested with the Construction card: src/ui/plan/editors/StrategyEditor.test.tsx, Titans.

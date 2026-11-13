@@ -52,4 +52,13 @@ describe('mech:titans_mech Hecatoncheires', () => {
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).waive?.map(w => w.code)).toEqual(['constructionUnits']);
   });
+  // The mech and the infantry are placed instead of a PDS, not produced: Construction asks no resources for them.
+  // Checks: the pair of the Titans with nothing paid raises no shortage of resources; for another faction the units are priced and short.
+  // Why the check is NOT redundant here: the replay prices every unit a card places as a produced one.
+  test('mech:titans_mech the pair costs no resources, the units of another faction do', () => {
+    const titans = instead({ mech: 1, infantry: 1 });
+    expect(warningsOf(titans, titans.entry).map(w => w.code)).not.toContain('shortResources');
+    const sol = instead({ mech: 1, infantry: 1 }, 'sol');
+    expect(warningsOf(sol, sol.entry).map(w => w.code)).toContain('shortResources');
+  });
 });

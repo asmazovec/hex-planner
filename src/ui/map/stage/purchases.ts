@@ -21,7 +21,7 @@ export interface PurchaseTarget {
 
 /** Routes what the big hex buys into the entry's effects. */
 export function cardPurchases(
-  game: Game, pack: DataPack, entry: CardEntry, slot: string, before: GameState, apply: (effects: CardEffects) => void,
+  game: Game, pack: DataPack, entry: Pick<CardEntry, 'id' | 'effects'>, slot: string, before: GameState, apply: (effects: CardEffects) => void,
 ): PurchaseTarget {
   const effects = entry.effects ?? {};
   const production = effects.production?.systemId === slot ? effects.production : undefined;

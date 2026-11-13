@@ -66,7 +66,7 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
   const effects = entry.effects ?? {};
   const cost = cardCost(entry, game.faction, holderOf(game, state), pack);
   // Units a card produces use a unit's PRODUCTION: the combined cost may be reduced (Sarween Tools), as a tactical action's is.
-  if (effects.production && cost.kind === 'resources' && !handlerOf(entry.card).cost) {
+  if (effects.production && cost.kind === 'resources' && !handlerOf(entry.card).cost && !handlerOf(entry.card).placesFree?.(entry, { pack, faction: game.faction })) {
     cost.amount = costOf(game, state, effects.production.units, pack, producerList(game, state, effects.production.systemId, pack).length > 0, entry);
   }
   const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings, { faction: game.faction, shared: round.states.me });

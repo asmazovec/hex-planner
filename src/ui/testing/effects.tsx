@@ -126,6 +126,7 @@ export function showTurn(bench: Bench, entry: Entry): Live<ComponentEntry> {
       common={<UsesBlock entry={shown} game={game} pack={pack} before={before} onChange={patch => update(patch as Partial<EntryBody>)} />}
       onNote={note => update({ note } as Partial<EntryBody>)} onComponent={componentId => update({ componentId, choices: undefined } as Partial<EntryBody>)}
       onChoices={choices => update({ choices: Object.keys(choices).length > 0 ? choices : undefined })}
+      production={{ picking: false, onPick: nothing, onOpenShop: nothing, onChange: effects => update({ effects } as Partial<EntryBody>), manual: false, onManual: nothing }}
       onDone={nothing} onRemove={nothing}
     />
   ));

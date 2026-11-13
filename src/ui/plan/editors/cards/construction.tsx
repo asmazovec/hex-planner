@@ -1,6 +1,6 @@
 import type { CardBlocks } from './kit';
 
-export const constructionBlocks: CardBlocks = ({ t, pack, effects, primary, te, placer, list, pickButton, tile, builtLine, onOpenShop }) => {
+export const constructionBlocks: CardBlocks = ({ t, game, pack, effects, primary, te, placer, list, pickButton, tile, builtLine, onOpenShop }) => {
   const production = effects.production;
   return (
     <>
@@ -12,6 +12,15 @@ export const constructionBlocks: CardBlocks = ({ t, pack, effects, primary, te, 
             list: effects.structures?.map(s => `${t(s.kind === 'pds' ? 'map.pds' : 'map.spaceDock')} (${pack.planets[s.planetId]?.name ?? s.planetId})`).join(', '),
           })}
         </p>
+      )}
+      {/* Hecatoncheires: a mech and an infantry stand instead of a PDS (the secondary). */}
+      {!primary && game.faction === 'titans' && (
+        <button
+          type="button" className="option" aria-pressed={production !== undefined} disabled={effects.systemId === undefined}
+          onClick={() => { if (effects.systemId) onOpenShop(effects.systemId, 'units'); }}
+        >
+          {t('plan.strategy.mechInstead')}
+        </button>
       )}
       {te && (production
         ? <button type="button" className="option" aria-pressed="true" onClick={() => onOpenShop(production.systemId, 'units')}>{t('plan.strategy.dock')} · {tile(production.systemId)}</button>

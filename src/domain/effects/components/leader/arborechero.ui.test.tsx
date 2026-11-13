@@ -1,5 +1,6 @@
-import { test } from 'vitest';
-import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
+import { expect, test } from 'vitest';
+import { screen } from '@testing-library/react';
+import { expectShownStanding, expectShownWaived, showTurn, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import type { CardEffects, Entry } from '../../../types';
 import { adjust, bench, componentAction, FAR, quote, TARGET } from '../kit';
 import { id } from './arborechero';
@@ -35,4 +36,22 @@ test('leader:arborechero a production in a system without my ground forces is sh
   const hero = table({ production: { systemId: FAR, units: { cruiser: 1 } }, payment: PAID });
   showWarnings(hero, hero.play);
   expectShownStanding('noProduction');
+});
+
+// "ACTION: Produce any number of units in any number of systems that contain 1 or more of your ground forces."
+// Checks: the component action of the hero shows a production block of its own: the button to choose the system until
+// one is chosen, then the system with what is produced and the payment.
+// Why: the hero's production is entered in its own editor, so its waivers can apply; a component that does not produce shows no block.
+test('leader:arborechero the component action has a production block', () => {
+  const empty = table({});
+  showTurn(empty, empty.play);
+  expect(screen.getByRole('button', { name: 'Choose a system to produce in' })).toBeTruthy();
+  expect(screen.getByRole('group', { name: 'Production' })).toBeTruthy();
+});
+
+test('leader:arborechero the production chosen shows its system and its payment', () => {
+  const hero = table({ production: { systemId: TARGET, units: { cruiser: 1, infantry: 2 }, ground: { t1: { infantry: 2 } } }, payment: PAID });
+  showTurn(hero, hero.play);
+  expect(screen.queryByRole('button', { name: 'Choose a system to produce in' })).toBeNull();
+  expect(screen.getByRole('button', { name: /Cruiser/ })).toBeTruthy();
 });

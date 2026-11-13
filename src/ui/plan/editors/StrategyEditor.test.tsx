@@ -460,6 +460,23 @@ describe('Construction', () => {
     expect(screen.getByRole('button', { name: /^Production in a space dock/ })).toBeVisible();
   });
 
+  test('Titans: the secondary offers a mech and an infantry instead of a PDS in the system chosen; other factions do not', async () => {
+    start({ expansions: ['pok'], faction: 'titans' });
+    await secondary('Construction');
+    const instead = () => screen.getByRole('button', { name: 'A mech and an infantry instead of a PDS' });
+    expect(instead()).toBeDisabled();
+    await click('Construction');
+    await userEvent.click(tile(HOME));
+    await click('Close');
+    expect(instead()).toBeEnabled();
+    await userEvent.click(instead());
+    expect(within(screen.getByRole('dialog')).getByRole('button', { name: 'Mech' })).toBeVisible();
+    cleanup();
+    start({ expansions: ['pok'] });
+    await secondary('Construction');
+    expect(screen.queryByRole('button', { name: 'A mech and an infantry instead of a PDS' })).toBeNull();
+  });
+
   test('before Thunder\'s Edge there is no dock production', async () => {
     start({ expansions: ['pok'] });
     await primary('Construction');

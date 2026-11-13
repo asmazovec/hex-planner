@@ -208,6 +208,8 @@ export interface ComponentEffect {
   play?: (turn: EffectTurn) => void;
   /** What the player chooses when the component is played; the editor of the entry asks it (`ChoicesBlock`). */
   choose?: ChoiceSpec[];
+  /** The component action produces units (`entry.effects.production`, paid with `entry.effects.payment`): its editor shows the system, the shop and the payment. */
+  produces?: boolean;
   /** hint: the steps in whose block the reminder stands; none where the data names no step. */
   hintAt?: RuleStep[];
   /** Any tier: the checks the component lifts (see `EffectTier` for when they hold). */
