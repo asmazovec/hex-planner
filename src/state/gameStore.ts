@@ -5,7 +5,7 @@ import { changeLayout, slotsFor } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
-import { startingDocks, withForTokenOfRound } from '../domain/strategy';
+import { startingDocks, startingPds, withForTokenOfRound } from '../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
 import { setLeader, setStartHolding } from '../domain/holdings';
 import { slotKeyOf } from '../domain/layouts';
@@ -501,7 +501,11 @@ export const useGame = create<GameStore>((set, get) => {
         const standsThere = (id: string) => startingDocks({ ...g, docks: [id] }, pack).includes(planetId);
         return { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(id => !standsThere(id)) };
       }),
-    setPds: (planetId, count) => commit(g => withField(g, 'pds', setOrDelete(g.pds, planetId, count > 0 ? count : null))),
+    setPds: (planetId, count) => commit(g => {
+        // What stands under my absent home planets moves to the planets where it stands now (as setDock does).
+        const standing = startingPds(g, loadPack(g.expansions));
+        return (standing[planetId] ?? 0) === Math.max(0, count) ? g : { ...g, pds: setOrDelete(standing, planetId, count > 0 ? count : null) };
+      }),
     changeAdjustment: (roundNo, change) => commit(g => editRound(g, roundNo, r => changeOnBoard(g, r, change, loadPack(g.expansions), newId))),
     setSlice: (id, owner) =>
       commit(g => {

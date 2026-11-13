@@ -94,6 +94,48 @@ describe('фракции', () => {
     expect(loadPack(['pok']).factions.naaz.startUnits).toMatchObject({ mech: 1 });
     expect(loadPack(['te']).factions.bastion.startUnits).toMatchObject({ cruiser: 1, dreadnought: 1 });
   });
+  /**
+   * The structures of every starting fleet, counted from the source's startingFleet line (AsyncTI4 data/factions, the
+   * line quoted on the right; the planet letter after a code is dropped). The rules corpus (knowledge-rag) holds the
+   * faction sheets only as images inside the PDFs and has no text for them, so the numbers are not quoted from it; they
+   * are the printed sheets' (Xxcha, Sardakk N'orr, Argent Flight, Ral Nel and Jol-Nar start with PDS as listed here).
+   */
+  test('стартовые сооружения каждой фракции равны строке стартового флота источника', () => {
+    const pack = loadPack(['pok', 'te']);
+    const expected: Record<string, { pds?: number; spacedock?: number }> = {
+      arborec: { pds: 1, spacedock: 1 },      // cv, cr,2 ff, 4 inf n,pds n, sd n
+      ghost: { spacedock: 1 },                // cv,2 dd,2 ff,4 inf c,sd c
+      hacan: { spacedock: 1 },                // 2 cv,cr,2 ff,2 inf h,sd a, inf a, inf k
+      jolnar: { pds: 2, spacedock: 1 },       // dn,2 cv,ff,2 inf j,sd n,pds j,pds n
+      l1z1x: { pds: 1, spacedock: 1 },        // dn, cv, 3 ff, 5 inf 0,sd 0,pds 0
+      letnev: { spacedock: 1 },               // dn,cv,dd,ff, 3 inf w,sd a
+      mentak: { pds: 1, spacedock: 1 },       // cv,2 cr,3 ff,4 inf m,pds m,sd m
+      muaat: { spacedock: 1 },                // ws,2 ff,4 inf m,sd m
+      naalu: { pds: 1, spacedock: 1 },        // cv,cr,dd,3 ff,2 inf m,2 inf d,pds m,sd d
+      nekro: { spacedock: 1 },                // dn,cv,cr,2 ff,2 inf m,sd m
+      saar: { spacedock: 1 },                 // 2 cv,1 cr,2 ff,4 inf, sd
+      sardakk: { pds: 1, spacedock: 1 },      // 2 cv,cr,3 inf q,2 inf t,sd q,pds t
+      sol: { spacedock: 1 },                  // 2 cv, dd, 3 ff,5 inf j, sd j
+      winnu: { pds: 1, spacedock: 1 },        // cv,cr,2 ff,2 inf w,pds w, sd w
+      xxcha: { pds: 1, spacedock: 1 },        // cv,2 cr,3 ff,2 inf at,2 inf ar,pds at,sd ar
+      yin: { spacedock: 1 },                  // 2 cv,dd,4 ff,4 inf d,sd d
+      yssaril: { pds: 1, spacedock: 1 },      // 2 cv,cr, 2 ff, 2 inf s,3 inf r,pds s,sd r
+      argent: { pds: 1, spacedock: 1 },       // cv,2 dd,2 ff,3 inf v,2 inf a, pds y,sd v
+      cabal: { spacedock: 1 }, empyrean: { spacedock: 1 }, mahact: { spacedock: 1 },
+      nomad: { spacedock: 1 }, naaz: { spacedock: 1 }, titans: { spacedock: 1 },
+      keleresm: { spacedock: 1 }, keleresx: { spacedock: 1 }, keleresa: { spacedock: 1 }, // 2 inf, 2 cv, 2 ff, 1 ca, sd <planet>
+      bastion: { spacedock: 1 },              // 3 inf o, sd o, 2 ff, cv, dn, ca
+      deepwrought: { spacedock: 1 },          // 3 inf i, sd i, 4 ff, cv, dn
+      firmament: { spacedock: 1 },            // 1 inf c, 2 inf t, cv, 3 ff, ca, dd, sd c
+      obsidian: { spacedock: 1 },             // same fleet as Firmament
+      crimson: { pds: 1, spacedock: 1 },      // 4 inf a, sd a, 3 ff, pds a, cv, 2 dd
+      ralnel: { pds: 2, spacedock: 1 },       // 2 inf m, 2 inf r, cv, 2 ff, dn, pds r, pds m, dd, sd m
+    };
+    expect(Object.keys(pack.factions).sort()).toEqual(Object.keys(expected).sort());
+    for (const [id, structures] of Object.entries(expected)) {
+      expect({ id, ...pack.factions[id].startStructures }).toEqual({ id, ...structures });
+    }
+  });
   test('домашний тайл содержит домашние планеты', () => {
     expect(loadPack([]).factions.ghost.homeTile).toBe('51');
     expect(loadPack(['te']).factions.crimson.homeTile).toBe('118');

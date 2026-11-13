@@ -6,6 +6,7 @@ import { gameAs, opponentsBySeat } from '../../../domain/players';
 import { boardSystemWarnings, dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionDue, productionPlaces, projectionAtRound, readyResources, seenBefore, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
 import { timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
+import { startingPds } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, GameState, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
@@ -122,7 +123,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
   const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => {
     if (kind === 'spacedock') setDock(planetId, amount > 0);
-    else setPds(planetId, (game.pds[planetId] ?? 0) + amount);
+    else setPds(planetId, (startingPds(game, pack)[planetId] ?? 0) + amount);
   };
 
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical' && e.systemId === slot && e.status !== 'cancelled');

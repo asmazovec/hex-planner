@@ -729,7 +729,6 @@
     "add": "＋ Add opponent",
     "home": "Home system",
     "start": "Start",
-    "commodities": "Commodities",
     "tech": "Starting technologies",
     "techChoice": "Chosen at setup: {{amount}} of these",
     "techChoiceAny": "Chosen at setup: any ({{amount}})",

@@ -18,7 +18,7 @@ export interface PlayerListProps {
   /** Highlights from the seat map beside the list; the list works without one. */
   drag?: Pick<SeatDrag, 'picked' | 'lifted' | 'bumped' | 'clearBump'>;
   /** On the plan screen, where the list is a reference only: my ships in the state the map shows; opponents come from the game. Points are totals by player id. */
-  live?: { upgraded: UpgradeId[]; /** Each opponent's upgraded types in the state shown, by id. */ rivalUpgraded?: Record<string, UpgradeId[]>; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
+  live?: { upgraded: UpgradeId[]; /** Each opponent's upgraded types in the state shown, by id. */ rivalUpgraded?: Record<string, UpgradeId[]>; /** Space docks and PDS each player has on the board in the state shown, by id (me is `me`). */ structures?: Record<string, { docks: number; pds: number }>; locked: Partial<Record<UnitId, number>>; points: Record<string, number> };
 }
 
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
@@ -129,6 +129,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
                 live={live && {
                   upgraded: index === 0 ? live.upgraded : live.rivalUpgraded?.[player.id] ?? upgradesOf(holdingsOf(game.start.opponents[player.id]), pack),
                   locked: index === 0 ? live.locked : undefined,
+                  structures: live.structures?.[player.id],
                 }}
               />
             )}

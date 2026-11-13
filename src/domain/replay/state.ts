@@ -1,6 +1,6 @@
 /** The replayed state: where it begins, and the helpers every step uses to change its counts. */
 import { violation } from '../rules/registry';
-import { absentHomePlanets, homePlanets, homeSlot, splitStartUnits, startingDocks } from '../strategy';
+import { absentHomePlanets, homePlanets, homeSlot, splitStartUnits, startingDocks, startingPds } from '../strategy';
 import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning } from '../types';
 import { startHoldings } from './holdings';
 
@@ -81,7 +81,7 @@ export function initialState(game: Game, pack: DataPack): GameState {
     systems, ground, exhausted: [], control, tokensOnMap: [],
     tradeGoods: 0, commodities: 0, ...START_TOKENS, vp: game.vp, opponentVp: Object.fromEntries(game.opponents.map(o => [o.id, o.vp])), 
     holdings: startHoldings(game.start.me, pack), laws: [], revealed: [], attachments: {},
-    docks: startingDocks(game, pack), pds: { ...game.pds },
+    docks: startingDocks(game, pack), pds: startingPds(game, pack),
   };
 }
 

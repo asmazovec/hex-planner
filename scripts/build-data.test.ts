@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { checkCounts, readPlanetKind, readPlanetMarks, readStation, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, positionToAxial, readStartingTech, readTech, readPrerequisites, readFactionTech, buildSheet, selectShips, buildStructures, readDockProduction } from './build-data';
+import { checkCounts, readPlanetKind, readPlanetMarks, readStation, checkLaneRotations, normalizeTileId, parseHyperlanes, parseStartingFleet, parseStartingStructures, positionToAxial, readStartingTech, readTech, readPrerequisites, readFactionTech, buildSheet, selectShips, buildStructures, readDockProduction } from './build-data';
 import { rotateLanes } from '../src/domain/lanes';
 
 test('сборщик падает при неверном количестве', () => {
@@ -23,6 +23,14 @@ test('стартовый флот: синонимы, сооружения отб
   expect(parseStartingFleet('dn,2 cr,mech r,fs,ws,dd'))
     .toEqual({ dreadnought: 1, cruiser: 2, mech: 1, flagship: 1, warsun: 1, destroyer: 1 });
   expect(() => parseStartingFleet('2 zz')).toThrow(/zz/);
+});
+
+test('стартовые сооружения: число по каждому коду, планета в записи не важна, пустое поле не пишется', () => {
+  expect(parseStartingStructures('cv, cr,2 ff, 4 inf n,pds n, sd n')).toEqual({ pds: 1, spacedock: 1 });
+  expect(parseStartingStructures('dn,2 cv,ff,2 inf j,sd n,pds j,pds n')).toEqual({ pds: 2, spacedock: 1 });
+  expect(parseStartingStructures('2 cv,cr, 2 ff, 2 inf s,3 inf r,2 pds s,sd r')).toEqual({ pds: 2, spacedock: 1 });
+  expect(parseStartingStructures('2 cv,cr,2 ff,4 inf, sd')).toEqual({ spacedock: 1 });
+  expect(parseStartingStructures('3 inf')).toEqual({});
 });
 
 test('позиция источника переводится в осевые координаты: север, затем по часовой', () => {

@@ -611,12 +611,13 @@ describe('merged adjustments and structures', () => {
   });
 
   test('a PDS count goes up and down with undo, and zero leaves the record', () => {
+    const start = { ...game().pds }; // the PDS of the faction's sheet stand from the start
     act().setPds('p', 2);
-    expect(game().pds).toEqual({ p: 2 });
+    expect(game().pds).toEqual({ ...start, p: 2 });
     act().setPds('p', 0);
-    expect(game().pds).toEqual({});
+    expect(game().pds).toEqual(start);
     act().undo();
-    expect(game().pds).toEqual({ p: 2 });
+    expect(game().pds).toEqual({ ...start, p: 2 });
   });
 
   test('setting the same PDS count leaves no undo step', () => {
@@ -625,20 +626,22 @@ describe('merged adjustments and structures', () => {
   });
 
   test('a PDS on Mecatol Rex follows the planet to Thunder\'s Edge, and so does a loss recorded there', () => {
+    const start = { ...game().pds };
     act().setPds('mr', 1);
     act().changeAdjustment(1, { kind: 'setup', systemId: '0,0', unit: 'infantry', planetId: 'mr', amount: 1 });
     act().addExpansion('te');
-    expect(game().pds).toEqual({ mrte: 1 });
+    expect(game().pds).toEqual({ ...start, mrte: 1 });
     expect(round().entries[0]).toMatchObject({ delta: { ground: { mrte: { infantry: 1 } } } });
   });
 
   test('an opponent who leaves takes the PDS of their planets along', () => {
     const [first] = game().opponents;
+    const start = { ...game().pds };
     act().setPlanetControl('p', first.id);
     act().setPds('p', 1);
     act().setPds('q', 1);
     act().removeOpponent(0);
-    expect(game().pds).toEqual({ q: 1 });
+    expect(game().pds).toEqual({ ...start, q: 1 });
   });
 });
 

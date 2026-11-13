@@ -2,6 +2,7 @@ import { noteAddress } from './components';
 import { genericNotes, startForFaction, withoutNotesOf } from './holdings';
 import { defaultLayout, moveToTemplate, ownHomeSlots, seatSlots, slotsFor, templateFor, withPlacedTiles } from './mapBuilder';
 import { createGame, makeId, slotKeyOf, timeIdMaker, type IdMaker } from './newGame';
+import { startStructures } from './startStructures';
 import { splitStartUnits } from './strategy';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, MapLayout, Opponent, Plan } from './types';
 
@@ -94,7 +95,9 @@ export function placeStartUnits(game: Game, pack: DataPack): Game {
       enemyUnits: { ...next.enemyUnits, [slot]: { ...next.enemyUnits[slot], [id]: split.space } },
       ...(onMap ? {
         enemyGround: home === undefined || Object.keys(split.ground).length === 0 ? next.enemyGround : { ...next.enemyGround, [home]: { ...next.enemyGround[home], [id]: split.ground } },
-        docks: home === undefined || next.docks.includes(home) ? next.docks : [...next.docks, home],
+        // The structures of the sheet stand on the first home planet (see startStructures).
+        docks: home === undefined || !(def.startStructures?.spacedock) || next.docks.includes(home) ? next.docks : [...next.docks, home],
+        pds: home === undefined || !(def.startStructures?.pds) ? next.pds : { ...next.pds, [home]: def.startStructures.pds },
         planetControl: { ...next.planetControl, ...Object.fromEntries(homes.map(planet => [planet, 'enemy' as const])) },
         planetOwner: { ...next.planetOwner, ...Object.fromEntries(homes.map(planet => [planet, id])) },
       } : {}),
@@ -264,8 +267,9 @@ export function setPlayerFaction(game: Game, index: number, faction: string, pac
   const planetControl = Object.fromEntries(Object.entries(game.planetControl).filter(([id]) => !old.includes(id)));
   for (const id of fresh) planetControl[id] = 'me';
   const planetOwner = Object.fromEntries(Object.entries(game.planetOwner).filter(([id]) => !old.includes(id) && !fresh.includes(id)));
-  const pds = Object.fromEntries(Object.entries(game.pds).filter(([id]) => !old.includes(id)));
-  return { ...next, planetControl, planetOwner, docks: [...game.docks.filter(id => !old.includes(id)), ...fresh.slice(0, 1)], pds };
+  const begin = startStructures(faction, pack);
+  const pds = { ...Object.fromEntries(Object.entries(game.pds).filter(([id]) => !old.includes(id))), ...begin.pds };
+  return { ...next, planetControl, planetOwner, docks: [...game.docks.filter(id => !old.includes(id)), ...begin.docks], pds };
 }
 
 

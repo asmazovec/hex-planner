@@ -811,6 +811,9 @@
         "dreadnought": 1,
         "cruiser": 1
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [],
       "startingTechChoice": {
         "amount": 1,
@@ -922,6 +925,9 @@
         "carrier": 1,
         "dreadnought": 1
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [],
       "startingTechChoice": {
         "amount": 2,
@@ -1022,6 +1028,9 @@
         "fighter": 3,
         "cruiser": 1,
         "destroyer": 1
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [],
       "startingTechChoice": {
@@ -1129,6 +1138,9 @@
         "cruiser": 1,
         "destroyer": 1
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [],
       "commodities": 3,
       "abilities": [
@@ -1230,6 +1242,10 @@
         "fighter": 3,
         "carrier": 1,
         "destroyer": 2
+      },
+      "startStructures": {
+        "spacedock": 1,
+        "pds": 1
       },
       "startingTech": [],
       "startingTechChoice": {
@@ -1371,6 +1387,10 @@
         "fighter": 2,
         "dreadnought": 1,
         "destroyer": 1
+      },
+      "startStructures": {
+        "pds": 2,
+        "spacedock": 1
       },
       "startingTech": [],
       "startingTechChoice": {

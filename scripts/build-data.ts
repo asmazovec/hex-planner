@@ -81,7 +81,7 @@ const UNIT_CODES: Record<string, UnitId> = {
   cv: 'carrier', ca: 'cruiser', cr: 'cruiser', dd: 'destroyer', dn: 'dreadnought', ws: 'warsun', fs: 'flagship',
   ff: 'fighter', inf: 'infantry', gf: 'infantry', mech: 'mech', mf: 'mech',
 };
-const STRUCTURE_CODES = new Set(['pds', 'pd', 'sd']);
+const STRUCTURE_CODES: Record<string, StructureKind> = { pds: 'pds', pd: 'pds', sd: 'spacedock' };
 const ANOMALY_FLAGS: [string, Anomaly][] = [
   ['isGravityRift', 'rift'], ['isAsteroidField', 'asteroid'], ['isNebula', 'nebula'], ['isSupernova', 'supernova'], ['isScar', 'scar'],
 ];
@@ -99,12 +99,23 @@ export function parseStartingFleet(fleet: string): UnitCounts {
   for (const item of fleet.split(',').map(s => s.trim()).filter(Boolean)) {
     const match = item.match(/^(\d+)?\s*([a-z]+)/);
     if (!match) throw new Error(`Cannot read starting fleet item "${item}"`);
-    if (STRUCTURE_CODES.has(match[2])) continue;
+    if (match[2] in STRUCTURE_CODES) continue;
     const unit = UNIT_CODES[match[2]];
     if (!unit) throw new Error(`Unknown unit code "${match[2]}" in "${fleet}"`);
     units[unit] = (units[unit] ?? 0) + Number(match[1] ?? 1);
   }
   return units;
+}
+
+/** The structures of the same notation, counted by kind: the planet letter after a code is not kept, the start puts them on the first home planet. */
+export function parseStartingStructures(fleet: string): NonNullable<FactionDef['startStructures']> {
+  const found: NonNullable<FactionDef['startStructures']> = {};
+  for (const item of fleet.split(',').map(s => s.trim()).filter(Boolean)) {
+    const match = item.match(/^(\d+)?\s*([a-z]+)/);
+    const kind = match ? STRUCTURE_CODES[match[2]] : undefined;
+    if (match && kind) found[kind] = (found[kind] ?? 0) + Number(match[1] ?? 1);
+  }
+  return found;
 }
 
 /** The source numbers positions ring + index: index 1 is north, then clockwise. */
@@ -586,6 +597,11 @@ export function buildSheet(
   };
 }
 
+const startStructuresOf = (fleet: string) => {
+  const structures = parseStartingStructures(fleet);
+  return Object.keys(structures).length > 0 ? { startStructures: structures } : {};
+};
+
 function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string, TileDef>>, abilityNames: Map<string, string>): Record<PackId, Record<string, FactionDef>> {
   const factions: Record<PackId, Record<string, FactionDef>> = { base: {}, pok: {}, te: {} };
   for (const faction of all) {
@@ -598,6 +614,7 @@ function buildFactions(all: SourceFaction[], tiles: Record<PackId, Record<string
     if (known.planetIds.length === 0) throw new Error(`Home tile ${homeTile} of ${id} has no planets`);
     factions[pack][id] = {
       id, name: faction.factionName, homeTile, startUnits: parseStartingFleet(faction.startingFleet),
+      ...startStructuresOf(faction.startingFleet),
       ...readStartingTech(faction),
       commodities: faction.commodities,
       abilities: faction.abilities.map(ability => {

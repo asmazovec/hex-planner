@@ -8,7 +8,7 @@ import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, projectionAtRound, systemSlots } from '../../domain/project';
 import { timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
-import { pausedPath, tacticalNumbers, tapStep, type RouteDraft } from '../../domain/route';
+import { pausedPath, tacticalNumbers, tacticalsOf, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
 import { cardChange, repaid, withSystem } from '../../domain/strategy';
@@ -371,9 +371,12 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const lockedUpgrades = entryUpgradeRounds(planSoFar, shownFilter, pack);
   const holdingSources = holdingRounds(planSoFar, shownFilter);
   const shownUpgrades = upgradesOf(shownState.holdings, pack);
+  const structuresOf = (s: { docks: string[]; pds: Record<string, number> }) => ({ docks: s.docks.length, pds: Object.values(s.pds).reduce((sum, n) => sum + n, 0) });
+  const structures = { me: structuresOf(shownState), ...Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, structuresOf(rival)])) };
   const rivalUpgraded = Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, upgradesOf(rival.holdings, pack)]));
   const heldCount = holdingCount(shownState.holdings);
-  const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical');
+  // Warfare's free action has its card's status: the card marked done turns its arrow done.
+  const tacticals: (Entry & TacticalEntry)[] = tacticalsOf(round.entries);
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
   // Lines and flights need to know where the off-map homes stand before the map draws them.
@@ -685,7 +688,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               ? (
                 <div className="players-panel">
                   <PlayerList
-                    live={{ upgraded: shownUpgrades, rivalUpgraded, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
+                    live={{ upgraded: shownUpgrades, rivalUpgraded, structures, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
                   />
                 </div>
               )

@@ -1,6 +1,7 @@
 import { genericNotes, startForFaction } from './holdings';
 import { defaultLayout, slotKeyOf, templateOf } from './layouts';
 import { seatSlots } from './mapBuilder';
+import { startStructures } from './startStructures';
 import { SAVE_FORMAT, type DataPack, type ExpansionId, type Game, type MapLayout } from './types';
 
 /** Makes an id with a prefix; it only has to be unique within one user's local games. */
@@ -31,6 +32,7 @@ export function createGame(
   for (const slot of template?.slots ?? []) if (slot.fixed) map[slotKeyOf(slot.q, slot.r)] = slot.fixed;
   const firstSeat = seatSlots(input.playerCount, pack, template?.layout ?? layout)[0];
   if (faction && firstSeat && !map[firstSeat]) map[firstSeat] = faction.gateTile ?? faction.homeTile;
+  const start = startStructures(input.faction, pack);
   const planetControl: Game['planetControl'] = {};
   for (const planetId of pack.tiles[faction?.homeTile ?? '']?.planetIds ?? []) planetControl[planetId] = 'me';
   const planId = makeId('plan', newId);
@@ -59,8 +61,8 @@ export function createGame(
     enemyGround: {},
     planetControl,
     planetOwner: {},
-    docks: pack.tiles[faction?.homeTile ?? '']?.planetIds.slice(0, 1) ?? [],
-    pds: {},
+    docks: start.docks,
+    pds: start.pds,
     expedition: { slices: {}, thundersEdgeSystem: null },
     fracture: { active: false, ingress: [], seat: null },
     plans: [{ id: planId, name: 'Plan 1', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }],

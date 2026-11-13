@@ -136,6 +136,8 @@ export interface FactionDef {
   /** Tile holding the home planets, where the starting units begin. */
   homeTile: string;
   startUnits: UnitCounts;
+  /** Structures of the starting fleet by kind (they are not units of `startUnits`); absent when the sheet has none. Placed on the first home planet. */
+  startStructures?: Partial<Record<StructureKind, number>>;
   /** Technology ids the faction always starts with. */
   startingTech: string[];
   /** The faction chooses this many at setup; no options means any. */

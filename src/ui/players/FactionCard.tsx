@@ -27,6 +27,8 @@ const nameLines = (name: string, planets: number): string[] => {
   return lines;
 };
 
+const STRUCTURES = [{ kind: 'spacedock', name: 'map.spaceDock' }, { kind: 'pds', name: 'map.pds' }] as const;
+
 function HomeHex({ faction, pack }: { faction: FactionDef; pack: DataPack }) {
   const { t } = useTranslation();
   const tile = pack.tiles[faction.homeTile];
@@ -79,7 +81,7 @@ export interface FactionCardProps {
   /** Choose which leaders, mechs and breakthroughs the card shows. */
   expansions: ExpansionId[];
   /** Current values on the plan screen; without it the table shows base values, read only. */
-  live?: Pick<ShipStatsProps, 'upgraded' | 'locked'>;
+  live?: Pick<ShipStatsProps, 'upgraded' | 'locked'> & { /** Space docks and PDS this player has on the board in the state shown. */ structures?: { docks: number; pds: number } };
   /** The technologies of the faction's choice that the player took, and what a press on one does: with it the choice is made here. */
   chosen?: readonly string[];
   onChoose?: (id: string, take: boolean) => void;
@@ -106,8 +108,28 @@ export function FactionCard({ faction, pack, expansions, live, chosen, onChoose 
               <b>{faction.startUnits[unit]}</b>
             </div>
           ))}
+          {/* Structures are not units of the start fleet (`startStructures`): the sheet's stand in the column like the units. */}
+          {STRUCTURES.map(({ kind, name }) => {
+            const count = faction.startStructures?.[kind] ?? 0;
+            return count === 0 ? null : (
+              <div key={kind} className="ship" data-testid="structure">
+                <UnitIcon unit={kind} />
+                <span>{t(name)}</span>
+                <b>{count}</b>
+              </div>
+            );
+          })}
         </div>
-        <div className="player-stat"><span>{t('players.commodities')}</span><b>{faction.commodities}</b></div>
+        {/* On the plan screen: how many the player has on the board in the state shown, against the supply (LRR 96.2). */}
+        {live?.structures && (
+          <div className="player-stat">
+            {STRUCTURES.map(({ kind, name }) => (
+              <span key={kind} data-testid="onboard">
+                {t(name)} <b>{live.structures![kind === 'spacedock' ? 'docks' : 'pds']} / {pack.structures.find(st => st.id === kind)?.limit}</b>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
       <div>
         <SectionTitle as="div" className="player-sec">{t('players.tech')}</SectionTitle>

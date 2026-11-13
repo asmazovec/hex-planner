@@ -190,7 +190,7 @@ const pack: DataPack = {
     fighter: unit('fighter', { cost: 0.5, fighter: true }),
     infantry: unit('infantry', { cost: 0.5, ground: true }),
   },
-  factions: { sol: { id: 'sol', name: 'Sol', homeTile: 'home', startUnits: { carrier: 1, infantry: 2 }, startingTech: [], commodities: 0, abilities: [] } },
+  factions: { sol: { id: 'sol', name: 'Sol', homeTile: 'home', startUnits: { carrier: 1, infantry: 2 }, startStructures: { spacedock: 1 }, startingTech: [], commodities: 0, abilities: [] } },
   templates: [{ playerCount: 3, layout: 'standard', slots: [{ q: 0, r: 0, fixed: '18' }, { q: 1, r: 0 }] }],
   technologies: {},
   structures: [],

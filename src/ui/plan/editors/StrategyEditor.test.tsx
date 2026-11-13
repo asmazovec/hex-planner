@@ -414,6 +414,7 @@ describe('Politics', () => {
 describe('Construction', () => {
   test('opens the shop limited to structures; they stay in the entry, off the game, and can be taken back', async () => {
     const docks = [...game().docks];
+    const pds = { ...game().pds };
     await primary('Construction');
     await click('Construction');
     await userEvent.click(tile(HOME));
@@ -422,7 +423,7 @@ describe('Construction', () => {
     expect(shop.queryByRole('button', { name: 'Build' })).toBeNull();
     await userEvent.click(shop.getByRole('button', { name: 'PDS' }));
     expect(cardEntry().effects?.structures).toMatchObject([{ kind: 'pds' }]);
-    expect(game().pds).toEqual({});
+    expect(game().pds).toEqual(pds);
     expect(game().docks).toEqual(docks);
     const ringed = document.querySelector('.stage-hex [data-stack="me|pds|0"] .token-hit');
     expect(ringed).not.toBeNull();

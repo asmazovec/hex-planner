@@ -1224,6 +1224,10 @@
         "fighter": 2,
         "infantry": 4
       },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
+      },
       "startingTech": [
         "md"
       ],
@@ -1336,6 +1340,9 @@
         "fighter": 2,
         "infantry": 4
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "gd"
       ],
@@ -1441,6 +1448,9 @@
         "fighter": 2,
         "infantry": 4
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "st",
         "amd"
@@ -1545,6 +1555,10 @@
         "carrier": 2,
         "fighter": 1,
         "infantry": 2
+      },
+      "startStructures": {
+        "spacedock": 1,
+        "pds": 2
       },
       "startingTech": [
         "amd",
@@ -1659,6 +1673,10 @@
         "carrier": 1,
         "fighter": 3,
         "infantry": 5
+      },
+      "startStructures": {
+        "spacedock": 1,
+        "pds": 1
       },
       "startingTech": [
         "ps",
@@ -1790,6 +1808,9 @@
         "fighter": 1,
         "infantry": 3
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "amd",
         "ps"
@@ -1893,6 +1914,10 @@
         "fighter": 3,
         "infantry": 4
       },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
+      },
       "startingTech": [
         "ps",
         "st"
@@ -1990,6 +2015,9 @@
         "warsun": 1,
         "fighter": 2,
         "infantry": 4
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [
         "ps"
@@ -2119,6 +2147,10 @@
         "destroyer": 1,
         "fighter": 3,
         "infantry": 4
+      },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
       },
       "startingTech": [
         "st",
@@ -2258,6 +2290,9 @@
         "fighter": 2,
         "infantry": 2
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "dxa"
       ],
@@ -2362,6 +2397,9 @@
         "fighter": 2,
         "infantry": 4
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "amd"
       ],
@@ -2462,6 +2500,10 @@
         "carrier": 2,
         "cruiser": 1,
         "infantry": 5
+      },
+      "startStructures": {
+        "spacedock": 1,
+        "pds": 1
       },
       "startingTech": [],
       "commodities": 3,
@@ -2582,6 +2624,9 @@
         "destroyer": 1,
         "fighter": 3,
         "infantry": 5
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [
         "amd",
@@ -2723,6 +2768,10 @@
         "fighter": 2,
         "infantry": 2
       },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
+      },
       "startingTech": [],
       "startingTechChoice": {
         "amount": 1,
@@ -2831,6 +2880,10 @@
         "cruiser": 2,
         "fighter": 3,
         "infantry": 4
+      },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
       },
       "startingTech": [
         "gls"
@@ -2942,6 +2995,9 @@
         "fighter": 4,
         "infantry": 4
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "st"
       ],
@@ -3039,6 +3095,10 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 5
+      },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
       },
       "startingTech": [
         "nm"

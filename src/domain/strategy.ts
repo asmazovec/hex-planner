@@ -294,6 +294,18 @@ export function startingDocks(game: Game, pack: DataPack): string[] {
   return [...new Set(game.docks.flatMap(id => (absent.includes(id) ? (first === undefined ? [] : [first]) : [id])))];
 }
 
+/** The PDS of the game as they stand on the map: those written under my absent home planets stand on the first planet of the tile at my seat, as the dock does. */
+export function startingPds(game: Game, pack: DataPack): Record<string, number> {
+  const absent = absentHomePlanets(game, pack);
+  const [first] = homePlanets(game, pack);
+  const out: Record<string, number> = {};
+  for (const [id, count] of Object.entries(game.pds)) {
+    const at = absent.includes(id) ? first : id;
+    if (at !== undefined) out[at] = (out[at] ?? 0) + count;
+  }
+  return out;
+}
+
 /** A faction's start units split by where they stand: ships in the space of the home system, ground forces on its planet (LRR 43.1; the one with the space dock). */
 export function splitStartUnits(units: UnitCounts, planetId: string | undefined, pack: DataPack): { space: UnitCounts; ground: UnitCounts } {
   const space: UnitCounts = {};

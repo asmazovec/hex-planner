@@ -42,9 +42,13 @@ test('starting ships have Russian unit names and counts from the pack', () => {
   expect(rows).toEqual([`Транспортник${carrier}`, `Эсминец${destroyer}`, `Истребитель${fighter}`, `Пехота${infantry}`]);
 });
 
-test('commodities are shown under their Russian name', () => {
+test('the card writes no commodities line: they start at 0, the value is not a holding', () => {
   show('hacan');
-  expect(screen.getByText('Продукция').parentElement).toHaveTextContent(String(pack.factions.hacan.commodities));
+  expect(screen.queryByText('Продукция')).toBeNull();
+  cleanup();
+  setLanguage('en');
+  render(<FactionCard faction={english.factions.hacan} pack={english} expansions={['pok', 'te']} />);
+  expect(screen.queryByText('Commodities')).toBeNull();
 });
 
 test('starting technologies show name, printed text and the colour of their type', () => {
@@ -186,4 +190,44 @@ test('the technology of a choice at setup is pressed to be taken, and pressed ag
   expect(onChoose).toHaveBeenLastCalledWith('st', false);
   fireEvent.click(screen.getByText('Antimass Deflectors').closest('button')!);
   expect(onChoose).toHaveBeenLastCalledWith('amd', true);
+});
+
+test('a card on the plan screen counts the docks and PDS of the player on the board against the supply', () => {
+  const docks = pack.structures.find(s => s.id === 'spacedock')!.limit;
+  const pds = pack.structures.find(s => s.id === 'pds')!.limit;
+  render(<FactionCard faction={pack.factions.ralnel} pack={pack} expansions={['pok', 'te']} live={{ upgraded: [], structures: { docks: 2, pds: 3 } }} />);
+  expect(screen.getAllByTestId('onboard').map(row => row.textContent)).toEqual([`База 2 / ${docks}`, `ПСО 3 / ${pds}`]);
+  expect(screen.getAllByTestId('structure').map(row => row.textContent)).toEqual(['База1', 'ПСО2']);
+  expect(docks).toBe(3);
+  expect(pds).toBe(6);
+});
+
+test('the Start column lists the structures of the sheet as tiles of the units: Ral Nel, Sardakk, two PDS, none for a missing dock', () => {
+  const rows = () => screen.getAllByTestId('structure').map(row => row.textContent);
+  show('ralnel');
+  expect(rows()).toEqual(['База1', 'ПСО2']);
+  cleanup();
+  show('sardakk');
+  expect(rows()).toEqual(['База1', 'ПСО1']);
+  cleanup();
+  show('jolnar');
+  expect(rows()).toEqual(['База1', 'ПСО2']);
+  cleanup();
+  show('sol');
+  expect(rows()).toEqual(['База1']);
+  cleanup();
+  const bare = structuredClone(pack);
+  bare.factions.sol.startStructures = { pds: 1 };
+  show('sol', ['pok', 'te'], bare);
+  expect(rows()).toEqual(['ПСО1']);
+  cleanup();
+  bare.factions.sol.startStructures = undefined;
+  show('sol', ['pok', 'te'], bare);
+  expect(screen.queryAllByTestId('structure')).toEqual([]);
+});
+
+test('in English the structures are Space dock and PDS', () => {
+  setLanguage('en');
+  render(<FactionCard faction={english.factions.ralnel} pack={english} expansions={['pok', 'te']} />);
+  expect(screen.getAllByTestId('structure').map(row => row.textContent)).toEqual(['Space dock1', 'PDS2']);
 });

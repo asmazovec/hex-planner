@@ -1043,6 +1043,9 @@
         "fighter": 2,
         "cruiser": 1
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [],
       "commodities": 2,
       "abilities": [
@@ -1150,6 +1153,9 @@
         "carrier": 2,
         "fighter": 2,
         "cruiser": 1
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [],
       "commodities": 2,
@@ -1259,6 +1265,9 @@
         "fighter": 2,
         "cruiser": 1
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [],
       "commodities": 2,
       "abilities": [
@@ -1366,6 +1375,10 @@
         "destroyer": 2,
         "fighter": 2,
         "infantry": 5
+      },
+      "startStructures": {
+        "pds": 1,
+        "spacedock": 1
       },
       "startingTech": [],
       "startingTechChoice": {
@@ -1500,6 +1513,9 @@
         "fighter": 3,
         "infantry": 3
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "sar"
       ],
@@ -1608,6 +1624,9 @@
         "fighter": 2,
         "infantry": 4
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "det"
       ],
@@ -1712,6 +1731,9 @@
         "cruiser": 1,
         "fighter": 2,
         "infantry": 3
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [
         "pi",
@@ -1838,6 +1860,9 @@
         "fighter": 3,
         "flagship": 1,
         "infantry": 4
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [
         "sr"
@@ -1970,6 +1995,9 @@
         "infantry": 3,
         "mech": 1
       },
+      "startStructures": {
+        "spacedock": 1
+      },
       "startingTech": [
         "pa",
         "aida"
@@ -2085,6 +2113,9 @@
         "cruiser": 2,
         "fighter": 2,
         "infantry": 3
+      },
+      "startStructures": {
+        "spacedock": 1
       },
       "startingTech": [
         "amd",

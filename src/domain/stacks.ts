@@ -6,7 +6,7 @@ import { UNIT_ORDER, type GroundStack, type SpaceStack } from './hexLayout';
 import { opponentsBySeat, planetHolder } from './players';
 import { structuresOn } from './replay/structures';
 import { planetsOf, systemSlots, tileAt } from './replay/board';
-import { startingDocks } from './strategy';
+import { startingDocks, startingPds } from './strategy';
 import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitCounts, UnitId } from './types';
 
 const unitsOf = (counts: UnitCounts | undefined): { unit: UnitId; count: number }[] =>
@@ -73,7 +73,7 @@ export function inHomeSystem(game: Game, planetId: string, pack: DataPack): bool
 
 /** Whether the game itself holds a structure, apart from what entries plan: a PDS set on the map, or a dock of the start. */
 export const structureInGame = (game: Game, pack: DataPack, kind: StructureKind, planetId: string): boolean =>
-  (kind === 'pds' ? (game.pds[planetId] ?? 0) > 0 : startingDocks(game, pack).includes(planetId));
+  (kind === 'pds' ? (startingPds(game, pack)[planetId] ?? 0) > 0 : startingDocks(game, pack).includes(planetId));
 
 /**
  * One unit of an opponent set by hand, added or removed. Ground forces go by planet; a removed one still listed with the

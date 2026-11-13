@@ -80,9 +80,9 @@ test('my faction has no remove button', () => {
 
 test('a card shows faction data only after the choice, with no extra tap', async () => {
   render(<GameScreen />);
-  expect(within(card(2)).queryByText('Commodities')).toBeNull();
+  expect(within(card(2)).queryByText('Space dock')).toBeNull();
   await pick(2, 'hacan');
-  expect(within(card(2)).getByText('Commodities')).toBeInTheDocument();
+  expect(within(card(2)).getByText('Space dock')).toBeInTheDocument();
   expect(within(card(2)).getByText('Sarween Tools')).toBeInTheDocument();
 });
 
