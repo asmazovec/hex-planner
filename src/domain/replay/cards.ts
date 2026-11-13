@@ -5,7 +5,7 @@ import { checkStationStructures } from '../thundersEdge';
 import type { DataPack, Game, GameState, Round, Warning } from '../types';
 import { handlerOf, type CardRound } from './cards/index';
 import { pay, readyPlanets } from './payment';
-import { checkProduction, costOf, placeProduction, producerList } from './production';
+import { checkProduction, placeProduction } from './production';
 import { fire } from '../effects/points/moments';
 import { holderOf } from '../effects/registry';
 import { research } from './holdings';
@@ -64,11 +64,8 @@ export function applyCard(game: Game, state: GameState, entry: CardEntry, pack: 
     fire('onTokenSpent', { game, state, shared: round.states.me ?? state, pack, warnings, player, states: round.states, entry }, { count: owed, card: entry.card, secondary: !primary });
   }
   const effects = entry.effects ?? {};
-  const cost = cardCost(entry, game.faction, holderOf(game, state), pack);
   // Units a card produces use a unit's PRODUCTION: the combined cost may be reduced (Sarween Tools), as a tactical action's is.
-  if (effects.production && cost.kind === 'resources' && !handlerOf(entry.card).cost) {
-    cost.amount = costOf(game, state, effects.production.units, pack, producerList(game, state, effects.production.systemId, pack).length > 0, entry);
-  }
+  const cost = cardCost(entry, game.faction, holderOf(game, state), pack, { game, state });
   const paid = pay(state, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind, pack, warnings, { faction: game.faction, shared: round.states.me });
   if (cost.amount > paid) {
     warnings.push(violation(cost.kind === 'influence' ? 'shortInfluence' : 'shortResources', { needed: cost.amount, paid }));

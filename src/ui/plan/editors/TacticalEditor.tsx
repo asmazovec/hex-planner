@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { autoPay } from '../../../domain/payment';
-import { fleetExcess, productionCost, routeSteps, standing, systemPlanets } from '../../../domain/project';
+import { fleetExcess, productionDue, routeSteps, standing, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../domain/effects/hints';
 import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
@@ -72,7 +72,7 @@ export function TacticalEditor({
   const target = entry.systemId;
   const planets = target === null ? [] : systemPlanets(game, target, pack);
   // The price asks the laws in play and the components this entry plays, as the replay does.
-  const priceOf = (units: UnitCounts) => productionCost(units, game.faction, holderOf(game, before), pack, entry);
+  const priceOf = (units: UnitCounts) => productionDue(game, before, units, pack, entry);
   const cost = priceOf(entry.production);
   const unitText = (units: UnitCounts): string => unitsText(units, t);
 

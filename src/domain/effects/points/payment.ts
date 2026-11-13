@@ -54,6 +54,12 @@ declare module '../types' {
      * (resources or influence, from planets and trade goods): the replay pays it and warns when it is short.
      */
     cost?: { kind: 'resources' | 'influence'; amount: number };
+    /**
+     * Any tier. What the component costs when a component entry names it in `uses` beside its own action (a mech that
+     * deploys after an ability): paid with the same `payment` as the action's own `cost`, which it is added to. None
+     * for an entry it does not follow.
+     */
+    useCost?: (entry: Entry) => { kind: 'resources' | 'influence'; amount: number } | undefined;
   }
 }
 

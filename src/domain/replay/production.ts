@@ -251,6 +251,18 @@ export function costOf(game: Game, state: GameState, units: UnitCounts, pack: Da
   return Math.max(0, appliedFor(pack, holder, entry, 'productionCost', cost, { faction: game.faction, systemId, wormholes, holdings: state.holdings, pack }).value);
 }
 
+/**
+ * What an entry owes for the units it produces, asked of `state` (the one before the entry in an editor; the one at
+ * payment in the replay): the editor's label, the shop counter, the automatic payment and the check all ask this
+ * one function, so they cannot disagree. Whether a unit uses PRODUCTION comes from the producers standing in the
+ * entry's system in that state.
+ */
+export function productionDue(game: Game, state: GameState, units: UnitCounts, pack: DataPack, entry?: Entry): number {
+  const systemId = systemOfProduction(entry);
+  const producing = systemId !== undefined && producerList(game, state, systemId, pack).length > 0;
+  return costOf(game, state, units, pack, producing, entry);
+}
+
 /** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. `producing`: a unit used PRODUCTION. */
 export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], producing = true): void {
   const cost = costOf(game, state, entry.production, pack, producing, entry);

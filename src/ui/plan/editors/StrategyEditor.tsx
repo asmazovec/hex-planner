@@ -68,8 +68,8 @@ export function StrategyEditor({
   const effects = entry.effects ?? {};
   const mine = !entry.owner;
   const te = game.expansions.includes('te');
-  const cost = cardCost(entry, game.faction, before.holdings, pack);
-  const change = (patch: CardPatch) => onUpdate(cardChange(entry, patch, before, game.faction, pack, manualPayment));
+  const cost = cardCost(entry, game.faction, before.holdings, pack, { game, state: before });
+  const change = (patch: CardPatch) => onUpdate(cardChange(entry, patch, before, game.faction, pack, manualPayment, game));
   const setEffects = (patch: CardEffects) => change({ effects: { ...effects, ...patch } });
   const named = (id: string) => opponentName(game, pack, id, t);
   const tile = (slot: string) => t('plan.strategy.tile', { name: systemTitle(game, pack, slot, t) });

@@ -128,7 +128,7 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
     const mode = e.forToken ? 'forToken' : primary ? 'primary' : 'secondary';
     steps.push(<><b>{card.name}</b>, {t(`plan.strategy.mode.${mode}`).toLowerCase()}{strategyTokensOwed(e, {}, game, before, before, pack) > 0 && <small>{t('plan.steps.strategyToken')}</small>}<small>{textOf(pack, primary ? `strategy:${card.id}` : `strategy:${card.id}#secondary`)}</small></>);
     const effects = e.effects ?? {};
-    const cost = cardCost(e, game.faction, before.holdings, pack);
+    const cost = cardCost(e, game.faction, before.holdings, pack, { game, state: before });
     if (cost.amount > 0) steps.push(<>{t(`plan.steps.cost.${cost.kind}`, { n: cost.amount })}{paid(effects.payment) && <small>{paid(effects.payment)}</small>}</>);
     if (effects.boughtTokens) steps.push(t('plan.steps.bought', { n: effects.boughtTokens }));
     const tokens = effects.tokens ?? {};

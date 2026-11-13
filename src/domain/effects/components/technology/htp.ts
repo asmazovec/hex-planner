@@ -8,6 +8,7 @@
  * of a dock on that planet) is not modelled.
  */
 import { readyToPlay } from '../../../replay/holdings';
+import { coverOf } from '../../shortfall';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:htp';
@@ -19,11 +20,8 @@ export const effect: ComponentEffect = {
     code: 'shortResources',
     rule: 'swap the resource and influence values of 1 planet you control during that use of Production',
     // The swap of the one best paying planet (its influence less its resources) must cover what is short.
-    when: ({ params }, { entry, game, pack, before }) => {
-      if (!readyToPlay(pack, before.holdings, game.faction, before.control).has(id)) return false;
-      const planets = entry && 'payment' in entry ? entry.payment?.planets ?? [] : [];
-      const gain = Math.max(0, ...planets.map(planetId => (pack.planets[planetId]?.influence ?? 0) - (pack.planets[planetId]?.resources ?? 0)));
-      return Number(params.needed) - Number(params.paid) <= gain;
-    },
+    // Together with the other components that cover a shortfall (`coverOf`): the swap of the best paying planet is one part.
+    when: ({ params }, ctx) => readyToPlay(ctx.pack, ctx.before.holdings, ctx.game.faction, ctx.before.control).has(id)
+      && Number(params.needed) - Number(params.paid) <= coverOf(ctx),
   }],
 };
