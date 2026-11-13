@@ -194,6 +194,8 @@ export function EntryList({
                 // A card speaks for Warfare's free action too: its warnings mark the card's row.
                 const free = entry.type === 'strategic' ? round.entries.find(e => e.type === 'tactical' && e.fromCard === entry.id) : undefined;
                 const list = [...(warnings[entry.id] ?? []), ...(free ? warnings[free.id] ?? [] : [])];
+                // The card's row carries the number of its free action, as the arrow of that action does on the map.
+                const number = numbers[entry.id] ?? (free ? numbers[free.id] : undefined);
                 const shown = entry.id === shownId;
                 // The steps of a shown action say what goes wrong with a flight by that flight; the row keeps the rest.
                 const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
@@ -206,7 +208,7 @@ export function EntryList({
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {/* The number is part of the name: one button, one background under the pointer. */}
                       <button type="button" className="entry-label" aria-label={label} aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
-                        {numbers[entry.id] !== undefined && <OrderHex number={numbers[entry.id]} label={t('plan.entries.number', { n: numbers[entry.id] })} />}
+                        {number !== undefined && <OrderHex number={number} label={t('plan.entries.number', { n: number })} />}
                         <span className="entry-name">
                           <span className="entry-title">{label}</span>
                           {/* What the turn holds beside its action, each a line of its own. */}

@@ -1902,7 +1902,7 @@ describe('acts inside an action in the plan list', () => {
     expect(screen.getAllByRole('listitem').filter(li => li.matches('.entry'))).toHaveLength(1);
   });
 
-  test('Warfare\'s free tactical action shows under its card, with no row or number of its own', () => {
+  test('Warfare\'s free tactical action shows under its card with no row of its own; the card row carries its number, as its arrow does', () => {
     const card = useGame.getState().addEntry(1, { type: 'strategic', card: 6 }, 'action');
     useGame.getState().addEntry(1, { type: 'tactical', systemId: TARGET, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: card }, 'action');
     useGame.getState().addEntry(1, { type: 'tactical', systemId: HOME, moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
@@ -1910,7 +1910,8 @@ describe('acts inside an action in the plan list', () => {
     const rows = screen.getAllByRole('listitem').filter(li => li.matches('.entry'));
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent('+ Tactical action without a token · Quann');
-    expect(within(rows[1]).getByText('1')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('1')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('2')).toBeInTheDocument();
   });
 });
 
