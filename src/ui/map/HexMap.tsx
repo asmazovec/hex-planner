@@ -8,7 +8,8 @@ import { animates } from '../common/motion';
 import { RowIcon } from '../primitives/Icon';
 import { prepareSprites, tokenColours } from '../units/sprites';
 import type { MapPan } from './edgePan';
-import { hexToPixel, mapBounds, type Rect } from './geometry';
+import { HEX_SIZE, hexToPixel, mapBounds, placeOffMapHomes, type Rect } from './geometry';
+import { offMapSpots } from './offMapHomes';
 import { RouteArrows, RouteDraftLine, type Arrow } from './RouteArrows';
 import { TileView, type Highlight } from './TileView';
 import type { RouteDraftView } from './useArrowDrag';
@@ -113,6 +114,13 @@ function useSmoothRect(target: Rect, area: string): Rect {
 
 const NO_ARROWS: Arrow[] = [];
 
+/** The smallest rectangle holding both. */
+const joined = (a: Rect, b: Rect): Rect => {
+  const x = Math.min(a.x, b.x);
+  const y = Math.min(a.y, b.y);
+  return { x, y, width: Math.max(a.x + a.width, b.x + b.width) - x, height: Math.max(a.y + a.height, b.y + b.height) - y };
+};
+
 const parseKey = (key: string): { q: number; r: number } => {
   const [q, r] = key.split(',').map(Number);
   return { q, r };
@@ -124,11 +132,16 @@ export function HexMap({
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
 
+  // The off-map homes stand beside the map; where, is told to the drawing before any tile or line asks.
+  const offMap = useMemo(() => offMapSpots(game, pack), [game, pack]);
+  placeOffMapHomes(offMap);
+  const homes = useMemo(() => Object.keys(offMap), [offMap]);
+
   const slotKeys = useMemo(() => {
     const keys = new Set(slotsFor(game.playerCount, pack, game.layout).map(s => slotKeyOf(s.q, s.r)));
     for (const key of Object.keys(game.map)) keys.add(key);
-    return [...keys];
-  }, [pack, game.playerCount, game.layout, game.map]);
+    return [...keys, ...homes];
+  }, [pack, game.playerCount, game.layout, game.map, homes]);
 
   const colours = tokenColours(game);
   const palette = Object.values(colours).join();
@@ -143,8 +156,20 @@ export function HexMap({
     }));
   }, [game, pack]);
 
-  const mapSlots = useMemo(() => slotKeys.map(parseKey), [slotKeys]);
-  const mapRect = useMemo(() => mapBounds(mapSlots), [mapSlots]);
+  const mapSlots = useMemo(() => slotKeys.filter(key => !homes.includes(key)).map(parseKey), [slotKeys, homes]);
+  // The frame holds the off-map homes too, drawn beside the map.
+  const homeRect = useMemo(() => {
+    const spots = Object.values(offMap);
+    if (spots.length === 0) return null;
+    const half = (HEX_SIZE * Math.sqrt(3)) / 2;
+    const left = Math.min(...spots.map(p => p.x)) - HEX_SIZE - 6;
+    const top = Math.min(...spots.map(p => p.y)) - half - 6;
+    return { x: left, y: top, width: Math.max(...spots.map(p => p.x)) + HEX_SIZE + 6 - left, height: Math.max(...spots.map(p => p.y)) + half + 6 - top };
+  }, [offMap]);
+  const mapRect = useMemo(() => {
+    const rect = mapBounds(mapSlots);
+    return homeRect ? joined(rect, homeRect) : rect;
+  }, [mapSlots, homeRect]);
   const { fractureAt, fracture, leaving, opening, flyRun, flyStyle, leftGone } = useFractureFlight(game, pack, mapSlots);
   // The map opens whole in its area, clear of the edges and of the tabs over them. Without a size (no layout yet) it is the plain frame.
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -162,11 +187,11 @@ export function HexMap({
     return () => observer.disconnect();
   }, [clearOf]);
   const bounds = useMemo(() => {
-    const frame = fracture ? capFit(mapRect, fracture.bounds) : mapRect;
+    const frame = fracture ? capFit(mapRect, homeRect ? joined(fracture.bounds, homeRect) : fracture.bounds) : mapRect;
     if (!area) return frame;
-    const hexes = [...mapSlots.map(s => hexToPixel(s.q, s.r)), ...(fracture?.spots ?? [])];
+    const hexes = [...mapSlots.map(s => hexToPixel(s.q, s.r)), ...Object.values(offMap), ...(fracture?.spots ?? [])];
     return fitBox(frame, area, hexes, area.tabs);
-  }, [fracture, mapRect, mapSlots, area]);
+  }, [fracture, mapRect, homeRect, offMap, mapSlots, area]);
   // Frames of a gesture or of the camera's approach go straight to the groups that carry the view, not through React:
   // the map, the moving systems, the arrows and the flight each have one, in layers drawn in that order.
   const viewGroup = useRef<SVGGElement>(null);

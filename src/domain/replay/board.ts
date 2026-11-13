@@ -51,5 +51,10 @@ export const systemPlanets = (game: Game, systemId: string, pack: DataPack): Pla
 /** The system a move leaves: its `from`, or for a planet pickup the system holding that planet. */
 export function sourceSlot(game: Game, pack: DataPack, from: string): string | null {
   if (!(from in pack.planets)) return from;
-  return systemSlots(game).find(slot => planetsOf(game, slot, pack).includes(from)) ?? null;
+  const found = systemSlots(game).find(slot => planetsOf(game, slot, pack).includes(from));
+  if (found !== undefined) return found;
+  // A planet of an off-map home (the Creuss home, 6 note 2) lies in that home, which stands under its tile id.
+  const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
+  const home = Object.values(pack.factions).find(f => f.gateTile !== undefined && onMap(f.gateTile) && !onMap(f.homeTile) && pack.tiles[f.homeTile]?.planetIds.includes(from));
+  return home?.homeTile ?? null;
 }

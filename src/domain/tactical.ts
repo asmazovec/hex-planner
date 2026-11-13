@@ -4,9 +4,9 @@
  * replay itself lives in src/domain/replay/.
  */
 import { holderOf } from './effects/registry';
-import { fleetSpeed, linksOf, routeMove, routeReach, type Blockers, type MoveView } from './movement';
+import { boardSlots, fleetSpeed, linksOf, routeMove, routeReach, type Blockers, type MoveView } from './movement';
 import { autoPay } from './payment';
-import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, systemSlots, tileIdOf } from './project';
+import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, tileIdOf } from './project';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
@@ -377,7 +377,8 @@ export function entrySystems(game: Game, pack: DataPack, entry: Entry): string[]
   } else if (entry.type === 'adjustment') {
     slots.push(entry.delta.units?.systemId, ...Object.keys(entry.delta.ground ?? {}).map(id => sourceSlot(game, pack, id)));
   }
-  return [...new Set(slots)].filter((s): s is string => Boolean(s) && isOnMap(game, s as string));
+  const board = new Set(boardSlots(game, pack));
+  return [...new Set(slots)].filter((s): s is string => Boolean(s) && (isOnMap(game, s as string) || board.has(s as string)));
 }
 
 /** Whether a flight of this entry would show anything: a destination and a unit in its moves. What was entered flies, whether or not it stands at the source. */
@@ -404,11 +405,11 @@ export function stateInFlight(pack: DataPack, entry: TacticalEntry, before: Game
 
 /** The systems a tap can make the system of an action: any tile on the map. */
 export const tileSystems = (game: Game, pack: DataPack): string[] =>
-  systemSlots(game).filter(slot => Boolean(pack.tiles[tileIdOf(game, slot)]));
+  boardSlots(game, pack).filter(slot => Boolean(pack.tiles[tileIdOf(game, slot)]));
 
 /** The systems that can start a route: those with units of mine, in space or on a planet. */
 export const sourceSystems = (game: Game, pack: DataPack, before: GameState): string[] =>
-  systemSlots(game).filter(slot => isValidSource(game, pack, before, slot));
+  boardSlots(game, pack).filter(slot => isValidSource(game, pack, before, slot));
 
 /**
  * A route under way: how far the fastest ship of its source flies (`speed`, after the anomalies on the path), the steps
