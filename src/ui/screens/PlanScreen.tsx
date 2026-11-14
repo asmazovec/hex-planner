@@ -366,7 +366,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const toggleManualPayment = (id: string, open: boolean) => setManualPayments(ids => (open ? [...ids, id] : ids.filter(other => other !== id)));
 
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
-  const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
   const shownLine = timelineOf(game, plan, shownFilter, pack);
   const shownTable = shownLine.kernel.table;
   const shownBoard = boardAtRound(shownLine, round.number);
@@ -797,7 +796,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             : stageFor.kind === 'component' && stagedTurn ? cardPurchases(gameAs(game, stagedTurn.owner), pack, stagedTurn, stage.slot, boards.before(stagedTurn.id), effects => updateEntry(stagedTurn.id, { effects: producedEffects(stagedTurn, effects) })) : undefined}
           manualPayments={manualPayments}
           tacticalId={stageFor.kind === 'tactical' ? stageFor.id : undefined} adjustmentId={stageFor.kind === 'adjustment' ? stageFor.id : undefined}
-          shownState={shownState} onClose={closeStage}
+          shownBoard={shownBoard} onClose={closeStage}
         />
       )}
       <div className="plan-switch" role="group" aria-label={t('plan.views')}>

@@ -14,6 +14,7 @@ import type { Entry, UnitCounts } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { HexStage, type HexStageProps } from './HexStage';
+import { viewOf } from '../../testing/legacyMap';
 
 /** The interface of these tests is English, and so are the texts of the packs. */
 const pack = loadPack(['pok'], 'en');
@@ -865,10 +866,13 @@ describe('fix round 1', () => {
   });
 
   test('control and readiness follow the state shown, the units the forecast', () => {
-    const shown = { ...forecast(), control: { [quann()]: 'enemy' as const }, exhausted: [quann()] };
-    open({ shownState: shown, initialMode: 'control' });
+    const shown = { ...forecast(), control: { [quann()]: 'enemy' as const } };
+    open({ shownBoard: viewOf(game(), shown, pack).board, initialMode: 'control' });
     const control = within(screen.getByRole('group', { name: `Control of ${nameOf(quann())}` }));
     expect(control.getByRole('button', { name: 'Player 2' })).toHaveAttribute('aria-pressed', 'true');
+    // Readiness is what a planet of mine has spent: a planet the plan has taken from me shows no spending.
+    cleanup();
+    open({ shownBoard: viewOf(game(), { ...forecast(), control: { [quann()]: 'me' as const }, exhausted: [quann()] }, pack).board, initialMode: 'control' });
     expect(within(screen.getByRole('group', { name: nameOf(quann()) })).getByText(/Exhausted/)).toBeVisible();
   });
 

@@ -7,6 +7,7 @@ export const KERNEL_ONLY = [
   'players/FactionCard.tsx', 'players/FactionComponents.tsx', 'players/FactionPicker.tsx', 'players/PlayerList.tsx', 'players/ShipStats.tsx', 'players/names.ts', 'players/useSeatDrag.ts',
   'screens/GameScreen.tsx', 'screens/EnergySettings.tsx', 'screens/LegalNotice.tsx',
   'map/HexMap.tsx', 'map/TileView.tsx', 'map/PlanetBadge.tsx', 'map/useFractureFlight.ts', 'map/offMapHomes.ts', 'map/marks.tsx', 'map/RouteArrows.tsx', 'map/FlightLayer.tsx',
+  'map/stage/ControlPanel.tsx', 'map/stage/BuildPanel.tsx', 'map/stage/PlanetDetails.tsx', 'map/stage/UnitShop.tsx', 'map/stage/BattlePanel.tsx', 'map/stage/SetupPanel.tsx', 'map/stage/HexStage.tsx',
   'map/geometry.ts', 'map/edgePan.ts', 'map/useArrowDrag.ts', 'map/usePanZoom.ts', 'map/viewLimits.ts',
 ];
 

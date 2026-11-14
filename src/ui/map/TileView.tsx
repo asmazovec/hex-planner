@@ -8,7 +8,7 @@ import { isOnMap, tileIdOf } from '../../domain/project';
 import type { PlanetValues } from '../../domain/payment';
 import type { DataPack, PlanetDef } from '../../domain/types';
 import { mapSource, planetsIn } from '../../game/space';
-import { othersOf, ownerKey, playerOfOwner, shownPlanetValues, tileStacks } from '../../game/tile';
+import { othersOf, ownerKey, planetShown, playerOfOwner, tileStacks } from '../../game/tile';
 import type { Board, PlayerId, Table } from '../../game/types';
 import { tableColours } from '../units/sprites';
 import { TokenLayer } from '../units/TokenLayer';
@@ -248,13 +248,8 @@ export function TileView({
     <>
       {planets.map((planet, i) => {
         const spot = layout.planets[i];
-        const held = board.planets[planet.id];
-        // The owner, as the viewer sees it: mine, an enemy's (the holder is that player), or no one's.
-        const control = held?.owner === undefined ? undefined : held.owner === viewer ? 'me' as const : 'enemy' as const;
-        const holder = control === 'enemy' ? held?.owner : undefined;
+        const { control, holder, exhausted, values } = planetShown(table, board, pack, viewer, planet.id);
         const holderColor = seated.find(o => o.id === holder)?.color;
-        const exhausted = (held?.exhausted ?? false) && (held?.owner === undefined || held.owner === viewer);
-        const values = shownPlanetValues(table, board, pack, viewer, planet.id);
         const parts = [`${planet.name}: ${values.resources}/${values.influence}`];
         for (const tech of planet.tech ?? []) parts.push(t(`map.tech.${tech}`));
         if (planet.legendary) parts.push(t('map.legendary'));

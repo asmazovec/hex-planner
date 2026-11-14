@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { isOnMap, tileIdOf } from '../../../domain/project';
-import type { DataPack, GameState } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
+import type { Board } from '../../../game/types';
 import { mapSource } from '../../../game/space';
 import { HexRemove } from '../../primitives/Icon';
 import { PlayerChoice, playerTag, type PlayerOption } from '../../primitives/player';
@@ -42,7 +43,7 @@ export interface HexStageProps {
   /** The opponent whose card this hex serves; an action's own owner counts without it. */
   owner?: string;
   /** What the map shows: control and readiness of a planet follow it, while the hex always shows the forecast. */
-  shownState?: GameState;
+  shownBoard?: Board;
   onClose: () => void;
 }
 
@@ -70,7 +71,7 @@ export function HexStage(props: HexStageProps) {
   const { t } = useTranslation();
   const stage = useStage(props);
   if (!stage) return null;
-  const { game, state, table, board, shown, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
+  const { game, table, board, shown, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
 
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
   /** An opponent in a player choice: the short name, and the tag for a crowded line. */
@@ -123,7 +124,7 @@ export function HexStage(props: HexStageProps) {
           {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} game={game} pack={pack} boardWarnings={stage.boardWarnings} />}
           {mode === 'build' && (
             <BuildPanel
-              game={game} pack={pack} state={state} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
+              table={table} game={game} pack={pack} board={board} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
               colour={colours[side]} onTake={stage.buyAt} onReturn={stage.unbuyAt} structuresOnly={structuresOnly}
               boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
             />
@@ -166,7 +167,7 @@ export function HexStage(props: HexStageProps) {
           )}
           {mode === 'control' && (
             <ControlPanel
-              game={game} pack={pack} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
+              table={table} pack={pack} tile={tile} rotation={mapValue?.split('@')[1]} planets={planets} shown={shown}
               seated={seated.map(seatOption)} chosen={planets[target]?.id} onChoose={setPlanet}
             />
           )}

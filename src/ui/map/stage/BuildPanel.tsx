@@ -1,18 +1,22 @@
 import { useTranslation } from 'react-i18next';
 import type { TokenKind } from '../../../domain/hexLayout';
-import type { DataPack, Game, GameState, Warning } from '../../../domain/types';
+import type { DataPack, Game, Warning } from '../../../domain/types';
+import { planetShown } from '../../../game/tile';
+import type { Board, PlayerId, Table } from '../../../game/types';
 import { SectionTitle } from '../../primitives/SectionTitle';
 import { WarningList } from '../../feedback/WarningText';
-import { shownPlanetValues } from '../../../domain/payment';
 import { PlanetBadge, SpaceBadge } from '../PlanetBadge';
 import { layoutFor, UnitDraft } from '../../units/UnitDraft';
 import type { MeterRow, ShopRow } from './useStage';
 
 export interface BuildPanelProps {
+  table: Table;
+  viewer?: PlayerId;
+  /** The warnings are worded from it (their places and names). */
   game: Game;
   pack: DataPack;
   /** What the hex shows: a planet's badge follows its control and readiness. */
-  state: GameState;
+  board: Board;
   /** The rows of units produced and of structures built, by where they go. */
   production: ShopRow[];
   construction: ShopRow[];
@@ -37,7 +41,7 @@ export interface BuildPanelProps {
  * hold a figure and, in the look of "beyond the stock", after that too (the domain warns); a tap on a bought one, or on its ringed token, takes it back. Units are produced and structures
  * built, so each stands under its own heading; a hex opened for one of them shows only it.
  */
-export function BuildPanel({ game, pack, state, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
+export function BuildPanel({ table, viewer = table.viewer, game, pack, board, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
   const { t } = useTranslation();
   const draft = (rows: ShopRow[]) => (
     <UnitDraft
@@ -45,7 +49,7 @@ export function BuildPanel({ game, pack, state, production, construction, stock,
       rows={rows.map(({ id, planet, items }) => ({
         id, items, layout: layoutFor(items.length), label: planet ? planet.name : t('draft.space'),
         place: planet
-          ? <PlanetBadge planet={planet} control={state.control[planet.id]} exhausted={state.exhausted.includes(planet.id)} values={shownPlanetValues(pack, state, planet.id, game.faction)} compact />
+          ? (() => { const { control, exhausted, values } = planetShown(table, board, pack, viewer, planet.id); return <PlanetBadge planet={planet} control={control} exhausted={exhausted} values={values} compact />; })()
           : <SpaceBadge label={t('draft.space')} />,
       }))}
     />

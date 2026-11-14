@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionDue, productionPlaces, readyResources, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { fleetExcess, standing, planetStructureWarnings, productionCost, productionDue, readyResources } from '../../../domain/project';
 import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { startingPds } from '../../../domain/strategy';
@@ -11,7 +11,13 @@ import { unitStats } from '../../../domain/unitStats';
 import type { Entry, GameState, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { lossesOf, withAdjustedUnit, withFleetRemoval, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
-import { enemyChange, holderIn, stacksOf, structureInGame } from '../../../domain/stacks';
+import { enemyChange, structureInGame } from '../../../domain/stacks';
+import { turnOf } from '../../../game/fromLegacy';
+import { productionSites } from '../../../game/flight';
+import { playerOfKey } from '../../../game/keys';
+import { capacityIn, fleetIn, fleetLimit, ownerOf, reinforcementsOf, shipsIn, structuresOf } from '../../../game/queries';
+import { planetsIn } from '../../../game/space';
+import { ownerKey, tileStacks } from '../../../game/tile';
 import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
 import { tokenColours } from '../../units/sprites';
 import { UNIT_ORDER } from '../../units/unitOrder';
@@ -66,7 +72,7 @@ export interface MeterRow {
  * What the big hex edits and how: placing, losses and purchases, for me or an opponent. Enemy units and structures
  * have no entry to hold what was lost or bought, so those strips last as long as the hex stays open.
  */
-export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownState }: HexStageProps) {
+export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownBoard }: HexStageProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game);
   const setEnemyUnits = useGame(s => s.setEnemyUnits);
@@ -91,7 +97,9 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const line = timelineOf(game, plan, 'forecast', pack);
   const projection = projectionAtRound(line, roundNo);
   const { state } = projection;
-  const planets = systemPlanets(game, slot, pack);
+  const table = line.kernel.table;
+  const board = boardAtRound(line, roundNo);
+  const planets = planetsIn(table, board, pack, slot).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined);
   const target = Math.min(chosenPlanet, Math.max(0, planets.length - 1));
   const targetPlanet = planets.at(target);
   const planetIdOf = (planet: number | undefined): string | null => (planet === undefined ? null : planets[planet]?.id ?? null);
@@ -102,9 +110,15 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const side = only ? mine : chosenSide ?? mine;
   const colours = tokenColours(game);
   const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, seat: o.seat, name: opponentName(game, pack, o.id, t) }));
-  const holderOf = (planetId: string): string => holderIn(game, state, planetId) ?? 'me';
-  /** Who controls the planet in the state shown: me, an opponent, or nobody. */
-  const controllerOf = (planetId: string): string | null => (state.control[planetId] === 'me' ? 'me' : holderIn(game, state, planetId) ?? null);
+  /** The player whose side `mine` is, on the board. */
+  const actor = playerOfKey(table, mine) ?? table.viewer;
+  /** Who controls the planet on the board: me, an opponent (by the id a saved game has for them), or nobody. */
+  const controllerOf = (planetId: string): string | null => {
+    const owner = ownerOf(board, planetId);
+    return owner === undefined ? null : ownerKey(table, table.viewer, owner);
+  };
+  const holderOf = (planetId: string): string => controllerOf(planetId) ?? 'me';
+  const hasDock = (planetId: string): boolean => (board.planets[planetId]?.structures.spacedock ?? 0) > 0;
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
   /** Ground forces go by planet; one still listed with the system comes off there. */
@@ -131,7 +145,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const tactical = onPurchase ? undefined : (fightingFor && tacticals.includes(fightingFor) ? fightingFor : tacticals.filter(e => !e.owner).at(-1));
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && seenBefore(line, tactical.id);
-  const produced = tactical && beforeTactical ? productionPlaces(view, tactical, beforeTactical, pack) : [];
+  const produced = tactical ? productionSites(table, line.kernel.byTurn.get(tactical.id)?.before ?? line.kernel.end, pack, turnOf(table, tactical, pack)) : [];
   const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
     updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id), view));
   const purchases: PurchaseTarget = onPurchase ?? {
@@ -168,7 +182,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const index = at ?? undefined;
     const planet = index === undefined ? undefined : planets.at(index);
     if (isStructure(kind)) {
-      if (!planet || (kind === 'spacedock' && structureOwner(state, 'spacedock', planet.id) !== undefined)) return;
+      if (!planet || (kind === 'spacedock' && hasDock(planet.id))) return;
       if (purchases.changeStructure) {
         purchases.changeStructure(kind, planet.id, 1);
         return;
@@ -248,7 +262,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
 
   /** Who takes part in a battle here: whoever has units or structures in the system, or has already lost some in it. */
-  const present = new Set(Object.values(stacksOf(game, state, slot, planets, pack)).flat().map(stack => stack.owner));
+  const stacks = tileStacks(table, board, table.viewer, slot, planets);
+  const present = new Set([...stacks.space, ...stacks.ground].map(stack => stack.owner));
   const fights = (owner: string): boolean => present.has(owner) || lossesFor(owner).length > 0;
 
   const sideFaction = side === mine ? view.faction : seated.find(o => o.id === side)?.faction ?? '';
@@ -281,20 +296,17 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
    * The figures still in the reinforcements of the player the shop buys for (96.2, 24.4): the limit less what the forecast
    * already holds on the board, purchases included; below zero by what was bought beyond them. Fighters and infantry have tokens and never run out.
    */
-  const sideState = side === mine ? acting : state.rivals?.[side];
-  const structureState = purchases.changeStructure || side === mine ? acting : state.rivals?.[side];
+  const sidePlayer = playerOfKey(table, side);
+  const structurePlayer = purchases.changeStructure || side === mine ? actor : sidePlayer;
   const shopStock: Partial<Record<TokenKind, number>> = {};
+  const reinforcements = sidePlayer === undefined ? {} : reinforcementsOf(board, pack, sidePlayer);
   for (const unit of units) {
-    const limit = pack.units[unit]?.limit;
-    if (limit === null || limit === undefined || unit === 'fighter' || unit === 'infantry' || !sideState) continue;
-    const onBoard = [...Object.values(sideState.systems), ...Object.values(sideState.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
-    shopStock[unit] = limit - onBoard;
+    if (reinforcements[unit] !== undefined) shopStock[unit] = reinforcements[unit];
   }
   for (const kind of STRUCTURES) {
     const limit = pack.structures.find(s => s.id === kind)?.limit ?? null;
-    if (limit === null || !structureState) continue;
-    const held = kind === 'spacedock' ? structureState.docks.length : Object.values(structureState.pds).reduce((sum, n) => sum + n, 0);
-    shopStock[kind] = limit - held;
+    if (limit === null || structurePlayer === undefined) continue;
+    shopStock[kind] = limit - structuresOf(board, structurePlayer).reduce((sum, held) => sum + (held.structures[kind] ?? 0), 0);
   }
   /** The shop as rows by where a purchase goes: ships to the space area, ground forces and structures to a planet. */
   const draftItem = (item: ShopItem, index: number | undefined, planet: PlanetDef | null): UnitDraftItem => {
@@ -303,7 +315,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
       kind: item.kind, picked: boughtAt(item.kind, index), price: item.price === undefined ? undefined : priceText(item.price),
       takeLabel: name, returnLabel: t('stage.giveBack', { unit: name }),
       // One dock to a planet (85.4): a second one was never placed, and now the button says so.
-      blockedReason: item.kind === 'spacedock' && planet && structureOwner(state, 'spacedock', planet.id) !== undefined
+      blockedReason: item.kind === 'spacedock' && planet && hasDock(planet.id)
         ? t('stage.dockHere') : undefined,
     };
   };
@@ -331,10 +343,10 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** My ships in the space area of the system, for the removal beyond the fleet pool: what stands, and what was removed. */
   const removed = fightingFor?.fleetRemovals ?? {};
   const fleetItems: UnitDraftItem[] = units.filter(unit => !pack.units[unit]?.ground).map(unit => ({
-    kind: unit as TokenKind, picked: removed[unit] ?? 0, left: acting.systems[slot]?.[unit] ?? 0,
+    kind: unit as TokenKind, picked: removed[unit] ?? 0, left: shipsIn(board, slot, actor)[unit] ?? 0,
     takeLabel: t('stage.fleetTake', { unit: kindName(unit) }), returnLabel: t('stage.giveBack', { unit: kindName(unit) }),
     // A ship that does not stand here cannot be removed: before the draft there was no token of it to tap, and no rule warns of it.
-    blockedReason: (acting.systems[slot]?.[unit] ?? 0) > 0 ? undefined : t('stage.fleetNone'),
+    blockedReason: (shipsIn(board, slot, actor)[unit] ?? 0) > 0 ? undefined : t('stage.fleetNone'),
   })).filter(item => item.picked > 0 || (item.left ?? 0) > 0);
   const beforeFight = fightingFor && seenBefore(line, fightingFor.id);
   /** How many ships are still over the fleet pool, as the replay says of the action. */
@@ -350,14 +362,15 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const ownEntry = onPurchase ? round.entries.find(e => e.id === onPurchase.entryId) : tactical;
   const spent = ownEntry && side === mine ? productionDue(view, payer, sideUnits, pack, ownEntry) : productionCost(sideUnits, sideFaction, sideHoldings, pack);
   const spendable = readyResources(payer, pack, { faction: view.faction }) + payer.tradeGoods;
-  const meters = systemMeters(view, acting.systems[slot] ?? {}, acting.holdings, pack, dockFighterRoom(view, acting, slot, pack));
+  const meters = { ships: fleetIn(table, board, pack, actor, slot), ...capacityIn(table, board, pack, actor, slot) };
+  const pool = fleetLimit(table, board, pack, actor);
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
   const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
   /** Over the limit is what the domain says of the entry. */
   const breaks = (code: WarningCode, counted: boolean) => (warningEntry ? standing(ownWarnings).some(w => w.code === code) : counted);
   const meterRows: MeterRow[] = [
     { key: 'resources', now: spent, of: spendable, over: breaks('shortResources', spent > spendable) },
-    { key: 'fleet', now: meters.ships, of: fleetLimit(view, acting, pack), over: breaks('fleetPool', meters.ships > fleetLimit(view, acting, pack)) },
+    { key: 'fleet', now: meters.ships, of: pool, over: breaks('fleetPool', meters.ships > pool) },
     { key: 'capacity', now: meters.load, of: meters.capacity, over: breaks('capacitySystem', meters.load > meters.capacity) },
   ];
   // The shop answers for what is bought and how it is paid; a route or a landing has its own block in the editor.
@@ -372,7 +385,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   ];
 
   return {
-    game, state, table: line.kernel.table, board: boardAtRound(line, roundNo), shown: shownState ?? state, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
+    game, state, table, board, shown: shownBoard ?? boardAtRound(line, roundNo), planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours, kindName,
     adjusting, tapNote, handover, onToken, ringed: (key: string) => inBuild && (bought[key] ?? 0) > 0,
     shopItems, buy, boughtTotal, spent, meterRows, entryWarnings, boardWarnings, lossesFor, fights,
     productionRows, constructionRows, shopStock, buyAt, unbuyAt, fleetItems, removeShip, fleetOver,

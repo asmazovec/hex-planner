@@ -70,3 +70,17 @@ export function shownPlanetValues(table: Table, board: Board, pack: DataPack, pl
 
 /** How many players sit at the table: those who hold a seat (a stray owner of units written by hand is no player of the map). */
 export const seatCount = (table: Table): number => table.players.filter(p => p.seat <= 8).length;
+
+/** What a planet shows at a viewer's eyes: who holds it (mine, an enemy's), whether it is exhausted, and its numbers. */
+export interface PlanetShown { control?: 'me' | 'enemy'; holder?: PlayerId; exhausted: boolean; values: PlanetValues }
+
+export function planetShown(table: Table, board: Board, pack: DataPack, viewer: PlayerId, planet: string): PlanetShown {
+  const held = board.planets[planet];
+  const control = held?.owner === undefined ? undefined : held.owner === viewer ? 'me' as const : 'enemy' as const;
+  return {
+    control, holder: control === 'enemy' ? held?.owner : undefined,
+    // Only what a planet of mine, or of no one, has spent shows struck out.
+    exhausted: (held?.exhausted ?? false) && (held?.owner === undefined || held.owner === viewer),
+    values: shownPlanetValues(table, board, pack, viewer, planet),
+  };
+}

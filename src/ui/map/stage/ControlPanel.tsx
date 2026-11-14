@@ -1,14 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { planetHolder } from '../../../domain/players';
-import type { DataPack, Game, GameState, PlanetDef, TileDef } from '../../../domain/types';
+import type { DataPack, PlanetDef, TileDef } from '../../../domain/types';
+import { ownerKey, planetShown } from '../../../game/tile';
+import type { Board, PlayerId, Table } from '../../../game/types';
 import { useGame } from '../../../state/gameStore';
 import { PlayerChoice, type PlayerOption } from '../../primitives/player';
-import { shownPlanetValues } from '../../../domain/payment';
 import { PlanetDetails } from './PlanetDetails';
 
 export interface ControlPanelProps {
-  game: Game;
+  table: Table;
+  /** Whose eyes the panel looks through: the viewer of the table by default. */
+  viewer?: PlayerId;
   pack: DataPack;
   /** The tile on this slot, when the data know its number. */
   tile: TileDef | undefined;
@@ -16,7 +18,7 @@ export interface ControlPanelProps {
   rotation: string | undefined;
   planets: PlanetDef[];
   /** What the map shows: control and readiness follow it. */
-  shown: GameState;
+  shown: Board;
   /** Each opponent as the control choice names them. */
   seated: PlayerOption[];
   /** The planet tapped on the hex: marked here and brought into view. */
@@ -29,7 +31,7 @@ export interface ControlPanelProps {
  * Control: the facts of the tile in one line, then every planet of the system with its printed values and who holds
  * it. The tile itself is read here only: the map is built on the game screen.
  */
-export function ControlPanel({ game, pack, tile, rotation, planets, shown, seated, chosen, onChoose }: ControlPanelProps) {
+export function ControlPanel({ table, viewer = table.viewer, pack, tile, rotation, planets, shown, seated, chosen, onChoose }: ControlPanelProps) {
   const { t } = useTranslation();
   // A lone planet needs no mark: there is nothing to tell it from.
   const marked = planets.length > 1 ? chosen : undefined;
@@ -44,7 +46,7 @@ export function ControlPanel({ game, pack, tile, rotation, planets, shown, seate
     tile && !anomalies && tile.wormholes.length === 0 ? t('map.sheet.plain') : '',
   ].filter(Boolean);
   const owners: { value: string | null; label: string; color?: number }[] = [
-    { value: 'me', label: t('map.sheet.mine'), color: game.color },
+    { value: 'me', label: t('map.sheet.mine'), color: table.players.find(p => p.id === viewer)?.color },
     ...seated,
     { value: null, label: t('map.sheet.none') },
   ];
@@ -54,8 +56,8 @@ export function ControlPanel({ game, pack, tile, rotation, planets, shown, seate
       {facts.length > 0 && <p className="muted">{facts.join(' · ')}</p>}
       {tile && planets.length === 0 && <p className="muted">{t('map.sheet.noPlanets')}</p>}
       {planets.map((planet, index) => {
-        const control = shown.control[planet.id];
-        const holder = control === 'enemy' ? planetHolder(game, planet.id) ?? null : control ?? null;
+        const { control, holder: owner, exhausted, values } = planetShown(table, shown, pack, viewer, planet.id);
+        const holder = control === 'me' ? 'me' : owner === undefined ? null : ownerKey(table, viewer, owner);
         return (
           <div
             key={planet.id} role="group" aria-label={planet.name} ref={planet.id === marked ? chosenRef : undefined}
@@ -64,9 +66,9 @@ export function ControlPanel({ game, pack, tile, rotation, planets, shown, seate
             onClick={planets.length > 1 ? () => onChoose?.(index) : undefined}
           >
             <PlanetDetails
-              planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={shown.exhausted.includes(planet.id)}
-              control={control} holderColor={game.opponents.find(o => o.id === holder)?.color}
-              values={shownPlanetValues(pack, shown, planet.id, game.faction)}
+              planet={planet} pack={pack} relic={tile?.kind === 'fracture'} exhausted={exhausted}
+              control={control} holderColor={table.players.find(p => p.id === owner)?.color}
+              values={values}
             />
             <PlayerChoice
               label={t('map.sheet.controlLabel', { planet: planet.name })} options={owners}
