@@ -24,10 +24,9 @@ export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Mecatol Rex joins every alpha and beta wormhole in the Winnu's tactical actions while they do not control it (40, 101).
-  links: ({ game, pack, state, shared, during }) => {
+  links: ({ game, pack, faction, controls, tokens, during }) => {
     const mecatol = mecatolSlot(game);
-    if (during !== 'tactical' || game.faction !== 'winnu' || mecatol === undefined || state?.control[mecatolPlanetOf(game)] === 'me') return [];
-    const tokens = shared?.wormholeTokens ?? state?.wormholeTokens;
+    if (during !== 'tactical' || faction !== 'winnu' || mecatol === undefined || controls(mecatolPlanetOf(game))) return [];
     return ['alpha', 'beta'].flatMap(type => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== mecatol).map((slot): [string, string] => [mecatol, slot]));
   },
   holder: 'self',

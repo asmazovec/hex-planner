@@ -8,18 +8,16 @@
 import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf } from '../../domain/effects/registry';
 import { productionCost } from '../../domain/unitStats';
-import { checkPoolChange } from '../../domain/replay/status';
 import { researchTechnologies } from '../../domain/replay/research';
 import { checkSystemOf } from '../../domain/replay/transport';
 import { applyComponentProduction } from '../../domain/replay/production';
 import { buildStructures } from '../../domain/replay/structures';
-import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { violation } from '../../domain/rules/registry';
 import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
 import { appliedOn, holderIn, inForce } from '../abilities/registry';
-import { areNeighbours, planetValue, reinforcementsOf, stacksOn, tradeGoodWorth } from '../queries';
+import { areNeighbours, planetValue, poolChangeWarnings, reinforcementsOf, stacksOn, tradeGoodWorth } from '../queries';
 import { spentOnObjectives, type Spent } from '../../domain/effects/points/status';
 import type { EffectTurn } from '../../domain/effects/types';
 import { adjacentSlots, planetsIn, tileKindIn, wormholesIn } from '../space';
@@ -66,8 +64,7 @@ export function poolWarnings(table: Table, before: Board, board: Board, pack: Da
     const had = before.players[event.player]?.pools[pool] ?? 0;
     if (pools[pool] < 0 && had + pools[pool] < 0) found.push(violation('poolNegative', { pool, have: had + pools[pool] }, step));
   }
-  const v = viewFor(table, board, pack, event.player);
-  found.push(...checkPoolChange(v.game, v.state, pack, pools, step, v.shared));
+  found.push(...poolChangeWarnings(table, board, pack, event.player, pools, step));
   return found;
 }
 
@@ -79,7 +76,7 @@ export function contextOf(
     board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), held: options.held ?? true, choices: options.choices ?? {}, own: player === options.actor,
     get my(): Reader { return readerOf(table, at, pack, player); }, of: other => readerOf(table, at, pack, other),
     key: other => legacyKey(table, other), id, ...(options.entry ? { entry: options.entry } : {}),
-    commodityValue: other => { const v = viewFor(table, at, pack, other); return commodityValueOf(v.game, v.state, pack, v.shared); },
+    commodityValue: other => { const faction = table.players.find(p => p.id === other)?.faction ?? ''; return appliedOn(table, at, pack, other, 'commodityValue', pack.factions[faction]?.commodities ?? 0, { faction }).value; },
     playerOf: key => playerOfKey(table, key),
     home: other => homeOf(table, table.players.find(p => p.id === other)!, pack)?.planets ?? [],
     neighbours: (a, b) => areNeighbours(table, at, pack, a, b),

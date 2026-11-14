@@ -16,6 +16,7 @@
  *  - `onActivate`: what happens when anyone activates a system, asked of every player's components in force;
  *  - `playAt`: a `play` of a tactical action that runs in the middle of it, not after its end.
  */
+import type { MapSource } from '../../replay/board';
 import type { DataPack, Entry, Game, GameState, UnitId, Warning } from '../../types';
 
 declare module '../types' {
@@ -48,12 +49,14 @@ declare module '../../types' {
 
 /** What a component that joins systems is asked with. */
 export interface LinkContext {
-  game: Game;
+  game: MapSource;
   pack: DataPack;
-  /** The owner's state; none where the question is asked of no one in particular. */
-  state?: GameState;
-  /** My state, which holds the laws and the wormhole tokens. */
-  shared?: GameState;
+  /** The faction of the owner; none of the cards of one player where the question is asked of no one in particular. */
+  faction: string;
+  /** Whether the owner controls the planet. */
+  controls: (planetId: string) => boolean;
+  /** The wormhole tokens of the game: the token's type, then the slot. */
+  tokens?: Record<string, string>;
   /** The tactical action of the owner (the route and its reach), or the neighbours of a transaction. */
   during: 'tactical' | 'neighbors';
 }

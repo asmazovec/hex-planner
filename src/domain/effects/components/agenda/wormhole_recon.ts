@@ -19,8 +19,8 @@ export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // "All systems that contain either an alpha or beta wormhole are adjacent to each other."
-  links: ({ game, pack, shared }) => {
-    const holes = [...new Set([...wormholeSlots(game, pack, 'alpha', shared?.wormholeTokens), ...wormholeSlots(game, pack, 'beta', shared?.wormholeTokens)])];
+  links: ({ game, pack, tokens }) => {
+    const holes = [...new Set([...wormholeSlots(game, pack, 'alpha', tokens), ...wormholeSlots(game, pack, 'beta', tokens)])];
     return holes.flatMap((a, i) => holes.slice(i + 1).map((b): readonly [string, string] => [a, b]));
   },
   holder: 'self',

@@ -15,8 +15,7 @@ export const ability: Ability = {
   rule: id,
   // Every system with an alpha wormhole is joined to every system with a beta one, Creuss tokens included. It lights
   // the reach and the neighbours; a step between systems that are not joined is a jump and is never warned of.
-  links: ({ game, pack, shared }) => {
-    const tokens = shared?.wormholeTokens;
+  links: ({ game, pack, tokens }) => {
     const beta = wormholeSlots(game, pack, 'beta', tokens);
     return wormholeSlots(game, pack, 'alpha', tokens).flatMap(alpha => beta.filter(slot => slot !== alpha).map((slot): readonly [string, string] => [alpha, slot]));
   },

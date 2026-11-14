@@ -47,12 +47,12 @@ import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/tr
 import { appliedToPlanet } from '../domain/effects/points/payment';
 import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
 import type { DataPack, UpgradeId } from '../domain/types';
-import { linksOf } from '../domain/movement';
-import { areNeighbors } from '../domain/neighbors';
+import { linksFrom } from '../domain/movement';
+import { areNeighborsOf } from '../domain/neighbors';
+import { systemSlots } from '../domain/replay/board';
 import { appliedOn, holderIn } from './abilities/registry';
 import { homeOf } from './setup';
 import { mapSource, planetsIn, wormholesIn } from './space';
-import { legacyKey, viewFor } from './legacyViews';
 import type { Table } from './types';
 
 const factionOf = (table: Table, player: PlayerId): string => table.players.find(p => p.id === player)?.faction ?? '';
@@ -156,11 +156,28 @@ export const payingPlanets = (_table: Table, board: Board, _pack: DataPack, play
   ...Object.keys(PLANET_CARDS).filter(id => { const held = board.players[player]?.cards[id]; return held !== undefined && held.state !== 'purged' && held.state !== 'exhausted'; }),
 ];
 
+/** The wormhole tokens of the board as the links read them: the token's type, then the slot. */
+const tokenSlots = (board: Board): Record<string, string> =>
+  Object.fromEntries(Object.entries(board.common.wormholeTokens).flatMap(([slot, types]) => types.map((type): [string, string] => [type, slot])));
+
+/** The systems where a player is present: units in space or on a planet, or a planet they control (60). */
+function presenceIn(table: Table, board: Board, pack: DataPack, player: PlayerId): Set<Slot> {
+  const slots = new Set<Slot>();
+  const holds = (units: UnitCounts): boolean => Object.values(units).some(n => (n ?? 0) > 0);
+  for (const slot of systemSlots(mapSource(table, board))) {
+    if (holds(shipsIn(board, slot, player))) slots.add(slot);
+    if (planetsIn(table, board, pack, slot).some(id => holds(groundOn(board, id, player)) || ownerOf(board, id) === player)) slots.add(slot);
+  }
+  return slots;
+}
+
 /** Whether two players are neighbours as the board stands: one is in a system or next to a system the other is in (60, 94.1). The components that change the links are asked. */
 export function areNeighbours(table: Table, board: Board, pack: DataPack, a: PlayerId, b: PlayerId): boolean {
-  const v = viewFor(table, board, pack, a);
-  const other = v.views.states[legacyKey(table, b)];
-  return other !== undefined && areNeighbors(v.game, v.state, other, pack, linksOf(v.game, pack, { state: v.state, shared: v.shared, during: 'neighbors' }));
+  if (!table.players.some(p => p.id === b)) return false;
+  const links = linksFrom(mapSource(table, board), pack, {
+    holder: holderIn(table, board, a), faction: factionOf(table, a), controls: id => ownerOf(board, id) === a, tokens: tokenSlots(board), during: 'neighbors',
+  });
+  return areNeighborsOf(mapSource(table, board), presenceIn(table, board, pack, a), presenceIn(table, board, pack, b), pack, links);
 }
 
 /** The units of each kind a player still has in the reinforcements: the limit less what stands on the board. Fighters and infantry have none (tokens stand in). */

@@ -5,7 +5,7 @@
  */
 import { MECATOL_TILE, MECATOL_TILE_TE } from '../../mecatol';
 import { adjacentTo, shipSpeed, wormholesOf } from '../../movement';
-import { hasAnomaly, planetsOf, systemSlots, tileIdOf } from '../../replay/board';
+import { hasAnomaly, planetsOf, systemSlots, tileIdOf, type MapSource } from '../../replay/board';
 import { unitIds } from '../../replay/state';
 import { homeSlot } from '../../strategy';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../../types';
@@ -65,7 +65,7 @@ export function playerHolds(game: Game, shared: GameState, player: string, slot:
 export const shortfall = (warning: Warning): number => Number(warning.params.steps) - Number(warning.params.move);
 
 /** The slot of Mecatol Rex on the map, whichever tile (18 or 112) stands there. */
-export const mecatolSlot = (game: Game): string | undefined =>
+export const mecatolSlot = (game: MapSource): string | undefined =>
   systemSlots(game).find(slot => [MECATOL_TILE, MECATOL_TILE_TE].includes(tileIdOf(game, slot)));
 
 /** Whether a system holds a space dock of the player (the state of the `gravityRift` ask, or any other with `docks`). */

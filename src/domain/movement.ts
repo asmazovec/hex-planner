@@ -154,15 +154,25 @@ export interface LinkWho { holder?: Holder; state?: GameState; shared?: GameStat
  * (in force, or named by the entry). Empty for a board that has none, so the cached graph is used as it is.
  */
 export function linksOf(game: Game, pack: DataPack, who: LinkWho): Link[] {
-  const tokens = (who.shared ?? who.state)?.wormholeTokens;
-  const links = Object.keys(tokens ?? {}).length > 0 ? tokenLinks(game, pack, tokens) : [];
   const holder = who.holder ?? (who.state ? holderOf(game, who.state, who.shared) : undefined);
-  const ids = [...(holder ? inForceOf(pack, holder, effect => effect.links !== undefined) : []), ...(who.named ?? []).filter(id => effectOf(pack, id)?.links)];
+  return linksFrom(game, pack, {
+    ...(holder ? { holder } : {}), faction: game.faction, controls: planetId => who.state?.control[planetId] === 'me',
+    tokens: (who.shared ?? who.state)?.wormholeTokens, ...(who.named ? { named: who.named } : {}), during: who.during,
+  });
+}
+
+/** Who asks for the adjacency beyond the board, from wherever the board is read. */
+export interface LinkFrom { holder?: Holder; faction: string; controls: (planetId: string) => boolean; tokens?: Record<string, string>; named?: readonly string[]; during: 'tactical' | 'neighbors' }
+
+/** The links, one implementation for the old state and the board. */
+export function linksFrom(game: MapSource, pack: DataPack, who: LinkFrom): Link[] {
+  const links = Object.keys(who.tokens ?? {}).length > 0 ? tokenLinks(game, pack, who.tokens) : [];
+  const ids = [...(who.holder ? inForceOf(pack, who.holder, effect => effect.links !== undefined) : []), ...(who.named ?? []).filter(id => effectOf(pack, id)?.links)];
   const seen = new Set<string>();
   for (const id of ids) {
     if (seen.has(noteBase(id))) continue;
     seen.add(noteBase(id));
-    links.push(...(effectOf(pack, id)?.links?.({ game, pack, state: who.state, shared: who.shared, during: who.during }) ?? []));
+    links.push(...(effectOf(pack, id)?.links?.({ game, pack, faction: who.faction, controls: who.controls, tokens: who.tokens, during: who.during }) ?? []));
   }
   return links;
 }

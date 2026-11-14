@@ -3,25 +3,21 @@
  * primary and the secondary replenish commodities up to the faction's value (21.3, 92.3, 92.5), and the components in
  * force may give trade goods for it (the `tradeGoodsOnReplenish` point, one for each neighbour).
  */
-import { applied } from '../../../domain/effects/apply';
 import '../../../domain/effects/points/moments';
-import { holderOf } from '../../../domain/effects/registry';
-import { linksOf } from '../../../domain/movement';
-import { areNeighbors } from '../../../domain/neighbors';
 import { CARD } from '../../../domain/replay/cards/ids';
-import { commodityValueOf } from '../../../domain/replay/cards/trade';
-import { playerOfKey } from '../../legacyViews';
-import { checkView, emit } from '../context';
+import { appliedOn } from '../../abilities/registry';
+import { playerOfKey } from '../../keys';
+import { areNeighbours } from '../../queries';
+import { emit } from '../context';
 import type { CardRule } from './rule';
 
 export const trade: CardRule = {
   apply: ({ ctx, effects, primary }) => {
-    const v = checkView(ctx);
+    const faction = ctx.table.players.find(p => p.id === ctx.player)?.faction ?? '';
     const have = ctx.board.players[ctx.player]?.commodities ?? 0;
-    const value = commodityValueOf(v.game, v.state, ctx.pack, v.shared);
-    const neighbours = (): number => Object.values(v.views.states).filter(other => other !== v.state
-      && areNeighbors(v.game, v.state, other, ctx.pack, linksOf(v.game, ctx.pack, { state: v.state, shared: v.shared, during: 'neighbors' }))).length;
-    const bonus = applied(ctx.pack, holderOf(v.game, v.state, v.shared), 'tradeGoodsOnReplenish', 0, { faction: v.game.faction, get neighbours() { return neighbours(); } }).value;
+    const value = appliedOn(ctx.table, ctx.board, ctx.pack, ctx.player, 'commodityValue', ctx.pack.factions[faction]?.commodities ?? 0, { faction }).value;
+    const neighbours = (): number => ctx.table.players.filter(other => other.id !== ctx.player && areNeighbours(ctx.table, ctx.board, ctx.pack, ctx.player, other.id)).length;
+    const bonus = appliedOn(ctx.table, ctx.board, ctx.pack, ctx.player, 'tradeGoodsOnReplenish', 0, { faction, get neighbours() { return neighbours(); } }).value;
     const goods = bonus + (primary ? 3 : 0);
     emit(ctx, [
       ...(value > have ? [{ type: 'CommoditiesChanged' as const, player: ctx.player, delta: value - have }] : []),
