@@ -19,7 +19,7 @@ import { emptySources, isUntouched, sourcesOf, tacticalOf, viaOf, withRoute, wit
 import { atOf, sourceSystemsOn, systemsOfTurn, tileSystemsOn } from '../../game/edit/tacticalRead';
 import { routeHintOn } from '../../game/flight';
 import { blockersOf } from '../../game/space';
-import { addTactical, addTurn, pruneEmptySources, writeTurn } from '../../state/turnBridge';
+import { addTactical, addTurn, pruneEmptySources, writeSaved } from '../../state/turnBridge';
 import type { Turn } from '../../game/actions';
 import type { PlayerId } from '../../game/types';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
@@ -151,7 +151,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const editTurn = (entryId: string, change: (turn: Turn, at: At) => Turn) => {
     if (!game) return;
     const view = boards.view(entryId);
-    const write = writeTurn(view.table, game, entryId, pack);
+    const write = writeSaved(saved!, entryId);
     if (write) write.update(change(write.turn, atOf(view.table, view.board, pack)));
   };
 
@@ -318,7 +318,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       const step = tapStep(tapPath, slot, entry.systemId ?? '');
       if (step.onActive) {
         // The wrong system: while nothing of the action is filled in a tap takes it back and returns to choosing.
-        if (isUntouched(writeTurn(forecastKernel.table, game, entry.id, pack)!.turn)) {
+        if (isUntouched(writeSaved(saved!, entry.id)!.turn)) {
           removeEntry(entry.id);
           update(state => ({
             ...state, next: IDLE,
@@ -400,13 +400,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     const status = kernelRound && statusIn(kernelRound, item.id);
     return [status && status !== item.status ? { ...item, status } : item];
   }) as (Entry & TacticalEntry)[];
+  const tacticalsAt = tacticals.flatMap(item => { const found = findTurn(forecastKernel.rounds, item.id); return found ? [{ id: item.id, status: item.status, turn: found.turn }] : []; });
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
   // Lines and flights need to know where the off-map homes stand before the map draws them.
   const offMap = placeOffMap(shownTable, shownBoard, pack);
   /** A system ships can be in: a tile of the map or an off-map home beside it. */
   const onBoard = (slot: string): boolean => slot in offMap || isOnMap(game, slot);
-  const arrows = planArrows(shownTable, shownBoard, pack, tacticals, kernelRound ? tacticalNumbers(kernelRound) : {}, focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
+  const arrows = planArrows(shownTable, shownBoard, pack, tacticalsAt, kernelRound ? tacticalNumbers(kernelRound) : {}, focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
   const entryView = entry ? boards.view(entry.id) : undefined;
@@ -426,13 +427,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** What the big hex buys for a card goes into its turn through the kernel; the old state is read only for what the shop still shows of it. */
   const cardTarget = (entryId: string, slot: string, before: NonNullable<typeof cardBefore>) => {
     const view = boards.view(entryId);
-    const write = writeTurn(view.table, game, entryId, pack);
+    const write = writeSaved(saved!, entryId);
     return write && turnPurchases(view, pack, write, slot, manualPayments.includes(entryId), { before, holdings: before.holdings });
   };
   /** What the big hex buys for a component action goes into its turn through the kernel too. */
   const componentTarget = (entryId: string, slot: string, before: NonNullable<typeof cardBefore>) => {
     const at = boards.view(entryId);
-    const write = writeTurn(at.table, game, entryId, pack);
+    const write = writeSaved(saved!, entryId);
     return write && componentPurchases(at, pack, write, slot, manualPayments.includes(entryId), { before, holdings: before.holdings });
   };
   const highlights = mapHighlights(shownTable, shownBoard, pack, {
@@ -440,7 +441,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       : adjustPick ? tileSystemsOn(shownTable, shownBoard, pack)
         : next.kind === 'placeTe' ? systemSlots(game).filter(suitable) : [],
     shownSystems: shownEntry && shownEntry.type !== 'tactical' ? systemsOf(shownEntry) : [],
-    focused: tacticals.find(item => item.id === focusId),
+    focused: tacticalsAt.find(item => item.id === focusId),
     path: draft?.path ?? [],
     reach: route?.reach ?? [],
     // Any system can be chosen; for a source those with ships are the ones lit.
@@ -513,7 +514,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const closePicker = (flown: TacticalEntry, source: string) => {
     toPicker(null);
     const view = boards.view(flown.id);
-    const write = writeTurn(view.table, game, flown.id, pack);
+    const write = writeSaved(saved!, flown.id);
     if (write && emptySources(atOf(view.table, view.board, pack), tacticalOf(write.turn)).includes(source)) leavers.leave(flown.id, source);
   };
 
@@ -586,7 +587,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
             onOpenPicker={toPicker}
-            leaving={sourcesOf(atOf(boards.view(edited.id).table, boards.view(edited.id).board, pack), tacticalOf(writeTurn(boards.view(edited.id).table, game, edited.id, pack)!.turn)).filter(source => leavers.leaving.includes(leaveKey(edited.id, source)))}
+            leaving={sourcesOf(atOf(boards.view(edited.id).table, boards.view(edited.id).board, pack), tacticalOf(writeSaved(saved!, edited.id)!.turn)).filter(source => leavers.leaving.includes(leaveKey(edited.id, source)))}
             onLeft={source => leavers.finish(edited.id, source)}
             onManualPayment={open => toggleManualPayment(edited.id, open)}
             onOpenShop={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'build', only: 'units', for: { kind: 'tactical', id: edited.id } } })); }}
@@ -702,7 +703,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     <section className="plan-screen" data-view={view}>
       <header className="plan-header">
         <PlanTabs
-          game={game} roundNo={round.number} onSelectPlan={closePanels}
+          saved={saved!} roundNo={round.number} onSelectPlan={closePanels}
           onSelectRound={number => { closePanels(); setRoundNo(number); }}
           onAddRound={() => {
             closePanels();

@@ -11,7 +11,7 @@ import { loadPack } from '../../../data/loadPack';
 import { cardChange, CARD, withProduction, withStructure, type CardEntry } from '../../../domain/strategy';
 import { stateBeforeEntry } from '../../../domain/project';
 import { useGame } from '../../../state/gameStore';
-import { writeTurn } from '../../../state/turnBridge';
+import { writeTurn } from '../../../testing/writeTurn';
 import { kernelViewOf } from '../../testing/view';
 import { turnPurchases } from './turnPurchases';
 

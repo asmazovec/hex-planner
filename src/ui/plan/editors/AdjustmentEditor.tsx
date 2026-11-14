@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import type { AdjustmentDelta, DataPack, Entry, UnitCounts, Warning } from '../../../domain/types';
+import type { AdjustmentDelta, DataPack, UnitCounts, Warning } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
 import { withAgendaChoices, withDelta, withLabel, withListed } from '../../../game/edit/turn';
 import { mapSource } from '../../../game/space';
@@ -24,7 +24,7 @@ import { ComponentSlot } from '../blocks/ComponentSlot';
 const DELTA_FIELDS = ['tradeGoods', 'commodities', 'tactic', 'fleet', 'strategy', 'vp'] as const;
 
 /** The agenda an entry of the agenda phase names, among what it gains. */
-export const agendaOf = (entry: Pick<Entry, 'gains'>, pack: DataPack) =>
+export const agendaOf = (entry: Pick<Turn, 'gains'>, pack: DataPack) =>
   (entry.gains ?? []).flatMap(id => componentById(pack, id) ?? []).find(def => def.kind === 'agenda');
 
 export interface AdjustmentEditorProps {

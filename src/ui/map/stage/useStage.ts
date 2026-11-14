@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
-import { gameAs, opponentsBySeat } from '../../../domain/players';
+import { gameAs } from '../../../domain/players';
 import { standing, planetStructureWarnings, productionCost, productionDue, readyResources } from '../../../domain/project';
 import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf, turnOfEntry } from '../../../testing/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
@@ -15,7 +15,7 @@ import { withFleetRemoval, withLoss } from '../../../game/edit/tactical';
 import { withProductionOn } from '../../../game/edit/tacticalRead';
 import type { Turn } from '../../../game/actions';
 import type { Board } from '../../../game/types';
-import { writeTurn } from '../../../state/turnBridge';
+import { writeSaved } from '../../../state/turnBridge';
 import { warningsByTurn } from '../../../game/rowWarnings';
 import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
 import { playerOfKey } from '../../../game/keys';
@@ -23,9 +23,9 @@ import { capacityIn, fleetIn, fleetLimit, ownerOf, reinforcementsOf, shipsIn, st
 import { planetsIn } from '../../../game/space';
 import { ownerKey, tileStacks } from '../../../game/tile';
 import { placesOf, type WarningPlace } from '../../feedback/warningPlaces';
-import { tokenColours } from '../../units/sprites';
+import { tableColours } from '../../units/sprites';
 import { UNIT_ORDER } from '../../units/unitOrder';
-import { opponentName } from '../../players/names';
+import { opponentsBySeat } from '../../players/names';
 import type { UnitDraftItem } from '../../units/UnitDraft';
 import type { BoughtUnit, PurchaseTarget } from './purchases';
 import { isStructure, priceText, type ShopItem } from './UnitShop';
@@ -79,6 +79,7 @@ export interface MeterRow {
 export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownBoard }: HexStageProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game);
+  const saved = useGame(s => s.saved);
   const setup = useSetupWrites();
   const [mode, setMode] = useState<StageMode>(initialMode);
   const [chosenSide, setSide] = useState<string | null>(null);
@@ -107,8 +108,8 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const view = gameAs(game, mine === 'me' ? undefined : mine);
   const acting = (mine !== 'me' && state.rivals?.[mine]) || state;
   const side = only ? mine : chosenSide ?? mine;
-  const colours = tokenColours(game);
-  const seated = opponentsBySeat(game).map(o => ({ id: o.id, color: o.color, faction: o.faction, seat: o.seat, name: opponentName(game, pack, o.id, t) }));
+  const colours = tableColours(table);
+  const seated = opponentsBySeat(table, pack, t);
   /** The player whose side `mine` is, on the board. */
   const actor = playerOfKey(table, mine) ?? table.viewer;
   /** Who controls the planet on the board: me, an opponent (by the id a saved game has for them), or nobody. */
@@ -127,7 +128,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const adjusting = adjustmentId ? round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment') : undefined;
   /** An edit of the turn of an entry of the plan, written back through the bridge; `before` is the board just before the turn. */
   const editTurn = (entryId: string, edit: (turn: Turn, before: Board) => Turn) => {
-    const write = writeTurn(table, game, entryId, pack);
+    const write = writeSaved(saved!, entryId);
     if (write) write.update(edit(write.turn, line.kernel.byTurn.get(entryId)?.before ?? line.kernel.end));
   };
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {

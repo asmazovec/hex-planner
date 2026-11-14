@@ -14,8 +14,7 @@ import type { SavedGame } from '../game/save';
 import { timelineOf } from './projection';
 import { playerOfLegacy } from '../game/entry';
 import type { Table } from '../game/types';
-import type { DataPack, EntryStatus, Game, Phase } from '../domain/types';
-import { savedFor } from '../testing/legacySave';
+import type { DataPack, EntryStatus, Phase } from '../domain/types';
 import { loadPack } from '../data/loadPack';
 import { useGame } from './gameStore';
 
@@ -33,9 +32,6 @@ export function writeSaved(saved: SavedGame, turnId: string): TurnWrite | undefi
   const found = findTurn(roundsOf(saved), turnId);
   return found ? { turn: found.turn, update: next => useGame.getState().updateTurn(turnId, next) } : undefined;
 }
-
-/** The same for a game as the screens still hold it (a view of the saved game the store holds). */
-export const writeTurn = (...[, game, turnId]: [table: Table, game: Game, turnId: string, pack: DataPack]): TurnWrite | undefined => writeSaved(savedFor(game), turnId);
 
 /** The turn of an entry and its writer, for an editor; none while it is not in the open plan. */
 export function useTurn(...[, turnId]: [table: Table, turnId: string, pack: DataPack]): TurnWrite | undefined {

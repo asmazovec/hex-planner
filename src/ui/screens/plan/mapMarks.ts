@@ -2,8 +2,8 @@
  * What the plan screen marks on the map: the arrows of the round's tactical actions, and the light of each tile. The
  * rules of what fits come from the domain; here only their order and tone.
  */
-import { turnOfEntry } from '../../../testing/projection';
-import type { TacticalEntry } from '../../../domain/tactical';
+import type { Turn } from '../../../game/actions';
+import type { EntryStatus } from '../../../domain/types';
 import { systemsAdjacent } from '../../../domain/project';
 import type { DataPack } from '../../../domain/types';
 import { arrowsOf, sourcesOf, tacticalOf, viaOf } from '../../../game/edit/tactical';
@@ -19,12 +19,12 @@ import type { Highlight } from '../../map/TileView';
  * whose sources are on their way out: they fade.
  */
 export function planArrows(
-  table: Table, board: Board, pack: DataPack, tacticals: TacticalEntry[], numbers: Record<string, number>, focusId: string | undefined, showPlanned: boolean,
+  table: Table, board: Board, pack: DataPack, tacticals: TacticalAt[], numbers: Record<string, number>, focusId: string | undefined, showPlanned: boolean,
   leaving: string[] = [],
 ): Arrow[] {
   const at = { map: mapSource(table, board), pack };
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || showPlanned))
-    .flatMap(item => { const turn = turnOfEntry(table, item, pack); return arrowsOf(at, tacticalOf(turn)).map(a => ({
+    .flatMap(item => { const { turn } = item; return arrowsOf(at, tacticalOf(turn)).map(a => ({
       ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: turn.player === table.viewer ? undefined : table.players.find(p => p.id === turn.player)?.color,
       tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
     })); });
@@ -32,13 +32,16 @@ export function planArrows(
   return drawn.map((a, i) => ({ ...a, shape: shapes[i], ...(leaving.includes(a.key) ? { leaving: true } : {}) }));
 }
 
+/** A tactical action as the map draws it: its turn, and its status (Warfare's free action has the status of its card). */
+export interface TacticalAt { id: string; status: EntryStatus; turn: Turn }
+
 export interface HighlightInput {
   /** The systems the map is choosing among now: for a card, a manual adjustment, Thunder's Edge or a tactical action. */
   choice: string[];
   /** The systems the entry being read speaks of, when it is not a tactical action. */
   shownSystems: string[];
   /** The tactical action in focus, edited or read. */
-  focused: TacticalEntry | undefined;
+  focused: TacticalAt | undefined;
   /** The route under way. */
   path: string[];
   /** Where the route under way can still go, and the systems that fit the choice of a tactical action; lit only where nothing else is. */
@@ -52,12 +55,12 @@ export interface HighlightInput {
  * way, and last where that route can still go and what else fits.
  */
 export function mapHighlights(table: Table, board: Board, pack: DataPack, { choice, shownSystems, focused, path, reach, options }: HighlightInput): Record<string, Highlight> {
-  const action = focused ? tacticalOf(turnOfEntry(table, focused, pack)) : undefined;
+  const action = focused ? tacticalOf(focused.turn) : undefined;
   const sources = action?.system ? sourcesOf({ map: mapSource(table, board), pack }, action) : [];
   const layers: [Iterable<string>, Highlight][] = [
     [choice, 'valid'],
     [shownSystems, 'active'],
-    [focused?.systemId ? [focused.systemId] : [], 'active'],
+    [action?.system ? [action.system] : [], 'active'],
     [sources, 'source'],
     [[...path, ...(action ? sources.flatMap(source => viaOf(action, source)) : [])], 'path'],
     [reach, 'valid'],

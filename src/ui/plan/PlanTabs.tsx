@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
-import type { Game, Plan } from '../../domain/types';
+import type { SavedGame } from '../../game/save';
 import { useGame } from '../../state/gameStore';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { HexRemove } from '../primitives/Icon';
@@ -13,7 +13,7 @@ export function planDisplayName(name: string, t: (key: string, options: { n: num
 }
 
 /** The name of the active plan, renamed when the field is left. */
-export function PlanName({ plan }: { plan: Plan }) {
+export function PlanName({ plan }: { plan: { name: string } }) {
   const { t } = useTranslation();
   const renamePlan = useGame(s => s.renamePlan);
   const shown = planDisplayName(plan.name, t);
@@ -36,7 +36,7 @@ export function PlanName({ plan }: { plan: Plan }) {
 }
 
 export interface PlanTabsProps {
-  game: Game;
+  saved: SavedGame;
   roundNo: number;
   /** Called before the plan changes, so that what is open still closes in its own plan. */
   onSelectPlan: () => void;
@@ -54,7 +54,7 @@ export interface PlanTabsProps {
 const DRAG_START = 6;
 
 /** Copy and the plan tabs, then the rounds of the active plan and Undo. A tab is dragged along the row to change the order of the plans. */
-export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRound, onDeleteRound, onDeletePlan, afterRounds }: PlanTabsProps) {
+export function PlanTabs({ saved, roundNo, onSelectPlan, onSelectRound, onAddRound, onDeleteRound, onDeletePlan, afterRounds }: PlanTabsProps) {
   const { t } = useTranslation();
   const setActivePlan = useGame(s => s.setActivePlan);
   const movePlan = useGame(s => s.movePlan);
@@ -63,8 +63,8 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
   const copyPlan = useGame(s => s.copyPlan);
   const undo = useGame(s => s.undo);
   const canUndo = useGame(s => s.canUndo);
-  const cards = strategyCards(game.expansions);
-  const active = game.plans.find(p => p.id === game.activePlanId);
+  const cards = strategyCards(saved.table.expansions);
+  const active = saved.plans.find(p => p.id === saved.activePlanId);
   const roundCount = active?.rounds.length ?? 0;
   // The rounds scroll under their plus once they are many: the one in view is brought out from under it.
   useEffect(() => {
@@ -74,7 +74,7 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
   const drag = useReorderDrag({
     axis: 'x', threshold: DRAG_START,
     element: id => row.current?.querySelector(`[data-plan-id="${id}"]`),
-    siblings: () => game.plans.map(p => p.id),
+    siblings: () => saved.plans.map(p => p.id),
     onDrop: movePlan,
   });
 
@@ -83,9 +83,9 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
       <div ref={row} className="plan-tabs" role="tablist" aria-label={t('plan.tabs')}>
         {/* Before the tabs, not after them: a new tab would push it from under the finger. */}
         <button type="button" className="plan-copy" onClick={() => { onSelectPlan(); copyPlan(); }}>{t('plan.copy')}</button>
-        {game.plans.map(plan => {
+        {saved.plans.map(plan => {
           const card = plan.rounds.find(r => r.number === roundNo)?.strategyCard;
-          const selected = plan.id === game.activePlanId;
+          const selected = plan.id === saved.activePlanId;
           const name = planDisplayName(plan.name, t);
           const dragging = drag.draggingId === plan.id ? ' plan-tab-dragging' : '';
           const tab = (
@@ -107,7 +107,7 @@ export function PlanTabs({ game, roundNo, onSelectPlan, onSelectRound, onAddRoun
           return (
             <div key={plan.id} className={`in-card plan-tab-card${dragging}`} data-plan-id={plan.id} style={drag.styleOf(plan.id)}>
               {tab}
-              <HexRemove label={t('plan.deletePlan', { name })} disabled={game.plans.length <= 1} onClick={onDeletePlan} />
+              <HexRemove label={t('plan.deletePlan', { name })} disabled={saved.plans.length <= 1} onClick={onDeletePlan} />
             </div>
           );
         })}

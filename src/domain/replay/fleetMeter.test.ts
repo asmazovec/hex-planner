@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 import { bench, HOME, TARGET, tactical, warningsOf } from '../effects/components/kit';
 import { before } from '../rules/kit';
 import type { Opponent } from '../types';
-import { tacticalMeters } from '../../state/testMeters';
+import { tacticalMeters } from '../../testing/meters';
 
 // Neuroglaive: "After another player activates a system that contains 1 or more of your ships, that player removes 1 token from their fleet pool".
 // Checks: I activate the system where the Naalu's ship stands; the fleet pool of the flight screen (`tacticalMeters`) is the one

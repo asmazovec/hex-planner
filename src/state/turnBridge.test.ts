@@ -17,7 +17,8 @@ import { planOf, tableOf } from '../game/fromLegacy';
 import { initialBoard } from '../game/setup';
 import { mapSource } from '../game/space';
 import { entryPatch } from '../ui/testing/turnProps';
-import { addTactical, pruneEmptySources, writeTurn } from './turnBridge';
+import { addTactical, pruneEmptySources } from './turnBridge';
+import { writeTurn } from '../testing/writeTurn';
 import { useGame } from './gameStore';
 
 const pack = loadPack(['pok']);

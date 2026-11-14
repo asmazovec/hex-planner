@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import type { DataPack, Opponent } from '../../domain/types';
+import type { DataPack } from '../../domain/types';
 import { nameTag, shortName } from '../players/names';
 
 /** The theme variable of a player's colour: `--player-1` to `--player-8`. */
@@ -42,7 +42,7 @@ export const playerTag = (name: string, hasFaction: boolean, seat: number): stri
  * Players as the options of a choice, named as everywhere: the short name of the faction (`named` says what a player
  * without a faction is called), the colour, the tag for a crowded line.
  */
-export const playerOptions = (players: Opponent[], pack: DataPack, named: (id: string) => string): PlayerOption[] => players.map(o => {
+export const playerOptions = (players: { id: string; faction: string; color: number; seat: number }[], pack: DataPack, named: (id: string) => string): PlayerOption[] => players.map(o => {
   const label = shortName(pack, o.faction, named(o.id));
   return { value: o.id, label, color: o.color, tag: playerTag(label, Boolean(pack.factions[o.faction]), o.seat) };
 });

@@ -1,7 +1,8 @@
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, test, vi } from 'vitest';
 import type { TokenKind } from '../../domain/hexLayout';
-import { BAKE_TIMEOUT_MS, getSprite, PLAYER_COLOURS, prepareSprites, tokenColours, tokenMarkup } from './sprites';
+import type { Table } from '../../game/types';
+import { BAKE_TIMEOUT_MS, getSprite, PLAYER_COLOURS, prepareSprites, tableColours, tokenMarkup } from './sprites';
 import { UNIT_ART } from './unitArt';
 import { UnitToken } from './UnitToken';
 
@@ -82,7 +83,7 @@ test.each(['warsun', 'infantry', 'mech', 'pds', 'spacedock'] as const)('the game
 });
 
 test('every player has a token colour: mine and one for each opponent id', () => {
-  expect(tokenColours({ color: 2, opponents: [{ id: 'a', faction: '', vp: 0, seat: 2, color: 5 }, { id: 'b', faction: '', vp: 0, seat: 3, color: 6 }] }))
+  expect(tableColours({ viewer: 'p1', players: [{ id: 'p1', seat: 1, faction: '', color: 2, setup: {} }, { id: 'p2', seat: 2, faction: '', color: 5, setup: {}, legacyId: 'a' }, { id: 'p3', seat: 3, faction: '', color: 6, setup: {}, legacyId: 'b' }] } as unknown as Table))
     .toEqual({ me: PLAYER_COLOURS[1], a: PLAYER_COLOURS[4], b: PLAYER_COLOURS[5] });
 });
 

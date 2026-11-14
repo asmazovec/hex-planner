@@ -351,9 +351,9 @@ test('default plan names render localized; own names stay', () => {
 });
 
 function PlanTabsLive() {
-  const live = useGame(s => s.game)!;
+  const live = useGame(s => s.saved)!;
   return (
-    <PlanTabs game={live} roundNo={1} onSelectRound={() => undefined} onSelectPlan={() => undefined} onAddRound={() => undefined} onDeleteRound={() => useGame.getState().deleteRound(1)} onDeletePlan={() => useGame.getState().deletePlan(live.activePlanId)} />
+    <PlanTabs saved={live} roundNo={1} onSelectRound={() => undefined} onSelectPlan={() => undefined} onAddRound={() => undefined} onDeleteRound={() => useGame.getState().deleteRound(1)} onDeletePlan={() => useGame.getState().deletePlan(live.activePlanId)} />
   );
 }
 

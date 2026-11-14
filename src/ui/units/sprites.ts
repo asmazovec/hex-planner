@@ -1,7 +1,6 @@
 import type { TokenKind } from '../../domain/hexLayout';
 import { ownerKey } from '../../game/tile';
 import type { Table } from '../../game/types';
-import type { Game } from '../../domain/types';
 import { UNIT_ART } from './unitArt';
 
 /** The values of `--player-1` to `--player-8` in the theme, kept equal by scripts/player-colours.test.ts. A token needs real numbers to mix its dark disc. */
@@ -14,11 +13,6 @@ export const playerColour = (color: number): string => PLAYER_COLOURS[(color - 1
 export const tableColours = (table: Table, viewer: string = table.viewer): Record<string, string> => ({
   me: playerColour(table.players.find(p => p.id === viewer)?.color ?? 0),
   ...Object.fromEntries(table.players.filter(p => p.id !== viewer).map(p => [ownerKey(table, viewer, p.id), playerColour(p.color)])),
-});
-
-export const tokenColours = (game: Pick<Game, 'color' | 'opponents'>): Record<string, string> => ({
-  me: playerColour(game.color),
-  ...Object.fromEntries(game.opponents.map(o => [o.id, playerColour(o.color)])),
 });
 
 const DISC_SHADE = 0.2;

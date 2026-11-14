@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 /** The files moved so far; each next step of the move adds its own. */
 export const KERNEL_ONLY = [
-  'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx', 'drawers/ComponentsPanel.tsx', 'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'drawers/ComponentTabs.tsx', 'drawers/ComponentsPanel.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/MapLegend.tsx', 'drawers/ThundersEdgePanel.tsx',
+  'plan/PlanTabs.tsx', 'plan/StrategyCards.tsx', 'plan/editors/StrategyEditorHost.tsx', 'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx', 'drawers/ComponentsPanel.tsx', 'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'drawers/ComponentTabs.tsx', 'drawers/ComponentsPanel.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/MapLegend.tsx', 'drawers/ThundersEdgePanel.tsx',
   'players/FactionCard.tsx', 'players/FactionComponents.tsx', 'players/FactionPicker.tsx', 'players/PlayerList.tsx', 'players/ShipStats.tsx', 'players/names.ts', 'players/useSeatDrag.ts',
   'screens/GameScreen.tsx', 'screens/EnergySettings.tsx', 'screens/LegalNotice.tsx',
   'map/HexMap.tsx', 'map/TileView.tsx', 'map/PlanetBadge.tsx', 'map/useFractureFlight.ts', 'map/offMapHomes.ts', 'map/marks.tsx', 'map/RouteArrows.tsx', 'map/FlightLayer.tsx',
@@ -24,7 +24,7 @@ export const KERNEL_ONLY = [
 
 /** The files of the list above that no longer take the old `Game` either: they read the table and the board. */
 export const WITHOUT_GAME = [
-  'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx', 'drawers/ComponentsPanel.tsx', 'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/ThundersEdgePanel.tsx', 'screens/plan/useFlightLoop.tsx',
+  'plan/PlanTabs.tsx', 'plan/StrategyCards.tsx', 'plan/editors/StrategyEditorHost.tsx', 'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx', 'drawers/ComponentsPanel.tsx', 'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/ThundersEdgePanel.tsx', 'screens/plan/useFlightLoop.tsx',
   'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
   'plan/SummaryBar.tsx', 'plan/actLines.ts',
   'plan/blocks/LandingBlock.tsx', 'plan/blocks/PaymentBlock.tsx', 'plan/blocks/TokenTiles.tsx', 'plan/blocks/ScoredBlock.tsx', 'plan/blocks/GainsBlock.tsx', 'plan/blocks/UsesBlock.tsx', 'plan/blocks/ChoicesBlock.tsx',
@@ -42,7 +42,8 @@ export const WITHOUT_GAME = [
 export const SAVED_ONLY = [
   'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'drawers/ComponentsPanel.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx',
   'drawers/ThundersEdgePanel.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx',
-  'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'screens/plan/useFlightLoop.tsx', 'screens/plan/useLeavingSources.ts',
+  'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'screens/plan/useFlightLoop.tsx',
+  'plan/PlanTabs.tsx', 'plan/StrategyCards.tsx', 'plan/editors/StrategyEditorHost.tsx',  'screens/plan/useLeavingSources.ts',
 ];
 
 const raw = import.meta.glob<string>(['./**/*.ts', './**/*.tsx', '!./**/*.test.*'], { query: '?raw', import: 'default', eager: true });
