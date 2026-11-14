@@ -1,29 +1,12 @@
 /** The actions that are not tactical or a card: a component's action, a pass, the status phase, the agenda and a correction. */
-import { checkProductionOn, costOn, producersOn } from '../../domain/replay/production';
-import { checkSystemOf } from '../../domain/replay/transport';
-import { groundIn, stacksOn } from '../queries';
 import type { Entry } from '../../domain/types';
-import { begin, emit, warn, type Ctx } from './context';
+import { begin, emit, type Ctx } from './context';
 import { correction } from './correction';
 import { playComponent } from './holdings';
-import { checkedPay, shortOf } from './payment';
-import { place } from './production';
+import { componentProduction } from './production';
 import { statusAction as status } from './status';
 
 type Of<T extends Entry['type']> = Extract<Entry, { type: T }>;
-
-/** What a component action builds: checked as one of a tactical action in its system, placed, paid for with `effects.payment`, its system checked for what it holds. */
-function componentProduction(ctx: Ctx, entry: Of<'component'>): void {
-  const made = entry.effects?.production;
-  if (!made || Object.values(made.units).every(n => !n)) return;
-  const ground = groundIn(ctx.table, ctx.board, ctx.pack, ctx.player);
-  warn(ctx, checkProductionOn(ground, made.systemId, made.units, ctx.pack, made.ground, 'system', undefined, entry));
-  const producing = producersOn(ground, made.systemId, ctx.pack).length > 0;
-  place(ctx, made.systemId, made.units, made.ground);
-  const cost = costOn(groundIn(ctx.table, ctx.board, ctx.pack, ctx.player), made.units, ctx.pack, producing, entry);
-  shortOf(ctx, 'resources', cost, checkedPay(ctx, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources'));
-  warn(ctx, checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), made.systemId));
-}
 
 /** A component's action: the component is played (held, exhausted, removed), and what it produces is built. */
 export function componentAction(ctx: Ctx): void {

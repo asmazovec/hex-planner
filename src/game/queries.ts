@@ -47,7 +47,10 @@ import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/tr
 import { appliedToPlanet } from '../domain/effects/points/payment';
 import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
 import type { DataPack, UpgradeId } from '../domain/types';
-import { linksFrom } from '../domain/movement';
+import { linksFrom, type MoveAt } from '../domain/movement';
+import { playedBy } from '../domain/effects/waivers';
+import type { RouteReads } from '../domain/replay/movement';
+import type { Move, TacticalEntry } from '../domain/replay/state';
 import { areNeighborsOf } from '../domain/neighbors';
 import { systemSlots } from '../domain/replay/board';
 import { appliedOn, holderIn } from './abilities/registry';
@@ -159,6 +162,31 @@ export const payingPlanets = (_table: Table, board: Board, _pack: DataPack, play
 /** The wormhole tokens of the board as the links read them: the token's type, then the slot. */
 const tokenSlots = (board: Board): Record<string, string> =>
   Object.fromEntries(Object.entries(board.common.wormholeTokens).flatMap(([slot, types]) => types.map((type): [string, string] => [type, slot])));
+
+/** The map as the player moves on it: the table's map and the open Fracture, with the faction of the mover (their ships' printed speeds). */
+export const mapOf = (table: Table, board: Board, player: PlayerId): ReturnType<typeof mapSource> => ({ ...mapSource(table, board), faction: factionOf(table, player) });
+
+/**
+ * What the route checks read of the mover on the board: their command tokens, the components that answer for them and
+ * the view of a ship's move they are asked with (the components the entry names, the links they and the tokens make,
+ * where the mover's home lies, the wormhole tokens, their docks).
+ */
+export function routeReadsOn(table: Table, board: Board, pack: DataPack, player: PlayerId, entry: TacticalEntry): RouteReads {
+  const map = mapOf(table, board, player);
+  const holder = holderIn(table, board, player);
+  const named = playedBy(entry);
+  const tokens = tokenSlots(board);
+  const links = linksFrom(map, pack, { holder, faction: map.faction, controls: id => ownerOf(board, id) === player, tokens, named, during: 'tactical' });
+  const at: MoveAt = {
+    map, tokens,
+    get home() { return homeOf(table, table.players.find(p => p.id === player)!, pack)?.slot ?? null; },
+    dockIn: slot => planetsIn(table, board, pack, slot).some(id => ownerOf(board, id) === player && (board.planets[id].structures.spacedock ?? 0) > 0),
+  };
+  return {
+    tokenAt: slot => board.systems[slot]?.tokens.includes(player) ?? false, holder,
+    view: (move: Move, unit) => ({ holder, from: move.from, target: entry.systemId ?? undefined, unit, group: move.units, named, links, at }),
+  };
+}
 
 /** The systems where a player is present: units in space or on a planet, or a planet they control (60). */
 function presenceIn(table: Table, board: Board, pack: DataPack, player: PlayerId): Set<Slot> {

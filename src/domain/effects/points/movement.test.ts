@@ -34,8 +34,8 @@ describe('speed: the context of a route', () => {
     warningsOf(table, move);
     expect(seen.length).toBeGreaterThan(0);
     expect(seen[0]).toMatchObject({ faction: 'sol', from: HOME, systemId: TARGET, group: { carrier: 1, dreadnought: 1 }, pack: table.pack });
-    // The game a component is given by the kernel is the table's setup as the old code reads it: the map and the seats, without the plans (the plan's turns come as `primaries`, `entry`).
-    expect((seen[0] as { game: unknown }).game).toMatchObject({ map: table.game.map, seat: table.game.seat, faction: table.game.faction });
+    // What the move reads of the board comes as `at`: the map the kernel holds, where the mover's home lies.
+    expect((seen[0] as { at: { map: unknown; home: unknown } }).at).toMatchObject({ map: { map: table.game.map }, home: HOME });
   });
 
   test('a speed asked for a display only carries no start: the old context still works', () => {

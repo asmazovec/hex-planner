@@ -6,11 +6,12 @@
 import { violation } from '../../domain/rules/registry';
 import productionShipsAway from '../../domain/rules/codes/productionShipsAway';
 import { checkProductionOn, costOn, placesOn, producersOn } from '../../domain/replay/production';
-import type { UnitCounts } from '../../domain/types';
+import { checkSystemOf } from '../../domain/replay/transport';
+import type { Entry, UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { groundIn } from '../queries';
+import { groundIn, stacksOn } from '../queries';
 import { emit, warn, type Ctx } from './context';
-import { pay, checkPay, shortOf } from './payment';
+import { pay, checkedPay, checkPay, shortOf } from './payment';
 
 const ids = (units: UnitCounts): (keyof UnitCounts)[] => (Object.keys(units) as (keyof UnitCounts)[]).filter(id => (units[id] ?? 0) > 0);
 
@@ -41,6 +42,19 @@ export function produce(ctx: Ctx, target: string, removeLater: UnitCounts): bool
   } else place(ctx, target, units, build?.ground);
   if (ids(removeLater).length > 0) emit(ctx, [{ type: 'UnitsRemoved', player: ctx.player, at: { slot: target }, units: removeLater, reason: 'limit' }], { step: 'production' });
   return producing;
+}
+
+/** What a component action builds: checked as one of a tactical action in its system, placed, paid for with `effects.payment`, its system checked for what it holds. */
+export function componentProduction(ctx: Ctx, entry: Extract<Entry, { type: 'component' }>): void {
+  const made = entry.effects?.production;
+  if (!made || Object.values(made.units).every(n => !n)) return;
+  const ground = groundIn(ctx.table, ctx.board, ctx.pack, ctx.player);
+  warn(ctx, checkProductionOn(ground, made.systemId, made.units, ctx.pack, made.ground, 'system', undefined, entry));
+  const producing = producersOn(ground, made.systemId, ctx.pack).length > 0;
+  place(ctx, made.systemId, made.units, made.ground);
+  const cost = costOn(groundIn(ctx.table, ctx.board, ctx.pack, ctx.player), made.units, ctx.pack, producing, entry);
+  shortOf(ctx, 'resources', cost, checkedPay(ctx, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources'));
+  warn(ctx, checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), made.systemId));
 }
 
 /** The production is paid in resources: the payment is made, and a shortfall reported. */

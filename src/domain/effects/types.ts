@@ -3,6 +3,7 @@
  * point for its value through `applied`, and the components of the player answer.
  */
 import type { AbilityContext, Hooks, Permit, Play } from '../../game/abilities/types';
+import type { MoveAt } from '../movement';
 import type { HolderRule } from './holder';
 import type { DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
 
@@ -25,7 +26,7 @@ export interface ModifierContext {
    * (`group`) and the board; none of them where a speed is only shown. A change that applies to ships leaves a 0 alone:
    * `plusSpeed` (effects/helpers/movement.ts) does it.
    */
-  speed: { faction: string; unit: UnitId; from?: string; systemId?: string; group?: UnitCounts; game?: Game; pack?: DataPack; state?: GameState; shared?: GameState };
+  speed: { faction: string; unit: UnitId; from?: string; systemId?: string; group?: UnitCounts; pack?: DataPack; /** What the move reads of the board: the map, the home slot, the wormhole tokens, the docks. */ at?: MoveAt; /** The highest move value among the units moving together (the ship's own companions). */ fastest?: () => number };
   /** The capacity of one ship. */
   capacity: { faction: string; unit: UnitId };
   /** The ships a system may hold: the base is the fleet pool. */

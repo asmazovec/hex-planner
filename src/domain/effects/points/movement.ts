@@ -16,15 +16,16 @@
  *  - `onActivate`: what happens when anyone activates a system, asked of every player's components in force;
  *  - `playAt`: a `play` of a tactical action that runs in the middle of it, not after its end.
  */
+import type { MoveAt } from '../../movement';
 import type { MapSource } from '../../replay/board';
 import type { DataPack, Entry, Game, GameState, UnitId, Warning } from '../../types';
 
 declare module '../types' {
   interface ModifierContext {
     /** The move value of a ship starting in a nebula: 1, or the ship's own value for a component that lifts it (Voidborn). `speed` is the value it would have elsewhere. */
-    nebulaStart: { faction: string; unit?: UnitId; speed: number; from: string; game: Game; pack: DataPack };
+    nebulaStart: { faction: string; unit?: UnitId; speed: number; from: string; pack: DataPack };
     /** A system a path enters counts as a gravity rift when the value is above 0; base 1 for a rift tile. */
-    gravityRift: { faction: string; systemId: string; game: Game; pack: DataPack; state?: GameState };
+    gravityRift: { faction: string; systemId: string; pack: DataPack; at?: MoveAt };
     /** The flying fighters beyond the capacity that count against the fleet pool (the base is that number). */
     excessFighters: { faction: string };
   }

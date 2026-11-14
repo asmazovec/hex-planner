@@ -8,26 +8,27 @@
 import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf } from '../../domain/effects/registry';
 import { productionCost } from '../../domain/unitStats';
-import { researchTechnologies } from '../../domain/replay/research';
 import { checkSystemOf } from '../../domain/replay/transport';
-import { applyComponentProduction } from '../../domain/replay/production';
-import { buildStructures } from '../../domain/replay/structures';
 import { violation } from '../../domain/rules/registry';
 import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
 import { appliedOn, holderIn, inForce } from '../abilities/registry';
 import { areNeighbours, planetValue, poolChangeWarnings, reinforcementsOf, stacksOn, tradeGoodWorth } from '../queries';
-import { spentOnObjectives, type Spent } from '../../domain/effects/points/status';
-import type { EffectTurn } from '../../domain/effects/types';
+import type { Spent } from '../../domain/effects/points/status';
 import { adjacentSlots, planetsIn, tileKindIn, wormholesIn } from '../space';
 import { homeOf } from '../setup';
 import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
 import { applyAll, applyChecked } from '../apply';
 import type { GameEvent } from '../events';
-import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, playerOfKey, viewFor } from '../legacyViews';
+import { tradeGoods } from '../abilities/emit';
+import { legacyKey, playerOfKey } from '../keys';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
-import { warn, type Ctx } from './context';
+import { emit, NO_TACTICAL, warn, type Ctx } from './context';
+import { checkPay, pay } from './payment';
+import { componentProduction } from './production';
+import { researchTechnologies } from './research';
+import { buildStructures } from './structures';
 import type { RoundTrack } from './track';
 
 export interface HookResult { board: Board; events: GameEvent[]; violations: Warning[] }
@@ -68,6 +69,44 @@ export function poolWarnings(table: Table, before: Board, board: Board, pack: Da
   return found;
 }
 
+/**
+ * A throwaway turn over a board, so that the steps of the resolver (research, structures, production, payment) can be run
+ * for a component's play: what they emit is the events the play returns, what they warn of goes to the play's `warn`.
+ */
+function scratch(table: Table, at: Board, pack: DataPack, player: PlayerId, step: RuleStep | undefined, entry: Entry | undefined): Ctx {
+  return {
+    table, pack, turn: undefined as never, tactical: NO_TACTICAL, track: undefined as never, player, entry: entry as Entry, board: at, blockers: new Set(),
+    steps: [], cur: { step: step ?? 'component', events: [], violations: [], hints: [] }, warnings: [], memo: new Map(),
+  };
+}
+
+const POOLS = ['tactic', 'fleet', 'strategy'] as const;
+
+/** What a status entry's `spend` takes for the objectives it scores (61.10): command tokens, trade goods, the planets' resources and influence. */
+function spendOnObjectivesOf(ctx: Ctx, entry: Entry): Spent {
+  const spend = entry.type === 'statusTokens' ? entry.spend ?? {} : {};
+  const me = ctx.board.players[ctx.player];
+  let tokens = 0;
+  for (const pool of POOLS) {
+    const count = spend[pool] ?? 0;
+    if (count <= 0) continue;
+    tokens += count;
+    const have = ctx.board.players[ctx.player]?.pools[pool] ?? 0;
+    if (have - count < 0) warn(ctx, violation('poolNegative', { pool, have: have - count }, 'status'));
+    emit(ctx, [{ type: 'TokensChanged', player: ctx.player, delta: { [pool]: -count } }], { quiet: true });
+  }
+  const goods = Math.max(0, spend.tradeGoods ?? 0);
+  const held = me?.tradeGoods ?? 0;
+  if (goods > held) warn(ctx, violation('shortTradeGoods', { needed: goods, have: held }, 'status'));
+  if (Math.min(goods, held) > 0) emit(ctx, [tradeGoods(ctx.player, -Math.min(goods, held))], { quiet: true });
+  const paid = (kind: 'resources' | 'influence'): number => {
+    const payment = { planets: spend[kind]?.planets ?? [], tradeGoods: 0 };
+    warn(ctx, checkPay(ctx, payment, 'status'));
+    return pay(ctx, payment, kind);
+  };
+  return { tokens, tradeGoods: goods, resources: paid('resources'), influence: paid('influence') };
+}
+
 /** The context a component is asked with: the board as it stands, the holder and the actor, the readers and the questions of the game. */
 export function contextOf(
   table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held' | 'warned' | 'revise' | 'memo' | 'track'>, warn: (warning: Warning) => void,
@@ -93,13 +132,10 @@ export function contextOf(
     systemOf: planet => Object.keys({ ...table.map, ...at.common.fracture.tiles }).find(slot => planetsIn(table, at, pack, slot).includes(planet)),
     after: events => contextOf(table, applyAll(at, events), pack, player, id, options, warn),
     research: technology => {
-      const before = legacyViews(table, at, pack);
-      const work = legacyViewsFresh(table, at, pack);
-      const v = viewFor(table, at, pack, player, work);
-      const found: Warning[] = [];
-      researchTechnologies(v.game, v.state, v.shared, [technology], pack, found);
-      found.forEach(warn);
-      return legacyEvents(table, pack, before, work, player);
+      const turn = scratch(table, at, pack, player, options.step, options.entry);
+      researchTechnologies(turn, [technology]);
+      turn.warnings.forEach(warn);
+      return turn.cur.events;
     },
     freeSecondaryFor: cardNumber => {
       const track = options.track;
@@ -111,34 +147,26 @@ export function contextOf(
       const known = options.memo?.get('spentOnObjectives') as Spent | undefined;
       if (known) return { spent: known, events: [] };
       if (!entry) return { spent: { tokens: 0, tradeGoods: 0, resources: 0, influence: 0 }, events: [] };
-      const before = legacyViews(table, at, pack);
-      const work = legacyViewsFresh(table, at, pack);
-      const v = viewFor(table, at, pack, player, work);
-      const found: Warning[] = [];
-      const spent = spentOnObjectives({ state: v.state, warnings: found, entry, pack } as unknown as EffectTurn);
-      found.forEach(warn);
+      const turn = scratch(table, at, pack, player, 'status', entry);
+      const spent = spendOnObjectivesOf(turn, entry);
+      turn.warnings.forEach(warn);
       options.memo?.set('spentOnObjectives', spent);
-      return { spent, events: legacyEvents(table, pack, before, work, player) };
+      return { spent, events: turn.cur.events };
     },
     buildStructures: structures => {
-      const before = legacyViews(table, at, pack);
-      const work = legacyViewsFresh(table, at, pack);
-      const v = viewFor(table, at, pack, player, work);
-      const found: Warning[] = [];
-      buildStructures(v.game, v.state, structures.map(each => ({ ...each })), false, undefined, pack, found);
-      found.forEach(warn);
-      return legacyEvents(table, pack, before, work, player);
+      const turn = scratch(table, at, pack, player, options.step, options.entry);
+      buildStructures(turn, structures.map(each => ({ ...each })), false, undefined);
+      turn.warnings.forEach(warn);
+      return turn.cur.events;
     },
     produce: (systemId, units) => {
       const entry = options.entry;
       if (entry?.type !== 'component') return [];
-      const before = legacyViews(table, at, pack);
-      const work = legacyViewsFresh(table, at, pack);
-      const v = viewFor(table, at, pack, player, work);
-      const found: Warning[] = [];
-      applyComponentProduction(v.game, v.state, { ...entry, effects: { ...entry.effects, production: { systemId, units } } }, pack, found);
-      found.forEach(warn);
-      return legacyEvents(table, pack, before, work, player);
+      const made = { ...entry, effects: { ...entry.effects, production: { systemId, units } } };
+      const turn = scratch(table, at, pack, player, options.step, made);
+      componentProduction(turn, made);
+      turn.warnings.forEach(warn);
+      return turn.cur.events;
     },
     systemWarnings: slot => checkSystemOf(stacksOn(table, at, pack, player), slot),
     capacityOf: units => { const { capacity: room, load } = stacksOn(table, at, pack, player).capacityOf(units, null); return { capacity: room, load }; },

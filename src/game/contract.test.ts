@@ -123,7 +123,7 @@ describe('abilities', () => {
   });
 
   /** The files that read the board alone: the steps and queries moved off the old per-player views, one by one. */
-  const BOARD_ONLY = ['./resolve/transport.ts', './resolve/production.ts', './resolve/others.ts', './resolve/waive.ts', './resolve/research.ts', './resolve/tail.ts', './resolve/cards/technology.ts', './resolve/combat.ts', './resolve/invasion.ts', './resolve/acts.ts', './resolve/holdings.ts', './resolve/cards/play.ts', './resolve/cards/trade.ts', './resolve/status.ts'];
+  const BOARD_ONLY = ['./resolve/transport.ts', './resolve/production.ts', './resolve/others.ts', './resolve/waive.ts', './resolve/research.ts', './resolve/tail.ts', './resolve/cards/technology.ts', './resolve/combat.ts', './resolve/invasion.ts', './resolve/acts.ts', './resolve/holdings.ts', './resolve/cards/play.ts', './resolve/cards/trade.ts', './resolve/status.ts', './resolve/movement.ts', './resolve/hooks.ts'];
   test('the files moved to the board build none of the old per-player views', () => {
     const files = import.meta.glob<string>(['./queries.ts', './resolve/**/*.ts'], { query: '?raw', import: 'default', eager: true });
     for (const name of BOARD_ONLY) {

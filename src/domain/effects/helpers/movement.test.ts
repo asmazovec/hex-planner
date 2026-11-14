@@ -9,7 +9,7 @@ import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, warningsOf, t
 import { effectsOf } from '../registry';
 import type { PermitContext } from '../../../game/abilities/types';
 import type { Ability } from '../types';
-import { activeNextToAnomaly, fastestOfGroup, ownDockIn, playerHolds, plusSpeed, shipSlots, shortfall, startWormholes, startsAtHome, startsInFracture } from './movement';
+import { activeNextToAnomaly, fastestOfGroup, playerHolds, plusSpeed, shipSlots, shortfall, startWormholes, startsAtHome, startsInFracture } from './movement';
 
 const TECH = 'technology:gd';
 const give = (table: Bench, effect: Partial<Ability>): void => {
@@ -155,12 +155,6 @@ describe('the route of a warning', () => {
     const rival = { opponents: [O1], enemyUnits: { [NEAR]: { o1: { cruiser: 2, fighter: 3, infantry: 1 } } } };
     expect(asked(MAP, { carrier: 1 }, (_w, ctx) => ctx.othersShipsIn(NEAR), rival)[0]).toEqual({ cruiser: 2 });
     expect(asked(MAP, { carrier: 1 }, (_w, ctx) => ctx.othersShipsIn(TARGET), rival)[0]).toEqual({});
-  });
-
-  test('ownDockIn: a dock on a planet of the system', () => {
-    const t = sol({ game: { docks: ['h1'] } });
-    expect(ownDockIn(t.game, endOf(t), HOME, t.pack)).toBe(true);
-    expect(ownDockIn(t.game, endOf(t), TARGET, t.pack)).toBe(false);
   });
 });
 

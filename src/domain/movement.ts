@@ -3,10 +3,10 @@
  * the speed of a ship and the systems it still reaches. Pure: the replay checks routes with it, the plan lights the reach.
  */
 import { rotateLanes } from './lanes';
-import { hasAnomaly, isLane, isOnMap, systemsAdjacent, systemSlots, tileAt, type MapSource } from './replay/board';
+import { hasAnomaly, isLane, isOnMap, planetsOf, systemsAdjacent, systemSlots, tileAt, type MapSource } from './replay/board';
 import { unitIds } from './replay/state';
 import { gridDistance, oppositeEdge, slotAcross } from './route';
-import { offMapHomes } from './strategy';
+import { homeSlot, offMapHomes } from './strategy';
 import { unitStats } from './unitStats';
 import { applied } from './effects/apply';
 import { effectOf, holderFor, holderOf, inForceOf, type Holder, type Who } from './effects/registry';
@@ -14,6 +14,9 @@ import './effects/points/movement';
 import './effects/points/rivals';
 import { noteBase } from './components';
 import type { DataPack, Game, GameState, UnitCounts, UnitId } from './types';
+
+/** What a move is counted over: the map and the faction of the mover. */
+export type Mover = MapSource & Pick<Game, 'faction'>;
 
 /** Two systems made adjacent beyond the board: a wormhole token, a law, an ability (6, 60.2). */
 export type Link = readonly [string, string];
@@ -40,7 +43,31 @@ export interface MoveView {
   named?: readonly string[];
   /** The systems made adjacent beyond the board (`linksOf`). */
   links?: readonly Link[];
+  /** What the components read of the board, when the move is counted over the kernel's board rather than a per-player state. */
+  at?: MoveAt;
 }
+
+/**
+ * What a component of the mover reads of the board while a move is counted, whichever model the board is kept in: the
+ * map (anomalies, adjacency, the Fracture), the slot of the mover's home, the wormhole tokens, and whether the mover has
+ * a space dock in a system.
+ */
+export interface MoveAt {
+  map: MapSource;
+  readonly home: string | null;
+  tokens?: Record<string, string>;
+  dockIn(slot: string): boolean;
+}
+
+/** The same reads over the old per-player state (the route editor and the first replay). */
+export const atOfState = (game: Game, pack: DataPack, state: GameState, shared?: GameState): MoveAt => ({
+  map: game, tokens: (shared ?? state).wormholeTokens,
+  get home() { return homeSlot(game, pack); },
+  dockIn: slot => planetsOf(game, slot, pack).some(planetId => state.docks.includes(planetId)),
+});
+
+const viewAt = (game: Pick<Game, 'faction'>, pack: DataPack, view: MoveView | undefined): MoveAt | undefined =>
+  view?.at ?? (view?.state ? atOfState(game as Game, pack, view.state, view.shared) : undefined);
 
 const viewHolder = (game: Pick<Game, 'faction'>, view: MoveView | undefined): Holder | undefined =>
   view?.holder ?? (view?.state ? holderOf(game, view.state) : undefined);
@@ -274,7 +301,13 @@ export function routeSteps(game: MapSource, path: string[], pack: DataPack, bloc
 /** How far a ship of the player flies, after what they hold changed its printed move; null when it does not move by itself. */
 export function shipSpeed(game: Pick<Game, 'faction'>, unit: UnitId, holdings: Who, pack: DataPack, view?: MoveView): number | null {
   const printed = unitStats(game.faction, unit, false, pack)?.move ?? 0;
-  const ctx = { faction: game.faction, unit, ...(view ? { from: view.from, systemId: view.target, group: view.group, game: game as Game, pack, state: view.state, shared: view.shared } : {}) };
+  const ctx = {
+    faction: game.faction, unit,
+    ...(view ? {
+      from: view.from, systemId: view.target, group: view.group, pack, at: viewAt(game, pack, view),
+      fastest: () => Math.max(0, ...unitIds(view.group ?? {}).flatMap(each => shipSpeed(game, each, holdings, pack) ?? [])),
+    } : {}),
+  };
   let { value } = applied(pack, viewHolder(game, view) ?? holderFor(holdings, game.faction), 'speed', printed, ctx);
   // What the entry names changes the move for it, once for each component however many copies it names.
   for (const id of new Set((view?.named ?? []).map(noteBase))) value = effectOf(pack, id)?.modifyWhenNamed?.speed?.(value, ctx) ?? value;
@@ -282,27 +315,27 @@ export function shipSpeed(game: Pick<Game, 'faction'>, unit: UnitId, holdings: W
 }
 
 /** How far the fastest ship among these units flies; null without a ship that flies by itself. */
-export function fleetSpeed(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, view?: MoveView): number | null {
+export function fleetSpeed(game: Mover, units: UnitCounts, holdings: Who, pack: DataPack, view?: MoveView): number | null {
   const speeds = unitIds(units).flatMap(id => shipSpeed(game, id, holdings, pack, view && { ...view, group: view.group ?? units }) ?? []);
   return speeds.length > 0 ? Math.max(...speeds) : null;
 }
 
 /** The gravity rifts a whole path leaves: each rift and each time adds 1 (41.3, note 6); a system with two rifts is one (41.4). */
-const riftsIn = (game: Game, full: string[], pack: DataPack, view?: MoveView): number => full.filter(slot => isRift(game, slot, pack, view)).length;
+const riftsIn = (game: Mover, full: string[], pack: DataPack, view?: MoveView): number => full.filter(slot => isRift(game, slot, pack, view)).length;
 
 /** Whether a system is a gravity rift for the mover: a rift tile, or what a component of theirs makes one (41.1). */
-function isRift(game: Game, slot: string, pack: DataPack, view?: MoveView): boolean {
+function isRift(game: Mover, slot: string, pack: DataPack, view?: MoveView): boolean {
   const base = hasAnomaly(game, slot, 'rift', pack) ? 1 : 0;
   const holder = viewHolder(game, view);
-  return (holder ? applied(pack, holder, 'gravityRift', base, { faction: game.faction, systemId: slot, game, pack, state: view?.state }).value : base) > 0;
+  return (holder ? applied(pack, holder, 'gravityRift', base, { faction: game.faction, systemId: slot, pack, at: viewAt(game, pack, view) }).value : base) > 0;
 }
 
 /** The move value of a ship that starts in a nebula: 1, unless a component of the mover says otherwise (59.2). */
-function nebulaSpeed(game: Game, from: string, speed: number, pack: DataPack, view?: MoveView): number {
+function nebulaSpeed(game: Mover, from: string, speed: number, pack: DataPack, view?: MoveView): number {
   const holder = viewHolder(game, view);
   if (!holder) return 1;
   const ask = (unit: UnitId | undefined, own: number): number =>
-    applied(pack, holder, 'nebulaStart', 1, { faction: game.faction, unit, speed: own, from, game, pack }).value;
+    applied(pack, holder, 'nebulaStart', 1, { faction: game.faction, unit, speed: own, from, pack }).value;
   if (view?.unit !== undefined || !view?.group) return ask(view?.unit, speed);
   return Math.max(...unitIds(view.group).flatMap(unit => { const own = shipSpeed(game, unit, holder.holdings, pack, { ...view, unit }); return own === null ? [] : [ask(unit, own)]; }), 1);
 }
@@ -311,7 +344,7 @@ function nebulaSpeed(game: Game, from: string, speed: number, pack: DataPack, vi
  * A ship's speed having left these systems, the first its start: a start in a nebula makes it 1 (`nebulaStart`),
  * each gravity rift left adds 1 (`gravityRift`).
  */
-export function routeMove(game: Game, left: string[], speed: number, pack: DataPack, blockers: Blockers = new Set(), view?: MoveView): number {
+export function routeMove(game: Mover, left: string[], speed: number, pack: DataPack, blockers: Blockers = new Set(), view?: MoveView): number {
   const full = fullPath(game, left, pack, blockers);
   return (hasAnomaly(game, full[0], 'nebula', pack) ? nebulaSpeed(game, full[0], speed, pack, view) : speed) + riftsIn(game, full, pack, view);
 }
@@ -320,7 +353,7 @@ export function routeMove(game: Game, left: string[], speed: number, pack: DataP
  * The systems a ship can still go to from the end of a path, by the rules for anomalies, other players' ships and speed.
  * The active system stays among them although the path has passed it: a ship may leave it and come back (58.3.5).
  */
-export function routeReach(game: Game, path: string[], speed: number, active: string, pack: DataPack, blockers: Blockers, view?: MoveView): Set<string> {
+export function routeReach(game: Mover, path: string[], speed: number, active: string, pack: DataPack, blockers: Blockers, view?: MoveView): Set<string> {
   const graph = routeGraph(game, pack, view?.links);
   const full = fullPath(game, path, pack, blockers);
   const reached = new Set<string>();

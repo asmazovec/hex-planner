@@ -6,7 +6,7 @@ import { blockersOf, fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
-import { planetsOf, sourceSlot } from './board';
+import { planetsOf, sourceSlot, type MapSource } from './board';
 import { gameAs } from '../players';
 import { take, unitIds, type Move } from './state';
 
@@ -23,6 +23,11 @@ export const pickupAllowed = (state: Pick<GameState, 'tokensOnMap'>, target: str
  * (95.1), and never where my command token lies other than the active system (95.3).
  */
 export function checkPickups(game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, blockers: Blockers = blockersOf(game, null, undefined, pack)): Warning[] {
+  return checkPickupsOf(game, slot => state.tokensOnMap.includes(slot), target, moves, pack, blockers);
+}
+
+/** The same over a reader of the mover's command tokens: one implementation for the old state and the board. */
+export function checkPickupsOf(game: MapSource, tokenAt: (slot: string) => boolean, target: string, moves: Move[], pack: DataPack, blockers: Blockers): Warning[] {
   const sources = new Set(moves.filter(move => !isPickup(move, target, pack)).map(move => move.from));
   const warnings: Warning[] = [];
   const warned = new Set<string>();
@@ -38,7 +43,7 @@ export function checkPickups(game: Game, state: GameState, target: string, moves
       }
     }
     // A source holding my token is warned about by its route already.
-    if (!pickupAllowed(state, target, slot) && !sources.has(slot) && !warned.has(`${from}:${slot}`)) {
+    if (slot !== target && tokenAt(slot) && !sources.has(slot) && !warned.has(`${from}:${slot}`)) {
       warned.add(`${from}:${slot}`);
       warnings.push(violation('sourceActivated', { from, systemId: slot, context: 'pickup' }, 'transport'));
     }

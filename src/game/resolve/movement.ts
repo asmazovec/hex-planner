@@ -3,16 +3,17 @@
  * structures taken on board) are carried into the active system. What was entered flies: a unit the source does not
  * hold is reported (`unitsMissing`) and arrives all the same, its source only ends empty.
  */
-import { checkEntryRoutes } from '../../domain/replay/movement';
+import { checkEntryRoutesOf } from '../../domain/replay/movement';
 import { sourceSlot } from '../../domain/replay/board';
-import { checkPickups, overflowLeft } from '../../domain/replay/transport';
+import { checkPickupsOf, overflowLeftOf } from '../../domain/replay/transport';
 import structureAboard from '../../domain/rules/codes/structureAboard';
 import { violation } from '../../domain/rules/registry';
 import type { StructureKind, UnitCounts } from '../../domain/types';
 import type { Flight } from '../actions';
 import type { GameEvent } from '../events';
+import { mapOf, routeReadsOn, stacksOn } from '../queries';
 import { mapSource } from '../space';
-import { begin, checkView, emit, warn, type Ctx } from './context';
+import { begin, emit, warn, type Ctx } from './context';
 
 const KINDS: StructureKind[] = ['pds', 'spacedock'];
 
@@ -43,10 +44,12 @@ function carryStructures(ctx: Ctx, target: string, flights: Flight[]): void {
 export function movement(ctx: Ctx, target: string): Flown {
   begin(ctx, 'movement');
   const flights = ctx.tactical.movement;
-  const v = checkView(ctx);
-  warn(ctx, checkEntryRoutes(v.game, v.state, v.shared, ctx.entry as never, ctx.pack, ctx.blockers));
-  warn(ctx, checkPickups(v.game, v.state, target, (ctx.entry as never as { moves: never }).moves, ctx.pack, ctx.blockers));
-  const over = overflowLeft(v.game, v.state, target, (ctx.entry as never as { moves: never }).moves, ctx.pack);
+  const { table, board, pack, player } = ctx;
+  const entry = ctx.entry as never as Parameters<typeof routeReadsOn>[4];
+  const reads = routeReadsOn(table, board, pack, player, entry);
+  warn(ctx, checkEntryRoutesOf(mapOf(table, board, player), reads, entry, pack, ctx.blockers));
+  warn(ctx, checkPickupsOf(mapSource(table, board), reads.tokenAt, target, entry.moves, pack, ctx.blockers));
+  const over = overflowLeftOf(stacksOn(table, board, pack, player), target, entry.moves, pack);
   const groups: Record<string, UnitCounts> = {};
   for (const flight of flights) {
     const events: GameEvent[] = [{ type: 'UnitsMoved', player: ctx.player, from: flight.from, to: { slot: target }, units: flight.units }];
