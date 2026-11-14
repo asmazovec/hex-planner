@@ -10,7 +10,7 @@ import { planetsOf, sourceSlot } from './board';
 import type { TacticalEntry } from './state';
 
 /** Most of one kind a planet holds (24 notes 1-2, 63.3, 79.3, 85.4, 85.5). */
-const PER_PLANET: Record<StructureKind, number> = { spacedock: 1, pds: 2 };
+export const PER_PLANET: Record<StructureKind, number> = { spacedock: 1, pds: 2 };
 
 const countOn = (state: GameState, kind: StructureKind, planetId: string): number =>
   (kind === 'pds' ? state.pds[planetId] ?? 0 : state.docks.includes(planetId) ? 1 : 0);

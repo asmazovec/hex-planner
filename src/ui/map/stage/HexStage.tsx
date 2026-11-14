@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { isOnMap, tileIdOf } from '../../../domain/project';
 import type { DataPack } from '../../../domain/types';
-import type { Board } from '../../../game/types';
+import type { Board, PlayerId } from '../../../game/types';
 import { mapSource } from '../../../game/space';
 import { HexRemove } from '../../primitives/Icon';
 import { PlayerChoice, playerTag, type PlayerOption } from '../../primitives/player';
@@ -40,8 +40,8 @@ export interface HexStageProps {
   tacticalId?: string;
   /** The manual adjustment that takes my units: the hex then shows only that. */
   adjustmentId?: string;
-  /** The opponent whose card this hex serves; an action's own owner counts without it. */
-  owner?: string;
+  /** The player whose card this hex serves; an action's own player counts without it. */
+  owner?: PlayerId;
   /** What the map shows: control and readiness of a planet follow it, while the hex always shows the forecast. */
   shownBoard?: Board;
   onClose: () => void;
@@ -71,7 +71,7 @@ export function HexStage(props: HexStageProps) {
   const { t } = useTranslation();
   const stage = useStage(props);
   if (!stage) return null;
-  const { game, table, board, shown, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
+  const { table, board, shown, viewerColor, planets, target, setPlanet, mode, setMode, mine, side, setSide, seated, colours } = stage;
 
   const seatName = (o: { name: string; faction: string }): string => shortName(pack, o.faction, o.name);
   /** An opponent in a player choice: the short name, and the tag for a crowded line. */
@@ -79,10 +79,11 @@ export function HexStage(props: HexStageProps) {
     const label = seatName(o);
     return { value: o.id, label, color: o.color, tag: playerTag(label, Boolean(pack.factions[o.faction]), o.seat) };
   };
-  const mapValue = game.map[slot];
-  const tileId = isOnMap(game, slot) ? tileIdOf(game, slot) : pack.tiles[slot] ? slot : '';
+  const map = mapSource(table, board);
+  const mapValue = table.map[slot];
+  const tileId = isOnMap(map, slot) ? tileIdOf(map, slot) : pack.tiles[slot] ? slot : '';
   const tile = pack.tiles[tileId];
-  const title = t('map.sheet.title', { number: tile ? systemName(game, pack, slot) : tileId });
+  const title = t('map.sheet.title', { number: tile ? systemName(map, pack, slot) : tileId });
   const structuresOnly = only === 'build';
   const manyPlanets = planets.length > 1;
   const { x, y } = slotToPixel(slot);
@@ -117,7 +118,7 @@ export function HexStage(props: HexStageProps) {
           {(mode === 'setup' || mode === 'build') && !only && mine === 'me' && (
             <PlayerChoice
               label={t('stage.owner')} chosen={value => side === value} onPick={value => setSide(value)}
-              options={[{ value: 'me', label: t('stage.mine'), color: game.color }, ...seated.map(seatOption)]}
+              options={[{ value: 'me', label: t('stage.mine'), color: viewerColor }, ...seated.map(seatOption)]}
             />
           )}
 

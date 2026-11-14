@@ -13,7 +13,7 @@ import type { PurchaseTarget } from './purchases';
  * shop still reads of the old state.
  */
 export function turnPurchases(
-  view: KernelView, pack: DataPack, write: TurnWrite, slot: string, manual: boolean, old: Pick<PurchaseTarget, 'before' | 'holdings'>,
+  view: KernelView, pack: DataPack, write: TurnWrite, slot: string, manual: boolean,
 ): PurchaseTarget | undefined {
   const { turn } = write;
   if (!isCardTurn(turn)) return undefined;
@@ -21,7 +21,7 @@ export function turnPurchases(
   const apply = (next: typeof turn) => write.update(withCardChange(table, board, pack, turn, { effects: effectsOf(next) }, manual));
   return {
     bought: purchasesOn(table, board, pack, turn, slot),
-    ...old,
+    view, player: turn.player,
     entryId: turn.id,
     change: (unit, planetId, amount) => apply(withCardProduction(turn, slot, unit, planetId, amount) as typeof turn),
     structures: effectsOf(turn).structures,
@@ -31,7 +31,7 @@ export function turnPurchases(
 
 /** The same for a component action that produces: what it buys goes into its effects, paid anew unless the payment is chosen by hand. */
 export function componentPurchases(
-  view: KernelView, pack: DataPack, write: TurnWrite, slot: string, manual: boolean, old: Pick<PurchaseTarget, 'before' | 'holdings'>,
+  view: KernelView, pack: DataPack, write: TurnWrite, slot: string, manual: boolean,
 ): PurchaseTarget | undefined {
   const { turn } = write;
   if (turn.action.kind !== 'component') return undefined;
@@ -40,7 +40,7 @@ export function componentPurchases(
   const apply = (next: CardEffects) => write.update(withProducedPayment(table, board, pack, turn, next, manual));
   return {
     bought: boughtOn(table, board, pack, turn.player, effects, slot),
-    ...old,
+    view, player: turn.player,
     entryId: turn.id,
     change: (unit, planetId, amount) => apply(withProduction(effects, slot, unit, planetId, amount)),
     structures: effects.structures,

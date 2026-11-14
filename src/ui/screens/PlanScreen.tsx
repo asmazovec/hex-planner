@@ -144,7 +144,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const [componentGroup, setComponentGroup] = useState(componentsTab.read);
   /** Whose components the drawer shows: an opponent's id, null for mine. */
   const [componentsOf, setComponentsOf] = useState<string | null>(null);
-  const boards = useBoards(game, plan, pack);
+  const boards = useBoards(saved, plan?.id, pack);
   const leavers = useLeavingSources();
 
   /** An edit of the turn of an entry, written back through the bridge: the turn and the places of the board just before it. */
@@ -423,18 +423,17 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     : route.speed !== null ? t('plan.tactical.speedHint', { speed: route.speed, steps: route.steps, left: route.left })
     : [t('plan.tactical.noShipsAtStart'), route.steps > 0 ? t('plan.tactical.distance', { n: route.steps }) : null].filter(Boolean).join(' ');
 
-  const cardBefore = cardEntry ? boards.before(cardEntry.id) : undefined;
-  /** What the big hex buys for a card goes into its turn through the kernel; the old state is read only for what the shop still shows of it. */
-  const cardTarget = (entryId: string, slot: string, before: NonNullable<typeof cardBefore>) => {
+  /** What the big hex buys for a card goes into its turn through the kernel. */
+  const cardTarget = (entryId: string, slot: string) => {
     const view = boards.view(entryId);
     const write = writeSaved(saved!, entryId);
-    return write && turnPurchases(view, pack, write, slot, manualPayments.includes(entryId), { before, holdings: before.holdings });
+    return write && turnPurchases(view, pack, write, slot, manualPayments.includes(entryId));
   };
   /** What the big hex buys for a component action goes into its turn through the kernel too. */
-  const componentTarget = (entryId: string, slot: string, before: NonNullable<typeof cardBefore>) => {
+  const componentTarget = (entryId: string, slot: string) => {
     const at = boards.view(entryId);
     const write = writeSaved(saved!, entryId);
-    return write && componentPurchases(at, pack, write, slot, manualPayments.includes(entryId), { before, holdings: before.holdings });
+    return write && componentPurchases(at, pack, write, slot, manualPayments.includes(entryId));
   };
   const highlights = mapHighlights(shownTable, shownBoard, pack, {
     choice: cardPick && cardEntry ? cardTargetsOn(shownTable, boards.boardOf(cardEntry.id), shownBoard, pack, playerOfEntry(boards.view(cardEntry.id), cardEntry.owner), cardEntry, cardPick)
@@ -830,9 +829,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       {stage && stageFor && (
         <HexStage
           key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}
-          owner={stageFor.kind === 'card' ? cardEntry?.owner : stageFor.kind === 'component' ? stagedTurn?.owner : undefined}
-          onPurchase={stageFor.kind === 'card' && cardEntry && cardBefore ? cardTarget(cardEntry.id, stage.slot, cardBefore)
-            : stageFor.kind === 'component' && stagedTurn ? componentTarget(stagedTurn.id, stage.slot, boards.before(stagedTurn.id)) : undefined}
+          owner={stageFor.kind === 'card' ? keyed(cardEntry?.owner) : stageFor.kind === 'component' ? keyed(stagedTurn?.owner) : undefined}
+          onPurchase={stageFor.kind === 'card' && cardEntry ? cardTarget(cardEntry.id, stage.slot)
+            : stageFor.kind === 'component' && stagedTurn ? componentTarget(stagedTurn.id, stage.slot) : undefined}
           manualPayments={manualPayments}
           tacticalId={stageFor.kind === 'tactical' ? stageFor.id : undefined} adjustmentId={stageFor.kind === 'adjustment' ? stageFor.id : undefined}
           shownBoard={shownBoard} onClose={closeStage}

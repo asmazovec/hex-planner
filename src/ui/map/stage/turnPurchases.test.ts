@@ -34,13 +34,13 @@ describe('what the big hex buys for a card', () => {
     const before = stateBeforeEntry(game, game.plans[0], entry.id, pack);
     const view = kernelViewOf(game, pack, entry.id);
     const write = writeTurn(view.table, game, entry.id, pack)!;
-    const target = turnPurchases(view, pack, write, 'B', manual, { before, holdings: before.holdings })!;
+    const target = turnPurchases(view, pack, write, 'B', manual)!;
     target.change('infantry', planet, 1);
     const effects = (entry.effects ?? {});
     const expected = cardChange(entry, { effects: withProduction(effects, 'B', 'infantry', planet, 1) }, before, 'sol', pack, manual, game).effects;
     expect(cardEntry().effects).toEqual(expected);
     const next = writeTurn(view.table, act().game!, entry.id, pack)!;
-    const again = turnPurchases(view, pack, next, 'B', manual, { before, holdings: before.holdings })!;
+    const again = turnPurchases(view, pack, next, 'B', manual)!;
     expect(again.bought).toContainEqual({ unit: 'infantry', planetId: planet, count: 1 });
     const built = withStructure(cardEntry().effects ?? {}, 'pds', planet, 1).structures;
     again.changeStructure!('pds', planet, 1);
