@@ -1,45 +1,42 @@
 import { useTranslation } from 'react-i18next';
 import type { KernelView } from '../kernelView';
-import { shownPlanetValues } from '../../../domain/payment';
-import { pickupAllowed, routeSteps, systemPlanets } from '../../../domain/project';
 import { flightOf as flightAt, metersOf } from '../../../game/flight';
-import { playerOfKey } from '../../../game/keys';
-import { turnOfEntry } from '../../../state/projection';
+import type { Turn } from '../../../game/actions';
+import { planetShown } from '../../../game/tile';
+import { planetsIn, stepsOf, type MapSource } from '../../../game/space';
 import type { TokenKind } from '../../../domain/hexLayout';
-import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitId, Warning } from '../../../domain/types';
+import type { DataPack, PlanetDef, StructureKind, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
 import { layoutFor, UnitDraft, type UnitDraftItem, type UnitDraftRow } from '../../units/UnitDraft';
 import { PlanetBadge, SpaceBadge } from '../../map/PlanetBadge';
 import { EditorFrame } from '../../primitives/EditorFrame';
 import { UNIT_ORDER } from '../../units/unitOrder';
-import { availableFor, fliesNow, groupOf, hasCargo, pickedFrom, pickedStructures, structuresFor, viaOf, withStructureCount, withUnitCount, withoutSource, type Move, type TacticalEntry } from '../../../domain/tactical';
+import { groupOf, hasCargo, tacticalOf, viaOf, withStructureCount, withUnitCount, withoutSource } from '../../../game/edit/tactical';
+import { atOf, availableFor, fliesOn, movesOf, pickedFrom, pickedStructures, pickupAllowedOn, structuresFor } from '../../../game/edit/tacticalRead';
 import { systemName, systemTitle } from '../../map/systemName';
 import { limitsSystem, ofSource, placeWarnings } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { SectionTitle } from '../../primitives/SectionTitle';
 
 export interface UnitPickerProps {
-  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  /** The table and the board just before the turn, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
-  game: Game;
   pack: DataPack;
-  /** The state just before the entry. */
-  before: GameState;
-  /** Only the moves of `source` are edited here. */
-  entry: TacticalEntry;
+  /** The tactical turn: only the flights of `source` are edited here, and the changed turn is handed back whole. */
+  turn: Turn;
   source: string;
   /** What is wrong with this flight: over the cargo by the cargo, the rest by the fleet line. */
   warnings?: Warning[];
-  onChange: (moves: Move[]) => void;
+  onChange: (turn: Turn) => void;
   /** Back to the editor. */
   onClose: () => void;
   onFly: () => void;
 }
 
 /** The warnings of one flight: its route and its cargo, and the limits of the system it flies to. */
-export function flightWarnings(warnings: Warning[], game: Game, pack: DataPack, entry: TacticalEntry, source: string): Warning[] {
+export function flightWarnings(warnings: Warning[], map: MapSource, pack: DataPack, turn: Turn, source: string): Warning[] {
   const placer = placeWarnings(warnings);
-  const mine = (w: Warning) => limitsSystem(w) || ofSource(w, game, pack, entry.moves, source);
+  const mine = (w: Warning) => limitsSystem(w) || ofSource(w, map, pack, movesOf(tacticalOf(turn)), source);
   return [...placer.at('route', mine), ...placer.at('cargo', mine)];
 }
 
@@ -70,13 +67,17 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
  * Every place a unit is taken from is a row of a `UnitDraft`: a button to take per kind, and the tray of what was taken.
  */
-export function UnitPicker({ game, pack, view, before, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
+export function UnitPicker({ pack, view, turn, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
-  const colour = playerColour(game.color);
-  const target = entry.systemId ?? '';
-  const group = groupOf(game, pack, entry.moves, source);
+  const { table, board } = view;
+  const action = tacticalOf(turn);
+  const player = turn.player;
+  const at = atOf(table, board, pack);
+  const colour = playerColour(table.players.find(p => p.id === player)?.color ?? 1);
+  const target = action.system ?? '';
+  const group = groupOf(at, action.movement, source);
   const known = UNIT_ORDER.filter(u => pack.units[u]);
-  const flying = known.filter(u => fliesNow(game, pack, before.holdings, u));
+  const flying = known.filter(u => fliesOn(table, board, pack, player, u));
   const cargo = known.filter(u => !flying.includes(u));
   // What rides with the ships stands by the cargo, the rest of the flight under its line.
   const placer = placeWarnings(warnings);
@@ -84,23 +85,23 @@ export function UnitPicker({ game, pack, view, before, entry, source, warnings =
 
   const picked = (from: string, unit: UnitId): number => pickedFrom(group, from, unit);
   /** What stands there, less what the other routes of this action take. */
-  const available = (from: string, unit: UnitId): number => availableFor(game, pack, before, entry, source, from, unit);
-  const setCount = (from: string, unit: UnitId, count: number) => onChange(withUnitCount(game, pack, entry.moves, source, from, unit, count));
+  const available = (from: string, unit: UnitId): number => availableFor(at, board, turn, source, from, unit);
+  const setCount = (from: string, unit: UnitId, count: number) => onChange(withUnitCount(at, turn, source, from, unit, count));
   const unitName = (unit: TokenKind) => t(`unit.${unit}`);
   const pickedOf = (from: string, kind: StructureKind): number => pickedStructures(group, from, kind);
   /** The structures that stand at a place, less what the other routes take: they are offered like any cargo, and the rules warn (85.3). */
-  const standingAt = (from: string, kind: StructureKind): number => structuresFor(game, pack, before, entry, source, from, kind);
+  const standingAt = (from: string, kind: StructureKind): number => structuresFor(at, board, turn, source, from, kind);
 
   const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
   const offered = flying.filter(u => available(source, u) > 0 || picked(source, u) > 0);
-  const { group: load, ships, fleet } = metersOf(view.table, pack, flightAt(view.table, view.board, pack, turnOfEntry(view.table, entry, pack)), playerOfKey(view.table, entry.owner ?? 'me') ?? view.table.viewer, source);
+  const { group: load, ships, fleet } = metersOf(table, pack, flightAt(table, board, pack, turn), player, source);
 
   /**
    * The places of a system to take cargo from: its space area and its planets, only what stands there. Where my command
    * token lies the units are still offered: the rules warn (95.3), and an ability may allow it.
    */
   const placesIn = (slot: string): { from: string; planet: PlanetDef | null; units: TokenKind[] }[] => {
-    const planets = systemPlanets(game, slot, pack);
+    const planets = planetsIn(table, board, pack, slot).map(id => pack.planets[id]).filter((p): p is PlanetDef => p !== undefined);
     const offeredAt = (from: string, kinds: UnitId[]) => kinds.filter(u => available(from, u) > 0 || picked(from, u) > 0);
     const ground = known.filter(u => pack.units[u]?.ground);
     // Structures stand in the row of their place only where there are any: on a planet, or in the space area they were carried to.
@@ -120,7 +121,7 @@ export function UnitPicker({ game, pack, view, before, entry, source, warnings =
     takeLabel: t('plan.picker.take', { unit: unitName(unit) }), returnLabel: t('plan.picker.put', { unit: unitName(unit) }),
   });
   const change = (from: string, kind: TokenKind, by: 1 | -1) => (isStructure(kind)
-    ? onChange(withStructureCount(game, pack, entry.moves, source, from, kind, pickedOf(from, kind) + by))
+    ? onChange(withStructureCount(at, turn, source, from, kind, pickedOf(from, kind) + by))
     : setCount(from, kind, picked(from, kind) + by));
   const draft = (rows: UnitDraftRow[], pickedLabel: string) => (
     <UnitDraft
@@ -129,19 +130,21 @@ export function UnitPicker({ game, pack, view, before, entry, source, warnings =
       onReturn={(from, unit) => change(from, unit, -1)}
     />
   );
-  const badge = (planet: PlanetDef | null) => (planet
-    ? <PlanetBadge planet={planet} control={before.control[planet.id]} exhausted={before.exhausted.includes(planet.id)} values={shownPlanetValues(pack, before, planet.id, game.faction)} compact />
-    : <SpaceBadge label={t('draft.space')} />);
+  const badge = (planet: PlanetDef | null) => {
+    if (!planet) return <SpaceBadge label={t('draft.space')} />;
+    const { control, exhausted, values } = planetShown(table, board, pack, player, planet.id);
+    return <PlanetBadge planet={planet} control={control} exhausted={exhausted} values={values} compact />;
+  };
 
   const line = (slot: string, role: 'start' | 'transit') => {
     const places = placesIn(slot);
     return (
       <li key={slot} className="stop">
-        <span className="stop-name">{systemTitle(game, pack, slot, t)} · {t(`plan.picker.${role}`)}</span>
-        {!pickupAllowed(before, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
+        <span className="stop-name">{systemTitle(at.map, pack, slot, t)} · {t(`plan.picker.${role}`)}</span>
+        {!pickupAllowedOn(board, player, target, slot) && <span className="muted">{t('plan.picker.tokenHere')}</span>}
         {places.length === 0 && <span className="muted">{t('plan.picker.nothing')}</span>}
         {places.length > 0 && draft(places.map(place => ({
-          id: place.from, layout: layoutFor(place.units.length), label: place.planet?.name ?? systemName(game, pack, slot), place: badge(place.planet), items: place.units.map(unit => item(place.from, unit)),
+          id: place.from, layout: layoutFor(place.units.length), label: place.planet?.name ?? systemName(at.map, pack, slot), place: badge(place.planet), items: place.units.map(unit => item(place.from, unit)),
         })), t('plan.picker.loaded'))}
       </li>
     );
@@ -149,11 +152,11 @@ export function UnitPicker({ game, pack, view, before, entry, source, warnings =
 
   return (
     <EditorFrame
-      className="unit-picker" title={t('plan.picker.title', { from: systemTitle(game, pack, source, t), to: systemTitle(game, pack, target, t) })}
+      className="unit-picker" title={t('plan.picker.title', { from: systemTitle(at.map, pack, source, t), to: systemTitle(at.map, pack, target, t) })}
       onBack={onClose} removeLabel={t('plan.picker.removeSource')}
-      onRemove={() => { onChange(withoutSource(game, pack, entry.moves, source)); onClose(); }}
+      onRemove={() => { onChange(withoutSource(at, turn, source)); onClose(); }}
     >
-      <small className="picker-distance">{t('plan.tactical.distance', { n: routeSteps(game, [source, ...viaOf(entry, source), target], pack) })}</small>
+      <small className="picker-distance">{t('plan.tactical.distance', { n: stepsOf(table, board, [source, ...viaOf(action, source), target], pack) })}</small>
 
       <div className="editor-section">
         <SectionTitle as="h4" className="picker-title">{t('plan.picker.flying')}</SectionTitle>
@@ -170,8 +173,8 @@ export function UnitPicker({ game, pack, view, before, entry, source, warnings =
         <span className="muted cargo-note">{Math.max(load.load, load.capacity) === 0 ? t('plan.picker.noRoom') : ''}</span>
         <ol className="stops">
           {line(source, 'start')}
-          {viaOf(entry, source).map(slot => line(slot, 'transit'))}
-          <li className="stop stop-target"><span className="stop-name">{systemTitle(game, pack, target, t)} · {t('plan.picker.target')}</span></li>
+          {viaOf(action, source).map(slot => line(slot, 'transit'))}
+          <li className="stop stop-target"><span className="stop-name">{systemTitle(at.map, pack, target, t)} · {t('plan.picker.target')}</span></li>
         </ol>
         {/* Under the stops: a warning above them would push the cargo from under the finger. */}
         <WarningList warnings={cargoWarnings} table={view.table} board={view.board} pack={pack} />

@@ -150,3 +150,12 @@ describe('the losses, the custodians and the places of a turn', () => {
     expect(now.custodiansFreeOn(t.table, t.board, pack, t.player)).toBe(inForceOf(pack, holderOf(t.g, t.before), e => e.permit?.some(w => w.code === 'custodians') ?? false).length > 0);
   });
 });
+
+describe('the flight of a source as the steps read it', () => {
+  test.each(['sol', 'naalu'])('%s: ships, cargo and the pickups of each source', faction => {
+    const t = build(faction, BODY);
+    for (const source of ['A', 'C', 'B']) {
+      expect(now.flightLineOf(t.table, t.board, pack, t.turn, source), source).toEqual(old.flightOf(t.g, pack, t.before.holdings, t.e, source));
+    }
+  });
+});

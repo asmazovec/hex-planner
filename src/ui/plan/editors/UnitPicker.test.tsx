@@ -11,6 +11,8 @@ import type { Game, GameState, UnitCounts, UnitId } from '../../../domain/types'
 import { setLanguage } from '../../../i18n';
 import type { Move, TacticalEntry } from '../tactical';
 import { UnitPicker } from './UnitPicker';
+import { legacyEntry } from '../../../game/entry';
+import { turnOf } from '../../../game/fromLegacy';
 
 const pack = loadPack(['pok']);
 
@@ -32,12 +34,13 @@ function setup(moves: Move[], before: Partial<GameState> = {}, production: UnitC
   const entry: TacticalEntry = {
     id: 'e', phase: 'action', status: 'planned', type: 'tactical', systemId: '0,0', moves, landings: [], production, payment: { planets: [], tradeGoods: 0 },
   };
+  const view = viewOf(game, merged, pack);
   function Live() {
     const [list, setList] = useState(moves);
     return (
-      <UnitPicker view={viewOf(game, merged, pack)}
-        game={game} pack={pack} before={merged} entry={{ ...entry, moves: list }} source={SOURCE}
-        onChange={next => { onChange(next); setList(next); }} onClose={() => undefined} onFly={onFly}
+      <UnitPicker view={view}
+        pack={pack} turn={turnOf(view.table, { ...entry, moves: list }, pack)} source={SOURCE}
+        onChange={next => { const kept = (legacyEntry(view.table, next) as TacticalEntry).moves; onChange(kept); setList(kept); }} onClose={() => undefined} onFly={onFly}
       />
     );
   }

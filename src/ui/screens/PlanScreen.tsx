@@ -42,7 +42,7 @@ import { TurnEditor } from '../plan/editors/TurnEditor';
 import { GainsBlock } from '../plan/blocks/GainsBlock';
 import { UsesBlock } from '../plan/blocks/UsesBlock';
 import { TurnActs } from '../plan/blocks/TurnActs';
-import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
+import { UnitPickerHost } from '../plan/editors/UnitPickerHost';
 import { EditorFrame } from '../primitives/EditorFrame';
 import { EntryList } from '../plan/EntryList';
 import { PlanName, PlanTabs } from '../plan/PlanTabs';
@@ -534,10 +534,10 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       case 'flight': {
         const flown = slot.entry;
         return (
-          <UnitPicker
-            game={entryGame} pack={pack} view={boards.view(flown.id)} before={boards.before(flown.id)} entry={flown} source={slot.source}
-            warnings={flightWarnings(forecast.warningsByEntry[flown.id] ?? [], entryGame, pack, flown, slot.source)}
-            onChange={moves => updateEntry(flown.id, { moves })} onClose={() => closePicker(flown, slot.source)}
+          <UnitPickerHost
+            entryId={flown.id} pack={pack} view={boards.view(flown.id)} source={slot.source}
+            warnings={forecast.warningsByEntry[flown.id] ?? []}
+            onClose={() => closePicker(flown, slot.source)}
             onFly={() => {
               toPicker(null);
               flight.start(flown.id);

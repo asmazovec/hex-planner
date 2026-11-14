@@ -187,3 +187,22 @@ export const custodiansFreeOn = (table: Table, board: Board, pack: DataPack, pla
 /** The flights as the places of a warning name them: the source or planet each takes from. */
 export const movesOf = (action: Tactical): { from: string; units: UnitCounts; pickupOf?: Slot }[] =>
   action.movement.map(f => ({ from: idOf(f.from), units: f.units, ...(f.pickupOf !== undefined ? { pickupOf: f.pickupOf } : {}) }));
+
+/**
+ * A source's flight as it reads: the ships that leave it, what rides on board from the source itself, and what is picked
+ * up in each system on the way.
+ */
+export function flightLineOf(table: Table, board: Board, pack: DataPack, turn: Turn, source: Slot): { ships: UnitCounts; board: UnitCounts; stops: Map<Slot, UnitCounts> } {
+  const at = atOf(table, board, pack);
+  const group = groupOf(at, tacticalOf(turn).movement, source);
+  const own = group.filter(f => f.pickupOf === undefined);
+  const leaving = own.filter(f => idOf(f.from) === source).reduce((sum, f) => ({ ...sum, ...f.units }), {} as UnitCounts);
+  const { ships } = splitFlightOn(table, board, pack, turn.player, leaving);
+  const { cargo } = splitFlightOn(table, board, pack, turn.player, unitsIn(own));
+  const stops = new Map<Slot, UnitCounts>();
+  for (const flight of group) {
+    const slot = flight.pickupOf === undefined ? null : sourceSlot(at.map, pack, idOf(flight.from));
+    if (slot !== null) stops.set(slot, addUnits(stops.get(slot) ?? {}, flight.units));
+  }
+  return { ships, board: cargo, stops };
+}

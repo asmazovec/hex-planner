@@ -26,6 +26,7 @@ import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { TurnEditor } from '../plan/editors/TurnEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { turnProps } from './turnProps';
+import { atOf } from '../../game/edit/tacticalRead';
 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 type ComponentEntry = Extract<Entry, { type: 'component' }>;
@@ -82,13 +83,16 @@ function live<E extends Entry>(bench: Bench, entry: E, view: (seen: Seen) => Rea
 
 /** The flight step of one source of a tactical action (`UnitPicker`): who flies, what rides on board, with the warnings of that flight. */
 export function showFlight(bench: Bench, entry: Entry, source: string): Live<TacticalEntry> {
-  return live(bench, entry as TacticalEntry, ({ game, pack, view, entry: shown, before, warnings, update }) => (
-    <UnitPicker
-      game={game} pack={pack} view={view} before={before} entry={shown as TacticalEntry} source={source}
-      warnings={flightWarnings(warnings, game, pack, shown as TacticalEntry, source)}
-      onChange={moves => update({ moves } as Partial<EntryBody>)} onClose={() => undefined} onFly={() => undefined}
-    />
-  ));
+  return live(bench, entry as TacticalEntry, ({ pack, view, entry: shown, warnings, update }) => {
+    const props = turnProps(view, pack, shown, update);
+    return (
+      <UnitPicker
+        pack={pack} view={view} turn={props.turn} source={source}
+        warnings={flightWarnings(warnings, atOf(view.table, view.board, pack).map, pack, props.turn, source)}
+        onChange={props.onChange} onClose={() => undefined} onFly={() => undefined}
+      />
+    );
+  });
 }
 
 /** The whole tactical editor of an entry, with «Used» as its common part: the landing, the result of the action, every block's warnings. */

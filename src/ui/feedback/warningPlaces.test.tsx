@@ -22,6 +22,7 @@ import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { turnProps } from '../testing/turnProps';
+import { atOf } from '../../game/edit/tacticalRead';
 import { placeWarnings, placesOf } from './warningPlaces';
 
 const pack = loadPack(['pok', 'te']);
@@ -51,10 +52,11 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
   } as TacticalEntry;
   // The flight of a source is a step that stands in the editor's place, with the warnings of that flight.
   if (pickerFrom !== null) {
+    const picked = { view: kernelViewOf(game(), pack), ...turnProps(kernelViewOf(game(), pack), pack, entry, () => undefined) };
     return render(
-      <UnitPicker view={kernelViewOf(game(), pack)}
-        game={game()} pack={pack} before={before()} entry={entry} source={pickerFrom} warnings={flightWarnings(warnings, game(), pack, entry, pickerFrom)}
-        onChange={() => undefined} onClose={() => undefined} onFly={() => undefined}
+      <UnitPicker pack={pack} {...picked} source={pickerFrom}
+        warnings={flightWarnings(warnings, atOf(picked.view.table, picked.view.board, pack).map, pack, picked.turn, pickerFrom)}
+        onClose={() => undefined} onFly={() => undefined}
       />,
     );
   }
