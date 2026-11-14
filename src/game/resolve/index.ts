@@ -25,7 +25,7 @@ import { hook } from './hooks';
 import { playNamed } from './play';
 import { waive } from './waive';
 import { turnTail } from './tail';
-import { movement } from './movement';
+import { movement, type Flown } from './movement';
 import { payProduction, produce } from './production';
 import { afterFlights, arrival, finalCheck, removeFleetExcess } from './transport';
 
@@ -42,10 +42,16 @@ export interface ResolveOptions {
   closing?: (board: Board) => { board: Board; violations: readonly Warning[] };
 }
 
-/** The tactical action itself (89.1-89.5). */
-function tacticalAction(ctx: Ctx, target: string): Lost {
+/** A point of the tactical action a reader may stop at: after the activation, after the flights arrived, after the landing, after the production (before it is paid). */
+export type Stage = 'activated' | 'moved' | 'landed' | 'built';
+
+/** The tactical action itself (89.1-89.5). `at` is told of each stage; answering true stops the action there (the board stands as it is). */
+function tacticalAction(ctx: Ctx, target: string, at?: (stage: Stage, flown?: Flown) => boolean | void): Lost {
+  const none: Lost = { planets: [], hooked: [] };
   activation(ctx, target);
+  if (at?.('activated')) return none;
   const flown = movement(ctx, target);
+  if (at?.('moved', flown)) return none;
   afterFlights(ctx, target, flown);
   // Ships lost where nothing could fight them were lost on the way, before the fleet pool counts the arrival.
   begin(ctx, 'combat');
@@ -70,9 +76,11 @@ function tacticalAction(ctx: Ctx, target: string): Lost {
   groundLosses(ctx);
   begin(ctx, 'invasion');
   gainControl(ctx, landed);
+  if (at?.('landed')) return none;
   begin(ctx, 'production');
   const producing = produce(ctx, target, removeLater);
   claimStations(ctx, target);
+  if (at?.('built')) return none;
   begin(ctx, 'payment');
   payProduction(ctx, producing);
   begin(ctx, 'invasion');
@@ -90,6 +98,23 @@ function tacticalAction(ctx: Ctx, target: string): Lost {
   begin(ctx, 'transport');
   finalCheck(ctx, target);
   return landed.lost;
+}
+
+/**
+ * The board of a tactical turn at the stages of its action, and what the flights carried: the readers of the editors (the
+ * meters of a source, the sites of the production, the flight replay) ask these, not a whole resolution.
+ */
+export function playTactical(table: Table, board: Board, turn: Turn, pack: DataPack): Partial<Record<Stage, Board>> & { flown?: Flown } {
+  const action = turn.action;
+  const seen: Partial<Record<Stage, Board>> & { flown?: Flown } = {};
+  if (action.kind !== 'tactical' || action.system === null) return seen;
+  const ctx = newCtx(table, board, turn, action, pack, blockersOf(table, board, turn.player, pack), newTrack());
+  tacticalAction(ctx, action.system, (stage, flown) => {
+    seen[stage] = ctx.board;
+    if (flown) seen.flown = flown;
+    return stage === 'built';
+  });
+  return seen;
 }
 
 /** Resolves a turn: the events it brings, the violations it finds, per step, and the board after it. */
