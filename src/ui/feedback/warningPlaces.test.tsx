@@ -8,7 +8,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { project, systemPlanets } from '../../domain/project';
+import { systemPlanets } from '../../domain/project';
 import type { Warning, WarningCode } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -21,7 +21,7 @@ import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
-import { turnProps } from '../testing/turnProps';
+import { cardProps, turnProps } from '../testing/turnProps';
 import { atOf } from '../../game/edit/tacticalRead';
 import { placeWarnings, placesOf } from './warningPlaces';
 
@@ -30,7 +30,6 @@ const HOME = '1,0';
 const SOURCE = '0,1';
 
 const game = () => useGame.getState().game!;
-const before = () => project(game(), game().plans[0], 'forecast', pack).state;
 
 beforeEach(() => {
   setLanguage('en');
@@ -115,10 +114,11 @@ describe('the strategy editor', () => {
   const noop = () => undefined;
   function card(warnings: Warning[], patch: Partial<CardEntry>) {
     const entry = { id: 'c', type: 'strategic', status: 'planned', ...patch } as CardEntry;
+    const view = kernelViewOf(game(), pack);
     return render(
-      <StrategyEditor view={kernelViewOf(game(), pack)}
-        game={game()} pack={pack} round={game().plans[0].rounds[0]} entry={entry} before={before()} warnings={warnings} manualPayment={false} picking={null}
-        onUpdate={noop} onManualPayment={noop} onPick={noop} onOpenShop={noop} onStartTactical={noop} onOpenTactical={noop} onDone={noop} onRemove={noop}
+      <StrategyEditor
+        view={view} pack={pack} {...cardProps(view, game(), pack, entry, noop)} warnings={warnings} manualPayment={false} picking={null}
+        onManualPayment={noop} onPick={noop} onOpenShop={noop} onStartTactical={noop} onOpenTactical={noop} onDone={noop} onRemove={noop}
       />,
     );
   }
@@ -332,7 +332,7 @@ describe('the steps of an action', () => {
       landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
     } as unknown as TacticalEntry;
     const speed: Warning = { code: 'speedShort', params: { from: SOURCE, unit: 'carrier', move: 1, steps: 2 } };
-    const { container } = render(<EntrySteps view={kernelViewOf(game(), pack)} entry={entry} game={game()} pack={pack} before={before()} warnings={[GROUP, speed]} />);
+    const { container } = render(<EntrySteps view={kernelViewOf(game(), pack)} entry={entry} game={game()} pack={pack} warnings={[GROUP, speed]} />);
     expect(container.querySelector('.stop-target')).toHaveTextContent(/capacity/i);
     expect(container.querySelector('.stop')).toHaveTextContent(/carrier/i);
     expect(container.querySelector('.stops')).toHaveClass('stops-over');

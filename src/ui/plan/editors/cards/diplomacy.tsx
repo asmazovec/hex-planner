@@ -1,13 +1,14 @@
-import { shownPlanetValues } from '../../../../domain/payment';
-import { readyChoices, readyLimit } from '../../../../domain/strategy';
+import { readyLimit } from '../../../../domain/strategy';
+import { readyChoicesOn } from '../../../../game/edit/strategicRead';
+import { shownPlanetValues } from '../../../../game/tile';
 import type { CardBlocks } from './kit';
 import { Section } from '../../../primitives/Section';
 
 /** The planets to ready and their limit come from the domain; the replay warns past the limit, so a button is never disabled. */
-export const diplomacyBlocks: CardBlocks = ({ t, game, pack, entry, before, effects, primary, setEffects, placer, list, pickButton, toggled }) => {
-  const limit = readyLimit(entry, game.expansions);
+export const diplomacyBlocks: CardBlocks = ({ t, table, board, pack, turn, player, entry, effects, primary, setEffects, placer, list, pickButton, toggled }) => {
+  const limit = readyLimit(entry, table.expansions);
   const readied = effects.readied ?? [];
-  const here = readyChoices(game, entry, before, pack);
+  const here = readyChoicesOn(table, board, pack, turn);
   return (
     <>
       {primary && pickButton('system', t('plan.strategy.systemPrimary'), effects.systemId)}
@@ -21,7 +22,7 @@ export const diplomacyBlocks: CardBlocks = ({ t, game, pack, entry, before, effe
                 key={planet.id} type="button" aria-pressed={readied.includes(planet.id)}
                 onClick={() => setEffects({ readied: toggled(readied, planet.id) })}
               >
-                {planet.name} {shownPlanetValues(pack, before, planet.id, game.faction).resources}/{shownPlanetValues(pack, before, planet.id, game.faction).influence}{before.exhausted.includes(planet.id) ? ` · ${t('plan.strategy.exhausted')}` : ''}
+                {planet.name} {shownPlanetValues(table, board, pack, player, planet.id).resources}/{shownPlanetValues(table, board, pack, player, planet.id).influence}{board.planets[planet.id]?.exhausted ? ` · ${t('plan.strategy.exhausted')}` : ''}
               </button>
             ))}
           </div>

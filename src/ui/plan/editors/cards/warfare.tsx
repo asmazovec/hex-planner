@@ -1,8 +1,8 @@
-import { homeSlot } from '../../../../domain/strategy';
-import type { TacticalEntry } from '../../tactical';
+import type { Tactical } from '../../../../game/actions';
+import { homeSlotOn } from '../../../../game/edit/strategicRead';
 import type { CardBlocks } from './kit';
 
-export const warfareBlocks: CardBlocks = ({ t, game, pack, round, entry, effects, primary, te, placer, list, tokenPick, pickButton, tile, builtLine, onOpenShop, onStartTactical, onOpenTactical }) => {
+export const warfareBlocks: CardBlocks = ({ t, table, pack, player, turn, effects, primary, te, placer, list, tokenPick, pickButton, tile, builtLine, onOpenShop, onStartTactical, onOpenTactical }) => {
   if (primary) {
     if (!te) {
       return (
@@ -12,13 +12,15 @@ export const warfareBlocks: CardBlocks = ({ t, game, pack, round, entry, effects
         </>
       );
     }
-    const tactical = round.entries.find((e): e is typeof e & TacticalEntry => e.type === 'tactical' && e.fromCard === entry.id);
+    // The free action stands inside the card; the bridge makes and drops it.
+    const tactical = turn.action.kind === 'strategic' ? turn.action.nested?.find(nested => nested.action.kind === 'tactical') : undefined;
+    const system = tactical ? (tactical.action as Tactical).system : null;
     return (
       <>
         {tactical
           ? (
             <button type="button" className="option" aria-pressed="true" onClick={() => onOpenTactical(tactical.id)}>
-              {t('plan.strategy.freeTacticalOpen')}{tactical.systemId ? ` · ${tile(tactical.systemId)}` : ''}
+              {t('plan.strategy.freeTacticalOpen')}{system ? ` · ${tile(system)}` : ''}
             </button>
           )
           : <button type="button" className="option" onClick={onStartTactical}>{t('plan.strategy.freeTactical')}</button>}
@@ -27,7 +29,7 @@ export const warfareBlocks: CardBlocks = ({ t, game, pack, round, entry, effects
       </>
     );
   }
-  const home = homeSlot(game, pack);
+  const home = homeSlotOn(table, pack, player);
   return (
     <>
       <button

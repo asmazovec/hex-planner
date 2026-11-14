@@ -1,4 +1,4 @@
-import { opponentOptions, type CardBlocks } from './kit';
+import type { CardBlocks } from './kit';
 import { Section } from '../../../primitives/Section';
 import { PlayerChoice } from '../../../primitives/player';
 
@@ -9,7 +9,7 @@ export const politicsBlocks: CardBlocks = kit => {
       {primary && (
         <Section title={t('plan.strategy.speaker')}>
           <PlayerChoice
-            label={t('plan.strategy.speaker')} options={opponentOptions(kit)} chosen={id => effects.speaker === id}
+            label={t('plan.strategy.speaker')} options={kit.others} chosen={id => effects.speaker === id}
             onPick={id => setEffects({ speaker: id === null || effects.speaker === id ? undefined : id })}
           />
         </Section>

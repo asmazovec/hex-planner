@@ -37,8 +37,6 @@ export interface EntryListProps {
   /** The table and the board just before an entry, as the kernel keeps them. */
   viewOf: (entryId: string) => KernelView;
   round: Round;
-  /** The state just before an entry, for what its steps read out; defaults to the forecast. */
-  stateBefore?: (entryId: string) => GameState;
   warnings: Record<string, Warning[]>;
   /** The forecast, for the systems a manual adjustment can change. */
   state: GameState;
@@ -157,7 +155,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, viewOf, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
+  game, pack, viewOf, round, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const moveEntry = useGame(s => s.moveEntry);
@@ -235,7 +233,7 @@ export function EntryList({
                       <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
                     {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} table={viewOf(entry.id).table} board={viewOf(entry.id).board} pack={pack} />}
-                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} view={viewOf(entry.id)} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
+                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} view={viewOf(entry.id)} warnings={list.filter(inSteps)} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
                         <StatusFields entry={entry} game={game} pack={pack} view={viewOf(entry.id)} state={state} warnings={list} />

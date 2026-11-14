@@ -10,7 +10,7 @@ import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
-import { cardChange, repaid, withSystem } from '../../domain/strategy';
+import { repaid, withSystem } from '../../domain/strategy';
 import { entrySystems, hasUnits, type TacticalEntry } from '../../domain/tactical';
 import { emptySources, isUntouched, sourcesOf, tacticalOf, viaOf, withRoute, withSystem as withActiveSystem, type At } from '../../game/edit/tactical';
 import { atOf, sourceSystemsOn, tileSystemsOn } from '../../game/edit/tacticalRead';
@@ -29,6 +29,7 @@ import { Drawer, DrawerTab } from '../overlays/Drawer';
 import { HexMap } from '../map/HexMap';
 import { HexStage, type StageMode } from '../map/stage/HexStage';
 import { cardPurchases } from '../map/stage/purchases';
+import { turnPurchases } from '../map/stage/turnPurchases';
 import { MapLegend } from '../drawers/MapLegend';
 import { ThundersEdgePanel } from '../drawers/ThundersEdgePanel';
 import { ComponentsPanel } from '../drawers/ComponentsPanel';
@@ -52,7 +53,7 @@ import { EntryList } from '../plan/EntryList';
 import { PlanName, PlanTabs } from '../plan/PlanTabs';
 import { PlayerList } from '../players/PlayerList';
 import { StrategyCards } from '../plan/StrategyCards';
-import { StrategyEditor } from '../plan/editors/StrategyEditor';
+import { StrategyEditorHost } from '../plan/editors/StrategyEditorHost';
 import { SummaryBar } from '../plan/SummaryBar';
 import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
@@ -410,7 +411,12 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     : [t('plan.tactical.noShipsAtStart'), route.steps > 0 ? t('plan.tactical.distance', { n: route.steps }) : null].filter(Boolean).join(' ');
 
   const cardBefore = cardEntry ? boards.before(cardEntry.id) : undefined;
-  const cardGame = gameAs(game, cardEntry?.owner);
+  /** What the big hex buys for a card goes into its turn through the kernel; the old state is read only for what the shop still shows of it. */
+  const cardTarget = (entryId: string, slot: string, before: NonNullable<typeof cardBefore>) => {
+    const view = boards.view(entryId);
+    const write = writeTurn(view.table, game, entryId, pack);
+    return write && turnPurchases(view, pack, write, slot, manualPayments.includes(entryId), { before, holdings: before.holdings });
+  };
   const highlights = mapHighlights(shownTable, shownBoard, pack, {
     choice: cardPick && cardEntry && cardBefore ? cardTargets(game, pack, cardEntry, cardPick, cardBefore, forecast.state)
       : adjustPick ? tileSystemsOn(shownTable, shownBoard, pack)
@@ -474,10 +480,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   /** The opponent whose action stands in an editor now: the panel says so in their colour. */
   const inHand = game.opponents.find(o => o.id === handOwner);
-  /** A card's purchases on the big hex change its effects, paid anew unless paid by hand. */
-  const onCardEffects = (effects: CardEffects) => {
-    if (cardEntry && cardBefore) updateEntry(cardEntry.id, cardChange(cardEntry, { effects }, cardBefore, cardGame.faction, pack, manualPayments.includes(cardEntry.id), cardGame));
-  };
   const stageFor = stage?.for;
   const stagedTurn = stageFor?.kind === 'component' ? turnIn(round, stageFor.id) : undefined;
 
@@ -576,10 +578,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       case 'card': {
         const played = slot.entry;
         return (
-          <StrategyEditor
-            game={cardGame} pack={pack} view={boards.view(played.id)} round={round} entry={played} before={boards.before(played.id)}
+          <StrategyEditorHost
+            key={played.id} entryId={played.id} roundNumber={round.number} pack={pack} view={boards.view(played.id)}
             warnings={forecast.warningsByEntry[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
-            onUpdate={patch => updateEntry(played.id, patch)}
             onManualPayment={open => toggleManualPayment(played.id, open)}
             onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) { drawers.closeRight(); setView('map'); } }}
             onOpenShop={(at, only) => update(state => ({ ...state, stage: { slot: at, mode: 'build', only, for: { kind: 'card' } } }))}
@@ -761,7 +762,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
                   game={game} pack={pack} viewOf={id => boards.view(id)} round={round}
-                  stateBefore={id => boards.before(id)} warnings={forecast.warningsByEntry} state={forecast.state}
+                  warnings={forecast.warningsByEntry} state={forecast.state}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) flight.start(done.id, shownFilter); }}
@@ -794,7 +795,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         <HexStage
           key={stage.slot} slot={stage.slot} roundNo={round.number} pack={pack} initialMode={stage.mode} only={stage.only}
           owner={stageFor.kind === 'card' ? cardEntry?.owner : stageFor.kind === 'component' ? stagedTurn?.owner : undefined}
-          onPurchase={stageFor.kind === 'card' && cardEntry && cardBefore ? cardPurchases(cardGame, pack, cardEntry, stage.slot, cardBefore, onCardEffects)
+          onPurchase={stageFor.kind === 'card' && cardEntry && cardBefore ? cardTarget(cardEntry.id, stage.slot, cardBefore)
             : stageFor.kind === 'component' && stagedTurn ? cardPurchases(gameAs(game, stagedTurn.owner), pack, stagedTurn, stage.slot, boards.before(stagedTurn.id), effects => updateEntry(stagedTurn.id, { effects: producedEffects(stagedTurn, effects) })) : undefined}
           manualPayments={manualPayments}
           tacticalId={stageFor.kind === 'tactical' ? stageFor.id : undefined} adjustmentId={stageFor.kind === 'adjustment' ? stageFor.id : undefined}

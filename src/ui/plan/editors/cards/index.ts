@@ -10,6 +10,7 @@ import { technologyBlocks } from './technology';
 import { tradeBlocks } from './trade';
 import { warfareBlocks } from './warfare';
 
+export { playersBeside } from './kit';
 export type { CardBlocks, CardKit } from './kit';
 
 export const CARD_BLOCKS: Record<number, CardBlocks> = {

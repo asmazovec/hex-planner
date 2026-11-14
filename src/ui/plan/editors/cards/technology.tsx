@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { researchTokensGiven } from '../../../../domain/replay/research';
-import { techSlicePlanets } from '../../../../domain/payment';
-import { researchCount, researchLimit } from '../../../../domain/strategy';
+import { researchCount } from '../../../../domain/strategy';
+import { researchLimitOn, researchTokensGivenOn } from '../../../../game/edit/strategicRead';
+import { legacyKey } from '../../../../game/keys';
+import { techSlicePlanetsOn } from '../../../../game/planQueries';
 import type { DataPack } from '../../../../domain/types';
 import type { CardBlocks } from './kit';
 import { ResearchBlock } from '../../blocks/ResearchBlock';
@@ -12,7 +13,7 @@ import { Section } from '../../../primitives/Section';
  * list. The row stands first: a tap on it adds a card to the list, and a list above would push the row from under the finger.
  * Planets with a technology specialty stand after the technologies: pressing one exhausts it for a prerequisite (90.14).
  */
-export const technologyBlocks: CardBlocks = ({ t, game, entry, effects, before, pack, cost, change, placer, list, upgradeRow, tokenPick }) => {
+export const technologyBlocks: CardBlocks = ({ t, table, board, player, turn, entry, effects, pack, cost, change, placer, list, upgradeRow, tokenPick }) => {
   const count = researchCount(entry);
   const setResearched = (researched: string[]) => {
     const { researched: old, ...rest } = effects;
@@ -20,7 +21,7 @@ export const technologyBlocks: CardBlocks = ({ t, game, entry, effects, before, 
     change({ effects: researched.length > 0 ? { ...rest, researched } : rest });
   };
   const chosen = effects.specialties ?? [];
-  const planets = [...new Set([...techSlicePlanets(before, pack), ...chosen])];
+  const planets = [...new Set([...techSlicePlanetsOn(table, board, pack, player), ...chosen])];
   const toggle = (id: string) => {
     const next = chosen.includes(id) ? chosen.filter(other => other !== id) : [...chosen, id];
     const { specialties: old, ...rest } = effects;
@@ -34,12 +35,12 @@ export const technologyBlocks: CardBlocks = ({ t, game, entry, effects, before, 
       </Section>
       <ResearchBlock
         title={t('plan.strategy.research', { n: count })}
-        note={t(researchLimit(entry, before.holdings, { pack, faction: game.faction }) === 2 ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}
-        researched={effects.researched ?? []} player={entry.owner ?? 'me'} pack={pack} onChange={setResearched}
+        note={t(researchLimitOn(table, board, pack, turn) === 2 ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}
+        researched={effects.researched ?? []} player={legacyKey(table, player)} pack={pack} onChange={setResearched}
         warnings={list(placer.at('research'))}
       />
       {/* A component that turns a research into tokens (Propagation): the card gives them to distribute. */}
-      {researchTokensGiven(pack, game, before, before, effects.researched) > 0 && tokenPick()}
+      {researchTokensGivenOn(table, board, pack, player, effects.researched) > 0 && tokenPick()}
       {planets.length > 0 && <Specialties planets={planets} chosen={chosen} pack={pack} onToggle={toggle} />}
     </>
   );

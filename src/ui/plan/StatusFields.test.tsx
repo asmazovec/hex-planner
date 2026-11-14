@@ -8,7 +8,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { boardBefore, project, timelineOf as timeline } from '../../domain/project';
+import { project } from '../../domain/project';
 import { withEffect } from '../../domain/effects/points/status.kit';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -32,11 +32,10 @@ function openStatus(faction: string, secrets: string[] = []): void {
   const id = store.addStatusEntry(1);
   function Live() {
     const live = useGame(s => s.game)!;
-    const line = timeline(live, live.plans[0], 'forecast', pack);
     return (
       <EntryList viewOf={() => kernelViewOf(live, pack)}
         game={live} pack={pack} round={live.plans[0].rounds[0]} warnings={{}} state={project(live, live.plans[0], 'forecast', pack).state}
-        stateBefore={entryId => boardBefore(line, entryId)} openId={id} onOpen={() => undefined}
+        openId={id} onOpen={() => undefined}
       />
     );
   }

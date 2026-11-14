@@ -1,6 +1,6 @@
 import type { CardBlocks } from './kit';
 
-export const constructionBlocks: CardBlocks = ({ t, game, pack, effects, primary, te, placer, list, pickButton, tile, builtLine, onOpenShop }) => {
+export const constructionBlocks: CardBlocks = ({ t, faction, pack, effects, primary, te, placer, list, pickButton, tile, builtLine, onOpenShop }) => {
   const production = effects.production;
   return (
     <>
@@ -14,7 +14,7 @@ export const constructionBlocks: CardBlocks = ({ t, game, pack, effects, primary
         </p>
       )}
       {/* Hecatoncheires: a mech and an infantry stand instead of a PDS (the secondary). */}
-      {!primary && game.faction === 'titans' && (
+      {!primary && faction === 'titans' && (
         <button
           type="button" className="option" aria-pressed={production !== undefined} disabled={effects.systemId === undefined}
           onClick={() => { if (effects.systemId) onOpenShop(effects.systemId, 'units'); }}
