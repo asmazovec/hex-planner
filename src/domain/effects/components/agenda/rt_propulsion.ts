@@ -10,6 +10,7 @@
  */
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import type { ComponentEffect } from '../../types';
+import { card } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'agenda:rt_propulsion';
@@ -17,15 +18,13 @@ export const id = 'agenda:rt_propulsion';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  // "Exhaust this card": the replay exhausts only what a kind of component has a rule for, so the card does it here;
-  // a second use before the status phase readies it is then warned of as an exhausted component.
-  play: ({ state, id: played }) => {
-    if (!state.holdings.exhausted.includes(played)) state.holdings.exhausted.push(played);
-  },
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  // "Exhaust this card": the replay exhausts only what a kind of component has a rule for, so the card does it here;
+  // a second use before the status phase readies it is then warned of as an exhausted component.
+  play: ctx => (ctx.my.holds(ctx.id) ? [card.exhaust(ctx.holder, ctx.id)] : [{ type: 'CardGained', player: ctx.holder, card: ctx.id, state: 'exhausted' }]),
   permit: [{
     code: prerequisitesMissing.code,
     rule: 'When the owner of this planet researches technology, they may exhaust this card to ignore 1 blue prerequisite.',

@@ -8,7 +8,8 @@
  * counts, so it is to become a `play` of the agenda entry with its outcome. The technology a player may research is
  * entered in the entry's `gains` (90.9); the "Against" outcome depends on votes and is not counted. Pass 1: still a hint.
  */
-import { wormholeSlots } from '../../../movement';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:wormhole_research';
@@ -17,10 +18,13 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   // "Then, destroy all ships in systems that contain an alpha or beta wormhole": the "For" outcome only.
-  play: ({ game, pack, choices, states, shared }) => {
-    if (choices.outcome !== 'for') return;
-    const holes = wormholeSlots(game, pack, 'alpha', shared.wormholeTokens).concat(wormholeSlots(game, pack, 'beta', shared.wormholeTokens));
-    const everyone = new Set([...Object.values(states), shared, ...Object.values(shared.rivals ?? {})]);
-    for (const who of everyone) for (const slot of holes) delete who.systems[slot];
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.outcome !== 'for') return [];
+    const slots = Object.keys({ ...ctx.table.map, ...ctx.board.common.fracture.tiles }).filter(slot => ctx.wormholes(slot).some(hole => hole === 'alpha' || hole === 'beta'));
+    return ctx.table.players.flatMap(({ id: player }) => slots.filter(slot => Object.values(ctx.of(player).unitsIn(slot)).some(n => (n ?? 0) > 0)).map(slot => removeUnits(player, { slot }, ctx.of(player).unitsIn(slot))));
   },
 };

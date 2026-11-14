@@ -6,7 +6,8 @@
  * loses 1 fleet pool token per prerequisite of it, never below 0 (rulings), after which the fleet pool is checked
  * (37.3).
  */
-import { gainTokens } from '../../../replay/status';
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:grant_reallocation';
@@ -14,10 +15,14 @@ export const id = 'agenda:grant_reallocation';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const gained = (turn.entry.gains ?? []).find(item => item.startsWith('technology:'));
-    const tech = gained === undefined ? undefined : turn.pack.technologies[gained.slice('technology:'.length)];
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const gained = (ctx.entry?.gains ?? []).find(item => item.startsWith('technology:'));
+    const tech = gained === undefined ? undefined : ctx.pack.technologies[gained.slice('technology:'.length)];
     const owed = Object.values(tech?.requires ?? {}).reduce((sum, count) => sum + (count ?? 0), 0);
-    if (owed > 0) gainTokens(turn, { fleet: -Math.min(owed, Math.max(0, turn.state.fleet)) });
+    return owed > 0 ? [tokens(ctx.holder, { fleet: -Math.min(owed, Math.max(0, ctx.my.pools.fleet)) }, 'component')] : [];
   },
 };

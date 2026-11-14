@@ -199,6 +199,11 @@ export interface AbilityContext {
    * for the entry, however many objectives it scores. `events` and the warnings of what was lacking come with the first call of the turn; `spent` says what it came to every time.
    */
   spendOnObjectives(): { spent: { tokens: number; tradeGoods: number; resources: number; influence: number }; events: GameEvent[] };
+  /**
+   * Makes the secondary of a strategy card free for every player for the rest of the round (Crisis). It writes the round's memory (the resolver's track), not the board:
+   * the board still changes only through the events a play returns.
+   */
+  freeSecondaryFor(card: number): void;
   /** Adds a warning of the turn. */
   warn(warning: Warning): void;
 }

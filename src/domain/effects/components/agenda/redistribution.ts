@@ -7,6 +7,9 @@
  * the planet is the entry's choice (`choices.planet`). The infantry placed then is another player's choice and is not
  * modelled.
  */
+import { removeUnits, structures } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:redistribution';
@@ -15,11 +18,17 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  play: ({ state, choices }) => {
-    const planet = String(choices.planet ?? '');
-    if (planet === '') return;
-    delete state.ground[planet];
-    delete state.pds[planet];
-    state.docks = state.docks.filter(dock => dock !== planet);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planet = String(ctx.choices.planet ?? '');
+    if (planet === '') return [];
+    const events: GameEvent[] = [];
+    const here = ctx.board.planets[planet];
+    for (const [player, units] of Object.entries(here?.ground ?? {})) if (Object.values(units).some(n => (n ?? 0) > 0)) events.push(removeUnits(player, { planet }, units));
+    if (here?.owner !== undefined && Object.values(here.structures).some(n => (n ?? 0) > 0)) events.push(structures.remove(here.owner, planet, here.structures));
+    return events;
   },
 };

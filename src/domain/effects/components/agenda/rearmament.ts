@@ -6,28 +6,33 @@
  * Decided: play. "For" places 1 mech on a planet of the home system the player controls; "Against" replaces each mech
  * with an infantry: both change the board the plan counts.
  */
-import type { UnitCounts } from '../../../types';
+import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:rearmament';
 
-/** The same units with each mech an infantry. */
-function disarmed(units: UnitCounts): UnitCounts {
-  const { mech, ...rest } = units;
-  return mech ? { ...rest, infantry: (rest.infantry ?? 0) + mech } : units;
-}
-
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const { state } = turn;
-    if (turn.choices.outcome === 'for') {
-      const planet = String(turn.choices.planet ?? '');
-      if (planet) state.ground[planet] = { ...state.ground[planet], mech: (state.ground[planet]?.mech ?? 0) + 1 };
-    } else if (turn.choices.outcome === 'against') {
-      for (const planet of Object.keys(state.ground)) state.ground[planet] = disarmed(state.ground[planet]);
-      for (const slot of Object.keys(state.systems)) state.systems[slot] = disarmed(state.systems[slot]);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (ctx.choices.outcome === 'for') {
+      const planet = String(ctx.choices.planet ?? '');
+      return planet ? [placeUnits(ctx.holder, { planet }, { mech: 1 })] : [];
     }
+    if (ctx.choices.outcome !== 'against') return [];
+    // Each mech of the holder, on a planet or in space, is replaced by an infantry.
+    const events: GameEvent[] = [];
+    const swap = (at: { planet: string } | { slot: string }, mech: number): void => {
+      if (mech > 0) events.push(removeUnits(ctx.holder, at, { mech }), placeUnits(ctx.holder, at, { infantry: mech }));
+    };
+    for (const planet of Object.keys(ctx.board.planets)) swap({ planet }, ctx.my.unitsOn(planet).mech ?? 0);
+    for (const slot of Object.keys(ctx.board.systems)) swap({ slot }, ctx.my.unitsIn(slot).mech ?? 0);
+    return events;
   },
 };

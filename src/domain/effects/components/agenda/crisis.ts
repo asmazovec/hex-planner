@@ -16,16 +16,15 @@ export const id = 'agenda:crisis';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    const card = Number(turn.choices.card);
-    const { cards } = turn;
-    if (!card || !cards) return;
-    cards.freeSecondary[card] = [...new Set([...(cards.freeSecondary[card] ?? []), ...Object.keys(cards.states)])];
-  },
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  play: ctx => {
+    const card = Number(ctx.choices.card);
+    if (card) ctx.freeSecondaryFor(card);
+    return [];
+  },
   permit: [
     { code: 'secondaryRepeated', rule: 'Each player may perform the secondary ability of the elected strategy card', lasts: 'round' },
     { code: 'ownSecondary', rule: 'Each player may perform the secondary ability of the elected strategy card', lasts: 'round' },

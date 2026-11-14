@@ -32,6 +32,7 @@ import type { GameEvent } from '../events';
 import { legacyEvents, legacyKey, legacyViews, legacyViewsFresh, playerOfKey, viewFor } from '../legacyViews';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
 import { warn, type Ctx } from './context';
+import type { RoundTrack } from './track';
 
 export interface HookResult { board: Board; events: GameEvent[]; violations: Warning[] }
 
@@ -50,6 +51,8 @@ export interface HookOptions {
   choices?: Readonly<Record<string, string | number>>;
   /** `play` only: whether the component was held and ready when it was played. */
   held?: boolean;
+  /** What the round remembers, as the turn changes it (`freeSecondaryFor`). */
+  track?: RoundTrack;
   /** What the turn remembers between the components it plays (what a status entry's spend paid, once). */
   memo?: Map<string, unknown>;
   /** `play` only: the warnings of the turn so far, and how a play takes one back or words it again. */
@@ -72,7 +75,7 @@ export function poolWarnings(table: Table, before: Board, board: Board, pack: Da
 
 /** The context a component is asked with: the board as it stands, the holder and the actor, the readers and the questions of the game. */
 export function contextOf(
-  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held' | 'warned' | 'revise' | 'memo'>, warn: (warning: Warning) => void,
+  table: Table, at: Board, pack: DataPack, player: PlayerId, id: string, options: Pick<HookOptions, 'actor' | 'step' | 'choices' | 'entry' | 'held' | 'warned' | 'revise' | 'memo' | 'track'>, warn: (warning: Warning) => void,
 ): AbilityContext {
   return {
     board: at, table, pack, holder: player, actor: options.actor, ...(options.step ? { step: options.step } : {}), held: options.held ?? true, choices: options.choices ?? {}, own: player === options.actor,
@@ -102,6 +105,10 @@ export function contextOf(
       researchTechnologies(v.game, v.state, v.shared, [technology], pack, found);
       found.forEach(warn);
       return legacyEvents(table, pack, before, work, player);
+    },
+    freeSecondaryFor: cardNumber => {
+      const track = options.track;
+      if (track) track.freeSecondary[cardNumber] = [...new Set([...(track.freeSecondary[cardNumber] ?? []), ...table.players.map(p => p.id)])];
     },
     tradeGoodWorth: kind => tradeGoodWorth(table, at, pack, player, kind),
     spendOnObjectives: () => {

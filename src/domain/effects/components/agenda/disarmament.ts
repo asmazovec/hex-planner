@@ -6,6 +6,9 @@
  * trade good for each (Compensated Disarmament notes 2 and 4: infantry and mechs count, structures are unaffected).
  *
  */
+import { removeUnits, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:disarmament';
@@ -14,12 +17,24 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-  play: ({ state, choices }) => {
-    const planet = String(choices.planet ?? '');
-    if (planet === '') return;
-    const destroyed = Object.values(state.ground[planet] ?? {}).reduce((sum, count) => sum + (count ?? 0), 0);
-    delete state.ground[planet];
-    // The player who controls the planet gains a trade good for each unit (note 2); a planet of another player is not my state.
-    if (state.control[planet] === 'me') state.tradeGoods += destroyed;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planet = String(ctx.choices.planet ?? '');
+    if (planet === '') return [];
+    let destroyed = 0;
+    const events: GameEvent[] = [];
+    for (const [player, units] of Object.entries(ctx.board.planets[planet]?.ground ?? {})) {
+      const count = Object.values(units).reduce((sum, each) => sum + (each ?? 0), 0);
+      if (count <= 0) continue;
+      destroyed += count;
+      events.push(removeUnits(player, { planet }, units));
+    }
+    // The player who controls the planet gains a trade good for each unit (note 2).
+    const controller = ctx.board.planets[planet]?.owner;
+    if (controller !== undefined && destroyed > 0) events.push(tradeGoods(controller, destroyed));
+    return events;
   },
 };

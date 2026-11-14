@@ -8,6 +8,9 @@
  * counts, the infantry on the planets of each player and their trade goods, so it is to become a `play` of the agenda
  * entry that resolves it, with the outcome chosen there (`choices.outcome`). Pass 1: still the hint it is today.
  */
+import { placeUnits, removeUnits, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:plowshares';
@@ -15,23 +18,27 @@ export const id = 'agenda:plowshares';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  // Each player is every state the replay has: the owner's, mine and the opponents' it keeps.
-  play: ({ choices, states, shared }) => {
-    const everyone = new Set([...Object.values(states), shared, ...Object.values(shared.rivals ?? {})]);
-    for (const who of everyone) {
-      if (choices.outcome === 'for') {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  // Each player is every player of the table.
+  play: ctx => {
+    const events: GameEvent[] = [];
+    for (const { id: player } of ctx.table.players) {
+      const who = ctx.of(player);
+      if (ctx.choices.outcome === 'for') {
         let destroyed = 0;
-        for (const units of Object.values(who.ground)) {
-          const half = Math.ceil((units.infantry ?? 0) / 2);
-          if (half > 0) units.infantry = (units.infantry ?? 0) - half;
+        for (const planetId of Object.keys(ctx.board.planets)) {
+          const half = Math.ceil((who.unitsOn(planetId).infantry ?? 0) / 2);
+          if (half > 0) events.push(removeUnits(player, { planet: planetId }, { infantry: half }));
           destroyed += half;
         }
-        who.tradeGoods += destroyed;
-      } else if (choices.outcome === 'against') {
-        for (const [planetId, side] of Object.entries(who.control)) {
-          if (side === 'me') who.ground[planetId] = { ...who.ground[planetId], infantry: (who.ground[planetId]?.infantry ?? 0) + 1 };
-        }
+        if (destroyed > 0) events.push(tradeGoods(player, destroyed));
+      } else if (ctx.choices.outcome === 'against') {
+        for (const planet of who.planets()) events.push(placeUnits(player, { planet: planet.id }, { infantry: 1 }));
       }
     }
+    return events;
   },
 };
