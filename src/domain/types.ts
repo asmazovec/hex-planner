@@ -1,3 +1,5 @@
+import type { Shelf } from './shelf';
+
 export type ExpansionId = 'pok' | 'te';
 
 export type UnitId = 'carrier' | 'cruiser' | 'destroyer' | 'dreadnought' | 'warsun'
@@ -382,31 +384,8 @@ export interface Opponent {
   color: number;
 }
 
-/** What a player holds of the game's components, by component id (`<kind>:<source id>`). */
-export interface Holdings {
-  /** Researched technologies, unit upgrades among them. */
-  technologies: string[];
-  /** Action cards in hand, with repeats. */
-  hand: string[];
-  relics: string[];
-  /** Promissory notes in hand and those played face up. */
-  promissory: string[];
-  /** Leaders by id; one not listed is locked. */
-  leaders: Record<string, LeaderState>;
-  breakthrough?: 'held' | 'exhausted';
-  /** Scored objectives, public and secret. */
-  scored: string[];
-  /** Secret objectives in hand. */
-  secrets: string[];
-  /**
-   * Exploration cards found and kept in the play area, with repeats: the relic fragments (35.9) and the cards that
-   * say so (Enigmatic Device). An exploration card that attaches, is a token or is resolved at once is held by no one.
-   */
-  found: string[];
-  /** Exhausted components the status phase readies: technologies, relics, legendary planet cards. */
-  exhausted: string[];
-}
-export type LeaderState = 'unlocked' | 'exhausted' | 'purged';
+export type Holdings = Shelf;
+export type { LeaderState } from './shelf';
 /** What a player held when the plan begins: the faction's starting technologies, and what was marked by hand. */
 export type StartHoldings = Partial<Pick<Holdings, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets' | 'found'>>;
 

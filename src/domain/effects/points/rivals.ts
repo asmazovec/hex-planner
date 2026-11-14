@@ -8,7 +8,8 @@
  *    planet (Keleres mech): it may change the lander's state and push warnings.
  */
 import type { MapSource } from '../../replay/board';
-import type { DataPack, Game, GameState, Holdings, Warning } from '../../types';
+import type { DataPack, Game, GameState, Warning } from '../../types';
+import type { Shelf } from '../../shelf';
 
 /** What a component that bars systems to other players' ships is asked with. */
 export interface PassageTurn {
@@ -52,12 +53,12 @@ declare module '../types' {
   }
 }
 
-declare module '../../types' {
-  interface Holdings {
+declare module '../../shelf' {
+  interface Shelf {
     /** The promissory notes held that lie in the play area, faceup, not in hand (69.3): a subset of `promissory`. A note in hand does nothing, one in play does what its text says until it is returned. */
     inPlay?: string[];
   }
 }
 
 /** The notes of the holdings that lie in the play area: those still held. */
-export const notesInPlay = (holdings: Holdings): string[] => (holdings.inPlay ?? []).filter(id => holdings.promissory.includes(id));
+export const notesInPlay = (holdings: Shelf): string[] => (holdings.inPlay ?? []).filter(id => holdings.promissory.includes(id));

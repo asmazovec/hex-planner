@@ -9,10 +9,8 @@
 import { applied } from '../../effects/apply';
 import { appliedFor } from '../../effects/entryApply';
 import '../../effects/points/research';
-import { violation } from '../../rules/registry';
 import type { CardEntry } from '../../strategy';
-import type { Holdings } from '../../types';
-import { researchTechnologies } from '../research';
+import type { Shelf } from '../../shelf';
 import type { CardHandler, CardWho } from './handler';
 
 const SECOND_RESEARCH = 6;
@@ -22,16 +20,16 @@ const SECONDARY_RESEARCH = 4;
 export const researchCount = (entry: CardEntry): number => entry.effects?.researched?.length ?? 0;
 
 /** What is researched anew: technologies already held are not. */
-const newResearch = (entry: CardEntry, held: Holdings): string[] =>
+const newResearch = (entry: CardEntry, held: Shelf): string[] =>
   (entry.effects?.researched ?? []).filter(id => !held.technologies.includes(id));
 
 /** Whether the entry researches as the primary does: the primary itself, or a secondary a component turns into it. */
-export const researchesAsPrimary = (entry: CardEntry, held: Holdings, who?: CardWho): boolean =>
+export const researchesAsPrimary = (entry: CardEntry, held: Shelf, who?: CardWho): boolean =>
   entry.type === 'strategic'
   || (who !== undefined && applied(who.pack, { holdings: held, faction: who.faction }, 'researchAsPrimary', 0, { faction: who.faction }).value > 0);
 
 /** How many technologies the side researches. */
-export const researchLimit = (entry: CardEntry, held?: Holdings, who?: CardWho): number =>
+export const researchLimit = (entry: CardEntry, held?: Shelf, who?: CardWho): number =>
   (held ? researchesAsPrimary(entry, held, who) : entry.type === 'strategic') ? 2 : 1;
 
 export const technology: CardHandler = {
@@ -42,12 +40,5 @@ export const technology: CardHandler = {
       return sum + (who ? appliedFor(who.pack, { holdings: held, faction: who.faction }, entry, 'researchCost', base, { technology: id, index }).value : base);
     }, 0);
     return { kind: 'resources', amount };
-  },
-  apply: ({ game, state, entry, pack, round, warnings }) => {
-    // Runs before this entry's research is added: the holdings are those of before.
-    const count = newResearch(entry, state.holdings).length;
-    const limit = researchLimit(entry, state.holdings, { pack, faction: game.faction });
-    researchTechnologies(game, state, round.states.me ?? state, entry.effects?.researched, pack, warnings, entry.effects?.specialties);
-    if (count > limit) warnings.push(violation('researchOverLimit', { limit, count }));
   },
 };

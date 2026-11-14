@@ -4,17 +4,18 @@
  * `replay/holdings.ts`.
  */
 import { componentsOf, noteAddress, noteBase, noteId, ownedBy } from './components';
-import type { ComponentDef, ComponentKind, DataPack, Holdings, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
+import type { ComponentDef, ComponentKind, DataPack, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
+import type { Shelf } from './shelf';
 
 /** The ability that purges its player's own Alliance note at setup, and the base id of that note. */
 const HUBRIS = 'Hubris';
 const ALLIANCE = /^promissory:.*_an$/;
 
-export const emptyHoldings = (): Holdings =>
+export const emptyHoldings = (): Shelf =>
   ({ technologies: [], hand: [], relics: [], promissory: [], leaders: {}, scored: [], secrets: [], found: [], exhausted: [] });
 
 /** The holdings a start gives, as a copy the replay may change. */
-export function holdingsOf(start: StartHoldings = {}): Holdings {
+export function holdingsOf(start: StartHoldings = {}): Shelf {
   return {
     technologies: [...(start.technologies ?? [])], hand: [...(start.hand ?? [])], relics: [...(start.relics ?? [])],
     promissory: [...(start.promissory ?? [])], leaders: { ...start.leaders }, scored: [...(start.scored ?? [])],
@@ -24,7 +25,7 @@ export function holdingsOf(start: StartHoldings = {}): Holdings {
 }
 
 /** How many components a player holds: every list with its repeats, the leaders that are not locked, the breakthrough. */
-export const holdingCount = (holdings: Holdings): number =>
+export const holdingCount = (holdings: Shelf): number =>
   holdings.technologies.length + holdings.hand.length + holdings.relics.length + holdings.promissory.length
   + Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0) + holdings.scored.length + holdings.secrets.length + holdings.found.length;
 
@@ -33,7 +34,7 @@ export const COMPONENT_GROUPS = ['technologies', 'cards', 'faction', 'relics', '
 export type ComponentGroup = typeof COMPONENT_GROUPS[number];
 
 /** How many components a player holds in each group; the laws of the game stand with the objectives. */
-export const groupCounts = (holdings: Holdings, laws: string[] = []): Record<ComponentGroup, number> => ({
+export const groupCounts = (holdings: Shelf, laws: string[] = []): Record<ComponentGroup, number> => ({
   technologies: holdings.technologies.length,
   cards: holdings.hand.length + holdings.promissory.length,
   faction: Object.keys(holdings.leaders).length + (holdings.breakthrough ? 1 : 0),
@@ -51,7 +52,7 @@ const techDef = (pack: DataPack, id: string) => (id.startsWith(TECH) ? pack.tech
  * The units and structures whose upgrade technology is held, in the order held. This is the only place that turns
  * technologies into upgrades: every count that follows a unit's level asks it. An id the pack does not know is passed over.
  */
-export function upgradesOf(holdings: Pick<Holdings, 'technologies'>, pack: DataPack): UpgradeId[] {
+export function upgradesOf(holdings: Pick<Shelf, 'technologies'>, pack: DataPack): UpgradeId[] {
   const upgrades: UpgradeId[] = [];
   for (const id of holdings.technologies) {
     const upgrade = techDef(pack, id)?.upgrade;
@@ -160,7 +161,7 @@ export const staysInPlay = (def: Pick<ComponentDef, 'id' | 'kind' | 'detail'>): 
  * What an entry can discard or lose: everything its owner held as a card before it, a hand with its repeats, and what
  * the entry itself brings, less what it already loses, a copy at a time.
  */
-export function losable(holdings: Holdings, entry: { gains?: string[]; spends?: string[] }): string[] {
+export function losable(holdings: Shelf, entry: { gains?: string[]; spends?: string[] }): string[] {
   const all = [...LIST_FIELDS.flatMap(field => holdings[field]), ...(entry.gains ?? [])];
   for (const id of entry.spends ?? []) {
     const at = all.indexOf(id);
@@ -170,7 +171,7 @@ export function losable(holdings: Holdings, entry: { gains?: string[]; spends?: 
 }
 
 /** What a player holds and cannot hold twice: everything held as a card but the hand of action cards. */
-export const heldOnce = (holdings: Holdings): Set<string> =>
+export const heldOnce = (holdings: Shelf): Set<string> =>
   new Set(LIST_FIELDS.filter(field => !COPIED.includes(field)).flatMap(field => holdings[field]));
 
 /**
@@ -184,7 +185,7 @@ export const TRANSACTION_KINDS: readonly ComponentKind[] = ['promissory', 'actio
  * What a player can still hand over in a transaction: the promissory notes held and then the action cards in hand,
  * each id once, less the copies already `chosen` for it.
  */
-export function tradable(holdings: Holdings, chosen: string[] = [], kinds: readonly ComponentKind[] = TRANSACTION_KINDS): string[] {
+export function tradable(holdings: Shelf, chosen: string[] = [], kinds: readonly ComponentKind[] = TRANSACTION_KINDS): string[] {
   const left = [...chosen];
   const free = kinds.flatMap(kind => holdings[HOLDING_FIELD[kind]!]).filter(id => {
     const at = left.indexOf(id);

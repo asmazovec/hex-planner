@@ -2,7 +2,8 @@
 import type { PaymentKind } from '../../payment';
 import type { CardEntry } from '../../strategy';
 import type { TokensOn } from '../../readers';
-import type { DataPack, ExpansionId, Game, GameState, Holdings, Warning } from '../../types';
+import type { DataPack, ExpansionId, GameState } from '../../types';
+import type { Shelf } from '../../shelf';
 
 /** What the round knows of the cards while it is replayed. Players are `me` and the opponents' ids. */
 export interface CardRound {
@@ -18,19 +19,6 @@ export interface CardRound {
   states: Record<string, GameState>;
 }
 
-/** One card entry being replayed. */
-export interface CardTurn {
-  game: Game;
-  state: GameState;
-  entry: CardEntry;
-  pack: DataPack;
-  round: CardRound;
-  /** `me` or the opponent whose entry this is. */
-  player: string;
-  primary: boolean;
-  warnings: Warning[];
-}
-
 /** Whose play it is, for a card whose numbers a component of the player changes (Brilliant, research cost). */
 export interface CardWho { pack: DataPack; faction: string }
 
@@ -40,11 +28,9 @@ export interface CardHandler {
   /** Its secondary spends no strategy token (Leadership, 20.5.1). */
   freeSecondary?: boolean;
   /** What it owes in resources or influence, given what the player already holds; without it, what its production costs. */
-  cost?: (entry: CardEntry, held: Holdings, who?: CardWho) => CardCost;
+  cost?: (entry: CardEntry, held: Shelf, who?: CardWho) => CardCost;
   /** What it places is placed, not produced: the units entered on it are paid for with nothing (Titans, Hecatoncheires). */
   placesFree?: (entry: CardEntry, who: CardWho) => boolean;
   /** The tokens it gives to distribute; `before`, the state before the entry, when the board is known. */
   freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: TokensOn) => number;
-  /** Its own effects and checks, after the common steps (token, payment, distribution, readying). */
-  apply?: (turn: CardTurn) => void;
 }

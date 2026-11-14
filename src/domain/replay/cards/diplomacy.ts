@@ -4,11 +4,8 @@
  * mine in that system.
  */
 import { strategyCardSet } from '../../cards';
-import { MECATOL_PLANETS } from '../../mecatol';
-import { violation } from '../../rules/registry';
 import type { CardEntry } from '../../strategy';
-import type { DataPack, ExpansionId, Game, GameState } from '../../types';
-import { systemPlanets } from '../board';
+import type { ExpansionId } from '../../types';
 import type { CardHandler } from './handler';
 
 const READY_LIMIT = 2;
@@ -21,24 +18,5 @@ export const inSystem = (entry: CardEntry, expansions: ExpansionId[]): boolean =
 export const readyLimit = (entry: CardEntry, expansions: ExpansionId[]): number | null =>
   (inSystem(entry, expansions) ? null : READY_LIMIT);
 
-/** Whether the system may be chosen: it holds a planet I control and is not the Mecatol Rex system. */
-export function diplomacySystemAllowed(game: Game, state: GameState, systemId: string, pack: DataPack): boolean {
-  const planets = systemPlanets(game, systemId, pack);
-  return !planets.some(p => MECATOL_PLANETS.includes(p.id)) && planets.some(p => state.control[p.id] === 'me');
-}
-
 export const diplomacy: CardHandler = {
-  apply: ({ game, state, entry, pack, round, player, primary, warnings }) => {
-    const effects = entry.effects ?? {};
-    const limit = readyLimit(entry, game.expansions);
-    const readied = effects.readied?.length ?? 0;
-    if (limit !== null && readied > limit) warnings.push(violation('readyOverLimit', { limit, readied }));
-    const systemId = effects.systemId;
-    if (!primary || !systemId) return;
-    if (!diplomacySystemAllowed(game, state, systemId, pack)) warnings.push(violation('diplomacySystem', { systemId }));
-    // The other players' tokens come from reinforcements, not their pools; one who already has a token there places none.
-    for (const [id, other] of Object.entries(round.states)) {
-      if (id !== player && !other.tokensOnMap.includes(systemId)) other.tokensOnMap.push(systemId);
-    }
-  },
 };

@@ -10,7 +10,8 @@
  * producers are pooled (68.1.1).
  */
 import type { MapSource } from '../../replay/board';
-import type { DataPack, Holdings, StructureCounts, UnitCounts, UnitId } from '../../types';
+import type { DataPack, StructureCounts, UnitCounts, UnitId } from '../../types';
+import type { Shelf } from '../../shelf';
 
 declare module '../types' {
   interface ModifierContext {
@@ -30,7 +31,7 @@ declare module '../types' {
       faction: string;
       /** The system that produces, when the entry names it. */ systemId?: string;
       /** Its wormholes, the tokens placed on it included. */ wormholes: string[];
-      /** What the owner holds (AI Development Algorithm counts the unit upgrades). */ holdings: Holdings; pack: DataPack;
+      /** What the owner holds (AI Development Algorithm counts the unit upgrades). */ holdings: Shelf; pack: DataPack;
     };
     /** Whether a space dock may produce infantry: base 1, 0 forbids (Arborec, 68.1 note 4). */
     dockInfantry: { faction: string; planetId: string };

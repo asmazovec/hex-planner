@@ -17,8 +17,4 @@ const lifts = (entry: CardEntry, expansions: ExpansionId[], before?: TokensOn): 
 
 export const warfare: CardHandler = {
   freeTokens: (entry, expansions, before) => (lifts(entry, expansions, before) ? 1 : 0),
-  apply: ({ game, state, entry, primary }) => {
-    const systemId = entry.effects?.systemId;
-    if (primary && systemId && !game.expansions.includes('te')) state.tokensOnMap = state.tokensOnMap.filter(id => id !== systemId);
-  },
 };

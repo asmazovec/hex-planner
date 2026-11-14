@@ -5,7 +5,9 @@
  * left without an entry. A hint's step comes from the data where the data names one.
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
-import type { ComponentDef, DataPack, Game, GameState, Holdings, RuleStep } from '../types';
+import type { ComponentDef, DataPack, Game, RuleStep } from '../types';
+import type { ControlOf, Kept, LawsOf, SharedOf } from '../readers';
+import type { Shelf } from '../shelf';
 import { defaultHolder, type HolderRule } from './holder';
 import type { Ability, Modifiers } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
@@ -108,7 +110,7 @@ export const orderOf = (pack: DataPack, id: string): number => registryOf(pack).
  * leaders, less what is exhausted. Each id once, in registry order; ids the pack does not know are left out. This is
  * what can still be used, so what the hints show; a passive effect does not ask it (`passivesOf`).
  */
-export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
+export function readyComponents(pack: DataPack, holdings: Shelf): string[] {
   const { effects, order } = registryOf(pack);
   const leaders = Object.keys(holdings.leaders).filter(id => holdings.leaders[id] === 'unlocked');
   const ids = new Set([...holdings.technologies, ...holdings.relics, ...holdings.promissory, ...holdings.hand, ...holdings.secrets, ...leaders]);
@@ -122,13 +124,13 @@ export function readyComponents(pack: DataPack, holdings: Holdings): string[] {
  * state's `control`), with `laws` the laws in play for the whole game.
  */
 export interface Holder {
-  holdings: Holdings; faction?: string; control?: GameState['control']; laws?: readonly string[];
+  holdings: Shelf; faction?: string; control?: ControlOf['control']; laws?: readonly string[];
   /** The holdings of every player by `me` or opponent id: what another player's component lends this one (an Alliance note brings its owner's commander). */
-  others?: Readonly<Record<string, Holdings>>;
+  others?: Readonly<Record<string, Shelf>>;
 }
 
 /** Whose components a count asks: the cards held alone, or a whole holder (faction sheet, planets controlled, laws in play). */
-export type Who = Holdings | Holder;
+export type Who = Shelf | Holder;
 
 /** The holder of `who`: holdings alone take the faction of the game, a holder keeps its own. */
 export const holderFor = (who: Who, faction: string): Holder => ('holdings' in who ? (who.faction === undefined ? { ...who, faction } : who) : { holdings: who, faction });
@@ -150,8 +152,8 @@ const sameOthers = (a: Holder['others'], b: Holder['others']): boolean => {
 };
 
 export function holderOf(
-  game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>,
-  shared: Pick<GameState, 'laws' | 'lawOwners'> | Pick<GameState, 'laws' | 'lawOwners' | 'holdings' | 'rivals'> = state,
+  game: Pick<Game, 'faction'>, state: Kept,
+  shared: SharedOf = state,
 ): Holder {
   const built = holderBuilt(game, state, shared);
   let kept = HOLDER_KEPT.get(state.holdings);
@@ -164,20 +166,20 @@ export function holderOf(
 }
 
 const holderBuilt = (
-  game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>,
-  shared: Pick<GameState, 'laws' | 'lawOwners'> | Pick<GameState, 'laws' | 'lawOwners' | 'holdings' | 'rivals'>,
+  game: Pick<Game, 'faction'>, state: Kept,
+  shared: SharedOf,
 ): Holder =>
   ({
     holdings: state.holdings, faction: game.faction, control: state.control, laws: lawsFor(shared, game.faction),
-    ...('rivals' in shared || 'holdings' in shared ? { others: othersOf(shared as Pick<GameState, 'holdings' | 'rivals'>) } : {}),
+    ...('rivals' in shared || 'holdings' in shared ? { others: othersOf(shared as Pick<SharedOf, 'holdings' | 'rivals'>) } : {}),
   });
 
 /** Every player's holdings by `me` or opponent id, from my state, which holds the opponents' in `rivals`. */
-const othersOf = (shared: Pick<GameState, 'holdings' | 'rivals'>): Record<string, Holdings> =>
-  ({ me: shared.holdings, ...Object.fromEntries(Object.entries(shared.rivals ?? {}).map(([id, rival]) => [id, rival.holdings])) });
+const othersOf = (shared: Pick<SharedOf, 'holdings' | 'rivals'>): Record<string, Shelf> =>
+  ({ me: shared.holdings as Shelf, ...Object.fromEntries(Object.entries(shared.rivals ?? {}).map(([id, rival]) => [id, rival.holdings])) });
 
 /** The laws that bind a faction: those of the whole game, and the `Elect Player` laws only for the player they elected. */
-const lawsFor = (shared: Pick<GameState, 'laws' | 'lawOwners'>, faction: string): readonly string[] | undefined =>
+const lawsFor = (shared: LawsOf, faction: string): readonly string[] | undefined =>
   (shared.lawOwners && shared.laws ? shared.laws.filter(id => shared.lawOwners![id] === undefined || shared.lawOwners![id] === faction) : shared.laws);
 
 /** What a faction sheet brings by itself: the abilities and the mech; the breakthrough apart, as it must be held. */
@@ -244,19 +246,19 @@ export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Abilit
   return found.length > 1 ? found.sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!) : found;
 }
 
-const isHolder = (who: Holdings | Holder): who is Holder => 'holdings' in who;
+const isHolder = (who: Shelf | Holder): who is Holder => 'holdings' in who;
 const isPassive = (effect: Ability): boolean => effect.tier === 'passive';
 
 /** The passive effects in force for a player, in registry order (`inForceOf`); holdings alone give only the cards held. */
 const PASSIVES = new WeakMap<object, { pack: DataPack; list: [string, Ability][] }>();
-export function passivesOf(pack: DataPack, who: Holdings | Holder): [string, Ability][] {
+export function passivesOf(pack: DataPack, who: Shelf | Holder): [string, Ability][] {
   const kept = PASSIVES.get(who);
   if (kept && kept.pack === pack) return kept.list;
   const list = passivesBuilt(pack, who);
   PASSIVES.set(who, { pack, list });
   return list;
 }
-function passivesBuilt(pack: DataPack, who: Holdings | Holder): [string, Ability][] {
+function passivesBuilt(pack: DataPack, who: Shelf | Holder): [string, Ability][] {
   const { effects } = registryOf(pack);
   // Asked at every point of the count: only the passive ones are gathered and put in order.
   return inForceOf(pack, isHolder(who) ? who : { holdings: who }, isPassive).map(id => [id, effects.get(noteBase(id))!]);

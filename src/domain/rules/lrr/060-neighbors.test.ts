@@ -1,8 +1,8 @@
 /** LRR 60 Neighbors. Source: tirules2 rules-reference/neighbors.md. My home planets on HOME make me present there. */
 import { describe, expect, test } from 'vitest';
-import { areNeighbors } from '../../neighbors';
 import type { Act, Entry, Opponent } from '../../types';
 import { FAR, FARTHER, HOME, NEAR, TARGET, adjust, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
+import { areNeighbors } from '../../../testing/old/domain/neighbors';
 
 /** The rival's faction has an empty home tile off this row, so they are only where their carrier is. */
 const pack = rulesPack(p => {

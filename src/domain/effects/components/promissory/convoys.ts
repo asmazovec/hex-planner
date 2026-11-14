@@ -3,7 +3,7 @@
  * card is in your play area, you may negotiate transactions with players who are not your neighbor. If you activate a
  * system that contains 1 or more of the Hacan player's units, return this card to the Hacan player."
  *
- * Decided: `play` puts the note in the play area (`Holdings.inPlay`); from then on, whatever the round, it waives
+ * Decided: `play` puts the note in the play area (`Shelf.inPlay`); from then on, whatever the round, it waives
  * `notNeighbor` (94.1) in every entry of its holder, because a note in the play area is asked by the waivers. In hand it
  * does nothing (Hacan note 4). When its holder activates a system holding units of the Hacan, `onActivate` returns it:
  * it leaves the holder's holdings and the play area and goes back to the Hacan. One transaction per player per turn

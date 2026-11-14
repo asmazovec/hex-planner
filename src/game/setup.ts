@@ -115,7 +115,7 @@ function heldEvents(player: Player, start: StartHoldings | undefined, pack: Data
 /**
  * The board a saved game begins with. The viewer's faction sheet places their fleet and home planets; every other
  * player stands as the start says (`StartEdits`: units, ground forces, planets, docks and PDS, written by hand and, when
- * the game begins, from the sheets by `startedGame`). Holdings, points, structures, the expedition and the Fracture are
+ * the game begins, from the sheets by `startedGame`). Shelf, points, structures, the expedition and the Fracture are
  * the start's too; the players' homes are theirs from the first.
  */
 export function startBoard(saved: SavedGame, pack: DataPack): Board {

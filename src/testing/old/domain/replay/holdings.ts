@@ -1,10 +1,9 @@
-import type { StartHoldings, DataPack, Holdings, GameState, ComponentDef, Entry, Warning } from '../../../../domain/types';
-import { holdingsOf, HOLDING_FIELD } from '../../../../domain/holdings';
-import { known, removeOne, type GainHow, gain, holds, isExhausted, PURGES, RETURNS, EXHAUSTS } from '../../../../domain/replay/holdings';
+import { HOLDING_FIELD, staysInPlay, holdingsOf } from '../../../../domain/holdings';
+import type { ComponentDef, GameState, StartHoldings, DataPack, Holdings, Entry, Warning } from '../../../../domain/types';
+import { type GainHow, known, removeOne, holds, isExhausted, PURGES, RETURNS, EXHAUSTS } from '../../../../domain/replay/holdings';
 import { componentById, noteAddress } from '../../../../domain/components';
 import { breakthroughOf } from '../../../../domain/effects/breakthrough';
 import { violation } from '../../../../domain/rules/registry';
-
 /** The holdings a game begins with, less what the pack does not know. */
 export function startHoldings(start: StartHoldings | undefined, pack: DataPack): Holdings {
   const holdings = holdingsOf(start);
@@ -111,5 +110,36 @@ export function applyScored(own: GameState, shared: GameState, ids: string[] | u
     if (def.kind === 'secretObjective') removeOne(own.holdings.secrets, def.id);
     else if (!(shared.revealed ??= []).includes(def.id)) shared.revealed.push(def.id);
     if (!own.holdings.scored.includes(def.id)) own.holdings.scored.push(def.id);
+  }
+}
+
+/**
+ * A player gains a component: its kind decides where it lies. An action card joins the hand as one more copy, the rest
+ * is held once. An agenda that is a law becomes a law of the whole game (`shared` is my state, 7.3); a directive is
+ * resolved and discarded (7.8), so it leaves nothing. An exploration card is held only when it stays in the play area
+ * (a relic fragment, 35.9, with as many copies as were found); the others attach to a planet, which the `gained` hook
+ * of the card knows, or are resolved at once.
+ */
+export function gain(own: GameState, shared: GameState, def: ComponentDef, how: GainHow = {}): void {
+  const holdings = own.holdings;
+  const field = HOLDING_FIELD[def.kind];
+  if (def.kind === 'exploration') {
+    if (staysInPlay(def)) holdings.found.push(def.id);
+  } else if (field) {
+    if (field === 'hand' || !holdings[field].includes(def.id)) holdings[field].push(def.id);
+  } else if (def.kind === 'leader') holdings.leaders[def.id] = 'unlocked';
+  else if (def.kind === 'breakthrough') holdings.breakthrough = 'held';
+  else if (def.kind === 'agenda' && def.detail?.type !== 'directive') {
+    // A law resolved "against" is not in play (7.6).
+    if (how.outcome === 'against') return;
+    const laws = (shared.laws ??= []);
+    if (!laws.includes(def.id)) laws.push(def.id);
+    const target = String(def.detail?.target ?? '');
+    // An "Elect Player" law binds the player elected; "Elect Planet" attaches it to the planet elected (7.3.1).
+    if (target.startsWith('Elect Player') && how.elected !== undefined) (shared.lawOwners ??= {})[def.id] = how.elected;
+    if (target.startsWith('Elect Planet') && how.planet !== undefined) {
+      const attached = ((shared.attachments ??= {})[how.planet] ??= []);
+      if (!attached.includes(def.id)) attached.push(def.id);
+    }
   }
 }

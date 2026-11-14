@@ -10,7 +10,4 @@ import type { CardHandler } from './handler';
 export const controlsMecatol = (state: ControlOf): boolean => MECATOL_PLANETS.some(id => state.control[id] === 'me');
 
 export const imperial: CardHandler = {
-  apply: ({ state, primary }) => {
-    if (primary && controlsMecatol(state)) state.vp += 1;
-  },
 };

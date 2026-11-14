@@ -7,7 +7,7 @@
  * player draws (entered in the entry's gains, 73.2). Fewer than three fragments of the type is warned of with a new
  * code (relicFragmentsShort, LRR 73.1, step component); nothing is waived.
  *
- * Pass 2: the fragments are held in `Holdings.found`; the play checks three of the type (the unknown fragment counts as
+ * Pass 2: the fragments are held in `Shelf.found`; the play checks three of the type (the unknown fragment counts as
  * any type) and the purge is the entry's `spends`.
  */
 import { fragmentAbility } from './batch33/fragments';

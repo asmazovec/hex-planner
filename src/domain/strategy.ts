@@ -7,9 +7,10 @@ import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
 import type { TokensOn } from './readers';
-import type { CardEffects, DataPack, Entry, ExpansionId, Game, Holdings, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { CardEffects, DataPack, Entry, ExpansionId, Game, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { Shelf } from './shelf';
 
-export { diplomacySystemAllowed, readyLimit } from './replay/cards/diplomacy';
+export { readyLimit } from './replay/cards/diplomacy';
 export { researchCount, researchLimit } from './replay/cards/technology';
 export { CARD };
 
@@ -85,7 +86,7 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 
 /** The same with the combined cost of the units asked of whoever knows the board (`due`). */
 export function cardCostOf(
-  entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack, due?: (units: UnitCounts) => number,
+  entry: CardEntry, factionId: string, who: Shelf | Holder, pack: DataPack, due?: (units: UnitCounts) => number,
 ): { kind: PaymentKind; amount: number } {
   if (handlerOf(entry.card).placesFree?.(entry, { pack, faction: factionId })) return { kind: 'resources', amount: 0 };
   const own = handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who, { pack, faction: factionId });

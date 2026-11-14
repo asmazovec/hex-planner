@@ -10,7 +10,7 @@ import { technology } from './technology';
 import { trade } from './trade';
 import { warfare } from './warfare';
 
-export type { CardCost, CardHandler, CardRound, CardTurn } from './handler';
+export type { CardCost, CardHandler, CardRound } from './handler';
 export { CARD } from './ids';
 
 const HANDLERS: Record<number, CardHandler> = {

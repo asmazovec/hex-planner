@@ -6,7 +6,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { pay } from '../../../testing/old/domain/replay/payment';
 import { autoPay, paymentValue } from '../../../testing/old/domain/payment';
-import { commodityValueOf, replenish } from '../../replay/cards/trade';
 import { gainCommodities } from '../../../testing/old/domain/replay/cards/trade';
 import { forecast, mutable, rulesGame, rulesPack, tactical } from '../../rules/kit';
 import type { Entry, GameState, Opponent, Warning } from '../../types';
@@ -15,6 +14,7 @@ import { alwaysInForce, throwaway } from './throwaway';
 import { gain } from '../../../game/abilities/emit';
 import { readyInfluence, readyResources } from '../../../testing/old/domain/replay/payment';
 import { applyPayment, checkPayment } from '../../../testing/old/domain/replay/payment';
+import { commodityValueOf, replenish } from '../../../testing/old/domain/replay/cards/trade';
 
 vi.mock('../registry', async original => (await import('./throwaway')).mockRegistry(await original()));
 // The components the registry loads import the payment module and need the mocked registry (a cycle): load it first,

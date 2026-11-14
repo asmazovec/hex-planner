@@ -17,7 +17,7 @@ export const id = 'exploration:ed1';
 
 /**
  * Pass 2: the cost (six resources, paid with the entry's `payment`) and the research are built. The card is held in
- * `Holdings.found` once gained, purged by the action (`playComponent`), and one never found or already purged is warned
+ * `Shelf.found` once gained, purged by the action (`playComponent`), and one never found or already purged is warned
  * of as not held.
  */
 

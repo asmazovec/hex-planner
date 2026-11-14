@@ -1,5 +1,6 @@
 /** The one way a step of the count asks for a value: the base, then every component of the player in registry order. */
-import type { DataPack, Holdings } from '../types';
+import type { DataPack } from '../types';
+import type { Shelf } from '../shelf';
 import { passivesOf, type Holder } from './registry';
 import type { Ability, ModifierContext, Modifiers } from './types';
 
@@ -29,7 +30,7 @@ export function stacked<K extends keyof Modifiers>(
  * one does: its passive abilities stay in effect (LRR 34.4.1). One the pack does not know does not.
  */
 export function applied<K extends keyof Modifiers>(
-  pack: DataPack, who: Holdings | Holder, point: K, base: number, ctx: ModifierContext[K],
+  pack: DataPack, who: Shelf | Holder, point: K, base: number, ctx: ModifierContext[K],
 ): Applied {
   return stacked(passivesOf(pack, who), point, base, ctx);
 }

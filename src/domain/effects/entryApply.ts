@@ -11,7 +11,9 @@
  */
 import { componentById, noteAddress } from '../components';
 import { holds, isExhausted } from '../replay/holdings';
-import type { DataPack, Entry, GameState, Holdings } from '../types';
+import type { DataPack, Entry } from '../types';
+import type { Kept } from '../readers';
+import type { Shelf } from '../shelf';
 import { applied, type Applied } from './apply';
 import { effectOf, type Holder } from './registry';
 import type { ModifierContext, Modifiers } from './types';
@@ -19,13 +21,13 @@ import { playedBy } from './waivers';
 import './points/production';
 
 /** Whether the owner holds the component ready on the board before the entry. */
-const ready = (pack: DataPack, state: Pick<GameState, 'holdings'> | undefined, id: string): boolean => {
+const ready = (pack: DataPack, state: Pick<Kept, 'holdings'> | undefined, id: string): boolean => {
   const def = componentById(pack, id);
   return !state || !def || (holds(state.holdings, def) && !isExhausted(state.holdings, def));
 };
 
 export function appliedFor<K extends keyof Modifiers>(
-  pack: DataPack, who: Holdings | Holder, entry: Entry | undefined, point: K, base: number, ctx: ModifierContext[K], state?: Pick<GameState, 'holdings'>,
+  pack: DataPack, who: Shelf | Holder, entry: Entry | undefined, point: K, base: number, ctx: ModifierContext[K], state?: Pick<Kept, 'holdings'>,
 ): Applied {
   const result = applied(pack, who, point, base, ctx);
   if (!entry) return result;
