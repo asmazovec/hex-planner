@@ -15,7 +15,7 @@ export const id = 'actionCard:repeal';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  choose: [{ key: 'law', kind: 'component', options: ({ shared }) => [...(shared.laws ?? [])] }],
+  choose: [{ key: 'law', kind: 'component', options: ctx => ctx.board.common.laws.map(law => law.id) }],
 };
 
 export const ability: Hooked = {

@@ -23,10 +23,10 @@ export const effect: ComponentEffect = {
     {
       // The technologies of the colour of the planet's specialty that the player can gain: no faction card, no unit upgrade, none held yet.
       key: 'technology', kind: 'component', label: { ru: 'Технология', en: 'Technology' }, when: chosen => chosen.planet !== undefined,
-      options: ({ pack, state, chosen }) => {
+      options: ({ pack, my, chosen }) => {
         const colours = pack.planets[String(chosen.planet ?? '')]?.tech ?? [];
         return componentsOf(pack)
-          .filter(def => def.kind === 'technology' && !def.faction && !state.holdings.technologies.includes(def.id))
+          .filter(def => def.kind === 'technology' && !def.faction && !my.holds(def.id))
           .filter(def => { const tech = pack.technologies[def.id.slice('technology:'.length)]; return !!tech?.type && !tech.upgrade && colours.includes(tech.type); })
           .map(def => def.id);
       },

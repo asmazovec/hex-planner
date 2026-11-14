@@ -514,7 +514,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         {/* What the entry gained and gave stands with what else it holds. */}
         <GainsBlock entry={entry} pack={pack} before={boards.before(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
         {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} shared={boards.board(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, repaid(entry, patch, boards.before(entry.id), gameAs(game, entry.owner), pack, manualPayments.includes(entry.id)) as Partial<EntryBody>)} />
+        <UsesBlock entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={boards.before(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, repaid(entry, patch, boards.before(entry.id), gameAs(game, entry.owner), pack, manualPayments.includes(entry.id)) as Partial<EntryBody>)} />
       </EditorPart>
     );
   };

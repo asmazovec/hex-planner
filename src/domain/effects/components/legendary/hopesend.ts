@@ -8,13 +8,9 @@
  */
 import { placeUnits } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
-import { planetsOf, systemSlots } from '../../../replay/board';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ChoiceContext, ComponentEffect } from '../../types';
-
-/** The planets of the map the player controls. */
-const controlled = (ctx: ChoiceContext): string[] =>
-  [...new Set(systemSlots(ctx.game).flatMap(slot => planetsOf(ctx.game, slot, ctx.pack)))].filter(planet => ctx.state.control[planet] === 'me');
+import type { ComponentEffect } from '../../types';
+import { controlledPlanets } from '../../helpers/choices';
 
 
 export const id = 'legendary:hopesend';
@@ -27,7 +23,7 @@ export const effect: ComponentEffect = {
       key: 'hopesend', kind: 'option', label: { ru: 'Что сделать', en: 'Which' }, options: () => ['mech', 'card'],
       names: { mech: { ru: 'Мех', en: 'Mech' }, card: { ru: 'Карта действия', en: 'Action card' } },
     },
-    { key: 'hopesendPlanet', kind: 'planet', options: controlled },
+    { key: 'hopesendPlanet', kind: 'planet', options: controlledPlanets },
   ],
 };
 

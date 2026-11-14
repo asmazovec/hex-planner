@@ -22,9 +22,8 @@ export const effect: ComponentEffect = {
   // The infantry removed, by planet: one button for each planet that holds some, as many presses as units removed.
   choose: [{
     key: 'infantry', kind: 'counts', verb: { ru: 'Убрать', en: 'Remove one' },
-    slots: ({ state }) => Object.entries(state.ground)
-      .filter(([, units]) => (units.infantry ?? 0) > 0)
-      .map(([planet, units]) => ({ key: planet, unit: 'infantry' as const, planet, max: units.infantry })),
+    slots: ctx => ctx.my.planets().filter(planet => (planet.ground.infantry ?? 0) > 0)
+      .map(planet => ({ key: planet.id, unit: 'infantry' as const, planet: planet.id, max: planet.ground.infantry })),
   }],
 };
 

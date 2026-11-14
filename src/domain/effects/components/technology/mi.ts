@@ -12,6 +12,7 @@ import { componentById } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import { handOf } from '../../helpers/choices';
 
 export const id = 'technology:mi';
 
@@ -22,7 +23,7 @@ export const effect: ComponentEffect = {
     { key: 'from', kind: 'player', label: { ru: 'Чья рука', en: 'Whose hand' } },
     {
       key: 'card', kind: 'component', label: { ru: 'Карта из руки', en: 'Card from the hand' }, when: chosen => chosen.from !== undefined,
-      options: ({ shared, chosen }) => [...((chosen.from === 'me' ? shared : shared.rivals?.[String(chosen.from)])?.holdings.hand ?? [])],
+      options: ctx => handOf(ctx, String(ctx.chosen.from)),
     },
   ],
 };

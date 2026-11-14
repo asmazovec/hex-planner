@@ -24,8 +24,8 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [{
     key: 'infantry', kind: 'counts', verb: { ru: 'Заменить', en: 'Replace one' },
-    slots: ({ state }) => Object.keys(state.ground).filter(planetId => (state.ground[planetId]?.infantry ?? 0) > 0)
-      .map(planetId => ({ key: planetId, unit: 'infantry' as const, planet: planetId, max: state.ground[planetId]?.infantry })),
+    slots: ctx => ctx.my.planets().filter(planet => (planet.ground.infantry ?? 0) > 0)
+      .map(planet => ({ key: planet.id, unit: 'infantry' as const, planet: planet.id, max: planet.ground.infantry })),
   }],
 };
 

@@ -14,7 +14,9 @@ import { waiveBoard } from '../game/resolve/waive';
 import { gameAs } from '../domain/players';
 import { checkSystem } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
-import type { DataPack, Game, GameState, Plan, Projection, Round, Warning } from '../domain/types';
+import { choicesOf, type ResolvedChoice } from '../game/abilities/choices';
+import { turnOf } from '../game/fromLegacy';
+import type { DataPack, Entry, Game, GameState, Plan, Projection, Round, Warning } from '../domain/types';
 
 export type { Filter };
 
@@ -198,6 +200,16 @@ export const stateAfterEntry = (game: Game, plan: Plan, entryId: string, pack: D
 /** The whole board just before an entry, mine and every opponent's (`rivals`), whoever the entry belongs to. */
 export const boardBeforeEntry = (game: Game, plan: Plan, entryId: string, pack: DataPack, filter: Filter = 'forecast'): GameState =>
   boardBefore(timelineOf(game, plan, filter, pack), entryId);
+
+/**
+ * The choices component `id` asks of an entry, with their candidates, from the board just before the entry (forecast)
+ * and for whoever the entry belongs to: the one function the editors ask (`choicesOf`, src/game/abilities/choices.ts).
+ */
+export function choicesBefore(game: Game, entry: Entry, id: string, pack: DataPack): ResolvedChoice[] {
+  const plan = game.plans.find(p => p.rounds.some(r => r.entries.some(e => e.id === entry.id))) ?? game.plans.find(p => p.id === game.activePlanId) ?? game.plans[0];
+  const { kernel } = timelineOf(game, plan, 'forecast', pack);
+  return choicesOf(kernel.table, kernel.byTurn.get(entry.id)?.before ?? kernel.end, turnOf(kernel.table, entry, pack), id, pack);
+}
 
 /** The turns of a round as the kernel plays them: the numbers and statuses of its actions are asked of these (src/game/numbering.ts). */
 export const turnsOf = (game: Game, round: Round, pack: DataPack): Turn[] =>

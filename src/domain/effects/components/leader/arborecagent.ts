@@ -24,8 +24,8 @@ export const effect: ComponentEffect = {
     { key: 'systemId', kind: 'system' },
     {
       key: 'ship', kind: 'unit', label: { ru: 'Заменяемый корабль', en: 'Ship replaced' },
-      options: ctx => Object.entries(ctx.state.systems[String(ctx.chosen.systemId ?? '')] ?? {})
-        .filter(([unit, count]) => count > 0 && ctx.pack.units[unit as UnitId]?.move != null && !ctx.pack.units[unit as UnitId]?.ground && !ctx.pack.units[unit as UnitId]?.fighter)
+      options: ctx => Object.entries(ctx.my.unitsIn(String(ctx.chosen.systemId ?? '')))
+        .filter(([unit, count]) => (count ?? 0) > 0 && ctx.pack.units[unit as UnitId]?.move != null && !ctx.pack.units[unit as UnitId]?.ground && !ctx.pack.units[unit as UnitId]?.fighter)
         .map(([unit]) => unit),
     },
     { key: 'replacement', kind: 'unit', label: { ru: 'Новый корабль', en: 'Ship placed' }, options: ctx => Object.values(ctx.pack.units).filter(u => u.move != null && !u.ground && !u.fighter).map(u => u.id) },

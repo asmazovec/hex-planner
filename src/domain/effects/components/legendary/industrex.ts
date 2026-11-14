@@ -16,6 +16,7 @@ import { violation } from '../../../rules/registry';
 import type { UnitCounts, UnitId } from '../../../types';
 import { requireControlBy, shipsOf } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
+import { systemsWithUnits } from '../../helpers/choices';
 
 export const id = 'legendary:industrex';
 
@@ -28,16 +29,14 @@ export const effect: ComponentEffect = {
   choose: [
     {
       key: 'unit', kind: 'unit', label: { ru: 'Поставить с Aeurex Mechanica', en: 'Placed with Aeurex Mechanica' },
-      options: ({ pack, game, state }) => SHIPS.filter(unit => {
-        const upgrade = upgradeTech(pack, game.faction, unit);
-        return pack.units[unit] !== undefined && upgrade !== undefined && state.holdings.technologies.includes(upgrade);
+      options: ({ pack, my }) => SHIPS.filter(unit => {
+        const upgrade = upgradeTech(pack, my.faction, unit);
+        return pack.units[unit] !== undefined && upgrade !== undefined && my.holds(upgrade);
       }),
     },
     {
       key: 'system', kind: 'system', label: { ru: 'В системе', en: 'In the system' },
-      options: ({ state, pack }) => Object.entries(state.systems)
-        .filter(([, units]) => Object.entries(units).some(([unit, count]) => (count ?? 0) > 0 && pack.units[unit as UnitId]?.ground === false))
-        .map(([slot]) => slot),
+      options: ctx => systemsWithUnits(ctx, unit => ctx.pack.units[unit as UnitId]?.ground === false),
     },
   ],
 };

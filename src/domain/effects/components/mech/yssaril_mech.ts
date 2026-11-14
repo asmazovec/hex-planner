@@ -8,11 +8,11 @@
  * else it does nothing, and so it does for another faction. Reinforcements are not counted.
  */
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
-import { planetsOf, systemSlots } from '../../../replay/board';
 import { placeUnits } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import { controlledPlanets } from '../../helpers/choices';
 
 export const id = 'mech:yssaril_mech';
 
@@ -21,7 +21,7 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [{
     key: 'planet', kind: 'planet',
-    options: ({ game, pack, state }) => [...new Set(systemSlots(game).flatMap(slot => planetsOf(game, slot, pack)))].filter(planetId => state.control[planetId] === 'me'),
+    options: controlledPlanets,
   }],
 };
 

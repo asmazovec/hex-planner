@@ -18,6 +18,7 @@ import factionTechCopied from '../../../rules/codes/factionTechCopied';
 import techNotFromNeighbor from '../../../rules/codes/techNotFromNeighbor';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import { othersOf, technologiesOf } from '../../helpers/choices';
 
 export const id = 'actionCard:plagiarize';
 
@@ -30,8 +31,8 @@ export const effect: ComponentEffect = {
     {
       key: 'technology',
       kind: 'component',
-      options: ctx => [...new Set(Object.values(ctx.shared.rivals ?? {}).flatMap(rival => rival.holdings.technologies))]
-        .filter(tech => !componentById(ctx.pack, tech)?.faction && !ctx.state.holdings.technologies.includes(tech)),
+      options: ctx => [...new Set(othersOf(ctx).flatMap(other => technologiesOf(ctx, other)))]
+        .filter(tech => !componentById(ctx.pack, tech)?.faction && !ctx.my.holds(tech)),
     },
   ],
 };

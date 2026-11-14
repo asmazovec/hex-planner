@@ -11,8 +11,8 @@ import { forecast } from '../rules/kit';
 import componentUnresolved from '../rules/codes/componentUnresolved';
 import { violation } from '../rules/registry';
 import type { Entry, ExtensionCode } from '../types';
-import { bench, componentAction, endOf, HOME, NEAR, tactical, using, warningsOf } from './components/kit';
-import { choicesFor, optionsOf, shownChoices, withChoices } from './choices';
+import { bench, componentAction, endOf, NEAR, tactical, using, warningsOf } from './components/kit';
+import { choicesFor, shownChoices, withChoices } from './choices';
 import { effectOf, hintsAt, inForce } from './registry';
 import type { ComponentEffect } from './types';
 
@@ -54,15 +54,7 @@ describe('choices of an entry', () => {
     expect(withChoices({ ...own, useChoices: { 'technology:x': { planet: 'h1' } } } as Entry, 'technology:x', {})).toEqual({ choices: undefined, useChoices: undefined });
   });
 
-  test('the candidates of a choice are its own `options`, or the default of its kind; a dependent choice shows only while its `when` holds', () => {
-    const table = bench({ faction: 'sol', game: { opponents: [{ id: 'o1', faction: 'xxcha', vp: 0, seat: 2, color: 2 }] } });
-    const ctx = { game: table.game, pack: table.pack, state: endOf(table), shared: endOf(table), player: 'me', entry: action(), chosen: {} };
-    expect(optionsOf({ key: 'p', kind: 'player' }, ctx)).toEqual(['o1']);
-    expect(optionsOf({ key: 'p', kind: 'player' }, { ...ctx, player: 'o1' })).toEqual(['me']);
-    expect(optionsOf({ key: 'p', kind: 'planet' }, ctx)).toEqual(expect.arrayContaining(['h1', 't1']));
-    expect(optionsOf({ key: 'p', kind: 'system' }, ctx)).toContain(HOME);
-    expect(optionsOf({ key: 'n', kind: 'number', range: [1, 3] }, ctx)).toEqual(['1', '2', '3']);
-    expect(optionsOf({ key: 'o', kind: 'option', options: () => ['a', 'b'] }, ctx)).toEqual(['a', 'b']);
+  test('a dependent choice shows only while its `when` holds (the candidates are `choicesOf`, src/game/abilities/choices.test.ts)', () => {
     const specs = [{ key: 'a', kind: 'planet' as const }, { key: 'b', kind: 'unit' as const, when: (c: Record<string, string | number>) => c.a === 'h1' }];
     expect(shownChoices(specs, {}).map(s => s.key)).toEqual(['a']);
     expect(shownChoices(specs, { a: 'h1' }).map(s => s.key)).toEqual(['a', 'b']);

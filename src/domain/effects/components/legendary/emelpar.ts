@@ -11,7 +11,7 @@
  */
 import { card } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
-import { componentById, componentsOf } from '../../../components';
+import { componentById } from '../../../components';
 import { requireControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
@@ -24,14 +24,8 @@ export const effect: ComponentEffect = {
     key: 'ready',
     kind: 'component',
     label: { ru: 'Подготовить с The Acropolis', en: 'Ready with The Acropolis' },
-    options: ({ state, pack, game }) => {
-      const { holdings } = state;
-      const exhausted = Object.entries(holdings.leaders).flatMap(([leader, mode]) => (mode === 'exhausted' ? [leader] : []));
-      const breakthrough = holdings.breakthrough === 'exhausted'
-        ? componentsOf(pack).filter(def => def.kind === 'breakthrough' && def.faction === game.faction).map(def => def.id)
-        : [];
-      return [...exhausted, ...breakthrough, ...holdings.exhausted].filter(component => component !== id && componentById(pack, component) !== undefined);
-    },
+    options: ctx => ctx.my.cards().filter(held => held.state === 'exhausted' && held.id !== id && componentById(ctx.pack, held.id) !== undefined).map(held => held.id),
+    
   }],
 };
 

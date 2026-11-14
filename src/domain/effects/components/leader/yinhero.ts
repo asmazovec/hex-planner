@@ -13,8 +13,6 @@
  * hand, a planet id with its number (`{ t1: 2, t2: 1 }`). More than three is not forbidden. The purge is the leader's
  * own rule (51.12).
  */
-import { planetsOf, systemSlots } from '../../../replay/board';
-import { inHomeSystem } from '../../../stacks';
 import type { AbilityContext } from '../../../../game/abilities/types';
 import type { ChoiceSpec, ComponentEffect } from '../../types';
 import { placeUnits } from '../../../../game/abilities/emit';
@@ -35,7 +33,7 @@ const label = (n: number) => ({ ru: `Планета ${n}`, en: `Planet ${n}` });
 /** One spec for each infantry: a non-home planet of the map. */
 const slot = (key: string, n: number, after?: string): ChoiceSpec => ({
   key, kind: 'planet', label: label(n),
-  options: ({ game, pack }) => [...new Set(systemSlots(game).flatMap(s => planetsOf(game, s, pack)))].filter(planetId => !inHomeSystem(game, planetId, pack)),
+  options: ctx => [...new Set(Object.keys(ctx.table.map).flatMap(s => ctx.planetsIn(s)))].filter(planetId => !inHome(ctx, planetId)),
   when: after === undefined ? undefined : chosen => chosen[after] !== undefined,
 });
 

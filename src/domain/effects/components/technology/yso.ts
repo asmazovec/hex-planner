@@ -12,32 +12,24 @@
 import { componentById } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
-import { planetsOf } from '../../../replay/board';
 import { placeUnits } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
 import { unitIds } from '../../../replay/state';
-import type { GameState } from '../../../types';
-import type { ChoiceContext, ComponentEffect } from '../../types';
+import type { UnitId } from '../../../types';
+import type { ComponentEffect } from '../../types';
+import { controlledPlanets, systemsWithUnits } from '../../helpers/choices';
 
 export const id = 'technology:yso';
-
-/** The planets the player controls on this map. */
-const controlled = ({ game, pack, state }: ChoiceContext): string[] =>
-  [...new Set(Object.keys(game.map).flatMap(slot => planetsOf(game, slot, pack)))].filter(planetId => state.control[planetId] === 'me');
-
-/** Whether the player has a ship in the space area of the slot. */
-const hasShip = (state: GameState, slot: string, pack: ChoiceContext['pack']): boolean =>
-  unitIds(state.systems[slot] ?? {}).some(unit => (state.systems[slot]?.[unit] ?? 0) > 0 && pack.units[unit]?.ground !== true);
 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [
-    { key: 'place', kind: 'planet', label: { ru: 'Планета', en: 'Planet' }, options: controlled },
+    { key: 'place', kind: 'planet', label: { ru: 'Планета', en: 'Planet' }, options: controlledPlanets },
     {
       key: 'space', kind: 'system', label: { ru: 'Космос системы', en: 'Space area' }, when: chosen => chosen.place === undefined,
-      options: ({ game, pack, state }) => Object.keys(game.map).filter(slot => hasShip(state, slot, pack)),
+      options: ctx => systemsWithUnits(ctx, unit => ctx.pack.units[unit as UnitId]?.ground !== true),
     },
     { key: 'count', kind: 'number', range: [1, 2], label: { ru: 'Сколько пехоты', en: 'How many infantry' } },
   ],

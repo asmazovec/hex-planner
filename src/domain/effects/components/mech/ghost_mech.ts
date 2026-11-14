@@ -11,6 +11,7 @@ import { removeUnits } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
+import { systemsWithUnits } from '../../helpers/choices';
 
 export const id = 'mech:ghost_mech';
 
@@ -22,7 +23,7 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [
     { key: 'token', kind: 'option', options: () => TOKENS, names: NAMES, label: { ru: 'Жетон', en: 'Token' } },
-    { key: 'systemId', kind: 'system', label: { ru: 'Система меха', en: 'System of the mech' }, options: ({ state }) => Object.entries(state.systems).filter(([, units]) => (units.mech ?? 0) > 0).map(([slot]) => slot) },
+    { key: 'systemId', kind: 'system', label: { ru: 'Система меха', en: 'System of the mech' }, options: ctx => systemsWithUnits(ctx, unit => unit === 'mech') },
   ],
 };
 

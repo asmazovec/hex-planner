@@ -3,11 +3,8 @@
  * replay hands a component's `play` the choices of its own (`choicesFor`); the editors read the same function, so what
  * the player pressed and what the effect sees are one thing.
  */
-import { UNIT_ORDER } from '../hexLayout';
-import { planetsOf, systemSlots } from '../replay/board';
-import { playersOf } from '../players';
 import type { Entry } from '../types';
-import type { ChoiceContext, ChoiceSpec } from './types';
+import type { ChoiceSpec } from './types';
 
 type Chosen = Record<string, string | number>;
 
@@ -29,22 +26,6 @@ export function withChoices(entry: Entry, id: string, chosen: Chosen): Pick<Entr
   if (Object.keys(chosen).length > 0) rest[id] = chosen;
   else delete rest[id];
   return { choices: entry.choices, useChoices: Object.keys(rest).length > 0 ? rest : undefined };
-}
-
-/** The candidates of a choice, as values: the effect's own `options`, or the default of its kind. */
-export function optionsOf(spec: ChoiceSpec, ctx: ChoiceContext): string[] {
-  if (spec.options) return spec.options(ctx);
-  switch (spec.kind) {
-    case 'planet': return [...new Set(systemSlots(ctx.game).flatMap(slot => planetsOf(ctx.game, slot, ctx.pack)))];
-    case 'system': return systemSlots(ctx.game);
-    case 'player': return playersOf(ctx.game).map(player => player.id).filter(id => spec.self || id !== ctx.player);
-    case 'unit': return [...UNIT_ORDER];
-    case 'number': {
-      const [min, max] = spec.range ?? [0, 0];
-      return Array.from({ length: Math.max(0, max - min + 1) }, (_, i) => String(min + i));
-    }
-    default: return [];
-  }
 }
 
 /** The choices of `specs` that stand on the screen given what is chosen: each shown while its `when` holds. */

@@ -11,7 +11,6 @@
 import { tradeGoods } from '../../../../game/abilities/emit';
 import type { GameEvent, Hooked } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
-import { planetsOf, systemSlots, tileIdOf } from '../../../replay/board';
 import { unitIds } from '../../../replay/state';
 import { violation } from '../../../rules/registry';
 import playTargetInvalid from '../../../rules/codes/playTargetInvalid';
@@ -25,7 +24,7 @@ export const effect: ComponentEffect = {
   choose: [{
     key: 'planet',
     kind: 'planet',
-    options: ({ game, pack }) => [...new Set(systemSlots(game).flatMap(slot => (pack.tiles[tileIdOf(game, slot)]?.kind === 'home' ? [] : planetsOf(game, slot, pack))))],
+    options: ctx => [...new Set(Object.keys(ctx.table.map).flatMap(slot => (ctx.tileKind(slot) === 'home' ? [] : ctx.planetsIn(slot))))],
   }],
 };
 

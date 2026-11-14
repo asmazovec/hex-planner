@@ -13,6 +13,7 @@ import { componentById } from '../../../components';
 import playTargetInvalid from '../../../rules/codes/playTargetInvalid';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
+import { controlledPlanets } from '../../helpers/choices';
 
 export const id = 'actionCard:brilliance';
 
@@ -22,7 +23,7 @@ export const effect: ComponentEffect = {
   choose: [{
     key: 'planet',
     kind: 'planet',
-    options: ({ state, pack }) => Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (pack.planets[planet]?.tech ?? []).length > 0),
+    options: ctx => controlledPlanets(ctx).filter(planet => (ctx.pack.planets[planet]?.tech ?? []).length > 0),
   }],
 };
 

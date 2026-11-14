@@ -106,7 +106,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
             />
           </Section>
           {played && board && onChoices && (
-            <ChoicesBlock id={played.id} entry={entry} game={game} pack={pack} before={playerState(board, entry.owner)} shared={board} onChange={onChoices} />
+            <ChoicesBlock id={played.id} entry={entry} game={game} pack={pack} onChange={onChoices} />
           )}
           {cost && own && onPayment && (
             <PaymentBlock

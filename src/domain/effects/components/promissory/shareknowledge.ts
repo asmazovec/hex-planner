@@ -13,6 +13,7 @@ import { componentById, noteAddress } from '../../../components';
 import { card } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
+import { technologiesOf } from '../../helpers/choices';
 
 export const id = 'promissory:shareknowledge';
 
@@ -21,13 +22,14 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [{
     key: 'technology', kind: 'component', label: { ru: 'Технология игрока Deepwrought', en: 'Technology of the Deepwrought player' },
-    options: ({ game, pack, shared, state, entry }) => {
-      const named = entry.type === 'component' && entry.componentId?.startsWith(id) ? noteAddress(entry.componentId) : undefined;
-      const owner = named ?? game.opponents.find(o => o.faction === 'deepwrought')?.id;
-      const theirs = owner === undefined ? [] : (owner === 'me' ? shared : shared.rivals?.[owner])?.holdings.technologies ?? [];
+    options: ctx => {
+      const used = ctx.entry?.type === 'component' ? ctx.entry.componentId : undefined;
+      const named = used?.startsWith(id) ? noteAddress(used) : undefined;
+      const owner = named ?? ctx.table.players.find(player => player.faction === 'deepwrought' && player.id !== ctx.holder)?.id;
+      const theirs = owner === undefined ? [] : technologiesOf(ctx, named ?? ctx.key(owner));
       return theirs.filter(tech => {
-        const def = componentById(pack, tech);
-        return def !== undefined && !def.faction && def.detail?.type !== 'unitUpgrade' && !state.holdings.technologies.includes(tech);
+        const def = componentById(ctx.pack, tech);
+        return def !== undefined && !def.faction && def.detail?.type !== 'unitUpgrade' && !ctx.my.holds(tech);
       });
     },
   }],

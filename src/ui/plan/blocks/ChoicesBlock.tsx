@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { choicesFor, optionsOf, shownChoices } from '../../../domain/effects/choices';
-import { effectOf } from '../../../domain/effects/registry';
-import type { ChoiceContext, ChoiceSlot, ChoiceSpec } from '../../../domain/effects/types';
+import { choicesFor, shownChoices } from '../../../domain/effects/choices';
+import type { ChoiceSlot, ChoiceSpec } from '../../../domain/effects/types';
 import { systemNameOf } from '../../../domain/systemName';
-import type { DataPack, Entry, Game, GameState } from '../../../domain/types';
+import type { DataPack, Entry, Game } from '../../../domain/types';
+import { useGame } from '../../../state/gameStore';
+import { choicesBefore } from '../../../state/projection';
 import { opponentShortName, shortName } from '../../players/names';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { playerStyle } from '../../primitives/player';
@@ -22,10 +23,6 @@ export interface ChoicesBlockProps {
   entry: Entry;
   game: Game;
   pack: DataPack;
-  /** The state of the entry's owner just before it. */
-  before?: GameState;
-  /** My state, which holds the laws and the objectives; the same as `before` for my own entry. */
-  shared?: GameState;
   /** The choices as they stand after the press; empty when none is left. */
   onChange: (chosen: Record<string, string | number>) => void;
 }
@@ -35,11 +32,14 @@ export interface ChoicesBlockProps {
  * and in it one row for each thing asked, its candidates as buttons (a stepper for a number). A press on the chosen one
  * takes it back. Nothing is forbidden: the effect warns of a value it cannot use. Draws nothing for a component that asks nothing.
  */
-export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }: ChoicesBlockProps) {
+export function ChoicesBlock({ id, entry, game, pack, onChange }: ChoicesBlockProps) {
   const { t, i18n } = useTranslation();
-  const specs = effectOf(pack, id)?.choose;
+  // The board is asked of the real game: a rival's entry is shown through `gameAs`, which turns `me` around.
+  const real = useGame(s => s.game) ?? game;
+  const resolved = choicesBefore(real, entry, id, pack);
   const def = componentById(pack, id);
-  if (!specs || specs.length === 0 || !def || !before) return null;
+  if (resolved.length === 0 || !def) return null;
+  const specs = resolved.map(each => each.spec);
   const chosen = choicesFor(entry, id);
   const owner = entry.owner ?? 'me';
   const lang = i18n.language.startsWith('ru') ? 'ru' : 'en';
@@ -64,10 +64,9 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
   };
   const colorOf = (spec: ChoiceSpec, value: string): number | undefined =>
     (spec.kind === 'player' ? (value === 'me' ? game.color : game.opponents.find(o => o.id === value)?.color) : undefined);
-  const context: ChoiceContext = { game, pack, state: before, shared: shared ?? before, player: owner, entry, chosen };
   return (
     <Section label={def.name} title={def.name} className="choices-block">
-      {shownChoices(specs, chosen).map(spec => {
+      {resolved.filter(each => each.shown).map(({ spec, options, slots }) => {
         const label = spec.label?.[lang] ?? t(`components.choice.${spec.kind}`);
         if (spec.kind === 'number') {
           const [min, max] = spec.range ?? [0, 0];
@@ -80,7 +79,6 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
           );
         }
         if (spec.kind === 'counts') {
-          const slots = spec.slots?.(context) ?? [];
           const verb = spec.verb?.[lang] ?? '';
           const nameOfSlot = (slot: ChoiceSlot): string => (slot.planet !== undefined
             ? t('components.choice.countOn', { verb, unit: t(`unit.${slot.unit}`), place: pack.planets[slot.planet]?.name ?? slot.planet })
@@ -110,7 +108,6 @@ export function ChoicesBlock({ id, entry, game, pack, before, shared, onChange }
             </div>
           );
         }
-        const options = optionsOf(spec, context);
         if (spec.kind === 'component' && options.length > MANY) {
           return (
             <ManyComponents

@@ -26,9 +26,9 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [{
     key: 'ships', kind: 'counts', verb: { ru: 'Вернуть', en: 'Return one' },
-    slots: ({ state, pack }) => Object.keys(state.systems).flatMap(slot => UNIT_ORDER
-      .filter(unit => pack.units[unit] && !pack.units[unit].ground && !pack.units[unit].fighter && (state.systems[slot]?.[unit] ?? 0) > 0)
-      .map(unit => ({ key: unit + '@' + slot, unit, group: slot, max: state.systems[slot]?.[unit] }))),
+    slots: ctx => Object.keys(ctx.board.systems).flatMap(slot => UNIT_ORDER
+      .filter(unit => ctx.pack.units[unit] && !ctx.pack.units[unit].ground && !ctx.pack.units[unit].fighter && (ctx.my.unitsIn(slot)[unit] ?? 0) > 0)
+      .map(unit => ({ key: unit + '@' + slot, unit, group: slot, max: ctx.my.unitsIn(slot)[unit] }))),
   }],
 };
 

@@ -17,7 +17,7 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [
-    { key: 'player', kind: 'player', options: ctx => ['me', ...ctx.game.opponents.map(o => o.id)] },
+    { key: 'player', kind: 'player', options: ctx => ctx.table.players.map(player => ctx.key(player.id)) },
     {
       key: 'structure', kind: 'option', options: () => ['pds', 'spacedock'],
       names: { pds: { ru: 'ПВО', en: 'PDS' }, spacedock: { ru: 'Космический док', en: 'Space dock' } },

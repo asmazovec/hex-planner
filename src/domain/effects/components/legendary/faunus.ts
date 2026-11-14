@@ -7,9 +7,9 @@
  */
 import { planet } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
-import { planetsOf, systemSlots } from '../../../replay/board';
 import { requireControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
+import { controlledPlanets } from '../../helpers/choices';
 
 export const id = 'legendary:faunus';
 
@@ -19,8 +19,8 @@ export const effect: ComponentEffect = {
   choose: [{
     key: 'faunusPlanet', kind: 'planet',
     // A planet that is not legendary and not mine; whether it holds units or attachments the plan cannot see for every player.
-    options: ctx => [...new Set(systemSlots(ctx.game).flatMap(slot => planetsOf(ctx.game, slot, ctx.pack)))]
-      .filter(planet => ctx.pack.planets[planet]?.legendary === undefined && ctx.state.control[planet] !== 'me'),
+    options: ctx => [...new Set(Object.keys(ctx.table.map).flatMap(slot => ctx.planetsIn(slot)))]
+      .filter(planet => ctx.pack.planets[planet]?.legendary === undefined && !controlledPlanets(ctx).includes(planet)),
   }],
 };
 

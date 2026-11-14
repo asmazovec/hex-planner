@@ -12,6 +12,7 @@ import { violation } from '../../../rules/registry';
 import { card } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
+import { handOf } from '../../helpers/choices';
 
 export const id = 'promissory:spynet';
 
@@ -20,11 +21,10 @@ export const effect: ComponentEffect = {
   rule: id,
   choose: [{
     key: 'card', kind: 'component', label: { ru: 'Карта из руки', en: 'Card from the hand' },
-    options: ({ entry, shared }) => {
-      const note = (entry.uses ?? []).find(used => used.startsWith(id));
+    options: ctx => {
+      const note = (ctx.entry?.uses ?? []).find(used => used.startsWith(id));
       const owner = note === undefined ? undefined : noteAddress(note);
-      const hand = owner === undefined ? [] : (owner === 'me' ? shared : shared.rivals?.[owner])?.holdings.hand ?? [];
-      return [...hand];
+      return owner === undefined ? [] : handOf(ctx, owner);
     },
   }],
 };

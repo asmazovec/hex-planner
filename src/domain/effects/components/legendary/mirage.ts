@@ -7,13 +7,12 @@
  */
 import { placeUnits } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
-import { systemSlots } from '../../../replay/board';
 import { requireControlBy } from '../../helpers/cardPlay';
 import type { ChoiceContext, ComponentEffect } from '../../types';
+import { systemsWithUnits } from '../../helpers/choices';
 
 /** The systems of the map where the player has a ship. */
-const withShips = (ctx: ChoiceContext): string[] =>
-  systemSlots(ctx.game).filter(slot => Object.values(ctx.state.systems[slot] ?? {}).some(count => count > 0));
+const withShips = (ctx: ChoiceContext): string[] => systemsWithUnits(ctx);
 
 
 export const id = 'legendary:mirage';

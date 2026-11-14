@@ -19,6 +19,7 @@ import returnedTechInvalid from '../../../rules/codes/returnedTechInvalid';
 import { violation } from '../../../rules/registry';
 import type { DataPack } from '../../../types';
 import type { ComponentEffect } from '../../types';
+import { technologiesOf } from '../../helpers/choices';
 
 export const id = 'actionCard:divert_funding';
 
@@ -32,8 +33,8 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [
-    { key: 'returned', kind: 'component', options: ctx => ctx.state.holdings.technologies.filter(tech => returnable(ctx.pack, tech)) },
-    { key: 'researched', kind: 'component', options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology' && !ctx.state.holdings.technologies.includes(def.id)).map(def => def.id) },
+    { key: 'returned', kind: 'component', options: ctx => technologiesOf(ctx, ctx.key(ctx.holder)).filter(tech => returnable(ctx.pack, tech)) },
+    { key: 'researched', kind: 'component', options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology' && !ctx.my.holds(def.id)).map(def => def.id) },
   ],
 };
 

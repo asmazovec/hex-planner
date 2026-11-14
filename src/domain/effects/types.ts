@@ -2,7 +2,7 @@
  * The contract of a component's effect (design §5.1). A step of the count never names a component: it asks a named
  * point for its value through `applied`, and the components of the player answer.
  */
-import type { Hooks, Permit, Play } from '../../game/abilities/types';
+import type { AbilityContext, Hooks, Permit, Play } from '../../game/abilities/types';
 import type { HolderRule } from './holder';
 import type { DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
 
@@ -120,19 +120,12 @@ export interface ChoiceSlot {
   max?: number;
 }
 
-/** What the interface knows when it offers the candidates of a choice: the board just before the entry. */
-export interface ChoiceContext {
-  game: Game;
-  pack: DataPack;
-  /** The state of the owner of the entry just before it, and mine (laws, objectives). */
-  state: GameState;
-  shared: GameState;
-  /** Whose entry: `me` or an opponent id. */
-  player: string;
-  entry: Entry;
-  /** What is chosen so far for this component, so that a later choice depends on an earlier one. */
-  chosen: Record<string, string | number>;
-}
+/**
+ * What a choice is asked with: the context of any ability over the board just before the entry (`holder` and `actor`
+ * are the one whose entry it is, `my` and `of(player)` read the board), and what is chosen so far for the component,
+ * so that a later choice depends on an earlier one.
+ */
+export type ChoiceContext = AbilityContext & { readonly chosen: Record<string, string | number> };
 
 /**
  * One thing a component asks the player to choose when it is played, written in the effect file. It shows in the
