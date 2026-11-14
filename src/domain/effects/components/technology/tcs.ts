@@ -10,6 +10,7 @@
  * entry only.
  */
 import type { ComponentEffect } from '../../types';
+import { card } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'technology:tcs';
@@ -19,18 +20,16 @@ const isAgent = (component: string): boolean => component.startsWith('leader:') 
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ entry, state, held }) => {
-    if (!held) return;
-    // The agents the entry exhausted (its own action, or «Used») are readied at once.
-    const exhausted = [entry.type === 'component' ? entry.componentId : undefined, ...(entry.uses ?? [])];
-    for (const agent of new Set(exhausted)) {
-      if (agent !== undefined && isAgent(agent) && state.holdings.leaders[agent] === 'exhausted') state.holdings.leaders[agent] = 'unlocked';
-    }
-  },
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    // The agents the entry exhausted (its own action, or «Used») are readied at once.
+    const exhausted = [ctx.entry?.type === 'component' ? ctx.entry.componentId : undefined, ...(ctx.entry?.uses ?? [])];
+    return [...new Set(exhausted)].flatMap(agent => (agent !== undefined && isAgent(agent) && ctx.my.card(agent) === 'exhausted' ? [card.ready(ctx.holder, agent)] : []));
+  },
   permit: [
     { code: 'notNeighbor', rule: "if you ready another player's agent, you may perform a transaction with that player" },
     { code: 'transactionRepeated', rule: "if you ready another player's agent, you may perform a transaction with that player" },

@@ -6,6 +6,8 @@
  * choice `card` moves from the hand of the player of the choice `from` to the player's. Any player, not only a
  * neighbour, so no transaction is made. A card not in that hand is warned of (`componentUnresolved`) and not moved.
  */
+import { card } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
@@ -23,16 +25,18 @@ export const effect: ComponentEffect = {
       options: ({ shared, chosen }) => [...((chosen.from === 'me' ? shared : shared.rivals?.[String(chosen.from)])?.holdings.hand ?? [])],
     },
   ],
-  play: ({ states, state, player, pack, choices, warnings, held }) => {
-    const { from: whose, card } = choices;
-    if (!held || whose === undefined || card === undefined || String(whose) === player) return;
-    const hand = states[String(whose)]?.holdings.hand;
-    const index = hand?.indexOf(String(card)) ?? -1;
-    if (!hand || index < 0) {
-      warnings.push(violation(componentUnresolved.code, { id, name: componentById(pack, id)?.name ?? id, reason: 'the card is not in that hand' }));
-      return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const { from: whose, card: chosen } = ctx.choices;
+    const from = whose === undefined ? undefined : ctx.playerOf(String(whose));
+    if (!ctx.held || from === undefined || chosen === undefined || from === ctx.holder) return [];
+    if (!ctx.of(from).holds(String(chosen))) {
+      ctx.warn(violation(componentUnresolved.code, { id, name: componentById(ctx.pack, id)?.name ?? id, reason: 'the card is not in that hand' }));
+      return [];
     }
-    hand.splice(index, 1);
-    state.holdings.hand.push(String(card));
+    return [card.lose(from, String(chosen)), card.gain(ctx.holder, String(chosen))];
   },
 };

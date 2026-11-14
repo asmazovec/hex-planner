@@ -104,7 +104,11 @@ export function playHooks(ctx: Ctx): void {
     return !(effect?.playAt && entry.type === 'tactical') && !NATIVE_PLAYS.includes(noteBase(id));
   });
   for (const run of runsOf(ctx, ids)) {
-    if (run.native) { for (const id of run.ids) playOne(ctx, id); continue; }
+    if (run.native) {
+      // A native play that spends strategy tokens tells the components in force like an old one.
+      for (const id of run.ids) for (const event of playOne(ctx, id)) if (event.type === 'TokensChanged' && (event.delta.strategy ?? 0) < 0) spent.push({ count: -(event.delta.strategy ?? 0), secondary: false });
+      continue;
+    }
     viaLegacy(ctx, r => {
       const cards = cardRoundOf(ctx.table, ctx.track, r.states);
       for (const id of run.ids) {

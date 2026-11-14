@@ -6,7 +6,9 @@
  * token spent (`shortStrategy` when the pool is empty), 4 trade goods to the Hacan, 2 to the chosen player. Pass 1:
  * still the hint it is today.
  */
-import { spendStrategyTokens } from '../../../replay/status';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { spendStrategyBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:pm';
@@ -15,12 +17,14 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'player', kind: 'player' }],
-  play: turn => {
-    const { state, states, choices, held } = turn;
-    if (!held) return;
-    spendStrategyTokens(turn);
-    state.tradeGoods += 4;
-    const other = typeof choices.player === 'string' ? states[choices.player] : undefined;
-    if (other && other !== state) other.tradeGoods += 2;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    const events = [...spendStrategyBy(ctx), tradeGoods(ctx.holder, 4)];
+    const other = typeof ctx.choices.player === 'string' ? ctx.playerOf(ctx.choices.player) : undefined;
+    return other !== undefined && other !== ctx.holder ? [...events, tradeGoods(other, 2)] : events;
   },
 };

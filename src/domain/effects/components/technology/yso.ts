@@ -13,8 +13,10 @@ import { componentById } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { planetsOf } from '../../../replay/board';
-import { add, unitIds } from '../../../replay/state';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
+import { unitIds } from '../../../replay/state';
 import type { GameState } from '../../../types';
 import type { ChoiceContext, ComponentEffect } from '../../types';
 
@@ -39,18 +41,25 @@ export const effect: ComponentEffect = {
     },
     { key: 'count', kind: 'number', range: [1, 2], label: { ru: 'Сколько пехоты', en: 'How many infantry' } },
   ],
-  play: ({ game, state, pack, choices, entry, warnings, held }) => {
-    const produced = entry.type === 'tactical' && Object.values(entry.production ?? {}).some(count => (count ?? 0) > 0);
-    const where = choices.place ?? choices.space;
-    if (!held || !produced || where === undefined) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    const produced = entry?.type === 'tactical' && Object.values(entry.production ?? {}).some(count => (count ?? 0) > 0);
+    const where = ctx.choices.place ?? ctx.choices.space;
+    if (!ctx.held || !produced || where === undefined) return [];
     const place = String(where);
-    const units = { infantry: Math.min(2, Math.max(0, Number(choices.count ?? 1))) };
-    if (pack.planets[place] !== undefined) {
-      if (state.control[place] !== 'me') warnings.push(violation(placeNotControlled.code, { planetId: place }));
-      else add(state.ground, place, units);
-    } else if (game.map[place] !== undefined || game.fracture.tiles?.[place] !== undefined) {
-      if (!hasShip(state, place, pack)) warnings.push(violation(componentUnresolved.code, { id, name: componentById(pack, id)?.name ?? id, reason: 'no ship of yours in that space area' }));
-      else add(state.systems, place, units);
+    const units = { infantry: Math.min(2, Math.max(0, Number(ctx.choices.count ?? 1))) };
+    if (ctx.pack.planets[place] !== undefined) {
+      if (ctx.board.planets[place]?.owner !== ctx.holder) ctx.warn(violation(placeNotControlled.code, { planetId: place }));
+      else return [placeUnits(ctx.holder, { planet: place }, units)];
+    } else if (ctx.table.map[place] !== undefined || ctx.board.common.fracture.tiles[place] !== undefined) {
+      if (!unitIds(ctx.my.unitsIn(place)).some(unit => (ctx.my.unitsIn(place)[unit] ?? 0) > 0 && ctx.pack.units[unit]?.ground !== true)) {
+        ctx.warn(violation(componentUnresolved.code, { id, name: componentById(ctx.pack, id)?.name ?? id, reason: 'no ship of yours in that space area' }));
+      } else return [placeUnits(ctx.holder, { slot: place }, units)];
     }
+    return [];
   },
 };

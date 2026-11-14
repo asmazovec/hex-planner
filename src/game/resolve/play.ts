@@ -36,12 +36,13 @@ export function runPlay(table: Table, start: Board, pack: DataPack, id: string, 
 export const playsNatively = (pack: DataPack, id: string): boolean => effectOf(pack, id)?.nativePlay !== undefined;
 
 /** One component the entry names, played on the turn's board: its events and warnings join the step. */
-export function playOne(ctx: Ctx, id: string): void {
+export function playOne(ctx: Ctx, id: string): GameEvent[] {
   const lacking = ctx.warnings.some(w => (w.code === 'componentNotHeld' || w.code === 'componentExhausted') && noteBase(String(w.params.id)) === noteBase(id));
   const result = runPlay(ctx.table, ctx.board, ctx.pack, id, ctx.player, { actor: ctx.player, step: ctx.cur.step, entry: ctx.entry, choices: choicesFor(ctx.entry, id), held: !lacking });
   ctx.board = result.board;
   ctx.cur.events.push(...result.events);
   if (result.violations.length > 0) warn(ctx, result.violations);
+  return result.events;
 }
 
 /** The plays the entry names that are written for the kernel and run at a step of a tactical action (`playAt`), in the order it names them. */

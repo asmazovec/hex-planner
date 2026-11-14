@@ -16,6 +16,8 @@ import type { GameState, UnitCounts, UnitId } from '../../types';
 import type { AbilityContext } from '../../../game/abilities/types';
 import componentUnresolved from '../../rules/codes/componentUnresolved';
 import type { GameEvent } from '../../../game/events';
+import { tokens } from '../../../game/abilities/emit';
+import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE_TE } from '../../mecatol';
 import type { EffectTurn } from '../types';
 
 /** The card's own condition is not met: the play is warned of (2.6), and what was entered is applied all the same. */
@@ -155,3 +157,14 @@ export function placeIn(ctx: AbilityContext, events: GameEvent[], slot: string, 
 export function requireControlBy(ctx: AbilityContext, planet: string): void {
   if (ctx.board.planets[planet]?.owner !== ctx.holder) ctx.warn(violation('componentNotHeld', { id: ctx.id, name: componentById(ctx.pack, ctx.id)?.name ?? ctx.id }));
 }
+
+/** For the `play` of a component that costs strategy tokens: takes `count` from the pool and warns `shortStrategy` when it holds fewer (20.5). The components in force are told of the spent tokens by the runner. */
+export function spendStrategyBy(ctx: AbilityContext, count = 1): GameEvent[] {
+  const have = ctx.my.pools.strategy;
+  if (have < count) ctx.warn(violation('shortStrategy', { have }));
+  return [tokens(ctx.holder, { strategy: -count })];
+}
+
+/** The planet id of Mecatol Rex on this map: the Thunder's Edge one when its tile is in the centre. */
+export const mecatolPlanetBy = (ctx: AbilityContext): string =>
+  Object.values(ctx.table.map).some(tile => tile.split('@')[0] === MECATOL_TILE_TE) ? MECATOL_PLANET_TE : MECATOL_PLANET;

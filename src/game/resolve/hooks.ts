@@ -12,6 +12,8 @@ import { checkPoolChange } from '../../domain/replay/status';
 import { tileAt } from '../../domain/replay/board';
 import { researchTechnologies } from '../../domain/replay/research';
 import { checkSystem } from '../../domain/replay/transport';
+import { applyComponentProduction } from '../../domain/replay/production';
+import { buildStructures } from '../../domain/replay/structures';
 import { adjacentTo, wormholesOf } from '../../domain/movement';
 import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { violation } from '../../domain/rules/registry';
@@ -91,6 +93,26 @@ export function contextOf(
       const v = viewFor(table, at, pack, player, work);
       const found: Warning[] = [];
       researchTechnologies(v.game, v.state, v.shared, [technology], pack, found);
+      found.forEach(warn);
+      return legacyEvents(table, pack, before, work, player);
+    },
+    buildStructures: structures => {
+      const before = legacyViews(table, at, pack);
+      const work = legacyViewsFresh(table, at, pack);
+      const v = viewFor(table, at, pack, player, work);
+      const found: Warning[] = [];
+      buildStructures(v.game, v.state, structures.map(each => ({ ...each })), false, undefined, pack, found);
+      found.forEach(warn);
+      return legacyEvents(table, pack, before, work, player);
+    },
+    produce: (systemId, units) => {
+      const entry = options.entry;
+      if (entry?.type !== 'component') return [];
+      const before = legacyViews(table, at, pack);
+      const work = legacyViewsFresh(table, at, pack);
+      const v = viewFor(table, at, pack, player, work);
+      const found: Warning[] = [];
+      applyComponentProduction(v.game, v.state, { ...entry, effects: { ...entry.effects, production: { systemId, units } } }, pack, found);
       found.forEach(warn);
       return legacyEvents(table, pack, before, work, player);
     },

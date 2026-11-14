@@ -8,7 +8,8 @@
  * from the losses entered (`losses`, `groundLosses`), but one effect has one tier; it stays a reminder for now.
  * Pass 2: play, the mech only; the trade good stays a reminder.
  */
-import { planetsOf } from '../../../replay/board';
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:sar';
@@ -16,14 +17,17 @@ export const id = 'technology:sar';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ game, pack, state, entry }) => {
-    if (entry.type !== 'tactical' || !entry.systemId) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (entry?.type !== 'tactical' || !entry.systemId) return [];
     const producing = Object.values(entry.production).some(count => (count ?? 0) > 0);
-    if (!producing) return;
+    if (!producing) return [];
     // On a planet I control in that system, never in its space area (ruling 2); the first one when several are.
-    const planetId = planetsOf(game, entry.systemId, pack).find(id => state.control[id] === 'me');
-    if (planetId === undefined) return;
-    const here = state.ground[planetId] ?? {};
-    state.ground[planetId] = { ...here, mech: (here.mech ?? 0) + 1 };
+    const planetId = ctx.planetsIn(entry.systemId).find(id => ctx.board.planets[id]?.owner === ctx.holder);
+    return planetId === undefined ? [] : [placeUnits(ctx.holder, { planet: planetId }, { mech: 1 })];
   },
 };

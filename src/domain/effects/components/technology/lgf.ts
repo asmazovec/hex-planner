@@ -8,11 +8,14 @@
  * where ships can fly (`routeReach`), not a warning, as a jump between marked systems is never warned of. The ACTION is
  * a `play`: one infantry on Mecatol Rex when the player controls it (the replay exhausts the card).
  */
+import { placeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { mecatolPlanetOf } from '../../../mecatol';
 import { wormholeSlots } from '../../../movement';
 import { violation } from '../../../rules/registry';
 import componentCondition from '../../../rules/codes/componentCondition';
+import { mecatolPlanetBy } from '../../helpers/cardPlay';
 import { mecatolSlot } from '../../helpers/movement';
 import type { ComponentEffect } from '../../types';
 
@@ -28,13 +31,17 @@ export const effect: ComponentEffect = {
     const tokens = shared?.wormholeTokens ?? state?.wormholeTokens;
     return ['alpha', 'beta'].flatMap(type => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== mecatol).map((slot): [string, string] => [mecatol, slot]));
   },
-  play: ({ game, state, pack, warnings, held }) => {
-    if (!held || game.faction !== 'winnu') return;
-    if (state.control[mecatolPlanetOf(game)] !== 'me') {
-      warnings.push(violation(componentCondition.code, { id, name: componentById(pack, id)?.name ?? id, condition: 'Mecatol Rex' }));
-      return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held || ctx.my.faction !== 'winnu') return [];
+    const mecatol = mecatolPlanetBy(ctx);
+    if (ctx.board.planets[mecatol]?.owner !== ctx.holder) {
+      ctx.warn(violation(componentCondition.code, { id, name: componentById(ctx.pack, id)?.name ?? id, condition: 'Mecatol Rex' }));
+      return [];
     }
-    const here = (state.ground[mecatolPlanetOf(game)] ??= {});
-    here.infantry = (here.infantry ?? 0) + 1;
+    return [placeUnits(ctx.holder, { planet: mecatol }, { infantry: 1 })];
   },
 };

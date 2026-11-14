@@ -11,7 +11,7 @@
  * player enters in «Taken and discarded».
 
  */
-import { buildStructures } from '../../../replay/structures';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:nanomachines';
@@ -20,9 +20,12 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'pds', kind: 'planet', label: { ru: 'Планета для PDS', en: 'Planet for the PDS' } }],
-  play: ({ game, state, pack, warnings, choices }) => {
-    const planetId = choices.pds;
-    if (typeof planetId !== 'string' || planetId === '') return;
-    buildStructures(game, state, [{ kind: 'pds', planetId }], false, undefined, pack, warnings);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planetId = ctx.choices.pds;
+    return typeof planetId !== 'string' || planetId === '' ? [] : ctx.buildStructures([{ kind: 'pds', planetId }]);
   },
 };
