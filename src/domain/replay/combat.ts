@@ -4,7 +4,7 @@ import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, Warning } from '../types';
 import { planetsOf } from './board';
 import { take, unitIds, type TacticalEntry } from './state';
-import { capacity, dockFighterRoom, fleetCount, fleetLimit } from './transport';
+import { capacity, checkArrivalOf, dockFighterRoom, stacksOfState } from './transport';
 
 /**
  * Whether anything can destroy ships in the active system once they arrived: another player's ships (a space combat),
@@ -22,16 +22,8 @@ export function canFight(game: Game, state: GameState, target: string, pack: Dat
  * that later destroys the excess does not undo it. The ground forces this action lands count as landed already, so the
  * fighters they make room for are no ships.
  */
-export function checkArrival(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
-  const here = { ...state.systems[target] };
-  // Ground forces committed from a planet never stood in the space area.
-  for (const { units } of entry.landings.filter(landing => landing.from === undefined)) {
-    for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
-  }
-  const ships = fleetCount(game, here, holderOf(game, state), pack, dockFighterRoom(game, state, target, pack));
-  const limit = fleetLimit(game, state, pack);
-  return ships > limit ? [violation('fleetPool', { systemId: target, ships, fleet: limit })] : [];
-}
+export const checkArrival = (game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] =>
+  checkArrivalOf(stacksOfState(game, state, pack), target, entry.landings.filter(landing => landing.from === undefined).map(landing => landing.units), pack);
 
 /** Effect: ships lost in the space combat leave the active system; a loss of what is not there is reported. */
 export function removeLosses(state: GameState, target: string, entry: TacticalEntry, warnings: Warning[]): void {

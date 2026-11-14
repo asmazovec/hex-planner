@@ -42,7 +42,7 @@ export interface MoveView {
   links?: readonly Link[];
 }
 
-const viewHolder = (game: Game, view: MoveView | undefined): Holder | undefined =>
+const viewHolder = (game: Pick<Game, 'faction'>, view: MoveView | undefined): Holder | undefined =>
   view?.holder ?? (view?.state ? holderOf(game, view.state) : undefined);
 
 /** The systems holding ships of players other than the one moving: a route may end there, never pass (58.3.2). */
@@ -262,9 +262,9 @@ export function routeSteps(game: MapSource, path: string[], pack: DataPack, bloc
 }
 
 /** How far a ship of the player flies, after what they hold changed its printed move; null when it does not move by itself. */
-export function shipSpeed(game: Game, unit: UnitId, holdings: Who, pack: DataPack, view?: MoveView): number | null {
+export function shipSpeed(game: Pick<Game, 'faction'>, unit: UnitId, holdings: Who, pack: DataPack, view?: MoveView): number | null {
   const printed = unitStats(game.faction, unit, false, pack)?.move ?? 0;
-  const ctx = { faction: game.faction, unit, ...(view ? { from: view.from, systemId: view.target, group: view.group, game, pack, state: view.state, shared: view.shared } : {}) };
+  const ctx = { faction: game.faction, unit, ...(view ? { from: view.from, systemId: view.target, group: view.group, game: game as Game, pack, state: view.state, shared: view.shared } : {}) };
   let { value } = applied(pack, viewHolder(game, view) ?? holderFor(holdings, game.faction), 'speed', printed, ctx);
   // What the entry names changes the move for it, once for each component however many copies it names.
   for (const id of new Set((view?.named ?? []).map(noteBase))) value = effectOf(pack, id)?.modifyWhenNamed?.speed?.(value, ctx) ?? value;

@@ -1,20 +1,20 @@
 /**
  * Transport (LRR 95, 16) and the fleet pool (37): what each moving group carries against its ships' capacity, what a
  * system holds against its capacity and the pool, and the ships the player removes beyond the pool. The sums are the
- * old pure ones, asked over the board's views.
+ * pure ones of `domain/replay/transport.ts`, asked of the player's stacks on the board.
  */
-import { checkArrival } from '../../domain/replay/combat';
-import { checkGroups, checkLeftBehind, checkSystem } from '../../domain/replay/transport';
+import { checkArrivalOf, checkGroupsOf, checkLeftBehindOf, checkSystemOf } from '../../domain/replay/transport';
 import type { UnitCounts } from '../../domain/types';
-import { begin, checkView, emit, warn, type Ctx } from './context';
+import { stacksOn } from '../queries';
+import { begin, emit, warn, type Ctx } from './context';
 import type { Flown } from './movement';
 
 /** After the flights: each group against its ships, what stays in the systems units left against the ships still there. */
 export function afterFlights(ctx: Ctx, target: string, flown: Flown): void {
   begin(ctx, 'transport');
-  const v = checkView(ctx);
-  warn(ctx, checkLeftBehind(v.game, v.state, flown.over, target, (ctx.entry as never as { moves: never }).moves, ctx.pack));
-  warn(ctx, checkGroups(v.game, v.state, flown.groups, ctx.pack));
+  const stacks = stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player);
+  warn(ctx, checkLeftBehindOf(stacks, flown.over, target, (ctx.entry as never as { moves: never }).moves, ctx.pack));
+  warn(ctx, checkGroupsOf(stacks, flown.groups));
 }
 
 /**
@@ -39,15 +39,14 @@ export function removeFleetExcess(ctx: Ctx, target: string): UnitCounts {
 /** On arrival, before the battle: the ships in the active system against the fleet pool. */
 export function arrival(ctx: Ctx, target: string): void {
   if (ctx.tactical.movement.length === 0) return;
-  const v = checkView(ctx);
-  warn(ctx, checkArrival(v.game, v.state, target, ctx.entry as never, ctx.pack));
+  const landings = (ctx.entry as never as { landings: { from?: unknown; units: UnitCounts }[] }).landings;
+  warn(ctx, checkArrivalOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), target, landings.filter(landing => landing.from === undefined).map(landing => landing.units), ctx.pack));
 }
 
 /** The capacity and the fleet pool of the system after the action; one the action already warned of at arrival or after the battle is not repeated. */
 export function finalCheck(ctx: Ctx, target: string): void {
   const built = Object.keys(ctx.tactical.production?.units ?? {}).length > 0;
   if (ctx.tactical.movement.length === 0 && !built) return;
-  const v = checkView(ctx);
-  const found = checkSystem(v.game, v.state, target, ctx.pack);
+  const found = checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), target);
   warn(ctx, found.filter(w => !ctx.warnings.some(g => g.code === w.code && g.params.systemId === w.params.systemId)));
 }

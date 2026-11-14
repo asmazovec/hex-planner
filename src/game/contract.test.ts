@@ -121,4 +121,14 @@ describe('abilities', () => {
     const text = (import.meta.glob<string>('./abilities/registry.ts', { query: '?raw', import: 'default', eager: true }))['./abilities/registry.ts'];
     expect(text).not.toMatch(/legacyViews\b|viewFor|legacyState|checkView/);
   });
+
+  /** The files that read the board alone: the steps and queries moved off the old per-player views, one by one. */
+  const BOARD_ONLY = ['./resolve/transport.ts'];
+  test('the files moved to the board build none of the old per-player views', () => {
+    const files = import.meta.glob<string>(['./queries.ts', './resolve/*.ts'], { query: '?raw', import: 'default', eager: true });
+    for (const name of BOARD_ONLY) {
+      expect(files[name], `${name} is missing`).toBeDefined();
+      expect(files[name], `${name} reads the old views`).not.toMatch(/legacyViews|viewFor|legacyState|checkView|fromLegacy/);
+    }
+  });
 });

@@ -47,7 +47,7 @@ export function checkPickups(game: Game, state: GameState, target: string, moves
 }
 
 /** Whether my fighters move by themselves at this point of the replay: they have a move value. */
-export const fightersFly = (game: Game, holdings: Who, pack: DataPack): boolean =>
+export const fightersFly = (game: Pick<Game, 'faction'>, holdings: Who, pack: DataPack): boolean =>
   shipSpeed(game, 'fighter', holdings, pack) !== null;
 
 /** The ships a system of the player may hold: the fleet pool, after what they hold changed it. */
@@ -62,11 +62,14 @@ export const DOCK_FIGHTERS = 3;
  * what stands in the system after movement: a moving group keeps its fighters on board (79 note 2, 2.1).
  */
 export const dockFighterRoom = (game: Game, state: Pick<GameState, 'docks'> & Partial<Pick<GameState, 'holdings' | 'control' | 'laws'>>, systemId: string, pack: DataPack): number =>
-  planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId))
-    // What a dock keeps is the point `dockFighters` (Dimensional Tear II: 12).
-    .reduce((sum, planetId) => sum + (state.holdings
-      ? applied(pack, holderOf(game, { holdings: state.holdings, control: state.control ?? {}, laws: state.laws }), 'dockFighters', DOCK_FIGHTERS, { faction: game.faction, planetId, systemId }).value
-      : DOCK_FIGHTERS), 0);
+  dockRoom(game.faction, planetsOf(game, systemId, pack).filter(planetId => state.docks.includes(planetId)), systemId,
+    state.holdings ? holderOf(game, { holdings: state.holdings, control: state.control ?? {}, laws: state.laws }) : undefined, pack);
+
+/** The same from the docks' planets themselves: what each keeps is the point `dockFighters` (Dimensional Tear II: 12). */
+export const dockRoom = (faction: string, docked: readonly string[], systemId: string, holder: Who | undefined, pack: DataPack): number =>
+  docked.reduce((sum, planetId) => sum + (holder
+    ? applied(pack, holderFor(holder, faction), 'dockFighters', DOCK_FIGHTERS, { faction, planetId, systemId }).value
+    : DOCK_FIGHTERS), 0);
 
 /** Fighters a dock keeps, out of those present: they count neither as load nor as ships. */
 const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.min(units.fighter ?? 0, Math.max(0, fighterRoom));
@@ -75,7 +78,7 @@ const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.mi
  * Cargo against the capacity of my ships at my current levels: only ground forces and fighters that do not fly count as
  * load. `fighterRoom` is what the system's space docks keep (`dockFighterRoom`): up to that many fighters are no load.
  */
-export function capacity(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
+export function capacity(game: Pick<Game, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
   const flying = fightersFly(game, holdings, pack);
   let load = 0;
   let cap = 0;
@@ -93,7 +96,7 @@ export function capacity(game: Game, units: UnitCounts, holdings: Who, pack: Dat
  * Ships for the fleet pool: flying fighters beyond the capacity left after the ground forces count as ships; those the
  * system's space docks keep (`fighterRoom`) do not.
  */
-export function fleetCount(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): number {
+export function fleetCount(game: Pick<Game, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): number {
   const ships = unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
@@ -106,39 +109,64 @@ export function fleetCount(game: Game, units: UnitCounts, holdings: Who, pack: D
 }
 
 /** What a system's stack holds against the fleet pool and its own capacity, with the fighters its space docks keep. */
-export function systemMeters(game: Game, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
+export function systemMeters(game: Pick<Game, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
   return { ...capacity(game, units, holdings, pack, fighterRoom), ships: fleetCount(game, units, holdings, pack, fighterRoom) };
 }
 
-/** Check: each group that left a system carries no more than its ships' capacity. */
-export function checkGroups(game: Game, state: GameState, groups: Record<string, UnitCounts>, pack: DataPack): Warning[] {
-  return Object.entries(groups).flatMap(([from, units]) => {
-    const group = capacity(game, units, holderOf(game, state), pack);
-    return group.load > group.capacity ? [violation('capacityGroup', { from, load: group.load, capacity: group.capacity })] : [];
-  });
+/**
+ * What the transport checks read of one player, whoever holds the board: their units in the space area of a system, how a
+ * stack measures against capacity and the fleet pool there (the system's space docks counted), and the pool itself.
+ * `capacityIn` and `fleetIn` take `null` for a stack that stands in no system (a group on its way: no docks).
+ */
+export interface Stacks {
+  units(slot: string): UnitCounts;
+  capacityOf(units: UnitCounts, slot: string | null): { load: number; capacity: number };
+  fleetOf(units: UnitCounts, slot: string | null): number;
+  fleet(): number;
 }
 
+/** The stacks of a player as the old per-player state holds them. */
+export const stacksOfState = (game: Game, state: GameState, pack: DataPack): Stacks => ({
+  units: slot => state.systems[slot] ?? {},
+  capacityOf: (units, slot) => capacity(game, units, holderOf(game, state), pack, slot === null ? 0 : dockFighterRoom(game, state, slot, pack)),
+  fleetOf: (units, slot) => fleetCount(game, units, holderOf(game, state), pack, slot === null ? 0 : dockFighterRoom(game, state, slot, pack)),
+  fleet: () => fleetLimit(game, state, pack),
+});
+
+/** Check: each group that left a system carries no more than its ships' capacity. */
+export const checkGroupsOf = (stacks: Stacks, groups: Record<string, UnitCounts>): Warning[] =>
+  Object.entries(groups).flatMap(([from, units]) => {
+    const group = stacks.capacityOf(units, null);
+    return group.load > group.capacity ? [violation('capacityGroup', { from, load: group.load, capacity: group.capacity })] : [];
+  });
+export const checkGroups = (game: Game, state: GameState, groups: Record<string, UnitCounts>, pack: DataPack): Warning[] =>
+  checkGroupsOf(stacksOfState(game, state, pack), groups);
+
 /** How far each system units leave is over its capacity, before or after the move. */
-export function overflowLeft(game: Game, state: GameState, target: string, moves: Move[], pack: DataPack): Map<string, number> {
+export function overflowLeftOf(stacks: Stacks, target: string, moves: Move[], pack: DataPack): Map<string, number> {
   const left = new Set(moves.filter(move => !(move.from in pack.planets) && move.from !== target).map(move => move.from));
   return new Map([...left].map(slot => {
-    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, holderOf(game, state), pack, dockFighterRoom(game, state, slot, pack));
+    const { load, capacity: room } = stacks.capacityOf(stacks.units(slot), slot);
     return [slot, load - room];
   }));
 }
+export const overflowLeft = (game: Game, state: GameState, target: string, moves: Move[], pack: DataPack): Map<string, number> =>
+  overflowLeftOf(stacksOfState(game, state, pack), target, moves, pack);
 
 /**
  * Check: what stays in the systems units left, against the capacity of the ships still there (16.3, 43.1, 95 note 4):
  * fighters and ground forces left in space without room on board are removed, which the plan must show. Only what the
  * leaving adds is warned about.
  */
-export function checkLeftBehind(game: Game, state: GameState, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] {
-  return [...overflowLeft(game, state, target, moves, pack)].flatMap(([slot, over]) => {
+export function checkLeftBehindOf(stacks: Stacks, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] {
+  return [...overflowLeftOf(stacks, target, moves, pack)].flatMap(([slot, over]) => {
     if (over <= 0 || over <= (before.get(slot) ?? 0)) return [];
-    const { load, capacity: room } = capacity(game, state.systems[slot] ?? {}, holderOf(game, state), pack, dockFighterRoom(game, state, slot, pack));
+    const { load, capacity: room } = stacks.capacityOf(stacks.units(slot), slot);
     return [violation('capacitySystem', { systemId: slot, load, capacity: room })];
   });
 }
+export const checkLeftBehind = (game: Game, state: GameState, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] =>
+  checkLeftBehindOf(stacksOfState(game, state, pack), before, target, moves, pack);
 
 /**
  * Effect (37.3, note 2): the ships the player chose to remove beyond the fleet pool leave the active system, as many of
@@ -168,16 +196,32 @@ export function boardSystemWarnings(game: Game, state: GameState, slot: string, 
 }
 
 /** Check: the capacity and the fleet pool of a system after units arrived or were built there. */
-export function checkSystem(game: Game, state: GameState, target: string, pack: DataPack): Warning[] {
+export function checkSystemOf(stacks: Stacks, target: string): Warning[] {
   const warnings: Warning[] = [];
-  const here = state.systems[target] ?? {};
-  const room = dockFighterRoom(game, state, target, pack);
-  const load = capacity(game, here, holderOf(game, state), pack, room);
+  const here = stacks.units(target);
+  const load = stacks.capacityOf(here, target);
   if (load.load > load.capacity) {
     warnings.push(violation('capacitySystem', { systemId: target, load: load.load, capacity: load.capacity }));
   }
-  const ships = fleetCount(game, here, holderOf(game, state), pack, room);
-  const limit = fleetLimit(game, state, pack);
+  const ships = stacks.fleetOf(here, target);
+  const limit = stacks.fleet();
   if (ships > limit) warnings.push(violation('fleetPool', { systemId: target, ships, fleet: limit }));
   return warnings;
+}
+export const checkSystem = (game: Game, state: GameState, target: string, pack: DataPack): Warning[] =>
+  checkSystemOf(stacksOfState(game, state, pack), target);
+
+/**
+ * Check on arrival, before the battle (37.3, 76.2): the ships in the active system against the fleet pool. `landed` are
+ * the ground forces this action lands from the space area (not from a planet): they count as landed already, so the
+ * fighters they make room for are no ships.
+ */
+export function checkArrivalOf(stacks: Stacks, target: string, landed: readonly UnitCounts[], pack: DataPack): Warning[] {
+  const here: UnitCounts = { ...stacks.units(target) };
+  for (const units of landed) {
+    for (const id of unitIds(units)) if (pack.units[id]?.ground) here[id] = Math.max(0, (here[id] ?? 0) - (units[id] ?? 0));
+  }
+  const ships = stacks.fleetOf(here, target);
+  const limit = stacks.fleet();
+  return ships > limit ? [violation('fleetPool', { systemId: target, ships, fleet: limit })] : [];
 }

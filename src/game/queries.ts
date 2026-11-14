@@ -37,33 +37,55 @@ export const poolsOf = (board: Board, player: PlayerId): Pools => board.players[
 // What the rules add to what the board says: the numbers an effect may change. They are read through the components in
 // force, so they take the table and the pack; the old per-player functions do the counting until the effects move over.
 import '../domain/effects/points/invasion';
-import { holderOf } from '../domain/effects/registry';
+import type { Holder } from '../domain/effects/registry';
 import { productionDue, systemProduction } from '../domain/replay/production';
-import { capacity, dockFighterRoom, fleetCount, fleetLimit as fleetLimitOf } from '../domain/replay/transport';
-import { planetValue as valueOf, readyPlanetIds, tradeGoodWorth as worthOf, type PaymentKind } from '../domain/payment';
+import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/transport';
+import { appliedToPlanet } from '../domain/effects/points/payment';
+import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
 import type { DataPack, UpgradeId } from '../domain/types';
 import { linksOf } from '../domain/movement';
 import { areNeighbors } from '../domain/neighbors';
-import { appliedOn } from './abilities/registry';
+import { appliedOn, holderIn } from './abilities/registry';
+import { planetsIn } from './space';
 import { legacyKey, viewFor } from './legacyViews';
 import type { Table } from './types';
 
-/** The load of a player's units in a system against the capacity of their ships there, the system's space docks counted. */
-export function capacityIn(table: Table, board: Board, pack: DataPack, player: PlayerId, slot: Slot): { load: number; capacity: number } {
-  const v = viewFor(table, board, pack, player);
-  return capacity(v.game, v.state.systems[slot] ?? {}, holderOf(v.game, v.state, v.shared), pack, dockFighterRoom(v.game, v.state, slot, pack));
-}
+const factionOf = (table: Table, player: PlayerId): string => table.players.find(p => p.id === player)?.faction ?? '';
 
-/** The ships a player has in a system for the fleet pool: flying fighters beyond what the capacity left holds count too. */
-export function fleetIn(table: Table, board: Board, pack: DataPack, player: PlayerId, slot: Slot): number {
-  const v = viewFor(table, board, pack, player);
-  return fleetCount(v.game, v.state.systems[slot] ?? {}, holderOf(v.game, v.state, v.shared), pack, dockFighterRoom(v.game, v.state, slot, pack));
+/** Fighters a player's space docks keep in a system: what each dock on its planets keeps, a point of the count (Dimensional Tear II). */
+export function dockFighterRoomIn(table: Table, board: Board, pack: DataPack, player: PlayerId, slot: Slot): number {
+  const docked = planetsIn(table, board, pack, slot).filter(id => board.planets[id]?.owner === player && (board.planets[id].structures.spacedock ?? 0) > 0);
+  return docked.length === 0 ? 0 : dockRoom(factionOf(table, player), docked, slot, holderIn(table, board, player), pack);
 }
 
 /** How many ships a system of the player may hold: the fleet pool, after what they hold changed it. */
 export function fleetLimit(table: Table, board: Board, pack: DataPack, player: PlayerId): number {
-  const v = viewFor(table, board, pack, player);
-  return fleetLimitOf(v.game, v.state, pack);
+  return appliedOn(table, board, pack, player, 'fleetLimit', poolsOf(board, player).fleet, { faction: factionOf(table, player) }).value;
+}
+
+/** A player's stacks as the transport checks read them, from the board alone. */
+export function stacksOn(table: Table, board: Board, pack: DataPack, player: PlayerId): Stacks {
+  const who = { faction: factionOf(table, player) };
+  const holder = (): Holder => holderIn(table, board, player);
+  const room = (slot: Slot | null): number => slot === null ? 0 : dockFighterRoomIn(table, board, pack, player, slot);
+  return {
+    units: slot => shipsIn(board, slot, player),
+    capacityOf: (units, slot) => capacity(who, units, holder(), pack, room(slot)),
+    fleetOf: (units, slot) => fleetCount(who, units, holder(), pack, room(slot)),
+    fleet: () => fleetLimit(table, board, pack, player),
+  };
+}
+
+/** The load of a player's units in a system against the capacity of their ships there, the system's space docks counted. */
+export function capacityIn(table: Table, board: Board, pack: DataPack, player: PlayerId, slot: Slot): { load: number; capacity: number } {
+  const stacks = stacksOn(table, board, pack, player);
+  return stacks.capacityOf(stacks.units(slot), slot);
+}
+
+/** The ships a player has in a system for the fleet pool: flying fighters beyond what the capacity left holds count too. */
+export function fleetIn(table: Table, board: Board, pack: DataPack, player: PlayerId, slot: Slot): number {
+  const stacks = stacksOn(table, board, pack, player);
+  return stacks.fleetOf(stacks.units(slot), slot);
 }
 
 /** The Production value of a player's units in a system, pooled and changed by the components (68.1). */
@@ -78,10 +100,11 @@ export function costOf(table: Table, board: Board, pack: DataPack, player: Playe
   return productionDue(v.game, v.state, units, pack, slot === undefined ? undefined : ({ type: 'tactical', systemId: slot } as never));
 }
 
-/** What a planet is worth to its player for a payment, after what they hold changed it. */
+/** What a planet (or a planet card) is worth to its player for a payment, after what they hold and what is attached changed it. */
 export function planetValue(table: Table, board: Board, pack: DataPack, player: PlayerId, planet: PlanetId, kind: PaymentKind): number {
-  const v = viewFor(table, board, pack, player);
-  return valueOf(pack, v.state, planet, kind, { faction: v.game.faction, shared: v.shared });
+  const printed = isPlanetCard(planet) ? PLANET_CARDS[planet] : pack.planets[planet]?.[kind] ?? 0;
+  const dock = board.planets[planet]?.owner === player && (board.planets[planet].structures.spacedock ?? 0) > 0;
+  return appliedToPlanet(pack, holderIn(table, board, player), board.planets[planet]?.attached ?? [], kind === 'resources' ? 'planetResources' : 'planetInfluence', printed, planet, dock).value;
 }
 
 /** The trade goods the components of a player add with each planet they gain control of (Scavenge); the rules themselves add none. */
@@ -91,8 +114,7 @@ export function tradeGoodsOnControl(table: Table, board: Board, pack: DataPack, 
 
 /** What a trade good is worth to its player for a payment, after what they hold changed it. */
 export function tradeGoodWorth(table: Table, board: Board, pack: DataPack, player: PlayerId, kind: PaymentKind): number {
-  const v = viewFor(table, board, pack, player);
-  return worthOf(pack, v.state, kind, { faction: v.game.faction, shared: v.shared });
+  return appliedOn(table, board, pack, player, 'tradeGoodValue', 1, { kind, faction: factionOf(table, player) }).value;
 }
 
 /** The planets a player holds that are ready: those that can pay. */
@@ -100,9 +122,11 @@ export function readyPlanets(board: Board, player: PlayerId): PlanetId[] {
   return planetsOf(board, player).filter(id => !board.planets[id].exhausted);
 }
 
-/** The same through the old rule for what may pay (a planet card counts), for the view of a player. */
-export const payingPlanets = (table: Table, board: Board, pack: DataPack, player: PlayerId): PlanetId[] =>
-  readyPlanetIds(viewFor(table, board, pack, player).state);
+/** The planets a player can still spend: their own and not exhausted, and the planet cards they hold and have not exhausted. */
+export const payingPlanets = (_table: Table, board: Board, _pack: DataPack, player: PlayerId): PlanetId[] => [
+  ...Object.keys(board.planets).filter(id => board.planets[id].owner === player && !board.planets[id].exhausted),
+  ...Object.keys(PLANET_CARDS).filter(id => { const held = board.players[player]?.cards[id]; return held !== undefined && held.state !== 'purged' && held.state !== 'exhausted'; }),
+];
 
 /** Whether two players are neighbours as the board stands: one is in a system or next to a system the other is in (60, 94.1). The components that change the links are asked. */
 export function areNeighbours(table: Table, board: Board, pack: DataPack, a: PlayerId, b: PlayerId): boolean {
