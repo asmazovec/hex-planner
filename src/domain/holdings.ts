@@ -1,5 +1,5 @@
 /**
- * What a player holds of the game's components: where a game begins (`Game.start`), how a mark is set by hand, and
+ * What a player holds of the game's components: where a game begins (`TableFacts.start`), how a mark is set by hand, and
  * the one bridge from the technologies held to the unit upgrades the counts follow. The replay's side is in
  * `replay/holdings.ts`.
  */

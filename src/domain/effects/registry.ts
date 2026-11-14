@@ -5,7 +5,8 @@
  * left without an entry. A hint's step comes from the data where the data names one.
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
-import type { ComponentDef, DataPack, Game, RuleStep } from '../types';
+import type { ComponentDef, DataPack, RuleStep } from '../types';
+import type { TableFacts } from '../facts';
 import type { ControlOf, Kept, LawsOf, SharedOf } from '../readers';
 import type { Shelf } from '../shelf';
 import { defaultHolder, type HolderRule } from './holder';
@@ -152,7 +153,7 @@ const sameOthers = (a: Holder['others'], b: Holder['others']): boolean => {
 };
 
 export function holderOf(
-  game: Pick<Game, 'faction'>, state: Kept,
+  game: Pick<TableFacts, 'faction'>, state: Kept,
   shared: SharedOf = state,
 ): Holder {
   const built = holderBuilt(game, state, shared);
@@ -166,7 +167,7 @@ export function holderOf(
 }
 
 const holderBuilt = (
-  game: Pick<Game, 'faction'>, state: Kept,
+  game: Pick<TableFacts, 'faction'>, state: Kept,
   shared: SharedOf,
 ): Holder =>
   ({

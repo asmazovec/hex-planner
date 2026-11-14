@@ -2,7 +2,8 @@
 import { componentById } from '../components';
 import { violation } from '../rules/registry';
 import { heldCards } from '../strategy';
-import type { DataPack, Entry, Game, Round, Warning } from '../types';
+import type { DataPack, Entry, Round, Warning } from '../types';
+import type { TableFacts } from '../facts';
 
 /** What a round remembers of its flow: whose pass has been replayed, by owner ('' for me). */
 export interface RoundFlow { round: Round; passed: Set<string> }
@@ -35,7 +36,7 @@ export const isTurn = (entry: Entry, pack?: DataPack): boolean => {
  * holds (3.4, 82.2). A rival's cards are not planned, so only my passes are checked against cards. `primaries` holds the
  * cards whose primary has been played this round.
  */
-export function checkFlow(game: Game, entry: Entry, flow: RoundFlow, primaries: (number | undefined)[], pack?: DataPack): Warning[] {
+export function checkFlow(game: TableFacts, entry: Entry, flow: RoundFlow, primaries: (number | undefined)[], pack?: DataPack): Warning[] {
   if (!isTurn(entry, pack)) return [];
   if (entry.phase !== 'action') return [violation('actionOutsidePhase', {})];
   const owner = entry.owner ?? '';

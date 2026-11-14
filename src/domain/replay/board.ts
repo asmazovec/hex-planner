@@ -1,9 +1,10 @@
 /** The board as the steps read it: which slots hold systems, their tiles, anomalies and planets. */
 import { areAdjacent, type Adjacency } from '../route';
-import type { Anomaly, DataPack, Game, PlanetDef } from '../types';
+import type { Anomaly, DataPack, PlanetDef } from '../types';
+import type { TableFacts } from '../facts';
 
-/** What the board of systems is read from: the map, the Fracture, who sits at the table. A `Game` is one; so is what the game kernel makes of a table and a board. */
-export type MapSource = Pick<Game, 'map' | 'fracture' | 'faction' | 'opponents' | 'expedition'>;
+/** What the board of systems is read from: the map, the Fracture, who sits at the table. An old game is one; so is what the game kernel makes of a table and a board. */
+export type MapSource = Pick<TableFacts, 'map' | 'fracture' | 'faction' | 'opponents' | 'expedition'>;
 
 export const THUNDERS_EDGE_PLANET = 'thundersedge';
 

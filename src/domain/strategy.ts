@@ -7,7 +7,8 @@ import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
 import type { TokensOn } from './readers';
-import type { CardEffects, DataPack, Entry, ExpansionId, Game, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { CardEffects, DataPack, Entry, ExpansionId, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { TableFacts } from './facts';
 import type { Shelf } from './shelf';
 
 export { readyLimit } from './replay/cards/diplomacy';
@@ -149,7 +150,7 @@ export interface Home {
  * the projection keeps its units there and the route graph knows it, see `offMapHomes`); otherwise the slot of my seat, whatever tile stands there; with an
  * empty seat, the first slot with a tile.
  */
-export function homeOf(game: Game, pack: DataPack): Home {
+export function homeOf(game: TableFacts, pack: DataPack): Home {
   const faction = pack.factions[game.faction];
   if (!faction) return { slot: null, fallback: false };
   const onMap = (tile: string | undefined) => Object.keys(game.map).find(slot => game.map[slot].split('@')[0] === tile);
@@ -161,13 +162,13 @@ export function homeOf(game: Game, pack: DataPack): Home {
   return { slot: first, fallback: first !== null };
 }
 
-export const homeSlot = (game: Game, pack: DataPack): string | null => homeOf(game, pack).slot;
+export const homeSlot = (game: TableFacts, pack: DataPack): string | null => homeOf(game, pack).slot;
 
 /**
  * The off-map homes of the players whose gate stands on the map (the Creuss home, LRR 6 note 2): each is a system of its
  * own under its tile id, which the route graph joins to the board by its wormhole alone.
  */
-export function offMapHomes(game: Pick<Game, 'map' | 'faction' | 'opponents'>, pack: DataPack): string[] {
+export function offMapHomes(game: Pick<TableFacts, 'map' | 'faction' | 'opponents'>, pack: DataPack): string[] {
   const onMap = (tile: string | undefined) => tile !== undefined && Object.values(game.map).some(id => id.split('@')[0] === tile);
   const factions = [game.faction, ...(game.opponents ?? []).map(o => o.faction)];
   return [...new Set(factions.flatMap(id => {
@@ -177,31 +178,31 @@ export function offMapHomes(game: Pick<Game, 'map' | 'faction' | 'opponents'>, p
 }
 
 /** The planets of my faction's own home tile, on the map or not. */
-const ownHomePlanets = (game: Game, pack: DataPack): string[] =>
+const ownHomePlanets = (game: TableFacts, pack: DataPack): string[] =>
   pack.tiles[pack.factions[game.faction]?.homeTile ?? '']?.planetIds ?? [];
 
 /** The planets I start with: of my own home, or of the tile at my seat when mine is not on the map. A fallback tile only holds the units until the seat has one. */
-export function homePlanets(game: Game, pack: DataPack): string[] {
+export function homePlanets(game: TableFacts, pack: DataPack): string[] {
   const { slot, fallback } = homeOf(game, pack);
   if (slot === null || fallback) return ownHomePlanets(game, pack);
   return pack.tiles[(game.map[slot] ?? slot).split('@')[0]]?.planetIds ?? ownHomePlanets(game, pack);
 }
 
 /** Planets that lost their place to the tile at my seat: nothing on the map stands for them. */
-export const absentHomePlanets = (game: Game, pack: DataPack): string[] => {
+export const absentHomePlanets = (game: TableFacts, pack: DataPack): string[] => {
   const home = homePlanets(game, pack);
   return ownHomePlanets(game, pack).filter(id => !home.includes(id));
 };
 
 /** The docks of the game as they stand on the map: the one of my absent home stands on the first planet of the tile at my seat. */
-export function startingDocks(game: Game, pack: DataPack): string[] {
+export function startingDocks(game: TableFacts, pack: DataPack): string[] {
   const absent = absentHomePlanets(game, pack);
   const [first] = homePlanets(game, pack);
   return [...new Set(game.docks.flatMap(id => (absent.includes(id) ? (first === undefined ? [] : [first]) : [id])))];
 }
 
 /** The PDS of the game as they stand on the map: those written under my absent home planets stand on the first planet of the tile at my seat, as the dock does. */
-export function startingPds(game: Game, pack: DataPack): Record<string, number> {
+export function startingPds(game: TableFacts, pack: DataPack): Record<string, number> {
   const absent = absentHomePlanets(game, pack);
   const [first] = homePlanets(game, pack);
   const out: Record<string, number> = {};

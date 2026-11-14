@@ -13,11 +13,12 @@ import { effectOf, holderFor, holderOf, inForceOf, type Holder, type Who } from 
 import './effects/points/movement';
 import './effects/points/rivals';
 import { noteBase } from './components';
-import type { DataPack, Game, UnitCounts, UnitId } from './types';
+import type { DataPack, UnitCounts, UnitId } from './types';
+import type { TableFacts } from './facts';
 import type { Moving, MoveShared } from './readers';
 
 /** What a move is counted over: the map and the faction of the mover. */
-export type Mover = MapSource & Pick<Game, 'faction'>;
+export type Mover = MapSource & Pick<TableFacts, 'faction'>;
 
 /** Two systems made adjacent beyond the board: a wormhole token, a law, an ability (6, 60.2). */
 export type Link = readonly [string, string];
@@ -61,16 +62,16 @@ export interface MoveAt {
 }
 
 /** The same reads over the old per-player state (the route editor and the first replay). */
-export const atOfState = (game: Game, pack: DataPack, state: Moving, shared?: MoveShared): MoveAt => ({
+export const atOfState = (game: TableFacts, pack: DataPack, state: Moving, shared?: MoveShared): MoveAt => ({
   map: game, tokens: (shared ?? state).wormholeTokens,
   get home() { return homeSlot(game, pack); },
   dockIn: slot => planetsOf(game, slot, pack).some(planetId => state.docks.includes(planetId)),
 });
 
-const viewAt = (game: Pick<Game, 'faction'>, pack: DataPack, view: MoveView | undefined): MoveAt | undefined =>
-  view?.at ?? (view?.state ? atOfState(game as Game, pack, view.state, view.shared) : undefined);
+const viewAt = (game: Pick<TableFacts, 'faction'>, pack: DataPack, view: MoveView | undefined): MoveAt | undefined =>
+  view?.at ?? (view?.state ? atOfState(game as TableFacts, pack, view.state, view.shared) : undefined);
 
-const viewHolder = (game: Pick<Game, 'faction'>, view: MoveView | undefined): Holder | undefined =>
+const viewHolder = (game: Pick<TableFacts, 'faction'>, view: MoveView | undefined): Holder | undefined =>
   view?.holder ?? (view?.state ? holderOf(game, view.state) : undefined);
 
 /** The systems holding ships of players other than the one moving: a route may end there, never pass (58.3.2). */
@@ -181,7 +182,7 @@ export interface LinkWho { holder?: Holder; state?: Moving; shared?: MoveShared;
  * The adjacency the board does not draw: the wormhole tokens of the game and what the components of the player join
  * (in force, or named by the entry). Empty for a board that has none, so the cached graph is used as it is.
  */
-export function linksOf(game: Game, pack: DataPack, who: LinkWho): Link[] {
+export function linksOf(game: TableFacts, pack: DataPack, who: LinkWho): Link[] {
   const holder = who.holder ?? (who.state ? holderOf(game, who.state, who.shared) : undefined);
   return linksFrom(game, pack, {
     ...(holder ? { holder } : {}), faction: game.faction, controls: planetId => who.state?.control?.[planetId] === 'me',
@@ -252,7 +253,7 @@ export function routeSteps(game: MapSource, path: string[], pack: DataPack, bloc
 }
 
 /** How far a ship of the player flies, after what they hold changed its printed move; null when it does not move by itself. */
-export function shipSpeed(game: Pick<Game, 'faction'>, unit: UnitId, holdings: Who, pack: DataPack, view?: MoveView): number | null {
+export function shipSpeed(game: Pick<TableFacts, 'faction'>, unit: UnitId, holdings: Who, pack: DataPack, view?: MoveView): number | null {
   const printed = unitStats(game.faction, unit, false, pack)?.move ?? 0;
   const ctx = {
     faction: game.faction, unit,

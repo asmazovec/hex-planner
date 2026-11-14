@@ -1,5 +1,6 @@
 import { defaultLayout, LAYOUT_CHOICES, slotKeyOf, templateFor, templateOf } from './layouts';
-import type { DataPack, Game, MapLayout, MapTemplate, TileDef } from './types';
+import type { DataPack, MapLayout, MapTemplate, TileDef } from './types';
+import type { TableFacts } from './facts';
 
 export { defaultLayout, LAYOUT_CHOICES, templateFor };
 
@@ -46,7 +47,7 @@ const MILTY_REPEATED_LANES = ['83A', '85A', '87A'];
  * Tile ids placed in more than one slot, in order of first repeat. Rotation is ignored. With a pack, the three sides the
  * Milty Draft layouts repeat (83A, 85A, 87A) are left out.
  */
-export function duplicateTiles(map: Game['map'], pack?: DataPack): string[] {
+export function duplicateTiles(map: TableFacts['map'], pack?: DataPack): string[] {
   const repeatable = pack ? new Set(MILTY_REPEATED_LANES) : new Set<string>();
   const seen = new Set<string>();
   const dupes = new Set<string>();
@@ -60,7 +61,7 @@ export function duplicateTiles(map: Game['map'], pack?: DataPack): string[] {
 }
 
 /** Slots holding a player's own home tile at that player's seat; the app places and moves those tiles by itself. */
-export function ownHomeSlots(game: Game, pack: DataPack): Set<string> {
+export function ownHomeSlots(game: TableFacts, pack: DataPack): Set<string> {
   const slots = seatSlots(game.playerCount, pack, game.layout);
   const own = new Set<string>();
   for (const { faction, seat } of [game, ...game.opponents]) {
@@ -72,7 +73,7 @@ export function ownHomeSlots(game: Game, pack: DataPack): Set<string> {
 }
 
 /** True while the map holds nothing beyond the tiles its template places and the players' own home tiles. */
-export function mapIsEmpty(game: Game, pack: DataPack): boolean {
+export function mapIsEmpty(game: TableFacts, pack: DataPack): boolean {
   const fixed = new Map(slotsFor(game.playerCount, pack, game.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
   const own = ownHomeSlots(game, pack);
   return Object.entries(game.map).every(([slot, tile]) => fixed.get(slot) === tile || own.has(slot));
@@ -115,10 +116,10 @@ const isLane = (fixed: string | undefined, pack: DataPack): fixed is string =>
  * slots. Other tiles stay in the slots both templates have, except fixed tiles the player never changed, which belong to
  * the old template and leave with it; the new template's other fixed tile (the centre) fills an empty slot.
  */
-export function moveToTemplate(from: Game['map'], oldSlots: MapTemplate['slots'], next: MapTemplate, pack: DataPack): Game['map'] {
+export function moveToTemplate(from: TableFacts['map'], oldSlots: MapTemplate['slots'], next: MapTemplate, pack: DataPack): TableFacts['map'] {
   const oldFixed = new Map(oldSlots.map(s => [slotKeyOf(s.q, s.r), s.fixed]));
   const present = new Set(next.slots.map(s => slotKeyOf(s.q, s.r)));
-  const map: Game['map'] = {};
+  const map: TableFacts['map'] = {};
   for (const [slot, tile] of Object.entries(from)) {
     if (present.has(slot) && oldFixed.get(slot) !== tile) map[slot] = tile;
   }
@@ -129,14 +130,17 @@ export function moveToTemplate(from: Game['map'], oldSlots: MapTemplate['slots']
   return map;
 }
 
+/** A game with its map given as a plain record, so a literal map type does not narrow what is read back. */
+type Mapped<G extends TableFacts> = Omit<G, 'map'> & { map: TableFacts['map'] };
+
 /**
  * The game with another layout of its player count; a layout the pack lacks, or the one in use, returns the same game.
  * The map moves as `moveToTemplate` moves it, and each player's own home tile goes to that player's seat slot in the new
  * layout, displacing what stands there, since layouts can put the homes elsewhere (the Large Galaxy, seven players).
  */
-export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Game {
+export function changeLayout<G extends TableFacts>(game: G, layout: MapLayout, pack: DataPack): Mapped<G> {
   const next = templateFor(game.playerCount, layout, pack);
-  if (!next || game.layout === layout) return game;
+  if (!next || game.layout === layout) return game as Mapped<G>;
   const own = ownHomeSlots(game, pack);
   const lifted = Object.fromEntries(Object.entries(game.map).filter(([slot]) => !own.has(slot)));
   const map = moveToTemplate(lifted, slotsFor(game.playerCount, pack, game.layout), next, pack);
@@ -153,7 +157,7 @@ export function changeLayout(game: Game, layout: MapLayout, pack: DataPack): Gam
  * How many tiles of the player a switch to `layout` removes: those in slots it lacks, those under its hyperlanes and
  * those on its seats. The players' own home tiles move with their seats and are not counted.
  */
-export function tilesLostByLayout(game: Game, layout: MapLayout, pack: DataPack): number {
+export function tilesLostByLayout(game: TableFacts, layout: MapLayout, pack: DataPack): number {
   const next = templateFor(game.playerCount, layout, pack);
   if (!next || game.layout === layout) return 0;
   const kept = changeLayout(game, layout, pack).map;
@@ -178,7 +182,7 @@ export const hyperlaneSlotCount = (playerCount: number, pack: DataPack, layout: 
  * Slots the player fills by hand, in template order: neither a tile the template fixes (the centre, hyperlanes) nor a
  * seat's home, which the app places itself.
  */
-export function freeSlots(game: Game, pack: DataPack): string[] {
+export function freeSlots(game: TableFacts, pack: DataPack): string[] {
   const seats = new Set(seatSlots(game.playerCount, pack, game.layout));
   return slotsFor(game.playerCount, pack, game.layout)
     .filter(slot => !slot.fixed)
@@ -187,15 +191,15 @@ export function freeSlots(game: Game, pack: DataPack): string[] {
 }
 
 /** Free slots that still hold no tile: the map is not built while there are any. */
-export const emptySlots = (game: Game, pack: DataPack): string[] => freeSlots(game, pack).filter(key => !game.map[key]);
+export const emptySlots = (game: TableFacts, pack: DataPack): string[] => freeSlots(game, pack).filter(key => !game.map[key]);
 
 /** The game with the tiles of `from` put back in its free slots that are empty, when the pack still has them. */
-export function withPlacedTiles(game: Game, from: Game['map'], pack: DataPack): Game {
+export function withPlacedTiles<G extends TableFacts>(game: G, from: TableFacts['map'], pack: DataPack): Mapped<G> {
   const back = freeSlots(game, pack).filter(key => !game.map[key] && from[key] && pack.tiles[from[key].split('@')[0]]);
-  if (back.length === 0) return game;
+  if (back.length === 0) return game as Mapped<G>;
   return { ...game, map: { ...game.map, ...Object.fromEntries(back.map(key => [key, from[key]])) } };
 }
 
 /** Whether the game is set up to play: every opponent has a faction and every free slot holds a tile. */
-export const readyToPlay = (game: Game, pack: DataPack): boolean =>
+export const readyToPlay = (game: TableFacts, pack: DataPack): boolean =>
   game.opponents.every(opponent => opponent.faction !== '') && emptySlots(game, pack).length === 0;

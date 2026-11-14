@@ -7,7 +7,8 @@ import { boardSlots } from './movement';
 import type { MapSource } from './replay/board';
 import { isOnMap, sourceSlot } from './replay';
 import type { Pools } from './readers';
-import type { AdjustmentDelta, DataPack, Entry, Game, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
+import type { AdjustmentDelta, DataPack, Entry, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
+import type { TableFacts } from './facts';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -125,7 +126,7 @@ const mainMove = (moves: Move[], source: string): Move | undefined =>
 export const viaOf = (entry: Pick<TacticalEntry, 'moves'>, source: string): string[] => mainMove(entry.moves, source)?.via ?? [];
 
 /** Sets the way of a source, adding the source if it is new. What it picked up in systems no longer on the way goes. */
-export function withRoute(game: Game, pack: DataPack, moves: Move[], source: string, via: string[]): Move[] {
+export function withRoute(game: TableFacts, pack: DataPack, moves: Move[], source: string, via: string[]): Move[] {
   const kept = moves.filter(m => m.pickupOf !== source || via.includes(sourceSlot(game, pack, m.from) ?? ''));
   const { via: old, ...known } = mainMove(moves, source) ?? { from: source, units: {} };
   void old;
@@ -133,13 +134,13 @@ export function withRoute(game: Game, pack: DataPack, moves: Move[], source: str
   return mainMove(moves, source) ? kept.map(m => (m.from === source && m.pickupOf === undefined ? main : m)) : [...kept, main];
 }
 
-export function withoutSource(game: Game, pack: DataPack, moves: Move[], source: string): Move[] {
+export function withoutSource(game: TableFacts, pack: DataPack, moves: Move[], source: string): Move[] {
   const group = groupOf(game, pack, moves, source);
   return moves.filter(m => !group.includes(m));
 }
 
 /** When the editor closes: a source with nothing chosen goes, and with it the empty moves. */
-export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): Move[] {
+export function withoutEmptySources(game: TableFacts, pack: DataPack, moves: Move[]): Move[] {
   return moves.filter(m => {
     if (hasCargo(m)) return true;
     return m.pickupOf === undefined && groupOf(game, pack, moves, m.from).some(hasCargo);
@@ -149,7 +150,7 @@ export function withoutEmptySources(game: Game, pack: DataPack, moves: Move[]): 
 export interface RouteArrow { from: string; via: string[]; to: string; pickups: { slot: string; count: number }[] }
 
 /** One arrow per source system. */
-export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry): RouteArrow[] {
+export function arrowsOf(game: TableFacts, pack: DataPack, entry: TacticalEntry): RouteArrow[] {
   const to = entry.systemId;
   if (to === null) return [];
   return sourcesOf(game, pack, entry).filter(from => from !== to).map(from => {
@@ -167,7 +168,7 @@ export function arrowsOf(game: Game, pack: DataPack, entry: TacticalEntry): Rout
 }
 
 /** The systems an entry touches, for the camera. */
-export function entrySystems(game: Game, pack: DataPack, entry: Entry): string[] {
+export function entrySystems(game: TableFacts, pack: DataPack, entry: Entry): string[] {
   const slots: (string | null | undefined)[] = [];
   if (entry.type === 'tactical') {
     slots.push(entry.systemId, ...sourcesOf(game, pack, entry));

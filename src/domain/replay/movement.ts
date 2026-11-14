@@ -2,7 +2,8 @@
 import { type Holder } from '../effects/registry';
 import { closedToRoute, endsRoute, fullPath, routeMove, routeSteps, shipSpeed, type Blockers, type MoveView } from '../movement';
 import { violation } from '../rules/registry';
-import type { DataPack, Game, UnitId, Warning } from '../types';
+import type { DataPack, UnitId, Warning } from '../types';
+import type { TableFacts } from '../facts';
 import { isLane, type MapSource } from './board';
 import { unitIds, type Move, type TacticalEntry } from './state';
 import { isPickup } from './transport';
@@ -15,14 +16,14 @@ export interface RouteReads {
 }
 
 /** The route warnings of a tactical entry over what a board says of the mover: the same checks, one implementation. */
-export function checkEntryRoutesOf(game: MapSource & Pick<Game, 'faction'>, reads: RouteReads, entry: TacticalEntry, pack: DataPack, blockers: Blockers): Warning[] {
+export function checkEntryRoutesOf(game: MapSource & Pick<TableFacts, 'faction'>, reads: RouteReads, entry: TacticalEntry, pack: DataPack, blockers: Blockers): Warning[] {
   const target = entry.systemId;
   if (target === null) return [];
   return checkRoutesOf(game, reads, target, entry.moves.filter(move => !isPickup(move, target, pack)), pack, blockers);
 }
 
 export function checkRoutesOf(
-  game: MapSource & Pick<Game, 'faction'>, reads: RouteReads, target: string, moves: Move[], pack: DataPack, blockers: Blockers,
+  game: MapSource & Pick<TableFacts, 'faction'>, reads: RouteReads, target: string, moves: Move[], pack: DataPack, blockers: Blockers,
 ): Warning[] {
   const warnings: Warning[] = [];
   for (const move of moves) {

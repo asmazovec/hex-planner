@@ -2,7 +2,7 @@ import { holdingsOfCards, legacyKey, playerOfKey, kindOf } from '../../../game/k
 import { type Game, SAVE_FORMAT, type DataPack, type UnitCounts, type StructureCounts } from '../../../domain/types';
 import { type Holdings, type GameState } from '../domain/types';
 import type { Table, Board, ComponentId, CardHold, PlayerId } from '../../../game/types';
-import { SOURCES } from '../../../game/source';
+import { ORIGINS } from './origin';
 import { emptyBoard } from '../../../game/board';
 import { breakthroughOf } from '../../../domain/effects/breakthrough';
 import type { Cause, GameEvent, Place } from '../../../game/events';
@@ -13,7 +13,7 @@ export { holdingsOfCards, legacyKey, playerOfKey };
 export const fractures = new WeakMap<object, Game['fracture']>();
 /** The viewer's game as the old code reads it: the map and who sits where, the planets by owner, nothing placed by hand. */
 export function legacyGame(table: Table, board: Board, memo = false): Game {
-  const source = SOURCES.get(table);
+  const source = ORIGINS.get(table);
   const viewer = table.players.find(p => p.id === table.viewer)!;
   const { control, owners } = part(CONTROLS, board.planets, table.viewer, () => {
     const control: Game['planetControl'] = {};
@@ -407,7 +407,6 @@ export function viewFor(table: Table, board: Board, pack: DataPack, player: Play
   const key = legacyKey(table, player);
   return { views, game: key === 'me' ? views.game : seenBy(views.game, key), state: views.states[key], shared: views.states.me, key };
 }
-export { SOURCES };
 export const EMPTY_FRACTURE = { active: false, ingress: [] as string[], seat: null as number | null };
 export const countsOf = <T extends object>(units: T | undefined): T => {
   const out: Record<string, unknown> = {};

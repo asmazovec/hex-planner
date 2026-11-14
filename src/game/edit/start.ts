@@ -1,7 +1,7 @@
 /**
  * Edits of what the user places by hand before the plan (`StartEdits`): the units and planets of the other players,
  * docks and PDS, what the players hold, the state of their leaders, the expedition and the Fracture. Each takes the
- * saved game and hands back the same one when nothing changed. Pinned 1:1 against the old edits of `Game`
+ * saved game and hands back the same one when nothing changed. Pinned 1:1 against the old edits of `TableFacts`
  * (`start.test.ts`).
  */
 import { loadPack } from '../../data/loadPack';
@@ -10,7 +10,8 @@ import { HOLDING_FIELD, kindOf } from '../../domain/holdings';
 import { slotKeyOf } from '../../domain/layouts';
 import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
-import type { ComponentKind, Game, LeaderState, StartHoldings } from '../../domain/types';
+import type { ComponentKind, LeaderState, StartHoldings } from '../../domain/types';
+import type { TableFacts } from '../../domain/facts';
 import { legacyPlayer, playerOfLegacy } from '../entry';
 import type { SavedGame, StartEdits } from '../save';
 import type { PlanetId, PlayerId, Slot, UnitCounts } from '../types';
@@ -64,13 +65,14 @@ export function withControl(saved: SavedGame, planet: PlanetId, player: PlayerId
 }
 
 /** The fields of the old game that the dock and PDS queries read: my faction, seat and map, and what is written for the structures. */
-function placementView(saved: SavedGame): Game {
+function placementView(saved: SavedGame): TableFacts {
   const { table, start } = saved;
   const me = table.players.find(p => p.id === table.viewer);
   return {
     expansions: table.expansions, layout: table.layout, map: table.map, faction: me?.faction ?? '', seat: me?.seat ?? 1,
-    playerCount: table.players.filter(p => p.seat < GHOST_SEAT).length, opponents: [], docks: start.docks, pds: start.pds,
-  } as unknown as Game;
+    playerCount: table.players.filter(p => p.seat < GHOST_SEAT).length, opponents: [], planetOwner: {}, docks: start.docks, pds: start.pds,
+    expedition: { slices: {}, thundersEdgeSystem: null }, fracture: { active: false, ingress: [], seat: null },
+  };
 }
 
 /** A space dock set or taken off a planet; what stands under my absent home planet is moved to where it stands now. */

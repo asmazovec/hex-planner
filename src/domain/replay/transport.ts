@@ -5,7 +5,8 @@ import { holderFor, type Who } from '../effects/registry';
 import { fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
-import type { DataPack, Game, UnitCounts, Warning } from '../types';
+import type { DataPack, UnitCounts, Warning } from '../types';
+import type { TableFacts } from '../facts';
 import type { TokensOn } from '../readers';
 import { sourceSlot, type MapSource } from './board';
 import { unitIds, type Move } from './state';
@@ -44,7 +45,7 @@ export function checkPickupsOf(game: MapSource, tokenAt: (slot: string) => boole
 }
 
 /** Whether my fighters move by themselves at this point of the replay: they have a move value. */
-export const fightersFly = (game: Pick<Game, 'faction'>, holdings: Who, pack: DataPack): boolean =>
+export const fightersFly = (game: Pick<TableFacts, 'faction'>, holdings: Who, pack: DataPack): boolean =>
   shipSpeed(game, 'fighter', holdings, pack) !== null;
 
 /** Fighters each space dock keeps in its system apart from the ships' capacity (Space Dock I and II). */
@@ -63,7 +64,7 @@ const keptFighters = (units: UnitCounts, fighterRoom: number): number => Math.mi
  * Cargo against the capacity of my ships at my current levels: only ground forces and fighters that do not fly count as
  * load. `fighterRoom` is what the system's space docks keep (`dockFighterRoom`): up to that many fighters are no load.
  */
-export function capacity(game: Pick<Game, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
+export function capacity(game: Pick<TableFacts, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number } {
   const flying = fightersFly(game, holdings, pack);
   let load = 0;
   let cap = 0;
@@ -81,7 +82,7 @@ export function capacity(game: Pick<Game, 'faction'>, units: UnitCounts, holding
  * Ships for the fleet pool: flying fighters beyond the capacity left after the ground forces count as ships; those the
  * system's space docks keep (`fighterRoom`) do not.
  */
-export function fleetCount(game: Pick<Game, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): number {
+export function fleetCount(game: Pick<TableFacts, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): number {
   const ships = unitIds(units).reduce((sum, id) => {
     const def = pack.units[id];
     return def && !def.fighter && !def.ground ? sum + (units[id] ?? 0) : sum;
@@ -94,7 +95,7 @@ export function fleetCount(game: Pick<Game, 'faction'>, units: UnitCounts, holdi
 }
 
 /** What a system's stack holds against the fleet pool and its own capacity, with the fighters its space docks keep. */
-export function systemMeters(game: Pick<Game, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
+export function systemMeters(game: Pick<TableFacts, 'faction'>, units: UnitCounts, holdings: Who, pack: DataPack, fighterRoom = 0): { load: number; capacity: number; ships: number } {
   return { ...capacity(game, units, holdings, pack, fighterRoom), ships: fleetCount(game, units, holdings, pack, fighterRoom) };
 }
 

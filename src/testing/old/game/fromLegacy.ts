@@ -5,6 +5,7 @@ import type { GameState } from '../domain/types';
 import type { Table, Board, PlayerId } from '../../../game/types';
 import { playersOf } from '../../../domain/players';
 import { SOURCES } from '../../../game/source';
+import { ORIGINS } from './origin';
 import { emptyBoard } from '../../../game/board';
 import { applyAll } from '../../../game/apply';
 import { startOf } from '../domain/replay/start';
@@ -39,6 +40,7 @@ export function tableOf(game: Game): Table {
     players, viewer: idOfSeat(game.seat),
   };
   SOURCES.set(table, game);
+  ORIGINS.set(table, game);
   return table;
 }
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,7 +51,7 @@ export function boardFromLegacy(table: Table, state: GameState, pack: DataPack):
   const game = legacyGame(table, emptyBoard(table));
   const states: Record<string, GameState> = { me: state, ...(state.rivals ?? {}) };
   // Someone who is not at the table (see `tableOf`) holds what was written for them by hand, which no entry changes.
-  const source = SOURCES.get(table);
+  const source = ORIGINS.get(table);
   for (const p of table.players.filter(q => q.seat >= GHOST_SEAT)) {
     const key = p.legacyId ?? p.id;
     const pick = (record: Game['enemyUnits'] | undefined): Record<string, UnitCounts> => Object.fromEntries(Object.entries(record ?? {}).flatMap(([place, byOwner]) => (byOwner[key] ? [[place, { ...byOwner[key] }]] : [])));
@@ -147,7 +149,7 @@ export function turnOf(table: Table, entry: Entry, pack?: DataPack, linked?: Ent
 export const planned = new WeakMap<object, { table: Table; pack: DataPack | undefined; round: Round }>();
 /** The rounds of an old plan as rounds of turns, a round object kept for as long as its old round and the table stay the same. */
 export function planOf(table: Table, plan: Plan, pack?: DataPack): Round[] {
-  const count = SOURCES.get(table)?.playerCount ?? table.players.length;
+  const count = ORIGINS.get(table)?.playerCount ?? table.players.length;
   return [...plan.rounds].sort((a, b) => a.number - b.number).map(round => {
     const known = planned.get(round);
     if (known && known.table === table && known.pack === pack) return known.round;
