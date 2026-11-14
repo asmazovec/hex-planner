@@ -11,7 +11,7 @@ import { EXHAUSTS, holds, isExhausted, PURGES, RETURNS } from '../../domain/repl
 import { violation } from '../../domain/rules/registry';
 import type { ComponentDef, Entry } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { holdingsOfCards, legacyKey, playerOfKey } from '../legacyViews';
+import { holdingsOfCards, legacyKey, playerOfKey } from '../keys';
 import type { PlayerId } from '../types';
 import { emit, warn, type Ctx } from './context';
 

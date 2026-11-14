@@ -3,11 +3,13 @@
  * landing), and what the surviving ships carry is checked. The battle itself is the player's: only its losses are entered.
  */
 import { holdsShips } from '../../domain/movement';
+import { violation } from '../../domain/rules/registry';
+import { unitIds } from '../../domain/replay/state';
+import { capacityIn } from '../queries';
 import { planetsIn } from '../space';
-import { checkAfterCombat } from '../../domain/replay/combat';
 import type { UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { checkView, emit, warn, type Ctx } from './context';
+import { emit, warn, type Ctx } from './context';
 
 /**
  * Whether anything can destroy ships in the active system once they arrived: another player's ships (a space combat),
@@ -29,8 +31,10 @@ export function spaceLosses(ctx: Ctx, target: string): void {
 
 /** After the space combat (16.3.3, 78.10.1): what the ships left cannot carry. */
 export function afterCombat(ctx: Ctx, target: string): void {
-  const v = checkView(ctx);
-  warn(ctx, checkAfterCombat(v.game, v.state, target, ctx.entry as never, ctx.pack));
+  // Only after a battle that cost something: without losses the capacity is what it was on arrival.
+  if (unitIds((ctx.entry as never as { losses?: UnitCounts }).losses ?? {}).length === 0) return;
+  const left = capacityIn(ctx.table, ctx.board, ctx.pack, ctx.player, target);
+  if (left.load > left.capacity) warn(ctx, [violation('capacitySystem', { systemId: target, load: left.load, capacity: left.capacity }, 'combat')]);
 }
 
 /** The ground forces each side lost on the planets, after the landing. */

@@ -9,7 +9,7 @@ import { violation } from '../rules/registry';
 import { gameAs } from '../players';
 import { inHomeSystem } from '../stacks';
 import type { AnyWarningCode, DataPack, Game, GameState, RuleStep, UnitCounts, Warning } from '../types';
-import { planetsOf } from './board';
+import { planetsOf, type MapSource } from './board';
 import { add, missingUnits, removeUnits, unitIds, type TacticalEntry } from './state';
 import { applyPayment, checkPayment } from './payment';
 import { losePlanet } from './structures';
@@ -31,6 +31,11 @@ const custodiansOn = (state: GameState, planetId: string): boolean =>
  * 89.4), and no more of a unit than stands in its space area.
  */
 export function checkLandings(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
+  return checkLandingsOf(game, state.systems[target] ?? {}, planetId => state.ground[planetId] ?? {}, target, entry, pack);
+}
+
+/** The same over what stands in the active system's space area and on the planets, from wherever they are read. */
+export function checkLandingsOf(game: MapSource, ships: UnitCounts, groundOn: (planetId: string) => UnitCounts, target: string, entry: Pick<TacticalEntry, 'landings'>, pack: DataPack): Warning[] {
   const planets = planetsOf(game, target, pack);
   const warnings: Warning[] = [];
   const wanted: UnitCounts = {};
@@ -53,9 +58,9 @@ export function checkLandings(game: Game, state: GameState, target: string, entr
       else if (source === undefined) wanted[id] = (wanted[id] ?? 0) + (landing.units[id] ?? 0);
     }
   }
-  for (const [planetId, units] of Object.entries(fromPlanets)) warnings.push(...missingUnits(state.ground, planetId, units, 'invasion'));
+  for (const [planetId, units] of Object.entries(fromPlanets)) warnings.push(...missingUnits({ [planetId]: groundOn(planetId) }, planetId, units, 'invasion'));
   for (const id of unitIds(wanted)) {
-    const available = state.systems[target]?.[id] ?? 0;
+    const available = ships[id] ?? 0;
     const total = wanted[id] ?? 0;
     if (total > available) warnings.push(violation('landingOverLimit', { unit: id, wanted: total, available }));
   }

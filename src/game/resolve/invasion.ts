@@ -6,16 +6,16 @@
  */
 import { CUSTODIANS_COST, MECATOL_PLANETS } from '../../domain/mecatol';
 import { isStation } from '../../domain/replay/board';
-import { checkLandings } from '../../domain/replay/invasion';
+import { checkLandingsOf } from '../../domain/replay/invasion';
 import { checkStationLandings } from '../../domain/thundersEdge';
 import { violation } from '../../domain/rules/registry';
 import type { StructureKind, UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
 import type { Board, PlayerId } from '../types';
-import { legacyKey } from '../legacyViews';
-import { groundOn, ownerOf } from '../queries';
-import { planetsIn } from '../space';
-import { checkView, emit, warn, type Ctx } from './context';
+import { legacyKey } from '../keys';
+import { groundOn, ownerOf, shipsIn } from '../queries';
+import { mapSource, planetsIn } from '../space';
+import { emit, warn, type Ctx } from './context';
 import { controlHooks } from './entryHooks';
 import { hook } from './hooks';
 import { effectOf } from '../../domain/effects/registry';
@@ -37,9 +37,8 @@ export interface Lost { planets: { planetId: string; to: string }[]; hooked: str
 export interface Landed { on: string[]; lost: Lost }
 
 export function landUnits(ctx: Ctx, target: string): Landed {
-  const v0 = checkView(ctx);
   warn(ctx, checkStationLandings(ctx.entry as never, ctx.pack));
-  warn(ctx, checkLandings(v0.game, v0.state, target, ctx.entry as never, ctx.pack));
+  warn(ctx, checkLandingsOf(mapSource(ctx.table, ctx.board), shipsIn(ctx.board, target, ctx.player), planetId => groundOn(ctx.board, planetId, ctx.player), target, ctx.entry as never, ctx.pack));
   const planets = planetsIn(ctx.table, ctx.board, ctx.pack, target);
   const on: string[] = [];
   for (const landing of ctx.tactical.invasion) {

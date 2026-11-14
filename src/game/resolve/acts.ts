@@ -7,14 +7,15 @@
 import { componentById } from '../../domain/components';
 import { breakthroughOf } from '../../domain/effects/breakthrough';
 import { staysInPlay, TRANSACTION_KINDS } from '../../domain/holdings';
-import { EXPEDITION_SLICES, techSlicePlanets } from '../../domain/payment';
+import { EXPEDITION_SLICES } from '../../domain/payment';
+import { specialtiesOf } from '../../domain/specialties';
 import { holds } from '../../domain/replay/holdings';
 import { violation } from '../../domain/rules/registry';
 import type { Act, Goods } from '../../domain/types';
-import { holdingsOfCards, legacyKey } from '../legacyViews';
-import { areNeighbours } from '../queries';
+import { holdingsOfCards, legacyKey } from '../keys';
+import { areNeighbours, payingPlanets } from '../queries';
 import type { PlayerId } from '../types';
-import { begin, checkView, emit, warn, type Ctx } from './context';
+import { begin, emit, warn, type Ctx } from './context';
 import { gain, lose } from './holdings';
 import { hook } from './hooks';
 import { checkedPay, shortOf } from './payment';
@@ -86,10 +87,9 @@ function expedition(ctx: Ctx, part: Extract<Act, { kind: 'expedition' }>): void 
     if (ctx.board.common.expedition[slice.id] !== undefined) warn(ctx, violation('sliceTaken', { sliceId: slice.id }, 'expedition'));
     else emit(ctx, [{ type: 'ExpeditionSliceTaken', player: ctx.player, slice: slice.id }], { quiet: true });
   }
-  const state = checkView(ctx).state;
   if (slice?.techPlanet) {
     // One of my ready planets with a technology specialty is exhausted (expedition 4.5); the value does not matter.
-    if (!part.payment.planets.some(id => techSlicePlanets(state, ctx.pack).includes(id))) warn(ctx, violation('expeditionUnpaid', { sliceId: slice.id }, 'expedition'));
+    if (!part.payment.planets.some(id => payingPlanets(ctx.table, ctx.board, ctx.pack, ctx.player).filter(p => specialtiesOf(ctx.pack, p, ctx.board.planets[p]?.attached).length > 0).includes(id))) warn(ctx, violation('expeditionUnpaid', { sliceId: slice.id }, 'expedition'));
     checkedPay(ctx, { planets: part.payment.planets, tradeGoods: 0 }, 'resources', 'expedition');
     return;
   }
