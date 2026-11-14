@@ -8,9 +8,14 @@ import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timeline
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { startingPds } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
-import type { Entry, GameState, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
+import type { Entry, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
-import { lossesOf, withAdjustedUnit, withFleetRemoval, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
+import { lossesOf, withAdjustedUnit, type TacticalEntry } from '../../../domain/tactical';
+import { withFleetRemoval, withLoss } from '../../../game/edit/tactical';
+import { withProductionOn } from '../../../game/edit/tacticalRead';
+import type { Turn } from '../../../game/actions';
+import type { Board } from '../../../game/types';
+import { writeTurn } from '../../../state/turnBridge';
 import { enemyChange, structureInGame } from '../../../domain/stacks';
 import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
 import { playerOfKey } from '../../../game/keys';
@@ -129,8 +134,13 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** The tactical action this hex was opened from: its battle belongs to it, its purchases too while it stands on this system, and the fleet limit counts it. */
   const fightingFor = tacticalId ? round.entries.find((e): e is Entry & TacticalEntry => e.id === tacticalId && e.type === 'tactical') : undefined;
   const adjusting = adjustmentId ? round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment') : undefined;
+  /** An edit of the turn of an entry of the plan, written back through the bridge; `before` is the board just before the turn. */
+  const editTurn = (entryId: string, edit: (turn: Turn, before: Board) => Turn) => {
+    const write = writeTurn(table, game, entryId, pack);
+    if (write) write.update(edit(write.turn, line.kernel.byTurn.get(entryId)?.before ?? line.kernel.end));
+  };
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {
-    if (kind === 'losses' && fightingFor) updateEntry(fightingFor.id, withLoss(fightingFor, unit, planetId, amount));
+    if (kind === 'losses' && fightingFor) editTurn(fightingFor.id, turn => withLoss(turn, unit, planetId, amount));
     else if (kind === 'setup' && adjusting) updateEntry(adjusting.id, { delta: withAdjustedUnit(adjusting.delta, slot, unit, planetId, amount) });
     else changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
   };
@@ -145,13 +155,13 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && seenBefore(line, tactical.id);
   const produced = tactical ? productionSites(table, line.kernel.byTurn.get(tactical.id)?.before ?? line.kernel.end, pack, turnOfEntry(table, tactical, pack)) : [];
-  const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
-    updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id), view));
+  const changeProduction = (entry: TacticalEntry, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
+    editTurn(entry.id, (turn, before) => withProductionOn(table, before, pack, turn, unit, planetId, amount, manualPayments.includes(entry.id)));
   const purchases: PurchaseTarget = onPurchase ?? {
     bought: [...produced, ...mergedCounts(round, 'build', slot)],
     change: (unit, planetId, amount) => {
       const held = produced.some(p => p.unit === unit && p.planetId === planetId);
-      if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, beforeTactical, unit, planetId, amount);
+      if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, unit, planetId, amount);
       else changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount });
     },
   };
@@ -223,7 +233,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const takeOff = ({ kind, owner, key }: PlacedStack, planetId: string | null) => {
     // Beyond the fleet pool only my ships in space go, back to the reinforcements.
     if (mode === 'fleet') {
-      if (fightingFor && owner === mine && !isStructure(kind) && planetId === null && !pack.units[kind]?.ground) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, kind, 1));
+      if (fightingFor && owner === mine && !isStructure(kind) && planetId === null && !pack.units[kind]?.ground) editTurn(fightingFor.id, turn => withFleetRemoval(turn, kind as UnitId, 1));
       return;
     }
     // A stack can hold planned structures too: the baseline ones go first, and one only planned belongs to its entry, so it takes no tap.
@@ -352,7 +362,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     const turn = turnOfEntry(table, fightingFor, pack);
     return fleetExcessOf(table, pack, flightOf(table, line.kernel.byTurn.get(fightingFor.id)?.before ?? line.kernel.end, pack, turn), turn.player, standing(projection.warningsByEntry[fightingFor.id] ?? []));
   })() : null;
-  const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, kind as UnitId, amount)); };
+  const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) editTurn(fightingFor.id, turn => withFleetRemoval(turn, kind as UnitId, amount)); };
 
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));
   const boughtTotal = Object.keys(bought).filter(key => parseKey(key).owner === side).reduce((sum, key) => sum + bought[key], 0);

@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadPack } from '../../../data/loadPack';
-import { emptySources, withoutSource } from '../../../domain/tactical';
+import { emptySources, tacticalOf, withoutSource } from '../../../game/edit/tactical';
+import { atOf } from '../../../game/edit/tacticalRead';
 import { useGame } from '../../../state/gameStore';
+import { timelineOf } from '../../../state/projection';
+import { writeTurn } from '../../../state/turnBridge';
 import { animates } from '../../common/motion';
 
 /**
@@ -13,19 +16,28 @@ export const LEAVE_MS = 400;
 /** A leaving source, by the key its arrow has on the map. */
 export const leaveKey = (entryId: string, source: string): string => `${entryId}:${source}`;
 
+/** The turn of the entry as the store has it now, its writer and the places of the board before it, while the entry is a tactical action. */
+function turnNow(entryId: string) {
+  const { game } = useGame.getState();
+  const plan = game?.plans.find(p => p.id === game.activePlanId);
+  if (!game || !plan) return null;
+  const pack = loadPack(game.expansions);
+  const { kernel } = timelineOf(game, plan, 'forecast', pack);
+  const write = writeTurn(kernel.table, game, entryId, pack);
+  if (!write || write.turn.action.kind !== 'tactical') return null;
+  return { write, at: atOf(kernel.table, kernel.byTurn.get(entryId)?.before ?? kernel.end, pack) };
+}
+
 /** The entry as the store has it now, and whether its source still has nothing chosen. */
 function emptyNow(entryId: string, source: string) {
-  const { game } = useGame.getState();
-  const found = game?.plans.find(p => p.id === game.activePlanId)?.rounds.flatMap(r => r.entries).find(e => e.id === entryId);
-  if (!game || found?.type !== 'tactical') return null;
-  const pack = loadPack(game.expansions);
-  return emptySources(game, pack, found).includes(source) ? { game, pack, entry: found } : null;
+  const now = turnNow(entryId);
+  return now && emptySources(now.at, tacticalOf(now.write.turn)).includes(source) ? now : null;
 }
 
 /** Takes the source out of its entry, if it is still there with nothing chosen. Works on the store, for it runs on unmount too. */
 function drop(entryId: string, source: string): void {
   const empty = emptyNow(entryId, source);
-  if (empty) useGame.getState().updateEntry(entryId, { moves: withoutSource(empty.game, empty.pack, empty.entry.moves, source) });
+  if (empty) empty.write.update(withoutSource(empty.at, empty.write.turn, source));
 }
 
 /**

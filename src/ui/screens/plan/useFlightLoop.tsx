@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { timelineOf, turnOfEntry } from '../../../state/projection';
 import { gameAs } from '../../../domain/players';
-import { entrySystems, type TacticalEntry } from '../../../domain/tactical';
+import type { TacticalEntry } from '../../../domain/tactical';
+import { atOf, tacticalSystems } from '../../../game/edit/tacticalRead';
 import type { DataPack, Entry, Game, Plan } from '../../../domain/types';
 import { activatedBoard, flies, inFlight as boardInFlight } from '../../../game/flight';
 import { mapSource } from '../../../game/space';
@@ -132,8 +133,12 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
   /** On landing only the systems of the action move: its active system and those its ships and cargo left. */
   const loopingEntry = shown && loops && shownEntry && game ? shownEntry : undefined;
   const animated = useMemo(
-    () => (loopingEntry && game ? new Set(entrySystems(gameAs(game, loopingEntry.owner), pack, loopingEntry)) : null),
-    [loopingEntry, game, pack],
+    () => {
+      if (!loopingEntry || !game || !plan) return null;
+      const { kernel } = timelineOf(game, plan, 'forecast', pack);
+      return new Set(tacticalSystems(atOf(kernel.table, kernel.end, pack), turnOfEntry(kernel.table, loopingEntry, pack)));
+    },
+    [loopingEntry, game, plan, pack],
   );
 
   return { flying, loops, still, quiet, animated, start, stop, scene };
