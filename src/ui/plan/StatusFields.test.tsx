@@ -1,5 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
-import { kernelViewOf } from '../testing/view';
+import { listOf } from '../testing/view';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 vi.mock('../../storage/db', () => ({
@@ -8,7 +8,6 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { project } from '../../domain/project';
 import { withEffect } from '../../domain/effects/points/status.kit';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -33,8 +32,7 @@ function openStatus(faction: string, secrets: string[] = []): void {
   function Live() {
     const live = useGame(s => s.game)!;
     return (
-      <EntryList viewOf={() => kernelViewOf(live, pack)}
-        game={live} pack={pack} round={live.plans[0].rounds[0]} warnings={{}} state={project(live, live.plans[0], 'forecast', pack).state}
+      <EntryList {...listOf(live, pack)}
         openId={id} onOpen={() => undefined}
       />
     );

@@ -6,6 +6,7 @@ import { AdjustmentEditor } from '../../../../ui/plan/editors/AdjustmentEditor';
 import type { Entry, EntryBody } from '../../../types';
 import { bench, HOME, planned, quote } from '../kit';
 import { id } from './cladenstine';
+import { turnProps } from '../../../../ui/testing/turnProps';
 
 uiBench();
 
@@ -24,10 +25,7 @@ test('agenda:cladenstine the agenda editor offers the outcomes For and Against',
   const t = table(agenda);
   quote(t.pack, id, 'Each player removes 1 command token from their fleet pool');
   render(
-    <AdjustmentEditor view={kernelViewOf(t.game, t.pack)}
-      pack={t.pack} entry={agenda as Extract<Entry, { type: 'adjustment' }>} warnings={[]} picking={false}
-      onPickSystem={nothing} onOpenHex={nothing} onUpdate={nothing} onDone={nothing} onRemove={nothing}
-    />,
+    <AdjustmentEditor {...turnProps(kernelViewOf(t.game, t.pack), t.pack, agenda as Extract<Entry, { type: 'adjustment' }>, nothing)} view={kernelViewOf(t.game, t.pack)} pack={t.pack} warnings={[]} picking={false} onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}/>,
   );
   expect(screen.getByRole('button', { name: 'For' })).toBeEnabled();
   expect(screen.getByRole('button', { name: 'Against' })).toBeEnabled();

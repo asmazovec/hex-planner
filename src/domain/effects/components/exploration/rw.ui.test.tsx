@@ -8,6 +8,8 @@ import { CARD } from '../../../replay/cards/ids';
 import { tech } from '../../../rules/kit';
 import { bench, NEAR, quote, secondary, TARGET, tactical } from '../kit';
 import { id } from './rw';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -30,7 +32,7 @@ test('exploration:rw is taken in «Taken and discarded» of the entry that explo
   quote(rich.pack, id, "This planet's resource value is increased by 1.");
   useGame.setState({ game: rich.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={rich.take} pack={rich.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(rich.game, rich.pack), rich.pack, rich.take, onChange)} pack={rich.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Rich World');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Rich World' }));

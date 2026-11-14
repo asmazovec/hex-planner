@@ -7,6 +7,8 @@ import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../.
 import { CARD } from '../../../replay/cards/ids';
 import { bench, NEAR, quote, secondary, TARGET, tactical } from '../kit';
 import { id } from './toe';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -26,7 +28,7 @@ test('exploration:toe is taken in «Taken and discarded» of the entry that expl
   quote(tomb.pack, id, "This planet's influence value is increased by 1.");
   useGame.setState({ game: tomb.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={tomb.take} pack={tomb.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(tomb.game, tomb.pack), tomb.pack, tomb.take, onChange)} pack={tomb.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Tomb of Emphidia');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Tomb of Emphidia' }));

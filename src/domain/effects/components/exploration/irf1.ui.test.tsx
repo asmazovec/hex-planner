@@ -7,6 +7,8 @@ import { expectShownStanding, showWarnings, uiBench } from '../../../../ui/testi
 import type { AnyWarningCode, Entry } from '../../../types';
 import { adjust, bench, componentAction, NEAR, quote } from '../kit';
 import { id } from './irf1';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -22,7 +24,7 @@ test('exploration:irf1 is taken in «Taken and discarded» of the entry that exp
   quote(fragments.pack, id, 'ACTION: Purge 3 of your industrial relic fragments to gain 1 relic.');
   useGame.setState({ game: fragments.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={take} pack={fragments.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(fragments.game, fragments.pack), fragments.pack, take, onChange)} pack={fragments.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Industrial Relic Fragment');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Industrial Relic Fragment' }));

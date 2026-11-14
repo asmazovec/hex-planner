@@ -2,14 +2,15 @@ import { Fragment, useMemo, useState } from 'react';
 import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import type { ComponentKind, DataPack, Entry, Warning } from '../../../domain/types';
+import type { ComponentKind, DataPack, Warning } from '../../../domain/types';
+import type { Turn } from '../../../game/actions';
+import { withChoicesOf, withUses } from '../../../game/edit/turn';
+import { legacyKey } from '../../../game/keys';
 import { readyToPlayOn } from '../../../game/planQueries';
-import { playerOfEntry } from '../kernelView';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { noteMark } from '../../components/noteMark';
-import { withChoices } from '../../../domain/effects/choices';
-import { usesWarnings } from '../../feedback/warningPlaces';
+import { usesWarnings, usingOf } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { Section } from '../../primitives/Section';
 import { ChoicesBlock } from './ChoicesBlock';
@@ -20,13 +21,13 @@ const USED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technolog
 export interface UsesBlockProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
-  /** Any entry: its owner uses the components. */
-  entry: Entry;
+  /** Any turn: its player uses the components. */
+  turn: Turn;
   pack: DataPack;
   /** The warnings of the entry: those of the components named here stand in this block. */
   warnings?: Warning[];
-  /** The new list; without a value when it became empty. */
-  onChange: (patch: { uses?: string[]; choices?: Record<string, string | number>; useChoices?: Record<string, Record<string, string | number>> }) => void;
+  /** The turn with its new list of uses. */
+  onChange: (turn: Turn) => void;
 }
 
 /**
@@ -36,19 +37,16 @@ export interface UsesBlockProps {
  * is marked, and the plan warns of a component not held or exhausted. What a component used here allows is listed
  * among the warnings of the entry as allowed.
  */
-export function UsesBlock({ entry, pack, view, warnings = [], onChange }: UsesBlockProps) {
+export function UsesBlock({ turn, pack, view, warnings = [], onChange }: UsesBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
-  const list = entry.uses ?? [];
-  const write = (ids: string[]) => {
-    // What was chosen for a component no longer used goes with it.
-    const kept = Object.fromEntries(Object.entries(entry.useChoices ?? {}).filter(([id]) => ids.includes(id)));
-    onChange({ uses: ids.length > 0 ? ids : undefined, ...(entry.useChoices ? { useChoices: Object.keys(kept).length > 0 ? kept : undefined } : {}) });
-  };
-  const ready = useMemo(() => readyToPlayOn(view.table, view.board, pack, playerOfEntry(view, entry.owner)), [view, pack, entry.owner]);
+  const list = turn.used.map(u => u.component);
+  // What was chosen for a component no longer used goes with it.
+  const write = (ids: string[]) => onChange(withUses(turn, ids));
+  const ready = useMemo(() => readyToPlayOn(view.table, view.board, pack, turn.player), [view, pack, turn.player]);
   const title = t('components.uses.title');
   return (
-    <Section label={title} title={title} warnings={<WarningList warnings={usesWarnings(entry, warnings)} table={view.table} board={view.board} pack={pack} />}>
+    <Section label={title} title={title} warnings={<WarningList warnings={usesWarnings(usingOf(turn), warnings)} table={view.table} board={view.board} pack={pack} />}>
       <span className="muted">{t('components.uses.hint')}</span>
       <div className="side-actions">
         <button type="button" onClick={() => setPicking(true)}>{t('components.uses.add')}</button>
@@ -62,13 +60,13 @@ export function UsesBlock({ entry, pack, view, warnings = [], onChange }: UsesBl
               def={def} pack={pack} held note={t('components.uses.used')} owner={mark?.owner} text={mark?.text}
               onRemove={() => write(list.filter((_, i) => i !== index))}
             />
-            <ChoicesBlock id={id} entry={entry} view={view} pack={pack} onChange={chosen => onChange(withChoices(entry, id, chosen))} />
+            <ChoicesBlock id={id} turn={turn} view={view} pack={pack} onChange={chosen => onChange(withChoicesOf(turn, id, chosen))} />
           </Fragment>
         );
       })}
       {picking && (
         <ComponentPicker
-          kinds={USED_KINDS} player={entry.owner ?? 'me'} owned={ready} prefer="owned" onClose={() => setPicking(false)}
+          kinds={USED_KINDS} player={legacyKey(view.table, turn.player)} owned={ready} prefer="owned" onClose={() => setPicking(false)}
           onPick={id => { if (!list.includes(id)) write([...list, id]); setPicking(false); }}
         />
       )}

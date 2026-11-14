@@ -3,28 +3,23 @@ import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { componentById } from '../../domain/components';
 import { CARD } from '../../domain/strategy';
-import { gameAs, playersOf } from '../../domain/players';
 import { standing } from '../../domain/project';
-import { statusTokensFree } from '../../game/queries';
-import type { DataPack, Entry, EntryBody, Game, GameState, Phase, Round, Warning } from '../../domain/types';
-import { useGame } from '../../state/gameStore';
-import { turnsOf } from '../../state/projection';
+import type { Turn } from '../../game/actions';
 import { turnNumbers } from '../../game/numbering';
+import { mapSource } from '../../game/space';
+import type { DataPack, Entry, Phase, Round, Warning } from '../../domain/types';
+import { addStatusTurn, moveTurn, removeTurn, setStatus } from '../../state/turnBridge';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
 import { EntrySteps } from './EntrySteps';
-import { actLines, insideCard } from './actLines';
-import { GainsBlock } from './blocks/GainsBlock';
-import { UsesBlock } from './blocks/UsesBlock';
-import { ScoredBlock } from './blocks/ScoredBlock';
-import { playerOfEntry, type KernelView } from './kernelView';
-import { StepHints } from '../feedback/StepHints';
+import { StatusFields } from './StatusFields';
+import { TurnHost } from './editors/TurnHost';
+import { actLines } from './actLines';
+import type { KernelView } from './kernelView';
 import { agendaOf } from './editors/AdjustmentEditor';
 import { HexRemove, RowIcon } from '../primitives/Icon';
-import { Stepper } from '../primitives/Stepper';
 import { systemTitle } from '../map/systemName';
-import { TokenTiles } from './blocks/TokenTiles';
-import { flightOf } from '../feedback/warningPlaces';
+import { flightOfTurn } from '../feedback/warningPlaces';
 import { WarningList } from '../feedback/WarningText';
 import { SectionTitle } from '../primitives/SectionTitle';
 import { playerStyle } from '../primitives/player';
@@ -32,14 +27,16 @@ import { playerStyle } from '../primitives/player';
 const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 
 export interface EntryListProps {
-  game: Game;
   pack: DataPack;
   /** The table and the board just before an entry, as the kernel keeps them. */
   viewOf: (entryId: string) => KernelView;
+  /** The round of the open plan: the entries the callbacks are about. */
   round: Round;
+  /** The same round as the kernel plays it: its turns are the rows. */
+  turns: readonly Turn[];
   warnings: Record<string, Warning[]>;
-  /** The forecast, for the systems a manual adjustment can change. */
-  state: GameState;
+  /** The table and the board at the end of the round, as the forecast has it: the points a status turn brings are added to them. */
+  end: KernelView;
   /** The entry whose fields are shown. */
   openId: string | null;
   /** The pencil: opens the entry's editor. */
@@ -60,83 +57,40 @@ export interface EntryListProps {
   addAction?: ReactNode;
 }
 
-// TODO(P2-349) #ws:ui-nesting #type:ui #needs:prototype — жетоны статуса раскрываются внутри строки записи (5 уровней); отдельное меню на месте списка, как Strategy и Adjustment
-/**
- * The status entry: the tokens taken this round, the points each player gains with their running total, and what the
- * phase brings: the action card drawn (81.3), whichever it is, has a button of its own.
- */
-function StatusFields({ entry, game, pack, view, state, warnings }: {
-  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; view: KernelView; state: GameState; warnings: Warning[];
-}) {
-  const { t } = useTranslation();
-  const updateEntry = useGame(s => s.updateEntry);
-  const gains = entry.opponentVp ?? {};
-  // Two tokens, and what the player's components make of them (Versatile, Hyper Metabolism, a note named in «Used»).
-  const free = statusTokensFree(view.table, view.board, pack, playerOfEntry(view, entry.owner), entry);
-  return (
-    <>
-      <TokenTiles
-        free={free} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
-        onChange={values => updateEntry(entry.id, values)}
-      />
-      <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
-      <SectionTitle as="h5" className="status-points">{t('plan.entries.roundPoints')}</SectionTitle>
-      {playersOf(game).map((player, index) => {
-        const me = index === 0;
-        return (
-          <div key={player.id} className="status-player" style={playerStyle('--player', player.color)}>
-            <Stepper
-              name={shortName(pack, player.faction, t('players.player', { n: index + 1 }))}
-              note={t('plan.entries.pointsTotal', { n: me ? state.vp : state.opponentVp[player.id] ?? player.vp })}
-              value={me ? entry.vp ?? 0 : gains[player.id] ?? 0} min={0}
-              onChange={value => updateEntry(entry.id, me ? { vp: value } : { opponentVp: { ...gains, [player.id]: value } })}
-            />
-          </div>
-        );
-      })}
-      <p className="muted status-reminder">{t('plan.entries.planetsRefresh')}</p>
-      {/* The objectives scored and their reminders come after the points: the warning under the tiles stays above the points. */}
-      <StepHints pack={pack} table={view.table} board={view.board} step="status" players={['me']} />
-      <ScoredBlock entry={entry} pack={pack} view={view} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
-      {/* Last: a card taken stands under its buttons and moves nothing above. */}
-      <GainsBlock entry={entry} pack={pack} view={view} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
-      {/* What the status phase uses: Letani Behemoth replaces the infantry of Mitosis, an agent is readied there. */}
-      <UsesBlock entry={entry} pack={pack} view={view} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
-    </>
-  );
-}
+const cardName = (view: KernelView, card: number | undefined): string | undefined =>
+  strategyCards(view.table.expansions).find(c => c.initiative === card)?.name;
 
-const cardName = (game: Game, card: number | undefined): string | undefined =>
-  strategyCards(game.expansions).find(c => c.initiative === card)?.name;
-
-/** An opponent's entry says whose it is before what it is. */
-function entryLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
-  const faction = game.opponents.find(o => o.id === entry.owner)?.faction ?? '';
-  const name = bareLabel(entry, game, pack, t);
+/** A turn of a rival says whose it is before what it is. */
+function entryLabel(turn: Turn, view: KernelView, pack: DataPack, t: (key: string) => string): string {
+  const faction = turn.player === view.table.viewer ? '' : view.table.players.find(p => p.id === turn.player)?.faction ?? '';
+  const name = bareLabel(turn, view, pack, t);
   return pack.factions[faction] ? `${shortName(pack, faction, '')}: ${name}` : name;
 }
 
-function bareLabel(entry: Entry, game: Game, pack: DataPack, t: (key: string) => string): string {
-  switch (entry.type) {
+function bareLabel(turn: Turn, view: KernelView, pack: DataPack, t: (key: string) => string): string {
+  const action = turn.action;
+  const map = mapSource(view.table, view.board);
+  switch (action.kind) {
     case 'tactical':
-      return `${entry.free ? `${cardName(game, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${entry.systemId === null ? t('plan.entries.noSystem') : systemTitle(game, pack, entry.systemId, t)}`;
+      return `${action.free ? `${cardName(view, CARD.warfare)}: ` : ''}${t('plan.menu.tactical')} · ${action.system === null ? t('plan.entries.noSystem') : systemTitle(map, pack, action.system, t)}`;
     case 'strategic':
     case 'secondary': {
-      const name = cardName(game, entry.card);
-      return `${t(`plan.entries.${entry.type}`)}${name ? `: ${name}` : ''}${entry.forToken ? ` · ${t('plan.entries.forToken')}` : ''}`;
+      const name = cardName(view, action.card);
+      return `${t(`plan.entries.${action.kind}`)}${name ? `: ${name}` : ''}${action.kind === 'strategic' && action.forToken ? ` · ${t('plan.entries.forToken')}` : ''}`;
     }
-    case 'adjustment':
+    case 'agenda':
       // In the agenda phase the entry is the agenda that was resolved.
-      if (entry.phase === 'agenda') return [t('plan.agenda.title'), agendaOf(entry, pack)?.name ?? entry.label].filter(Boolean).join(': ');
-      if (entry.kind) return `${t(`plan.entries.kind.${entry.kind}`)} · ${systemTitle(game, pack, entry.delta.units?.systemId ?? '', t)}`;
-      return entry.label ? `${t('plan.menu.adjustment')}: ${entry.label}` : t('plan.menu.adjustment');
+      return [t('plan.agenda.title'), agendaOf(turn, pack)?.name ?? action.label].filter(Boolean).join(': ');
+    case 'correction':
+      if (action.purpose) return `${t(`plan.entries.kind.${action.purpose}`)} · ${systemTitle(map, pack, action.delta.units?.systemId ?? '', t)}`;
+      return action.label ? `${t('plan.menu.adjustment')}: ${action.label}` : t('plan.menu.adjustment');
     case 'component':
       // The component it plays names the entry, so that several actions of a round can be told apart; the note comes second.
-      return [t('plan.menu.component'), (entry.componentId ? componentById(pack, entry.componentId)?.name : undefined) ?? entry.note].filter(Boolean).join(': ');
-    case 'statusTokens':
+      return [t('plan.menu.component'), (action.component ? componentById(pack, action.component)?.name : undefined) ?? action.note].filter(Boolean).join(': ');
+    case 'status':
       return t('plan.entries.statusTokens');
     default:
-      return t(`plan.menu.${entry.type}`);
+      return t(`plan.menu.${action.kind}`);
   }
 }
 
@@ -155,13 +109,9 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, viewOf, round, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
+  pack, viewOf, round, turns, warnings, end, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
-  const moveEntry = useGame(s => s.moveEntry);
-  const removeEntry = useGame(s => s.removeEntry);
-  const setEntryStatus = useGame(s => s.setEntryStatus);
-  const addStatusEntry = useGame(s => s.addStatusEntry);
   const listRef = useRef<HTMLDivElement>(null);
   // An entry removed mid-drag (undo, another tab) ends the drag. Entries move within their phase.
   const drag = useReorderDrag({
@@ -174,69 +124,73 @@ export function EntryList({
     exists: id => round.entries.some(e => e.id === id),
     onDrop: (id, toIndex) => {
       const phase = round.entries.find(e => e.id === id)?.phase;
-      if (phase) moveEntry(id, phase, toIndex);
+      if (phase) moveTurn(id, phase, toIndex);
     },
   });
-  const numbers = turnNumbers(turnsOf(game, round, pack));
+  const numbers = turnNumbers(turns);
+  const entryOf = (id: string): Entry | undefined => round.entries.find(e => e.id === id);
 
   return (
     <div className="plan-entries" ref={listRef}>
       {PHASES.map(phase => {
-        // Warfare's free tactical action is drawn inside its card's row.
-        const entries = round.entries.filter(e => e.phase === phase && !insideCard(e, round));
+        // Warfare's free tactical action is drawn inside its card's row: it is no turn of its own.
+        const inPhase = turns.filter(turn => (turn.phase ?? 'action') === phase);
         return (
           <section key={phase} className="phase" aria-label={t(`plan.phases.${phase}`)}>
             {phase === 'strategy' && strategy ? strategy : <SectionTitle as="h4" className="phase-title">{t(`plan.phases.${phase}`)}</SectionTitle>}
-            {entries.length === 0 && !(phase === 'strategy' && strategy) && <p className="muted phase-auto">{t(`plan.phases.${phase}Empty`)}</p>}
+            {inPhase.length === 0 && !(phase === 'strategy' && strategy) && <p className="muted phase-auto">{t(`plan.phases.${phase}Empty`)}</p>}
             <ul className="entry-list">
-              {entries.map(entry => {
-                const label = entryLabel(entry, game, pack, t);
+              {inPhase.map(entry => {
+                const view = viewOf(entry.id);
+                const label = entryLabel(entry, view, pack, t);
                 // The round has one status entry, so there is nothing to move it past.
-                const movable = entry.type !== 'statusTokens';
-                const rival = game.opponents.find(o => o.id === entry.owner);
+                const movable = entry.action.kind !== 'status';
+                const rival = entry.player === view.table.viewer ? undefined : view.table.players.find(p => p.id === entry.player);
                 // A card speaks for Warfare's free action too: its warnings mark the card's row.
-                const free = entry.type === 'strategic' ? round.entries.find(e => e.type === 'tactical' && e.fromCard === entry.id) : undefined;
+                const free = entry.action.kind === 'strategic' ? entry.action.nested?.[0] : undefined;
                 const list = [...(warnings[entry.id] ?? []), ...(free ? warnings[free.id] ?? [] : [])];
                 // The card's row carries the number of its free action, as the arrow of that action does on the map.
                 const number = numbers[entry.id] ?? (free ? numbers[free.id] : undefined);
                 const shown = entry.id === shownId;
                 // The steps of a shown action say what goes wrong with a flight by that flight; the row keeps the rest.
-                const inSteps = (w: Warning) => flightOf(w, gameAs(game, entry.owner), pack, entry) !== undefined;
+                const inSteps = (w: Warning) => flightOfTurn(w, view.table, view.board, pack, entry) !== undefined;
                 // Open fields show the warnings in their own blocks; otherwise the row says it stands for them.
-                const fieldsOpen = entry.id === openId && entry.type === 'statusTokens';
+                const fieldsOpen = entry.id === openId && entry.action.kind === 'status';
                 const cls = ['entry', shown && 'entry-shown', entry.status === 'done' && 'entry-done', standing(list).length > 0 && 'entry-warned', rival && 'entry-rival', drag.draggingId === entry.id && 'entry-dragging'].filter(Boolean).join(' ');
                 return (
                   <li key={entry.id} className={cls} style={rival ? { ...drag.styleOf(entry.id), ...playerStyle('--owner', rival.color) } : drag.styleOf(entry.id)} data-entry-id={entry.id} aria-label={label}>
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {/* The number is part of the name: one button, one background under the pointer. */}
-                      <button type="button" className="entry-label" aria-label={label} aria-expanded={entry.type === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
+                      <button type="button" className="entry-label" aria-label={label} aria-expanded={entry.action.kind === 'pass' ? undefined : shown} onClick={() => onShow?.(entryOf(entry.id)!)}>
                         {number !== undefined && <OrderHex number={number} label={t('plan.entries.number', { n: number })} />}
                         <span className="entry-name">
                           <span className="entry-title">{label}</span>
                           {/* What the turn holds beside its action, each a line of its own. */}
-                          {actLines(entry, round, viewOf(entry.id), pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
+                          {actLines(entry, view, pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
                         </span>
                       </button>
-                      <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>
+                      <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entryOf(entry.id)!)}><RowIcon name="edit" /></button>
                       <label className="icon-button entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
                         <input
                           type="checkbox" checked={entry.status === 'done'}
                           onChange={e => {
-                            setEntryStatus(entry.id, e.target.checked ? 'done' : 'planned');
-                            if (e.target.checked) onDone?.(entry);
+                            setStatus(entry.id, e.target.checked ? 'done' : 'planned');
+                            if (e.target.checked) onDone?.(entryOf(entry.id)!);
                           }}
                         />
                         <RowIcon name="done" />
                       </label>
-                      <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
+                      <HexRemove label={t('plan.entries.delete')} onClick={() => removeTurn(entry.id)} />
                     </div>
-                    {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} table={viewOf(entry.id).table} board={viewOf(entry.id).board} pack={pack} />}
-                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} view={viewOf(entry.id)} warnings={list.filter(inSteps)} />}
-                    {entry.id === openId && entry.type === 'statusTokens' && (
+                    {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} table={view.table} board={view.board} pack={pack} />}
+                    {shown && <EntrySteps turn={entry} pack={pack} view={view} warnings={list.filter(inSteps)} />}
+                    {entry.id === openId && entry.action.kind === 'status' && (
                       <div className="entry-details">
-                        <StatusFields entry={entry} game={game} pack={pack} view={viewOf(entry.id)} state={state} warnings={list} />
+                        <TurnHost entryId={entry.id} view={view} pack={pack}>
+                          {({ turn, update }) => <StatusFields turn={turn} pack={pack} view={view} end={end} warnings={list} onChange={update} />}
+                        </TurnHost>
                       </div>
                     )}
                   </li>
@@ -244,8 +198,8 @@ export function EntryList({
               })}
             </ul>
             {phase === 'action' && addAction && <div className="phase-add">{addAction}</div>}
-            {phase === 'status' && !entries.some(e => e.type === 'statusTokens') && (
-              <button type="button" onClick={() => onStatusAdded?.(addStatusEntry(round.number))}>{t('plan.entries.statusTokens')}</button>
+            {phase === 'status' && !inPhase.some(e => e.action.kind === 'status') && (
+              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(round.number))}>{t('plan.entries.statusTokens')}</button>
             )}
             {/* Each agenda of the phase is an entry of its own: the button stays for the next one. */}
             {phase === 'agenda' && onAddAgenda && <button type="button" onClick={onAddAgenda}>{t('plan.agenda.add')}</button>}

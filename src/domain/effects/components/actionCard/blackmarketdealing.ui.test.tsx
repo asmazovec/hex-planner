@@ -8,6 +8,7 @@ import { project, stateBeforeEntry } from '../../../project';
 import type { Act, Entry, Game, Opponent } from '../../../types';
 import { bench, NEAR, quote, tactical, using } from '../kit';
 import { id } from './blackmarketdealing';
+import { transactionProps } from '../../../../ui/testing/turnProps';
 
 uiBench();
 
@@ -48,7 +49,7 @@ test('actionCard:blackmarketdealing the transaction offers the relic I hold once
   const board = stateBeforeEntry(market.game, plan, turn.id, market.pack);
   const warnings = project(market.game, plan, 'forecast', market.pack).warningsByEntry[turn.id] ?? [];
   const nothing = () => undefined;
-  render(<TransactionStep view={viewOf(market.game, board, market.pack)} pack={market.pack} act={act} owner="me" warnings={warnings} uses={turn.uses} onChange={nothing} onBack={nothing} onRemove={nothing} />);
+  render(<TransactionStep {...transactionProps(viewOf(market.game, board, market.pack), market.pack, act, "me", turn.uses, nothing)} view={viewOf(market.game, board, market.pack)} pack={market.pack} warnings={warnings} onBack={nothing} onRemove={nothing}/>);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
   expect(await screen.findByRole('button', { name: 'Choose Dynamis Core' })).toBeEnabled();
 });

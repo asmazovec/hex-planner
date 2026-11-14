@@ -6,6 +6,8 @@ import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { uiBench } from '../../../../ui/testing/effects';
 import { bench, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './aw1';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -18,7 +20,7 @@ test('exploration:aw1 is taken in «Taken and discarded» of the entry that expl
   quote(explored.pack, id, 'or you may convert up to 2 of your commodities to trade goods');
   useGame.setState({ game: explored.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={take} pack={explored.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(explored.game, explored.pack), explored.pack, take, onChange)} pack={explored.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Abandoned Warehouses');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Abandoned Warehouses' }));

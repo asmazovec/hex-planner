@@ -1,24 +1,26 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import type { DataPack, Entry, StatusSpend } from '../../../domain/types';
+import type { DataPack, StatusSpend } from '../../../domain/types';
+import type { Turn } from '../../../game/actions';
+import { withScored, withSpend } from '../../../game/edit/turn';
+import { legacyKey } from '../../../game/keys';
 import { payingPlanets } from '../../../game/queries';
 import { shelfOf } from '../../../game/shelf';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
-import { playerOfEntry, type KernelView } from '../kernelView';
-
-type StatusEntry = Extract<Entry, { type: 'statusTokens' }>;
+import type { KernelView } from '../kernelView';
 
 export interface ScoredBlockProps {
-  entry: StatusEntry;
+  /** A turn of the status phase. */
+  turn: Turn;
   pack: DataPack;
   /** The table and the board just before the entry: the secret objectives in hand and the public ones revealed stand first. */
   view?: KernelView;
-  /** The fields that changed; `scored` and `spend` come without a value when they became empty. */
-  onChange: (patch: { scored?: string[]; spend?: StatusSpend }) => void;
+  /** The turn with the objectives or the spending changed; they are gone from it when they became empty. */
+  onChange: (turn: Turn) => void;
 }
 
 /** An objective is scored by spending when its text begins with "Spend" (61.10). */
@@ -33,21 +35,22 @@ const emptySpend = (spend: StatusSpend): boolean =>
  * stands over the cards, so a card added moves nothing. The requirement of an objective is not asked here: the replay
  * warns when it is not met, in the warnings of the entry.
  */
-export function ScoredBlock({ entry, pack, view, onChange }: ScoredBlockProps) {
+export function ScoredBlock({ turn, pack, view, onChange }: ScoredBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
-  const scored = entry.scored ?? [];
+  const status = turn.action.kind === 'status' ? turn.action : undefined;
+  const scored = status?.scored ?? [];
   const defs = scored.flatMap(id => componentById(pack, id) ?? []);
-  const player = view && playerOfEntry(view, entry.owner);
+  const player = view && turn.player;
   const owned = useMemo(() => {
     if (!view || player === undefined) return new Set<string>();
     const held = shelfOf(view.table, view.board, player);
     return new Set([...held.secrets, ...view.board.common.revealed.filter(id => !held.scored.includes(id))]);
   }, [view, player]);
-  const spend = entry.spend ?? {};
+  const spend = status?.spend ?? {};
   const setSpend = (patch: StatusSpend) => {
     const next = { ...spend, ...patch };
-    onChange({ spend: emptySpend(next) ? undefined : next });
+    onChange(withSpend(turn, emptySpend(next) ? undefined : next));
   };
   const planets = view && player !== undefined ? payingPlanets(view.table, view.board, pack, player) : [];
   const group = (field: 'resources' | 'influence', label: string) => {
@@ -69,7 +72,7 @@ export function ScoredBlock({ entry, pack, view, onChange }: ScoredBlockProps) {
         {defs.map((def, index) => (
           <ComponentCard
             key={`${def.id}-${index}`} def={def} pack={pack} held note={t('plan.entries.scoredNote')}
-            onRemove={() => { const rest = scored.filter(id => id !== def.id); onChange({ scored: rest.length > 0 ? rest : undefined }); }}
+            onRemove={() => { const rest = scored.filter(id => id !== def.id); onChange(withScored(turn, rest)); }}
           />
         ))}
       </Section>
@@ -85,8 +88,8 @@ export function ScoredBlock({ entry, pack, view, onChange }: ScoredBlockProps) {
       )}
       {picking && (
         <ComponentPicker
-          kinds={['publicObjective', 'secretObjective']} player={entry.owner ?? 'me'} owned={owned} prefer="owned" onClose={() => setPicking(false)}
-          onPick={id => { onChange({ scored: [...scored, id] }); setPicking(false); }}
+          kinds={['publicObjective', 'secretObjective']} player={view ? legacyKey(view.table, turn.player) : 'me'} owned={owned} prefer="owned" onClose={() => setPicking(false)}
+          onPick={id => { onChange(withScored(turn, [...scored, id])); setPicking(false); }}
         />
       )}
     </>

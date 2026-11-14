@@ -2,8 +2,8 @@ import type { TFunction } from 'i18next';
 import { nameOfPlayer, shortName } from '../players/names';
 import { systemTitle } from '../map/systemName';
 import { componentById } from '../../domain/components';
-import type { Act, DataPack, Entry, Goods, Round } from '../../domain/types';
-import { playerOfKey } from '../../game/keys';
+import type { DataPack } from '../../domain/types';
+import type { Expedition, Goods, Transaction, Turn } from '../../game/actions';
 import { mapSource } from '../../game/space';
 import type { Table } from '../../game/types';
 import type { KernelView } from './kernelView';
@@ -28,36 +28,24 @@ export function expeditionText(part: { sliceId: string | null; payment: { planet
   return [t(`plan.slice.${part.sliceId}`), ...(paid.length > 0 ? [paid.join(', ')] : [])].join(' · ');
 }
 
-/** How a narrow place names a player of the table by the key an entry gives (`me` or an opponent id): the short name of the faction, or the player number. */
-const playerShortName = (table: Table, pack: DataPack, key: string, t: T): string => {
-  const id = playerOfKey(table, key) ?? key;
-  return shortName(pack, table.players.find(p => p.id === id)?.faction ?? '', nameOfPlayer(table, pack, id, t));
-};
+/** How a narrow place names a player of the table: the short name of the faction, or the player number. */
+const playerShortName = (table: Table, pack: DataPack, id: string, t: T): string =>
+  shortName(pack, table.players.find(p => p.id === id)?.faction ?? '', nameOfPlayer(table, pack, id, t));
 
-/** One act read as a line, as the plan row and the turn block show it. */
-export const actLine = (act: Act, table: Table, pack: DataPack, t: T): string => (act.kind === 'expedition'
-  ? t('plan.acts.expedition', { brief: expeditionText(act, pack, t) })
+/** One act of a turn read as a line, as the plan row and the turn block show it. */
+export const turnActLine = (act: Transaction | Expedition, table: Table, pack: DataPack, t: T): string => (act.kind === 'expedition'
+  ? t('plan.acts.expedition', { brief: expeditionText({ sliceId: act.slice, payment: act.payment }, pack, t) })
   : t('plan.acts.transaction', {
-    name: act.with === 'me' ? t('plan.acts.me') : playerShortName(table, pack, act.with, t),
+    name: act.with === table.viewer ? t('plan.acts.me') : playerShortName(table, pack, act.with, t),
     give: goodsText(act.give, pack, t), get: goodsText(act.get, pack, t),
   }));
 
-/** Warfare's free tactical action stored for this card, if any: part of the card, shown under it. */
-export const freeTacticalOf = (entry: Entry, round: Round): Extract<Entry, { type: 'tactical' }> | undefined =>
-  (entry.type === 'strategic'
-    ? round.entries.find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical' && e.fromCard === entry.id)
-    : undefined);
-
-/** Whether an entry is drawn inside another one's row: Warfare's free tactical action of a card in the round. */
-export const insideCard = (entry: Entry, round: Round): boolean =>
-  entry.type === 'tactical' && entry.fromCard !== undefined && round.entries.some(e => e.id === entry.fromCard);
-
 /** The lines a row shows under its name for what the turn holds: Warfare's movement, transactions, the expedition. */
-export function actLines(entry: Entry, round: Round, view: KernelView, pack: DataPack, t: T): string[] {
-  const free = freeTacticalOf(entry, round);
-  const movement = free ? [`+ ${t('plan.strategy.freeTacticalOpen')}${free.systemId ? ` · ${systemTitle(mapSource(view.table, view.board), pack, free.systemId, t)}` : ''}`] : [];
-  const acts = 'acts' in entry && entry.acts ? entry.acts : [];
+export function actLines(turn: Turn, view: KernelView, pack: DataPack, t: T): string[] {
+  const free = turn.action.kind === 'strategic' ? turn.action.nested?.find(n => n.action.kind === 'tactical') : undefined;
+  const system = free?.action.kind === 'tactical' ? free.action.system : null;
+  const movement = free ? [`+ ${t('plan.strategy.freeTacticalOpen')}${system ? ` · ${systemTitle(mapSource(view.table, view.board), pack, system, t)}` : ''}`] : [];
   // Transactions come in the turn before the expedition that ends it.
-  const ordered = [...acts.filter(a => a.kind === 'transaction'), ...acts.filter(a => a.kind === 'expedition')];
-  return [...movement, ...ordered.map(act => actLine(act, view.table, pack, t))];
+  const ordered = [...turn.acts.filter(a => a.kind === 'transaction'), ...turn.acts.filter(a => a.kind === 'expedition')];
+  return [...movement, ...ordered.map(act => turnActLine(act, view.table, pack, t))];
 }

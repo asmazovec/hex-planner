@@ -7,13 +7,13 @@
 import { useMemo } from 'react';
 import type { Turn } from '../game/actions';
 import { legacyEntry, nestedEntries, playerOfLegacy } from '../game/entry';
-import { newTurn } from '../game/edit/new';
+import { newTurn, type NewAction } from '../game/edit/new';
 import { withoutEmptySources } from '../game/edit/tactical';
 import { atOf } from '../game/edit/tacticalRead';
 import { timelineOf } from './projection';
-import { turnOf } from '../game/fromLegacy';
+import { planOf, turnOf } from '../game/fromLegacy';
 import type { Table } from '../game/types';
-import type { DataPack, Entry, EntryBody, Game } from '../domain/types';
+import type { DataPack, Entry, EntryBody, EntryStatus, Game, Phase } from '../domain/types';
 import { loadPack } from '../data/loadPack';
 import { useGame } from './gameStore';
 
@@ -104,3 +104,32 @@ export function pruneEmptySources(entryId: string | undefined): void {
   if (!write || write.turn.action.kind !== 'tactical') return;
   write.update(withoutEmptySources(atOf(kernel.table, kernel.byTurn.get(entryId)?.before ?? kernel.end, pack), write.turn));
 }
+
+/**
+ * A new turn of a kind other than a tactical action, in a round of the open plan: its body is the kernel's `newTurn`
+ * (a strategy card starts on the card the viewer holds and has not played), stored as the body the store keeps.
+ * `owner` is the old key of whose it is. Returns its id.
+ */
+export function addTurn(table: Table, roundNumber: number, kind: Exclude<NewAction, 'tactical'>, owner: string | undefined, phase?: Phase): string {
+  const store = useGame.getState();
+  const game = store.game;
+  const plan = game?.plans.find(p => p.id === game.activePlanId) ?? game?.plans[0];
+  const round = game && plan ? planOf(table, plan, loadPack(game.expansions)).find(r => r.number === roundNumber) : undefined;
+  const player = (owner === undefined ? undefined : playerOfLegacy(table, owner)) ?? table.viewer;
+  const turn = newTurn(kind, { id: '', player, viewer: table.viewer, round: round ?? { number: roundNumber, strategyCard: null, backupCard: null, held: [], turns: [] }, ...(phase ? { phase } : {}) });
+  const { id, status, phase: placed, owner: made, acts, ...body } = legacyEntry(table, turn) as Entry & { acts?: unknown[] };
+  void id; void status; void made;
+  return store.addEntry(roundNumber, { ...body, ...(acts && acts.length > 0 ? { acts } : {}) } as EntryBody, placed, owner);
+}
+
+/** The status turn of a round: the one it already has, or a new one with no tokens taken. */
+export const addStatusTurn = (roundNumber: number): string => useGame.getState().addStatusEntry(roundNumber);
+
+/** Marks a turn done, planned again or cancelled. */
+export const setStatus = (turnId: string, status: EntryStatus): void => useGame.getState().setEntryStatus(turnId, status);
+
+/** Takes a turn out of its round; Warfare's free action goes with its card. */
+export const removeTurn = (turnId: string): void => useGame.getState().removeEntry(turnId);
+
+/** Puts a turn at a place among those of its phase. */
+export const moveTurn = (turnId: string, phase: Phase, toIndex: number): void => useGame.getState().moveEntry(turnId, phase, toIndex);

@@ -7,6 +7,8 @@ import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../.
 import { CARD } from '../../../replay/cards/ids';
 import { bench, NEAR, quote, secondary, TARGET, tactical } from '../kit';
 import { id } from './pw';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -26,7 +28,7 @@ test('exploration:pw is taken in «Taken and discarded» of the entry that explo
   quote(paradise.pack, id, "This planet's influence value is increased by 2.");
   useGame.setState({ game: paradise.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={paradise.take} pack={paradise.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(paradise.game, paradise.pack), paradise.pack, paradise.take, onChange)} pack={paradise.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Paradise World');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Paradise World' }));

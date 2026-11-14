@@ -16,6 +16,7 @@ export const KERNEL_ONLY = [
   'plan/editors/AdjustmentEditor.tsx', 'plan/editors/TransactionStep.tsx', 'plan/blocks/AgendaChoices.tsx', 'plan/editors/TacticalEditor.tsx', 'plan/editors/UnitPicker.tsx', 'plan/TacticalSteps.tsx', 'units/UnitPictures.tsx', 'plan/StrategySteps.tsx', 'map/stage/turnPurchases.ts',
   'plan/editors/StrategyEditor.tsx', 'plan/blocks/EntryUpgrades.tsx', 'plan/editors/cards/construction.tsx', 'plan/editors/cards/diplomacy.tsx', 'plan/editors/cards/imperial.tsx', 'plan/editors/cards/index.ts',
   'plan/editors/cards/kit.ts', 'plan/editors/cards/leadership.tsx', 'plan/editors/cards/politics.tsx', 'plan/editors/cards/technology.tsx', 'plan/editors/cards/trade.tsx', 'plan/editors/cards/warfare.tsx',
+  'plan/StatusFields.tsx', 'plan/EntrySteps.tsx', 'plan/EntryList.tsx', 'plan/editors/TurnHost.tsx',
 ];
 
 /** The files of the list above that no longer take the old `Game` either: they read the table and the board. */
@@ -27,6 +28,7 @@ export const WITHOUT_GAME = [
   'plan/editors/AdjustmentEditor.tsx', 'plan/editors/TransactionStep.tsx', 'plan/blocks/AgendaChoices.tsx', 'plan/editors/TacticalEditor.tsx', 'plan/editors/UnitPicker.tsx', 'plan/TacticalSteps.tsx', 'units/UnitPictures.tsx', 'plan/StrategySteps.tsx', 'map/stage/turnPurchases.ts',
   'plan/editors/StrategyEditor.tsx', 'plan/blocks/EntryUpgrades.tsx', 'plan/editors/cards/construction.tsx', 'plan/editors/cards/diplomacy.tsx', 'plan/editors/cards/imperial.tsx', 'plan/editors/cards/index.ts',
   'plan/editors/cards/kit.ts', 'plan/editors/cards/leadership.tsx', 'plan/editors/cards/politics.tsx', 'plan/editors/cards/technology.tsx', 'plan/editors/cards/trade.tsx', 'plan/editors/cards/warfare.tsx',
+  'plan/StatusFields.tsx', 'plan/EntrySteps.tsx', 'plan/EntryList.tsx', 'plan/editors/TurnHost.tsx',
 ];
 
 const raw = import.meta.glob<string>(['./**/*.ts', './**/*.tsx', '!./**/*.test.*'], { query: '?raw', import: 'default', eager: true });

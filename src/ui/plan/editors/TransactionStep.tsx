@@ -3,8 +3,10 @@ import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { notesOfFirst, tradable, TRANSACTION_KINDS } from '../../../domain/holdings';
-import type { Act, ComponentKind, DataPack, Goods, Warning } from '../../../domain/types';
-import { legacyKey, playerOfKey } from '../../../game/keys';
+import type { ComponentKind, DataPack, Warning } from '../../../domain/types';
+import type { Goods, Transaction, Turn } from '../../../game/actions';
+import { withAct } from '../../../game/edit/turn';
+import { legacyKey } from '../../../game/keys';
 import { effectOfComponent as effectOf } from '../../../game/planQueries';
 import { shelfOf } from '../../../game/shelf';
 import { ComponentCard } from '../../components/ComponentCard';
@@ -19,21 +21,19 @@ import { PlayerChoice, playerOptions } from '../../primitives/player';
 import { Section } from '../../primitives/Section';
 import { Stepper } from '../../primitives/Stepper';
 
-type Transaction = Extract<Act, { kind: 'transaction' }>;
 type Side = 'give' | 'get';
 
 export interface TransactionStepProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
   pack: DataPack;
-  act: Transaction;
-  /** Whose turn it is: `me` or an opponent's id; the other side is chosen among the rest. */
-  owner: string;
+  /** The turn the transaction is in, and the place of the transaction among its acts. Its player is the one whose turn it is; the other side is chosen among the rest. */
+  turn: Turn;
+  index: number;
   /** The turn's warnings: the step shows those of transactions. */
   warnings: Warning[];
-  /** The components the turn uses beside its action: one that lifts the check of the kind (Black Market Dealings) opens relics and secret objectives to the deal. */
-  uses?: string[];
-  onChange: (act: Transaction) => void;
+  /** The turn with its transaction changed; the components the turn uses beside its action count: one that lifts the check of the kind (Black Market Dealings) opens relics and secret objectives to the deal. */
+  onChange: (turn: Turn) => void;
   onBack: () => void;
   onRemove: () => void;
 }
@@ -42,22 +42,26 @@ export interface TransactionStepProps {
  * A transaction with a neighbour (LRR 94): who with, then what is given and what is got. The components of a side are
  * chosen among what the giving side holds and a transaction hands over; nothing else is limited, the replay warns.
  */
-export function TransactionStep({ pack, view, act, owner, warnings, uses = [], onChange, onBack, onRemove }: TransactionStepProps) {
+export function TransactionStep({ pack, view, turn, index, warnings, onChange, onBack, onRemove }: TransactionStepProps) {
   const { t } = useTranslation();
+  const act = turn.acts[index] as Transaction;
+  const owner = turn.player;
+  const uses = turn.used.map(u => u.component);
+  const change = (next: Transaction) => onChange(withAct(turn, index, next));
   const [picking, setPicking] = useState<Side | null>(null);
   // The game is seen by the turn's owner: its opponents are every other player, me among them in an opponent's turn.
   // They are named as everywhere: the short name of the faction, a tag when the line is crowded.
   const players = playerOptions(
-    view.table.players.filter(p => p.seat <= 8 && legacyKey(view.table, p.id) !== owner).sort((a, b) => a.seat - b.seat)
-      .map(p => ({ id: legacyKey(view.table, p.id), faction: p.faction, vp: 0, seat: p.seat, color: p.color })),
-    pack, id => nameOfPlayer(view.table, pack, playerOfKey(view.table, id) ?? id, t),
+    view.table.players.filter(p => p.seat <= 8 && p.id !== owner).sort((a, b) => a.seat - b.seat)
+      .map(p => ({ id: p.id, faction: p.faction, vp: 0, seat: p.seat, color: p.color })),
+    pack, id => nameOfPlayer(view.table, pack, id, t),
   );
-  const giver = (key: Side): string => (key === 'give' ? owner : act.with);
+  const giver = (key: Side) => (key === 'give' ? owner : act.with);
   const set = (key: Side, patch: Partial<Goods>) => {
     const next: Goods = { ...act[key], ...patch };
     for (const field of ['tradeGoods', 'commodities'] as const) if (!next[field]) delete next[field];
     if (!next.components?.length) delete next.components;
-    onChange({ ...act, [key]: next });
+    change({ ...act, [key]: next });
   };
   /**
    * What the giving side of `key` can still add: its notes and action cards before the entry, less those chosen. The
@@ -67,8 +71,7 @@ export function TransactionStep({ pack, view, act, owner, warnings, uses = [], o
   const kinds: readonly ComponentKind[] = uses.some(id => effectOf(pack, id)?.permit?.some(w => w.code === 'transactionKind'))
     ? [...TRANSACTION_KINDS, 'relic', 'secretObjective'] : TRANSACTION_KINDS;
   const offer = (key: Side): string[] => {
-    const who = playerOfKey(view.table, giver(key));
-    return who === undefined ? [] : notesOfFirst(tradable(shelfOf(view.table, view.board, who), act[key].components ?? [], kinds), giver(key === 'give' ? 'get' : 'give'));
+    return notesOfFirst(tradable(shelfOf(view.table, view.board, giver(key)), act[key].components ?? [], kinds), legacyKey(view.table, giver(key === 'give' ? 'get' : 'give')));
   };
   const side = (key: Side, title: string) => {
     const goods = act[key];
@@ -97,15 +100,15 @@ export function TransactionStep({ pack, view, act, owner, warnings, uses = [], o
   };
   return (
     <EditorFrame title={t('plan.acts.transactionTitle')} removeLabel={t('plan.acts.remove', { name: t('plan.acts.kind.transaction') })} onRemove={onRemove} onBack={onBack}>
-      <PlayerChoice label={t('plan.acts.withWhom')} options={players} chosen={value => value === act.with} onPick={value => { if (value !== null) onChange({ ...act, with: value }); }} />
+      <PlayerChoice label={t('plan.acts.withWhom')} options={players} chosen={value => value === act.with} onPick={value => { if (value !== null) change({ ...act, with: value }); }} />
       {side('give', t('plan.acts.give'))}
       {side('get', t('plan.acts.get'))}
       {/* Under the goods: a warning above them would push the counters from under the finger. */}
       <WarningList warnings={placeWarnings(warnings).at('deal')} table={view.table} board={view.board} pack={pack} />
-      <StepHints pack={pack} table={view.table} board={view.board} step="transaction" players={[owner, act.with]} />
+      <StepHints pack={pack} table={view.table} board={view.board} step="transaction" players={[legacyKey(view.table, owner), legacyKey(view.table, act.with)]} />
       {picking && (
         <ComponentPicker
-          ids={offer(picking)} player={giver(picking)} onClose={() => setPicking(null)}
+          ids={offer(picking)} player={legacyKey(view.table, giver(picking))} onClose={() => setPicking(null)}
           onPick={id => { set(picking, { components: [...(act[picking].components ?? []), id] }); setPicking(null); }}
         />
       )}

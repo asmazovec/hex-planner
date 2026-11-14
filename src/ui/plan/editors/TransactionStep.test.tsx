@@ -9,6 +9,7 @@ import type { Act, Game, Opponent } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { uiBench } from '../../testing/effects';
 import { TransactionStep } from './TransactionStep';
+import { transactionProps } from '../../testing/turnProps';
 
 vi.mock('../../../domain/effects/registry', async original => (await import('../../../domain/effects/points/throwaway')).mockRegistry(await original()));
 
@@ -32,7 +33,7 @@ async function openGive(uses: string[]) {
   const board = stateBeforeEntry(table.game, table.game.plans[0], turn.id, table.pack);
   useGame.setState({ game: table.game });
   const nothing = () => undefined;
-  render(<TransactionStep view={viewOf(table.game, board, table.pack)} pack={table.pack} act={act} owner="me" warnings={[]} uses={uses} onChange={nothing} onBack={nothing} onRemove={nothing} />);
+  render(<TransactionStep {...transactionProps(viewOf(table.game, board, table.pack), table.pack, act, "me", uses, nothing)} view={viewOf(table.game, board, table.pack)} pack={table.pack} warnings={[]} onBack={nothing} onRemove={nothing}/>);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
 }
 

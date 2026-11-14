@@ -1,5 +1,8 @@
 import { ruleOf } from '../../domain/rules/registry';
-import type { MapSource } from '../../game/space';
+import type { Turn } from '../../game/actions';
+import { legacyEntry } from '../../game/entry';
+import { mapSource, type MapSource } from '../../game/space';
+import type { Board, Table } from '../../game/types';
 import type { DataPack, RuleStep, Warning } from '../../domain/types';
 import { groupOf, sourcesOf, type Move, type TacticalEntry } from '../plan/tactical';
 
@@ -83,8 +86,16 @@ export interface WarningPlacer {
   rest: () => Warning[];
 }
 
+/** The same for a turn: the flight of its tactical action a warning speaks of. */
+export function flightOfTurn(warning: Warning, table: Table, board: Board, pack: DataPack, turn: Turn): string | undefined {
+  return turn.action.kind === 'tactical' ? flightOf(warning, mapSource(table, board), pack, legacyEntry(table, turn)) : undefined;
+}
+
 /** What of an entry decides which warnings are of its components: the ones it names in «Used» and the one it plays. */
 export interface UsingEntry { uses?: readonly string[]; componentId?: string | undefined }
+
+/** What a turn uses and the component it plays, as the places of warnings ask for it. */
+export const usingOf = (turn: Turn): UsingEntry => ({ uses: turn.used.map(u => u.component), componentId: turn.action.kind === 'component' ? turn.action.component : undefined });
 
 /**
  * The warnings of the components an entry names in «Used»: what the component breaks (not held, exhausted) stands in that

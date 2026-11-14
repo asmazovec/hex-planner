@@ -8,6 +8,8 @@ import { tech } from '../../../rules/kit';
 import type { Entry } from '../../../types';
 import { adjust, bench, componentAction, quote } from '../kit';
 import { id } from './ed1';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -23,7 +25,7 @@ test('exploration:ed1 is taken in «Taken and discarded» of the entry that expl
   quote(device.pack, id, 'Place this card faceup in your play area.');
   useGame.setState({ game: device.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={take} pack={device.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(device.game, device.pack), device.pack, take, onChange)} pack={device.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Enigmatic Device');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Enigmatic Device' }));

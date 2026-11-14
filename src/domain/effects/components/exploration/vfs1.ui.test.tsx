@@ -6,6 +6,8 @@ import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { uiBench } from '../../../../ui/testing/effects';
 import { bench, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './vfs1';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -18,7 +20,7 @@ test('exploration:vfs1 is taken in В«Taken and discardedВ» of the entry that
   quote(explored.pack, id, 'If you have at least 1 mech on this planet, or if you remove 1 infantry from this planet, gain 1 command token.');
   useGame.setState({ game: explored.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={take} pack={explored.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(explored.game, explored.pack), explored.pack, take, onChange)} pack={explored.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Volatile Fuel Source');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Volatile Fuel Source' }));

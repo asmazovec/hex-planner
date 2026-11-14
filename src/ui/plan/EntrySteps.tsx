@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { turnOfEntry } from '../../state/projection';
-import type { DataPack, Entry, Game, UnitCounts, Warning } from '../../domain/types';
+import type { DataPack, UnitCounts, Warning } from '../../domain/types';
+import type { Turn } from '../../game/actions';
+import { roundPointsOf } from '../../game/edit/turn';
+import { mapSource } from '../../game/space';
 import type { KernelView } from './kernelView';
-import { opponentName } from '../players/names';
+import { nameOfPlayer } from '../players/names';
 import { StrategySteps } from './StrategySteps';
 import { TacticalSteps } from './TacticalSteps';
 import { unitsText } from '../units/unitsText';
@@ -11,37 +13,38 @@ import { systemTitle } from '../map/systemName';
 import { agendaOf } from './editors/AdjustmentEditor';
 
 export interface EntryStepsProps {
-  entry: Entry;
-  game: Game;
+  turn: Turn;
   pack: DataPack;
-  /** The table and the board just before the entry, as the kernel keeps them. */
+  /** The table and the board just before the turn, as the kernel keeps them. */
   view: KernelView;
-  /** The entry's warnings about its flights; each stands in the flight it speaks of. */
+  /** The turn's warnings about its flights; each stands in the flight it speaks of. */
   warnings?: Warning[];
 }
 
-/** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
-export function EntrySteps({ entry, game, pack, view, warnings = [] }: EntryStepsProps) {
+/** What a turn plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
+export function EntrySteps({ turn, pack, view, warnings = [] }: EntryStepsProps) {
   const { t } = useTranslation();
-  const name = (slot: string) => systemTitle(game, pack, slot, t);
+  const name = (slot: string) => systemTitle(mapSource(view.table, view.board), pack, slot, t);
   const planetName = (id: string) => pack.planets[id]?.name ?? id;
   const steps: ReactNode[] = [];
+  const action = turn.action;
 
-  switch (entry.type) {
+  switch (action.kind) {
     case 'tactical':
-      return <TacticalSteps view={view} pack={pack} turn={turnOfEntry(view.table, entry, pack)} warnings={warnings} />;
+      return <TacticalSteps view={view} pack={pack} turn={turn} warnings={warnings} />;
     case 'strategic':
     case 'secondary':
-      return <StrategySteps view={view} pack={pack} turn={turnOfEntry(view.table, entry, pack)} />;
+      return <StrategySteps view={view} pack={pack} turn={turn} />;
     case 'component':
-      steps.push(entry.note || t('plan.steps.noNote'));
+      steps.push(action.note || t('plan.steps.noNote'));
       break;
-    case 'adjustment': {
-      const { delta } = entry;
+    case 'agenda':
+    case 'correction': {
+      const { delta } = action;
       // The agenda an entry of the agenda phase names, and whether it stays in play.
-      const agenda = entry.phase === 'agenda' ? agendaOf(entry, pack) : undefined;
+      const agenda = action.kind === 'agenda' ? agendaOf(turn, pack) : undefined;
       if (agenda) steps.push(<>{agenda.name}<small>{t(agenda.detail?.type === 'directive' ? 'plan.agenda.directive' : 'plan.agenda.law')}</small></>);
-      if (entry.label) steps.push(entry.label);
+      if (action.label) steps.push(action.label);
       for (const field of ['tradeGoods', 'tactic', 'fleet', 'strategy', 'vp'] as const) {
         const value = delta[field] ?? 0;
         if (value !== 0) steps.push(`${t(`plan.summary.${field}`)} ${value > 0 ? '+' : ''}${value}`);
@@ -52,13 +55,16 @@ export function EntrySteps({ entry, game, pack, view, warnings = [] }: EntryStep
       if (steps.length === 0) steps.push(t('plan.steps.noChanges'));
       break;
     }
-    case 'statusTokens':
-      steps.push(t('plan.steps.tokens', { tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }));
-      if (entry.vp) steps.push(t('plan.steps.points', { n: entry.vp }));
-      for (const [id, points] of Object.entries(entry.opponentVp ?? {})) {
-        if (points) steps.push(t('plan.steps.opponentPoints', { name: opponentName(game, pack, id, t), n: points }));
+    case 'status': {
+      steps.push(t('plan.steps.tokens', { tactic: action.tactic, fleet: action.fleet, strategy: action.strategy }));
+      const own = roundPointsOf(turn, turn.player);
+      if (own) steps.push(t('plan.steps.points', { n: own }));
+      for (const player of view.table.players.filter(p => p.id !== turn.player)) {
+        const points = roundPointsOf(turn, player.id);
+        if (points) steps.push(t('plan.steps.opponentPoints', { name: nameOfPlayer(view.table, pack, player.id, t), n: points }));
       }
       break;
+    }
     case 'pass':
       return null;
   }

@@ -3,13 +3,16 @@ import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import type { AdjustmentDelta, DataPack, Entry, UnitCounts, Warning } from '../../../domain/types';
+import type { Turn } from '../../../game/actions';
+import { withAgendaChoices, withDelta, withLabel, withListed } from '../../../game/edit/turn';
+import { legacyKey } from '../../../game/keys';
 import { mapSource } from '../../../game/space';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { NoteField } from '../../primitives/NoteField';
 import { HexRemove } from '../../primitives/Icon';
 import { Stepper } from '../../primitives/Stepper';
 import { systemTitle } from '../../map/systemName';
-import { placeWarnings } from '../../feedback/warningPlaces';
+import { placeWarnings, usingOf } from '../../feedback/warningPlaces';
 import { WarningList } from '../../feedback/WarningText';
 import { unitsText } from '../../units/unitsText';
 import { MapPickButton } from '../../primitives/MapPickButton';
@@ -29,7 +32,8 @@ export interface AdjustmentEditorProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
   pack: DataPack;
-  entry: Extract<Entry, { type: 'adjustment' }>;
+  /** The turn of a correction or an agenda. */
+  turn: Turn;
   warnings: Warning[];
   /** The next tap on the map chooses the system. */
   picking: boolean;
@@ -38,7 +42,8 @@ export interface AdjustmentEditorProps {
   onPickSystem: () => void;
   /** Opens the big hex of the system, where its units change. */
   onOpenHex: (slot: string) => void;
-  onUpdate: (patch: { label?: string; delta?: AdjustmentDelta; gains?: string[]; choices?: Record<string, string> }) => void;
+  /** The turn after an edit: its label, numbers, the agenda it names and how it was resolved. */
+  onChange: (turn: Turn) => void;
   onDone: () => void;
   /** The cross of the head: the adjustment goes. */
   onRemove: () => void;
@@ -49,11 +54,12 @@ export interface AdjustmentEditorProps {
  * big hex. In the agenda phase it is an agenda that was resolved: the card stands first, and a law among them stays in
  * play (7.3), while a directive leaves nothing (7.8); what the outcome changed is entered by the same numbers.
  */
-export function AdjustmentEditor({ pack, view, entry, warnings, picking, common, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
+export function AdjustmentEditor({ pack, view, turn, warnings, picking, common, onPickSystem, onOpenHex, onChange, onDone, onRemove }: AdjustmentEditorProps) {
   const { t } = useTranslation();
   const [choosing, setChoosing] = useState(false);
-  const { delta } = entry;
-  const setDelta = (patch: Partial<AdjustmentDelta>) => onUpdate({ delta: { ...delta, ...patch } });
+  const action = turn.action.kind === 'correction' || turn.action.kind === 'agenda' ? turn.action : undefined;
+  const delta = action?.delta ?? {};
+  const setDelta = (patch: Partial<AdjustmentDelta>) => onChange(withDelta(turn, { ...delta, ...patch }));
   const systemId = delta.units?.systemId;
   const signed = (units: UnitCounts) => unitsText(units, t, true);
   const changes = [
@@ -61,18 +67,17 @@ export function AdjustmentEditor({ pack, view, entry, warnings, picking, common,
     ...Object.entries(delta.ground ?? {}).filter(([, units]) => signed(units)).map(([planetId, units]) => `${pack.planets[planetId]?.name ?? planetId}: ${signed(units)}`),
   ].filter(Boolean);
   // The units of the system change in its block; the rest has no block here.
-  const placer = placeWarnings(warnings, entry);
+  const placer = placeWarnings(warnings, usingOf(turn));
   const systemWarnings = [...placer.at('units'), ...placer.at('system')];
 
-  const ofAgenda = entry.phase === 'agenda';
-  const agenda = ofAgenda ? agendaOf(entry, pack) : undefined;
+  const ofAgenda = turn.action.kind === 'agenda';
+  const agenda = ofAgenda ? agendaOf(turn, pack) : undefined;
   const laws = useMemo(() => view.board.common.laws.map(law => law.id), [view.board]);
   const inPlay = useMemo(() => new Set(laws), [laws]);
   /** The entry names one agenda: another takes its place, and the rest of what the entry gains stays. */
   const setAgenda = (id: string | undefined) => {
-    const rest = (entry.gains ?? []).filter(other => componentById(pack, other)?.kind !== 'agenda');
-    const next = [...rest, ...(id ? [id] : [])];
-    onUpdate({ gains: next.length > 0 ? next : undefined });
+    const rest = (turn.gains ?? []).filter(other => componentById(pack, other)?.kind !== 'agenda');
+    onChange(withListed(turn, 'gains', [...rest, ...(id ? [id] : [])]));
   };
 
   return (
@@ -91,10 +96,10 @@ export function AdjustmentEditor({ pack, view, entry, warnings, picking, common,
             <span className="muted">{t('plan.agenda.hint')}</span>
           </Section>
         )}
-        {agenda && <AgendaChoices table={view.table} pack={pack} agenda={agenda} choices={entry.choices} laws={laws} onChange={choices => onUpdate({ choices })} />}
+        {agenda && <AgendaChoices table={view.table} pack={pack} agenda={agenda} choices={turn.action.kind === 'agenda' ? turn.action.choices : undefined} laws={laws} onChange={choices => onChange(withAgendaChoices(turn, choices))} />}
 
         <Section>
-          <NoteField label={t('plan.entries.label')} value={entry.label} onCommit={label => onUpdate({ label })} />
+          <NoteField label={t('plan.entries.label')} value={action?.label ?? ''} onCommit={label => onChange(withLabel(turn, label))} />
         </Section>
 
         <Section>
@@ -121,7 +126,7 @@ export function AdjustmentEditor({ pack, view, entry, warnings, picking, common,
       {common}
       {choosing && (
         <ComponentPicker
-          kinds={['agenda']} player={entry.owner ?? 'me'} owned={inPlay} prefer="new" onClose={() => setChoosing(false)}
+          kinds={['agenda']} player={legacyKey(view.table, turn.player)} owned={inPlay} prefer="new" onClose={() => setChoosing(false)}
           onPick={id => { setAgenda(id); setChoosing(false); }}
         />
       )}

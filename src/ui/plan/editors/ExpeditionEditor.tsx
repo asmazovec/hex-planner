@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import type { KernelView } from '../kernelView';
 import { EXPEDITION_SLICES, slicePlanetCost } from '../../../domain/payment';
-import type { DataPack, Payment, Warning } from '../../../domain/types';
+import type { DataPack, Warning } from '../../../domain/types';
+import type { Expedition, Payment, Turn } from '../../../game/actions';
+import { withAct } from '../../../game/edit/turn';
 import { autoPayOn, sliceAutoPaymentOn, techSlicePlanetsOn } from '../../../game/planQueries';
-import { playerOfEntry } from '../kernelView';
 import { PaymentBlock } from '../blocks/PaymentBlock';
 import type { SliceOwners } from '../../../domain/thundersEdge';
 import { placeWarnings } from '../../feedback/warningPlaces';
@@ -16,18 +17,18 @@ const NO_PAYMENT: Payment = { planets: [], tradeGoods: 0 };
 export interface ExpeditionEditorProps {
   /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
   view: KernelView;
-  /** Whose contribution it is: `me` or a rival's id; none is mine. */
-  owner?: string;
+  /** The turn the contribution is in, and its place among the turn's acts; the turn's player is whose it is. */
+  turn: Turn;
+  index: number;
   pack: DataPack;
-  sliceId: string | null;
-  payment: Payment;
   /** Parts already held, mine and others'; this entry's own part is not counted against it. */
   owners: SliceOwners;
   warnings?: Warning[];
   /** The payment is chosen by hand, kept by the plan screen like every payment's. */
   manualPayment: boolean;
   onManualPayment: (open: boolean) => void;
-  onChange: (patch: { sliceId?: string | null; payment?: Payment }) => void;
+  /** The turn with its contribution changed. */
+  onChange: (turn: Turn) => void;
   onDone: () => void;
   /** The cross of the head: the contribution goes. */
   onRemove: () => void;
@@ -35,18 +36,22 @@ export interface ExpeditionEditorProps {
 
 /** The editor of an expedition contribution: the part and its payment. A part taken by someone else cannot be chosen. */
 export function ExpeditionEditor({
-  owner, view, sliceId, payment, owners, pack, warnings = [], manualPayment, onManualPayment, onChange, onDone, onRemove,
+  turn, index, view, owners, pack, warnings = [], manualPayment, onManualPayment, onChange, onDone, onRemove,
 }: ExpeditionEditorProps) {
   const { t } = useTranslation();
+  const act = turn.acts[index] as Expedition;
+  const sliceId = act.slice;
+  const payment = act.payment;
+  const change = (patch: Partial<Pick<Expedition, 'slice' | 'payment'>>) => onChange(withAct(turn, index, { ...act, ...patch }));
   const paidWith = slicePlanetCost(sliceId);
 
   // The technology part is paid by exhausting one planet of mine with a technology specialty.
   const techPlanet = EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet === true;
-  const player = playerOfEntry(view, owner);
+  const player = turn.player;
   const techPlanets = techSlicePlanetsOn(view.table, view.board, pack, player);
   const choose = (id: string | null) => {
     onManualPayment(false);
-    onChange({ sliceId: id, payment: sliceAutoPaymentOn(view.table, view.board, pack, player, id) });
+    change({ slice: id, payment: sliceAutoPaymentOn(view.table, view.board, pack, player, id) });
   };
 
   const placer = placeWarnings(warnings);
@@ -77,9 +82,9 @@ export function ExpeditionEditor({
           manual={manualPayment}
           onManual={open => {
             onManualPayment(open);
-            if (!open) onChange({ payment: autoPayOn(view.table, view.board, pack, player, paidWith.amount, paidWith.kind) });
+            if (!open) change({ payment: autoPayOn(view.table, view.board, pack, player, paidWith.amount, paidWith.kind) });
           }}
-          onChange={next => onChange({ payment: next })}
+          onChange={next => change({ payment: next })}
         >
           <WarningList warnings={paymentWarnings} table={view.table} board={view.board} pack={pack} />
         </PaymentBlock>
@@ -90,7 +95,7 @@ export function ExpeditionEditor({
           {techPlanets.map(id => (
             <button
               key={id} type="button" className="option" aria-pressed={payment.planets.includes(id)}
-              onClick={() => onChange({ payment: payment.planets.includes(id) ? NO_PAYMENT : { planets: [id], tradeGoods: 0 } })}
+              onClick={() => change({ payment: payment.planets.includes(id) ? NO_PAYMENT : { planets: [id], tradeGoods: 0 } })}
             >
               {pack.planets[id]?.name ?? id}
             </button>

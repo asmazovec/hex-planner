@@ -10,7 +10,7 @@ import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
-import { repaid, withSystem } from '../../domain/strategy';
+import { withSystem } from '../../domain/strategy';
 import { entrySystems, hasUnits, type TacticalEntry } from '../../domain/tactical';
 import { emptySources, isUntouched, sourcesOf, tacticalOf, viaOf, withRoute, withSystem as withActiveSystem, type At } from '../../game/edit/tactical';
 import { atOf, sourceSystemsOn, tileSystemsOn } from '../../game/edit/tacticalRead';
@@ -21,7 +21,7 @@ import type { Turn } from '../../game/actions';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
 import { emptyHoldings, groupCounts, holdingCount, holdingRounds, upgradesOf, type ComponentGroup } from '../../domain/holdings';
 import { entryUpgradeRounds, productionCost } from '../../domain/unitStats';
-import type { Act, AdjustmentKind, CardEffects, Entry, EntryBody } from '../../domain/types';
+import type { AdjustmentKind, CardEffects, Entry } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { componentsTab, lastView } from '../common/preferences';
 import { usePack } from '../common/usePack';
@@ -44,6 +44,8 @@ import { AdjustmentEditor } from '../plan/editors/AdjustmentEditor';
 import { ExpeditionEditor } from '../plan/editors/ExpeditionEditor';
 import { TransactionStep } from '../plan/editors/TransactionStep';
 import { TurnEditor } from '../plan/editors/TurnEditor';
+import { TurnHost } from '../plan/editors/TurnHost';
+import { withoutAct, withUsesRepriced } from '../../game/edit/turn';
 import { GainsBlock } from '../plan/blocks/GainsBlock';
 import { UsesBlock } from '../plan/blocks/UsesBlock';
 import { TurnActs } from '../plan/blocks/TurnActs';
@@ -499,8 +501,6 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     if (write && emptySources(atOf(view.table, view.board, pack), tacticalOf(write.turn)).includes(source)) leavers.leave(flown.id, source);
   };
 
-  /** The acts of a turn entry, written back without an empty list. */
-  const setActs = (entry: Entry, acts: Act[]) => updateEntry(entry.id, { acts: acts.length > 0 ? acts : undefined } as Partial<EntryBody>);
   /**
    * The common part of every editor, the last one, under its own heading. A turn of the active player holds its acts,
    * each opening as a step of this editor with Back returning here, and what it took and discarded. A secondary is
@@ -508,23 +508,30 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
    * so theirs holds only what was taken and discarded.
    */
   const commonOf = (entry: Entry) => {
-    const turn = entry.type === 'tactical' || entry.type === 'strategic' || entry.type === 'component' || entry.type === 'pass';
+    const isTurn = entry.type === 'tactical' || entry.type === 'strategic' || entry.type === 'component' || entry.type === 'pass';
+    const view = boards.view(entry.id);
     return (
       <EditorPart title={t(entry.type === 'adjustment' ? 'plan.acts.titleEntry' : 'plan.acts.title')}>
-        {turn && (
-          <TurnActs
-            game={gameAs(game, entry.owner)} pack={pack} view={boards.view(entry.id)} entry={entry} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
-            onChange={acts => setActs(entry, acts)}
-            // Back from a step returns to the editor as it stands, not as it was first opened.
-            onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel.kind === 'turn' ? { kind: 'turn', entryId: entry.id } : state.panel }, next: IDLE }))}
-          />
-        )}
-        {/* The reminders of the round: what its player holds ready that speaks of the round as a whole, stated in every turn. */}
-        {turn && <StepHints pack={pack} table={boards.view(entry.id).table} board={boards.view(entry.id).board} step="round" players={[entry.owner ?? 'me']} />}
-        {/* What the entry gained and gave stands with what else it holds. */}
-        <GainsBlock entry={entry} pack={pack} view={boards.view(entry.id)} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
-        {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-        <UsesBlock entry={entry} pack={pack} view={boards.view(entry.id)} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={patch => updateEntry(entry.id, repaid(entry, patch, boards.before(entry.id), gameAs(game, entry.owner), pack, manualPayments.includes(entry.id)) as Partial<EntryBody>)} />
+        <TurnHost entryId={entry.id} view={view} pack={pack}>
+          {({ turn, update: change }) => (
+            <>
+              {isTurn && (
+                <TurnActs
+                  pack={pack} view={view} turn={turn} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
+                  onChange={change}
+                  // Back from a step returns to the editor as it stands, not as it was first opened.
+                  onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel.kind === 'turn' ? { kind: 'turn', entryId: entry.id } : state.panel }, next: IDLE }))}
+                />
+              )}
+              {/* The reminders of the round: what its player holds ready that speaks of the round as a whole, stated in every turn. */}
+              {isTurn && <StepHints pack={pack} table={view.table} board={view.board} step="round" players={[entry.owner ?? 'me']} />}
+              {/* What the entry gained and gave stands with what else it holds. */}
+              <GainsBlock turn={turn} pack={pack} view={view} onChange={change} />
+              {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
+              <UsesBlock turn={turn} pack={pack} view={view} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={next => change(withUsesRepriced(view.table, view.board, pack, turn, next, manualPayments.includes(entry.id)))} />
+            </>
+          )}
+        </TurnHost>
       </EditorPart>
     );
   };
@@ -599,64 +606,76 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       case 'adjustment': {
         const adjusted = slot.entry;
         return (
-          <AdjustmentEditor
-            key={adjusted.id} pack={pack} view={boards.view(adjusted.id)} entry={adjusted} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
-            picking={adjustPick !== undefined} common={commonOf(adjusted)}
-            onPickSystem={() => { if (!adjustPick) drawers.closeRight(); update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
-            onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
-            onUpdate={patch => updateEntry(adjusted.id, patch)}
-            onDone={toList}
-            onRemove={() => removeEdited(adjusted.id)}
-          />
+          <TurnHost key={adjusted.id} entryId={adjusted.id} view={boards.view(adjusted.id)} pack={pack}>
+            {({ turn, update: change }) => (
+              <AdjustmentEditor
+                pack={pack} view={boards.view(adjusted.id)} turn={turn} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
+                picking={adjustPick !== undefined} common={commonOf(adjusted)}
+                onPickSystem={() => { if (!adjustPick) drawers.closeRight(); update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
+                onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
+                onChange={change}
+                onDone={toList}
+                onRemove={() => removeEdited(adjusted.id)}
+              />
+            )}
+          </TurnHost>
         );
       }
       case 'turn': {
         const turn = slot.entry;
         return (
-          <TurnEditor
-            key={turn.id} entry={turn} pack={pack} view={boards.view(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
-            onNote={note => updateEntry(turn.id, { note })} onComponent={componentId => updateEntry(turn.id, { componentId, choices: undefined })} onChoices={choices => updateEntry(turn.id, { choices: Object.keys(choices).length > 0 ? choices : undefined })} onPayment={payment => updateEntry(turn.id, { payment })}
-            production={{
-              picking: next.kind === 'produce',
-              onPick: () => { update(state => ({ ...state, next: state.next.kind === 'produce' ? IDLE : { kind: 'produce' } })); if (next.kind !== 'produce') { drawers.closeRight(); setView('map'); } },
-              onOpenShop: at => update(state => ({ ...state, stage: { slot: at, mode: 'build', only: 'units', for: { kind: 'component', id: turn.id } } })),
-              onChange: effects => updateEntry(turn.id, { effects: effects === undefined ? undefined : effects }),
-              manual: manualPayments.includes(turn.id),
-              onManual: open => { toggleManualPayment(turn.id, open); if (!open && turn.type === 'component') updateEntry(turn.id, { effects: producedEffects(turn, turn.effects) }); },
-            }}
-            onDone={toList} onRemove={() => removeEdited(turn.id)}
-          />
+          <TurnHost key={turn.id} entryId={turn.id} view={boards.view(turn.id)} pack={pack}>
+            {({ turn: played, update: change }) => (
+              <TurnEditor
+                turn={played} pack={pack} view={boards.view(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
+                onChange={change}
+                production={{
+                  picking: next.kind === 'produce',
+                  onPick: () => { update(state => ({ ...state, next: state.next.kind === 'produce' ? IDLE : { kind: 'produce' } })); if (next.kind !== 'produce') { drawers.closeRight(); setView('map'); } },
+                  onOpenShop: at => update(state => ({ ...state, stage: { slot: at, mode: 'build', only: 'units', for: { kind: 'component', id: turn.id } } })),
+                  manual: manualPayments.includes(turn.id),
+                  onManual: open => toggleManualPayment(turn.id, open),
+                }}
+                onDone={toList} onRemove={() => removeEdited(turn.id)}
+              />
+            )}
+          </TurnHost>
         );
       }
       case 'act': {
         const { entry: host, index, act, back } = slot;
-        const acts = 'acts' in host && host.acts ? host.acts : [];
         const backTo = () => update(state => ({ ...state, panel: back, next: IDLE }));
-        const replace = (next: Act) => setActs(host, acts.map((a, i) => (i === index ? next : a)));
-        const drop = () => { setActs(host, acts.filter((_, i) => i !== index)); backTo(); };
         const all = forecast.warningsByEntry[host.id] ?? [];
-        if (act.kind === 'transaction') {
-          return (
-            <TransactionStep
-              key={`${host.id}-${index}`} pack={pack} view={boards.view(host.id)} act={act} owner={host.owner ?? 'me'}
-              warnings={all.filter(w => w.step === 'transaction')} uses={host.uses} onChange={replace} onBack={backTo} onRemove={drop}
-            />
-          );
-        }
-        // Its own part is not counted against it.
-        const { [act.sliceId ?? '']: own, ...othersOwners } = owners;
-        void own;
+        const view = boards.view(host.id);
         const paymentKey = `${host.id}#${index}`;
         return (
-          <ExpeditionEditor
-            key={paymentKey} owner={host.owner} pack={pack} view={boards.view(host.id)} sliceId={act.sliceId} payment={act.payment}
-            owners={act.sliceId && !game.expedition.slices[act.sliceId] ? othersOwners : owners}
-            warnings={all.filter(w => w.step === 'expedition')}
-            manualPayment={manualPayments.includes(paymentKey)} onManualPayment={open => toggleManualPayment(paymentKey, open)}
-            onChange={patch => replace({ ...act, ...patch })}
-            onDone={backTo}
-            onRemove={drop}
-          />
+          <TurnHost key={act.kind === 'transaction' ? `${host.id}-${index}` : paymentKey} entryId={host.id} view={view} pack={pack}>
+            {({ turn, update: change }) => {
+              const drop = () => { change(withoutAct(turn, index)); backTo(); };
+              if (act.kind === 'transaction') {
+                return (
+                  <TransactionStep
+                    pack={pack} view={view} turn={turn} index={index}
+                    warnings={all.filter(w => w.step === 'transaction')} onChange={change} onBack={backTo} onRemove={drop}
+                  />
+                );
+              }
+              // Its own part is not counted against it.
+              const { [act.sliceId ?? '']: own, ...othersOwners } = owners;
+              void own;
+              return (
+                <ExpeditionEditor
+                  pack={pack} view={view} turn={turn} index={index}
+                  owners={act.sliceId && !game.expedition.slices[act.sliceId] ? othersOwners : owners}
+                  warnings={all.filter(w => w.step === 'expedition')}
+                  manualPayment={manualPayments.includes(paymentKey)} onManualPayment={open => toggleManualPayment(paymentKey, open)}
+                  onChange={change}
+                  onDone={backTo}
+                  onRemove={drop}
+                />
+              );
+            }}
+          </TurnHost>
         );
       }
     }
@@ -761,8 +780,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               <>
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
-                  game={game} pack={pack} viewOf={id => boards.view(id)} round={round}
-                  warnings={forecast.warningsByEntry} state={forecast.state}
+                  pack={pack} viewOf={id => boards.view(id)} round={round} turns={forecastKernel.rounds.find(r => r.number === round.number)?.turns ?? []}
+                  warnings={forecast.warningsByEntry} end={{ table: forecastKernel.table, board: boardAtRound(timelineOf(game, plan, 'forecast', pack), round.number) }}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) flight.start(done.id, shownFilter); }}

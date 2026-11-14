@@ -103,7 +103,7 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
       pack={pack} view={view} {...turnProps(view, pack, shown, update)} warnings={warnings} manualPayment={false} choosing={null}
       onChoose={nothing} onOpenPicker={nothing} onManualPayment={nothing}
       onOpenShop={nothing} onOpenBattle={nothing} onOpenFleet={nothing} onDone={nothing} onRemove={nothing}
-      common={<UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
+      common={<UsesBlock {...turnProps(view, pack, shown, update)} pack={pack} view={view} warnings={warnings} />}
     />
   ));
 }
@@ -112,7 +112,7 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
 export function showUses(bench: Bench, entry: Entry): Live {
   return live(bench, entry, ({ pack, view, entry: shown, warnings, update }) => (
     <>
-      <UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <UsesBlock {...turnProps(view, pack, shown, update)} pack={pack} view={view} warnings={warnings} />
       <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
     </>
   ));
@@ -130,11 +130,9 @@ export function showTurn(bench: Bench, entry: Entry): Live<ComponentEntry> {
   const nothing = () => undefined;
   return live(bench, entry as ComponentEntry, ({ pack, view, entry: shown, warnings, update }) => (
     <TurnEditor
-      entry={shown as ComponentEntry} pack={pack} view={view} warnings={warnings}
-      common={<UsesBlock entry={shown} pack={pack} view={view} warnings={warnings} onChange={patch => update(patch as Partial<EntryBody>)} />}
-      onNote={note => update({ note } as Partial<EntryBody>)} onComponent={componentId => update({ componentId, choices: undefined } as Partial<EntryBody>)}
-      onChoices={choices => update({ choices: Object.keys(choices).length > 0 ? choices : undefined })}
-      production={{ picking: false, onPick: nothing, onOpenShop: nothing, onChange: effects => update({ effects } as Partial<EntryBody>), manual: false, onManual: nothing }}
+      {...turnProps(view, pack, shown, update)} pack={pack} view={view} warnings={warnings}
+      common={<UsesBlock {...turnProps(view, pack, shown, update)} pack={pack} view={view} warnings={warnings} />}
+      production={{ picking: false, onPick: nothing, onOpenShop: nothing, manual: false, onManual: nothing }}
       onDone={nothing} onRemove={nothing}
     />
   ));
@@ -148,8 +146,8 @@ export function showAgenda(bench: Bench, entry: Entry): Live<Extract<Entry, { ty
   const nothing = () => undefined;
   return live(bench, entry as Extract<Entry, { type: 'adjustment' }>, ({ pack, view, entry: shown, warnings, update }) => (
     <AdjustmentEditor
-      pack={pack} view={view} entry={shown as Extract<Entry, { type: 'adjustment' }>} warnings={warnings} picking={false}
-      onPickSystem={nothing} onOpenHex={nothing} onUpdate={patch => update(patch as Partial<EntryBody>)} onDone={nothing} onRemove={nothing}
+      {...turnProps(view, pack, shown, update)} pack={pack} view={view} warnings={warnings} picking={false}
+      onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}
     />
   ));
 }
@@ -158,7 +156,7 @@ export function showAgenda(bench: Bench, entry: Entry): Live<Extract<Entry, { ty
 export function showScored(bench: Bench, entry: Entry): Live<Extract<Entry, { type: 'statusTokens' }>> {
   return live(bench, entry as Extract<Entry, { type: 'statusTokens' }>, ({ pack, view, entry: shown, warnings, update }) => (
     <>
-      <ScoredBlock entry={shown as Extract<Entry, { type: 'statusTokens' }>} pack={pack} view={view} onChange={patch => update(patch as Partial<EntryBody>)} />
+      <ScoredBlock {...turnProps(view, pack, shown, update)} pack={pack} view={view} />
       <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
     </>
   ));

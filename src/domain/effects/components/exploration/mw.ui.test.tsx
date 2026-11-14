@@ -6,6 +6,8 @@ import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectNotShown, expectShownStanding, showTactical, uiBench } from '../../../../ui/testing/effects';
 import { bench, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './mw';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -26,7 +28,7 @@ test('exploration:mw is taken in «Taken and discarded» of the entry that explo
   quote(mining.pack, id, "This planet's resource value is increased by 2.");
   useGame.setState({ game: mining.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={mining.take} pack={mining.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(mining.game, mining.pack), mining.pack, mining.take, onChange)} pack={mining.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Mining World');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Mining World' }));

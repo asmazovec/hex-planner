@@ -9,6 +9,7 @@ import { uiBench } from '../../../../ui/testing/effects';
 import type { Entry } from '../../../types';
 import { adjust, bench, type Bench, quote } from '../kit';
 import { id } from './standardization';
+import { turnProps } from '../../../../ui/testing/turnProps';
 
 uiBench();
 
@@ -22,11 +23,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
     current = shown;
     const nothing = () => undefined;
     return (
-      <AdjustmentEditor view={kernelViewOf(table.game, table.pack)}
-        pack={table.pack} entry={shown} warnings={[]} picking={false}
-        onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}
-        onUpdate={patch => setShown(now => ({ ...now, ...patch }))}
-      />
+      <AdjustmentEditor {...turnProps(kernelViewOf(table.game, table.pack), table.pack, shown, patch => setShown(now => ({ ...now, ...patch }) as Agenda))} view={kernelViewOf(table.game, table.pack)} pack={table.pack} warnings={[]} picking={false} onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}/>
     );
   }
   useGame.setState({ game: table.game });

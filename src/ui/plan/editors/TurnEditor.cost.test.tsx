@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { kernelViewOf } from '../../testing/view';
+import { playProps } from '../../testing/turnProps';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
@@ -23,8 +24,8 @@ function show(entry: Entry, onPayment: (p: unknown) => void) {
   const nothing = () => undefined;
   render(
     <TurnEditor view={kernelViewOf(table.game, table.pack, entry.id)}
-      entry={entry as Extract<Entry, { type: 'component' }>} pack={table.pack} warnings={[]} common={null}
-      onNote={nothing} onComponent={nothing} onPayment={onPayment} onDone={nothing} onRemove={nothing}
+      {...playProps(kernelViewOf(table.game, table.pack, entry.id), table.pack, entry, { onPayment })} pack={table.pack} warnings={[]} common={null}
+      onDone={nothing} onRemove={nothing}
     />,
   );
 }

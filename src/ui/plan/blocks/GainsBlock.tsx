@@ -2,10 +2,13 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { emptyHoldings, heldOnce, HOLDING_FIELD, losable } from '../../../domain/holdings';
-import type { ComponentKind, DataPack, Entry } from '../../../domain/types';
+import type { ComponentKind, DataPack } from '../../../domain/types';
+import type { Turn } from '../../../game/actions';
+import { withListed } from '../../../game/edit/turn';
+import { legacyKey } from '../../../game/keys';
 import { losableOf } from '../../../game/planQueries';
 import { shelfOf } from '../../../game/shelf';
-import { playerOfEntry, type KernelView } from '../kernelView';
+import type { KernelView } from '../kernelView';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { Section } from '../../primitives/Section';
@@ -15,8 +18,8 @@ type Side = 'gains' | 'spends';
 const HELD_KINDS = [...(Object.keys(HOLDING_FIELD) as ComponentKind[]), 'breakthrough' as ComponentKind];
 
 export interface GainsBlockProps {
-  /** Any entry: its owner gains and gives. */
-  entry: Entry;
+  /** Any turn: its player gains and gives. */
+  turn: Turn;
   pack: DataPack;
   /** The table and the board just before the entry: only what its owner holds then can be discarded. Without it only what the entry itself takes can. */
   view?: KernelView;
@@ -25,8 +28,8 @@ export interface GainsBlockProps {
    * card drawn in the status phase (81.3). Which card it is only the player knows.
    */
   lead?: ComponentKind;
-  /** The list that changed; without a value when it became empty. */
-  onChange: (patch: { gains?: string[] } | { spends?: string[] }) => void;
+  /** The turn with the list that changed; the list is gone from it when it became empty. */
+  onChange: (turn: Turn) => void;
 }
 
 /**
@@ -36,14 +39,14 @@ export interface GainsBlockProps {
  * card (an agenda the entry names) is not listed here and stays in the entry as it is. The buttons stand over the
  * cards, so a card added moves no button.
  */
-export function GainsBlock({ entry, pack, view, lead, onChange }: GainsBlockProps) {
+export function GainsBlock({ turn, pack, view, lead, onChange }: GainsBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState<Side | 'lead' | null>(null);
-  const listOf = (side: Side): string[] => entry[side] ?? [];
-  const write = (side: Side, ids: string[]) => onChange(side === 'gains' ? { gains: ids.length > 0 ? ids : undefined } : { spends: ids.length > 0 ? ids : undefined });
+  const listOf = (side: Side): string[] => turn[side] ?? [];
+  const write = (side: Side, ids: string[]) => onChange(withListed(turn, side, ids));
   const title = t('components.gains.title');
-  const player = view && playerOfEntry(view, entry.owner);
-  const canLose = view && player !== undefined ? losableOf(view.board, player, entry) : losable(emptyHoldings(), entry);
+  const player = view && turn.player;
+  const canLose = view && player !== undefined ? losableOf(view.board, player, turn) : losable(emptyHoldings(), turn);
   const once = useMemo(() => heldOnce(view && player !== undefined ? shelfOf(view.table, view.board, player) : emptyHoldings()), [view, player]);
   const nothing = canLose.length === 0;
   return (
@@ -72,7 +75,7 @@ export function GainsBlock({ entry, pack, view, lead, onChange }: GainsBlockProp
       }))}
       {picking && (
         <ComponentPicker
-          kinds={picking === 'lead' && lead ? [lead] : HELD_KINDS} player={entry.owner ?? 'me'} onClose={() => setPicking(null)}
+          kinds={picking === 'lead' && lead ? [lead] : HELD_KINDS} player={view ? legacyKey(view.table, turn.player) : 'me'} onClose={() => setPicking(null)}
           {...(picking === 'spends' ? { ids: canLose } : { owned: once, prefer: 'new' as const })}
           onPick={id => { const side = picking === 'spends' ? 'spends' : 'gains'; write(side, [...listOf(side), id]); setPicking(null); }}
         />

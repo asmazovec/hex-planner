@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { kernelEndOf, kernelViewOf } from '../testing/view';
+import { kernelEndOf, kernelViewOf, listOf } from '../testing/view';
 import { viewOf } from '../testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -427,8 +427,7 @@ test('undo is offered only when there is something to undo, and reverts', async 
 function EntryListLive({ warnings = {} }: { warnings?: Record<string, Warning[]> }) {
   const live = useGame(s => s.game)!;
   return (
-    <EntryList viewOf={() => kernelViewOf(live, pack)}
-      game={live} pack={pack} round={live.plans[0].rounds[0]} warnings={warnings} state={project(live, live.plans[0], 'forecast', pack).state}
+    <EntryList {...listOf(live, pack, 0, warnings)}
       openId={null} onOpen={() => undefined}
     />
   );
@@ -486,9 +485,8 @@ test('a drag does not wedge when its entry disappears meanwhile', () => {
 test('a warning about the tokens stands right below the tiles of the open status fields, so the tiles do not move', async () => {
   const id = useGame.getState().addStatusEntry(1);
   useGame.getState().updateEntry(id, { tactic: 4 });
-  const round = plan().rounds[0];
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList viewOf={() => kernelViewOf(game(), pack)} game={game()} pack={pack} round={round} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
+  render(<EntryList {...listOf(game(), pack, 0, state.warningsByEntry)} openId={id} onOpen={() => undefined} />);
   const details = document.querySelector('.entry-details')!;
   const warnings = screen.getAllByRole('list', { name: 'Warnings' });
   expect(warnings).toHaveLength(1);
@@ -502,7 +500,7 @@ test('a closed entry shows its warnings on its row, above what it reads out', ()
   const id = useGame.getState().addStatusEntry(1);
   useGame.getState().updateEntry(id, { tactic: 4 });
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList viewOf={() => kernelViewOf(game(), pack)} game={game()} pack={pack} round={plan().rounds[0]} warnings={state.warningsByEntry} state={state.state} openId={null} onOpen={() => undefined} />);
+  render(<EntryList {...listOf(game(), pack, 0, state.warningsByEntry)} openId={null} onOpen={() => undefined} />);
   expect(document.querySelector('.entry-main')!.nextElementSibling).toHaveClass('warning-list');
 });
 

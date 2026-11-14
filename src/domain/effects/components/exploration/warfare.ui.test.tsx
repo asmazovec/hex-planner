@@ -7,6 +7,8 @@ import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../.
 import type { EntryBody } from '../../../types';
 import { bench, NEAR, planned, quote, TARGET, tactical } from '../kit';
 import { id } from './warfare';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -26,7 +28,7 @@ test('exploration:warfare is taken in «Taken and discarded» of the entry that 
   quote(facility.pack, id, 'This planet has a red technology specialty.');
   useGame.setState({ game: facility.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={facility.take} pack={facility.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(facility.game, facility.pack), facility.pack, facility.take, onChange)} pack={facility.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Warfare Research Facility');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Warfare Research Facility' }));

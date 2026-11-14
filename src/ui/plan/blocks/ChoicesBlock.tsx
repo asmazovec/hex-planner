@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
-import { choicesFor, shownChoices } from '../../../domain/effects/choices';
+import { shownChoices } from '../../../domain/effects/choices';
 import type { ChoiceSlot, ChoiceSpec } from '../../../domain/effects/types';
 import { systemNameOf } from '../../../domain/systemName';
-import type { DataPack, Entry } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
+import type { Turn } from '../../../game/actions';
+import { choicesOfTurn } from '../../../game/edit/turn';
 import { choicesOf } from '../../../game/abilities/choices';
-import { playerOfKey } from '../../../game/keys';
+import { legacyKey, playerOfKey } from '../../../game/keys';
 import { mapSource } from '../../../game/space';
-import { turnOfEntry } from '../../../state/projection';
 import { nameOfPlayer, shortName } from '../../players/names';
 import type { KernelView } from '../kernelView';
 import { ComponentPicker } from '../../components/ComponentPicker';
@@ -23,7 +24,7 @@ const MANY = 12;
 export interface ChoicesBlockProps {
   /** The component whose choices these are: the entry's component action or one of its `uses`. */
   id: string;
-  entry: Entry;
+  turn: Turn;
   /** The table and the board just before the entry. */
   view: KernelView;
   pack: DataPack;
@@ -36,16 +37,16 @@ export interface ChoicesBlockProps {
  * and in it one row for each thing asked, its candidates as buttons (a stepper for a number). A press on the chosen one
  * takes it back. Nothing is forbidden: the effect warns of a value it cannot use. Draws nothing for a component that asks nothing.
  */
-export function ChoicesBlock({ id, entry, view, pack, onChange }: ChoicesBlockProps) {
+export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockProps) {
   const { t, i18n } = useTranslation();
   const { table, board } = view;
   const map = mapSource(table, board);
-  const resolved = choicesOf(table, board, turnOfEntry(table, entry, pack), id, pack);
+  const resolved = choicesOf(table, board, turn, id, pack);
   const def = componentById(pack, id);
   if (resolved.length === 0 || !def) return null;
   const specs = resolved.map(each => each.spec);
-  const chosen = choicesFor(entry, id);
-  const owner = entry.owner ?? 'me';
+  const chosen = choicesOfTurn(turn, id);
+  const owner = legacyKey(table, turn.player);
   const lang = i18n.language.startsWith('ru') ? 'ru' : 'en';
   const set = (key: string, value: string | number | undefined) => {
     const next = { ...chosen };

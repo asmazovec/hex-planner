@@ -7,6 +7,8 @@ import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../.
 import { CARD } from '../../../replay/cards/ids';
 import { bench, NEAR, quote, secondary, TARGET, tactical } from '../kit';
 import { id } from './ls';
+import { turnProps } from '../../../../ui/testing/turnProps';
+import { kernelViewOf } from '../../../../ui/testing/view';
 
 uiBench();
 
@@ -26,7 +28,7 @@ test('exploration:ls is taken in «Taken and discarded» of the entry that explo
   quote(lazax.pack, id, 'its influence value is increased by 2');
   useGame.setState({ game: lazax.game });
   const onChange = vi.fn();
-  render(<GainsBlock entry={lazax.take} pack={lazax.pack} onChange={onChange} />);
+  render(<GainsBlock {...turnProps(kernelViewOf(lazax.game, lazax.pack), lazax.pack, lazax.take, onChange)} pack={lazax.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));
   await userEvent.type(screen.getByRole('searchbox', { name: 'Search components' }), 'Lazax Survivors');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Lazax Survivors' }));

@@ -17,6 +17,7 @@ import type { Entry, GameState } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { ScoredBlock } from './ScoredBlock';
+import { turnProps } from '../../testing/turnProps';
 
 const pack = loadPack(['pok']);
 type Status = Extract<Entry, { type: 'statusTokens' }>;
@@ -41,7 +42,7 @@ const find = async (query: string, name: string) => {
 
 test('«Score an objective» writes the objective into `scored`, and a cross takes it back out; an empty list leaves no key', async () => {
   const onChange = vi.fn();
-  render(<ScoredBlock entry={status({ scored: ['publicObjective:develop'] })} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)} onChange={onChange} />);
+  render(<ScoredBlock {...turnProps(viewOf(useGame.getState().game!, holding(), pack), pack, status({ scored: ['publicObjective:develop'] }), onChange)} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)}/>);
   expect(block().getByTestId('component-publicObjective:develop')).toHaveTextContent('scored');
   await userEvent.click(block().getByRole('button', { name: 'Score an objective' }));
   await find('Diversify', 'Diversify Research');
@@ -52,7 +53,7 @@ test('«Score an objective» writes the objective into `scored`, and a cross tak
 
 test('an objective that is scored by spending opens the cost: tokens, trade goods, the planets paying; an empty cost leaves no key', async () => {
   const onChange = vi.fn();
-  render(<ScoredBlock entry={status({ scored: ['publicObjective:centralize_trade'], spend: { tradeGoods: 9 } })} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)} onChange={onChange} />);
+  render(<ScoredBlock {...turnProps(viewOf(useGame.getState().game!, holding(), pack), pack, status({ scored: ['publicObjective:centralize_trade'], spend: { tradeGoods: 9 } }), onChange)} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)}/>);
   const cost = within(screen.getByRole('group', { name: 'What scoring cost' }));
   await userEvent.click(cost.getByRole('button', { name: 'Add one trade good' }));
   expect(onChange).toHaveBeenLastCalledWith({ spend: { tradeGoods: 10 } });
@@ -63,6 +64,6 @@ test('an objective that is scored by spending opens the cost: tokens, trade good
 });
 
 test('an objective that is not scored by spending shows no cost', () => {
-  render(<ScoredBlock entry={status({ scored: ['publicObjective:develop'] })} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)} onChange={vi.fn()} />);
+  render(<ScoredBlock {...turnProps(viewOf(useGame.getState().game!, holding(), pack), pack, status({ scored: ['publicObjective:develop'] }), vi.fn())} pack={pack} view={viewOf(useGame.getState().game!, holding(), pack)}/>);
   expect(screen.queryByRole('group', { name: 'What scoring cost' })).toBeNull();
 });

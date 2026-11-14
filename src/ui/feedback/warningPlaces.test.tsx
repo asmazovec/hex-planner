@@ -21,7 +21,9 @@ import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
-import { cardProps, turnProps } from '../testing/turnProps';
+import { cardProps, turnProps, expeditionProps } from '../testing/turnProps';
+import { turnOf } from '../../game/fromLegacy';
+import type { Entry } from '../../domain/types';
 import { atOf } from '../../game/edit/tacticalRead';
 import { placeWarnings, placesOf } from './warningPlaces';
 
@@ -156,9 +158,7 @@ describe('the strategy editor', () => {
 
 describe('the expedition editor', () => {
   const expedition = (warnings: Warning[], sliceId: string | null) => render(
-    <ExpeditionEditor view={kernelViewOf(game(), pack)} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} warnings={warnings}
-      manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
-    />,
+    <ExpeditionEditor {...expeditionProps(kernelViewOf(game(), pack), pack, sliceId, { planets: [], tradeGoods: 0 }, () => undefined)} view={kernelViewOf(game(), pack)} pack={pack} owners={{}} warnings={warnings} manualPayment={false} onManualPayment={() => undefined} onDone={() => undefined} onRemove={() => undefined}/>,
   );
 
   test('a taken part is said right under the parts', () => {
@@ -302,12 +302,9 @@ describe('the tactical editor', () => {
 
 describe('the rest of an editor stands first', () => {
   test('in the adjustment the units stand in the system, anything else above the blocks', () => {
-    const entry = { id: 'a', type: 'adjustment', status: 'planned', label: '', delta: {} } as Parameters<typeof AdjustmentEditor>[0]['entry'];
+    const entry = { id: 'a', type: 'adjustment', status: 'planned', label: '', delta: {} } as Entry;
     const { container } = render(
-      <AdjustmentEditor view={kernelViewOf(game(), pack)}
-        pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined} onRemove={() => undefined}
-        warnings={[{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'round' }, SHORT]}
-      />,
+      <AdjustmentEditor {...turnProps(kernelViewOf(game(), pack), pack, entry, () => undefined)} view={kernelViewOf(game(), pack)} pack={pack} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onDone={() => undefined} onRemove={() => undefined} warnings={[{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'round' }, SHORT]}/>,
     );
     expect(screen.getByRole('group', { name: 'System' })).toHaveTextContent(/Cruiser/);
     const rest = screen.getByText(/short by 2/);
@@ -317,9 +314,7 @@ describe('the rest of an editor stands first', () => {
 
   test('in the expedition what no block takes stands above the parts', () => {
     const { container } = render(
-      <ExpeditionEditor view={kernelViewOf(game(), pack)} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} warnings={[LANDING]}
-        manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
-      />,
+      <ExpeditionEditor {...expeditionProps(kernelViewOf(game(), pack), pack, null, { planets: [], tradeGoods: 0 }, () => undefined)} view={kernelViewOf(game(), pack)} pack={pack} owners={{}} warnings={[LANDING]} manualPayment={false} onManualPayment={() => undefined} onDone={() => undefined} onRemove={() => undefined}/>,
     );
     expect(screen.getByText(/^Landing needs/).compareDocumentPosition(container.querySelector('.slice-grid')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -332,7 +327,7 @@ describe('the steps of an action', () => {
       landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
     } as unknown as TacticalEntry;
     const speed: Warning = { code: 'speedShort', params: { from: SOURCE, unit: 'carrier', move: 1, steps: 2 } };
-    const { container } = render(<EntrySteps view={kernelViewOf(game(), pack)} entry={entry} game={game()} pack={pack} warnings={[GROUP, speed]} />);
+    const { container } = render(<EntrySteps view={kernelViewOf(game(), pack)} turn={turnOf(kernelViewOf(game(), pack).table, entry as Entry, pack)} pack={pack} warnings={[GROUP, speed]} />);
     expect(container.querySelector('.stop-target')).toHaveTextContent(/capacity/i);
     expect(container.querySelector('.stop')).toHaveTextContent(/carrier/i);
     expect(container.querySelector('.stops')).toHaveClass('stops-over');
