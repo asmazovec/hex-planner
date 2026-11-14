@@ -15,7 +15,7 @@ import { tacticalBody } from '../domain/newEntry';
 import { planOf, tableOf } from '../game/fromLegacy';
 import { initialBoard } from '../game/setup';
 import { mapSource } from '../game/space';
-import { entryPatch, writeTurn } from './turnBridge';
+import { addTactical, entryPatch, pruneEmptySources, writeTurn } from './turnBridge';
 import { useGame } from './gameStore';
 
 const pack = loadPack(['pok']);
@@ -72,5 +72,24 @@ describe('the free action of a card', () => {
     const again = writeTurn(table, act().game!, card, pack)!;
     again.update({ ...again.turn, action: { ...(again.turn.action as object), nested: undefined } as never });
     expect(entries().some(e => e.type === 'tactical')).toBe(false);
+  });
+});
+
+describe('a new tactical action and the sources left empty', () => {
+  test('stored as the old body is, with the owner and the card', () => {
+    const table = tableOf(act().game!);
+    const mine = act().addEntry(1, tacticalBody('B'), 'action');
+    const made = addTactical(table, 1, 'B', undefined, undefined);
+    expect(entries().find(e => e.id === made)).toEqual({ ...entries().find(e => e.id === mine), id: made });
+    const card = act().addEntry(1, { type: 'strategic', card: 6 }, 'action');
+    const oldFree = act().addEntry(1, tacticalBody('B', card), 'action', undefined);
+    const free = addTactical(table, 1, 'B', undefined, card);
+    expect(entries().find(e => e.id === free)).toEqual({ ...entries().find(e => e.id === oldFree), id: free });
+  });
+
+  test('an empty source goes, a source with units stays', () => {
+    const id = act().addEntry(1, { type: 'tactical', systemId: 'B', moves: [{ from: 'A', units: {} }, { from: 'C', units: { cruiser: 1 } }, { from: 'A', units: {}, pickupOf: 'C' }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
+    pruneEmptySources(id);
+    expect((entries().find(e => e.id === id) as Extract<Entry, { type: 'tactical' }>).moves).toEqual([{ from: 'C', units: { cruiser: 1 } }]);
   });
 });

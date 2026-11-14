@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPack } from '../../data/loadPack';
 import { emptySlots } from '../../domain/mapBuilder';
-import { blockersOf } from '../../domain/movement';
-import { newEntryBody, tacticalBody, tacticalOwner } from '../../domain/newEntry';
+import { newEntryBody, tacticalOwner } from '../../domain/newEntry';
 import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/project';
 import { shownOf } from '../../game/shelf';
@@ -13,7 +11,13 @@ import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
 import { placeOffMap } from '../map/offMapHomes';
 import { cardChange, repaid, withSystem } from '../../domain/strategy';
-import { emptySources, entrySystems, hasUnits, isUntouched, routeHint, sourceSystems, sourcesOf, tileSystems, viaOf, withRoute, withoutEmptySources, type TacticalEntry } from '../../domain/tactical';
+import { entrySystems, hasUnits, type TacticalEntry } from '../../domain/tactical';
+import { emptySources, isUntouched, sourcesOf, tacticalOf, viaOf, withRoute, withSystem as withActiveSystem, type At } from '../../game/edit/tactical';
+import { atOf, sourceSystemsOn, tileSystemsOn } from '../../game/edit/tacticalRead';
+import { routeHintOn } from '../../game/flight';
+import { blockersOf } from '../../game/space';
+import { addTactical, pruneEmptySources, writeTurn } from '../../state/turnBridge';
+import type { Turn } from '../../game/actions';
 import { sliceOwners, validThundersEdgeSlot } from '../../domain/thundersEdge';
 import { emptyHoldings, groupCounts, holdingCount, holdingRounds, upgradesOf, type ComponentGroup } from '../../domain/holdings';
 import { entryUpgradeRounds, productionCost } from '../../domain/unitStats';
@@ -52,6 +56,7 @@ import { StrategyEditor } from '../plan/editors/StrategyEditor';
 import { SummaryBar } from '../plan/SummaryBar';
 import { systemName } from '../map/systemName';
 import { playerColour } from '../units/sprites';
+import { playerOfEntry } from '../plan/kernelView';
 import { TacticalEditorHost } from '../plan/editors/TacticalEditorHost';
 import { mapHighlights, planArrows, shownSystemsOf } from './plan/mapMarks';
 import { adjustmentIn, backFrom, cardIn, choosesForTe, hintKey, IDLE, LIST, resolvePick, slotOf, START, tacticalIn, turnIn, type PickState, type Slot } from './plan/pick';
@@ -62,16 +67,6 @@ import { leaveKey, useLeavingSources } from './plan/useLeavingSources';
 import { StepHints } from '../feedback/StepHints';
 import { EditorPart } from '../primitives/EditorPart';
 import { PlayerChoice, PlayerDot, playerStyle, playerTag } from '../primitives/player';
-
-/** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
-function pruneEmptySources(entryId: string | undefined) {
-  const { game, updateEntry } = useGame.getState();
-  if (!game || !entryId) return;
-  const found = game.plans.find(p => p.id === game.activePlanId)?.rounds.flatMap(r => r.entries).find(e => e.id === entryId);
-  if (found?.type !== 'tactical') return;
-  const kept = withoutEmptySources(game, loadPack(game.expansions), found.moves);
-  if (kept.length !== found.moves.length) updateEntry(entryId, { moves: kept });
-}
 
 const STAGE_MODE: Record<AdjustmentKind, StageMode> = { setup: 'setup', losses: 'battle', build: 'build' };
 
@@ -146,11 +141,21 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const boards = useBoards(game, plan, pack);
   const leavers = useLeavingSources();
 
+  /** An edit of the turn of an entry, written back through the bridge: the turn and the places of the board just before it. */
+  const editTurn = (entryId: string, change: (turn: Turn, at: At) => Turn) => {
+    if (!game) return;
+    const view = boards.view(entryId);
+    const write = writeTurn(view.table, game, entryId, pack);
+    if (write) write.update(change(write.turn, atOf(view.table, view.board, pack)));
+  };
+
   /** A finished route keeps the earlier ones: it adds its source, or gives a known source a new way. */
   const openRoute = ({ from, via }: RouteDraft) => {
     if (!game || !entry || !onBoard(from)) return;
-    const known = sourcesOf(game, pack, entry).includes(from);
-    if (!known || viaOf(entry, from).join() !== via.join()) updateEntry(entry.id, { moves: withRoute(game, pack, entry.moves, from, via) });
+    editTurn(entry.id, (turn, at) => {
+      const known = sourcesOf(at, tacticalOf(turn)).includes(from);
+      return !known || viaOf(tacticalOf(turn), from).join() !== via.join() ? withRoute(at, turn, from, via) : turn;
+    });
     // A source drawn again while it was on its way out stays; the one whose flight step this route replaces goes if nothing was chosen there.
     leavers.keep(entry.id, from);
     if (tactical?.pickerFrom && tactical.pickerFrom !== from) leavers.leave(entry.id, tactical.pickerFrom);
@@ -182,6 +187,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   }
 
   // Totals and map show the end of the chosen round: later rounds would ready planets and clear its tokens.
+  const forecastKernel = timelineOf(game, plan, 'forecast', pack).kernel;
   const forecast = projectionAtRound(timelineOf(game, plan, 'forecast', pack), round.number);
 
   const closeShown = () => {
@@ -281,7 +287,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     if (tactical) {
       if (!onBoard(slot)) return;
       if (tactical.entryId === null) {
-        const id = addEntry(round.number, tacticalBody(slot, tactical.fromCard), 'action', handOwner);
+        const id = addTactical(forecastKernel.table, round.number, slot, handOwner, tactical.fromCard);
         update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: tactical.card }, next: IDLE }));
         setView('plan');
         return;
@@ -291,7 +297,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         update(state => ({ ...state, next: next.what === 'source' && slot !== entry.systemId ? { kind: 'route', path: [slot] } : IDLE }));
         if (slot === entry.systemId) return;
         if (next.what === 'system') {
-          updateEntry(entry.id, { systemId: slot });
+          editTurn(entry.id, turn => withActiveSystem(turn, slot));
           setView('plan');
         } else {
           // The source only starts the route: it is recorded when the route reaches the active system.
@@ -302,7 +308,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       const step = tapStep(tapPath, slot, entry.systemId ?? '');
       if (step.onActive) {
         // The wrong system: while nothing of the action is filled in a tap takes it back and returns to choosing.
-        if (isUntouched(entry)) {
+        if (isUntouched(writeTurn(forecastKernel.table, game, entry.id, pack)!.turn)) {
           removeEntry(entry.id);
           update(state => ({
             ...state, next: IDLE,
@@ -389,16 +395,13 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const arrows = planArrows(shownTable, shownBoard, pack, tacticals, tacticalNumbers(game, round, pack), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
-  const entryGame = gameAs(game, entry?.owner);
   const entryBefore = entry ? boards.before(entry.id) : undefined;
+  const entryView = entry ? boards.view(entry.id) : undefined;
   const draft = tactical && entry ? arrow.preview ?? (tapPath && { path: tapPath }) : null;
   // The route under way: how far the fastest ship of its source still flies from the last hex. Other players' ships
   // stand as the plan has them just before this action, mine among them for an opponent's.
-  const route = draft && entry && entryBefore && !arrow.preview?.reverse
-    ? routeHint(entryGame, draft.path, entryBefore, activeSystem, pack, () => {
-      const board = boards.board(entry.id);
-      return blockersOf(game, board, entry.owner && board.rivals?.[entry.owner] ? entry.owner : undefined, pack);
-    })
+  const route = draft && entry && entryView && !arrow.preview?.reverse
+    ? routeHintOn(entryView.table, entryView.board, pack, playerOfEntry(entryView, entry.owner), draft.path, activeSystem, () => blockersOf(entryView.table, entryView.board, playerOfEntry(entryView, entry.owner), pack))
     : null;
   // A route can start anywhere. Where no ships stand there is no speed to compare and no reach to light: the hint says
   // so, and the distance is still worth saying.
@@ -410,14 +413,14 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const cardGame = gameAs(game, cardEntry?.owner);
   const highlights = mapHighlights(shownTable, shownBoard, pack, {
     choice: cardPick && cardEntry && cardBefore ? cardTargets(game, pack, cardEntry, cardPick, cardBefore, forecast.state)
-      : adjustPick ? tileSystems(game, pack)
+      : adjustPick ? tileSystemsOn(shownTable, shownBoard, pack)
         : next.kind === 'placeTe' ? systemSlots(game).filter(suitable) : [],
     shownSystems: shownSystemsOf(game, pack, shownEntry),
     focused: tacticals.find(item => item.id === focusId),
     path: draft?.path ?? [],
     reach: route?.reach ?? [],
     // Any system can be chosen; for a source those with ships are the ones lit.
-    options: !choosing || !entryBefore ? [] : choosing === 'system' ? tileSystems(game, pack) : sourceSystems(game, pack, entryBefore),
+    options: !choosing || !entryView ? [] : choosing === 'system' ? tileSystemsOn(entryView.table, entryView.board, pack) : sourceSystemsOn(entryView.table, entryView.board, pack, playerOfEntry(entryView, entry?.owner)),
   });
   const { mapBoard, layer: flightLayer } = flight.scene(tacticals, shownBoard, arrows);
   const shownArea = shownEntry ? focusRect(entrySystems(game, pack, shownEntry)) : null;
@@ -489,7 +492,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** Back from a flight step: a source with nothing chosen does not stay in the action, it leaves the editor as it returns. */
   const closePicker = (flown: TacticalEntry, source: string) => {
     toPicker(null);
-    if (emptySources(game, pack, flown).includes(source)) leavers.leave(flown.id, source);
+    const view = boards.view(flown.id);
+    const write = writeTurn(view.table, game, flown.id, pack);
+    if (write && emptySources(atOf(view.table, view.board, pack), tacticalOf(write.turn)).includes(source)) leavers.leave(flown.id, source);
   };
 
   /** The acts of a turn entry, written back without an empty list. */
@@ -556,7 +561,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
             onOpenPicker={toPicker}
-            leaving={sourcesOf(game, pack, edited).filter(source => leavers.leaving.includes(leaveKey(edited.id, source)))}
+            leaving={sourcesOf(atOf(boards.view(edited.id).table, boards.view(edited.id).board, pack), tacticalOf(writeTurn(boards.view(edited.id).table, game, edited.id, pack)!.turn)).filter(source => leavers.leaving.includes(leaveKey(edited.id, source)))}
             onLeft={source => leavers.finish(edited.id, source)}
             onManualPayment={open => toggleManualPayment(edited.id, open)}
             onOpenShop={() => { if (systemId !== null) update(state => ({ ...state, stage: { slot: systemId, mode: 'build', only: 'units', for: { kind: 'tactical', id: edited.id } } })); }}

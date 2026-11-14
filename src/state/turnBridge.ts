@@ -6,10 +6,15 @@
  */
 import { useMemo } from 'react';
 import type { Turn } from '../game/actions';
-import { legacyEntry, nestedEntries } from '../game/entry';
+import { legacyEntry, nestedEntries, playerOfLegacy } from '../game/entry';
+import { newTurn } from '../game/edit/new';
+import { withoutEmptySources } from '../game/edit/tactical';
+import { atOf } from '../game/edit/tacticalRead';
+import { timelineOf } from './projection';
 import { turnOf } from '../game/fromLegacy';
 import type { Table } from '../game/types';
 import type { DataPack, Entry, EntryBody, Game } from '../domain/types';
+import { loadPack } from '../data/loadPack';
 import { useGame } from './gameStore';
 
 const same = (a: unknown, b: unknown): boolean => a === b || JSON.stringify(a) === JSON.stringify(b);
@@ -76,4 +81,26 @@ export function writeTurn(table: Table, game: Game, entryId: string, pack: DataP
 export function useTurn(table: Table, entryId: string, pack: DataPack): TurnWrite | undefined {
   const game = useGame(s => s.game);
   return useMemo(() => (game ? writeTurn(table, game, entryId, pack) : undefined), [table, game, entryId, pack]);
+}
+
+/** A new tactical action on a system, stored as the body the store keeps: `owner` is the old key of whose it is, `fromCard` the card that gives it (Warfare). Returns its id. */
+export function addTactical(table: Table, roundNumber: number, system: string, owner: string | undefined, fromCard: string | undefined): string {
+  const player = (owner === undefined ? undefined : playerOfLegacy(table, owner)) ?? table.viewer;
+  const round = { number: roundNumber, strategyCard: null, backupCard: null, held: [], turns: [] };
+  const turn = newTurn('tactical', { id: '', player, viewer: player, round }, { system, ...(fromCard ? { fromCard } : {}) });
+  const { id, status, phase, owner: made, acts, ...body } = legacyEntry(table, turn) as Entry & { acts?: unknown[] };
+  void id; void status; void made;
+  return useGame.getState().addEntry(roundNumber, { ...body, ...(acts && acts.length > 0 ? { acts } : {}), ...(fromCard ? { fromCard } : {}) } as EntryBody, phase, owner);
+}
+
+/** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */
+export function pruneEmptySources(entryId: string | undefined): void {
+  const { game } = useGame.getState();
+  if (!game || !entryId) return;
+  const pack = loadPack(game.expansions);
+  const plan = game.plans.find(p => p.id === game.activePlanId) ?? game.plans[0];
+  const { kernel } = timelineOf(game, plan, 'forecast', pack);
+  const write = writeTurn(kernel.table, game, entryId, pack);
+  if (!write || write.turn.action.kind !== 'tactical') return;
+  write.update(withoutEmptySources(atOf(kernel.table, kernel.byTurn.get(entryId)?.before ?? kernel.end, pack), write.turn));
 }

@@ -287,3 +287,6 @@ export function withCustodiansPayment(turn: Turn, landing: boolean, free: boolea
     return { ...action, custodians: pay() };
   });
 }
+
+/** The active system of the action, chosen on the map. */
+export const withSystem = (turn: Turn, system: Slot): Turn => onTactical(turn, a => ({ ...a, system }));
