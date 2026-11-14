@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { EXPEDITION_SLICES } from '../../domain/payment';
 import type { SliceOwners } from '../../domain/thundersEdge';
-import type { DataPack, Game } from '../../domain/types';
+import type { DataPack } from '../../domain/types';
+import type { MapSource } from '../../game/space';
 import { useGame } from '../../state/gameStore';
 import { systemName } from '../map/systemName';
 import { HexRemove } from '../primitives/Icon';
@@ -10,7 +11,9 @@ import { MapPickButton } from '../primitives/MapPickButton';
 export type { SliceOwners } from '../../domain/thundersEdge';
 
 export interface ExpeditionWidgetProps {
-  game: Game;
+  /** The slot of Thunder's Edge once placed. */
+  placed: string | null;
+  map: MapSource;
   pack: DataPack;
   owners: SliceOwners;
   /** Starts placing Thunder's Edge: the next tap on a suitable system puts it there. */
@@ -18,12 +21,11 @@ export interface ExpeditionWidgetProps {
 }
 
 /** Counter of taken expedition parts; a part is taken by another player with a tap, mine come from the plan. */
-export function ExpeditionWidget({ game, pack, owners, onPlace }: ExpeditionWidgetProps) {
+export function ExpeditionWidget({ placed, map, pack, owners, onPlace }: ExpeditionWidgetProps) {
   const { t } = useTranslation();
   const setSlice = useGame(s => s.setSlice);
   const setThundersEdge = useGame(s => s.setThundersEdge);
   const taken = Object.keys(owners).length;
-  const placed = game.expedition.thundersEdgeSystem;
 
   return (
     <div className="editor-section" role="group" aria-label={t('expedition.title')}>
@@ -52,7 +54,7 @@ export function ExpeditionWidget({ game, pack, owners, onPlace }: ExpeditionWidg
         // The panel steps aside while the map chooses, so the button is never seen pressed.
         <div className="in-card">
           <MapPickButton active={false} className="source-button" onToggle={onPlace}>
-            {t('expedition.placedAt', { system: systemName(game, pack, placed) })}
+            {t('expedition.placedAt', { system: systemName(map, pack, placed) })}
             <small>{t('expedition.repick')}</small>
           </MapPickButton>
           <HexRemove label={t('expedition.remove')} onClick={() => setThundersEdge(null)} />

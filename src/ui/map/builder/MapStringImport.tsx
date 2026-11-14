@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { mapIsEmpty } from '../../../domain/mapBuilder';
 import { loadPack } from '../../../data/loadPack';
-import { emptySeatHomes } from '../../../domain/players';
+import { emptySeatHomes, mapIsEmpty, seatedCount } from '../../../game/edit/table';
+import type { SavedGame } from '../../../game/save';
 import { arrangeSet, parseMapString, type MapStringResult, type OtherPacks } from '../../../domain/mapString';
-import type { DataPack, ExpansionId, Game } from '../../../domain/types';
+import type { DataPack, ExpansionId } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { EXPANSION_NAMES } from '../../common/expansions';
 import { ConfirmBar } from '../../primitives/ConfirmBar';
@@ -14,7 +14,7 @@ import { HexRemove } from '../../primitives/Icon';
 const OTHER_PACKS: OtherPacks = { pok: loadPack(['pok']), te: loadPack(['te']) };
 
 export interface MapStringImportProps {
-  game: Game;
+  saved: SavedGame;
   pack: DataPack;
   /** The game has started: its layout stays, so a string of another layout cannot be applied. */
   started?: boolean;
@@ -22,31 +22,33 @@ export interface MapStringImportProps {
 }
 
 /** A panel in the map block for pasting the map string of a Milty Draft; it replaces the map in one undo step. */
-export function MapStringImport({ game, pack, started = false, onClose }: MapStringImportProps) {
+export function MapStringImport({ saved, pack, started = false, onClose }: MapStringImportProps) {
   const { t } = useTranslation();
+  const { table } = saved;
+  const playerCount = seatedCount(table);
   const setMap = useGame(s => s.setMap);
   const addExpansion = useGame(s => s.addExpansion);
   const setDraftExpansions = useGame(s => s.setDraftExpansions);
   // The open game turns an expansion on in one undo step; the draft has its own toggle.
-  const turnOn = (id: ExpansionId) => (started ? addExpansion(id) : setDraftExpansions([...game.expansions, id]));
+  const turnOn = (id: ExpansionId) => (started ? addExpansion(id) : setDraftExpansions([...table.expansions, id]));
   const [text, setText] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [result, setResult] = useState<(MapStringResult & { seated: number }) | null>(null);
-  const parsed = parseMapString(text, game.playerCount, pack, OTHER_PACKS);
+  const parsed = parseMapString(text, playerCount, pack, OTHER_PACKS);
   const off = (Object.keys(parsed.offExpansion) as ExpansionId[]).filter(id => parsed.offExpansion[id]);
   const isSet = parsed.kind === 'set';
-  const arranged = isSet ? arrangeSet(parsed.set, game.playerCount, pack) : parsed;
+  const arranged = isSet ? arrangeSet(parsed.set, playerCount, pack) : parsed;
   const nothing = Object.keys(arranged.map).filter(slot => slot !== '0,0').length === 0;
-  const otherLayout = started && !nothing && arranged.layout !== game.layout;
+  const otherLayout = started && !nothing && arranged.layout !== table.layout;
 
   const apply = () => {
-    const seated = Object.keys(emptySeatHomes({ ...game, map: arranged.map, layout: arranged.layout }, pack)).length;
+    const seated = Object.keys(emptySeatHomes({ ...table, map: arranged.map, layout: arranged.layout }, pack)).length;
     setMap(arranged.map, arranged.layout);
     setResult({ ...arranged, seated, unknown: parsed.unknown, offExpansion: parsed.offExpansion });
     setConfirming(false);
     setText('');
   };
-  const onApply = () => (mapIsEmpty(game, pack) ? apply() : setConfirming(true));
+  const onApply = () => (mapIsEmpty(table, pack) ? apply() : setConfirming(true));
 
   return (
     <div className="map-import" role="group" aria-label={t('mapImport.title')}>

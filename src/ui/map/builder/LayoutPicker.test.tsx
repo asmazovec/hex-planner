@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
+import { savedFor } from '../../../testing/legacySave';
 import { LayoutPicker } from './LayoutPicker';
 
 vi.mock('../../../storage/db', () => ({
@@ -20,7 +21,7 @@ function open(playerCount: number, expansions: ('pok')[] = ['pok']) {
   const pack = loadPack(expansions);
   useGame.getState().newGame({ expansions, playerCount, faction: 'arborec' }, pack);
   const game = useGame.getState().game!;
-  render(<LayoutPicker game={game} pack={pack} />);
+  render(<LayoutPicker saved={savedFor(game)} pack={pack} />);
   return game;
 }
 
@@ -52,7 +53,7 @@ test('each layout of the rulebook notes its deal: tiles per player, the speaker\
   expect(screen.getByText(/4 blue and 2 red tiles; the speaker then places 5 more \(2 red, 3 blue\) next to Mecatol Rex/)).toBeInTheDocument();
   await userEvent.click(screen.getByRole('radio', { name: 'Alternate hyperlanes' }));
   cleanup();
-  render(<LayoutPicker game={useGame.getState().game!} pack={pok} />);
+  render(<LayoutPicker saved={useGame.getState().saved!} pack={pok} />);
   expect(screen.getByText(/own shape\. Each player is dealt 3 blue and 2 red tiles/)).toBeInTheDocument();
   cleanup();
   open(8);
@@ -61,7 +62,7 @@ test('each layout of the rulebook notes its deal: tiles per player, the speaker\
   open(6);
   await userEvent.click(screen.getByRole('radio', { name: 'Large Galaxy' }));
   cleanup();
-  render(<LayoutPicker game={useGame.getState().game!} pack={pok} />);
+  render(<LayoutPicker saved={useGame.getState().saved!} pack={pok} />);
   expect(screen.getByText(/6 blue and 3 red tiles; the 14-point side/)).toBeInTheDocument();
   cleanup();
   open(5);
@@ -102,7 +103,7 @@ test('a map whose tiles all survive switches at once', async () => {
   useGame.getState().setTile('0,-1', '25');
   const game = useGame.getState().game!;
   cleanup();
-  render(<LayoutPicker game={game} pack={pok} />);
+  render(<LayoutPicker saved={savedFor(game)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   expect(useGame.getState().game!.layout).toBe('hyperlanes');
   expect(useGame.getState().game!.map['0,-1']).toBe('25');
@@ -113,7 +114,7 @@ test('a tile under a lane asks first, naming how many tiles go, and cancelling c
   useGame.getState().setTile('-2,-1', '25');
   const game = useGame.getState().game!;
   cleanup();
-  render(<LayoutPicker game={game} pack={pok} />);
+  render(<LayoutPicker saved={savedFor(game)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   expect(screen.getByRole('button', { name: 'Switch layout' })).toBeInTheDocument();
   expect(screen.getByText(/1 tile that this layout removes/)).toBeInTheDocument();
@@ -129,7 +130,7 @@ test('confirming switches the layout, keeps shared tiles and puts the lane under
   useGame.getState().setTile('-2,-1', '26');
   const game = useGame.getState().game!;
   cleanup();
-  render(<LayoutPicker game={game} pack={pok} />);
+  render(<LayoutPicker saved={savedFor(game)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   await userEvent.click(screen.getByRole('button', { name: 'Switch layout' }));
   expect(useGame.getState().game!.layout).toBe('hyperlanes');
@@ -142,11 +143,11 @@ test('a question left open does not carry over to another game', async () => {
   useGame.getState().setTile('-2,-1', '25');
   const first = useGame.getState().game!;
   cleanup();
-  const view = render(<LayoutPicker game={first} pack={pok} />);
+  const view = render(<LayoutPicker saved={savedFor(first)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   expect(screen.getByRole('button', { name: 'Switch layout' })).toBeInTheDocument();
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 4, faction: 'arborec' }, pok);
-  view.rerender(<LayoutPicker game={useGame.getState().game!} pack={pok} />);
+  view.rerender(<LayoutPicker saved={useGame.getState().saved!} pack={pok} />);
   expect(screen.queryByRole('button', { name: 'Switch layout' })).toBeNull();
 });
 

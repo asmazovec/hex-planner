@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { playersOf } from '../../domain/players';
-import { homeNotes } from '../../domain/strategy';
+import { homeNotes, listPlayers } from '../../game/edit/table';
 import type { ExpansionId } from '../../domain/types';
 import { currentLanguage, LANGUAGES, setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
@@ -44,10 +43,11 @@ export interface GameScreenProps {
 /** The players on the left; expansions, the map with the seats and saved games on the right, language and settings last. */
 export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const { t } = useTranslation();
-  const open = useGame(s => s.game);
+  const open = useGame(s => s.saved);
   const openSaved = useGame(s => s.saved);
-  const game = useGame(s => s.game ?? s.draft);
   const shared = useGame(s => s.saved ?? s.draftSaved);
+  const { table } = shared;
+  const me = table.players.find(p => p.id === table.viewer);
   const openGame = useGame(s => s.openGame);
   const startGame = useGame(s => s.startGame);
   const closeGame = useGame(s => s.closeGame);
@@ -65,8 +65,8 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const [asked, setAsked] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const pack = usePack(game.expansions);
-  const players = playersOf(game);
+  const pack = usePack(table.expansions);
+  const players = listPlayers(table);
   const { ghostRef, ...drag } = useSeatDrag(players, swapSeats);
   const mapBlock = useRef<HTMLDivElement>(null);
   useEffect(() => { if (showMap) mapBlock.current?.scrollIntoView?.({ block: 'start' }); }, [showMap]);
@@ -82,8 +82,8 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   }, [open?.id, loadFailure, t]);
 
   const toggle = (id: ExpansionId) => {
-    const on = game.expansions.includes(id);
-    setDraftExpansions(EXPANSIONS.filter(e => (e === id ? !on : game.expansions.includes(e))));
+    const on = table.expansions.includes(id);
+    setDraftExpansions(EXPANSIONS.filter(e => (e === id ? !on : table.expansions.includes(e))));
   };
 
   const remove = async (id: string) => {
@@ -159,11 +159,11 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
       <aside className="players-aside">
         <div className="side-group">
           {/* The name is chosen before the game starts: a link finds the save by it. */}
-          <NoteField key={game.id} label={t('game.name')} value={game.name ?? ''} disabled={Boolean(open)} onCommit={setName} />
+          <NoteField key={shared.id} label={t('game.name')} value={shared.name ?? ''} disabled={Boolean(open)} onCommit={setName} />
           {!open && (
             <div className="start-game">
-              <button type="button" className="primary" disabled={!game.faction} onClick={startGame}>{t('players.begin')}</button>
-              {!game.faction && <span className="players-hint">{t('players.needFaction')}</span>}
+              <button type="button" className="primary" disabled={!me?.faction} onClick={startGame}>{t('players.begin')}</button>
+              {!me?.faction && <span className="players-hint">{t('players.needFaction')}</span>}
             </div>
           )}
         </div>
@@ -173,14 +173,14 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
             <span className="chip fix on">{t('players.base')}</span>
             {EXPANSIONS.map(id => {
               const label = EXPANSION_NAMES[id];
-              const on = game.expansions.includes(id);
+              const on = table.expansions.includes(id);
               if (open) return on ? <span key={id} className="chip fix on">{label}</span> : null;
               return <button key={id} type="button" className="chip" aria-pressed={on} onClick={() => toggle(id)}>{label}</button>;
             })}
           </div>
         </div>
-        <MapSetup ref={mapBlock} game={game} pack={pack} drag={drag} ghostRef={ghostRef} started={Boolean(open)}>
-          {open && homeNotes(open, pack).map(note => (
+        <MapSetup ref={mapBlock} saved={shared} pack={pack} drag={drag} ghostRef={ghostRef} started={Boolean(open)}>
+          {open && homeNotes(open.table, pack).map(note => (
             <p key={`${note.kind}-${note.seat}`} className="side-note" role="status">
               {note.kind === 'foreign'
                 ? t('game.homeForeign', { seat: note.seat, other: factionName(note.other), mine: factionName(note.mine) })

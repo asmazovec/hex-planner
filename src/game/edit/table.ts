@@ -12,7 +12,7 @@ import { defaultLayout, slotKeyOf, templateOf } from '../../domain/layouts';
 import { moveToTemplate, seatSlots, slotsFor, templateFor } from '../../domain/mapBuilder';
 import { makeId, timeIdMaker, type IdMaker } from '../../domain/newGame';
 import { startStructures } from '../../domain/startStructures';
-import { heldCards, splitStartUnits } from '../../domain/strategy';
+import { heldCards, splitStartUnits, type HomeNote } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { DataPack, ExpansionId, MapLayout, StartHoldings } from '../../domain/types';
 import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../save';
@@ -226,7 +226,7 @@ function ownHomeSlots(table: Table, pack: DataPack): Set<string> {
 }
 
 /** The slots of the seats that hold no tile while their player has a faction: each takes that faction's home tile. */
-function emptySeatHomes(table: Table, pack: DataPack): Record<string, string> {
+export function emptySeatHomes(table: Table, pack: DataPack): Record<string, string> {
   const slots = seatSlots(real(table).length, pack, table.layout);
   const homes: Record<string, string> = {};
   for (const player of real(table)) {
@@ -295,10 +295,11 @@ function seatedAs(saved: SavedGame, list: Player[], start: StartEdits = saved.st
 }
 
 /** The players of the table, mine first. */
-const listOf = (saved: SavedGame): Player[] => {
-  const me = saved.table.players.find(p => p.id === saved.table.viewer);
-  return [...(me ? [me] : []), ...real(saved.table).filter(p => p !== me)];
+export const listPlayers = (table: Table): Player[] => {
+  const me = table.players.find(p => p.id === table.viewer);
+  return [...(me ? [me] : []), ...real(table).filter(p => p !== me)];
 };
+const listOf = (saved: SavedGame): Player[] => listPlayers(saved.table);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Players.
@@ -574,4 +575,80 @@ export function startedGame(draft: SavedGame): SavedGame {
     };
   }, draft.start);
   return { ...draft, start };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// What the map builder reads of the table: the old `domain/mapBuilder` questions over a table (pinned in `table.test.ts`).
+
+/** The players at the table: the seated ones, not those written for by hand. */
+export const seatedCount = (table: Table): number => real(table).length;
+
+/** Slots the player fills by hand, in template order: neither a tile the template fixes nor a seat's home. */
+export function freeSlots(table: Table, pack: DataPack): string[] {
+  const count = real(table).length;
+  const seats = new Set(seatSlots(count, pack, table.layout));
+  return slotsFor(count, pack, table.layout).filter(slot => !slot.fixed).map(slot => slotKeyOf(slot.q, slot.r)).filter(key => !seats.has(key));
+}
+
+/** Free slots that still hold no tile: the map is not built while there are any. */
+export const emptySlots = (table: Table, pack: DataPack): string[] => freeSlots(table, pack).filter(key => !table.map[key]);
+
+/** True while the map holds nothing beyond the tiles its template places and the players' own home tiles. */
+export function mapIsEmpty(table: Table, pack: DataPack): boolean {
+  const fixed = new Map(slotsFor(real(table).length, pack, table.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+  const own = ownHomeSlots(table, pack);
+  return Object.entries(table.map).every(([slot, tile]) => fixed.get(slot) === tile || own.has(slot));
+}
+
+/** How many tiles of the player a switch to `layout` removes: those in slots it lacks, under its hyperlanes and on its seats; own home tiles move with their seats. */
+export function tilesLostByLayout(saved: SavedGame, layout: MapLayout, pack: DataPack): number {
+  const { table } = saved;
+  const next = templateFor(real(table).length, layout, pack);
+  if (!next || table.layout === layout) return 0;
+  const kept = changeLayout(saved, layout).table.map;
+  const own = ownHomeSlots(table, pack);
+  const oldFixed = new Map(slotsFor(real(table).length, pack, table.layout).map(s => [slotKeyOf(s.q, s.r), s.fixed]));
+  return Object.entries(table.map).filter(([slot, tile]) => !own.has(slot) && oldFixed.get(slot) !== tile && kept[slot] !== tile).length;
+}
+
+/** Whether the game is set up to play: every opponent has a faction and every free slot holds a tile. */
+export const readyToPlay = (table: Table, pack: DataPack): boolean =>
+  real(table).filter(p => p.id !== table.viewer).every(p => p.faction !== '') && emptySlots(table, pack).length === 0;
+
+/** What the Game screen says about the homes: a seat holding another faction's home system, or my seat holding nothing. */
+export function homeNotes(table: Table, pack: DataPack): HomeNote[] {
+  const slots = seatSlots(real(table).length, pack, table.layout);
+  const onMap = (tile: string | undefined) => tile !== undefined && Object.values(table.map).some(id => id.split('@')[0] === tile);
+  const notes: HomeNote[] = [];
+  for (const player of listPlayers(table)) {
+    const def = pack.factions[player.faction];
+    if (!def || onMap(def.homeTile) || onMap(def.gateTile)) continue;
+    const tile = table.map[slots[player.seat - 1]]?.split('@')[0];
+    if (tile === undefined) {
+      if (player.id === table.viewer) notes.push({ kind: 'noHome', seat: player.seat });
+      continue;
+    }
+    if (pack.tiles[tile]?.kind !== 'home') continue;
+    const owners = Object.values(pack.factions).filter(f => f.homeTile === tile || f.gateTile === tile);
+    const other = owners.find(f => !f.id.startsWith('keleres')) ?? owners[0];
+    if (other) notes.push({ kind: 'foreign', seat: player.seat, other: other.id, mine: player.faction });
+  }
+  return notes;
+}
+
+/** What going to another count means for the map: the tiles the player has placed, and how many of them would leave. */
+export function countChangeEffect(table: Table, count: number, pack: DataPack): { filled: number; lost: number } {
+  const tiles = userTiles(table, pack);
+  const template = templateFor(count, layoutForCount(table, count, pack), pack);
+  if (!template) return { filled: tiles.length, lost: 0 };
+  const map = moveToTemplate(table.map, slotsFor(real(table).length, pack, table.layout), template, pack);
+  return { filled: tiles.length, lost: tiles.filter(slot => map[slot] !== table.map[slot]).length };
+}
+
+/** What a player has put on the board by hand, which leaving the table takes away: the units and the planets under their control. */
+export function opponentHoldings(start: StartEdits, player: PlayerId): { units: number; planets: number } {
+  const units = [...Object.values(start.units), ...Object.values(start.ground)]
+    .flatMap(byOwner => Object.values(byOwner[player] ?? {}))
+    .reduce<number>((sum, n) => sum + (n ?? 0), 0);
+  return { units, planets: Object.values(start.control).filter(owner => owner === player).length };
 }

@@ -3,8 +3,8 @@ import { loadPack } from '../../../data/loadPack';
 import { emptySources, tacticalOf, withoutSource } from '../../../game/edit/tactical';
 import { atOf } from '../../../game/edit/tacticalRead';
 import { useGame } from '../../../state/gameStore';
-import { timelineOf } from '../../../testing/projection';
-import { writeTurn } from '../../../state/turnBridge';
+import { timelineOf } from '../../../state/projection';
+import { writeSaved } from '../../../state/turnBridge';
 import { animates } from '../../common/motion';
 
 /**
@@ -18,12 +18,11 @@ export const leaveKey = (entryId: string, source: string): string => `${entryId}
 
 /** The turn of the entry as the store has it now, its writer and the places of the board before it, while the entry is a tactical action. */
 function turnNow(entryId: string) {
-  const { game } = useGame.getState();
-  const plan = game?.plans.find(p => p.id === game.activePlanId);
-  if (!game || !plan) return null;
-  const pack = loadPack(game.expansions);
-  const { kernel } = timelineOf(game, plan, 'forecast', pack);
-  const write = writeTurn(kernel.table, game, entryId, pack);
+  const { saved } = useGame.getState();
+  if (!saved) return null;
+  const pack = loadPack(saved.table.expansions);
+  const kernel = timelineOf(saved, saved.activePlanId, 'forecast', pack);
+  const write = writeSaved(saved, entryId);
   if (!write || write.turn.action.kind !== 'tactical') return null;
   return { write, at: atOf(kernel.table, kernel.byTurn.get(entryId)?.before ?? kernel.end, pack) };
 }

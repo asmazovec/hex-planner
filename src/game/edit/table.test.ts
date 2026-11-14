@@ -2,16 +2,18 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { LAYOUT_CHOICES, slotKeyOf } from '../../domain/layouts';
-import { changeLayout as oldChangeLayout, slotsFor } from '../../domain/mapBuilder';
+import { changeLayout as oldChangeLayout, emptySlots as oldEmptySlots, freeSlots as oldFreeSlots, mapIsEmpty as oldMapIsEmpty, readyToPlay as oldReady, slotsFor, tilesLostByLayout as oldLost } from '../../domain/mapBuilder';
 import { withTeMecatol } from '../../domain/mecatol';
 import { createGame } from '../../domain/newGame';
 import { placeStartUnits, addPlayer as oldAdd, draftWithExpansions as oldDraft, removePlayer as oldRemove, setPlayerFaction as oldFaction, swapSeats as oldSwap, withSeatHomes } from '../../domain/players';
+import { countChangeEffect as oldCount, opponentHoldings as oldHoldings } from '../../domain/players';
+import { homeNotes as oldHomeNotes } from '../../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../../domain/thundersEdge';
 import type { Entry, ExpansionId, Game, MapLayout } from '../../domain/types';
 import { gameOf, savedOf } from '../../testing/legacySave';
 import type { SavedGame } from '../save';
 import {
-  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName, withTile,
+  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, countChangeEffect, emptySlots, freeSlots, homeNotes, opponentHoldings, mapIsEmpty, readyToPlay, removePlayer, setFaction, startedGame, swapSeats, tilesLostByLayout, withMap, withName, withTile,
 } from './table';
 import { withFractureActive, withFractureSeat } from './start';
 
@@ -228,5 +230,32 @@ describe('the start of the game', () => {
   ])('%i players: the opponents stand at their seats as the old start places them', (count, factions) => {
     const g = draft(count, factions);
     expect(startedGame(savedOf(g))).toEqual(savedOf(placeStartUnits(g, pack)));
+  });
+});
+
+describe('what the map builder reads of the table, as the old builder reads it of the game', () => {
+  const made = (count: number, factions: string[], tiles: Record<string, string> = {}): Game => {
+    const p = loadPack(['pok', 'te']);
+    let g = createGame({ expansions: ['pok', 'te'], playerCount: count, faction: '' }, p, counter());
+    factions.forEach((f, i) => { g = oldFaction(g, i, f, p); });
+    return { ...g, map: { ...g.map, ...tiles } };
+  };
+  const loadedPack = loadPack(['pok', 'te']);
+  test.each([
+    [4, ['sol', 'hacan', 'arborec', 'creuss'], {}],
+    [6, ['sol', 'creuss', 'hacan', '', '', 'saar'], { '1,-1': '26', '2,-1': '27' }],
+    [3, ['sol', '', 'yssaril'], { '1,-1': '26' }],
+    [5, ['letnev', 'nekro', 'naalu', 'muaat', ''], {}],
+  ])('%i players: free and empty slots, an empty map, readiness and the tiles a layout switch loses', (count, factions, tiles) => {
+    const g = made(count, factions, tiles);
+    const saved = savedOf(g);
+    expect(freeSlots(saved.table, loadedPack)).toEqual(oldFreeSlots(g, loadedPack));
+    expect(emptySlots(saved.table, loadedPack)).toEqual(oldEmptySlots(g, loadedPack));
+    expect(mapIsEmpty(saved.table, loadedPack)).toBe(oldMapIsEmpty(g, loadedPack));
+    expect(readyToPlay(saved.table, loadedPack)).toBe(oldReady(g, loadedPack));
+    for (const n of [count - 1, count + 1]) expect(countChangeEffect(saved.table, n, loadedPack)).toEqual(oldCount(g, n, loadedPack));
+    for (const o of g.opponents) expect(opponentHoldings(saved.start, saved.table.players.find(q => q.legacyId === o.id)!.id)).toEqual(oldHoldings(g, o.id));
+    expect(homeNotes(saved.table, loadedPack)).toEqual(oldHomeNotes(g, loadedPack));
+    for (const layout of LAYOUT_CHOICES[count] ?? []) expect(tilesLostByLayout(saved, layout, loadedPack)).toBe(oldLost(g, layout, loadedPack));
   });
 });

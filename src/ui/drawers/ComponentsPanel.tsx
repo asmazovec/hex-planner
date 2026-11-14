@@ -3,12 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { componentById, componentsOf, noteAddress, ownedBy, textOf } from '../../domain/components';
 import { breakthroughOf } from '../../domain/effects/breakthrough';
 import { HOLDING_FIELD, staysInPlay, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
-import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats, upgradableStructures } from '../../domain/unitStats';
-import type { ComponentDef, DataPack, Game, TechType } from '../../domain/types';
+import type { ComponentDef, DataPack, TechType } from '../../domain/types';
 import { legacyNotes, shelfOf } from '../../game/shelf';
 import type { Board, Table } from '../../game/types';
-import { playerOfKey } from '../../game/keys';
+import { legacyKey, playerOfKey } from '../../game/keys';
+import type { StartEdits } from '../../game/save';
 import { tableView } from '../../game/views';
 import { useGame } from '../../state/gameStore';
 import { ComponentCard, type CardState } from '../components/ComponentCard';
@@ -24,7 +24,8 @@ import { Stepper } from '../primitives/Stepper';
 import { UnitIcon } from '../units/UnitIcon';
 
 export interface ComponentsPanelProps {
-  game: Game;
+  /** What was placed by hand before the plan: the leaders and the other holdings the game began with. */
+  start: StartEdits;
   pack: DataPack;
   /** The table and the board the map shows: what every player holds is read from them. */
   table: Table;
@@ -66,7 +67,7 @@ const unique = (ids: string[]): string[] => [...new Set(ids)];
  * it finds, what the player holds first, the rest with a control that adds it. Marks made here are what the player held
  * when the plan begins; what an entry of the plan brought says its round and is changed in that entry.
  */
-export function ComponentsPanel({ game, pack, table, board, rounds, group, chosen, onChoose }: ComponentsPanelProps) {
+export function ComponentsPanel({ start: startEdits, pack, table, board, rounds, group, chosen, onChoose }: ComponentsPanelProps) {
   const { t } = useTranslation();
   const setStartHolding = useGame(s => s.setStartHolding);
   const setLeader = useGame(s => s.setLeader);
@@ -75,11 +76,14 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
   const find = useComponentSearch(pack, undefined, undefined, table);
   const found = useMemo(() => find(asked), [find, asked]);
 
-  const rival = game.opponents.find(o => o.id === chosen);
+  const seated = table.players.filter(p => p.seat < 100).map(p => ({ id: legacyKey(table, p.id), faction: p.faction, color: p.color, seat: p.seat }));
+  const me = seated.find(p => p.id === 'me') ?? { id: 'me', faction: '', color: 1, seat: 1 };
+  const opponents = seated.filter(p => p.id !== 'me').sort((a, b) => a.seat - b.seat);
+  const rival = opponents.find(o => o.id === chosen);
   const player = rival ? rival.id : 'me';
-  const faction = rival ? rival.faction : game.faction;
+  const faction = rival ? rival.faction : me.faction;
   const holdings = shelfOf(table, board, playerOfKey(table, player) ?? table.viewer);
-  const start = (rival ? game.start.opponents[rival.id] : game.start.me) ?? {};
+  const start = startEdits.holdings[playerOfKey(table, player) ?? table.viewer] ?? {};
   const fromPlan = rounds[player] ?? {};
   const laws = tableView(table, board, pack).laws.map(law => law.id);
 
@@ -157,7 +161,7 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
     );
   };
 
-  const playerOf = (who: string) => (who === 'me' ? game : game.opponents.find(o => o.id === who));
+  const playerOf = (who: string) => (who === 'me' ? me : opponents.find(o => o.id === who));
   const nameOf = (who: string): string => {
     const found = playerOf(who);
     return found ? shortName(pack, found.faction, t('players.player', { n: found.seat })) : who;
@@ -284,13 +288,13 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
   const rest = found.filter(def => !first.includes(def.id));
 
   return (
-    <DrawerSheet className="components-panel" title={t('components.title')} style={playerStyle('--player', rival ? rival.color : game.color)}>
+    <DrawerSheet className="components-panel" title={t('components.title')} style={playerStyle('--player', rival ? rival.color : me.color)}>
       <PlayerChoice
         label={t('components.whose')}
         chosen={value => (value === null ? !rival : rival?.id === value)} onPick={onChoose}
         options={[
-          { value: null, label: t('plan.mine'), color: game.color },
-          ...opponentsBySeat(game).map(o => {
+          { value: null, label: t('plan.mine'), color: me.color },
+          ...opponents.map(o => {
             const name = shortName(pack, o.faction, t('players.player', { n: o.seat }));
             return { value: o.id, label: name, color: o.color, tag: playerTag(name, Boolean(pack.factions[o.faction]), o.seat) };
           }),

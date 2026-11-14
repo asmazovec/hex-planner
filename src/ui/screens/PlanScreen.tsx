@@ -5,7 +5,9 @@ import { EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/project';
 import { shownOf } from '../../game/shelf';
 import { warningsByTurn } from '../../game/rowWarnings';
-import { boardAtRound, tacticalEntries, tacticalNumbers, timelineOf, turnOfEntry } from '../../testing/projection';
+import { boardAt, statusIn, tacticalNumbers, timelineOf } from '../../state/projection';
+import { findTurn } from '../../game/edit/plan';
+import { mapSource } from '../../game/space';
 import { cardTargetsOn } from '../../game/planQueries';
 import { tacticalOwner } from '../../game/edit/new';
 import { legacyKey, playerOfKey } from '../../game/keys';
@@ -84,6 +86,7 @@ export interface PlanScreenProps {
 export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const { t, i18n } = useTranslation();
   const game = useGame(s => s.game);
+  const saved = useGame(s => s.saved);
   const toggleIngress = useGame(s => s.toggleIngress);
   const setThundersEdge = useGame(s => s.setThundersEdge);
   const addRound = useGame(s => s.addRound);
@@ -176,7 +179,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   const onPlayed = useCallback(() => setPick(state => (state.panel.kind === 'list' && state.panel.shown
     ? { ...state, panel: { ...state.panel, shown: { ...state.panel.shown, plays: state.panel.shown.plays + 1 } } } : state)), []);
-  const flight = useFlightLoop({ game, plan, pack: pack, boards, shown, shownEntry, onPlayed });
+  const flight = useFlightLoop({ saved, planId: plan?.id, pack: pack, boards, shown, shownEntry, onPlayed });
 
   /** What the editor holds on leaving the screen, whichever way: the menu has no way to ask. */
   const editedId = useRef<string | undefined>(undefined);
@@ -190,7 +193,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   }
 
   // Totals and map show the end of the chosen round: later rounds would ready planets and clear its tokens.
-  const forecastKernel = timelineOf(game, plan, 'forecast', pack).kernel;
+  const forecastKernel = timelineOf(saved!, plan.id, 'forecast', pack);
   const rowWarnings = warningsByTurn(forecastKernel);
 
   const closeShown = () => {
@@ -336,7 +339,8 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   /** The systems an entry touches, as the kernel reads its turn on the board just before it. */
   const systemsOf = (of: Entry) => {
     const at = boards.view(of.id);
-    return systemsOfTurn(at.table, at.board, pack, turnOfEntry(at.table, of, pack));
+    const found = findTurn(forecastKernel.rounds, of.id);
+    return found ? systemsOfTurn(at.table, at.board, pack, found.turn) : [];
   };
   const onShowEntry = (tapped: Entry) => {
     if (tapped.type === 'pass') return;
@@ -376,9 +380,9 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const toggleManualPayment = (id: string, open: boolean) => setManualPayments(ids => (open ? [...ids, id] : ids.filter(other => other !== id)));
 
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
-  const shownLine = timelineOf(game, plan, shownFilter, pack);
-  const shownTable = shownLine.kernel.table;
-  const shownBoard = boardAtRound(shownLine, round.number);
+  const shownLine = timelineOf(saved!, plan.id, shownFilter, pack);
+  const shownTable = shownLine.table;
+  const shownBoard = boardAt(shownLine, round.number);
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
   const planSoFar = { ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) };
   const lockedUpgrades = entryUpgradeRounds(planSoFar, shownFilter, pack);
@@ -390,14 +394,19 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const rivalUpgraded = Object.fromEntries(Object.entries(seen.players).filter(([id]) => id !== 'me').map(([id, p]) => [id, upgradesOf(p.shelf, pack)]));
   const heldCount = holdingCount(seen.players.me.shelf);
   // Warfare's free action has its card's status: the card marked done turns its arrow done.
-  const tacticals: (Entry & TacticalEntry)[] = tacticalEntries(game, round, pack);
+  const kernelRound = forecastKernel.rounds.find(r => r.number === round.number);
+  const tacticals = round.entries.flatMap(item => {
+    if (item.type !== 'tactical') return [];
+    const status = kernelRound && statusIn(kernelRound, item.id);
+    return [status && status !== item.status ? { ...item, status } : item];
+  }) as (Entry & TacticalEntry)[];
   /** The action the map speaks of: the one being edited or read. */
   const focusId = entry?.id ?? shownEntry?.id ?? flight.flying?.entryId;
   // Lines and flights need to know where the off-map homes stand before the map draws them.
   const offMap = placeOffMap(shownTable, shownBoard, pack);
   /** A system ships can be in: a tile of the map or an off-map home beside it. */
   const onBoard = (slot: string): boolean => slot in offMap || isOnMap(game, slot);
-  const arrows = planArrows(shownTable, shownBoard, pack, tacticals, tacticalNumbers(game, round, pack), focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
+  const arrows = planArrows(shownTable, shownBoard, pack, tacticals, kernelRound ? tacticalNumbers(kernelRound) : {}, focusId, tactical !== null || mapMode !== 'now', leavers.leaving);
 
   /** The action in hand, as its owner plays it. */
   const entryView = entry ? boards.view(entry.id) : undefined;
@@ -712,7 +721,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             </div>
           )}
         />
-        <SummaryBar table={shownTable} now={boardAtRound(timelineOf(game, plan, 'now', pack), round.number)} forecast={boardAtRound(timelineOf(game, plan, 'forecast', pack), round.number)} pack={pack} factOnly={shownFilter === 'now'} />
+        <SummaryBar table={shownTable} now={boardAt(timelineOf(saved!, plan.id, 'now', pack), round.number)} forecast={boardAt(forecastKernel, round.number)} pack={pack} factOnly={shownFilter === 'now'} />
       </header>
       <div className="plan-body">
         <Drawer open={leftOpen} className={`drawer-left drawer-${leftDrawer}`} onDismiss={closeDrawer}>
@@ -765,10 +774,10 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <Drawer open={rightOpen} className="drawer-under">
             <div key={rightDrawer} className="drawer-swap">
               {rightDrawer === 'components'
-                ? <ComponentsPanel game={game} pack={pack} table={shownTable} board={shownBoard} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />
+                ? <ComponentsPanel start={saved!.start} pack={pack} table={shownTable} board={shownBoard} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />
                 : (
                   <ThundersEdgePanel
-                    game={game} pack={pack} owners={owners}
+                    table={shownTable} start={saved!.start} map={mapSource(shownTable, shownBoard)} pack={pack} owners={owners}
                     onPlace={() => update(state => ({ ...state, next: { kind: 'placeTe' } }))} onMark={() => update(state => ({ ...state, next: { kind: 'markIngress' } }))}
                   />
                 )}
@@ -788,7 +797,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
                   pack={pack} viewOf={id => boards.view(id)} round={round} turns={forecastKernel.rounds.find(r => r.number === round.number)?.turns ?? []}
-                  warnings={rowWarnings} end={{ table: forecastKernel.table, board: boardAtRound(timelineOf(game, plan, 'forecast', pack), round.number) }}
+                  warnings={rowWarnings} end={{ table: forecastKernel.table, board: boardAt(forecastKernel, round.number) }}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) flight.start(done.id, shownFilter); }}

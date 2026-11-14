@@ -3,10 +3,11 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { HEX_INNER } from '../../../domain/hexLayout';
 import { rotateLanes } from '../../../domain/lanes';
-import { duplicateTiles, freeSlots, seatSlots, slotsFor } from '../../../domain/mapBuilder';
+import { duplicateTiles, seatSlots, slotsFor } from '../../../domain/mapBuilder';
 import { MECATOL_PLANETS } from '../../../domain/mecatol';
-import { playersOf } from '../../../domain/players';
-import type { DataPack, Game, TileDef } from '../../../domain/types';
+import { freeSlots, listPlayers, seatedCount } from '../../../game/edit/table';
+import type { SavedGame } from '../../../game/save';
+import type { DataPack, TileDef } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
 import { Popover } from '../../overlays/Popover';
 import { factionShortName } from '../../players/names';
@@ -35,7 +36,7 @@ const centreOf = (key: string) => {
 };
 
 export interface TileMinimapProps {
-  game: Game;
+  saved: SavedGame;
   pack: DataPack;
   drag: Omit<SeatDrag, 'ghostRef'>;
   ghostRef: SeatDrag['ghostRef'];
@@ -48,16 +49,18 @@ export interface TileMinimapProps {
  * the hyperlanes and the homes come by themselves. A token per player on the homes, seat 1 at the top: drag one onto
  * another, or tap one and then another, and the two players swap seats.
  */
-export function TileMinimap({ game, pack, drag, ghostRef, locked = false }: TileMinimapProps) {
+export function TileMinimap({ saved, pack, drag, ghostRef, locked = false }: TileMinimapProps) {
   const { t } = useTranslation();
+  const { table } = saved;
+  const playerCount = seatedCount(table);
   const setTile = useGame(s => s.setTile);
   const [selected, setSelected] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const players = playersOf(game);
-  const slots = slotsFor(game.playerCount, pack, game.layout);
-  const seats = seatSlots(game.playerCount, pack, game.layout);
-  const free = new Set(freeSlots(game, pack));
-  const dupes = new Set(duplicateTiles(game.map, pack));
+  const players = listPlayers(table);
+  const slots = slotsFor(playerCount, pack, table.layout);
+  const seats = seatSlots(playerCount, pack, table.layout);
+  const free = new Set(freeSlots(table, pack));
+  const dupes = new Set(duplicateTiles(table.map, pack));
   const box = mapBounds(slots);
   // 44 px across on screen, however far the map shrinks to fit the block.
   const hitRadius = (22 * box.width) / BLOCK_WIDTH;
@@ -75,7 +78,7 @@ export function TileMinimap({ game, pack, drag, ghostRef, locked = false }: Tile
   };
 
   const tileOf = (key: string) => {
-    const value = game.map[key];
+    const value = table.map[key];
     const id = value?.split('@')[0];
     return { value, id, tile: id ? pack.tiles[id] : undefined };
   };
@@ -182,7 +185,7 @@ export function TileMinimap({ game, pack, drag, ghostRef, locked = false }: Tile
           className="tile-popover" data-slot-popover={open} anchor={anchor} areaRef={wrapRef} keepOpenIn=".tile-mini"
           closeLabel={t('map.sheet.close')} onClose={close}
         >
-          <TileNumberInput key={open} pack={pack} value={game.map[open]} onChange={value => place(open, value)} />
+          <TileNumberInput key={open} pack={pack} value={table.map[open]} onChange={value => place(open, value)} />
         </Popover>
       )}
       {createPortal(

@@ -26,8 +26,8 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(error, info.componentStack);
-    const { game, crashGame } = useGame.getState();
-    if (!game) return;
+    const { saved, crashGame } = useGame.getState();
+    if (!saved) return;
     crashGame(error.message || String(error));
     this.setState({ error: null });
   }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPack } from '../data/loadPack';
-import { readyToPlay } from '../domain/mapBuilder';
+import { readyToPlay } from '../game/edit/table';
 import { shareLinkQuery } from '../domain/shareLink';
 import { useGame } from '../state/gameStore';
 import { Banner } from './feedback/Banner';
@@ -20,8 +20,8 @@ type Screen = (typeof SCREENS)[number];
 
 export function App() {
   const { t } = useTranslation();
-  const game = useGame(s => s.game);
-  const gameId = game?.id ?? null;
+  const openSaved = useGame(s => s.saved);
+  const gameId = openSaved?.id ?? null;
   const [screen, setScreen] = useState<Screen>(() => (gameId === null ? null : lastView.read(gameId)?.screen) ?? 'game');
   /** The plan's hint about an unfinished map leads to the map block of the game screen. */
   const [toMap, setToMap] = useState(false);
@@ -36,32 +36,31 @@ export function App() {
   }
 
   // Without a game there is no plan to show, so the menu does not offer it. Leaving a game comes back here too.
-  const shown: Screen = game ? screen : 'game';
+  const shown: Screen = openSaved ? screen : 'game';
   useEffect(() => {
     if (gameId !== null) lastView.write(gameId, { screen: shown });
   }, [gameId, shown]);
 
   // The address of an open game is its link: copy it and pass it on. No history entry, for it changes with every tile.
-  const openSaved = useGame(s => s.saved);
-  const query = game && openSaved ? shareLinkQuery(openSaved) : '';
+  const query = openSaved ? shareLinkQuery(openSaved) : '';
   useEffect(() => {
     window.history.replaceState(null, '', gameAddress(query));
   }, [query]);
 
   /** A save set up to play opens on its plan and map; an unfinished one stays here to be finished. */
   const openedSave = () => {
-    const opened = useGame.getState().game;
-    if (opened && readyToPlay(opened, loadPack(opened.expansions))) { setScreen('plan'); setToMap(false); }
+    const opened = useGame.getState().saved;
+    if (opened && readyToPlay(opened.table, loadPack(opened.table.expansions))) { setScreen('plan'); setToMap(false); }
   };
 
-  const dataMismatch =game !== null && game.dataVersion !== loadPack(game.expansions).version;
+  const dataMismatch = openSaved !== null && openSaved.dataVersion !== loadPack(openSaved.table.expansions).version;
 
   return (
     <div className="app">
       {dataMismatch && <Banner kind="warning" message={t('game.dataVersionWarning')} />}
       {saveError && <ErrorBanner message={t('banner.saveError', { error: saveError })} />}
       <div className="app-body">
-        {game && (
+        {openSaved && (
           <nav className="app-rail">
             {SCREENS.map((id) => (
               <button

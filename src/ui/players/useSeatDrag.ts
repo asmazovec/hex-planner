@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import type { Player } from '../../domain/players';
+import type { Player } from '../../game/types';
 
 const DRAG_DISTANCE = 6;
 const LAND_MS = 230;

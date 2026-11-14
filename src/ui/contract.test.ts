@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 
 /** The files moved so far; each next step of the move adds its own. */
 export const KERNEL_ONLY = [
-  'drawers/ComponentTabs.tsx', 'drawers/ComponentsPanel.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/MapLegend.tsx', 'drawers/ThundersEdgePanel.tsx',
+  'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx', 'drawers/ComponentsPanel.tsx', 'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'drawers/ComponentTabs.tsx', 'drawers/ComponentsPanel.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/MapLegend.tsx', 'drawers/ThundersEdgePanel.tsx',
   'players/FactionCard.tsx', 'players/FactionComponents.tsx', 'players/FactionPicker.tsx', 'players/PlayerList.tsx', 'players/ShipStats.tsx', 'players/names.ts', 'players/useSeatDrag.ts',
   'screens/GameScreen.tsx', 'screens/EnergySettings.tsx', 'screens/LegalNotice.tsx',
   'map/HexMap.tsx', 'map/TileView.tsx', 'map/PlanetBadge.tsx', 'map/useFractureFlight.ts', 'map/offMapHomes.ts', 'map/marks.tsx', 'map/RouteArrows.tsx', 'map/FlightLayer.tsx',
@@ -24,6 +24,7 @@ export const KERNEL_ONLY = [
 
 /** The files of the list above that no longer take the old `Game` either: they read the table and the board. */
 export const WITHOUT_GAME = [
+  'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx', 'drawers/ComponentsPanel.tsx', 'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx', 'drawers/ThundersEdgePanel.tsx', 'screens/plan/useFlightLoop.tsx',
   'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
   'plan/SummaryBar.tsx', 'plan/actLines.ts',
   'plan/blocks/LandingBlock.tsx', 'plan/blocks/PaymentBlock.tsx', 'plan/blocks/TokenTiles.tsx', 'plan/blocks/ScoredBlock.tsx', 'plan/blocks/GainsBlock.tsx', 'plan/blocks/UsesBlock.tsx', 'plan/blocks/ChoicesBlock.tsx',
@@ -35,6 +36,13 @@ export const WITHOUT_GAME = [
   'components/ComponentPicker.tsx', 'components/useComponentSearch.ts', 'components/ComponentCard.tsx', 'components/ComponentSearchField.tsx', 'plan/blocks/ComponentSlot.tsx', 'plan/blocks/ResearchBlock.tsx', 'plan/blocks/TurnActs.tsx', 'plan/editors/TacticalEditorHost.tsx', 'plan/editors/UnitPickerHost.tsx', 'plan/tactical.ts', 'plan/kernelView.ts',
   'screens/PlanScreen.tsx', 'screens/plan/pick.ts',
   'common/expansions.ts', 'common/gameAddress.ts', 'common/motion.ts', 'common/preferences.ts', 'common/scrollbar.ts', 'common/usePack.ts', 'common/useReorderDrag.ts', 'feedback/Banner.tsx', 'map/builder/TileNumberInput.tsx', 'overlays/Drawer.tsx', 'overlays/Modal.tsx', 'overlays/Popover.tsx', 'plan/ActionMenu.tsx', 'plan/blocks/CardGrid.tsx', 'primitives/ConfirmBar.tsx', 'primitives/EditorFrame.tsx', 'primitives/EditorPart.tsx', 'primitives/Icon.tsx', 'primitives/MapPickButton.tsx', 'primitives/NoteField.tsx', 'primitives/player.tsx', 'primitives/Section.tsx', 'primitives/SectionTitle.tsx', 'primitives/Stepper.tsx', 'primitives/Vanishing.tsx', 'screens/plan/useDrawers.ts', 'units/TokenLayer.tsx', 'units/unitArt.ts', 'units/UnitDraft.tsx', 'units/UnitIcon.tsx', 'units/unitOrder.ts', 'units/unitsText.ts', 'units/UnitTile.tsx', 'units/UnitToken.tsx',
+];
+
+/** The files that read the saved game of the store and nothing of its derived old view (`game`, `draft`). */
+export const SAVED_ONLY = [
+  'App.tsx', 'common/ErrorBanner.tsx', 'common/ErrorBoundary.tsx', 'common/ShareConflict.tsx', 'drawers/ComponentsPanel.tsx', 'drawers/ExpeditionWidget.tsx', 'drawers/FractureControl.tsx',
+  'drawers/ThundersEdgePanel.tsx', 'map/builder/LayoutPicker.tsx', 'map/builder/MapSetup.tsx', 'map/builder/MapStringImport.tsx', 'map/builder/TileMinimap.tsx',
+  'players/PlayerList.tsx', 'screens/GameScreen.tsx', 'screens/plan/useFlightLoop.tsx', 'screens/plan/useLeavingSources.ts',
 ];
 
 const raw = import.meta.glob<string>(['./**/*.ts', './**/*.tsx', '!./**/*.test.*'], { query: '?raw', import: 'default', eager: true });
@@ -66,6 +74,12 @@ describe('the screens that read the game model only', () => {
       expect(KERNEL_ONLY, file).toContain(file);
       const imports = [...text(file).matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+'([^']+)'/g)];
       for (const [, names] of imports) expect(names, `${file} imports the old game`).not.toMatch(/\bGame\b/);
+    }
+  });
+
+  test('the files that read the saved game ask the store for nothing of its derived old view', () => {
+    for (const file of SAVED_ONLY) {
+      expect(text(file), `${file} reads the derived old view of the store`).not.toMatch(/s => s\.(game|draft)\b|\.getState\(\)\.(game|draft)\b|\{ game\b/);
     }
   });
 });

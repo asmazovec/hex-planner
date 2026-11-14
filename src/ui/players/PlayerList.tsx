@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { holdingsOf, upgradesOf } from '../../domain/holdings';
-import { countChangeEffect, maxPlayers, MIN_PLAYERS, opponentHoldings, playersOf } from '../../domain/players';
+import { countChangeEffect, listPlayers, maxPlayers, MIN_PLAYERS, opponentHoldings } from '../../game/edit/table';
+import { legacyKey } from '../../game/keys';
 import type { UnitId, UpgradeId } from '../../domain/types';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
@@ -24,14 +25,15 @@ export interface PlayerListProps {
 /** The players of the open game, or of the draft before a game starts: one card each, everything visible, my faction first. */
 export function PlayerList({ drag, live }: PlayerListProps) {
   const { t } = useTranslation();
-  const game = useGame(s => s.game ?? s.draft);
+  const saved = useGame(s => s.saved ?? s.draftSaved);
+  const { table } = saved;
   const setFaction = useGame(s => s.setFaction);
   const setOpponent = useGame(s => s.setOpponent);
   const addOpponent = useGame(s => s.addOpponent);
   const removeOpponent = useGame(s => s.removeOpponent);
   const setStartHolding = useGame(s => s.setStartHolding);
-  const started = useGame(s => s.game !== null);
-  const pack = usePack(game.expansions);
+  const started = useGame(s => s.saved !== null);
+  const pack = usePack(table.expansions);
   const factions = useMemo(
     () => Object.values(pack.factions).sort((a, b) => a.name.localeCompare(b.name, 'en')),
     [pack],
@@ -40,14 +42,15 @@ export function PlayerList({ drag, live }: PlayerListProps) {
   const [fresh, setFresh] = useState<number | null>(null);
   const listRef = useRef<HTMLElement>(null);
 
-  const players = playersOf(game);
+  /** The players, mine first; `key` is the id the screens and the store call them by (`me` for mine). */
+  const players = listPlayers(table).map(p => ({ ...p, key: legacyKey(table, p.id), vp: saved.start.points[p.id] ?? 0 }));
   const count = players.length;
   const max = maxPlayers(pack);
 
   const add = () => {
     addOpponent();
-    const { game: open, draft } = useGame.getState();
-    setFresh((open ?? draft).opponents.at(-1)?.color ?? null);
+    const now = useGame.getState();
+    setFresh(listPlayers((now.saved ?? now.draftSaved).table).at(-1)?.color ?? null);
     setAsked(null);
   };
   useEffect(() => {
@@ -58,8 +61,8 @@ export function PlayerList({ drag, live }: PlayerListProps) {
     setAsked(null);
   };
   const effectOf = (next: Asked) => ({
-    ...countChangeEffect(game, next.kind === 'add' ? count + 1 : count - 1, pack),
-    held: next.kind === 'remove' ? opponentHoldings(game, game.opponents[next.opponent].id) : { units: 0, planets: 0 },
+    ...countChangeEffect(table, next.kind === 'add' ? count + 1 : count - 1, pack),
+    held: next.kind === 'remove' ? opponentHoldings(saved.start, players[next.opponent + 1].id) : { units: 0, planets: 0 },
   });
   const ask = (next: Asked) => {
     const { filled, held } = effectOf(next);
@@ -114,7 +117,7 @@ export function PlayerList({ drag, live }: PlayerListProps) {
                   />
                 )}
               </div>
-              {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.id] ?? player.vp}</b></div>}
+              {live && <div className="player-vp">{t('players.points')} <b>{live.points[player.key] ?? player.vp}</b></div>}
               {/* The question stands in for the cross that asked it. */}
               {index === 0 || live || (asked?.kind === 'remove' && asked.opponent === opponent) ? <span /> : (
                 <HexRemove label={t('players.remove')} disabled={count <= MIN_PLAYERS} onClick={() => ask({ kind: 'remove', opponent })} />
@@ -123,13 +126,13 @@ export function PlayerList({ drag, live }: PlayerListProps) {
             {asked?.kind === 'remove' && asked.opponent === opponent && confirmBar(asked)}
             {faction && (
               <FactionCard
-                faction={faction} pack={pack} expansions={game.expansions}
-                chosen={(index === 0 ? game.start.me : game.start.opponents[player.id])?.technologies?.map(id => id.slice('technology:'.length))}
-                onChoose={(id, take) => setStartHolding(index === 0 ? 'me' : player.id, `technology:${id}`, take)}
+                faction={faction} pack={pack} expansions={table.expansions}
+                chosen={saved.start.holdings[player.id]?.technologies?.map(id => id.slice('technology:'.length))}
+                onChoose={(id, take) => setStartHolding(player.key, `technology:${id}`, take)}
                 live={live && {
-                  upgraded: index === 0 ? live.upgraded : live.rivalUpgraded?.[player.id] ?? upgradesOf(holdingsOf(game.start.opponents[player.id]), pack),
+                  upgraded: index === 0 ? live.upgraded : live.rivalUpgraded?.[player.key] ?? upgradesOf(holdingsOf(saved.start.holdings[player.id]), pack),
                   locked: index === 0 ? live.locked : undefined,
-                  structures: live.structures?.[player.id],
+                  structures: live.structures?.[player.key],
                 }}
               />
             )}

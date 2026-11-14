@@ -1,7 +1,9 @@
 import { forwardRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { duplicateTiles, emptySlots, freeSlots } from '../../../domain/mapBuilder';
-import type { DataPack, Game } from '../../../domain/types';
+import { duplicateTiles } from '../../../domain/mapBuilder';
+import type { DataPack } from '../../../domain/types';
+import { emptySlots, freeSlots } from '../../../game/edit/table';
+import type { SavedGame } from '../../../game/save';
 import { WarningList } from '../../feedback/WarningText';
 import type { SeatDrag } from '../../players/useSeatDrag';
 import { SectionTitle } from '../../primitives/SectionTitle';
@@ -10,7 +12,7 @@ import { MapStringImport } from './MapStringImport';
 import { TileMinimap } from './TileMinimap';
 
 export interface MapSetupProps {
-  game: Game;
+  saved: SavedGame;
   pack: DataPack;
   drag: Omit<SeatDrag, 'ghostRef'>;
   ghostRef: SeatDrag['ghostRef'];
@@ -21,21 +23,21 @@ export interface MapSetupProps {
 }
 
 /** The block «Map and seats» beside the players: the layout, the Milty string, the minimap and what the map still lacks. */
-export const MapSetup = forwardRef<HTMLDivElement, MapSetupProps>(function MapSetup({ game, pack, drag, ghostRef, started, children }, ref) {
+export const MapSetup = forwardRef<HTMLDivElement, MapSetupProps>(function MapSetup({ saved, pack, drag, ghostRef, started, children }, ref) {
   const { t } = useTranslation();
   const [importing, setImporting] = useState(false);
-  const empty = emptySlots(game, pack).length;
-  const dupes = duplicateTiles(game.map, pack);
-  const total = freeSlots(game, pack).length;
+  const empty = emptySlots(saved.table, pack).length;
+  const dupes = duplicateTiles(saved.table.map, pack);
+  const total = freeSlots(saved.table, pack).length;
 
   return (
     <div className="side-group map-block" ref={ref}>
       <SectionTitle as="p" className="side-label">{t('builder.block')}</SectionTitle>
-      <LayoutPicker game={game} pack={pack} locked={started} />
+      <LayoutPicker saved={saved} pack={pack} locked={started} />
       {importing
-        ? <MapStringImport game={game} pack={pack} started={started} onClose={() => setImporting(false)} />
+        ? <MapStringImport saved={saved} pack={pack} started={started} onClose={() => setImporting(false)} />
         : <button type="button" className="map-paste" onClick={() => setImporting(true)}>{t('mapImport.title')}</button>}
-      <TileMinimap game={game} pack={pack} drag={drag} ghostRef={ghostRef} locked={started} />
+      <TileMinimap saved={saved} pack={pack} drag={drag} ghostRef={ghostRef} locked={started} />
       {empty > 0 && <WarningList message={t('builder.empty', { count: empty })} />}
       {dupes.length > 0 && <WarningList message={t('builder.duplicates', { list: dupes.join(', ') })} />}
       {empty === 0 && total > 0 && <p className="map-ok" role="status">{t('builder.complete', { count: total })}</p>}
