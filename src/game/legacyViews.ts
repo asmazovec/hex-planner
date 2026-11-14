@@ -446,8 +446,18 @@ export interface PlayerView {
   key: string;
 }
 
+/** The game as a rival sees it, once for the viewer's game it is made from. */
+const SEEN = new WeakMap<Game, Map<string, Game>>();
+function seenBy(game: Game, key: string): Game {
+  let by = SEEN.get(game);
+  if (!by) SEEN.set(game, by = new Map());
+  let seen = by.get(key);
+  if (!seen) by.set(key, seen = gameAs(game, key));
+  return seen;
+}
+
 /** The views of a board from one player's side: what the old functions are given for that player. */
 export function viewFor(table: Table, board: Board, pack: DataPack, player: PlayerId, views = legacyViews(table, board, pack)): PlayerView {
   const key = legacyKey(table, player);
-  return { views, game: key === 'me' ? views.game : gameAs(views.game, key), state: views.states[key], shared: views.states.me, key };
+  return { views, game: key === 'me' ? views.game : seenBy(views.game, key), state: views.states[key], shared: views.states.me, key };
 }

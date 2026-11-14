@@ -5,7 +5,7 @@
  */
 import type { Blockers } from '../../domain/movement';
 import { violation } from '../../domain/rules/registry';
-import type { ComponentDef, Entry, Warning } from '../../domain/types';
+import type { ComponentDef, Entry, GameState, Warning } from '../../domain/types';
 import type { Tactical, Turn } from '../actions';
 import { applyChecked, type Shortfall } from '../apply';
 import type { GameEvent } from '../events';
@@ -91,13 +91,18 @@ export function emit(ctx: Ctx, events: GameEvent[], options: EmitOptions = {}): 
   return short;
 }
 
+const RIVAL_STATES = new WeakMap<GameState, GameState>();
 /** The board from one player's side as the old checks want it. For a rival owner, the state also sees the others (`rivals`), as mine does. */
 export function checkView(ctx: Ctx, player: PlayerId = ctx.player): PlayerView {
   const v = viewFor(ctx.table, ctx.board, ctx.pack, player);
   if (v.key === 'me') return v;
-  // The views are shared: the state the rival sees is a copy of its own.
+  // The views are shared: the state the rival sees is a copy of its own, made once for the views.
+  const kept = RIVAL_STATES.get(v.state);
+  if (kept) return { ...v, state: kept };
   const others = Object.fromEntries(Object.entries(v.views.states).filter(([key]) => key !== v.key));
-  return { ...v, state: { ...v.state, rivals: others } };
+  const state = { ...v.state, rivals: others };
+  RIVAL_STATES.set(v.state, state);
+  return { ...v, state };
 }
 
 /** What stands in for the tactical action while the turn holds another one. */

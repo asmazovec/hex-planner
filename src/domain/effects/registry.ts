@@ -137,9 +137,25 @@ export type Who = Holdings | Holder;
 export const holderFor = (who: Who, faction: string): Holder => ('holdings' in who ? (who.faction === undefined ? { ...who, faction } : who) : { holdings: who, faction });
 
 /** The holder a player of a game is: `state` is their own, `shared` mine, which keeps the laws. */
-export const holderOf = (
+/** The holders built from the same holdings, control and shared state are the one holder: a state of a view is shared and never changes, and what is kept per holder is kept once. */
+const HOLDER_KEPT = new WeakMap<object, { control: unknown; shared: unknown; faction: string; holder: Holder }[]>();
+
+export function holderOf(
   game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>,
   shared: Pick<GameState, 'laws' | 'lawOwners'> | Pick<GameState, 'laws' | 'lawOwners' | 'holdings' | 'rivals'> = state,
+): Holder {
+  let kept = HOLDER_KEPT.get(state.holdings);
+  const known = kept?.find(k => k.control === state.control && k.shared === shared && k.faction === game.faction);
+  if (known) return known.holder;
+  const holder = holderBuilt(game, state, shared);
+  if (!kept) HOLDER_KEPT.set(state.holdings, kept = []);
+  if (kept.length < 8) kept.push({ control: state.control, shared, faction: game.faction, holder });
+  return holder;
+}
+
+const holderBuilt = (
+  game: Pick<Game, 'faction'>, state: Pick<GameState, 'holdings' | 'control' | 'laws'>,
+  shared: Pick<GameState, 'laws' | 'lawOwners'> | Pick<GameState, 'laws' | 'lawOwners' | 'holdings' | 'rivals'>,
 ): Holder =>
   ({
     holdings: state.holdings, faction: game.faction, control: state.control, laws: lawsFor(shared, game.faction),
@@ -226,7 +242,15 @@ const isHolder = (who: Holdings | Holder): who is Holder => 'holdings' in who;
 const isPassive = (effect: ComponentEffect): boolean => effect.tier === 'passive';
 
 /** The passive effects in force for a player, in registry order (`inForceOf`); holdings alone give only the cards held. */
+const PASSIVES = new WeakMap<object, { pack: DataPack; list: [string, ComponentEffect][] }>();
 export function passivesOf(pack: DataPack, who: Holdings | Holder): [string, ComponentEffect][] {
+  const kept = PASSIVES.get(who);
+  if (kept && kept.pack === pack) return kept.list;
+  const list = passivesBuilt(pack, who);
+  PASSIVES.set(who, { pack, list });
+  return list;
+}
+function passivesBuilt(pack: DataPack, who: Holdings | Holder): [string, ComponentEffect][] {
   const { effects } = registryOf(pack);
   // Asked at every point of the count: only the passive ones are gathered and put in order.
   return inForceOf(pack, isHolder(who) ? who : { holdings: who }, isPassive).map(id => [id, effects.get(noteBase(id))!]);

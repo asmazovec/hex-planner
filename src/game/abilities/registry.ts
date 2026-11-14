@@ -17,21 +17,29 @@ import type { Board, DataPack, PlayerId, Table } from '../types';
 /** The holder a player is, read from the board: their cards and faction, the planets they control, the laws that bind them. */
 export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   const cards = board.players[player]?.cards;
-  const kept = cards && HOLDERS.get(cards);
-  if (kept && kept.table === table && kept.planets === board.planets && kept.laws === board.common.laws && kept.player === player) return kept.holder;
   const faction = table.players.find(p => p.id === player)?.faction;
   const control: Record<string, 'me'> = {};
-  for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) control[id] = 'me';
+  let owned = '';
+  for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) { control[id] = 'me'; owned += id + ','; }
   const laws = board.common.laws.filter(law => law.elected === undefined || law.elected === player).map(law => law.id);
+  const lawKey = laws.join(',');
   // An Alliance note lends its owner's commander: every player's holdings, under their id and under the key notes are addressed by.
+  const lent = table.players.map(p => holdingsOf(board, p.id));
+  const kept = cards && HOLDERS.get(cards)?.find(k => k.table === table && k.player === player && k.owned === owned && k.lawKey === lawKey && k.lent.every((h, i) => h === lent[i]));
+  if (kept) return kept.holder;
   const others: Record<string, Holdings> = {};
-  for (const p of table.players) others[legacyKey(table, p.id)] = others[p.id] = holdingsOf(board, p.id);
+  table.players.forEach((p, i) => { others[legacyKey(table, p.id)] = others[p.id] = lent[i]; });
   const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
-  if (cards) HOLDERS.set(cards, { table, planets: board.planets, laws: board.common.laws, player, holder });
+  if (cards) {
+    const list = HOLDERS.get(cards) ?? [];
+    if (list.length >= 8) list.shift();
+    list.push({ table, player, owned, lawKey, lent, holder });
+    HOLDERS.set(cards, list);
+  }
   return holder;
 }
-/** A holder is a function of the board's immutable parts, so it is kept while they are the same objects. */
-const HOLDERS = new WeakMap<object, { table: Table; planets: Board['planets']; laws: Board['common']['laws']; player: PlayerId; holder: Holder }>();
+/** A holder is a function of the player's cards, the planets they control, the laws that bind them and the holdings others lend: the same holder is kept while those are the same. */
+const HOLDERS = new WeakMap<object, { table: Table; player: PlayerId; owned: string; lawKey: string; lent: Holdings[]; holder: Holder }[]>();
 const PASSIVES = new WeakMap<Holder, { pack: DataPack; list: ReturnType<typeof passivesOf> }>();
 const FORCED = new WeakMap<Holder, { pack: DataPack; found: string[] }>();
 
@@ -66,12 +74,23 @@ type Slot = string;
 /** The kinds that come with a faction sheet or a planet: in force without being held as cards, and reminded of through their holder. */
 const SHEET_KIND = /^(ability|mech|breakthrough|legendary):/;
 
+/** What the faction sheet and the legendary planets of a holder bring, laws and lent holdings left out: kept per holder. */
+const SHEETS = new WeakMap<Holder, { pack: DataPack; ids: string[] }>();
+function sheetOf(pack: DataPack, holder: Holder): string[] {
+  const kept = SHEETS.get(holder);
+  if (kept && kept.pack === pack) return kept.ids;
+  const { holdings } = holder;
+  const ids = inForceOf(pack, { holdings, ...(holder.faction === undefined ? {} : { faction: holder.faction }), ...(holder.control ? { control: holder.control } : {}) }).filter(id => SHEET_KIND.test(id));
+  SHEETS.set(holder, { pack, ids });
+  return ids;
+}
+
 /** The reminders a player holds: what they have ready, their secrets and the public objectives not yet scored by them, what their sheet brings. */
 function remindersOf(table: Table, board: Board, pack: DataPack, player: PlayerId): string[] {
   const holder = holderIn(table, board, player);
   const { holdings } = holder;
   const objectives = [...holdings.secrets, ...board.common.revealed.filter(id => !holdings.scored.includes(id))];
-  const sheet = inForceOf(pack, { holdings, ...(holder.faction === undefined ? {} : { faction: holder.faction }), ...(holder.control ? { control: holder.control } : {}) }).filter(id => SHEET_KIND.test(id));
+  const sheet = sheetOf(pack, holder);
   // A note of one's own is not played from one's own hand (LRR 69.2).
   const own = (id: string): boolean => id.startsWith('promissory:') && [player, legacyKey(table, player)].includes(noteAddress(id) ?? '');
   return [...readyComponents(pack, holdings), ...objectives, ...sheet].filter(id => !own(id) && effectOf(pack, id)?.tier === 'hint');
