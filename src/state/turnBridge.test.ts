@@ -15,7 +15,8 @@ import { tacticalBody } from '../domain/newEntry';
 import { planOf, tableOf } from '../game/fromLegacy';
 import { initialBoard } from '../game/setup';
 import { mapSource } from '../game/space';
-import { addTactical, entryPatch, pruneEmptySources, writeTurn } from './turnBridge';
+import { entryPatch } from '../ui/testing/turnProps';
+import { addTactical, pruneEmptySources, writeTurn } from './turnBridge';
 import { useGame } from './gameStore';
 
 const pack = loadPack(['pok']);

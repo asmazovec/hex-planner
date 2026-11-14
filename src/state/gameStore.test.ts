@@ -177,7 +177,7 @@ describe('gameStore', () => {
     act().addRound();
     await act().openGame('x');
     expect(loadGame).toHaveBeenCalledWith('x');
-    expect(game()).toBe(other);
+    expect(game()).toEqual(other);
     expect(act().canUndo).toBe(false);
   });
 });
@@ -678,5 +678,54 @@ describe('enemy ground units by planet', () => {
     expect(opponentHoldings(game(), id).units).toBe(2);
     act().removeOpponent(0);
     expect(game().enemyGround).toEqual({ p: { [other.id]: { mech: 1 } } });
+  });
+});
+
+describe('the store holds the saved game', () => {
+  const saved = () => act().saved!;
+  const rounds = () => saved().plans.find(p => p.id === saved().activePlanId)!.rounds;
+  const pass = (): import('../game/actions').Turn => ({ id: '', player: saved().table.viewer, status: 'planned', action: { kind: 'pass' }, acts: [], used: [] });
+
+  test('turns are added, replaced, moved and removed in the rounds of the open plan, and the old view follows', () => {
+    const id = act().addTurn(1, pass());
+    expect(rounds()[0].turns).toMatchObject([{ id, phase: 'action', action: { kind: 'pass' } }]);
+    act().updateTurn(id, { ...rounds()[0].turns[0], gains: ['relic:shard'] });
+    expect(round().entries[0]).toMatchObject({ id, type: 'pass', gains: ['relic:shard'] });
+    const before = saved();
+    act().updateTurn(id, rounds()[0].turns[0]);
+    expect(saved()).toBe(before);
+    act().setStatus(id, 'done');
+    expect(round().entries[0].status).toBe('done');
+    act().removeTurn(id);
+    expect(rounds()[0].turns).toEqual([]);
+    act().undo();
+    expect(rounds()[0].turns).toHaveLength(1);
+  });
+
+  test('an edit of one round keeps the other rounds as they were', () => {
+    act().addRound();
+    const second = rounds()[1];
+    act().addTurn(1, pass());
+    expect(rounds()[1]).toBe(second);
+  });
+
+  test('a free action is nested in its card and a copy of the plan gives both fresh ids', () => {
+    const card = act().addTurn(1, { ...pass(), action: { kind: 'strategic', card: 6 } });
+    const free = act().addTurn(1, { ...pass(), action: { kind: 'tactical', system: 'B', movement: [], invasion: [], free: true } }, card);
+    expect(rounds()[0].turns).toHaveLength(1);
+    expect(round().entries.map(e => e.id)).toEqual([card, free]);
+    act().copyPlan();
+    const copy = rounds()[0].turns[0];
+    expect(copy.id).not.toBe(card);
+    expect((copy.action as { nested: { id: string }[] }).nested[0].id).not.toBe(free);
+  });
+
+  test('a game set by hand on the old view becomes the saved game', () => {
+    const other = structuredClone(game());
+    other.plans[0].rounds[0].strategyCard = 5;
+    useGame.setState({ game: other });
+    expect(rounds()[0].strategyCard).toBe(5);
+    useGame.setState({ game: null });
+    expect(act().saved).toBeNull();
   });
 });

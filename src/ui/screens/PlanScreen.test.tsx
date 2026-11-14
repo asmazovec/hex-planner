@@ -39,7 +39,7 @@ beforeEach(() => {
 const game = () => useGame.getState().game!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const entries = () => plan().rounds.at(-1)!.entries;
-const tactical = () => entries()[0] as Extract<Entry, { type: 'tactical' }>;
+const tactical = () => entries().find(e => e.type === 'tactical') as Extract<Entry, { type: 'tactical' }>;
 const tile = (slot: string) => document.querySelector(`[data-slot="${slot}"]`)!;
 const cell = (name: string) => within(screen.getByRole('group', { name: 'Totals, now and forecast' })).getByRole('group', { name });
 

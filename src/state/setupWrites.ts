@@ -3,7 +3,9 @@
  * the control of a planet, a manual adjustment, the units of a setup entry. The hex reads the board through the kernel;
  * these writes stay here until the setup has a place in the table (the start events of the game store).
  */
+import { withDelta } from '../game/edit/turn';
 import { useGame } from './gameStore';
+import { writeSaved } from './turnBridge';
 import { enemyChange, structureInGame } from '../domain/stacks';
 import { startingPds } from '../domain/strategy';
 import { withAdjustedUnit } from '../domain/tactical';
@@ -32,7 +34,6 @@ export function useSetupWrites(): SetupWrites | undefined {
   const setPds = useGame(s => s.setPds);
   const setPlanetControl = useGame(s => s.setPlanetControl);
   const changeAdjustment = useGame(s => s.changeAdjustment);
-  const updateEntry = useGame(s => s.updateEntry);
   if (!game) return undefined;
   return {
     changeEnemy: (slot, owner, unit, planetId, amount) => {
@@ -47,6 +48,10 @@ export function useSetupWrites(): SetupWrites | undefined {
     inBaseline: (pack, kind, planetId) => structureInGame(game, pack, kind, planetId),
     setPlanetControl,
     changeAdjustment,
-    adjustSetup: (entryId, delta, slot, unit, planetId, amount) => updateEntry(entryId, { delta: withAdjustedUnit(delta, slot, unit, planetId, amount) }),
+    adjustSetup: (entryId, delta, slot, unit, planetId, amount) => {
+      const saved = useGame.getState().saved;
+      const write = saved ? writeSaved(saved, entryId) : undefined;
+      if (write) write.update(withDelta(write.turn, withAdjustedUnit(delta, slot, unit, planetId, amount)));
+    },
   };
 }

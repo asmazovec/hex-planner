@@ -2,9 +2,22 @@
 import type { Turn } from '../../game/actions';
 import { legacyEntry } from '../../game/entry';
 import { planOf, turnOf } from '../../game/fromLegacy';
-import { entryPatch } from '../../state/turnBridge';
 import type { Act, DataPack, Entry, EntryBody, Game, Payment } from '../../domain/types';
 import type { KernelView } from '../plan/kernelView';
+
+const same = (a: unknown, b: unknown): boolean => a === b || JSON.stringify(a) === JSON.stringify(b);
+
+/** The fields of an old entry that differ between two of its states; a field the second lacks is written as undefined. */
+export function entryPatch(before: Entry, after: Entry): Partial<EntryBody> {
+  const patch: Record<string, unknown> = {};
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    if (key === 'id') continue;
+    const was = (before as unknown as Record<string, unknown>)[key];
+    const now = (after as unknown as Record<string, unknown>)[key];
+    if (!same(was, now)) patch[key] = now;
+  }
+  return patch as Partial<EntryBody>;
+}
 
 export function turnProps(view: KernelView, pack: DataPack, entry: Entry, update: (patch: Partial<EntryBody>) => void): { turn: Turn; view: KernelView; onChange: (next: Turn) => void } {
   const turn = turnOf(view.table, entry, pack);

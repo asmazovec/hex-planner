@@ -10,9 +10,12 @@ import { statusOf, turnNumbers } from '../game/numbering';
 import { planOf } from '../game/fromLegacy';
 import { timeline as kernelTimeline, type Filter, type Frame as KernelFrame, type Timeline as Kernel } from '../game/timeline';
 import type { Board, Table } from '../game/types';
+import type { Round as KernelRound } from '../game/round';
 import { playerOfKey } from '../game/keys';
 import { waiveBoard } from '../game/resolve/waive';
 import { gameAs } from '../domain/players';
+import { originOf } from '../storage/legacySave';
+import type { SavedGame } from '../game/save';
 import { checkSystem } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
 import { choicesOf, type ResolvedChoice } from '../game/abilities/choices';
@@ -61,12 +64,25 @@ function sameSetup(a: Game, b: Game): boolean {
   return true;
 }
 
-interface Setup { game: Game; pack: DataPack; table: Table; start: Board }
+interface Setup { game: Game; saved?: SavedGame; pack: DataPack; table: Table; start: Board }
 let setup: Setup | undefined;
 function setupOf(game: Game, pack: DataPack): Setup {
-  if (setup && setup.pack === pack && sameSetup(setup.game, game)) return setup;
-  setup = { game, pack, table: tableOf(game), start: boardOf(game, pack) };
+  // A game the store holds is a view of a saved game: its table and start are the same objects until a setup edit.
+  const saved = originOf(game);
+  const kept = setup && setup.pack === pack && (saved && setup.saved
+    ? setup.saved.table === saved.table && setup.saved.start === saved.start
+    : !saved && !setup.saved && sameSetup(setup.game, game));
+  if (kept) return setup!;
+  setup = { game, ...(saved ? { saved } : {}), pack, table: tableOf(game), start: boardOf(game, pack) };
   return setup;
+}
+
+/** The rounds of the kernel for a plan: those of the saved game the store holds, else the plan read as turns. */
+function roundsOf(game: Game, plan: Plan, table: Table, pack: DataPack): KernelRound[] {
+  const saved = originOf(game);
+  // Only the plan the view holds stands for the saved plan: a plan made of other rounds is read as turns.
+  const own = saved && game.plans.find(p => p.id === plan.id) === plan ? saved.plans.find(p => p.id === plan.id) : undefined;
+  return own?.rounds ?? planOf(table, plan, pack);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -133,7 +149,7 @@ export function timelineOf(game: Game, plan: Plan, filter: Filter, pack: DataPac
   const key = `${filter}:${plan.id}`;
   const previous = lines.get(key);
   const { table, start } = setupOf(game, pack);
-  const kernel = kernelTimeline(table, pack, planOf(table, plan, pack), filter, { start, previous: previous?.kernel });
+  const kernel = kernelTimeline(table, pack, roundsOf(game, plan, table, pack), filter, { start, previous: previous?.kernel });
   if (previous && previous.kernel === kernel && previous.game === game && previous.plan === plan) return previous;
   const line: Timeline = {
     game, plan, filter, pack, kernel, ...readKernel(table, pack, kernel),

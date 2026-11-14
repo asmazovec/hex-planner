@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Game } from '../domain/types';
 import { errorText } from './errorText';
-import { savedOf } from './legacySave';
+import { savedFor } from './legacySave';
 import { parseGame } from './schema';
 
 /**
@@ -54,7 +54,7 @@ function readGame(stored: unknown): { ok: true; game: Game } | { ok: false; kind
 
 export async function saveGame(game: Game): Promise<void> {
   const { id, name, faction, playerCount } = game;
-  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game: savedOf(game) });
+  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game: savedFor(game) });
 }
 
 /** Null when there is no such save; a save that is there but does not read throws `BrokenSaveError`. */
