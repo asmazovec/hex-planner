@@ -28,6 +28,7 @@ import {
   withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
   withStartHolding, withThundersEdge, withUnitsAt,
 } from '../game/edit/start';
+import { withName, withTile } from '../game/edit/table';
 import { playerOfLegacy } from '../game/entry';
 import { patchedTurn, turnOfBody, viaGame } from './legacyEdits';
 import { forgetTimelines } from './projection';
@@ -72,18 +73,6 @@ function copyOf(saved: SavedGame): SavedGame {
   if (!source) return saved;
   const copy: SavedPlan = { id: newId(), name: defaultPlanName(saved.plans.length + 1), rounds: copiedRounds(source.rounds, newId) };
   return { ...saved, plans: [...saved.plans, copy], activePlanId: copy.id };
-}
-
-function withField<K extends keyof Game>(game: Game, key: K, value: Game[K]): Game {
-  return game[key] === value ? game : { ...game, [key]: value };
-}
-
-function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
-  if (value === null && !(key in record)) return record;
-  if (value !== null && record[key] === value) return record;
-  const rest = { ...record };
-  delete rest[key];
-  return value === null ? rest : { ...rest, [key]: value };
 }
 
 /** The tiles of the open Fracture by slot. They follow its seat and the map's size. */
@@ -236,6 +225,12 @@ export const useGame = create<GameStore>((set, get) => {
     }
   };
 
+  /** An edit of the table written over the saved game: to the open game, or to the draft while none is open. */
+  const commitSetup = (edit: (saved: SavedGame) => SavedGame): void => {
+    if (get().saved) commit(edit);
+    else setDraft(edit(get().draftSaved));
+  };
+
   const setDraft = (draftSaved: SavedGame): void => set({ draftSaved, draft: gameOf(draftSaved) });
 
   /** A save that would not open: the player is told, the save stays as it is. */
@@ -316,13 +311,7 @@ export const useGame = create<GameStore>((set, get) => {
       if ('keepSaved' in choice) await get().openGame(conflict.savedId);
       else startFromShare({ ...conflict.share, name: choice.newName });
     },
-    setName: name => commitPlayers(g => {
-      const next = name.trim();
-      if (next === (g.name ?? '')) return g;
-      const { name: old, ...rest } = g;
-      void old;
-      return next ? { ...rest, name: next } : rest;
-    }),
+    setName: name => commitSetup(saved => withName(saved, name)),
     startGame: () => {
       const { draft, draftSaved } = get();
       if (!draft.faction) return;
@@ -427,7 +416,7 @@ export const useGame = create<GameStore>((set, get) => {
         return id === 'te' ? withTeMecatol(next) : next;
       }),
     // The map is built on the draft too, before the game starts.
-    setTile: (slotKey, tileId) => commitPlayers(g => withField(g, 'map', setOrDelete(g.map, slotKey, tileId))),
+    setTile: (slotKey, tileId) => commitSetup(saved => withTile(saved, slotKey, tileId)),
     setMap: (map, layout) => commitPlayers((g, pack) => {
       const next = { ...map };
       delete next['0,0'];
