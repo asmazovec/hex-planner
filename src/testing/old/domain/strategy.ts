@@ -2,10 +2,10 @@ import type { CardPlay, Round, Entry, Game, GameState, DataPack, Holdings, Payme
 import { type CardEntry, heldCards, primaryForToken, strategyTokensOwedOf, cardCostOf, type HomeNote } from '../../../domain/strategy';
 import { holderOf, type Holder, effectOf } from '../../../domain/effects/registry';
 import { type PaymentKind } from '../../../domain/payment';
-import { productionDue } from '../../../domain/replay/production';
 import { autoPay } from './payment';
 import { playedCost } from '../../../domain/effects/playedCost';
 import { seatSlots } from '../../../domain/mapBuilder';
+import { productionDue } from './replay/production';
 
 export { controlsMecatol } from '../../../domain/replay/cards/imperial';
 export type CardPatch = CardPlay & { type?: CardEntry['type'] };

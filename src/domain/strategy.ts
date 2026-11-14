@@ -9,7 +9,7 @@ import { productionCost } from './unitStats';
 import type { TokensOn } from './readers';
 import type { CardEffects, DataPack, Entry, ExpansionId, Game, Holdings, Round, StructureKind, UnitCounts, UnitId } from './types';
 
-export { diplomacySystemAllowed, readyChoices, readyLimit } from './replay/cards/diplomacy';
+export { diplomacySystemAllowed, readyLimit } from './replay/cards/diplomacy';
 export { researchCount, researchLimit } from './replay/cards/technology';
 export { CARD };
 

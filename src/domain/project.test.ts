@@ -5,11 +5,13 @@ import { loadPack } from '../data/loadPack';
 import { emptyHoldings, holdingsOf, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from '../testing/old/domain/newGame';
 import { slotAcross } from './route';
-import { fleetSpeed, productionCost, productionPlaces, project, readyInfluence, readyResources, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, systemsAdjacent } from '../testing/old/domain/project';
+import { fleetSpeed, productionCost, project, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, systemsAdjacent } from '../testing/old/domain/project';
 import { tacticalMeters } from '../testing/meters';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
 } from './types';
+import { productionPlaces } from '../testing/old/domain/replay/tactical';
+import { readyInfluence, readyResources } from '../testing/old/domain/replay/payment';
 
 describe('how far a route goes', () => {
   const plain = { number: '1', planetIds: [], kind: 'system', wormholes: [] };

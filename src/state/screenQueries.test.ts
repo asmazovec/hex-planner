@@ -5,13 +5,14 @@ import { allTurns, holdingRoundsOf, mergedCountsOf, sliceOwnersOf, spendableOn, 
 import { holdingRounds } from '../domain/holdings';
 import { mergedCounts } from '../domain/losses';
 import { createGame } from '../testing/old/domain/newGame';
-import { planetStructureWarnings, readyResources } from '../testing/old/domain/project';
 import { sliceOwners } from '../testing/old/domain/thundersEdge';
 import { entryUpgradeRounds } from '../domain/unitStats';
 import type { Entry, Game } from '../domain/types';
 import { projectionAtRound, timelineOf as oldTimeline } from '../testing/projection';
 import { savedOf } from '../testing/legacySave';
 import { boardAt, timelineOf } from './projection';
+import { readyResources } from '../testing/old/domain/replay/payment';
+import { planetStructureWarnings } from '../testing/old/domain/replay/structures';
 
 const pack = loadPack(['pok']);
 const SLOT = '1,0';

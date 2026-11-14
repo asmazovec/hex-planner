@@ -1,9 +1,10 @@
-import type { Game, GameState, DataPack, Warning, UnitCounts } from '../../../../domain/types';
+import { holderOf } from '../../../../domain/effects/registry';
+import type { DataPack, Game, GameState, Warning, UnitCounts } from '../../../../domain/types';
+import { gameAs } from '../../../../domain/players';
+import { type Stacks, capacity, checkSystemOf, dockFighterRoom, fleetCount, fleetLimit, checkPickupsOf, checkGroupsOf, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';
 import { type Move, unitIds, take } from '../../../../domain/replay/state';
-import { type Blockers } from '../../../../domain/movement';
+import type { Blockers } from '../../../../domain/movement';
 import { blockersOf } from '../movement';
-import { checkPickupsOf, checkGroupsOf, stacksOfState, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';
-
 /**
  * Check, after the activation: a ship picks units up only in the system it starts in, one it passes or the active one
  * (95.1), and never where my command token lies other than the active system (95.3).
@@ -34,3 +35,23 @@ export function removeFleetExcess(state: GameState, target: string, removals: Un
   take(state.systems, target, now, []);
   return later;
 }
+
+/** The stacks of a player as the old per-player state holds them. */
+export const stacksOfState = (game: Game, state: GameState, pack: DataPack): Stacks => ({
+  units: slot => state.systems[slot] ?? {},
+  capacityOf: (units, slot) => capacity(game, units, holderOf(game, state), pack, slot === null ? 0 : dockFighterRoom(game, state, slot, pack)),
+  fleetOf: (units, slot) => fleetCount(game, units, holderOf(game, state), pack, slot === null ? 0 : dockFighterRoom(game, state, slot, pack)),
+  fleet: () => fleetLimit(game, state, pack),
+});
+
+/**
+ * What the board itself breaks in a system, apart from any entry: each player's capacity and fleet pool there (16.3,
+ * 37.1), as units placed by hand leave them. A big hex placing by hand checks this; it forbids nothing.
+ */
+export function boardSystemWarnings(game: Game, state: GameState, slot: string, pack: DataPack): Warning[] {
+  const players: [Game, GameState][] = [[game, state], ...Object.entries(state.rivals ?? {}).map(([id, held]): [Game, GameState] => [gameAs(game, id), held])];
+  return players.flatMap(([view, held]) => checkSystem(view, held, slot, pack));
+}
+
+export const checkSystem = (game: Game, state: GameState, target: string, pack: DataPack): Warning[] =>
+  checkSystemOf(stacksOfState(game, state, pack), target);

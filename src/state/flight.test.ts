@@ -1,13 +1,15 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
-import { stateBeforeEntry, productionPlaces } from '../testing/old/domain/project';
+import { stateBeforeEntry } from '../testing/old/domain/project';
 import { tacticalMeters } from '../testing/meters';
-import { flies as oldFlies, stateInFlight } from '../domain/tactical';
+import { flies as oldFlies } from '../domain/tactical';
 import type { Entry, EntryBody, Game, UnitCounts } from '../domain/types';
 import { flies, flightOf, inFlight, metersOf, productionSites } from '../game/flight';
 import { turnOf } from '../testing/old/game/fromLegacy';
 import { timelineOf } from '../testing/projection';
+import { stateInFlight } from '../testing/old/domain/tactical';
+import { productionPlaces } from '../testing/old/domain/replay/tactical';
 
 const pack = loadPack(['pok']);
 let n = 0;

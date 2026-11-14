@@ -9,10 +9,7 @@ import type { Turn } from '../../game/actions';
 import { flightDuration, joinShare, slotToPixel, type CurveSegment, type Point, type RouteShape } from '../map/geometry';
 import type { UnitId } from '../../domain/types';
 
-export {
-  arrowsOf, entrySystems, flies, groupOf, lossesOf, sourcesOf, stateInFlight, viaOf, withLoss, withRoute, withoutEmptySources, withoutSource,
-  type Move, type RouteArrow, type TacticalEntry,
-} from '../../domain/tactical';
+export { arrowsOf, entrySystems, flies, groupOf, lossesOf, sourcesOf, viaOf, withLoss, withRoute, withoutEmptySources, withoutSource, type Move, type RouteArrow, type TacticalEntry } from '../../domain/tactical';
 
 const placeId = (place: { planet: string } | { slot: string }): string => ('planet' in place ? place.planet : place.slot);
 

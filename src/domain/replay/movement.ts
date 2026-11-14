@@ -2,9 +2,9 @@
 import { type Holder } from '../effects/registry';
 import { closedToRoute, endsRoute, fullPath, routeMove, routeSteps, shipSpeed, type Blockers, type MoveView } from '../movement';
 import { violation } from '../rules/registry';
-import type { DataPack, Game, GameState, UnitCounts, UnitId, Warning } from '../types';
-import { isLane, sourceSlot, type MapSource } from './board';
-import { add, take, unitIds, type Move, type TacticalEntry } from './state';
+import type { DataPack, Game, UnitId, Warning } from '../types';
+import { isLane, type MapSource } from './board';
+import { unitIds, type Move, type TacticalEntry } from './state';
 import { isPickup } from './transport';
 
 /** What a route check reads of the mover besides the map: whether their command token lies in a system, whose components answer, and the view of one ship's move they are asked with. */
@@ -45,23 +45,4 @@ export function checkRoutesOf(
     }
   }
   return warnings;
-}
-
-/**
- * Effect: carries the moves into the target and returns what each source system sent, by slot. What was entered is what
- * flies: a unit asked for that is not there is reported (`unitsMissing`) and flies all the same, since a warning forbids
- * nothing; its source only ends empty, never below. Pickups from the target's own planets stay in the system, so they
- * join no group.
- */
-export function moveUnits(
-  game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, warnings: Warning[],
-): Record<string, UnitCounts> {
-  const groups: Record<string, UnitCounts> = {};
-  for (const move of moves) {
-    take(move.from in pack.planets ? state.ground : state.systems, move.from, move.units, warnings);
-    add(state.systems, target, move.units);
-    const slot = move.pickupOf ?? sourceSlot(game, pack, move.from);
-    if (slot !== null && slot !== target) add(groups, slot, move.units);
-  }
-  return groups;
 }

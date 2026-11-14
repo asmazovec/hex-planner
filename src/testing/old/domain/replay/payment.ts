@@ -1,10 +1,10 @@
-import type { GameState, Payment, DataPack, Warning, RuleStep, Game, Entry } from '../../../../domain/types';
-import { type PaymentKind, type PayView } from '../../../../domain/payment';
+import { planetValue, type PayView, type PaymentKind } from '../../../../domain/payment';
+import type { DataPack, GameState, Payment, Warning, RuleStep, Game, Entry } from '../../../../domain/types';
 import { checkPayment, applyPayment } from '../../../../domain/replay/payment';
 import { violation } from '../../../../domain/rules/registry';
 import { playedCost } from '../../../../domain/effects/playedCost';
 import { effectOf } from '../../../../domain/effects/registry';
-
+import { readyPlanetIds } from '../payment';
 /** Exhausts the paying planets and spends the trade goods; returns what the payment is worth for `kind`. */
 export function pay(state: GameState, payment: Payment, kind: PaymentKind, pack: DataPack, warnings: Warning[], view?: PayView): number {
   warnings.push(...checkPayment(state, payment, view));
@@ -37,3 +37,10 @@ export function payPlayedCost(game: Pick<Game, 'faction'>, state: GameState, sha
   const cost = playedCost(pack, entry, effectOf);
   if (cost && entry.type === 'component') payComponentCost(state, cost, entry.payment, pack, warnings, { faction: game.faction, shared });
 }
+
+export const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind, view?: PayView): number =>
+  readyPlanetIds(state).reduce((total, id) => total + planetValue(pack, state, id, field, view), 0);
+
+export const readyResources = (state: GameState, pack: DataPack, view?: PayView): number => sumPlanets(state, pack, 'resources', view);
+
+export const readyInfluence = (state: GameState, pack: DataPack, view?: PayView): number => sumPlanets(state, pack, 'influence', view);

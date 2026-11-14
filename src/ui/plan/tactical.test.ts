@@ -7,7 +7,8 @@ import { routeShapes } from '../map/geometry';
 import type { Entry, Game, GameState } from '../../domain/types';
 import { emptySources } from '../../testing/old/domain/tactical';
 import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
-import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
+import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
+import { stateInFlight } from '../../testing/old/domain/tactical';
 
 const pack = loadPack(['pok']);
 const HOME = '1,0';

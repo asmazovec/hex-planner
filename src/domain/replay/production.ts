@@ -269,15 +269,6 @@ export function costOn(g: Ground, units: UnitCounts, pack: DataPack, producing: 
   return Math.max(0, appliedFor(pack, g.holder, entry, 'productionCost', cost, { faction: g.faction, systemId, wormholes, holdings: g.holder.holdings, pack }).value);
 }
 
-/**
- * What an entry owes for the units it produces, asked of `state` (the one before the entry in an editor; the one at
- * payment in the replay): the editor's label, the shop counter, the automatic payment and the check all ask this
- * one function, so they cannot disagree. Whether a unit uses PRODUCTION comes from the producers standing in the
- * entry's system in that state.
- */
-export function productionDue(game: Game, state: GameState, units: UnitCounts, pack: DataPack, entry?: Entry): number {
-  return productionDueOn(groundOf(game, state, pack), units, pack, entry);
-}
 export function productionDueOn(g: Ground, units: UnitCounts, pack: DataPack, entry?: Entry): number {
   const systemId = systemOfProduction(entry);
   const producing = systemId !== undefined && producersOn(g, systemId, pack).length > 0;

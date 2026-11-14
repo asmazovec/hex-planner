@@ -8,7 +8,6 @@ import { unitStats } from '../unitStats';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import type { TokensOn } from '../readers';
 import { planetsOf, sourceSlot, type MapSource } from './board';
-import { gameAs } from '../players';
 import { unitIds, type Move } from './state';
 
 /** A move that only picks units up, so no route to check: from a planet, from the active system itself, or marked as a pickup. */
@@ -123,14 +122,6 @@ export interface Stacks {
   fleet(): number;
 }
 
-/** The stacks of a player as the old per-player state holds them. */
-export const stacksOfState = (game: Game, state: GameState, pack: DataPack): Stacks => ({
-  units: slot => state.systems[slot] ?? {},
-  capacityOf: (units, slot) => capacity(game, units, holderOf(game, state), pack, slot === null ? 0 : dockFighterRoom(game, state, slot, pack)),
-  fleetOf: (units, slot) => fleetCount(game, units, holderOf(game, state), pack, slot === null ? 0 : dockFighterRoom(game, state, slot, pack)),
-  fleet: () => fleetLimit(game, state, pack),
-});
-
 /** Check: each group that left a system carries no more than its ships' capacity. */
 export const checkGroupsOf = (stacks: Stacks, groups: Record<string, UnitCounts>): Warning[] =>
   Object.entries(groups).flatMap(([from, units]) => {
@@ -160,15 +151,6 @@ export function checkLeftBehindOf(stacks: Stacks, before: Map<string, number>, t
   });
 }
 
-/**
- * What the board itself breaks in a system, apart from any entry: each player's capacity and fleet pool there (16.3,
- * 37.1), as units placed by hand leave them. A big hex placing by hand checks this; it forbids nothing.
- */
-export function boardSystemWarnings(game: Game, state: GameState, slot: string, pack: DataPack): Warning[] {
-  const players: [Game, GameState][] = [[game, state], ...Object.entries(state.rivals ?? {}).map(([id, held]): [Game, GameState] => [gameAs(game, id), held])];
-  return players.flatMap(([view, held]) => checkSystem(view, held, slot, pack));
-}
-
 /** Check: the capacity and the fleet pool of a system after units arrived or were built there. */
 export function checkSystemOf(stacks: Stacks, target: string): Warning[] {
   const warnings: Warning[] = [];
@@ -182,9 +164,6 @@ export function checkSystemOf(stacks: Stacks, target: string): Warning[] {
   if (ships > limit) warnings.push(violation('fleetPool', { systemId: target, ships, fleet: limit }));
   return warnings;
 }
-export const checkSystem = (game: Game, state: GameState, target: string, pack: DataPack): Warning[] =>
-  checkSystemOf(stacksOfState(game, state, pack), target);
-
 /**
  * Check on arrival, before the battle (37.3, 76.2): the ships in the active system against the fleet pool. `landed` are
  * the ground forces this action lands from the space area (not from a planet): they count as landed already, so the

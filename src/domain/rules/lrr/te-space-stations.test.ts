@@ -1,8 +1,9 @@
 /** Thunder's Edge: Space Stations. Source: tirules2 rules-reference/space-stations.md (Notes; no LRR section). */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { productionPlaces, systemPlanets } from '../../../testing/old/domain/project';
+import { systemPlanets } from '../../../testing/old/domain/project';
 import { HOME, NEAR, TARGET, before, codesOf, forecast, primary, rulesGame, rulesPack, tactical } from '../kit';
+import { productionPlaces } from '../../../testing/old/domain/replay/tactical';
 
 const te = loadPack(['pok', 'te']);
 const tePack = () => rulesPack(p => { Object.assign(p.tiles, te.tiles); Object.assign(p.planets, te.planets); });

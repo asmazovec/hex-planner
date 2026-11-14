@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import type { Game } from '../../types';
 import { codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET } from '../kit';
-import { planetStructureWarnings } from '../../replay/structures';
+import { planetStructureWarnings } from '../../../testing/old/domain/replay/structures';
 
 const pack = rulesPack();
 

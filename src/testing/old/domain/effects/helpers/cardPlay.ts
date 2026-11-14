@@ -8,7 +8,7 @@ import { adjacentTo } from '../../../../../domain/movement';
 import { holderIn } from '../../stacks';
 import { upgradeTech } from '../../../../../domain/holdings';
 import { unitStats } from '../../../../../domain/unitStats';
-import { checkSystem } from '../../../../../domain/replay/transport';
+import { checkSystem } from '../../replay/transport';
 
 /** The card's own condition is not met: the play is warned of (2.6), and what was entered is applied all the same. */
 export function unmet(turn: EffectTurn): void {

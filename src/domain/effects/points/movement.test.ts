@@ -3,7 +3,7 @@
  * throwaway effects put in the registry of a bench's own pack: no component file is involved.
  */
 import { describe, expect, test } from 'vitest';
-import { fleetCount, checkSystem } from '../../replay/transport';
+import { fleetCount } from '../../replay/transport';
 import { adjacentTo, fleetSpeed, joined, linksOf, routeDistances, routeReach, shipSpeed, wormholesOf, type MoveView } from '../../movement';
 import type { GameState } from '../../types';
 import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, using, warningsOf, type Bench } from '../components/kit';
@@ -11,6 +11,7 @@ import { tech } from '../../rules/kit';
 import { effectsOf } from '../registry';
 import type { Ability } from '../types';
 import './movement';
+import { checkSystem } from '../../../testing/old/domain/replay/transport';
 
 /** The technology of the effect: held from the start, its effect replaced in this bench's registry. */
 const TECH = 'technology:gd';

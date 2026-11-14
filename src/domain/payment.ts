@@ -33,14 +33,6 @@ export interface PayView { faction: string; shared?: GameState; step?: RuleStep 
 export const PLANET_CARDS: Readonly<Record<string, number>> = { 'relic:thetriad': 3 };
 export const isPlanetCard = (id: string): boolean => id in PLANET_CARDS;
 
-/** A planet card the player holds and has not exhausted. */
-const readyPlanetCards = (state: GameState): string[] =>
-  Object.keys(PLANET_CARDS).filter(id => state.holdings.relics.includes(id) && !state.holdings.exhausted.includes(id));
-
-/** Planets the player can still spend: own and not exhausted, and the planet cards held and ready. */
-export const readyPlanetIds = (state: GameState): string[] =>
-  [...Object.keys(state.control).filter(id => state.control[id] === 'me' && !state.exhausted.includes(id)), ...readyPlanetCards(state)];
-
 /** What a planet (or planet card) gives in `kind`, after the components of its controller and what is attached to it. */
 export function planetValue(pack: DataPack, state: GameState, planetId: string, kind: PaymentKind, view?: PayView): number {
   const printed = isPlanetCard(planetId) ? PLANET_CARDS[planetId] : pack.planets[planetId]?.[kind] ?? 0;

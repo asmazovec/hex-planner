@@ -1,13 +1,7 @@
 /** Payment: planets are exhausted and trade goods spent for what an entry costs. */
-import { isPlanetCard, planetValue, readyPlanetIds, tradeGoodWorth, type PayView, type PaymentKind } from '../payment';
+import { isPlanetCard, planetValue, tradeGoodWorth, type PayView, type PaymentKind } from '../payment';
 import { violation } from '../rules/registry';
 import type { DataPack, GameState, Payment, Warning } from '../types';
-
-const sumPlanets = (state: GameState, pack: DataPack, field: PaymentKind, view?: PayView): number =>
-  readyPlanetIds(state).reduce((total, id) => total + planetValue(pack, state, id, field, view), 0);
-
-export const readyResources = (state: GameState, pack: DataPack, view?: PayView): number => sumPlanets(state, pack, 'resources', view);
-export const readyInfluence = (state: GameState, pack: DataPack, view?: PayView): number => sumPlanets(state, pack, 'influence', view);
 
 /** A planet card held: it pays, though it is no planet I control. */
 const heldCard = (state: GameState, id: string): boolean => isPlanetCard(id) && state.holdings.relics.includes(id);

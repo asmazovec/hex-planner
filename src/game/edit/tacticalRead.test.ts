@@ -7,7 +7,6 @@ import * as oldOld from '../../testing/old/domain/tactical';
 import { blockersOf } from '../../testing/old/domain/movement';
 import { systemPlanets } from '../../domain/replay/board';
 import { pickupAllowed } from '../../domain/replay/transport';
-import { productionDue } from '../../domain/replay/production';
 import { autoPay } from '../../testing/old/domain/payment';
 import type { Entry, EntryBody, Game, UnitCounts } from '../../domain/types';
 import { holderOf, inForceOf } from '../../domain/effects/registry';
@@ -21,6 +20,7 @@ import * as now from './tacticalRead';
 import { warningsByTurn } from '../rowWarnings';
 import { withDeltaSystem } from './turn';
 import { tacticalOf, withCustodiansPayment as withCustodians } from './tactical';
+import { productionDue } from '../../testing/old/domain/replay/production';
 
 const pack = loadPack(['pok']);
 const mecatol = pack.tiles['18'].planetIds[0];

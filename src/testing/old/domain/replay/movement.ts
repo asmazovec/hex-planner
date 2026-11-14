@@ -1,12 +1,12 @@
-import type { GameState, Game, UnitId, DataPack, Warning } from '../../../../domain/types';
+import type { DataPack, Game, GameState, UnitCounts, Warning, UnitId } from '../../../../domain/types';
+import { sourceSlot } from '../../../../domain/replay/board';
+import { add, take, type Move, type TacticalEntry } from '../../../../domain/replay/state';
 import { type MoveView, type Blockers, linksOf } from '../../../../domain/movement';
-import { type Move, type TacticalEntry } from '../../../../domain/replay/state';
 import { holderOf } from '../../../../domain/effects/registry';
 import { playedBy } from '../../../../domain/effects/waivers';
 import { isPickup } from '../../../../domain/replay/transport';
 import { blockersOf } from '../movement';
 import { type RouteReads, checkRoutesOf } from '../../../../domain/replay/movement';
-
 /** What a route check knows of the entry beyond the board: my state (laws, tokens) and the components the entry names. */
 export interface RouteWho { shared?: GameState; named?: readonly string[]; links?: MoveView['links'] }
 /** What the components of the mover are told of one ship's move: where it starts, where it goes, who moves with it. */
@@ -37,3 +37,22 @@ export function checkRoutes(
   };
   return checkRoutesOf(game, reads, target, moves, pack, blockers);
 }
+
+/**
+ * Effect: carries the moves into the target and returns what each source system sent, by slot. What was entered is what
+ * flies: a unit asked for that is not there is reported (`unitsMissing`) and flies all the same, since a warning forbids
+ * nothing; its source only ends empty, never below. Pickups from the target's own planets stay in the system, so they
+ * join no group.
+ */
+export function moveUnits(
+  game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, warnings: Warning[],
+): Record<string, UnitCounts> {
+  const groups: Record<string, UnitCounts> = {};
+  for (const move of moves) {
+    take(move.from in pack.planets ? state.ground : state.systems, move.from, move.units, warnings);
+    add(state.systems, target, move.units);
+    const slot = move.pickupOf ?? sourceSlot(game, pack, move.from);
+    if (slot !== null && slot !== target) add(groups, slot, move.units);
+  }
+  return groups;
+}

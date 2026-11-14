@@ -1,21 +1,22 @@
-import type { Game, GameState, DataPack, Warning, UnitCounts } from '../../../../domain/types';
+import { checkStationLandings } from '../../../../domain/thundersEdge';
+import type { DataPack, Game, GameState, Warning, UnitCounts } from '../../../../domain/types';
+import { gainControl, landUnits } from '../../../../domain/replay/invasion';
+import { placesOf, type ProductionPlace } from '../../../../domain/replay/production';
 import { type TacticalEntry, unitIds, take } from '../../../../domain/replay/state';
 import type { Blockers } from '../../../../domain/movement';
 import { checkEntryRoutes } from './movement';
 import { checkPickups, overflowLeft, checkLeftBehind, checkGroups, removeFleetExcess } from './transport';
-import { moveUnits } from '../../../../domain/replay/movement';
 import { carryStructures, placeCarried } from './structures';
-import { fightAndLand, fresh } from '../../../../domain/replay/tactical';
 import { checkProduction, producerList, placeProduction, payProduction } from './production';
 import { violation } from '../../../../domain/rules/registry';
 import productionShipsAway from '../../../../domain/rules/codes/productionShipsAway';
 import { claimStations } from '../thundersEdge';
 import { checkActivation, activate, reactToActivation } from './activation';
 import { canFight, checkArrival } from './combat';
-import { removeLosses } from '../../../../domain/replay/combat';
 import { fire } from '../effects/points/moments';
-import { checkSystem } from '../../../../domain/replay/transport';
-
+import { checkSystem } from './transport';
+import { moveUnits } from './movement';
+import { checkAfterCombat, removeGroundLosses, removeLosses } from './combat';
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
 export function movement(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers, shared?: GameState): Record<string, UnitCounts> {
   warnings.push(...checkEntryRoutes(game, state, shared, entry, pack, blockers));
@@ -83,3 +84,33 @@ export function applyTactical(
   if (losses.length > 0) fire('onDestroyed', at, { losses });
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));
 }
+
+/**
+ * Steps 89.3 and 89.4 in the target after the moves: the battle's losses, the landing, the losses on the planets, then
+ * control of the planets still held. What the surviving ships cannot carry is checked between the two (16.3.3).
+ */
+export function fightAndLand(
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
+  shared: GameState = state,
+): void {
+  if (!lossesTaken) removeLosses(state, target, entry, warnings);
+  warnings.push(...checkAfterCombat(game, state, target, entry, pack));
+  warnings.push(...checkStationLandings(entry, pack));
+  const landedOn = landUnits(game, state, target, entry, pack, warnings, shared);
+  removeGroundLosses(state, entry, warnings);
+  gainControl(game, state, landedOn, pack);
+}
+
+/** Where a tactical entry's production stands, as the replay places it: after the entry's own moves and landings. */
+export function productionPlaces(game: Game, entry: TacticalEntry, before: GameState, pack: DataPack): ProductionPlace[] {
+  const target = entry.systemId;
+  if (target === null) return [];
+  const state = structuredClone(before);
+  moveUnits(game, state, target, entry.moves, pack, []);
+  fightAndLand(game, state, target, entry, pack, []);
+  return placesOf(game, state, target, entry.production, pack, entry.productionGround);
+}
+
+/** A warning of the final check that the action already gave for the same system, at arrival or after the battle, is not repeated. */
+export const fresh = (found: Warning[], given: Warning[]): Warning[] =>
+  found.filter(w => !given.some(g => g.code === w.code && g.params.systemId === w.params.systemId));

@@ -6,6 +6,7 @@ import { gameAs } from '../../domain/players';
 import { upgradesOf as upgradesHeld } from '../../domain/holdings';
 import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
+import * as oldDiplomacy from '../../testing/old/domain/replay/cards/diplomacy';
 import type { Entry, Game } from '../../domain/types';
 import { turnOf } from '../../testing/old/game/fromLegacy';
 import { playerOfKey } from '../keys';
@@ -48,7 +49,7 @@ describe.each([
     const turn = turnOf(table, e, pack) as read.CardTurn;
     const board = line.kernel.byTurn.get(e.id)!.before;
     const before = stateBeforeEntry(g, g.plans[0], e.id, pack);
-    expect(read.readyChoicesOn(table, board, pack, turn).map(p => p.id).sort()).toEqual(old.readyChoices(g, e as old.CardEntry, before, pack).map(p => p.id).sort());
+    expect(read.readyChoicesOn(table, board, pack, turn).map(p => p.id).sort()).toEqual(oldDiplomacy.readyChoices(g, e as old.CardEntry, before, pack).map(p => p.id).sort());
     expect(read.controlsMecatolOn(board, turn.player)).toBe(oldOld.controlsMecatol(before));
     expect([...upgradesOf(board, pack, turn.player)].sort()).toEqual([...upgradesHeld(before.holdings, pack)].sort());
   });

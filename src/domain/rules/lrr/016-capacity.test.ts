@@ -3,8 +3,8 @@
  * Base pack: a carrier I has capacity 4 and moves 1; a cruiser I has capacity 0; a dreadnought I has capacity 1.
  */
 import { describe, expect, test } from 'vitest';
-import { boardSystemWarnings } from '../../replay';
 import { codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
+import { boardSystemWarnings } from '../../../testing/old/domain/replay/transport';
 
 const pack = rulesPack();
 

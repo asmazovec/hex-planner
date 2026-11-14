@@ -7,7 +7,7 @@ import { boardSlots } from './movement';
 import type { MapSource } from './replay/board';
 import { isOnMap, sourceSlot } from './replay';
 import type { Pools } from './readers';
-import type { AdjustmentDelta, DataPack, Entry, Game, GameState, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
+import type { AdjustmentDelta, DataPack, Entry, Game, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
 
 export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
@@ -186,21 +186,4 @@ export function entrySystems(game: Game, pack: DataPack, entry: Entry): string[]
 /** Whether a flight of this entry would show anything: a destination and a unit in its moves. What was entered flies, whether or not it stands at the source. */
 export function flies(entry: TacticalEntry): boolean {
   return entry.systemId !== null && entry.moves.some(move => hasUnits(move.units));
-}
-
-/** The map during a flight: what flies has left its tile, what is picked up on the way leaves when the leader passes. It lands with the end of the flight. */
-export function stateInFlight(pack: DataPack, entry: TacticalEntry, before: GameState, passed: number[]): GameState {
-  const state = structuredClone(before);
-  entry.moves.forEach((move, index) => {
-    if (move.pickupOf !== undefined && !passed.includes(index)) return;
-    const pool = poolOf(state, pack, move.from);
-    if (!pool) return;
-    for (const unit of Object.keys(move.units) as UnitId[]) {
-      const count = (pool[unit] ?? 0) - (move.units[unit] ?? 0);
-      if (count > 0) pool[unit] = count;
-      else delete pool[unit];
-    }
-  });
-  if (!entry.free && entry.systemId !== null && !state.tokensOnMap.includes(entry.systemId)) state.tokensOnMap.push(entry.systemId);
-  return state;
 }

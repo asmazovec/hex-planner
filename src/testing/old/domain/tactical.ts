@@ -1,12 +1,11 @@
-import { type TacticalEntry, hasUnits, withCount, hasStructures, withStructure, type Move, groupOf, hasCargo, isGround, unitsIn, addUnits, poolOf, sourcesOf } from '../../../domain/tactical';
-import type { UnitId, StructureKind, GameState, StructureCounts, DataPack, Game, UnitCounts, Holdings } from '../../../domain/types';
+import type { DataPack, GameState, UnitId, StructureKind, StructureCounts, Game, UnitCounts, Holdings } from '../../../domain/types';
+import { type TacticalEntry, poolOf, hasUnits, withCount, hasStructures, withStructure, type Move, groupOf, hasCargo, isGround, unitsIn, addUnits, sourcesOf } from '../../../domain/tactical';
 import { sourceSlot, productionCost, systemPlanets, fightersFly, tileIdOf, routeSteps } from '../../../domain/replay/index';
 import { holderOf } from '../../../domain/effects/registry';
-import { productionDue } from '../../../domain/replay/production';
 import { autoPay } from './payment';
 import { boardSlots, type Blockers, type MoveView, linksOf, fleetSpeed, routeMove, routeReach } from '../../../domain/movement';
 import { MECATOL_PLANETS, CUSTODIANS_COST } from '../../../domain/mecatol';
-
+import { productionDue } from './replay/production';
 /** Nothing of the action is filled in yet, so its system can still change. */
 export const isUntouched = (entry: TacticalEntry): boolean =>
   entry.moves.length === 0 && entry.landings.length === 0 && !hasUnits(entry.production) && !hasUnits(entry.losses) && !entry.groundLosses
@@ -227,4 +226,21 @@ export function withCustodiansPayment(entry: TacticalEntry, before: GameState, f
   if (custodiansLanding(before, entry, pack) === undefined) return entry.custodiansPayment ? { custodiansPayment: undefined } : {};
   if (entry.custodiansPayment !== undefined || free) return {};
   return { custodiansPayment: autoPay(before, CUSTODIANS_COST, 'influence', pack, { faction }) };
+}
+
+/** The map during a flight: what flies has left its tile, what is picked up on the way leaves when the leader passes. It lands with the end of the flight. */
+export function stateInFlight(pack: DataPack, entry: TacticalEntry, before: GameState, passed: number[]): GameState {
+  const state = structuredClone(before);
+  entry.moves.forEach((move, index) => {
+    if (move.pickupOf !== undefined && !passed.includes(index)) return;
+    const pool = poolOf(state, pack, move.from);
+    if (!pool) return;
+    for (const unit of Object.keys(move.units) as UnitId[]) {
+      const count = (pool[unit] ?? 0) - (move.units[unit] ?? 0);
+      if (count > 0) pool[unit] = count;
+      else delete pool[unit];
+    }
+  });
+  if (!entry.free && entry.systemId !== null && !state.tokensOnMap.includes(entry.systemId)) state.tokensOnMap.push(entry.systemId);
+  return state;
 }

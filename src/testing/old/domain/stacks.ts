@@ -3,9 +3,9 @@ import { planetHolder } from '../../../domain/players';
 import { type SpaceStack, type GroundStack, UNIT_ORDER } from '../../../domain/hexLayout';
 import { unitsOf } from '../../../domain/stacks';
 import { opponentsBySeat } from './players';
-import { structuresOn } from '../../../domain/replay/structures';
 import { systemSlots, planetsOf, tileAt } from '../../../domain/replay/board';
 import { startingPds, startingDocks } from '../../../domain/strategy';
+import { structuresOn } from './replay/structures';
 
 /** A player's own state in a whole board: mine, or an opponent's as the replay counts them. */
 export const playerState = (board: GameState, owner: string | undefined): GameState =>

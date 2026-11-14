@@ -9,7 +9,6 @@ import { createGame } from '../testing/old/domain/newGame';
 import { autoPay, sliceAutoPayment } from '../testing/old/domain/payment';
 import { setPlayerFaction } from '../testing/old/domain/players';
 import { cardTargets } from '../testing/old/domain/replay/cards/targets';
-import { productionDue } from '../domain/replay/production';
 import type { Entry } from '../domain/types';
 import type { Turn } from './actions';
 import { legacyKey, legacyState, tableOf, turnOf } from '../testing/old/game/fromLegacy';
@@ -19,6 +18,7 @@ import {
 } from './planQueries';
 import { initialBoard } from './setup';
 import { playedCost } from '../domain/effects/playedCost';
+import { productionDue } from '../testing/old/domain/replay/production';
 
 const pack = loadPack(['pok', 'te']);
 let game = createGame({ expansions: ['pok', 'te'], playerCount: 3, faction: 'sol' }, pack);
