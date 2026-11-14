@@ -97,15 +97,20 @@ export function costsStrategyToken(entry: CardEntry, play: { held?: number[]; fr
 export function strategyTokensOwed(
   entry: CardEntry, play: { held?: number[]; free?: boolean }, game: Pick<Game, 'faction'>, state: GameState, shared: GameState, pack: DataPack,
 ): number {
+  return strategyTokensOwedOf(entry, play, holderOf(game, state, shared), pack);
+}
+
+/** The same for a holder: what they hold is what stood before the entry. */
+export function strategyTokensOwedOf(entry: CardEntry, play: { held?: number[]; free?: boolean }, holder: Holder, pack: DataPack): number {
   if (!costsStrategyToken(entry, play)) return 0;
-  return Math.max(0, appliedFor(pack, holderOf(game, state, shared), entry, 'strategyCost', 1, { card: entry.card, secondary: entry.type === 'secondary' }, state).value);
+  return Math.max(0, appliedFor(pack, holder, entry, 'strategyCost', 1, { card: entry.card, secondary: entry.type === 'secondary' }, holder).value);
 }
 
 /**
  * What a card gives to distribute: Leadership's own and bought tokens, the token Warfare's primary gains before
  * Thunder's Edge. `before`, the state before the entry: Warfare gains a token only when the chosen system held one of mine (99 note 1).
  */
-export const freeTokens = (entry: CardEntry, expansions: ExpansionId[], before?: GameState): number =>
+export const freeTokens = (entry: CardEntry, expansions: ExpansionId[], before?: Pick<GameState, 'tokensOnMap'>): number =>
   handlerOf(entry.card).freeTokens?.(entry, expansions, before) ?? 0;
 
 /** Leadership's tokens as tapped: what goes beyond the free ones is bought. */
@@ -141,12 +146,19 @@ export function tappedTokens(values: Partial<Record<TokenPool, number>>, pool: T
 export function cardCost(
   entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack, at?: { game: Game; state: GameState },
 ): { kind: PaymentKind; amount: number } {
+  return cardCostOf(entry, factionId, who, pack, at && (units => productionDue(at.game, at.state, units, pack, entry)));
+}
+
+/** The same with the combined cost of the units asked of whoever knows the board (`due`). */
+export function cardCostOf(
+  entry: CardEntry, factionId: string, who: Holdings | Holder, pack: DataPack, due?: (units: UnitCounts) => number,
+): { kind: PaymentKind; amount: number } {
   if (handlerOf(entry.card).placesFree?.(entry, { pack, faction: factionId })) return { kind: 'resources', amount: 0 };
   const own = handlerOf(entry.card).cost?.(entry, 'holdings' in who ? who.holdings : who, { pack, faction: factionId });
   if (own) return own;
   const units = entry.effects?.production?.units ?? {};
   // With the board, the units are asked as the check asks them: the combined cost (Sarween Tools, Particle Synthesis) counts.
-  return { kind: 'resources', amount: at ? productionDue(at.game, at.state, units, pack, entry) : productionCost(units, factionId, who, pack, entry) };
+  return { kind: 'resources', amount: due ? due(units) : productionCost(units, factionId, who, pack, entry) };
 }
 
 /**

@@ -39,6 +39,10 @@ export const poolsOf = (board: Board, player: PlayerId): Pools => board.players[
 import '../domain/effects/points/invasion';
 import type { Holder } from '../domain/effects/registry';
 import { productionDueOn, systemProductionOn, type Ground } from '../domain/replay/production';
+import { statusTokensFreeOf, tokensOverLimit } from '../domain/replay/status';
+import fleetPoolTokens from '../domain/rules/codes/fleetPoolTokens';
+import { violation } from '../domain/rules/registry';
+import type { Entry, RuleStep, Warning } from '../domain/types';
 import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/transport';
 import { appliedToPlanet } from '../domain/effects/points/payment';
 import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
@@ -187,3 +191,43 @@ const reinforcementCount = (board: Board, player: PlayerId, unit: UnitId): numbe
   ...Object.values(board.systems).map(s => s.ships[player]?.[unit] ?? 0),
   ...Object.values(board.planets).map(p => p.ground[player]?.[unit] ?? 0),
 ].reduce((sum, n) => sum + n, 0);
+
+/** The systems that hold a command token of the player: what stands on the map for the old `tokensOnMap`. */
+export const tokensOnMapOf = (board: Board, player: PlayerId): Slot[] => Object.keys(board.systems).filter(slot => board.systems[slot].tokens.includes(player));
+
+/** The command tokens a player gains in the status phase, after what they hold and the entry plays changed them (81.5). */
+export const statusTokensFree = (table: Table, board: Board, pack: DataPack, player: PlayerId, entry: Entry): number =>
+  statusTokensFreeOf(holderIn(table, board, player), entry, pack);
+
+/** No more tokens than the sixteen of a faction: the pools, and with `onBoard` those on the board (20.3.1). */
+export function reinforcementWarnings(board: Board, player: PlayerId, onBoard: boolean, step?: RuleStep): Warning[] {
+  const pools = poolsOf(board, player);
+  return tokensOverLimit(pools.tactic + pools.fleet + pools.strategy + (onBoard ? tokensOnMapOf(board, player).length : 0), step);
+}
+
+/** After the fleet pool shrank: a system holds more ships than it allows (37.3, 81.5.1). */
+export function fleetPoolWarnings(table: Table, board: Board, pack: DataPack, player: PlayerId, step?: RuleStep): Warning[] {
+  const stacks = stacksOn(table, board, pack, player);
+  const limit = stacks.fleet();
+  return Object.keys(board.systems).flatMap(systemId => {
+    const ships = stacks.fleetOf(stacks.units(systemId), systemId);
+    return ships > limit ? [violation('fleetPool', { systemId, ships, fleet: limit }, step)] : [];
+  });
+}
+
+/** More tokens in the fleet pool than a game effect allows (the `fleetPoolMax` point). */
+export function fleetPoolMaxWarnings(table: Table, board: Board, pack: DataPack, player: PlayerId, step: RuleStep = 'status'): Warning[] {
+  const limit = appliedOn(table, board, pack, player, 'fleetPoolMax', Number.POSITIVE_INFINITY, { faction: factionOf(table, player) }).value;
+  const fleet = poolsOf(board, player).fleet;
+  return fleet > limit ? [violation(fleetPoolTokens.code, { fleet, limit }, step)] : [];
+}
+
+/** The checks of the pools after a card changed them: tokens past the sixteen, the fleet pool past a law, below the ships standing. */
+export function poolChangeWarnings(table: Table, board: Board, pack: DataPack, player: PlayerId, change: Partial<Record<'tactic' | 'fleet' | 'strategy', number>> | undefined, step?: RuleStep): Warning[] {
+  const gained = (change?.tactic ?? 0) + (change?.fleet ?? 0) + (change?.strategy ?? 0);
+  return [
+    ...(gained > 0 ? reinforcementWarnings(board, player, true, step) : []),
+    ...((change?.fleet ?? 0) > 0 ? fleetPoolMaxWarnings(table, board, pack, player, step) : []),
+    ...((change?.fleet ?? 0) < 0 ? fleetPoolWarnings(table, board, pack, player, step) : []),
+  ];
+}

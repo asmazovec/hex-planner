@@ -3,7 +3,7 @@ import { componentById } from '../components';
 import { applied } from '../effects/apply';
 import { appliedFor } from '../effects/entryApply';
 import fleetPoolTokens from '../rules/codes/fleetPoolTokens';
-import { effectOf, holderOf } from '../effects/registry';
+import { effectOf, holderOf, type Holder } from '../effects/registry';
 import objectiveRepeated from '../rules/codes/objectiveRepeated';
 import objectivesPerPhase from '../rules/codes/objectivesPerPhase';
 import scoreWithoutHome from '../rules/codes/scoreWithoutHome';
@@ -28,12 +28,21 @@ export function checkTokensGiven(given: number, free: number, step?: RuleStep): 
  * those the entry names in `uses` (the `tokensGained` point at the step `status`). `state` is the owner's, `shared` mine.
  */
 export function statusTokensFree(game: Game, state: GameState, shared: GameState, entry: Entry, pack: DataPack): number {
-  return appliedFor(pack, holderOf(game, state, shared), entry, 'tokensGained', STATUS_TOKENS, { step: 'status' }, state).value;
+  return statusTokensFreeOf(holderOf(game, state, shared), entry, pack);
+}
+
+/** The same for a holder: what they hold is what stood before the entry. */
+export function statusTokensFreeOf(holder: Holder, entry: Entry, pack: DataPack): number {
+  return appliedFor(pack, holder, entry, 'tokensGained', STATUS_TOKENS, { step: 'status' }, holder).value;
 }
 
 /** Check: the tokens in the pools, and with `onBoard` those on the board, are more than the sixteen of a faction (20.3.1). */
 export function checkReinforcements(state: GameState, onBoard: boolean, step?: RuleStep): Warning[] {
-  const total = state.tactic + state.fleet + state.strategy + (onBoard ? state.tokensOnMap.length : 0);
+  return tokensOverLimit(state.tactic + state.fleet + state.strategy + (onBoard ? state.tokensOnMap.length : 0), step);
+}
+
+/** The same for a count of tokens. */
+export function tokensOverLimit(total: number, step?: RuleStep): Warning[] {
   return total > TOKEN_LIMIT ? [violation('noReinforcements', { total, limit: TOKEN_LIMIT }, step)] : [];
 }
 

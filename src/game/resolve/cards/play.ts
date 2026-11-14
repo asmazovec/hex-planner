@@ -3,24 +3,24 @@
  * tokens it gives, the planets it readies, the card's own effects, the research it lists, the structures and units it
  * builds. Every step reads the board through queries and applies its events; the card's own rule is `cards/<card>.ts`.
  */
-import { holderOf } from '../../../domain/effects/registry';
-import { checkProduction } from '../../../domain/replay/production';
-import { researchTokensGiven } from '../../../domain/replay/research';
-import { checkPoolChange, checkTokensGiven } from '../../../domain/replay/status';
+import { checkProductionOn, productionDueOn } from '../../../domain/replay/production';
+import { checkTokensGiven } from '../../../domain/replay/status';
 import { checkSystemOf } from '../../../domain/replay/transport';
-import { stacksOn } from '../../queries';
+import { appliedOn, holderIn } from '../../abilities/registry';
+import { groundIn, poolChangeWarnings, stacksOn, tokensOnMapOf } from '../../queries';
 import { violation } from '../../../domain/rules/registry';
-import { CARD, cardCost, cardsHeld, freeTokens, strategyTokensOwed, type CardEntry } from '../../../domain/strategy';
+import { CARD, cardCostOf, cardsHeld, freeTokens, strategyTokensOwedOf, type CardEntry } from '../../../domain/strategy';
 import { checkStationStructures } from '../../../domain/thundersEdge';
 import { componentById } from '../../../domain/components';
 import type { Delta } from '../../events';
-import { checkView, emit, warn, type Ctx } from '../context';
+import { emit, warn, type Ctx } from '../context';
 import { checkedPay, shortOf } from '../payment';
 import { place } from '../production';
 import { hook } from '../hooks';
 import { noteAddress, noteBase } from '../../../domain/components';
-import { legacyKey } from '../../legacyViews';
+import { legacyKey } from '../../keys';
 import { ACQUIESCENCE } from '../natives';
+import { playerCountOf } from '../../space';
 import { buildStructures } from '../structures';
 import { ruleOf } from './index';
 
@@ -40,7 +40,7 @@ function checkPlay(ctx: Ctx, entry: CardEntry): { held?: number[]; free?: boolea
     else if (held.length > 0 || !entry.forToken) {
       const repeated = primaries.includes(card);
       primaries.push(card);
-      const limit = held.length > 0 ? held.length : cardsHeld(checkView(ctx).game.playerCount);
+      const limit = held.length > 0 ? held.length : cardsHeld(playerCountOf(ctx.table));
       if (repeated || primaries.length > limit) warn(ctx, violation('primaryRepeated', { held: limit }));
     }
     return { held };
@@ -66,8 +66,7 @@ export function playCard(ctx: Ctx): void {
   const primary = entry.type === 'strategic';
   const effects = entry.effects ?? {};
   // The token the card owes: one, or what the components of the player make of it (the `strategyCost` point).
-  let v = checkView(ctx);
-  const owed = strategyTokensOwed(entry, checkPlay(ctx, entry), v.game, v.state, v.shared, ctx.pack);
+  const owed = strategyTokensOwedOf(entry, checkPlay(ctx, entry), holderIn(ctx.table, ctx.board, ctx.player), ctx.pack);
   if (owed > 0) {
     const have = ctx.board.players[ctx.player]?.pools.strategy ?? 0;
     if (have < owed) warn(ctx, violation('shortStrategy', { have }));
@@ -79,14 +78,15 @@ export function playCard(ctx: Ctx): void {
     }
   }
   // Units a card produces use a unit's PRODUCTION: the combined cost may be reduced (Sarween Tools), as a tactical action's is.
-  v = checkView(ctx);
-  const cost = cardCost(entry, v.game.faction, holderOf(v.game, v.state), ctx.pack, { game: v.game, state: v.state });
+  const faction = ctx.table.players.find(p => p.id === ctx.player)?.faction ?? '';
+  const ground = groundIn(ctx.table, ctx.board, ctx.pack, ctx.player);
+  const cost = cardCostOf(entry, faction, ground.holder, ctx.pack, units => productionDueOn(ground, units, ctx.pack, entry));
   const paid = checkedPay(ctx, effects.payment ?? { planets: [], tradeGoods: 0 }, cost.kind);
   shortOf(ctx, cost.kind, cost.amount, paid);
-  v = checkView(ctx);
   const given = (effects.tokens?.tactic ?? 0) + (effects.tokens?.fleet ?? 0) + (effects.tokens?.strategy ?? 0);
-  const bonus = entry.card === CARD.technology ? researchTokensGiven(ctx.pack, v.game, v.state, v.shared, effects.researched) : 0;
-  warn(ctx, checkTokensGiven(given, freeTokens(entry, ctx.table.expansions, v.state) + bonus, 'card'));
+  const bonus = entry.card === CARD.technology ? (effects.researched ?? []).filter(id => componentById(ctx.pack, id)?.kind === 'technology')
+    .reduce((sum, id) => sum + appliedOn(ctx.table, ctx.board, ctx.pack, ctx.player, 'researchTokens', 0, { technology: id }).value, 0) : 0;
+  warn(ctx, checkTokensGiven(given, freeTokens(entry, ctx.table.expansions, { tokensOnMap: tokensOnMapOf(ctx.board, ctx.player) }) + bonus, 'card'));
   for (const pool of POOLS) {
     const change = effects.tokens?.[pool] ?? 0;
     if (change === 0) continue;
@@ -102,8 +102,7 @@ export function playCard(ctx: Ctx): void {
     emit(ctx, (effects.researched ?? []).filter(id => componentById(ctx.pack, id)?.kind === 'technology')
       .map(technology => ({ type: 'TechnologyResearched' as const, player: ctx.player, technology })), { quiet: true });
   }
-  v = checkView(ctx);
-  warn(ctx, checkPoolChange(v.game, v.state, ctx.pack, effects.tokens, 'card', v.shared));
+  warn(ctx, poolChangeWarnings(ctx.table, ctx.board, ctx.pack, ctx.player, effects.tokens, 'card'));
   buildStructures(ctx, effects.structures ?? [], primary, effects.systemId);
   warn(ctx, checkStationStructures(effects.structures ?? [], ctx.pack));
   if (effects.production) {
@@ -111,8 +110,7 @@ export function playCard(ctx: Ctx): void {
     // Units entered on Construction (which a law may allow) are limited by the Production of their system, as a tactical action's.
     const source = !primary && entry.card === CARD.warfare ? 'homeDock' : entry.card === CARD.construction ? 'system' : 'card';
     const { systemId, units, ground } = effects.production;
-    v = checkView(ctx);
-    warn(ctx, checkProduction(v.game, v.state, systemId, units, ctx.pack, ground, source, 'card', entry));
+    warn(ctx, checkProductionOn(groundIn(ctx.table, ctx.board, ctx.pack, ctx.player), systemId, units, ctx.pack, ground, source, 'card', entry));
     place(ctx, systemId, units, ground);
     warn(ctx, checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), systemId));
   }

@@ -19,13 +19,13 @@ import { playedBy } from './waivers';
 import './points/production';
 
 /** Whether the owner holds the component ready on the board before the entry. */
-const ready = (pack: DataPack, state: GameState | undefined, id: string): boolean => {
+const ready = (pack: DataPack, state: Pick<GameState, 'holdings'> | undefined, id: string): boolean => {
   const def = componentById(pack, id);
   return !state || !def || (holds(state.holdings, def) && !isExhausted(state.holdings, def));
 };
 
 export function appliedFor<K extends keyof Modifiers>(
-  pack: DataPack, who: Holdings | Holder, entry: Entry | undefined, point: K, base: number, ctx: ModifierContext[K], state?: GameState,
+  pack: DataPack, who: Holdings | Holder, entry: Entry | undefined, point: K, base: number, ctx: ModifierContext[K], state?: Pick<GameState, 'holdings'>,
 ): Applied {
   const result = applied(pack, who, point, base, ctx);
   if (!entry) return result;

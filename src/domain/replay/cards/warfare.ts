@@ -7,7 +7,7 @@ import type { ExpansionId, GameState } from '../../types';
 import type { CardHandler } from './handler';
 
 /** Before Thunder's Edge, whether the primary lifts a token: the chosen system holds one of mine. Without the board, it may. */
-const lifts = (entry: CardEntry, expansions: ExpansionId[], before?: GameState): boolean => {
+const lifts = (entry: CardEntry, expansions: ExpansionId[], before?: Pick<GameState, 'tokensOnMap'>): boolean => {
   if (entry.type !== 'strategic' || expansions.includes('te')) return false;
   if (!before) return true;
   const systemId = entry.effects?.systemId;

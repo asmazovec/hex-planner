@@ -103,3 +103,6 @@ export const endsThere = (table: Table, board: Board, slot: Slot, pack: DataPack
 export const reach = (
   table: Table, board: Board, path: Slot[], speed: number, active: Slot, pack: DataPack, blockers: Blockers, view?: MoveView,
 ): Set<Slot> => routeReach({ ...mapSource(table, board) } as Parameters<typeof routeReach>[0], path, speed, active, pack, blockers, view);
+
+/** The number of players the game began with: eliminations leave it, so the cards held at the table count by it (33.9). */
+export const playerCountOf = (table: Table): number => SOURCES.get(table)?.playerCount ?? table.players.length;

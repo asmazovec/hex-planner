@@ -43,7 +43,7 @@ export interface CardHandler {
   /** What it places is placed, not produced: the units entered on it are paid for with nothing (Titans, Hecatoncheires). */
   placesFree?: (entry: CardEntry, who: CardWho) => boolean;
   /** The tokens it gives to distribute; `before`, the state before the entry, when the board is known. */
-  freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: GameState) => number;
+  freeTokens?: (entry: CardEntry, expansions: ExpansionId[], before?: Pick<GameState, 'tokensOnMap'>) => number;
   /** Its own effects and checks, after the common steps (token, payment, distribution, readying). */
   apply?: (turn: CardTurn) => void;
 }
