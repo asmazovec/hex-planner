@@ -5,18 +5,18 @@
  * `GameState` for each player, the warnings of each entry); a board is turned into a state only when somebody asks
  * for it, and once. It rests on the store keeping every object it did not edit.
  */
-import { legacyState, boardOf, tableOf } from '../game/fromLegacy';
+import { legacyState, tableOf } from '../game/fromLegacy';
+import { startBoard } from '../game/setup';
+import { stacksOn } from '../game/queries';
 import { statusOf, turnNumbers } from '../game/numbering';
 import { planOf } from '../game/fromLegacy';
 import { timeline as kernelTimeline, type Filter, type Frame as KernelFrame, type Timeline as Kernel } from '../game/timeline';
 import type { Board, Table } from '../game/types';
 import type { Round as KernelRound } from '../game/round';
-import { playerOfKey } from '../game/keys';
 import { waiveBoard } from '../game/resolve/waive';
-import { gameAs } from '../domain/players';
-import { originOf } from '../storage/legacySave';
+import { originOf, savedFor } from '../storage/legacySave';
 import type { SavedGame } from '../game/save';
-import { checkSystem } from '../domain/replay/transport';
+import { checkSystemOf } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
 import { choicesOf, type ResolvedChoice } from '../game/abilities/choices';
 import { turnOf } from '../game/fromLegacy';
@@ -73,7 +73,7 @@ function setupOf(game: Game, pack: DataPack): Setup {
     ? setup.saved.table === saved.table && setup.saved.start === saved.start
     : !saved && !setup.saved && sameSetup(setup.game, game));
   if (kept) return setup!;
-  setup = { game, ...(saved ? { saved } : {}), pack, table: tableOf(game), start: boardOf(game, pack) };
+  setup = { game, ...(saved ? { saved } : {}), pack, table: tableOf(game), start: startBoard(saved ?? savedFor(game), pack) };
   return setup;
 }
 
@@ -279,11 +279,7 @@ export function systemWarningsAt(line: Timeline, roundNo: number, slot: string):
   const { table } = setupOf(game, pack);
   const next = line.starts.findIndex(s => s.number > roundNo);
   const board = next < 0 ? line.kernel.end : line.kernel.marks[next].start;
-  const state = projectionAtRound(line, roundNo).state;
-  const seats: [string, Game, GameState][] = [['me', game, state], ...Object.entries(state.rivals ?? {}).map(([key, held]): [string, Game, GameState] => [key, gameAs(game, key), held])];
-  return seats.flatMap(([key, view, held]) => {
-    const player = playerOfKey(table, key);
-    const found = checkSystem(view, held, slot, pack);
-    return player === undefined ? found : waiveBoard(table, board, pack, player, found);
-  });
+  // Every player's capacity and fleet pool in the system, the viewer first.
+  const ordered = [...table.players].sort((x, y) => (x.id === table.viewer ? -1 : y.id === table.viewer ? 1 : 0));
+  return ordered.flatMap(({ id }) => waiveBoard(table, board, pack, id, checkSystemOf(stacksOn(table, board, pack, id), slot)));
 }

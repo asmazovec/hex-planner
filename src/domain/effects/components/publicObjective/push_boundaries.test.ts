@@ -27,7 +27,7 @@ const table = (jolnarPlanets: string[]) => {
       game: {
         map: { [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', [FAR]: 'p-far', [FARTHER]: 'r-empty' },
         opponents: [
-          { id: 'hacan', faction: 'hacan', vp: 0, seat: 2, color: 2 },
+          { id: 'hacan', faction: 'hacan', vp: 0, seat: 4, color: 2 },
           { id: 'jolnar', faction: 'jolnar', vp: 0, seat: 5, color: 3 },
         ],
         planetControl, planetOwner,

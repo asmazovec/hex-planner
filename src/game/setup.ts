@@ -3,13 +3,16 @@
  * this in pieces (units in `startUnits`, structures in `startStructures`, notes and technologies in `startForFaction`).
  */
 import { componentById, componentsOf, noteBase, ownedBy } from '../domain/components';
-import { factionNotes, genericNotes, startingTechnologies } from '../domain/holdings';
+import { breakthroughOf } from '../domain/effects/breakthrough';
+import { factionNotes, genericNotes, holdingsOf, startingTechnologies } from '../domain/holdings';
 import { seatSlots } from '../domain/mapBuilder';
 import { splitStartUnits } from '../domain/strategy';
 import { applyAll } from './apply';
 import { emptyBoard, START_POOLS } from './board';
 import type { Cause, GameEvent } from './events';
-import type { Board, DataPack, Player, PlanetId, Slot, Table } from './types';
+import type { StartHoldings } from '../domain/types';
+import type { SavedGame } from './save';
+import type { Board, DataPack, Player, PlanetId, PlayerId, Slot, Table } from './types';
 
 const SETUP: Cause = { step: 'setup' };
 /** The ability that purges its player's own Alliance note at setup. */
@@ -75,3 +78,91 @@ export function setup(table: Table, pack: DataPack): GameEvent[] {
 }
 
 export const initialBoard = (table: Table, pack: DataPack): Board => applyAll(emptyBoard(table), setup(table, pack));
+
+// ---------------------------------------------------------------------------------------------------------------------
+// The board a saved game begins with: the sheet of the viewer's faction, then what `StartEdits` holds.
+
+/** The planets of a faction's own home tile that the tile at its seat does not hold: nothing on the map stands for them. */
+function absentHomes(table: Table, player: Player, pack: DataPack): string[] {
+  const home = homeOf(table, player, pack);
+  const def = pack.factions[player.faction];
+  return home === undefined || !def ? [] : (pack.tiles[def.homeTile]?.planetIds ?? []).filter(id => !home.planets.includes(id));
+}
+
+type CardState = 'ready' | 'exhausted' | 'inPlay' | 'purged';
+
+/** A player's cards as the start holds them, as events: what the pack does not know is passed over. */
+function heldEvents(player: Player, start: StartHoldings | undefined, pack: DataPack): GameEvent[] {
+  const h = holdingsOf(start);
+  const known = (id: string): boolean => componentById(pack, id) !== undefined;
+  const cards = new Map<string, { state: CardState; count: number }>();
+  const put = (id: string, state: CardState): void => {
+    const was = cards.get(id);
+    cards.set(id, { state: was?.state === 'exhausted' ? 'exhausted' : state, count: (was?.count ?? 0) + 1 });
+  };
+  for (const id of [...h.technologies, ...h.hand, ...h.relics, ...h.promissory, ...h.secrets, ...h.found].filter(known)) put(id, 'ready');
+  for (const id of h.scored.filter(known)) put(id, 'inPlay');
+  for (const [id, leader] of Object.entries(h.leaders).filter(([id]) => known(id))) cards.set(id, { state: leader === 'unlocked' ? 'ready' : leader, count: 1 });
+  const breakthrough = h.breakthrough && player.faction ? breakthroughOf(pack, player.faction) : undefined;
+  if (breakthrough) cards.set(breakthrough, { state: h.breakthrough === 'exhausted' ? 'exhausted' : 'ready', count: 1 });
+  return [...cards].flatMap(([card, { state, count }]): GameEvent[] => [
+    { type: 'CardGained', player: player.id, card, count, ...(state === 'inPlay' ? { state } : {}), cause: SETUP },
+    ...(state === 'exhausted' ? [{ type: 'CardExhausted', player: player.id, card, cause: SETUP } as GameEvent] : []),
+    ...(state === 'purged' ? [{ type: 'CardPurged', player: player.id, card, cause: SETUP } as GameEvent] : []),
+  ]);
+}
+
+/**
+ * The board a saved game begins with. The viewer's faction sheet places their fleet and home planets; every other
+ * player stands as the start says (`StartEdits`: units, ground forces, planets, docks and PDS, written by hand and, when
+ * the game begins, from the sheets by `startedGame`). Holdings, points, structures, the expedition and the Fracture are
+ * the start's too; the players' homes are theirs from the first.
+ */
+export function startBoard(saved: SavedGame, pack: DataPack): Board {
+  const { table, start } = saved;
+  const events: GameEvent[] = [];
+  const homes: Record<PlanetId, PlayerId> = {};
+  const firsts: Record<PlayerId, PlanetId | undefined> = {};
+  const absent: Record<PlayerId, string[]> = {};
+  const viewerFirst = [...table.players].sort((a, b) => (a.id === table.viewer ? -1 : b.id === table.viewer ? 1 : 0));
+  for (const player of viewerFirst) {
+    events.push(...tokenEvents(player));
+    const home = homeOf(table, player, pack);
+    absent[player.id] = absentHomes(table, player, pack);
+    const def = pack.factions[player.faction];
+    // A seat the map has no slot for (a player beyond the template) holds the faction's own home planets.
+    const planets = home?.planets ?? (def ? pack.tiles[def.homeTile]?.planetIds ?? [] : []);
+    firsts[player.id] = planets[0];
+    for (const planet of planets) homes[planet] ??= player.id;
+    if (player.id === table.viewer && def && home) {
+      const split = splitStartUnits(def.startUnits, home.planets[0], pack);
+      if (Object.keys(split.space).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { slot: home.slot }, units: split.space, cause: SETUP });
+      if (home.planets[0] !== undefined && Object.keys(split.ground).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { planet: home.planets[0] }, units: split.ground, cause: SETUP });
+    }
+  }
+  // Who holds what planet: the start's word, else the home it is; the planets of a home the map has no place for are nobody's.
+  const owner: Record<PlanetId, PlayerId> = { ...homes, ...start.control };
+  for (const [planet, who] of Object.entries(owner)) if (absent[who]?.includes(planet)) delete owner[planet];
+  for (const [planet, player] of Object.entries(owner)) events.push({ type: 'PlanetGained', player, planet, cause: SETUP });
+  // Structures stand with whoever holds the planet; those written under an absent home planet stand on the first planet of the tile at the seat.
+  for (const [planet, player] of Object.entries(owner)) {
+    const from = [planet, ...(absent[player] ?? []).filter(() => firsts[player] === planet)];
+    const docks = from.some(id => start.docks.includes(id)) ? 1 : 0;
+    const pds = from.reduce((n, id) => n + (start.pds[id] ?? 0), 0);
+    const structures = { ...(docks > 0 ? { spacedock: docks } : {}), ...(pds > 0 ? { pds } : {}) };
+    if (Object.keys(structures).length > 0) events.push({ type: 'StructurePlaced', player, at: { planet }, structures, cause: SETUP });
+  }
+  for (const player of table.players) {
+    if (player.id !== table.viewer) {
+      for (const [slot, byPlayer] of Object.entries(start.units)) if (Object.keys(byPlayer[player.id] ?? {}).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { slot }, units: byPlayer[player.id], cause: SETUP });
+      for (const [planet, byPlayer] of Object.entries(start.ground)) if (Object.keys(byPlayer[player.id] ?? {}).length > 0) events.push({ type: 'UnitsPlaced', player: player.id, at: { planet }, units: byPlayer[player.id], cause: SETUP });
+    }
+    const points = start.points[player.id] ?? 0;
+    if (points !== 0) events.push({ type: 'PointsChanged', player: player.id, delta: points, cause: SETUP });
+    events.push(...heldEvents(player, start.holdings[player.id], pack));
+  }
+  if (start.fracture.tiles && Object.keys(start.fracture.tiles).length > 0) events.push({ type: 'FractureOpened', tiles: { ...start.fracture.tiles } });
+  for (const [slice, by] of Object.entries(start.expedition.slices)) if (by) events.push({ type: 'ExpeditionSliceTaken', player: by, slice });
+  if (start.expedition.thundersEdgeSystem !== null) events.push({ type: 'ThundersEdgeSlotSet', system: start.expedition.thundersEdgeSystem });
+  return applyAll(emptyBoard(table), events);
+}
