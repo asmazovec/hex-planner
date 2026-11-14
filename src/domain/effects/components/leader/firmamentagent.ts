@@ -26,7 +26,7 @@ export const ability: Hooked = {
     rule: "If they are not transporting units, they can also move through other players' ships.",
     when: (warning, ctx) => {
       const def = componentById(ctx.pack, id);
-      const ready = !def || ctx.had.card(id) === 'ready';
+      const ready = !def || ctx.ready(id);
       return ready && ctx.routeBlockKind(warning) === 'ships' && ctx.shipsOnly(warning);
     },
   }],

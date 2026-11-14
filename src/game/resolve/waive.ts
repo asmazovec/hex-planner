@@ -90,8 +90,9 @@ function permitContext(ctx: Ctx, before: Board, earlier: readonly string[], aske
     return value > 0 ? value : 0;
   };
   const isShip = (unit: UnitId): boolean => pack.units[unit] !== undefined && !pack.units[unit].ground && !pack.units[unit].fighter;
+  const had = readerOf(table, before, pack, asked.holder);
   return Object.assign(Object.create(base) as PermitContext, {
-    before, had: readerOf(table, before, pack, asked.holder), prior, plays: earlier, ...(primaries ? { primaries } : {}),
+    before, had, ready: (id: string) => had.ready(id), prior, plays: earlier, ...(primaries ? { primaries } : {}),
     blockedByShips: (slot: string): boolean => shipBlockers(before, mover, pack).has(slot),
     routeBlockKind: (warning: Warning): RouteBlockKind | undefined => {
       if (warning.code !== 'routeBlocked') return undefined;

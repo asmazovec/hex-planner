@@ -24,7 +24,7 @@ export const ability: Ability = {
       const warned = String(warning.params.id);
       if (!isAgent(warned)) return false;
       // The agent that pays: another agent of mine, named in «Used», that was ready before the entry.
-      return (ctx.entry?.uses ?? []).some(other => other !== warned && isAgent(other) && ctx.had.card(other) === 'ready');
+      return (ctx.entry?.uses ?? []).some(other => other !== warned && isAgent(other) && ctx.ready(other));
     },
   }],
 };

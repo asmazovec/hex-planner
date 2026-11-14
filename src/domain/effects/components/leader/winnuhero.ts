@@ -15,7 +15,7 @@ export const id = 'leader:winnuhero';
 
 const RULE = 'Perform the primary ability of any strategy card';
 /** The hero is ready and the entry is a primary performed through it. */
-const performed = (ctx: PermitContext): boolean => ctx.entry?.type === 'strategic' && ctx.had.card(id) === 'ready';
+const performed = (ctx: PermitContext): boolean => ctx.entry?.type === 'strategic' && ctx.ready(id);
 
 export const ability: Ability = {
   holder: 'self',

@@ -60,6 +60,8 @@ export interface PermitContext extends AbilityContext {
   /** The board before the turn, and the holder read from it. */
   readonly before: Board;
   readonly had: Reader;
+  /** Whether the holder could play the component when the turn began: held and ready, a faction sheet's item for its own faction, a legendary planet's card for its controller. */
+  ready(id: string): boolean;
   /** The same questions asked of the board before the turn (readers, `planetValue`, `capacityOf`, `adjacent`...): the context itself is the board after it. */
   readonly prior: AbilityContext;
   /** The strategy cards whose primary the actor resolved earlier this round, when the round keeps them. */

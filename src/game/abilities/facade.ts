@@ -4,7 +4,9 @@
  * the kernel. Nothing here counts a rule or changes a board.
  */
 import { componentById } from '../../domain/components';
+import { readyToPlay } from '../../domain/replay/holdings';
 import type { PlanetDef, StructureCounts, UnitCounts } from '../../domain/types';
+import { holdingsOfCards } from '../keys';
 import { cardsOf, groundOn, planetsOf, poolsOf, shipsIn, type HeldCard } from '../queries';
 import type { Board, CardState, ComponentId, DataPack, LawInForce, PlanetId, PlayerId, Pools, Slot, Table } from '../types';
 
@@ -31,6 +33,8 @@ export interface Reader {
   /** The state of a held card; none when it is not held. */
   card(id: ComponentId): CardState | undefined;
   holds(id: ComponentId): boolean;
+  /** Whether the component can be played by the player: held and not exhausted; what a faction sheet brings counts for that faction only, a legendary planet's card for whoever controls the planet. */
+  ready(id: ComponentId): boolean;
   /** The planets the player controls. */
   planets(): PlanetRead[];
   /** The player's units in a system's space area, or on a planet. */
@@ -52,6 +56,7 @@ export interface Shared {
 const any = (units: UnitCounts): boolean => Object.values(units).some(n => (n ?? 0) > 0);
 
 export function readerOf(table: Table, board: Board, pack: DataPack, player: PlayerId): Reader {
+  let ready: Set<string> | undefined;
   const state = board.players[player];
   const planet = (id: PlanetId): PlanetRead => {
     const def: Partial<PlanetDef> = pack.planets[id] ?? {};
@@ -64,6 +69,7 @@ export function readerOf(table: Table, board: Board, pack: DataPack, player: Pla
     cards: kind => cardsOf(board, player, kind),
     card: id => (state?.cards[id]?.state === 'purged' ? undefined : state?.cards[id]?.state),
     holds: id => state?.cards[id] !== undefined && state.cards[id].state !== 'purged',
+    ready: id => (ready ??= readyIds(board, pack, player, state?.cards ?? {}, table.players.find(p => p.id === player)?.faction ?? '')).has(id),
     planets: () => planetsOf(board, player).map(planet),
     unitsIn: slot => shipsIn(board, slot, player),
     unitsOn: id => groundOn(board, id, player),
@@ -78,4 +84,11 @@ export function sharedOf(board: Board, pack: DataPack): Shared {
     objectives: () => board.common.revealed.filter(id => componentById(pack, id)?.kind === 'publicObjective'),
     scored: (player, id) => board.players[player]?.cards[id]?.state === 'inPlay',
   };
+}
+
+/** The components the player can play, as `readyToPlay` counts them (the old readiness, asked of the board's cards). */
+function readyIds(board: Board, pack: DataPack, player: PlayerId, cards: Board['players'][string]['cards'], faction: string): Set<string> {
+  const control: Record<string, 'me'> = {};
+  for (const [id, planet] of Object.entries(board.planets)) if (planet.owner === player) control[id] = 'me';
+  return readyToPlay(pack, holdingsOfCards(cards), faction, control);
 }

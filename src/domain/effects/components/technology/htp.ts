@@ -21,6 +21,6 @@ export const ability: Ability = {
     rule: 'swap the resource and influence values of 1 planet you control during that use of Production',
     // The swap of the one best paying planet (its influence less its resources) must cover what is short.
     // Together with the other components that cover a shortfall (coverOf): the swap of the best paying planet is one part.
-    when: ({ params }, ctx) => ctx.had.card(id) === 'ready' && Number(params.needed) - Number(params.paid) <= coverOf(ctx),
+    when: ({ params }, ctx) => ctx.ready(id) && Number(params.needed) - Number(params.paid) <= coverOf(ctx),
   }],
 };

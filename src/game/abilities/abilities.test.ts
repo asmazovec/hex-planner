@@ -80,3 +80,22 @@ describe('the registry over the board', () => {
     expect(at('p1', 'movement')).not.toContain('promissory:stymie@p1');
   });
 });
+
+describe('what a player has ready to play', () => {
+  test('`ready` answers as the old readiness did: cards held and not exhausted, a faction sheet for its own faction, a legendary planet for its controller', () => {
+    const ability = `ability:${pack.factions.sol.sheet!.abilities[0].id}`;
+    const winnuAbility = `ability:${pack.factions.winnu.sheet!.abilities[0].id}`;
+    const sol = readerOf(table, start, pack, 'p1');
+    expect(sol.card(ability)).toBeUndefined();
+    expect(sol.ready(ability)).toBe(true);
+    expect(sol.ready(winnuAbility)).toBe(false);
+    expect(readerOf(table, start, pack, 'p2').ready(winnuAbility)).toBe(true);
+    const board = holding(start, 'p1', { 'relic:shard': { state: 'exhausted', count: 1 }, 'actionCard:decoy': { state: 'ready', count: 1 } });
+    expect(readerOf(table, board, pack, 'p1').ready('relic:shard')).toBe(false);
+    expect(readerOf(table, board, pack, 'p1').ready('actionCard:decoy')).toBe(true);
+    const legendary = Object.keys(pack.planets).find(id => pack.planets[id].legendary)!;
+    const held = { ...start, planets: { ...start.planets, [legendary]: { ...start.planets[jord], owner: 'p1' } } };
+    expect(readerOf(table, held, pack, 'p1').ready(`legendary:${legendary}`)).toBe(true);
+    expect(readerOf(table, held, pack, 'p2').ready(`legendary:${legendary}`)).toBe(false);
+  });
+});

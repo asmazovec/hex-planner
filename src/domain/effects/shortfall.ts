@@ -21,11 +21,11 @@ export function coverOf(ctx: PermitContext): number {
   const named = namedBy(entry);
   const payment = entry && 'payment' in entry ? entry.payment : entry && 'effects' in entry ? entry.effects?.payment : undefined;
   let cover = 0;
-  if (named.includes(AGENT_OF_THE_WINNU) && had.card(AGENT_OF_THE_WINNU) === 'ready') cover += WINNU_AGENT_REDUCTION;
-  if (named.includes(HEGEMONIC_TRADE_POLICY) && had.card(HEGEMONIC_TRADE_POLICY) === 'ready') {
+  if (named.includes(AGENT_OF_THE_WINNU) && ctx.ready(AGENT_OF_THE_WINNU)) cover += WINNU_AGENT_REDUCTION;
+  if (named.includes(HEGEMONIC_TRADE_POLICY) && ctx.ready(HEGEMONIC_TRADE_POLICY)) {
     cover += Math.max(0, ...(payment?.planets ?? []).map(planetId => (pack.planets[planetId]?.influence ?? 0) - (pack.planets[planetId]?.resources ?? 0)));
   }
-  if (named.includes(KELERES_AGENT) && had.card(KELERES_AGENT) === 'ready') {
+  if (named.includes(KELERES_AGENT) && ctx.ready(KELERES_AGENT)) {
     cover += Math.min(Math.max(0, (payment?.tradeGoods ?? 0) - had.tradeGoods), had.commodities);
   }
   return cover;

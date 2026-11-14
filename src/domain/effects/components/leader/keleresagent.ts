@@ -23,12 +23,12 @@ export const ability: Hooked = {
   permit: [{
     code: 'shortTradeGoods',
     rule: 'allow any player to spend commodities as if they were trade goods',
-    when: (w, ctx) => ctx.had.card(id) === 'ready' && Number(w.params.needed) <= Number(w.params.have) + ctx.had.commodities,
+    when: (w, ctx) => ctx.ready(id) && Number(w.params.needed) <= Number(w.params.have) + ctx.had.commodities,
   }, {
     // The commodities spent as trade goods count as paid, so what they cover of a resource shortfall is none.
     code: 'shortResources',
     rule: 'allow any player to spend commodities as if they were trade goods',
-    when: (w, ctx) => ctx.had.card(id) === 'ready' && Number(w.params.needed) - Number(w.params.paid) <= coverOf(ctx),
+    when: (w, ctx) => ctx.ready(id) && Number(w.params.needed) - Number(w.params.paid) <= coverOf(ctx),
   }],
   // Takes from the commodities what the payment lacked in trade goods, as the payment's own warnings say; what they cannot cover stays short.
   play: ctx => {

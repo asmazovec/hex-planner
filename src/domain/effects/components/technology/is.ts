@@ -31,7 +31,7 @@ export const ability: Hooked = {
     rule: "ignore all of that technology's prerequisites",
     when: (_warning, ctx) => {
       const def = componentById(ctx.pack, id);
-      return !def || ctx.had.card(id) === 'ready';
+      return !def || ctx.ready(id);
     },
   }],
 };

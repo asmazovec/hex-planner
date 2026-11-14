@@ -21,6 +21,6 @@ export const ability: Ability = {
     rule: 'You may exhaust this card to reduce the combined cost of the produced units by 2',
     // The cost is 2 less: a shortfall of 2 or less is none. An agent not ready (exhausted, locked) reduces nothing.
     // Together with the other components that cover a shortfall (coverOf).
-    when: ({ params }, ctx) => Number(params.needed) - Number(params.paid) <= coverOf(ctx) && ctx.had.card(id) === 'ready',
+    when: ({ params }, ctx) => Number(params.needed) - Number(params.paid) <= coverOf(ctx) && ctx.ready(id),
   }],
 };

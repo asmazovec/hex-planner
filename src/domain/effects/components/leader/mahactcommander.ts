@@ -33,6 +33,6 @@ export const ability: Hooked = {
   permit: [{
     code: 'systemHasToken',
     rule: 'you can activate systems that contain your command tokens.',
-    when: (_warning, ctx) => ctx.had.card(id) === 'ready',
+    when: (_warning, ctx) => ctx.ready(id),
   }],
 };
