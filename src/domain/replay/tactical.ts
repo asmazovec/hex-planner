@@ -4,7 +4,6 @@
  * changes it; the steps themselves live in their own modules.
  */
 import { fire } from '../effects/points/moments';
-import { holderOf } from '../effects/registry';
 import productionShipsAway from '../rules/codes/productionShipsAway';
 import { violation } from '../rules/registry';
 import { checkStationLandings, claimStations } from '../thundersEdge';
@@ -16,7 +15,7 @@ import { checkEntryRoutes, moveUnits } from './movement';
 import { checkProduction, payProduction, placeProduction, placesOf, producerList, type ProductionPlace } from './production';
 import { take, unitIds, type TacticalEntry } from './state';
 import { carryStructures, placeCarried } from './structures';
-import { capacity, checkGroups, checkLeftBehind, checkPickups, checkSystem, dockFighterRoom, fleetCount, fleetLimit, overflowLeft, removeFleetExcess } from './transport';
+import { checkGroups, checkLeftBehind, checkPickups, checkSystem, overflowLeft, removeFleetExcess } from './transport';
 import type { Blockers } from '../movement';
 
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
@@ -107,42 +106,6 @@ export function applyTactical(
   ].filter(loss => loss.count > 0);
   if (losses.length > 0) fire('onDestroyed', at, { losses });
   if (entry.moves.length > 0 || unitIds(entry.production).length > 0) warnings.push(...fresh(checkSystem(game, state, target, pack), warnings));
-}
-
-/** The numbers behind `capacityGroup` and `fleetPool`, for the source being edited. */
-export function tacticalMeters(
-  game: Game, entry: TacticalEntry, source: string, before: GameState, pack: DataPack, shared: GameState = before,
-): { group: { load: number; capacity: number }; ships: number; fleet: number } {
-  const state = structuredClone(before);
-  const target = entry.systemId;
-  // What the activation does to the pool (Neuroglaive takes a token) stands in the number the warning gives; `shared` is mine, with the rivals.
-  if (target !== null) {
-    activate(state, target, entry);
-    reactToActivation(game, state, structuredClone(shared), entry, target, pack, []);
-  }
-  const groups = target === null ? {} : moveUnits(game, state, target, entry.moves, pack, []);
-  if (target !== null) landAndBuild(game, state, target, entry, pack, [], false, removeFleetExcess(state, target, entry.fleetRemovals ?? {}));
-  return {
-    group: capacity(game, groups[source] ?? {}, holderOf(game, before), pack),
-    // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
-    ships: fleetCount(game, state.systems[target ?? ''] ?? {}, holderOf(game, before), pack, target === null ? 0 : dockFighterRoom(game, state, target, pack)),
-    fleet: fleetLimit(game, state, pack),
-  };
-}
-
-/**
- * How the active system of an action stands against the fleet pool (37.3): its ships, the pool, and how many are still
- * to remove. While the replay warns of the entry, the numbers are those of its warning, the worst one where it warns
- * both on arrival and after the production; with no warning, the ships left at the end of the action and nothing over.
- */
-export function fleetExcess(
-  game: Game, entry: TacticalEntry, before: GameState, pack: DataPack, warnings: Warning[],
-): { ships: number; fleet: number; over: number } {
-  const over = warnings.filter(w => w.code === 'fleetPool' && w.params.systemId === entry.systemId)
-    .map(w => ({ ships: Number(w.params.ships), fleet: Number(w.params.fleet) }))
-    .sort((a, b) => (b.ships - b.fleet) - (a.ships - a.fleet))[0];
-  if (over) return { ...over, over: Math.max(0, over.ships - over.fleet) };
-  return { ships: tacticalMeters(game, entry, '', before, pack).ships, fleet: fleetLimit(game, before, pack), over: 0 };
 }
 
 /** Where a tactical entry's production stands, as the replay places it: after the entry's own moves and landings. */

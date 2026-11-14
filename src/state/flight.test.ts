@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
-import { stateBeforeEntry, tacticalMeters, productionPlaces } from '../domain/project';
+import { stateBeforeEntry, productionPlaces } from '../domain/project';
+import { tacticalMeters } from './testMeters';
 import { flies as oldFlies, stateInFlight } from '../domain/tactical';
 import type { Entry, EntryBody, Game, UnitCounts } from '../domain/types';
 import { flies, flightOf, inFlight, metersOf, productionSites } from '../game/flight';

@@ -10,7 +10,7 @@ export const KERNEL_ONLY = [
   'map/stage/ControlPanel.tsx', 'map/stage/BuildPanel.tsx', 'map/stage/PlanetDetails.tsx', 'map/stage/UnitShop.tsx', 'map/stage/BattlePanel.tsx', 'map/stage/SetupPanel.tsx', 'map/stage/HexStage.tsx',
   'map/geometry.ts', 'map/edgePan.ts', 'map/useArrowDrag.ts', 'map/usePanZoom.ts', 'map/viewLimits.ts',
   'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
-  'plan/SummaryBar.tsx', 'plan/actLines.ts',
+  'plan/SummaryBar.tsx', 'plan/actLines.ts', 'screens/plan/mapMarks.ts', 'screens/plan/useFlightLoop.tsx',
 ];
 
 /** The files of the list above that no longer take the old `Game` either: they read the table and the board. */

@@ -8,6 +8,7 @@ import { apply } from './apply';
 import { placesOn, type ProductionPlace } from '../domain/replay/production';
 import { fleetLimit, groundIn, stacksOn } from './queries';
 import { playTactical } from './resolve';
+import type { Warning } from '../domain/types';
 import type { Board, DataPack, PlayerId, Slot, Table, UnitCounts } from './types';
 
 export interface FlightRead {
@@ -48,7 +49,8 @@ export function metersOf(table: Table, pack: DataPack, flight: FlightRead, playe
     group: stacks.capacityOf(flight.groups[source] ?? {}, null),
     // A moving group keeps its fighters on board (79 note 2): the docks keep fighters only in the system after the move.
     ships: end.fleetOf(flight.built.systems[target ?? '']?.ships[player] ?? {}, target),
-    fleet: fleetLimit(table, flight.before, pack, player),
+    // The pool after the activation: what the components answer to it (Neuroglaive takes a token) stands in the number the warning gives.
+    fleet: fleetLimit(table, flight.activated, pack, player),
   };
 }
 
@@ -65,6 +67,19 @@ export const fleetEnd = (table: Table, pack: DataPack, flight: FlightRead, playe
   const meters = metersOf(table, pack, flight, player, '');
   return { ships: meters.ships, fleet: meters.fleet };
 };
+
+/**
+ * How the active system stands against the fleet pool at the end of the action (37.3): its ships, the pool, and how many are
+ * still to remove. While the action is warned of, the numbers are those of its warning, the worst one where it warns both on
+ * arrival and after the production; with no warning, the ships left at the end of the action and nothing over.
+ */
+export function fleetExcessOf(table: Table, pack: DataPack, flight: FlightRead, player: PlayerId, warnings: readonly Warning[]): { ships: number; fleet: number; over: number } {
+  const over = warnings.filter(w => w.code === 'fleetPool' && w.params.systemId === flight.target)
+    .map(w => ({ ships: Number(w.params.ships), fleet: Number(w.params.fleet) }))
+    .sort((a, b) => (b.ships - b.fleet) - (a.ships - a.fleet))[0];
+  if (over) return { ...over, over: Math.max(0, over.ships - over.fleet) };
+  return { ...fleetEnd(table, pack, flight, player), over: 0 };
+}
 
 /** Whether a flight of this turn would show anything: a destination and a unit in its moves. What was entered flies, whether or not it stands at the source. */
 export function flies(turn: Turn): boolean {

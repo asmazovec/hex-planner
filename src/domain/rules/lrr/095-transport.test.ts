@@ -1,6 +1,6 @@
 /** LRR 95 Transport. Source: tirules2 rules-reference/transport.md. */
 import { describe, expect, test } from 'vitest';
-import { tacticalMeters } from '../../replay';
+import { tacticalMeters } from '../../../state/testMeters';
 import type { TacticalEntry } from '../../tactical';
 import { adjust, before, codesOf, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 import { row } from './kit-83-101';

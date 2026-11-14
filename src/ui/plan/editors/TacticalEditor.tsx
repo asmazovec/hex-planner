@@ -4,8 +4,10 @@ import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CUSTODIANS_COST } from '../../../domain/mecatol';
 import { autoPay, shownPlanetValues } from '../../../domain/payment';
-import { fleetExcess, productionDue, routeSteps, standing, systemPlanets } from '../../../domain/project';
+import { productionDue, routeSteps, standing, systemPlanets } from '../../../domain/project';
 import { stepPlayers } from '../../../game/abilities/registry';
+import { fleetExcessOf, flightOf as flightAt } from '../../../game/flight';
+import { turnOfEntry } from '../../../state/projection';
 import { legacyKey, playerOfKey } from '../../../game/keys';
 import type { KernelView } from '../kernelView';
 import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
@@ -126,7 +128,8 @@ export function TacticalEditor({
   const overall = placer.at('action');
   const removed = entry.fleetRemovals ?? {};
   /** How many ships are still to remove, as the replay says of this action. */
-  const stillOver = fleetExcess(game, entry, before, pack, standing(warnings)).over;
+  const turn = turnOfEntry(view.table, entry, pack);
+  const stillOver = fleetExcessOf(view.table, pack, flightAt(view.table, view.board, pack, turn), turn.player, standing(warnings)).over;
   const overFleet = standing(warnings).some(w => w.code === 'fleetPool' && w.params.systemId === target);
   const battleWarnings = placer.at('battle');
   /** The reminders of a step: what its players hold for it, under the block of the step. */

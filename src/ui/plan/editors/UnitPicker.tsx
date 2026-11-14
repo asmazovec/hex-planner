@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import type { KernelView } from '../kernelView';
 import { shownPlanetValues } from '../../../domain/payment';
-import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
+import { pickupAllowed, routeSteps, systemPlanets } from '../../../domain/project';
+import { flightOf as flightAt, metersOf } from '../../../game/flight';
+import { playerOfKey } from '../../../game/keys';
+import { turnOfEntry } from '../../../state/projection';
 import type { TokenKind } from '../../../domain/hexLayout';
 import type { DataPack, Game, GameState, PlanetDef, StructureKind, UnitId, Warning } from '../../../domain/types';
 import { playerColour } from '../../units/sprites';
@@ -22,8 +25,6 @@ export interface UnitPickerProps {
   pack: DataPack;
   /** The state just before the entry. */
   before: GameState;
-  /** The whole board just before the entry (mine, with the rivals): what an activation does to the fleet pool is read from it. */
-  shared?: GameState;
   /** Only the moves of `source` are edited here. */
   entry: TacticalEntry;
   source: string;
@@ -69,7 +70,7 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
  * Every place a unit is taken from is a row of a `UnitDraft`: a button to take per kind, and the tray of what was taken.
  */
-export function UnitPicker({ game, pack, view, before, shared, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
+export function UnitPicker({ game, pack, view, before, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
   const colour = playerColour(game.color);
   const target = entry.systemId ?? '';
@@ -92,7 +93,7 @@ export function UnitPicker({ game, pack, view, before, shared, entry, source, wa
 
   const noShipsHere = flying.every(u => available(source, u) + picked(source, u) <= 0);
   const offered = flying.filter(u => available(source, u) > 0 || picked(source, u) > 0);
-  const { group: load, ships, fleet } = tacticalMeters(game, entry, source, before, pack, shared);
+  const { group: load, ships, fleet } = metersOf(view.table, pack, flightAt(view.table, view.board, pack, turnOfEntry(view.table, entry, pack)), playerOfKey(view.table, entry.owner ?? 'me') ?? view.table.viewer, source);
 
   /**
    * The places of a system to take cargo from: its space area and its planets, only what stands there. Where my command

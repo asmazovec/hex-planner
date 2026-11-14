@@ -148,6 +148,14 @@ export function tableOfGame(game: Game, pack: DataPack): Table {
   return setupOf(game, pack).table;
 }
 
+/**
+ * The turn of the kernel an entry of the plan stands for, read as it is now (an entry being edited is not yet in the plan).
+ * The one place a screen turns an entry into a `Turn` until the editors write turns themselves.
+ */
+export function turnOfEntry(table: Table, entry: Entry, pack: DataPack): Turn {
+  return turnOf(table, entry, pack);
+}
+
 /** Forgets every timeline: for tests, and when a game closes. */
 export function forgetTimelines(): void {
   lines.clear();

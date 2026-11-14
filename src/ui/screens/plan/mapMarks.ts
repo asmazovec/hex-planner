@@ -2,11 +2,11 @@
  * What the plan screen marks on the map: the arrows of the round's tactical actions, and the light of each tile. The
  * rules of what fits come from the domain; here only their order and tone.
  */
+import { turnOfEntry } from '../../../state/projection';
 import { entrySystems, type TacticalEntry } from '../../../domain/tactical';
 import { systemsAdjacent } from '../../../domain/project';
 import type { DataPack, Entry, Game } from '../../../domain/types';
 import { arrowsOf, sourcesOf, tacticalOf, viaOf } from '../../../game/edit/tactical';
-import { turnOf } from '../../../game/fromLegacy';
 import { mapSource } from '../../../game/space';
 import type { Board, Table } from '../../../game/types';
 import { routeShapes } from '../../map/geometry';
@@ -24,7 +24,7 @@ export function planArrows(
 ): Arrow[] {
   const at = { map: mapSource(table, board), pack };
   const drawn = tacticals.filter(item => item.status !== 'cancelled' && (item.id === focusId || item.status === 'done' || showPlanned))
-    .flatMap(item => { const turn = turnOf(table, item, pack); return arrowsOf(at, tacticalOf(turn)).map(a => ({
+    .flatMap(item => { const turn = turnOfEntry(table, item, pack); return arrowsOf(at, tacticalOf(turn)).map(a => ({
       ...a, key: `${item.id}:${a.from}`, number: numbers[item.id], player: turn.player === table.viewer ? undefined : table.players.find(p => p.id === turn.player)?.color,
       tone: item.id === focusId ? 'active' as const : item.status === 'done' ? 'done' as const : 'planned' as const,
     })); });
@@ -52,7 +52,7 @@ export interface HighlightInput {
  * way, and last where that route can still go and what else fits.
  */
 export function mapHighlights(table: Table, board: Board, pack: DataPack, { choice, shownSystems, focused, path, reach, options }: HighlightInput): Record<string, Highlight> {
-  const action = focused ? tacticalOf(turnOf(table, focused, pack)) : undefined;
+  const action = focused ? tacticalOf(turnOfEntry(table, focused, pack)) : undefined;
   const sources = action?.system ? sourcesOf({ map: mapSource(table, board), pack }, action) : [];
   const layers: [Iterable<string>, Highlight][] = [
     [choice, 'valid'],

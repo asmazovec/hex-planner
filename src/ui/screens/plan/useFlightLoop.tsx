@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { timelineOf } from '../../../state/projection';
+import { timelineOf, turnOfEntry } from '../../../state/projection';
 import { gameAs } from '../../../domain/players';
 import { entrySystems, type TacticalEntry } from '../../../domain/tactical';
 import type { DataPack, Entry, Game, Plan } from '../../../domain/types';
-import { turnOf } from '../../../game/fromLegacy';
 import { activatedBoard, flies, inFlight as boardInFlight } from '../../../game/flight';
 import { mapSource } from '../../../game/space';
 import type { Board } from '../../../game/types';
@@ -61,7 +60,7 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
 
   // Nothing to show in a flight, nothing to repeat: an action with no units in its moves, for one.
   const loops = shownEntry?.type === 'tactical' && playsFlights() && game !== null && plan !== undefined
-    && flies(turnOf(timelineOf(game, plan, 'forecast', pack).kernel.table, shownEntry, pack));
+    && flies(turnOfEntry(timelineOf(game, plan, 'forecast', pack).kernel.table, shownEntry, pack));
 
   const start = useCallback((entryId: string, filter: Filter = 'forecast', repeat = false) => {
     const current = useGame.getState().game;
@@ -105,14 +104,14 @@ export function useFlightLoop({ game, plan, pack, boards, shown, shownEntry, onP
     const beforeFlight = flying && flyingEntry ? boards.boardOf(flyingEntry.id, flying.filter) : null;
     const table = timelineOf(game, plan, flying?.filter ?? 'forecast', pack).kernel.table;
     const inFlight = airborne && flyingEntry && beforeFlight
-      ? (waiting ? activatedBoard(beforeFlight, turnOf(table, flyingEntry, pack)) : boardInFlight(beforeFlight, turnOf(table, flyingEntry, pack), flying.passed))
+      ? (waiting ? activatedBoard(beforeFlight, turnOfEntry(table, flyingEntry, pack)) : boardInFlight(beforeFlight, turnOfEntry(table, flyingEntry, pack), flying.passed))
       : null;
     const mapBoard = inFlight ?? restingBoard ?? shownBoard;
     const flyingGame = gameAs(game, flyingEntry?.owner);
     const layer = flying && flyingEntry && beforeFlight && (
       <FlightLayer
         key={flying.run} colour={playerColour(flyingGame.color)} passed={flying.passed}
-        routes={flightRoutes({ map: mapSource(table, shownBoard), pack }, turnOf(table, flyingEntry, pack), from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
+        routes={flightRoutes({ map: mapSource(table, shownBoard), pack }, turnOfEntry(table, flyingEntry, pack), from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
         onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
         holdMs={flying.repeat ? DEPART_HOLD_MS : FIRST_HOLD_MS}
         onDepart={() => setFlight(f => f && { ...f, departed: true })}

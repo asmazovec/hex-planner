@@ -1,5 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
-import { kernelViewOf } from '../../testing/view';
+import { viewOf } from '../../testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
@@ -35,7 +35,7 @@ function setup(moves: Move[], before: Partial<GameState> = {}, production: UnitC
   function Live() {
     const [list, setList] = useState(moves);
     return (
-      <UnitPicker view={kernelViewOf(game, pack)}
+      <UnitPicker view={viewOf(game, merged, pack)}
         game={game} pack={pack} before={merged} entry={{ ...entry, moves: list }} source={SOURCE}
         onChange={next => { onChange(next); setList(next); }} onClose={() => undefined} onFly={onFly}
       />

@@ -11,7 +11,7 @@ import type { DataPack, Game, Plan, Projection } from './types';
 export {
   isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileIdOf, fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed,
   readyToPlay, statusTokensFree, readyInfluence, readyResources, placesOf, productionCost, productionDue, START_TOKENS,
-  planetStructureWarnings, structureOwner, structuresOn, fleetExcess, productionPlaces, tacticalMeters,
+  planetStructureWarnings, structureOwner, structuresOn, productionPlaces,
   boardSystemWarnings, dockFighterRoom, fightersFly, fleetLimit, pickupAllowed, systemMeters, isWaived, standing, inForce,
   type ProductionPlace,
 } from './replay';

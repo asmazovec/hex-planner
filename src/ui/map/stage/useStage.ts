@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { fleetExcess, standing, planetStructureWarnings, productionCost, productionDue, readyResources } from '../../../domain/project';
-import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
+import { standing, planetStructureWarnings, productionCost, productionDue, readyResources } from '../../../domain/project';
+import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf, turnOfEntry } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { startingPds } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
@@ -12,8 +12,7 @@ import type { Entry, GameState, PlanetDef, StructureKind, UnitCounts, UnitId, Wa
 import { useGame } from '../../../state/gameStore';
 import { lossesOf, withAdjustedUnit, withFleetRemoval, withLoss, withProduction, type TacticalEntry } from '../../../domain/tactical';
 import { enemyChange, structureInGame } from '../../../domain/stacks';
-import { turnOf } from '../../../game/fromLegacy';
-import { productionSites } from '../../../game/flight';
+import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
 import { playerOfKey } from '../../../game/keys';
 import { capacityIn, fleetIn, fleetLimit, ownerOf, reinforcementsOf, shipsIn, structuresOf } from '../../../game/queries';
 import { planetsIn } from '../../../game/space';
@@ -145,7 +144,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const tactical = onPurchase ? undefined : (fightingFor && tacticals.includes(fightingFor) ? fightingFor : tacticals.filter(e => !e.owner).at(-1));
   /** The state the tactical entry pays and places with: the end of the round may differ. */
   const beforeTactical = tactical && seenBefore(line, tactical.id);
-  const produced = tactical ? productionSites(table, line.kernel.byTurn.get(tactical.id)?.before ?? line.kernel.end, pack, turnOf(table, tactical, pack)) : [];
+  const produced = tactical ? productionSites(table, line.kernel.byTurn.get(tactical.id)?.before ?? line.kernel.end, pack, turnOfEntry(table, tactical, pack)) : [];
   const changeProduction = (entry: TacticalEntry, before: GameState, unit: UnitId, planetId: string | null, amount: 1 | -1) =>
     updateEntry(entry.id, withProduction(entry, before, view.faction, unit, planetId, amount, pack, manualPayments.includes(entry.id), view));
   const purchases: PurchaseTarget = onPurchase ?? {
@@ -348,9 +347,11 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     // A ship that does not stand here cannot be removed: before the draft there was no token of it to tap, and no rule warns of it.
     blockedReason: (shipsIn(board, slot, actor)[unit] ?? 0) > 0 ? undefined : t('stage.fleetNone'),
   })).filter(item => item.picked > 0 || (item.left ?? 0) > 0);
-  const beforeFight = fightingFor && seenBefore(line, fightingFor.id);
   /** How many ships are still over the fleet pool, as the replay says of the action. */
-  const fleetOver = fightingFor && beforeFight ? fleetExcess(view, fightingFor, beforeFight, pack, standing(projection.warningsByEntry[fightingFor.id] ?? [])) : null;
+  const fleetOver = fightingFor ? (() => {
+    const turn = turnOfEntry(table, fightingFor, pack);
+    return fleetExcessOf(table, pack, flightOf(table, line.kernel.byTurn.get(fightingFor.id)?.before ?? line.kernel.end, pack, turn), turn.player, standing(projection.warningsByEntry[fightingFor.id] ?? []));
+  })() : null;
   const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) updateEntry(fightingFor.id, withFleetRemoval(fightingFor, kind as UnitId, amount)); };
 
   const sideUnits: UnitCounts = Object.fromEntries(units.map(unit => [unit, boughtOf(unit)]));

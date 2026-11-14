@@ -13,19 +13,9 @@ import type { UnitId } from '../../../types';
 
 export const id = 'technology:ng';
 
-/**
- * The old-state shape of the same rule: the flight screen's meters (`tacticalMeters`) still replay an action on the old
- * state and need the fleet pool after Neuroglaive. The kernel does not read this one: it runs `ability`.
- */
-
 export const ability: Ability = {
   tier: 'passive',
   rule: id,
-  onActivate: ({ owner, activator, state, activeState, systemId, pack }) => {
-    if (owner === activator) return;
-    const ships = Object.entries(state.systems[systemId] ?? {}).some(([unit, count]) => (count ?? 0) > 0 && pack.units[unit as UnitId]?.ground === false);
-    if (ships) activeState.fleet -= 1;
-  },
   holder: 'others',
   on: {
     onActivate: (ctx, activation) => {

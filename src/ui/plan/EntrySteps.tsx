@@ -2,7 +2,10 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
-import { standing, tacticalMeters } from '../../domain/project';
+import { standing } from '../../domain/project';
+import { flightOf as flightAt, metersOf } from '../../game/flight';
+import { playerOfKey } from '../../game/keys';
+import { turnOfEntry } from '../../state/projection';
 import { upgradesOf } from '../../domain/holdings';
 import { cardCost, strategyTokensOwed } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
@@ -81,7 +84,7 @@ export function EntrySteps({ entry, game, pack, view, before, warnings = [] }: E
         {sources.map((source, index) => {
           const { ships, board, stops } = flightOf(game, pack, before.holdings, e, source);
           const via = viaOf(e, source);
-          const { group: load } = tacticalMeters(game, e, source, before, pack);
+          const { group: load } = metersOf(view.table, pack, flightAt(view.table, view.board, pack, turnOfEntry(view.table, e, pack)), playerOfKey(view.table, e.owner ?? 'me') ?? view.table.viewer, source);
           // What rides with the ships is said by the cargo, the rest of the flight by its start.
           const placer = placeWarnings(warnings.filter(w => warningFlightOf(w, game, pack, e) === source));
           const cargoWarnings = placer.at('cargo');
