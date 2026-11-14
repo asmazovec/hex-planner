@@ -7,7 +7,8 @@ import { emptyBoard } from '../board';
 import type { GameEvent } from '../events';
 import { tableOf, turnOf } from '../fromLegacy';
 import { poolsOf, shipsIn, tokensOnMap } from '../queries';
-import { planOf, timeline } from '../timeline';
+import { timeline } from '../timeline';
+import { planOf } from '../fromLegacy';
 import { resolveTurn } from './index';
 import { newTrack } from './track';
 

@@ -9,8 +9,8 @@ import { stacked, type Applied } from '../../domain/effects/apply';
 import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf, inForceOf, orderOf, passivesOf, readyComponents, type Holder } from '../../domain/effects/registry';
 import type { Ability, ModifierContext, Modifiers } from '../../domain/effects/types';
-import type { ComponentDef, Holdings, RuleStep } from '../../domain/types';
-import { holdingsOfCards, legacyKey } from '../keys';
+import type { ComponentDef, RuleStep } from '../../domain/types';
+import { holdingsOfCards, legacyKey, type Shelf } from '../keys';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 
 
@@ -30,7 +30,7 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   const lent = table.players.map(p => holdingsOf(board, p.id));
   const kept = cards && HOLDERS.get(cards)?.find(k => k.table === table && k.player === player && k.owned === owned && k.lawKey === lawKey && k.lent.every((h, i) => h === lent[i]));
   if (kept) { kept.planets = board.planets; kept.laws = board.common.laws; return kept.holder; }
-  const others: Record<string, Holdings> = {};
+  const others: Record<string, Shelf> = {};
   table.players.forEach((p, i) => { others[legacyKey(table, p.id)] = others[p.id] = lent[i]; });
   const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
   if (cards) {
@@ -42,7 +42,7 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   return holder;
 }
 /** A holder is a function of the player's cards, the planets they control, the laws that bind them and the holdings others lend: the same holder is kept while those are the same. */
-const HOLDERS = new WeakMap<object, { table: Table; player: PlayerId; owned: string; lawKey: string; lent: Holdings[]; holder: Holder; planets: Board['planets']; laws: Board['common']['laws'] }[]>();
+const HOLDERS = new WeakMap<object, { table: Table; player: PlayerId; owned: string; lawKey: string; lent: Shelf[]; holder: Holder; planets: Board['planets']; laws: Board['common']['laws'] }[]>();
 const PASSIVES = new WeakMap<Holder, { pack: DataPack; list: ReturnType<typeof passivesOf> }>();
 const FORCED = new WeakMap<Holder, { pack: DataPack; found: string[] }>();
 
@@ -129,8 +129,8 @@ export function hintsAtSteps(table: Table, board: Board, pack: DataPack, actor: 
 }
 
 
-const HOLDINGS = new WeakMap<object, Holdings>();
-const holdingsOf = (board: Board, player: PlayerId): Holdings => {
+const HOLDINGS = new WeakMap<object, Shelf>();
+const holdingsOf = (board: Board, player: PlayerId): Shelf => {
   const cards = board.players[player]?.cards ?? {};
   let known = HOLDINGS.get(cards);
   if (!known) HOLDINGS.set(cards, known = holdingsOfCards(cards));

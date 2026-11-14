@@ -9,7 +9,7 @@ import { UNIT_ORDER } from '../../domain/hexLayout';
 import { effectOf } from '../../domain/effects/registry';
 import type { ChoiceContext, ChoiceSlot, ChoiceSpec } from '../../domain/effects/types';
 import type { Turn } from '../actions';
-import { legacyEntry } from '../fromLegacy';
+import { legacyEntry } from '../entry';
 import { contextOf } from '../resolve/hooks';
 import type { Board, DataPack, Table } from '../types';
 

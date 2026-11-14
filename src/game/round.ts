@@ -5,14 +5,11 @@
  * the round's flow (a turn out of its phase, after a pass, a pass before the primaries) are `resolve/flow.ts`, over the
  * turns of the round the track holds.
  */
-import { readyCards } from '../domain/replay/holdings';
-import { clearBoard } from '../domain/replay/status';
 import type { DataPack, Entry, Phase, Warning } from '../domain/types';
 import type { Turn } from './actions';
 import { applyAll } from './apply';
 import type { GameEvent } from './events';
-import { legacyEntry } from './fromLegacy';
-import { legacyEvents, legacyViews, legacyViewsFresh } from './legacyViews';
+import { legacyEntry } from './entry';
 import { runHooks } from './resolve/hooks';
 import type { HookKind } from './abilities/types';
 import type { Board, PlayerId, Table } from './types';
@@ -34,14 +31,26 @@ function ask(table: Table, board: Board, pack: DataPack, hook: HookKind, players
 
 const everyone = (table: Table): PlayerId[] => table.players.map(p => p.id);
 
+/** The events that clear the board: every planet readied, every command token off the map, and with `cards` every exhausted card readied (a leader and a breakthrough come back ready too). */
+function clearing(table: Table, board: Board, cards: boolean): GameEvent[] {
+  const cause = { step: 'round' as const };
+  const events: GameEvent[] = [];
+  for (const [planet, state] of Object.entries(board.planets)) {
+    if (state.exhausted && state.owner !== undefined) events.push({ type: 'PlanetReadied', player: state.owner, planet, cause });
+  }
+  for (const { id } of table.players) {
+    if (Object.values(board.systems).some(s => s.tokens.includes(id))) events.push({ type: 'TokenReturned', player: id, cause });
+    if (!cards) continue;
+    for (const [card, hold] of Object.entries(board.players[id]?.cards ?? {})) {
+      if (hold.state === 'exhausted') events.push({ type: 'CardReadied', player: id, card, cause });
+    }
+  }
+  return events;
+}
+
 /** The round begins with the board clear and its planets ready (81.4, 81.6: the agenda phase has ended); cards are readied too when the status phase before it was not replayed. */
-export function roundClear(table: Table, board: Board, pack: DataPack, cardsDue: boolean): Moment {
-  const work = legacyViewsFresh(table, board, pack);
-  const before = legacyViews(table, board, pack);
-  const states = Object.values(work.states);
-  if (cardsDue) readyCards(states);
-  clearBoard(states);
-  const events = legacyEvents(table, pack, before, work, table.viewer, { step: 'round' });
+export function roundClear(table: Table, board: Board, _pack: DataPack, cardsDue: boolean): Moment {
+  const events = clearing(table, board, cardsDue);
   return { board: applyAll(board, events), events, violations: [] };
 }
 
@@ -54,11 +63,7 @@ export const statusStart = (table: Table, board: Board, pack: DataPack, turn?: T
 
 /** The status phase ends, once: the board is cleared, the cards readied, and every player's components are told. */
 export function statusEnd(table: Table, board: Board, pack: DataPack): Moment {
-  const work = legacyViewsFresh(table, board, pack);
-  const before = legacyViews(table, board, pack);
-  clearBoard(Object.values(work.states));
-  readyCards(Object.values(work.states));
-  const events = legacyEvents(table, pack, before, work, table.viewer, { step: 'round' });
+  const events = clearing(table, board, true);
   const cleared = applyAll(board, events);
   const asked = ask(table, cleared, pack, 'onStatusEnd', everyone(table));
   return { board: asked.board, events: [...events, ...asked.events], violations: asked.violations };

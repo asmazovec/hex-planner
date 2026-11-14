@@ -7,7 +7,8 @@
  */
 import { legacyState, boardOf, tableOf } from '../game/fromLegacy';
 import { statusOf, turnNumbers } from '../game/numbering';
-import { planOf, timeline as kernelTimeline, type Filter, type Frame as KernelFrame, type Timeline as Kernel } from '../game/timeline';
+import { planOf } from '../game/fromLegacy';
+import { timeline as kernelTimeline, type Filter, type Frame as KernelFrame, type Timeline as Kernel } from '../game/timeline';
 import type { Board, Table } from '../game/types';
 import { playerOfKey } from '../game/keys';
 import { waiveBoard } from '../game/resolve/waive';

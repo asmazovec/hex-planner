@@ -1,7 +1,6 @@
 /** How the old model names players and what it makes of a player's cards; pure, and shared by the native registry. */
 
 import { emptyHoldings } from '../domain/holdings';
-import type { Holdings } from '../domain/types';
 import type { CardHold, ComponentId, PlayerId, Table } from './types';
 
 /** The id the old model gives a player: `me` for the viewer, the opponent's own id for the rest. */
@@ -13,8 +12,11 @@ export const playerOfKey = (table: Table, key: string): PlayerId | undefined =>
 
 export const kindOf = (id: ComponentId): string => id.slice(0, id.indexOf(':'));
 
-/** What a player's cards are as the old `Holdings`. */
-export function holdingsOfCards(cards: Record<ComponentId, CardHold>): Holdings {
+/** The shape the domain's readers take of a player's cards (the holder's holdings): what a player's cards are in it. */
+export type Shelf = ReturnType<typeof emptyHoldings>;
+
+/** What a player's cards are in the domain's holdings shape. */
+export function holdingsOfCards(cards: Record<ComponentId, CardHold>): Shelf {
   const h = emptyHoldings();
   for (const [id, hold] of Object.entries(cards)) {
     const exhausted = hold.state === 'exhausted';

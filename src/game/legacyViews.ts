@@ -13,14 +13,14 @@ import type {
 } from '../domain/types';
 import { SAVE_FORMAT } from '../domain/types';
 import { emptyBoard } from './board';
+import { SOURCES } from './source';
 import { holdingsOfCards, kindOf, legacyKey, playerOfKey } from './keys';
 
 export { holdingsOfCards, legacyKey, playerOfKey };
 import type { Cause, GameEvent, Place } from './events';
 import type { Board, CardHold, ComponentId, PlayerId, Table } from './types';
 
-/** The game a table came from, kept for the fields the table and board have no place for yet (ingress, the Thunder's Edge system). */
-export const SOURCES = new WeakMap<Table, Game>();
+export { SOURCES };
 
 const EMPTY_FRACTURE = { active: false, ingress: [] as string[], seat: null as number | null };
 const fractures = new WeakMap<object, Game['fracture']>();

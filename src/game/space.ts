@@ -11,7 +11,7 @@ import { planetsOf as planetsOfSystem, tileAt, type MapSource } from '../domain/
 import type { DataPack } from '../domain/types';
 import { effectOf, inForceOf } from '../domain/effects/registry';
 import { holderIn } from './abilities/registry';
-import { SOURCES } from './legacyViews';
+import { SOURCES } from './source';
 import type { Board, PlayerId, Slot, Table } from './types';
 
 const sources = new WeakMap<Table, WeakMap<Board['common']['fracture'], MapSource>>();

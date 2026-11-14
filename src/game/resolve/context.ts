@@ -9,7 +9,7 @@ import type { ComponentDef, Entry, Warning } from '../../domain/types';
 import type { Tactical, Turn } from '../actions';
 import { applyChecked, type Shortfall } from '../apply';
 import type { GameEvent } from '../events';
-import { legacyEntry } from '../fromLegacy';
+import { legacyEntry } from '../entry';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
 import type { RoundTrack } from './track';
 

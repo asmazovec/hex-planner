@@ -6,15 +6,13 @@
  * flows from turn to turn; nothing is rebuilt from an old state.
  */
 import { isTurn } from '../domain/replay/round';
-import { heldCards } from '../domain/strategy';
-import type { ComponentDef, DataPack, Plan, Warning } from '../domain/types';
+import type { ComponentDef, DataPack, Warning } from '../domain/types';
 import type { Turn } from './actions';
 import type { GameEvent } from './events';
-import { legacyEntry, turnOf } from './fromLegacy';
-import { SOURCES } from './legacyViews';
+import { legacyEntry } from './entry';
 import { resolveTurn, type StepResult } from './resolve';
 import { newTrack } from './resolve/track';
-import { PHASES, roundClear, roundStarted, statusEnd, statusStart, turnStart, type Round } from './round';
+import { roundClear, roundStarted, statusEnd, statusStart, turnStart, type Round } from './round';
 import { initialBoard } from './setup';
 import type { Board, Table } from './types';
 
@@ -48,28 +46,6 @@ export interface Timeline {
   byTurn: Map<string, Frame>;
   end: Board;
   marks: Mark[];
-}
-
-const planned = new WeakMap<object, { table: Table; pack: DataPack | undefined; round: Round }>();
-
-/** The rounds of an old plan as rounds of turns, a round object kept for as long as its old round and the table stay the same. */
-export function planOf(table: Table, plan: Plan, pack?: DataPack): Round[] {
-  const count = SOURCES.get(table)?.playerCount ?? table.players.length;
-  return [...plan.rounds].sort((a, b) => a.number - b.number).map(round => {
-    const known = planned.get(round);
-    if (known && known.table === table && known.pack === pack) return known.round;
-    const turns: Turn[] = [];
-    for (const phase of PHASES) {
-      for (const entry of round.entries) {
-        if (entry.phase !== phase || (entry.type === 'tactical' && entry.fromCard && round.entries.some(e => e.id === entry.fromCard))) continue;
-        const linked = entry.type === 'strategic' ? round.entries.find(e => e.type === 'tactical' && e.fromCard === entry.id) : undefined;
-        turns.push(turnOf(table, entry, pack, linked));
-      }
-    }
-    const made: Round = { number: round.number, strategyCard: round.strategyCard, backupCard: round.backupCard, held: heldCards(round, count), turns };
-    planned.set(round, { table, pack, round: made });
-    return made;
-  });
 }
 
 export interface TimelineOptions {

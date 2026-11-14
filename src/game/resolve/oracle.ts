@@ -8,7 +8,8 @@ import { createHash } from 'node:crypto';
 import { loadPack } from '../../data/loadPack';
 import { legacyState, boardOf, tableOf } from '../fromLegacy';
 import { normalState, normalWarnings } from '../compare';
-import { planOf, timeline as kernelTimeline, type Filter } from '../timeline';
+import { planOf } from '../fromLegacy';
+import { timeline as kernelTimeline, type Filter } from '../timeline';
 import type { DataPack, ExpansionId, Game, Plan } from '../../domain/types';
 
 export const hash = (value: unknown): string =>

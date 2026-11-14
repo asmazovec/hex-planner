@@ -122,13 +122,29 @@ describe('abilities', () => {
     expect(text).not.toMatch(/legacyViews\b|viewFor|legacyState|checkView/);
   });
 
-  /** The files that read the board alone: the steps and queries moved off the old per-player views, one by one. */
-  const BOARD_ONLY = ['./resolve/transport.ts', './resolve/production.ts', './resolve/others.ts', './resolve/waive.ts', './resolve/research.ts', './resolve/tail.ts', './resolve/cards/technology.ts', './resolve/combat.ts', './resolve/invasion.ts', './resolve/acts.ts', './resolve/holdings.ts', './resolve/cards/play.ts', './resolve/cards/trade.ts', './resolve/status.ts', './resolve/movement.ts', './resolve/hooks.ts'];
-  test('the files moved to the board build none of the old per-player views', () => {
-    const files = import.meta.glob<string>(['./queries.ts', './resolve/**/*.ts'], { query: '?raw', import: 'default', eager: true });
-    for (const name of BOARD_ONLY) {
-      expect(files[name], `${name} is missing`).toBeDefined();
-      expect(files[name], `${name} reads the old views`).not.toMatch(/legacyViews|viewFor|legacyState|checkView|fromLegacy/);
+  /**
+   * The rule of the kernel: nothing under src/game but the bridge from the old model (legacyViews, fromLegacy, compare, the oracle
+   * harness) and the tests imports the old views, `fromLegacy`, or the old per-player types `GameState` and `Holdings`; and
+   * `legacyViews` is imported by the projection of the screens and by tests only.
+   */
+  const BRIDGE = /^(\.\/(legacyViews|fromLegacy|compare)\.ts|\.\/resolve\/(oracle|__oracle__\/.*))$/;
+  test('the kernel imports nothing of the old model outside the bridge', () => {
+    const files = import.meta.glob<string>(['./**/*.ts', '!./**/*.test.ts'], { query: '?raw', import: 'default', eager: true });
+    const bad: string[] = [];
+    for (const [name, text] of Object.entries(files)) {
+      if (BRIDGE.test(name) || /oracle/.test(name)) continue;
+      const imports = [...text.matchAll(/import (?:type )?(\{[^}]*\}|[^'"]*?) from '([^']+)'/g)];
+      for (const [, names, from] of imports) {
+        if (/(^|\/)(legacyViews|fromLegacy)$/.test(from)) bad.push(`${name} imports ${from}`);
+        if (/(^|[^A-Za-z])(GameState|Holdings)([^A-Za-z]|$)/.test(names)) bad.push(`${name} imports the old type ${names.trim()}`);
+      }
     }
+    expect(Object.keys(files).length).toBeGreaterThan(20);
+    expect(bad).toEqual([]);
+  });
+  test('legacyViews is imported by the projection of the screens and by tests only', () => {
+    const files = import.meta.glob<string>(['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts', '!../**/*.test.tsx', '!../game/**'], { query: '?raw', import: 'default', eager: true });
+    const users = Object.entries(files).filter(([, text]) => /from '[^']*\/legacyViews'/.test(text)).map(([name]) => name);
+    expect(users.filter(name => name !== '../state/projection.ts')).toEqual([]);
   });
 });
