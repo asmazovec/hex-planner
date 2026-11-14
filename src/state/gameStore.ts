@@ -5,9 +5,7 @@ import { changeLayout, slotsFor } from '../domain/mapBuilder';
 import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import { withTeMecatol } from '../domain/mecatol';
-import { startingDocks, startingPds } from '../domain/strategy';
 import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
-import { setLeader, setStartHolding } from '../domain/holdings';
 import { slotKeyOf } from '../domain/layouts';
 import { placeStartUnits, withSeatHomes, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
@@ -26,6 +24,11 @@ import { errorText } from '../storage/errorText';
 import { gameOf, originOf, savedFor, savedOf } from '../storage/legacySave';
 import { flushSaves, queueSave } from './autosave';
 import * as history from './history';
+import {
+  withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
+  withStartHolding, withThundersEdge, withUnitsAt,
+} from '../game/edit/start';
+import { playerOfLegacy } from '../game/entry';
 import { patchedTurn, turnOfBody, viaGame } from './legacyEdits';
 import { forgetTimelines } from './projection';
 
@@ -39,6 +42,9 @@ function mapSame<T>(items: T[], edit: (item: T) => T): T[] {
   const next = items.map(edit);
   return next.every((item, i) => item === items[i]) ? items : next;
 }
+
+/** The kernel player an old id (`me`, an opponent's id) stands for. */
+const pid = (saved: SavedGame, legacy: string): string => playerOfLegacy(saved.table, legacy) ?? legacy;
 
 const activePlan = (saved: SavedGame): SavedPlan | undefined => saved.plans.find(p => p.id === saved.activePlanId);
 const seated = (saved: SavedGame): number => saved.table.players.filter(p => p.seat < 100).length;
@@ -79,14 +85,6 @@ function setOrDelete<T>(record: Record<string, T>, key: string, value: T | null)
   delete rest[key];
   return value === null ? rest : { ...rest, [key]: value };
 }
-
-/** Counts compare equal when every unit has the same positive count, ignoring zeros. */
-function sameUnits(a: UnitCounts, b: UnitCounts): boolean {
-  const ids = new Set([...Object.keys(a), ...Object.keys(b)]) as Set<keyof UnitCounts>;
-  return [...ids].every(id => (a[id] ?? 0) === (b[id] ?? 0));
-}
-
-const hasUnits = (units: UnitCounts): boolean => Object.values(units).some(n => (n ?? 0) > 0);
 
 /** The tiles of the open Fracture by slot. They follow its seat and the map's size. */
 function withFractureTiles(game: Game): Game {
@@ -446,42 +444,13 @@ export const useGame = create<GameStore>((set, get) => {
     }),
     setLayout: layout => commitPlayers((g, pack) => changeLayout(g, layout, pack)),
     setOpponent: (index, { faction }) => commitPlayers((g, pack) => setPlayerFaction(g, index + 1, faction, pack)),
-    setStartHolding: (player, id, present) => commitOld(g => setStartHolding(g, player, id, present)),
-    setLeader: (player, id, state) => commitOld(g => setLeader(g, player, id, state)),
-    setEnemyUnits: (systemId, opponentId, units) =>
-      commitOld(g => {
-        const inSystem = g.enemyUnits[systemId] ?? {};
-        if (sameUnits(inSystem[opponentId] ?? {}, units)) return g;
-        const next = setOrDelete(inSystem, opponentId, hasUnits(units) ? units : null);
-        return withField(g, 'enemyUnits', setOrDelete(g.enemyUnits, systemId, Object.keys(next).length > 0 ? next : null));
-      }),
-    setEnemyGround: (planetId, opponentId, units) =>
-      commitOld(g => {
-        const onPlanet = g.enemyGround[planetId] ?? {};
-        if (sameUnits(onPlanet[opponentId] ?? {}, units)) return g;
-        const next = setOrDelete(onPlanet, opponentId, hasUnits(units) ? units : null);
-        return withField(g, 'enemyGround', setOrDelete(g.enemyGround, planetId, Object.keys(next).length > 0 ? next : null));
-      }),
-    setPlanetControl: (planetId, owner) =>
-      commitOld(g => {
-        const control = owner === null ? null : owner === 'me' ? 'me' : 'enemy';
-        const planetControl = setOrDelete(g.planetControl, planetId, control);
-        const planetOwner = setOrDelete(g.planetOwner, planetId, control === 'enemy' ? owner : null);
-        return planetControl === g.planetControl && planetOwner === g.planetOwner ? g : { ...g, planetControl, planetOwner };
-      }),
-    setDock: (planetId, present) =>
-      commitOld(g => {
-        const pack = loadPack(g.expansions);
-        if (startingDocks(g, pack).includes(planetId) === present) return g;
-        // The dock on the tile at my seat is written down under my absent home planet.
-        const standsThere = (id: string) => startingDocks({ ...g, docks: [id] }, pack).includes(planetId);
-        return { ...g, docks: present ? [...g.docks, planetId] : g.docks.filter(id => !standsThere(id)) };
-      }),
-    setPds: (planetId, count) => commitOld(g => {
-      // What stands under my absent home planets moves to the planets where it stands now (as setDock does).
-      const standing = startingPds(g, loadPack(g.expansions));
-      return (standing[planetId] ?? 0) === Math.max(0, count) ? g : { ...g, pds: setOrDelete(standing, planetId, count > 0 ? count : null) };
-    }),
+    setStartHolding: (player, id, present) => commit(s => withStartHolding(s, pid(s, player), id, present)),
+    setLeader: (player, id, state) => commit(s => withLeader(s, pid(s, player), id, state)),
+    setEnemyUnits: (systemId, opponentId, units) => commit(s => withUnitsAt(s, systemId, pid(s, opponentId), units)),
+    setEnemyGround: (planetId, opponentId, units) => commit(s => withGroundAt(s, planetId, pid(s, opponentId), units)),
+    setPlanetControl: (planetId, owner) => commit(s => withControl(s, planetId, owner === null ? null : pid(s, owner))),
+    setDock: (planetId, present) => commit(s => withDock(s, planetId, present)),
+    setPds: (planetId, count) => commit(s => withPds(s, planetId, count)),
     changeAdjustment: (roundNo, change) => commit(s => {
       const round = activePlan(s)?.rounds.find(r => r.number === roundNo);
       if (!round) return s;
@@ -494,28 +463,11 @@ export const useGame = create<GameStore>((set, get) => {
       const [made] = planOf(tableOf(game), { rounds: [changed] } as Parameters<typeof planOf>[1], pack);
       return editRound(s, roundNo, () => made);
     }),
-    setSlice: (id, owner) =>
-      commitOld(g => {
-        const slices = setOrDelete(g.expedition.slices, id, owner);
-        return slices === g.expedition.slices ? g : { ...g, expedition: { ...g.expedition, slices } };
-      }),
-    setThundersEdge: systemId =>
-      commitOld(g => (g.expedition.thundersEdgeSystem === systemId
-        ? g : { ...g, expedition: { ...g.expedition, thundersEdgeSystem: systemId } })),
-    setFractureActive: active =>
-      commitOld(g => (g.fracture.active === active ? g : { ...g, fracture: { ...g.fracture, active } })),
-    setFractureSeat: seat =>
-      commitOld(g => (g.fracture.seat === seat ? g : { ...g, fracture: { ...g.fracture, seat } })),
-    toggleIngress: systemId =>
-      commitOld(g => ({
-        ...g,
-        fracture: {
-          ...g.fracture,
-          ingress: g.fracture.ingress.includes(systemId)
-            ? g.fracture.ingress.filter(s => s !== systemId)
-            : [...g.fracture.ingress, systemId],
-        },
-      })),
+    setSlice: (id, owner) => commit(s => withSlice(s, id, owner === null ? null : owner === 'me' ? s.table.viewer : s.table.players.find(q => q.id !== s.table.viewer)?.id ?? 'other')),
+    setThundersEdge: systemId => commit(s => withThundersEdge(s, systemId)),
+    setFractureActive: active => commit(s => withFractureActive(s, active)),
+    setFractureSeat: seat => commit(s => withFractureSeat(s, seat)),
+    toggleIngress: systemId => commit(s => withIngressToggled(s, systemId)),
 
     undo: () => {
       const previous = history.pop();
