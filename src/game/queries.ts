@@ -38,7 +38,7 @@ export const poolsOf = (board: Board, player: PlayerId): Pools => board.players[
 // force, so they take the table and the pack; the old per-player functions do the counting until the effects move over.
 import '../domain/effects/points/invasion';
 import type { Holder } from '../domain/effects/registry';
-import { productionDue, systemProduction } from '../domain/replay/production';
+import { productionDueOn, systemProductionOn, type Ground } from '../domain/replay/production';
 import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/transport';
 import { appliedToPlanet } from '../domain/effects/points/payment';
 import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
@@ -46,7 +46,8 @@ import type { DataPack, UpgradeId } from '../domain/types';
 import { linksOf } from '../domain/movement';
 import { areNeighbors } from '../domain/neighbors';
 import { appliedOn, holderIn } from './abilities/registry';
-import { planetsIn } from './space';
+import { homeOf } from './setup';
+import { mapSource, planetsIn, wormholesIn } from './space';
 import { legacyKey, viewFor } from './legacyViews';
 import type { Table } from './types';
 
@@ -88,16 +89,39 @@ export function fleetIn(table: Table, board: Board, pack: DataPack, player: Play
   return stacks.fleetOf(stacks.units(slot), slot);
 }
 
+/** One player's side of the board as the production maths reads it: the same rules the old per-player state is read with (`groundOf`). */
+export function groundIn(table: Table, board: Board, pack: DataPack, player: PlayerId): Ground {
+  const planet = (id: PlanetId) => board.planets[id];
+  const mine = (id: PlanetId): boolean => planet(id)?.owner === player;
+  const others = table.players.map(p => p.id).filter(id => id !== player);
+  return {
+    faction: factionOf(table, player), map: mapSource(table, board), holder: holderIn(table, board, player),
+    mine,
+    dock: id => mine(id) && (planet(id).structures.spacedock ?? 0) > 0,
+    pds: id => (mine(id) ? planet(id).structures.pds ?? 0 : 0),
+    attached: id => planet(id)?.attached ?? [],
+    ground: id => groundOn(board, id, player),
+    ships: slot => shipsIn(board, slot, player),
+    wormholes: slot => wormholesIn(table, board, pack, slot),
+    resources: id => planetValue(table, board, pack, player, id, 'resources'),
+    othersIn: (slot, withGround) => {
+      const planets = withGround ? planetsIn(table, board, pack, slot) : [];
+      const standing = (units: UnitCounts): boolean => Object.entries(units).some(([unit, n]) => (n ?? 0) > 0 && (withGround || pack.units[unit as UnitId]?.ground !== true));
+      return others.some(other => standing(shipsIn(board, slot, other)) || planets.some(id => withGround && standing(groundOn(board, id, other))));
+    },
+    onBoard: unit => reinforcementCount(board, player, unit),
+    home: () => homeOf(table, table.players.find(p => p.id === player)!, pack)?.slot ?? null,
+  };
+}
+
 /** The Production value of a player's units in a system, pooled and changed by the components (68.1). */
 export function productionLimit(table: Table, board: Board, pack: DataPack, player: PlayerId, slot: Slot): number {
-  const v = viewFor(table, board, pack, player);
-  return systemProduction(v.game, v.state, slot, pack);
+  return systemProductionOn(groundIn(table, board, pack, player), slot, pack);
 }
 
 /** What units cost to build in a system, as the player pays it: each unit's cost, the laws, and the combined cost where a unit uses PRODUCTION. */
 export function costOf(table: Table, board: Board, pack: DataPack, player: PlayerId, units: UnitCounts, slot?: Slot): number {
-  const v = viewFor(table, board, pack, player);
-  return productionDue(v.game, v.state, units, pack, slot === undefined ? undefined : ({ type: 'tactical', systemId: slot } as never));
+  return productionDueOn(groundIn(table, board, pack, player), units, pack, slot === undefined ? undefined : ({ type: 'tactical', systemId: slot } as never));
 }
 
 /** What a planet (or a planet card) is worth to its player for a payment, after what they hold and what is attached changed it. */
@@ -138,10 +162,7 @@ export function areNeighbours(table: Table, board: Board, pack: DataPack, a: Pla
 /** The units of each kind a player still has in the reinforcements: the limit less what stands on the board. Fighters and infantry have none (tokens stand in). */
 export function reinforcementsOf(board: Board, pack: DataPack, player: PlayerId): Partial<Record<UnitId, number>> {
   const left: Partial<Record<UnitId, number>> = {};
-  const onBoard = (unit: UnitId): number => [
-    ...Object.values(board.systems).map(s => s.ships[player]?.[unit] ?? 0),
-    ...Object.values(board.planets).map(p => p.ground[player]?.[unit] ?? 0),
-  ].reduce((sum, n) => sum + n, 0);
+  const onBoard = (unit: UnitId): number => reinforcementCount(board, player, unit);
   for (const unit of Object.keys(pack.units) as UnitId[]) {
     const limit = pack.units[unit]?.limit;
     if (limit === null || limit === undefined || unit === 'fighter' || unit === 'infantry') continue;
@@ -160,3 +181,9 @@ export function upgradesOf(board: Board, pack: DataPack, player: PlayerId): Upgr
     .flatMap(card => pack.technologies[card.id.slice('technology:'.length)]?.upgrade ?? [])
     .sort();
 }
+
+/** How many of a unit of a player stand on the board, ships and ground forces. */
+const reinforcementCount = (board: Board, player: PlayerId, unit: UnitId): number => [
+  ...Object.values(board.systems).map(s => s.ships[player]?.[unit] ?? 0),
+  ...Object.values(board.planets).map(p => p.ground[player]?.[unit] ?? 0),
+].reduce((sum, n) => sum + n, 0);

@@ -5,18 +5,18 @@
  */
 import { violation } from '../../domain/rules/registry';
 import productionShipsAway from '../../domain/rules/codes/productionShipsAway';
-import { checkProduction, costOf, placesOf, producerList } from '../../domain/replay/production';
+import { checkProductionOn, costOn, placesOn, producersOn } from '../../domain/replay/production';
 import type { UnitCounts } from '../../domain/types';
 import type { GameEvent } from '../events';
-import { checkView, emit, warn, type Ctx } from './context';
+import { groundIn } from '../queries';
+import { emit, warn, type Ctx } from './context';
 import { pay, checkPay, shortOf } from './payment';
 
 const ids = (units: UnitCounts): (keyof UnitCounts)[] => (Object.keys(units) as (keyof UnitCounts)[]).filter(id => (units[id] ?? 0) > 0);
 
 /** Puts built units where the rules place them. */
 export function place(ctx: Ctx, target: string, units: UnitCounts, onPlanets?: Record<string, UnitCounts>): void {
-  const v = checkView(ctx);
-  const events: GameEvent[] = placesOf(v.game, v.state, target, units, ctx.pack, onPlanets).map(({ unit, planetId, count }) => ({
+  const events: GameEvent[] = placesOn(groundIn(ctx.table, ctx.board, ctx.pack, ctx.player), target, units, ctx.pack, onPlanets).map(({ unit, planetId, count }) => ({
     type: 'UnitsPlaced', player: ctx.player, at: planetId === null ? { slot: target } : { planet: planetId }, units: { [unit]: count },
   }));
   emit(ctx, events, { quiet: true });
@@ -26,9 +26,9 @@ export function place(ctx: Ctx, target: string, units: UnitCounts, onPlanets?: R
 export function produce(ctx: Ctx, target: string, removeLater: UnitCounts): boolean {
   const build = ctx.tactical.production;
   const units = build?.units ?? {};
-  const v = checkView(ctx);
-  warn(ctx, checkProduction(v.game, v.state, target, units, ctx.pack, build?.ground, 'system', undefined, ctx.entry));
-  const producing = producerList(v.game, v.state, target, ctx.pack).length > 0;
+  const ground = groundIn(ctx.table, ctx.board, ctx.pack, ctx.player);
+  warn(ctx, checkProductionOn(ground, target, units, ctx.pack, build?.ground, 'system', undefined, ctx.entry));
+  const producing = producersOn(ground, target, ctx.pack).length > 0;
   const away = build?.shipsTo !== undefined && build.shipsTo !== target && ctx.table.map[build.shipsTo] !== undefined ? build.shipsTo : undefined;
   const ships = Object.fromEntries(ids(units).filter(id => !ctx.pack.units[id]?.ground).map(id => [id, units[id]])) as UnitCounts;
   if (away && ids(ships).length > 0) {
@@ -45,9 +45,8 @@ export function produce(ctx: Ctx, target: string, removeLater: UnitCounts): bool
 
 /** The production is paid in resources: the payment is made, and a shortfall reported. */
 export function payProduction(ctx: Ctx, producing: boolean): void {
-  const v = checkView(ctx);
   const build = ctx.tactical.production;
-  const cost = costOf(v.game, v.state, build?.units ?? {}, ctx.pack, producing, ctx.entry);
+  const cost = costOn(groundIn(ctx.table, ctx.board, ctx.pack, ctx.player), build?.units ?? {}, ctx.pack, producing, ctx.entry);
   const payment = build?.payment ?? { planets: [], tradeGoods: 0 };
   warn(ctx, checkPay(ctx, payment));
   const paid = pay(ctx, payment, 'resources');

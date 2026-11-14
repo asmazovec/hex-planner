@@ -9,7 +9,8 @@
  * the unit where the replay knows it; a source with a value above 0 is a producer, and the values of a system's
  * producers are pooled (68.1.1).
  */
-import type { DataPack, Game, Holdings, StructureCounts, UnitCounts, UnitId } from '../../types';
+import type { MapSource } from '../../replay/board';
+import type { DataPack, Holdings, StructureCounts, UnitCounts, UnitId } from '../../types';
 
 declare module '../types' {
   interface ModifierContext {
@@ -20,7 +21,7 @@ declare module '../types' {
     /** A system's space area that produces (a supernova with my units, Magmus Reactor). Asked for a system where I have units. Base 0. */
     spaceProduction: {
       systemId: string; /** Anomalies of the system. */ anomalies: string[]; units: UnitCounts;
-      /** The wormholes of the system, the tokens placed on it included (Particle Synthesis). */ wormholes: string[]; game: Game; pack: DataPack;
+      /** The wormholes of the system, the tokens placed on it included (Particle Synthesis). */ wormholes: string[]; game: MapSource; pack: DataPack;
     };
     /** The pooled PRODUCTION of a system's producers, after the sum: the base is the sum (War Machine adds 4 to the total). */
     productionTotal: { systemId: string; faction: string };
