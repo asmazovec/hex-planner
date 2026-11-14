@@ -50,17 +50,17 @@
 | `Frame.before/after`, `boardBefore/After`, `seenBefore/After`, `projectionAtRound` | кадры `Timeline.frames` ядра (`before`, `after`: `Board`), `byTurn` | есть |
 | `tacticalNumbers`, `turnsOf` | `turnNumbers`, `planOf` (мост) | есть |
 | `fleetLimit`, `fleetExcess`, `dockFighterRoom`, `systemMeters` | `fleetLimit`, `fleetIn`, `capacityIn`, `dockFighterRoomIn` | есть |
-| `productionCost`, `productionDue`, `productionPlaces` | `costOf`, `productionLimit` | `productionPlaces`, `productionDue`: нет (запросы `productionSites(board, player, slot)` и `productionDueOn(...)`) |
-| `readyResources`, `readyInfluence`, `planetValue`, `autoPay`, `shownPlanetValues` | `planetValue`, `readyPlanets`, `payingPlanets`, `tradeGoodWorth` | `autoPay`, `shownPlanetValues`, `sliceAutoPayment`: нет (запрос `autoPayOn(table, board, pack, player, price)`) |
+| `productionCost`, `productionDue`, `productionPlaces` | `costOf`, `productionLimit` | `productionPlaces` → `productionSites(table, board, pack, turn)` (`src/game/flight.ts`), `productionDue` → `productionDueOnBoard` (`planQueries.ts`, та же `productionDueOn` над `Ground`): есть |
+| `readyResources`, `readyInfluence`, `planetValue`, `autoPay`, `shownPlanetValues` | `planetValue`, `readyPlanets`, `payingPlanets`, `tradeGoodWorth` | `autoPay` → `autoPayOn`, `sliceAutoPayment` → `sliceAutoPaymentOn` (общее ядро `choosePayment` в `domain/payment.ts`): есть; `shownPlanetValues`: нет |
 | `routeSteps`, `systemsAdjacent`, `blockersOf`, `pickupAllowed` | `stepsOf`, `pathOf`, `adjacentSlots`, `areJoined`, `blockersOf`, `reach` | есть; `pickupAllowed`: нет (запрос по `routeReadsOn`) |
-| `tacticalMeters`, `stateInFlight`, `flightOf`, `flies`, `fliesNow`, `entrySystems`, `arrowsOf` (полёт и стрелки) | нет: читают состояние до и после активации | нет (запрос `flightOf(table, board, pack, turn)`: доски до и после активации хода плюс `arrowsOf` над `Tactical`; нужен для пункта 2 Neuroglaive) |
-| `withLoss`, `withLanding*`, `withFleetRemoval`, `withAdjustedUnit`, `addUnits`, `viaOf`, `sourcesOf`, `groupOf`, `emptySources`, `hasCargo`, `structuresFor`... (правка тела записи) | нет: функции над `Tactical`/`Flight`/`Landing` из `actions.ts` | нет (модуль `src/game/edit/tactical.ts`: те же функции над `Tactical`, чистые) |
-| `newEntryBody`, `tacticalBody`, `tacticalOwner` | нет | нет (`newTurn(kind, ...)` в `src/game/edit/new.ts`) |
+| `tacticalMeters`, `stateInFlight`, `flightOf`, `flies`, `fliesNow`, `entrySystems`, `arrowsOf` (полёт и стрелки) | нет: читают состояние до и после активации | `flightOf`, `metersOf`, `inFlight`, `flies` (`src/game/flight.ts`: доска на стадиях действия через `playTactical`), `arrowsOf` над `Tactical` (`edit/tactical.ts`): есть, тесты 1 к 1; экраны ещё зовут старые, поэтому старый `onActivate` Neuroglaive и исключение в `hooks.test.ts` остаются до шага 4 |
+| `withLoss`, `withLanding*`, `withFleetRemoval`, `withAdjustedUnit`, `addUnits`, `viaOf`, `sourcesOf`, `groupOf`, `emptySources`, `hasCargo`, `structuresFor`... (правка тела записи) | нет: функции над `Tactical`/`Flight`/`Landing` из `actions.ts` | `src/game/edit/tactical.ts`: те же функции `Turn → Turn`, тесты 1 к 1 через мост (старые остаются отдельной реализацией до шага 5): есть |
+| `newEntryBody`, `tacticalBody`, `tacticalOwner` | нет | `newTurn`, `plannedCard`, `tacticalOwner` в `src/game/edit/new.ts`: есть |
 | `cardCost`, `freeTokens`, `strategyTokensOwed`, `cardChange`, `researchLimit`, `readyLimit`, `heldCards`, `startsAsPrimary`, `withLeadershipTokens` | `holderIn`, `statusTokensFree`, `heldCards` в раунде, `resolve/cards` | частично; чистая часть остаётся в `domain/strategy.ts` над `Turn` |
 | `gameAs`, `opponentsBySeat`, `playersOf`, `planetHolder`, `playerState`, `othersOnPlanet` | `Table.players`, `seenBy`, `tableView`, `ownerOf` | есть |
-| `holdingsOf`, `ownNotes`, `noteCards`, `losable`, `tradable`, `notesOfFirst` | `playerView(...).cards`, `cardsOf` | `ownNotes` и `losable` по `Board`: нет (запросы `notesOf(board, player)`, `losableOf(board, player)`) |
+| `holdingsOf`, `ownNotes`, `noteCards`, `losable`, `tradable`, `notesOfFirst` | `playerView(...).cards`, `cardsOf` | `notesOf`, `losableOf`, `tradableOf`, `notesOfFirst` (`planQueries.ts`); для шторок `legacyNotes`, `shelfOf`, `shownOf` (`src/game/shelf.ts`: тот же лист владения и старые адреса обязательств): есть |
 | `standing`, `isWaived`, `ruleOf`, предупреждения `WarningList` | `Warning` ядра, `standing` (чистая) | есть |
-| `choicesFor`, `shownChoices`, `withChoices`, `choicesBefore`, `effectOf`, `holderOf`, `playedCost`, `landingOffers`, `cardTargets` | `choicesOf` (`abilities/choices`), `holderIn`, `effectOf` (`abilities/facade`) | `landingOffers`, `cardTargets`, `playedCost`: нет (запросы над доской) |
+| `choicesFor`, `shownChoices`, `withChoices`, `choicesBefore`, `effectOf`, `holderOf`, `playedCost`, `landingOffers`, `cardTargets` | `choicesOf` (`abilities/choices`), `holderIn`, `effectOf` (`abilities/facade`) | `landingOffersOn`, `cardTargetsOn` (общее ядро `cardTargetsOver`), `playedCostOf`: есть |
 
 ## (d) Что пишет старый `Game` и что в ядре
 
@@ -75,8 +75,8 @@
 
 ## Порядок шагов (каждый выпускается: приложение работает после него)
 
-1. Запросы, которых нет (см. «нет»): `flightOf`, `productionSites`/`productionDueOn`, `autoPayOn`, `notesOfFirst`/`losableOf`, `landingOffers`/`cardTargets`/`playedCost` над доской, правка тела `Tactical` в `src/game/edit/`, `newTurn`. Тесты 1 к 1 со старыми функциями, старые функции становятся оболочками. Экраны не трогаются.
-2. Шторки и экран партии: читают `seenBy`/`PlayerView` вместо `state.holdings`/`rivals` (старого `Frame` берут только доску из `kernel`). Состояние `Game` не меняется.
+1. (сделано, кроме перевода старых функций в оболочки: они берут `GameState`, их зовут экраны, перевод на шагах 4-5) Запросы, которых нет (см. «нет»): `flightOf`, `productionSites`/`productionDueOn`, `autoPayOn`, `notesOfFirst`/`losableOf`, `landingOffers`/`cardTargets`/`playedCost` над доской, правка тела `Tactical` в `src/game/edit/`, `newTurn`. Тесты 1 к 1 со старыми функциями, старые функции становятся оболочками. Экраны не трогаются.
+2. (сделано: `ComponentsPanel` и счёт игроков плана читают доску кадра, `src/ui/contract.test.ts` со списком `KERNEL_ONLY`; ошибка описи: `PlayerList` и остальные файлы шторок состояния не читали, `live` собирает `PlanScreen`, теперь через `shownOf`; адреса обязательств на доске старые (`@me`) для партии из `Game` и `@p1` для доски `setup`, `legacyNote` сводит их) Шторки и экран партии: читают `seenBy`/`PlayerView` вместо `state.holdings`/`rivals` (старого `Frame` берут только доску из `kernel`). Состояние `Game` не меняется.
 3. Карта и большой гекс (чтение): `stacksOn`, `shipsIn`, `groundOn`, `planetsIn`, `fleetLimit` и прочее по доске кадра. Предупреждения и подсветка идут из ядра.
 4. План и редакторы, чтение: итоги, предупреждения, блоки показывают доску кадра и `PlayerView`; редакторы пока пишут `Entry` (мост `turnOf` остаётся).
 5. Редакторы переходят на `Turn.action` (пишут их через `src/game/edit/`), `Entry` и `EntryBody` исчезают из `ui`; мост `legacyEntry` остаётся только в ядре.

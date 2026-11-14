@@ -190,6 +190,12 @@ export function projectionAtRound(line: Timeline, roundNo: number): Projection {
   return found;
 }
 
+/** The kernel's board as the plan stands at the end of a round, as `projectionAtRound` has the old state: later rounds would ready planets and clear its tokens. */
+export function boardAtRound(line: Timeline, roundNo: number): Board {
+  const next = line.kernel.marks.findIndex(mark => mark.round.number > roundNo);
+  return next < 0 ? line.kernel.end : line.kernel.marks[next].start;
+}
+
 // The same questions about a game and a plan, for what does not hold a timeline.
 export const project = (game: Game, plan: Plan, filter: Filter, pack: DataPack): Projection => projectionOf(timelineOf(game, plan, filter, pack));
 /** The state just before an entry applies: by default the forecast, what that entry can move and pay with. */

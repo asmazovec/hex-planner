@@ -4,9 +4,9 @@ import { createGame } from '../domain/newGame';
 import { stateBeforeEntry, tacticalMeters, productionPlaces } from '../domain/project';
 import { flies as oldFlies, stateInFlight } from '../domain/tactical';
 import type { Entry, EntryBody, Game, UnitCounts } from '../domain/types';
-import { flies, flightOf, inFlight, metersOf, productionSites } from './flight';
-import { turnOf } from './fromLegacy';
-import { timelineOf } from '../state/projection';
+import { flies, flightOf, inFlight, metersOf, productionSites } from '../game/flight';
+import { turnOf } from '../game/fromLegacy';
+import { timelineOf } from './projection';
 
 const pack = loadPack(['pok']);
 let n = 0;

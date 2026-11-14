@@ -6,7 +6,8 @@ import { blockersOf } from '../../domain/movement';
 import { newEntryBody, tacticalBody, tacticalOwner } from '../../domain/newEntry';
 import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/project';
-import { projectionAtRound, tacticalEntries, tacticalNumbers, timelineOf } from '../../state/projection';
+import { shownOf } from '../../game/shelf';
+import { boardAtRound, projectionAtRound, tacticalEntries, tacticalNumbers, timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
 import { focusRect } from '../map/geometry';
@@ -366,15 +367,19 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
 
   const shownFilter = tactical || cardEntry || mapMode === 'forecast' ? 'forecast' : 'now';
   const shownState = shownFilter === 'forecast' ? forecast.state : now.state;
+  const shownLine = timelineOf(game, plan, shownFilter, pack);
+  const shownTable = shownLine.kernel.table;
+  const shownBoard = boardAtRound(shownLine, round.number);
   // A type an entry upgrades cannot be toggled by hand, even if the baseline holds it too: a tap would change nothing.
   const planSoFar = { ...plan, rounds: plan.rounds.filter(r => r.number <= round.number) };
   const lockedUpgrades = entryUpgradeRounds(planSoFar, shownFilter, pack);
   const holdingSources = holdingRounds(planSoFar, shownFilter);
-  const shownUpgrades = upgradesOf(shownState.holdings, pack);
-  const structuresOf = (s: { docks: string[]; pds: Record<string, number> }) => ({ docks: s.docks.length, pds: Object.values(s.pds).reduce((sum, n) => sum + n, 0) });
-  const structures = { me: structuresOf(shownState), ...Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, structuresOf(rival)])) };
-  const rivalUpgraded = Object.fromEntries(Object.entries(shownState.rivals ?? {}).map(([id, rival]) => [id, upgradesOf(rival.holdings, pack)]));
-  const heldCount = holdingCount(shownState.holdings);
+  // What the players hold and have on the board, read from the board the map shows.
+  const seen = shownOf(shownTable, shownBoard, pack);
+  const shownUpgrades = upgradesOf(seen.players.me.shelf, pack);
+  const structures = Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.structures]));
+  const rivalUpgraded = Object.fromEntries(Object.entries(seen.players).filter(([id]) => id !== 'me').map(([id, p]) => [id, upgradesOf(p.shelf, pack)]));
+  const heldCount = holdingCount(seen.players.me.shelf);
   // Warfare's free action has its card's status: the card marked done turns its arrow done.
   const tacticals: (Entry & TacticalEntry)[] = tacticalEntries(game, round, pack);
   /** The action the map speaks of: the one being edited or read. */
@@ -459,7 +464,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     componentsTab.write(group);
     setComponentGroup(group);
   };
-  const shownHoldings = (game.opponents.some(o => o.id === componentsOf) ? shownState.rivals?.[componentsOf ?? '']?.holdings : shownState.holdings) ?? emptyHoldings();
+  const shownHoldings = (game.opponents.some(o => o.id === componentsOf) ? seen.players[componentsOf ?? '']?.shelf : seen.players.me.shelf) ?? emptyHoldings();
   const toggleTe = () => {
     // While the panel stands aside for the map, the button brings it back.
     if (teChoosing) stopTeChoice();
@@ -688,7 +693,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               ? (
                 <div className="players-panel">
                   <PlayerList
-                    live={{ upgraded: shownUpgrades, rivalUpgraded, structures, locked: lockedUpgrades, points: { me: shownState.vp, ...shownState.opponentVp } }}
+                    live={{ upgraded: shownUpgrades, rivalUpgraded, structures, locked: lockedUpgrades, points: Object.fromEntries(Object.entries(seen.players).map(([id, p]) => [id, p.vp])) }}
                   />
                 </div>
               )
@@ -718,7 +723,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           {/* The fan of the components stays at the edge of the map, beside its sheet; the tab of Thunder's Edge rides on the edge of its own. */}
           <div className={`drawer-rail drawer-rail-right${rightOpen ? ' drawer-rail-open' : ''}`} role="group" aria-label={t('plan.drawers')}>
             <ComponentTabs
-              open={componentsOpen} group={componentGroup} counts={groupCounts(shownHoldings, shownState.laws)} total={heldCount}
+              open={componentsOpen} group={componentGroup} counts={groupCounts(shownHoldings, seen.laws)} total={heldCount}
               onOpen={openComponents} onGroup={pickComponentGroup}
             />
             {hasTe && (
@@ -732,7 +737,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <Drawer open={rightOpen} className="drawer-under">
             <div key={rightDrawer} className="drawer-swap">
               {rightDrawer === 'components'
-                ? <ComponentsPanel game={game} pack={pack} state={shownState} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />
+                ? <ComponentsPanel game={game} pack={pack} table={shownTable} board={shownBoard} rounds={holdingSources} group={componentGroup} chosen={componentsOf} onChoose={setComponentsOf} />
                 : (
                   <ThundersEdgePanel
                     game={game} pack={pack} owners={owners}

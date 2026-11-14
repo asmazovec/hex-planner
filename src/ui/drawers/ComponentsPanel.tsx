@@ -2,10 +2,14 @@ import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById, componentsOf, noteAddress, ownedBy, textOf } from '../../domain/components';
 import { breakthroughOf } from '../../domain/effects/breakthrough';
-import { emptyHoldings, HOLDING_FIELD, ownNotes, staysInPlay, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
+import { HOLDING_FIELD, staysInPlay, upgradesOf, upgradeTech, type ComponentGroup, type NotePlace } from '../../domain/holdings';
 import { opponentsBySeat } from '../../domain/players';
 import { hasLevelTwo, isUniqueShip, SHIP_KINDS, unitStats, upgradableStructures } from '../../domain/unitStats';
-import type { ComponentDef, DataPack, Game, GameState, TechType } from '../../domain/types';
+import type { ComponentDef, DataPack, Game, TechType } from '../../domain/types';
+import { legacyNotes, shelfOf } from '../../game/shelf';
+import type { Board, Table } from '../../game/types';
+import { playerOfKey } from '../../game/keys';
+import { playerView, tableView } from '../../game/views';
 import { useGame } from '../../state/gameStore';
 import { ComponentCard, type CardState } from '../components/ComponentCard';
 import { ComponentSearchField } from '../components/ComponentSearchField';
@@ -22,8 +26,9 @@ import { UnitIcon } from '../units/UnitIcon';
 export interface ComponentsPanelProps {
   game: Game;
   pack: DataPack;
-  /** The state the map shows: mine, with every opponent in `rivals`. */
-  state: GameState;
+  /** The table and the board the map shows: what every player holds is read from them. */
+  table: Table;
+  board: Board;
   /** What the entries of the plan brought, by player and component id, with the round: not to take off here. */
   rounds: Record<string, Record<string, number>>;
   /** The group of the fan whose sections the sheet shows; a query shows its results whatever the group. */
@@ -61,7 +66,7 @@ const unique = (ids: string[]): string[] => [...new Set(ids)];
  * it finds, what the player holds first, the rest with a control that adds it. Marks made here are what the player held
  * when the plan begins; what an entry of the plan brought says its round and is changed in that entry.
  */
-export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onChoose }: ComponentsPanelProps) {
+export function ComponentsPanel({ game, pack, table, board, rounds, group, chosen, onChoose }: ComponentsPanelProps) {
   const { t } = useTranslation();
   const setStartHolding = useGame(s => s.setStartHolding);
   const setLeader = useGame(s => s.setLeader);
@@ -73,10 +78,10 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
   const rival = game.opponents.find(o => o.id === chosen);
   const player = rival ? rival.id : 'me';
   const faction = rival ? rival.faction : game.faction;
-  const holdings = (rival ? state.rivals?.[rival.id]?.holdings : state.holdings) ?? emptyHoldings();
+  const holdings = shelfOf(table, playerView(table, board, pack, playerOfKey(table, player) ?? table.viewer));
   const start = (rival ? game.start.opponents[rival.id] : game.start.me) ?? {};
   const fromPlan = rounds[player] ?? {};
-  const laws = state.laws ?? [];
+  const laws = tableView(table, board, pack).laws.map(law => law.id);
 
   /** The breakthrough of the player's faction sheet: the Keleres share one card, listed under the first of them. */
   const ownBreakthrough = breakthroughOf(pack, faction);
@@ -177,7 +182,6 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
     }
     return <ComponentCard key={id} def={def} pack={pack} where={{ label: t('components.outOfGame') }} text={text} onAdd={() => setStartHolding(player, id, true)} />;
   };
-  const everyHoldings = { me: state.holdings, ...Object.fromEntries(game.opponents.map(o => [o.id, state.rivals?.[o.id]?.holdings])) };
 
   /** The components under these ids that the data still knows, each once. */
   const known = (ids: string[]): ComponentDef[] => unique(ids).flatMap(id => componentById(pack, id) ?? []);
@@ -259,7 +263,7 @@ export function ComponentsPanel({ game, pack, state, rounds, group, chosen, onCh
   const sections: [string, ReactNode[]][] = [
     ['technologies', listed.map(card)],
     ['unitUpgrades', [...unitCards.map(unit => unit.card), ...structureCards.map(unit => unit.card), ...researched.filter(c => !listed.includes(c)).map(card)]],
-    ['ownNotes', ownNotes(game, pack, player, everyHoldings).map(ownNote)],
+    ['ownNotes', legacyNotes(table, board, pack, player).map(ownNote)],
     ['promissory', known(holdings.promissory).filter(c => noteAddress(c.id) !== player).map(card)],
     ['actionCards', known(holdings.hand).map(card)],
     ['relics', known([...holdings.relics, ...holdings.found]).map(card)],

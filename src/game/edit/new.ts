@@ -8,7 +8,7 @@ export type NewAction = 'tactical' | 'strategic' | 'component' | 'pass' | 'adjus
 /** Where a new turn is added: its id, whose it is, the player whose eyes the plan is seen through, and the round it goes into. */
 export interface NewTurnAt { id: string; player: PlayerId; viewer: PlayerId; round: Round; phase?: Turn['phase'] }
 
-/** A strategic card is a primary for a token when it is not one of the round's cards; with no card of the round chosen, the flag says. */
+/** A strategy card is a primary for a token when it is not one of the round's cards; with no card of the round chosen, the flag says. */
 const forTokenOf = (card: number | undefined, flag: boolean | undefined, held: number[]): boolean =>
   (held.length > 0 ? card !== undefined && !held.includes(card) : flag === true);
 
