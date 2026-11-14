@@ -160,6 +160,12 @@ export function timelineOf(game: Game, plan: Plan, filter: Filter, pack: DataPac
 }
 
 /** The table of a game, kept for as long as its setup is the same: what a screen outside the plan reads names and notes from. */
+/** The table of a game and the board its plans begin from, the objects the timelines of the game stand on. */
+export function startOfGame(game: Game, pack: DataPack): { table: Table; start: Board } {
+  const { table, start } = setupOf(game, pack);
+  return { table, start };
+}
+
 export function tableOfGame(game: Game, pack: DataPack): Table {
   return setupOf(game, pack).table;
 }

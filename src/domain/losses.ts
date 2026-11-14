@@ -31,7 +31,7 @@ function shifted(units: UnitCounts, unit: UnitId, amount: number): UnitCounts {
   return next;
 }
 
-function changedDelta(delta: AdjustmentDelta, { systemId, unit, planetId, amount }: MergedChange): AdjustmentDelta {
+export function changedDelta(delta: AdjustmentDelta, { systemId, unit, planetId, amount }: MergedChange): AdjustmentDelta {
   if (planetId === null) return { ...delta, units: { systemId, units: shifted(delta.units?.units ?? {}, unit, amount) } };
   const { [planetId]: current = {}, ...others } = delta.ground ?? {};
   const units = shifted(current, unit, amount);
@@ -41,7 +41,7 @@ function changedDelta(delta: AdjustmentDelta, { systemId, unit, planetId, amount
   return Object.keys(ground).length > 0 ? { ...rest, ground } : rest;
 }
 
-const isEmpty = (delta: AdjustmentDelta): boolean =>
+export const isEmptyDelta = (delta: AdjustmentDelta): boolean =>
   Object.keys(delta.units?.units ?? {}).length === 0 && delta.ground === undefined;
 
 /**
@@ -54,7 +54,7 @@ export function changeMerged(round: Round, change: MergedChange, newId: () => st
   const found = mergedEntry(round, kind, systemId);
   const delta = changedDelta(found?.delta ?? { units: { systemId, units: {} } }, change);
   if (found) {
-    const entries = isEmpty(delta)
+    const entries = isEmptyDelta(delta)
       ? round.entries.filter(e => e !== found)
       : round.entries.map(e => (e === found ? { ...found, delta } : e));
     return { ...round, entries };

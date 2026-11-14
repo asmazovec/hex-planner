@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
-import { changeOnBoard, type MergedChange } from '../domain/losses';
+import type { MergedChange } from '../domain/losses';
+import { changeOnBoard } from '../game/edit/merged';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import type {
   DataPack, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, UnitCounts,
@@ -10,7 +11,6 @@ import {
   copiedRounds, holdsTurn, withCardCycled, withRoundAdded, withTurnAdded, withTurnMoved, withTurnRemoved, withTurnReplaced,
   withTurnStatus, withoutRound,
 } from '../game/edit/plan';
-import { tableOf, planOf } from '../game/fromLegacy';
 import type { Round } from '../game/round';
 import type { SavedGame, SavedPlan } from '../game/save';
 import { loadGame, listGames } from '../storage/db';
@@ -28,7 +28,7 @@ import {
 } from '../game/edit/table';
 import { playerOfLegacy } from '../game/entry';
 import { patchedTurn, turnOfBody } from './legacyEdits';
-import { forgetTimelines } from './projection';
+import { forgetTimelines, startOfGame } from './projection';
 
 export { flushSaves };
 
@@ -391,16 +391,14 @@ export const useGame = create<GameStore>((set, get) => {
     setDock: (planetId, present) => commit(s => withDock(s, planetId, present)),
     setPds: (planetId, count) => commit(s => withPds(s, planetId, count)),
     changeAdjustment: (roundNo, change) => commit(s => {
-      const round = activePlan(s)?.rounds.find(r => r.number === roundNo);
-      if (!round) return s;
+      const plan = activePlan(s);
+      const round = plan?.rounds.find(r => r.number === roundNo);
+      if (!plan || !round) return s;
       const game = gameOf(s);
-      const pack = loadPack(game.expansions);
-      const old = game.plans.find(p => p.id === s.activePlanId)?.rounds.find(r => r.number === roundNo);
-      if (!old) return s;
-      const changed = changeOnBoard(game, old, change, pack, newId);
-      if (changed === old) return s;
-      const [made] = planOf(tableOf(game), { rounds: [changed] } as Parameters<typeof planOf>[1], pack);
-      return editRound(s, roundNo, () => made);
+      const pack = loadPack(s.table.expansions);
+      const { table, start } = startOfGame(game, pack);
+      const made = changeOnBoard(table, start, pack, plan.rounds, roundNo, change, newId);
+      return !made || made === round ? s : editRound(s, roundNo, () => made);
     }),
     setSlice: (id, owner) => commit(s => withSlice(s, id, owner === null ? null : owner === 'me' ? s.table.viewer : s.table.players.find(q => q.id !== s.table.viewer)?.id ?? 'other')),
     setThundersEdge: systemId => commit(s => withThundersEdge(s, systemId)),
