@@ -143,6 +143,11 @@ export function timelineOf(game: Game, plan: Plan, filter: Filter, pack: DataPac
   return line;
 }
 
+/** The table of a game, kept for as long as its setup is the same: what a screen outside the plan reads names and notes from. */
+export function tableOfGame(game: Game, pack: DataPack): Table {
+  return setupOf(game, pack).table;
+}
+
 /** Forgets every timeline: for tests, and when a game closes. */
 export function forgetTimelines(): void {
   lines.clear();

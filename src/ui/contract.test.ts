@@ -9,6 +9,14 @@ export const KERNEL_ONLY = [
   'map/HexMap.tsx', 'map/TileView.tsx', 'map/PlanetBadge.tsx', 'map/useFractureFlight.ts', 'map/offMapHomes.ts', 'map/marks.tsx', 'map/RouteArrows.tsx', 'map/FlightLayer.tsx',
   'map/stage/ControlPanel.tsx', 'map/stage/BuildPanel.tsx', 'map/stage/PlanetDetails.tsx', 'map/stage/UnitShop.tsx', 'map/stage/BattlePanel.tsx', 'map/stage/SetupPanel.tsx', 'map/stage/HexStage.tsx',
   'map/geometry.ts', 'map/edgePan.ts', 'map/useArrowDrag.ts', 'map/usePanZoom.ts', 'map/viewLimits.ts',
+  'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
+  'plan/SummaryBar.tsx', 'plan/actLines.ts',
+];
+
+/** The files of the list above that no longer take the old `Game` either: they read the table and the board. */
+export const WITHOUT_GAME = [
+  'feedback/StepHints.tsx', 'feedback/WarningText.tsx', 'feedback/warningPlaces.ts', 'components/noteMark.ts', 'map/systemName.ts',
+  'plan/SummaryBar.tsx', 'plan/actLines.ts',
 ];
 
 const raw = import.meta.glob<string>(['./**/*.ts', './**/*.tsx', '!./**/*.test.*'], { query: '?raw', import: 'default', eager: true });
@@ -32,6 +40,14 @@ describe('the screens that read the game model only', () => {
         expect(path, `${file} imports ${path}`).not.toMatch(/domain\/replay|effects\/registry|legacyViews|fromLegacy/);
       }
       expect(source, `${file} reads a state of the old model`).not.toMatch(/\bstate\.(holdings|rivals|laws|opponentVp)\b|\.rivals\?*\.\[|opponentVp/);
+    }
+  });
+
+  test('the files that read the table take no old game', () => {
+    for (const file of WITHOUT_GAME) {
+      expect(KERNEL_ONLY, file).toContain(file);
+      const imports = [...text(file).matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s+from\s+'([^']+)'/g)];
+      for (const [, names] of imports) expect(names, `${file} imports the old game`).not.toMatch(/\bGame\b/);
     }
   });
 });

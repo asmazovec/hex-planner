@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../../data/loadPack';
 import { textOf } from '../../../domain/components';
@@ -28,14 +29,14 @@ import { StepHints } from '../../feedback/StepHints';
 export type MapPick = 'system' | 'build' | 'dock';
 
 export interface StrategyEditorProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   game: Game;
   pack: DataPack;
   round: Round;
   entry: CardEntry;
   /** The state just before the entry. */
   before: GameState;
-  /** The whole board just before the entry, every opponent in `rivals`: the reminders of the card step are read from it. */
-  board?: GameState;
   warnings: Warning[];
   manualPayment: boolean;
   /** What the next tap on the map will choose. */
@@ -61,7 +62,7 @@ export interface StrategyEditorProps {
 
 /** A strategy card played: first the card, then its primary or secondary; either stays open, and a switch starts the play over. */
 export function StrategyEditor({
-  game, pack, round, entry, before, board, warnings, manualPayment, picking,
+  game, pack, view, round, entry, before, warnings, manualPayment, picking,
   onUpdate, onManualPayment, onPick, onOpenShop, onStartTactical, onOpenTactical, onDone, onRemove, common,
 }: StrategyEditorProps) {
   const { t } = useTranslation();
@@ -87,7 +88,7 @@ export function StrategyEditor({
   };
 
   const placer = placeWarnings(warnings, entry);
-  const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
+  const list = (shown: Warning[]) => <WarningList warnings={shown} table={view.table} board={view.board} pack={pack} />;
 
   const tokenPick = (rearrange = false, onTokens: (tokens: CardEffects['tokens']) => void = tokens => setEffects({ tokens })) => (
     <Section warnings={list(placer.at('tokens'))}>
@@ -185,7 +186,7 @@ export function StrategyEditor({
         {!card && <p className="muted">{t('plan.strategy.chooseCard')}</p>}
         {cardBlocks}
         {/* The reminders of a card played concern everyone at the table: the researcher, the one who may react. */}
-        <StepHints pack={pack} board={board} step="card" players={['me', ...opponents.map(o => o.id)]} />
+        <StepHints pack={pack} table={view.table} board={view.board} step="card" players={['me', ...opponents.map(o => o.id)]} />
       </EditorPart>
       {common}
     </EditorFrame>

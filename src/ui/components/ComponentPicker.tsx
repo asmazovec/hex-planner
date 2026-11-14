@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { componentById, componentsOf, ownedBy } from '../../domain/components';
 import { noteCards } from '../../domain/holdings';
 import type { ComponentDef, ComponentKind } from '../../domain/types';
+import { tableOfGame } from '../../state/projection';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
 import { Modal } from '../overlays/Modal';
@@ -34,6 +35,7 @@ export function ComponentPicker({ kinds, ids, owned, prefer, player, onPick, onC
   const { t } = useTranslation();
   const game = useGame(s => s.game);
   const pack = usePack(game?.expansions);
+  const table = useMemo(() => (game ? tableOfGame(game, pack) : undefined), [game, pack]);
   const [query, setQuery] = useState('');
   const asked = useDeferredValue(query);
   const among = useMemo(() => ids && new Set(ids), [ids]);
@@ -65,7 +67,7 @@ export function ComponentPicker({ kinds, ids, owned, prefer, player, onPick, onC
         {shown.map(def => (
           <ComponentCard
             key={def.id} def={def} pack={pack} held={owned?.has(def.id)} note={noteOf(def)} count={ids?.filter(id => id === def.id).length}
-            {...(game ? noteMark(game, pack, def.id, t) : {})}
+            {...(table ? noteMark(table, pack, def.id, t) : {})}
             pickLabel={t('components.choose', { name: def.name })} onAdd={() => onPick(def.id)}
           />
         ))}

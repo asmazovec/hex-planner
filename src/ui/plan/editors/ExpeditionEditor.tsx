@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import type { KernelView } from '../kernelView';
 import { autoPay, EXPEDITION_SLICES, sliceAutoPayment, slicePlanetCost, techSlicePlanets } from '../../../domain/payment';
 import type { DataPack, Game, GameState, Payment, Warning } from '../../../domain/types';
 import { PaymentBlock } from '../blocks/PaymentBlock';
@@ -11,6 +12,8 @@ import { Section } from '../../primitives/Section';
 const NO_PAYMENT: Payment = { planets: [], tradeGoods: 0 };
 
 export interface ExpeditionEditorProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   game: Game;
   pack: DataPack;
   sliceId: string | null;
@@ -31,7 +34,7 @@ export interface ExpeditionEditorProps {
 
 /** The editor of an expedition contribution: the part and its payment. A part taken by someone else cannot be chosen. */
 export function ExpeditionEditor({
-  game, sliceId, payment, owners, before, pack, warnings = [], manualPayment, onManualPayment, onChange, onDone, onRemove,
+  game, view, sliceId, payment, owners, before, pack, warnings = [], manualPayment, onManualPayment, onChange, onDone, onRemove,
 }: ExpeditionEditorProps) {
   const { t } = useTranslation();
   const paidWith = slicePlanetCost(sliceId);
@@ -52,8 +55,8 @@ export function ExpeditionEditor({
   return (
     <EditorFrame title={t('expedition.title')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
-      <WarningList warnings={placer.rest()} game={game} pack={pack} />
-      <Section label={t('expedition.part')} title={t('expedition.part')} warnings={<WarningList warnings={sliceWarnings} game={game} pack={pack} />}>
+      <WarningList warnings={placer.rest()} table={view.table} board={view.board} pack={pack} />
+      <Section label={t('expedition.part')} title={t('expedition.part')} warnings={<WarningList warnings={sliceWarnings} table={view.table} board={view.board} pack={pack} />}>
         <div className="slice-grid">
           {EXPEDITION_SLICES.map(({ id }) => (
             <button
@@ -76,11 +79,11 @@ export function ExpeditionEditor({
           }}
           onChange={next => onChange({ payment: next })}
         >
-          <WarningList warnings={paymentWarnings} game={game} pack={pack} />
+          <WarningList warnings={paymentWarnings} table={view.table} board={view.board} pack={pack} />
         </PaymentBlock>
       )}
       {techPlanet && (
-        <Section label={t('expedition.techPlanet')} title={t('expedition.techPlanet')} warnings={<WarningList warnings={paymentWarnings} game={game} pack={pack} />}>
+        <Section label={t('expedition.techPlanet')} title={t('expedition.techPlanet')} warnings={<WarningList warnings={paymentWarnings} table={view.table} board={view.board} pack={pack} />}>
           {techPlanets.length === 0 && <p className="muted">{t('expedition.noTechPlanet')}</p>}
           {techPlanets.map(id => (
             <button

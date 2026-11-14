@@ -1,5 +1,5 @@
-import { systemPlanets, tileIdOf } from './replay/board';
-import type { Anomaly, DataPack, Game, TileDef } from './types';
+import { systemPlanets, tileIdOf, type MapSource } from './replay/board';
+import type { Anomaly, DataPack, TileDef } from './types';
 
 /** What a system can be called by, with no words of any language: the screen puts them together. */
 export interface SystemName {
@@ -14,7 +14,7 @@ export interface SystemName {
 }
 
 /** The planets, number and marks of the system in a slot of the map or of the open Fracture. */
-export function systemNameOf(game: Game, pack: DataPack, slot: string): SystemName {
+export function systemNameOf(game: MapSource, pack: DataPack, slot: string): SystemName {
   const tileId = tileIdOf(game, slot);
   const tile = pack.tiles[tileId];
   if (!tile) return { planets: [], number: tileId, kind: null, anomalies: [], wormholes: [] };

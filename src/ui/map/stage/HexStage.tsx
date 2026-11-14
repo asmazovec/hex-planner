@@ -121,10 +121,10 @@ export function HexStage(props: HexStageProps) {
             />
           )}
 
-          {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} game={game} pack={pack} boardWarnings={stage.boardWarnings} />}
+          {mode === 'setup' && <SetupPanel items={stage.shopItems} onPick={stage.buy} structuresOnly={structuresOnly} manyPlanets={manyPlanets} table={table} board={board} pack={pack} boardWarnings={stage.boardWarnings} />}
           {mode === 'build' && (
             <BuildPanel
-              table={table} game={game} pack={pack} board={board} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
+              table={table} pack={pack} board={board} production={stage.productionRows} construction={stage.constructionRows} stock={stage.shopStock}
               colour={colours[side]} onTake={stage.buyAt} onReturn={stage.unbuyAt} structuresOnly={structuresOnly}
               boughtTotal={stage.boughtTotal} spent={stage.spent} mine={side === mine} meters={stage.meterRows} warnings={stage.entryWarnings} boardWarnings={stage.boardWarnings}
             />

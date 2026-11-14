@@ -10,6 +10,8 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
+import { createGame } from '../../domain/newGame';
+import { viewOf } from '../testing/legacyMap';
 import { componentById, componentsOf } from '../../domain/components';
 import { effectOf } from '../../domain/effects/registry';
 import { emptyHoldings } from '../../domain/holdings';
@@ -29,12 +31,15 @@ const played = cardOf('component');
 /** A technology that speaks of the card step and of the round as a whole. */
 const PSYCHOARCHAEOLOGY = 'technology:pa';
 
-const board = (hand: string[], rivalHand: string[] = []): GameState => {
+/** The table and the board of a game with the two hands: mine, and the rival's (a player the table does not know by seat). */
+const board = (hand: string[], rivalHand: string[] = []) => {
   const state = (cards: string[]): GameState => ({
     systems: {}, ground: {}, exhausted: [], control: {}, tokensOnMap: [], tradeGoods: 0, commodities: 0, tactic: 0, fleet: 0, strategy: 0,
     vp: 0, opponentVp: {}, holdings: { ...emptyHoldings(), hand: cards }, docks: [], pds: {},
   });
-  return { ...state(hand), rivals: { rival: state(rivalHand) } };
+  const base = createGame({ expansions: ['pok'], playerCount: 2, faction: 'arborec' }, pack);
+  const game = { ...base, opponents: base.opponents.map(o => ({ ...o, id: 'rival' })) };
+  return viewOf(game, { ...state(hand), rivals: { rival: state(rivalHand) } }, pack);
 };
 
 afterEach(cleanup);
@@ -42,7 +47,7 @@ beforeEach(() => setLanguage('en'));
 
 describe('StepHints', () => {
   test('names the components the players hold for the step, and a press opens the printed text', async () => {
-    render(<StepHints pack={pack} board={board([combat.id, production.id])} step="combat" players={['me']} />);
+    render(<StepHints pack={pack} {...board([combat.id, production.id])} step="combat" players={['me']} />);
     const hints = screen.getByRole('group', { name: 'Reminders for this step' });
     expect(within(hints).getAllByTestId(/^component-/)).toHaveLength(1);
     expect(hints).not.toHaveTextContent(combat.text.slice(0, 24));
@@ -53,16 +58,16 @@ describe('StepHints', () => {
   });
 
   test('asks only the players named', () => {
-    const { rerender } = render(<StepHints pack={pack} board={board([], [combat.id])} step="combat" players={['me']} />);
+    const { rerender } = render(<StepHints pack={pack} {...board([], [combat.id])} step="combat" players={['me']} />);
     expect(screen.queryByRole('group', { name: 'Reminders for this step' })).toBeNull();
-    rerender(<StepHints pack={pack} board={board([], [combat.id])} step="combat" players={['me', 'rival']} />);
+    rerender(<StepHints pack={pack} {...board([], [combat.id])} step="combat" players={['me', 'rival']} />);
     expect(screen.getByRole('group', { name: 'Reminders for this step' })).toHaveTextContent(combat.name);
   });
 
   test('draws nothing when nothing is held for the step, or without a board', () => {
-    const { container, rerender } = render(<StepHints pack={pack} board={board([production.id])} step="combat" players={['me']} />);
+    const { container, rerender } = render(<StepHints pack={pack} {...board([production.id])} step="combat" players={['me']} />);
     expect(container).toBeEmptyDOMElement();
-    rerender(<StepHints pack={pack} board={undefined} step="production" players={['me']} />);
+    rerender(<StepHints pack={pack} table={board([]).table} board={undefined} step="production" players={['me']} />);
     expect(container).toBeEmptyDOMElement();
   });
 });

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import type { AdjustmentDelta, DataPack, Entry, Game, UnitCounts, Warning } from '../../../domain/types';
@@ -24,6 +25,8 @@ export const agendaOf = (entry: Pick<Entry, 'gains'>, pack: DataPack) =>
   (entry.gains ?? []).flatMap(id => componentById(pack, id) ?? []).find(def => def.kind === 'agenda');
 
 export interface AdjustmentEditorProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   game: Game;
   pack: DataPack;
   entry: Extract<Entry, { type: 'adjustment' }>;
@@ -48,7 +51,7 @@ export interface AdjustmentEditorProps {
  * big hex. In the agenda phase it is an agenda that was resolved: the card stands first, and a law among them stays in
  * play (7.3), while a directive leaves nothing (7.8); what the outcome changed is entered by the same numbers.
  */
-export function AdjustmentEditor({ game, pack, entry, warnings, picking, laws, common, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
+export function AdjustmentEditor({ game, pack, view, entry, warnings, picking, laws, common, onPickSystem, onOpenHex, onUpdate, onDone, onRemove }: AdjustmentEditorProps) {
   const { t } = useTranslation();
   const [choosing, setChoosing] = useState(false);
   const { delta } = entry;
@@ -76,7 +79,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, laws, c
   return (
     <EditorFrame title={t(ofAgenda ? 'plan.agenda.title' : 'plan.menu.adjustment')} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
       {/* A warning whose block is not on the screen stands first, where it cannot be missed. */}
-      <WarningList warnings={placer.rest()} game={game} pack={pack} />
+      <WarningList warnings={placer.rest()} table={view.table} board={view.board} pack={pack} />
 
       <EditorPart title={t(ofAgenda ? 'plan.agenda.part' : 'editor.setup')}>
         {ofAgenda && (
@@ -101,7 +104,7 @@ export function AdjustmentEditor({ game, pack, entry, warnings, picking, laws, c
           ))}
         </Section>
 
-        <Section label={t('plan.entries.system')} title={t('plan.entries.system')} warnings={<WarningList warnings={systemWarnings} game={game} pack={pack} />}>
+        <Section label={t('plan.entries.system')} title={t('plan.entries.system')} warnings={<WarningList warnings={systemWarnings} table={view.table} board={view.board} pack={pack} />}>
           {systemId
             ? (
               <div className="source-row in-card">

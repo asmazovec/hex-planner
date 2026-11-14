@@ -1,4 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { kernelEndOf, kernelViewOf } from '../testing/view';
+import { viewOf } from '../testing/legacyMap';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -40,7 +42,7 @@ test('the summary shows now and forecast for every value', () => {
     type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {},
     payment: { planets: ['nestphar'], tradeGoods: 0 },
   }, 'action');
-  render(<SummaryBar now={project(game(), plan(), 'now', pack).state} forecast={project(game(), plan(), 'forecast', pack).state} pack={pack} />);
+  render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} />);
   const cell = (name: string) => screen.getByRole('group', { name });
   expect(cell('Resources')).toHaveTextContent('3 → 0');
   expect(cell('Influence')).toHaveTextContent('2 → 0');
@@ -54,7 +56,7 @@ test('the summary shows now and forecast for every value', () => {
 test('the fact shows what is, without the arrows of the plan', () => {
   const store = useGame.getState();
   store.addEntry(1, { type: 'adjustment', label: 'x', delta: { tradeGoods: 2, fleet: -1 } }, 'action');
-  render(<SummaryBar now={project(game(), plan(), 'now', pack).state} forecast={project(game(), plan(), 'forecast', pack).state} pack={pack} factOnly />);
+  render(<SummaryBar table={kernelEndOf(game(), pack, 'now').table} now={kernelEndOf(game(), pack, 'now').board} forecast={kernelEndOf(game(), pack, 'forecast').board} pack={pack} factOnly />);
   const cell = (name: string) => screen.getByRole('group', { name });
   expect(cell('Trade goods')).toHaveTextContent(/^Trade goods0$/);
   expect(cell('Fleet')).toHaveTextContent(/^Fleet3$/);
@@ -65,7 +67,8 @@ test('the summary totals count the planets as a card attached to them makes them
   const state = structuredClone(project(game(), plan(), 'now', pack).state); // the state of the kernel is read-only
   const printed = pack.planets.nestphar;
   state.attachments = { nestphar: ['relic:nanoforge'] };
-  render(<SummaryBar now={state} forecast={state} pack={pack} view={{ faction: game().faction }} factOnly />);
+  const { table, board } = viewOf(game(), state, pack);
+  render(<SummaryBar table={table} now={board} forecast={board} pack={pack} factOnly />);
   expect(screen.getByRole('group', { name: 'Resources' })).toHaveTextContent(`Resources${printed.resources + 2}`);
   expect(screen.getByRole('group', { name: 'Influence' })).toHaveTextContent(`Influence${printed.influence + 2}`);
 });
@@ -324,7 +327,7 @@ const CASES: Record<WarningCode, Warning['params']> = {
 test.each(['en', 'ru'] as const)('every warning code has %s text, with names and the shortfall', lang => {
   setLanguage(lang);
   for (const [code, params] of Object.entries(CASES)) {
-    const { container, unmount } = render(<WarningText warning={{ code: code as WarningCode, params }} game={game()} pack={pack} />);
+    const { container, unmount } = render(<WarningText warning={{ code: code as WarningCode, params }} {...kernelViewOf(game(), pack)} pack={pack} />);
     expect(container.textContent).not.toContain('plan.');
     expect(container.textContent).not.toContain('{{');
     expect(container.textContent).not.toContain('1,0');
@@ -419,7 +422,7 @@ test('undo is offered only when there is something to undo, and reverts', async 
 function EntryListLive({ warnings = {} }: { warnings?: Record<string, Warning[]> }) {
   const live = useGame(s => s.game)!;
   return (
-    <EntryList
+    <EntryList viewOf={() => kernelViewOf(live, pack)}
       game={live} pack={pack} round={live.plans[0].rounds[0]} warnings={warnings} state={project(live, live.plans[0], 'forecast', pack).state}
       openId={null} onOpen={() => undefined}
     />
@@ -480,7 +483,7 @@ test('a warning about the tokens stands right below the tiles of the open status
   useGame.getState().updateEntry(id, { tactic: 4 });
   const round = plan().rounds[0];
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList game={game()} pack={pack} round={round} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
+  render(<EntryList viewOf={() => kernelViewOf(game(), pack)} game={game()} pack={pack} round={round} warnings={state.warningsByEntry} state={state.state} openId={id} onOpen={() => undefined} />);
   const details = document.querySelector('.entry-details')!;
   const warnings = screen.getAllByRole('list', { name: 'Warnings' });
   expect(warnings).toHaveLength(1);
@@ -494,7 +497,7 @@ test('a closed entry shows its warnings on its row, above what it reads out', ()
   const id = useGame.getState().addStatusEntry(1);
   useGame.getState().updateEntry(id, { tactic: 4 });
   const state = project(game(), plan(), 'forecast', pack);
-  render(<EntryList game={game()} pack={pack} round={plan().rounds[0]} warnings={state.warningsByEntry} state={state.state} openId={null} onOpen={() => undefined} />);
+  render(<EntryList viewOf={() => kernelViewOf(game(), pack)} game={game()} pack={pack} round={plan().rounds[0]} warnings={state.warningsByEntry} state={state.state} openId={null} onOpen={() => undefined} />);
   expect(document.querySelector('.entry-main')!.nextElementSibling).toHaveClass('warning-list');
 });
 

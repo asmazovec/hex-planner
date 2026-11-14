@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { kernelViewOf } from '../../testing/view';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
@@ -23,7 +24,7 @@ function show(entry: Entry, onPayment: (p: unknown) => void) {
   const board = stateBeforeEntry(table.game, table.game.plans[0], entry.id, table.pack);
   const nothing = () => undefined;
   render(
-    <TurnEditor
+    <TurnEditor view={kernelViewOf(table.game, table.pack)}
       entry={entry as Extract<Entry, { type: 'component' }>} game={table.game} pack={table.pack} board={board} warnings={[]} common={null}
       onNote={nothing} onComponent={nothing} onPayment={onPayment} onDone={nothing} onRemove={nothing}
     />,

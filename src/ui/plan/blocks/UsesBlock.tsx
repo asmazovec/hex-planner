@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from 'react';
+import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { readyToPlay } from '../../../domain/project';
@@ -16,6 +17,8 @@ import { ChoicesBlock } from './ChoicesBlock';
 const USED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'mech', 'legendary', 'agenda', 'exploration'];
 
 export interface UsesBlockProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   /** Any entry: its owner uses the components. */
   entry: Entry;
   /** The game as the owner of the entry sees it. */
@@ -36,7 +39,7 @@ export interface UsesBlockProps {
  * is marked, and the plan warns of a component not held or exhausted. What a component used here allows is listed
  * among the warnings of the entry as allowed.
  */
-export function UsesBlock({ entry, game, pack, before, warnings = [], onChange }: UsesBlockProps) {
+export function UsesBlock({ entry, game, pack, view, before, warnings = [], onChange }: UsesBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   const list = entry.uses ?? [];
@@ -48,14 +51,14 @@ export function UsesBlock({ entry, game, pack, before, warnings = [], onChange }
   const ready = useMemo(() => (before ? readyToPlay(pack, before.holdings, game.faction, before.control) : undefined), [before, pack, game.faction]);
   const title = t('components.uses.title');
   return (
-    <Section label={title} title={title} warnings={<WarningList warnings={usesWarnings(entry, warnings)} game={game} pack={pack} />}>
+    <Section label={title} title={title} warnings={<WarningList warnings={usesWarnings(entry, warnings)} table={view.table} board={view.board} pack={pack} />}>
       <span className="muted">{t('components.uses.hint')}</span>
       <div className="side-actions">
         <button type="button" onClick={() => setPicking(true)}>{t('components.uses.add')}</button>
       </div>
       {list.map((id, index) => {
         const def = componentById(pack, id);
-        const mark = def && noteMark(game, pack, def.id, t, entry.owner ?? 'me');
+        const mark = def && noteMark(view.table, pack, def.id, t);
         return def && (
           <Fragment key={`${id}-${index}`}>
             <ComponentCard

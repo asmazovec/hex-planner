@@ -5,7 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { CUSTODIANS_COST } from '../../../domain/mecatol';
 import { autoPay, shownPlanetValues } from '../../../domain/payment';
 import { fleetExcess, productionDue, routeSteps, standing, systemPlanets } from '../../../domain/project';
-import { stepPlayers } from '../../../domain/effects/hints';
+import { stepPlayers } from '../../../game/abilities/registry';
+import { legacyKey, playerOfKey } from '../../../game/keys';
+import type { KernelView } from '../kernelView';
 import type { DataPack, Game, GameState, RuleStep, StructureKind, UnitCounts, UnitId, Warning } from '../../../domain/types';
 import { UNIT_ORDER } from '../../units/unitOrder';
 import { commitSources } from '../../../domain/commitSources';
@@ -26,6 +28,8 @@ import { MapPickButton } from '../../primitives/MapPickButton';
 import { Vanishing } from '../../primitives/Vanishing';
 
 export interface TacticalEditorProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   game: Game;
   pack: DataPack;
   entry: TacticalEntry;
@@ -33,8 +37,6 @@ export interface TacticalEditorProps {
   before: GameState;
   /** The whole board just before the entry, every opponent in `rivals`. */
   board?: GameState;
-  /** The game as I see it, whoever owns the entry: who holds the planets of the active system. Without it a step reminds its owner alone. */
-  table?: Pick<Game, 'opponents' | 'planetOwner'>;
   warnings: Warning[];
   manualPayment: boolean;
   /** What the next tap on the map chooses. */
@@ -66,7 +68,7 @@ export interface TacticalEditorProps {
  * block shows its own warnings. The flight of a source is a step of its own (UnitPicker), shown in its place.
  */
 export function TacticalEditor({
-  game, pack, entry, before, board, table, warnings, manualPayment, choosing, onChoose,
+  game, pack, view, entry, before, board, warnings, manualPayment, choosing, onChoose,
   onUpdate, onOpenPicker, leaving = [], onLeft, onManualPayment, onOpenShop, onOpenBattle, onOpenFleet, onDone, onRemove, common,
 }: TacticalEditorProps) {
   const { t } = useTranslation();
@@ -115,7 +117,7 @@ export function TacticalEditor({
   };
 
   const placer = placeWarnings(warnings, entry);
-  const list = (shown: Warning[]) => <WarningList warnings={shown} game={game} pack={pack} />;
+  const list = (shown: Warning[]) => <WarningList warnings={shown} table={view.table} board={view.board} pack={pack} />;
   /** The warnings of the flight from one source: its route and its cargo. */
   const flight = (source: string) => {
     const mine = (w: Warning) => ofSource(w, game, pack, entry.moves, source);
@@ -130,8 +132,9 @@ export function TacticalEditor({
   /** The reminders of a step: what its players hold for it, under the block of the step. */
   const hints = (step: RuleStep) => {
     const owner = entry.owner ?? 'me';
-    const players = board && table ? stepPlayers(table, board, entry.owner, step, target, planets.map(p => p.id)) : [owner];
-    return <StepHints pack={pack} board={board} step={step} players={players} />;
+    const actor = playerOfKey(view.table, owner);
+    const players = actor === undefined ? [owner] : stepPlayers(view.table, view.board, actor, step, target, planets.map(p => p.id)).map(id => legacyKey(view.table, id));
+    return <StepHints pack={pack} table={view.table} board={view.board} step={step} players={players} />;
   };
 
   const blocks = target !== null && (

@@ -16,6 +16,7 @@ import { actLines, insideCard } from './actLines';
 import { GainsBlock } from './blocks/GainsBlock';
 import { UsesBlock } from './blocks/UsesBlock';
 import { ScoredBlock } from './blocks/ScoredBlock';
+import type { KernelView } from './kernelView';
 import { StepHints } from '../feedback/StepHints';
 import { agendaOf } from './editors/AdjustmentEditor';
 import { HexRemove, RowIcon } from '../primitives/Icon';
@@ -32,6 +33,8 @@ const PHASES: Phase[] = ['strategy', 'action', 'status', 'agenda'];
 export interface EntryListProps {
   game: Game;
   pack: DataPack;
+  /** The table and the board just before an entry, as the kernel keeps them. */
+  viewOf: (entryId: string) => KernelView;
   round: Round;
   /** The state just before an entry, for what its steps read out; defaults to the forecast. */
   stateBefore?: (entryId: string) => GameState;
@@ -63,8 +66,8 @@ export interface EntryListProps {
  * The status entry: the tokens taken this round, the points each player gains with their running total, and what the
  * phase brings: the action card drawn (81.3), whichever it is, has a button of its own.
  */
-function StatusFields({ entry, game, pack, state, before, warnings }: {
-  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; state: GameState; before?: GameState; warnings: Warning[];
+function StatusFields({ entry, game, pack, view, state, before, warnings }: {
+  entry: Extract<Entry, { type: 'statusTokens' }>; game: Game; pack: DataPack; view: KernelView; state: GameState; before?: GameState; warnings: Warning[];
 }) {
   const { t } = useTranslation();
   const updateEntry = useGame(s => s.updateEntry);
@@ -77,7 +80,7 @@ function StatusFields({ entry, game, pack, state, before, warnings }: {
         free={free} values={{ tactic: entry.tactic, fleet: entry.fleet, strategy: entry.strategy }}
         onChange={values => updateEntry(entry.id, values)}
       />
-      <WarningList warnings={warnings} game={game} pack={pack} />
+      <WarningList warnings={warnings} table={view.table} board={view.board} pack={pack} />
       <SectionTitle as="h5" className="status-points">{t('plan.entries.roundPoints')}</SectionTitle>
       {playersOf(game).map((player, index) => {
         const me = index === 0;
@@ -94,12 +97,12 @@ function StatusFields({ entry, game, pack, state, before, warnings }: {
       })}
       <p className="muted status-reminder">{t('plan.entries.planetsRefresh')}</p>
       {/* The objectives scored and their reminders come after the points: the warning under the tiles stays above the points. */}
-      <StepHints pack={pack} board={before} step="status" players={['me']} />
+      <StepHints pack={pack} table={view.table} board={view.board} step="status" players={['me']} />
       <ScoredBlock entry={entry} pack={pack} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       {/* Last: a card taken stands under its buttons and moves nothing above. */}
       <GainsBlock entry={entry} pack={pack} before={before} lead="actionCard" onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
       {/* What the status phase uses: Letani Behemoth replaces the infantry of Mitosis, an agent is readied there. */}
-      <UsesBlock entry={entry} game={game} pack={pack} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
+      <UsesBlock entry={entry} game={game} pack={pack} view={view} before={before} onChange={patch => updateEntry(entry.id, patch as Partial<EntryBody>)} />
     </>
   );
 }
@@ -153,7 +156,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  game, pack, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
+  game, pack, viewOf, round, stateBefore, warnings, state, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const moveEntry = useGame(s => s.moveEntry);
@@ -213,7 +216,7 @@ export function EntryList({
                         <span className="entry-name">
                           <span className="entry-title">{label}</span>
                           {/* What the turn holds beside its action, each a line of its own. */}
-                          {actLines(entry, round, game, pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
+                          {actLines(entry, round, viewOf(entry.id), pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
                         </span>
                       </button>
                       <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>
@@ -230,11 +233,11 @@ export function EntryList({
                       </label>
                       <HexRemove label={t('plan.entries.delete')} onClick={() => removeEntry(entry.id)} />
                     </div>
-                    {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} game={game} pack={pack} />}
-                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
+                    {!fieldsOpen && <WarningList variant="row" warnings={shown ? list.filter(w => !inSteps(w)) : list} table={viewOf(entry.id).table} board={viewOf(entry.id).board} pack={pack} />}
+                    {shown && <EntrySteps entry={entry} game={gameAs(game, entry.owner)} pack={pack} view={viewOf(entry.id)} before={stateBefore ? stateBefore(entry.id) : state} warnings={list.filter(inSteps)} />}
                     {entry.id === openId && entry.type === 'statusTokens' && (
                       <div className="entry-details">
-                        <StatusFields entry={entry} game={game} pack={pack} state={state} before={stateBefore?.(entry.id)} warnings={list} />
+                        <StatusFields entry={entry} game={game} pack={pack} view={viewOf(entry.id)} state={state} before={stateBefore?.(entry.id)} warnings={list} />
                       </div>
                     )}
                   </li>

@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
+import { kernelViewOf } from '../testing/view';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 vi.mock('../../storage/db', () => ({
@@ -33,7 +34,7 @@ function openStatus(faction: string, secrets: string[] = []): void {
     const live = useGame(s => s.game)!;
     const line = timeline(live, live.plans[0], 'forecast', pack);
     return (
-      <EntryList
+      <EntryList viewOf={() => kernelViewOf(live, pack)}
         game={live} pack={pack} round={live.plans[0].rounds[0]} warnings={{}} state={project(live, live.plans[0], 'forecast', pack).state}
         stateBefore={entryId => boardBefore(line, entryId)} openId={id} onOpen={() => undefined}
       />

@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react';
+import { kernelViewOf } from '../testing/view';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 vi.mock('../../storage/db', () => ({
@@ -50,14 +51,14 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
   // The flight of a source is a step that stands in the editor's place, with the warnings of that flight.
   if (pickerFrom !== null) {
     return render(
-      <UnitPicker
+      <UnitPicker view={kernelViewOf(game(), pack)}
         game={game()} pack={pack} before={before()} entry={entry} source={pickerFrom} warnings={flightWarnings(warnings, game(), pack, entry, pickerFrom)}
         onChange={() => undefined} onClose={() => undefined} onFly={() => undefined}
       />,
     );
   }
   return render(
-    <TacticalEditor
+    <TacticalEditor view={kernelViewOf(game(), pack)}
       game={game()} pack={pack} entry={entry} before={before()} warnings={warnings} manualPayment={false}
       choosing={null} onChoose={() => undefined}
       onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
@@ -112,7 +113,7 @@ describe('the strategy editor', () => {
   function card(warnings: Warning[], patch: Partial<CardEntry>) {
     const entry = { id: 'c', type: 'strategic', status: 'planned', ...patch } as CardEntry;
     return render(
-      <StrategyEditor
+      <StrategyEditor view={kernelViewOf(game(), pack)}
         game={game()} pack={pack} round={game().plans[0].rounds[0]} entry={entry} before={before()} warnings={warnings} manualPayment={false} picking={null}
         onUpdate={noop} onManualPayment={noop} onPick={noop} onOpenShop={noop} onStartTactical={noop} onOpenTactical={noop} onDone={noop} onRemove={noop}
       />,
@@ -152,7 +153,7 @@ describe('the strategy editor', () => {
 
 describe('the expedition editor', () => {
   const expedition = (warnings: Warning[], sliceId: string | null) => render(
-    <ExpeditionEditor game={game()} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={warnings}
+    <ExpeditionEditor view={kernelViewOf(game(), pack)} game={game()} pack={pack} sliceId={sliceId} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={warnings}
       manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
     />,
   );
@@ -252,7 +253,7 @@ describe('the tactical editor', () => {
   test('no word about a space dock of its own: the domain\'s noProduction stands in the production block', () => {
     useGame.getState().setTile(SOURCE, '25');
     const { unmount } = render(
-      <TacticalEditor
+      <TacticalEditor view={kernelViewOf(game(), pack)}
         game={game()} pack={pack} before={before()} warnings={[]} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
         onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
@@ -261,7 +262,7 @@ describe('the tactical editor', () => {
     expect(screen.queryByText(/with Production/)).toBeNull();
     unmount();
     render(
-      <TacticalEditor
+      <TacticalEditor view={kernelViewOf(game(), pack)}
         game={game()} pack={pack} before={before()} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} manualPayment={false} choosing={null} onChoose={() => undefined}
         entry={{ id: 'e', type: 'tactical', status: 'planned', systemId: SOURCE, moves: [], landings: [], production: { fighter: 1 }, payment: { planets: [], tradeGoods: 0 } } as unknown as TacticalEntry}
         onUpdate={() => undefined} onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
@@ -301,7 +302,7 @@ describe('the rest of an editor stands first', () => {
   test('in the adjustment the units stand in the system, anything else above the blocks', () => {
     const entry = { id: 'a', type: 'adjustment', status: 'planned', label: '', delta: {} } as Parameters<typeof AdjustmentEditor>[0]['entry'];
     const { container } = render(
-      <AdjustmentEditor
+      <AdjustmentEditor view={kernelViewOf(game(), pack)}
         game={game()} pack={pack} entry={entry} picking={false} onPickSystem={() => undefined} onOpenHex={() => undefined} onUpdate={() => undefined} onDone={() => undefined} onRemove={() => undefined}
         warnings={[{ code: 'unitsMissing', params: { where: HOME, unit: 'cruiser', missing: 1 }, step: 'round' }, SHORT]}
       />,
@@ -314,7 +315,7 @@ describe('the rest of an editor stands first', () => {
 
   test('in the expedition what no block takes stands above the parts', () => {
     const { container } = render(
-      <ExpeditionEditor game={game()} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={[LANDING]}
+      <ExpeditionEditor view={kernelViewOf(game(), pack)} game={game()} pack={pack} sliceId={null} payment={{ planets: [], tradeGoods: 0 }} owners={{}} before={before()} warnings={[LANDING]}
         manualPayment={false} onManualPayment={() => undefined} onChange={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
     );
@@ -329,7 +330,7 @@ describe('the steps of an action', () => {
       landings: [], production: {}, payment: { planets: [], tradeGoods: 0 },
     } as unknown as TacticalEntry;
     const speed: Warning = { code: 'speedShort', params: { from: SOURCE, unit: 'carrier', move: 1, steps: 2 } };
-    const { container } = render(<EntrySteps entry={entry} game={game()} pack={pack} before={before()} warnings={[GROUP, speed]} />);
+    const { container } = render(<EntrySteps view={kernelViewOf(game(), pack)} entry={entry} game={game()} pack={pack} before={before()} warnings={[GROUP, speed]} />);
     expect(container.querySelector('.stop-target')).toHaveTextContent(/capacity/i);
     expect(container.querySelector('.stop')).toHaveTextContent(/carrier/i);
     expect(container.querySelector('.stops')).toHaveClass('stops-over');
@@ -338,7 +339,7 @@ describe('the steps of an action', () => {
 
 describe('the list of warnings', () => {
   test('a free text wears the same mark as a warning of a block; in a row it leaves the mark to the row', () => {
-    const { container } = render(<><WarningList message="Taken" /><WarningList variant="row" warnings={[SHORT]} game={game()} pack={pack} /></>);
+    const { container } = render(<><WarningList message="Taken" /><WarningList variant="row" warnings={[SHORT]} {...kernelViewOf(game(), pack)} pack={pack} /></>);
     expect(screen.getByRole('status')).toHaveClass('warning-text', 'place-warnings');
     expect(container.querySelector('ul')).toHaveClass('warning-list');
     expect(container.querySelector('ul')).not.toHaveClass('place-warnings');

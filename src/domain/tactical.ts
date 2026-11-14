@@ -7,6 +7,7 @@ import { holderOf } from './effects/registry';
 import { CUSTODIANS_COST, MECATOL_PLANETS } from './mecatol';
 import { boardSlots, fleetSpeed, linksOf, routeMove, routeReach, type Blockers, type MoveView } from './movement';
 import { autoPay } from './payment';
+import type { MapSource } from './replay/board';
 import { productionDue } from './replay/production';
 import { fightersFly, isOnMap, productionCost, routeSteps, sourceSlot, systemPlanets, tileIdOf } from './project';
 import type { AdjustmentDelta, DataPack, Entry, Game, GameState, Holdings, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
@@ -242,13 +243,13 @@ export function splitFlight(game: Game, pack: DataPack, holdings: Holdings, unit
 }
 
 /** The source systems of an action, in the order of their moves. */
-export function sourcesOf(game: Game, pack: DataPack, entry: TacticalEntry): string[] {
+export function sourcesOf(game: MapSource, pack: DataPack, entry: TacticalEntry): string[] {
   const slots = entry.moves.filter(m => m.pickupOf === undefined).map(m => sourceSlot(game, pack, m.from));
   return [...new Set(slots)].filter((s): s is string => s !== null);
 }
 
 /** The moves of one source: its space area, its planets, and what it picks up on the way. */
-export function groupOf(game: Game, pack: DataPack, moves: Move[], source: string): Move[] {
+export function groupOf(game: MapSource, pack: DataPack, moves: Move[], source: string): Move[] {
   return moves.filter(m => (m.pickupOf === undefined ? sourceSlot(game, pack, m.from) === source : m.pickupOf === source));
 }
 

@@ -3,6 +3,7 @@ import { boardBefore, timelineOf } from '../../../state/projection';
 import { playerState } from '../../../domain/stacks';
 import type { DataPack, Game, GameState, Plan } from '../../../domain/types';
 import type { Board } from '../../../game/types';
+import type { KernelView } from '../../plan/kernelView';
 
 type Filter = 'now' | 'forecast';
 
@@ -13,6 +14,8 @@ export interface Boards {
   before: (entryId: string, filter?: Filter) => GameState;
   /** The kernel's board just before an entry, whoever it belongs to: the whole table. */
   boardOf: (entryId: string, filter?: Filter) => Board;
+  /** The table and the board of the kernel just before an entry: what the editors read names, notes, reminders and warnings from. */
+  view: (entryId: string, filter?: Filter) => KernelView;
 }
 
 /**
@@ -36,6 +39,15 @@ export function useBoards(game: Game | null, plan: Plan | undefined, pack: DataP
       const { kernel } = timelineOf(game!, plan!, filter, pack);
       return kernel.byTurn.get(entryId)?.before ?? kernel.end;
     };
-    return { board, boardOf, before: (entryId, filter) => playerState(board(entryId, filter), ownerOf(entryId)) };
+    const views = new Map<string, KernelView>();
+    const view = (entryId: string, filter: Filter = 'forecast'): KernelView => {
+      const at = boardOf(entryId, filter);
+      const kept = views.get(`${filter}:${entryId}`);
+      if (kept && kept.board === at) return kept;
+      const made = { table: timelineOf(game!, plan!, filter, pack).kernel.table, board: at };
+      views.set(`${filter}:${entryId}`, made);
+      return made;
+    };
+    return { board, boardOf, view, before: (entryId, filter) => playerState(board(entryId, filter), ownerOf(entryId)) };
   }, [game, plan, pack]);
 }

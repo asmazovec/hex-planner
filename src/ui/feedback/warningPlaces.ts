@@ -1,6 +1,7 @@
 import { ruleOf } from '../../domain/rules/registry';
-import type { DataPack, Entry, Game, RuleStep, Warning } from '../../domain/types';
-import { groupOf, sourcesOf, type Move } from '../plan/tactical';
+import type { MapSource } from '../../game/space';
+import type { DataPack, RuleStep, Warning } from '../../domain/types';
+import { groupOf, sourcesOf, type Move, type TacticalEntry } from '../plan/tactical';
 
 /** The block of an editor where the thing a warning speaks of is set up. */
 export type WarningPlace =
@@ -63,16 +64,16 @@ export const allPlaces = (): WarningPlace[] => [...new Set([...Object.values(STE
 export const limitsSystem = (warning: Warning): boolean => placesOf(warning).includes('action') && placesOf(warning).includes('route');
 
 /** Whether a warning speaks of the ships or the cargo of one source of a tactical action. */
-export function ofSource(warning: Warning, game: Game, pack: DataPack, moves: Move[], source: string): boolean {
-  if (warning.code === 'unitsMissing') return groupOf(game, pack, moves, source).some(m => m.from === warning.params.where);
+export function ofSource(warning: Warning, map: MapSource, pack: DataPack, moves: Move[], source: string): boolean {
+  if (warning.code === 'unitsMissing') return groupOf(map, pack, moves, source).some(m => m.from === warning.params.where);
   const from = warning.place?.source ?? warning.params.from;
   return (stepOf(warning) === 'movement' || stepOf(warning) === 'transport') && !limitsSystem(warning) && from === source;
 }
 
 /** The source of a tactical action whose flight a warning speaks of, if it speaks of one. */
-export function flightOf(warning: Warning, game: Game, pack: DataPack, entry: Entry): string | undefined {
-  if (entry.type !== 'tactical') return undefined;
-  return sourcesOf(game, pack, entry).find(source => ofSource(warning, game, pack, entry.moves, source));
+export function flightOf(warning: Warning, map: MapSource, pack: DataPack, entry: { type: string; moves?: Move[] }): string | undefined {
+  if (entry.type !== 'tactical' || entry.moves === undefined) return undefined;
+  return sourcesOf(map, pack, entry as TacticalEntry).find(source => ofSource(warning, map, pack, entry.moves!, source));
 }
 
 export interface WarningPlacer {
@@ -82,13 +83,16 @@ export interface WarningPlacer {
   rest: () => Warning[];
 }
 
+/** What of an entry decides which warnings are of its components: the ones it names in «Used» and the one it plays. */
+export interface UsingEntry { uses?: readonly string[]; componentId?: string | undefined }
+
 /**
  * The warnings of the components an entry names in «Used»: what the component breaks (not held, exhausted) stands in that
  * block, whatever the entry is, and the component the action itself plays keeps its own.
  */
-export function usesWarnings(entry: Entry, warnings: Warning[]): Warning[] {
+export function usesWarnings(entry: UsingEntry, warnings: Warning[]): Warning[] {
   const used = new Set(entry.uses);
-  const played = entry.type === 'component' ? entry.componentId : undefined;
+  const played = entry.componentId;
   return warnings.filter(w => stepOf(w) === 'component' && typeof w.params.id === 'string' && used.has(w.params.id) && w.params.id !== played);
 }
 
@@ -96,7 +100,7 @@ export function usesWarnings(entry: Entry, warnings: Warning[]): Warning[] {
  * Hands the warnings of an editor out to its blocks, and keeps what is left so that no warning gets lost. Given the
  * entry, what concerns a component of its «Used» block is taken out: that block shows it.
  */
-export function placeWarnings(warnings: Warning[], entry?: Entry): WarningPlacer {
+export function placeWarnings(warnings: Warning[], entry?: UsingEntry): WarningPlacer {
   const given = new Map<WarningPlace, Set<Warning>>();
   const taken = new Set<Warning>(entry ? usesWarnings(entry, warnings) : []);
   const placed = new Set<Warning>(taken);

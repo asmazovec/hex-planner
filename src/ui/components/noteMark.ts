@@ -1,6 +1,8 @@
 import type { TFunction } from 'i18next';
-import { noteOwner, noteText } from '../../domain/holdings';
-import type { DataPack, Game } from '../../domain/types';
+import { noteAddress, textOf } from '../../domain/components';
+import type { DataPack } from '../../domain/types';
+import { legacyKey } from '../../game/keys';
+import type { Table } from '../../game/types';
 import { shortName } from '../players/names';
 
 /** Whose card a promissory note is, for `ComponentCard`: the owner's short name and colour, and the text with the owner in it. */
@@ -10,16 +12,16 @@ export interface NoteMark {
 }
 
 /**
- * How a note held, played or handed over shows whose it is. `viewer` is the player the game is shown as (`gameAs`),
- * `me` for the game itself. Nothing for any other component, and for a note without an address.
+ * How a note held, played or handed over shows whose it is: the owner is the player of the table the note is addressed
+ * to (`me` or an opponent id, or the kernel's id). Nothing for any other component, and for a note without an address
+ * or to nobody at the table. The text of the note says the owner by name in place of `<color>`.
  */
-export function noteMark(game: Game, pack: DataPack, id: string, t: TFunction, viewer = 'me'): NoteMark {
-  const owner = noteOwner(game, id, viewer);
+export function noteMark(table: Table, pack: DataPack, id: string, t: TFunction): NoteMark {
+  const address = noteAddress(id);
+  const owner = address === undefined ? undefined : table.players.find(p => p.id === address || legacyKey(table, p.id) === address);
   if (owner === undefined) return {};
-  const player = (who: string) => (who === viewer ? game : game.opponents.find(o => o.id === who));
-  const nameOf = (who: string): string => {
-    const found = player(who);
-    return found ? shortName(pack, found.faction, t('players.player', { n: found.seat })) : who;
-  };
-  return { owner: { name: nameOf(owner), color: player(owner)?.color ?? 0 }, text: noteText(game, pack, id, nameOf, viewer) };
+  const name = shortName(pack, owner.faction, t('players.player', { n: owner.seat }));
+  return { owner: { name, color: owner.color }, text: textWith(pack, id, name) };
 }
+
+const textWith = (pack: DataPack, id: string, name: string): string => textOf(pack, id).replaceAll('<color>', name);

@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
+import { kernelViewOf } from '../../testing/view';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -83,7 +84,7 @@ test('a component action chooses its component, shows it over the note and lets 
   const onComponent = vi.fn();
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const shown = (e: typeof entry) => (
-    <TurnEditor entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
+    <TurnEditor view={kernelViewOf(game(), pack)} entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
   );
   const { rerender } = render(shown(entry));
   await userEvent.click(screen.getByRole('button', { name: 'Choose the component' }));
@@ -100,7 +101,7 @@ test('a component action begins with the place of its component: as wide as the 
   const onComponent = vi.fn();
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const shown = (e: typeof entry) => (
-    <TurnEditor entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
+    <TurnEditor view={kernelViewOf(game(), pack)} entry={e} game={game()} pack={pack} warnings={[]} common={null} onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined} />
   );
   const { rerender } = render(shown(entry));
   const own = () => within(screen.getByRole('group', { name: 'Action setup' }));
@@ -120,7 +121,7 @@ test('a component action begins with the place of its component: as wide as the 
 
 test('a component action just added from the menu opens the choice of its component at once', async () => {
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
-  render(<TurnEditor entry={entry} game={game()} pack={pack} warnings={[]} common={null} pickFirst onNote={() => undefined} onComponent={() => undefined} onDone={() => undefined} onRemove={() => undefined} />);
+  render(<TurnEditor view={kernelViewOf(game(), pack)} entry={entry} game={game()} pack={pack} warnings={[]} common={null} pickFirst onNote={() => undefined} onComponent={() => undefined} onDone={() => undefined} onRemove={() => undefined} />);
   expect(picker()).toBeVisible();
   await userEvent.keyboard('{Escape}');
   expect(screen.getByRole('button', { name: 'Choose the component' })).toBeVisible();
@@ -235,7 +236,7 @@ test('a component action offers first what its owner holds ready; the rest says 
   const entry = { id: 'c', phase: 'action', status: 'planned', type: 'component', note: '' } as Extract<Entry, { type: 'component' }>;
   const onComponent = vi.fn();
   render(
-    <TurnEditor
+    <TurnEditor view={kernelViewOf(game(), pack)}
       entry={entry} game={game()} pack={pack} board={holding({ relics: ['relic:thalnos'] })} warnings={[]} common={null}
       onNote={() => undefined} onComponent={onComponent} onDone={() => undefined} onRemove={() => undefined}
     />,

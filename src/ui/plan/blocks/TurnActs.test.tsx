@@ -1,4 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
+import { kernelViewOf } from '../../testing/view';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -39,7 +40,7 @@ const turn = (acts: Act[] = []): Entry => ({ id: 't', phase: 'action', status: '
 function block(entry: Entry, game = gameWith()) {
   const onChange = vi.fn();
   const onOpen = vi.fn();
-  render(<TurnActs game={game} pack={pack} entry={entry} warnings={[]} owners={{}} onChange={onChange} onOpen={onOpen} />);
+  render(<TurnActs view={kernelViewOf(game, pack)} game={game} pack={pack} entry={entry} warnings={[]} owners={{}} onChange={onChange} onOpen={onOpen} />);
   return { onChange, onOpen, game };
 }
 
@@ -80,7 +81,7 @@ test('the transaction step sets the player and what is given and got', async () 
   const game = gameWith();
   const onChange = vi.fn();
   const act: Act = { kind: 'transaction', with: game.opponents[0].id, give: {}, get: {} };
-  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={boardOf()} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={boardOf()} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: 'Add one Trade goods' }));
   expect(onChange).toHaveBeenLastCalledWith({ ...act, give: { tradeGoods: 1 } });
   await userEvent.click(within(screen.getByRole('group', { name: 'With whom' })).getByRole('button', { name: 'Player 3' }));
@@ -98,7 +99,7 @@ test('«+ Component» offers only what the giving side holds and a transaction h
     { promissory: [NOTE], hand: [CARD, CARD], technologies: ['technology:st'], relics: ['relic:shard'] },
     { [rival]: { promissory: [THEIR_NOTE] }, [game.opponents[1].id]: { promissory: ['promissory:fires'] } },
   );
-  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
   expect(offered()).toEqual([`component-${NOTE}`, `component-${CARD}`]);
   await userEvent.click(screen.getByRole('button', { name: 'Choose War Funding' }));
@@ -115,7 +116,7 @@ test('in a rival\'s turn the sides swap: the rival gives from their holdings and
   const rival = game.opponents[0].id;
   const act: Act = { kind: 'transaction', with: 'me', give: {}, get: {} };
   const board = boardOf({ promissory: [NOTE] }, { [rival]: { promissory: [THEIR_NOTE] } });
-  render(<TransactionStep game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={board} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={board} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
   expect(offered()).toEqual([`component-${THEIR_NOTE}`]);
   await userEvent.keyboard('{Escape}');
@@ -127,7 +128,7 @@ test('a chosen component is not offered again, and a side with nothing left to h
   const game = gameWith();
   const rival = game.opponents[0].id;
   const act: Act = { kind: 'transaction', with: rival, give: { components: [NOTE, CARD] }, get: {} };
-  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={boardOf({ promissory: [NOTE], hand: [CARD, CARD] })} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={boardOf({ promissory: [NOTE], hand: [CARD, CARD] })} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));
   // The note is held once; the second copy of the action card is still in hand.
   expect(offered()).toEqual([`component-${CARD}`]);
@@ -138,7 +139,7 @@ test('the chosen components stand under the counters and the button that adds th
   const game = gameWith();
   const onChange = vi.fn();
   const act: Act = { kind: 'transaction', with: game.opponents[0].id, give: { tradeGoods: 1, components: [NOTE, CARD] }, get: {} };
-  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={boardOf({ promissory: [NOTE], hand: [CARD] })} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={boardOf({ promissory: [NOTE], hand: [CARD] })} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
   const give = within(screen.getByRole('group', { name: 'Give' }));
   const order = [
     give.getByRole('group', { name: 'Trade goods' }), give.getByRole('group', { name: 'Commodities' }),
@@ -169,7 +170,7 @@ test('in the turn of an opponent the transaction step lists every other player o
   const game = gameWith();
   const rival = game.opponents[0].id;
   const act: Act = { kind: 'transaction', with: 'me', give: {}, get: {} };
-  render(<TransactionStep game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   const names = within(screen.getByRole('group', { name: 'With whom' })).getAllByRole('button').map(b => b.textContent);
   expect(names).toHaveLength(game.opponents.length);
   expect(new Set(names).size).toBe(names.length);
@@ -180,7 +181,7 @@ test('the players of a transaction are named as everywhere, by the short name of
   useGame.getState().setOpponent(1, { faction: 'letnev' });
   const game = useGame.getState().game!;
   const act: Act = { kind: 'transaction', with: game.opponents[0].id, give: {}, get: {} };
-  const { unmount } = render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  const { unmount } = render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   expect(within(screen.getByRole('group', { name: 'With whom' })).getAllByRole('button').map(b => b.textContent)).toEqual(['Hacan', 'Letnev', 'Player 4']);
   unmount();
   block(turn([act]), game);
@@ -192,7 +193,7 @@ test('in the turn of an opponent I stand among the players under the short name 
   const game = useGame.getState().game!;
   const rival = game.opponents[0].id;
   const act: Act = { kind: 'transaction', with: 'me', give: {}, get: {} };
-  render(<TransactionStep game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   expect(within(screen.getByRole('group', { name: 'With whom' })).getByRole('button', { name: 'Sol' })).toHaveAttribute('aria-pressed', 'true');
 });
 
@@ -205,7 +206,7 @@ test('«+ Component» offers first the notes of the side that gets them: mine am
     { promissory: [`${NOTE}@me`, `${NOTE}@${other}`, `${NOTE}@${rival}`], hand: [CARD] },
     { [rival]: { promissory: [`${NOTE}@${rival}`, `promissory:<color>_cf@${other}`, `promissory:<color>_cf@me`] } },
   );
-  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   await userEvent.click(within(screen.getByRole('group', { name: 'Get' })).getByRole('button', { name: '+ Component' }));
   expect(offered()).toEqual([`component-promissory:<color>_cf@me`, `component-${NOTE}@${rival}`, `component-promissory:<color>_cf@${other}`]);
   await userEvent.keyboard('{Escape}');
@@ -221,7 +222,7 @@ test('a note got from a rival says whose it is, in the choice, in its text and o
   const onChange = vi.fn();
   const act: Act = { kind: 'transaction', with: rival, give: {}, get: { components: [`promissory:convoys@${rival}`] } };
   const board = boardOf({ promissory: ['promissory:<color>_ta@me'] }, { [rival]: { promissory: [theirs, `promissory:convoys@${rival}`] } });
-  render(<TransactionStep game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={game} pack={pack} act={act} owner="me" board={board} warnings={[]} onChange={onChange} onBack={vi.fn()} onRemove={vi.fn()} />);
   const get = within(screen.getByRole('group', { name: 'Get' }));
   expect(get.getByTestId(`component-promissory:convoys@${rival}`)).toHaveTextContent('Hacan');
   await userEvent.click(get.getByRole('button', { name: '+ Component' }));
@@ -242,7 +243,7 @@ test('in a rival\'s turn the note the rival gives is still marked as theirs, and
   const game = useGame.getState().game!;
   const rival = game.opponents[0].id;
   const act: Act = { kind: 'transaction', with: 'me', give: { components: [`promissory:<color>_ta@${rival}`] }, get: { components: ['promissory:<color>_ta@me'] } };
-  render(<TransactionStep game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
+  render(<TransactionStep view={kernelViewOf(game, pack)} game={gameAs(game, rival)} pack={pack} act={act} owner={rival} board={boardOf()} warnings={[]} onChange={vi.fn()} onBack={vi.fn()} onRemove={vi.fn()} />);
   expect(within(screen.getByRole('group', { name: 'Give' })).getByTestId(`component-promissory:<color>_ta@${rival}`)).toHaveTextContent('Hacan');
   expect(within(screen.getByRole('group', { name: 'Get' })).getByTestId('component-promissory:<color>_ta@me')).toHaveTextContent('Sol');
 });

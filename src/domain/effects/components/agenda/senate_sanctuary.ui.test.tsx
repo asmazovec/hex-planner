@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { kernelViewOf } from '../../../../ui/testing/view';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { expect, test } from 'vitest';
@@ -22,7 +23,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
     current = shown;
     const nothing = () => undefined;
     return (
-      <AdjustmentEditor
+      <AdjustmentEditor view={kernelViewOf(table.game, table.pack)}
         game={table.game} pack={table.pack} entry={shown} warnings={[]} picking={false}
         onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}
         onUpdate={patch => setShown(now => ({ ...now, ...patch }))}

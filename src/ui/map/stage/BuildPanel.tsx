@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { TokenKind } from '../../../domain/hexLayout';
-import type { DataPack, Game, Warning } from '../../../domain/types';
+import type { DataPack, Warning } from '../../../domain/types';
 import { planetShown } from '../../../game/tile';
 import type { Board, PlayerId, Table } from '../../../game/types';
 import { SectionTitle } from '../../primitives/SectionTitle';
@@ -12,8 +12,6 @@ import type { MeterRow, ShopRow } from './useStage';
 export interface BuildPanelProps {
   table: Table;
   viewer?: PlayerId;
-  /** The warnings are worded from it (their places and names). */
-  game: Game;
   pack: DataPack;
   /** What the hex shows: a planet's badge follows its control and readiness. */
   board: Board;
@@ -41,7 +39,7 @@ export interface BuildPanelProps {
  * hold a figure and, in the look of "beyond the stock", after that too (the domain warns); a tap on a bought one, or on its ringed token, takes it back. Units are produced and structures
  * built, so each stands under its own heading; a hex opened for one of them shows only it.
  */
-export function BuildPanel({ table, viewer = table.viewer, game, pack, board, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
+export function BuildPanel({ table, viewer = table.viewer, pack, board, production, construction, stock, colour, onTake, onReturn, structuresOnly, boughtTotal, spent, mine, meters, warnings, boardWarnings }: BuildPanelProps) {
   const { t } = useTranslation();
   const draft = (rows: ShopRow[]) => (
     <UnitDraft
@@ -58,7 +56,7 @@ export function BuildPanel({ table, viewer = table.viewer, game, pack, board, pr
     <>
       {production.length > 0 && <><SectionTitle>{t('stage.production')}</SectionTitle>{draft(production)}</>}
       {construction.length > 0 && <><SectionTitle>{t('stage.construction')}</SectionTitle>{draft(construction)}</>}
-      <WarningList warnings={boardWarnings} game={game} pack={pack} />
+      <WarningList warnings={boardWarnings} table={table} board={board} pack={pack} />
       <div className="stage-total">
         <span>{t('stage.bought', { n: boughtTotal })}</span>
         <b>{spent}</b>
@@ -73,7 +71,7 @@ export function BuildPanel({ table, viewer = table.viewer, game, pack, board, pr
           ))}
         </div>
       )}
-      {mine && <WarningList warnings={warnings} game={game} pack={pack} />}
+      {mine && <WarningList warnings={warnings} table={table} board={board} pack={pack} />}
       <p className="muted">{t('stage.buildNote')}</p>
     </>
   );

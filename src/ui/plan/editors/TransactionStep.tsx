@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { effectOf } from '../../../domain/effects/registry';
@@ -21,6 +22,8 @@ type Transaction = Extract<Act, { kind: 'transaction' }>;
 type Side = 'give' | 'get';
 
 export interface TransactionStepProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   game: Game;
   pack: DataPack;
   act: Transaction;
@@ -41,7 +44,7 @@ export interface TransactionStepProps {
  * A transaction with a neighbour (LRR 94): who with, then what is given and what is got. The components of a side are
  * chosen among what the giving side holds and a transaction hands over; nothing else is limited, the replay warns.
  */
-export function TransactionStep({ game, pack, act, owner, board, warnings, uses = [], onChange, onBack, onRemove }: TransactionStepProps) {
+export function TransactionStep({ game, pack, view, act, owner, board, warnings, uses = [], onChange, onBack, onRemove }: TransactionStepProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState<Side | null>(null);
   // The game is seen by the turn's owner: its opponents are every other player, me among them in an opponent's turn.
@@ -81,7 +84,7 @@ export function TransactionStep({ game, pack, act, owner, board, warnings, uses 
           const def = componentById(pack, id);
           return def && (
             <ComponentCard
-              key={`${id}-${index}`} def={def} pack={pack} held {...noteMark(game, pack, id, t, owner)}
+              key={`${id}-${index}`} def={def} pack={pack} held {...noteMark(view.table, pack, id, t)}
               note={def.kind === 'actionCard' ? t('plan.acts.byAbility') : undefined}
               onRemove={() => set(key, { components: components.filter((_, i) => i !== index) })}
             />
@@ -96,8 +99,8 @@ export function TransactionStep({ game, pack, act, owner, board, warnings, uses 
       {side('give', t('plan.acts.give'))}
       {side('get', t('plan.acts.get'))}
       {/* Under the goods: a warning above them would push the counters from under the finger. */}
-      <WarningList warnings={placeWarnings(warnings).at('deal')} game={game} pack={pack} />
-      <StepHints pack={pack} board={board} step="transaction" players={[owner, act.with]} />
+      <WarningList warnings={placeWarnings(warnings).at('deal')} table={view.table} board={view.board} pack={pack} />
+      <StepHints pack={pack} table={view.table} board={view.board} step="transaction" players={[owner, act.with]} />
       {picking && (
         <ComponentPicker
           ids={offer(picking)} player={giver(picking)} onClose={() => setPicking(null)}

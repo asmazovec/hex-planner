@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import type { KernelView } from '../kernelView';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import { effectOf } from '../../../domain/effects/registry';
@@ -42,6 +43,8 @@ export interface TurnProduction {
 }
 
 export interface TurnEditorProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   entry: Extract<Entry, { type: 'component' | 'pass' }>;
   game: Game;
   pack: DataPack;
@@ -70,7 +73,7 @@ export interface TurnEditorProps {
  * A component action or a pass as a turn: the component the action plays, first and as wide as the editor, and its note
  * in a part of their own, then what any turn holds; a pass has only that.
  */
-export function TurnEditor({ entry, game, pack, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, production, onDone, onRemove }: TurnEditorProps) {
+export function TurnEditor({ entry, game, pack, view, board, warnings, common, pickFirst, onNote, onComponent, onChoices, onPayment, production, onDone, onRemove }: TurnEditorProps) {
   const { t } = useTranslation();
   const [manualPayment, setManualPayment] = useState(false);
   const [picking, setPicking] = useState(() => Boolean(pickFirst) && entry.type === 'component' && entry.componentId === undefined);
@@ -96,12 +99,12 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
   const ofProduction = makes ? placer.at('production') : [];
   return (
     <EditorFrame title={t(`plan.menu.${entry.type}`)} removeLabel={t('editor.remove')} onRemove={onRemove} onDone={onDone}>
-      <WarningList warnings={placer.rest()} game={game} pack={pack} />
+      <WarningList warnings={placer.rest()} table={view.table} board={view.board} pack={pack} />
       {entry.type === 'component' && (
         <EditorPart title={t('editor.setup')}>
-          <Section label={t('components.played')} title={t('components.played')} warnings={<WarningList warnings={ofComponent} game={game} pack={pack} />}>
+          <Section label={t('components.played')} title={t('components.played')} warnings={<WarningList warnings={ofComponent} table={view.table} board={view.board} pack={pack} />}>
             <ComponentSlot
-              label={t('components.pickPlayed')} def={played} pack={pack} card={played && noteMark(game, pack, played.id, t, entry.owner ?? 'me')}
+              label={t('components.pickPlayed')} def={played} pack={pack} card={played && noteMark(view.table, pack, played.id, t)}
               onPick={() => setPicking(true)} onRemove={() => onComponent(undefined)}
             />
           </Section>
@@ -116,7 +119,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
             />
           )}
           {makes && production && own && (
-            <Section label={t('components.produce')} title={t('components.produce')} warnings={<WarningList warnings={ofProduction} game={game} pack={pack} />}>
+            <Section label={t('components.produce')} title={t('components.produce')} warnings={<WarningList warnings={ofProduction} table={view.table} board={view.board} pack={pack} />}>
               {made
                 ? (
                   <div className="source-row in-card">
@@ -137,7 +140,7 @@ export function TurnEditor({ entry, game, pack, board, warnings, common, pickFir
               )}
             </Section>
           )}
-          <StepHints pack={pack} board={board} step="component" players={[entry.owner ?? 'me']} />
+          <StepHints pack={pack} table={view.table} board={view.board} step="component" players={[entry.owner ?? 'me']} />
           <NoteField label={t('plan.entries.note')} value={entry.note} onCommit={onNote} />
         </EditorPart>
       )}

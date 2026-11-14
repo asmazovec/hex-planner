@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { kernelViewOf } from '../../../../ui/testing/view';
 import { expect, test } from 'vitest';
 import { expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { AdjustmentEditor } from '../../../../ui/plan/editors/AdjustmentEditor';
@@ -23,7 +24,7 @@ test('agenda:cladenstine the agenda editor offers the outcomes For and Against',
   const t = table(agenda);
   quote(t.pack, id, 'Each player removes 1 command token from their fleet pool');
   render(
-    <AdjustmentEditor
+    <AdjustmentEditor view={kernelViewOf(t.game, t.pack)}
       game={t.game} pack={t.pack} entry={agenda as Extract<Entry, { type: 'adjustment' }>} warnings={[]} picking={false}
       onPickSystem={nothing} onOpenHex={nothing} onUpdate={nothing} onDone={nothing} onRemove={nothing}
     />,

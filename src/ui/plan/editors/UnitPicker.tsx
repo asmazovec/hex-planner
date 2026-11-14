@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import type { KernelView } from '../kernelView';
 import { shownPlanetValues } from '../../../domain/payment';
 import { pickupAllowed, routeSteps, systemPlanets, tacticalMeters } from '../../../domain/project';
 import type { TokenKind } from '../../../domain/hexLayout';
@@ -15,6 +16,8 @@ import { WarningList } from '../../feedback/WarningText';
 import { SectionTitle } from '../../primitives/SectionTitle';
 
 export interface UnitPickerProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   game: Game;
   pack: DataPack;
   /** The state just before the entry. */
@@ -66,7 +69,7 @@ function CargoPips({ load, capacity }: { load: number; capacity: number }) {
  * what is taken from each system on the way. Its cross removes the route. Nothing is chosen at first; limits warn, never forbid.
  * Every place a unit is taken from is a row of a `UnitDraft`: a button to take per kind, and the tray of what was taken.
  */
-export function UnitPicker({ game, pack, before, shared, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
+export function UnitPicker({ game, pack, view, before, shared, entry, source, warnings = [], onChange, onClose, onFly }: UnitPickerProps) {
   const { t } = useTranslation();
   const colour = playerColour(game.color);
   const target = entry.systemId ?? '';
@@ -170,12 +173,12 @@ export function UnitPicker({ game, pack, before, shared, entry, source, warnings
           <li className="stop stop-target"><span className="stop-name">{systemTitle(game, pack, target, t)} · {t('plan.picker.target')}</span></li>
         </ol>
         {/* Under the stops: a warning above them would push the cargo from under the finger. */}
-        <WarningList warnings={cargoWarnings} game={game} pack={pack} />
+        <WarningList warnings={cargoWarnings} table={view.table} board={view.board} pack={pack} />
       </div>
 
       {/* Over the limit the warning below says it, in the look of every warning. */}
       {ships <= fleet && <p className="picker-fleet muted">{t('plan.picker.fleet', { ships, fleet })}</p>}
-      <WarningList warnings={placer.rest()} game={game} pack={pack} />
+      <WarningList warnings={placer.rest()} table={view.table} board={view.board} pack={pack} />
 
       <button type="button" className="primary" disabled={!group.some(hasCargo)} onClick={onFly}>{t('plan.picker.fly')}</button>
     </EditorFrame>

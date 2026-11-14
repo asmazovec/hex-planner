@@ -1,29 +1,34 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PayView } from '../../domain/payment';
-import { readyInfluence, readyResources } from '../../domain/project';
-import type { DataPack, GameState } from '../../domain/types';
+import type { PaymentKind } from '../../domain/payment';
+import type { DataPack } from '../../domain/types';
+import { payingPlanets, planetValue, poolsOf } from '../../game/queries';
+import type { Board, Table } from '../../game/types';
 import { animates } from '../common/motion';
 
 export interface SummaryBarProps {
-  now: GameState;
-  forecast: GameState;
+  /** Whose totals are shown is the viewer of the table; the planets count as the components make them. */
+  table: Table;
+  now: Board;
+  forecast: Board;
   pack: DataPack;
-  /** Who plays: the totals count the planets as the components make them. */
-  view?: PayView;
   /** Only what has happened: the plan's forecast is not shown. */
   factOnly?: boolean;
 }
 
-const VALUES: { key: string; read: (state: GameState, pack: DataPack, view?: PayView) => number }[] = [
-  { key: 'resources', read: readyResources },
-  { key: 'influence', read: readyInfluence },
-  { key: 'tradeGoods', read: s => s.tradeGoods },
-  { key: 'commodities', read: s => s.commodities },
-  { key: 'tactic', read: s => s.tactic },
-  { key: 'fleet', read: s => s.fleet },
-  { key: 'strategy', read: s => s.strategy },
-  { key: 'vp', read: s => s.vp },
+/** What the ready planets are worth to the viewer. */
+const worth = (table: Table, board: Board, pack: DataPack, kind: PaymentKind): number =>
+  payingPlanets(table, board, pack, table.viewer).reduce((total, id) => total + planetValue(table, board, pack, table.viewer, id, kind), 0);
+
+const VALUES: { key: string; read: (table: Table, board: Board, pack: DataPack) => number }[] = [
+  { key: 'resources', read: (table, board, pack) => worth(table, board, pack, 'resources') },
+  { key: 'influence', read: (table, board, pack) => worth(table, board, pack, 'influence') },
+  { key: 'tradeGoods', read: (table, board) => board.players[table.viewer]?.tradeGoods ?? 0 },
+  { key: 'commodities', read: (table, board) => board.players[table.viewer]?.commodities ?? 0 },
+  { key: 'tactic', read: (table, board) => poolsOf(board, table.viewer).tactic },
+  { key: 'fleet', read: (table, board) => poolsOf(board, table.viewer).fleet },
+  { key: 'strategy', read: (table, board) => poolsOf(board, table.viewer).strategy },
+  { key: 'vp', read: (table, board) => board.players[table.viewer]?.vp ?? 0 },
 ];
 
 /** The forecast after the arrow: it unrolls and rolls back up, and leaves the screen once its closing animation ends. */
@@ -45,13 +50,13 @@ function Forecast({ before, after }: { before: number; after: number }) {
   );
 }
 
-export function SummaryBar({ now, forecast, pack, view, factOnly = false }: SummaryBarProps) {
+export function SummaryBar({ table, now, forecast, pack, factOnly = false }: SummaryBarProps) {
   const { t } = useTranslation();
   return (
     <div className="summary-bar" role="group" aria-label={t('plan.summary.label')}>
       {VALUES.map(({ key, read }) => {
-        const before = read(now, pack, view);
-        const after = factOnly ? before : read(forecast, pack, view);
+        const before = read(table, now, pack);
+        const after = factOnly ? before : read(table, forecast, pack);
         return (
           <div key={key} className="summary-cell" role="group" aria-label={t(`plan.summary.${key}`)}>
             <span>{t(`plan.summary.${key}`)}</span>

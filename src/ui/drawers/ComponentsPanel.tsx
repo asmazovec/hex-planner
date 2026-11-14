@@ -150,7 +150,7 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
     }
     return (
       <ComponentCard
-        key={def.id} def={def} pack={pack} held={held} state={held ? tired : undefined} note={note} source={source} {...noteMark(game, pack, def.id, t)}
+        key={def.id} def={def} pack={pack} held={held} state={held ? tired : undefined} note={note} source={source} {...noteMark(table, pack, def.id, t)}
         onRemove={held && atStart > 0 && source === undefined ? () => setStartHolding(player, def.id, false) : undefined}
         onAdd={held ? undefined : add}
       />
@@ -166,7 +166,7 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
   const ownNote = ({ id, holder }: NotePlace): ReactNode => {
     const def = componentById(pack, id);
     if (!def) return null;
-    const { text } = noteMark(game, pack, id, t);
+    const { text } = noteMark(table, pack, id, t);
     const there = holder === undefined || holder === player ? undefined : playerOf(holder);
     if (holder === player) {
       const source = fromPlan[id];

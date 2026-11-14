@@ -6,6 +6,7 @@ import { standing, tacticalMeters } from '../../domain/project';
 import { upgradesOf } from '../../domain/holdings';
 import { cardCost, strategyTokensOwed } from '../../domain/strategy';
 import type { DataPack, Entry, Game, GameState, Payment, UnitCounts, Warning } from '../../domain/types';
+import type { KernelView } from './kernelView';
 import { flightOf as warningFlightOf, placeWarnings } from '../feedback/warningPlaces';
 import { WarningList } from '../feedback/WarningText';
 import { opponentName } from '../players/names';
@@ -31,6 +32,8 @@ export interface EntryStepsProps {
   entry: Entry;
   game: Game;
   pack: DataPack;
+  /** The table and the board just before the entry, as the kernel keeps them. */
+  view: KernelView;
   /** The state just before the entry. */
   before: GameState;
   /** The entry's warnings about its flights; each stands in the flight it speaks of. */
@@ -38,7 +41,7 @@ export interface EntryStepsProps {
 }
 
 /** What an entry plans, with no controls: a tactical action along its lines, the others as numbered steps. Pass has nothing to say. */
-export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntryStepsProps) {
+export function EntrySteps({ entry, game, pack, view, before, warnings = [] }: EntryStepsProps) {
   const { t } = useTranslation();
   const name = (slot: string) => systemTitle(game, pack, slot, t);
   const pictures = (units: UnitCounts) => <UnitPictures units={units} game={game} t={t} />;
@@ -101,12 +104,12 @@ export function EntrySteps({ entry, game, pack, before, warnings = [] }: EntrySt
                       ? <span key={slot} className="stop-take"><span className="stop-name">{t('plan.steps.pickup', { name: name(slot) })}</span>{pictures(taken)}</span>
                       : null;
                   })}
-                  <WarningList variant="row" warnings={startWarnings} game={game} pack={pack} />
+                  <WarningList variant="row" warnings={startWarnings} table={view.table} board={view.board} pack={pack} />
                 </li>
                 <li className="stop stop-target">
                   <span className="stop-name">{name(target)}</span>
                   {load.load > 0 && <span className="stop-name">{t('plan.steps.cargo', { load: load.load, capacity: load.capacity })}</span>}
-                  <WarningList variant="row" warnings={cargoWarnings} game={game} pack={pack} />
+                  <WarningList variant="row" warnings={cargoWarnings} table={view.table} board={view.board} pack={pack} />
                   {last && after.length > 0 && <div className="stop-after">{after}</div>}
                 </li>
               </ol>

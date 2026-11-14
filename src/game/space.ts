@@ -14,6 +14,8 @@ import { holderIn } from './abilities/registry';
 import { SOURCES } from './source';
 import type { Board, PlayerId, Slot, Table } from './types';
 
+export type { MapSource };
+
 const sources = new WeakMap<Table, WeakMap<Board['common']['fracture'], MapSource>>();
 
 /** The table's map and the Fracture of the board, as the movement code reads them. Memoized: the route graph is cached by it. */

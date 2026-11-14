@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import type { KernelView } from '../kernelView';
 import { EXPEDITION_SLICES } from '../../../domain/payment';
 import type { SliceOwners } from '../../../domain/thundersEdge';
 import type { Act, DataPack, Entry, Game, Warning } from '../../../domain/types';
@@ -9,6 +10,8 @@ import { Section } from '../../primitives/Section';
 import { actLine } from '../actLines';
 
 export interface TurnActsProps {
+  /** The table and the board just before the entry, as the kernel keeps them: names, notes, reminders and the places of warnings are read from it. */
+  view: KernelView;
   /** The game as the turn's owner sees it. */
   game: Game;
   pack: DataPack;
@@ -31,7 +34,7 @@ const NO_PAYMENT = { planets: [], tradeGoods: 0 };
  * A transaction is added with the first opponent (or me in an opponent's turn); an expedition only with Thunder's Edge
  * while a part is free.
  */
-export function TurnActs({ game, pack, entry, warnings, owners, onChange, onOpen }: TurnActsProps) {
+export function TurnActs({ game, pack, view, entry, warnings, owners, onChange, onOpen }: TurnActsProps) {
   const { t } = useTranslation();
   const acts = 'acts' in entry && entry.acts ? entry.acts : [];
   const placer = placeWarnings(warnings);
@@ -43,10 +46,10 @@ export function TurnActs({ game, pack, entry, warnings, owners, onChange, onOpen
   };
   const title = t(game.expansions.includes('te') ? 'plan.acts.blockTe' : 'plan.acts.block');
   return (
-    <Section label={title} title={title} warnings={<WarningList warnings={[...placer.at('deal'), ...placer.at('slice')]} game={game} pack={pack} />}>
+    <Section label={title} title={title} warnings={<WarningList warnings={[...placer.at('deal'), ...placer.at('slice')]} table={view.table} board={view.board} pack={pack} />}>
       {acts.map((act, index) => (
         <div key={index} className="source-row in-card">
-          <button type="button" className="source-button" onClick={() => onOpen(index)}>{actLine(act, game, pack, t)}</button>
+          <button type="button" className="source-button" onClick={() => onOpen(index)}>{actLine(act, view.table, pack, t)}</button>
           <HexRemove label={t('plan.acts.remove', { name: t(`plan.acts.kind.${act.kind}`) })} onClick={() => onChange(acts.filter((_, i) => i !== index))} />
         </div>
       ))}
