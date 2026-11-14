@@ -2,7 +2,7 @@
  * Playing a component on the kernel: a component action, or a component the entry names in `uses`. The play of a
  * component written for the kernel (`Ability.play`) reads the board through the context (`held`, `choices`) and returns
  * events, which are applied with the component as their cause, like those of a hook; its violations go through
- * `ctx.warn`. The plays still written for the old state run in `legacyEffects.ts`.
+ * `ctx.warn`. Also here: the order and the announcing of the plays an entry names (`playNamed`, `playHooks`).
  */
 import { noteBase } from '../../domain/components';
 import { choicesFor } from '../../domain/effects/choices';
@@ -13,8 +13,9 @@ import { applyChecked } from '../apply';
 import type { GameEvent } from '../events';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 import { warn, type Ctx } from './context';
+import { ACQUIESCENCE } from './natives';
 import { gainedPlanet } from './invasion';
-import { contextOf, poolWarnings, type HookOptions, type HookResult } from './hooks';
+import { contextOf, hook, poolWarnings, type HookOptions, type HookResult } from './hooks';
 
 /** Plays the component `id` for `player`: what it does is applied one event at a time, its warnings are listed. */
 export function runPlay(table: Table, start: Board, pack: DataPack, id: string, player: PlayerId, options: HookOptions): HookResult {
@@ -60,10 +61,29 @@ export function playOne(ctx: Ctx, id: string): GameEvent[] {
   return result.events;
 }
 
-/** The plays the entry names that are written for the kernel and run at a step of a tactical action (`playAt`), in the order it names them. */
-export function playNativeAt(ctx: Ctx, at: 'activation' | 'combat'): void {
+/** Components whose play is a rule of the kernel (resolved natively), not a hook. */
+const NATIVE_PLAYS: readonly string[] = [ACQUIESCENCE];
+
+/** What a component the entry names plays at a step of the action (Salvage, once the losses are taken), in the order the entry names them. */
+export function playNamed(ctx: Ctx, at: 'activation' | 'combat'): void {
   for (const id of playedBy(ctx.entry)) {
     const effect = effectOf(ctx.pack, id);
     if (effect?.play && effect.playAt === at) playOne(ctx, id);
   }
+}
+
+/** The plays of the components the entry names that no step of a tactical action took, run where they have an effect, and the components in force told what they spent. */
+export function playHooks(ctx: Ctx): void {
+  // Nothing named, nothing played, and the round's cards stay as they are.
+  if (playedBy(ctx.entry).length === 0) return;
+  const spent: { count: number; secondary: boolean }[] = [];
+  const { entry, pack } = ctx;
+  // A play that asked to run in the middle of a tactical action has run there already; in any other entry (a component action) it runs here, once.
+  const ids = playedBy(entry).filter(id => {
+    const effect = effectOf(pack, id);
+    return !(effect?.playAt && entry.type === 'tactical') && !NATIVE_PLAYS.includes(noteBase(id));
+  });
+  // A play that spends strategy tokens tells the components in force.
+  for (const id of ids) for (const event of playOne(ctx, id)) if (event.type === 'TokensChanged' && (event.delta.strategy ?? 0) < 0) spent.push({ count: -(event.delta.strategy ?? 0), secondary: false });
+  for (const each of spent) hook(ctx, 'onTokenSpent', [ctx.player], each);
 }

@@ -3,7 +3,7 @@ import { violation } from '../../domain/rules/registry';
 import { poolsOf, tokensOnMap } from '../queries';
 import { begin, emit, warn, type Ctx } from './context';
 import { hook } from './hooks';
-import { playNamed } from './legacyEffects';
+import { playNamed } from './play';
 import { planetsIn } from '../space';
 
 export function activation(ctx: Ctx, target: string): void {

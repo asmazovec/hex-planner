@@ -31,68 +31,47 @@ load without the mechs must fit). One component may have both.
 
 ## The contract
 
-`src/domain/effects/types.ts`:
+A component file exports its `id` and one `ability` (`Ability`, `src/domain/effects/types.ts`; the context is in
+`src/game/abilities/types.ts`). Everything is written for the game kernel: it reads the board through the context and
+returns events; it never reads or writes a state of its own.
 
 ```ts
-export type EffectTier = 'passive' | 'play' | 'hint';
-
-export interface ComponentEffect {
-  tier: EffectTier;
-  /** The LRR point the effect stands on; the component's own id when its printed text is the rule. */
-  rule: string;
-  /** passive only: the changes to the points of the count, while the component is in force. */
-  modify?: Partial<Modifiers>;
-  /** play only: what happens when an entry plays the component with its choices. */
-  play?: (turn: EffectTurn) => void;
-  /** hint only: the steps in whose block the reminder stands. */
-  hintAt?: RuleStep[];
-  /** Any tier: the checks the component lifts. */
-  waive?: Waiver[];
-}
-
-export interface Waiver {
-  code: AnyWarningCode;          // the warning lifted
-  rule: string;                  // the sentence of the component's text, or the LRR point, that lifts it
-  when?: (warning: Warning, ctx: WaiverContext) => boolean;   // narrows it to what the text covers
-  lasts?: 'round';               // play and hint only: from the entry that names it to the end of the round
-}
-
-export interface WaiverContext {
-  pack: DataPack;
-  game: Game;        // as the owner of the entry sees it: game.faction is theirs
-  entry?: Entry;     // none for a check of the board itself (units placed by hand)
-  before: GameState; // the owner's state just before the entry
-  after: GameState;  // and after it
-  shared: GameState; // my state: laws, revealed objectives, attachments
-}
+export const ability: Ability = {
+  tier: 'passive' | 'play' | 'hint',   // the class
+  holder: 'self' | 'others' | 'anyone', // whose action it speaks in
+  rule: string,                         // the LRR point; the component's own id when its text is the rule
+  modify?: Partial<Modifiers>,          // changes to the points of the count
+  permit?: Permit[],                    // the checks it lifts (the warning is kept and marked)
+  on?: Hooks,                           // reactions: onActivate, onLanding, gained, restrict, ...
+  play?: (ctx) => Effects | void,       // what playing it does (a component action, or named in `uses`)
+  choose?: ChoiceSpec[],                // what the player chooses when it is played
+  hintAt?: RuleStep[],                  // hint: the steps whose block shows the reminder
+  // plain data: produces, cost, useCost, playAt, requirement, suppresses, links
+};
 ```
 
-When a component's waivers hold (`src/domain/effects/waivers.ts`, the one place that applies them):
+The context (`AbilityContext`) gives `holder` and `actor` (so a file never compares ids), `my` and `of(player)` (what a player
+holds, controls and has on the board), `choices`, `entry`, and the questions of the game (`planetsIn`, `adjacent`,
+`planetValue`, `capacityOf`, ...). A play returns events (`src/game/abilities/emit.ts`) and reports breaches with `ctx.warn`;
+`apply.ts` is the only writer of a board.
 
-- **`passive`**: for every entry of the player while the component is **in force** (`inForce` in `registry.ts`): the
-  technologies, relics, promissory notes and leaders they hold (exhausted or not; a purged or locked leader is not),
-  the abilities and the mech of their faction sheet, their breakthrough once held, the legendary planets they control,
-  the laws in play.
-- **`play`** and **`hint`**: for the entry that **names** the component: its component action (`componentId`), its
-  `spends` (an action card discarded is a card played), its `uses`. With `lasts: 'round'` also for the same player's
-  later entries of that round.
+**Choices.** A `ChoiceSpec` has a `kind` (planet, system, player, unit, number, option, component, counts); the candidates are
+those of its kind unless `options(ctx)` (or `slots(ctx)` for `counts`) says otherwise. `ctx` there is the same context over
+the board just before the entry, with `chosen`, for the one whose entry it is: `ctx.my.planets()` is the planets of whoever plays,
+the player kind offers the others as seen from them. `controlledPlanets`, `systemsWithUnits`, `technologiesOf`, `handOf` and
+`othersOf` (`effects/helpers/choices.ts`) cover the usual ones. One function answers them for the editor, the plays and the
+resolver: `choicesOf` (`src/game/abilities/choices.ts`). Values are kept in the entry's `choices` / `useChoices` as `me`, an
+opponent id, a planet id, a slot; they are the saved format.
 
-An ability worded "may" that lifts a check is `passive` and needs no mark in the entry: the player already entered the
-breach, so the ability is taken as used. `uses` is for what is spent by being used and is not a component action: an
-agent or a technology exhausted, an action card played in a window of another action. A component in `uses` is played
-as a component action plays its own: exhausted if its text says "exhaust this card" or it is an agent, purged if a
-hero, discarded if an action card, and warned of when not held or already exhausted.
+A component file must not import `game/abilities/registry`, `game/setup`, `game/queries` or `game/keys`: what it needs comes on its context.
+Still on the old state: `requirement` (objectives), `links` and `useCost`, which the old replay asks.
 
-A waived warning keeps its place in the list with `waivedBy: string[]`. Everything that asks "does this entry break a
-rule" asks `standing(warnings)` (`src/domain/rules/registry.ts`); the interface lists a waived warning after the
-standing ones, dimmed and struck through, with «Разрешено: <component>».
-
-The contract tests (`src/domain/effects/contract.test.ts`, `src/domain/rules/contract.test.ts`) check all of this.
+The contract tests (`src/domain/effects/contract.test.ts`, `src/domain/rules/contract.test.ts`, `src/game/contract.test.ts`) check all of this.
 
 ## The files of one component
 
 ```
-src/domain/effects/components/<kind>/<slug>.ts            the effect
+src/domain/effects/components/<kind>/<slug>.ts            the ability
 src/domain/effects/components/<kind>/<slug>.test.ts       its domain tests
 src/domain/effects/components/<kind>/<slug>.ui.test.tsx   its interface tests (needed once it waives, modifies or plays)
 ```
@@ -102,18 +81,19 @@ src/domain/effects/components/<kind>/<slug>.ui.test.tsx   its interface tests (n
 
 ```ts
 // src/domain/effects/components/ability/armada.ts
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:armada';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
+  holder: 'self',
   rule: id,
   modify: { fleetLimit: value => value + 2 },
 };
 ```
 
-- The file exports exactly `id` and `effect`. It starts with a comment that quotes the printed text and says what was
+- The file exports exactly `id` and `ability`. It starts with a comment that quotes the printed text and says what was
   decided and why.
 - Do not call imported functions at the top level of the file (the registry loads every file while the domain is still
   loading); inside `when`, `modify` and `play` anything of the domain may be called. Importing a warning code's file is fine.

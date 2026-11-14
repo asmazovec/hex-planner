@@ -22,7 +22,7 @@ import { claimStations, gainControl, landUnits, placeCarried, type Lost } from '
 import { turnActs } from './acts';
 import { playerOfKey } from '../keys';
 import { hook } from './hooks';
-import { playNamed } from './legacyEffects';
+import { playNamed } from './play';
 import { waive } from './waive';
 import { turnTail } from './tail';
 import { movement } from './movement';

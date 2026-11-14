@@ -65,7 +65,7 @@ function producingPds(id: string, value: number): void {
 }
 
 function shownOnly(id: string, kind: StructureKind): void {
-  expect(effectOf(pack, id)).toEqual({ tier: 'passive', rule: '97.4', modify: {} });
+  expect(effectOf(pack, id)).toEqual({ tier: 'passive', holder: 'self', rule: '97.4', modify: {} });
   expect(pack.technologies[id.slice('technology:'.length)].upgrade).toBe(kind);
 }
 

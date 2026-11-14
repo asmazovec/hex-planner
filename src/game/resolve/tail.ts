@@ -9,7 +9,7 @@ import { playedCost } from '../../domain/effects/playedCost';
 import { checkView, warn, type Ctx } from './context';
 import { applyGains, playUses } from './holdings';
 import { gainHooks } from './entryHooks';
-import { playHooks } from './legacyEffects';
+import { playHooks } from './play';
 import { checkedPay, shortOf } from './payment';
 
 /** The cost of what a component entry plays, with what it names in `uses`: paid with the entry's `payment`. */
