@@ -9,6 +9,8 @@
 import { componentById, noteAddress } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
+import { card } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:spynet';
@@ -25,17 +27,19 @@ export const effect: ComponentEffect = {
       return [...hand];
     },
   }],
-  play: ({ id: note, states, state, player, pack, choices, warnings, held }) => {
-    const card = choices.card;
-    const owner = noteAddress(note);
-    if (!held || card === undefined || owner === undefined || owner === player) return;
-    const from = states[owner]?.holdings.hand;
-    const index = from?.indexOf(String(card)) ?? -1;
-    if (!from || index < 0) {
-      warnings.push(violation(componentUnresolved.code, { id: note, name: componentById(pack, id)?.name ?? id, reason: 'the card is not in that hand' }));
-      return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const chosen = ctx.choices.card;
+    const key = noteAddress(ctx.id);
+    const owner = key === undefined ? undefined : ctx.playerOf(key);
+    if (!ctx.held || chosen === undefined || owner === undefined || owner === ctx.holder) return [];
+    if (!ctx.of(owner).holds(String(chosen))) {
+      ctx.warn(violation(componentUnresolved.code, { id: ctx.id, name: componentById(ctx.pack, id)?.name ?? id, reason: 'the card is not in that hand' }));
+      return [];
     }
-    from.splice(index, 1);
-    state.holdings.hand.push(String(card));
+    return [card.lose(owner, String(chosen)), card.gain(ctx.holder, String(chosen))];
   },
 };

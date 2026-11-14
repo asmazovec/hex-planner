@@ -8,7 +8,9 @@
  * a payment counts it. The traits are for exploration, which the plan does not count. Once played it is never returned
  * (Titans of Ul, Terraform note 1).
  */
-import { attachCard } from '../../../replay/invasion';
+import attachTarget from '../../../rules/codes/attachTarget';
+import { violation } from '../../../rules/registry';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:terraform';
@@ -24,17 +26,19 @@ export const effect: ComponentEffect = {
     planetResources: (value, ctx) => (attached(ctx) ? value + 1 : value),
     planetInfluence: (value, ctx) => (attached(ctx) ? value + 1 : value),
   },
-  play: ({ game, state, shared, id: played, choices, pack, warnings }) => {
-    const planetId = String(choices.planetId ?? '');
-    if (!planetId) return;
-    const before = warnings.length;
-    attachCard(game, state, planetId, played, pack, warnings, { notHome: true });
-    const target = state.attachments?.[planetId] ?? [];
-    // A target the card does not allow is warned of and gets no bonus: the card is taken off again.
-    const refused = warnings.slice(before).some(w => w.code === 'attachTarget' && w.params.planetId === planetId);
-    const cards = refused ? target.filter(card => card !== played) : target;
-    if (state !== shared) delete state.attachments;
-    const all = (shared.attachments ??= {});
-    if (cards.length) all[planetId] = cards; else delete all[planetId];
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planetId = String(ctx.choices.planetId ?? '');
+    if (!planetId) return [];
+    const reason = ctx.board.planets[planetId]?.owner !== ctx.holder ? 'notControlled' : ctx.tileKind(ctx.systemOf(planetId) ?? '') === 'home' ? 'home' : undefined;
+    // A target the card does not allow is warned of and gets no bonus: the note is not attached.
+    if (reason) {
+      ctx.warn(violation(attachTarget.code, { planetId, reason }));
+      return [];
+    }
+    return [{ type: 'CardAttached', planet: planetId, card: ctx.id }];
   },
 };

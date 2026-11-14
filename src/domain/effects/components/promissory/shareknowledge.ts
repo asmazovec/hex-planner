@@ -31,17 +31,17 @@ export const effect: ComponentEffect = {
       });
     },
   }],
-  play: ({ id: note, state, choices, held }) => {
-    const technology = choices.technology;
-    if (!held || technology === undefined) return;
-    if (!state.holdings.technologies.includes(String(technology))) state.holdings.technologies.push(String(technology));
-    (state.onCard ??= {})[note] = { technology: String(technology) };
-  },
 };
 
-/** The loan ends with the status phase: a hook of the kernel; the play and its choice are still written for the old state. */
+/** The loan is made by the play and ends with the status phase, a hook of the kernel. */
 export const ability: Hooked = {
   holder: 'anyone',
+  play: ctx => {
+    const technology = ctx.choices.technology;
+    if (!ctx.held || technology === undefined) return [];
+    const tech = String(technology);
+    return [...(ctx.my.holds(tech) ? [] : [card.gain(ctx.holder, tech)]), { type: 'CardLoaded', player: ctx.holder, card: ctx.id, technology: tech }];
+  },
   on: {
     onStatusEnd: ctx => {
       const lent = ctx.board.players[ctx.holder]?.cards[ctx.id]?.onCard?.technologies[0];

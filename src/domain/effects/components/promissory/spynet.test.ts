@@ -55,6 +55,6 @@ describe('promissory:spynet Spy Net', () => {
   test('promissory:spynet is a play effect', () => {
     const { pack } = table(turn());
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

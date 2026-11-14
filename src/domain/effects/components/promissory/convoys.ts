@@ -19,16 +19,13 @@ export const id = 'promissory:convoys';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  // Played, the note stays held and lies in the play area: nothing on the board changes.
-  play: turn => {
-    const { holdings } = turn.state;
-    if (!(holdings.inPlay ??= []).includes(turn.id)) holdings.inPlay.push(turn.id);
-  },
 };
 
-/** Returning to the Hacan player is a hook of the kernel; the play (the note lying in the play area) is still written for the old state. */
+/** Returning to the Hacan player is a hook of the kernel, and so is the play (the note lying in the play area). */
 export const ability: Hooked = {
   holder: 'self',
+  // Played, the note stays held and lies in the play area: nothing else on the board changes.
+  play: ctx => (ctx.my.card(ctx.id) === 'inPlay' ? [] : [{ type: 'CardLaidInPlay', player: ctx.holder, card: ctx.id }]),
   permit: [{ code: 'notNeighbor', rule: 'While this card is in your play area, you may negotiate transactions with players who are not your neighbor.' }],
   on: {
     onActivate: (ctx, activation) => {

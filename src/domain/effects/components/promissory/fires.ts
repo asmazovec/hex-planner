@@ -8,9 +8,11 @@
  * back to the Muaat (69.3, already replayed for every note that says so). A player who already owns their war sun
  * upgrade cannot play it (Muaat note 1): warned of as a technology gained twice. Pass 1: still the hint it is today.
  */
-import { componentById } from '../../../components';
-import { noteOwner, upgradeTech } from '../../../holdings';
-import { gain } from '../../../replay/holdings';
+import { componentById, noteAddress } from '../../../components';
+import { upgradeTech } from '../../../holdings';
+import { card, tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
@@ -19,20 +21,24 @@ export const id = 'promissory:fires';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ game, state, shared, states, pack, player, id: noteId, warnings, held }) => {
-    if (!held) return;
-    const owner = noteOwner(game, noteId, player);
-    const muaat = owner === undefined ? undefined : states[owner];
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
+    const key = noteAddress(ctx.id);
+    const owner = key === undefined ? undefined : ctx.playerOf(key);
     // The Muaat's own note is refused by 69.2 already; nothing is taken from them then.
-    if (owner === player) return;
-    if (muaat) muaat.fleet -= 1;
-    const tech = upgradeTech(pack, game.faction, 'warsun');
-    const def = tech === undefined ? undefined : componentById(pack, tech);
-    if (tech === undefined || !def) return;
-    if (state.holdings.technologies.includes(tech)) {
-      warnings.push(violation('researchOwned', { id: tech, name: def.name }));
-      return;
+    if (owner === ctx.holder) return [];
+    const events: GameEvent[] = owner === undefined ? [] : [tokens(owner, { fleet: -1 })];
+    const tech = upgradeTech(ctx.pack, ctx.my.faction, 'warsun');
+    const def = tech === undefined ? undefined : componentById(ctx.pack, tech);
+    if (tech === undefined || !def) return events;
+    if (ctx.my.holds(tech)) {
+      ctx.warn(violation('researchOwned', { id: tech, name: def.name }));
+      return events;
     }
-    gain(state, shared, def);
+    return [...events, card.gain(ctx.holder, tech)];
   },
 };

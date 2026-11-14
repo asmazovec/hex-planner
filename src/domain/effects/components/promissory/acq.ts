@@ -10,6 +10,7 @@
  */
 import { noteAddress, noteBase } from '../../../components';
 import type { ComponentEffect } from '../../types';
+import { tokens } from '../../../../game/abilities/emit';
 import type { Hooked } from '../../../../game/abilities/types';
 
 export const id = 'promissory:acq';
@@ -17,15 +18,16 @@ export const id = 'promissory:acq';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  // The replay took the token the secondary costs (and warned when the pool was empty); the note gives it back.
-  play: ({ entry, state, held, player, id: noteInstance }) => {
-    if (!held || entry.type !== 'secondary' || noteAddress(noteInstance) === player) return;
-    state.strategy += 1;
-  },
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  // The replay took the token the secondary costs (and warned when the pool was empty); the note gives it back.
+  play: ctx => {
+    const owner = noteAddress(ctx.id);
+    if (!ctx.held || ctx.entry?.type !== 'secondary' || (owner !== undefined && ctx.playerOf(owner) === ctx.holder)) return [];
+    return [tokens(ctx.holder, { strategy: 1 })];
+  },
   permit: [{
     code: 'shortStrategy',
     rule: 'You do not have to spend or place a command token to resolve the secondary ability of that strategy card',

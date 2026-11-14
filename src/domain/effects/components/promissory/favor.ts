@@ -9,6 +9,8 @@
  * "remove", and the player may have none).
  */
 import { noteAddress } from '../../../components';
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:favor';
@@ -16,10 +18,14 @@ export const id = 'promissory:favor';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ id: note, player, states, held }) => {
-    const owner = noteAddress(note);
-    const pool = owner === undefined || owner === player ? undefined : states[owner];
-    if (!held || !pool || pool.strategy <= 0) return;
-    pool.strategy -= 1;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const key = noteAddress(ctx.id);
+    const owner = key === undefined ? undefined : ctx.playerOf(key);
+    if (!ctx.held || owner === undefined || owner === ctx.holder || ctx.of(owner).pools.strategy <= 0) return [];
+    return [tokens(owner, { strategy: -1 })];
   },
 };

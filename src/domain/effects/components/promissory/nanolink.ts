@@ -14,6 +14,7 @@
  */
 import { joined } from '../../../movement';
 import structureAboard from '../../../rules/codes/structureAboard';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:nanolink';
@@ -23,7 +24,6 @@ const RULE = 'You may move your structures from adjacent systems that do not con
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: () => {},
   waive: [{
     code: structureAboard.code,
     rule: RULE,
@@ -33,4 +33,10 @@ export const effect: ComponentEffect = {
       return entry?.type === 'tactical' && entry.systemId !== null && from !== entry.systemId && joined(game, from, entry.systemId, pack) && !before.tokensOnMap.includes(from);
     },
   }],
+};
+
+/** Playing the note changes nothing on the board: what it lifts is the waiver above. */
+export const ability: Hooked = {
+  holder: 'self',
+  play: () => [],
 };

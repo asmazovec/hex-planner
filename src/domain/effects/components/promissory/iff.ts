@@ -8,12 +8,11 @@
  * controls or a non-home system without other players' ships, else warned of (`wormholeTokenPlace`). The card goes back
  * to the Creuss player by the generic rule (69.3). The timing (the start of the turn) is not checked.
  */
-import { planetsOf, tileAt } from '../../../replay/board';
-import { unitIds } from '../../../replay/state';
 import wormholeTokenPlace from '../../../rules/codes/wormholeTokenPlace';
 import { violation } from '../../../rules/registry';
-import type { UnitCounts } from '../../../types';
-import type { ComponentEffect, EffectTurn } from '../../types';
+import type { AbilityContext, Hooked } from '../../../../game/abilities/types';
+import { othersHaveShips } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:iff';
 
@@ -21,12 +20,10 @@ const TOKENS = ['alpha', 'beta'];
 const NAMES = { alpha: { ru: 'Альфа', en: 'Alpha' }, beta: { ru: 'Бета', en: 'Beta' } };
 
 /** Whether a system takes the token: a planet the owner controls, or a non-home system with no other player's ships. */
-function takesToken({ game, pack, state, states, player }: EffectTurn, slot: string): boolean {
-  if (planetsOf(game, slot, pack).some(planetId => state.control[planetId] === 'me')) return true;
-  if (tileAt(game, slot, pack)?.kind === 'home') return false;
-  const ships = (units: UnitCounts | undefined): boolean => unitIds(units ?? {}).some(unit => pack.units[unit] && !pack.units[unit].ground);
-  const others = Object.entries(states).some(([who, other]) => who !== player && ships(other.systems[slot]));
-  return !others && !Object.entries(game.enemyUnits[slot] ?? {}).some(([who, units]) => !(who in states) && who !== player && ships(units));
+function takesToken(ctx: AbilityContext, slot: string): boolean {
+  if (ctx.planetsIn(slot).some(planetId => ctx.board.planets[planetId]?.owner === ctx.holder)) return true;
+  if (ctx.tileKind(slot) === 'home') return false;
+  return !othersHaveShips(ctx, slot);
 }
 
 export const effect: ComponentEffect = {
@@ -36,11 +33,17 @@ export const effect: ComponentEffect = {
     { key: 'token', kind: 'option', options: () => TOKENS, names: NAMES, label: { ru: 'Жетон', en: 'Token' } },
     { key: 'systemId', kind: 'system' },
   ],
-  play: turn => {
-    const { choices, shared, warnings, held } = turn;
-    const token = String(choices.token);
-    if (!held || !TOKENS.includes(token) || typeof choices.systemId !== 'string') return;
-    if (!takesToken(turn, choices.systemId)) warnings.push(violation(wormholeTokenPlace.code, { systemId: choices.systemId }));
-    shared.wormholeTokens = { ...shared.wormholeTokens, [token]: choices.systemId };
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const token = String(ctx.choices.token);
+    const to = ctx.choices.systemId;
+    if (!ctx.held || !TOKENS.includes(token) || typeof to !== 'string') return [];
+    if (!takesToken(ctx, to)) ctx.warn(violation(wormholeTokenPlace.code, { systemId: to }));
+    const from = Object.keys(ctx.board.common.wormholeTokens).find(key => ctx.board.common.wormholeTokens[key].includes(token));
+    if (from === to) return [];
+    return [from === undefined ? { type: 'WormholeTokenPlaced', system: to, wormhole: token } : { type: 'WormholeTokenMoved', from, to, wormhole: token }];
   },
 };
