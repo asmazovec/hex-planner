@@ -1,4 +1,5 @@
 import type { Game } from '../domain/types';
+import { savedOf } from './legacySave';
 import { parseGame } from './schema';
 
 export type ImportResult =
@@ -6,7 +7,7 @@ export type ImportResult =
   /** `oldFormat`: the file was saved by an earlier version of the app, which this one does not read. */
   | { ok: false; reason: 'invalidJson' | 'invalidSchema' | 'newerVersion' | 'oldFormat' };
 
-export const exportGame = (game: Game): string => JSON.stringify(game, null, 2);
+export const exportGame = (game: Game): string => JSON.stringify(savedOf(game), null, 2);
 
 /** Pure: never touches storage, so a failed import leaves saved games alone. */
 export function importGame(text: string): ImportResult {

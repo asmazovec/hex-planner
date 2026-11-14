@@ -1,5 +1,9 @@
 import { z } from 'zod';
 import { SAVE_FORMAT, type Game } from '../domain/types';
+import type { Action, Turn } from '../game/actions';
+import type { Round } from '../game/round';
+import type { SavedGame } from '../game/save';
+import { gameOf, savedOf } from './legacySave';
 
 export { SAVE_FORMAT };
 /** Counts the changes of the save within `SAVE_FORMAT`. Saves of the app before that format are not read. */
@@ -18,7 +22,6 @@ const phase = z.enum(['strategy', 'action', 'status', 'agenda']);
 /** Component ids: `<kind>:<source id>`. One the data no longer has is kept and passed over by the replay. */
 const ids = z.array(z.string());
 const choices = z.record(z.string(), z.union([z.string(), z.number()]));
-const base = { id: z.string(), phase, status, owner: z.string().optional(), gains: ids.optional(), spends: ids.optional(), uses: ids.optional(), choices: choices.optional(), useChoices: z.record(z.string(), choices).optional() };
 const cardEffects = z.object({
     tokens: z.object({ tactic: z.number().int().optional(), fleet: z.number().int().optional(), strategy: z.number().int().optional() }).optional(),
     boughtTokens: count.optional(),
@@ -33,104 +36,99 @@ const cardEffects = z.object({
     structures: z.array(z.object({ kind: z.enum(['pds', 'spacedock']), planetId: z.string() })).optional(),
     payment: payment.optional(),
 });
-const cardPlay = {
-  card: z.number().int().optional(),
-  forToken: z.boolean().optional(),
-  effects: cardEffects.optional(),
-};
 const statusSpend = z.object({
   tactic: z.number().optional(), fleet: z.number().optional(), strategy: z.number().optional(), tradeGoods: z.number().optional(),
   resources: payment.optional(), influence: payment.optional(),
 });
 const goods = z.object({ tradeGoods: count.optional(), commodities: count.optional(), components: z.array(z.string()).optional() });
-const act = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('expedition'), sliceId: z.string().nullable(), payment }),
-  z.object({ kind: z.literal('transaction'), with: z.string(), give: goods, get: goods }),
-]);
-const acts = z.array(act).optional();
-const entrySchema = z.discriminatedUnion('type', [
+const adjustmentDelta = z.object({
+  tradeGoods: z.number().optional(), commodities: z.number().optional(), tactic: z.number().optional(), fleet: z.number().optional(),
+  strategy: z.number().optional(), vp: z.number().optional(),
+  units: z.object({ systemId: z.string(), units: signedCounts }).optional(),
+  ground: z.record(z.string(), signedCounts).optional(),
+});
+const place = z.union([z.object({ slot: z.string() }), z.object({ planet: z.string() })]);
+const transaction = z.object({ kind: z.literal('transaction'), with: z.string(), give: goods, get: goods });
+const expedition = z.object({ kind: z.literal('expedition'), slice: z.string().nullable(), payment });
+const byPlayer = <T extends z.ZodType>(value: T) => z.record(z.string(), value);
+const action: z.ZodType<Action> = z.lazy(() => z.discriminatedUnion('kind', [
   z.object({
-    ...base, type: z.literal('tactical'), systemId: z.string().nullable(),
-    moves: z.array(z.object({ from: z.string(), units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional(), structures: structureCounts })),
-    landings: z.array(z.object({ planetId: z.string(), units: unitCounts, from: z.string().optional(), structures: structureCounts })),
-    production: unitCounts, losses: unitCounts.optional(), groundLosses: z.record(z.string(), unitCounts).optional(), fleetRemovals: unitCounts.optional(), productionGround: z.record(z.string(), unitCounts).optional(), shipsTo: z.string().optional(), payment, custodiansPayment: payment.optional(), free: z.boolean().optional(), fromCard: z.string().optional(), acts,
+    kind: z.literal('tactical'), system: z.string().nullable(), free: z.boolean().optional(),
+    movement: z.array(z.object({ from: place, units: unitCounts, via: z.array(z.string()).optional(), pickupOf: z.string().optional(), structures: structureCounts })),
+    spaceCombat: byPlayer(unitCounts).optional(),
+    invasion: z.array(z.object({ planet: z.string(), units: unitCounts, from: z.string().optional(), structures: structureCounts })),
+    groundCombat: z.record(z.string(), byPlayer(unitCounts)).optional(),
+    production: z.object({ units: unitCounts, ground: z.record(z.string(), unitCounts).optional(), shipsTo: z.string().optional(), payment }).optional(),
+    fleetRemovals: unitCounts.optional(), custodians: payment.optional(),
   }),
-  z.object({ ...base, ...cardPlay, type: z.literal('strategic'), acts }),
-  z.object({ ...base, ...cardPlay, type: z.literal('secondary') }),
-  z.object({ ...base, type: z.literal('component'), componentId: z.string().optional(), note: z.string(), acts, effects: cardEffects.optional(), payment: payment.optional() }),
-  z.object({ ...base, type: z.literal('pass'), acts }),
+  z.object({ kind: z.literal('strategic'), card: z.number().int().optional(), forToken: z.boolean().optional(), effects: cardEffects.optional(), nested: z.array(turn).optional() }),
+  z.object({ kind: z.literal('secondary'), card: z.number().int().optional(), effects: cardEffects.optional() }),
+  z.object({ kind: z.literal('component'), component: z.string().optional(), note: z.string(), effects: cardEffects.optional(), payment: payment.optional() }),
+  z.object({ kind: z.literal('pass') }),
   z.object({
-    ...base, type: z.literal('adjustment'), label: z.string(), kind: z.enum(['losses', 'build', 'setup']).optional(),
-    delta: z.object({
-      tradeGoods: z.number().optional(), commodities: z.number().optional(), tactic: z.number().optional(), fleet: z.number().optional(),
-      strategy: z.number().optional(), vp: z.number().optional(),
-      units: z.object({ systemId: z.string(), units: signedCounts }).optional(),
-      ground: z.record(z.string(), signedCounts).optional(),
-    }),
+    kind: z.literal('status'), tactic: z.number(), fleet: z.number(), strategy: z.number(), vp: z.number().optional(),
+    opponentVp: byPlayer(z.number()).optional(), scored: ids.optional(), spend: statusSpend.optional(),
   }),
-  z.object({
-    ...base, type: z.literal('statusTokens'), tactic: z.number(), fleet: z.number(), strategy: z.number(),
-    vp: z.number().optional(), opponentVp: z.record(z.string(), z.number()).optional(), scored: ids.optional(), spend: statusSpend.optional(),
-  }),
-]);
+  z.object({ kind: z.literal('agenda'), label: z.string(), delta: adjustmentDelta, choices: choices.optional() }),
+  z.object({ kind: z.literal('correction'), label: z.string(), delta: adjustmentDelta, purpose: z.enum(['losses', 'build', 'setup']).optional() }),
+]));
+const turn: z.ZodType<Turn> = z.lazy(() => z.object({
+  id: z.string(), player: z.string(), phase: phase.optional(), status, action,
+  acts: z.array(z.union([transaction, expedition])),
+  used: z.array(z.object({ component: z.string(), choices: choices.optional() })),
+  gains: ids.optional(), spends: ids.optional(), choices: choices.optional(),
+}));
+const round: z.ZodType<Round> = z.object({
+  number: z.number().int(), strategyCard: z.number().nullable(), backupCard: z.number().nullable(), held: z.array(z.number().int()), turns: z.array(turn),
+});
 
-const control = z.enum(['me', 'enemy']);
 const startHoldings = z.object({
   technologies: ids.optional(), hand: ids.optional(), relics: ids.optional(), promissory: ids.optional(),
   leaders: z.record(z.string(), z.enum(['unlocked', 'exhausted', 'purged'])).optional(),
   breakthrough: z.enum(['held', 'exhausted']).optional(), scored: ids.optional(), secrets: ids.optional(), found: ids.optional(),
 });
 
-export const gameSchema = z.object({
-  name: z.string().optional(),
+const setup = z.object({ technologies: ids.optional(), structurePlanet: z.string().optional() });
+const table = z.object({
+  id: z.string(), name: z.string(), expansions: z.array(z.enum(['pok', 'te'])),
+  layout: z.enum(['standard', 'hyperlanes', 'alternate', 'large']), map: z.record(z.string(), z.string()),
+  players: z.array(z.object({ id: z.string(), faction: z.string(), seat: z.number().int(), color: z.number().int(), setup, legacyId: z.string().optional() })),
+  viewer: z.string(),
+});
+const start = z.object({
+  points: z.record(z.string(), z.number()),
+  holdings: z.record(z.string(), startHoldings),
+  units: z.record(z.string(), z.record(z.string(), unitCounts)),
+  ground: z.record(z.string(), z.record(z.string(), unitCounts)),
+  control: z.record(z.string(), z.string()),
+  docks: z.array(z.string()),
+  pds: z.record(z.string(), count),
+  expedition: z.object({ slices: z.record(z.string(), z.string().nullable()), thundersEdgeSystem: z.string().nullable() }),
+  fracture: z.object({ active: z.boolean(), ingress: z.array(z.string()), seat: z.number().nullable(), tiles: z.record(z.string(), z.string()).optional() }),
+});
+
+export const savedSchema = z.object({
   id: z.string(),
+  name: z.string().optional(),
   format: z.literal(SAVE_FORMAT),
   schemaVersion: z.number().int().min(1).max(CURRENT_SCHEMA),
   dataVersion: z.string(),
-  expansions: z.array(z.enum(['pok', 'te'])),
-  playerCount: z.number().int(),
-  layout: z.enum(['standard', 'hyperlanes', 'alternate', 'large']),
-  faction: z.string(),
-  seat: z.number().int(),
-  color: z.number().int(),
-  vp: count,
-  map: z.record(z.string(), z.string()),
-  opponents: z.array(z.object({ id: z.string(), faction: z.string(), vp: z.number(), seat: z.number().int(), color: z.number().int() })),
-  start: z.object({ me: startHoldings, opponents: z.record(z.string(), startHoldings) }),
-  enemyUnits: z.record(z.string(), z.record(z.string(), unitCounts)),
-  enemyGround: z.record(z.string(), z.record(z.string(), unitCounts)),
-  planetControl: z.record(z.string(), control),
-  planetOwner: z.record(z.string(), z.string()),
-  docks: z.array(z.string()),
-  pds: z.record(z.string(), count),
-  expedition: z.object({
-    slices: z.record(z.string(), z.enum(['me', 'other']).nullable()),
-    thundersEdgeSystem: z.string().nullable(),
-  }),
-  fracture: z.object({ active: z.boolean(), ingress: z.array(z.string()), seat: z.number().nullable(), tiles: z.record(z.string(), z.string()).optional() }),
-  plans: z.array(z.object({
-    id: z.string(), name: z.string(),
-    rounds: z.array(z.object({
-      number: z.number().int(), strategyCard: z.number().nullable(), backupCard: z.number().nullable(),
-      entries: z.array(entrySchema),
-    })),
-  })),
+  table,
+  start,
+  plans: z.array(z.object({ id: z.string(), name: z.string(), rounds: z.array(round) })),
   activePlanId: z.string(),
-}).superRefine((game, ctx) => {
-  // The seats are the players: one each, numbered from 1, and as many as the game counts. A file that disagrees with
-  // itself would seat two players on one home or leave a home with nobody.
-  if (game.playerCount !== game.opponents.length + 1) {
-    ctx.addIssue({ code: 'custom', path: ['playerCount'], message: `${game.playerCount} players, but ${game.opponents.length} opponents and me` });
-  }
+}).superRefine((saved, ctx) => {
+  // The seats are the players: one each, numbered from 1; a player outside the table (a stray of a scratch game) sits past the eighth.
+  const seated = saved.table.players.filter(p => p.seat < 100);
   const taken = new Set<number>();
-  const seat = (value: number, path: (string | number)[]) => {
-    if (value < 1 || value > game.playerCount) ctx.addIssue({ code: 'custom', path, message: `seat ${value} is outside 1..${game.playerCount}` });
-    else if (taken.has(value)) ctx.addIssue({ code: 'custom', path, message: `seat ${value} is taken twice` });
-    taken.add(value);
-  };
-  seat(game.seat, ['seat']);
-  game.opponents.forEach((opponent, i) => seat(opponent.seat, ['opponents', i, 'seat']));
-}) satisfies z.ZodType<Game>;
+  saved.table.players.forEach((p, i) => {
+    const path = ['table', 'players', i, 'seat'];
+    if (p.seat < 100 && (p.seat < 1 || p.seat > seated.length)) ctx.addIssue({ code: 'custom', path, message: `seat ${p.seat} is outside 1..${seated.length}` });
+    else if (taken.has(p.seat)) ctx.addIssue({ code: 'custom', path, message: `seat ${p.seat} is taken twice` });
+    taken.add(p.seat);
+  });
+  if (!saved.table.players.some(p => p.id === saved.table.viewer)) ctx.addIssue({ code: 'custom', path: ['table', 'viewer'], message: 'the viewer is not a player' });
+}) satisfies z.ZodType<SavedGame>;
 
 /** The number of the format in a mark like `ti4-planner/3`; null for anything else. */
 function formatNumber(mark: unknown): number | null {
@@ -160,8 +158,15 @@ export function parseGame(raw: unknown): ParsedGame {
   if (typeof schemaVersion === 'number' && schemaVersion > CURRENT_SCHEMA) {
     return { ok: false, kind: 'newerVersion', reason: `schema ${schemaVersion} is newer than ${CURRENT_SCHEMA}` };
   }
-  const parsed = gameSchema.safeParse(raw);
-  if (parsed.success) return { ok: true, game: parsed.data };
+  const parsed = savedSchema.safeParse(raw);
+  if (parsed.success) return { ok: true, game: gameOf(parsed.data) };
   const issue = parsed.error.issues[0];
   return { ok: false, kind: 'damaged', reason: issue ? `${issue.path.join('.') || 'game'}: ${issue.message}` : 'invalid save' };
+}
+
+/** The game as it comes back from a save: written as a saved game, through JSON, read again. What the format does not keep is lost, as in a reload. */
+export function reloaded(game: Game): Game {
+  const parsed = parseGame(JSON.parse(JSON.stringify(savedOf(game))));
+  if (!parsed.ok) throw new Error(parsed.reason);
+  return parsed.game;
 }

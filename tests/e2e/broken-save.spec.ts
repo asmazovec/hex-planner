@@ -23,7 +23,11 @@ test('a corrupt save is listed with its message, can be exported and deleted, an
         const tx = open.result.transaction('games', 'readwrite');
         tx.objectStore('games').put({
           id: 'broken', name: 'Damaged', faction: 'sol', playerCount: 4, updatedAt: Date.now() + 1000,
-          game: { id: 'broken', format: 'ti4-planner/2', schemaVersion: 1, plans: 'not a list' },
+          game: { id: 'broken', format: 'ti4-planner/3', schemaVersion: 1, plans: 'not a list' },
+        });
+        tx.objectStore('games').put({
+          id: 'earlier', name: 'Earlier', faction: 'sol', playerCount: 4, updatedAt: Date.now() + 500,
+          game: { id: 'earlier', format: 'ti4-planner/2', schemaVersion: 1, plans: [] },
         });
         tx.oncomplete = () => { open.result.close(); resolve(); };
         tx.onerror = () => reject(tx.error);
@@ -35,6 +39,11 @@ test('a corrupt save is listed with its message, can be exported and deleted, an
   await test.step('it is listed with the message and nothing else breaks', async () => {
     await expect(row('Damaged').getByText('The save could not be loaded')).toBeVisible();
     await expect(row('Damaged').getByRole('button', { name: 'Open' })).toHaveCount(0);
+    // A save of the earlier format (ti4-planner/2) is listed the same way, with a message about the version.
+    await expect(row('Earlier').getByRole('status')).toBeVisible();
+    await expect(row('Earlier').getByRole('button', { name: 'Open' })).toHaveCount(0);
+    await expect(row('Earlier').getByRole('button', { name: 'Export data' })).toBeVisible();
+    await expect(row('Earlier').getByRole('button', { name: 'Delete game' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Start game' })).toBeVisible();
   });
 

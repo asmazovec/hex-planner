@@ -14,7 +14,7 @@ import { project } from '../../domain/project';
 import type { Entry } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
-import { gameSchema } from '../../storage/schema';
+import { reloaded } from '../../storage/schema';
 import { App } from '../App';
 import { PlanScreen } from './PlanScreen';
 import type { Move } from '../plan/tactical';
@@ -469,7 +469,7 @@ describe('an opponent in the plan', () => {
 
   test('a saved game keeps whose an entry is', () => {
     useGame.getState().addEntry(1, { type: 'pass' }, 'action', rival().id);
-    const saved = gameSchema.parse(game()) as unknown as ReturnType<typeof game>;
+    const saved = reloaded(game()) as unknown as ReturnType<typeof game>;
     expect(saved.plans[0].rounds[0].entries[0].owner).toBe(rival().id);
   });
 });
@@ -893,7 +893,7 @@ describe('the battle of a tactical action', () => {
   test('a saved game keeps its losses', async () => {
     await fourCruisersArrive();
     act(() => useGame.getState().updateEntry(action().id, { losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } }));
-    const saved = gameSchema.parse(game()) as unknown as ReturnType<typeof game>;
+    const saved = reloaded(game()) as unknown as ReturnType<typeof game>;
     const entry = saved.plans[0].rounds.flatMap(r => r.entries).find(e => e.type === 'tactical');
     expect(entry).toMatchObject({ losses: { cruiser: 1 }, groundLosses: { quann: { infantry: 1 } } });
   });

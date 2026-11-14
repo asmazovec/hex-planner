@@ -204,9 +204,10 @@ test('a game from the first screen to an exported file, and back offline', async
     await page.getByRole('button', { name: 'Export to file' }).click();
     const file = testInfo.outputPath('game.json');
     await (await download).saveAs(file);
-    const exported = JSON.parse(readFileSync(file, 'utf8')) as { faction: string; plans: { rounds: { entries: unknown[] }[] }[] };
-    expect(exported.faction).toBe('argent');
-    expect(exported.plans[0].rounds[0].entries).toHaveLength(entryCount + 1);
+    const exported = JSON.parse(readFileSync(file, 'utf8')) as { format: string; table: { viewer: string; players: { id: string; faction: string }[] }; plans: { rounds: { turns: unknown[] }[] }[] };
+    expect(exported.format).toBe('ti4-planner/3');
+    expect(exported.table.players.find(p => p.id === exported.table.viewer)?.faction).toBe('argent');
+    expect(exported.plans[0].rounds[0].turns).toHaveLength(entryCount + 1);
 
     await page.locator('input[type=file]').setInputFiles({ name: 'game.json', mimeType: 'application/json', buffer: readFileSync(file) });
     // The imported game opens at once: it is the chosen one of the two saves and has nothing to open.

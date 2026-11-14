@@ -2,6 +2,7 @@ import { openDB } from 'idb';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../domain/newGame';
 import type { Entry, Game } from '../domain/types';
+import { savedOf } from './legacySave';
 
 /** Writes a record straight into the saves, past `saveGame`, as a damaged or foreign save would lie there. */
 export async function putRawSave(record: Record<string, unknown>): Promise<void> {
@@ -13,7 +14,7 @@ export async function putRawSave(record: Record<string, unknown>): Promise<void>
 /** A save whose game the schema refuses: its summary reads, its plans are not plans. */
 export const brokenSave = (id = 'broken', name = 'Damaged'): Record<string, unknown> => ({
   id, name, faction: 'sol', playerCount: 4, updatedAt: 1,
-  game: { ...sampleGame(), id, name, plans: 'not a list' },
+  game: { ...savedOf({ ...sampleGame(), id, name }), plans: 'not a list' },
 });
 
 const pay = { planets: ['a', 'b'], tradeGoods: 1 };
@@ -23,10 +24,10 @@ export function sampleGame(): Game {
   const pack = loadPack(['pok']);
   const game = createGame({ expansions: ['pok'], playerCount: 4, faction: Object.keys(pack.factions)[0] }, pack);
   const entries: Entry[] = [
+    { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic' },
     { id: 'e1', phase: 'action', status: 'planned', type: 'tactical', systemId: '1,0',
       moves: [{ from: '0,1', units: { carrier: 1, fighter: 2 } }],
       landings: [{ planetId: 'a', units: { infantry: 2 } }], production: { cruiser: 1 }, payment: pay },
-    { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic' },
     { id: 'e3', phase: 'action', status: 'cancelled', type: 'secondary' },
     { id: 'e4', phase: 'action', status: 'planned', type: 'component', note: 'note' },
     { id: 'e5', phase: 'action', status: 'planned', type: 'pass',
@@ -44,7 +45,6 @@ export function sampleGame(): Game {
 
 /** A save as an earlier version of the app left it: a whole game, without the format mark. */
 export function oldFormatSave(id = 'old', name = 'Earlier'): Record<string, unknown> {
-  const { format, ...game } = sampleGame();
-  void format;
-  return { id, name, faction: game.faction, playerCount: game.playerCount, updatedAt: 1, game: { ...game, id, name, schemaVersion: 6 } };
+  const game = sampleGame();
+  return { id, name, faction: game.faction, playerCount: game.playerCount, updatedAt: 1, game: { ...game, id, name, format: 'ti4-planner/2', schemaVersion: 6 } };
 }

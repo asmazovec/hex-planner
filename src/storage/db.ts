@@ -1,6 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import type { Game } from '../domain/types';
 import { errorText } from './errorText';
+import { savedOf } from './legacySave';
 import { parseGame } from './schema';
 
 /**
@@ -9,7 +10,7 @@ import { parseGame } from './schema';
  */
 export interface GameSummary { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; broken?: true; oldFormat?: true; }
 
-interface StoredGame { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; game: Game; }
+interface StoredGame { id: string; name?: string; faction: string; playerCount: number; updatedAt: number; game: unknown; }
 interface Ti4DB extends DBSchema { games: { key: string; value: StoredGame }; }
 
 /** Why a save does not open: an earlier version of the app saved it, or it does not read as a game at all. */
@@ -53,7 +54,7 @@ function readGame(stored: unknown): { ok: true; game: Game } | { ok: false; kind
 
 export async function saveGame(game: Game): Promise<void> {
   const { id, name, faction, playerCount } = game;
-  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game });
+  await (await db()).put('games', { id, name, faction, playerCount, updatedAt: Date.now(), game: savedOf(game) });
 }
 
 /** Null when there is no such save; a save that is there but does not read throws `BrokenSaveError`. */

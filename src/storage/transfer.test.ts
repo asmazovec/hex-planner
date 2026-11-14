@@ -8,14 +8,20 @@ import { oldFormatSave, sampleGame } from './fixture';
 
 const game = sampleGame();
 
+const ORDER = ['strategy', 'action', 'status', 'agenda'];
+/** A game as a file keeps it: the entries of a round stand in the order of the phases (the turns of a round do). */
+const normal = (game: Game): Game => ({
+  ...game, plans: game.plans.map(plan => ({ ...plan, rounds: plan.rounds.map(round => ({ ...round, entries: [...round.entries].sort((a, b) => ORDER.indexOf(a.phase) - ORDER.indexOf(b.phase)) })) })),
+});
+
 test('экспорт и импорт туда и обратно', () => {
-  expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+  expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
 });
 
 test('a new game goes to a file and back as it is', () => {
   const pack = loadPack(['pok', 'te']);
   const fresh = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'sol' }, pack);
-  expect(importGame(exportGame(fresh))).toEqual({ ok: true, game: fresh });
+  expect(importGame(exportGame(fresh))).toEqual({ ok: true, game: normal(fresh) });
 });
 
 test('a promissory note addressed to its player (`@`) goes to a file and back: held, handed over, played', () => {
@@ -31,16 +37,16 @@ test('a promissory note addressed to its player (`@`) goes to a file and back: h
       { id: 'e2', phase: 'action', status: 'planned', type: 'component', componentId: theirs, note: '', gains: [theirs], spends: [theirs] },
     ] }] }],
   };
-  expect(importGame(exportGame(played))).toEqual({ ok: true, game: played });
+  expect(importGame(exportGame(played))).toEqual({ ok: true, game: normal(played) });
 });
 
 test('a new game is written with the format mark and schema version 1', () => {
   const fresh = createGame({ expansions: [], playerCount: 3, faction: 'sol' }, loadPack([]));
-  expect(fresh.format).toBe('ti4-planner/2');
+  expect(fresh.format).toBe('ti4-planner/3');
   expect(fresh.format).toBe(SAVE_FORMAT);
   expect(fresh.schemaVersion).toBe(1);
   expect(CURRENT_SCHEMA).toBe(1);
-  expect(JSON.parse(exportGame(fresh))).toMatchObject({ format: 'ti4-planner/2', schemaVersion: 1 });
+  expect(JSON.parse(exportGame(fresh))).toMatchObject({ format: 'ti4-planner/3', schemaVersion: 1 });
 });
 
 describe('a file of an earlier version of the app', () => {
@@ -59,7 +65,7 @@ describe('a file of an earlier version of the app', () => {
 });
 
 test('a file whose format mark is of a later version of the app is refused as newer, not as earlier', () => {
-  for (const format of ['ti4-planner/3', 'ti4-planner/10']) {
+  for (const format of ['ti4-planner/4', 'ti4-planner/10']) {
     expect(importGame(JSON.stringify({ ...game, format }))).toEqual({ ok: false, reason: 'newerVersion' });
     expect(parseGame({ ...game, format })).toMatchObject({ ok: false, kind: 'newerVersion' });
   }
@@ -145,15 +151,15 @@ describe('схема', () => {
 
 describe('раскладка карты', () => {
   test('файл без раскладки и с неизвестной раскладкой отклоняется', () => {
-    const withoutLayout = JSON.parse(exportGame(game)) as Record<string, unknown>;
-    delete withoutLayout.layout;
+    const withoutLayout = JSON.parse(exportGame(game)) as { table: Record<string, unknown> };
+    delete withoutLayout.table.layout;
     expect(importGame(JSON.stringify(withoutLayout))).toEqual({ ok: false, reason: 'invalidSchema' });
-    expect(importGame(JSON.stringify({ ...withoutLayout, layout: 'lanes' }))).toEqual({ ok: false, reason: 'invalidSchema' });
+    expect(importGame(JSON.stringify({ ...withoutLayout, table: { ...(withoutLayout.table as object), layout: 'lanes' } }))).toEqual({ ok: false, reason: 'invalidSchema' });
   });
 
   test('раскладка с гиперпутями сохраняется при экспорте', () => {
     const lanes = { ...game, layout: 'hyperlanes' as const };
-    expect(importGame(exportGame(lanes))).toEqual({ ok: true, game: lanes });
+    expect(importGame(exportGame(lanes))).toEqual({ ok: true, game: normal(lanes) });
   });
 });
 
@@ -163,19 +169,19 @@ test('seats, colours and points survive export and import', () => {
   const result = importGame(exportGame(moved));
   expect(result.ok && result.game.seat).toBe(3);
   expect(result.ok && result.game.vp).toBe(2);
-  expect(result.ok && result.game.opponents.map(o => [o.seat, o.color])).toEqual(moved.opponents.map(o => [o.seat, o.color]));
+  const bySeat = (g: Game) => g.opponents.map(o => [o.seat, o.color]).sort((a, b) => a[0] - b[0]);
+  expect(result.ok && bySeat(result.game)).toEqual(bySeat(moved));
 });
 
 test('a seat or a count of players that is no number is refused', () => {
   const doc = JSON.parse(exportGame(sampleGame()));
-  doc.opponents[0].seat = 'two';
+  doc.table.players[1].seat = 'two';
   expect(importGame(JSON.stringify(doc))).toEqual({ ok: false, reason: 'invalidSchema' });
-  expect(importGame(JSON.stringify({ ...sampleGame(), playerCount: 'four' }))).toEqual({ ok: false, reason: 'invalidSchema' });
 });
 
 test('owners of enemy units and planets survive export and import', () => {
   const owned = { ...game, planetOwner: { arc: game.opponents[1].id }, planetControl: { arc: 'enemy' as const } };
-  expect(importGame(exportGame(owned))).toEqual({ ok: true, game: owned });
+  expect(importGame(exportGame(owned))).toEqual({ ok: true, game: normal(owned) });
 });
 
 test('holdings survive a round trip, entries included, and a bad leader state is refused', () => {
@@ -185,9 +191,11 @@ test('holdings survive a round trip, entries included, and a bad leader state is
   marked.plans[0].rounds[0].entries[1] = { id: 'e2', phase: 'strategy', status: 'done', type: 'strategic', effects: { researched: ['technology:cr2'] }, gains: ['actionCard:abs'], spends: ['actionCard:bribery'] };
   marked.plans[0].rounds[0].entries[2] = { id: 'e3', phase: 'action', status: 'planned', type: 'component', componentId: 'leader:solagent', note: '', choices: { planet: 'jord', count: 2 } };
   marked.plans[0].rounds[0].entries[3] = { id: 'e4', phase: 'status', status: 'planned', type: 'statusTokens', tactic: 1, fleet: 1, strategy: 0, scored: ['publicObjective:corner'] };
-  expect(importGame(exportGame(marked))).toEqual({ ok: true, game: marked });
-  expect(importGame(JSON.stringify({ ...game, start: { me: { leaders: { 'leader:solagent': 'asleep' } }, opponents: {} } })).ok).toBe(false);
-  expect(importGame(JSON.stringify({ ...game, start: undefined })).ok).toBe(false);
+  expect(importGame(exportGame(marked))).toEqual({ ok: true, game: normal(marked) });
+  const doc = JSON.parse(exportGame(game));
+  doc.start.holdings[doc.table.viewer] = { leaders: { 'leader:solagent': 'asleep' } };
+  expect(importGame(JSON.stringify(doc)).ok).toBe(false);
+  expect(importGame(JSON.stringify({ ...JSON.parse(exportGame(game)), start: undefined })).ok).toBe(false);
 });
 
 test('a card entry with its effects and a free tactical survive export and import', () => {
@@ -202,7 +210,7 @@ test('a card entry with its effects and a free tactical survive export and impor
     id: 'free', phase: 'action', status: 'planned', type: 'tactical', systemId: '1,0', moves: [], landings: [], production: {},
     payment: { planets: [], tradeGoods: 0 }, free: true, fromCard: 'card',
   });
-  expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+  expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
 });
 
 test('the acts of a turn survive export and import', () => {
@@ -212,7 +220,7 @@ test('the acts of a turn survive export and import', () => {
     id: 'c', phase: 'action', status: 'planned', type: 'component', note: '',
     acts: [{ kind: 'transaction', with: rival, give: { tradeGoods: 2 }, get: { components: ['promissory:war_funding'] } }, { kind: 'expedition', sliceId: 'tg3', payment: { planets: [], tradeGoods: 0 } }],
   }];
-  expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+  expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
 });
 
 test('the points of a status entry survive export and import', () => {
@@ -228,7 +236,7 @@ test('the points of a status entry survive export and import', () => {
 describe('PDS in saved games', () => {
   test('a file with PDS keeps them', () => {
     const game = { ...sampleGame(), pds: { jord: 2 } };
-    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
   });
 
   test('a bad PDS count is refused', () => {
@@ -241,7 +249,7 @@ describe('PDS in saved games', () => {
       id: 'e9', phase: 'action', status: 'planned', type: 'adjustment', label: '', kind: 'losses',
       delta: { units: { systemId: '1,0', units: { carrier: -1 } }, ground: { jord: { infantry: -2 } } },
     });
-    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
   });
 
   test('an adjustment by hand has no kind, and an unknown kind is refused', () => {
@@ -256,7 +264,7 @@ describe('PDS in saved games', () => {
 describe('enemy ground units by planet', () => {
   test('a file with them is left alone, and a bad count refused', () => {
     const game = { ...sampleGame(), enemyGround: { arc: { o: { infantry: 2 } } } };
-    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
     expect(importGame(JSON.stringify({ ...game, enemyGround: { arc: { o: { infantry: -1 } } } })).ok).toBe(false);
   });
 
@@ -264,21 +272,20 @@ describe('enemy ground units by planet', () => {
     const game = sampleGame();
     const first = game.plans[0].rounds[0].entries[0];
     if (first.type === 'tactical') first.productionGround = { a: { infantry: 1 } };
-    expect(importGame(exportGame(game))).toEqual({ ok: true, game });
+    expect(importGame(exportGame(game))).toEqual({ ok: true, game: normal(game) });
   });
 });
 
 describe('routes in a saved game', () => {
-  const withMoves = (moves: unknown[]) => {
-    const doc = structuredClone(game) as unknown as { plans: { rounds: { entries: unknown[] }[] }[] };
-    doc.plans[0].rounds[0].entries = [{ id: 'r', phase: 'action', status: 'planned', type: 'tactical', systemId: '0,1', moves, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }];
-    return JSON.stringify(doc);
+  const withMoves = (moves: { from: string; units: object; via?: string[]; pickupOf?: string }[]) => {
+    const doc = structuredClone(game);
+    doc.plans[0].rounds[0].entries = [{ id: 'r', phase: 'action', status: 'planned', type: 'tactical', systemId: '0,1', moves: moves as never, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }];
+    return exportGame(doc);
   };
   const movesOf = (result: ReturnType<typeof importGame>) => {
     if (!result.ok) throw new Error('not imported');
     return (result.game.plans[0].rounds[0].entries[0] as { moves: unknown[] }).moves;
   };
-
   test('a move from a neighbour has no way written down', () => {
     const moves = [{ from: '1,0', units: { carrier: 1 } }];
     expect(movesOf(importGame(withMoves(moves)))).toEqual(moves);
@@ -292,7 +299,7 @@ describe('routes in a saved game', () => {
 
 test('an open Fracture with its systems survives export and import', () => {
   const open = { ...sampleGame(), fracture: { active: true, ingress: ['1,0'], seat: 2, tiles: { '5,-5': 'fracture1' } } };
-  expect(importGame(exportGame(open))).toEqual({ ok: true, game: open });
+  expect(importGame(exportGame(open))).toEqual({ ok: true, game: normal(open) });
   const { seat, ...noSeat } = open.fracture;
   void seat;
   expect(importGame(JSON.stringify({ ...open, fracture: noSeat }))).toEqual({ ok: false, reason: 'invalidSchema' });

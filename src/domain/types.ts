@@ -411,7 +411,7 @@ export type LeaderState = 'unlocked' | 'exhausted' | 'purged';
 export type StartHoldings = Partial<Pick<Holdings, 'technologies' | 'hand' | 'relics' | 'promissory' | 'leaders' | 'breakthrough' | 'scored' | 'secrets' | 'found'>>;
 
 /** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
-export const SAVE_FORMAT = 'ti4-planner/2';
+export const SAVE_FORMAT = 'ti4-planner/3';
 
 export interface Game {
   id: string;

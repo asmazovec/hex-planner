@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { emptyHoldings, holdingsOf } from '../holdings';
-import { gameSchema } from '../../storage/schema';
+import { reloaded } from '../../storage/schema';
 import { rulesGame, tactical } from '../rules/kit';
 import { applied } from './apply';
 import { inForceOf, passivesOf } from './registry';
@@ -42,7 +42,7 @@ describe('components in force', () => {
 
   test('a save keeps what an entry uses and the structures it takes on board and puts down', () => {
     const entry = { ...tactical('1,0', { moves: [{ from: 'h1', units: {}, structures: { pds: 1 } }], landings: [{ planetId: 't1', units: {}, structures: { pds: 1 } }] }), uses: ['leader:letnevagent'] };
-    const saved = gameSchema.parse({ ...rulesGame({ entries: [entry], playerCount: 1 }) });
+    const saved = reloaded(rulesGame({ entries: [entry], playerCount: 1 }));
     expect(saved.plans[0].rounds[0].entries[0]).toMatchObject({ uses: ['leader:letnevagent'], moves: [{ structures: { pds: 1 } }], landings: [{ structures: { pds: 1 } }] });
   });
 });
