@@ -5,7 +5,8 @@
  * pool of their choice (20.2) and three trade goods. A token beyond the sixteen of a faction is warned of as any gain is
  * (`noReinforcements`, 20.3). Pass 2: written.
  */
-import { gainTokens } from '../../../replay/status';
+import { tokens, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:majent';
@@ -23,8 +24,9 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'pool', kind: 'option', label: { ru: 'В какой резерв', en: 'Into which pool' }, options: () => [...POOLS], names: NAMES }],
-  play: turn => {
-    gainTokens(turn, { [pool(turn.choices.pool)]: 1 });
-    turn.state.tradeGoods += 3;
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => [tokens(ctx.holder, { [pool(ctx.choices.pool)]: 1 }, 'component'), tradeGoods(ctx.holder, 3)],
 };

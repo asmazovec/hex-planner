@@ -5,7 +5,8 @@
  * pools of their choice (20.2). Tokens beyond the sixteen of a faction are warned of as any gain is (`noReinforcements`,
  * 20.3). Pass 2: written.
  */
-import { gainTokens } from '../../../replay/status';
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:kel1';
@@ -23,8 +24,9 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'first', kind: 'option', label: { ru: 'Первый жетон в резерв', en: 'First token into' }, options: () => [...POOLS], names: NAMES }, { key: 'second', kind: 'option', label: { ru: 'Второй жетон в резерв', en: 'Second token into' }, options: () => [...POOLS], names: NAMES }],
-  play: turn => {
-    gainTokens(turn, { [pool(turn.choices.first)]: 1 });
-    gainTokens(turn, { [pool(turn.choices.second)]: 1 });
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => [tokens(ctx.holder, { [pool(ctx.choices.first)]: 1 }, 'component'), tokens(ctx.holder, { [pool(ctx.choices.second)]: 1 }, 'component')],
 };

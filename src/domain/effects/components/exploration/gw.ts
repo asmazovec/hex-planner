@@ -6,6 +6,7 @@
  * the active system for the rest of the game, and from then on movement takes it as adjacent to every other system with
  * a gamma wormhole (101, "Systems that contain identical wormholes are adjacent"). Pass 2: written.
  */
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:gw';
@@ -13,8 +14,16 @@ export const id = 'exploration:gw';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ entry, shared }) => {
-    if (entry.type !== 'tactical' || entry.systemId === null) return;
-    shared.wormholeTokens = { ...shared.wormholeTokens, gamma: entry.systemId };
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (entry?.type !== 'tactical' || entry.systemId === null) return [];
+    const to = entry.systemId;
+    const from = Object.keys(ctx.board.common.wormholeTokens).find(key => ctx.board.common.wormholeTokens[key].includes('gamma'));
+    if (from === to) return [];
+    return [from === undefined ? { type: 'WormholeTokenPlaced', system: to, wormhole: 'gamma' } : { type: 'WormholeTokenMoved', from, to, wormhole: 'gamma' }];
   },
 };

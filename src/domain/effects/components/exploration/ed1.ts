@@ -11,7 +11,7 @@
  *
  */
 import { componentsOf } from '../../../components';
-import { researchTechnologies } from '../../../replay/research';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:ed1';
@@ -28,8 +28,12 @@ export const effect: ComponentEffect = {
     key: 'technology', kind: 'component', label: { ru: 'Технология', en: 'Technology' },
     options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology').map(def => def.id),
   }],
-  play: turn => {
-    const technology = turn.choices.technology;
-    if (typeof technology === 'string') researchTechnologies(turn.game, turn.state, turn.shared, [technology], turn.pack, turn.warnings);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const technology = ctx.choices.technology;
+    return typeof technology === 'string' ? ctx.research(technology) : [];
   },
 };

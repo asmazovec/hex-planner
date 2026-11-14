@@ -7,6 +7,7 @@
  * whoever controls it). The planet's values are then two resources and one influence higher wherever the count asks
  * them (`planetResources`, `planetInfluence`): a payment, a dock's Production, Hoard Raw Materials. Pass 2: written.
  */
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:ds';
@@ -19,12 +20,15 @@ export const id = 'exploration:ds';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  play: ({ entry, state }) => {
-    if (entry.type !== 'tactical') return;
-    const planetId = entry.landings.map(landing => landing.planetId).find(p => state.control[p] === 'me' && !state.attachments?.[p]?.includes(id));
-    if (planetId === undefined) return;
-    const attached = (state.attachments ??= {});
-    attached[planetId] = [...(attached[planetId] ?? []), id];
-  },
   modify: { planetResources: value => value + 2, planetInfluence: value => value + 1 },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const entry = ctx.entry;
+    if (entry?.type !== 'tactical') return [];
+    const planetId = entry.landings.map(landing => landing.planetId).find(p => ctx.board.planets[p]?.owner === ctx.holder && !ctx.board.planets[p].attached.includes(id));
+    return planetId === undefined ? [] : [{ type: 'CardAttached', planet: planetId, card: id }];
+  },
 };

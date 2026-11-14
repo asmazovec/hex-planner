@@ -7,6 +7,8 @@
  * for them (53.2). The token itself (the planet standing in the active system) is not modelled: the systems of the
  * board take their planets from their tiles.
  */
+import { planet } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'exploration:mirage';
@@ -14,9 +16,10 @@ export const id = 'exploration:mirage';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ state }) => {
-    // The planet card comes with the exploration, readied; the legendary card follows with control (53.2).
-    state.control.mirage = 'me';
-    state.exhausted = state.exhausted.filter(planet => planet !== 'mirage');
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  // The planet card comes with the exploration, readied; the legendary card follows with control (53.2).
+  play: ctx => [planet.gain(ctx.holder, 'mirage'), planet.ready(ctx.holder, 'mirage')],
 };
