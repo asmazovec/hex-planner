@@ -2,9 +2,8 @@ import { useTranslation } from 'react-i18next';
 import type { DataPack, Warning } from '../../domain/types';
 import type { Turn } from '../../game/actions';
 import { roundPointsOf, withRoundPoints, withStatusTokens } from '../../game/edit/turn';
-import { legacyEntry } from '../../game/entry';
 import { legacyKey } from '../../game/keys';
-import { statusTokensFree } from '../../game/queries';
+import { statusTokensFreeOfTurn } from '../../game/queries';
 import { StepHints } from '../feedback/StepHints';
 import { WarningList } from '../feedback/WarningText';
 import { shortName } from '../players/names';
@@ -39,7 +38,7 @@ export function StatusFields({ turn, pack, view, end, warnings, onChange }: Stat
   const status = turn.action.kind === 'status' ? turn.action : undefined;
   if (!status) return null;
   // Two tokens, and what the player's components make of them (Versatile, Hyper Metabolism, a note named in «Used»).
-  const free = statusTokensFree(view.table, view.board, pack, turn.player, legacyEntry(view.table, turn));
+  const free = statusTokensFreeOfTurn(view.table, view.board, pack, turn);
   // The viewer first, then the others by seat, as the table lists them.
   const seated = view.table.players.filter(p => p.seat <= 8).sort((a, b) => a.seat - b.seat);
   const players = [...seated.filter(p => p.id === view.table.viewer), ...seated.filter(p => p.id !== view.table.viewer)];

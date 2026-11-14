@@ -17,6 +17,7 @@ import type { Turn } from '../../../game/actions';
 import type { Board } from '../../../game/types';
 import { writeTurn } from '../../../state/turnBridge';
 import { enemyChange, structureInGame } from '../../../domain/stacks';
+import { warningsByTurn } from '../../../game/rowWarnings';
 import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
 import { playerOfKey } from '../../../game/keys';
 import { capacityIn, fleetIn, fleetLimit, ownerOf, reinforcementsOf, shipsIn, structuresOf } from '../../../game/queries';
@@ -100,6 +101,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
   const line = timelineOf(game, plan, 'forecast', pack);
   const projection = projectionAtRound(line, roundNo);
+  const rows = warningsByTurn(line.kernel);
   const { state } = projection;
   const table = line.kernel.table;
   const board = boardAtRound(line, roundNo);
@@ -360,7 +362,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   /** How many ships are still over the fleet pool, as the replay says of the action. */
   const fleetOver = fightingFor ? (() => {
     const turn = turnOfEntry(table, fightingFor, pack);
-    return fleetExcessOf(table, pack, flightOf(table, line.kernel.byTurn.get(fightingFor.id)?.before ?? line.kernel.end, pack, turn), turn.player, standing(projection.warningsByEntry[fightingFor.id] ?? []));
+    return fleetExcessOf(table, pack, flightOf(table, line.kernel.byTurn.get(fightingFor.id)?.before ?? line.kernel.end, pack, turn), turn.player, standing(rows[fightingFor.id] ?? []));
   })() : null;
   const removeShip = (kind: TokenKind, amount: 1 | -1) => { if (fightingFor) editTurn(fightingFor.id, turn => withFleetRemoval(turn, kind as UnitId, amount)); };
 
@@ -376,7 +378,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const meters = { ships: fleetIn(table, board, pack, actor, slot), ...capacityIn(table, board, pack, actor, slot) };
   const pool = fleetLimit(table, board, pack, actor);
   const warningEntry = onPurchase ? onPurchase.entryId : tactical?.id;
-  const ownWarnings = warningEntry ? projection.warningsByEntry[warningEntry] ?? [] : [];
+  const ownWarnings = warningEntry ? rows[warningEntry] ?? [] : [];
   /** Over the limit is what the domain says of the entry. */
   const breaks = (code: WarningCode, counted: boolean) => (warningEntry ? standing(ownWarnings).some(w => w.code === code) : counted);
   const meterRows: MeterRow[] = [

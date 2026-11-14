@@ -1,6 +1,6 @@
 import { ruleOf } from '../../domain/rules/registry';
 import type { Turn } from '../../game/actions';
-import { legacyEntry } from '../../game/entry';
+import { movesOf } from '../../game/edit/tacticalRead';
 import { mapSource, type MapSource } from '../../game/space';
 import type { Board, Table } from '../../game/types';
 import type { DataPack, RuleStep, Warning } from '../../domain/types';
@@ -88,7 +88,7 @@ export interface WarningPlacer {
 
 /** The same for a turn: the flight of its tactical action a warning speaks of. */
 export function flightOfTurn(warning: Warning, table: Table, board: Board, pack: DataPack, turn: Turn): string | undefined {
-  return turn.action.kind === 'tactical' ? flightOf(warning, mapSource(table, board), pack, legacyEntry(table, turn)) : undefined;
+  return turn.action.kind === 'tactical' ? flightOf(warning, mapSource(table, board), pack, { type: 'tactical', moves: movesOf(turn.action) }) : undefined;
 }
 
 /** What of an entry decides which warnings are of its components: the ones it names in «Used» and the one it plays. */

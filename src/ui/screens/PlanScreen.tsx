@@ -5,6 +5,7 @@ import { newEntryBody, tacticalOwner } from '../../domain/newEntry';
 import { autoPay, EXPEDITION_SLICES } from '../../domain/payment';
 import { isOnMap, systemSlots } from '../../domain/project';
 import { shownOf } from '../../game/shelf';
+import { warningsByTurn } from '../../game/rowWarnings';
 import { boardAtRound, projectionAtRound, tacticalEntries, tacticalNumbers, timelineOf } from '../../state/projection';
 import { cardTargets } from '../../domain/replay/cards/targets';
 import { pausedPath, tapStep, type RouteDraft } from '../../domain/route';
@@ -192,6 +193,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   // Totals and map show the end of the chosen round: later rounds would ready planets and clear its tokens.
   const forecastKernel = timelineOf(game, plan, 'forecast', pack).kernel;
   const forecast = projectionAtRound(timelineOf(game, plan, 'forecast', pack), round.number);
+  const rowWarnings = warningsByTurn(forecastKernel);
 
   const closeShown = () => {
     update(state => (state.panel.kind === 'list' ? { ...state, panel: LIST } : state));
@@ -517,7 +519,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             <>
               {isTurn && (
                 <TurnActs
-                  pack={pack} view={view} turn={turn} warnings={forecast.warningsByEntry[entry.id] ?? []} owners={owners}
+                  pack={pack} view={view} turn={turn} warnings={rowWarnings[entry.id] ?? []} owners={owners}
                   onChange={change}
                   // Back from a step returns to the editor as it stands, not as it was first opened.
                   onOpen={index => update(state => ({ ...state, panel: { kind: 'act', entryId: entry.id, index, back: state.panel.kind === 'turn' ? { kind: 'turn', entryId: entry.id } : state.panel }, next: IDLE }))}
@@ -528,7 +530,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
               {/* What the entry gained and gave stands with what else it holds. */}
               <GainsBlock turn={turn} pack={pack} view={view} onChange={change} />
               {/* What the entry used beside its action: what it allows is marked among the entry's warnings. */}
-              <UsesBlock turn={turn} pack={pack} view={view} warnings={forecast.warningsByEntry[entry.id] ?? []} onChange={next => change(withUsesRepriced(view.table, view.board, pack, turn, next, manualPayments.includes(entry.id)))} />
+              <UsesBlock turn={turn} pack={pack} view={view} warnings={rowWarnings[entry.id] ?? []} onChange={next => change(withUsesRepriced(view.table, view.board, pack, turn, next, manualPayments.includes(entry.id)))} />
             </>
           )}
         </TurnHost>
@@ -550,7 +552,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <UnitPickerHost
             entryId={flown.id} pack={pack} view={boards.view(flown.id)} source={slot.source}
-            warnings={forecast.warningsByEntry[flown.id] ?? []}
+            warnings={rowWarnings[flown.id] ?? []}
             onClose={() => closePicker(flown, slot.source)}
             onFly={() => {
               toPicker(null);
@@ -566,7 +568,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <TacticalEditorHost
             entryId={edited.id} pack={pack} view={boards.view(edited.id)}
-            warnings={forecast.warningsByEntry[edited.id] ?? []}
+            warnings={rowWarnings[edited.id] ?? []}
             manualPayment={manualPayment} choosing={choosing}
             onChoose={what => { update(state => ({ ...state, next: what ? { kind: 'choose', what } : IDLE })); if (what) { drawers.closeRight(); setView('map'); } }}
             onOpenPicker={toPicker}
@@ -587,7 +589,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
         return (
           <StrategyEditorHost
             key={played.id} entryId={played.id} roundNumber={round.number} pack={pack} view={boards.view(played.id)}
-            warnings={forecast.warningsByEntry[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
+            warnings={rowWarnings[played.id] ?? []} manualPayment={manualPayments.includes(played.id)} picking={cardPick}
             onManualPayment={open => toggleManualPayment(played.id, open)}
             onPick={target => { update(state => ({ ...state, next: target ? { kind: 'card', pick: target } : IDLE })); if (target) { drawers.closeRight(); setView('map'); } }}
             onOpenShop={(at, only) => update(state => ({ ...state, stage: { slot: at, mode: 'build', only, for: { kind: 'card' } } }))}
@@ -609,7 +611,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <TurnHost key={adjusted.id} entryId={adjusted.id} view={boards.view(adjusted.id)} pack={pack}>
             {({ turn, update: change }) => (
               <AdjustmentEditor
-                pack={pack} view={boards.view(adjusted.id)} turn={turn} warnings={forecast.warningsByEntry[adjusted.id] ?? []}
+                pack={pack} view={boards.view(adjusted.id)} turn={turn} warnings={rowWarnings[adjusted.id] ?? []}
                 picking={adjustPick !== undefined} common={commonOf(adjusted)}
                 onPickSystem={() => { if (!adjustPick) drawers.closeRight(); update(state => ({ ...state, next: adjustPick ? IDLE : { kind: 'adjustmentSystem' } })); setView('map'); }}
                 onOpenHex={at => update(state => ({ ...state, stage: { slot: at, mode: 'setup', only: 'units', for: { kind: 'adjustment', id: adjusted.id } } }))}
@@ -627,7 +629,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
           <TurnHost key={turn.id} entryId={turn.id} view={boards.view(turn.id)} pack={pack}>
             {({ turn: played, update: change }) => (
               <TurnEditor
-                turn={played} pack={pack} view={boards.view(turn.id)} warnings={forecast.warningsByEntry[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
+                turn={played} pack={pack} view={boards.view(turn.id)} warnings={rowWarnings[turn.id] ?? []} common={commonOf(turn)} pickFirst={panel.kind === 'turn' && panel.fresh}
                 onChange={change}
                 production={{
                   picking: next.kind === 'produce',
@@ -645,7 +647,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       case 'act': {
         const { entry: host, index, act, back } = slot;
         const backTo = () => update(state => ({ ...state, panel: back, next: IDLE }));
-        const all = forecast.warningsByEntry[host.id] ?? [];
+        const all = rowWarnings[host.id] ?? [];
         const view = boards.view(host.id);
         const paymentKey = `${host.id}#${index}`;
         return (
@@ -781,7 +783,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
                 <PlanName key={`${plan.id}:${plan.name}:${i18n.language}`} plan={plan} />
                 <EntryList
                   pack={pack} viewOf={id => boards.view(id)} round={round} turns={forecastKernel.rounds.find(r => r.number === round.number)?.turns ?? []}
-                  warnings={forecast.warningsByEntry} end={{ table: forecastKernel.table, board: boardAtRound(timelineOf(game, plan, 'forecast', pack), round.number) }}
+                  warnings={rowWarnings} end={{ table: forecastKernel.table, board: boardAtRound(timelineOf(game, plan, 'forecast', pack), round.number) }}
                   openId={openId} onOpen={onOpenEntry} shownId={shownEntry?.id ?? null} onShow={onShowEntry}
                   onStatusAdded={id => update(state => ({ ...state, openId: id }))} onAddAgenda={onAddAgenda}
                   onDone={done => { if (done.type === 'tactical' && done.moves.some(m => hasUnits(m.units))) flight.start(done.id, shownFilter); }}
