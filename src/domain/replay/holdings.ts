@@ -140,29 +140,6 @@ export const PURGES = /\bpurge this card\b/i;
 /** A note that goes back once its ability is resolved says so last: "Then, return this card to the ... player." */
 export const RETURNS = /\bthen,? return this card to\b/i;
 
-/**
- * A component action names its component (22.1). One not held, or exhausted (71.4), is warned about and still played.
- * Playing it: an action card is discarded (2.7); an agent is exhausted (51.4) and a hero purged (51.12); a card whose
- * printed text exhausts it is exhausted (34.4), and a relic whose text purges it is gone (70). A promissory note of the
- * player's own colour or faction (`faction` is theirs) is warned about (69.2); another player's note whose text
- * returns it goes back to its owner (69.3), found in `states` by `me` or opponent id, and one that purges itself is gone.
- */
-export function applyComponent(
-  own: GameState, entry: Extract<Entry, { type: 'component' }>, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {},
-): void {
-  if (entry.componentId !== undefined) playComponent(own, entry.componentId, entry.owner ?? 'me', pack, warnings, faction, states);
-}
-
-/**
- * The components an entry uses beside its action (`uses`): each is played as a component action plays its own, so an
- * agent or a card that exhausts itself is exhausted, a hero purged, an action card discarded, and one not held or
- * already exhausted is warned about. The component its own action already plays is not played twice.
- */
-export function applyUses(own: GameState, entry: Entry, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {}): void {
-  const action = entry.type === 'component' ? entry.componentId : undefined;
-  for (const id of new Set(entry.uses)) if (id !== action) playComponent(own, id, entry.owner ?? 'me', pack, warnings, faction, states);
-}
-
 /** One component played by `player` (`me` or an opponent id), as the rules of its kind have it. */
 export function playComponent(
   own: GameState, id: string, player: string, pack: DataPack, warnings: Warning[], faction = '', states: Record<string, GameState> = {},
@@ -225,14 +202,5 @@ export function applyScored(own: GameState, shared: GameState, ids: string[] | u
     if (def.kind === 'secretObjective') removeOne(own.holdings.secrets, def.id);
     else if (!(shared.revealed ??= []).includes(def.id)) shared.revealed.push(def.id);
     if (!own.holdings.scored.includes(def.id)) own.holdings.scored.push(def.id);
-  }
-}
-
-/** The Ready Cards step (81.6, 34.2), for every player at once: exhausted components, agents and breakthroughs are readied. */
-export function readyCards(states: GameState[]): void {
-  for (const { holdings } of states) {
-    holdings.exhausted = [];
-    for (const id of Object.keys(holdings.leaders)) if (holdings.leaders[id] === 'exhausted') holdings.leaders[id] = 'unlocked';
-    if (holdings.breakthrough === 'exhausted') holdings.breakthrough = 'held';
   }
 }

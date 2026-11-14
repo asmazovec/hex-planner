@@ -5,8 +5,7 @@
 import { componentById } from '../../components';
 import { upgradeTech } from '../../holdings';
 import { adjacentTo } from '../../movement';
-import { planetsOf, systemSlots } from '../../replay/board';
-import { removeUnits, unitIds } from '../../replay/state';
+import { unitIds } from '../../replay/state';
 import { checkSystem } from '../../replay/transport';
 import playCondition from '../../rules/codes/playCondition';
 import { violation } from '../../rules/registry';
@@ -50,16 +49,6 @@ export const othersOf = (turn: EffectTurn): [string, GameState][] =>
 export const othersShipsIn = (turn: EffectTurn, slot: string): boolean =>
   othersOf(turn).some(([, state]) => shipsIn(turn, state, slot) > 0);
 
-/** The slot a planet lies in, on the map. */
-export const slotOfPlanet = (turn: EffectTurn, planetId: string): string | undefined =>
-  systemSlots(turn.game).find(slot => planetsOf(turn.game, slot, turn.pack).includes(planetId));
-
-/** Whether a slot holds a home system. */
-export const isHomeSlot = (turn: EffectTurn, slot: string): boolean => {
-  const tile = (turn.game.map[slot] ?? turn.game.fracture.tiles?.[slot] ?? slot).split('@')[0];
-  return turn.pack.tiles[tile]?.kind === 'home';
-};
-
 /** The slots adjacent to a slot for a move of the plan (a shared side, a wormhole, a hyperlane). */
 export const adjacentSlots = (turn: EffectTurn, slot: string): string[] => adjacentTo(turn.game, slot, turn.pack);
 
@@ -69,19 +58,6 @@ export function controllerOf(turn: EffectTurn, planetId: string): string | undef
   const control = (mine ? turn.state : turn.shared).control[planetId];
   if (mine) return control === 'me' ? 'me' : control === 'enemy' ? holderIn(turn.game, turn.state, planetId) : undefined;
   return control === 'enemy' ? holderIn(turn.game, turn.shared, planetId) : undefined;
-}
-
-/** The state of a planet's controller, when it is another player's. */
-export function rivalStateOf(turn: EffectTurn, planetId: string): GameState | undefined {
-  const holder = controllerOf(turn, planetId);
-  return holder === undefined || holder === turn.player ? undefined : turn.states[holder];
-}
-
-/** Whether a unit of the state has a bombardment roll (the upgrade counted when its technology is held). */
-export function hasBombardment(turn: EffectTurn, state: GameState, unit: UnitId): boolean {
-  const faction = state.faction ?? turn.game.faction;
-  const tech = upgradeTech(turn.pack, faction, unit as never);
-  return unitStats(faction, unit, tech !== undefined && state.holdings.technologies.includes(tech), turn.pack)?.bombard !== undefined;
 }
 
 /** Whether a unit of the state has capacity (the upgrade counted when its technology is held). */
@@ -97,9 +73,6 @@ export function place(turn: EffectTurn, slot: string, units: UnitCounts): void {
   for (const unit of unitIds(units)) bucket[unit] = (bucket[unit] ?? 0) + (units[unit] ?? 0);
   turn.warnings.push(...checkSystem(turn.game, turn.state, slot, turn.pack));
 }
-
-/** Removes what is there, up to the request. */
-export const removeFrom = (state: GameState, slot: string, units: UnitCounts): UnitCounts => removeUnits(state.systems, slot, units);
 
 /** Adds a planet to a state's exhausted ones. */
 export function exhaust(state: GameState, planetId: string): void {

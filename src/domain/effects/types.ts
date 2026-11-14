@@ -154,18 +154,6 @@ export interface ChoiceSpec {
   when?: (chosen: Record<string, string | number>) => boolean;
 }
 
-/** What a gain hands a component's effect: the holder's own state and the component just gained. */
-export interface GainTurn {
-  game: Game;
-  state: GameState;
-  shared: GameState;
-  pack: DataPack;
-  /** The component just gained by the entry's `gains`. */
-  id: string;
-  entry: Entry;
-  warnings: Warning[];
-}
-
 /**
  * What a component file exports as `ability`: its class (`tier`), the rule it stands on, whose action it speaks in
  * (`holder`) and what it does, all written for the kernel: hooks, the play, the permits, the changes to the count and the

@@ -70,26 +70,6 @@ export function pay(state: GameState, payment: Payment, kind: PaymentKind, pack:
   return applyPayment(state, payment, kind, pack, view);
 }
 
-/** Spends `amount` trade goods for an effect: what is not there is warned of and never taken, so the pool stays at zero or above. */
-export function spendTradeGoods(state: GameState, amount: number, warnings: Warning[], step: RuleStep = 'payment'): void {
-  if (amount > state.tradeGoods) warnings.push(violation('shortTradeGoods', { needed: amount, have: state.tradeGoods }, step));
-  state.tradeGoods -= Math.max(0, Math.min(amount, state.tradeGoods));
-}
-
-/**
- * For the component that lets commodities be spent as if they were trade goods (the Keleres agent): after the entry's
- * payment, takes from the commodities what the payment lacked in trade goods, as the payment's own warnings say, and
- * returns it. Whatever the commodities cannot cover stays short.
- */
-export function commoditiesForShortfall(turn: { state: GameState; warnings: Warning[] }): number {
-  const short = turn.warnings
-    .filter(w => w.code === 'shortTradeGoods' && w.step === 'payment')
-    .reduce((sum, w) => sum + Math.max(0, Number(w.params.needed) - Number(w.params.have)), 0);
-  const covered = Math.min(short, turn.state.commodities);
-  turn.state.commodities -= covered;
-  return covered;
-}
-
 /**
  * A game effect readies the listed planets; only those I control can be readied (71 note 3). `step` is where the
  * warning stands: the card's block unless the effect is a component's.

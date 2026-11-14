@@ -10,7 +10,6 @@ import { adjust, bench, endOf, expectNone, expectStanding, HOME, NEAR, primary, 
 import { effectsOf } from '../registry';
 import type { Ability } from '../types';
 import { appliedFor } from '../entryApply';
-import { unitLimitWarnings, systemProduction } from '../../replay/production';
 
 /** A throwaway effect for a component of the bench's pack. */
 const give = (table: Bench, id: string, effect: Partial<Ability>): void => {
@@ -86,13 +85,6 @@ describe('production sources', () => {
     const empty = bench({ faction: 'sol', start: { technologies: [TECH] }, entries: [entry] });
     give(empty, TECH, { modify: { spaceProduction: (v, ctx) => (ctx.units.cruiser ? 5 : v) } });
     expectStanding(warningsOf(empty, entry), 'noProduction');
-  });
-
-  test('systemProduction: the pooled value of a system, for a plan\'s own check (PEM)', () => {
-    const entry = produce({});
-    const table = build(entry, { game: { docks: ['h1', 'h2'] } });
-    const { state } = { state: endOf(table) };
-    expect(systemProduction(table.game, state, HOME, table.pack)).toBe(5 + 3);
   });
 });
 
@@ -190,16 +182,6 @@ describe('the checks of production', () => {
   test('productionNotAllowed: a Construction primary without units is not warned of', () => {
     const entry = primary(4, { structures: [{ kind: 'spacedock', planetId: 'h2' }] });
     expectNone(warningsOf(build(entry), entry), code('productionNotAllowed'));
-  });
-
-  test('unitLimitWarnings: the pieces of the game for units a step puts on the board', () => {
-    const entry = produce({});
-    const table = build(entry, { game: {} });
-    const state = structuredClone(endOf(table)); // the kernel's state is read-only; this helper writes to its input
-    state.systems[HOME] = { cruiser: 8 };
-    expect(unitLimitWarnings(state, { cruiser: 1 }, table.pack).map(w => w.code)).toEqual(['reinforcementsOut']);
-    expect(unitLimitWarnings(state, { cruiser: 1, infantry: 99, fighter: 99 }, table.pack)).toHaveLength(1);
-    expect(unitLimitWarnings(state, {}, table.pack)).toEqual([]);
   });
 });
 

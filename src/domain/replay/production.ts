@@ -14,7 +14,6 @@ import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Wa
 import { hasAnomaly, isStation, planetsOf, tileAt, type MapSource } from './board';
 import { pay } from './payment';
 import { add, unitIds, type TacticalEntry } from './state';
-import { checkSystem } from './transport';
 
 export { productionCost };
 
@@ -166,14 +165,6 @@ export function producersOn(g: Ground, systemId: string, pack: DataPack, source:
 export const producers = (game: Game, state: GameState, systemId: string, pack: DataPack): string[] => producerPlanets(groundOf(game, state, pack), systemId, pack);
 const producerPlanets = (g: Ground, systemId: string, pack: DataPack): string[] =>
   [...new Set(producersOn(g, systemId, pack).flatMap(p => (p.planetId === null ? [] : [p.planetId])))];
-
-/**
- * The Production value of a system as the check counts it: its producers pooled (68.1.1), then the total changed
- * (War Machine, with the entry that plays it). With `homeDock` the largest dock alone (99.3). 0 with no producer.
- */
-export function systemProduction(game: Game, state: GameState, systemId: string, pack: DataPack, source: ProductionSource = 'system', entry?: Entry): number {
-  return systemProductionOn(groundOf(game, state, pack), systemId, pack, source, entry);
-}
 export function systemProductionOn(g: Ground, systemId: string, pack: DataPack, source: ProductionSource = 'system', entry?: Entry): number {
   const list = producersOn(g, systemId, pack, source);
   if (list.length === 0) return 0;
@@ -245,15 +236,6 @@ export function placeProduction(
 /** How many of a unit stand on the board in this state, ships and ground forces. */
 export const unitsOnBoard = (state: GameState, unit: UnitId): number =>
   [...Object.values(state.systems), ...Object.values(state.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
-
-/**
- * The reinforcement limit of the pieces of the game for units about to be placed (67.5, 72.1, 96.2): one warning per
- * unit type that would pass it. Fighters and infantry are not limited: tokens stand in for them (67.5.2, 96 note 2.1).
- * Any step that puts units on the board from the reinforcements (a production, the play of a component) asks this.
- */
-export function unitLimitWarnings(state: GameState, units: UnitCounts, pack: DataPack, step?: RuleStep): Warning[] {
-  return limitWarnings(unit => unitsOnBoard(state, unit), units, pack, step);
-}
 const limitWarnings = (onBoardOf: (unit: UnitId) => number, units: UnitCounts, pack: DataPack, step?: RuleStep): Warning[] => {
   const warnings: Warning[] = [];
   for (const unit of unitIds(units)) {
@@ -355,23 +337,4 @@ export function payProduction(game: Game, state: GameState, entry: TacticalEntry
   const cost = costOf(game, state, entry.production, pack, producing, entry);
   const paid = pay(state, entry.payment, 'resources', pack, warnings, { faction: game.faction });
   if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
-}
-
-/**
- * The production of a component's entry (`effects.production`, as a card's: a hero that produces, a technology that
- * builds): checked as one of a tactical action in its system, placed, paid for with `effects.payment`, and its system
- * checked for what it holds.
- */
-export function applyComponentProduction(
-  game: Game, state: GameState, entry: Extract<Entry, { type: 'component' }>, pack: DataPack, warnings: Warning[],
-): void {
-  const made = entry.effects?.production;
-  if (!made || unitIds(made.units).length === 0) return;
-  warnings.push(...checkProduction(game, state, made.systemId, made.units, pack, made.ground, 'system', undefined, entry));
-  const producing = producerList(game, state, made.systemId, pack).length > 0;
-  placeProduction(game, state, made.systemId, made.units, pack, made.ground);
-  const cost = costOf(game, state, made.units, pack, producing, entry);
-  const paid = pay(state, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources', pack, warnings, { faction: game.faction });
-  if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
-  warnings.push(...checkSystem(game, state, made.systemId, pack));
 }

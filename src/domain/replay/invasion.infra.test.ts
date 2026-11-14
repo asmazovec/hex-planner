@@ -9,7 +9,7 @@ import type { HookPayloads } from '../../game/abilities/types';
 import type { Ability } from '../effects/types';
 import { bench, endOf, expectStanding, NEAR, TARGET, adjust, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
 import type { AnyWarningCode, Entry, Opponent } from '../types';
-import { attachCard, controlGained, exploreCondition, placeOnPlanet } from './invasion';
+import { attachCard, exploreCondition, placeOnPlanet } from './invasion';
 
 const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const code = (name: string) => name as AnyWarningCode;
@@ -105,15 +105,6 @@ describe('landing from a planet', () => {
   test('a landing from the space area names no planet and is not warned of', () => {
     const move = tactical(TARGET, { landings: [{ planetId: 't1', units: { infantry: 1 } }] });
     expect(warningsOf(table(move), move).map(w => w.code)).not.toContain(code('landingFromPlanet'));
-  });
-});
-
-describe('controlGained', () => {
-  test('lists the planets that were not mine before and are after', () => {
-    const table = bench({ faction: 'sol', units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [invade(['t1'])] });
-    const start = bench({ faction: 'sol' });
-    expect(controlGained(endOf(start), endOf(table))).toEqual(['t1']);
-    expect(controlGained(endOf(table), endOf(table))).toEqual([]);
   });
 });
 

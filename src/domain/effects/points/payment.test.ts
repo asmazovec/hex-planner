@@ -4,14 +4,13 @@
  * the cost of a component action. A component's own file is never touched.
  */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { applyPayment, checkPayment, commoditiesForShortfall, pay, readyInfluence, readyResources, spendTradeGoods } from '../../replay/payment';
+import { applyPayment, checkPayment, pay, readyInfluence, readyResources } from '../../replay/payment';
 import { autoPay, paymentValue } from '../../payment';
 import { commodityValueOf, gainCommodities, replenish } from '../../replay/cards/trade';
 import { forecast, mutable, rulesGame, rulesPack, tactical } from '../../rules/kit';
 import type { Entry, GameState, Opponent, Warning } from '../../types';
 import { componentAction } from '../components/kit';
 import { alwaysInForce, throwaway } from './throwaway';
-import { violation } from '../../rules/registry';
 import { gain } from '../../../game/abilities/emit';
 
 vi.mock('../registry', async original => (await import('./throwaway')).mockRegistry(await original()));
@@ -109,27 +108,6 @@ describe('payment: the step of the warnings, trade goods and commodities', () =>
     const warnings: Warning[] = [];
     pay(freshState(), { planets: ['h1'], tradeGoods: 1 }, 'resources', pack, warnings, { ...view, step: 'status' });
     expect(warnings.map(w => [w.code, w.step])).toEqual([['shortTradeGoods', 'status']]);
-  });
-
-  test('spendTradeGoods takes what is there, warns for the rest and never goes below zero', () => {
-    const state = freshState();
-    state.tradeGoods = 2;
-    const warnings: Warning[] = [];
-    spendTradeGoods(state, 3, warnings, 'component');
-    expect(state.tradeGoods).toBe(0);
-    expect(warnings.map(w => [w.code, w.step, w.params])).toEqual([['shortTradeGoods', 'component', { needed: 3, have: 2 }]]);
-  });
-
-  test('commoditiesForShortfall covers the payment warning of trade goods from the commodities', () => {
-    const state = freshState();
-    state.tradeGoods = 1;
-    state.commodities = 2;
-    const warnings: Warning[] = [];
-    pay(state, { planets: [], tradeGoods: 3 }, 'resources', pack, warnings);
-    expect(commoditiesForShortfall({ state, warnings })).toBe(2);
-    expect(state.commodities).toBe(0);
-    state.commodities = 1;
-    expect(commoditiesForShortfall({ state, warnings: [violation('shortTradeGoods', { needed: 4, have: 1 }, 'transaction')] })).toBe(0);
   });
 });
 

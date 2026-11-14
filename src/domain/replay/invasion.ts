@@ -2,7 +2,6 @@
 import '../effects/points/invasion';
 import '../effects/points/rivals';
 import { applied } from '../effects/apply';
-import { hooked, run } from '../effects/points/moments';
 import { effectOf, holderOf, inForceOf } from '../effects/registry';
 import { CUSTODIANS_COST, MECATOL_PLANETS } from '../mecatol';
 import { violation } from '../rules/registry';
@@ -131,10 +130,6 @@ export function gainControl(game: Game, state: GameState, landedOn: string[], pa
   }
 }
 
-/** The planets that are mine in `after` and were not in `before`: what an entry gained, for a waiver that asks what the entry took. */
-export const controlGained = (before: Pick<GameState, 'control'>, after: Pick<GameState, 'control'>): string[] =>
-  Object.keys(after.control).filter(planetId => after.control[planetId] === 'me' && before.control[planetId] !== 'me');
-
 /**
  * Effect of an ability or card that places units on a planet: they are added to it; a planet the player does not
  * control is warned of (67.4.1) and gets them all the same. Reinforcement limits are not counted here.
@@ -190,28 +185,5 @@ export function reactToLanding(game: Game, state: GameState, shared: GameState, 
     for (const id of inForceOf(pack, holderOf(ownerGame, own, shared), effect => effect.onLanding !== undefined)) {
       effectOf(pack, id)!.onLanding!({ id, game: ownerGame, pack, owner, lander, planetId, landed, state: own, landerState: state, shared, warnings });
     }
-  }
-}
-
-/**
- * Effect on my state of an opponent's tactical action, once their own count has replayed it: each planet they landed on
- * and hold with ground forces is theirs, and I and the other opponents lose it with our structures there (25.5, 49.5.1).
- * The custodians token they removed is gone for everyone, with its point to them.
- */
-export function rivalLandings(state: GameState, entry: TacticalEntry, owner: string, pack: DataPack, game?: Game, warnings: Warning[] = []): void {
-  const rival = state.rivals?.[owner];
-  if (!rival) return;
-  for (const { planetId } of entry.landings) {
-    if (rival.control[planetId] !== 'me' || !hasGround(rival.ground[planetId], pack)) continue;
-    // What I lose with the planet is asked before it goes: a legendary planet is in force only while I control it.
-    const lost = game && state.control[planetId] === 'me' ? hooked('onControlLost', { game, state, shared: state, pack }) : [];
-    losePlanet(state, planetId);
-    if (game) run('onControlLost', lost, { game, state, shared: state, pack, warnings, entry, states: { me: state, ...state.rivals } }, { planetId, to: owner });
-    if (state.rivalHolds) state.rivalHolds[planetId] = owner;
-    for (const [id, other] of Object.entries(state.rivals ?? {})) if (id !== owner) losePlanet(other, planetId);
-  }
-  if (rival.custodiansRemoved && !state.custodiansRemoved) {
-    for (const each of [state, ...Object.values(state.rivals ?? {})]) each.custodiansRemoved = true;
-    state.opponentVp[owner] = (state.opponentVp[owner] ?? 0) + 1;
   }
 }

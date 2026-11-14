@@ -2,15 +2,10 @@
 import { componentById } from '../components';
 import { violation } from '../rules/registry';
 import { heldCards } from '../strategy';
-import type { DataPack, Entry, Game, Phase, Round, Warning } from '../types';
-
-/** The phases of a round in the order they are played, whatever the order of the plan's list. */
-export const PHASE_ORDER: Phase[] = ['strategy', 'action', 'status', 'agenda'];
+import type { DataPack, Entry, Game, Round, Warning } from '../types';
 
 /** What a round remembers of its flow: whose pass has been replayed, by owner ('' for me). */
 export interface RoundFlow { round: Round; passed: Set<string> }
-
-export const roundFlow = (round: Round): RoundFlow => ({ round, passed: new Set() });
 
 /** An action card played in a window of its own ("After ...", "When ..."): not a component action, so no turn (2.6, 40.2). */
 const inWindow = (pack: DataPack | undefined, id: string): boolean => {

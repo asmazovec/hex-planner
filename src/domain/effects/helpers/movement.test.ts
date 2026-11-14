@@ -5,11 +5,11 @@
 import { describe, expect, test } from 'vitest';
 import { adjacentTo } from '../../movement';
 import type { Entry } from '../../types';
-import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, warningsOf, type Bench } from '../components/kit';
+import { bench, FAR, FARTHER, HOME, NEAR, TARGET, tactical, warningsOf, type Bench } from '../components/kit';
 import { effectsOf } from '../registry';
 import type { PermitContext } from '../../../game/abilities/types';
 import type { Ability } from '../types';
-import { activeNextToAnomaly, fastestOfGroup, playerHolds, plusSpeed, shipSlots, shortfall, startWormholes, startsAtHome, startsInFracture } from './movement';
+import { activeNextToAnomaly, fastestOfGroup, plusSpeed, shortfall, startWormholes, startsAtHome, startsInFracture } from './movement';
 
 const TECH = 'technology:gd';
 const give = (table: Bench, effect: Partial<Ability>): void => {
@@ -166,17 +166,6 @@ describe('the board of the others', () => {
     give(t, lifting('speedShort', (_w, ctx) => { seen.push(ctx.fastestOnBoard()); return false; }));
     warningsOf(t, move);
     expect(seen[0]).toBeGreaterThanOrEqual(2);
-  });
-
-  test('playerHolds: ships, ground forces and structures count, by the replayed state or by hand', () => {
-    const t = sol({ units: { [HOME]: { carrier: 1 } }, game: { opponents: [O1], enemyUnits: { [FAR]: { o1: { cruiser: 1 } } }, enemyGround: { t1: { o1: { infantry: 1 } } } } });
-    const state = endOf(t);
-    expect(playerHolds(t.game, state, 'me', HOME, t.pack)).toBe(true);
-    expect(playerHolds(t.game, state, 'me', NEAR, t.pack)).toBe(false);
-    expect(playerHolds(t.game, state, 'o1', FAR, t.pack)).toBe(true);
-    expect(playerHolds(t.game, state, 'o1', TARGET, t.pack)).toBe(true);
-    expect(playerHolds(t.game, { ...state, docks: ['h1'] }, 'me', HOME, t.pack)).toBe(true);
-    expect(shipSlots(state, t.pack)).toEqual([HOME]);
   });
 
   test('mecatolSlot finds tile 18 or 112, and playerNear asks the presence of another player in or next to it', () => {
