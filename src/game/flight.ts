@@ -6,7 +6,9 @@
 import type { Turn } from './actions';
 import { apply } from './apply';
 import { placesOn, type ProductionPlace } from '../domain/replay/production';
-import { fleetLimit, groundIn, stacksOn } from './queries';
+import { fleetLimit, groundIn, mapOf, routeReadsOn, shipsIn, stacksOn } from './queries';
+import { fleetSpeed, routeMove, routeReach, routeSteps, type Blockers } from '../domain/movement';
+import type { TacticalEntry } from '../domain/replay/state';
 import { playTactical } from './resolve';
 import type { Warning } from '../domain/types';
 import type { Board, DataPack, PlayerId, Slot, Table, UnitCounts } from './types';
@@ -108,4 +110,25 @@ export function activatedBoard(board: Board, turn: Turn): Board {
   const action = turn.action;
   if (action.kind !== 'tactical' || action.free || action.system === null || (board.systems[action.system]?.tokens.includes(turn.player) ?? false)) return board;
   return apply(board, { type: 'SystemActivated', player: turn.player, system: action.system });
+}
+
+/**
+ * A route under way: how far the fastest ship of its source flies (`speed`, after the anomalies on the path), the steps
+ * taken, what is left, and the systems it can still reach towards the active one. A source without ships has no speed,
+ * only its distance. `blockers` are asked for only when the reach is counted.
+ */
+export function routeHintOn(
+  table: Table, board: Board, pack: DataPack, player: PlayerId, path: Slot[], active: Slot | null, blockers: () => Blockers,
+): { speed: number | null; steps: number; left: number | null; reach: Set<Slot> } {
+  const map = mapOf(table, board, player);
+  const group = shipsIn(board, path[0], player);
+  // The components of the player answer for the start, the active system and the group, as in the move of the plan.
+  const reads = routeReadsOn(table, board, pack, player, { systemId: active, moves: [] } as unknown as TacticalEntry);
+  const view = reads.view({ from: path[0], units: group }, undefined);
+  const fastest = fleetSpeed(map, group, reads.holder, pack, view);
+  const steps = routeSteps(map, path, pack);
+  if (fastest === null) return { speed: null, steps, left: null, reach: new Set() };
+  const speed = routeMove(map, path, fastest, pack, undefined, view);
+  const reach = active === null ? new Set<Slot>() : routeReach(map, path, fastest, active, pack, blockers(), view);
+  return { speed, steps, left: Math.max(0, speed - steps), reach };
 }

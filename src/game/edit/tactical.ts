@@ -8,7 +8,6 @@ import { sourceSlot, type MapSource } from '../../domain/replay/board';
 import type { Turn, Tactical, Flight, Landing, Payment } from '../actions';
 import type { Place } from '../events';
 import type { DataPack, PlanetId, PlayerId, Slot, StructureCounts, StructureKind, UnitCounts, UnitId } from '../types';
-
 /** What the editors count a place by: the table's map and the pack. */
 export interface At { map: MapSource; pack: DataPack }
 

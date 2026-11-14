@@ -10,7 +10,9 @@ import { loadPack } from '../data/loadPack';
 import { withLanding as oldLanding, withRoute as oldRoute } from '../domain/tactical';
 import type { Entry } from '../domain/types';
 import { withLanding, withRoute } from '../game/edit/tactical';
-import { tableOf } from '../game/fromLegacy';
+import { newTurn } from '../game/edit/new';
+import { tacticalBody } from '../domain/newEntry';
+import { planOf, tableOf } from '../game/fromLegacy';
 import { initialBoard } from '../game/setup';
 import { mapSource } from '../game/space';
 import { entryPatch, writeTurn } from './turnBridge';
@@ -53,5 +55,22 @@ describe('the write bridge', () => {
     const a = { id: 'x', type: 'pass', phase: 'action', status: 'planned', gains: ['a'] } as Entry;
     const b = { id: 'x', type: 'pass', phase: 'action', status: 'planned', spends: ['b'] } as Entry;
     expect(entryPatch(a, b)).toEqual({ gains: undefined, spends: ['b'] });
+  });
+});
+
+describe('the free action of a card', () => {
+  test('made with the card and dropped with it, as the store makes and drops it', () => {
+    const card = act().addEntry(1, { type: 'strategic', card: 6 }, 'action');
+    const game = act().game!;
+    const table = tableOf(game);
+    const round = planOf(table, game.plans[0], pack)[0];
+    const bridge = writeTurn(table, game, card, pack)!;
+    const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round }, { system: 'B', fromCard: card });
+    bridge.update({ ...bridge.turn, action: { ...(bridge.turn.action as object), nested: [free] } as never });
+    const made = entries().find(e => e.type === 'tactical') as Extract<Entry, { type: 'tactical' }>;
+    expect(made).toMatchObject({ ...tacticalBody('B', card), id: expect.any(String) });
+    const again = writeTurn(table, act().game!, card, pack)!;
+    again.update({ ...again.turn, action: { ...(again.turn.action as object), nested: undefined } as never });
+    expect(entries().some(e => e.type === 'tactical')).toBe(false);
   });
 });

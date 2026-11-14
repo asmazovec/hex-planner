@@ -57,6 +57,14 @@ export function writeTurn(table: Table, game: Game, entryId: string, pack: DataP
     if (turn.action.kind !== 'strategic' || next.action.kind !== 'strategic') return;
     const was = nestedEntries(table, turn)[0];
     const now = nestedEntries(table, next)[0];
+    // The free action of the card is made or dropped with it.
+    if (!now && found.linked) store.removeEntry(found.linked.id);
+    if (now && !found.linked) {
+      const { id: made, status, phase, ...body } = now;
+      void made; void status;
+      store.addEntry(found.round, body as EntryBody, phase, now.owner);
+      return;
+    }
     if (!now || !found.linked || !was) return;
     const nestedPatch = entryPatch(was, now);
     if (Object.keys(nestedPatch).length > 0) store.updateEntry(found.linked.id, nestedPatch);
