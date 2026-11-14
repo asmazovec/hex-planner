@@ -12,6 +12,7 @@ import { deleteGame, listGames, saveGame } from '../../storage/db';
 import { sampleGame } from '../../testing/fixture';
 import { exportGame } from '../../storage/transfer';
 import { GameScreen } from './GameScreen';
+import { draftNow, gameNow, seedDraft, seedGame } from '../../testing/store';
 
 afterEach(cleanup);
 
@@ -20,7 +21,8 @@ beforeEach(async () => {
   for (const g of await listGames()) await deleteGame(g.id);
   useGame.getState().closeGame();
   const expansions = ['pok', 'te'] as const;
-  useGame.setState({ draft: createGame({ expansions: [...expansions], playerCount: 6, faction: '' }, loadPack([...expansions])), saveError: null });
+  seedDraft(createGame({ expansions: [...expansions], playerCount: 6, faction: '' }, loadPack([...expansions])));
+  useGame.setState({ saveError: null });
 });
 
 const cards = () => screen.getAllByRole('group', { name: /^Player \d/ });
@@ -35,7 +37,8 @@ const pick = async (n: number, faction: string) => {
 const startOpen = (playerCount = 4, faction = 'sol') =>
   useGame.getState().newGame({ expansions: ['pok', 'te'], playerCount, faction }, loadPack(['pok', 'te']));
 const seats = () => {
-  const { draft, game } = useGame.getState();
+  const game = gameNow();
+  const draft = draftNow();
   const g = game ?? draft;
   return [g.seat, ...g.opponents.map(o => o.seat)];
 };
@@ -105,13 +108,13 @@ test('only starting information: no points on the cards', () => {
 test('the start button waits for my faction, then starts with the list as set', async () => {
   render(<GameScreen />);
   expect(screen.getByRole('button', { name: 'Start game' })).toBeDisabled();
-  expect(useGame.getState().game).toBeNull();
+  expect(gameNow()).toBeNull();
   await pick(1, 'sol');
   await pick(2, 'hacan');
   await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: 'Remove opponent' }));
   drag(1, 3)();
   await userEvent.click(screen.getByRole('button', { name: 'Start game' }));
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   expect(game.faction).toBe('sol');
   expect(game.expansions).toEqual(['pok', 'te']);
   expect(game.playerCount).toBe(5);
@@ -130,7 +133,7 @@ test('a started game appears in the saved list, and a new game can follow', asyn
   expect(screen.queryByRole('button', { name: 'Open' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Start game' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'New game' }));
-  expect(useGame.getState().game).toBeNull();
+  expect(gameNow()).toBeNull();
   expect(await screen.findByRole('button', { name: 'Open' })).toBeVisible();
   expect(screen.getByRole('button', { name: 'Start game' })).toBeDisabled();
 });
@@ -270,37 +273,37 @@ test('removing an opponent on a filled map asks first, and cancel changes nothin
   useGame.getState().setTile('1,0', '30');
   render(<GameScreen />);
   await userEvent.click(within(card(6)).getByRole('button', { name: 'Remove opponent' }));
-  expect(useGame.getState().game!.playerCount).toBe(6);
+  expect(gameNow()!.playerCount).toBe(6);
   expect(screen.getByText(/Tiles on the map: 1, of them leaving: 0/)).toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  expect(useGame.getState().game!.playerCount).toBe(6);
+  expect(gameNow()!.playerCount).toBe(6);
   expect(screen.queryByText(/Tiles on the map/)).toBeNull();
   await userEvent.click(within(card(6)).getByRole('button', { name: 'Remove opponent' }));
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-  expect(useGame.getState().game!.playerCount).toBe(5);
-  expect(useGame.getState().game!.map['1,0']).toBe('30');
+  expect(gameNow()!.playerCount).toBe(5);
+  expect(gameNow()!.map['1,0']).toBe('30');
 });
 
 test('removing an opponent who has units or planets says so, and only then asks', async () => {
   startOpen(6);
-  const [first, second] = useGame.getState().game!.opponents.map(o => o.id);
+  const [first, second] = gameNow()!.opponents.map(o => o.id);
   useGame.getState().setEnemyUnits('1,0', first, { cruiser: 2 });
   useGame.getState().setEnemyUnits('0,1', first, { fighter: 1 });
   useGame.getState().setPlanetControl('arc', first);
   render(<GameScreen />);
   await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
-  expect(useGame.getState().game!.playerCount).toBe(6);
+  expect(gameNow()!.playerCount).toBe(6);
   expect(screen.getByText(/Units on the map: 3, planets: 1/)).toBeInTheDocument();
   expect(screen.queryByText(/Tiles on the map/)).toBeNull();
   expect(within(card(2)).queryByRole('button', { name: 'Remove opponent' })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-  expect(useGame.getState().game!.enemyUnits['1,0']).toEqual({ [first]: { cruiser: 2 } });
+  expect(gameNow()!.enemyUnits['1,0']).toEqual({ [first]: { cruiser: 2 } });
   await userEvent.click(within(card(3)).getByRole('button', { name: 'Remove opponent' }));
-  expect(useGame.getState().game!.opponents.map(o => o.id)).not.toContain(second);
+  expect(gameNow()!.opponents.map(o => o.id)).not.toContain(second);
   expect(screen.queryByText(/Units on the map/)).toBeNull();
   await userEvent.click(within(card(2)).getByRole('button', { name: 'Remove opponent' }));
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   expect(game.opponents.map(o => o.id)).not.toContain(first);
   expect(game.enemyUnits).toEqual({});
   expect(game.planetControl.arc).toBeUndefined();
@@ -309,17 +312,18 @@ test('removing an opponent who has units or planets says so, and only then asks'
 test('adding on a filled map asks first too; a map with only home tiles does not', async () => {
   const pack = loadPack(['pok', 'te']);
   const draft = createGame({ expansions: ['pok', 'te'], playerCount: 4, faction: '' }, pack);
-  useGame.setState({ game: null, draft });
+  seedGame(null);
+  seedDraft(draft);
   render(<GameScreen />);
   await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
-  expect(useGame.getState().draft.playerCount).toBe(5);
-  act(() => useGame.setState(state => ({ draft: { ...state.draft, map: { ...state.draft.map, '1,0': '30' } } })));
+  expect(draftNow().playerCount).toBe(5);
+  act(() => seedDraft({ ...draftNow(), map: { ...draftNow().map, '1,0': '30' } }));
   await userEvent.click(screen.getByRole('button', { name: /Add opponent/ }));
-  expect(useGame.getState().draft.playerCount).toBe(5);
+  expect(draftNow().playerCount).toBe(5);
   // The question stands in for the button that asked it.
   expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Change' }));
-  expect(useGame.getState().draft.playerCount).toBe(6);
+  expect(draftNow().playerCount).toBe(6);
 });
 
 test('the interface language is chosen here and remembered', async () => {
@@ -349,7 +353,7 @@ test('the layout can be chosen before the start as well', async () => {
   render(<GameScreen />);
   for (let i = 0; i < 2; i++) await userEvent.click(within(cards().at(-1)!).getByRole('button', { name: 'Remove opponent' }));
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
-  expect(useGame.getState().draft.layout).toBe('hyperlanes');
+  expect(draftNow().layout).toBe('hyperlanes');
 });
 
 test('importing a broken file shows the reason and keeps saved games', async () => {
@@ -359,7 +363,7 @@ test('importing a broken file shows the reason and keeps saved games', async () 
   await userEvent.upload(screen.getByLabelText('Import game'), file);
   expect(await screen.findByRole('alert')).toHaveTextContent('not valid JSON');
   expect(await listGames()).toHaveLength(1);
-  expect(useGame.getState().game).toBeNull();
+  expect(gameNow()).toBeNull();
 });
 
 test('importing a game whose id exists saves it as a new game', async () => {
@@ -369,7 +373,7 @@ test('importing a game whose id exists saves it as a new game', async () => {
   const file = new File([exportGame(game)], 'g.json', { type: 'application/json' });
   await userEvent.upload(screen.getByLabelText('Import game'), file);
   await waitFor(async () => expect(await listGames()).toHaveLength(2));
-  expect(useGame.getState().game!.id).not.toBe(game.id);
+  expect(gameNow()!.id).not.toBe(game.id);
 });
 
 test('a failing save during import shows an error instead of throwing', async () => {
@@ -394,7 +398,7 @@ test('the screen credits the authors of the game-icons', () => {
 test('a saved game goes after a second tap, and the open one closes with it', async () => {
   startOpen();
   await flushSaves();
-  const { id } = useGame.getState().game!;
+  const { id } = gameNow()!;
   render(<GameScreen />);
   await userEvent.click(await screen.findByRole('button', { name: 'Delete game' }));
   expect(await listGames()).toHaveLength(1);
@@ -403,7 +407,7 @@ test('a saved game goes after a second tap, and the open one closes with it', as
   await userEvent.click(screen.getByRole('button', { name: 'Delete game' }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete for good' }));
   await waitFor(async () => expect((await listGames()).map(g => g.id)).not.toContain(id));
-  expect(useGame.getState().game).toBeNull();
+  expect(gameNow()).toBeNull();
 });
 
 test('the blur setting is remembered and reaches the stylesheet', async () => {
@@ -422,44 +426,44 @@ describe('a link to a game', () => {
   const store = () => useGame.getState();
 
   test('without a name it fills the draft of a new game', async () => {
-    useGame.setState({ game: null });
+    seedGame(null);
     await store().openShareLink('?factions=sol,arborec,hacan&exp=pok');
-    expect(store().draft.playerCount).toBe(3);
-    expect(store().draft.faction).toBe('sol');
-    expect(store().draft.expansions).toEqual(['pok']);
+    expect(draftNow().playerCount).toBe(3);
+    expect(draftNow().faction).toBe('sol');
+    expect(draftNow().expansions).toEqual(['pok']);
   });
 
   test('never touches a game that is open', async () => {
     store().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, loadPack(['pok']));
-    const open = store().game;
-    const draft = store().draft;
+    const open = gameNow();
+    const draft = draftNow();
     await store().openShareLink('?name=Other&factions=sol,arborec,hacan');
-    expect(store().game).toBe(open);
-    expect(store().draft).toBe(draft);
+    expect(gameNow()).toBe(open);
+    expect(draftNow()).toBe(draft);
   });
 
   test('without game parameters nothing changes', async () => {
-    useGame.setState({ game: null });
-    const draft = store().draft;
+    seedGame(null);
+    const draft = draftNow();
     await store().openShareLink('?utm=x');
-    expect(store().draft).toBe(draft);
+    expect(draftNow()).toBe(draft);
   });
 
   test('a game is named before it starts, and after that the field is closed and nobody more joins', async () => {
-    useGame.setState({ game: null });
+    seedGame(null);
     const { unmount } = render(<GameScreen />);
     await userEvent.type(screen.getByRole('textbox', { name: 'Game name' }), 'Friday{Enter}');
-    expect(store().draft.name).toBe('Friday');
+    expect(draftNow().name).toBe('Friday');
     expect(screen.getByRole('button', { name: /Add opponent/ })).toBeVisible();
     unmount();
     store().setFaction('arborec');
     store().startGame();
-    expect(store().game?.name).toBe('Friday');
+    expect(gameNow()?.name).toBe('Friday');
     render(<GameScreen />);
     expect(screen.getByRole('textbox', { name: 'Game name' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: /Add opponent/ })).toBeNull();
     await flushSaves();
-    expect((await listGames()).find(g => g.id === store().game?.id)?.name).toBe('Friday');
+    expect((await listGames()).find(g => g.id === gameNow()?.id)?.name).toBe('Friday');
   });
 
   test('a save shows its name apart from what it is, and one without a name goes by its faction', async () => {

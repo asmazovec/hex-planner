@@ -15,11 +15,12 @@ import { componentsOf, textOf } from '../../domain/components';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
+import { gameNow } from '../../testing/store';
 
 /** The interface of these tests is English, and so are the texts of the pack. */
 const pack = loadPack(['pok'], 'en');
 const russian = loadPack(['pok'], 'ru');
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 const rival = () => game().opponents[0];
 
 afterEach(cleanup);

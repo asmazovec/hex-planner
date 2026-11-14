@@ -23,6 +23,7 @@ import { PlanTabs, planDisplayName } from './PlanTabs';
 import { StrategyCards } from './StrategyCards';
 import { SummaryBar } from './SummaryBar';
 import { WarningText } from '../feedback/WarningText';
+import { gameNow, useOldGame } from '../../testing/store';
 
 const pack = loadPack(['pok', 'te']);
 
@@ -33,7 +34,7 @@ beforeEach(() => {
   useGame.getState().setTile('1,0', '5');
 });
 
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 
 test('the summary shows now and forecast for every value', () => {
@@ -204,7 +205,7 @@ test('with 3 or 4 players the backup is the second card', async () => {
 });
 
 function StrategyCardsLive({ playerCount = 6 }: { playerCount?: number }) {
-  const live = useGame(s => s.game)!;
+  const live = useOldGame()!;
   const round = live.plans[0].rounds[0];
   return <StrategyCards expansions={live.expansions} playerCount={playerCount} round={round} />;
 }
@@ -424,7 +425,7 @@ test('undo is offered only when there is something to undo, and reverts', async 
 });
 
 function EntryListLive({ warnings = {} }: { warnings?: Record<string, Warning[]> }) {
-  const live = useGame(s => s.game)!;
+  const live = useOldGame()!;
   return (
     <EntryList {...listOf(live, pack, 0, warnings)}
       openId={null} onOpen={() => undefined}

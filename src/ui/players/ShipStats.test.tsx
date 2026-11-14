@@ -17,6 +17,7 @@ import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 import { FactionCard } from './FactionCard';
 import { ShipStats } from './ShipStats';
+import { gameNow } from '../../testing/store';
 
 /** The interface of these tests is Russian, and so are the texts of the packs. */
 const pack = loadPack(['pok', 'te'], 'ru');
@@ -35,7 +36,7 @@ afterEach(cleanup);
 beforeEach(() => setLanguage('ru'));
 
 const row = (kind: string) => screen.getByTestId(`ship-row-${kind}`);
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 /** The unit upgrades I hold from the start, as the panel marks them. */
 const baseline = () => upgradesOf({ technologies: game().start.me.technologies ?? [] }, pack);
 const round = () => game().plans[0].rounds[0];

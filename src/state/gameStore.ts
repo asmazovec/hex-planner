@@ -4,7 +4,7 @@ import type { MergedChange } from '../domain/losses';
 import { changeOnBoard } from '../game/edit/merged';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
 import type {
-  DataPack, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, UnitCounts,
+  DataPack, EntryStatus, ExpansionId, MapLayout, LeaderState, Phase, UnitCounts,
 } from '../domain/types';
 import type { Turn } from '../game/actions';
 import {
@@ -15,7 +15,7 @@ import type { Round } from '../game/round';
 import type { SavedGame, SavedPlan } from '../game/save';
 import { loadGame, listGames } from '../storage/db';
 import { errorText } from '../storage/errorText';
-import { gameOf, originOf, savedFor } from '../testing/legacySave';
+
 import { flushSaves, queueSave } from './autosave';
 import * as history from './history';
 import {
@@ -26,7 +26,7 @@ import {
   addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName,
   withTile,
 } from '../game/edit/table';
-import { playerOfLegacy } from '../game/entry';
+import { playerOfKey } from '../game/keys';
 import { forgetTimelines, startOfSaved } from './projection';
 
 export { flushSaves };
@@ -40,8 +40,8 @@ function mapSame<T>(items: T[], edit: (item: T) => T): T[] {
   return next.every((item, i) => item === items[i]) ? items : next;
 }
 
-/** The kernel player an old id (`me`, an opponent's id) stands for. */
-const pid = (saved: SavedGame, legacy: string): string => playerOfLegacy(saved.table, legacy) ?? legacy;
+/** The player an owner key (`me`, a rival's id) stands for at the table. */
+const pid = (saved: SavedGame, key: string): string => playerOfKey(saved.table, key) ?? key;
 
 const activePlan = (saved: SavedGame): SavedPlan | undefined => saved.plans.find(p => p.id === saved.activePlanId);
 const seated = (saved: SavedGame): number => saved.table.players.filter(p => p.seat < 100).length;
@@ -76,10 +76,6 @@ export interface GameStore {
   saved: SavedGame | null;
   /** The setup being made before a game starts. Edits of the players and the layout go here while no game is open. */
   draftSaved: SavedGame;
-  /** The open game read as the old `Game`, for the screens not yet moved to the kernel; derived from `saved`. */
-  game: Game | null;
-  /** The setup read as the old `Game`; derived from `draftSaved`. */
-  draft: Game;
   saveError: string | null;
   /**
    * The last save that could not be opened, or crashed once open, with why; `id` is null when the saves could not even be
@@ -172,7 +168,7 @@ export const useGame = create<GameStore>((set, get) => {
   const initialDraft = newDraft();
 
   const replace = (saved: SavedGame): void => {
-    set({ saved, game: gameOf(saved), canUndo: history.size() > 0 });
+    set({ saved, canUndo: history.size() > 0 });
     queueSave(saved, saveError => set({ saveError }));
   };
 
@@ -192,7 +188,7 @@ export const useGame = create<GameStore>((set, get) => {
     else setDraft(edit(get().draftSaved));
   };
 
-  const setDraft = (draftSaved: SavedGame): void => set({ draftSaved, draft: gameOf(draftSaved) });
+  const setDraft = (draftSaved: SavedGame): void => set({ draftSaved });
 
   /** A save that would not open: the player is told, the save stays as it is. */
   const failLoad = (id: string | null, error: unknown): void => {
@@ -218,8 +214,6 @@ export const useGame = create<GameStore>((set, get) => {
   const store: GameStore = {
     saved: null,
     draftSaved: initialDraft,
-    game: null,
-    draft: gameOf(initialDraft),
     saveError: null,
     loadFailure: null,
     brokenSaves: {},
@@ -285,7 +279,7 @@ export const useGame = create<GameStore>((set, get) => {
     closeGame: () => {
       history.clear();
       forgetTimelines();
-      set({ saved: null, game: null, canUndo: false });
+      set({ saved: null, canUndo: false });
     },
     setDraftExpansions: expansions => setDraft(draftWithExpansions(get().draftSaved, expansions)),
     addOpponent: () => commitSetup(s => addPlayer(s)),
@@ -307,7 +301,7 @@ export const useGame = create<GameStore>((set, get) => {
       set(state => {
         const { [id]: fixed, ...brokenSaves } = state.brokenSaves;
         void fixed;
-        return { saved, game: gameOf(saved), canUndo: false, saveError: null, loadFailure: null, brokenSaves };
+        return { saved, canUndo: false, saveError: null, loadFailure: null, brokenSaves };
       });
     },
     crashGame: error => {
@@ -317,7 +311,6 @@ export const useGame = create<GameStore>((set, get) => {
       forgetTimelines();
       set(state => ({
         saved: null,
-        game: null,
         canUndo: false,
         loadFailure: { id: saved.id, error },
         brokenSaves: { ...state.brokenSaves, [saved.id]: error },
@@ -405,15 +398,5 @@ export const useGame = create<GameStore>((set, get) => {
   return store;
 });
 
-// The screens not yet moved, and the tests, still set `game` and `draft` by hand: the saved game follows what they set.
-useGame.subscribe((state, previous) => {
-  if (state.game !== previous.game && state.saved === previous.saved) {
-    if (state.game === null) useGame.setState({ saved: null });
-    else if (!originOf(state.game)) useGame.setState({ saved: savedFor(state.game) });
-    else if (state.game !== (state.saved && gameOf(state.saved))) useGame.setState({ saved: originOf(state.game) });
-  }
-  if (state.draft !== previous.draft && state.draftSaved === previous.draftSaved && state.draft !== gameOf(state.draftSaved)) {
-    useGame.setState({ draftSaved: savedFor(state.draft) });
-  }
-});
+
 

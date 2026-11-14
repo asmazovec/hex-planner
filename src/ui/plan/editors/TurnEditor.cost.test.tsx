@@ -6,9 +6,9 @@ import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
 import { bench, componentAction } from '../../../domain/effects/components/kit';
 import type { Entry } from '../../../domain/types';
-import { useGame } from '../../../state/gameStore';
 import { uiBench } from '../../testing/effects';
 import { TurnEditor } from './TurnEditor';
+import { seedGame } from '../../../testing/store';
 
 vi.mock('../../../domain/effects/registry', async original => (await import('../../../domain/effects/points/throwaway')).mockRegistry(await original()));
 
@@ -20,7 +20,7 @@ beforeEach(() => { for (const key of Object.keys(throwaway)) delete throwaway[ke
 
 function show(entry: Entry, onPayment: (p: unknown) => void) {
   const table = bench({ faction: 'sol', expansions: ['pok'], start: { hand: [CARD] }, entries: [entry] });
-  useGame.setState({ game: table.game });
+  seedGame(table.game);
   const nothing = () => undefined;
   render(
     <TurnEditor view={kernelViewOf(table.game, table.pack, entry.id)}

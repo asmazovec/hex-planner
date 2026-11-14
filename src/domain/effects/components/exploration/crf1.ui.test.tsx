@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
-import { useGame } from '../../../../state/gameStore';
 import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectShownStanding, play, showTurn, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import type { AnyWarningCode, Entry } from '../../../types';
@@ -9,6 +8,7 @@ import { adjust, bench, componentAction, NEAR, quote } from '../kit';
 import { id } from './crf1';
 import { turnProps } from '../../../../ui/testing/turnProps';
 import { kernelViewOf } from '../../../../ui/testing/view';
+import { seedGame } from '../../../../testing/store';
 
 uiBench();
 
@@ -22,7 +22,7 @@ test('exploration:crf1 is taken in «Taken and discarded» of the entry that exp
   const take = adjust({});
   const fragments = table([take]);
   quote(fragments.pack, id, 'ACTION: Purge 3 of your cultural relic fragments to gain 1 relic.');
-  useGame.setState({ game: fragments.game });
+  seedGame(fragments.game);
   const onChange = vi.fn();
   render(<GainsBlock {...turnProps(kernelViewOf(fragments.game, fragments.pack), fragments.pack, take, onChange)} pack={fragments.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));

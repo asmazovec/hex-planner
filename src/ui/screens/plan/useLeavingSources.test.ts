@@ -15,6 +15,7 @@ import type { Move } from '../../../domain/tactical';
 import { useGame } from '../../../state/gameStore';
 import { motion } from '../../common/preferences';
 import { LEAVE_MS, leaveKey, useLeavingSources } from './useLeavingSources';
+import { gameNow } from '../../../testing/store';
 
 const pack = loadPack(['pok']);
 const HOME = '1,0';
@@ -22,7 +23,7 @@ const WAY = '1,1';
 const TARGET = '0,1';
 
 let id = '';
-const moves = () => (useGame.getState().game!.plans[0].rounds[0].entries[0] as Extract<Entry, { type: 'tactical' }>).moves;
+const moves = () => (gameNow()!.plans[0].rounds[0].entries[0] as Extract<Entry, { type: 'tactical' }>).moves;
 const start = (list: Move[]) => {
   id = edits.addEntry(1, { type: 'tactical', systemId: TARGET, moves: list, landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
 };

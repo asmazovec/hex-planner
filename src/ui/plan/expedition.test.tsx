@@ -15,6 +15,7 @@ import { validThundersEdgeSystem } from '../../domain/thundersEdge';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
+import { gameNow } from '../../testing/store';
 
 const pack = loadPack(['pok', 'te']);
 const SLICES = EXPEDITION_SLICES.map(s => s.id);
@@ -26,7 +27,7 @@ beforeEach(() => {
   useGame.getState().newGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'arborec' }, pack);
 });
 
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const tile = (slot: string) => document.querySelector(`[data-slot="${slot}"]`)!;
 const widget = () => screen.getByRole('group', { name: 'Expedition' });

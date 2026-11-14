@@ -16,14 +16,15 @@ import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { GameScreen } from '../../screens/GameScreen';
 import { PlanScreen } from '../../screens/PlanScreen';
+import { draftNow, gameNow, seedDraft } from '../../../testing/store';
 
 const pack = loadPack(['pok']);
-const map = () => useGame.getState().game!.map;
+const map = () => gameNow()!.map;
 const slot = (key: string) => document.querySelector<SVGGElement>(`[data-slot="${key}"]`)!;
 const minimap = () => screen.getByRole('group', { name: 'Minimap' });
 const toDraft = (playerCount = 6) => {
   useGame.getState().closeGame();
-  useGame.setState({ draft: createGame({ expansions: ['pok'], playerCount, faction: '' }, pack) });
+  seedDraft(createGame({ expansions: ['pok'], playerCount, faction: '' }, pack));
 };
 
 afterEach(cleanup);
@@ -89,7 +90,7 @@ test('a repeated tile is warned in the block and is still placed', async () => {
 
 test('the block counts the empty slots until the map is built', () => {
   render(<GameScreen />);
-  const empty = emptySlots(useGame.getState().game!, pack);
+  const empty = emptySlots(gameNow()!, pack);
   expect(screen.getByText(new RegExp(`Empty slots: ${empty.length}\\.`))).toBeVisible();
   act(() => { for (const key of empty) useGame.getState().setTile(key, '25'); });
   expect(screen.queryByText(/Empty slots/)).toBeNull();
@@ -172,10 +173,10 @@ test('the map is built before the start too, and the tiles stay through a change
   await userEvent.click(slot('1,0'));
   await userEvent.type(screen.getByLabelText('Tile number'), '25');
   await userEvent.click(screen.getByRole('button', { name: 'Place' }));
-  expect(useGame.getState().draft.map['1,0']).toBe('25');
+  expect(draftNow().map['1,0']).toBe('25');
   await userEvent.click(screen.getByRole('button', { name: "Thunder's Edge" }));
-  expect(useGame.getState().draft.expansions).toContain('te');
-  expect(useGame.getState().draft.map['1,0']).toBe('25');
+  expect(draftNow().expansions).toContain('te');
+  expect(draftNow().map['1,0']).toBe('25');
 });
 
 test('in a started game the tiles still change, the layout and the seats do not', async () => {
@@ -198,7 +199,7 @@ test('the plan screen has no building tools: a tap opens the big hex, and an unf
   expect(screen.queryByRole('button', { name: 'Build map' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Paste a Milty string' })).toBeNull();
   expect(screen.getByRole('button', { name: 'Forecast' })).toBeVisible();
-  const empty = emptySlots(useGame.getState().game!, pack).length;
+  const empty = emptySlots(gameNow()!, pack).length;
   expect(screen.getByRole('status')).toHaveTextContent(`The map is not complete: ${empty} empty slots.`);
   await userEvent.click(screen.getByRole('button', { name: 'Finish the map' }));
   expect(finish).toHaveBeenCalled();
@@ -208,7 +209,7 @@ test('the plan screen has no building tools: a tap opens the big hex, and an unf
 });
 
 test('a built map raises no hint on the plan screen', () => {
-  for (const key of emptySlots(useGame.getState().game!, pack)) useGame.getState().setTile(key, '25');
+  for (const key of emptySlots(gameNow()!, pack)) useGame.getState().setTile(key, '25');
   render(<PlanScreen onFinishMap={() => undefined} />);
   expect(screen.queryByRole('button', { name: 'Finish the map' })).toBeNull();
 });
@@ -243,8 +244,8 @@ test('a string pasted before the start fills the draft', async () => {
   await userEvent.click(field);
   await userEvent.paste('25 999 26');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(useGame.getState().draft.map['0,-1']).toBe('25');
-  expect(useGame.getState().draft.map['1,0']).toBe('26');
+  expect(draftNow().map['0,-1']).toBe('25');
+  expect(draftNow().map['1,0']).toBe('26');
 });
 
 test('an empty field cannot be applied', async () => {
@@ -308,7 +309,7 @@ test('before the start a string with hyperlanes switches a four-player map to th
   await userEvent.click(field);
   await userEvent.paste(laneString());
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(useGame.getState().draft.layout).toBe('hyperlanes');
+  expect(draftNow().layout).toBe('hyperlanes');
   expect(screen.getByText(/Map layout: With hyperlanes/)).toBeTruthy();
 });
 
@@ -327,7 +328,7 @@ test('a string without hyperlanes keeps a standard layout', async () => {
   await userEvent.click(field);
   await userEvent.paste('25 26');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(useGame.getState().game!.layout).toBe('standard');
+  expect(gameNow()!.layout).toBe('standard');
   expect(screen.getByText(/Map layout: Standard/)).toBeTruthy();
 });
 
@@ -341,13 +342,13 @@ test('tiles of an expansion that is off are named while typing, and one button t
   expect(screen.getByText(/102, 106 .*Thunder's Edge/)).toBeVisible();
   expect(screen.queryByText(/Unknown numbers/)).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: "Turn on Thunder's Edge" }));
-  expect(useGame.getState().game!.expansions).toEqual(['pok', 'te']);
+  expect(gameNow()!.expansions).toEqual(['pok', 'te']);
   expect(screen.queryByRole('button', { name: "Turn on Thunder's Edge" })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(map()['1,-1']).toBe('102');
   useGame.getState().undo();
   useGame.getState().undo();
-  expect(useGame.getState().game!.expansions).toEqual(['pok']);
+  expect(gameNow()!.expansions).toEqual(['pok']);
 });
 
 test('before the start the button turns the expansion on for the draft', async () => {
@@ -356,7 +357,7 @@ test('before the start the button turns the expansion on for the draft', async (
   await userEvent.click(field);
   await userEvent.paste('25 102 106');
   await userEvent.click(screen.getByRole('button', { name: "Turn on Thunder's Edge" }));
-  expect(useGame.getState().draft.expansions).toEqual(['pok', 'te']);
+  expect(draftNow().expansions).toEqual(['pok', 'te']);
 });
 
 test('a sorted list of tiles is a set: the panel says so and places it by seats and ring order', async () => {

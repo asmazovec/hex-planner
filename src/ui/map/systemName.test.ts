@@ -4,6 +4,7 @@ import { systemNameOf } from '../../domain/systemName';
 import i18n, { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { systemName, systemTitle } from './systemName';
+import { gameNow } from '../../testing/store';
 
 const pack = loadPack(['pok']);
 const t = i18n.t.bind(i18n);
@@ -26,7 +27,7 @@ beforeEach(() => {
   setTile(SLOTS.lane, '83A');
 });
 
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 
 describe('what a system is called, as data', () => {
   test('a system with planets holds their names and its tile number', () => {

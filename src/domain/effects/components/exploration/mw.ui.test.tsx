@@ -1,13 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
-import { useGame } from '../../../../state/gameStore';
 import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectNotShown, expectShownStanding, showTactical, uiBench } from '../../../../ui/testing/effects';
 import { bench, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './mw';
 import { turnProps } from '../../../../ui/testing/turnProps';
 import { kernelViewOf } from '../../../../ui/testing/view';
+import { seedGame } from '../../../../testing/store';
 
 uiBench();
 
@@ -26,7 +26,7 @@ const table = (gains: string[]) => {
 test('exploration:mw is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const mining = table([]);
   quote(mining.pack, id, "This planet's resource value is increased by 2.");
-  useGame.setState({ game: mining.game });
+  seedGame(mining.game);
   const onChange = vi.fn();
   render(<GainsBlock {...turnProps(kernelViewOf(mining.game, mining.pack), mining.pack, mining.take, onChange)} pack={mining.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));

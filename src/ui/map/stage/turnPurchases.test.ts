@@ -14,10 +14,11 @@ import { useGame } from '../../../state/gameStore';
 import { writeTurn } from '../../../testing/writeTurn';
 import { kernelViewOf } from '../../testing/view';
 import { turnPurchases } from './turnPurchases';
+import { gameNow } from '../../../testing/store';
 
 const pack = loadPack(['pok']);
 const act = () => useGame.getState();
-const cardEntry = () => act().game!.plans[0].rounds[0].entries.find((e): e is CardEntry => e.type === 'strategic' || e.type === 'secondary')!;
+const cardEntry = () => gameNow()!.plans[0].rounds[0].entries.find((e): e is CardEntry => e.type === 'strategic' || e.type === 'secondary')!;
 const [planet] = pack.tiles['20'].planetIds;
 
 beforeEach(() => {
@@ -29,7 +30,7 @@ beforeEach(() => {
 
 describe('what the big hex buys for a card', () => {
   test.each([false, true])('a tap writes the effects the old purchase wrote, manual payment %s', manual => {
-    const game = act().game!;
+    const game = gameNow()!;
     const entry = cardEntry();
     const before = stateBeforeEntry(game, game.plans[0], entry.id, pack);
     const view = kernelViewOf(game, pack, entry.id);
@@ -39,7 +40,7 @@ describe('what the big hex buys for a card', () => {
     const effects = (entry.effects ?? {});
     const expected = cardChange(entry, { effects: withProduction(effects, 'B', 'infantry', planet, 1) }, before, 'sol', pack, manual, game).effects;
     expect(cardEntry().effects).toEqual(expected);
-    const next = writeTurn(view.table, act().game!, entry.id, pack)!;
+    const next = writeTurn(view.table, gameNow()!, entry.id, pack)!;
     const again = turnPurchases(view, pack, next, 'B', manual)!;
     expect(again.bought).toContainEqual({ unit: 'infantry', planetId: planet, count: 1 });
     const built = withStructure(cardEntry().effects ?? {}, 'pds', planet, 1).structures;

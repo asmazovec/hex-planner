@@ -19,6 +19,7 @@ import { reloaded } from '../../testing/legacySave';
 import { App } from '../App';
 import { PlanScreen } from './PlanScreen';
 import type { Move } from '../plan/tactical';
+import { gameNow, seedGame } from '../../testing/store';
 
 const pack = loadPack(['pok']);
 const HOME = '1,0';
@@ -37,7 +38,7 @@ beforeEach(() => {
   useGame.getState().setTile('1,1', '39');
 });
 
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const entries = () => plan().rounds.at(-1)!.entries;
 const tactical = () => entries().find(e => e.type === 'tactical') as Extract<Entry, { type: 'tactical' }>;
@@ -52,7 +53,7 @@ async function chooseSystem(slot = TARGET) {
 }
 
 test('without a game it asks for one', () => {
-  useGame.setState({ game: null });
+  seedGame(null);
   render(<PlanScreen />);
   expect(screen.getByText('Start or open a game first.')).toBeVisible();
 });
@@ -638,7 +639,7 @@ test('landing puts ground units on a planet and changes its control', async () =
 
 test('a planet of the landing shows its picture, name and state, and who stands there', async () => {
   edits.addEntry(1, { type: 'adjustment', label: '', delta: { ground: { quann: { mech: 1 } } } }, 'strategy');
-  useGame.getState().setEnemyGround('quann', useGame.getState().game!.opponents[0].id, { infantry: 2 });
+  useGame.getState().setEnemyGround('quann', gameNow()!.opponents[0].id, { infantry: 2 });
   await chooseSystem();
   await addRouteByTaps(HOME, TARGET);
   await userEvent.click(screen.getByRole('button', { name: 'Take one Infantry' }));
@@ -1246,7 +1247,7 @@ describe('leaving', () => {
     const [id, first] = [tactical().id, plan().id];
     act(() => {
       useGame.getState().renamePlan('First');
-      useGame.setState(s => ({ game: { ...s.game!, plans: [...s.game!.plans, { id: 'other', name: 'Other', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }] } }));
+      seedGame({ ...gameNow()!, plans: [...gameNow()!.plans, { id: 'other', name: 'Other', rounds: [{ number: 1, strategyCard: null, backupCard: null, entries: [] }] }] });
     });
     await userEvent.click(screen.getByRole('tab', { name: 'Other' }));
     expect(plan().id).toBe('other');

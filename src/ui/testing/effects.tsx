@@ -17,7 +17,6 @@ import { project, stateBeforeEntry, timelineOf } from '../../testing/projection'
 import type { KernelView } from '../plan/kernelView';
 import type { AnyWarningCode, DataPack, Entry, EntryBody, Game, GameState, Warning } from '../../domain/types';
 import { setLanguage } from '../../i18n';
-import { useGame } from '../../state/gameStore';
 import { WarningList } from '../feedback/WarningText';
 import { UsesBlock } from '../plan/blocks/UsesBlock';
 import { ScoredBlock } from '../plan/blocks/ScoredBlock';
@@ -27,6 +26,7 @@ import { TurnEditor } from '../plan/editors/TurnEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { turnProps } from './turnProps';
 import { atOf } from '../../game/edit/tacticalRead';
+import { seedGame } from '../../testing/store';
 
 type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
 type ComponentEntry = Extract<Entry, { type: 'component' }>;
@@ -66,7 +66,7 @@ function live<E extends Entry>(bench: Bench, entry: E, view: (seen: Seen) => Rea
     const shown = entryOf(game, entry.id);
     const update = (patch: Partial<EntryBody>) => setGame(now => {
       const next = withEntry(now, { ...entryOf(now, entry.id), ...patch } as Entry);
-      useGame.setState({ game: next });
+      seedGame(next);
       return next;
     });
     const before = stateBeforeEntry(game, game.plans[0], entry.id, bench.pack);
@@ -76,7 +76,7 @@ function live<E extends Entry>(bench: Bench, entry: E, view: (seen: Seen) => Rea
     return <>{view({ game, pack: bench.pack, view: at, entry: shown, before, warnings, update })}</>;
   }
   // The choice of a component reads the game from the store.
-  useGame.setState({ game: bench.game });
+  seedGame(bench.game);
   render(<Host />);
   return { entry: () => entryOf(current, entry.id) as E, warnings: warningsNow, game: () => current };
 }

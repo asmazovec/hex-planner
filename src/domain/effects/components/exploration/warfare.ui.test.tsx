@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
-import { useGame } from '../../../../state/gameStore';
 import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import type { EntryBody } from '../../../types';
@@ -9,6 +8,7 @@ import { bench, NEAR, planned, quote, TARGET, tactical } from '../kit';
 import { id } from './warfare';
 import { turnProps } from '../../../../ui/testing/turnProps';
 import { kernelViewOf } from '../../../../ui/testing/view';
+import { seedGame } from '../../../../testing/store';
 
 uiBench();
 
@@ -26,7 +26,7 @@ const table = (gains: string[]) => {
 test('exploration:warfare is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const facility = table([]);
   quote(facility.pack, id, 'This planet has a red technology specialty.');
-  useGame.setState({ game: facility.game });
+  seedGame(facility.game);
   const onChange = vi.fn();
   render(<GainsBlock {...turnProps(kernelViewOf(facility.game, facility.pack), facility.pack, facility.take, onChange)} pack={facility.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));

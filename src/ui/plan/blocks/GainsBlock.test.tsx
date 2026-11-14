@@ -22,9 +22,10 @@ import { PlanScreen } from '../../screens/PlanScreen';
 import { TurnEditor } from '../editors/TurnEditor';
 import { GainsBlock } from './GainsBlock';
 import { playProps, turnProps } from '../../testing/turnProps';
+import { gameNow } from '../../../testing/store';
 
 const pack = loadPack(['pok']);
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 const entries = () => game().plans[0].rounds[0].entries;
 
 afterEach(cleanup);

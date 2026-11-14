@@ -1,6 +1,7 @@
 /** The questions of the screens over the kernel's rounds and boards, against the old questions they replaced. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
+import { allTurns, holdingRoundsOf, mergedCountsOf, sliceOwnersOf, spendableOn, structureWarningsOn, upgradeRoundsOf } from '../game/screenQueries';
 import { holdingRounds } from '../domain/holdings';
 import { mergedCounts } from '../domain/losses';
 import { createGame } from '../domain/newGame';
@@ -10,9 +11,7 @@ import { entryUpgradeRounds } from '../domain/unitStats';
 import type { Entry, Game } from '../domain/types';
 import { projectionAtRound, timelineOf as oldTimeline } from '../testing/projection';
 import { savedOf } from '../testing/legacySave';
-import { timelineOf } from '../state/projection';
-import { boardAt } from '../state/projection';
-import { allTurns, holdingRoundsOf, mergedCountsOf, sliceOwnersOf, spendableOn, structureWarningsOn, upgradeRoundsOf } from './screenQueries';
+import { boardAt, timelineOf } from './projection';
 
 const pack = loadPack(['pok']);
 const SLOT = '1,0';

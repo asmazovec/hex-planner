@@ -13,13 +13,14 @@ import type { CardEntry } from '../../../../domain/strategy';
 import { setLanguage } from '../../../../i18n';
 import { useGame } from '../../../../state/gameStore';
 import { PlanScreen } from '../../../screens/PlanScreen';
+import { gameNow } from '../../../../testing/store';
 
 const store = () => useGame.getState();
-const cardEntry = () => store().game!.plans[0].rounds.at(-1)!.entries.find((e): e is CardEntry => e.type === 'strategic' || e.type === 'secondary')!;
+const cardEntry = () => gameNow()!.plans[0].rounds.at(-1)!.entries.find((e): e is CardEntry => e.type === 'strategic' || e.type === 'secondary')!;
 
 /** The Technology primary of my card, open in the editor, with Instinct Training (one biotic) researched. */
 async function openResearch() {
-  const mine = strategyCards(store().game!.expansions).find(c => c.name === 'Technology')!;
+  const mine = strategyCards(gameNow()!.expansions).find(c => c.name === 'Technology')!;
   store().setStrategyCard(1, mine.initiative);
   store().setStrategyCard(1, mine.initiative);
   render(<PlanScreen />);
@@ -71,7 +72,7 @@ describe('the second technology and its payment (argent playthrough)', () => {
   test('taking the paid second technology back takes its payment back too', async () => {
     const pack = loadPack(['pok', 'te']);
     store().newGame({ expansions: ['pok', 'te'], playerCount: 6, faction: 'argent' }, pack);
-    const mine = strategyCards(store().game!.expansions).find(c => c.name === 'Technology')!;
+    const mine = strategyCards(gameNow()!.expansions).find(c => c.name === 'Technology')!;
     store().setStrategyCard(1, mine.initiative);
     store().setStrategyCard(1, mine.initiative);
     render(<PlanScreen />);

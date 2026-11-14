@@ -13,6 +13,7 @@ import { withEffect } from '../../domain/effects/points/status.kit';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { EntryList } from './EntryList';
+import { useOldGame } from '../../testing/store';
 
 const pack = loadPack(['pok']);
 // The ability of the Sol is written by its own batch; a throwaway effect stands in for it (a passive change of `tokensGained`).
@@ -31,7 +32,7 @@ function openStatus(faction: string, secrets: string[] = []): void {
   for (const id of secrets) store.setStartHolding('me', id, true);
   const id = edits.addStatusEntry(1);
   function Live() {
-    const live = useGame(s => s.game)!;
+    const live = useOldGame()!;
     return (
       <EntryList {...listOf(live, pack)}
         openId={id} onOpen={() => undefined}

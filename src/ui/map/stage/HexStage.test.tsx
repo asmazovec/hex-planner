@@ -16,6 +16,7 @@ import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { HexStage, type HexStageProps } from './HexStage';
 import { viewOf } from '../../testing/legacyMap';
+import { gameNow } from '../../../testing/store';
 
 /** The interface of these tests is English, and so are the texts of the packs. */
 const pack = loadPack(['pok'], 'en');
@@ -28,7 +29,7 @@ const ONE = '25';
 const TWO = '71';
 
 const store = () => useGame.getState();
-const game = () => store().game!;
+const game = () => gameNow()!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const entries = () => plan().rounds.at(-1)!.entries;
 const forecast = () => project(game(), plan(), 'forecast', pack).state;

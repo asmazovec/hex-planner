@@ -26,12 +26,13 @@ import { turnOf } from '../../game/fromLegacy';
 import type { Entry } from '../../domain/types';
 import { atOf } from '../../game/edit/tacticalRead';
 import { placeWarnings, placesOf } from './warningPlaces';
+import { gameNow } from '../../testing/store';
 
 const pack = loadPack(['pok', 'te']);
 const HOME = '1,0';
 const SOURCE = '0,1';
 
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 
 beforeEach(() => {
   setLanguage('en');

@@ -20,10 +20,11 @@ import { entryPatch } from '../ui/testing/turnProps';
 import { addTactical, pruneEmptySources } from './turnBridge';
 import { writeTurn } from '../testing/writeTurn';
 import { useGame } from './gameStore';
+import { gameNow } from '../testing/store';
 
 const pack = loadPack(['pok']);
 const act = () => useGame.getState();
-const entries = (): Entry[] => act().game!.plans.find(p => p.id === act().game!.activePlanId)!.rounds[0].entries;
+const entries = (): Entry[] => gameNow()!.plans.find(p => p.id === gameNow()!.activePlanId)!.rounds[0].entries;
 
 beforeEach(() => {
   act().newGame({ expansions: ['pok'], playerCount: 4, faction: 'sol' }, pack);
@@ -34,7 +35,7 @@ describe('the write bridge', () => {
   test('a turn edited by the kernel is stored as the old writer stores it', () => {
     const [pa] = pack.tiles['20'].planetIds;
     const id = edits.addEntry(1, { type: 'tactical', systemId: 'B', moves: [{ from: 'A', units: { carrier: 1 } }], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } }, 'action');
-    const game = act().game!;
+    const game = gameNow()!;
     const table = tableOf(game);
     const at = { map: mapSource(table, initialBoard(table, pack)), pack };
     const bridge = writeTurn(table, game, id, pack)!;
@@ -48,10 +49,10 @@ describe('the write bridge', () => {
 
   test('an edit that changes nothing writes nothing', () => {
     const id = edits.addEntry(1, { type: 'pass' }, 'action');
-    const game = act().game!;
+    const game = gameNow()!;
     const bridge = writeTurn(tableOf(game), game, id, pack)!;
     bridge.update(bridge.turn);
-    expect(act().game).toBe(game);
+    expect(gameNow()).toBe(game);
   });
 
   test('the patch names the changed fields and the removed ones', () => {
@@ -64,7 +65,7 @@ describe('the write bridge', () => {
 describe('the free action of a card', () => {
   test('made with the card and dropped with it, as the store makes and drops it', () => {
     const card = edits.addEntry(1, { type: 'strategic', card: 6 }, 'action');
-    const game = act().game!;
+    const game = gameNow()!;
     const table = tableOf(game);
     const round = planOf(table, game.plans[0], pack)[0];
     const bridge = writeTurn(table, game, card, pack)!;
@@ -72,7 +73,7 @@ describe('the free action of a card', () => {
     bridge.update({ ...bridge.turn, action: { ...(bridge.turn.action as object), nested: [free] } as never });
     const made = entries().find(e => e.type === 'tactical') as Extract<Entry, { type: 'tactical' }>;
     expect(made).toMatchObject({ ...tacticalBody('B', card), id: expect.any(String) });
-    const again = writeTurn(table, act().game!, card, pack)!;
+    const again = writeTurn(table, gameNow()!, card, pack)!;
     again.update({ ...again.turn, action: { ...(again.turn.action as object), nested: undefined } as never });
     expect(entries().some(e => e.type === 'tactical')).toBe(false);
   });
@@ -80,7 +81,7 @@ describe('the free action of a card', () => {
 
 describe('a new tactical action and the sources left empty', () => {
   test('stored as the old body is, with the owner and the card', () => {
-    const table = tableOf(act().game!);
+    const table = tableOf(gameNow()!);
     const mine = edits.addEntry(1, tacticalBody('B'), 'action');
     const made = addTactical(table, 1, 'B', undefined, undefined);
     expect(entries().find(e => e.id === made)).toEqual({ ...entries().find(e => e.id === mine), id: made });

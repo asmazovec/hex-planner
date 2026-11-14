@@ -8,13 +8,14 @@ import { deleteGame, listGames, saveGame } from '../storage/db';
 import { sampleGame } from '../testing/fixture';
 import { App } from './App';
 import { ErrorBoundary } from './common/ErrorBoundary';
+import { gameNow } from '../testing/store';
 
 // The plan of one game fails to draw, as a replay that throws would.
 vi.mock('./screens/PlanScreen', async () => {
   const { useGame: store } = await import('../state/gameStore');
   return {
     PlanScreen: () => {
-      if (store.getState().game?.id === 'crashes') throw new Error('replay failed');
+      if (store.getState().saved?.id === 'crashes') throw new Error('replay failed');
       return <p>plan screen</p>;
     },
   };
@@ -44,7 +45,7 @@ test('a game that crashes while drawn returns to «Game» with the message, stay
 
   expect(await screen.findByText('The save “Crashes” could not be loaded: replay failed')).toBeVisible();
   expect(document.querySelector('main')).toHaveAttribute('data-screen', 'game');
-  expect(useGame.getState().game).toBeNull();
+  expect(gameNow()).toBeNull();
   expect(within(await row('Crashes')).getByText('The save could not be loaded')).toBeVisible();
   expect((await listGames()).map(g => g.id).sort()).toEqual(['crashes', 'fine']);
 

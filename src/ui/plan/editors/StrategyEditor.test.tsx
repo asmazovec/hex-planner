@@ -17,11 +17,12 @@ import type { Entry, ExpansionId } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { PlanScreen } from '../../screens/PlanScreen';
+import { gameNow } from '../../../testing/store';
 
 const HOME = '1,0';
 const OTHER = '0,1';
 const store = () => useGame.getState();
-const game = () => store().game!;
+const game = () => gameNow()!;
 const round = () => game().plans[0].rounds.at(-1)!;
 const entries = () => round().entries;
 const cardEntry = () => entries().find((e): e is CardEntry => e.type === 'strategic' || e.type === 'secondary')!;
@@ -655,7 +656,7 @@ describe('Warfare', () => {
   });
 
   test('nothing on the map, no home and no shop', async () => {
-    for (const slot of Object.keys(store().game!.map)) store().setTile(slot, null);
+    for (const slot of Object.keys(gameNow()!.map)) store().setTile(slot, null);
     await secondary('Warfare');
     expect(button('Production in the home system')).toBeDisabled();
     expect(screen.getByText('The home system is not on the map.')).toBeVisible();

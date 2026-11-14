@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
-import { useGame } from '../../../../state/gameStore';
 import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { tech } from '../../../rules/kit';
@@ -10,6 +9,7 @@ import { adjust, bench, componentAction, quote } from '../kit';
 import { id } from './ed1';
 import { turnProps } from '../../../../ui/testing/turnProps';
 import { kernelViewOf } from '../../../../ui/testing/view';
+import { seedGame } from '../../../../testing/store';
 
 uiBench();
 
@@ -23,7 +23,7 @@ test('exploration:ed1 is taken in «Taken and discarded» of the entry that expl
   const take = adjust({});
   const device = table([take]);
   quote(device.pack, id, 'Place this card faceup in your play area.');
-  useGame.setState({ game: device.game });
+  seedGame(device.game);
   const onChange = vi.fn();
   render(<GainsBlock {...turnProps(kernelViewOf(device.game, device.pack), device.pack, take, onChange)} pack={device.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));

@@ -180,3 +180,34 @@ export function withIngressToggled(saved: SavedGame, slot: Slot): SavedGame {
   const { ingress } = saved.start.fracture;
   return withFracture(saved, { ingress: ingress.includes(slot) ? ingress.filter(s => s !== slot) : [...ingress, slot] });
 }
+
+/**
+ * One unit of another player set by hand, added or removed (the big hex in setup mode). Ground forces go by planet; a
+ * removed one still listed with the system (as a start places them) comes off there. Returns the stack to write: on a
+ * planet, or in the system's space.
+ */
+export function enemyChangeOf(
+  saved: SavedGame, slot: Slot, player: PlayerId, unit: string, planetId: PlanetId | null, amount: number,
+): { planetId: PlanetId; units: UnitCounts } | { slot: Slot; units: UnitCounts } {
+  const shifted = (units: UnitCounts): UnitCounts => {
+    const count = (units[unit as keyof UnitCounts] ?? 0) + amount;
+    const { [unit as keyof UnitCounts]: gone, ...rest } = units;
+    void gone;
+    return count > 0 ? { ...rest, [unit]: count } : rest;
+  };
+  const onPlanet = planetId === null ? {} : saved.start.ground[planetId]?.[player] ?? {};
+  if (planetId !== null && (amount > 0 || ((onPlanet[unit as keyof UnitCounts] ?? 0) > 0))) return { planetId, units: shifted(onPlanet) };
+  return { slot, units: shifted(saved.start.units[slot]?.[player] ?? {}) };
+}
+
+/** The PDS of the start as they stand on the map (those under my absent home planets stand on the first planet of my home tile). */
+export const startingPdsOf = (saved: SavedGame): Record<string, number> => {
+  const game = placementView(saved);
+  return startingPds(game, loadPack(game.expansions));
+};
+
+/** Whether the start itself holds a structure, apart from what the plan builds: a PDS set on the map, or a dock of the start. */
+export function structureAtStart(saved: SavedGame, kind: 'pds' | 'spacedock', planet: PlanetId): boolean {
+  const game = placementView(saved);
+  return kind === 'pds' ? (startingPdsOf(saved)[planet] ?? 0) > 0 : startingDocks(game, loadPack(game.expansions)).includes(planet);
+}

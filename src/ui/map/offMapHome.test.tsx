@@ -16,9 +16,10 @@ import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';
 import { LegacyTile } from '../testing/legacyMap';
+import { gameNow } from '../../testing/store';
 
 const all = loadPack(['pok', 'te']);
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 const tile = (slot: string) => document.querySelector(`[data-slot="${slot}"]`)!;
 
 afterEach(cleanup);

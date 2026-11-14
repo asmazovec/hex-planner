@@ -4,6 +4,7 @@ import { loadPack } from '../../data/loadPack';
 import { setLeader, setStartHolding } from '../../domain/holdings';
 import { createGame } from '../../domain/newGame';
 import { placeStartUnits, setPlayerFaction } from '../../domain/players';
+import { enemyChange, structureInGame } from '../../domain/stacks';
 import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { Game } from '../../domain/types';
@@ -11,7 +12,7 @@ import { gameOf, savedOf } from '../../testing/legacySave';
 import { playerOfLegacy } from '../entry';
 import type { SavedGame } from '../save';
 import {
-  withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
+  enemyChangeOf, startingPdsOf, structureAtStart, withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
   withStartHolding, withThundersEdge, withUnitsAt,
 } from './start';
 
@@ -112,5 +113,31 @@ describe('expedition and the Fracture', () => {
     const again = gameOf(opened);
     pinned(x => open({ ...x, fracture: { ...x.fracture, seat: 3 } }), x => withFractureSeat(x, 3), again);
     pinned(x => ({ ...x, fracture: { ...x.fracture, ingress: ['1,-1'] } }), x => withIngressToggled(x, '1,-1'), g);
+  });
+});
+
+describe('what the big hex asks of the start, against the old questions', () => {
+  test('enemyChangeOf is enemyChange, in space and on a planet, adding and removing', () => {
+    const game: Game = { ...base(), map: { ...base().map, '1,0': '25' } };
+    const planet = pack.tiles['25'].planetIds[0];
+    game.enemyUnits = { '1,0': { [opp]: { cruiser: 1 } } };
+    game.enemyGround = { [planet]: { [opp]: { infantry: 2 } } };
+    const saved = savedOf(game);
+    const who = kid(saved, opp);
+    for (const [unit, at, amount] of [['cruiser', null, 1], ['cruiser', null, -1], ['infantry', planet, 1], ['infantry', planet, -1], ['mech', planet, -1], ['mech', planet, 1]] as const) {
+      expect(enemyChangeOf(saved, '1,0', who, unit, at, amount), `${unit} ${at} ${amount}`).toEqual(enemyChange(game, '1,0', opp, unit, at, amount));
+    }
+  });
+
+  test('startingPdsOf and structureAtStart are startingPds and structureInGame', () => {
+    const game: Game = { ...base() };
+    const home = game.map[Object.keys(game.map).find(key => game.map[key] !== undefined)!];
+    void home;
+    const planet = pack.tiles[Object.values(game.map)[0].split('@')[0]]?.planetIds[0] ?? '';
+    game.pds = { [planet]: 2 };
+    game.docks = [planet];
+    const saved = savedOf(game);
+    expect(startingPdsOf(saved)).toEqual(startingPds(game, pack));
+    for (const kind of ['pds', 'spacedock'] as const) expect(structureAtStart(saved, kind, planet)).toBe(structureInGame(game, pack, kind, planet));
   });
 });

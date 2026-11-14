@@ -6,6 +6,7 @@ import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { savedFor } from '../../../testing/legacySave';
 import { LayoutPicker } from './LayoutPicker';
+import { gameNow } from '../../../testing/store';
 
 vi.mock('../../../storage/db', () => ({
   saveGame: vi.fn(async () => undefined),
@@ -20,7 +21,7 @@ beforeEach(() => setLanguage('en'));
 function open(playerCount: number, expansions: ('pok')[] = ['pok']) {
   const pack = loadPack(expansions);
   useGame.getState().newGame({ expansions, playerCount, faction: 'arborec' }, pack);
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   render(<LayoutPicker saved={savedFor(game)} pack={pack} />);
   return game;
 }
@@ -73,7 +74,7 @@ test('the Large Galaxy moves the homes to the fourth ring and back', async () =>
   const game = open(6);
   const home = game.map['0,-3'];
   await userEvent.click(screen.getByRole('radio', { name: 'Large Galaxy' }));
-  const large = useGame.getState().game!;
+  const large = gameNow()!;
   expect(large.layout).toBe('large');
   expect(large.map['0,-4']).toBe(home);
   expect(large.map['0,-3']).toBeUndefined();
@@ -94,54 +95,54 @@ test('without Prophecy of Kings the hyperlane layout is shown as unavailable', (
 test('an empty map switches at once', async () => {
   open(4);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
-  expect(useGame.getState().game!.layout).toBe('hyperlanes');
-  expect(useGame.getState().game!.map['-2,-1']).toBe('83A@0');
+  expect(gameNow()!.layout).toBe('hyperlanes');
+  expect(gameNow()!.map['-2,-1']).toBe('83A@0');
 });
 
 test('a map whose tiles all survive switches at once', async () => {
   open(4);
   useGame.getState().setTile('0,-1', '25');
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   cleanup();
   render(<LayoutPicker saved={savedFor(game)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
-  expect(useGame.getState().game!.layout).toBe('hyperlanes');
-  expect(useGame.getState().game!.map['0,-1']).toBe('25');
+  expect(gameNow()!.layout).toBe('hyperlanes');
+  expect(gameNow()!.map['0,-1']).toBe('25');
 });
 
 test('a tile under a lane asks first, naming how many tiles go, and cancelling changes nothing', async () => {
   open(4);
   useGame.getState().setTile('-2,-1', '25');
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   cleanup();
   render(<LayoutPicker saved={savedFor(game)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   expect(screen.getByRole('button', { name: 'Switch layout' })).toBeInTheDocument();
   expect(screen.getByText(/1 tile that this layout removes/)).toBeInTheDocument();
-  expect(useGame.getState().game!.layout).toBe('standard');
+  expect(gameNow()!.layout).toBe('standard');
   await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
   expect(screen.queryByRole('button', { name: 'Switch layout' })).toBeNull();
-  expect(useGame.getState().game!.layout).toBe('standard');
+  expect(gameNow()!.layout).toBe('standard');
 });
 
 test('confirming switches the layout, keeps shared tiles and puts the lane under the displaced tile', async () => {
   open(4);
   useGame.getState().setTile('0,-1', '25');
   useGame.getState().setTile('-2,-1', '26');
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   cleanup();
   render(<LayoutPicker saved={savedFor(game)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));
   await userEvent.click(screen.getByRole('button', { name: 'Switch layout' }));
-  expect(useGame.getState().game!.layout).toBe('hyperlanes');
-  expect(useGame.getState().game!.map['0,-1']).toBe('25');
-  expect(useGame.getState().game!.map['-2,-1']).toBe('83A@0');
+  expect(gameNow()!.layout).toBe('hyperlanes');
+  expect(gameNow()!.map['0,-1']).toBe('25');
+  expect(gameNow()!.map['-2,-1']).toBe('83A@0');
 });
 
 test('a question left open does not carry over to another game', async () => {
   open(4);
   useGame.getState().setTile('-2,-1', '25');
-  const first = useGame.getState().game!;
+  const first = gameNow()!;
   cleanup();
   const view = render(<LayoutPicker saved={savedFor(first)} pack={pok} />);
   await userEvent.click(screen.getByRole('radio', { name: 'With hyperlanes' }));

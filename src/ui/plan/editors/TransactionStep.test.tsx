@@ -6,10 +6,10 @@ import { throwaway } from '../../../domain/effects/points/throwaway';
 import { bench, NEAR, tactical } from '../../../domain/effects/components/kit';
 import { stateBeforeEntry } from '../../../domain/project';
 import type { Act, Game, Opponent } from '../../../domain/types';
-import { useGame } from '../../../state/gameStore';
 import { uiBench } from '../../testing/effects';
 import { TransactionStep } from './TransactionStep';
 import { transactionProps } from '../../testing/turnProps';
+import { seedGame } from '../../../testing/store';
 
 vi.mock('../../../domain/effects/registry', async original => (await import('../../../domain/effects/points/throwaway')).mockRegistry(await original()));
 
@@ -31,7 +31,7 @@ async function openGive(uses: string[]) {
     game: { opponents: [RIVAL], enemyUnits: { [NEAR]: { o1: { carrier: 1 } } }, start: { me: { relics: [RELIC], secrets: [SECRET] }, opponents: {} } } as Partial<Game>,
   } as Parameters<typeof bench>[0]);
   const board = stateBeforeEntry(table.game, table.game.plans[0], turn.id, table.pack);
-  useGame.setState({ game: table.game });
+  seedGame(table.game);
   const nothing = () => undefined;
   render(<TransactionStep {...transactionProps(viewOf(table.game, board, table.pack), table.pack, act, "me", uses, nothing)} view={viewOf(table.game, board, table.pack)} pack={table.pack} warnings={[]} onBack={nothing} onRemove={nothing}/>);
   await userEvent.click(within(screen.getByRole('group', { name: 'Give' })).getByRole('button', { name: '+ Component' }));

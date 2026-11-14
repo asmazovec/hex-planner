@@ -13,6 +13,7 @@ import { tableOfGame } from '../../testing/projection';
 import { useGame } from '../../state/gameStore';
 import { ComponentPicker } from './ComponentPicker';
 import { searchComponents } from './useComponentSearch';
+import { gameNow } from '../../testing/store';
 
 const pack = loadPack(['pok']);
 
@@ -22,7 +23,7 @@ beforeEach(() => {
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
 });
 
-const now = () => tableOfGame(useGame.getState().game!, pack);
+const now = () => tableOfGame(gameNow()!, pack);
 const box = () => screen.getByRole('searchbox', { name: 'Search components' });
 
 test('the choice gets the id of the component found, typo and all', async () => {
@@ -116,7 +117,7 @@ test('what is held stands first, and the rest says it is not held, when somethin
 
 test('the notes I hold of other players stand first when something is played, each with its owner; my own are offered after them', async () => {
   useGame.getState().setOpponent(0, { faction: 'hacan' });
-  const rival = useGame.getState().game!.opponents[0].id;
+  const rival = gameNow()!.opponents[0].id;
   const held = [`promissory:convoys@${rival}`, `promissory:<color>_ta@${rival}`];
   render(<ComponentPicker kinds={['promissory']} owned={new Set(held)} prefer="owned" table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   expect(cards().slice(0, 2).sort()).toEqual([...held].sort());

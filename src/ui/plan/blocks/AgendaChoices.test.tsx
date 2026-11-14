@@ -16,9 +16,10 @@ import { componentById } from '../../../domain/components';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { AgendaChoices } from './AgendaChoices';
+import { gameNow } from '../../../testing/store';
 
 const pack = loadPack(['pok']);
-const game = () => useGame.getState().game!;
+const game = () => gameNow()!;
 
 afterEach(cleanup);
 beforeEach(() => {

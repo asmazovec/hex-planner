@@ -3,13 +3,13 @@ import { kernelViewOf } from '../../../../ui/testing/view';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { expect, test } from 'vitest';
-import { useGame } from '../../../../state/gameStore';
 import { AdjustmentEditor } from '../../../../ui/plan/editors/AdjustmentEditor';
 import { uiBench } from '../../../../ui/testing/effects';
 import type { Entry } from '../../../types';
 import { adjust, bench, type Bench, quote } from '../kit';
 import { id } from './crown_of_emphidia';
 import { turnProps } from '../../../../ui/testing/turnProps';
+import { seedGame } from '../../../../testing/store';
 
 uiBench();
 
@@ -26,7 +26,7 @@ function showAgenda(table: Bench, entry: Entry): () => Agenda {
       <AdjustmentEditor {...turnProps(kernelViewOf(table.game, table.pack), table.pack, shown, patch => setShown(now => ({ ...now, ...patch }) as Agenda))} view={kernelViewOf(table.game, table.pack)} pack={table.pack} warnings={[]} picking={false} onPickSystem={nothing} onOpenHex={nothing} onDone={nothing} onRemove={nothing}/>
     );
   }
-  useGame.setState({ game: table.game });
+  seedGame(table.game);
   render(<Host />);
   return () => current;
 }

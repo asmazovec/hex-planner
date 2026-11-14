@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
-import { useGame } from '../../../../state/gameStore';
 import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { CARD } from '../../../replay/cards/ids';
@@ -9,6 +8,7 @@ import { bench, NEAR, quote, secondary, TARGET, tactical } from '../kit';
 import { id } from './toe';
 import { turnProps } from '../../../../ui/testing/turnProps';
 import { kernelViewOf } from '../../../../ui/testing/view';
+import { seedGame } from '../../../../testing/store';
 
 uiBench();
 
@@ -26,7 +26,7 @@ const table = (gains: string[]) => {
 test('exploration:toe is taken in «Taken and discarded» of the entry that explores the planet', async () => {
   const tomb = table([]);
   quote(tomb.pack, id, "This planet's influence value is increased by 1.");
-  useGame.setState({ game: tomb.game });
+  seedGame(tomb.game);
   const onChange = vi.fn();
   render(<GainsBlock {...turnProps(kernelViewOf(tomb.game, tomb.pack), tomb.pack, tomb.take, onChange)} pack={tomb.pack}/>);
   await userEvent.click(screen.getByRole('button', { name: '+ Took' }));

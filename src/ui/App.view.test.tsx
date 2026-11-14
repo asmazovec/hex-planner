@@ -8,6 +8,7 @@ import { setLanguage } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { App } from './App';
 import { lastView } from './common/preferences';
+import { gameNow, seedGame } from '../testing/store';
 
 const pack = loadPack(['pok']);
 
@@ -26,9 +27,9 @@ const roundButton = (n: number) => screen.getByRole('button', { name: `Round ${n
 
 /** The page loads again: the game is gone from memory, the app starts, and only then the game opens from its save. */
 function reload(): Game {
-  const game = useGame.getState().game!;
+  const game = gameNow()!;
   cleanup();
-  useGame.setState({ game: null });
+  seedGame(null);
   render(<App />);
   return game;
 }
@@ -37,8 +38,8 @@ test('the screen and the round of the open game are kept beside the other settin
   render(<App />);
   await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
   await userEvent.click(roundButton(2));
-  expect(lastView.read(useGame.getState().game!.id)).toEqual({ screen: 'plan', round: 2 });
-  expect(localStorage.getItem('ti4.view')).toContain(useGame.getState().game!.id);
+  expect(lastView.read(gameNow()!.id)).toEqual({ screen: 'plan', round: 2 });
+  expect(localStorage.getItem('ti4.view')).toContain(gameNow()!.id);
 });
 
 test('after the page loads again the same game opens on the screen and the round it was left on', async () => {
@@ -47,7 +48,7 @@ test('after the page loads again the same game opens on the screen and the round
   await userEvent.click(roundButton(2));
   const game = reload();
   expect(shownScreen()).toBe('game');
-  act(() => useGame.setState({ game }));
+  act(() => seedGame(game));
   expect(shownScreen()).toBe('plan');
   expect(roundButton(2)).toHaveAttribute('aria-pressed', 'true');
 });
@@ -57,7 +58,7 @@ test('a game left on its own screen opens there again', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
   await userEvent.click(screen.getByRole('button', { name: 'Game' }));
   const game = reload();
-  act(() => useGame.setState({ game }));
+  act(() => seedGame(game));
   expect(shownScreen()).toBe('game');
 });
 
@@ -65,7 +66,7 @@ test('what is kept belongs to one game: another game does not open on it', async
   render(<App />);
   await userEvent.click(screen.getByRole('button', { name: 'Plan & map' }));
   const game = reload();
-  act(() => useGame.setState({ game: { ...game, id: 'another' } }));
+  act(() => seedGame({ ...game, id: 'another' }));
   expect(shownScreen()).toBe('game');
   expect(lastView.read('another')).toEqual({ screen: 'game', round: null });
 });

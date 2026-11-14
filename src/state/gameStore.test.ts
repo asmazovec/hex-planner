@@ -14,10 +14,11 @@ import { project } from '../domain/project';
 import type { Game } from '../domain/types';
 import { listGames, loadGame, saveGame } from '../storage/db';
 import { flushSaves, useGame } from './gameStore';
+import { draftNow, gameNow, seedGame } from '../testing/store';
 
 const pack = loadPack(['pok']);
 const act = () => useGame.getState();
-const game = (): Game => act().game!;
+const game = (): Game => gameNow()!;
 const plan = () => game().plans.find(p => p.id === game().activePlanId)!;
 const plans = () => game().plans;
 const round = () => plan().rounds[0];
@@ -225,7 +226,7 @@ describe('a save that does not load', () => {
     vi.mocked(saveGame).mockClear();
     const { id } = game();
     act().crashGame('replay failed');
-    expect(act().game).toBeNull();
+    expect(gameNow()).toBeNull();
     expect(act().canUndo).toBe(false);
     expect(act().loadFailure).toEqual({ id, error: 'replay failed' });
     expect(act().brokenSaves[id]).toBe('replay failed');
@@ -242,7 +243,7 @@ describe('a save that does not load', () => {
     vi.mocked(listGames).mockResolvedValue([{ id: 'friday', name: 'Friday', faction: 'sol', playerCount: 4, updatedAt: 1, broken: true }]);
     vi.mocked(loadGame).mockRejectedValue(new Error('damaged'));
     await act().openShareLink('?name=Friday&me=1');
-    expect(act().game).toBeNull();
+    expect(gameNow()).toBeNull();
     expect(act().loadFailure).toEqual({ id: 'friday', error: 'damaged' });
     await flushSaves();
     expect(saveGame).not.toHaveBeenCalled();
@@ -252,8 +253,8 @@ describe('a save that does not load', () => {
     act().closeGame();
     vi.mocked(listGames).mockRejectedValue(new Error('no IndexedDB'));
     await act().openShareLink('?name=Friday&exp=pok');
-    expect(act().game).toBeNull();
-    expect(act().draft.expansions).toEqual(['pok']);
+    expect(gameNow()).toBeNull();
+    expect(draftNow().expansions).toEqual(['pok']);
     expect(act().loadFailure).toEqual({ id: null, error: 'no IndexedDB' });
     expect(act().brokenSaves).toEqual({});
   });
@@ -399,64 +400,64 @@ describe('players', () => {
 
   test('edits go to the draft while no game is open, without saving or undo', () => {
     useGame.getState().closeGame();
-    const before = useGame.getState().draft.opponents.length;
+    const before = draftNow().opponents.length;
     useGame.getState().addOpponent();
-    expect(useGame.getState().draft.opponents).toHaveLength(before + 1);
-    expect(useGame.getState().game).toBeNull();
+    expect(draftNow().opponents).toHaveLength(before + 1);
+    expect(gameNow()).toBeNull();
     expect(useGame.getState().canUndo).toBe(false);
     useGame.getState().removeOpponent(before);
-    expect(useGame.getState().draft.opponents).toHaveLength(before);
+    expect(draftNow().opponents).toHaveLength(before);
   });
 
   test('a draft without my faction does not start', () => {
     useGame.getState().closeGame();
-    const { draft } = useGame.getState();
+    const draft = draftNow();
     useGame.getState().startGame();
-    expect(useGame.getState().game).toBeNull();
-    expect(useGame.getState().draft).toBe(draft);
+    expect(gameNow()).toBeNull();
+    expect(draftNow()).toBe(draft);
   });
 
   test('the dock standing for my absent home comes off, and goes back', () => {
     const pack = loadPack(['pok']);
     useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'sol' }, pack);
-    const seat = Object.keys(useGame.getState().game!.map).find(slot => useGame.getState().game!.map[slot] === pack.factions.sol.homeTile)!;
+    const seat = Object.keys(gameNow()!.map).find(slot => gameNow()!.map[slot] === pack.factions.sol.homeTile)!;
     useGame.getState().setTile(seat, '4');
     const planet = pack.tiles['4'].planetIds[0];
     useGame.getState().setDock(planet, false);
-    expect(useGame.getState().game!.docks).toEqual([]);
+    expect(gameNow()!.docks).toEqual([]);
     useGame.getState().setDock(planet, true);
-    expect(useGame.getState().game!.docks).toEqual([planet]);
+    expect(gameNow()!.docks).toEqual([planet]);
   });
 
   test('starting turns the draft into the game and leaves a fresh draft', () => {
     useGame.getState().closeGame();
     useGame.getState().setFaction('sol');
-    const { draft } = useGame.getState();
+    const draft = draftNow();
     useGame.getState().startGame();
-    expect(useGame.getState().game!.id).toBe(draft.id);
-    expect(useGame.getState().game!.faction).toBe('sol');
-    expect(useGame.getState().draft.faction).toBe('');
-    expect(useGame.getState().draft.id).not.toBe(draft.id);
+    expect(gameNow()!.id).toBe(draft.id);
+    expect(gameNow()!.faction).toBe('sol');
+    expect(draftNow().faction).toBe('');
+    expect(draftNow().id).not.toBe(draft.id);
   });
 
   test('in an open game the player actions can be undone and the starting points count in the projection', () => {
     open();
     useGame.getState().addOpponent();
-    expect(useGame.getState().game!.playerCount).toBe(5);
+    expect(gameNow()!.playerCount).toBe(5);
     useGame.getState().undo();
-    expect(useGame.getState().game!.playerCount).toBe(4);
-    const game = { ...useGame.getState().game!, vp: 3 };
+    expect(gameNow()!.playerCount).toBe(4);
+    const game = { ...gameNow()!, vp: 3 };
     expect(project(game, game.plans[0], 'now', pok).state.vp).toBe(3);
   });
 
   test('an opponent faction goes through the home tile rule, and in a started game the seats stay', () => {
     open();
     useGame.getState().setOpponent(0, { faction: 'hacan' });
-    const slots = seatSlots(4, pok, useGame.getState().game!.layout);
-    expect(useGame.getState().game!.map[slots[1]]).toBe('16');
-    const before = useGame.getState().game;
+    const slots = seatSlots(4, pok, gameNow()!.layout);
+    expect(gameNow()!.map[slots[1]]).toBe('16');
+    const before = gameNow();
     useGame.getState().swapSeats(1, 2);
-    expect(useGame.getState().game).toBe(before);
+    expect(gameNow()).toBe(before);
   });
 });
 
@@ -724,9 +725,9 @@ describe('the store holds the saved game', () => {
   test('a game set by hand on the old view becomes the saved game', () => {
     const other = structuredClone(game());
     other.plans[0].rounds[0].strategyCard = 5;
-    useGame.setState({ game: other });
+    seedGame(other);
     expect(rounds()[0].strategyCard).toBe(5);
-    useGame.setState({ game: null });
+    seedGame(null);
     expect(act().saved).toBeNull();
   });
 });
