@@ -4,9 +4,11 @@
  * the cost of a component action. A component's own file is never touched.
  */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { applyPayment, checkPayment, pay, readyInfluence, readyResources } from '../../replay/payment';
-import { autoPay, paymentValue } from '../../payment';
-import { commodityValueOf, gainCommodities, replenish } from '../../replay/cards/trade';
+import { applyPayment, checkPayment, readyInfluence, readyResources } from '../../replay/payment';
+import { pay } from '../../../testing/old/domain/replay/payment';
+import { autoPay, paymentValue } from '../../../testing/old/domain/payment';
+import { commodityValueOf, replenish } from '../../replay/cards/trade';
+import { gainCommodities } from '../../../testing/old/domain/replay/cards/trade';
 import { forecast, mutable, rulesGame, rulesPack, tactical } from '../../rules/kit';
 import type { Entry, GameState, Opponent, Warning } from '../../types';
 import { componentAction } from '../components/kit';

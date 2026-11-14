@@ -63,11 +63,6 @@ export const unresearchable = (pack: DataPack, id: string): boolean =>
 export const researchTokensOf = (pack: DataPack, game: Pick<Game, 'faction'>, state: GameState, shared: GameState, technology: string): number =>
   applied(pack, holderOf(game, state, shared), 'researchTokens', 0, { technology }).value;
 
-/** The tokens the technologies of an entry give instead of being researched, for the card's free tokens. */
-export const researchTokensGiven = (pack: DataPack, game: Pick<Game, 'faction'>, state: GameState, shared: GameState, ids: readonly string[] | undefined): number =>
-  (ids ?? []).filter(id => componentById(pack, id)?.kind === 'technology')
-    .reduce((sum, id) => sum + researchTokensOf(pack, game, state, shared, id), 0);
-
 export interface ResearchResult {
   /** The technologies that joined the holdings. */
   researched: string[];

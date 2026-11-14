@@ -1,7 +1,7 @@
 /** LRR 69 Promissory Notes. Source: tirules2 rules-reference/promissory-notes.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { createGame } from '../../newGame';
+import { createGame } from '../../../testing/old/domain/newGame';
 import type { Act, Entry, Goods, Opponent } from '../../types';
 import { FACTION, NEAR, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 

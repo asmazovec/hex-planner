@@ -3,10 +3,10 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import type { MergedChange } from '../../domain/losses';
 import { changeOnBoard as oldChange } from '../../testing/oldMerged';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import type { AdjustmentKind, Entry, EntryBody, Game, Phase, UnitId } from '../../domain/types';
 import { savedOf } from '../../testing/legacySave';
-import { boardOf, planOf, tableOf } from '../fromLegacy';
+import { boardOf, planOf, tableOf } from '../../testing/old/game/fromLegacy';
 import { changeOnBoard, mergedTurn } from './merged';
 
 const pack = loadPack(['pok']);

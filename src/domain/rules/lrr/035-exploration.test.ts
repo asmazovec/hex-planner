@@ -2,7 +2,8 @@
 import { describe, expect, test } from 'vitest';
 import { componentById } from '../../components';
 import { emptyHoldings } from '../../holdings';
-import { gain, holds, lose } from '../../replay/holdings';
+import { gain, holds } from '../../replay/holdings';
+import { lose } from '../../../testing/old/domain/replay/holdings';
 import { rulesPack } from '../kit';
 import { loadPack } from '../../../data/loadPack';
 import { MECATOL_PLANET } from '../../mecatol';

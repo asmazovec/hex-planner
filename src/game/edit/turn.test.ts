@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { withChoices } from '../../domain/effects/choices';
 import { stateBeforeEntry } from '../../domain/project';
-import { repaid } from '../../domain/strategy';
+import { repaid } from '../../testing/old/domain/strategy';
 import type { Entry, Game } from '../../domain/types';
 import { legacyEntry } from '../entry';
-import { turnOf } from '../fromLegacy';
+import { turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as now from './turn';
 

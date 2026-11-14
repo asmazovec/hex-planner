@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hintsAt } from '../../registry';
+import { hintsAt } from '../../../../testing/old/domain/effects/registry';
 import type { Entry } from '../../../types';
 import { bench, effect, endOf, expectNone, expectStanding, NEAR, quote, tactical, TARGET, using, warningsOf } from '../kit';
 import { id } from './td';

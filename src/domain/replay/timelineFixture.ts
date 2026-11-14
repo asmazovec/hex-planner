@@ -1,8 +1,8 @@
 /** A long game for the timeline's tests and bench: six players, every kind of entry in each round. */
 import { loadPack } from '../../data/loadPack';
 import { seatSlots } from '../mapBuilder';
-import { createGame } from '../newGame';
-import { placeStartUnits, setPlayerFaction } from '../players';
+import { createGame } from '../../testing/old/domain/newGame';
+import { placeStartUnits, setPlayerFaction } from '../../testing/old/domain/players';
 import type { Entry, Game, Round } from '../types';
 
 export const fixturePack = loadPack(['pok', 'te']);

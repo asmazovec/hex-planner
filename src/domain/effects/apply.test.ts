@@ -4,7 +4,8 @@ import { emptyHoldings, holdingsOf } from '../holdings';
 import { forecast, rulesGame, rulesPack, tech } from '../rules/kit';
 import type { Entry, Opponent } from '../types';
 import { applied, stacked } from './apply';
-import { effectOf, hintsAt, stepsOfWindow } from './registry';
+import { effectOf, stepsOfWindow } from './registry';
+import { hintsAt } from '../../testing/old/domain/effects/registry';
 import type { Ability } from './types';
 
 const pack = rulesPack();

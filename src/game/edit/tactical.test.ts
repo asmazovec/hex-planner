@@ -1,12 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import type { Entry, EntryBody, Game, UnitCounts } from '../../domain/types';
 import * as old from '../../domain/tactical';
-import { plannedCard as oldPlanned, heldCards } from '../../domain/strategy';
-import { newEntryBody, tacticalBody, tacticalOwner as oldOwner } from '../../domain/newEntry';
+import * as oldOld from '../../testing/old/domain/tactical';
+import { heldCards } from '../../domain/strategy';
+import { plannedCard as oldPlanned } from '../../testing/old/domain/strategy';
+import { newEntryBody, tacticalBody, tacticalOwner as oldOwner } from '../../testing/old/domain/newEntry';
 import { legacyEntry } from '../entry';
-import { planOf, tableOf, turnOf } from '../fromLegacy';
+import { planOf, tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { mapSource } from '../space';
 import { initialBoard } from '../setup';
 import * as now from './tactical';
@@ -46,11 +48,11 @@ describe('reading the flights', () => {
     }
     expect(now.arrowsOf(at, a)).toEqual(old.arrowsOf(g, pack, e));
     const bare = base({ moves: [{ from: 'A', units: {} }], losses: { fighter: 1 }, groundLosses: { [pb]: { infantry: 1 } } });
-    expect(now.emptySources(at, now.tacticalOf(turnFor(bare)))).toEqual(old.emptySources(g, pack, bare));
+    expect(now.emptySources(at, now.tacticalOf(turnFor(bare)))).toEqual(oldOld.emptySources(g, pack, bare));
     expect(now.lossesOf(turnFor(bare))).toEqual(old.lossesOf(bare));
-    expect(now.isUntouched(turnFor(bare))).toBe(old.isUntouched(bare));
+    expect(now.isUntouched(turnFor(bare))).toBe(oldOld.isUntouched(bare));
     const none = base({ moves: [], landings: [], production: {} });
-    expect(now.isUntouched(turnFor(none))).toBe(old.isUntouched(none));
+    expect(now.isUntouched(turnFor(none))).toBe(oldOld.isUntouched(none));
   });
 });
 
@@ -69,13 +71,13 @@ describe('editing the route', () => {
   test('withUnitCount: set, add a pickup, take away, planet of the source', () => {
     const cases = [['A', 'A', 'carrier', 3], ['A', 'A', 'fighter', 0], ['A', 'A', 'cruiser', 1], ['A', pa, 'infantry', 4], ['A', 'C', 'fighter', 2], ['A', pb, 'infantry', 1], ['H', 'H', 'carrier', 1]] as [string, string, 'carrier', number][];
     for (const [source, from, unit, count] of cases) {
-      sameMoves(e, old.withUnitCount(g, pack, e.moves, source, from, unit, count), now.withUnitCount(at, turnFor(e), source, from, unit, count));
+      sameMoves(e, oldOld.withUnitCount(g, pack, e.moves, source, from, unit, count), now.withUnitCount(at, turnFor(e), source, from, unit, count));
     }
   });
   test('withStructureCount', () => {
     const cases = [['A', 'A', 'pds', 1], ['A', pa, 'spacedock', 1], ['A', 'C', 'pds', 2], ['A', 'A', 'pds', 0]] as [string, string, 'pds', number][];
     for (const [source, from, kind, count] of cases) {
-      sameMoves(e, old.withStructureCount(g, pack, e.moves, source, from, kind, count), now.withStructureCount(at, turnFor(e), source, from, kind, count));
+      sameMoves(e, oldOld.withStructureCount(g, pack, e.moves, source, from, kind, count), now.withStructureCount(at, turnFor(e), source, from, kind, count));
     }
   });
 });
@@ -84,12 +86,12 @@ describe('editing the landings and the battle', () => {
   const e = base();
   test('landings', () => {
     const cases = [[pb, 'infantry', 5], [pb, 'mech', 0], [pa, 'infantry', 1], [pb, 'infantry', 0]] as [string, 'infantry', number][];
-    for (const [planet, unit, count] of cases) same(e, old.withLanding(e, planet, unit, count), now.withLanding(turnFor(e), planet, unit, count));
-    same(e, old.withLandingFrom(e, pb, pa, 'infantry', 2), now.withLandingFrom(turnFor(e), pb, pa, 'infantry', 2));
-    same(e, old.withLandedStructure(e, pb, 'pds', 1), now.withLandedStructure(turnFor(e), pb, 'pds', 1));
+    for (const [planet, unit, count] of cases) same(e, oldOld.withLanding(e, planet, unit, count), now.withLanding(turnFor(e), planet, unit, count));
+    same(e, oldOld.withLandingFrom(e, pb, pa, 'infantry', 2), now.withLandingFrom(turnFor(e), pb, pa, 'infantry', 2));
+    same(e, oldOld.withLandedStructure(e, pb, 'pds', 1), now.withLandedStructure(turnFor(e), pb, 'pds', 1));
     const from = base({ landings: [{ planetId: pb, units: { infantry: 2 }, from: pa }] });
-    same(from, old.withLandingFrom(from, pb, pa, 'infantry', 0), now.withLandingFrom(turnFor(from), pb, pa, 'infantry', 0));
-    expect(now.landedFrom(now.tacticalOf(turnFor(from)), pb, pa, 'infantry')).toBe(old.landedFrom(from, pb, pa, 'infantry'));
+    same(from, oldOld.withLandingFrom(from, pb, pa, 'infantry', 0), now.withLandingFrom(turnFor(from), pb, pa, 'infantry', 0));
+    expect(now.landedFrom(now.tacticalOf(turnFor(from)), pb, pa, 'infantry')).toBe(oldOld.landedFrom(from, pb, pa, 'infantry'));
   });
   test('losses: in space, on a planet, a lander lost and given back', () => {
     const steps: [string | null, 'fighter', number][] = [[null, 'fighter', -1], [pb, 'fighter', -1], [pb, 'fighter', 1], [null, 'fighter', 1]];
@@ -105,9 +107,9 @@ describe('editing the landings and the battle', () => {
     }
   });
   test('fleet removals', () => {
-    same(e, old.withFleetRemoval(e, 'cruiser', 2), now.withFleetRemoval(turnFor(e), 'cruiser', 2));
+    same(e, oldOld.withFleetRemoval(e, 'cruiser', 2), now.withFleetRemoval(turnFor(e), 'cruiser', 2));
     const some = base({ fleetRemovals: { cruiser: 1 } });
-    same(some, old.withFleetRemoval(some, 'cruiser', -1), now.withFleetRemoval(turnFor(some), 'cruiser', -1));
+    same(some, oldOld.withFleetRemoval(some, 'cruiser', -1), now.withFleetRemoval(turnFor(some), 'cruiser', -1));
   });
 });
 

@@ -4,7 +4,7 @@ import { CARD } from '../../domain/replay/cards/ids';
 import { primary, rulesGame, rulesPack, secondary } from '../../domain/rules/kit';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
-import { tableOf, turnOf } from '../fromLegacy';
+import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { resolveTurn, warningsOf } from './index';
 import { newTrack } from './track';
 

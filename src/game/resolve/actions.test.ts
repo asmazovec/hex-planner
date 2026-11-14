@@ -5,10 +5,10 @@ import type { Entry, Plan } from '../../domain/types';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
 import type { GameEvent } from '../events';
-import { tableOf, turnOf } from '../fromLegacy';
+import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { poolsOf, shipsIn, tokensOnMap } from '../queries';
 import { timeline } from '../timeline';
-import { planOf } from '../fromLegacy';
+import { planOf } from '../../testing/old/game/fromLegacy';
 import { resolveTurn } from './index';
 import { newTrack } from './track';
 

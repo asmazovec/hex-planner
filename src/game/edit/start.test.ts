@@ -1,10 +1,10 @@
 /** Each start edit against the old edit of `Game` it replaces: the saved game it makes is the one the old edit makes. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { setLeader, setStartHolding } from '../../domain/holdings';
-import { createGame } from '../../domain/newGame';
-import { placeStartUnits, setPlayerFaction } from '../../domain/players';
-import { enemyChange, structureInGame } from '../../domain/stacks';
+import { setLeader, setStartHolding } from '../../testing/old/domain/holdings';
+import { createGame } from '../../testing/old/domain/newGame';
+import { placeStartUnits, setPlayerFaction } from '../../testing/old/domain/players';
+import { enemyChange, structureInGame } from '../../testing/old/domain/stacks';
 import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { Game } from '../../domain/types';

@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { genericNotes, startForFaction } from '../../holdings';
-import { passageBarredOf, shipBlockersOf } from '../../movement';
+import { passageBarredOf, shipBlockersOf } from '../../../testing/old/domain/movement';
 import type { Opponent } from '../../types';
 import { bench, endOf, FAR, NEAR, TARGET, tactical } from '../components/kit';
 import { notesInPlay } from './rivals';

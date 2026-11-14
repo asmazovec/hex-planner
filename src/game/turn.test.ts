@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { FAR, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../domain/rules/kit';
 import type { Entry } from '../domain/types';
-import { legacyEntry, legacyPlayer, playerOfLegacy, tableOf, turnOf } from './fromLegacy';
+import { legacyEntry, legacyPlayer, playerOfLegacy, tableOf, turnOf } from '../testing/old/game/fromLegacy';
 
 const pack = rulesPack();
 const game = rulesGame({ game: { opponents: [{ id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 }] } });

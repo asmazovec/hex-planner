@@ -5,14 +5,14 @@ import { useState } from 'react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { holdingsOf, upgradeTech } from '../../../domain/holdings';
-import { createGame } from '../../../domain/newGame';
+import { createGame } from '../../../testing/old/domain/newGame';
 import { project } from '../../../domain/project';
 import type { Game, GameState, UnitCounts, UnitId } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import type { Move, TacticalEntry } from '../tactical';
 import { UnitPicker } from './UnitPicker';
 import { legacyEntry } from '../../../game/entry';
-import { turnOf } from '../../../game/fromLegacy';
+import { turnOf } from '../../../testing/old/game/fromLegacy';
 
 const pack = loadPack(['pok']);
 

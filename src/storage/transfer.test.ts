@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { CURRENT_SCHEMA, parseSaved, SAVE_FORMAT } from './schema';
 import { gameOf, savedOf } from '../testing/legacySave';
 import type { Game } from '../domain/types';

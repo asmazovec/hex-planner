@@ -9,7 +9,7 @@ vi.mock('../storage/db', () => ({
 
 import { loadPack } from '../data/loadPack';
 import { seatSlots } from '../domain/mapBuilder';
-import { opponentHoldings } from '../domain/players';
+import { opponentHoldings } from '../testing/old/domain/players';
 import { project } from '../domain/project';
 import type { Game } from '../domain/types';
 import { listGames, loadGame, saveGame } from '../storage/db';
@@ -646,7 +646,6 @@ describe('merged adjustments and structures', () => {
     expect(game().pds).toEqual({ ...start, q: 1 });
   });
 });
-
 
 describe('enemy ground units by planet', () => {
   test('they are set with undo, and nothing left leaves no record', () => {

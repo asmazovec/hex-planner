@@ -4,8 +4,8 @@ import { adjacentTo, routeReach } from '../domain/movement';
 import { FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, TARGET } from '../domain/rules/kit';
 import { applyAll } from './apply';
 import { emptyBoard } from './board';
-import { legacyGame } from './legacyViews';
-import { tableOf } from './fromLegacy';
+import { legacyGame } from '../testing/old/game/legacyViews';
+import { tableOf } from '../testing/old/game/fromLegacy';
 import { adjacentSlots, areJoined, blockersOf, distancesFrom, reach, shipBlockers, slotsOf } from './space';
 
 const pack = rulesPack();

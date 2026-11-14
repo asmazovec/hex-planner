@@ -5,8 +5,10 @@
 import { loadPack } from '../data/loadPack';
 import type { Game, Opponent, Plan, StartHoldings } from '../domain/types';
 import { SAVE_FORMAT } from '../domain/types';
-import { legacyEntry, legacyPlayer, nestedEntries, playerOfLegacy } from '../game/entry';
-import { GHOST_SEAT, planOf, tableOf } from '../game/fromLegacy';
+import { legacyEntry, legacyPlayer, playerOfLegacy } from '../game/entry';
+import { nestedEntries } from './old/game/entry';
+import { GHOST_SEAT } from '../game/fromLegacy';
+import { planOf, tableOf } from './old/game/fromLegacy';
 import type { SavedGame, StartEdits } from '../game/save';
 import type { Round as KernelRound } from '../game/round';
 import type { Table, UnitCounts } from '../game/types';

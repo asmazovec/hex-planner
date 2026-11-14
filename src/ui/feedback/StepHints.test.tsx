@@ -11,7 +11,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { viewOf } from '../testing/legacyMap';
 import { componentById, componentsOf } from '../../domain/components';
 import { effectOf } from '../../domain/effects/registry';

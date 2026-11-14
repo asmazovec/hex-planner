@@ -14,10 +14,6 @@ import type { DataPack, Entry, GameState, Warning } from '../types';
 export const HAND_LIMIT = 7;
 export const SECRET_LIMIT = 3;
 
-/** What an entry chose for the components it plays, by the names their effects ask for: a component's `choices`, an agenda's outcome and election. */
-export const choicesOf = (entry: Entry): Record<string, string | number> =>
-  ('choices' in entry ? entry.choices : undefined) ?? {};
-
 /** The same for a holder: what they hold after the entry, the faction they play. */
 export function entryLimitsOf(holder: Holder, faction: string, entry: Entry, pack: DataPack, before?: GameState): Warning[] {
   const { holdings } = holder;

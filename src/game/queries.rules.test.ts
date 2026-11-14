@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { HOME, NEAR, rulesGame, rulesPack, tech } from '../domain/rules/kit';
 import { applyAll } from './apply';
 import { emptyBoard } from './board';
-import { tableOf } from './fromLegacy';
+import { tableOf } from '../testing/old/game/fromLegacy';
 import {
   capacityIn, costOf, fleetIn, fleetLimit, planetValue, productionLimit, readyPlanets, reinforcementsOf, tokensOnMap, tradeGoodsOnControl, upgradesOf,
 } from './queries';

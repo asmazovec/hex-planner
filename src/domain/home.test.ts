@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { parseMapString } from './mapString';
-import { createGame } from './newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { project } from './project';
-import { homeNotes, homeOf, homeSlot, startingDocks } from './strategy';
+import { homeOf, homeSlot, startingDocks } from './strategy';
+import { homeNotes } from '../testing/old/domain/strategy';
 import type { Game } from './types';
 
 const pack = loadPack(['pok', 'te']);

@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { componentById, noteAddress, noteBase, noteId, textOf } from './components';
-import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, noteCards, noteOwner, notesOfFirst, noteText, ownNotes, setLeader, setStartHolding, tradable, upgradesOf, upgradeTech } from './holdings';
-import { createGame } from './newGame';
-import { addPlayer, draftWithExpansions, gameAs, removePlayer, setPlayerFaction } from './players';
+import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, notesOfFirst, tradable, upgradesOf, upgradeTech } from './holdings';
+import { noteCards, noteOwner, noteText, ownNotes, setLeader, setStartHolding } from '../testing/old/domain/holdings';
+import { createGame } from '../testing/old/domain/newGame';
+import { gameAs } from './players';
+import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
 import { forgetTimelines, project, readyToPlay, timelineOf } from './project';
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';

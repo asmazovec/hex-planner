@@ -1,7 +1,8 @@
-import { createGame } from './newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { describe, expect, test, it } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { fractureSlots, validThundersEdgeSystem, withFractureMoved } from './thundersEdge';
+import { fractureSlots, validThundersEdgeSystem } from './thundersEdge';
+import { withFractureMoved } from '../testing/old/domain/thundersEdge';
 import { seatSlots } from './mapBuilder';
 import type { TileDef } from './types';
 

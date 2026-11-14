@@ -5,11 +5,11 @@
  * Nothing here forbids a tap elsewhere.
  */
 import { MECATOL_PLANETS } from '../../mecatol';
-import type { Entry, Game, GameState, DataPack } from '../../types';
+import type { Entry, DataPack } from '../../types';
 import { isOnMap, systemPlanets, systemSlots, type MapSource } from '../board';
 import { CARD } from './ids';
 
-type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
+export type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
 
 /** What a tap on the map chooses for a card: the system of its effect, a place to build, or a dock to produce at. */
 export type CardMapPick = 'system' | 'build' | 'dock';
@@ -30,14 +30,4 @@ export function cardTargetsOver(reads: TargetReads, pack: DataPack, entry: CardE
     const planets = systemPlanets(map, slot, pack);
     return planets.some(p => reads.fits(p.id, pick)) && !planets.some(p => excluded.includes(p.id)) && !tokened.includes(slot);
   });
-}
-
-/**
- * `before` is the state just before the card, `latest` the state the map shows (the planets mine and the docks there).
- */
-export function cardTargets(game: Game, pack: DataPack, entry: CardEntry, pick: CardMapPick, before: GameState, latest: GameState): string[] {
-  return cardTargetsOver({
-    map: game, expansions: game.expansions, tokens: before.tokensOnMap,
-    fits: (planetId, kind) => (kind === 'dock' ? latest.docks.includes(planetId) : latest.control[planetId] === 'me'),
-  }, pack, entry, pick);
 }

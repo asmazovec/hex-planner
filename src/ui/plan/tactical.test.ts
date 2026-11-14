@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { hexLayout } from '../../domain/hexLayout';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { project } from '../../domain/project';
 import { routeShapes } from '../map/geometry';
 import type { Entry, Game, GameState } from '../../domain/types';
-import { emptySources } from '../../domain/tactical';
-import { tableOf, turnOf } from '../../game/fromLegacy';
+import { emptySources } from '../../testing/old/domain/tactical';
+import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { arrowsOf, entrySystems, flies, flightRoutes, sourcesOf, stateInFlight, viaOf, withRoute, withoutEmptySources, withoutSource, type Move, type TacticalEntry } from './tactical';
 
 const pack = loadPack(['pok']);

@@ -4,7 +4,7 @@ import { NEAR, rulesGame, rulesPack, tactical } from '../../domain/rules/kit';
 import type { Act, Entry } from '../../domain/types';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
-import { tableOf, turnOf } from '../fromLegacy';
+import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { resolveTurn } from './index';
 import { newTrack } from './track';
 

@@ -2,13 +2,13 @@
 import { applied } from '../effects/apply';
 import '../effects/points/production';
 import { holderFor, holderOf, type Who } from '../effects/registry';
-import { blockersOf, fullPath, shipSpeed, type Blockers } from '../movement';
+import { fullPath, shipSpeed, type Blockers } from '../movement';
 import { violation } from '../rules/registry';
 import { unitStats } from '../unitStats';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
 import { planetsOf, sourceSlot, type MapSource } from './board';
 import { gameAs } from '../players';
-import { take, unitIds, type Move } from './state';
+import { unitIds, type Move } from './state';
 
 /** A move that only picks units up, so no route to check: from a planet, from the active system itself, or marked as a pickup. */
 export const isPickup = (move: Move, target: string, pack: DataPack): boolean =>
@@ -17,14 +17,6 @@ export const isPickup = (move: Move, target: string, pack: DataPack): boolean =>
 /** Whether units may be picked up in a system: not where my command token lies, unless it is the active system (95.3). */
 export const pickupAllowed = (state: Pick<GameState, 'tokensOnMap'>, target: string, slot: string): boolean =>
   slot === target || !state.tokensOnMap.includes(slot);
-
-/**
- * Check, after the activation: a ship picks units up only in the system it starts in, one it passes or the active one
- * (95.1), and never where my command token lies other than the active system (95.3).
- */
-export function checkPickups(game: Game, state: GameState, target: string, moves: Move[], pack: DataPack, blockers: Blockers = blockersOf(game, null, undefined, pack)): Warning[] {
-  return checkPickupsOf(game, slot => state.tokensOnMap.includes(slot), target, moves, pack, blockers);
-}
 
 /** The same over a reader of the mover's command tokens: one implementation for the old state and the board. */
 export function checkPickupsOf(game: MapSource, tokenAt: (slot: string) => boolean, target: string, moves: Move[], pack: DataPack, blockers: Blockers): Warning[] {
@@ -144,8 +136,6 @@ export const checkGroupsOf = (stacks: Stacks, groups: Record<string, UnitCounts>
     const group = stacks.capacityOf(units, null);
     return group.load > group.capacity ? [violation('capacityGroup', { from, load: group.load, capacity: group.capacity })] : [];
   });
-export const checkGroups = (game: Game, state: GameState, groups: Record<string, UnitCounts>, pack: DataPack): Warning[] =>
-  checkGroupsOf(stacksOfState(game, state, pack), groups);
 
 /** How far each system units leave is over its capacity, before or after the move. */
 export function overflowLeftOf(stacks: Stacks, target: string, moves: Move[], pack: DataPack): Map<string, number> {
@@ -155,8 +145,6 @@ export function overflowLeftOf(stacks: Stacks, target: string, moves: Move[], pa
     return [slot, load - room];
   }));
 }
-export const overflowLeft = (game: Game, state: GameState, target: string, moves: Move[], pack: DataPack): Map<string, number> =>
-  overflowLeftOf(stacksOfState(game, state, pack), target, moves, pack);
 
 /**
  * Check: what stays in the systems units left, against the capacity of the ships still there (16.3, 43.1, 95 note 4):
@@ -169,26 +157,6 @@ export function checkLeftBehindOf(stacks: Stacks, before: Map<string, number>, t
     const { load, capacity: room } = stacks.capacityOf(stacks.units(slot), slot);
     return [violation('capacitySystem', { systemId: slot, load, capacity: room })];
   });
-}
-export const checkLeftBehind = (game: Game, state: GameState, before: Map<string, number>, target: string, moves: Move[], pack: DataPack): Warning[] =>
-  checkLeftBehindOf(stacksOfState(game, state, pack), before, target, moves, pack);
-
-/**
- * Effect (37.3, note 2): the ships the player chose to remove beyond the fleet pool leave the active system, as many of
- * each type as stand there now; the rest is returned, to be removed after the production that builds them.
- */
-export function removeFleetExcess(state: GameState, target: string, removals: UnitCounts): UnitCounts {
-  const here = state.systems[target] ?? {};
-  const now: UnitCounts = {};
-  const later: UnitCounts = {};
-  for (const id of unitIds(removals)) {
-    const wanted = removals[id] ?? 0;
-    const taken = Math.min(wanted, here[id] ?? 0);
-    if (taken > 0) now[id] = taken;
-    if (wanted > taken) later[id] = wanted - taken;
-  }
-  take(state.systems, target, now, []);
-  return later;
 }
 
 /**

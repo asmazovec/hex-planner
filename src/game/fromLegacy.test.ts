@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
-import { setPlayerFaction } from '../domain/players';
-import { legacyPlayer, playerOfLegacy, tableOf } from './fromLegacy';
+import { createGame } from '../testing/old/domain/newGame';
+import { setPlayerFaction } from '../testing/old/domain/players';
+import { legacyPlayer, playerOfLegacy, tableOf } from '../testing/old/game/fromLegacy';
 
 const pack = loadPack(['pok', 'te']);
 const FACTIONS = ['sol', 'hacan', 'arborec', 'letnev'];

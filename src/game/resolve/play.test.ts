@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { COMPONENT_FILES, effectOf } from '../../domain/effects/registry';
-import { createGame } from '../../domain/newGame';
-import { tableOf, turnOf } from '../fromLegacy';
+import { createGame } from '../../testing/old/domain/newGame';
+import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { applyAll } from '../apply';
 import { initialBoard } from '../setup';
 import { tactical } from '../../domain/rules/kit';

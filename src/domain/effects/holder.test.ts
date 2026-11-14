@@ -2,7 +2,8 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { bench, endOf } from './components/kit';
 import { defaultHolder, speaksIn } from './holder';
-import { holderRuleOf, hintsAt } from './registry';
+import { holderRuleOf } from './registry';
+import { hintsAt } from '../../testing/old/domain/effects/registry';
 
 describe('holder: on whose action a component speaks', () => {
   test('the card prints it: another player\'s action is `others`, anything else `self`', () => {

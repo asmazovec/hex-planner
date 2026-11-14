@@ -7,7 +7,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { holdingsOf } from '../holdings';
 import { shipSpeed } from '../movement';
-import { createGame } from '../newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { capacity } from '../replay/transport';
 import type { Holdings, StructureKind, UnitId } from '../types';
 import { productionCost } from '../unitStats';

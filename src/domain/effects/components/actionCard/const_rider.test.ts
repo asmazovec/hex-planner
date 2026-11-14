@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { STEPS } from '../../../rules/registry';
-import { hintsAt } from '../../registry';
+import { hintsAt } from '../../../../testing/old/domain/effects/registry';
 import { bench, effect, endOf, quote } from '../kit';
 import { id } from './const_rider';
 

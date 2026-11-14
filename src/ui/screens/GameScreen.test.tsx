@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { seatSlots } from '../../domain/mapBuilder';
 import { hexToPixel } from '../map/geometry';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { setLanguage } from '../../i18n';
 import { flushSaves, useGame } from '../../state/gameStore';
 import { deleteGame, listGames, saveGame } from '../../storage/db';

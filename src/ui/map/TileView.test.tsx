@@ -4,12 +4,11 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { hexLayout } from '../../domain/hexLayout';
 import { emptyHoldings } from '../../domain/holdings';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import type { Game, GameState } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { seatSlots } from '../../domain/mapBuilder';
 import { LegacyMap, LegacyTile } from '../testing/legacyMap';
-
 
 vi.mock('../../domain/hexLayout', async original => {
   const actual = await original<typeof import('../../domain/hexLayout')>();
@@ -572,7 +571,6 @@ test('control stays on the rim and an exhausted planet keeps its look with the t
   expect(group).toHaveClass('planet-exhausted');
   expect(group.querySelector('.planet-trait-hazardous')).not.toBeNull();
 });
-
 
 test('enemy ground units stand on the arc of their own planet, apart from any carried in the system', () => {
   const [first, second] = pack.tiles['71'].planetIds;

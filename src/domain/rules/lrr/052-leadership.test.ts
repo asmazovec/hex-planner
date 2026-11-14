@@ -1,7 +1,8 @@
 /** LRR 52 Leadership (Strategy Card). Source: tirules2 rules-reference/leadership.md. */
 import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from '../../holdings';
-import { CARD, cardCost, costsStrategyToken, withLeadershipTokens } from '../../strategy';
+import { CARD, costsStrategyToken, withLeadershipTokens } from '../../strategy';
+import { cardCost } from '../../../testing/old/domain/strategy';
 import type { Entry } from '../../types';
 import { adjust, codesOf, FACTION, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';
 

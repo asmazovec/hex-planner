@@ -1,11 +1,11 @@
 /** What a tile draws of a board, pinned to what the old per-player state gave: the same stacks and the same numbers. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
-import { shownPlanetValues as shownOld } from '../domain/payment';
-import { stacksOf } from '../domain/stacks';
+import { createGame } from '../testing/old/domain/newGame';
+import { shownPlanetValues as shownOld } from '../testing/old/domain/payment';
+import { stacksOf } from '../testing/old/domain/stacks';
 import { systemPlanets } from '../domain/project';
-import { boardOf, legacyState, tableOf } from './fromLegacy';
+import { boardOf, legacyState, tableOf } from '../testing/old/game/fromLegacy';
 import { seatSlots } from '../domain/mapBuilder';
 import { ownerKey, playerOfOwner, seatCount, shownPlanetValues, tileStacks } from './tile';
 

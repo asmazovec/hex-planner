@@ -3,11 +3,12 @@ import { loadPack } from '../data/loadPack';
 import { factionsByExpansion } from './factionSheet';
 import { emptyHoldings } from './holdings';
 import { lookUpTile } from './mapBuilder';
-import { newEntryBody, tacticalBody, tacticalOwner } from './newEntry';
+import { newEntryBody, tacticalBody, tacticalOwner } from '../testing/old/domain/newEntry';
 import { rulesGame, rulesPack, tactical, TARGET } from './rules/kit';
-import { enemyChange, holderIn, othersOnPlanet, playerState } from './stacks';
-import { afterBattle, availableFor, flightOf, standingAfterBattle, withLanding, withProduction, type TacticalEntry } from './tactical';
-import { sliceOwners } from './thundersEdge';
+import { enemyChange, holderIn, othersOnPlanet, playerState } from '../testing/old/domain/stacks';
+import { type TacticalEntry } from './tactical';
+import { afterBattle, availableFor, flightOf, standingAfterBattle, withLanding, withProduction } from '../testing/old/domain/tactical';
+import { sliceOwners } from '../testing/old/domain/thundersEdge';
 import type { GameState, Opponent, Round } from './types';
 import { UNIT_ORDER } from './hexLayout';
 

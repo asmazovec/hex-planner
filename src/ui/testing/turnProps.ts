@@ -1,7 +1,7 @@
 /** The turn of a hand-written old entry and a writer that hands the changed turn back as the old patch, for the tests that render an editor of the kernel's turn over an entry. */
 import type { Turn } from '../../game/actions';
 import { legacyEntry } from '../../game/entry';
-import { planOf, turnOf } from '../../game/fromLegacy';
+import { planOf, turnOf } from '../../testing/old/game/fromLegacy';
 import type { Act, DataPack, Entry, EntryBody, Game, Payment } from '../../domain/types';
 import type { KernelView } from '../plan/kernelView';
 

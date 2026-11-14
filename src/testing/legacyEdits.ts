@@ -6,8 +6,9 @@ import { loadPack } from '../data/loadPack';
 import type { Entry, EntryBody, Phase } from '../domain/types';
 import type { Turn } from '../game/actions';
 import { findTurn } from '../game/edit/plan';
-import { legacyEntry, nestedEntries } from '../game/entry';
-import { turnOf } from '../game/fromLegacy';
+import { legacyEntry } from '../game/entry';
+import { nestedEntries } from './old/game/entry';
+import { turnOf } from './old/game/fromLegacy';
 import type { SavedGame } from '../game/save';
 
 /** The turn an entry body is, to be added to a round: its card when it is a free action a card gives (Warfare). */

@@ -1,13 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
-import { setPlayerFaction } from '../domain/players';
-import { startOf } from '../domain/replay/start';
+import { createGame } from '../testing/old/domain/newGame';
+import { setPlayerFaction } from '../testing/old/domain/players';
+import { startOf } from '../testing/old/domain/replay/start';
 import { applyAll } from './apply';
-import { normalState } from './compare';
-import { boardFromLegacy, boardOf, legacyState, tableOf } from './fromLegacy';
-import { legacyEvents, legacyGame, legacyKey, legacyViews } from './legacyViews';
-
+import { normalState } from '../testing/old/game/compare';
+import { boardFromLegacy, boardOf, legacyState, tableOf } from '../testing/old/game/fromLegacy';
+import { legacyEvents, legacyGame, legacyKey, legacyViews } from '../testing/old/game/legacyViews';
 
 const pack = loadPack(['pok', 'te']);
 const FACTIONS = ['sol', 'hacan', 'arborec', 'letnev'];

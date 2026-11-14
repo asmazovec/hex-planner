@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { rotateLanes } from './lanes';
 import { defaultLayout, layoutChoices, seatSlots, slotsFor, templateFor } from './mapBuilder';
-import { createGame } from './newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { routeDistances } from './project';
 import type { Game, MapLayout } from './types';
 

@@ -2,8 +2,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { factionSheet } from '../../factionSheet';
-import { createGame } from '../../newGame';
-import { setPlayerFaction } from '../../players';
+import { createGame } from '../../../testing/old/domain/newGame';
+import { setPlayerFaction } from '../../../testing/old/domain/players';
 import type { Entry, ExpansionId } from '../../types';
 import { codesOf, forecast, rulesGame, statusTokens } from '../kit';
 

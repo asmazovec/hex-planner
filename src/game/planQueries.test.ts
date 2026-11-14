@@ -3,15 +3,16 @@ import { loadPack } from '../data/loadPack';
 import { effectOf } from '../domain/effects/registry';
 import { landingOffers } from '../domain/effects/points/landing';
 import { holderOf } from '../domain/effects/registry';
-import { losable, notesOfFirst as oldNotesOfFirst, ownNotes, tradable } from '../domain/holdings';
-import { createGame } from '../domain/newGame';
-import { autoPay, sliceAutoPayment } from '../domain/payment';
-import { setPlayerFaction } from '../domain/players';
-import { cardTargets } from '../domain/replay/cards/targets';
+import { losable, notesOfFirst as oldNotesOfFirst, tradable } from '../domain/holdings';
+import { ownNotes } from '../testing/old/domain/holdings';
+import { createGame } from '../testing/old/domain/newGame';
+import { autoPay, sliceAutoPayment } from '../testing/old/domain/payment';
+import { setPlayerFaction } from '../testing/old/domain/players';
+import { cardTargets } from '../testing/old/domain/replay/cards/targets';
 import { productionDue } from '../domain/replay/production';
 import type { Entry } from '../domain/types';
 import type { Turn } from './actions';
-import { legacyKey, legacyState, tableOf, turnOf } from './fromLegacy';
+import { legacyKey, legacyState, tableOf, turnOf } from '../testing/old/game/fromLegacy';
 import { playerOfKey } from './keys';
 import {
   autoPayOn, cardTargetsOn, landingOffersOn, losableOf, notesOf, notesOfFirst, playedCostOf, productionDueOnBoard, sliceAutoPaymentOn, tradableOf,

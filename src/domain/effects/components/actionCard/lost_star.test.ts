@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hintsAt } from '../../registry';
+import { hintsAt } from '../../../../testing/old/domain/effects/registry';
 import { bench, effect, endOf, expectNone, FARTHER, HOME, NEAR, quote, TARGET, FAR, tactical, warningsOf } from '../kit';
 import { id } from './lost_star';
 

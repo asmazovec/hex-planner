@@ -548,4 +548,3 @@ export interface Warning {
   readonly step?: RuleStep;
   readonly place?: ViolationPlace;
 }
-export type Projection = { state: GameState; warningsByEntry: Record<string, Warning[]> };

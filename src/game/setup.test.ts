@@ -1,10 +1,10 @@
 /** Setup by the rule (LRR "Setup"): each test names what the rules give a player and checks the board holds it. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
-import { setPlayerFaction } from '../domain/players';
+import { createGame } from '../testing/old/domain/newGame';
+import { setPlayerFaction } from '../testing/old/domain/players';
 import { seatSlots } from '../domain/mapBuilder';
-import { tableOf } from './fromLegacy';
+import { tableOf } from '../testing/old/game/fromLegacy';
 import { initialBoard, setup } from './setup';
 import type { Table } from './types';
 

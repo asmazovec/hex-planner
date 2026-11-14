@@ -22,7 +22,7 @@ import type { TacticalEntry } from '../plan/tactical';
 import { TacticalEditor } from '../plan/editors/TacticalEditor';
 import { flightWarnings, UnitPicker } from '../plan/editors/UnitPicker';
 import { cardProps, turnProps, expeditionProps } from '../testing/turnProps';
-import { turnOf } from '../../game/fromLegacy';
+import { turnOf } from '../../testing/old/game/fromLegacy';
 import type { Entry } from '../../domain/types';
 import { atOf } from '../../game/edit/tacticalRead';
 import { placeWarnings, placesOf } from './warningPlaces';

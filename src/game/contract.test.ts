@@ -142,8 +142,8 @@ describe('abilities', () => {
     expect(Object.keys(files).length).toBeGreaterThan(20);
     expect(bad).toEqual([]);
   });
-  test('legacyViews is imported by the projection of the screens and by tests only', () => {
-    const files = import.meta.glob<string>(['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts', '!../**/*.test.tsx', '!../game/**'], { query: '?raw', import: 'default', eager: true });
+  test('legacyViews is imported by the projection of the screens, by tests and by the test-only code in src/testing', () => {
+    const files = import.meta.glob<string>(['../**/*.ts', '../**/*.tsx', '!../**/*.test.ts', '!../**/*.test.tsx', '!../game/**', '!../testing/**', '!../ui/testing/**'], { query: '?raw', import: 'default', eager: true });
     const users = Object.entries(files).filter(([, text]) => /from '[^']*\/legacyViews'/.test(text)).map(([name]) => name);
     expect(users.filter(name => name !== '../state/projection.ts')).toEqual([]);
   });

@@ -1,8 +1,8 @@
 /** The map and its tile for tests that build a game and a state in the old shapes: they are turned into the table and board the screens read. */
 import { useMemo, type ComponentProps } from 'react';
-import { boardFromLegacy, tableOf } from '../../game/fromLegacy';
-import { startOf } from '../../domain/replay/start';
-import { holderIn } from '../../domain/stacks';
+import { boardFromLegacy, tableOf } from '../../testing/old/game/fromLegacy';
+import { startOf } from '../../testing/old/domain/replay/start';
+import { holderIn } from '../../testing/old/domain/stacks';
 import type { DataPack, Game, GameState } from '../../domain/types';
 import { HexMap } from '../map/HexMap';
 import { TileView } from '../map/TileView';

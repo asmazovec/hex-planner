@@ -1,5 +1,5 @@
 /** The meters of a source of a tactical entry as the kernel reads them, over a game and a state of the old shape: for the tests that pin the numbers of the flight screen. */
-import { turnOf } from '../game/fromLegacy';
+import { turnOf } from './old/game/fromLegacy';
 import { viewOf } from '../ui/testing/legacyMap';
 import { flightOf, metersOf, type Meters } from '../game/flight';
 import { playerOfKey } from '../game/keys';

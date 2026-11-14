@@ -6,11 +6,11 @@
  */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
-import { placeStartUnits, setPlayerFaction } from '../domain/players';
-import { initialState } from '../domain/replay/state';
+import { createGame } from '../testing/old/domain/newGame';
+import { placeStartUnits, setPlayerFaction } from '../testing/old/domain/players';
+import { initialState } from '../testing/old/domain/replay/state';
 import type { Game, UnitCounts } from '../domain/types';
-import { legacyPlayer, tableOf } from './fromLegacy';
+import { legacyPlayer, tableOf } from '../testing/old/game/fromLegacy';
 import { initialBoard } from './setup';
 import type { Board, PlayerId, Table } from './types';
 

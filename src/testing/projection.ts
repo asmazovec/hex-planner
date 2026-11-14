@@ -5,11 +5,11 @@
  * `GameState` for each player, the warnings of each entry); a board is turned into a state only when somebody asks
  * for it, and once. It rests on the store keeping every object it did not edit.
  */
-import { legacyState, tableOf } from '../game/fromLegacy';
+import { legacyState, tableOf } from './old/game/fromLegacy';
 import { startBoard } from '../game/setup';
 import { stacksOn } from '../game/queries';
 import { statusOf, turnNumbers } from '../game/numbering';
-import { planOf } from '../game/fromLegacy';
+import { planOf } from './old/game/fromLegacy';
 import { timeline as kernelTimeline, type Filter, type Frame as KernelFrame, type Timeline as Kernel } from '../game/timeline';
 import type { Board, Table } from '../game/types';
 import type { Round as KernelRound } from '../game/round';
@@ -19,8 +19,9 @@ import type { SavedGame } from '../game/save';
 import { checkSystemOf } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
 import { choicesOf, type ResolvedChoice } from '../game/abilities/choices';
-import { turnOf } from '../game/fromLegacy';
-import type { DataPack, Entry, Game, GameState, Plan, Projection, Round, Warning } from '../domain/types';
+import { turnOf } from './old/game/fromLegacy';
+import type { DataPack, Entry, Game, GameState, Plan, Round, Warning } from '../domain/types';
+import type { Projection } from './old/domain/types';
 
 export type { Filter };
 

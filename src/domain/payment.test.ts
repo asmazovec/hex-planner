@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from './holdings';
-import { autoPay, EXPEDITION_SLICES, paymentValue } from './payment';
+import { EXPEDITION_SLICES } from './payment';
+import { autoPay, paymentValue } from '../testing/old/domain/payment';
 import type { DataPack, GameState } from './types';
 
 /** Planets `p1`, `p2`, ... get the given resource values; influence is 10 minus the resources. */

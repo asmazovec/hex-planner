@@ -13,7 +13,8 @@ import { violation } from '../rules/registry';
 import type { Entry, ExtensionCode } from '../types';
 import { bench, componentAction, endOf, NEAR, tactical, using, warningsOf } from './components/kit';
 import { choicesFor, shownChoices, withChoices } from './choices';
-import { effectOf, hintsAt, inForce } from './registry';
+import { effectOf, inForce } from './registry';
+import { hintsAt } from '../../testing/old/domain/effects/registry';
 import type { Ability } from './types';
 
 const CARD = 'actionCard:assassin';

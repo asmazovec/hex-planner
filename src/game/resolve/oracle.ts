@@ -6,9 +6,10 @@
  */
 import { createHash } from 'node:crypto';
 import { loadPack } from '../../data/loadPack';
-import { legacyState, boardOf, tableOf } from '../fromLegacy';
-import { normalState, normalWarnings } from '../compare';
-import { planOf } from '../fromLegacy';
+import { legacyState, boardOf, tableOf } from '../../testing/old/game/fromLegacy';
+import { normalWarnings } from '../compare';
+import { normalState } from '../../testing/old/game/compare';
+import { planOf } from '../../testing/old/game/fromLegacy';
 import { timeline as kernelTimeline, type Filter } from '../timeline';
 import type { DataPack, ExpansionId, Game, Plan } from '../../domain/types';
 

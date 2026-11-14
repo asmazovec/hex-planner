@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { adjust, rulesGame, rulesPack } from '../domain/rules/kit';
 import { violation } from '../domain/rules/registry';
 import type { Entry } from '../domain/types';
-import { boardOf, tableOf, turnOf } from './fromLegacy';
+import { boardOf, tableOf, turnOf } from '../testing/old/game/fromLegacy';
 import { resolveTurn } from './resolve';
 
 const pack = rulesPack();

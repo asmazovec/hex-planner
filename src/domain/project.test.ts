@@ -3,7 +3,7 @@ import { CARD } from './strategy';
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { emptyHoldings, holdingsOf, upgradesOf, upgradeTech } from './holdings';
-import { createGame } from './newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { slotAcross } from './route';
 import { fleetSpeed, productionCost, productionPlaces, project, readyInfluence, readyResources, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, systemsAdjacent } from './project';
 import { tacticalMeters } from '../testing/meters';
@@ -933,7 +933,6 @@ describe('createGame structures', () => {
     expect(createGame({ expansions: ['pok'], playerCount: 3, faction: 'sol' }, pack).pds).toEqual({});
   });
 });
-
 
 describe('production on a chosen planet', () => {
   const build = (productionGround?: Record<string, UnitCounts>, production: UnitCounts = { infantry: 2 }) => withId('b', entry({

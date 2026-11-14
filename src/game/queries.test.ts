@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from '../domain/newGame';
-import { setPlayerFaction } from '../domain/players';
-import { tableOf } from './fromLegacy';
+import { createGame } from '../testing/old/domain/newGame';
+import { setPlayerFaction } from '../testing/old/domain/players';
+import { tableOf } from '../testing/old/game/fromLegacy';
 import { cardsOf, groundOn, ownerOf, planetsOf, poolsOf, shipsIn, structuresOf } from './queries';
 import { initialBoard } from './setup';
 

@@ -1,10 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { emptyHoldings, upgradesOf, upgradeTech } from './holdings';
-import { createGame } from './newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { project, stateBeforeEntry, stateAfterEntry } from './project';
-import { withTeMecatol } from './mecatol';
-import { cardChange, cardCost, cardsHeld, costsStrategyToken, freeTokens, freshPlay, heldCards, homeSlot, plannedCard, playOf, startsAsPrimary, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
+import { withTeMecatol } from '../testing/old/domain/mecatol';
+import { cardsHeld, costsStrategyToken, freeTokens, heldCards, homeSlot, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
+import { cardChange, cardCost, freshPlay, plannedCard, playOf, startsAsPrimary } from '../testing/old/domain/strategy';
 import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
 
 const pack = loadPack(['pok', 'te']);

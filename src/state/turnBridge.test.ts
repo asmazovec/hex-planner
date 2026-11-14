@@ -8,12 +8,13 @@ vi.mock('../storage/db', () => ({
 }));
 
 import { loadPack } from '../data/loadPack';
-import { withLanding as oldLanding, withRoute as oldRoute } from '../domain/tactical';
+import { withRoute as oldRoute } from '../domain/tactical';
+import { withLanding as oldLanding } from '../testing/old/domain/tactical';
 import type { Entry } from '../domain/types';
 import { withLanding, withRoute } from '../game/edit/tactical';
 import { newTurn } from '../game/edit/new';
-import { tacticalBody } from '../domain/newEntry';
-import { planOf, tableOf } from '../game/fromLegacy';
+import { tacticalBody } from '../testing/old/domain/newEntry';
+import { planOf, tableOf } from '../testing/old/game/fromLegacy';
 import { initialBoard } from '../game/setup';
 import { mapSource } from '../game/space';
 import { entryPatch } from '../ui/testing/turnProps';

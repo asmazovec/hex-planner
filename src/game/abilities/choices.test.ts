@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { adjust, bench, componentAction, HOME, NEAR } from '../../domain/effects/components/kit';
 import type { Entry, Opponent } from '../../domain/types';
 import { timelineOf } from '../../testing/projection';
-import { turnOf } from '../fromLegacy';
+import { turnOf } from '../../testing/old/game/fromLegacy';
 import { choicesOf } from './choices';
 
 const RIVAL: Opponent = { id: 'o1', faction: 'hacan', vp: 0, seat: 2, color: 2 };

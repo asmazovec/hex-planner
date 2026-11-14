@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { stateBeforeEntry } from '../../domain/project';
 import { gameAs } from '../../domain/players';
 import { upgradesOf as upgradesHeld } from '../../domain/holdings';
 import * as old from '../../domain/strategy';
+import * as oldOld from '../../testing/old/domain/strategy';
 import type { Entry, Game } from '../../domain/types';
-import { turnOf } from '../fromLegacy';
+import { turnOf } from '../../testing/old/game/fromLegacy';
 import { playerOfKey } from '../keys';
 import { upgradesOf } from '../queries';
 import { timelineOf } from '../../testing/projection';
@@ -48,7 +49,7 @@ describe.each([
     const board = line.kernel.byTurn.get(e.id)!.before;
     const before = stateBeforeEntry(g, g.plans[0], e.id, pack);
     expect(read.readyChoicesOn(table, board, pack, turn).map(p => p.id).sort()).toEqual(old.readyChoices(g, e as old.CardEntry, before, pack).map(p => p.id).sort());
-    expect(read.controlsMecatolOn(board, turn.player)).toBe(old.controlsMecatol(before));
+    expect(read.controlsMecatolOn(board, turn.player)).toBe(oldOld.controlsMecatol(before));
     expect([...upgradesOf(board, pack, turn.player)].sort()).toEqual([...upgradesHeld(before.holdings, pack)].sort());
   });
 
@@ -87,7 +88,7 @@ describe('a switch of the card reprices as cardChange of a fresh play does', () 
     const before = stateBeforeEntry(g, g.plans[0], e.id, pack);
     for (const manual of [false, true]) {
       for (const play of plays) {
-        const expected = old.cardChange(e as old.CardEntry, old.freshPlay(play as old.CardPatch), before, 'sol', pack, manual, g);
+        const expected = oldOld.cardChange(e as old.CardEntry, oldOld.freshPlay(play as oldOld.CardPatch), before, 'sol', pack, manual, g);
         const { type, ...rest } = play;
         const next = now.withFreshChange(table, board, pack, turn, { ...rest, side: type === 'strategic' ? 'primary' : 'secondary' }, manual);
         expect(plain(legacyEntry(table, next))).toEqual(plain({ ...e, ...expected }));

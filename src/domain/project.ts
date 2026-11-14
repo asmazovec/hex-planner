@@ -4,9 +4,11 @@
  * measures of a board, the costs of production, the routes) is re-exported from src/domain/replay/ as before. The old
  * old replay is gone: its last record is the frozen oracle of src/game/resolve (oracle.test.ts, recorded by record.test.ts).
  */
-import { blockersOf, routeReach as reachOf, type Blockers } from './movement';
+import { routeReach as reachOf, type Blockers } from './movement';
+import { blockersOf } from '../testing/old/domain/movement';
 import { boardBefore, project as kernelProject, type Timeline } from '../testing/projection';
-import type { DataPack, Game, Plan, Projection } from './types';
+import type { DataPack, Game, Plan } from './types';
+import type { Projection } from '../testing/old/domain/types';
 
 export {
   isOnMap, sourceSlot, systemPlanets, systemsAdjacent, systemSlots, tileIdOf, fleetSpeed, routeDistances, routeMove, routeSteps, shipSpeed,

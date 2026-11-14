@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { changeLayout, seatSlots } from './mapBuilder';
-import { createGame } from './newGame';
-import {
-  addPlayer, countChangeEffect, draftWithExpansions, maxPlayers, opponentHoldings, opponentsBySeat, planetHolder, playersOf, removePlayer, setPlayerFaction, swapSeats,
-} from './players';
+import { createGame } from '../testing/old/domain/newGame';
+import { maxPlayers, planetHolder, playersOf } from './players';
+import { addPlayer, countChangeEffect, draftWithExpansions, opponentHoldings, opponentsBySeat, removePlayer, setPlayerFaction, swapSeats } from '../testing/old/domain/players';
 import type { Game } from './types';
 
 const pack = loadPack(['pok', 'te']);

@@ -3,7 +3,7 @@ import { kernelViewOf } from '../testing/view';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import type { AnyWarningCode } from '../../domain/types';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { setLanguage } from '../../i18n';
 import { WarningText } from './WarningText';
 

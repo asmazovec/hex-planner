@@ -11,9 +11,9 @@ vi.mock('../../../storage/db', () => ({
 
 import { loadPack } from '../../../data/loadPack';
 import { emptyHoldings } from '../../../domain/holdings';
-import { initialState } from '../../../domain/replay/state';
-import { startOf } from '../../../domain/replay/start';
-import { createGame } from '../../../domain/newGame';
+import { initialState } from '../../../testing/old/domain/replay/state';
+import { startOf } from '../../../testing/old/domain/replay/start';
+import { createGame } from '../../../testing/old/domain/newGame';
 import type { Act, Entry, Game, GameState, Holdings } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';

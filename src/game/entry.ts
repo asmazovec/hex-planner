@@ -16,10 +16,6 @@ export const legacyPlayer = (table: Table, player: PlayerId): string =>
 export const playerOfLegacy = (table: Table, legacy: string): PlayerId | undefined =>
   table.players.find(p => (p.legacyId ?? p.id) === legacy)?.id;
 
-/** The old entries a strategic turn's nested actions were made from (Warfare's free action, `fromCard` the card). */
-export const nestedEntries = (table: Table, turn: Turn): Entry[] =>
-  turn.action.kind === 'strategic' ? (turn.action.nested ?? []).map(n => ({ ...legacyEntry(table, n), fromCard: turn.id }) as Entry) : [];
-
 /** The old entry a turn was made from, for the checks of the old code that read one. */
 export function legacyEntry(table: Table, turn: Turn): Entry {
   const action = turn.action;

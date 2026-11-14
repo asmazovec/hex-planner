@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from 'vitest';
 import { project as oldProject } from '../domain/project';
-import { normalState } from '../game/compare';
+import { normalState } from '../testing/old/game/compare';
 import { editRound, fixturePack as pack, longGame } from '../domain/replay/timelineFixture';
 import { forgetTimelines, project, projectionAtRound, timelineOf } from '../testing/projection';
 

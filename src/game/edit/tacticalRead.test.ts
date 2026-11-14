@@ -1,17 +1,18 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { stateBeforeEntry } from '../../domain/project';
 import * as old from '../../domain/tactical';
-import { blockersOf } from '../../domain/movement';
+import * as oldOld from '../../testing/old/domain/tactical';
+import { blockersOf } from '../../testing/old/domain/movement';
 import { systemPlanets } from '../../domain/replay/board';
 import { pickupAllowed } from '../../domain/replay/transport';
 import { productionDue } from '../../domain/replay/production';
-import { autoPay } from '../../domain/payment';
+import { autoPay } from '../../testing/old/domain/payment';
 import type { Entry, EntryBody, Game, UnitCounts } from '../../domain/types';
 import { holderOf, inForceOf } from '../../domain/effects/registry';
 import { legacyEntry } from '../entry';
-import { turnOf } from '../fromLegacy';
+import { turnOf } from '../../testing/old/game/fromLegacy';
 import { routeHintOn } from '../flight';
 import { planetsIn } from '../space';
 import { timelineOf } from '../../testing/projection';
@@ -58,38 +59,38 @@ describe.each(['sol', 'naalu', 'arborec'])('the readers of a tactical action, %s
   const at = now.atOf(t.table, t.board, pack);
 
   test('after the battle, the structures that arrived, the custodians', () => {
-    expect(now.afterBattle(pack, t.turn, t.board, UNIT_ORDER)).toEqual(old.afterBattle(pack, t.e, t.before, UNIT_ORDER));
-    expect(now.structuresArrived(t.turn, t.board)).toEqual(old.structuresArrived(t.e, t.before));
-    expect(now.custodiansLanding(t.board, t.turn, pack)).toBe(old.custodiansLanding(t.before, t.e, pack));
+    expect(now.afterBattle(pack, t.turn, t.board, UNIT_ORDER)).toEqual(oldOld.afterBattle(pack, t.e, t.before, UNIT_ORDER));
+    expect(now.structuresArrived(t.turn, t.board)).toEqual(oldOld.structuresArrived(t.e, t.before));
+    expect(now.custodiansLanding(t.board, t.turn, pack)).toBe(oldOld.custodiansLanding(t.before, t.e, pack));
     expect(now.custodiansLanding(t.board, t.turn, pack)).toBe(mecatol);
   });
 
   test('where a flight takes from, and what it can still take', () => {
     for (const from of ['A', 'C', 'B', pb]) {
       for (const unit of ['carrier', 'infantry', 'fighter'] as const) {
-        expect(now.availableFor(at, t.board, t.turn, 'A', from, unit), `${from} ${unit}`).toBe(old.availableFor(t.g, pack, t.before, t.e, 'A', from, unit));
-        expect(now.pickedFrom(tacticalOf(t.turn).movement, from, unit)).toBe(old.pickedFrom(t.e.moves, from, unit));
+        expect(now.availableFor(at, t.board, t.turn, 'A', from, unit), `${from} ${unit}`).toBe(oldOld.availableFor(t.g, pack, t.before, t.e, 'A', from, unit));
+        expect(now.pickedFrom(tacticalOf(t.turn).movement, from, unit)).toBe(oldOld.pickedFrom(t.e.moves, from, unit));
       }
       for (const kind of ['pds', 'spacedock'] as const) {
-        expect(now.structuresFor(at, t.board, t.turn, 'A', from, kind), `${from} ${kind}`).toBe(old.structuresFor(t.g, pack, t.before, t.e, 'A', from, kind));
-        expect(now.structuresAt(t.board, pack, t.player, from, kind)).toBe(old.structuresAt(t.before, pack, from, kind));
-        expect(now.pickedStructures(tacticalOf(t.turn).movement, from, kind)).toBe(old.pickedStructures(t.e.moves, from, kind));
+        expect(now.structuresFor(at, t.board, t.turn, 'A', from, kind), `${from} ${kind}`).toBe(oldOld.structuresFor(t.g, pack, t.before, t.e, 'A', from, kind));
+        expect(now.structuresAt(t.board, pack, t.player, from, kind)).toBe(oldOld.structuresAt(t.before, pack, from, kind));
+        expect(now.pickedStructures(tacticalOf(t.turn).movement, from, kind)).toBe(oldOld.pickedStructures(t.e.moves, from, kind));
       }
     }
   });
 
   test('ships and cargo, the commit sources, the planets of a system', () => {
     const units = { carrier: 1, fighter: 2, infantry: 1, mech: 1 } as UnitCounts;
-    expect(now.splitFlightOn(t.table, t.board, pack, t.player, units)).toEqual(old.splitFlight(t.g, pack, t.before.holdings, units));
+    expect(now.splitFlightOn(t.table, t.board, pack, t.player, units)).toEqual(oldOld.splitFlight(t.g, pack, t.before.holdings, units));
     expect(now.commitSourcesOn(t.table, t.board, pack, t.player, 'B')).toEqual([{ planetId: 'vefutii', units: { infantry: 3, mech: 1 } }]);
     expect(now.commitSourcesOn(t.table, t.board, pack, t.player, 'A')).toEqual([]);
     for (const slot of ['A', 'B', 'C', 'M']) {
       expect(planetsIn(t.table, t.board, pack, slot)).toEqual(systemPlanets(t.g, slot, pack).map(p => p.id));
-      expect(now.isValidSource(t.table, t.board, pack, t.player, slot)).toBe(old.isValidSource(t.g, pack, t.before, slot));
+      expect(now.isValidSource(t.table, t.board, pack, t.player, slot)).toBe(oldOld.isValidSource(t.g, pack, t.before, slot));
       expect(now.pickupAllowedOn(t.board, t.player, 'B', slot)).toBe(pickupAllowed(t.before, 'B', slot));
     }
-    expect(now.sourceSystemsOn(t.table, t.board, pack, t.player)).toEqual(old.sourceSystems(t.g, pack, t.before));
-    expect(now.tileSystemsOn(t.table, t.board, pack)).toEqual(old.tileSystems(t.g, pack));
+    expect(now.sourceSystemsOn(t.table, t.board, pack, t.player)).toEqual(oldOld.sourceSystems(t.g, pack, t.before));
+    expect(now.tileSystemsOn(t.table, t.board, pack)).toEqual(oldOld.tileSystems(t.g, pack));
   });
 
   test('the systems of an entry for the camera', () => {
@@ -99,7 +100,7 @@ describe.each(['sol', 'naalu', 'arborec'])('the readers of a tactical action, %s
   test('the hint of a route: speed, steps, what is left and the reach', () => {
     for (const [path, active] of [[['A', 'C'], 'B'], [['A'], 'B'], [['A', 'C', 'B'], 'B'], [['C'], 'B'], [['B'], null]] as [string[], string | null][]) {
       const hint = routeHintOn(t.table, t.board, pack, t.player, path, active, () => new Set());
-      const was = old.routeHint(t.g, path, t.before, active, pack, () => blockersOf(t.g, null, undefined, pack));
+      const was = oldOld.routeHint(t.g, path, t.before, active, pack, () => blockersOf(t.g, null, undefined, pack));
       expect({ ...hint, reach: [...hint.reach].sort() }, path.join()).toEqual({ ...was, reach: [...was.reach].sort() });
     }
   });
@@ -112,7 +113,7 @@ describe('the edits that read the board', () => {
 
   test('the production: the price the check asks, the payment of the ready planets, by hand or not', () => {
     for (const [unit, planet, amount, manual] of [['cruiser', null, 1, false], ['carrier', null, 1, true], ['infantry', pb, 1, false]] as ['cruiser', string | null, 1, boolean][]) {
-      same(old.withProduction(t.e, t.before, t.g.faction, unit, planet, amount, pack, manual, t.g), now.withProductionOn(t.table, t.board, pack, t.turn, unit, planet, amount, manual));
+      same(oldOld.withProduction(t.e, t.before, t.g.faction, unit, planet, amount, pack, manual, t.g), now.withProductionOn(t.table, t.board, pack, t.turn, unit, planet, amount, manual));
     }
     const cost = productionDue(t.g, t.before, { cruiser: 1 }, pack, t.e);
     expect(autoPay(t.before, cost, 'resources', pack, { faction: t.g.faction })).toEqual(now.withProductionOn(t.table, t.board, pack, t.turn, 'cruiser', null, 1, false).action.kind === 'tactical'
@@ -121,10 +122,10 @@ describe('the edits that read the board', () => {
 
   test('the custodians payment follows the landing', () => {
     const landed = build('sol', { ...BODY });
-    const oldPatch = old.withCustodiansPayment(landed.e, landed.before, landed.g.faction, pack, false);
+    const oldPatch = oldOld.withCustodiansPayment(landed.e, landed.before, landed.g.faction, pack, false);
     same2(landed, oldPatch, now.withCustodiansOn(landed.table, landed.board, pack, landed.turn, false));
     const none = build('sol', { ...BODY, landings: [] });
-    same2(none, old.withCustodiansPayment({ ...none.e, custodiansPayment: noPay }, none.before, none.g.faction, pack, false), now.withCustodiansOn(none.table, none.board, pack, { ...none.turn, action: { ...(none.turn.action as object), custodians: noPay } as never }, false));
+    same2(none, oldOld.withCustodiansPayment({ ...none.e, custodiansPayment: noPay }, none.before, none.g.faction, pack, false), now.withCustodiansOn(none.table, none.board, pack, { ...none.turn, action: { ...(none.turn.action as object), custodians: noPay } as never }, false));
     expect(withCustodians).toBeTypeOf('function');
   });
 
@@ -156,7 +157,7 @@ describe('the flight of a source as the steps read it', () => {
   test.each(['sol', 'naalu'])('%s: ships, cargo and the pickups of each source', faction => {
     const t = build(faction, BODY);
     for (const source of ['A', 'C', 'B']) {
-      expect(now.flightLineOf(t.table, t.board, pack, t.turn, source), source).toEqual(old.flightOf(t.g, pack, t.before.holdings, t.e, source));
+      expect(now.flightLineOf(t.table, t.board, pack, t.turn, source), source).toEqual(oldOld.flightOf(t.g, pack, t.before.holdings, t.e, source));
     }
   });
 });

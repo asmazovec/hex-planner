@@ -6,7 +6,7 @@
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
 import type { ComponentDef, DataPack, Game, GameState, Holdings, RuleStep } from '../types';
-import { defaultHolder, speaksIn, type HolderRule } from './holder';
+import { defaultHolder, type HolderRule } from './holder';
 import type { Ability, Modifiers } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
 
@@ -71,7 +71,7 @@ function merged(generated: Ability, file: Ability): Ability {
 interface Registry { effects: Map<string, Ability>; order: Map<string, number> }
 const REGISTRIES = new WeakMap<DataPack, Registry>();
 
-function registryOf(pack: DataPack): Registry {
+export function registryOf(pack: DataPack): Registry {
   let registry = REGISTRIES.get(pack);
   if (!registry) {
     const hints = hintsFor(pack);
@@ -267,16 +267,7 @@ function passivesBuilt(pack: DataPack, who: Holdings | Holder): [string, Ability
 }
 
 /** The kinds that come with a faction sheet or a planet: they are in force without being held as cards, and their reminders are asked of the holder. */
-const SHEET_KIND = /^(ability|mech|breakthrough|legendary):/;
-
-/**
- * The reminders of a step: the hint components with that step which the named players (`me` or an opponent id) hold
- * ready, in hand or in play, hold as a secret objective, or have by their faction sheet (abilities, mech, breakthrough
- * once held) or a legendary planet they control. A component held by several of them, or in several copies, is given once.
- */
-export function hintsAt(pack: DataPack, board: GameState, step: RuleStep, players: string[]): ComponentDef[] {
-  return hintsAtSteps(pack, board, [step], players).get(step) ?? [];
-}
+export const SHEET_KIND = /^(ability|mech|breakthrough|legendary):/;
 
 /** On whose action a component speaks: what its file declares, else what its card prints (`holder.ts`). */
 export function holderRuleOf(pack: DataPack, id: string): HolderRule {
@@ -284,33 +275,4 @@ export function holderRuleOf(pack: DataPack, id: string): HolderRule {
   if (declared) return declared;
   const def = componentById(pack, id);
   return def ? defaultHolder(def) : 'self';
-}
-
-/**
- * The reminders of several steps at once: what the players hold is looked through once, not once for each step. `players`
- * are those the steps concern, the actor first (`stepPlayers`); a component that speaks in another player's action
- * (`holder: 'others'`) is reminded of through every other player who holds it, whether or not they stand in the step.
- */
-export function hintsAtSteps(pack: DataPack, board: GameState, steps: RuleStep[], players: string[]): Map<RuleStep, ComponentDef[]> {
-  const { order } = registryOf(pack);
-  const actor = players[0];
-  const holders = new Map<string, Set<string>>();
-  for (const player of ['me', ...Object.keys(board.rivals ?? {})]) {
-    const state = player === 'me' ? board : board.rivals?.[player];
-    if (!state) continue;
-    // A secret objective in hand, and a public one revealed and not yet scored by the player, are reminded of at the status step.
-    const objectives = [...state.holdings.secrets, ...(board.revealed ?? []).filter(id => !state.holdings.scored.includes(id))];
-    const sheet = inForceOf(pack, { holdings: state.holdings, faction: state.faction, control: state.control }).filter(id => SHEET_KIND.test(id));
-    for (const id of [...readyComponents(pack, state.holdings), ...objectives, ...sheet]) {
-      // A note of one's own is not played from one's own hand (LRR 69.2).
-      if (noteAddress(id) === player) continue;
-      if (effectOf(pack, id)?.tier === 'hint') (holders.get(id) ?? holders.set(id, new Set()).get(id)!).add(player);
-    }
-  }
-  const sorted = [...holders.keys()].sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!);
-  const speaks = (id: string): boolean => {
-    const rule = holderRuleOf(pack, id);
-    return [...holders.get(id)!].some(player => speaksIn(rule, player === actor, players.includes(player)));
-  };
-  return new Map(steps.map(step => [step, sorted.filter(id => effectOf(pack, id)?.hintAt?.includes(step) === true && speaks(id)).flatMap(id => componentById(pack, id) ?? [])]));
 }

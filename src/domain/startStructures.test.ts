@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { parseMapString } from './mapString';
-import { createGame } from './newGame';
-import { placeStartUnits, removePlayer, setPlayerFaction } from './players';
+import { createGame } from '../testing/old/domain/newGame';
+import { placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
 import { project } from './project';
 import { seatSlots } from './mapBuilder';
 import { homeSlot } from './strategy';

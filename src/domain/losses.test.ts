@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { changeMerged, mergedCounts, mergedEntry } from './losses';
 import { changeOnBoard } from '../testing/oldMerged';
-import { createGame } from './newGame';
+import { createGame } from '../testing/old/domain/newGame';
 import { project } from './project';
 import type { AdjustmentKind, Entry, EntryBody, Game, Phase, Round, UnitId } from './types';
 
@@ -116,7 +116,6 @@ describe('setup is signed', () => {
     expect(mergedCounts(emptyRound(), 'setup', SLOT)).toEqual([]);
   });
 });
-
 
 describe('a removal must count at the place of its entry', () => {
   const pack = loadPack(['pok']);

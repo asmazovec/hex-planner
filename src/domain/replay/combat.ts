@@ -2,28 +2,8 @@
 import { holderOf } from '../effects/registry';
 import { violation } from '../rules/registry';
 import type { DataPack, Game, GameState, Warning } from '../types';
-import { planetsOf } from './board';
 import { take, unitIds, type TacticalEntry } from './state';
-import { capacity, checkArrivalOf, dockFighterRoom, stacksOfState } from './transport';
-
-/**
- * Whether anything can destroy ships in the active system once they arrived: another player's ships (a space combat),
- * or planets (space cannon). Losses where nothing can were taken on the way, in a gravity rift (37 note 4).
- */
-export function canFight(game: Game, state: GameState, target: string, pack: DataPack): boolean {
-  const ships = (units: Game['enemyUnits'][string][string] | undefined) => unitIds(units ?? {}).some(id => !pack.units[id]?.ground);
-  return planetsOf(game, target, pack).length > 0
-    || Object.values(game.enemyUnits[target] ?? {}).some(ships)
-    || Object.values(state.rivals ?? {}).some(rival => ships(rival.systems[target]));
-}
-
-/**
- * Check on arrival, before the battle (37.3, 76.2): the ships in the active system against the fleet pool, so a battle
- * that later destroys the excess does not undo it. The ground forces this action lands count as landed already, so the
- * fighters they make room for are no ships.
- */
-export const checkArrival = (game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] =>
-  checkArrivalOf(stacksOfState(game, state, pack), target, entry.landings.filter(landing => landing.from === undefined).map(landing => landing.units), pack);
+import { capacity, dockFighterRoom } from './transport';
 
 /** Effect: ships lost in the space combat leave the active system; a loss of what is not there is reported. */
 export function removeLosses(state: GameState, target: string, entry: TacticalEntry, warnings: Warning[]): void {

@@ -12,8 +12,7 @@ import { wormholesOf } from '../movement';
 import { productionCost, unitStats } from '../unitStats';
 import type { DataPack, Entry, Game, GameState, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
 import { hasAnomaly, isStation, planetsOf, tileAt, type MapSource } from './board';
-import { pay } from './payment';
-import { add, unitIds, type TacticalEntry } from './state';
+import { unitIds } from './state';
 
 export { productionCost };
 
@@ -46,7 +45,6 @@ const PRINTED_UNIT_PRODUCTION: Record<string, number> = { arborec_infantry: 1 };
  * A flagship's ability is no component, so the replay counts it here as a producer of its own.
  */
 const PRINTED_SHIP_PRODUCTION: Record<string, number> = { arborec_flagship: 5 };
-
 
 /**
  * What the production maths reads of one player's side of the board, neutral of where it comes from: the old per-player
@@ -107,17 +105,6 @@ const dockValue = (g: Ground, planetId: string, pack: DataPack): number => {
   return applied(pack, g.holder, 'productionValue', g.resources(planetId) + printed, { structure: 'spacedock', planetId, attached: g.attached(planetId) }).value;
 };
 
-/**
- * Everything of mine that produces in a system, in the order docks, PDS, units, planets, space (the first dock is where
- * ground forces go with no choice). My space docks on planets I control, since an opponent's dock gives me nothing
- * (79.4); then what components make a producer through the points `productionValue` (a PDS, base 0), `unitProduction`,
- * `planetProduction` and `spaceProduction` (a value above 0). Units in an entropic scar cannot use Production
- * (Thunder's Edge, entropic scars 2), so there are none. With `homeDock` only docks count (Warfare's secondary).
- */
-export function producerList(game: Game, state: GameState, systemId: string, pack: DataPack, source: ProductionSource = 'system'): Producer[] {
-  return producersOn(groundOf(game, state, pack), systemId, pack, source);
-}
-
 export function producersOn(g: Ground, systemId: string, pack: DataPack, source: ProductionSource = 'system'): Producer[] {
   if (hasAnomaly(g.map, systemId, 'scar', pack)) return [];
   const holder = g.holder;
@@ -160,10 +147,7 @@ export function producersOn(g: Ground, systemId: string, pack: DataPack, source:
   if (ships > 0) list.push({ kind: 'space', planetId: null, value: ships, infantry: true });
   return list;
 }
-
-/** The planets of my producers in a system, docks first: ground forces may be placed on them (68.3). */
-export const producers = (game: Game, state: GameState, systemId: string, pack: DataPack): string[] => producerPlanets(groundOf(game, state, pack), systemId, pack);
-const producerPlanets = (g: Ground, systemId: string, pack: DataPack): string[] =>
+export const producerPlanets = (g: Ground, systemId: string, pack: DataPack): string[] =>
   [...new Set(producersOn(g, systemId, pack).flatMap(p => (p.planetId === null ? [] : [p.planetId])))];
 export function systemProductionOn(g: Ground, systemId: string, pack: DataPack, source: ProductionSource = 'system', entry?: Entry): number {
   const list = producersOn(g, systemId, pack, source);
@@ -224,15 +208,6 @@ export function placesOn(g: Ground, target: string, units: UnitCounts, pack: Dat
   return places;
 }
 
-/** Effect: the built units stand where `placesOf` puts them. */
-export function placeProduction(
-  game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets?: Record<string, UnitCounts>,
-): void {
-  for (const { unit, planetId, count } of placesOf(game, state, target, units, pack, onPlanets)) {
-    add(planetId === null ? state.systems : state.ground, planetId ?? target, { [unit]: count });
-  }
-}
-
 /** How many of a unit stand on the board in this state, ships and ground forces. */
 export const unitsOnBoard = (state: GameState, unit: UnitId): number =>
   [...Object.values(state.systems), ...Object.values(state.ground)].reduce((sum, counts) => sum + (counts[unit] ?? 0), 0);
@@ -246,20 +221,6 @@ const limitWarnings = (onBoardOf: (unit: UnitId) => number, units: UnitCounts, p
   }
   return warnings;
 };
-
-/**
- * Check, over the state just before the units are placed: a unit with Production to use and its value (67, 68.1, 79),
- * infantry only where a producer may build them (68.1 note 4), a war sun only for a player who may have one, no ships
- * among other players' ships (67.6, 14.1), the reinforcements (67.5, 72.1) and the planets ground forces go to (68.3).
- * The value is the pooled Production of the system's producers (`producerList`), changed by `productionTotal`; the
- * `entry` that plays components lets their `play` modifiers count.
- */
-export function checkProduction(
-  game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack,
-  onPlanets: Record<string, UnitCounts> = {}, source: ProductionSource = 'system', step?: RuleStep, entry?: Entry,
-): Warning[] {
-  return checkProductionOn(groundOf(game, state, pack), target, units, pack, onPlanets, source, step, entry);
-}
 export function checkProductionOn(
   g: Ground, target: string, units: UnitCounts, pack: DataPack,
   onPlanets: Record<string, UnitCounts> = {}, source: ProductionSource = 'system', step?: RuleStep, entry?: Entry,
@@ -300,15 +261,6 @@ export function checkProductionOn(
 /** The system an entry produces in: the tactical action's, or the one its card or component names. */
 const systemOfProduction = (entry: Entry | undefined): string | undefined =>
   entry?.type === 'tactical' ? entry.systemId ?? undefined : entry && 'effects' in entry ? entry.effects?.production?.systemId : undefined;
-
-/**
- * The combined cost of a production as it is paid: each unit's cost (`unitCost`, with the laws and what the entry
- * plays), then the combined cost (`productionCost`, Sarween Tools) when a unit used PRODUCTION (`producing`; Sarween
- * ruling 1: units placed without one get no reduction).
- */
-export function costOf(game: Game, state: GameState, units: UnitCounts, pack: DataPack, producing: boolean, entry?: Entry): number {
-  return costOn(groundOf(game, state, pack), units, pack, producing, entry);
-}
 export function costOn(g: Ground, units: UnitCounts, pack: DataPack, producing: boolean, entry?: Entry): number {
   const cost = productionCost(units, g.faction, g.holder, pack, entry);
   if (!producing || cost <= 0) return cost;
@@ -330,11 +282,4 @@ export function productionDueOn(g: Ground, units: UnitCounts, pack: DataPack, en
   const systemId = systemOfProduction(entry);
   const producing = systemId !== undefined && producersOn(g, systemId, pack).length > 0;
   return costOn(g, units, pack, producing, entry);
-}
-
-/** The tactical action's production is paid in resources: the payment is made, and a shortfall reported. `producing`: a unit used PRODUCTION. */
-export function payProduction(game: Game, state: GameState, entry: TacticalEntry, pack: DataPack, warnings: Warning[], producing = true): void {
-  const cost = costOf(game, state, entry.production, pack, producing, entry);
-  const paid = pay(state, entry.payment, 'resources', pack, warnings, { faction: game.faction });
-  if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
 }

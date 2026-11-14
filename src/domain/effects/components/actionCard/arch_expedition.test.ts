@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { hintsAt } from '../../registry';
+import { hintsAt } from '../../../../testing/old/domain/effects/registry';
 import { bench, componentAction, effect, endOf, quote, warningsOf } from '../kit';
 import { id } from './arch_expedition';
 

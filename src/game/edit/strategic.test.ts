@@ -1,13 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
-import { createGame } from '../../domain/newGame';
+import { createGame } from '../../testing/old/domain/newGame';
 import { stateBeforeEntry } from '../../domain/project';
 import * as old from '../../domain/strategy';
-import { researchTokensGiven } from '../../domain/replay/research';
+import * as oldOld from '../../testing/old/domain/strategy';
+import { researchTokensGiven } from '../../testing/old/domain/replay/research';
 import { placesOf } from '../../domain/replay/production';
 import type { Entry, Game } from '../../domain/types';
 import { legacyEntry } from '../entry';
-import { planOf, turnOf } from '../fromLegacy';
+import { planOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
@@ -67,11 +68,11 @@ describe.each(['sol', 'naalu', 'arborec', 'titans'])('the readers of a card turn
 
   test.each(INDEXES)('cost, tokens owed, free tokens, research, entry %i', i => {
     const { e, turn, board, before } = t.at(t.entries[i]);
-    expect(read.cardCostOn(t.table, board, pack, turn)).toEqual(old.cardCost(e, faction, before.holdings, pack, { game: t.g, state: before }));
+    expect(read.cardCostOn(t.table, board, pack, turn)).toEqual(oldOld.cardCost(e, faction, before.holdings, pack, { game: t.g, state: before }));
     for (const heldOf of [[], held]) {
-      expect(read.strategyTokensOwedOn(t.table, board, pack, turn, { held: heldOf })).toBe(old.strategyTokensOwed(e, { held: heldOf }, t.g, before, before, pack));
+      expect(read.strategyTokensOwedOn(t.table, board, pack, turn, { held: heldOf })).toBe(oldOld.strategyTokensOwed(e, { held: heldOf }, t.g, before, before, pack));
     }
-    expect(read.strategyTokensOwedOn(t.table, board, pack, turn, { free: true })).toBe(old.strategyTokensOwed(e, { free: true }, t.g, before, before, pack));
+    expect(read.strategyTokensOwedOn(t.table, board, pack, turn, { free: true })).toBe(oldOld.strategyTokensOwed(e, { free: true }, t.g, before, before, pack));
     expect(read.costsTokenOn(t.table, turn, { held })).toBe(old.costsStrategyToken(e, { held }));
     expect(read.primaryForTokenOf(turn, held)).toBe(old.primaryForToken(e, held));
     expect(read.freeTokensOn(t.table, board, turn)).toBe(old.freeTokens(e, ['pok'], before));
@@ -102,7 +103,7 @@ describe.each(['sol', 'arborec'])('the edits of a card turn, %s', faction => {
     const { e, turn, board, before } = t.at(t.entries[i]);
     for (const manual of [false, true]) {
       for (const patch of patches) {
-        const expected = old.cardChange(e, patch as old.CardPatch, before, faction, pack, manual, t.g);
+        const expected = oldOld.cardChange(e, patch as oldOld.CardPatch, before, faction, pack, manual, t.g);
         sameEntry(t.table, now.withCardChange(t.table, board, pack, turn, kernelPatch(patch), manual), e, expected as never);
       }
     }
@@ -111,7 +112,7 @@ describe.each(['sol', 'arborec'])('the edits of a card turn, %s', faction => {
   test.each(INDEXES)('a fresh play, a system, the shop and the tokens, entry %i', i => {
     const { e, turn } = t.at(t.entries[i]);
     for (const patch of [{ card: CARD.warfare, type: 'strategic' }, { type: 'secondary' }, { card: CARD.leadership }]) {
-      const { acts, ...rest } = old.freshPlay(patch as old.CardPatch) as old.CardPatch & { acts?: unknown };
+      const { acts, ...rest } = oldOld.freshPlay(patch as oldOld.CardPatch) as oldOld.CardPatch & { acts?: unknown };
       void acts;
       const next = now.withFreshPlay(turn, kernelPatch(patch));
       sameEntry(t.table, next, e, rest as never);
@@ -131,17 +132,17 @@ describe.each(['sol', 'arborec'])('the edits of a card turn, %s', faction => {
     for (const i of [0, 1, 2, 3, 6]) {
       const { e, turn } = t.at(t.entries[i]);
       for (const card of [CARD.leadership, CARD.technology, CARD.warfare, CARD.trade]) {
-        expect(now.startsAsPrimaryOn(t.round, t.table.viewer, card, turn)).toBe(old.startsAsPrimary(r, 3, card, e));
+        expect(now.startsAsPrimaryOn(t.round, t.table.viewer, card, turn)).toBe(oldOld.startsAsPrimary(r, 3, card, e));
         for (const primary of [true, false]) {
           for (const mine of [true, false]) {
-            const was = old.playOf(r, 3, card, primary, mine);
+            const was = oldOld.playOf(r, 3, card, primary, mine);
             expect(now.playOfOn(t.round, card, primary, mine)).toEqual({ side: was.type === 'strategic' ? 'primary' : 'secondary', forToken: was.forToken });
           }
         }
       }
     }
     const synced = now.withForTokenOfRound(t.round, t.table.viewer);
-    const oldSynced = old.withForTokenOfRound(r, 3);
+    const oldSynced = oldOld.withForTokenOfRound(r, 3);
     expect(synced.turns.map(turn => (turn.action.kind === 'strategic' ? turn.action.forToken : undefined)))
       .toEqual(oldSynced.entries.map(x => (x.type === 'strategic' ? x.forToken : undefined)));
     expect(now.withForTokenOfRound(synced, t.table.viewer)).toBe(synced);

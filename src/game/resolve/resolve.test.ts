@@ -5,7 +5,7 @@ import type { Entry } from '../../domain/types';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
 import type { GameEvent } from '../events';
-import { tableOf, turnOf } from '../fromLegacy';
+import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { groundOn, ownerOf, poolsOf, shipsIn, tokensOnMap } from '../queries';
 import { resolveTurn } from './index';
 

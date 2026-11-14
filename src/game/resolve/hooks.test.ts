@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { COMPONENT_FILES, effectOf } from '../../domain/effects/registry';
-import { createGame } from '../../domain/newGame';
-import { setPlayerFaction } from '../../domain/players';
+import { createGame } from '../../testing/old/domain/newGame';
+import { setPlayerFaction } from '../../testing/old/domain/players';
 import { holdings } from '../abilities/testBoard';
-import { tableOf } from '../fromLegacy';
+import { tableOf } from '../../testing/old/game/fromLegacy';
 import { legacyKey } from '../keys';
 import { initialBoard } from '../setup';
 import { runHooks } from './hooks';
@@ -25,7 +25,6 @@ const EXAMPLES: Record<(typeof NATIVE_KINDS)[number], string> = {
   onActivate: 'technology:ng', onLanding: 'mech:keleres_mech', onRoundStart: 'ability:council_patronage', onStatusStart: 'ability:mitosis', onStatusEnd: 'promissory:malevolency', onTurnStart: 'technology:cl2',
   gained: 'relic:shard', lost: 'relic:shard', restrict: 'agenda:censure', onGainControl: 'ability:liberate',
 };
-
 
 describe('the native hook runner', () => {
   test('no component file keeps a hook of a native kind on the old state', () => {
