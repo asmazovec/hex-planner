@@ -5,13 +5,13 @@ import { LAYOUT_CHOICES, slotKeyOf } from '../../domain/layouts';
 import { changeLayout as oldChangeLayout, slotsFor } from '../../domain/mapBuilder';
 import { withTeMecatol } from '../../domain/mecatol';
 import { createGame } from '../../domain/newGame';
-import { addPlayer as oldAdd, draftWithExpansions as oldDraft, removePlayer as oldRemove, setPlayerFaction as oldFaction, swapSeats as oldSwap, withSeatHomes } from '../../domain/players';
+import { placeStartUnits, addPlayer as oldAdd, draftWithExpansions as oldDraft, removePlayer as oldRemove, setPlayerFaction as oldFaction, swapSeats as oldSwap, withSeatHomes } from '../../domain/players';
 import { fractureSlots, withFractureMoved } from '../../domain/thundersEdge';
 import type { Entry, ExpansionId, Game, MapLayout } from '../../domain/types';
 import { gameOf, savedOf } from '../../storage/legacySave';
 import type { SavedGame } from '../save';
 import {
-  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, swapSeats, withMap, withName, withTile,
+  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName, withTile,
 } from './table';
 import { withFractureActive, withFractureSeat } from './start';
 
@@ -209,5 +209,24 @@ describe('expansions', () => {
       expectSame(draftWithExpansions(savedOf(d), expansions), savedOf({ ...old, name: undefined } as Game));
     }
     void gameOf;
+  });
+});
+
+describe('the start of the game', () => {
+  const draft = (count: number, factions: string[], expansions: ExpansionId[] = ['pok', 'te']): Game => {
+    const p = loadPack(expansions);
+    let g = createGame({ expansions, playerCount: count, faction: '' }, p, counter());
+    factions.forEach((f, i) => { g = oldFaction(g, i, f, p); });
+    return g;
+  };
+  test.each([
+    [4, ['sol', 'hacan', 'arborec', 'creuss']],
+    [6, ['sol', 'creuss', 'hacan', 'arborec', 'mentak', 'saar']],
+    [5, ['letnev', 'nekro', 'naalu', 'muaat', 'empyrean']],
+    [3, ['sol', '', 'yssaril']],
+    [8, ['sol', 'hacan', 'arborec', 'creuss', 'mentak', 'saar', 'winnu', 'yin']],
+  ])('%i players: the opponents stand at their seats as the old start places them', (count, factions) => {
+    const g = draft(count, factions);
+    expect(startedGame(savedOf(g))).toEqual(savedOf(placeStartUnits(g, pack)));
   });
 });

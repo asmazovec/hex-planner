@@ -285,7 +285,7 @@ export const useGame = create<GameStore>((set, get) => {
       const { draftSaved } = get();
       if (!draftSaved.table.players.find(p => p.id === draftSaved.table.viewer)?.faction) return;
       history.clear();
-      // What the sheets give the players at the start is the board's `setup`: nothing is placed in the save.
+      // The opponents stand at their seats with what their sheets give, written in the save so the Setup mode can edit it.
       replace(startedGame(draftSaved));
       setDraft(newDraft(draftSaved.table.expansions));
       set({ loadFailure: null });

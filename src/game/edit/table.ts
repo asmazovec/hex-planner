@@ -12,7 +12,7 @@ import { defaultLayout, slotKeyOf, templateOf } from '../../domain/layouts';
 import { moveToTemplate, seatSlots, slotsFor, templateFor } from '../../domain/mapBuilder';
 import { makeId, timeIdMaker, type IdMaker } from '../../domain/newGame';
 import { startStructures } from '../../domain/startStructures';
-import { heldCards } from '../../domain/strategy';
+import { heldCards, splitStartUnits } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import type { DataPack, ExpansionId, MapLayout, StartHoldings } from '../../domain/types';
 import { SAVED_FORMAT, type SavedGame, type StartEdits } from '../save';
@@ -544,5 +544,34 @@ export function draftWithExpansions(draft: SavedGame, expansions: ExpansionId[],
   return withPlacedTiles(named, draft.table.map);
 }
 
-/** The draft as an open game: the start of the game places everything the faction sheets give (`setup`), so nothing is written. */
-export const startedGame = (draft: SavedGame): SavedGame => draft;
+/**
+ * A game begins: every opponent stands at their seat with their faction's start units, and their home planets are theirs.
+ * The board's `setup` places what the sheets give; the opponents' placements are written too, because the Setup mode of the
+ * big hex edits them as they stand (a fleet taken off, a dock moved) and a placement that setup alone gave could not be taken off.
+ */
+export function startedGame(draft: SavedGame): SavedGame {
+  const { table } = draft;
+  const pack = loadPack(table.expansions);
+  const slots = seatSlots(real(table).length, pack, table.layout);
+  const start = listOf(draft).slice(1).reduce<StartEdits>((next, { id, faction, seat }) => {
+    const def = pack.factions[faction];
+    const slot = slots[seat - 1];
+    if (!def || !slot) return next;
+    const homes = pack.tiles[def.homeTile]?.planetIds ?? [];
+    const onMap = [def.homeTile, def.gateTile].includes(table.map[slot]?.split('@')[0]);
+    const [home] = homes;
+    const split = splitStartUnits(def.startUnits, onMap ? home : undefined, pack);
+    return {
+      ...next,
+      units: { ...next.units, [slot]: { ...next.units[slot], [id]: split.space } },
+      ...(onMap ? {
+        ground: home === undefined || Object.keys(split.ground).length === 0 ? next.ground : { ...next.ground, [home]: { ...next.ground[home], [id]: split.ground } },
+        // The structures of the sheet stand on the first home planet (see startStructures).
+        docks: home === undefined || !(def.startStructures?.spacedock) || next.docks.includes(home) ? next.docks : [...next.docks, home],
+        pds: home === undefined || !(def.startStructures?.pds) ? next.pds : { ...next.pds, [home]: def.startStructures.pds },
+        control: { ...next.control, ...Object.fromEntries(homes.map(planet => [planet, id])) },
+      } : {}),
+    };
+  }, draft.start);
+  return { ...draft, start };
+}
