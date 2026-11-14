@@ -1,8 +1,9 @@
+import { createSaved, MIN_PLAYERS, maxPlayers, setFaction, swapSeats, withName } from '../game/edit/table';
+import type { SavedGame } from '../game/save';
+import type { Table } from '../game/types';
 import { LAYOUT_ORDER, templateOf } from './layouts';
 import { arrangeSet, parseMapString, ringSlots } from './mapString';
-import { createGame } from './newGame';
-import { maxPlayers, MIN_PLAYERS, playersOf, setPlayerFaction, swapSeats } from './players';
-import type { DataPack, ExpansionId, Game, MapLayout } from './types';
+import type { DataPack, ExpansionId, MapLayout } from './types';
 
 const EXPANSIONS: ExpansionId[] = ['pok', 'te'];
 const NO_EXPANSIONS = 'base';
@@ -53,65 +54,70 @@ export function readShareLink(search: string): ShareParams | null {
   return Object.keys(share).length > 0 ? share : null;
 }
 
+const realPlayers = (table: Table) => table.players.filter(p => p.seat < 100);
+const viewerOf = (table: Table) => table.players.find(p => p.id === table.viewer);
+
 /**
  * The game not started yet that a link describes. Factions and tiles the chosen expansions lack are left out rather
  * than refused: a link that is partly wrong still gives what it can.
  */
-export function draftFromShare(share: ShareParams, base: Game, packOf: (expansions: ExpansionId[]) => DataPack): Game {
-  const expansions = share.expansions ?? base.expansions;
+export function draftFromShare(share: ShareParams, base: SavedGame, packOf: (expansions: ExpansionId[]) => DataPack): SavedGame {
+  const expansions = share.expansions ?? base.table.expansions;
   const pack = packOf(expansions);
-  const count = Math.min(maxPlayers(pack), Math.max(MIN_PLAYERS, share.factions?.length ?? base.playerCount));
+  const count = Math.min(maxPlayers(pack), Math.max(MIN_PLAYERS, share.factions?.length ?? realPlayers(base.table).length));
   const parsed = share.map ? parseMapString(share.map, count, pack) : null;
-  const layout = share.layout ?? parsed?.layout ?? (share.factions || share.expansions ? undefined : base.layout);
-  const blank = createGame({ expansions, playerCount: count, faction: '', layout }, pack);
+  const layout = share.layout ?? parsed?.layout ?? (share.factions || share.expansions ? undefined : base.table.layout);
+  const blank = createSaved({ expansions, playerCount: count, faction: '', layout }, pack);
 
-  const seated = share.me && share.me <= count ? swapSeats(blank, 0, playersOf(blank).findIndex(p => p.seat === share.me), pack) : blank;
-  const named = (share.factions ?? []).slice(0, count).reduce<Game>((game, faction, i) => {
-    const index = playersOf(game).findIndex(p => p.seat === i + 1);
+  const seated = share.me && share.me <= count ? swapSeats(blank, 0, realPlayers(blank.table).findIndex(p => p.seat === share.me)) : blank;
+  const named = (share.factions ?? []).slice(0, count).reduce<SavedGame>((game, faction, i) => {
+    const index = realPlayers(game.table).findIndex(p => p.seat === i + 1);
     const id = factionOf(faction, pack);
-    return id ? setPlayerFaction(game, index, id, pack) : game;
+    return id ? setFaction(game, index, id) : game;
   }, seated);
 
-  if (!parsed) return withName(named, share.name);
-  const placed = parsed.kind === 'set' ? arrangeSet(parsed.set, count, pack, named.layout) : parsed;
-  return withName({ ...named, map: { ...named.map, ...placed.map } }, share.name);
+  if (!parsed) return withName(named, share.name ?? '');
+  const placed = parsed.kind === 'set' ? arrangeSet(parsed.set, count, pack, named.table.layout) : parsed;
+  return withName({ ...named, table: { ...named.table, map: { ...named.table.map, ...placed.map } } }, share.name ?? '');
 }
-
-const withName = (game: Game, name: string | undefined): Game => (name ? { ...game, name } : game);
 
 export type ShareDifference = 'expansions' | 'layout' | 'factions' | 'seat' | 'map';
 
 /** Where a link disagrees with a saved game. What the link leaves out is no disagreement. */
-export function shareDifferences(share: ShareParams, saved: Game, packOf: (expansions: ExpansionId[]) => DataPack): ShareDifference[] {
+export function shareDifferences(share: ShareParams, game: SavedGame, packOf: (expansions: ExpansionId[]) => DataPack): ShareDifference[] {
+  const saved = game.table;
   const pack = packOf(saved.expansions);
+  const playerCount = realPlayers(saved).length;
   const differences: ShareDifference[] = [];
   const same = (a: string[], b: string[]) => [...a].sort().join() === [...b].sort().join();
   if (share.expansions && !same(share.expansions, saved.expansions)) differences.push('expansions');
   // A layout the player count lacks (seven players without hyperlanes, retired) means the one a new game would take.
-  const layout = share.layout && (templateOf(saved.playerCount, pack, share.layout)?.layout ?? share.layout);
+  const layout = share.layout && (templateOf(playerCount, pack, share.layout)?.layout ?? share.layout);
   if (layout && layout !== saved.layout) differences.push('layout');
-  const players = playersOf(saved);
-  if (share.factions && (share.factions.length !== saved.playerCount || share.factions.some((faction, i) => factionOf(faction, pack) !== (players.find(p => p.seat === i + 1)?.faction ?? '')))) differences.push('factions');
-  if (share.me && share.me !== saved.seat) differences.push('seat');
+  const players = realPlayers(saved);
+  if (share.factions && (share.factions.length !== playerCount || share.factions.some((faction, i) => factionOf(faction, pack) !== (players.find(p => p.seat === i + 1)?.faction ?? '')))) differences.push('factions');
+  if (share.me && share.me !== viewerOf(saved)?.seat) differences.push('seat');
   if (share.map) {
-    const parsed = parseMapString(share.map, saved.playerCount, pack);
-    const placed = parsed.kind === 'set' ? arrangeSet(parsed.set, saved.playerCount, pack, saved.layout) : parsed;
+    const parsed = parseMapString(share.map, playerCount, pack);
+    const placed = parsed.kind === 'set' ? arrangeSet(parsed.set, playerCount, pack, saved.layout) : parsed;
     if (Object.entries(placed.map).some(([slot, tile]) => saved.map[slot] !== tile)) differences.push('map');
   }
   return differences;
 }
 
 /** The query of a link to a game: its expansions, its layout, who sits where, and its map as a Milty string. */
-export function shareLinkQuery(game: Game): string {
-  const players = playersOf(game);
-  const bySeat = Array.from({ length: game.playerCount }, (_, i) => {
+export function shareLinkQuery(saved: SavedGame): string {
+  const game = saved.table;
+  const players = realPlayers(game);
+  const bySeat = Array.from({ length: players.length }, (_, i) => {
     const faction = players.find(p => p.seat === i + 1)?.faction;
     return faction ? factionCode(faction) : EMPTY_SEAT;
   });
   const tokens = RINGS.flatMap(ringSlots).map(slot => (game.map[slot] ?? '0').replace('@', ''));
   while (tokens.at(-1) === '0') tokens.pop();
   const query = new URLSearchParams({ ...(game.name ? { name: game.name } : {}), exp: game.expansions.join(',') || NO_EXPANSIONS, layout: game.layout, factions: bySeat.join(',') });
-  if (game.seat !== 1) query.set('me', String(game.seat));
+  const seat = viewerOf(game)?.seat ?? 1;
+  if (seat !== 1) query.set('me', String(seat));
   if (tokens.length > 0) query.set('map', tokens.join(' '));
   return query.toString();
 }

@@ -1,13 +1,7 @@
 import { create } from 'zustand';
 import { loadPack } from '../data/loadPack';
 import { changeOnBoard, type MergedChange } from '../domain/losses';
-import { changeLayout, slotsFor } from '../domain/mapBuilder';
-import { createGame } from '../domain/newGame';
 import { draftFromShare, readShareLink, shareDifferences, type ShareDifference, type ShareParams } from '../domain/shareLink';
-import { withTeMecatol } from '../domain/mecatol';
-import { fractureSlots, withFractureMoved } from '../domain/thundersEdge';
-import { slotKeyOf } from '../domain/layouts';
-import { placeStartUnits, withSeatHomes, addPlayer, draftWithExpansions, removePlayer, setPlayerFaction, swapSeats } from '../domain/players';
 import type {
   DataPack, EntryBody, EntryStatus, ExpansionId, Game, MapLayout, LeaderState, Phase, UnitCounts,
 } from '../domain/types';
@@ -21,16 +15,19 @@ import type { Round } from '../game/round';
 import type { SavedGame, SavedPlan } from '../game/save';
 import { loadGame, listGames } from '../storage/db';
 import { errorText } from '../storage/errorText';
-import { gameOf, originOf, savedFor, savedOf } from '../storage/legacySave';
+import { gameOf, originOf, savedFor } from '../storage/legacySave';
 import { flushSaves, queueSave } from './autosave';
 import * as history from './history';
 import {
   withControl, withDock, withFractureActive, withFractureSeat, withGroundAt, withIngressToggled, withLeader, withPds, withSlice,
-  withStartHolding, withThundersEdge, withUnitsAt,
+  withFractureTiles, withStartHolding, withThundersEdge, withUnitsAt,
 } from '../game/edit/start';
-import { withName, withTile } from '../game/edit/table';
+import {
+  addExpansion, addPlayer, changeLayout, createSaved, draftWithExpansions, removePlayer, setFaction, startedGame, swapSeats, withMap, withName,
+  withTile,
+} from '../game/edit/table';
 import { playerOfLegacy } from '../game/entry';
-import { patchedTurn, turnOfBody, viaGame } from './legacyEdits';
+import { patchedTurn, turnOfBody } from './legacyEdits';
 import { forgetTimelines } from './projection';
 
 export { flushSaves };
@@ -73,16 +70,6 @@ function copyOf(saved: SavedGame): SavedGame {
   if (!source) return saved;
   const copy: SavedPlan = { id: newId(), name: defaultPlanName(saved.plans.length + 1), rounds: copiedRounds(source.rounds, newId) };
   return { ...saved, plans: [...saved.plans, copy], activePlanId: copy.id };
-}
-
-/** The tiles of the open Fracture by slot. They follow its seat and the map's size. */
-function withFractureTiles(game: Game): Game {
-  const tiles = game.fracture.active
-    ? Object.fromEntries(fractureSlots(game.fracture.seat, game.playerCount, loadPack(game.expansions), game.layout).map(s => [slotKeyOf(s.q, s.r), s.tileId]))
-    : {};
-  const old = game.fracture.tiles ?? {};
-  const same = Object.keys(tiles).length === Object.keys(old).length && Object.entries(tiles).every(([slot, id]) => old[slot] === id);
-  return same ? game : { ...game, fracture: { ...game.fracture, tiles } };
 }
 
 export interface GameStore {
@@ -187,7 +174,7 @@ export interface GameStore {
 
 const DRAFT_EXPANSIONS: ExpansionId[] = ['pok', 'te'];
 const newDraft = (expansions: ExpansionId[] = DRAFT_EXPANSIONS): SavedGame =>
-  savedOf(createGame({ expansions, playerCount: 6, faction: '' }, loadPack(expansions)));
+  createSaved({ expansions, playerCount: 6, faction: '' }, loadPack(expansions));
 
 export const useGame = create<GameStore>((set, get) => {
   const initialDraft = newDraft();
@@ -205,24 +192,6 @@ export const useGame = create<GameStore>((set, get) => {
     if (next === current) return;
     history.push(current);
     replace(next);
-  };
-
-  /** An edit of the setup, written over the old game: the Fracture follows what the edit changed. */
-  const viaOld = (edit: (game: Game, pack: DataPack) => Game) => (saved: SavedGame): SavedGame =>
-    viaGame(saved, (game, pack) => {
-      const next = edit(game, pack);
-      return next === game ? game : withFractureTiles(withFractureMoved(game, next, pack));
-    });
-
-  const commitOld = (edit: (game: Game, pack: DataPack) => Game): void => commit(viaOld(edit));
-
-  /** Applies a players edit to the open game, or to the draft while none is open: no undo step and no save there. */
-  const commitPlayers = (edit: (game: Game, pack: DataPack) => Game): void => {
-    if (get().saved) commitOld(edit);
-    else {
-      const draftSaved = viaOld(edit)(get().draftSaved);
-      set({ draftSaved, draft: gameOf(draftSaved) });
-    }
   };
 
   /** An edit of the table written over the saved game: to the open game, or to the draft while none is open. */
@@ -244,13 +213,13 @@ export const useGame = create<GameStore>((set, get) => {
   };
 
   const startFromShare = (share: ShareParams): void => {
-    const game = draftFromShare(share, get().draft, loadPack);
-    if (game.faction) {
+    const game = draftFromShare(share, get().draftSaved, loadPack);
+    if (game.table.players.find(p => p.id === game.table.viewer)?.faction) {
       history.clear();
-      replace(savedOf(placeStartUnits(game, loadPack(game.expansions))));
-      setDraft(newDraft(game.expansions));
+      replace(startedGame(game));
+      setDraft(newDraft(game.table.expansions));
     } else {
-      setDraft(savedOf(game));
+      setDraft(game);
     }
   };
 
@@ -267,14 +236,14 @@ export const useGame = create<GameStore>((set, get) => {
 
     newGame: (input, pack) => {
       history.clear();
-      replace(savedOf(createGame(input, pack)));
+      replace(createSaved(input, pack));
     },
     openShareLink: async search => {
       const share = readShareLink(search);
       if (!share || get().saved) return;
       /** A game whose player is known starts at once; otherwise it waits in the draft for the choice of a faction. */
       if (!share.name) {
-        setDraft(savedOf(draftFromShare(share, get().draft, loadPack)));
+        setDraft(draftFromShare(share, get().draftSaved, loadPack));
         return;
       }
       let saves: Awaited<ReturnType<typeof listGames>>;
@@ -283,7 +252,7 @@ export const useGame = create<GameStore>((set, get) => {
       } catch (error) {
         // Without the saves it is unknown whether the named one exists: the link only fills the draft.
         failLoad(null, error);
-        setDraft(savedOf(draftFromShare(share, get().draft, loadPack)));
+        setDraft(draftFromShare(share, get().draftSaved, loadPack));
         return;
       }
       const found = saves.find(save => save.name === share.name);
@@ -291,7 +260,7 @@ export const useGame = create<GameStore>((set, get) => {
       let differences: ShareDifference[];
       try {
         saved = found ? await loadGame(found.id) : null;
-        differences = saved ? shareDifferences(share, saved, loadPack) : [];
+        differences = saved ? shareDifferences(share, savedFor(saved), loadPack) : [];
       } catch (error) {
         // The named save is broken: a new game under its name would hide it, so nothing starts.
         failLoad(found?.id ?? null, error);
@@ -313,11 +282,12 @@ export const useGame = create<GameStore>((set, get) => {
     },
     setName: name => commitSetup(saved => withName(saved, name)),
     startGame: () => {
-      const { draft, draftSaved } = get();
-      if (!draft.faction) return;
+      const { draftSaved } = get();
+      if (!draftSaved.table.players.find(p => p.id === draftSaved.table.viewer)?.faction) return;
       history.clear();
-      replace(viaGame(draftSaved, (game, pack) => placeStartUnits(game, pack)));
-      setDraft(newDraft(draft.expansions));
+      // What the sheets give the players at the start is the board's `setup`: nothing is placed in the save.
+      replace(startedGame(draftSaved));
+      setDraft(newDraft(draftSaved.table.expansions));
       set({ loadFailure: null });
     },
     closeGame: () => {
@@ -325,19 +295,18 @@ export const useGame = create<GameStore>((set, get) => {
       forgetTimelines();
       set({ saved: null, game: null, canUndo: false });
     },
-    setDraftExpansions: expansions =>
-      setDraft(viaGame(get().draftSaved, game => draftWithExpansions(game, expansions, loadPack(expansions)))),
-    addOpponent: () => commitPlayers(addPlayer),
-    removeOpponent: index => commitPlayers((g, pack) => removePlayer(g, index + 1, pack)),
-    setFaction: faction => commitPlayers((g, pack) => setPlayerFaction(g, 0, faction, pack)),
+    setDraftExpansions: expansions => setDraft(draftWithExpansions(get().draftSaved, expansions)),
+    addOpponent: () => commitSetup(s => addPlayer(s)),
+    removeOpponent: index => commitSetup(s => removePlayer(s, index + 1)),
+    setFaction: faction => commitSetup(s => setFaction(s, 0, faction)),
     // The seats are settled when the game starts: its units and plans stand on them.
-    swapSeats: (a, b) => { if (!get().saved) commitPlayers((g, pack) => swapSeats(g, a, b, pack)); },
+    swapSeats: (a, b) => { if (!get().saved) commitSetup(s => swapSeats(s, a, b)); },
     openGame: async id => {
       let saved: SavedGame;
       try {
         const loaded = await loadGame(id);
         if (!loaded) return;
-        saved = viaGame(savedFor(loaded), game => withFractureTiles(game));
+        saved = withFractureTiles(savedFor(loaded));
       } catch (error) {
         failLoad(id, error);
         return;
@@ -408,31 +377,12 @@ export const useGame = create<GameStore>((set, get) => {
     setActivePlan: id =>
       commit(s => (s.activePlanId === id || !s.plans.some(p => p.id === id) ? s : { ...s, activePlanId: id })),
 
-    addExpansion: id =>
-      commitOld(g => {
-        if (g.expansions.includes(id)) return g;
-        const expansions = DRAFT_EXPANSIONS.filter(e => e === id || g.expansions.includes(e));
-        const next = { ...g, expansions };
-        return id === 'te' ? withTeMecatol(next) : next;
-      }),
+    addExpansion: id => commit(s => addExpansion(s, id)),
     // The map is built on the draft too, before the game starts.
     setTile: (slotKey, tileId) => commitSetup(saved => withTile(saved, slotKey, tileId)),
-    setMap: (map, layout) => commitPlayers((g, pack) => {
-      const next = { ...map };
-      delete next['0,0'];
-      if (g.map['0,0']) next['0,0'] = g.map['0,0'];
-      // The hyperlanes of the layout stay where the string leaves their slots empty.
-      for (const slot of slotsFor(g.playerCount, pack, layout ?? g.layout)) {
-        if (slot.fixed && !next[slotKeyOf(slot.q, slot.r)]) next[slotKeyOf(slot.q, slot.r)] = slot.fixed;
-      }
-      const nextLayout = layout ?? g.layout;
-      // A 0 on a home slot leaves it to the faction seated there.
-      const placed = withSeatHomes({ ...g, map: next, layout: nextLayout }, pack);
-      const same = Object.keys(placed.map).length === Object.keys(g.map).length && Object.entries(placed.map).every(([k, v]) => g.map[k] === v);
-      return same && nextLayout === g.layout ? g : placed;
-    }),
-    setLayout: layout => commitPlayers((g, pack) => changeLayout(g, layout, pack)),
-    setOpponent: (index, { faction }) => commitPlayers((g, pack) => setPlayerFaction(g, index + 1, faction, pack)),
+    setMap: (map, layout) => commitSetup(saved => withMap(saved, map, layout)),
+    setLayout: layout => commitSetup(saved => changeLayout(saved, layout)),
+    setOpponent: (index, { faction }) => commitSetup(saved => setFaction(saved, index + 1, faction)),
     setStartHolding: (player, id, present) => commit(s => withStartHolding(s, pid(s, player), id, present)),
     setLeader: (player, id, state) => commit(s => withLeader(s, pid(s, player), id, state)),
     setEnemyUnits: (systemId, opponentId, units) => commit(s => withUnitsAt(s, systemId, pid(s, opponentId), units)),

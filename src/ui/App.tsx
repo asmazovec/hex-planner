@@ -42,7 +42,8 @@ export function App() {
   }, [gameId, shown]);
 
   // The address of an open game is its link: copy it and pass it on. No history entry, for it changes with every tile.
-  const query = game ? shareLinkQuery(game) : '';
+  const openSaved = useGame(s => s.saved);
+  const query = game && openSaved ? shareLinkQuery(openSaved) : '';
   useEffect(() => {
     window.history.replaceState(null, '', gameAddress(query));
   }, [query]);

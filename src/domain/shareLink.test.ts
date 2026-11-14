@@ -1,14 +1,20 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import { createGame } from './newGame';
-import { playersOf } from './players';
+import { createSaved } from '../game/edit/table';
+import type { SavedGame } from '../game/save';
 import { draftFromShare, factionCode, readShareLink, shareLinkQuery } from './shareLink';
-import type { ExpansionId, Game } from './types';
+import type { ExpansionId } from './types';
 
 const packOf = (expansions: ExpansionId[]) => loadPack(expansions);
-const base = () => createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: '' }, loadPack(['pok', 'te']));
-const fromLink = (search: string) => draftFromShare(readShareLink(search)!, base(), packOf);
-const factionAt = (game: Game, seat: number) => playersOf(game).find(p => p.seat === seat)?.faction;
+const base = () => createSaved({ expansions: ['pok', 'te'], playerCount: 6, faction: '' }, loadPack(['pok', 'te']));
+/** The saved game of a link, with what the table says of it written out: how many play, who I am and where I sit. */
+const seen = (saved: SavedGame) => {
+  const players = saved.table.players.filter(p => p.seat < 100);
+  const me = players.find(p => p.id === saved.table.viewer)!;
+  return { ...saved, ...saved.table, playerCount: players.length, faction: me.faction, seat: me.seat };
+};
+const fromLink = (search: string) => seen(draftFromShare(readShareLink(search)!, base(), packOf));
+const factionAt = (game: SavedGame, seat: number) => game.table.players.find(p => p.seat === seat)?.faction;
 
 describe('reading a link', () => {
   test('an address without game parameters says nothing', () => {
@@ -61,7 +67,7 @@ describe('the game it describes', () => {
     expect(game.map['0,-1']).toBe('25');
     expect(game.map['1,-1']).toBe('26');
     expect(game.map['1,0']).toBeUndefined();
-    expect(game.map['0,0']).toBe(base().map['0,0']);
+    expect(game.map['0,0']).toBe(base().table.map['0,0']);
   });
 
   test('a home of a chosen faction stays where the string has a placeholder', () => {
@@ -112,7 +118,7 @@ describe('the code of a faction', () => {
 describe('a link to a game', () => {
   test('gives back the same game', () => {
     const made = fromLink('?exp=pok&factions=sol,arborec,-,hacan,letnev&me=2&map=25+26+27+28');
-    const again = draftFromShare(readShareLink(`?${shareLinkQuery(made)}`)!, base(), packOf);
+    const again = seen(draftFromShare(readShareLink(`?${shareLinkQuery(made)}`)!, base(), packOf));
     expect(again.expansions).toEqual(made.expansions);
     expect(again.playerCount).toBe(made.playerCount);
     expect(again.layout).toBe(made.layout);
@@ -125,7 +131,7 @@ describe('a link to a game', () => {
     const tokens = Array(18).fill('0');
     tokens[0] = '83A2';
     const made = fromLink(`?factions=sol,hacan,arborec&map=${tokens.join('+')}`);
-    const again = draftFromShare(readShareLink(`?${shareLinkQuery(made)}`)!, base(), packOf);
+    const again = seen(draftFromShare(readShareLink(`?${shareLinkQuery(made)}`)!, base(), packOf));
     expect(again.map).toEqual(made.map);
   });
 

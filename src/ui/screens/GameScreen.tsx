@@ -46,6 +46,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
   const { t } = useTranslation();
   const open = useGame(s => s.game);
   const game = useGame(s => s.game ?? s.draft);
+  const shared = useGame(s => s.saved ?? s.draftSaved);
   const openGame = useGame(s => s.openGame);
   const startGame = useGame(s => s.startGame);
   const closeGame = useGame(s => s.closeGame);
@@ -110,7 +111,7 @@ export function GameScreen({ showMap = false, onOpened }: GameScreenProps) {
 
   /** A link to what stands on the screen: the map, the seats and the expansions, not the plans. */
   const copyLink = async () => {
-    const link = gameAddress(shareLinkQuery(game), true);
+    const link = gameAddress(shareLinkQuery(shared), true);
     try {
       await navigator.clipboard.writeText(link);
       setLinkCopied(true);

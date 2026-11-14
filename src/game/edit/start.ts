@@ -95,7 +95,7 @@ const heldBy = (saved: SavedGame, player: PlayerId): StartHoldings | undefined =
   saved.table.players.some(p => p.id === player && p.seat < GHOST_SEAT) ? saved.start.holdings[player] ?? {} : undefined;
 
 /** What a player holds, set; the technologies stand in the table too (the faction sheet's choice reads them there). */
-function withHeld(saved: SavedGame, player: PlayerId, held: StartHoldings): SavedGame {
+export function withHeld(saved: SavedGame, player: PlayerId, held: StartHoldings): SavedGame {
   const kept = withStart(saved, { holdings: { ...saved.start.holdings, [player]: held } });
   const technologies = held.technologies ?? [];
   const row = saved.table.players.find(p => p.id === player);
