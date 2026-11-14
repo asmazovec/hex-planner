@@ -1,6 +1,6 @@
-import { violation } from '../../../../domain/rules/registry';
 import type { GameState, StructureKind, Warning, Game, DataPack } from '../../../../domain/types';
-import { PER_PLANET, countOn, kindsOf } from '../../../../domain/replay/structures';
+import { violation } from '../../../../domain/rules/registry';
+import { PER_PLANET, kindsOf } from '../../../../domain/replay/structures';
 import { planetsOf, sourceSlot } from '../../../../domain/replay/board';
 import type { TacticalEntry } from '../../../../domain/replay/state';
 import structureAboard from '../../../../domain/rules/codes/structureAboard';
@@ -131,4 +131,14 @@ export function planetStructureWarnings(state: GameState, planetIds: string[]): 
   return planetIds.flatMap(planetId => holders.some(held => countOn(held, 'pds', planetId) > PER_PLANET.pds)
     ? [violation('structureLimit', { kind: 'pds', planetId, count: PER_PLANET.pds, context: 'planet' }, 'production')]
     : []);
+}
+
+export const countOn = (state: GameState, kind: StructureKind, planetId: string): number =>
+  (kind === 'pds' ? state.pds[planetId] ?? 0 : state.docks.includes(planetId) ? 1 : 0);
+
+/** Effect: another player gains a planet; the player of `state` loses it if it was theirs, and their structures on it are destroyed. */
+export function losePlanet(state: GameState, planetId: string): void {
+  state.control[planetId] = 'enemy';
+  state.docks = state.docks.filter(id => id !== planetId);
+  delete state.pds[planetId];
 }

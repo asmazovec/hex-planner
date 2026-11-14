@@ -1,9 +1,15 @@
-import type { GameState, UnitCounts, Warning, RuleStep, Game, DataPack } from '../../../../domain/types';
+import { applied } from '../../../../domain/effects/apply';
+import { effectOf, holderOf, inForceOf } from '../../../../domain/effects/registry';
+import { CUSTODIANS_COST, MECATOL_PLANETS } from '../../../../domain/mecatol';
 import { violation } from '../../../../domain/rules/registry';
-import { code } from '../../../../domain/replay/invasion';
-import { add, removeUnits } from '../../../../domain/replay/state';
+import type { DataPack, Game, GameState, Warning, UnitCounts, RuleStep } from '../../../../domain/types';
+import { planetsOf } from '../../../../domain/replay/board';
+import { add, removeUnits, unitIds, type TacticalEntry } from '../../../../domain/replay/state';
+import { checkLandingsOf, code, groundOf, hasGround } from '../../../../domain/replay/invasion';
 import { inHomeSystem } from '../stacks';
-
+import { losePlanet } from './structures';
+import { applyPayment, checkPayment } from './payment';
+import { gameAs } from '../players';
 /**
  * Effect of an ability or card that places units on a planet: they are added to it; a planet the player does not
  * control is warned of (67.4.1) and gets them all the same. Reinforcement limits are not counted here.
@@ -42,3 +48,96 @@ export function attachCard(
   const attached = (state.attachments ??= {});
   attached[planetId] = [...(attached[planetId] ?? []), cardId];
 }
+
+/** The custodians token still stands on a Mecatol Rex no one controls and no one has landed on yet. */
+export const custodiansOn = (state: GameState, planetId: string): boolean =>
+  MECATOL_PLANETS.includes(planetId) && state.control[planetId] === undefined && !state.custodiansRemoved;
+
+/**
+ * Check, over the state before the landing: only ground forces land (76.1), only on planets of the active system (49.2,
+ * 89.4), and no more of a unit than stands in its space area.
+ */
+export function checkLandings(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack): Warning[] {
+  return checkLandingsOf(game, state.systems[target] ?? {}, planetId => state.ground[planetId] ?? {}, target, entry, pack);
+}
+
+/**
+ * Effect: the ground forces of each landing go from the active system's space onto its planet, as many as were entered;
+ * returns the planets something landed on. The first to land on Mecatol Rex removes the custodians token: six influence
+ * paid with `custodiansPayment` (a shortfall is warned about), and one victory point (27.2, 27.3, 54.1).
+ */
+export function landUnits(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], shared: GameState = state): string[] {
+  warnings.push(...checkLandings(game, state, target, entry, pack));
+  const planets = planetsOf(game, target, pack);
+  const landedOn: string[] = [];
+  for (const landing of entry.landings) {
+    if (!planets.includes(landing.planetId)) continue;
+    // What was entered lands: the shortfall is reported as landingOverLimit and forbids nothing; the space area only ends empty.
+    const landed = groundOf(landing.units, pack);
+    if (landing.from !== undefined) removeUnits(state.ground, landing.from, landed);
+    else removeUnits(state.systems, target, landed);
+    if (unitIds(landed).length === 0) continue;
+    if (custodiansOn(state, landing.planetId)) {
+      // The six influence come from the entry's own payment; one warning says what is lacking.
+      const payment = entry.custodiansPayment ?? { planets: [], tradeGoods: 0 };
+      warnings.push(...checkPayment(state, payment, { step: 'invasion' }));
+      const paid = applyPayment(state, payment, 'influence', pack, { faction: game.faction, shared });
+      if (paid < CUSTODIANS_COST) warnings.push(violation('custodians', { planetId: landing.planetId, needed: CUSTODIANS_COST, paid }));
+      for (const each of [state, ...Object.values(state.rivals ?? {})]) each.custodiansRemoved = true;
+      state.vp += 1;
+    }
+    reactToLanding(game, state, shared, entry, landing.planetId, unitIds(landed).reduce((sum, unit) => sum + (landed[unit] ?? 0), 0), pack, warnings);
+    add(state.ground, landing.planetId, landed);
+    if (!landedOn.includes(landing.planetId)) landedOn.push(landing.planetId);
+  }
+  return landedOn;
+}
+
+/**
+ * Effect: the player of `state` gains control of one planet (25.1, 49.5): it is theirs and, newly gained, exhausted
+ * (49.5.2); every opponent counted in this state loses it with their structures there (49.5.1). Then each component
+ * hooked on the gain (`onGainControl`) runs: the passive ones in force, and the play ones the entry names; and the
+ * trade goods the point `tradeGoodsOnControl` asks are added. A planet already theirs changes nothing; returns whether
+ * it was newly gained. Used by the landing and by every component that gives a planet.
+ */
+export function takeControl(game: Game, state: GameState, planetId: string, pack: DataPack): boolean {
+  if (state.control[planetId] === 'me') return false;
+  if (!state.exhausted.includes(planetId)) state.exhausted.push(planetId);
+  state.control[planetId] = 'me';
+  for (const rival of Object.values(state.rivals ?? {})) losePlanet(rival, planetId);
+  if (state.rivalHolds) delete state.rivalHolds[planetId];
+  afterControl(game, state, planetId, pack);
+  return true;
+}
+
+/**
+ * What follows a planet changing hands to the player of `state`, whose control of it is set already: the trade goods
+ * `tradeGoodsOnControl` asks are added. The components hooked on the gain (`onGainControl`) run on the kernel's runner.
+ */
+export function afterControl(game: Game, state: GameState, planetId: string, pack: DataPack): void {
+  state.tradeGoods += applied(pack, holderOf(game, state), 'tradeGoodsOnControl', 0, { planetId }).value;
+}
+
+/** Effect after the ground combat (49.5): each planet landed on that still holds the active player's ground forces is theirs (`takeControl`). */
+export function gainControl(game: Game, state: GameState, landedOn: string[], pack: DataPack): void {
+  for (const planetId of landedOn) {
+    if (hasGround(state.ground[planetId], pack)) takeControl(game, state, planetId, pack);
+  }
+}
+
+/**
+ * Effect on the way to a landing: every other player's components in force that answer a landing on a planet
+ * (`onLanding`) are asked, the owner of the component being any player but the lander. `shared` is my state, which
+ * holds every player's own. A component may push warnings (a cost its owner imposes) or change a state.
+ */
+export function reactToLanding(game: Game, state: GameState, shared: GameState, entry: TacticalEntry, planetId: string, landed: number, pack: DataPack, warnings: Warning[]): void {
+  const lander = entry.owner ?? 'me';
+  const states: Record<string, GameState> = { ...(shared.rivals ?? {}), me: shared, [lander]: state };
+  for (const [owner, own] of Object.entries(states)) {
+    if (owner === lander) continue;
+    const ownerGame = gameAs(game, owner);
+    for (const id of inForceOf(pack, holderOf(ownerGame, own, shared), effect => effect.onLanding !== undefined)) {
+      effectOf(pack, id)!.onLanding!({ id, game: ownerGame, pack, owner, lander, planetId, landed, state: own, landerState: state, shared, warnings });
+    }
+  }
+}

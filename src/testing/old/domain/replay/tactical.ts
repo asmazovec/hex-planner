@@ -1,7 +1,6 @@
 import { checkStationLandings } from '../../../../domain/thundersEdge';
 import type { DataPack, Game, GameState, Warning, UnitCounts } from '../../../../domain/types';
-import { gainControl, landUnits } from '../../../../domain/replay/invasion';
-import { placesOf, type ProductionPlace } from '../../../../domain/replay/production';
+import { type ProductionPlace } from '../../../../domain/replay/production';
 import { type TacticalEntry, unitIds, take } from '../../../../domain/replay/state';
 import type { Blockers } from '../../../../domain/movement';
 import { checkEntryRoutes } from './movement';
@@ -17,6 +16,8 @@ import { fire } from '../effects/points/moments';
 import { checkSystem } from './transport';
 import { moveUnits } from './movement';
 import { checkAfterCombat, removeGroundLosses, removeLosses } from './combat';
+import { placesOf } from './production';
+import { gainControl, landUnits } from './invasion';
 /** Step 89.2: the routes and pickups are checked over the state before the move, then the units are carried and what stays behind is checked; returns each source's group. */
 export function movement(game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], blockers?: Blockers, shared?: GameState): Record<string, UnitCounts> {
   warnings.push(...checkEntryRoutes(game, state, shared, entry, pack, blockers));

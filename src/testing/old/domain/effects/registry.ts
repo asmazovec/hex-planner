@@ -1,8 +1,7 @@
-import type { DataPack, GameState, RuleStep, ComponentDef } from '../../../../domain/types';
-import { registryOf, inForceOf, SHEET_KIND, readyComponents, effectOf, holderRuleOf } from '../../../../domain/effects/registry';
+import type { DataPack, Game, GameState, RuleStep, ComponentDef } from '../../../../domain/types';
+import { holderOf, inForceOf, registryOf, SHEET_KIND, readyComponents, effectOf, holderRuleOf } from '../../../../domain/effects/registry';
 import { noteAddress, noteBase, componentById } from '../../../../domain/components';
 import { speaksIn } from '../../../../domain/effects/holder';
-
 /**
  * The reminders of a step: the hint components with that step which the named players (`me` or an opponent id) hold
  * ready, in hand or in play, hold as a secret objective, or have by their faction sheet (abilities, mech, breakthrough
@@ -39,3 +38,7 @@ export function hintsAtSteps(pack: DataPack, board: GameState, steps: RuleStep[]
   };
   return new Map(steps.map(step => [step, sorted.filter(id => effectOf(pack, id)?.hintAt?.includes(step) === true && speaks(id)).flatMap(id => componentById(pack, id) ?? [])]));
 }
+
+/** The same for a player of a game: `state` is their own, `shared` mine, which keeps the laws. */
+export const inForce = (pack: DataPack, game: Pick<Game, 'faction'>, state: GameState, shared: GameState = state): string[] =>
+  inForceOf(pack, holderOf(game, state, shared));

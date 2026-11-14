@@ -1,8 +1,8 @@
 import type { Game, GameState, DataPack, Warning } from '../../../../domain/types';
 import type { TacticalEntry } from '../../../../domain/replay/state';
-import { gameAs } from '../../../../domain/players';
 import { inForceOf, holderOf, effectOf } from '../../../../domain/effects/registry';
 import { violation } from '../../../../domain/rules/registry';
+import { gameAs } from '../players';
 
 /**
  * Effect, after the token is placed: every player's components in force that answer an activation (`onActivate`) are

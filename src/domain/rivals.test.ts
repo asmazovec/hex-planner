@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
-import { gameAs, playersOf } from './players';
+import { playersOf } from './players';
 import { addPlayer, placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
 import { project, stateBeforeEntry } from '../testing/old/domain/project';
 import { seatSlots } from './mapBuilder';
 import type { Entry, Game } from './types';
+import { gameAs } from '../testing/old/domain/players';
 
 const pack = loadPack(['pok', 'te']);
 /** The start units that stand in space: the ground forces stand on the home planet (LRR 43.1). */

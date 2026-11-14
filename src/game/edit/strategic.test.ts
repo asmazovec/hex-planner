@@ -5,13 +5,13 @@ import { stateBeforeEntry } from '../../testing/old/domain/project';
 import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
 import { researchTokensGiven } from '../../testing/old/domain/replay/research';
-import { placesOf } from '../../domain/replay/production';
 import type { Entry, Game } from '../../domain/types';
 import { legacyEntry } from '../entry';
 import { planOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
+import { placesOf } from '../../testing/old/domain/replay/production';
 
 const pack = loadPack(['pok']);
 const { CARD } = old;

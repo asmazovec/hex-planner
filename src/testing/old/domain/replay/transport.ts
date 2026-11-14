@@ -1,10 +1,11 @@
+import { applied } from '../../../../domain/effects/apply';
 import { holderOf } from '../../../../domain/effects/registry';
 import type { DataPack, Game, GameState, Warning, UnitCounts } from '../../../../domain/types';
-import { gameAs } from '../../../../domain/players';
-import { type Stacks, capacity, checkSystemOf, dockFighterRoom, fleetCount, fleetLimit, checkPickupsOf, checkGroupsOf, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';
+import { type Stacks, capacity, checkSystemOf, dockFighterRoom, fleetCount, checkPickupsOf, checkGroupsOf, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';
 import { type Move, unitIds, take } from '../../../../domain/replay/state';
 import type { Blockers } from '../../../../domain/movement';
 import { blockersOf } from '../movement';
+import { gameAs } from '../players';
 /**
  * Check, after the activation: a ship picks units up only in the system it starts in, one it passes or the active one
  * (95.1), and never where my command token lies other than the active system (95.3).
@@ -55,3 +56,7 @@ export function boardSystemWarnings(game: Game, state: GameState, slot: string, 
 
 export const checkSystem = (game: Game, state: GameState, target: string, pack: DataPack): Warning[] =>
   checkSystemOf(stacksOfState(game, state, pack), target);
+
+/** The ships a system of the player may hold: the fleet pool, after what they hold changed it. */
+export const fleetLimit = (game: Game, state: GameState, pack: DataPack): number =>
+  applied(pack, holderOf(game, state), 'fleetLimit', state.fleet, { faction: game.faction }).value;

@@ -13,9 +13,10 @@ import { violation } from '../rules/registry';
 import type { Entry, ExtensionCode } from '../types';
 import { bench, componentAction, endOf, NEAR, tactical, using, warningsOf } from './components/kit';
 import { choicesFor, shownChoices, withChoices } from './choices';
-import { effectOf, inForce } from './registry';
+import { effectOf } from './registry';
 import { hintsAt } from '../../testing/old/domain/effects/registry';
 import type { Ability } from './types';
+import { inForce } from '../../testing/old/domain/effects/registry';
 
 const CARD = 'actionCard:assassin';
 const SEVEN = ['actionCard:abs', 'actionCard:assassin', 'actionCard:bribery', 'actionCard:bunker', 'actionCard:confusing', 'actionCard:courageous', 'actionCard:cripple'];

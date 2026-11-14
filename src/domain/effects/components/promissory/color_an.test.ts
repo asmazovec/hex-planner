@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { inForce } from '../../registry';
 import type { Entry } from '../../../types';
 import { bench, effect, endOf, HOME, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './color_an';
+import { inForce } from '../../../../testing/old/domain/effects/registry';
 
 const RIVAL = { id: 'a', faction: 'letnev', vp: 0, seat: 2, color: 2 };
 const NOTE = `${id}@a`;

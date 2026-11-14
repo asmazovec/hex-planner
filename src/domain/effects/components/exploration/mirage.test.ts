@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'vitest';
-import { inForce } from '../../registry';
 import type { Entry } from '../../../types';
 import { bench, effect, endOf, HOME, NEAR, quote, tactical, using } from '../kit';
 import { id } from './mirage';
+import { inForce } from '../../../../testing/old/domain/effects/registry';
 
 const explore = (named = true): Entry => {
   const move = tactical(NEAR, { moves: [{ from: HOME, units: { carrier: 1 } }] });

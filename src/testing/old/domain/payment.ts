@@ -1,5 +1,7 @@
-import type { GameState, DataPack, Payment } from '../../../domain/types';
-import { PLANET_CARDS, type PlanetValues, planetValue, type PaymentKind, type PayView, tradeGoodWorth, choosePayment, slicePlanetCost, EXPEDITION_SLICES } from '../../../domain/payment';
+import { applied } from '../../../domain/effects/apply';
+import { holderOf } from '../../../domain/effects/registry';
+import type { DataPack, GameState, Payment } from '../../../domain/types';
+import { type PayView, type PaymentKind, PLANET_CARDS, type PlanetValues, planetValue, choosePayment, slicePlanetCost, EXPEDITION_SLICES } from '../../../domain/payment';
 import { specialtiesOf } from '../../../domain/specialties';
 /** Planets that can pay the technology part of the expedition: ready, mine, with a technology specialty. */
 export const techSlicePlanets = (state: GameState, pack: DataPack): string[] =>
@@ -40,10 +42,14 @@ export function sliceAutoPayment(state: GameState, sliceId: string | null, pack:
   return EXPEDITION_SLICES.find(s => s.id === sliceId)?.techPlanet && techPlanets.length > 0 ? { planets: [techPlanets[0]], tradeGoods: 0 } : { planets: [], tradeGoods: 0 };
 }
 
-/** A planet card the player holds and has not exhausted. */
-export const readyPlanetCards = (state: GameState): string[] =>
-  Object.keys(PLANET_CARDS).filter(id => state.holdings.relics.includes(id) && !state.holdings.exhausted.includes(id));
+/** A planet card the player holds and has not exhausted. */
+export const readyPlanetCards = (state: GameState): string[] =>
+  Object.keys(PLANET_CARDS).filter(id => state.holdings.relics.includes(id) && !state.holdings.exhausted.includes(id));
 
-/** Planets the player can still spend: own and not exhausted, and the planet cards held and ready. */
-export const readyPlanetIds = (state: GameState): string[] =>
-  [...Object.keys(state.control).filter(id => state.control[id] === 'me' && !state.exhausted.includes(id)), ...readyPlanetCards(state)];
+/** Planets the player can still spend: own and not exhausted, and the planet cards held and ready. */
+export const readyPlanetIds = (state: GameState): string[] =>
+  [...Object.keys(state.control).filter(id => state.control[id] === 'me' && !state.exhausted.includes(id)), ...readyPlanetCards(state)];
+
+/** What one trade good spent is worth in `kind`: 1, or what the components of the payer make it. */
+export const tradeGoodWorth = (pack: DataPack, state: GameState, kind: PaymentKind, view?: PayView): number =>
+  view ? applied(pack, holderOf(view, state, view.shared ?? state), 'tradeGoodValue', 1, { kind, faction: view.faction }).value : 1;

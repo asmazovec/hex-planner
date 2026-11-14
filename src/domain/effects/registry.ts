@@ -244,10 +244,6 @@ export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Abilit
   return found.length > 1 ? found.sort((a, b) => order.get(noteBase(a))! - order.get(noteBase(b))!) : found;
 }
 
-/** The same for a player of a game: `state` is their own, `shared` mine, which keeps the laws. */
-export const inForce = (pack: DataPack, game: Pick<Game, 'faction'>, state: GameState, shared: GameState = state): string[] =>
-  inForceOf(pack, holderOf(game, state, shared));
-
 const isHolder = (who: Holdings | Holder): who is Holder => 'holdings' in who;
 const isPassive = (effect: Ability): boolean => effect.tier === 'passive';
 

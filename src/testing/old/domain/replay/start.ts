@@ -1,7 +1,7 @@
 import type { Game, DataPack, GameState } from '../../../../domain/types';
 import { initialState } from './state';
 import { keepOwnStructures } from './structures';
-import { gameAs } from '../../../../domain/players';
+import { gameAs } from '../players';
 
 /** An opponent counted like me: what stands on the map for them is where they begin. */
 export function rivalState(game: Game, view: Game, id: string, pack: DataPack): GameState {

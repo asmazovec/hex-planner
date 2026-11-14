@@ -4,7 +4,6 @@ import { componentById, noteAddress, noteBase, noteId, textOf } from './componen
 import { COMPONENT_GROUPS, groupCounts, heldOnce, holdingRounds, holdingsOf, losable, notesOfFirst, tradable, upgradesOf, upgradeTech } from './holdings';
 import { noteCards, noteOwner, noteText, ownNotes, setLeader, setStartHolding } from '../testing/old/domain/holdings';
 import { createGame } from '../testing/old/domain/newGame';
-import { gameAs } from './players';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
 import { forgetTimelines, project, readyToPlay, timelineOf } from '../testing/old/domain/project';
 import { CARD } from './strategy';
@@ -13,6 +12,7 @@ import type { Entry, Game, Opponent } from './types';
 import { fleetSpeed } from './movement';
 import { capacity } from './replay/transport';
 import { productionCost } from './unitStats';
+import { gameAs } from '../testing/old/domain/players';
 
 const pack = rulesPack();
 const pok = loadPack(['pok']);

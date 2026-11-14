@@ -177,15 +177,6 @@ export function othersIn(game: Game, state: GameState, systemId: string, pack: D
 
 export interface ProductionPlace { unit: UnitId; /** Null for the space area. */ planetId: string | null; count: number }
 
-/**
- * Ships go to the space area; ground forces to the planets they were bought on where they may stand, the rest to the
- * planet holding the producing dock (68.3), or to the space area with no planet for them.
- */
-export function placesOf(
-  game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {},
-): ProductionPlace[] {
-  return placesOn(groundOf(game, state, pack), target, units, pack, onPlanets);
-}
 export function placesOn(g: Ground, target: string, units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {}): ProductionPlace[] {
   const places: ProductionPlace[] = [];
   // With no dock (which is warned about) they go on a planet of mine there, as the player most likely means.

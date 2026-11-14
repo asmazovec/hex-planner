@@ -1,4 +1,3 @@
-import { applied } from './effects/apply';
 import { appliedToPlanet } from './effects/points/payment';
 import { holderOf } from './effects/registry';
 import type { DataPack, GameState, Payment, RuleStep } from './types';
@@ -46,10 +45,6 @@ export function planetValue(pack: DataPack, state: GameState, planetId: string, 
 
 /** A planet's resources and influence as the screens show them, and whether a component changed either. */
 export interface PlanetValues { resources: number; influence: number; changed: boolean }
-
-/** What one trade good spent is worth in `kind`: 1, or what the components of the payer make it. */
-export const tradeGoodWorth = (pack: DataPack, state: GameState, kind: PaymentKind, view?: PayView): number =>
-  view ? applied(pack, holderOf(view, state, view.shared ?? state), 'tradeGoodValue', 1, { kind, faction: view.faction }).value : 1;
 
 interface Pick { count: number; ids: string[]; }
 

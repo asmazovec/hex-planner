@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../testing/old/domain/newGame';
 import { stateBeforeEntry } from '../../testing/old/domain/project';
-import { gameAs } from '../../domain/players';
 import { upgradesOf as upgradesHeld } from '../../domain/holdings';
 import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
@@ -15,6 +14,7 @@ import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
 import { legacyEntry } from '../entry';
+import { gameAs } from '../../testing/old/domain/players';
 
 const pack = loadPack(['pok']);
 const { CARD } = old;

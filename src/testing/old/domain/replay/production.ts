@@ -1,5 +1,5 @@
-import type { DataPack, Entry, Game, GameState, UnitCounts, RuleStep, Warning } from '../../../../domain/types';
-import { groundOf, productionDueOn, type ProductionSource, type Producer, producersOn, producerPlanets, placesOf, checkProductionOn, costOn } from '../../../../domain/replay/production';
+import type { DataPack, Game, GameState, UnitCounts, Entry, RuleStep, Warning } from '../../../../domain/types';
+import { type ProductionPlace, groundOf, placesOn, productionDueOn, type ProductionSource, type Producer, producersOn, producerPlanets, checkProductionOn, costOn } from '../../../../domain/replay/production';
 import { add, type TacticalEntry } from '../../../../domain/replay/state';
 import { pay } from './payment';
 import { violation } from '../../../../domain/rules/registry';
@@ -51,12 +51,22 @@ export function payProduction(game: Game, state: GameState, entry: TacticalEntry
   if (cost > paid) warnings.push(violation('shortResources', { needed: cost, paid }));
 }
 
-/**
- * What an entry owes for the units it produces, asked of `state` (the one before the entry in an editor; the one at
- * payment in the replay): the editor's label, the shop counter, the automatic payment and the check all ask this
- * one function, so they cannot disagree. Whether a unit uses PRODUCTION comes from the producers standing in the
- * entry's system in that state.
- */
-export function productionDue(game: Game, state: GameState, units: UnitCounts, pack: DataPack, entry?: Entry): number {
-  return productionDueOn(groundOf(game, state, pack), units, pack, entry);
-}
+/**
+ * What an entry owes for the units it produces, asked of `state` (the one before the entry in an editor; the one at
+ * payment in the replay): the editor's label, the shop counter, the automatic payment and the check all ask this
+ * one function, so they cannot disagree. Whether a unit uses PRODUCTION comes from the producers standing in the
+ * entry's system in that state.
+ */
+export function productionDue(game: Game, state: GameState, units: UnitCounts, pack: DataPack, entry?: Entry): number {
+  return productionDueOn(groundOf(game, state, pack), units, pack, entry);
+}
+
+/**
+ * Ships go to the space area; ground forces to the planets they were bought on where they may stand, the rest to the
+ * planet holding the producing dock (68.3), or to the space area with no planet for them.
+ */
+export function placesOf(
+  game: Game, state: GameState, target: string, units: UnitCounts, pack: DataPack, onPlanets: Record<string, UnitCounts> = {},
+): ProductionPlace[] {
+  return placesOn(groundOf(game, state, pack), target, units, pack, onPlanets);
+}

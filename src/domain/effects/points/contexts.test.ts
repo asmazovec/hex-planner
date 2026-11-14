@@ -5,12 +5,12 @@
  * A throwaway effect is put in the registry of the test's own pack, as in `production.test.ts`.
  */
 import { describe, expect, test } from 'vitest';
-import { applyPayment } from '../../replay/payment';
 import { adjust, bench, HOME, NEAR, tactical, TARGET, using, FAR, FARTHER, type Bench } from '../components/kit';
 import { appliedFor } from '../entryApply';
 import { effectsOf, holderOf } from '../registry';
 import type { Ability, ModifierContext } from '../types';
 import { forecast } from '../../rules/kit';
+import { applyPayment } from '../../../testing/old/domain/replay/payment';
 
 const give = (table: Bench, id: string, effect: Partial<Ability>): void => {
   (effectsOf(table.pack) as Map<string, Ability>).set(id, { tier: 'passive', rule: 'test', ...effect });

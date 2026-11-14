@@ -2,7 +2,7 @@ import type { GameState } from '../../../../../domain/types';
 import { type Spent } from '../../../../../domain/effects/points/status';
 import type { EffectTurn } from '../types';
 import { violation } from '../../../../../domain/rules/registry';
-import { checkPayment, applyPayment } from '../../../../../domain/replay/payment';
+import { applyPayment, checkPayment } from '../../replay/payment';
 
 export const PAID = new WeakMap<GameState, Map<string, Spent>>();
 /**

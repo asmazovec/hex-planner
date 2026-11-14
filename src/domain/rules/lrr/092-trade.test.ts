@@ -1,10 +1,10 @@
 /** LRR 92 Trade (Strategy Card). Source: tirules2 rules-reference/trade.md. */
 import { describe, expect, test } from 'vitest';
-import { gameAs } from '../../players';
 import { opponentsBySeat } from '../../../testing/old/domain/players';
 import { CARD } from '../../strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';
 import { holding, ofRival, RIVAL } from './kit-83-101';
+import { gameAs } from '../../../testing/old/domain/players';
 
 const pack = rulesPack();
 const SECOND_RIVAL = { ...RIVAL, id: 'o2', seat: 3, color: 3 };

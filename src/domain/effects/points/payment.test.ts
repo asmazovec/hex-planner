@@ -4,7 +4,6 @@
  * the cost of a component action. A component's own file is never touched.
  */
 import { beforeEach, describe, expect, test, vi } from 'vitest';
-import { applyPayment, checkPayment } from '../../replay/payment';
 import { pay } from '../../../testing/old/domain/replay/payment';
 import { autoPay, paymentValue } from '../../../testing/old/domain/payment';
 import { commodityValueOf, replenish } from '../../replay/cards/trade';
@@ -15,6 +14,7 @@ import { componentAction } from '../components/kit';
 import { alwaysInForce, throwaway } from './throwaway';
 import { gain } from '../../../game/abilities/emit';
 import { readyInfluence, readyResources } from '../../../testing/old/domain/replay/payment';
+import { applyPayment, checkPayment } from '../../../testing/old/domain/replay/payment';
 
 vi.mock('../registry', async original => (await import('./throwaway')).mockRegistry(await original()));
 // The components the registry loads import the payment module and need the mocked registry (a cycle): load it first,

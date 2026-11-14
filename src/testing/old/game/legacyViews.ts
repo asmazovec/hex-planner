@@ -5,8 +5,8 @@ import { SOURCES } from '../../../game/source';
 import { emptyBoard } from '../../../game/board';
 import { breakthroughOf } from '../../../domain/effects/breakthrough';
 import type { Cause, GameEvent, Place } from '../../../game/events';
-import { gameAs } from '../../../domain/players';
 import { componentById, noteAddress } from '../../../domain/components';
+import { gameAs } from '../domain/players';
 
 export { holdingsOfCards, legacyKey, playerOfKey };
 export const fractures = new WeakMap<object, Game['fracture']>();

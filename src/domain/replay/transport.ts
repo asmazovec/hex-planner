@@ -47,10 +47,6 @@ export function checkPickupsOf(game: MapSource, tokenAt: (slot: string) => boole
 export const fightersFly = (game: Pick<Game, 'faction'>, holdings: Who, pack: DataPack): boolean =>
   shipSpeed(game, 'fighter', holdings, pack) !== null;
 
-/** The ships a system of the player may hold: the fleet pool, after what they hold changed it. */
-export const fleetLimit = (game: Game, state: GameState, pack: DataPack): number =>
-  applied(pack, holderOf(game, state), 'fleetLimit', state.fleet, { faction: game.faction }).value;
-
 /** Fighters each space dock keeps in its system apart from the ships' capacity (Space Dock I and II). */
 export const DOCK_FIGHTERS = 3;
 
