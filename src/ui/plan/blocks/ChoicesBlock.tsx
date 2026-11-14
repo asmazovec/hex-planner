@@ -6,9 +6,10 @@ import type { ChoiceSlot, ChoiceSpec } from '../../../domain/effects/types';
 import { systemNameOf } from '../../../domain/systemName';
 import type { DataPack } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
+import type { PlayerId, Table } from '../../../game/types';
 import { choicesOfTurn } from '../../../game/edit/turn';
 import { choicesOf } from '../../../game/abilities/choices';
-import { legacyKey, playerOfKey } from '../../../game/keys';
+import { playerOfKey } from '../../../game/keys';
 import { mapSource } from '../../../game/space';
 import { nameOfPlayer, shortName } from '../../players/names';
 import type { KernelView } from '../kernelView';
@@ -46,7 +47,6 @@ export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockPro
   if (resolved.length === 0 || !def) return null;
   const specs = resolved.map(each => each.spec);
   const chosen = choicesOfTurn(turn, id);
-  const owner = legacyKey(table, turn.player);
   const lang = i18n.language.startsWith('ru') ? 'ru' : 'en';
   const set = (key: string, value: string | number | undefined) => {
     const next = { ...chosen };
@@ -121,7 +121,7 @@ export function ChoicesBlock({ id, turn, view, pack, onChange }: ChoicesBlockPro
           return (
             <ManyComponents
               key={spec.key} label={label} options={options} value={typeof chosen[spec.key] === 'string' ? String(chosen[spec.key]) : undefined}
-              pack={pack} player={owner} onChange={value => set(spec.key, value)}
+              pack={pack} table={table} player={turn.player} onChange={value => set(spec.key, value)}
             />
           );
         }
@@ -148,18 +148,19 @@ interface ManyComponentsProps {
   options: string[];
   value?: string;
   pack: DataPack;
-  player: string;
+  table: Table;
+  player: PlayerId;
   onChange: (value: string | undefined) => void;
 }
 
 /** A choice among many components: the place of the chosen one, which opens the same picker as everywhere else. */
-function ManyComponents({ label, options, value, pack, player, onChange }: ManyComponentsProps) {
+function ManyComponents({ label, options, value, pack, table, player, onChange }: ManyComponentsProps) {
   const [picking, setPicking] = useState(false);
   const known = options.filter(id => componentById(pack, id));
   return (
     <div className="choice-many" role="group" aria-label={label}>
       <ComponentSlot label={label} def={value ? componentById(pack, value) : undefined} pack={pack} onPick={() => setPicking(true)} onRemove={() => onChange(undefined)} />
-      {picking && <ComponentPicker ids={known} player={player} onPick={id => { onChange(id); setPicking(false); }} onClose={() => setPicking(false)} />}
+      {picking && <ComponentPicker ids={known} table={table} player={player} onPick={id => { onChange(id); setPicking(false); }} onClose={() => setPicking(false)} />}
     </div>
   );
 }

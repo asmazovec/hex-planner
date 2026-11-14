@@ -3,17 +3,25 @@
  * from the kernel's view of the player. While the writers of the game still name players by their old ids (`me`, an
  * opponent id), the notes in it carry those ids as their address.
  */
-import { noteAddress, noteBase, noteId } from '../domain/components';
+import { componentById, noteAddress, noteBase, noteId } from '../domain/components';
 import { holdingsOfCards, legacyKey, playerOfKey, type Shelf } from './keys';
 import { tableView } from './views';
 import { genericNotes, factionNotes } from '../domain/holdings';
 import { cardsOf } from './queries';
+import type { ComponentDef } from '../domain/types';
 import type { Board, ComponentId, CardHold, DataPack, PlayerId, Table } from './types';
 
 /** A note id with its address, a kernel player id, turned into the old id of that player. */
 export function legacyNote(table: Table, id: ComponentId): ComponentId {
   const address = noteAddress(id);
   return address === undefined ? id : noteId(noteBase(id), legacyKey(table, address));
+}
+
+/** The cards a catalogue note stands for at the table: a generic note is one card of each player, a faction's note the card of each player of that faction; anything else is itself. */
+export function noteCardsOf(table: Table, pack: DataPack, def: ComponentDef): ComponentDef[] {
+  if (def.kind !== 'promissory' || noteAddress(def.id) !== undefined) return [def];
+  const cards = table.players.filter(p => def.faction === undefined || def.faction === p.faction).flatMap(p => componentById(pack, noteId(def.id, legacyKey(table, p.id))) ?? []);
+  return cards.length > 0 ? cards : [def];
 }
 
 /** The kernel id of the player a note, with an old address, belongs to. */

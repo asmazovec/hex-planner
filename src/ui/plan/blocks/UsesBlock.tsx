@@ -5,7 +5,6 @@ import { componentById } from '../../../domain/components';
 import type { ComponentKind, DataPack, Warning } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
 import { withChoicesOf, withUses } from '../../../game/edit/turn';
-import { legacyKey } from '../../../game/keys';
 import { readyToPlayOn } from '../../../game/planQueries';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
@@ -66,7 +65,7 @@ export function UsesBlock({ turn, pack, view, warnings = [], onChange }: UsesBlo
       })}
       {picking && (
         <ComponentPicker
-          kinds={USED_KINDS} player={legacyKey(view.table, turn.player)} owned={ready} prefer="owned" onClose={() => setPicking(false)}
+          kinds={USED_KINDS} table={view.table} player={turn.player} owned={ready} prefer="owned" onClose={() => setPicking(false)}
           onPick={id => { if (!list.includes(id)) write([...list, id]); setPicking(false); }}
         />
       )}

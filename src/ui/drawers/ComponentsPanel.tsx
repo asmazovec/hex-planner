@@ -72,7 +72,7 @@ export function ComponentsPanel({ game, pack, table, board, rounds, group, chose
   const setLeader = useGame(s => s.setLeader);
   const [query, setQuery] = useState('');
   const asked = useDeferredValue(query);
-  const find = useComponentSearch(pack, undefined, undefined, game);
+  const find = useComponentSearch(pack, undefined, undefined, table);
   const found = useMemo(() => find(asked), [find, asked]);
 
   const rival = game.opponents.find(o => o.id === chosen);

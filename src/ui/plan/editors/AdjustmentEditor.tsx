@@ -5,7 +5,6 @@ import { componentById } from '../../../domain/components';
 import type { AdjustmentDelta, DataPack, Entry, UnitCounts, Warning } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
 import { withAgendaChoices, withDelta, withLabel, withListed } from '../../../game/edit/turn';
-import { legacyKey } from '../../../game/keys';
 import { mapSource } from '../../../game/space';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { NoteField } from '../../primitives/NoteField';
@@ -126,7 +125,7 @@ export function AdjustmentEditor({ pack, view, turn, warnings, picking, common, 
       {common}
       {choosing && (
         <ComponentPicker
-          kinds={['agenda']} player={legacyKey(view.table, turn.player)} owned={inPlay} prefer="new" onClose={() => setChoosing(false)}
+          kinds={['agenda']} table={view.table} player={turn.player} owned={inPlay} prefer="new" onClose={() => setChoosing(false)}
           onPick={id => { setAgenda(id); setChoosing(false); }}
         />
       )}

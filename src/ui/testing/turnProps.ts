@@ -6,9 +6,9 @@ import { entryPatch } from '../../state/turnBridge';
 import type { Act, DataPack, Entry, EntryBody, Game, Payment } from '../../domain/types';
 import type { KernelView } from '../plan/kernelView';
 
-export function turnProps(view: KernelView, pack: DataPack, entry: Entry, update: (patch: Partial<EntryBody>) => void): { turn: Turn; onChange: (next: Turn) => void } {
+export function turnProps(view: KernelView, pack: DataPack, entry: Entry, update: (patch: Partial<EntryBody>) => void): { turn: Turn; view: KernelView; onChange: (next: Turn) => void } {
   const turn = turnOf(view.table, entry, pack);
-  return { turn, onChange: next => update(entryPatch(legacyEntry(view.table, turn), legacyEntry(view.table, next))) };
+  return { turn, view, onChange: next => update(entryPatch(legacyEntry(view.table, turn), legacyEntry(view.table, next))) };
 }
 
 /** The same for a card entry: the round of the first plan as the kernel keeps it comes with it (the cards held decide how a card is played). */

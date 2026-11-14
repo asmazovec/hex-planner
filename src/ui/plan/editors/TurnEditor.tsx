@@ -138,7 +138,7 @@ export function TurnEditor({ turn, pack, view, warnings, common, pickFirst, onCh
       {common}
       {picking && (
         <ComponentPicker
-          kinds={PLAYED_KINDS} player={key} owned={ready} prefer="owned" onClose={() => setPicking(false)}
+          kinds={PLAYED_KINDS} table={view.table} player={player} owned={ready} prefer="owned" onClose={() => setPicking(false)}
           onPick={id => {
             const played = withPlayed(turn, id);
             const picked = effectOf(pack, id)?.cost;

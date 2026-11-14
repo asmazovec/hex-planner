@@ -53,7 +53,7 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
   } as TacticalEntry;
   // The flight of a source is a step that stands in the editor's place, with the warnings of that flight.
   if (pickerFrom !== null) {
-    const picked = { view: kernelViewOf(game(), pack), ...turnProps(kernelViewOf(game(), pack), pack, entry, () => undefined) };
+    const picked = { ...turnProps(kernelViewOf(game(), pack), pack, entry, () => undefined) };
     return render(
       <UnitPicker pack={pack} {...picked} source={pickerFrom}
         warnings={flightWarnings(warnings, atOf(picked.view.table, picked.view.board, pack).map, pack, picked.turn, pickerFrom)}
@@ -62,7 +62,7 @@ function editor(warnings: Warning[], patch: Partial<TacticalEntry> = {}, pickerF
     );
   }
   return render(
-    <TacticalEditor view={kernelViewOf(game(), pack)}
+    <TacticalEditor
       pack={pack} {...turnProps(kernelViewOf(game(), pack), pack, entry, () => undefined)} warnings={warnings} manualPayment={false}
       choosing={null} onChoose={() => undefined}
       onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
@@ -119,7 +119,7 @@ describe('the strategy editor', () => {
     const view = kernelViewOf(game(), pack);
     return render(
       <StrategyEditor
-        view={view} pack={pack} {...cardProps(view, game(), pack, entry, noop)} warnings={warnings} manualPayment={false} picking={null}
+        pack={pack} {...cardProps(view, game(), pack, entry, noop)} warnings={warnings} manualPayment={false} picking={null}
         onManualPayment={noop} onPick={noop} onOpenShop={noop} onStartTactical={noop} onOpenTactical={noop} onDone={noop} onRemove={noop}
       />,
     );
@@ -257,7 +257,7 @@ describe('the tactical editor', () => {
   test('no word about a space dock of its own: the domain\'s noProduction stands in the production block', () => {
     useGame.getState().setTile(SOURCE, '25');
     const { unmount } = render(
-      <TacticalEditor view={kernelViewOf(game(), pack)}
+      <TacticalEditor
         pack={pack} {...turnProps(kernelViewOf(game(), pack), pack, NOPROD, () => undefined)} warnings={[]} manualPayment={false} choosing={null} onChoose={() => undefined}
         onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,
@@ -265,7 +265,7 @@ describe('the tactical editor', () => {
     expect(screen.queryByText(/with Production/)).toBeNull();
     unmount();
     render(
-      <TacticalEditor view={kernelViewOf(game(), pack)}
+      <TacticalEditor
         pack={pack} {...turnProps(kernelViewOf(game(), pack), pack, NOPROD, () => undefined)} warnings={[{ code: 'noProduction', params: { systemId: SOURCE } }]} manualPayment={false} choosing={null} onChoose={() => undefined}
         onOpenPicker={() => undefined} onManualPayment={() => undefined} onOpenShop={() => undefined} onOpenBattle={() => undefined} onOpenFleet={() => undefined} onDone={() => undefined} onRemove={() => undefined}
       />,

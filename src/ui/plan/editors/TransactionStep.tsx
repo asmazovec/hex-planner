@@ -108,7 +108,7 @@ export function TransactionStep({ pack, view, turn, index, warnings, onChange, o
       <StepHints pack={pack} table={view.table} board={view.board} step="transaction" players={[legacyKey(view.table, owner), legacyKey(view.table, act.with)]} />
       {picking && (
         <ComponentPicker
-          ids={offer(picking)} player={legacyKey(view.table, giver(picking))} onClose={() => setPicking(null)}
+          ids={offer(picking)} table={view.table} player={giver(picking)} onClose={() => setPicking(null)}
           onPick={id => { set(picking, { components: [...(act[picking].components ?? []), id] }); setPicking(null); }}
         />
       )}

@@ -100,7 +100,7 @@ export function showTactical(bench: Bench, entry: Entry): Live<TacticalEntry> {
   const nothing = () => undefined;
   return live(bench, entry as TacticalEntry, ({ pack, view, entry: shown, warnings, update }) => (
     <TacticalEditor
-      pack={pack} view={view} {...turnProps(view, pack, shown, update)} warnings={warnings} manualPayment={false} choosing={null}
+      pack={pack} {...turnProps(view, pack, shown, update)} warnings={warnings} manualPayment={false} choosing={null}
       onChoose={nothing} onOpenPicker={nothing} onManualPayment={nothing}
       onOpenShop={nothing} onOpenBattle={nothing} onOpenFleet={nothing} onDone={nothing} onRemove={nothing}
       common={<UsesBlock {...turnProps(view, pack, shown, update)} pack={pack} view={view} warnings={warnings} />}

@@ -5,7 +5,6 @@ import { emptyHoldings, heldOnce, HOLDING_FIELD, losable } from '../../../domain
 import type { ComponentKind, DataPack } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
 import { withListed } from '../../../game/edit/turn';
-import { legacyKey } from '../../../game/keys';
 import { losableOf } from '../../../game/planQueries';
 import { shelfOf } from '../../../game/shelf';
 import type { KernelView } from '../kernelView';
@@ -73,9 +72,9 @@ export function GainsBlock({ turn, pack, view, lead, onChange }: GainsBlockProps
           />
         );
       }))}
-      {picking && (
+      {picking && view && (
         <ComponentPicker
-          kinds={picking === 'lead' && lead ? [lead] : HELD_KINDS} player={view ? legacyKey(view.table, turn.player) : 'me'} onClose={() => setPicking(null)}
+          kinds={picking === 'lead' && lead ? [lead] : HELD_KINDS} table={view.table} player={turn.player} onClose={() => setPicking(null)}
           {...(picking === 'spends' ? { ids: canLose } : { owned: once, prefer: 'new' as const })}
           onPick={id => { const side = picking === 'spends' ? 'spends' : 'gains'; write(side, [...listOf(side), id]); setPicking(null); }}
         />

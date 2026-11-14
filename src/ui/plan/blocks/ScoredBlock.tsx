@@ -4,7 +4,6 @@ import { componentById } from '../../../domain/components';
 import type { DataPack, StatusSpend } from '../../../domain/types';
 import type { Turn } from '../../../game/actions';
 import { withScored, withSpend } from '../../../game/edit/turn';
-import { legacyKey } from '../../../game/keys';
 import { payingPlanets } from '../../../game/queries';
 import { shelfOf } from '../../../game/shelf';
 import { ComponentCard } from '../../components/ComponentCard';
@@ -86,9 +85,9 @@ export function ScoredBlock({ turn, pack, view, onChange }: ScoredBlockProps) {
           {group('influence', t('plan.entries.spendInfluence'))}
         </Section>
       )}
-      {picking && (
+      {picking && view && (
         <ComponentPicker
-          kinds={['publicObjective', 'secretObjective']} player={view ? legacyKey(view.table, turn.player) : 'me'} owned={owned} prefer="owned" onClose={() => setPicking(false)}
+          kinds={['publicObjective', 'secretObjective']} table={view.table} player={turn.player} owned={owned} prefer="owned" onClose={() => setPicking(false)}
           onPick={id => { onChange(withScored(turn, [...scored, id])); setPicking(false); }}
         />
       )}

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { componentById } from '../../../domain/components';
 import type { ComponentKind, DataPack } from '../../../domain/types';
+import type { PlayerId, Table } from '../../../game/types';
 import { ComponentCard } from '../../components/ComponentCard';
 import { ComponentPicker } from '../../components/ComponentPicker';
 import { Section } from '../../primitives/Section';
@@ -15,14 +16,15 @@ export interface ResearchBlockProps {
   /** The technologies the entry researches, by component id. */
   researched: string[];
   /** Whose entry it is: `me` or an opponent id. */
-  player: string;
+  table: Table;
+  player: PlayerId;
   pack: DataPack;
   onChange: (researched: string[]) => void;
   warnings?: ReactNode;
 }
 
 /** What a card researches: each technology a card with its cross, and the button that opens the choice of technologies. */
-export function ResearchBlock({ title, note, researched, player, pack, onChange, warnings }: ResearchBlockProps) {
+export function ResearchBlock({ title, note, researched, table, player, pack, onChange, warnings }: ResearchBlockProps) {
   const { t } = useTranslation();
   const [picking, setPicking] = useState(false);
   return (
@@ -37,7 +39,7 @@ export function ResearchBlock({ title, note, researched, player, pack, onChange,
       })}
       {picking && (
         <ComponentPicker
-          kinds={TECHNOLOGY} player={player} onClose={() => setPicking(false)}
+          kinds={TECHNOLOGY} table={table} player={player} onClose={() => setPicking(false)}
           onPick={id => { if (!researched.includes(id)) onChange([...researched, id]); setPicking(false); }}
         />
       )}

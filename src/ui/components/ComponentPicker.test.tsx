@@ -9,6 +9,7 @@ vi.mock('../../storage/db', () => ({
 
 import { loadPack } from '../../data/loadPack';
 import { setLanguage } from '../../i18n';
+import { tableOfGame } from '../../state/projection';
 import { useGame } from '../../state/gameStore';
 import { ComponentPicker } from './ComponentPicker';
 import { searchComponents } from './useComponentSearch';
@@ -21,18 +22,19 @@ beforeEach(() => {
   useGame.getState().newGame({ expansions: ['pok'], playerCount: 6, faction: 'arborec' }, pack);
 });
 
+const now = () => tableOfGame(useGame.getState().game!, pack);
 const box = () => screen.getByRole('searchbox', { name: 'Search components' });
 
 test('the choice gets the id of the component found, typo and all', async () => {
   const onPick = vi.fn();
-  render(<ComponentPicker player="me" onPick={onPick} onClose={() => undefined} />);
+  render(<ComponentPicker table={now()} player={now().viewer} onPick={onPick} onClose={() => undefined} />);
   await userEvent.type(box(), 'sabotge');
   await userEvent.click(await screen.findByRole('button', { name: 'Choose Sabotage' }));
   expect(onPick).toHaveBeenCalledWith('actionCard:sabo1');
 });
 
 test('kinds leave only those components, before a query and after it', async () => {
-  render(<ComponentPicker kinds={['technology']} player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker kinds={['technology']} table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   const dialog = screen.getByRole('dialog', { name: 'Choose a component' });
   const shown = () => within(dialog).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!);
   expect(shown().length).toBeGreaterThan(0);
@@ -47,7 +49,7 @@ test('kinds leave only those components, before a query and after it', async () 
 
 test('ids leave only those components, all of them in their order before a query, and those of them a query finds', async () => {
   const ids = ['promissory:war_funding', 'actionCard:sabo1'];
-  render(<ComponentPicker ids={ids} player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker ids={ids} table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   const dialog = screen.getByRole('dialog', { name: 'Choose a component' });
   const shown = () => within(dialog).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!);
   expect(shown()).toEqual(ids.map(id => `component-${id}`));
@@ -61,7 +63,7 @@ test('ids leave only those components, all of them in their order before a query
 
 test('Escape empties the field first and closes the window only after that', async () => {
   const onClose = vi.fn();
-  render(<ComponentPicker player="me" onPick={() => undefined} onClose={onClose} />);
+  render(<ComponentPicker table={now()} player={now().viewer} onPick={() => undefined} onClose={onClose} />);
   await userEvent.type(box(), 'sabo');
   await userEvent.keyboard('{Escape}');
   expect(box()).toHaveValue('');
@@ -80,7 +82,7 @@ test('the search gives at most thirty, and nothing for spaces', () => {
 const cards = () => within(screen.getByRole('dialog', { name: 'Choose a component' })).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!.slice('component-'.length));
 
 test('`ids` leaves only that set, a repeat as one card with its count, and the search looks in it alone', async () => {
-  render(<ComponentPicker ids={['actionCard:sabo1', 'relic:shard', 'actionCard:sabo1']} player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker ids={['actionCard:sabo1', 'relic:shard', 'actionCard:sabo1']} table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   expect(cards()).toEqual(['actionCard:sabo1', 'relic:shard']);
   expect(screen.getByTestId('component-actionCard:sabo1')).toHaveTextContent('×2');
   expect(screen.queryByText(/^One line searches the name, kind, faction/)).toBeNull();
@@ -92,7 +94,7 @@ test('`ids` leaves only that set, a repeat as one card with its count, and the s
 });
 
 test('what is already held stands under the rest and says so, when something new is chosen', async () => {
-  render(<ComponentPicker kinds={['relic']} owned={new Set(['relic:emphidia'])} prefer="new" player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker kinds={['relic']} owned={new Set(['relic:emphidia'])} prefer="new" table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   // The search alone would put it first.
   await userEvent.type(box(), 'crown');
   await screen.findByTestId('component-relic:emphidia');
@@ -103,7 +105,7 @@ test('what is already held stands under the rest and says so, when something new
 
 test('what is held stands first, and the rest says it is not held, when something is played', async () => {
   const onPick = vi.fn();
-  render(<ComponentPicker kinds={['relic']} owned={new Set(['relic:stellarconverter'])} prefer="owned" player="me" onPick={onPick} onClose={() => undefined} />);
+  render(<ComponentPicker kinds={['relic']} owned={new Set(['relic:stellarconverter'])} prefer="owned" table={now()} player={now().viewer} onPick={onPick} onClose={() => undefined} />);
   expect(cards()[0]).toBe('relic:stellarconverter');
   expect(screen.getByTestId('component-relic:stellarconverter')).not.toHaveTextContent('not held');
   expect(screen.getByTestId(`component-${cards()[1]}`)).toHaveTextContent('not held');
@@ -116,7 +118,7 @@ test('the notes I hold of other players stand first when something is played, ea
   useGame.getState().setOpponent(0, { faction: 'hacan' });
   const rival = useGame.getState().game!.opponents[0].id;
   const held = [`promissory:convoys@${rival}`, `promissory:<color>_ta@${rival}`];
-  render(<ComponentPicker kinds={['promissory']} owned={new Set(held)} prefer="owned" player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker kinds={['promissory']} owned={new Set(held)} prefer="owned" table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   expect(cards().slice(0, 2).sort()).toEqual([...held].sort());
   expect(screen.getByTestId(`component-${held[1]}`)).toHaveTextContent('Hacan');
   expect(cards()).toContain('promissory:<color>_ta@me');
@@ -126,17 +128,17 @@ test('the notes I hold of other players stand first when something is played, ea
 });
 
 test('the placeholder of the one search line says what can be typed, in the language of the interface', () => {
-  render(<ComponentPicker player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   expect(box()).toHaveAttribute('placeholder', 'Name, kind, faction, text');
   cleanup();
   setLanguage('ru');
-  render(<ComponentPicker player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   expect(screen.getByRole('searchbox', { name: 'Поиск компонентов' })).toHaveAttribute('placeholder', 'Название, тип, фракция, текст');
 });
 
 test('in Russian one line finds by the kind and the faction, by the colour of a technology, and by words of the Russian text', async () => {
   setLanguage('ru');
-  render(<ComponentPicker player="me" onPick={() => undefined} onClose={() => undefined} />);
+  render(<ComponentPicker table={now()} player={now().viewer} onPick={() => undefined} onClose={() => undefined} />);
   const field = screen.getByRole('searchbox', { name: 'Поиск компонентов' });
   const shown = () => within(screen.getByRole('dialog', { name: 'Выбор компонента' })).queryAllByTestId(/^component-/).map(card => card.getAttribute('data-testid')!.slice('component-'.length));
   await userEvent.type(field, 'Агент Хакан');

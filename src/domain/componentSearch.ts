@@ -1,7 +1,6 @@
 import { componentById, componentsOf, noteBase } from './components';
 import { buildIndex, search, type SearchIndex } from './fuzzy';
-import { noteCards } from './holdings';
-import type { ComponentDef, ComponentKind, ComponentPack, DataPack, Game } from './types';
+import type { ComponentDef, ComponentKind, ComponentPack, DataPack } from './types';
 
 /** How many results a search shows. */
 export const RESULT_LIMIT = 30;
@@ -168,14 +167,14 @@ function indexOf(pack: DataPack): SearchIndex {
  * query. A promissory note found is the cards it stands for: those among the ids, or else one of each player of the
  * game.
  */
-export function searchComponents(pack: DataPack, query: string, kinds?: ComponentKind[], among?: Set<string>, game?: Game | null): ComponentDef[] {
+export function searchComponents(pack: DataPack, query: string, kinds?: ComponentKind[], among?: Set<string>, notes?: (def: ComponentDef) => ComponentDef[]): ComponentDef[] {
   if (query.trim() === '') return [];
   const found: ComponentDef[] = [];
   for (const { id } of search(indexOf(pack), query)) {
     const component = componentById(pack, id);
     if (!component || (kinds && !kinds.includes(component.kind))) continue;
     const cards = among ? [...among].filter(other => noteBase(other) === id).flatMap(other => componentById(pack, other) ?? [])
-      : game ? noteCards(game, pack, component) : [component];
+      : notes ? notes(component) : [component];
     found.push(...cards);
     if (found.length >= RESULT_LIMIT) break;
   }

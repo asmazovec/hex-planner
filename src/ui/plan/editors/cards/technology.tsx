@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { researchCount } from '../../../../domain/strategy';
 import { researchLimitOn, researchTokensGivenOn } from '../../../../game/edit/strategicRead';
-import { legacyKey } from '../../../../game/keys';
 import { techSlicePlanetsOn } from '../../../../game/planQueries';
 import type { DataPack } from '../../../../domain/types';
 import type { CardBlocks } from './kit';
@@ -36,7 +35,7 @@ export const technologyBlocks: CardBlocks = ({ t, table, board, player, turn, en
       <ResearchBlock
         title={t('plan.strategy.research', { n: count })}
         note={t(researchLimitOn(table, board, pack, turn) === 2 ? 'plan.strategy.techPrimary' : 'plan.strategy.techSecondary', { n: cost.amount, count })}
-        researched={effects.researched ?? []} player={legacyKey(table, player)} pack={pack} onChange={setResearched}
+        researched={effects.researched ?? []} table={table} player={player} pack={pack} onChange={setResearched}
         warnings={list(placer.at('research'))}
       />
       {/* A component that turns a research into tokens (Propagation): the card gives them to distribute. */}
