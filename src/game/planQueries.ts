@@ -102,6 +102,8 @@ export function tradableOf(board: Board, player: PlayerId, chosen: ComponentId[]
 export const landingOffersOn = (table: Table, board: Board, pack: DataPack, player: PlayerId): ReturnType<typeof landingOffers> =>
   landingOffers(pack, holderIn(table, board, player));
 
+export type { CardMapPick };
+
 /** The systems a card's effect can be aimed at on the map: `before` is the board just before the card, `latest` the one the map shows. */
 export function cardTargetsOn(
   table: Table, before: Board, latest: Board, pack: DataPack, player: PlayerId, entry: Extract<Entry, { type: 'strategic' | 'secondary' }>, pick: CardMapPick,

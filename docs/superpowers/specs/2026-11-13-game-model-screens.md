@@ -113,3 +113,44 @@
 
 - Шаг 4-5 (карты стратегии, экраны): `StrategyEditor` и `editors/cards/*` берут `turn` и `onChange(turn)` и доску кадра (`StrategyEditorHost` через `useTurn`, круг раунда ядра через `planOf`), свободное действие Warfare читается из `Strategic.nested`; `StrategySteps` вынесен из `EntrySteps` (у неё больше нет `before`, у `EntryList` нет `stateBefore`), покупки большого гекса для карты идут через `turnPurchases` (`writeTurn` и `withCardChange` над `withCardProduction`/`withCardStructure`). Новые чтения над доской в `strategicRead.ts`: `readyChoicesOn`, `controlsMecatolOn`, `homeSlotOn`; `withFreshChange` — смена карты или стороны с новой ценой; все сверены со старыми в `strategicBoard.test.ts`; улучшения по доске даёт уже существовавший `upgradesOf(board, …)`, технологии с подготовкой `techSlicePlanetsOn`. Остаток шага: покупки компонентного действия в `purchases.ts` (`cardPurchases` по старой записи), `PlanScreen` (`cardTargets`, подсветка), `StatusFields`, `EntryList`, `ComponentPicker`.
 - Заметка: в `StrategySteps` стек юнитов рисуется цветом игрока записи (раньше всегда моим), имена выбранных игроков идут по `Table.players`, как в `TacticalSteps`.
+
+## Опись для последних шагов (после переноса остатка `src/ui`)
+
+Состояние: на `KERNEL_ONLY` стоят все файлы `src/ui`, кроме перечисленных ниже; на `WITHOUT_GAME` те из них, что не берут старый `Game`. Это проверяет `src/ui/contract.test.ts`.
+
+### Что не на `KERNEL_ONLY`, и почему
+
+`src/ui`:
+- `App.tsx`, `common/ErrorBanner.tsx`, `common/ErrorBoundary.tsx`, `common/ShareConflict.tsx`: читают хранилище (`useGame`): запуск, ссылка на партию, битое сохранение; на старые состояния не смотрят, но живут, пока есть хранилище.
+- `common/download.ts`, `common/ExportReminder.tsx`: файл сохранения (`Game` и схема хранилища, формат `ti4-planner/2`).
+- `map/builder/LayoutPicker.tsx`, `MapSetup.tsx`, `MapStringImport.tsx`, `TileMinimap.tsx`: сборка карты на экране «Партия» пишет в `Game` (`setMapSlot`, раскладка); в `Table` карты до старта нет.
+- `plan/PlanTabs.tsx`: вкладки и имя плана, `Game` и планы хранилища.
+- `plan/StrategyCards.tsx`, `screens/plan/useLeavingSources.ts`: читают хранилище для записей плана (`useGame`), без старых состояний; уйдут вместе с ним.
+- `plan/editors/StrategyEditorHost.tsx`: берёт круг раунда ядра через `planOf` (`fromLegacy`), мост.
+- `map/stage/useStage.ts`: большой гекс ещё читает старое состояние кадра (`state.rivals`, `acting`, `beforeTactical`, `sideHoldings`, `planetStructureWarnings`, `systemWarningsAt`, `productionDue`/`readyResources` над `GameState`) и записи `mergedCounts`, `lossesOf`; ручная расстановка (враги, контроль, доки, PDS, правка чисел) вынесена в `src/state/setupWrites.ts`.
+- `map/stage/purchases.ts`: тип `PurchaseTarget` несёт `before`/`holdings` старого состояния для магазина; уйдёт вместе с `useStage`.
+- `screens/plan/useBoards.ts`: единственный, кто ещё строит `GameState` кадра для экрана (`board`, `before`), их читает `PlanScreen` для покупок магазина большого гекса.
+- `units/sprites.ts`: `tokenColours(game)` берёт цвета из `Game`.
+- `testing/*`: вспомогательные файлы тестов (старая пара `Game`/`GameState`, `fromLegacy`, `legacyEntry`).
+
+`src/state`:
+- `gameStore.ts`: хранилище, держит `Game` (планы из `Entry`); шаг 6.
+- `turnBridge.ts`: единственное место, где `Turn` записывается как правка старой записи; уйдёт со сменой формата.
+- `projection.ts`: повтор ядра плюс чтение кадров в старых видах (`legacyState`, лениво по первому обращению); пока `useBoards` и `useStage` читают `Frame.before`/`after`, остаётся.
+- `setupWrites.ts`: ручная расстановка большого гекса в `Game` (враги, контроль, доки, PDS, правка чисел, ручные коррекции).
+- `autosave.ts`, `history.ts`, `testMeters.ts`, `projection.bench.ts`: сохранение и откат над `Game`, тестовый помощник и бенч.
+
+`src/storage`: `db.ts` (IndexedDB, `Game`), `schema.ts` (zod-схема `ti4-planner/2`), `transfer.ts` (экспорт и импорт файла), `fixture.ts` (старые игры для тестов), `errorText.ts` (тексты ошибок, старой модели не касается: можно на список).
+
+Ссылка на партию (`src/domain/shareLink.ts`) читает и пишет параметры `Game`: остаётся с хранилищем.
+
+### Модули `src/domain`, которые зовёт код вне `src/domain` (число файлов, считая `src/game`, `src/state`, `src/ui`, `scripts`, без тестов)
+
+`types` 142, `components` 41, `rules/registry` 22, `hexLayout` 20, `strategy` 19, `holdings` 17, `payment` 15, `effects/registry` 14, `mapBuilder` 13, `players` 13, `mecatol` 11, `tactical` 10, `project` 9, `thundersEdge` 8, `replay/production` 7, `replay/board` 7, `replay/transport` 7, `unitStats` 7, `movement` 6, `effects/types` 5, `effects/breakthrough` 5, `effects/waivers` 5, `replay/holdings` 4, `replay/state` 4, `shareLink` 4, `newGame` 4, `route` 4, `effects/holder` 3, `replay/status` 3, `effects/choices` 3, `lanes` 3, `layouts` 2, `replay/cards/technology` 2, `replay/cards/diplomacy` 2, `effects/playedCost` 2, `specialties` 2, `replay/movement` 2, `replay/cards/ids` 2, `replay/round` 2, `effects/points/status` 2, `losses` 2, `stacks` 2, `systemName` 2, `factionSheet` 2; по одному файлу: `cards`, `effects/apply`, `replay/cards/index`, `replay/cards/targets`, `replay/start`, `replay/invasion`, `replay/research`, `replay/afterEntry`, `effects/points/landing`, `effects/points/payment`, `effects/points/rivals`, `effects/files`, `neighbors`, `componentSearch`, `mapString`, `rules/codes` и девять `rules/codes/*`.
+
+Что из этого уйдёт со старой моделью (шаг 7): `replay/*` (кроме того, что ядро зовёт само: `production`, `board`, `transport`, `holdings`, `status`, `cards/*`, `research`, `invasion`: это счёт, на нём стоят и ядро, и `domain/rules`), `project`, `tactical`, `stacks`, `losses`, `route` частично, `players` (`gameAs`, `opponentsBySeat`), `newGame`, `strategy` (часть над `Entry`), `types` (`Game`, `GameState`, `Entry`).
+
+### Функции `src/domain`, которые держатся только тестами закрепления
+
+Найдены обходом (экспорт, на который не ссылается ни один файл вне тестов, кроме своего): `commitSources` (весь модуль), `route.extendPath`, `stacks.stacksOf`, `stacks.othersOnPlanet`, `tactical.standingAfterBattle`, `tactical.tileSystems`, `tactical.sourceSystems`, `tactical.routeHint`, `strategy.playOf`, `strategy.startsAsPrimary`, `strategy.strategyTokensOwed`, `strategy.freshPlay`, `strategy.repaid`, `payment.paymentValue`, `payment.sliceAutoPayment`, `holdings.noteText`, `holdings.noteCards`, `newEntry.tacticalBody`, `project.watchProjects`, `replay/research.researchTokensGiven`, `effects/choices.withChoices`. Это пары к ядру (тест сверяет ядро со старой функцией): удаляются со старой моделью вместе с тестом.
+Служебное для тестов, не к удалению: `components.COMPONENT_KINDS`, `effects/registry.COMPONENT_FILES`, `rules/codes.codeFile`, `rules/codes.CODE_FILES`, `effects/points/status.kit.withEffect`, `effects/points/throwaway.mockRegistry`, `replay/timelineFixture.longGame`, `rules/lrr/kit-83-101.ofRival`.

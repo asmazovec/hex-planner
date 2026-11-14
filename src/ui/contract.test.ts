@@ -18,6 +18,8 @@ export const KERNEL_ONLY = [
   'plan/editors/cards/kit.ts', 'plan/editors/cards/leadership.tsx', 'plan/editors/cards/politics.tsx', 'plan/editors/cards/technology.tsx', 'plan/editors/cards/trade.tsx', 'plan/editors/cards/warfare.tsx',
   'plan/StatusFields.tsx', 'plan/EntrySteps.tsx', 'plan/EntryList.tsx', 'plan/editors/TurnHost.tsx',
   'components/ComponentPicker.tsx', 'components/useComponentSearch.ts', 'components/ComponentCard.tsx', 'components/ComponentSearchField.tsx', 'plan/blocks/ComponentSlot.tsx', 'plan/blocks/ResearchBlock.tsx', 'plan/blocks/TurnActs.tsx', 'plan/editors/TacticalEditorHost.tsx', 'plan/editors/UnitPickerHost.tsx', 'plan/tactical.ts', 'plan/kernelView.ts',
+  'screens/PlanScreen.tsx', 'screens/plan/pick.ts',
+  'common/expansions.ts', 'common/gameAddress.ts', 'common/motion.ts', 'common/preferences.ts', 'common/scrollbar.ts', 'common/usePack.ts', 'common/useReorderDrag.ts', 'feedback/Banner.tsx', 'map/builder/TileNumberInput.tsx', 'overlays/Drawer.tsx', 'overlays/Modal.tsx', 'overlays/Popover.tsx', 'plan/ActionMenu.tsx', 'plan/blocks/CardGrid.tsx', 'primitives/ConfirmBar.tsx', 'primitives/EditorFrame.tsx', 'primitives/EditorPart.tsx', 'primitives/Icon.tsx', 'primitives/MapPickButton.tsx', 'primitives/NoteField.tsx', 'primitives/player.tsx', 'primitives/Section.tsx', 'primitives/SectionTitle.tsx', 'primitives/Stepper.tsx', 'primitives/Vanishing.tsx', 'screens/plan/useDrawers.ts', 'units/TokenLayer.tsx', 'units/unitArt.ts', 'units/UnitDraft.tsx', 'units/UnitIcon.tsx', 'units/unitOrder.ts', 'units/unitsText.ts', 'units/UnitTile.tsx', 'units/UnitToken.tsx',
 ];
 
 /** The files of the list above that no longer take the old `Game` either: they read the table and the board. */
@@ -31,6 +33,8 @@ export const WITHOUT_GAME = [
   'plan/editors/cards/kit.ts', 'plan/editors/cards/leadership.tsx', 'plan/editors/cards/politics.tsx', 'plan/editors/cards/technology.tsx', 'plan/editors/cards/trade.tsx', 'plan/editors/cards/warfare.tsx',
   'plan/StatusFields.tsx', 'plan/EntrySteps.tsx', 'plan/EntryList.tsx', 'plan/editors/TurnHost.tsx',
   'components/ComponentPicker.tsx', 'components/useComponentSearch.ts', 'components/ComponentCard.tsx', 'components/ComponentSearchField.tsx', 'plan/blocks/ComponentSlot.tsx', 'plan/blocks/ResearchBlock.tsx', 'plan/blocks/TurnActs.tsx', 'plan/editors/TacticalEditorHost.tsx', 'plan/editors/UnitPickerHost.tsx', 'plan/tactical.ts', 'plan/kernelView.ts',
+  'screens/PlanScreen.tsx', 'screens/plan/pick.ts',
+  'common/expansions.ts', 'common/gameAddress.ts', 'common/motion.ts', 'common/preferences.ts', 'common/scrollbar.ts', 'common/usePack.ts', 'common/useReorderDrag.ts', 'feedback/Banner.tsx', 'map/builder/TileNumberInput.tsx', 'overlays/Drawer.tsx', 'overlays/Modal.tsx', 'overlays/Popover.tsx', 'plan/ActionMenu.tsx', 'plan/blocks/CardGrid.tsx', 'primitives/ConfirmBar.tsx', 'primitives/EditorFrame.tsx', 'primitives/EditorPart.tsx', 'primitives/Icon.tsx', 'primitives/MapPickButton.tsx', 'primitives/NoteField.tsx', 'primitives/player.tsx', 'primitives/Section.tsx', 'primitives/SectionTitle.tsx', 'primitives/Stepper.tsx', 'primitives/Vanishing.tsx', 'screens/plan/useDrawers.ts', 'units/TokenLayer.tsx', 'units/unitArt.ts', 'units/UnitDraft.tsx', 'units/UnitIcon.tsx', 'units/unitOrder.ts', 'units/unitsText.ts', 'units/UnitTile.tsx', 'units/UnitToken.tsx',
 ];
 
 const raw = import.meta.glob<string>(['./**/*.ts', './**/*.tsx', '!./**/*.test.*'], { query: '?raw', import: 'default', eager: true });

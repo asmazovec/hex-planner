@@ -3,7 +3,7 @@
  * hex over the map. Impossible mixes cannot be written: a route belongs to a tactical action in
  * the panel, a card's pick to its card, and a state that undo left without its entry falls back on its own (`resolvePick`).
  */
-import type { CardMapPick } from '../../../domain/replay/cards/targets';
+import type { CardMapPick } from '../../../game/planQueries';
 import type { Act, Entry, Round } from '../../../domain/types';
 import type { StageMode } from '../../map/stage/HexStage';
 

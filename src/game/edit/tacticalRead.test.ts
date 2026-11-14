@@ -18,6 +18,8 @@ import { planetsIn } from '../space';
 import { timelineOf } from '../../state/projection';
 import { UNIT_ORDER } from '../../ui/units/unitOrder';
 import * as now from './tacticalRead';
+import { warningsByTurn } from '../rowWarnings';
+import { withDeltaSystem } from './turn';
 import { tacticalOf, withCustodiansPayment as withCustodians } from './tactical';
 
 const pack = loadPack(['pok']);
@@ -157,5 +159,30 @@ describe('the flight of a source as the steps read it', () => {
     for (const source of ['A', 'C', 'B']) {
       expect(now.flightLineOf(t.table, t.board, pack, t.turn, source), source).toEqual(old.flightOf(t.g, pack, t.before.holdings, t.e, source));
     }
+  });
+});
+
+describe('the screens of the plan read the kernel', () => {
+  test.each(['sol', 'naalu'])('%s: the systems a turn touches are those of the old entry', faction => {
+    const t = build(faction, BODY);
+    expect(now.systemsOfTurn(t.table, t.board, pack, t.turn)).toEqual(old.entrySystems(t.g, pack, t.e));
+    const free = { ...t.e, moves: [], systemId: null } as Entry;
+    expect(now.systemsOfTurn(t.table, t.board, pack, turnOf(t.table, free, pack))).toEqual(old.entrySystems(t.g, pack, free));
+  });
+
+  test('a correction puts its units in the system chosen; the units counted stay', () => {
+    const t = build('sol', BODY);
+    const adjust = entry({ type: 'adjustment', label: 'x', delta: { units: { systemId: 'A', units: { carrier: 1 } } } });
+    const turn = turnOf(t.table, adjust, pack);
+    const moved = withDeltaSystem(turn, 'C');
+    expect(moved.action).toMatchObject({ kind: 'correction', delta: { units: { systemId: 'C', units: { carrier: 1 } } } });
+    expect(withDeltaSystem(t.turn, 'C')).toBe(t.turn);
+  });
+
+  test('the warnings of a row are those of the legacy frames', () => {
+    const t = build('sol', BODY);
+    const line = timelineOf(t.g, t.g.plans[0], 'forecast', pack);
+    const rows = warningsByTurn(line.kernel);
+    for (const frame of line.frames.filter(f => f.applied)) expect(rows[frame.entryId], frame.entryId).toEqual(frame.warnings);
   });
 });

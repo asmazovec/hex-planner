@@ -206,3 +206,22 @@ export function flightLineOf(table: Table, board: Board, pack: DataPack, turn: T
   }
   return { ships, board: cargo, stops };
 }
+
+/** The systems a turn touches, for the camera and the lit systems: what the same function of the old entry answers (`entrySystems`). */
+export function systemsOfTurn(table: Table, board: Board, pack: DataPack, turn: Turn): Slot[] {
+  const at = atOf(table, board, pack);
+  const slots: (string | null | undefined)[] = [];
+  const action = turn.action;
+  if (action.kind === 'tactical') {
+    slots.push(action.system, ...sourcesOf(at, action));
+    for (const flight of action.movement) slots.push(...(flight.via ?? []), sourceSlot(at.map, pack, idOf(flight.from)));
+  } else if (action.kind === 'strategic' || action.kind === 'secondary') {
+    const { effects } = action;
+    slots.push(effects?.systemId, effects?.production?.systemId, ...(effects?.structures ?? []).map(s => sourceSlot(at.map, pack, s.planetId)));
+    slots.push(...(effects?.readied ?? []).map(id => sourceSlot(at.map, pack, id)));
+  } else if (action.kind === 'correction' || action.kind === 'agenda') {
+    slots.push(action.delta.units?.systemId, ...Object.keys(action.delta.ground ?? {}).map(id => sourceSlot(at.map, pack, id)));
+  }
+  const known = new Set(boardSlots(at.map, pack));
+  return [...new Set(slots)].filter((s): s is string => Boolean(s) && (isOnMap(at.map, s as string) || known.has(s as string)));
+}

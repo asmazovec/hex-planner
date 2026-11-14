@@ -80,8 +80,13 @@ export function researchLimitOn(table: Table, board: Board, pack: DataPack, turn
 
 /** Where the units a card bought stand: the system's space area, and the planets, as the replay places them (68.3). */
 export function purchasesOn(table: Table, board: Board, pack: DataPack, turn: CardTurn, slot: string): ProductionPlace[] {
-  const production = effectsOf(turn).production?.systemId === slot ? effectsOf(turn).production : undefined;
-  return placesOn(groundIn(table, board, pack, turn.player), slot, production?.units ?? {}, pack, production?.ground);
+  return boughtOn(table, board, pack, turn.player, effectsOf(turn), slot);
+}
+
+/** The same for the effects of any turn that produces (a component action too): what its production holds in the system. */
+export function boughtOn(table: Table, board: Board, pack: DataPack, player: PlayerId, effects: NonNullable<Strategic['effects']>, slot: string): ProductionPlace[] {
+  const production = effects.production?.systemId === slot ? effects.production : undefined;
+  return placesOn(groundIn(table, board, pack, player), slot, production?.units ?? {}, pack, production?.ground);
 }
 
 /** The planets the card may ready: my exhausted ones, or for the base primary mine in the chosen system; those already chosen stay listed. */

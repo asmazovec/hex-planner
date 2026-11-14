@@ -3,9 +3,9 @@
  * rules of what fits come from the domain; here only their order and tone.
  */
 import { turnOfEntry } from '../../../state/projection';
-import { entrySystems, type TacticalEntry } from '../../../domain/tactical';
+import type { TacticalEntry } from '../../../domain/tactical';
 import { systemsAdjacent } from '../../../domain/project';
-import type { DataPack, Entry, Game } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
 import { arrowsOf, sourcesOf, tacticalOf, viaOf } from '../../../game/edit/tactical';
 import { mapSource } from '../../../game/space';
 import type { Board, Table } from '../../../game/types';
@@ -68,6 +68,3 @@ export function mapHighlights(table: Table, board: Board, pack: DataPack, { choi
   return highlights;
 }
 
-/** The systems an entry other than a tactical action speaks of, lit while it is read: the camera alone does not say which ones. */
-export const shownSystemsOf = (game: Game, pack: DataPack, shown: Entry | undefined): string[] =>
-  (shown && shown.type !== 'tactical' ? entrySystems(game, pack, shown) : []);

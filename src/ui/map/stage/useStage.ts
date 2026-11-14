@@ -6,17 +6,16 @@ import { gameAs, opponentsBySeat } from '../../../domain/players';
 import { standing, planetStructureWarnings, productionCost, productionDue, readyResources } from '../../../domain/project';
 import { boardAtRound, projectionAtRound, seenBefore, systemWarningsAt, timelineOf, turnOfEntry } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
-import { startingPds } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, PlanetDef, StructureKind, UnitCounts, UnitId, Warning, WarningCode } from '../../../domain/types';
 import { useGame } from '../../../state/gameStore';
-import { lossesOf, withAdjustedUnit, type TacticalEntry } from '../../../domain/tactical';
+import { useSetupWrites } from '../../../state/setupWrites';
+import { lossesOf, type TacticalEntry } from '../../../domain/tactical';
 import { withFleetRemoval, withLoss } from '../../../game/edit/tactical';
 import { withProductionOn } from '../../../game/edit/tacticalRead';
 import type { Turn } from '../../../game/actions';
 import type { Board } from '../../../game/types';
 import { writeTurn } from '../../../state/turnBridge';
-import { enemyChange, structureInGame } from '../../../domain/stacks';
 import { warningsByTurn } from '../../../game/rowWarnings';
 import { fleetExcessOf, flightOf, productionSites } from '../../../game/flight';
 import { playerOfKey } from '../../../game/keys';
@@ -80,13 +79,7 @@ export interface MeterRow {
 export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onPurchase, manualPayments = [], tacticalId, adjustmentId, owner: ownerGiven, shownBoard }: HexStageProps) {
   const { t } = useTranslation();
   const game = useGame(s => s.game);
-  const setEnemyUnits = useGame(s => s.setEnemyUnits);
-  const setEnemyGround = useGame(s => s.setEnemyGround);
-  const setDock = useGame(s => s.setDock);
-  const setPds = useGame(s => s.setPds);
-  const changeAdjustment = useGame(s => s.changeAdjustment);
-  const updateEntry = useGame(s => s.updateEntry);
-  const setPlanetControl = useGame(s => s.setPlanetControl);
+  const setup = useSetupWrites();
   const [mode, setMode] = useState<StageMode>(initialMode);
   const [chosenSide, setSide] = useState<string | null>(null);
   const [chosenPlanet, setPlanet] = useState(0);
@@ -97,7 +90,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
 
   const plan = game?.plans.find(p => p.id === game.activePlanId);
   const round = plan?.rounds.find(r => r.number === roundNo);
-  if (!game || !plan || !round) return null;
+  if (!game || !plan || !round || !setup) return null;
 
   const line = timelineOf(game, plan, 'forecast', pack);
   const projection = projectionAtRound(line, roundNo);
@@ -128,11 +121,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   const kindName = (kind: TokenKind): string => (kind === 'pds' ? t('map.pds') : kind === 'spacedock' ? t('map.spaceDock') : t(`unit.${kind}`));
 
   /** Ground forces go by planet; one still listed with the system comes off there. */
-  const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => {
-    const next = enemyChange(game, slot, owner, unit, planetId, amount);
-    if ('planetId' in next) setEnemyGround(next.planetId, owner, next.units);
-    else setEnemyUnits(next.slot, owner, next.units);
-  };
+  const changeEnemy = (owner: string, unit: UnitId, planetId: string | null, amount: number) => setup.changeEnemy(slot, owner, unit, planetId, amount);
   /** The tactical action this hex was opened from: its battle belongs to it, its purchases too while it stands on this system, and the fleet limit counts it. */
   const fightingFor = tacticalId ? round.entries.find((e): e is Entry & TacticalEntry => e.id === tacticalId && e.type === 'tactical') : undefined;
   const adjusting = adjustmentId ? round.entries.find((e): e is Extract<Entry, { type: 'adjustment' }> => e.id === adjustmentId && e.type === 'adjustment') : undefined;
@@ -143,13 +132,10 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
   const change = (kind: 'setup' | 'losses', unit: UnitId, planetId: string | null, amount: number) => {
     if (kind === 'losses' && fightingFor) editTurn(fightingFor.id, turn => withLoss(turn, unit, planetId, amount));
-    else if (kind === 'setup' && adjusting) updateEntry(adjusting.id, { delta: withAdjustedUnit(adjusting.delta, slot, unit, planetId, amount) });
-    else changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
+    else if (kind === 'setup' && adjusting) setup.adjustSetup(adjusting.id, adjusting.delta, slot, unit, planetId, amount);
+    else setup.changeAdjustment(roundNo, { kind, systemId: slot, unit, planetId, amount });
   };
-  const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => {
-    if (kind === 'spacedock') setDock(planetId, amount > 0);
-    else setPds(planetId, (startingPds(game, pack)[planetId] ?? 0) + amount);
-  };
+  const changeStructure = (kind: StructureKind, planetId: string, amount: 1 | -1) => setup.changeStructure(pack, kind, planetId, amount);
 
   const tacticals = round.entries.filter((e): e is Entry & TacticalEntry => e.type === 'tactical' && e.systemId === slot && e.status !== 'cancelled');
   /** The action that takes the purchases: the one this hex was opened from, otherwise the round's last one of mine here. */
@@ -164,7 +150,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
     change: (unit, planetId, amount) => {
       const held = produced.some(p => p.unit === unit && p.planetId === planetId);
       if (tactical && beforeTactical && (amount > 0 || held)) changeProduction(tactical, unit, planetId, amount);
-      else changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount });
+      else setup.changeAdjustment(roundNo, { kind: 'build', systemId: slot, unit, planetId, amount });
     },
   };
   const keyOfBought = ({ unit, planetId }: BoughtUnit): string => {
@@ -199,7 +185,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
         return;
       }
       // A structure is its controller's (85): placed for another player, it hands them the planet first, as the note said.
-      if (handsOver(planet)) setPlanetControl(planet.id, side);
+      if (handsOver(planet)) setup.setPlanetControl(planet.id, side);
       changeStructure(kind, planet.id, 1);
       if (mode === 'build') setNews(bumped(news, stackKey(side, kind, index), 1));
       return;
@@ -214,7 +200,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   };
 
   /** Whether the game itself holds this structure, apart from what entries plan. */
-  const inBaseline = (kind: StructureKind, planetId: string): boolean => structureInGame(game, pack, kind, planetId);
+  const inBaseline = (kind: StructureKind, planetId: string): boolean => setup.inBaseline(pack, kind, planetId);
 
   /** Build: a tap takes back one bought here. */
   const unbuy = ({ kind, owner, key }: PlacedStack, planetId: string | null) => {

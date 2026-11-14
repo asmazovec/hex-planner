@@ -133,6 +133,12 @@ export const withLabel = (turn: Turn, label: string): Turn => onNumbers(turn, ac
 /** The numbers a correction or an agenda changes. */
 export const withDelta = (turn: Turn, delta: AdjustmentDelta): Turn => onNumbers(turn, action => ({ ...action, delta }));
 
+/** The system a correction or an agenda puts its units in; the units already counted stay. */
+export const withDeltaSystem = (turn: Turn, systemId: string): Turn =>
+  (turn.action.kind === 'correction' || turn.action.kind === 'agenda'
+    ? withDelta(turn, { ...turn.action.delta, units: { systemId, units: turn.action.delta.units?.units ?? {} } })
+    : turn);
+
 /** How an agenda was resolved; none clears it. */
 export function withAgendaChoices(turn: Turn, choices: Record<string, string> | undefined): Turn {
   if (turn.action.kind !== 'agenda') return turn;
