@@ -4,7 +4,7 @@
  * the Deepwrought player at the end of the status phase."
  *
  * Decided: `play`, as a component action with the choice `technology`: the technology joins the player's holdings and is
- * written on the note (`GameState.onCard`); the note stays in play. The hook `onStatusEnd` (points/moments.ts) ends it
+ * written on the note (`onCard` of the board); the note stays in play. The hook `onStatusEnd` (points/moments.ts) ends it
  * with the status phase: the technology leaves the holdings and the note goes back to the Deepwrought player. The
  * candidates offered are the Deepwrought player's non-faction, non-unit upgrade technologies; a value outside them is
  * taken as entered (no warning code says "not a technology this note gives" yet).

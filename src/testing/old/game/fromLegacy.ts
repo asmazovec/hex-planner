@@ -3,7 +3,6 @@ import { playerOfLegacy } from '../../../game/entry';
 import type { Game, GameState, DataPack, UnitCounts, Entry, Plan } from '../../../domain/types';
 import type { Table, Board, PlayerId } from '../../../game/types';
 import { playersOf } from '../../../domain/players';
-import { idOfSeat, GHOST_SEAT, SLOT } from '../../../game/fromLegacy';
 import { SOURCES } from '../../../game/source';
 import { emptyBoard } from '../../../game/board';
 import { applyAll } from '../../../game/apply';
@@ -164,3 +163,7 @@ export function planOf(table: Table, plan: Plan, pack?: DataPack): Round[] {
     return made;
   });
 }
+export const idOfSeat = (seat: number): PlayerId => `p${seat}`;
+/** The seat of the first player who is not at the table: the seats of the table stop at eight. */
+export const GHOST_SEAT = 100;
+export const SLOT = /^-?\d+,-?\d+$/;

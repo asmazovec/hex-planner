@@ -38,12 +38,12 @@ export function useTurn(...[, turnId]: [table: Table, turnId: string, pack: Data
   return useMemo(() => (saved ? writeSaved(saved, turnId) : undefined), [saved, turnId]);
 }
 
-/** A new tactical action on a system: `owner` is whose it is (mine when none), `fromCard` the card that gives it (Warfare, nested in it). Returns its id. */
-export function addTactical(table: Table, roundNumber: number, system: string, owner: PlayerId | undefined, fromCard: string | undefined): string {
+/** A new tactical action on a system: `owner` is whose it is (mine when none), `byCard` the card that gives it (Warfare, nested in it). Returns its id. */
+export function addTactical(table: Table, roundNumber: number, system: string, owner: PlayerId | undefined, byCard: string | undefined): string {
   const player = owner ?? table.viewer;
   const round = { number: roundNumber, strategyCard: null, backupCard: null, held: [], turns: [] };
-  const turn = newTurn('tactical', { id: '', player, viewer: player, round }, { system, ...(fromCard ? { fromCard } : {}) });
-  return useGame.getState().addTurn(roundNumber, turn, fromCard);
+  const turn = newTurn('tactical', { id: '', player, viewer: player, round }, { system, ...(byCard ? { byCard } : {}) });
+  return useGame.getState().addTurn(roundNumber, turn, byCard);
 }
 
 /** A source with nothing chosen goes when the editor closes. Works on the store, for it runs on unmount too. */

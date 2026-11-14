@@ -10,7 +10,7 @@ vi.mock('../../../storage/db', () => ({
 import { loadPack } from '../../../data/loadPack';
 import { CARD, withProduction, withStructure, type CardEntry } from '../../../domain/strategy';
 import { cardChange } from '../../../testing/old/domain/strategy';
-import { stateBeforeEntry } from '../../../domain/project';
+import { stateBeforeEntry } from '../../../testing/old/domain/project';
 import { useGame } from '../../../state/gameStore';
 import { writeTurn } from '../../../testing/writeTurn';
 import { kernelViewOf } from '../../testing/view';

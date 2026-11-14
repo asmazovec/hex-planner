@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { slotsFor } from '../../mapBuilder';
-import { routeDistances, routeReach, systemsAdjacent } from '../../project';
+import { routeDistances, routeReach, systemsAdjacent } from '../../../testing/old/domain/project';
 import { fractureSlots } from '../../thundersEdge';
 import type { Game } from '../../types';
 import { FAR, FARTHER, NEAR, rulesGame, rulesPack } from '../kit';

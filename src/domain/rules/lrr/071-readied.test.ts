@@ -1,6 +1,6 @@
 /** LRR 71 Readied. Source: tirules2 rules-reference/readied.md. */
 import { describe, expect, test } from 'vitest';
-import { readyResources } from '../../project';
+import { readyResources } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
 import { adjust, before, codesOf, forecast, HOME, primary, rulesGame, rulesPack, secondary, statusTokens, tactical } from '../kit';
 

@@ -1,6 +1,6 @@
 /** LRR 58 Movement. Source: tirules2 rules-reference/movement.md. */
 import { describe, expect, test } from 'vitest';
-import { routeReach, routeSteps } from '../../project';
+import { routeReach, routeSteps } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
 import type { Opponent } from '../../types';
 import { codesOf, FACTION, FAR, FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET, tech } from '../kit';

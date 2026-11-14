@@ -22,4 +22,9 @@ describe('the old model stays out of new files', () => {
       .filter(path => !allowed.has(path));
     expect(fresh, 'new file with an old-model identifier').toEqual([]);
   });
+
+  test('no application file imports src/testing: the old model there is the input language of tests only', () => {
+    const users = Object.entries(files).filter(([, text]) => text.includes('/testing/')).map(([path]) => path);
+    expect(users).toEqual([]);
+  });
 });

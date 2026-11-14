@@ -1,6 +1,6 @@
 /** LRR 6 Adjacency. Source: tirules2 rules-reference/adjacency.md. Speeds from the base pack: a destroyer I moves 2. */
 import { describe, expect, test } from 'vitest';
-import { routeDistances, routeReach, routeSteps } from '../../project';
+import { routeDistances, routeReach, routeSteps } from '../../../testing/old/domain/project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack(p => {

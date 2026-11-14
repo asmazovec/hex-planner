@@ -1,14 +1,12 @@
-/** A long game for the timeline's tests and bench: six players, every kind of entry in each round. */
-import { loadPack } from '../../data/loadPack';
-import { seatSlots } from '../mapBuilder';
-import { createGame } from '../../testing/old/domain/newGame';
-import { placeStartUnits, setPlayerFaction } from '../../testing/old/domain/players';
-import type { Entry, Game, Round } from '../types';
+import { loadPack } from '../../../../data/loadPack';
+import type { Game, Round, Entry } from '../../../../domain/types';
+import { createGame } from '../newGame';
+import { setPlayerFaction, placeStartUnits } from '../players';
+import { seatSlots } from '../../../../domain/mapBuilder';
 
 export const fixturePack = loadPack(['pok', 'te']);
-const FACTIONS = ['sol', 'arborec', 'hacan', 'letnev', 'saar', 'muaat'];
-const noPay = { planets: [], tradeGoods: 0 };
-
+export const FACTIONS = ['sol', 'arborec', 'hacan', 'letnev', 'saar', 'muaat'];
+export const noPay = { planets: [], tradeGoods: 0 };
 export function longGame(rounds = 6, turns = 3): Game {
   let game = createGame({ expansions: ['pok', 'te'], playerCount: 6, faction: '' }, fixturePack);
   FACTIONS.forEach((faction, i) => { game = setPlayerFaction(game, i, faction, fixturePack); });
@@ -41,7 +39,6 @@ export function longGame(rounds = 6, turns = 3): Game {
   });
   return { ...game, plans: [{ ...game.plans[0], rounds: made }] };
 }
-
 /** The game with one round of its plan rewritten; every other round keeps its object, as the store keeps it. */
 export function editRound(game: Game, number: number, edit: (round: Round) => Round): Game {
   return { ...game, plans: game.plans.map(plan => ({ ...plan, rounds: plan.rounds.map(r => (r.number === number ? edit(r) : r)) })) };

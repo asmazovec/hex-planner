@@ -6,7 +6,7 @@ import { noteCards, noteOwner, noteText, ownNotes, setLeader, setStartHolding } 
 import { createGame } from '../testing/old/domain/newGame';
 import { gameAs } from './players';
 import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
-import { forgetTimelines, project, readyToPlay, timelineOf } from './project';
+import { forgetTimelines, project, readyToPlay, timelineOf } from '../testing/old/domain/project';
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';
 import type { Entry, Game, Opponent } from './types';

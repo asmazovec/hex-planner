@@ -116,8 +116,8 @@ function withoutNotes(turn: Turn, gone: (id: string) => boolean, left: Player): 
 /** The turns forget a player who left: their turns, their points, their place in card effects and their notes (69.7). */
 function withoutPlayerInPlans(saved: SavedGame, leaving: Player): SavedGame {
   const player = leaving.id;
-  const legacy = legacyOf(leaving);
-  const gone = (id: string): boolean => noteAddress(id) === legacy;
+  const oldId = legacyOf(leaving);
+  const gone = (id: string): boolean => noteAddress(id) === oldId;
   return mapRounds(saved, round => ({
     ...round,
     turns: mapTurns(round.turns, turn => {
@@ -132,8 +132,8 @@ function withoutPlayerInPlans(saved: SavedGame, leaving: Player): SavedGame {
       if ((action.kind === 'strategic' || action.kind === 'secondary') && action.effects) {
         const { speaker, freeSecondary, ...rest } = action.effects;
         const effects = { ...rest } as NonNullable<typeof action.effects>;
-        if (speaker !== undefined && speaker !== legacy) effects.speaker = speaker;
-        const free = (freeSecondary ?? []).filter(id => id !== legacy);
+        if (speaker !== undefined && speaker !== oldId) effects.speaker = speaker;
+        const free = (freeSecondary ?? []).filter(id => id !== oldId);
         if (free.length > 0) effects.freeSecondary = free;
         return { ...made, action: { ...action, effects } };
       }
@@ -313,14 +313,14 @@ export function addPlayer(saved: SavedGame, newId: IdMaker = timeIdMaker): Saved
   if (players.length >= maxPlayers(pack)) return saved;
   const used = players.map(p => p.color);
   const color = Array.from({ length: COLORS }, (_, i) => i + 1).find(c => !used.includes(c)) ?? 1;
-  const legacy = makeId('opponent', newId);
+  const oldId = makeId('opponent', newId);
   const seat = players.length + 1;
-  const fresh: Player = { id: 'new', faction: '', seat, color, setup: emptySetup(), legacyId: legacy };
+  const fresh: Player = { id: 'new', faction: '', seat, color, setup: emptySetup(), legacyId: oldId };
   const start: StartEdits = {
     ...saved.start,
     points: { ...saved.start.points, new: 0 },
     // The newcomer begins with the generic notes of their colour (69).
-    holdings: { ...saved.start.holdings, new: { promissory: genericNotes(pack, legacy) } },
+    holdings: { ...saved.start.holdings, new: { promissory: genericNotes(pack, oldId) } },
   };
   return settled(saved, seatedAs(saved, [...players, fresh], start));
 }
@@ -330,7 +330,7 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
   const players = listOf(saved);
   const leaving = players[index];
   if (index === 0 || !leaving || players.length <= MIN_PLAYERS) return saved;
-  const legacy = legacyOf(leaving);
+  const oldId = legacyOf(leaving);
   const rest = players.filter((_, i) => i !== index).map(p => (p.seat > leaving.seat ? { ...p, seat: p.seat - 1 } : p));
   const { start } = saved;
   const planets = Object.keys(start.control).filter(id => start.control[id] === leaving.id);
@@ -347,7 +347,7 @@ export function removePlayer(saved: SavedGame, index: number): SavedGame {
     start: {
       ...start, points,
       // The notes of the player who leaves go with them, whoever held them (69.7).
-      holdings: Object.fromEntries(Object.entries(held).map(([id, theirs]) => [id, withoutNotesOf(theirs, legacy)])),
+      holdings: Object.fromEntries(Object.entries(held).map(([id, theirs]) => [id, withoutNotesOf(theirs, oldId)])),
       units: without(start.units), ground: without(start.ground),
       control: Object.fromEntries(Object.entries(start.control).filter(([id]) => !planets.includes(id))),
       docks: start.docks.filter(id => !planets.includes(id)),

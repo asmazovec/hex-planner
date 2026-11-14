@@ -1,7 +1,7 @@
 /**
  * What the editors of a tactical action read of the board before it, and the edits that need the board: who stands where,
  * what a flight can take, what stands after the battle, what can land, the production with its price and payment.
- * The same answers as the old `Game`/`GameState` functions of `src/domain/tactical.ts`, over the table, the board and the turn.
+ * The same answers as the old per-player functions of `src/domain/tactical.ts`, over the table, the board and the turn.
  */
 import { addUnits, hasUnits, isGround, unitsIn } from '../../domain/tactical';
 import { CUSTODIANS_COST, MECATOL_PLANETS } from '../../domain/mecatol';

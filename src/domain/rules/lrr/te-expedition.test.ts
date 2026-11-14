@@ -1,7 +1,7 @@
 /** Thunder's Edge: Expeditions. Source: tirules2 rules-reference/expedition.md (Notes; no LRR section). */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { systemPlanets } from '../../project';
+import { systemPlanets } from '../../../testing/old/domain/project';
 import { validThundersEdgeSystem } from '../../thundersEdge';
 import type { Entry, Payment } from '../../types';
 import { HOME, NO_PAYMENT, TARGET, adjust, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';

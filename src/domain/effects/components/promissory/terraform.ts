@@ -4,7 +4,7 @@
  * traits (cultural, hazardous, and industrial)."
  *
  * Decided: a passive effect with a `play` (the stacking of a planet's value reads `modify` of passive effects only). Played by a component action with the planet as its choice (`choices.planetId`), it attaches to that
- * planet (`GameState.attachments`), and from then on the planet is worth 1 more resource and 1 more influence wherever
+ * planet (`attachments` of the board), and from then on the planet is worth 1 more resource and 1 more influence wherever
  * a payment counts it. The traits are for exploration, which the plan does not count. Once played it is never returned
  * (Titans of Ul, Terraform note 1).
  */

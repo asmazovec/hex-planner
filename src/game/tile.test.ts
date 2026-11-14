@@ -4,7 +4,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
 import { shownPlanetValues as shownOld } from '../testing/old/domain/payment';
 import { stacksOf } from '../testing/old/domain/stacks';
-import { systemPlanets } from '../domain/project';
+import { systemPlanets } from '../testing/old/domain/project';
 import { boardOf, legacyState, tableOf } from '../testing/old/game/fromLegacy';
 import { seatSlots } from '../domain/mapBuilder';
 import { ownerKey, playerOfOwner, seatCount, shownPlanetValues, tileStacks } from './tile';

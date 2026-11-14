@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from '../../holdings';
 import { loadPack } from '../../../data/loadPack';
 import { factionSheet } from '../../factionSheet';
-import { productionCost } from '../../project';
+import { productionCost } from '../../../testing/old/domain/project';
 import { SHIP_KINDS } from '../../unitStats';
 import { codesOf, FACTION, forecast, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 

@@ -10,7 +10,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { project } from '../../domain/project';
+import { project } from '../../testing/old/domain/project';
 import { offMapHomes } from '../../domain/strategy';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';

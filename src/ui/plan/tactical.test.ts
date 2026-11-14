@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { hexLayout } from '../../domain/hexLayout';
 import { createGame } from '../../testing/old/domain/newGame';
-import { project } from '../../domain/project';
+import { project } from '../../testing/old/domain/project';
 import { routeShapes } from '../map/geometry';
 import type { Entry, Game, GameState } from '../../domain/types';
 import { emptySources } from '../../testing/old/domain/tactical';

@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { MECATOL_PLANET } from '../../mecatol';
-import { readyInfluence, readyResources } from '../../project';
+import { readyInfluence, readyResources } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
 import { codesOf, forecast, HOME, rulesGame, rulesPack, secondary, tactical } from '../kit';
 

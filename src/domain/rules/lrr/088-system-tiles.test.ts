@@ -1,7 +1,7 @@
 /** LRR 88 System Tiles. Source: tirules2 rules-reference/system-tiles.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeReach } from '../../project';
+import { routeReach } from '../../../testing/old/domain/project';
 import { FARTHER, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 import { row } from './kit-83-101';
 

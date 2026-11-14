@@ -1,6 +1,6 @@
 /** LRR 59 Nebula. Source: tirules2 rules-reference/nebula.md. */
 import { describe, expect, test } from 'vitest';
-import { routeReach } from '../../project';
+import { routeReach } from '../../../testing/old/domain/project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

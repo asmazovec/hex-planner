@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { parseMapString } from './mapString';
 import { createGame } from '../testing/old/domain/newGame';
 import { placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
-import { project } from './project';
+import { project } from '../testing/old/domain/project';
 import { seatSlots } from './mapBuilder';
 import { homeSlot } from './strategy';
 import type { Game, GameState, UnitCounts } from './types';

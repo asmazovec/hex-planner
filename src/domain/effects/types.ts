@@ -5,7 +5,7 @@
 import type { AbilityContext, Hooks, Permit, Play } from '../../game/abilities/types';
 import type { MoveAt } from '../movement';
 import type { HolderRule } from './holder';
-import type { DataPack, Entry, Game, GameState, RuleStep, StructureKind, TechType, UnitCounts, UnitId, Warning } from '../types';
+import type { DataPack, RuleStep, StructureKind, TechType, UnitCounts, UnitId } from '../types';
 
 /**
  * `passive` applies by itself while the component is in force (`inForce`), exhausted or not (LRR 34.4.1); `play`
@@ -58,34 +58,6 @@ export interface ModifierContext {
 
 /** The named points the count passes through: each takes the value so far and gives the value after this component. */
 export type Modifiers = { [K in keyof ModifierContext]: (value: number, ctx: ModifierContext[K]) => number };
-
-/** One component being played by an entry, with what the player chose for it. */
-export interface EffectTurn {
-  game: Game;
-  /** The state of the player whose entry this is. */
-  state: GameState;
-  /** My state, which holds what belongs to the whole game: laws, revealed objectives, attachments. */
-  shared: GameState;
-  /** The entry that plays it: a component action, or any entry that names it in `uses`. */
-  entry: Entry;
-  /** The component being played, by id as the entry names it (a note under its address). */
-  id: string;
-  /** Whose entry: `me` or an opponent id. */
-  player: string;
-  /**
-   * Every player's state by `me` or opponent id, the owner's among them (the same object as `state`): what moves a
-   * card or a token from another player (Spy Net, Insubordination) reads and changes them here.
-   */
-  states: Record<string, GameState>;
-  /** What the player chose for this component: the entry's `choices` for its component action, then its `useChoices[id]` (`choicesFor`). */
-  choices: Record<string, string | number>;
-  /** False when the replay already warned that the owner does not hold the component or that it is exhausted: a play may then do nothing. */
-  held: boolean;
-  pack: DataPack;
-  warnings: Warning[];
-  /** Set by the game kernel: the strategy tokens this play spent, told to the components in force when the play is done. */
-  spent?: { count: number; secondary: boolean }[];
-}
 
 /** What a component asks for is named by `ChoiceSpec.kind`; the interface offers the candidates and the entry keeps the value. */
 export type ChoiceKind =

@@ -7,7 +7,7 @@ import { effectsOf } from '../../effects/registry';
 import type { Ability } from '../../effects/types';
 import '../../effects/points/production';
 import { emptyHoldings } from '../../holdings';
-import { productionCost } from '../../project';
+import { productionCost } from '../../../testing/old/domain/project';
 import { codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

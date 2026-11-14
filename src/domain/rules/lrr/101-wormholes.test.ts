@@ -1,7 +1,7 @@
 /** LRR 101 Wormholes. Source: tirules2 rules-reference/wormholes.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeDistances, routeReach, routeSteps } from '../../project';
+import { routeDistances, routeReach, routeSteps } from '../../../testing/old/domain/project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 import { row } from './kit-83-101';
 

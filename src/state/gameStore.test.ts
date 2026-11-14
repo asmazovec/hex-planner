@@ -10,7 +10,7 @@ vi.mock('../storage/db', () => ({
 import { loadPack } from '../data/loadPack';
 import { seatSlots } from '../domain/mapBuilder';
 import { opponentHoldings } from '../testing/old/domain/players';
-import { project } from '../domain/project';
+import { project } from '../testing/old/domain/project';
 import type { Game } from '../domain/types';
 import { listGames, loadGame, saveGame } from '../storage/db';
 import { flushSaves, useGame } from './gameStore';

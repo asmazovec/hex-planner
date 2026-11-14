@@ -6,7 +6,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { adjust, bench, statusTokens } from '../../../domain/effects/components/kit';
-import { project } from '../../../domain/project';
+import { project } from '../../../testing/old/domain/project';
 import scoreWithoutHome from '../../../domain/rules/codes/scoreWithoutHome';
 import type { Entry } from '../../../domain/types';
 import { expectNotShown, expectShownStanding, showAgenda, showScored, uiBench } from '../../testing/effects';

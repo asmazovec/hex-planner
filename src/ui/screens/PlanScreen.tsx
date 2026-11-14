@@ -215,7 +215,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
   const actor = planTable.players.some(p => p.id === actingAs && p.id !== planTable.viewer && p.seat < 100) ? actingAs ?? undefined : undefined;
   /** Whose action stands in an editor now; a new tactical action is the card's owner's or the one it is added for. */
   const handOwner: PlayerId | undefined = picking
-    ? tacticalOwner(forecastKernel.rounds.find(r => r.number === round.number) ?? { number: round.number, strategyCard: null, backupCard: null, held: [], turns: [] }, tactical?.fromCard, actor ?? planTable.viewer)
+    ? tacticalOwner(forecastKernel.rounds.find(r => r.number === round.number) ?? { number: round.number, strategyCard: null, backupCard: null, held: [], turns: [] }, tactical?.byCard, actor ?? planTable.viewer)
     : (entry ?? cardEntry ?? adjustmentEntry)?.player ?? planTable.viewer;
 
   const onPick = (type: ActionType) => {
@@ -292,7 +292,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
     if (tactical) {
       if (!onBoard(slot)) return;
       if (tactical.entryId === null) {
-        const id = addTactical(planTable, round.number, slot, handOwner === undefined || handOwner === planTable.viewer ? undefined : handOwner, tactical.fromCard);
+        const id = addTactical(planTable, round.number, slot, handOwner === undefined || handOwner === planTable.viewer ? undefined : handOwner, tactical.byCard);
         update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: tactical.card }, next: IDLE }));
         setView('plan');
         return;
@@ -314,11 +314,11 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       if (step.onActive) {
         // The wrong system: while nothing of the action is filled in a tap takes it back and returns to choosing.
         if (isUntouched(writeSaved(saved!, entry.id)!.turn)) {
-          const fromCard = parentIn(round, entry.id)?.id;
+          const byCard = parentIn(round, entry.id)?.id;
           removeEntry(entry.id);
           update(state => ({
             ...state, next: IDLE,
-            panel: { kind: 'tactical', entryId: null, pickerFrom: null, ...(fromCard ? { fromCard } : {}), card: tactical.card },
+            panel: { kind: 'tactical', entryId: null, pickerFrom: null, ...(byCard ? { byCard } : {}), card: tactical.card },
           }));
         }
         return;
@@ -551,7 +551,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
       case 'pickSystem':
         return (
           <EditorFrame title={t('plan.tactical.title')} removeLabel={t('plan.tactical.cancel')} onRemove={toList}>
-            <span className="muted">{t(slot.fromCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')}</span>
+            <span className="muted">{t(slot.byCard ? 'plan.tactical.freePickHint' : 'plan.tactical.pickHint')}</span>
           </EditorFrame>
         );
       case 'flight': {
@@ -602,7 +602,7 @@ export function PlanScreen({ onFinishMap }: PlanScreenProps) {
             onOpenShop={(at, only) => update(state => ({ ...state, stage: { slot: at, mode: 'build', only, for: { kind: 'card' } } }))}
             onStartTactical={() => {
               drawers.closeRight();
-              update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null, fromCard: played.id, card: played.id }, next: IDLE }));
+              update(state => ({ ...state, panel: { kind: 'tactical', entryId: null, pickerFrom: null, byCard: played.id, card: played.id }, next: IDLE }));
               setView('map');
             }}
             onOpenTactical={id => { drawers.closeRight(); update(state => ({ ...state, panel: { kind: 'tactical', entryId: id, pickerFrom: null, card: played.id }, next: IDLE })); }}

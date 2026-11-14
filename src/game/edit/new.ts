@@ -24,27 +24,27 @@ export function plannedCard(round: Round, viewer: PlayerId): number | undefined 
 const empty = (): Payment => ({ planets: [], tradeGoods: 0 });
 
 /** A new tactical action on a system; one a card gives (Warfare) costs no token. */
-export function newTactical(system: Slot, fromCard?: string): Action {
+export function newTactical(system: Slot, byCard?: string): Action {
   return {
     kind: 'tactical', system, movement: [], invasion: [], production: { units: {}, payment: empty() },
-    ...(fromCard ? { free: true } : {}),
+    ...(byCard ? { free: true } : {}),
   };
 }
 
 /** Whose a new tactical action is: the owner of the card that gives it, or else the player it is being added for. */
-export const tacticalOwner = (round: Round, fromCard: string | undefined, actor: PlayerId): PlayerId =>
-  (fromCard ? round.turns.find(t => t.id === fromCard)?.player : undefined) ?? actor;
+export const tacticalOwner = (round: Round, byCard: string | undefined, actor: PlayerId): PlayerId =>
+  (byCard ? round.turns.find(t => t.id === byCard)?.player : undefined) ?? actor;
 
 /**
  * A new turn of any kind. A strategic action of the viewer starts on the card they hold and have not played this round;
  * a rival's cards are not planned, so theirs starts on none.
  */
-export function newTurn(kind: NewAction, at: NewTurnAt, options: { system?: Slot; fromCard?: string } = {}): Turn {
+export function newTurn(kind: NewAction, at: NewTurnAt, options: { system?: Slot; byCard?: string } = {}): Turn {
   const mine = at.player === at.viewer;
-  const player = kind === 'tactical' ? tacticalOwner(at.round, options.fromCard, at.player) : at.player;
+  const player = kind === 'tactical' ? tacticalOwner(at.round, options.byCard, at.player) : at.player;
   let action: Action;
   switch (kind) {
-    case 'tactical': action = newTactical(options.system ?? '', options.fromCard); break;
+    case 'tactical': action = newTactical(options.system ?? '', options.byCard); break;
     case 'strategic': {
       const card = mine ? plannedCard(at.round, at.viewer) : undefined;
       action = card === undefined ? { kind: 'strategic' } : { kind: 'strategic', card };

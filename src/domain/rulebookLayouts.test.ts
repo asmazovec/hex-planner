@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { rotateLanes } from './lanes';
 import { defaultLayout, layoutChoices, seatSlots, slotsFor, templateFor } from './mapBuilder';
 import { createGame } from '../testing/old/domain/newGame';
-import { routeDistances } from './project';
+import { routeDistances } from '../testing/old/domain/project';
 import type { Game, MapLayout } from './types';
 
 // The maps of the Prophecy of Kings rulebook: page 9 (five, seven and eight players) and page 12, the Map Appendix

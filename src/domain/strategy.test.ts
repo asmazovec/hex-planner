@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { emptyHoldings, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from '../testing/old/domain/newGame';
-import { project, stateBeforeEntry, stateAfterEntry } from './project';
+import { project, stateBeforeEntry, stateAfterEntry } from '../testing/old/domain/project';
 import { withTeMecatol } from '../testing/old/domain/mecatol';
 import { cardsHeld, costsStrategyToken, freeTokens, heldCards, homeSlot, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import { cardChange, cardCost, freshPlay, plannedCard, playOf, startsAsPrimary } from '../testing/old/domain/strategy';

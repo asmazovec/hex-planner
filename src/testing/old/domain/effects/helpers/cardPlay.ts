@@ -1,4 +1,4 @@
-import type { EffectTurn } from '../../../../../domain/effects/types';
+import type { EffectTurn } from '../types';
 import { violation } from '../../../../../domain/rules/registry';
 import playCondition from '../../../../../domain/rules/codes/playCondition';
 import { componentById } from '../../../../../domain/components';

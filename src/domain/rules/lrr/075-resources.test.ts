@@ -1,6 +1,6 @@
 /** LRR 75 Resources. Source: tirules2 rules-reference/resources.md. */
 import { describe, expect, test } from 'vitest';
-import { readyResources } from '../../project';
+import { readyResources } from '../../../testing/old/domain/project';
 import { adjust, codesOf, forecast, HOME, rulesGame, rulesPack, tactical } from '../kit';
 
 const pack = rulesPack();

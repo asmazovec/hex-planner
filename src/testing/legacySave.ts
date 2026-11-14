@@ -7,7 +7,7 @@ import type { Game, Opponent, Plan, StartHoldings } from '../domain/types';
 import { SAVE_FORMAT } from '../domain/types';
 import { legacyEntry, legacyPlayer, playerOfLegacy } from '../game/entry';
 import { nestedEntries } from './old/game/entry';
-import { GHOST_SEAT } from '../game/fromLegacy';
+import { GHOST_SEAT } from './old/game/fromLegacy';
 import { planOf, tableOf } from './old/game/fromLegacy';
 import type { SavedGame, StartEdits } from '../game/save';
 import type { Round as KernelRound } from '../game/round';

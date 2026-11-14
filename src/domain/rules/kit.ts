@@ -8,7 +8,7 @@
  */
 import { loadPack } from '../../data/loadPack';
 import { upgradeTech } from '../holdings';
-import { forgetTimelines, project, stateBeforeEntry } from '../project';
+import { forgetTimelines, project, stateBeforeEntry } from '../../testing/old/domain/project';
 import { SAVE_FORMAT, type ExpansionId, type CardEffects, type CardPlay, type DataPack, type Entry, type EntryBody, type Game, type GameState, type Phase, type TileDef, type UnitCounts, type UpgradeId, type Warning } from '../types';
 
 export const HOME = '0,0';

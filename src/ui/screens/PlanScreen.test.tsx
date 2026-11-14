@@ -11,7 +11,7 @@ vi.mock('../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../data/loadPack';
-import { project } from '../../domain/project';
+import { project } from '../../testing/old/domain/project';
 import type { Entry } from '../../domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
@@ -1301,7 +1301,6 @@ describe('leaving', () => {
     expect(document.querySelector('[data-flight-stack="cruiser"]')).toBeInTheDocument();
   });
 });
-
 
 describe('flying', () => {
   test('Fly plays the action and a press on the map finishes it, without acting as a tap', async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../testing/old/domain/newGame';
-import { stateBeforeEntry } from '../../domain/project';
+import { stateBeforeEntry } from '../../testing/old/domain/project';
 import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
 import { researchTokensGiven } from '../../testing/old/domain/replay/research';

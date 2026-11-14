@@ -1,7 +1,7 @@
 /** LRR 44 Hyperlanes. Source: tirules2 rules-reference/hyperlanes.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeReach, routeSteps } from '../../project';
+import { routeReach, routeSteps } from '../../../testing/old/domain/project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

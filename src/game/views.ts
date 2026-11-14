@@ -1,5 +1,5 @@
 /**
- * What the interface reads in place of the old per-player `GameState`: one typed read model of a player and of the table,
+ * What the interface reads in place of the old per-player state: one typed read model of a player and of the table,
  * built only from the board, the table and the data pack, through the queries. Nothing here counts a rule: the values of
  * a planet are the printed ones (what a component changes them to is `queries.planetValue`).
  */

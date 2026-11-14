@@ -10,7 +10,7 @@ vi.mock('../../../storage/db', () => ({
 
 import { loadPack } from '../../../data/loadPack';
 import { textOf } from '../../../domain/components';
-import { project } from '../../../domain/project';
+import { project } from '../../../testing/old/domain/project';
 import type { Entry, UnitCounts } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
@@ -748,7 +748,6 @@ describe('build', () => {
     expect(entries().filter(e => e.type === 'adjustment' && e.kind)).toEqual([]);
   });
 });
-
 
 describe('fix round 1', () => {
   const tactical = () => entries().find((e): e is Extract<Entry, { type: 'tactical' }> => e.type === 'tactical')!;

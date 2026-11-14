@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
 import { gameAs, playersOf } from './players';
 import { addPlayer, placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
-import { project, stateBeforeEntry } from './project';
+import { project, stateBeforeEntry } from '../testing/old/domain/project';
 import { seatSlots } from './mapBuilder';
 import type { Entry, Game } from './types';
 

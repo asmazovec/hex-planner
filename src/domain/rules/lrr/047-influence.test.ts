@@ -1,6 +1,6 @@
 /** LRR 47 Influence. Source: tirules2 rules-reference/influence.md. */
 import { describe, expect, test } from 'vitest';
-import { readyInfluence } from '../../project';
+import { readyInfluence } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
 import { adjust, codesOf, forecast, rulesGame, rulesPack, secondary } from '../kit';
 

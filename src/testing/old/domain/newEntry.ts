@@ -1,5 +1,4 @@
 import type { EntryBody, Round } from '../../../domain/types';
-import { EMPTY_PAYMENT, type NewAction } from '../../../domain/newEntry';
 import { plannedCard } from './strategy';
 
 /** A new tactical action on a system; one a card gives (Warfare) costs no token. */
@@ -30,3 +29,7 @@ export function newEntryBody(type: Exclude<NewAction, 'tactical'>, round: Round,
 /** Whose a new tactical action is: the owner of the card that gives it, or else the player it is being added for. */
 export const tacticalOwner = (round: Round, fromCard: string | undefined, actor: string | undefined): string | undefined =>
   (fromCard ? round.entries.find(e => e.id === fromCard)?.owner : actor);
+/** The bodies of new entries, by the kind of action, and whose they are: the screen only asks for one. */
+
+export type NewAction = 'tactical' | 'strategic' | 'component' | 'pass' | 'adjustment';
+export const EMPTY_PAYMENT = { planets: [], tradeGoods: 0 };

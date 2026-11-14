@@ -155,7 +155,7 @@ describe('new turns', () => {
   test('a tactical action, free from a card', () => {
     const turn = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B' });
     expect(legacyEntry(table, turn)).toEqual(body(tacticalBody('B'), 'n'));
-    const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B', fromCard: 'w' });
+    const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B', byCard: 'w' });
     expect(legacyEntry(table, free)).toEqual({ ...body(tacticalBody('B', 'w'), 'n'), fromCard: undefined });
   });
   test('the other kinds, mine and a rival', () => {

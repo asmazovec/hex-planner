@@ -13,7 +13,7 @@ const at = (panel: Panel): PickState => ({ ...START, panel });
 describe('the one slot of the panel', () => {
   test('each state shows one thing', () => {
     expect(slotOf(START, round)).toEqual({ kind: 'list' });
-    expect(slotOf(at({ kind: 'tactical', entryId: null, pickerFrom: null, fromCard: 'c' }), round)).toEqual({ kind: 'pickSystem', fromCard: 'c' });
+    expect(slotOf(at({ kind: 'tactical', entryId: null, pickerFrom: null, byCard: 'c' }), round)).toEqual({ kind: 'pickSystem', byCard: 'c' });
     expect(slotOf(at({ kind: 'tactical', entryId: 't', pickerFrom: null }), round)).toMatchObject({ kind: 'tactical', entry: { id: 't' } });
     expect(slotOf(at({ kind: 'tactical', entryId: 't', pickerFrom: '1,0' }), round)).toMatchObject({ kind: 'flight', source: '1,0', entry: { id: 't' } });
     expect(slotOf(at({ kind: 'card', entryId: 'c' }), round)).toMatchObject({ kind: 'card', entry: { id: 'c' } });

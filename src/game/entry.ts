@@ -13,8 +13,8 @@ export const legacyPlayer = (table: Table, player: PlayerId): string =>
   table.players.find(p => p.id === player)?.legacyId ?? player;
 
 /** The player an old id stands for. */
-export const playerOfLegacy = (table: Table, legacy: string): PlayerId | undefined =>
-  table.players.find(p => (p.legacyId ?? p.id) === legacy)?.id;
+export const playerOfLegacy = (table: Table, oldId: string): PlayerId | undefined =>
+  table.players.find(p => (p.legacyId ?? p.id) === oldId)?.id;
 
 /** The old entry a turn was made from, for the checks of the old code that read one. */
 export function legacyEntry(table: Table, turn: Turn): Entry {

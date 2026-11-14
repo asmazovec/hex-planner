@@ -1,7 +1,7 @@
 /** LRR 9 Anomalies. Source: tirules2 rules-reference/anomalies.md. A cruiser I moves 2. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeMove } from '../../project';
+import { routeMove } from '../../../testing/old/domain/project';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack(p => {

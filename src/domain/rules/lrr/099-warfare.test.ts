@@ -1,7 +1,7 @@
 /** LRR 99 Warfare (Strategy Card). Source: tirules2 rules-reference/warfare.md. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import { project } from '../../project';
+import { project } from '../../../testing/old/domain/project';
 import type { Entry } from '../../types';
 import { adjust, codesOf, forecast, HOME, NEAR, NO_PAYMENT, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 import { holding } from './kit-83-101';

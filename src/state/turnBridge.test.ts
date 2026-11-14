@@ -70,7 +70,7 @@ describe('the free action of a card', () => {
     const table = tableOf(game);
     const round = planOf(table, game.plans[0], pack)[0];
     const bridge = writeTurn(table, game, card, pack)!;
-    const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round }, { system: 'B', fromCard: card });
+    const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round }, { system: 'B', byCard: card });
     bridge.update({ ...bridge.turn, action: { ...(bridge.turn.action as object), nested: [free] } as never });
     const made = entries().find(e => e.type === 'tactical') as Extract<Entry, { type: 'tactical' }>;
     expect(made).toMatchObject({ ...tacticalBody('B', card), id: expect.any(String) });

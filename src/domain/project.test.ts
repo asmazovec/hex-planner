@@ -5,7 +5,7 @@ import { loadPack } from '../data/loadPack';
 import { emptyHoldings, holdingsOf, upgradesOf, upgradeTech } from './holdings';
 import { createGame } from '../testing/old/domain/newGame';
 import { slotAcross } from './route';
-import { fleetSpeed, productionCost, productionPlaces, project, readyInfluence, readyResources, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, systemsAdjacent } from './project';
+import { fleetSpeed, productionCost, productionPlaces, project, readyInfluence, readyResources, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, systemsAdjacent } from '../testing/old/domain/project';
 import { tacticalMeters } from '../testing/meters';
 import type {
   AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,

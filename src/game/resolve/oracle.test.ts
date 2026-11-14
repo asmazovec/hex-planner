@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, test } from 'vitest';
-import { marksOf, packOf, type Fixture } from './oracle';
+import { marksOf, packOf, type Fixture } from '../../testing/old/game/resolve/oracle';
 
 const fixture = JSON.parse(gunzipSync(readFileSync('src/game/resolve/__oracle__/corpus.json.gz')).toString('utf8')) as Fixture;
 

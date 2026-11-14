@@ -6,7 +6,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { holdingsOf, upgradeTech } from '../../../domain/holdings';
 import { createGame } from '../../../testing/old/domain/newGame';
-import { project } from '../../../domain/project';
+import { project } from '../../../testing/old/domain/project';
 import type { Game, GameState, UnitCounts, UnitId } from '../../../domain/types';
 import { setLanguage } from '../../../i18n';
 import type { Move, TacticalEntry } from '../tactical';

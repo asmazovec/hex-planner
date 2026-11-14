@@ -1,6 +1,6 @@
 /** LRR 86 Supernova. Source: tirules2 rules-reference/supernova.md. */
 import { describe, expect, test } from 'vitest';
-import { routeReach } from '../../project';
+import { routeReach } from '../../../testing/old/domain/project';
 import { FAR, HOME, NEAR, rulesGame, rulesPack, TARGET } from '../kit';
 import { flight, row } from './kit-83-101';
 

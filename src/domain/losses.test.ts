@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { changeMerged, mergedCounts, mergedEntry } from './losses';
 import { changeOnBoard } from '../testing/oldMerged';
 import { createGame } from '../testing/old/domain/newGame';
-import { project } from './project';
+import { project } from '../testing/old/domain/project';
 import type { AdjustmentKind, Entry, EntryBody, Game, Phase, Round, UnitId } from './types';
 
 const SLOT = '1,0';

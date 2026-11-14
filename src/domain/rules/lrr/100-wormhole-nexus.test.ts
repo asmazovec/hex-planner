@@ -1,7 +1,7 @@
 /** LRR 100 Wormhole Nexus. Source: tirules2 rules-reference/wormhole-nexus.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import { routeDistances, routeSteps } from '../../project';
+import { routeDistances, routeSteps } from '../../../testing/old/domain/project';
 import { FARTHER, HOME, rulesGame, rulesPack } from '../kit';
 import { row } from './kit-83-101';
 

@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, use, uiBench } from '../../../../ui/testing/effects';
 import { TransactionStep } from '../../../../ui/plan/editors/TransactionStep';
-import { project, stateBeforeEntry } from '../../../project';
+import { project, stateBeforeEntry } from '../../../../testing/old/domain/project';
 import type { Act, Entry, Game, Opponent } from '../../../types';
 import { bench, NEAR, quote, tactical, using } from '../kit';
 import { id } from './blackmarketdealing';

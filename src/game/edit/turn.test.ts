@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../testing/old/domain/newGame';
 import { withChoices } from '../../domain/effects/choices';
-import { stateBeforeEntry } from '../../domain/project';
+import { stateBeforeEntry } from '../../testing/old/domain/project';
 import { repaid } from '../../testing/old/domain/strategy';
 import type { Entry, Game } from '../../domain/types';
 import { legacyEntry } from '../entry';

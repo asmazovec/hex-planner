@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { project } from '../../../project';
+import { project } from '../../../../testing/old/domain/project';
 import { showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { bench, FAR, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './ghost_mech';

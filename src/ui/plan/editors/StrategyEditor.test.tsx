@@ -10,7 +10,7 @@ vi.mock('../../../storage/db', () => ({
 
 import { loadPack, strategyCards } from '../../../data/loadPack';
 import { autoPay } from '../../../testing/old/domain/payment';
-import { stateBeforeEntry } from '../../../domain/project';
+import { stateBeforeEntry } from '../../../testing/old/domain/project';
 import { CARD, type CardEntry } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
 import type { Entry, ExpansionId } from '../../../domain/types';

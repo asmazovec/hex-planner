@@ -1,5 +1,4 @@
-import type { Holdings, GameState } from '../../../domain/types';
-import { sorted, stacks } from '../../../game/compare';
+import type { Holdings, GameState, UnitCounts, Warning } from '../../../domain/types';
 
 export const holdingsOf = (h: Holdings): Record<string, unknown> => ({
   technologies: sorted(h.technologies), hand: sorted(h.hand), relics: sorted(h.relics), promissory: sorted(h.promissory),
@@ -37,3 +36,13 @@ export function normalState(state: GameState, viewer = true, claimed: string[] =
     } : {}),
   };
 }
+export const sorted = (list: readonly string[] | undefined): string[] => [...(list ?? [])].sort();
+export const stacks = (record: Record<string, UnitCounts> | undefined): Record<string, UnitCounts> =>
+  Object.fromEntries(Object.entries(record ?? {}).flatMap(([key, units]) => {
+    const kept = Object.fromEntries(Object.entries(units).filter(([, n]) => (n ?? 0) > 0));
+    return Object.keys(kept).length > 0 ? [[key, kept]] : [];
+  }));
+/** A warning as plain data, in a fixed form to sort and compare. */
+export const warningKey = (w: Warning): string =>
+  JSON.stringify([w.code, Object.entries(w.params).sort(([a], [b]) => (a < b ? -1 : 1)), w.step ?? null, w.rule ?? null, w.place ?? null, [...(w.waivedBy ?? [])].sort()]);
+export const normalWarnings = (warnings: readonly Warning[]): string[] => warnings.map(warningKey).sort();

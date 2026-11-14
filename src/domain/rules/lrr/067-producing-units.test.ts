@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from '../../holdings';
-import { productionCost } from '../../project';
+import { productionCost } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
 import type { Game } from '../../types';
 import { adjust, codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';

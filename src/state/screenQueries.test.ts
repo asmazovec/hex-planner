@@ -5,7 +5,7 @@ import { allTurns, holdingRoundsOf, mergedCountsOf, sliceOwnersOf, spendableOn, 
 import { holdingRounds } from '../domain/holdings';
 import { mergedCounts } from '../domain/losses';
 import { createGame } from '../testing/old/domain/newGame';
-import { planetStructureWarnings, readyResources } from '../domain/project';
+import { planetStructureWarnings, readyResources } from '../testing/old/domain/project';
 import { sliceOwners } from '../testing/old/domain/thundersEdge';
 import { entryUpgradeRounds } from '../domain/unitStats';
 import type { Entry, Game } from '../domain/types';

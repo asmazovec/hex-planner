@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from 'vitest';
-import { fixturePack as pack, longGame } from '../domain/replay/timelineFixture';
+import { fixturePack as pack, longGame } from '../testing/old/domain/replay/timelineFixture';
 import { savedFor } from '../testing/legacySave';
 import { forgetTimelines as forgetOld, timelineOf as oldTimelineOf } from '../testing/projection';
 import { boardAt, boardBefore, forgetTimelines, startOfSaved, timelineOf, turnsOfRound, warningsByTurn } from './projection';

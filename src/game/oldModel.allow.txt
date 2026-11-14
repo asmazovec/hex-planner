@@ -1,5 +1,3 @@
-src/domain/effects/components/promissory/shareknowledge.ts
-src/domain/effects/components/promissory/terraform.ts
 src/domain/effects/entryApply.ts
 src/domain/effects/helpers/cardPlay.ts
 src/domain/effects/points/moments.ts
@@ -7,7 +5,6 @@ src/domain/effects/points/movement.ts
 src/domain/effects/points/payment.ts
 src/domain/effects/points/rivals.ts
 src/domain/effects/registry.ts
-src/domain/effects/types.ts
 src/domain/movement.ts
 src/domain/neighbors.ts
 src/domain/payment.ts
@@ -32,12 +29,3 @@ src/domain/replay/transport.ts
 src/domain/strategy.ts
 src/domain/tactical.ts
 src/domain/types.ts
-src/game/edit/new.ts
-src/game/edit/table.ts
-src/game/edit/tacticalRead.ts
-src/game/entry.ts
-src/game/legacyViews.ts
-src/game/views.ts
-src/state/turnBridge.ts
-src/ui/screens/PlanScreen.tsx
-src/ui/screens/plan/pick.ts

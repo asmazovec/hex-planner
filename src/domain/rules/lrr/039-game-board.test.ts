@@ -1,6 +1,6 @@
 /** LRR 39 Game Board. Source: tirules2 rules-reference/game-board.md. */
 import { describe, expect, test } from 'vitest';
-import { isOnMap, systemSlots } from '../../project';
+import { isOnMap, systemSlots } from '../../../testing/old/domain/project';
 import { rulesGame, ROW } from '../kit';
 
 describe('LRR 39 Game Board', () => {

@@ -1,6 +1,6 @@
 import type { GameState } from '../../../../../domain/types';
 import { type Spent } from '../../../../../domain/effects/points/status';
-import type { EffectTurn } from '../../../../../domain/effects/types';
+import type { EffectTurn } from '../types';
 import { violation } from '../../../../../domain/rules/registry';
 import { checkPayment, applyPayment } from '../../../../../domain/replay/payment';
 

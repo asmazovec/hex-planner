@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
 import { bench, NEAR, tactical } from '../../../domain/effects/components/kit';
-import { stateBeforeEntry } from '../../../domain/project';
+import { stateBeforeEntry } from '../../../testing/old/domain/project';
 import type { Act, Game, Opponent } from '../../../domain/types';
 import { uiBench } from '../../testing/effects';
 import { TransactionStep } from './TransactionStep';

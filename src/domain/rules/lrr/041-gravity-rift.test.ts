@@ -1,6 +1,6 @@
 /** LRR 41 Gravity Rift. Source: tirules2 rules-reference/gravity-rift.md. Speeds from the base pack: a cruiser I moves 2, a cruiser II 3. */
 import { describe, expect, test } from 'vitest';
-import { routeReach } from '../../project';
+import { routeReach } from '../../../testing/old/domain/project';
 import type { UnitCounts } from '../../types';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET , tech } from '../kit';
 
