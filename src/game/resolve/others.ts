@@ -1,6 +1,7 @@
 /** The actions that are not tactical or a card: a component's action, a pass, the status phase, the agenda and a correction. */
 import { checkProduction, costOf, producerList } from '../../domain/replay/production';
-import { checkSystem } from '../../domain/replay/transport';
+import { checkSystemOf } from '../../domain/replay/transport';
+import { stacksOn } from '../queries';
 import type { Entry } from '../../domain/types';
 import { begin, checkView, emit, warn, type Ctx } from './context';
 import { correction } from './correction';
@@ -22,8 +23,7 @@ function componentProduction(ctx: Ctx, entry: Of<'component'>): void {
   v = checkView(ctx);
   const cost = costOf(v.game, v.state, made.units, ctx.pack, producing, entry);
   shortOf(ctx, 'resources', cost, checkedPay(ctx, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources'));
-  v = checkView(ctx);
-  warn(ctx, checkSystem(v.game, v.state, made.systemId, ctx.pack));
+  warn(ctx, checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), made.systemId));
 }
 
 /** A component's action: the component is played (held, exhausted, removed), and what it produces is built. */

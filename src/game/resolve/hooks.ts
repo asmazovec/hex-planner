@@ -6,25 +6,23 @@
  * per-player state is not built here: where a pool warning needs it (tokens gained), it is read from the board once.
  */
 import { speaksIn } from '../../domain/effects/holder';
-import { effectOf, holderOf, holderRuleOf } from '../../domain/effects/registry';
+import { effectOf, holderRuleOf } from '../../domain/effects/registry';
 import { productionCost } from '../../domain/unitStats';
 import { checkPoolChange } from '../../domain/replay/status';
-import { tileAt } from '../../domain/replay/board';
 import { researchTechnologies } from '../../domain/replay/research';
-import { capacity, checkSystem } from '../../domain/replay/transport';
+import { checkSystemOf } from '../../domain/replay/transport';
 import { applyComponentProduction } from '../../domain/replay/production';
 import { buildStructures } from '../../domain/replay/structures';
-import { adjacentTo, wormholesOf } from '../../domain/movement';
 import { commodityValueOf } from '../../domain/replay/cards/trade';
 import { violation } from '../../domain/rules/registry';
 import { noteBase } from '../../domain/components';
 import type { Entry, Warning } from '../../domain/types';
 import { readerOf, type Reader } from '../abilities/facade';
-import { appliedOn, inForce } from '../abilities/registry';
-import { areNeighbours, planetValue, reinforcementsOf, tradeGoodWorth } from '../queries';
+import { appliedOn, holderIn, inForce } from '../abilities/registry';
+import { areNeighbours, planetValue, reinforcementsOf, stacksOn, tradeGoodWorth } from '../queries';
 import { spentOnObjectives, type Spent } from '../../domain/effects/points/status';
 import type { EffectTurn } from '../../domain/effects/types';
-import { planetsIn } from '../space';
+import { adjacentSlots, planetsIn, tileKindIn, wormholesIn } from '../space';
 import { homeOf } from '../setup';
 import type { AbilityContext, HookKind, HookPayloads } from '../abilities/types';
 import { applyAll, applyChecked } from '../apply';
@@ -145,15 +143,15 @@ export function contextOf(
       found.forEach(warn);
       return legacyEvents(table, pack, before, work, player);
     },
-    systemWarnings: slot => { const v = viewFor(table, at, pack, player); return checkSystem(v.game, v.state, slot, pack); },
-    capacityOf: units => { const v = viewFor(table, at, pack, player); const { capacity: room, load } = capacity(v.game, units, holderOf(v.game, v.state, v.shared), pack); return { capacity: room, load }; },
+    systemWarnings: slot => checkSystemOf(stacksOn(table, at, pack, player), slot),
+    capacityOf: units => { const { capacity: room, load } = stacksOn(table, at, pack, player).capacityOf(units, null); return { capacity: room, load }; },
     warned: options.warned ?? [],
     revise: (found, to) => { options.revise?.(found, to); },
-    unitCost: units => { const v = viewFor(table, at, pack, player); return productionCost(units, v.game.faction, holderOf(v.game, v.state, v.shared), pack); },
+    unitCost: units => productionCost(units, table.players.find(p => p.id === player)?.faction ?? '', holderIn(table, at, player), pack),
     planetValue: (planet, kind) => planetValue(table, at, pack, player, planet, kind),
-    tileKind: slot => { const v = viewFor(table, at, pack, player); return tileAt(v.game, slot, pack)?.kind; },
-    wormholes: slot => { const v = viewFor(table, at, pack, player); return wormholesOf(v.game, pack, slot, v.shared.wormholeTokens); },
-    adjacent: slot => { const v = viewFor(table, at, pack, player); return adjacentTo(v.game, slot, pack); },
+    tileKind: slot => tileKindIn(table, at, pack, slot),
+    wormholes: slot => wormholesIn(table, at, pack, slot),
+    adjacent: slot => adjacentSlots(table, at, slot, pack),
     warn,
   };
 }

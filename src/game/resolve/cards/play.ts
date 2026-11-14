@@ -7,7 +7,8 @@ import { holderOf } from '../../../domain/effects/registry';
 import { checkProduction } from '../../../domain/replay/production';
 import { researchTokensGiven } from '../../../domain/replay/research';
 import { checkPoolChange, checkTokensGiven } from '../../../domain/replay/status';
-import { checkSystem } from '../../../domain/replay/transport';
+import { checkSystemOf } from '../../../domain/replay/transport';
+import { stacksOn } from '../../queries';
 import { violation } from '../../../domain/rules/registry';
 import { CARD, cardCost, cardsHeld, freeTokens, strategyTokensOwed, type CardEntry } from '../../../domain/strategy';
 import { checkStationStructures } from '../../../domain/thundersEdge';
@@ -113,8 +114,7 @@ export function playCard(ctx: Ctx): void {
     v = checkView(ctx);
     warn(ctx, checkProduction(v.game, v.state, systemId, units, ctx.pack, ground, source, 'card', entry));
     place(ctx, systemId, units, ground);
-    v = checkView(ctx);
-    warn(ctx, checkSystem(v.game, v.state, systemId, ctx.pack));
+    warn(ctx, checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), systemId));
   }
 }
 

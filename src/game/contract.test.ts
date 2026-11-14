@@ -128,7 +128,7 @@ describe('abilities', () => {
     const files = import.meta.glob<string>(['./queries.ts', './resolve/*.ts'], { query: '?raw', import: 'default', eager: true });
     for (const name of BOARD_ONLY) {
       expect(files[name], `${name} is missing`).toBeDefined();
-      expect(files[name], `${name} reads the old views`).not.toMatch(/legacyViews|viewFor|legacyState|checkView|fromLegacy/);
+      expect(files[name], `${name} reads the old views`).not.toMatch(/legacyViews|viewFor|legacyState|checkView|fromLegacy/);
     }
   });
 });

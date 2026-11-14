@@ -7,7 +7,7 @@ import {
   adjacentTo, boardSlots, closedToRoute, endsRoute, fullPath, holdsShips, joined, passageBarredOf, routeDistances, routeReach, routeSteps,
   type Blockers, type Link, type MoveView,
 } from '../domain/movement';
-import { planetsOf as planetsOfSystem, type MapSource } from '../domain/replay/board';
+import { planetsOf as planetsOfSystem, tileAt, type MapSource } from '../domain/replay/board';
 import type { DataPack } from '../domain/types';
 import { legacyViews, SOURCES } from './legacyViews';
 import type { Board, PlayerId, Slot, Table } from './types';
@@ -38,6 +38,13 @@ export function mapSource(table: Table, board: Board): MapSource {
 
 /** The planets of a system, the Thunder's Edge planet in the system the expedition put it in. */
 export const planetsIn = (table: Table, board: Board, pack: DataPack, slot: Slot): string[] => planetsOfSystem(mapSource(table, board), slot, pack);
+
+/** The kind of tile a slot holds; none for a slot with no tile. */
+export const tileKindIn = (table: Table, board: Board, pack: DataPack, slot: Slot): string | undefined => tileAt(mapSource(table, board), slot, pack)?.kind;
+
+/** The wormholes a system holds: its tile's and its tokens'. */
+export const wormholesIn = (table: Table, board: Board, pack: DataPack, slot: Slot): string[] =>
+  [...new Set([...(tileAt(mapSource(table, board), slot, pack)?.wormholes ?? []), ...(board.common.wormholeTokens[slot] ?? [])])];
 
 /** Every slot a ship can be in: the map, the Fracture and an off-map home. */
 export const slotsOf = (table: Table, board: Board, pack: DataPack): Slot[] => boardSlots(mapSource(table, board), pack);
