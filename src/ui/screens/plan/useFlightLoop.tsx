@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { timelineOf } from '../../../state/projection';
-import { findTurn } from '../../../game/edit/plan';
-import type { Round } from '../../../game/round';
 import type { Turn } from '../../../game/actions';
-import { playerOfKey } from '../../../game/keys';
 import type { SavedGame } from '../../../game/save';
-import type { TacticalEntry } from '../../../domain/tactical';
+import { isTacticalTurn, type TacticalTurn } from '../../../game/screenQueries';
 import { atOf, tacticalSystems } from '../../../game/edit/tacticalRead';
-import type { DataPack, Entry } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
 import { activatedBoard, flies, inFlight as boardInFlight } from '../../../game/flight';
 import { mapSource } from '../../../game/space';
 import type { Board } from '../../../game/types';
@@ -30,8 +27,6 @@ type Filter = 'now' | 'forecast';
  */
 interface Flight { entryId: string; run: number; saved: SavedGame; passed: number[]; filter: Filter; /** A flight after another of the same reading: only then is the step back seen. */ repeat: boolean; departed?: boolean; landed?: boolean }
 
-/** The turn of an entry as the plan holds it: what the flight reads its moves from. */
-const turnOfEntry = (rounds: Round[], entry: Entry): Turn => findTurn(rounds, entry.id)!.turn;
 
 /** The pause before a shown action first flies, and between its flights. */
 const LOOP_START_MS = 380;
@@ -48,7 +43,7 @@ export interface FlightLoopInput {
   boards: Boards;
   /** The entry being read, and how many of its flights have started. */
   shown: Shown | null;
-  shownEntry: Entry | undefined;
+  shownEntry: Turn | undefined;
   /** One more flight of the entry being read has started. */
   onPlayed: () => void;
 }
@@ -67,8 +62,7 @@ export function useFlightLoop({ saved, planId, pack, boards, shown, shownEntry, 
   const flying = flight?.saved === saved ? flight : null;
 
   // Nothing to show in a flight, nothing to repeat: an action with no units in its moves, for one.
-  const loops = shownEntry?.type === 'tactical' && playsFlights() && saved !== null && planId !== undefined
-    && flies(turnOfEntry(timelineOf(saved, planId, 'forecast', pack).rounds, shownEntry));
+  const loops = isTacticalTurn(shownEntry) && playsFlights() && saved !== null && planId !== undefined && flies(shownEntry);
 
   const start = useCallback((entryId: string, filter: Filter = 'forecast', repeat = false) => {
     const current = useGame.getState().saved;
@@ -106,19 +100,19 @@ export function useFlightLoop({ saved, planId, pack, boards, shown, shownEntry, 
    * in the plan would blink in and out on every round. `shownState` is what the map shows otherwise; the arrows give the
    * flight its lines.
    */
-  const scene = (tacticals: TacticalEntry[], shownBoard: Board, arrows: Arrow[]): { mapBoard: Board; layer: ReactNode } => {
+  const scene = (tacticals: TacticalTurn[], shownBoard: Board, arrows: Arrow[]): { mapBoard: Board; layer: ReactNode } => {
     const flyingEntry = flying ? tacticals.find(item => item.id === flying.entryId) : undefined;
     if (!saved || !planId) return { mapBoard: shownBoard, layer: null };
     const beforeFlight = flying && flyingEntry ? boards.boardOf(flyingEntry.id, flying.filter) : null;
-    const { table, rounds } = timelineOf(saved, planId, flying?.filter ?? 'forecast', pack);
+    const { table } = timelineOf(saved, planId, flying?.filter ?? 'forecast', pack);
     const inFlight = airborne && flyingEntry && beforeFlight
-      ? (waiting ? activatedBoard(beforeFlight, turnOfEntry(rounds, flyingEntry)) : boardInFlight(beforeFlight, turnOfEntry(rounds, flyingEntry), flying.passed))
+      ? (waiting ? activatedBoard(beforeFlight, flyingEntry) : boardInFlight(beforeFlight, flyingEntry, flying.passed))
       : null;
     const mapBoard = inFlight ?? restingBoard ?? shownBoard;
     const layer = flying && flyingEntry && beforeFlight && (
       <FlightLayer
-        key={flying.run} colour={playerColour(table.players.find(p => p.id === (playerOfKey(table, flyingEntry?.owner ?? 'me') ?? table.viewer))?.color ?? 1)} passed={flying.passed}
-        routes={flightRoutes({ map: mapSource(table, shownBoard), pack }, turnOfEntry(rounds, flyingEntry), from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
+        key={flying.run} colour={playerColour(table.players.find(p => p.id === flyingEntry.player)?.color ?? 1)} passed={flying.passed}
+        routes={flightRoutes({ map: mapSource(table, shownBoard), pack }, flyingEntry, from => arrows.find(a => a.key === `${flyingEntry.id}:${from}`)?.shape)}
         onPass={move => setFlight(f => f && { ...f, passed: [...f.passed, move] })}
         holdMs={flying.repeat ? DEPART_HOLD_MS : FIRST_HOLD_MS}
         onDepart={() => setFlight(f => f && { ...f, departed: true })}
@@ -142,7 +136,7 @@ export function useFlightLoop({ saved, planId, pack, boards, shown, shownEntry, 
     () => {
       if (!loopingEntry || !saved || !planId) return null;
       const kernel = timelineOf(saved, planId, 'forecast', pack);
-      return new Set(tacticalSystems(atOf(kernel.table, kernel.end, pack), turnOfEntry(kernel.rounds, loopingEntry)));
+      return isTacticalTurn(loopingEntry) ? new Set(tacticalSystems(atOf(kernel.table, kernel.end, pack), loopingEntry)) : null;
     },
     [loopingEntry, saved, planId, pack],
   );

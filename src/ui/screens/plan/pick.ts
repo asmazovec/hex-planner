@@ -4,7 +4,9 @@
  * the panel, a card's pick to its card, and a state that undo left without its entry falls back on its own (`resolvePick`).
  */
 import type { CardMapPick } from '../../../game/planQueries';
-import type { Act, Entry, Round } from '../../../domain/types';
+import type { Expedition, Transaction, Turn } from '../../../game/actions';
+import type { Round } from '../../../game/round';
+import { allTurns, isTacticalTurn, type TacticalTurn } from '../../../game/screenQueries';
 import type { StageMode } from '../../map/stage/HexStage';
 
 /** The entry being read in the list, and how many of its flights have started. */
@@ -59,27 +61,29 @@ export const IDLE: NextTap = { kind: 'idle' };
 export const LIST: Panel = { kind: 'list', shown: null };
 export const START: PickState = { panel: LIST, next: IDLE, stage: null, openId: null };
 
-type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
-type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
-type AdjustmentEntry = Extract<Entry, { type: 'adjustment' }>;
-
-const find = (round: Round | undefined, id: string | null | undefined) => (id ? round?.entries.find(e => e.id === id) : undefined);
-export const tacticalIn = (round: Round | undefined, id: string | null | undefined) => {
+/** The turn of the round with this id, an action nested in a card too. */
+export const find = (round: Round | undefined, id: string | null | undefined): Turn | undefined =>
+  (id && round ? allTurns(round).find(turn => turn.id === id) : undefined);
+export const tacticalIn = (round: Round | undefined, id: string | null | undefined): TacticalTurn | undefined => {
   const found = find(round, id);
-  return found?.type === 'tactical' ? found as TacticalEntry : undefined;
+  return isTacticalTurn(found) ? found : undefined;
 };
-export const cardIn = (round: Round | undefined, id: string | null | undefined) => {
+export const cardIn = (round: Round | undefined, id: string | null | undefined): Turn | undefined => {
   const found = find(round, id);
-  return found?.type === 'strategic' || found?.type === 'secondary' ? found as CardEntry : undefined;
+  return found?.action.kind === 'strategic' || found?.action.kind === 'secondary' ? found : undefined;
 };
-export const turnIn = (round: Round | undefined, id: string | null | undefined) => {
+export const turnIn = (round: Round | undefined, id: string | null | undefined): Turn | undefined => {
   const found = find(round, id);
-  return found?.type === 'component' ? found as Extract<Entry, { type: 'component' }> : undefined;
+  return found?.action.kind === 'component' ? found : undefined;
 };
-export const adjustmentIn = (round: Round | undefined, id: string | null | undefined) => {
+/** A manual correction or an agenda: what the plan calls an adjustment. */
+export const adjustmentIn = (round: Round | undefined, id: string | null | undefined): Turn | undefined => {
   const found = find(round, id);
-  return found?.type === 'adjustment' ? found as AdjustmentEntry : undefined;
+  return found?.action.kind === 'correction' || found?.action.kind === 'agenda' ? found : undefined;
 };
+/** The card turn whose nested action this is (Warfare's free action); none for a turn of its own. */
+export const parentIn = (round: Round | undefined, id: string | null | undefined): Turn | undefined =>
+  (id && round ? round.turns.find(turn => turn.action.kind === 'strategic' && turn.action.nested?.some(n => n.id === id)) : undefined);
 
 /** Where an editor goes back to: the card it was opened from, or the list. */
 export const backFrom = (panel: Panel): Panel => (panel.kind === 'tactical' && panel.card ? { kind: 'card', entryId: panel.card } : LIST);
@@ -93,12 +97,12 @@ export function resolvePick(state: PickState, round: Round | undefined): PickSta
   if (panel.kind === 'tactical' && panel.entryId !== null && !tacticalIn(round, panel.entryId)) panel = backFrom(panel);
   if (panel.kind === 'card' && !cardIn(round, panel.entryId)) panel = LIST;
   if (panel.kind === 'adjustment' && !adjustmentIn(round, panel.entryId)) panel = LIST;
-  if (panel.kind === 'turn' && !['component', 'pass'].includes(find(round, panel.entryId)?.type ?? '')) panel = LIST;
+  if (panel.kind === 'turn' && !['component', 'pass'].includes(find(round, panel.entryId)?.action.kind ?? '')) panel = LIST;
   if (panel.kind === 'act') {
     const host = find(round, panel.entryId);
     // An act undo took away returns to where it was opened from; with its turn gone, to the list.
     if (!host) panel = LIST;
-    else if (!('acts' in host && host.acts?.[panel.index])) panel = panel.back;
+    else if (!host.acts[panel.index]) panel = panel.back;
   }
   if (panel.kind === 'list' && panel.shown && round && !find(round, panel.shown.id)) panel = LIST;
   const { next } = state;
@@ -142,12 +146,12 @@ export function hintKey(state: PickState): string | null {
 export type Slot =
   | { kind: 'list' }
   | { kind: 'pickSystem'; fromCard?: string }
-  | { kind: 'tactical'; entry: TacticalEntry }
-  | { kind: 'flight'; entry: TacticalEntry; source: string }
-  | { kind: 'card'; entry: CardEntry }
-  | { kind: 'adjustment'; entry: AdjustmentEntry }
-  | { kind: 'turn'; entry: Extract<Entry, { type: 'component' | 'pass' }> }
-  | { kind: 'act'; entry: Entry; index: number; act: Act; back: Panel };
+  | { kind: 'tactical'; entry: TacticalTurn }
+  | { kind: 'flight'; entry: TacticalTurn; source: string }
+  | { kind: 'card'; entry: Turn }
+  | { kind: 'adjustment'; entry: Turn }
+  | { kind: 'turn'; entry: Turn }
+  | { kind: 'act'; entry: Turn; index: number; act: Transaction | Expedition; back: Panel };
 
 /** The slot of a resolved state: an editor whose entry is gone shows the list. */
 export function slotOf({ panel }: PickState, round: Round | undefined): Slot {
@@ -170,11 +174,11 @@ export function slotOf({ panel }: PickState, round: Round | undefined): Slot {
     }
     case 'turn': {
       const entry = find(round, panel.entryId);
-      return entry?.type === 'component' || entry?.type === 'pass' ? { kind: 'turn', entry } : { kind: 'list' };
+      return entry?.action.kind === 'component' || entry?.action.kind === 'pass' ? { kind: 'turn', entry } : { kind: 'list' };
     }
     case 'act': {
       const entry = find(round, panel.entryId);
-      const act = entry && 'acts' in entry ? entry.acts?.[panel.index] : undefined;
+      const act = entry?.acts[panel.index];
       return entry && act ? { kind: 'act', entry, index: panel.index, act, back: panel.back } : { kind: 'list' };
     }
   }

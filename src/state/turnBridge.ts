@@ -12,8 +12,7 @@ import { withoutEmptySources } from '../game/edit/tactical';
 import { atOf } from '../game/edit/tacticalRead';
 import type { SavedGame } from '../game/save';
 import { timelineOf } from './projection';
-import { playerOfLegacy } from '../game/entry';
-import type { Table } from '../game/types';
+import type { PlayerId, Table } from '../game/types';
 import type { DataPack, EntryStatus, Phase } from '../domain/types';
 import { loadPack } from '../data/loadPack';
 import { useGame } from './gameStore';
@@ -39,9 +38,9 @@ export function useTurn(...[, turnId]: [table: Table, turnId: string, pack: Data
   return useMemo(() => (saved ? writeSaved(saved, turnId) : undefined), [saved, turnId]);
 }
 
-/** A new tactical action on a system: `owner` is the old key of whose it is, `fromCard` the card that gives it (Warfare, nested in it). Returns its id. */
-export function addTactical(table: Table, roundNumber: number, system: string, owner: string | undefined, fromCard: string | undefined): string {
-  const player = (owner === undefined ? undefined : playerOfLegacy(table, owner)) ?? table.viewer;
+/** A new tactical action on a system: `owner` is whose it is (mine when none), `fromCard` the card that gives it (Warfare, nested in it). Returns its id. */
+export function addTactical(table: Table, roundNumber: number, system: string, owner: PlayerId | undefined, fromCard: string | undefined): string {
+  const player = owner ?? table.viewer;
   const round = { number: roundNumber, strategyCard: null, backupCard: null, held: [], turns: [] };
   const turn = newTurn('tactical', { id: '', player, viewer: player, round }, { system, ...(fromCard ? { fromCard } : {}) });
   return useGame.getState().addTurn(roundNumber, turn, fromCard);
@@ -60,13 +59,13 @@ export function pruneEmptySources(entryId: string | undefined): void {
 
 /**
  * A new turn of a kind other than a tactical action, in a round of the open plan: its body is the kernel's `newTurn`
- * (a strategy card starts on the card the viewer holds and has not played). `owner` is the old key of whose it is.
+ * (a strategy card starts on the card the viewer holds and has not played). `owner` is whose it is (mine when none).
  * Returns its id.
  */
-export function addTurn(table: Table, roundNumber: number, kind: Exclude<NewAction, 'tactical'>, owner: string | undefined, phase?: Phase): string {
+export function addTurn(table: Table, roundNumber: number, kind: Exclude<NewAction, 'tactical'>, owner: PlayerId | undefined, phase?: Phase): string {
   const store = useGame.getState();
   const round = roundsOf(store.saved!).find(r => r.number === roundNumber);
-  const player = (owner === undefined ? undefined : playerOfLegacy(table, owner)) ?? table.viewer;
+  const player = owner ?? table.viewer;
   const turn = newTurn(kind, { id: '', player, viewer: table.viewer, round: round ?? { number: roundNumber, strategyCard: null, backupCard: null, held: [], turns: [] }, ...(phase ? { phase } : {}) });
   return store.addTurn(roundNumber, turn);
 }

@@ -7,7 +7,7 @@ import { standing } from '../../domain/project';
 import type { Turn } from '../../game/actions';
 import { turnNumbers } from '../../game/numbering';
 import { mapSource } from '../../game/space';
-import type { DataPack, Entry, Phase, Round, Warning } from '../../domain/types';
+import type { DataPack, Phase, Warning } from '../../domain/types';
 import { addStatusTurn, moveTurn, removeTurn, setStatus } from '../../state/turnBridge';
 import { useReorderDrag } from '../common/useReorderDrag';
 import { shortName } from '../players/names';
@@ -30,9 +30,9 @@ export interface EntryListProps {
   pack: DataPack;
   /** The table and the board just before an entry, as the kernel keeps them. */
   viewOf: (entryId: string) => KernelView;
-  /** The round of the open plan: the entries the callbacks are about. */
-  round: Round;
-  /** The same round as the kernel plays it: its turns are the rows. */
+  /** The number of the round of the open plan. */
+  roundNo: number;
+  /** The round as the kernel plays it: its turns are the rows. */
   turns: readonly Turn[];
   warnings: Record<string, Warning[]>;
   /** The table and the board at the end of the round, as the forecast has it: the points a status turn brings are added to them. */
@@ -40,13 +40,13 @@ export interface EntryListProps {
   /** The entry whose fields are shown. */
   openId: string | null;
   /** The pencil: opens the entry's editor. */
-  onOpen: (entry: Entry) => void;
+  onOpen: (entry: Turn) => void;
   /** The entry being read: its steps stand under its row. */
   shownId?: string | null;
   /** A tap on the row shows the entry, a second tap closes it. */
-  onShow?: (entry: Entry) => void;
+  onShow?: (entry: Turn) => void;
   /** The entry was just marked as done. */
-  onDone?: (entry: Entry) => void;
+  onDone?: (entry: Turn) => void;
   /** The status entry was added; it opens for its tokens and points. */
   onStatusAdded?: (id: string) => void;
   /** Adds an agenda that was resolved to the agenda phase and opens it. */
@@ -109,7 +109,7 @@ function OrderHex({ number, label }: { number: number; label: string }) {
 
 /** A round's four phases, always shown. Entries move by the handle within a phase, get marked done or deleted. */
 export function EntryList({
-  pack, viewOf, round, turns, warnings, end, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
+  pack, viewOf, roundNo, turns, warnings, end, openId, onOpen, shownId = null, onShow, onDone, onStatusAdded, onAddAgenda, strategy, addAction,
 }: EntryListProps) {
   const { t } = useTranslation();
   const listRef = useRef<HTMLDivElement>(null);
@@ -118,17 +118,16 @@ export function EntryList({
     axis: 'y',
     element: id => listRef.current?.querySelector(`[data-entry-id="${id}"]`),
     siblings: id => {
-      const phase = round.entries.find(e => e.id === id)?.phase;
-      return round.entries.filter(e => e.phase === phase).map(e => e.id);
+      const phase = turns.find(e => e.id === id)?.phase ?? 'action';
+      return turns.filter(e => (e.phase ?? 'action') === phase).map(e => e.id);
     },
-    exists: id => round.entries.some(e => e.id === id),
+    exists: id => turns.some(e => e.id === id),
     onDrop: (id, toIndex) => {
-      const phase = round.entries.find(e => e.id === id)?.phase;
-      if (phase) moveTurn(id, phase, toIndex);
+      const found = turns.find(e => e.id === id);
+      if (found) moveTurn(id, found.phase ?? 'action', toIndex);
     },
   });
   const numbers = turnNumbers(turns);
-  const entryOf = (id: string): Entry | undefined => round.entries.find(e => e.id === id);
 
   return (
     <div className="plan-entries" ref={listRef}>
@@ -162,7 +161,7 @@ export function EntryList({
                     <div className="entry-main">
                       {movable && <button type="button" className="entry-handle" aria-label={t('plan.entries.drag')} {...drag.handlers(entry.id)}><RowIcon name="grip" /></button>}
                       {/* The number is part of the name: one button, one background under the pointer. */}
-                      <button type="button" className="entry-label" aria-label={label} aria-expanded={entry.action.kind === 'pass' ? undefined : shown} onClick={() => onShow?.(entryOf(entry.id)!)}>
+                      <button type="button" className="entry-label" aria-label={label} aria-expanded={entry.action.kind === 'pass' ? undefined : shown} onClick={() => onShow?.(entry)}>
                         {number !== undefined && <OrderHex number={number} label={t('plan.entries.number', { n: number })} />}
                         <span className="entry-name">
                           <span className="entry-title">{label}</span>
@@ -170,14 +169,14 @@ export function EntryList({
                           {actLines(entry, view, pack, t).map(line => <small key={line} className="entry-brief entry-act">{line}</small>)}
                         </span>
                       </button>
-                      <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entryOf(entry.id)!)}><RowIcon name="edit" /></button>
+                      <button type="button" className="icon-button" aria-label={t('plan.entries.edit', { name: label })} onClick={() => onOpen(entry)}><RowIcon name="edit" /></button>
                       <label className="icon-button entry-check">
                         <span className="visually-hidden">{t('plan.entries.done')}</span>
                         <input
                           type="checkbox" checked={entry.status === 'done'}
                           onChange={e => {
                             setStatus(entry.id, e.target.checked ? 'done' : 'planned');
-                            if (e.target.checked) onDone?.(entryOf(entry.id)!);
+                            if (e.target.checked) onDone?.(entry);
                           }}
                         />
                         <RowIcon name="done" />
@@ -199,7 +198,7 @@ export function EntryList({
             </ul>
             {phase === 'action' && addAction && <div className="phase-add">{addAction}</div>}
             {phase === 'status' && !inPhase.some(e => e.action.kind === 'status') && (
-              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(round.number))}>{t('plan.entries.statusTokens')}</button>
+              <button type="button" onClick={() => onStatusAdded?.(addStatusTurn(roundNo))}>{t('plan.entries.statusTokens')}</button>
             )}
             {/* Each agenda of the phase is an entry of its own: the button stays for the next one. */}
             {phase === 'agenda' && onAddAgenda && <button type="button" onClick={onAddAgenda}>{t('plan.agenda.add')}</button>}

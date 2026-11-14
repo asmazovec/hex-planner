@@ -10,6 +10,7 @@ import { setPlayerFaction } from '../domain/players';
 import { cardTargets } from '../domain/replay/cards/targets';
 import { productionDue } from '../domain/replay/production';
 import type { Entry } from '../domain/types';
+import type { Turn } from './actions';
 import { legacyKey, legacyState, tableOf, turnOf } from './fromLegacy';
 import { playerOfKey } from './keys';
 import {
@@ -101,7 +102,8 @@ describe('the map', () => {
       for (const type of ['strategic', 'secondary'] as const) {
         const e = { id: 'c', phase: 'action', status: 'planned', type, card } as Entry as Extract<Entry, { type: 'strategic' | 'secondary' }>;
         for (const pick of ['system', 'build', 'dock'] as const) {
-          expect(cardTargetsOn(table, board, board, pack, 'p1', e, pick).sort(), `${type} ${card} ${pick}`)
+          const turn: Turn = { id: 'c', player: 'p1', status: 'planned', action: type === 'strategic' ? { kind: 'strategic', card } : { kind: 'secondary', card }, acts: [], used: [] };
+          expect(cardTargetsOn(table, board, board, pack, 'p1', turn, pick).sort(), `${type} ${card} ${pick}`)
             .toEqual(cardTargets(game, pack, e, pick, old, old).sort());
         }
       }

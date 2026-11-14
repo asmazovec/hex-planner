@@ -20,7 +20,7 @@ export function listOf(game: Game, pack: DataPack, roundIndex = 0, warnings: Rec
   const line = timelineOf(game, game.plans[0], 'forecast', pack);
   const round = game.plans[0].rounds[roundIndex];
   return {
-    pack, viewOf: (id: string) => kernelViewOf(game, pack, id), round, warnings,
+    pack, viewOf: (id: string) => kernelViewOf(game, pack, id), roundNo: round.number, warnings,
     turns: line.kernel.rounds.find(r => r.number === round.number)?.turns ?? [],
     end: { table: line.kernel.table, board: boardAtRound(line, round.number) },
   };

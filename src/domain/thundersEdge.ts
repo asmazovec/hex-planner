@@ -1,6 +1,6 @@
 import { clockwiseAngle, hexDistance, seatSlots, slotsFor } from './mapBuilder';
 import { slotKeyOf } from './layouts';
-import { isOnMap, isStation, planetsOf, tileIdOf } from './replay/board';
+import { isOnMap, isStation, planetsOf, tileIdOf, type MapSource } from './replay/board';
 import { othersIn } from './replay/production';
 import { violation } from './rules/registry';
 import { withSlotsMoved } from './slotRename';
@@ -125,7 +125,7 @@ export function sliceOwners(game: Game, plan?: Plan): SliceOwners {
 }
 
 /** Whether Thunder's Edge can go into the system of a map slot (see `validThundersEdgeSystem`). */
-export function validThundersEdgeSlot(game: Game, slot: string, pack: DataPack): boolean {
+export function validThundersEdgeSlot(game: MapSource, slot: string, pack: DataPack): boolean {
   const tile = isOnMap(game, slot) ? pack.tiles[tileIdOf(game, slot)] : undefined;
   return tile !== undefined && validThundersEdgeSystem(tile);
 }

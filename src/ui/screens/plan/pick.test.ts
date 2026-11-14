@@ -1,11 +1,13 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Round } from '../../../domain/types';
+import type { Turn } from '../../../game/actions';
+import type { Round } from '../../../game/round';
 import { LIST, resolvePick, slotOf, START, type Panel, type PickState } from './pick';
 
-const tactical = { id: 't', type: 'tactical', status: 'planned', phase: 'action', systemId: '0,1', moves: [], landings: [], production: {}, payment: { planets: [], tradeGoods: 0 } } as unknown as Entry;
-const card = { id: 'c', type: 'strategic', status: 'planned', phase: 'action', card: 1 } as unknown as Entry;
-const adjustment = { id: 'x', type: 'adjustment', status: 'planned', phase: 'action', label: '', delta: {} } as unknown as Entry;
-const round = { number: 1, entries: [tactical, card, adjustment] } as unknown as Round;
+const turn = (id: string, action: Turn['action']): Turn => ({ id, player: 'p1', status: 'planned', phase: 'action', action, acts: [], used: [] });
+const tactical = turn('t', { kind: 'tactical', system: '0,1', movement: [], invasion: [] });
+const card = turn('c', { kind: 'strategic', card: 1 });
+const adjustment = turn('x', { kind: 'correction', label: '', delta: {} });
+const round: Round = { number: 1, strategyCard: null, backupCard: null, held: [], turns: [tactical, card, adjustment] };
 const at = (panel: Panel): PickState => ({ ...START, panel });
 
 describe('the one slot of the panel', () => {
@@ -26,8 +28,8 @@ describe('the one slot of the panel', () => {
 });
 
 test('a turn editor or an act step whose entry or act undo took away falls back: the act to where it came from, the turn to the list', () => {
-  const withAct = { ...card, acts: [{ kind: 'transaction', with: 'o1', give: {}, get: {} }] } as unknown as Entry;
-  const turnRound = { number: 1, entries: [withAct] } as unknown as Round;
+  const withAct: Turn = { ...card, acts: [{ kind: 'transaction', with: 'o1', give: {}, get: {} }] };
+  const turnRound: Round = { ...round, turns: [withAct] };
   const back: Panel = { kind: 'card', entryId: 'c' };
   expect(resolvePick(at({ kind: 'act', entryId: 'c', index: 0, back }), turnRound).panel).toMatchObject({ kind: 'act' });
   expect(resolvePick(at({ kind: 'act', entryId: 'c', index: 1, back }), turnRound).panel).toEqual(back);

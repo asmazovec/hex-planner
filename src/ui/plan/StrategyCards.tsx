@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { strategyCards } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
 import { cardsHeld } from '../../domain/strategy';
-import type { ExpansionId, Round } from '../../domain/types';
+import type { ExpansionId } from '../../domain/types';
+import type { Round } from '../../game/round';
 import { useGame } from '../../state/gameStore';
 import { usePack } from '../common/usePack';
 import { SectionTitle } from '../primitives/SectionTitle';
@@ -12,7 +13,7 @@ import { CardGrid } from './blocks/CardGrid';
 export interface StrategyCardsProps {
   expansions: ExpansionId[];
   playerCount: number;
-  round: Round;
+  round: Pick<Round, 'number' | 'strategyCard' | 'backupCard'>;
 }
 
 /**

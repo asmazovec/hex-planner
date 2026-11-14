@@ -106,8 +106,9 @@ export type { CardMapPick };
 
 /** The systems a card's effect can be aimed at on the map: `before` is the board just before the card, `latest` the one the map shows. */
 export function cardTargetsOn(
-  table: Table, before: Board, latest: Board, pack: DataPack, player: PlayerId, entry: Extract<Entry, { type: 'strategic' | 'secondary' }>, pick: CardMapPick,
+  table: Table, before: Board, latest: Board, pack: DataPack, player: PlayerId, turn: Turn, pick: CardMapPick,
 ): Slot[] {
+  const entry = legacyEntry(table, turn) as Extract<Entry, { type: 'strategic' | 'secondary' }>;
   return cardTargetsOver({
     map: mapSource(table, latest), expansions: table.expansions, tokens: tokensOnMapOf(before, player),
     fits: (planetId, kind) => (kind === 'dock'
