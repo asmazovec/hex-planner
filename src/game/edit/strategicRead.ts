@@ -10,10 +10,15 @@ import { handlerOf } from '../../domain/replay/cards/index';
 import { researchLimit } from '../../domain/replay/cards/technology';
 import { placesOn, type ProductionPlace } from '../../domain/replay/production';
 import type { PaymentKind } from '../../domain/payment';
+import { readyLimit } from '../../domain/replay/cards/diplomacy';
+import { MECATOL_PLANETS } from '../../domain/mecatol';
+import { seatSlots } from '../../domain/mapBuilder';
+import type { PlanetDef } from '../../domain/types';
 import type { Turn, Strategic, Secondary } from '../actions';
 import { legacyEntry } from '../entry';
 import { productionDueOnBoard } from '../planQueries';
-import { groundIn, tokensOnMapOf } from '../queries';
+import { groundIn, ownerOf, tokensOnMapOf } from '../queries';
+import { planetsIn, playerCountOf } from '../space';
 import type { Board, DataPack, PlayerId, Table } from '../types';
 
 export type CardTurn = Turn & { action: Strategic | Secondary };
@@ -77,4 +82,31 @@ export function researchLimitOn(table: Table, board: Board, pack: DataPack, turn
 export function purchasesOn(table: Table, board: Board, pack: DataPack, turn: CardTurn, slot: string): ProductionPlace[] {
   const production = effectsOf(turn).production?.systemId === slot ? effectsOf(turn).production : undefined;
   return placesOn(groundIn(table, board, pack, turn.player), slot, production?.units ?? {}, pack, production?.ground);
+}
+
+/** The planets the card may ready: my exhausted ones, or for the base primary mine in the chosen system; those already chosen stay listed. */
+export function readyChoicesOn(table: Table, board: Board, pack: DataPack, turn: CardTurn): PlanetDef[] {
+  const mine = (id: string): boolean => ownerOf(board, id) === turn.player;
+  const effects = effectsOf(turn);
+  if (readyLimit(cardEntryOf(table, turn), table.expansions) === null) {
+    return effects.systemId ? planetsIn(table, board, pack, effects.systemId).filter(mine).flatMap(id => pack.planets[id] ?? []) : [];
+  }
+  const exhausted = Object.keys(board.planets).filter(id => board.planets[id].exhausted && mine(id));
+  return [...new Set([...exhausted, ...(effects.readied ?? [])])].flatMap(id => pack.planets[id] ?? []);
+}
+
+/** Whether the player holds a planet of the Mecatol Rex system. */
+export const controlsMecatolOn = (board: Board, player: PlayerId): boolean => MECATOL_PLANETS.some(id => ownerOf(board, id) === player);
+
+/** The slot of a player's home: the faction's home tile if it is on the map (for an off-map home with its gate on the map, the tile's own id), otherwise the slot of the seat, with an empty seat the first slot with a tile; none with nothing on the map. */
+export function homeSlotOn(table: Table, pack: DataPack, player: PlayerId): string | null {
+  const who = table.players.find(p => p.id === player);
+  const faction = who && pack.factions[who.faction];
+  if (!who || !faction) return null;
+  const onMap = (tile: string | undefined) => Object.keys(table.map).find(slot => table.map[slot].split('@')[0] === tile);
+  const own = onMap(faction.homeTile) ?? (onMap(faction.gateTile) ? faction.homeTile : undefined);
+  if (own) return own;
+  const seat = seatSlots(playerCountOf(table), pack, table.layout)[who.seat - 1];
+  if (seat && table.map[seat]) return seat;
+  return Object.keys(table.map).find(slot => slot !== '0,0') ?? null;
 }

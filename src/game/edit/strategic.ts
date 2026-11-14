@@ -40,18 +40,26 @@ export function onEffects(turn: Turn, change: (effects: CardEffects) => CardEffe
   return withCard(turn, { effects: Object.keys(next).length > 0 ? next : undefined });
 }
 
-/**
- * A change to the turn with the payment following the new price: a new cost pays automatically from the ready planets,
- * unless the payment was chosen by hand (`manual`). `board` is the board just before the turn.
- */
-export function withCardChange(table: Table, board: Board, pack: DataPack, turn: Turn, patch: CardPatch, manual: boolean): Turn {
-  if (!isCardTurn(turn)) return turn;
-  const next = withCard(turn, patch) as CardTurn;
+/** The next turn with the payment following its new price: a new cost pays automatically from the ready planets, unless the payment was chosen by hand. */
+function repriced(table: Table, board: Board, pack: DataPack, turn: CardTurn, next: CardTurn, manual: boolean): Turn {
   if (manual) return next;
   const was = cardCostOn(table, board, pack, turn);
   const cost = cardCostOn(table, board, pack, next);
   if (cost.amount === was.amount && cost.kind === was.kind) return next;
   return withCard(next, { effects: { ...effectsOf(next), payment: autoPayOn(table, board, pack, turn.player, cost.amount, cost.kind) } });
+}
+
+/**
+ * A change to the turn with the payment following the new price: a new cost pays automatically from the ready planets,
+ * unless the payment was chosen by hand (`manual`). `board` is the board just before the turn.
+ */
+export function withCardChange(table: Table, board: Board, pack: DataPack, turn: Turn, patch: CardPatch, manual: boolean): Turn {
+  return isCardTurn(turn) ? repriced(table, board, pack, turn, withCard(turn, patch) as CardTurn, manual) : turn;
+}
+
+/** A switch of the card or of its side (`withFreshPlay`), repriced as `withCardChange` does: what the old play paid goes, the new price pays anew. */
+export function withFreshChange(table: Table, board: Board, pack: DataPack, turn: Turn, patch: CardPatch, manual: boolean): Turn {
+  return isCardTurn(turn) ? repriced(table, board, pack, turn, withFreshPlay(turn, patch) as CardTurn, manual) : turn;
 }
 
 /** The effects with a chosen system; what belongs to the old system goes. */
