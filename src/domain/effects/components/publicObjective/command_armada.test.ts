@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { hintsAt } from '../../../../testing/old/domain/effects/registry';
 import { standing } from '../../../rules/registry';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { before, bench, effect, endOf, quote, statusTokens, warningsOf } from '../kit';
 import { id } from './command_armada';
 

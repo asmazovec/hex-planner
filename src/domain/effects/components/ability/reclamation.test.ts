@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_PLANET_TE, MECATOL_TILE, MECATOL_TILE_TE } from '../../../mecatol';
-import type { Entry, Game, StructureCounts } from '../../../types';
+import type { StructureCounts } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, type Bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './reclamation';
 

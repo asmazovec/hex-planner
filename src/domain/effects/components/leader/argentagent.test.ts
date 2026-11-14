@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, UnitCounts } from '../../../types';
+import type { UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, using, warningsOf } from '../kit';
 import { id } from './argentagent';
 

@@ -23,7 +23,7 @@ describe('the start of the game', () => {
   });
   test('the store and its writers take nothing from the test support or the bridge to the old game', () => {
     for (const name of ['./gameStore.ts', './setupWrites.ts', './turnBridge.ts', './projection.ts']) {
-      expect(files[name], name).not.toMatch(/from '[./]*\/(testing\/|game\/(fromLegacy|legacyViews|compare)')|playerOfLegacy|legacyEntry|legacySave/);
+      expect(files[name], name).not.toMatch(/from '[./]*\/(testing\/|game\/(fromLegacy|legacyViews|compare)')|playerOfLegacy|factsOf|legacySave/);
     }
   });
   test('no setup edit goes the long way through the old game', () => {

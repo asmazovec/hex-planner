@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { before, bench, componentAction, effect, expectNone, expectStanding, HOME, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './obsidianhero';
 

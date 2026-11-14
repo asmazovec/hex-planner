@@ -9,7 +9,7 @@ import { enemyChange, holderIn, othersOnPlanet, playerState } from '../testing/o
 import { type TacticalEntry } from './tactical';
 import { afterBattle, availableFor, flightOf, standingAfterBattle, withLanding, withProduction } from '../testing/old/domain/tactical';
 import { sliceOwners } from '../testing/old/domain/thundersEdge';
-import type { Round } from './types';
+import type { Round } from '../testing/old/domain/types';
 import type { Player } from './players';
 import type { GameState } from '../testing/old/domain/types';
 import { UNIT_ORDER } from './hexLayout';

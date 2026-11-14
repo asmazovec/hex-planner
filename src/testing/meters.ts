@@ -3,7 +3,8 @@ import { turnOf } from './old/game/fromLegacy';
 import { viewOf } from '../ui/testing/legacyMap';
 import { flightOf, metersOf, type Meters } from '../game/flight';
 import { playerOfKey } from '../game/keys';
-import type { DataPack, Entry, Game } from '../domain/types';
+import type { DataPack } from '../domain/types';
+import type { Entry, Game } from './old/domain/types';
 import type { GameState } from './old/domain/types';
 
 export function tacticalMeters(game: Game, entry: Extract<Entry, { type: 'tactical' }>, source: string, before: GameState, pack: DataPack): Meters {

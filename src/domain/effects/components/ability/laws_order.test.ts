@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, before, bench, effect, endOf, NEAR, quote, tactical, using } from '../kit';
 import { id } from './laws_order';
 

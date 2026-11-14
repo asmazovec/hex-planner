@@ -2,7 +2,8 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showTactical, uiBench, use } from '../../../../ui/testing/effects';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './bastionbt';
 

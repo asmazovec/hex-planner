@@ -7,7 +7,8 @@ import { type Holder } from '../effects/registry';
 import dockInfantry from '../rules/codes/dockInfantry';
 import warSunLocked from '../rules/codes/warSunLocked';
 import { productionCost, unitStats } from '../unitStats';
-import type { DataPack, Entry, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
+import type { DataPack, RuleStep, UnitCounts, UnitId, Warning, WarningCode } from '../types';
+import type { TurnFacts } from '../../game/turnFacts';
 import { hasAnomaly, isStation, planetsOf, tileAt, type MapSource } from './board';
 import { unitIds } from './state';
 
@@ -128,7 +129,7 @@ export function producersOn(g: Ground, systemId: string, pack: DataPack, source:
 }
 export const producerPlanets = (g: Ground, systemId: string, pack: DataPack): string[] =>
   [...new Set(producersOn(g, systemId, pack).flatMap(p => (p.planetId === null ? [] : [p.planetId])))];
-export function systemProductionOn(g: Ground, systemId: string, pack: DataPack, source: ProductionSource = 'system', entry?: Entry): number {
+export function systemProductionOn(g: Ground, systemId: string, pack: DataPack, source: ProductionSource = 'system', entry?: TurnFacts): number {
   const list = producersOn(g, systemId, pack, source);
   if (list.length === 0) return 0;
   const values = list.map(p => p.value);
@@ -178,7 +179,7 @@ const limitWarnings = (onBoardOf: (unit: UnitId) => number, units: UnitCounts, p
 };
 export function checkProductionOn(
   g: Ground, target: string, units: UnitCounts, pack: DataPack,
-  onPlanets: Record<string, UnitCounts> = {}, source: ProductionSource = 'system', step?: RuleStep, entry?: Entry,
+  onPlanets: Record<string, UnitCounts> = {}, source: ProductionSource = 'system', step?: RuleStep, entry?: TurnFacts,
 ): Warning[] {
   const built = unitIds(units);
   if (built.length === 0) return [];
@@ -214,9 +215,9 @@ export function checkProductionOn(
 }
 
 /** The system an entry produces in: the tactical action's, or the one its card or component names. */
-const systemOfProduction = (entry: Entry | undefined): string | undefined =>
+const systemOfProduction = (entry: TurnFacts | undefined): string | undefined =>
   entry?.type === 'tactical' ? entry.systemId ?? undefined : entry && 'effects' in entry ? entry.effects?.production?.systemId : undefined;
-export function costOn(g: Ground, units: UnitCounts, pack: DataPack, producing: boolean, entry?: Entry): number {
+export function costOn(g: Ground, units: UnitCounts, pack: DataPack, producing: boolean, entry?: TurnFacts): number {
   const cost = productionCost(units, g.faction, g.holder, pack, entry);
   if (!producing || cost <= 0) return cost;
   const systemId = systemOfProduction(entry);
@@ -224,7 +225,7 @@ export function costOn(g: Ground, units: UnitCounts, pack: DataPack, producing: 
   return Math.max(0, appliedFor(pack, g.holder, entry, 'productionCost', cost, { faction: g.faction, systemId, wormholes, holdings: g.holder.holdings, pack }).value);
 }
 
-export function productionDueOn(g: Ground, units: UnitCounts, pack: DataPack, entry?: Entry): number {
+export function productionDueOn(g: Ground, units: UnitCounts, pack: DataPack, entry?: TurnFacts): number {
   const systemId = systemOfProduction(entry);
   const producing = systemId !== undefined && producersOn(g, systemId, pack).length > 0;
   return costOn(g, units, pack, producing, entry);

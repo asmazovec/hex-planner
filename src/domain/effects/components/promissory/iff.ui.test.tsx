@@ -1,6 +1,7 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, componentAction, FAR, NEAR, quote } from '../kit';
 import { id } from './iff';

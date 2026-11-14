@@ -1,4 +1,5 @@
-import type { DataPack, Entry, Game, Warning } from '../../../../../domain/types';
+import type { DataPack, Warning } from '../../../../../domain/types';
+import type { Entry, Game } from '../../types';
 import type { GameState } from '../../types';
 import type { Destroyed, ControlLost, Produced, TokenSpent } from '../../../../../domain/effects/points/moments';
 

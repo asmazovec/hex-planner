@@ -6,7 +6,7 @@ import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { applyAll } from '../apply';
 import { initialBoard } from '../setup';
 import { tactical } from '../../domain/rules/kit';
-import type { Entry } from '../../domain/types';
+import type { Entry } from '../../testing/old/domain/types';
 import { resolveTurn } from './index';
 import { runPlay } from './play';
 import { newTrack } from './track';

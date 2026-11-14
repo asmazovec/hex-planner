@@ -1,5 +1,6 @@
 import { test } from 'vitest';
-import type { Entry, Payment } from '../../../types';
+import type { Payment } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { adjust, bench, quote, statusTokens } from '../kit';
 import { id } from './amass_wealth';

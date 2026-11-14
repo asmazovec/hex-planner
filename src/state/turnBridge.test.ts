@@ -10,7 +10,7 @@ vi.mock('../storage/db', () => ({
 import { loadPack } from '../data/loadPack';
 import { withRoute as oldRoute } from '../domain/tactical';
 import { withLanding as oldLanding } from '../testing/old/domain/tactical';
-import type { Entry } from '../domain/types';
+import type { Entry } from '../testing/old/domain/types';
 import { withLanding, withRoute } from '../game/edit/tactical';
 import { newTurn } from '../game/edit/new';
 import { tacticalBody } from '../testing/old/domain/newEntry';

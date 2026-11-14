@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
 import { CARD } from '../../../replay/cards/ids';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, primary, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './blood_ties';
 

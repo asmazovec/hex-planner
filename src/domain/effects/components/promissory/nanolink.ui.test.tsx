@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, land, showFlight, showTactical, showUses, take, uiBench, use } from '../../../../ui/testing/effects';
 import structureAboard from '../../../rules/codes/structureAboard';
-import type { Entry, Game } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, using } from '../kit';
 import { id } from './nanolink';
 

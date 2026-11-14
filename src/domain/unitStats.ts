@@ -1,14 +1,16 @@
 import { appliedFor } from './effects/entryApply';
 import { holderFor, type Who } from './effects/registry';
 import { holdingRounds, upgradesOf } from './holdings';
-import type { DataPack, Entry, Plan, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import type { DataPack, ShipLevels, ShipStats, StructureKind, UnitCounts, UnitId, UpgradeId } from './types';
+import type { TurnFacts } from '../game/turnFacts';
+import type { RoundFacts } from '../game/turnFacts';
 
 /**
  * Fighters and infantry cost 0.5, so each unit type is rounded up to whole resources on its own. `who` is the holdings
  * (the cards held) or a `Holder` (`holderOf`: also the faction sheet, the planets controlled and the laws in play); the
  * `entry` that plays components lets their `play` modifiers of `unitCost` count (Harrugh Gefhara: 0).
  */
-export function productionCost(units: UnitCounts, factionId: string, who: Who, pack: DataPack, entry?: Entry): number {
+export function productionCost(units: UnitCounts, factionId: string, who: Who, pack: DataPack, entry?: TurnFacts): number {
   let total = 0;
   const holder = holderFor(who, factionId);
   for (const id of Object.keys(units) as UnitId[]) {
@@ -49,7 +51,7 @@ export const isUniqueShip = (factionId: string, kind: UnitId, pack: DataPack): b
   pack.factions[factionId]?.ships?.[kind] !== undefined;
 
 /** The first round whose entries of mine research each unit upgrade: done ones for `now`, planned ones too for `forecast`. */
-export function entryUpgradeRounds(plan: Plan, filter: 'now' | 'forecast', pack: DataPack): Partial<Record<UpgradeId, number>> {
+export function entryUpgradeRounds(plan: { rounds: RoundFacts[] }, filter: 'now' | 'forecast', pack: DataPack): Partial<Record<UpgradeId, number>> {
   const rounds: Partial<Record<UpgradeId, number>> = {};
   for (const [id, round] of Object.entries(holdingRounds(plan, filter).me ?? {})) {
     const [unit] = upgradesOf({ technologies: [id] }, pack);

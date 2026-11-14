@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, expectNone, expectStanding, expectWaived, HOME, primary, quote, secondary, tactical, warningsOf } from '../kit';
 import { id } from './minister_sciences';
 

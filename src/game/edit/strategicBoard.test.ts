@@ -6,14 +6,14 @@ import { upgradesOf as upgradesHeld } from '../../domain/holdings';
 import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
 import * as oldDiplomacy from '../../testing/old/domain/replay/cards/diplomacy';
-import type { Entry, Game } from '../../domain/types';
+import type { Entry, Game } from '../../testing/old/domain/types';
 import { turnOf } from '../../testing/old/game/fromLegacy';
 import { playerOfKey } from '../keys';
 import { upgradesOf } from '../queries';
 import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
 import * as now from './strategic';
-import { legacyEntry } from '../entry';
+import { factsOf } from '../turnFacts';
 import { gameAs } from '../../testing/old/domain/players';
 
 const pack = loadPack(['pok']);
@@ -92,7 +92,7 @@ describe('a switch of the card reprices as cardChange of a fresh play does', () 
         const expected = oldOld.cardChange(e as old.CardEntry, oldOld.freshPlay(play as oldOld.CardPatch), before, 'sol', pack, manual, g);
         const { type, ...rest } = play;
         const next = now.withFreshChange(table, board, pack, turn, { ...rest, side: type === 'strategic' ? 'primary' : 'secondary' }, manual);
-        expect(plain(legacyEntry(table, next))).toEqual(plain({ ...e, ...expected }));
+        expect(plain(factsOf(table, next))).toEqual(plain({ ...e, ...expected }));
       }
     }
   });

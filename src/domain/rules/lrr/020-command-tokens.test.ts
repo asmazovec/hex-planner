@@ -1,7 +1,7 @@
 /** LRR 20 Command Tokens. Source: tirules2 rules-reference/command-tokens.md. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Game } from '../../types';
+import type { Game } from '../../../testing/old/domain/types';
 import { adjust, codesOf, FAR, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

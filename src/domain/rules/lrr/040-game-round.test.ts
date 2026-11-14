@@ -1,6 +1,6 @@
 /** LRR 40 Game Round. Source: tirules2 rules-reference/game-round.md. */
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, before, codesOf, HOME, NEAR, rulesGame, rulesPack, statusTokens, tactical } from '../kit';
 
 const pack = rulesPack();

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, UnitCounts } from '../../../types';
+import type { AnyWarningCode, UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, statusTokens, TARGET, warningsOf } from '../kit';
 import { id } from './deep_space';
 

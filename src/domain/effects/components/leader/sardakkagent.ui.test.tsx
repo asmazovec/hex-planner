@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, endOf, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './sardakkagent';
 

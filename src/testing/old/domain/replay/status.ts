@@ -1,5 +1,6 @@
 import { holderOf } from '../../../../domain/effects/registry';
-import type { DataPack, Entry, Game } from '../../../../domain/types';
+import type { DataPack } from '../../../../domain/types';
+import type { Entry, Game } from '../types';
 import type { GameState } from '../types';
 import { statusTokensFreeOf } from '../../../../domain/replay/status';
 /**

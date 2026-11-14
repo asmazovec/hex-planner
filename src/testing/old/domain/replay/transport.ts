@@ -1,5 +1,6 @@
 import { holderOf } from '../../../../domain/effects/registry';
-import type { DataPack, Game, Warning, UnitCounts } from '../../../../domain/types';
+import type { DataPack, Warning, UnitCounts } from '../../../../domain/types';
+import type { Game } from '../types';
 import type { GameState } from '../types';
 import { planetsOf } from '../../../../domain/replay/board';
 import { dockRoom, type Stacks, capacity, checkSystemOf, fleetCount, checkPickupsOf, checkGroupsOf, overflowLeftOf, checkLeftBehindOf } from '../../../../domain/replay/transport';

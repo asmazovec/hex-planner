@@ -3,7 +3,8 @@ import { appliedFor } from '../effects/entryApply';
 import { type Holder } from '../effects/registry';
 import { violation } from '../rules/registry';
 import { STATUS_TOKENS } from '../strategy';
-import type { DataPack, Entry, RuleStep, Warning } from '../types';
+import type { DataPack, RuleStep, Warning } from '../types';
+import type { TurnFacts } from '../../game/turnFacts';
 
 /** The command tokens of a faction (LRR 20.3, 23.2): those not in the pools or on the board are in reinforcements. */
 export const TOKEN_LIMIT = 16;
@@ -15,7 +16,7 @@ export function checkTokensGiven(given: number, free: number, step?: RuleStep): 
 }
 
 /** The same for a holder: what they hold is what stood before the entry. */
-export function statusTokensFreeOf(holder: Holder, entry: Entry, pack: DataPack): number {
+export function statusTokensFreeOf(holder: Holder, entry: TurnFacts, pack: DataPack): number {
   return appliedFor(pack, holder, entry, 'tokensGained', STATUS_TOKENS, { step: 'status' }, holder).value;
 }
 

@@ -18,7 +18,7 @@ const TEXT = 3;
 const WHAT = [NAME, KIND, TAGS];
 
 /** An item as the search reads it: normalised and split into words once. */
-interface Entry {
+interface Indexed {
   id: string;
   /** The words of the name joined by spaces: the order of equal hits. */
   name: string;
@@ -28,7 +28,7 @@ interface Entry {
 
 /** Built once per pack by `buildIndex`; entries stand in the order of their names. */
 export interface SearchIndex {
-  readonly entries: readonly Entry[];
+  readonly entries: readonly Indexed[];
   /** Every distinct word of every item: a query word is compared with each of them once, whatever the number of items. */
   readonly words: readonly string[];
 }
@@ -140,7 +140,7 @@ export function buildIndex(items: SearchItem[]): SearchIndex {
     }
     return [...own];
   };
-  const entries = items.map((item): Entry => ({
+  const entries = items.map((item): Indexed => ({
     id: item.id, name: wordsOf(item.name).join(' '),
     fields: [numbersOf(item.name), numbersOf(item.kind ?? ''), numbersOf(item.tags ?? ''), numbersOf(item.text)],
   }));
@@ -231,7 +231,7 @@ interface Asked {
 const soundScore = (field: number, match: number): number => (match >= INSIDE ? SCORES[field][match] - BY_SOUND : match ? SOUND_TYPO[field] : 0);
 
 /** The best way one query word matches an entry; 0 when it does not. */
-function wordScore(entry: Entry, asked: Asked): number {
+function wordScore(entry: Indexed, asked: Asked): number {
   let score = 0;
   for (const field of WHAT) {
     const words = entry.fields[field];

@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Act, Entry } from '../../../types';
+import type { Act } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, NEAR, quote, tactical } from '../kit';
 import { id } from './thesilverflame';

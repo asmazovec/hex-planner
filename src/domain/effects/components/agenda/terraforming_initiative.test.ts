@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, expectNone, expectStanding, HOME, quote, secondary, tactical, warningsOf } from '../kit';
 import { id } from './terraforming_initiative';
 

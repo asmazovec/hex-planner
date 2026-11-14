@@ -7,7 +7,7 @@ import { mergedCounts } from '../domain/losses';
 import { createGame } from '../testing/old/domain/newGame';
 import { sliceOwners } from '../testing/old/domain/thundersEdge';
 import { entryUpgradeRounds } from '../domain/unitStats';
-import type { Entry, Game } from '../domain/types';
+import type { Entry, Game } from '../testing/old/domain/types';
 import { projectionAtRound, timelineOf as oldTimeline } from '../testing/projection';
 import { savedOf } from '../testing/legacySave';
 import { boardAt, timelineOf } from './projection';

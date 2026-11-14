@@ -20,7 +20,8 @@ import { checkSystemOf } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
 import { choicesOf, type ResolvedChoice } from '../game/abilities/choices';
 import { turnOf } from './old/game/fromLegacy';
-import type { DataPack, Entry, Game, Plan, Round, Warning } from '../domain/types';
+import type { DataPack, Warning } from '../domain/types';
+import type { Entry, Game, Plan, Round } from './old/domain/types';
 import type { GameState } from './old/domain/types';
 import type { Projection } from './old/domain/types';
 

@@ -10,7 +10,7 @@ vi.mock('../../../storage/db', () => ({
 }));
 
 import { loadPack } from '../../../data/loadPack';
-import type { Entry } from '../../../domain/types';
+import type { Entry } from '../../../testing/old/domain/types';
 import type { Move } from '../../../domain/tactical';
 import { useGame } from '../../../state/gameStore';
 import { motion } from '../../common/preferences';

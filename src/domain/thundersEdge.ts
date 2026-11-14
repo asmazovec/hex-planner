@@ -2,7 +2,8 @@ import { clockwiseAngle, hexDistance, seatSlots, slotsFor } from './mapBuilder';
 import { slotKeyOf } from './layouts';
 import { isOnMap, isStation, tileIdOf, type MapSource } from './replay/board';
 import { violation } from './rules/registry';
-import type { DataPack, Entry, MapLayout, TileDef, Warning } from './types';
+import type { DataPack, MapLayout, TileDef, Warning } from './types';
+import type { TurnFacts } from '../game/turnFacts';
 
 /**
  * Thunder's Edge goes into a system with no planet, no supernova and no printed wormhole (TE rules).
@@ -72,7 +73,7 @@ export function fractureSlots(
 }
 
 /** Check: ground forces cannot land on a space station (space stations 4). The landing itself is left as written. */
-export const checkStationLandings = (entry: Extract<Entry, { type: 'tactical' }>, pack: DataPack): Warning[] =>
+export const checkStationLandings = (entry: Extract<TurnFacts, { type: 'tactical' }>, pack: DataPack): Warning[] =>
   entry.landings.filter(l => isStation(pack, l.planetId) && Object.values(l.units).some(n => (n ?? 0) > 0))
     .map(l => violation('stationGround', { planetId: l.planetId }));
 

@@ -51,7 +51,7 @@ export const ability: Ability = {
 ```
 
 The context (`AbilityContext`) gives `holder` and `actor` (so a file never compares ids), `my` and `of(player)` (what a player
-holds, controls and has on the board), `choices`, `entry`, and the questions of the game (`planetsIn`, `adjacent`,
+holds, controls and has on the board), `choices`, `entry` (the turn as `TurnFacts`, `src/game/turnFacts.ts`: `type`, `systemId`, `moves`, `landings`, `uses`, `gains`, `spends`, `componentId`, `card`, `owner` as the old key `me` or a rival id), and the questions of the game (`planetsIn`, `adjacent`,
 `planetValue`, `capacityOf`, ...). A play returns events (`src/game/abilities/emit.ts`) and reports breaches with `ctx.warn`;
 `apply.ts` is the only writer of a board.
 

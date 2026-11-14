@@ -9,7 +9,7 @@ import { isTurn } from '../domain/replay/round';
 import type { ComponentDef, DataPack, Warning } from '../domain/types';
 import type { Turn } from './actions';
 import type { GameEvent } from './events';
-import { legacyEntry } from './entry';
+import { factsOf } from './turnFacts';
 import { resolveTurn, type StepResult } from './resolve';
 import { newTrack } from './resolve/track';
 import { roundClear, roundStarted, statusEnd, statusStart, turnStart, type Round } from './round';
@@ -108,7 +108,7 @@ export function timeline(table: Table, pack: DataPack, rounds: Round[], filter: 
         take(roundStarted(table, board, pack));
       }
       if (phase === 'status') beginStatus(turn);
-      if (phase === 'action' && isTurn(legacyEntry(table, turn), pack)) take(turnStart(table, board, pack, turn));
+      if (phase === 'action' && isTurn(factsOf(table, turn), pack)) take(turnStart(table, board, pack, turn));
       const before = board;
       // The status phase ends with its status entry (81.4, 81.6), and what its end brings is part of that turn.
       const closing = turn.action.kind === 'status' ? (b: Board) => { board = b; finishStatus(); return { board, violations: lead.splice(0) }; } : undefined;

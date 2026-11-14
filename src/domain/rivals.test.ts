@@ -5,7 +5,7 @@ import { playersOf } from './players';
 import { addPlayer, placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/domain/players';
 import { project, stateBeforeEntry } from '../testing/old/domain/project';
 import { seatSlots } from './mapBuilder';
-import type { Entry, Game } from './types';
+import type { Entry, Game } from '../testing/old/domain/types';
 import { gameAs } from '../testing/old/domain/players';
 
 const pack = loadPack(['pok', 'te']);

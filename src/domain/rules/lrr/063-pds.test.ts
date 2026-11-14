@@ -1,7 +1,7 @@
 /** LRR 63 PDS. Source: tirules2 rules-reference/pds.md. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Game } from '../../types';
+import type { Game } from '../../../testing/old/domain/types';
 import { codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 import { planetStructureWarnings } from '../../../testing/old/domain/replay/structures';
 

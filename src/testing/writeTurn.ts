@@ -1,4 +1,5 @@
-import type { DataPack, Game } from '../domain/types';
+import type { DataPack } from '../domain/types';
+import type { Game } from './old/domain/types';
 import type { Table } from '../game/types';
 import { writeSaved, type TurnWrite } from '../state/turnBridge';
 import { savedFor } from './legacySave';

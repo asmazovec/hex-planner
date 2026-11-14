@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../replay/cards/ids';
-import type { Entry, UnitCounts } from '../../../types';
+import type { UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, expectStanding, expectWaived, HOME, primary, quote, tactical, warningsOf } from '../kit';
 import { id } from './xxchabt';
 

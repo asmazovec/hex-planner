@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, EntryBody, LeaderState, TileDef, UnitCounts } from '../../../types';
+import type { AnyWarningCode, LeaderState, TileDef, UnitCounts } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './sardakkcommander';
 

@@ -4,7 +4,7 @@ import { expect, test, vi } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { PaymentBlock } from '../../../../ui/plan/blocks/PaymentBlock';
 import { kernelViewOf } from '../../../../ui/testing/view';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, HOME, NO_PAYMENT, quote, tactical } from '../kit';
 import { id } from './thetriad';
 

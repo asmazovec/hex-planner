@@ -5,11 +5,12 @@
  * Nothing here forbids a tap elsewhere.
  */
 import { MECATOL_PLANETS } from '../../mecatol';
-import type { Entry, DataPack } from '../../types';
+import type { DataPack } from '../../types';
+import type { TurnFacts } from '../../../game/turnFacts';
 import { isOnMap, systemPlanets, systemSlots, type MapSource } from '../board';
 import { CARD } from './ids';
 
-export type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
+export type CardEntry = Extract<TurnFacts, { type: 'strategic' | 'secondary' }>;
 
 /** What a tap on the map chooses for a card: the system of its effect, a place to build, or a dock to produce at. */
 export type CardMapPick = 'system' | 'build' | 'dock';

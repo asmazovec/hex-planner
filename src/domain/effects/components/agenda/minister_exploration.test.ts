@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, endOf, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './minister_exploration';
 

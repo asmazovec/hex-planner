@@ -7,7 +7,8 @@ import { CARD, handlerOf } from './replay/cards/index';
 import { LEADERSHIP_FREE } from './replay/cards/leadership';
 import { productionCost } from './unitStats';
 import type { TokensOn } from './readers';
-import type { CardEffects, DataPack, Entry, ExpansionId, Round, StructureKind, UnitCounts, UnitId } from './types';
+import type { CardEffects, DataPack, ExpansionId, StructureKind, UnitCounts, UnitId } from './types';
+import type { TurnFacts, RoundFacts } from '../game/turnFacts';
 import type { TableFacts } from './facts';
 import type { Shelf } from './shelf';
 
@@ -15,7 +16,7 @@ export { readyLimit } from './replay/cards/diplomacy';
 export { researchCount, researchLimit } from './replay/cards/technology';
 export { CARD };
 
-export type CardEntry = Extract<Entry, { type: 'strategic' | 'secondary' }>;
+export type CardEntry = Extract<TurnFacts, { type: 'strategic' | 'secondary' }>;
 
 /** The tokens a player takes in the status phase; abilities may give more, which only warns. */
 export const STATUS_TOKENS = 2;
@@ -24,7 +25,7 @@ export const STATUS_TOKENS = 2;
 export const cardsHeld = (playerCount: number): number => (playerCount <= 4 ? 2 : 1);
 
 /** The cards that are mine this round: the main one, and with 3 or 4 players the second one too. */
-export const heldCards = (round: Round, playerCount: number): number[] =>
+export const heldCards = (round: RoundFacts, playerCount: number): number[] =>
   (cardsHeld(playerCount) > 1 ? [round.strategyCard, round.backupCard] : [round.strategyCard]).filter((card): card is number => card !== null);
 
 /**

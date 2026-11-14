@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, LeaderState, UnitCounts } from '../../../types';
+import type { LeaderState, UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, expectStanding, expectWaived, HOME, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './winnuagent';
 

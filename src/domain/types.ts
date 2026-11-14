@@ -1,5 +1,4 @@
 import type { Shelf } from './shelf';
-import type { Player } from './players';
 
 export type ExpansionId = 'pok' | 'te';
 
@@ -311,70 +310,7 @@ export type Act =
 /** The entries that make a player's turn and so can hold acts; a secondary is played in another player's turn. */
 export const TURN_TYPES = ['tactical', 'strategic', 'component', 'pass'] as const;
 
-/**
- * `systemId` is a `Game.map` slot key. A tactical entry's `moves` carry units from `from`
- * (a slot key, or a planet id to pick ground forces up) into `systemId`. The route of a source is held by the move
- * whose `from` is that source: `via` lists the slots on the way, in flight order. A move with `pickupOf` takes units
- * on board on the way: it joins the group of that source slot.
- */
-export type EntryBody = (
-  | { type: 'tactical'; systemId: string | null;
-      moves: { from: string; units: UnitCounts; via?: string[]; pickupOf?: string;
-        /** Structures taken on board with the units: from a planet (`from` is its id) or from the space area of a system. The rules forbid it (85.3); a component may lift that. */ structures?: StructureCounts }[];
-      landings: { planetId: string; units: UnitCounts;
-        /** A planet the ground forces are committed from instead of the space area of the active system (49.2); a component may lift the warning. */ from?: string;
-        /** Structures put on the planet from the space area of the active system, at the end of the action. */ structures?: StructureCounts }[];
-      production: UnitCounts; payment: Payment;
-      /** The six influence that remove the custodians token when the landing is the first on Mecatol Rex (27.2): planets exhausted, trade goods spent. */ custodiansPayment?: Payment;
-      /** What the battle in the active system cost me: gone after the moves, before the landing and the production. */ losses?: UnitCounts;
-      /** What the battle cost on planets, by planet id: gone after the landing. */ groundLosses?: Record<string, UnitCounts>;
-      /** Ships I remove from the active system beyond my fleet pool (37.3): gone on arrival, or after the production if built then. */ fleetRemovals?: UnitCounts;
-      /** Where the ground forces of `production` were bought, by planet id; what is not listed goes to the first planet I control. */ productionGround?: Record<string, UnitCounts>;
-      /** The system the ships of `production` are placed in when it is not the active one (68.2 places them there; a component may lift the warning). */ shipsTo?: string;
-      /** Warfare's primary in Thunder's Edge: no tactic token is spent and no command token goes down. */ free?: boolean;
-      /** The id of the card entry that started this action: it goes when that entry goes. */ fromCard?: string; acts?: Act[] }
-  | ({ type: 'strategic'; acts?: Act[] } & CardPlay)
-  | ({ type: 'secondary' } & CardPlay)
-  | { type: 'component';
-      /** The component played: an action card leaves the hand, an agent is exhausted, a hero purged. Without it the action is only its note. */ componentId?: string;
-      note: string;
-      acts?: Act[];
-      /** What the component produces, as a card's effects do: a hero or a technology that builds units (`production`, paid with `payment`). */ effects?: CardEffects;
-      /** What the component costs when its effect declares a `cost`: the planets exhausted and the trade goods spent. */ payment?: Payment }
-  | { type: 'pass'; acts?: Act[] }
-  | { type: 'adjustment'; label: string; delta: AdjustmentDelta; kind?: AdjustmentKind;
-      /** An agenda of the agenda phase: its outcome (`for` or `against`) and what was elected (`elect`: a planet id, a law id, `me` or an opponent id), the strategy card elected (`card`, its initiative as text or number). */ choices?: Record<string, string | number> }
-  | { type: 'statusTokens'; tactic: number; fleet: number; strategy: number;
-      /** My points gained this round. */ vp?: number;
-      /** Rival id to the points they gained this round. */ opponentVp?: Record<string, number>;
-      /** Objectives the owner scored, by component id: a secret one leaves the hand for the scored ones, a public one joins them. */ scored?: string[];
-      /** What scoring them cost, when an objective is scored by spending (61.10): tokens from the pools, trade goods, planets paying resources or influence. */ spend?: StatusSpend }
-) & {
-  /** Components the owner of the entry gains with it, by id: drawn action cards, a relic, a note received. */
-  gains?: string[];
-  /** Components the owner loses with it, one copy each. */
-  spends?: string[];
-  /**
-   * Components the owner uses with it, by id, that are neither its component action nor spent: an agent or a technology
-   * exhausted, an ability invoked. Each is played as a component action plays its own (exhausted, purged, discarded),
-   * and its waivers hold for this entry (src/domain/effects/waivers.ts).
-   */
-  uses?: string[];
-  /**
-   * What the player chose for the component the entry plays (its component action), by the names its effect asks for
-   * (`Ability.choose`): a planet id, a system slot, a player (`me` or an opponent id), a unit type, a number.
-   * On an entry with no component action it goes to the components it uses.
-   */
-  choices?: Record<string, string | number>;
-  /** The same for a component named in `uses`, by component id; it wins over `choices`, and is the one the editor writes. */
-  useChoices?: Record<string, Record<string, string | number>>;
-};
 
-export type Entry = EntryBody & { id: string; phase: Phase; status: EntryStatus;
-  /** The opponent this is expected of; without it the entry is mine. */ owner?: string };
-
-export interface Round { number: number; strategyCard: number | null; backupCard: number | null; entries: Entry[]; }
-export interface Plan { id: string; name: string; rounds: Round[]; }
 
 export type { LeaderState } from './shelf';
 /** What a player held when the plan begins: the faction's starting technologies, and what was marked by hand. */
@@ -383,47 +319,6 @@ export type StartHoldings = Partial<Pick<Shelf, 'technologies' | 'hand' | 'relic
 /** The mark of a save this app reads. A save without it comes from an earlier version and is not read. */
 export const SAVE_FORMAT = 'ti4-planner/3';
 
-export interface Game {
-  id: string;
-  /** What the player calls this game; a link finds its save by this. */
-  name?: string;
-  format: typeof SAVE_FORMAT;
-  /** Counts the changes of the save within the format, from 1. */
-  schemaVersion: number;
-  dataVersion: string;
-  expansions: ExpansionId[];
-  playerCount: number;
-  /** Which map template of the player count is in use. */
-  layout: MapLayout;
-  faction: string;
-  /** Your seat: 1 at the top of the map, then clockwise. Seats of all players are a permutation of 1..playerCount. */
-  seat: number;
-  /** Number of your player colour, 1 to 8: `--player-<n>` in the theme. */
-  color: number;
-  /** Starting victory points; the status entries and adjustments of a plan add to it. */
-  vp: number;
-  /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
-  map: Record<string, string>;
-  opponents: Player[];
-  /** What each player holds before the plan: the starting technologies of the faction, the rest set by hand. Entries of a plan add to it. */
-  start: { me: StartHoldings; opponents: Record<string, StartHoldings> };
-  /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
-  enemyUnits: Record<string, Record<string, UnitCounts>>;
-  /** Planet id to opponent id to that opponent's ground forces there. */
-  enemyGround: Record<string, Record<string, UnitCounts>>;
-  planetControl: Record<string, 'me' | 'enemy'>;
-  /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
-  planetOwner: Record<string, string>;
-  /** Ids of planets that have a space dock. A structure belongs to whoever controls its planet, or to me on a planet no one controls. */
-  docks: string[];
-  /** Planet id to the number of PDS on it, owned as the docks are. */
-  pds: Record<string, number>;
-  expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
-  fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null;
-    /** While open: slot key beside the map to its Fracture tile, so ships fly there like to any system. Absent until the Fracture first opens. */ tiles?: Record<string, string> };
-  plans: Plan[];
-  activePlanId: string;
-}
 
 /** Every warning the replay can give; the rule registry (src/domain/rules/registry.ts) maps each to its rules and step. */
 export const WARNING_CODES = ['shortResources', 'shortInfluence', 'shortTradeGoods', 'planetExhausted',

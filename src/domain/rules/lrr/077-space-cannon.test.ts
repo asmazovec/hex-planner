@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { withLoss } from '../../../ui/plan/tactical';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { forecast, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

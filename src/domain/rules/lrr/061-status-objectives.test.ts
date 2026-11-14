@@ -6,7 +6,7 @@
 import { describe, expect, test } from 'vitest';
 import { gain } from '../../../game/abilities/emit';
 import { withEffect } from '../../effects/points/status.kit';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, codesOf, forecast, rulesGame, rulesPack, statusTokens } from '../kit';
 
 /** The status entry that scores `ids`. */

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { DataPack, Entry } from '../../../types';
+import type { DataPack } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './economic_initiative';
 

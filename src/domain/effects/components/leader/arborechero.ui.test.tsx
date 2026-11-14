@@ -1,7 +1,8 @@
 import { expect, test } from 'vitest';
 import { screen } from '@testing-library/react';
 import { expectShownStanding, expectShownWaived, showTurn, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { CardEffects, Entry } from '../../../types';
+import type { CardEffects } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, componentAction, FAR, quote, TARGET } from '../kit';
 import { id } from './arborechero';
 

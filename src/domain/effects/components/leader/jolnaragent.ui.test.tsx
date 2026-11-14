@@ -4,7 +4,7 @@ import { screen } from '@testing-library/react';
 import { expectNotShown, expectShownStanding, showUses, uiBench, use } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
 import { CARD } from '../../../strategy';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, endOf, quote, secondary } from '../kit';
 import { id } from './jolnaragent';
 

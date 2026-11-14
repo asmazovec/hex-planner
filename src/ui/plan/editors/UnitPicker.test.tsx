@@ -7,12 +7,13 @@ import { loadPack } from '../../../data/loadPack';
 import { holdingsOf, upgradeTech } from '../../../domain/holdings';
 import { createGame } from '../../../testing/old/domain/newGame';
 import { project } from '../../../testing/old/domain/project';
-import type { Game, UnitCounts, UnitId } from '../../../domain/types';
+import type { UnitCounts, UnitId } from '../../../domain/types';
+import type { Game } from '../../../testing/old/domain/types';
 import type { GameState } from '../../../testing/old/domain/types';
 import { setLanguage } from '../../../i18n';
 import type { Move, TacticalEntry } from '../tactical';
 import { UnitPicker } from './UnitPicker';
-import { legacyEntry } from '../../../game/entry';
+import { factsOf } from '../../../game/turnFacts';
 import { turnOf } from '../../../testing/old/game/fromLegacy';
 
 const pack = loadPack(['pok']);
@@ -41,7 +42,7 @@ function setup(moves: Move[], before: Partial<GameState> = {}, production: UnitC
     return (
       <UnitPicker view={view}
         pack={pack} turn={turnOf(view.table, { ...entry, moves: list }, pack)} source={SOURCE}
-        onChange={next => { const kept = (legacyEntry(view.table, next) as TacticalEntry).moves; onChange(kept); setList(kept); }} onClose={() => undefined} onFly={onFly}
+        onChange={next => { const kept = (factsOf(view.table, next) as TacticalEntry).moves; onChange(kept); setList(kept); }} onClose={() => undefined} onFly={onFly}
       />
     );
   }

@@ -3,7 +3,7 @@ import { kernelViewOf } from '../../../../ui/testing/view';
 import { expect, test } from 'vitest';
 import { uiBench } from '../../../../ui/testing/effects';
 import { AdjustmentEditor } from '../../../../ui/plan/editors/AdjustmentEditor';
-import type { Entry, EntryBody } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, planned, quote } from '../kit';
 import { id } from './rearmament';
 import { turnProps } from '../../../../ui/testing/turnProps';

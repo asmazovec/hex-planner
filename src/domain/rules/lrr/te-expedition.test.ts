@@ -3,7 +3,8 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { systemPlanets } from '../../../testing/old/domain/project';
 import { validThundersEdgeSystem } from '../../thundersEdge';
-import type { Entry, Payment } from '../../types';
+import type { Payment } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { HOME, NO_PAYMENT, TARGET, adjust, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 
 let next = 0;

@@ -2,7 +2,7 @@ import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { tech } from '../../../rules/kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, primary, quote } from '../kit';
 import { id } from './schematics';
 

@@ -1,7 +1,7 @@
 /** The actions beside the tactical one on the kernel: a card's two sides, Warfare's nested action, a pass, the status phase, a correction, and the timeline of a plan. */
 import { describe, expect, test } from 'vitest';
 import { adjust, HOME, NEAR, NO_PAYMENT, planned, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, TARGET } from '../../domain/rules/kit';
-import type { Entry, Plan } from '../../domain/types';
+import type { Entry, Plan } from '../../testing/old/domain/types';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
 import type { GameEvent } from '../events';
@@ -86,7 +86,7 @@ describe('the other actions', () => {
     expect(r.steps.flatMap(s => s.events).map(e => e.type)).toEqual(expect.arrayContaining(['TradeGoodsChanged', 'PointsChanged']));
   });
 
-  test('turnOf and legacyEntry are inverses for every kind of entry', () => {
+  test('turnOf and factsOf are inverses for every kind of entry', () => {
     const entries: Entry[] = [primary(2, { tokens: { tactic: 1 } }), secondary(2), planned({ type: 'pass' }), statusTokens(1, 1, 0), adjust({ vp: 1 }), adjust({}, 'agenda')];
     for (const entry of entries) expect(turnOf(table, entry, pack).action.kind).toBeDefined();
   });

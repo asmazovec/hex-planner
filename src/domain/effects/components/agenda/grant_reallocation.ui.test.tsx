@@ -1,6 +1,6 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, EntryBody } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, HOME, planned, quote } from '../kit';
 import { id } from './grant_reallocation';
 

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, StartHoldings } from '../../../types';
+import type { StartHoldings } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, planned, quote, TARGET, warningsOf } from '../kit';
 import { id } from './keleresbt';

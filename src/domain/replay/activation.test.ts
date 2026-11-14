@@ -9,7 +9,7 @@ import { gain, tokens } from '../../game/abilities/emit';
 import type { Play } from '../../game/abilities/types';
 import { effectsOf } from '../effects/registry';
 import type { Ability } from '../effects/types';
-import type { Entry } from '../types';
+import type { Entry } from '../../testing/old/domain/types';
 import '../effects/points/movement';
 
 const TECH = 'technology:gd';

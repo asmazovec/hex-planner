@@ -1,4 +1,5 @@
-import type { Game, DataPack, MapLayout, Entry, Plan, CardEffects, ExpansionId } from '../../../domain/types';
+import type { DataPack, MapLayout, CardEffects, ExpansionId } from '../../../domain/types';
+import type { Game, Entry, Plan } from './types';
 import { planetHolder, playersOf, homeTileOnMap, type Player, maxPlayers, COLORS, MIN_PLAYERS, homePlanets } from '../../../domain/players';
 import { seatSlots, slotsFor, ownHomeSlots, templateFor, defaultLayout, moveToTemplate, withPlacedTiles } from '../../../domain/mapBuilder';
 import { splitStartUnits } from '../../../domain/strategy';

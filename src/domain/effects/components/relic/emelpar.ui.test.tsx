@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, shown, showUses, showWarnings, uiBench, use } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, quote, secondary } from '../kit';
 import { id } from './emelpar';
 

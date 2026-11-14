@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import { project } from '../../../testing/old/domain/project';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, codesOf, forecast, HOME, NEAR, NO_PAYMENT, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 import { holding } from './kit-83-101';
 

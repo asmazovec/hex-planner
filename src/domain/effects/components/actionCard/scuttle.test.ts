@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectStanding, HOME, NEAR, quote, warningsOf } from '../kit';
 import { id } from './scuttle';
 

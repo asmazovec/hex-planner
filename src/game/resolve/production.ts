@@ -7,7 +7,8 @@ import { violation } from '../../domain/rules/registry';
 import productionShipsAway from '../../domain/rules/codes/productionShipsAway';
 import { checkProductionOn, costOn, placesOn, producersOn } from '../../domain/replay/production';
 import { checkSystemOf } from '../../domain/replay/transport';
-import type { Entry, UnitCounts } from '../../domain/types';
+import type { UnitCounts } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import type { GameEvent } from '../events';
 import { groundIn, stacksOn } from '../queries';
 import { emit, warn, type Ctx } from './context';
@@ -45,7 +46,7 @@ export function produce(ctx: Ctx, target: string, removeLater: UnitCounts): bool
 }
 
 /** What a component action builds: checked as one of a tactical action in its system, placed, paid for with `effects.payment`, its system checked for what it holds. */
-export function componentProduction(ctx: Ctx, entry: Extract<Entry, { type: 'component' }>): void {
+export function componentProduction(ctx: Ctx, entry: Extract<TurnFacts, { type: 'component' }>): void {
   const made = entry.effects?.production;
   if (!made || Object.values(made.units).every(n => !n)) return;
   const ground = groundIn(ctx.table, ctx.board, ctx.pack, ctx.player);

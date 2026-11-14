@@ -1,6 +1,7 @@
 import { holderOf } from '../../../../domain/effects/registry';
 import { violation } from '../../../../domain/rules/registry';
-import type { DataPack, Game, Warning } from '../../../../domain/types';
+import type { DataPack, Warning } from '../../../../domain/types';
+import type { Game } from '../types';
 import type { GameState } from '../types';
 import { take, unitIds, type TacticalEntry } from '../../../../domain/replay/state';
 import { capacity, checkArrivalOf } from '../../../../domain/replay/transport';

@@ -1,10 +1,11 @@
-import type { AdjustmentDelta, AdjustmentKind, Entry, Round, UnitCounts, UnitId } from './types';
+import type { AdjustmentDelta, AdjustmentKind, UnitCounts, UnitId } from './types';
+import type { TurnFacts, RoundFacts } from '../game/turnFacts';
 
 /**
  * What the big hex records: one adjustment per system, kind and round, which every tap edits. `delta.units` is always
  * there, because its `systemId` is what a merged entry is found by.
  */
-type MergedEntry = Extract<Entry, { type: 'adjustment' }>;
+type MergedEntry = Extract<TurnFacts, { type: 'adjustment' }>;
 
 export interface MergedChange {
   kind: AdjustmentKind;
@@ -17,7 +18,7 @@ export interface MergedChange {
 
 export interface MergedCount { unit: UnitId; planetId: string | null; count: number }
 
-export const mergedEntry = (round: Round, kind: AdjustmentKind, systemId: string): MergedEntry | undefined =>
+export const mergedEntry = (round: RoundFacts, kind: AdjustmentKind, systemId: string): MergedEntry | undefined =>
   round.entries.find((e): e is MergedEntry =>
     e.type === 'adjustment' && e.kind === kind && e.status !== 'cancelled' && e.delta.units?.systemId === systemId);
 
@@ -47,7 +48,7 @@ export const isEmptyDelta = (delta: AdjustmentDelta): boolean =>
  * One tap on the big hex. The first change makes the entry at the end of the round's action phase, and the entry goes
  * when it nets to nothing. Setup records the board as it stands, so it counts as done; losses and purchases are planned.
  */
-export function changeMerged(round: Round, change: MergedChange, newId: () => string): Round {
+export function changeMerged(round: RoundFacts, change: MergedChange, newId: () => string): RoundFacts {
   if (change.amount === 0) return round;
   const { kind, systemId } = change;
   const found = mergedEntry(round, kind, systemId);
@@ -65,7 +66,7 @@ export function changeMerged(round: Round, change: MergedChange, newId: () => st
 }
 
 /** The signed counts of a merged entry: space first, then by planet. */
-export function mergedCounts(round: Round, kind: AdjustmentKind, systemId: string): MergedCount[] {
+export function mergedCounts(round: RoundFacts, kind: AdjustmentKind, systemId: string): MergedCount[] {
   const delta = mergedEntry(round, kind, systemId)?.delta;
   const counts = (units: UnitCounts, planetId: string | null): MergedCount[] =>
     (Object.keys(units) as UnitId[]).map(unit => ({ unit, planetId, count: units[unit] ?? 0 }));

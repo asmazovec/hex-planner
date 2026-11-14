@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import structureAboard from '../../../rules/codes/structureAboard';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, expectStanding, expectWaived, HOME, quote, TARGET, NEAR, tactical, warningsOf } from '../kit';
 import { id } from './miniaturization';
 

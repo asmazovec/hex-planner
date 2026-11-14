@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { bench, componentAction, HOME, NEAR, tactical, using } from '../../../domain/effects/components/kit';
 import { planned } from '../../../domain/rules/kit';
-import type { Entry } from '../../../domain/types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { showTactical, showTurn, uiBench, use, shown } from '../../testing/effects';
 
 uiBench();

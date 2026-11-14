@@ -2,11 +2,12 @@
  * A manual correction, and an agenda card as the numbers it changed: counts change by the delta, signed. A unit count
  * that goes below what stands there reports what was missing (the stack stops at nothing).
  */
-import type { Entry, UnitCounts, UnitId } from '../../domain/types';
+import type { UnitCounts, UnitId } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import type { GameEvent, Place } from '../events';
 import { emit, type Ctx } from './context';
 
-type Adjustment = Extract<Entry, { type: 'adjustment' }>;
+type Adjustment = Extract<TurnFacts, { type: 'adjustment' }>;
 
 function shifts(ctx: Ctx, at: Place, units: UnitCounts): GameEvent[] {
   const up: UnitCounts = {};

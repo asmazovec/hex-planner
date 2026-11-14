@@ -4,7 +4,8 @@ import { HOME, NO_PAYMENT, primary } from '../rules/kit';
 import { CARD } from '../strategy';
 import { cardCost, repaid } from '../../testing/old/domain/strategy';
 import { withProduction } from '../../testing/old/domain/tactical';
-import type { Entry, UnitCounts } from '../types';
+import type { UnitCounts } from '../types';
+import type { Entry } from '../../testing/old/domain/types';
 import { productionDue } from '../../testing/old/domain/replay/production';
 
 /**

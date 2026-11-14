@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showFlight, showUses, take, uiBench, use } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, HOME, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './dominusorb';
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { isWaived } from '../../../rules/registry';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectStanding, expectWaived, primary, quote, using, warningsOf, type Bench } from '../kit';
 import { id } from './overrule';
 

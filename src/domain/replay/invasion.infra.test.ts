@@ -8,7 +8,8 @@ import { place } from '../../game/abilities/emit';
 import type { HookPayloads } from '../../game/abilities/types';
 import type { Ability } from '../effects/types';
 import { bench, endOf, expectStanding, NEAR, TARGET, adjust, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
-import type { AnyWarningCode, Entry } from '../types';
+import type { AnyWarningCode } from '../types';
+import type { Entry } from '../../testing/old/domain/types';
 import type { Player } from '../players';
 import { attachCard, exploreCondition, placeOnPlanet } from '../../testing/old/domain/replay/invasion';
 

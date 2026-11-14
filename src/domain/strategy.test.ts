@@ -6,7 +6,8 @@ import { project, stateBeforeEntry, stateAfterEntry } from '../testing/old/domai
 import { withTeMecatol } from '../testing/old/domain/mecatol';
 import { cardsHeld, costsStrategyToken, freeTokens, heldCards, homeSlot, withProduction, withStructure, withSystem, type CardEntry, withLeadershipTokens } from './strategy';
 import { cardChange, cardCost, freshPlay, plannedCard, playOf, startsAsPrimary } from '../testing/old/domain/strategy';
-import type { CardEffects, Entry, EntryBody, ExpansionId, Game, UnitId, Warning } from './types';
+import type { CardEffects, ExpansionId, UnitId, Warning } from './types';
+import type { Entry, EntryBody, Game } from '../testing/old/domain/types';
 
 const pack = loadPack(['pok', 'te']);
 /** A unit upgrade as the technology Jol-Nar researches for it. */

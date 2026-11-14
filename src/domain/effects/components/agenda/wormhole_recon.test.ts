@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Act, DataPack, Entry } from '../../../types';
+import type { Act, DataPack } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './wormhole_recon';

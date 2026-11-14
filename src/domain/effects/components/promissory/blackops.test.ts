@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import type { GameState } from '../../../../testing/old/domain/types';
 import { bench, endOf, NEAR, quote, tactical } from '../kit';

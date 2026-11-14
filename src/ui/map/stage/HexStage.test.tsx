@@ -11,7 +11,8 @@ vi.mock('../../../storage/db', () => ({
 import { loadPack } from '../../../data/loadPack';
 import { textOf } from '../../../domain/components';
 import { project } from '../../../testing/old/domain/project';
-import type { Entry, UnitCounts } from '../../../domain/types';
+import type { UnitCounts } from '../../../domain/types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { setLanguage } from '../../../i18n';
 import { useGame } from '../../../state/gameStore';
 import { HexStage, type HexStageProps } from './HexStage';

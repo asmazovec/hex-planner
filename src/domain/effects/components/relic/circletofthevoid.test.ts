@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { isWaived } from '../../../rules/registry';
-import type { Entry, Game, Warning } from '../../../types';
+import type { Warning } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, effect, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './circletofthevoid';
 

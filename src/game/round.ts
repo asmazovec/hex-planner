@@ -5,11 +5,12 @@
  * the round's flow (a turn out of its phase, after a pass, a pass before the primaries) are `resolve/flow.ts`, over the
  * turns of the round the track holds.
  */
-import type { DataPack, Entry, Phase, Warning } from '../domain/types';
+import type { DataPack, Phase, Warning } from '../domain/types';
+import type { TurnFacts } from './turnFacts';
 import type { Turn } from './actions';
 import { applyAll } from './apply';
 import type { GameEvent } from './events';
-import { legacyEntry } from './entry';
+import { factsOf } from './turnFacts';
 import { runHooks } from './resolve/hooks';
 import type { HookKind } from './abilities/types';
 import type { Board, PlayerId, Table } from './types';
@@ -25,7 +26,7 @@ export interface Moment { board: Board; events: GameEvent[]; violations: Warning
 const noMoment = (board: Board): Moment => ({ board, events: [], violations: [] });
 
 /** Asks the components of `players` for the hook, and applies what they returned. `turn` is the turn the moment belongs to, when there is one. */
-function ask(table: Table, board: Board, pack: DataPack, hook: HookKind, players: PlayerId[], turn?: Turn, entry?: Entry): Moment {
+function ask(table: Table, board: Board, pack: DataPack, hook: HookKind, players: PlayerId[], turn?: Turn, entry?: TurnFacts): Moment {
   return runHooks(table, board, pack, hook, players, {}, { actor: turn?.player ?? table.viewer, step: 'round', ...(turn ? { turn: turn.id } : {}), ...(entry ? { entry } : {}) });
 }
 
@@ -59,7 +60,7 @@ export const roundStarted = (table: Table, board: Board, pack: DataPack): Moment
 
 /** The status phase begins, once: the components are told, with the first entry of the phase when it names what takes the place of the start's effect. */
 export const statusStart = (table: Table, board: Board, pack: DataPack, turn?: Turn): Moment =>
-  ask(table, board, pack, 'onStatusStart', everyone(table), turn, turn ? legacyEntry(table, turn) : undefined);
+  ask(table, board, pack, 'onStatusStart', everyone(table), turn, turn ? factsOf(table, turn) : undefined);
 
 /** The status phase ends, once: the board is cleared, the cards readied, and every player's components are told. */
 export function statusEnd(table: Table, board: Board, pack: DataPack): Moment {
@@ -71,6 +72,6 @@ export function statusEnd(table: Table, board: Board, pack: DataPack): Moment {
 
 /** A turn of the action phase begins: its player's components are told. */
 export const turnStart = (table: Table, board: Board, pack: DataPack, turn: Turn): Moment =>
-  ask(table, board, pack, 'onTurnStart', [turn.player], turn, legacyEntry(table, turn));
+  ask(table, board, pack, 'onTurnStart', [turn.player], turn, factsOf(table, turn));
 
 export { noMoment };

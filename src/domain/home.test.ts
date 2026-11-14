@@ -5,7 +5,7 @@ import { createGame } from '../testing/old/domain/newGame';
 import { project } from '../testing/old/domain/project';
 import { homeOf, homeSlot, startingDocks } from './strategy';
 import { homeNotes } from '../testing/old/domain/strategy';
-import type { Game } from './types';
+import type { Game } from '../testing/old/domain/types';
 
 const pack = loadPack(['pok', 'te']);
 const MAP_STRING = '66 22 61 19 72 24 110 79 48 106 117 33 41 71 28 44 46 30 58 63 115 55 76 49 16 74 78 14 37 68 12 102 80 4 34 113';

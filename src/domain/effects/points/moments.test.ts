@@ -6,7 +6,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import { adjust, forecast, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, HOME, NEAR, TARGET } from '../../rules/kit';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import type { Ability } from '../types';
 import { spendStrategyBy } from '../helpers/cardPlay';
 import { gain } from '../../../game/abilities/emit';

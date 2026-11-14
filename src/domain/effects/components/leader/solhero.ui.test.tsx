@@ -1,6 +1,6 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showTactical, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './solhero';
 

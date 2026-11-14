@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, LeaderState } from '../../../types';
+import type { LeaderState } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, endOf, expectStanding, expectWaived, NEAR, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './mahactcommander';
 

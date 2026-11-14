@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Game, StructureCounts, UnitCounts } from '../../../types';
+import type { StructureCounts, UnitCounts } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, type Bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './winnu_mech';
 

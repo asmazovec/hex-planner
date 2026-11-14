@@ -1,4 +1,5 @@
-import type { DataPack, Entry, Game, Goods, Warning } from '../../../../../domain/types';
+import type { DataPack, Goods, Warning } from '../../../../../domain/types';
+import type { Entry, Game } from '../../types';
 import type { GameState } from '../../types';
 
 /** What a transaction (LRR 94) tells a component of one of its two sides, after the goods and components have moved. */

@@ -1,7 +1,7 @@
 /** The resolver on the rules test board: events and violations of a tactical turn, step by step. */
 import { describe, expect, test } from 'vitest';
 import { FAR, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../../domain/rules/kit';
-import type { Entry } from '../../domain/types';
+import type { Entry } from '../../testing/old/domain/types';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
 import type { GameEvent } from '../events';

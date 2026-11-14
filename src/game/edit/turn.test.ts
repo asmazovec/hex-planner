@@ -4,8 +4,8 @@ import { createGame } from '../../testing/old/domain/newGame';
 import { withChoices } from '../../domain/effects/choices';
 import { stateBeforeEntry } from '../../testing/old/domain/project';
 import { repaid } from '../../testing/old/domain/strategy';
-import type { Entry, Game } from '../../domain/types';
-import { legacyEntry } from '../entry';
+import type { Entry, Game } from '../../testing/old/domain/types';
+import { factsOf } from '../turnFacts';
 import { turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as now from './turn';
@@ -33,7 +33,7 @@ const plain = (e: unknown) => JSON.parse(JSON.stringify(e, (key, value) => (key 
 const same = (id: string, next: ReturnType<typeof turnOfId>, patch: Record<string, unknown>) => {
   const merged: Record<string, unknown> = { ...entryOf(id), ...patch };
   for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
-  expect(plain(legacyEntry(table, next))).toEqual(plain(merged));
+  expect(plain(factsOf(table, next))).toEqual(plain(merged));
 };
 
 describe('the edits of component actions, passes and what every turn holds, against what the screens wrote', () => {

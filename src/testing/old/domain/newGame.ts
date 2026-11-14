@@ -1,4 +1,5 @@
-import { type ExpansionId, type MapLayout, type DataPack, type Game, SAVE_FORMAT } from '../../../domain/types';
+import { type ExpansionId, type MapLayout, type DataPack, SAVE_FORMAT } from '../../../domain/types';
+import type { Game } from './types';
 import { type IdMaker, timeIdMaker, makeId } from '../../../domain/newGame';
 import { defaultLayout, templateOf, slotKeyOf } from '../../../domain/layouts';
 import { seatSlots } from '../../../domain/mapBuilder';

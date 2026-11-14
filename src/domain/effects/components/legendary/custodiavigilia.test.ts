@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { standing } from '../../../rules/registry';
-import type { Entry, UnitCounts } from '../../../types';
+import type { UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './custodiavigilia';
 

@@ -10,7 +10,8 @@
  */
 import objectiveUnmet from '../../rules/codes/objectiveUnmet';
 import { violation } from '../../rules/registry';
-import type { DataPack, Entry, UnitCounts, Warning } from '../../types';
+import type { DataPack, UnitCounts, Warning } from '../../types';
+import type { TurnFacts } from '../../../game/turnFacts';
 import type { MapSource } from '../../replay/board';
 import type { AbilityContext } from '../../../game/abilities/types';
 import type { PlayerId } from '../../../game/types';
@@ -24,7 +25,7 @@ import type { Ability } from '../types';
  */
 export interface RequirementContext extends AbilityContext {
   /** The status entry that scores the objective. */
-  readonly entry: Extract<Entry, { type: 'statusTokens' }>;
+  readonly entry: Extract<TurnFacts, { type: 'statusTokens' }>;
   /** The component id of the objective. */
   readonly objective: string;
   /** The map as the movement code reads it (the table's map and the open Fracture). */
@@ -65,7 +66,7 @@ declare module '../types' {
 }
 
 /** The action cards an entry plays: its component action, what it spends and what it names in `uses`. */
-export function actionCardsPlayed(entry: Entry, pack: DataPack): string[] {
+export function actionCardsPlayed(entry: TurnFacts, pack: DataPack): string[] {
   return playedBy(entry).filter(id => componentById(pack, id)?.kind === 'actionCard');
 }
 

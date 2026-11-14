@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, uiBench, use } from '../../../../ui/testing/effects';
-import type { Game } from '../../../types';
+import type { Game } from '../../../../testing/old/domain/types';
 import { bench, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './crucible';
 

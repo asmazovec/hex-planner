@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { expect, test } from 'vitest';
 import { AdjustmentEditor } from '../../../../ui/plan/editors/AdjustmentEditor';
 import { uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, quote, type Bench } from '../kit';
 import { id } from './plowshares';
 import { turnProps } from '../../../../ui/testing/turnProps';

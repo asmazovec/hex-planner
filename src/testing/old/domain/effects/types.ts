@@ -1,4 +1,5 @@
-import type { Game, Entry, DataPack, Warning } from '../../../../domain/types';
+import type { DataPack, Warning } from '../../../../domain/types';
+import type { Game, Entry } from '../types';
 import type { GameState } from '../types';
 
 /** One component being played by an entry, with what the player chose for it. */

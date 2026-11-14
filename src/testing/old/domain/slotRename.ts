@@ -1,4 +1,4 @@
-import type { Entry, Game } from '../../../domain/types';
+import type { Entry, Game } from './types';
 
 /** An entry whose slot keys go through `to`: the active system, the sources and routes of moves, the card and adjustment systems. */
 export function movedEntry(entry: Entry, to: (slot: string) => string): Entry {

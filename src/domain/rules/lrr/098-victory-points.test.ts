@@ -1,6 +1,6 @@
 /** LRR 98 Victory Points. Source: tirules2 rules-reference/victory-points.md. */
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, forecast, rulesGame, rulesPack, statusTokens } from '../kit';
 import { RIVAL } from './kit-83-101';
 

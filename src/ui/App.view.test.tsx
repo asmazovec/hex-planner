@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import type { Game } from '../domain/types';
+import type { Game } from '../testing/old/domain/types';
 import { setLanguage } from '../i18n';
 import { useGame } from '../state/gameStore';
 import { App } from './App';

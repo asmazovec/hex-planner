@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { choose, showComponent, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, EntryBody } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { adjust, bench, planned, quote } from '../kit';
 import { id } from './redistribution';
 

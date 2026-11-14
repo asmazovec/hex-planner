@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { showFlight, take, takeButton, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, HOME, NEAR, quote, tactical, using } from '../kit';
 import { id } from './sol_mech';
 

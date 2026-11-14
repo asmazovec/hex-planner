@@ -10,7 +10,8 @@ import { describe, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { watchProjects } from '../../testing/old/domain/project';
 import { watchGames } from '../../domain/rules/kit';
-import type { DataPack, Game } from '../../domain/types';
+import type { DataPack } from '../../domain/types';
+import type { Game } from '../../testing/old/domain/types';
 import { fixtureOf, marksOf, packBaseOf, packOf, type Case } from '../../testing/old/game/resolve/oracle';
 
 const recording = Boolean(process.env.ORACLE_RECORD);

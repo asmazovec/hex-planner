@@ -1,5 +1,5 @@
 import { loadPack } from '../../../../data/loadPack';
-import type { Game, Round, Entry } from '../../../../domain/types';
+import type { Game, Round, Entry } from '../types';
 import { createGame } from '../newGame';
 import { setPlayerFaction, placeStartUnits } from '../players';
 import { seatSlots } from '../../../../domain/mapBuilder';

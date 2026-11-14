@@ -1,4 +1,5 @@
-import type { DataPack, Game, UnitCounts, Warning, UnitId } from '../../../../domain/types';
+import type { DataPack, UnitCounts, Warning, UnitId } from '../../../../domain/types';
+import type { Game } from '../types';
 import type { GameState } from '../types';
 import { sourceSlot } from '../../../../domain/replay/board';
 import { add, take, type Move, type TacticalEntry } from '../../../../domain/replay/state';

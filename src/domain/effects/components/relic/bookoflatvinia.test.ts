@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { DataPack, Entry, TechType } from '../../../types';
+import type { DataPack, TechType } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, quote } from '../kit';
 import { id } from './bookoflatvinia';
 

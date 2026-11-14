@@ -3,7 +3,8 @@
  * made from the body of an old entry. The store itself holds only the kernel's turn edits.
  */
 import { useGame } from '../state/gameStore';
-import type { EntryBody, EntryStatus, Phase } from '../domain/types';
+import type { EntryStatus, Phase } from '../domain/types';
+import type { EntryBody } from './old/domain/types';
 import { patchedTurn, turnOfBody } from './legacyEdits';
 
 export function addEntry(roundNo: number, body: EntryBody, phase: Phase, owner?: string): string {

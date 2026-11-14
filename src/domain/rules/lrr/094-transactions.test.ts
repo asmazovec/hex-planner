@@ -1,7 +1,8 @@
 /** LRR 94 Transactions. Source: tirules2 rules-reference/transactions.md. A transaction is an act of the active player's turn. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Act, Entry, Game, Goods } from '../../types';
+import type { Act, Goods } from '../../types';
+import type { Entry, Game } from '../../../testing/old/domain/types';
 import type { Player } from '../../players';
 import { FACTION, NEAR, adjust, codesOf, forecast, rulesGame, rulesPack, secondary, tactical, tech } from '../kit';
 

@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showUses, use, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, EntryBody } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, HOME, NEAR, planned, quote, tactical } from '../kit';
 import { id } from './puppetsonastring';
 

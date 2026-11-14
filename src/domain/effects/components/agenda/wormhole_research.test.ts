@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, endOf, FARTHER, HOME, NEAR, quote, TARGET } from '../kit';
 import { id } from './wormhole_research';
 

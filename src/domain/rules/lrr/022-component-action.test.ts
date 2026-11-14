@@ -1,7 +1,7 @@
 /** LRR 22 Component Action. Source: tirules2 rules-reference/component-action.md. */
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { codesOf, forecast, rulesGame, rulesPack, rulesOf } from '../kit';
 
 const pack = rulesPack();

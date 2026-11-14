@@ -7,10 +7,11 @@ import { boardSlots } from './movement';
 import type { MapSource } from './replay/board';
 import { isOnMap, sourceSlot } from './replay';
 import type { Pools } from './readers';
-import type { AdjustmentDelta, DataPack, Entry, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
+import type { AdjustmentDelta, DataPack, StructureCounts, StructureKind, UnitCounts, UnitId } from './types';
+import type { TurnFacts } from '../game/turnFacts';
 import type { TableFacts } from './facts';
 
-export type TacticalEntry = Extract<Entry, { type: 'tactical' }>;
+export type TacticalEntry = Extract<TurnFacts, { type: 'tactical' }>;
 export type Move = TacticalEntry['moves'][number];
 
 export const hasUnits = (units: UnitCounts | undefined): boolean =>
@@ -168,7 +169,7 @@ export function arrowsOf(game: TableFacts, pack: DataPack, entry: TacticalEntry)
 }
 
 /** The systems an entry touches, for the camera. */
-export function entrySystems(game: TableFacts, pack: DataPack, entry: Entry): string[] {
+export function entrySystems(game: TableFacts, pack: DataPack, entry: TurnFacts): string[] {
   const slots: (string | null | undefined)[] = [];
   if (entry.type === 'tactical') {
     slots.push(entry.systemId, ...sourcesOf(game, pack, entry));

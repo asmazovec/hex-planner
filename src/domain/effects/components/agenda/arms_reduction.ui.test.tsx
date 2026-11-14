@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, HOME, quote } from '../kit';
 import { id } from './arms_reduction';
 

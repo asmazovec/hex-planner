@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test, vi } from 'vitest';
 import { GainsBlock } from '../../../../ui/plan/blocks/GainsBlock';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { EntryBody } from '../../../types';
+import type { EntryBody } from '../../../../testing/old/domain/types';
 import { bench, NEAR, planned, quote, TARGET, tactical } from '../kit';
 import { id } from './propulsion';
 import { turnProps } from '../../../../ui/testing/turnProps';

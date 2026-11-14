@@ -1,6 +1,6 @@
 /** LRR 2 Action Cards. Source: tirules2 rules-reference/action-cards.md. The hand is kept by what entries gain and play; there is no deck. */
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { effectOf } from '../../effects/registry';
 import { forecast, rulesGame, rulesPack } from '../kit';
 

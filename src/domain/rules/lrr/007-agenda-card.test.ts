@@ -3,7 +3,7 @@
  * the agenda phase names the agenda that was resolved, and a law among them stays in play for the whole game.
  */
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { forecast, rulesGame, rulesPack } from '../kit';
 
 const pack = rulesPack();

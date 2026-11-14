@@ -1,5 +1,6 @@
 import { boardBefore, type Timeline, project as kernelProject } from '../../projection';
-import type { Game, DataPack, Plan } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
+import type { Game, Plan } from './types';
 import type { Projection } from './types';
 import { type Blockers, routeReach as reachOf } from '../../../domain/movement';
 import { blockersOf } from './movement';

@@ -1,6 +1,7 @@
 /** The table and the board the kernel keeps for a game of the old shape, for the tests that render an editor or a block over a `Game`. */
 import { boardAtRound, timelineOf } from '../../testing/projection';
-import type { DataPack, Game, Warning } from '../../domain/types';
+import type { DataPack, Warning } from '../../domain/types';
+import type { Game } from '../../testing/old/domain/types';
 import type { KernelView } from '../plan/kernelView';
 
 /** The table, and the board at the end of the first plan, as it stands now or in the forecast. */

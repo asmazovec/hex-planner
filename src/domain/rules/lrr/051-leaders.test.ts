@@ -4,7 +4,8 @@ import { loadPack } from '../../../data/loadPack';
 import { factionSheet } from '../../factionSheet';
 import { createGame } from '../../../testing/old/domain/newGame';
 import { setPlayerFaction } from '../../../testing/old/domain/players';
-import type { Entry, ExpansionId } from '../../types';
+import type { ExpansionId } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { codesOf, forecast, rulesGame, statusTokens } from '../kit';
 
 const pok = loadPack(['pok']);

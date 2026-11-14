@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, endOf, expectNone, expectStanding, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';
 import { id } from './demilitarized_zone';
 

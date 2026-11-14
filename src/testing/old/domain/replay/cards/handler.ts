@@ -1,5 +1,6 @@
 import type { CardEntry } from '../../../../../domain/strategy';
-import type { DataPack, Game, Warning } from '../../../../../domain/types';
+import type { DataPack, Warning } from '../../../../../domain/types';
+import type { Game } from '../../types';
 import type { GameState } from '../../types';
 /** One card entry being replayed. */
 export interface CardTurn {

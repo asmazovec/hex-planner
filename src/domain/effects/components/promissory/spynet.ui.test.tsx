@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { choose, showUses, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, endOf, NEAR, quote, tactical, using } from '../kit';
 import { id } from './spynet';

@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showFlight, showTactical, take, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './letnevhero';
 

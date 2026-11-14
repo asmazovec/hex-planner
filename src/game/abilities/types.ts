@@ -3,7 +3,8 @@
  * the context and returns events (or warnings); `apply` is the only thing that changes a board. `holder` (who holds the
  * component) and `actor` (whose turn it is) are both in the context, so a file never has to find out whose it is.
  */
-import type { AnyWarningCode, ComponentDef, Entry, Goods, RuleStep, UnitCounts, Warning } from '../../domain/types';
+import type { AnyWarningCode, ComponentDef, Goods, RuleStep, UnitCounts, Warning } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import type { ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { HolderRule } from '../../domain/effects/holder';
 import type { Cause, GameEvent } from '../events';
@@ -140,7 +141,7 @@ export interface AbilityContext {
   /** The component asked, as held (a note under its address). */
   readonly id: ComponentId;
   /** The entry of the action the moment belongs to, when there is one. */
-  readonly entry?: Entry;
+  readonly entry?: TurnFacts;
   /** The commodity value of a player: the faction's printed value after the components that change it (21.1). */
   commodityValue(player: PlayerId): number;
   /** The player an old-model key (`me`, an opponent id; a note's address) names. */

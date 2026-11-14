@@ -3,17 +3,19 @@
  * itself. Only the storage and the file go through here; goes with the old `Game`.
  */
 import { loadPack } from '../data/loadPack';
-import type { Game, Plan, StartHoldings } from '../domain/types';
+import type { StartHoldings } from '../domain/types';
+import type { Game, Plan } from './old/domain/types';
 import type { Player } from '../domain/players';
 import { SAVE_FORMAT } from '../domain/types';
-import { legacyEntry, legacyPlayer, playerOfLegacy } from '../game/entry';
+import { legacyPlayer, playerOfLegacy } from '../game/entry';
+import { factsOf } from '../game/turnFacts';
 import { nestedEntries } from './old/game/entry';
 import { GHOST_SEAT } from './old/game/fromLegacy';
 import { planOf, tableOf } from './old/game/fromLegacy';
 import type { SavedGame, StartEdits } from '../game/save';
 import type { Round as KernelRound } from '../game/round';
 import type { Table, UnitCounts } from '../game/types';
-import type { Round } from '../domain/types';
+import type { Round } from './old/domain/types';
 import { parseSaved } from '../storage/schema';
 
 const nonEmpty = <T extends object>(record: Record<string, T>): Record<string, T> =>
@@ -75,7 +77,7 @@ export function savedOf(game: Game): SavedGame {
 }
 
 const entriesOf = (table: Table, round: KernelRound): Round['entries'] =>
-  round.turns.flatMap(turn => [legacyEntry(table, turn), ...nestedEntries(table, turn)])
+  round.turns.flatMap(turn => [factsOf(table, turn), ...nestedEntries(table, turn)])
     // An entry with no acts has none: the kernel's `acts` is always a list.
     .map(entry => (!('acts' in entry) || (entry.acts && entry.acts.length > 0) ? entry : omitActs(entry)));
 

@@ -9,7 +9,7 @@ import { UNIT_ORDER } from '../../domain/hexLayout';
 import { effectOf } from '../../domain/effects/registry';
 import type { ChoiceContext, ChoiceSlot, ChoiceSpec } from '../../domain/effects/types';
 import type { Turn } from '../actions';
-import { legacyEntry } from '../entry';
+import { factsOf } from '../turnFacts';
 import { contextOf } from '../resolve/hooks';
 import type { Board, DataPack, Table } from '../types';
 
@@ -59,7 +59,7 @@ export function choicesOf(table: Table, board: Board, turn: Turn, id: string, pa
   const specs = effectOf(pack, id)?.choose;
   if (!specs || specs.length === 0) return [];
   const chosen = chosenOf(turn, id);
-  const base = contextOf(table, board, pack, turn.player, id, { actor: turn.player, choices: chosen, entry: legacyEntry(table, turn) }, () => {});
+  const base = contextOf(table, board, pack, turn.player, id, { actor: turn.player, choices: chosen, entry: factsOf(table, turn) }, () => {});
   const ctx: ChoiceContext = Object.assign(Object.create(base) as object, { chosen }) as ChoiceContext;
   return specs.map(spec => {
     const shown = spec.when?.(chosen) ?? true;

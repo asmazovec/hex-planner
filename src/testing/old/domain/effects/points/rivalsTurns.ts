@@ -1,4 +1,5 @@
-import type { DataPack, Game, Warning } from '../../../../../domain/types';
+import type { DataPack, Warning } from '../../../../../domain/types';
+import type { Game } from '../../types';
 import type { GameState } from '../../types';
 
 /** What a component is asked with when a player lands ground forces on a planet. */

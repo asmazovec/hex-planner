@@ -12,7 +12,8 @@ import objectiveRepeated from '../../domain/rules/codes/objectiveRepeated';
 import objectivesPerPhase from '../../domain/rules/codes/objectivesPerPhase';
 import scoreWithoutHome from '../../domain/rules/codes/scoreWithoutHome';
 import { violation } from '../../domain/rules/registry';
-import type { Entry, Warning } from '../../domain/types';
+import type { Warning } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import type { GameEvent } from '../events';
 import { playerOfKey } from '../keys';
 import { fleetPoolMaxWarnings, fleetPoolWarnings, planetsOf, readyPlanets, reinforcementWarnings, shipsIn, groundOn, statusTokensFree } from '../queries';
@@ -21,7 +22,7 @@ import { contextOf } from './hooks';
 import { emit, warn, type Ctx } from './context';
 import { applyScored } from './holdings';
 
-type StatusEntry = Extract<Entry, { type: 'statusTokens' }>;
+type StatusEntry = Extract<TurnFacts, { type: 'statusTokens' }>;
 const POOLS = ['tactic', 'fleet', 'strategy'] as const;
 
 function statusTokens(ctx: Ctx, entry: StatusEntry): void {

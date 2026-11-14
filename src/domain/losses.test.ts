@@ -4,7 +4,8 @@ import { changeMerged, mergedCounts, mergedEntry } from './losses';
 import { changeOnBoard } from '../testing/oldMerged';
 import { createGame } from '../testing/old/domain/newGame';
 import { project } from '../testing/old/domain/project';
-import type { AdjustmentKind, Entry, EntryBody, Game, Phase, Round, UnitId } from './types';
+import type { AdjustmentKind, Phase, UnitId } from './types';
+import type { Entry, EntryBody, Game, Round } from '../testing/old/domain/types';
 
 const SLOT = '1,0';
 const emptyRound = (): Round => ({ number: 1, strategyCard: null, backupCard: null, entries: [] });

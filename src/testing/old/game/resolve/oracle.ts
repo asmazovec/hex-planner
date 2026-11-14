@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { type Filter, timeline as kernelTimeline } from '../../../../game/timeline';
-import type { ExpansionId, Game, DataPack, Plan } from '../../../../domain/types';
+import type { ExpansionId, DataPack } from '../../../../domain/types';
+import type { Game, Plan } from '../../domain/types';
 import { loadPack } from '../../../../data/loadPack';
 import { tableOf, planOf, boardOf, legacyState } from '../fromLegacy';
 import { normalState, normalWarnings } from '../compare';

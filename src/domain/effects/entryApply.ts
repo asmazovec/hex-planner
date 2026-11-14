@@ -11,7 +11,8 @@
  */
 import { componentById, noteAddress } from '../components';
 import { holds, isExhausted } from '../replay/holdings';
-import type { DataPack, Entry } from '../types';
+import type { DataPack } from '../types';
+import type { TurnFacts } from '../../game/turnFacts';
 import type { Kept } from '../readers';
 import type { Shelf } from '../shelf';
 import { applied, type Applied } from './apply';
@@ -27,7 +28,7 @@ const ready = (pack: DataPack, state: Pick<Kept, 'holdings'> | undefined, id: st
 };
 
 export function appliedFor<K extends keyof Modifiers>(
-  pack: DataPack, who: Shelf | Holder, entry: Entry | undefined, point: K, base: number, ctx: ModifierContext[K], state?: Pick<Kept, 'holdings'>,
+  pack: DataPack, who: Shelf | Holder, entry: TurnFacts | undefined, point: K, base: number, ctx: ModifierContext[K], state?: Pick<Kept, 'holdings'>,
 ): Applied {
   const result = applied(pack, who, point, base, ctx);
   if (!entry) return result;

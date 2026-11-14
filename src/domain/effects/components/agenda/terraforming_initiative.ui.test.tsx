@@ -6,7 +6,7 @@ import { expect, test } from 'vitest';
 import { AdjustmentEditor } from '../../../../ui/plan/editors/AdjustmentEditor';
 import { expectNotShown, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { CARD } from '../../../strategy';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, type Bench, quote, secondary } from '../kit';
 import { id } from './terraforming_initiative';
 import { turnProps } from '../../../../ui/testing/turnProps';

@@ -10,7 +10,8 @@ import { countChangeEffect as oldCount, opponentHoldings as oldHoldings } from '
 import { homeNotes as oldHomeNotes } from '../../testing/old/domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
 import { withFractureMoved } from '../../testing/old/domain/thundersEdge';
-import type { Entry, ExpansionId, Game, MapLayout } from '../../domain/types';
+import type { ExpansionId, MapLayout } from '../../domain/types';
+import type { Entry, Game } from '../../testing/old/domain/types';
 import { gameOf, savedOf } from '../../testing/legacySave';
 import type { SavedGame } from '../save';
 import {

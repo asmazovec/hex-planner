@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { alwaysInForce, throwaway } from '../../effects/points/throwaway';
 import noteRefused from '../codes/noteRefused';
 import { violation } from '../registry';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import type { Player } from '../../players';
 import { NEAR, forecast, rulesGame, rulesPack, tactical } from '../kit';
 

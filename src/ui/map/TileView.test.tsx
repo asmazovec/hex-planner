@@ -5,7 +5,7 @@ import { loadPack } from '../../data/loadPack';
 import { hexLayout } from '../../domain/hexLayout';
 import { emptyHoldings } from '../../domain/holdings';
 import { createGame } from '../../testing/old/domain/newGame';
-import type { Game } from '../../domain/types';
+import type { Game } from '../../testing/old/domain/types';
 import type { GameState } from '../../testing/old/domain/types';
 import { setLanguage } from '../../i18n';
 import { seatSlots } from '../../domain/mapBuilder';

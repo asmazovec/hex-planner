@@ -6,7 +6,8 @@ import { placeStartUnits, removePlayer, setPlayerFaction } from '../testing/old/
 import { project } from '../testing/old/domain/project';
 import { seatSlots } from './mapBuilder';
 import { homeSlot } from './strategy';
-import type { Game, UnitCounts } from './types';
+import type { UnitCounts } from './types';
+import type { Game } from '../testing/old/domain/types';
 import type { GameState } from '../testing/old/domain/types';
 
 const pack = loadPack(['pok', 'te']);

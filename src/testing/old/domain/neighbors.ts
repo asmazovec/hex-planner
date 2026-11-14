@@ -1,6 +1,7 @@
 import { type Link, routeDistances } from '../../../domain/movement';
 import { planetsOf, systemSlots } from '../../../domain/replay/board';
-import type { DataPack, Game } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
+import type { Game } from './types';
 import type { GameState } from './types';
 import { areNeighborsOf, holds } from '../../../domain/neighbors';
 /** Whether a player is present in a system or next to it: units there, or a planet of theirs. */

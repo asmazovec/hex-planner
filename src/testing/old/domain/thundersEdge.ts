@@ -1,4 +1,5 @@
-import type { Game, DataPack, Plan } from '../../../domain/types';
+import type { DataPack } from '../../../domain/types';
+import type { Game, Plan } from './types';
 import type { GameState } from './types';
 import { fractureSlots, type SliceOwners } from '../../../domain/thundersEdge';
 import { slotKeyOf } from '../../../domain/layouts';

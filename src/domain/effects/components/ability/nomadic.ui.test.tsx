@@ -1,6 +1,7 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, quote, statusTokens } from '../kit';
 import { id } from './nomadic';
 

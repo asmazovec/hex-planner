@@ -1,12 +1,12 @@
 /** The actions that are not tactical or a card: a component's action, a pass, the status phase, the agenda and a correction. */
-import type { Entry } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import { begin, emit, type Ctx } from './context';
 import { correction } from './correction';
 import { playComponent } from './holdings';
 import { componentProduction } from './production';
 import { statusAction as status } from './status';
 
-type Of<T extends Entry['type']> = Extract<Entry, { type: T }>;
+type Of<T extends TurnFacts['type']> = Extract<TurnFacts, { type: T }>;
 
 /** A component's action: the component is played (held, exhausted, removed), and what it produces is built. */
 export function componentAction(ctx: Ctx): void {

@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { expectNotShown, showUses, uiBench, use } from '../../../../ui/testing/effects';
-import type { Entry, EntryBody } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, HOME, planned, quote, using } from '../kit';
 import { id } from './hopesend';
 

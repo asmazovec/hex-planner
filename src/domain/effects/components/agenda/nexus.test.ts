@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { EntryBody } from '../../../types';
+import type { EntryBody } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, planned, quote } from '../kit';
 import { id } from './nexus';
 

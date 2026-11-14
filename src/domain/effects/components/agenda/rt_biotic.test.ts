@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, expectStanding, expectWaived, quote, secondary, using, warningsOf } from '../kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
 import { id } from './rt_biotic';

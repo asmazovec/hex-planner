@@ -3,7 +3,7 @@ import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
 import { CURRENT_SCHEMA, parseSaved, SAVE_FORMAT } from './schema';
 import { gameOf, savedOf } from '../testing/legacySave';
-import type { Game } from '../domain/types';
+import type { Game } from '../testing/old/domain/types';
 import { exportGame as exportSaved, importGame as importSaved } from './transfer';
 import { oldFormatSave, legacySampleGame as sampleGame } from '../testing/fixture';
 

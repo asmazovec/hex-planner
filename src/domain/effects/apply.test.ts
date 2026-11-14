@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { emptyHoldings, holdingsOf } from '../holdings';
 import { forecast, rulesGame, rulesPack, tech } from '../rules/kit';
-import type { Entry } from '../types';
+import type { Entry } from '../../testing/old/domain/types';
 import type { Player } from '../players';
 import { applied, stacked } from './apply';
 import { effectOf, stepsOfWindow } from './registry';

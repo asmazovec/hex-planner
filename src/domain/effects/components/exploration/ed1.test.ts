@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { tech } from '../../../rules/kit';
-import type { Entry, StartHoldings } from '../../../types';
+import type { StartHoldings } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Holdings } from '../../../../testing/old/domain/types';
 import { adjust, before, bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf, type Bench } from '../kit';
 import { id } from './ed1';

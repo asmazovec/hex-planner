@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { MECATOL_PLANET, MECATOL_TILE } from '../../../mecatol';
 import { CARD } from '../../../replay/cards/ids';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectStanding, FAR, FARTHER, HOME, NEAR, primary, quote, secondary, TARGET, using, warningsOf } from '../kit';
 import { id } from './peace_accords';
 

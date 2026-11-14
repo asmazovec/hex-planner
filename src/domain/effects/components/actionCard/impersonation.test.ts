@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Payment } from '../../../types';
+import type { Payment } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, quote, warningsOf } from '../kit';
 import { id } from './impersonation';
 

@@ -1,7 +1,7 @@
 /** LRR 3 Action Phase. Source: tirules2 rules-reference/action-phase.md. My cards of a round are `strategyCard` and `backupCard`. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Entry, Game } from '../../types';
+import type { Entry, Game } from '../../../testing/old/domain/types';
 import { before, codesOf, FAR, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

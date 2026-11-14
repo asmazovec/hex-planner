@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { tech } from '../../../rules/kit';
-import type { Entry, EntryBody, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, expectStanding, FAR, HOME, NEAR, planned, quote, tactical, using, warningsOf } from '../kit';
 import { id } from './industrex';
 

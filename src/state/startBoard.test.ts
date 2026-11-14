@@ -7,7 +7,7 @@ import { loadPack } from '../data/loadPack';
 import { setLeader, setStartHolding } from '../testing/old/domain/holdings';
 import { createGame } from '../testing/old/domain/newGame';
 import { addPlayer, placeStartUnits, setPlayerFaction } from '../testing/old/domain/players';
-import type { Game } from '../domain/types';
+import type { Game } from '../testing/old/domain/types';
 import { gameOf, savedOf } from '../testing/legacySave';
 import { normalState } from '../testing/old/game/compare';
 import { boardOf, legacyState, tableOf } from '../testing/old/game/fromLegacy';

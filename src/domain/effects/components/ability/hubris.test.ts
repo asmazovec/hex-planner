@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { genericNotes, startForFaction } from '../../../holdings';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, expectStanding, NEAR, quote, tactical, warningsOf } from '../kit';
 import { id } from './hubris';

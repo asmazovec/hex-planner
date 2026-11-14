@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, showUses, uiBench, use } from '../../../../ui/testing/effects';
-import type { Entry, EntryBody, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, planned, quote, tactical, TARGET } from '../kit';
 import { id } from './censure';
 

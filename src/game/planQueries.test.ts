@@ -9,7 +9,7 @@ import { createGame } from '../testing/old/domain/newGame';
 import { autoPay, sliceAutoPayment } from '../testing/old/domain/payment';
 import { setPlayerFaction } from '../testing/old/domain/players';
 import { cardTargets } from '../testing/old/domain/replay/cards/targets';
-import type { Entry } from '../domain/types';
+import type { Entry } from '../testing/old/domain/types';
 import type { Turn } from './actions';
 import { legacyKey, legacyState, tableOf, turnOf } from '../testing/old/game/fromLegacy';
 import { playerOfKey } from './keys';

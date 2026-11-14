@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, EntryBody } from '../types';
+import type { Entry, EntryBody } from '../../testing/old/domain/types';
 import { adjust, bench, endOf, planned, quote } from './components/kit';
 
 const gaining = (...ids: string[]): Entry => ({ ...adjust({}), gains: ids });

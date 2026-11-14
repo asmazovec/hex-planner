@@ -1,5 +1,6 @@
 /** Helpers of the rules tests for LRR 83 to 101, on top of the shared kit. */
-import type { DataPack, Entry, Game } from '../../types';
+import type { DataPack } from '../../types';
+import type { Entry, Game } from '../../../testing/old/domain/types';
 import type { Player } from '../../players';
 import { codesOf, FAR, FARTHER, HOME, NEAR, rulesGame, tactical, TARGET } from '../kit';
 

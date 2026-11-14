@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import type { GameState } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET, warningsOf } from '../kit';

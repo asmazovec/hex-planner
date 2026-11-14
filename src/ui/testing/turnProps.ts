@@ -1,8 +1,9 @@
 /** The turn of a hand-written old entry and a writer that hands the changed turn back as the old patch, for the tests that render an editor of the kernel's turn over an entry. */
 import type { Turn } from '../../game/actions';
-import { legacyEntry } from '../../game/entry';
+import { factsOf } from '../../game/turnFacts';
 import { planOf, turnOf } from '../../testing/old/game/fromLegacy';
-import type { Act, DataPack, Entry, EntryBody, Game, Payment } from '../../domain/types';
+import type { Act, DataPack, Payment } from '../../domain/types';
+import type { Entry, EntryBody, Game } from '../../testing/old/domain/types';
 import type { KernelView } from '../plan/kernelView';
 
 const same = (a: unknown, b: unknown): boolean => a === b || JSON.stringify(a) === JSON.stringify(b);
@@ -21,7 +22,7 @@ export function entryPatch(before: Entry, after: Entry): Partial<EntryBody> {
 
 export function turnProps(view: KernelView, pack: DataPack, entry: Entry, update: (patch: Partial<EntryBody>) => void): { turn: Turn; view: KernelView; onChange: (next: Turn) => void } {
   const turn = turnOf(view.table, entry, pack);
-  return { turn, view, onChange: next => update(entryPatch(legacyEntry(view.table, turn), legacyEntry(view.table, next))) };
+  return { turn, view, onChange: next => update(entryPatch(factsOf(view.table, turn), factsOf(view.table, next))) };
 }
 
 /** The same for a card entry: the round of the first plan as the kernel keeps it comes with it (the cards held decide how a card is played). */
@@ -32,7 +33,7 @@ export function cardProps(view: KernelView, game: Game, pack: DataPack, entry: E
 /** A transaction as the step of a turn that holds it, and the writer that hands the changed transaction back as the old act: for the tests of `TransactionStep` over a hand-written act. `owner` is the old key of whose turn it is. */
 export function transactionProps(view: KernelView, pack: DataPack, act: Act, owner: string, uses: string[] | undefined, update: (act: Act) => void): { turn: Turn; index: number; onChange: (next: Turn) => void } {
   const entry = { id: 't', phase: 'action', status: 'planned', type: 'pass', acts: [act], ...(owner === 'me' ? {} : { owner }), ...(uses ? { uses } : {}) } as Entry;
-  return { turn: turnOf(view.table, entry, pack), index: 0, onChange: next => update((legacyEntry(view.table, next) as { acts: Act[] }).acts[0]) };
+  return { turn: turnOf(view.table, entry, pack), index: 0, onChange: next => update((factsOf(view.table, next) as { acts: Act[] }).acts[0]) };
 }
 
 /** The same for an expedition contribution (`ExpeditionEditor`): the old patch of its part and payment. */
@@ -40,7 +41,7 @@ export function expeditionProps(view: KernelView, pack: DataPack, sliceId: strin
   const entry = { id: 't', phase: 'action', status: 'planned', type: 'pass', acts: [{ kind: 'expedition', sliceId, payment }] } as Entry;
   return {
     turn: turnOf(view.table, entry, pack), index: 0,
-    onChange: next => { const [act] = (legacyEntry(view.table, next) as { acts: { sliceId: string | null; payment: Payment }[] }).acts; update({ sliceId: act.sliceId, payment: act.payment }); },
+    onChange: next => { const [act] = (factsOf(view.table, next) as { acts: { sliceId: string | null; payment: Payment }[] }).acts; update({ sliceId: act.sliceId, payment: act.payment }); },
   };
 }
 
@@ -61,5 +62,5 @@ export function playProps(
 
 /** The turn of an entry and a writer that hands the changed acts back as the old list. */
 export function actsProps(view: KernelView, pack: DataPack, entry: Entry, update: (acts: Act[]) => void): { turn: Turn; onChange: (next: Turn) => void } {
-  return { turn: turnOf(view.table, entry, pack), onChange: next => update((legacyEntry(view.table, next) as { acts?: Act[] }).acts ?? []) };
+  return { turn: turnOf(view.table, entry, pack), onChange: next => update((factsOf(view.table, next) as { acts?: Act[] }).acts ?? []) };
 }

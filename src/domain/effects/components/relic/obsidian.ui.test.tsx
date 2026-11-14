@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import secretsOverLimit from '../../../rules/codes/secretsOverLimit';
 import { adjust, bench, quote } from '../kit';
 import { id } from './obsidian';

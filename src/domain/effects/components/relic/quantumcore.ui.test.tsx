@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, quote } from '../kit';
 import { id } from './quantumcore';
 

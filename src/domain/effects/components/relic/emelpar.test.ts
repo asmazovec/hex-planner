@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { isWaived } from '../../../rules/registry';
-import type { Entry, Warning } from '../../../types';
+import type { Warning } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, endOf, expectStanding, quote, secondary, using, warningsOf } from '../kit';
 import { id } from './emelpar';
 

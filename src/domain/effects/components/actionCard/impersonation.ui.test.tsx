@@ -1,6 +1,6 @@
 import { test } from 'vitest';
 import { expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, quote } from '../kit';
 import { id } from './impersonation';
 

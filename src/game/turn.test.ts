@@ -1,8 +1,9 @@
 /** The tactical entry of the old plan as a turn, and back. */
 import { describe, expect, test } from 'vitest';
 import { FAR, HOME, NEAR, rulesGame, rulesPack, tactical, TARGET } from '../domain/rules/kit';
-import type { Entry } from '../domain/types';
-import { legacyEntry, legacyPlayer, playerOfLegacy, tableOf, turnOf } from '../testing/old/game/fromLegacy';
+import type { Entry } from '../testing/old/domain/types';
+import { legacyPlayer, playerOfLegacy, tableOf, turnOf } from '../testing/old/game/fromLegacy';
+import { factsOf } from './turnFacts';
 
 const pack = rulesPack();
 const game = rulesGame({ game: { opponents: [{ id: 'o1', faction: 'rules-tester', vp: 0, seat: 2, color: 2 }] } });
@@ -28,19 +29,19 @@ describe('turnOf', () => {
     expect(turn.action.production).toMatchObject({ units: { cruiser: 1 }, ground: { h1: { infantry: 1 } }, shipsTo: NEAR });
   });
 
-  test('legacyEntry gives the entry back, whoever the owner is', () => {
+  test('factsOf gives the entry back, whoever the owner is', () => {
     const mine = turnOf(table, entry, pack);
-    expect(legacyEntry(table, mine)).toMatchObject({ type: 'tactical', systemId: TARGET, moves: entry.type === 'tactical' ? entry.moves : [], losses: { fighter: 1 }, groundLosses: { t1: { infantry: 1 } }, free: true });
+    expect(factsOf(table, mine)).toMatchObject({ type: 'tactical', systemId: TARGET, moves: entry.type === 'tactical' ? entry.moves : [], losses: { fighter: 1 }, groundLosses: { t1: { infantry: 1 } }, free: true });
     const theirs = tactical(TARGET, { losses: { cruiser: 1 } }, { owner: 'o1' });
     const turn = turnOf(table, theirs, pack);
     expect(turn.player).toBe(playerOfLegacy(table, 'o1'));
-    expect(legacyEntry(table, turn)).toMatchObject({ owner: 'o1', losses: { cruiser: 1 } });
+    expect(factsOf(table, turn)).toMatchObject({ owner: 'o1', losses: { cruiser: 1 } });
     expect(legacyPlayer(table, turn.player)).toBe('o1');
   });
 
   test('every kind of entry becomes a turn and comes back as the entry it was', () => {
     const pass: Entry = { id: 'x', phase: 'action', status: 'planned', type: 'pass' };
     expect(turnOf(table, pass, pack).action).toEqual({ kind: 'pass' });
-    expect(legacyEntry(table, turnOf(table, pass, pack))).toMatchObject({ type: 'pass', phase: 'action' });
+    expect(factsOf(table, turnOf(table, pass, pack))).toMatchObject({ type: 'pass', phase: 'action' });
   });
 });

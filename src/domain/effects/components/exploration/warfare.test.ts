@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../replay/cards/ids';
 import { tech } from '../../../rules/kit';
-import type { Entry, EntryBody, ExpansionId, TechType } from '../../../types';
+import type { ExpansionId, TechType } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, expectStanding, NEAR, planned, quote, secondary, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './warfare';
 

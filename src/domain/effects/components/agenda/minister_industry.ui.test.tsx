@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, HOME, primary, quote } from '../kit';
 import { id } from './minister_industry';
 

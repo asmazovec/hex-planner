@@ -1,4 +1,4 @@
-import type { Entry } from '../../../../domain/types';
+import type { Entry } from '../types';
 
 /** What an entry chose for the components it plays, by the names their effects ask for: a component's `choices`, an agenda's outcome and election. */
 export const choicesOf = (entry: Entry): Record<string, string | number> =>

@@ -11,7 +11,8 @@ import { productionCost } from '../../domain/unitStats';
 import { checkSystemOf } from '../../domain/replay/transport';
 import { violation } from '../../domain/rules/registry';
 import { noteBase } from '../../domain/components';
-import type { Entry, Warning } from '../../domain/types';
+import type { Warning } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import { readerOf, type Reader } from '../abilities/facade';
 import { appliedOn, holderIn, inForce } from '../abilities/registry';
 import { areNeighbours, planetValue, poolChangeWarnings, reinforcementsOf, stacksOn, tradeGoodWorth } from '../queries';
@@ -39,7 +40,7 @@ export interface HookOptions {
   step?: RuleStep;
   /** The turn the moment belongs to; stamped on the events. */
   turn?: string;
-  entry?: Entry;
+  entry?: TurnFacts;
   /** A component held in several copies (notes) is asked once. */
   once?: boolean;
   /** Asks these components (found before the moment, as a planet lost takes a legendary one with it) instead of those in force now. */
@@ -73,9 +74,9 @@ export function poolWarnings(table: Table, before: Board, board: Board, pack: Da
  * A throwaway turn over a board, so that the steps of the resolver (research, structures, production, payment) can be run
  * for a component's play: what they emit is the events the play returns, what they warn of goes to the play's `warn`.
  */
-function scratch(table: Table, at: Board, pack: DataPack, player: PlayerId, step: RuleStep | undefined, entry: Entry | undefined): Ctx {
+function scratch(table: Table, at: Board, pack: DataPack, player: PlayerId, step: RuleStep | undefined, entry: TurnFacts | undefined): Ctx {
   return {
-    table, pack, turn: undefined as never, tactical: NO_TACTICAL, track: undefined as never, player, entry: entry as Entry, board: at, blockers: new Set(),
+    table, pack, turn: undefined as never, tactical: NO_TACTICAL, track: undefined as never, player, entry: entry as TurnFacts, board: at, blockers: new Set(),
     steps: [], cur: { step: step ?? 'component', events: [], violations: [], hints: [] }, warnings: [], memo: new Map(),
   };
 }
@@ -83,7 +84,7 @@ function scratch(table: Table, at: Board, pack: DataPack, player: PlayerId, step
 const POOLS = ['tactic', 'fleet', 'strategy'] as const;
 
 /** What a status entry's `spend` takes for the objectives it scores (61.10): command tokens, trade goods, the planets' resources and influence. */
-function spendOnObjectivesOf(ctx: Ctx, entry: Entry): Spent {
+function spendOnObjectivesOf(ctx: Ctx, entry: TurnFacts): Spent {
   const spend = entry.type === 'statusTokens' ? entry.spend ?? {} : {};
   const me = ctx.board.players[ctx.player];
   let tokens = 0;

@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { strategyCards } from '../../../data/loadPack';
 import { cardsHeld, CARD, costsStrategyToken, heldCards } from '../../strategy';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { codesOf, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';
 import { holding } from './kit-83-101';
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { tech } from '../../../rules/kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, expectStanding, expectWaived, primary, quote, warningsOf } from '../kit';
 import { id } from './schematics';
 

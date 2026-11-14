@@ -1,6 +1,7 @@
 import { legacyGame, blankViews, legacyEvents } from './legacyViews';
 import { playerOfLegacy } from '../../../game/entry';
-import type { Game, DataPack, UnitCounts, Entry, Plan } from '../../../domain/types';
+import type { DataPack, UnitCounts } from '../../../domain/types';
+import type { Game, Entry, Plan } from '../domain/types';
 import type { GameState } from '../domain/types';
 import type { Table, Board, PlayerId } from '../../../game/types';
 import { playersOf } from '../../../domain/players';
@@ -15,7 +16,7 @@ import { type Round, PHASES } from '../../../game/round';
 import { heldCards } from '../../../domain/strategy';
 
 export { legacyState, legacyViews, legacyGame, legacyKey } from './legacyViews';
-export { legacyPlayer, playerOfLegacy, legacyEntry } from '../../../game/entry';
+export { legacyPlayer, playerOfLegacy } from '../../../game/entry';
 export { nestedEntries } from './entry';
 /** Me and the opponents become players `p<seat>`, in seat order; the viewer is my player. */
 export function tableOf(game: Game): Table {

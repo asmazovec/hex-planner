@@ -1,4 +1,5 @@
-import type { Game, DataPack, UnitCounts } from '../../../domain/types';
+import type { DataPack, UnitCounts } from '../../../domain/types';
+import type { Game } from './types';
 import type { GameState } from './types';
 import { holderOf, inForceOf, effectOf } from '../../../domain/effects/registry';
 import { holdsShips } from '../../../domain/movement';

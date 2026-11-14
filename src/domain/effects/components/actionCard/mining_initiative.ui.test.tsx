@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { choose, expectShownStanding, play, showTurn, uiBench } from '../../../../ui/testing/effects';
-import type { AnyWarningCode, EntryBody } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { EntryBody } from '../../../../testing/old/domain/types';
 import { bench, endOf, planned, quote } from '../kit';
 import { id } from './mining_initiative';
 

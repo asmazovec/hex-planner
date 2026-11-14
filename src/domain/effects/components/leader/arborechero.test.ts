@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { CardEffects, Entry, Warning } from '../../../types';
+import type { CardEffects, Warning } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { isWaived } from '../../../rules/registry';
 import { adjust, bench, componentAction, effect, endOf, FAR, quote, TARGET, warningsOf } from '../kit';
 import { id } from './arborechero';

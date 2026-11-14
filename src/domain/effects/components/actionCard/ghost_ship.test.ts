@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { DataPack, Game } from '../../../types';
+import type { DataPack } from '../../../types';
+import type { Game } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, FARTHER, HOME, NEAR, quote, TARGET, warningsOf } from '../kit';
 import ghostShipSystem from '../../../rules/codes/ghostShipSystem';
 import { id } from './ghost_ship';

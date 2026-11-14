@@ -3,7 +3,7 @@
  * one: the store itself holds only the kernel's `SavedGame`.
  */
 import { useGame } from '../state/gameStore';
-import type { Game } from '../domain/types';
+import type { Game } from './old/domain/types';
 import { gameOf, savedFor } from './legacySave';
 
 /** Opens a game of the old shape in the store, or closes the open one with `null`. */

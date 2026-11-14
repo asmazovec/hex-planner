@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import { unitStats } from '../../unitStats';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, codesOf, FACTION, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

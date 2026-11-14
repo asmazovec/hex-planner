@@ -4,7 +4,7 @@ import { changeLayout, seatSlots } from './mapBuilder';
 import { createGame } from '../testing/old/domain/newGame';
 import { maxPlayers, planetHolder, playersOf } from './players';
 import { addPlayer, countChangeEffect, draftWithExpansions, opponentHoldings, opponentsBySeat, removePlayer, setPlayerFaction, swapSeats } from '../testing/old/domain/players';
-import type { Game } from './types';
+import type { Game } from '../testing/old/domain/types';
 
 const pack = loadPack(['pok', 'te']);
 const start = (playerCount = 6, faction = 'sol'): Game => createGame({ expansions: ['pok', 'te'], playerCount, faction }, pack);

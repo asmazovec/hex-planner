@@ -5,8 +5,8 @@ import { stateBeforeEntry } from '../../testing/old/domain/project';
 import * as old from '../../domain/strategy';
 import * as oldOld from '../../testing/old/domain/strategy';
 import { researchTokensGiven } from '../../testing/old/domain/replay/research';
-import type { Entry, Game } from '../../domain/types';
-import { legacyEntry } from '../entry';
+import type { Entry, Game } from '../../testing/old/domain/types';
+import { factsOf } from '../turnFacts';
 import { planOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { timelineOf } from '../../testing/projection';
 import * as read from './strategicRead';
@@ -44,8 +44,8 @@ const plain = (e: unknown) => {
   if (entry.type === 'secondary') delete entry.forToken;
   return entry;
 };
-const sameEntry = (table: Parameters<typeof legacyEntry>[0], turn: Parameters<typeof legacyEntry>[1], e: Entry, patch: Record<string, unknown>) =>
-  expect(plain(legacyEntry(table, turn))).toEqual(plain({ ...e, ...patch }));
+const sameEntry = (table: Parameters<typeof factsOf>[0], turn: Parameters<typeof factsOf>[1], e: Entry, patch: Record<string, unknown>) =>
+  expect(plain(factsOf(table, turn))).toEqual(plain({ ...e, ...patch }));
 
 const BODIES = [
   { type: 'strategic', card: CARD.leadership, effects: { tokens: { tactic: 4, fleet: 1 }, boughtTokens: 2, payment: { planets: [], tradeGoods: 0 } } },

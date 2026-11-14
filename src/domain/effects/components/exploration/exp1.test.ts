@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../replay/cards/ids';
 import { tech } from '../../../rules/kit';
-import type { AnyWarningCode, Entry, EntryBody, UnitCounts } from '../../../types';
+import type { AnyWarningCode, UnitCounts } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectNone, expectStanding, NEAR, planned, quote, secondary, TARGET, tactical, warningsOf, type Bench } from '../kit';
 import { id } from './exp1';
 

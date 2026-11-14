@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { choose, expectShownStanding, play, showTurn, uiBench } from '../../../../ui/testing/effects';
-import type { AnyWarningCode, DataPack, EntryBody, Game } from '../../../types';
+import type { AnyWarningCode, DataPack } from '../../../types';
+import type { EntryBody, Game } from '../../../../testing/old/domain/types';
 import { bench, endOf, planned, quote } from '../kit';
 import { id } from './meltdown';
 

@@ -1,4 +1,5 @@
-import type { Game, DataPack, Warning } from '../../../../domain/types';
+import type { DataPack, Warning } from '../../../../domain/types';
+import type { Game } from '../types';
 import type { GameState } from '../types';
 import type { TacticalEntry } from '../../../../domain/replay/state';
 import { inForceOf, holderOf, effectOf } from '../../../../domain/effects/registry';

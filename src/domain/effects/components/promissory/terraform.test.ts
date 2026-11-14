@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../replay/cards/ids';
-import type { Entry, Game } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, HOME, primary, quote, tactical, warningsOf } from '../kit';
 import attachTarget from '../../../rules/codes/attachTarget';
 import { id } from './terraform';

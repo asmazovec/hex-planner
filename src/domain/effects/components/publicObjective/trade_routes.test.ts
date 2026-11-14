@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, EntryBody, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, planned, quote, warningsOf } from '../kit';
 import { id } from './trade_routes';
 

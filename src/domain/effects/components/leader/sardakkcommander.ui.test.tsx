@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showTactical, uiBench } from '../../../../ui/testing/effects';
 import { componentById } from '../../../components';
-import type { AnyWarningCode, Entry, EntryBody, TileDef } from '../../../types';
+import type { AnyWarningCode, TileDef } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { adjust, bench, FAR, FARTHER, HOME, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './sardakkcommander';
 

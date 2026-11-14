@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry, StartHoldings } from '../../../types';
+import type { StartHoldings } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, effect, expectNone, expectStanding, expectWaived, quote, secondary, warningsOf } from '../kit';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';

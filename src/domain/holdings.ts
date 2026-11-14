@@ -4,7 +4,8 @@
  * `replay/holdings.ts`.
  */
 import { componentsOf, noteAddress, noteBase, noteId, ownedBy } from './components';
-import type { ComponentDef, ComponentKind, DataPack, LeaderState, Plan, StartHoldings, UpgradeId } from './types';
+import type { ComponentDef, ComponentKind, DataPack, LeaderState, StartHoldings, UpgradeId } from './types';
+import type { RoundFacts } from '../game/turnFacts';
 import type { Shelf } from './shelf';
 
 /** The ability that purges its player's own Alliance note at setup, and the base id of that note. */
@@ -206,7 +207,7 @@ export const notesOfFirst = (ids: string[], player: string): string[] =>
  * The first round whose entries bring each component, by player (`me` or an opponent id): gains, research and scored
  * objectives; done entries for `now`, planned ones too for `forecast`. What is held from the start is not listed.
  */
-export function holdingRounds(plan: Plan, filter: 'now' | 'forecast'): Record<string, Record<string, number>> {
+export function holdingRounds(plan: { rounds: RoundFacts[] }, filter: 'now' | 'forecast'): Record<string, Record<string, number>> {
   const rounds: Record<string, Record<string, number>> = {};
   for (const round of [...plan.rounds].sort((a, b) => a.number - b.number)) {
     for (const entry of round.entries) {

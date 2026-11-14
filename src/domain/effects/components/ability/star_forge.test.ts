@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, UnitCounts } from '../../../types';
+import type { AnyWarningCode, UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, componentAction, effect, endOf, expectNone, expectStanding, HOME, NEAR, quote, warningsOf } from '../kit';
 import { id } from './star_forge';
 

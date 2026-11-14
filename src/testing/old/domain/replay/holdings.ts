@@ -1,5 +1,6 @@
 import { HOLDING_FIELD, staysInPlay, holdingsOf } from '../../../../domain/holdings';
-import type { ComponentDef, StartHoldings, DataPack, Entry, Warning } from '../../../../domain/types';
+import type { ComponentDef, StartHoldings, DataPack, Warning } from '../../../../domain/types';
+import type { Entry } from '../types';
 import type { GameState, Holdings } from '../types';
 import { type GainHow, known, removeOne, holds, isExhausted, PURGES, RETURNS, EXHAUSTS } from '../../../../domain/replay/holdings';
 import { componentById, noteAddress } from '../../../../domain/components';

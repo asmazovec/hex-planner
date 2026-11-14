@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { throwaway } from '../../../domain/effects/points/throwaway';
 import { bench, componentAction } from '../../../domain/effects/components/kit';
-import type { Entry } from '../../../domain/types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { uiBench } from '../../testing/effects';
 import { TurnEditor } from './TurnEditor';
 import { seedGame } from '../../../testing/store';

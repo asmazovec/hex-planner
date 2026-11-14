@@ -1,4 +1,4 @@
-import type { EntryBody, Round } from '../../../domain/types';
+import type { EntryBody, Round } from './types';
 import { plannedCard } from './strategy';
 
 /** A new tactical action on a system; one a card gives (Warfare) costs no token. */

@@ -1,4 +1,4 @@
-import type { Entry, Game } from '../../../domain/types';
+import type { Entry, Game } from './types';
 import { toTe, MECATOL_TILE, MECATOL_TILE_TE } from '../../../domain/mecatol';
 
 export function migrateEntry(entry: Entry): Entry {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { primary, rulesGame, rulesPack, tactical, TARGET, NEAR } from '../domain/rules/kit';
-import type { Entry } from '../domain/types';
+import type { Entry } from '../testing/old/domain/types';
 import { tacticalEntries, tacticalNumbers, turnsOf } from '../testing/projection';
 import { statusOf, turnNumbers } from '../game/numbering';
 

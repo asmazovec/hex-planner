@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, UnitCounts } from '../../../types';
+import type { AnyWarningCode, UnitCounts } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, endOf, expectNone, expectStanding, FAR, HOME, NEAR, quote, statusTokens, warningsOf } from '../kit';
 import { id } from './engineer_marvel';
 

@@ -1,7 +1,7 @@
 import { openDB } from 'idb';
 import { loadPack } from '../data/loadPack';
 import { createGame } from './old/domain/newGame';
-import type { Entry, Game } from '../domain/types';
+import type { Entry, Game } from './old/domain/types';
 import type { SavedGame } from '../game/save';
 import { savedOf } from './legacySave';
 

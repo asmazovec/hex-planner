@@ -1,13 +1,14 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../testing/old/domain/newGame';
-import type { Entry, EntryBody, Game, UnitCounts } from '../../domain/types';
+import type { UnitCounts } from '../../domain/types';
+import type { Entry, EntryBody, Game } from '../../testing/old/domain/types';
 import * as old from '../../domain/tactical';
 import * as oldOld from '../../testing/old/domain/tactical';
 import { heldCards } from '../../domain/strategy';
 import { plannedCard as oldPlanned } from '../../testing/old/domain/strategy';
 import { newEntryBody, tacticalBody, tacticalOwner as oldOwner } from '../../testing/old/domain/newEntry';
-import { legacyEntry } from '../entry';
+import { factsOf } from '../turnFacts';
 import { planOf, tableOf, turnOf } from '../../testing/old/game/fromLegacy';
 import { mapSource } from '../space';
 import { initialBoard } from '../setup';
@@ -34,7 +35,7 @@ const turnFor = (e: Tac) => turnOf(table, e, pack);
 type T = ReturnType<typeof turnOf>;
 /** What the entry is after the old patch, and what the turn is after the new edit, both through the bridge. */
 const same = (e: Tac, patch: Partial<Entry>, edited: T) =>
-  expect(legacyEntry(table, edited)).toEqual(legacyEntry(table, turnOf(table, { ...e, ...patch } as Entry, pack)));
+  expect(factsOf(table, edited)).toEqual(factsOf(table, turnOf(table, { ...e, ...patch } as Entry, pack)));
 const sameMoves = (e: Tac, moves: unknown, edited: T) => same(e, { moves } as never, edited);
 
 describe('reading the flights', () => {
@@ -103,7 +104,7 @@ describe('editing the landings and the battle', () => {
     for (const [planet, unit, amount] of run) {
       entry = { ...entry, ...old.withLoss(entry, unit, planet, amount) } as typeof e;
       turn = now.withLoss(turn, unit, planet, amount);
-      expect(legacyEntry(table, turn), `${planet} ${unit} ${amount}`).toEqual(legacyEntry(table, turnFor(entry)));
+      expect(factsOf(table, turn), `${planet} ${unit} ${amount}`).toEqual(factsOf(table, turnFor(entry)));
     }
   });
   test('fleet removals', () => {
@@ -154,16 +155,16 @@ describe('new turns', () => {
   const body = (b: EntryBody, id: string, owner?: string) => ({ ...b, id, status: 'planned', phase: 'action', ...(b.type === 'adjustment' ? {} : { acts: [] }), ...(owner ? { owner } : {}) });
   test('a tactical action, free from a card', () => {
     const turn = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B' });
-    expect(legacyEntry(table, turn)).toEqual(body(tacticalBody('B'), 'n'));
+    expect(factsOf(table, turn)).toEqual(body(tacticalBody('B'), 'n'));
     const free = newTurn('tactical', { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound }, { system: 'B', byCard: 'w' });
-    expect(legacyEntry(table, free)).toEqual({ ...body(tacticalBody('B', 'w'), 'n'), fromCard: undefined });
+    expect(factsOf(table, free)).toEqual({ ...body(tacticalBody('B', 'w'), 'n'), fromCard: undefined });
   });
   test('the other kinds, mine and a rival', () => {
     const rival = table.players[1];
     const key = rival.legacyId ?? rival.id;
     for (const kind of ['strategic', 'component', 'pass', 'adjustment'] as const) {
-      expect(legacyEntry(table, newTurn(kind, { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3), 'n'));
-      expect(legacyEntry(table, newTurn(kind, { id: 'n', player: rival.id, viewer: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3, key), 'n', key));
+      expect(factsOf(table, newTurn(kind, { id: 'n', player: 'p1', viewer: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3), 'n'));
+      expect(factsOf(table, newTurn(kind, { id: 'n', player: rival.id, viewer: 'p1', round: kernelRound })), kind).toEqual(body(newEntryBody(kind, round, 3, key), 'n', key));
     }
   });
   test('the planned card skips the cards already played; the owner of a free action is the owner of the card', () => {

@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest';
 import { project } from '../../../../testing/old/domain/project';
 import { showUses, uiBench, use } from '../../../../ui/testing/effects';
-import type { Game } from '../../../types';
+import type { Game } from '../../../../testing/old/domain/types';
 import { bench, HOME, NEAR, quote, tactical } from '../kit';
 import { id } from './empyreanagent';
 

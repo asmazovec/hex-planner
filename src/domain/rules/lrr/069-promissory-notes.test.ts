@@ -2,7 +2,8 @@
 import { describe, expect, test } from 'vitest';
 import { loadPack } from '../../../data/loadPack';
 import { createGame } from '../../../testing/old/domain/newGame';
-import type { Act, Entry, Goods } from '../../types';
+import type { Act, Goods } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import type { Player } from '../../players';
 import { FACTION, NEAR, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 

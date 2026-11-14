@@ -15,7 +15,7 @@ import { MECATOL_PLANETS } from '../../domain/mecatol';
 import { seatSlots } from '../../domain/mapBuilder';
 import type { PlanetDef } from '../../domain/types';
 import type { Turn, Strategic, Secondary } from '../actions';
-import { legacyEntry } from '../entry';
+import { factsOf } from '../turnFacts';
 import { productionDueOnBoard } from '../planQueries';
 import { groundIn, ownerOf, tokensOnMapOf } from '../queries';
 import { planetsIn, playerCountOf } from '../space';
@@ -30,7 +30,7 @@ export const isCardTurn = (turn: Turn): turn is CardTurn => turn.action.kind ===
 export const isPrimary = (turn: Turn): boolean => turn.action.kind === 'strategic';
 
 /** The old entry of a card turn, for the handlers of the cards that still read one. */
-export const cardEntryOf = (table: Table, turn: CardTurn): CardEntry => legacyEntry(table, turn) as CardEntry;
+export const cardEntryOf = (table: Table, turn: CardTurn): CardEntry => factsOf(table, turn) as CardEntry;
 
 /** The effects a card turn chose; empty before any choice. */
 export const effectsOf = (turn: Turn): NonNullable<Strategic['effects']> => (isCardTurn(turn) ? turn.action.effects ?? {} : {});

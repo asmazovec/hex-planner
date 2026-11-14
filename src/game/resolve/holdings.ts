@@ -9,7 +9,8 @@ import { breakthroughOf } from '../../domain/effects/breakthrough';
 import { HOLDING_FIELD, staysInPlay } from '../../domain/holdings';
 import { EXHAUSTS, holds, isExhausted, PURGES, RETURNS } from '../../domain/replay/holdings';
 import { violation } from '../../domain/rules/registry';
-import type { ComponentDef, Entry } from '../../domain/types';
+import type { ComponentDef } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import type { GameEvent } from '../events';
 import { holdingsOfCards, legacyKey, playerOfKey } from '../keys';
 import type { PlayerId } from '../types';
@@ -93,7 +94,7 @@ export function playUses(ctx: Ctx): void {
 const known = (ctx: Ctx, ids: string[] | undefined): ComponentDef[] => (ids ?? []).flatMap(id => componentById(ctx.pack, id) ?? []);
 
 /** How an entry's agenda was resolved, and who it elected. */
-function howOf(ctx: Ctx, entry: Entry): { outcome?: string; elected?: PlayerId; planet?: string } {
+function howOf(ctx: Ctx, entry: TurnFacts): { outcome?: string; elected?: PlayerId; planet?: string } {
   const choices = entry.type === 'adjustment' ? entry.choices ?? {} : {};
   const elect = choices.elect === undefined ? undefined : String(choices.elect);
   const byFaction = (key: string): PlayerId | undefined => {

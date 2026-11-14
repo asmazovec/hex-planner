@@ -1,6 +1,6 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, Game } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, componentAction, HOME, quote, tactical } from '../kit';
 import { id } from './terraform';
 

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Payment } from '../../../types';
+import type { Payment } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, effect, endOf, expectNone, expectStanding, quote, statusTokens, warningsOf } from '../kit';
 import { id } from './manipulate_law';
 

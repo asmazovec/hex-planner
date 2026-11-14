@@ -1,6 +1,6 @@
 /** LRR 8 Agenda Phase. Source: tirules2 rules-reference/agenda-phase.md. Voting is not modelled; the phase is a place for entries. */
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { codesOf, rulesGame, rulesPack } from '../kit';
 
 const pack = rulesPack();

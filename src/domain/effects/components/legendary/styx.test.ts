@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { DataPack, Entry, Game } from '../../../types';
+import type { DataPack } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './styx';
 

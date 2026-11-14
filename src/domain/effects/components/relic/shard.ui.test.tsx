@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, showUses, uiBench } from '../../../../ui/testing/effects';
-import type { Entry } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, endOf, quote } from '../kit';
 import { id } from './shard';
 

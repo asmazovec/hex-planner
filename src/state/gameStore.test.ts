@@ -11,7 +11,7 @@ import { loadPack } from '../data/loadPack';
 import { seatSlots } from '../domain/mapBuilder';
 import { opponentHoldings } from '../testing/old/domain/players';
 import { project } from '../testing/old/domain/project';
-import type { Game } from '../domain/types';
+import type { Game } from '../testing/old/domain/types';
 import { listGames, loadGame, saveGame } from '../storage/db';
 import { flushSaves, useGame } from './gameStore';
 import { draftNow, gameNow, seedGame } from '../testing/store';

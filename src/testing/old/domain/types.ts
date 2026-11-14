@@ -1,6 +1,8 @@
 /** The old per-player state of the replay: the input language of the rules and component tests, not part of the application. */
 import type { Shelf } from '../../../domain/shelf';
-import type { StructureCounts, UnitCounts, Warning } from '../../../domain/types';
+import type { Player } from '../../../domain/players';
+import type { ExpansionId, MapLayout, SAVE_FORMAT, StartHoldings, StructureCounts, UnitCounts, Warning } from '../../../domain/types';
+import type { RoundFacts, TurnBody, TurnFacts } from '../../../game/turnFacts';
 
 export type Holdings = Shelf;
 
@@ -49,4 +51,51 @@ export interface GameState {
   rivalHolds?: Record<string, string>;
   /** What waits on a component's card, by the component id as held: units placed on it (Crimson Legionnaire II), a technology lent with it (Share Knowledge). */
   onCard?: Record<string, { units?: UnitCounts; technology?: string }>;
+}
+
+export type EntryBody = TurnBody;
+export type Entry = TurnFacts;
+export type Round = RoundFacts;
+export interface Plan { id: string; name: string; rounds: Round[]; }
+
+export interface Game {
+  id: string;
+  /** What the player calls this game; a link finds its save by this. */
+  name?: string;
+  format: typeof SAVE_FORMAT;
+  /** Counts the changes of the save within the format, from 1. */
+  schemaVersion: number;
+  dataVersion: string;
+  expansions: ExpansionId[];
+  playerCount: number;
+  /** Which map template of the player count is in use. */
+  layout: MapLayout;
+  faction: string;
+  /** Your seat: 1 at the top of the map, then clockwise. Seats of all players are a permutation of 1..playerCount. */
+  seat: number;
+  /** Number of your player colour, 1 to 8: `--player-<n>` in the theme. */
+  color: number;
+  /** Starting victory points; the status entries and adjustments of a plan add to it. */
+  vp: number;
+  /** Slot key to `<tileId>` or `<tileId>@<rotation 0-5>`. Slot keys are the system ids used everywhere else. */
+  map: Record<string, string>;
+  opponents: Player[];
+  /** What each player holds before the plan: the starting technologies of the faction, the rest set by hand. Entries of a plan add to it. */
+  start: { me: StartHoldings; opponents: Record<string, StartHoldings> };
+  /** Slot key to opponent id to that opponent's units in space; ground forces only in a system without planets. */
+  enemyUnits: Record<string, Record<string, UnitCounts>>;
+  /** Planet id to opponent id to that opponent's ground forces there. */
+  enemyGround: Record<string, Record<string, UnitCounts>>;
+  planetControl: Record<string, 'me' | 'enemy'>;
+  /** Planet id to opponent id, only for enemy planets. An enemy planet with no owner belongs to the first opponent. */
+  planetOwner: Record<string, string>;
+  /** Ids of planets that have a space dock. A structure belongs to whoever controls its planet, or to me on a planet no one controls. */
+  docks: string[];
+  /** Planet id to the number of PDS on it, owned as the docks are. */
+  pds: Record<string, number>;
+  expedition: { slices: Record<string, 'me' | 'other' | null>; thundersEdgeSystem: string | null };
+  fracture: { active: boolean; ingress: string[]; /** Chosen seat (1 is at the top, then clockwise); null puts the group at the default edge. */ seat: number | null;
+    /** While open: slot key beside the map to its Fracture tile, so ships fly there like to any system. Absent until the Fracture first opens. */ tiles?: Record<string, string> };
+  plans: Plan[];
+  activePlanId: string;
 }

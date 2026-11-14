@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { adjacentTo } from '../../movement';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { bench, FAR, FARTHER, HOME, NEAR, TARGET, tactical, warningsOf, type Bench } from '../components/kit';
 import { effectsOf } from '../registry';
 import type { PermitContext } from '../../../game/abilities/types';

@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import { showUses, uiBench, use } from '../../../../ui/testing/effects';
-import type { DataPack, Entry } from '../../../types';
+import type { DataPack } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, endOf, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './infiltrate';
 

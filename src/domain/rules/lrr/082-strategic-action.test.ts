@@ -1,7 +1,7 @@
 /** LRR 82 Strategic Action. Source: tirules2 rules-reference/strategic-action.md. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Entry, Game } from '../../types';
+import type { Entry, Game } from '../../../testing/old/domain/types';
 import { codesOf, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';
 
 const pack = rulesPack();

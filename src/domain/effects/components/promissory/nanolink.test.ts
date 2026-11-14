@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import structureAboard from '../../../rules/codes/structureAboard';
-import type { Entry, Game } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, using, warningsOf } from '../kit';
 import { id } from './nanolink';
 

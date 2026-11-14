@@ -3,7 +3,7 @@
  * adds to the payment, so two of them lift a shortfall that neither lifts alone (Berekar Berekon 2 and Hegemonic Trade
  * Policy 1 cover 3). Each such component's waiver asks the sum, never its own part. Not imported by the registry.
  */
-import type { Entry } from '../types';
+import type { TurnFacts } from '../../game/turnFacts';
 import type { PermitContext } from '../../game/abilities/types';
 
 const AGENT_OF_THE_WINNU = 'leader:winnuagent';
@@ -12,7 +12,7 @@ const KELERES_AGENT = 'leader:keleresagent';
 /** Berekar Berekon: the combined cost of the produced units is 2 less. */
 const WINNU_AGENT_REDUCTION = 2;
 
-const namedBy = (entry: Entry | undefined): string[] =>
+const namedBy = (entry: TurnFacts | undefined): string[] =>
   entry ? [...(entry.type === 'component' && entry.componentId !== undefined ? [entry.componentId] : []), ...(entry.spends ?? []), ...(entry.uses ?? [])] : [];
 
 /** The resources the named components cover in the payment of the turn: the agent's 2, the swap of the best planet paid, the commodities spent as trade goods. */

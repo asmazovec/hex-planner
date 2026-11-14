@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, Game } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, endOf, expectNone, expectStanding, quote, statusTokens, warningsOf } from '../kit';
 import { id } from './build_defenses';
 

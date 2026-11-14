@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from '../../holdings';
 import { CARD, costsStrategyToken, withLeadershipTokens } from '../../strategy';
 import { cardCost } from '../../../testing/old/domain/strategy';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, codesOf, FACTION, forecast, primary, rulesGame, rulesPack, secondary } from '../kit';
 
 const pack = rulesPack();

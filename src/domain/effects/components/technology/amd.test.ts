@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Game } from '../../../types';
+import type { Game } from '../../../../testing/old/domain/types';
 import { bench, effect, expectStanding, expectWaived, FAR, FARTHER, HOME, NEAR, quote, TARGET, tactical, warningsOf } from '../kit';
 import { id } from './amd';
 

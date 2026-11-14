@@ -1,7 +1,8 @@
 /** The old edit of the big hex over entries, kept to pin the kernel's changeOnBoard (src/game/edit/merged.test.ts); it replays the plan through the old projection. */
 import { changeMerged, mergedEntry, type MergedChange } from '../domain/losses';
 import { project } from './old/domain/project';
-import type { DataPack, Entry, Game, Phase, Round } from '../domain/types';
+import type { DataPack, Phase } from '../domain/types';
+import type { Entry, Game, Round } from './old/domain/types';
 import type { GameState } from './old/domain/types';
 import { changedDelta } from '../domain/losses';
 

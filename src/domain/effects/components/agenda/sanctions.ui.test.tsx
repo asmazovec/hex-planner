@@ -1,7 +1,8 @@
 import { expect, test } from 'vitest';
 import { expectNotShown, expectShownStanding, shown, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { componentsOf } from '../../../components';
-import type { AnyWarningCode, Entry } from '../../../types';
+import type { AnyWarningCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { adjust, bench, quote } from '../kit';
 import { id } from './sanctions';
 

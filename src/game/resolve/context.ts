@@ -5,11 +5,12 @@
  */
 import type { Blockers } from '../../domain/movement';
 import { violation } from '../../domain/rules/registry';
-import type { ComponentDef, Entry, Warning } from '../../domain/types';
+import type { ComponentDef, Warning } from '../../domain/types';
+import type { TurnFacts } from '../turnFacts';
 import type { Tactical, Turn } from '../actions';
 import { applyChecked, type Shortfall } from '../apply';
 import type { GameEvent } from '../events';
-import { legacyEntry } from '../entry';
+import { factsOf } from '../turnFacts';
 import type { Board, DataPack, PlayerId, RuleStep, Table } from '../types';
 import type { RoundTrack } from './track';
 
@@ -33,7 +34,7 @@ export interface Ctx {
   track: RoundTrack;
   player: PlayerId;
   /** The turn as the old checks read it. */
-  entry: Entry;
+  entry: TurnFacts;
   board: Board;
   /** The systems where other players' ships end a route, as the board stood before the action. */
   blockers: Blockers;
@@ -47,7 +48,7 @@ export interface Ctx {
 
 export function newCtx(table: Table, board: Board, turn: Turn, tactical: Tactical, pack: DataPack, blockers: Blockers, track: RoundTrack): Ctx {
   return {
-    table, pack, turn, tactical, track, player: turn.player, entry: legacyEntry(table, turn), board, blockers, steps: [],
+    table, pack, turn, tactical, track, player: turn.player, entry: factsOf(table, turn), board, blockers, steps: [],
     cur: { step: 'activation', events: [], violations: [], hints: [] }, warnings: [], memo: new Map(),
   };
 }

@@ -11,7 +11,7 @@ vi.mock('../../storage/db', () => ({
 import { loadPack } from '../../data/loadPack';
 import { textOf } from '../../domain/components';
 import { upgradesOf } from '../../domain/holdings';
-import type { Entry, EntryBody } from '../../domain/types';
+import type { Entry, EntryBody } from '../../testing/old/domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { PlanScreen } from '../screens/PlanScreen';

@@ -1,7 +1,7 @@
 import { test } from 'vitest';
 import { expectShownStanding, expectShownWaived, showWarnings, uiBench } from '../../../../ui/testing/effects';
 import { CARD } from '../../../replay/cards/ids';
-import type { Entry, EntryBody } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, planned, quote } from '../kit';
 import { id } from './crisis';
 

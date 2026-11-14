@@ -12,7 +12,7 @@ vi.mock('../../storage/db', () => ({
 
 import { loadPack } from '../../data/loadPack';
 import { project } from '../../testing/old/domain/project';
-import type { Entry } from '../../domain/types';
+import type { Entry } from '../../testing/old/domain/types';
 import { setLanguage } from '../../i18n';
 import { useGame } from '../../state/gameStore';
 import { reloaded } from '../../testing/legacySave';

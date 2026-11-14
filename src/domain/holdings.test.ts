@@ -8,7 +8,7 @@ import { addPlayer, draftWithExpansions, removePlayer, setPlayerFaction } from '
 import { forgetTimelines, project, readyToPlay, timelineOf } from '../testing/old/domain/project';
 import { CARD } from './strategy';
 import { codesOf, forecast, primary, rulesGame, rulesPack, statusTokens, tech } from './rules/kit';
-import type { Entry, Game } from './types';
+import type { Entry, Game } from '../testing/old/domain/types';
 import type { Player } from './players';
 import { fleetSpeed } from './movement';
 import { capacity } from './replay/transport';

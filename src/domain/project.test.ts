@@ -7,9 +7,8 @@ import { createGame } from '../testing/old/domain/newGame';
 import { slotAcross } from './route';
 import { fleetSpeed, productionCost, project, routeDistances, routeMove, routeReach, routeSteps, stateBeforeEntry, systemsAdjacent } from '../testing/old/domain/project';
 import { tacticalMeters } from '../testing/meters';
-import type {
-  AdjustmentDelta, DataPack, Entry, EntryBody, Game, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning,
-} from './types';
+import type { AdjustmentDelta, DataPack, Payment, Phase, UnitCounts, UnitDef, UnitId, Warning } from './types';
+import type { Entry, EntryBody, Game } from '../testing/old/domain/types';
 import { productionPlaces } from '../testing/old/domain/replay/tactical';
 import { readyInfluence, readyResources } from '../testing/old/domain/replay/payment';
 

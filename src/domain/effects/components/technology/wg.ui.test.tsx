@@ -1,6 +1,7 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showFlight, showWarnings, take, uiBench } from '../../../../ui/testing/effects';
-import type { Entry, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, componentAction, FAR, FARTHER, quote, tactical, TARGET } from '../kit';
 import { id } from './wg';

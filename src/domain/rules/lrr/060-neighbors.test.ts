@@ -1,6 +1,7 @@
 /** LRR 60 Neighbors. Source: tirules2 rules-reference/neighbors.md. My home planets on HOME make me present there. */
 import { describe, expect, test } from 'vitest';
-import type { Act, Entry } from '../../types';
+import type { Act } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import type { Player } from '../../players';
 import { FAR, FARTHER, HOME, NEAR, TARGET, adjust, codesOf, forecast, rulesGame, rulesPack, tactical } from '../kit';
 import { areNeighbors } from '../../../testing/old/domain/neighbors';

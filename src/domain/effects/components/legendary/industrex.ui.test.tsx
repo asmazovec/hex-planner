@@ -3,7 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 import { expectShownStanding, showUses, showWarnings, uiBench, use } from '../../../../ui/testing/effects';
 import { tech } from '../../../rules/kit';
-import type { Entry, EntryBody, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, HOME, planned, quote, using } from '../kit';
 import { id } from './industrex';
 

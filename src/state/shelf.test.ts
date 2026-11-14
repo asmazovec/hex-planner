@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { loadPack } from '../data/loadPack';
 import { createGame } from '../testing/old/domain/newGame';
 import { setPlayerFaction } from '../testing/old/domain/players';
-import type { Entry } from '../domain/types';
+import type { Entry } from '../testing/old/domain/types';
 import { timelineOf } from '../testing/projection';
 import { legacyKey } from '../game/keys';
 import { ownNotes } from '../testing/old/domain/holdings';

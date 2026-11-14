@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest';
 import { emptyHoldings } from '../../holdings';
 import { productionCost } from '../../../testing/old/domain/project';
 import { CARD } from '../../strategy';
-import type { Game } from '../../types';
+import type { Game } from '../../../testing/old/domain/types';
 import { adjust, codesOf, FACTION, forecast, HOME, NEAR, rulesGame, rulesPack, secondary, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

@@ -1,7 +1,8 @@
 import { applied } from '../../../../../domain/effects/apply';
 import { holderOf } from '../../../../../domain/effects/registry';
 import { linksOf } from '../../../../../domain/movement';
-import type { DataPack, Game } from '../../../../../domain/types';
+import type { DataPack } from '../../../../../domain/types';
+import type { Game } from '../../types';
 import type { GameState } from '../../types';
 import { areNeighbors } from '../../neighbors';
 /** Gains commodities, no more than the commodity value allows (21.2); returns what was gained. */

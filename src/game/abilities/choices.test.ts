@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { adjust, bench, componentAction, HOME, NEAR } from '../../domain/effects/components/kit';
-import type { Entry } from '../../domain/types';
+import type { Entry } from '../../testing/old/domain/types';
 import type { Player } from '../../domain/players';
 import { timelineOf } from '../../testing/projection';
 import { turnOf } from '../../testing/old/game/fromLegacy';

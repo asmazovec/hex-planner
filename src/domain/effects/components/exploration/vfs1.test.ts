@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, EntryBody, UnitCounts } from '../../../types';
+import type { AnyWarningCode, UnitCounts } from '../../../types';
+import type { Entry, EntryBody } from '../../../../testing/old/domain/types';
 import { bench, effect, endOf, expectStanding, NEAR, planned, quote, TARGET, tactical, warningsOf, type Bench } from '../kit';
 import { id } from './vfs1';
 

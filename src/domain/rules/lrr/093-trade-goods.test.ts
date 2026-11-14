@@ -1,7 +1,7 @@
 /** LRR 93 Trade Goods. Source: tirules2 rules-reference, the trade goods page. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, codesOf, forecast, HOME, NO_PAYMENT, primary, rulesGame, rulesPack, secondary, tactical } from '../kit';
 
 const pack = rulesPack();

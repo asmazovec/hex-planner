@@ -4,7 +4,8 @@
  * component's file; the components that really use the points have their own tests under `components/`.
  */
 import { describe, expect, test } from 'vitest';
-import type { AnyWarningCode, Entry, UnitCounts } from '../../types';
+import type { AnyWarningCode, UnitCounts } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { standing } from '../../rules/registry';
 import { adjust, bench, endOf, expectNone, expectStanding, HOME, NEAR, primary, tactical, TARGET, using, warningsOf, type Bench } from '../components/kit';
 import { effectsOf } from '../registry';

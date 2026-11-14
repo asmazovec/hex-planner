@@ -1,4 +1,5 @@
-import type { DataPack, Entry, Game, Warning } from '../../../../../domain/types';
+import type { DataPack, Warning } from '../../../../../domain/types';
+import type { Entry, Game } from '../../types';
 import type { GameState } from '../../types';
 
 /** What a component is asked with when a system is activated: the owner of the component may be any player. */

@@ -1,6 +1,7 @@
 import { test } from 'vitest';
 import { expectNotShown, expectShownStanding, showWarnings, uiBench } from '../../../../ui/testing/effects';
-import type { DataPack, Entry } from '../../../types';
+import type { DataPack } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import { bench, componentAction, NEAR, quote, tactical, TARGET } from '../kit';
 import { id } from './economic_initiative';
 

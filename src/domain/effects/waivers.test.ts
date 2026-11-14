@@ -6,7 +6,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { forecast } from '../rules/kit';
 import { bench, componentAction, NEAR, tactical, using } from './components/kit';
 import { effectOf } from './registry';
-import type { Entry } from '../types';
+import type { Entry } from '../../testing/old/domain/types';
 import { playedBy } from './waivers';
 
 describe('waivers', () => {

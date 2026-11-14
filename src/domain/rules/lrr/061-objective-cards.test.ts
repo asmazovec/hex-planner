@@ -1,6 +1,6 @@
 /** LRR 61 Objective Cards. Source: tirules2 rules-reference/objective-cards.md. */
 import { describe, expect, test } from 'vitest';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, forecast, rulesGame, rulesPack, statusTokens } from '../kit';
 
 const pack = rulesPack();

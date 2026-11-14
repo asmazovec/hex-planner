@@ -1,5 +1,6 @@
 import { MECATOL_PLANETS } from '../../../../../domain/mecatol';
-import type { DataPack, Game, PlanetDef } from '../../../../../domain/types';
+import type { DataPack, PlanetDef } from '../../../../../domain/types';
+import type { Game } from '../../types';
 import type { GameState } from '../../types';
 import { systemPlanets } from '../../../../../domain/replay/board';
 import type { CardEntry } from '../../../../../domain/strategy';

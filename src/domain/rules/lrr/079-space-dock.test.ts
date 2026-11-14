@@ -1,7 +1,7 @@
 /** LRR 79 Space Dock. Source: tirules2 rules-reference/space-dock.md. A space dock I produces its planet's resources + 2. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Game } from '../../types';
+import type { Game } from '../../../testing/old/domain/types';
 import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, tactical, TARGET, tech } from '../kit';
 
 const pack = rulesPack();

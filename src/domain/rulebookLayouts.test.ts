@@ -4,7 +4,8 @@ import { rotateLanes } from './lanes';
 import { defaultLayout, layoutChoices, seatSlots, slotsFor, templateFor } from './mapBuilder';
 import { createGame } from '../testing/old/domain/newGame';
 import { routeDistances } from '../testing/old/domain/project';
-import type { Game, MapLayout } from './types';
+import type { MapLayout } from './types';
+import type { Game } from '../testing/old/domain/types';
 
 // The maps of the Prophecy of Kings rulebook: page 9 (five, seven and eight players) and page 12, the Map Appendix
 // (alternate hyperlanes for seven and eight players, the Large Galaxy for six).

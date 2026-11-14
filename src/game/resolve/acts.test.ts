@@ -1,7 +1,8 @@
 /** The acts of a turn on the kernel: transactions (LRR 94) and the Thunder's Edge expedition resolve into their own events. */
 import { describe, expect, test } from 'vitest';
 import { NEAR, rulesGame, rulesPack, tactical } from '../../domain/rules/kit';
-import type { Act, Entry } from '../../domain/types';
+import type { Act } from '../../domain/types';
+import type { Entry } from '../../testing/old/domain/types';
 import { applyAll } from '../apply';
 import { emptyBoard } from '../board';
 import { tableOf, turnOf } from '../../testing/old/game/fromLegacy';

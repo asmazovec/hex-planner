@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import type { Entry, Game } from '../../../types';
+import type { Entry, Game } from '../../../../testing/old/domain/types';
 import { bench, componentAction, effect, endOf, expectNone, expectStanding, FAR, HOME, NEAR, quote, warningsOf } from '../kit';
 import systemOccupied from '../../../rules/codes/systemOccupied';
 import { id } from './l1z1xhero';

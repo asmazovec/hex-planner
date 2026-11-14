@@ -7,7 +7,7 @@ import { placeStartUnits, setPlayerFaction } from '../../testing/old/domain/play
 import { enemyChange, structureInGame } from '../../testing/old/domain/stacks';
 import { startingDocks, startingPds } from '../../domain/strategy';
 import { fractureSlots } from '../../domain/thundersEdge';
-import type { Game } from '../../domain/types';
+import type { Game } from '../../testing/old/domain/types';
 import { gameOf, savedOf } from '../../testing/legacySave';
 import { playerOfLegacy } from '../entry';
 import type { SavedGame } from '../save';

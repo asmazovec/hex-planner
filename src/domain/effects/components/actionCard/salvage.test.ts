@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../../strategy';
-import type { Entry, ExtensionCode } from '../../../types';
+import type { ExtensionCode } from '../../../types';
+import type { Entry } from '../../../../testing/old/domain/types';
 import type { Player } from '../../../players';
 import { bench, effect, endOf, expectStanding, NEAR, planned, quote, tactical, TARGET, using, warningsOf } from '../kit';
 import { id } from './salvage';

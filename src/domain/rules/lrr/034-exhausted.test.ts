@@ -1,7 +1,7 @@
 /** LRR 34 Exhausted. Source: tirules2 rules-reference/exhausted.md. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import type { Entry } from '../../types';
+import type { Entry } from '../../../testing/old/domain/types';
 import { adjust, before, codesOf, forecast, HOME, primary, rulesGame, rulesPack, statusTokens, tactical, TARGET } from '../kit';
 
 const pack = rulesPack();

@@ -42,9 +42,10 @@ import { productionDueOn, systemProductionOn, type Ground } from '../domain/repl
 import { statusTokensFreeOf, tokensOverLimit } from '../domain/replay/status';
 import fleetPoolTokens from '../domain/rules/codes/fleetPoolTokens';
 import { violation } from '../domain/rules/registry';
-import type { Entry, RuleStep, Warning } from '../domain/types';
+import type { RuleStep, Warning } from '../domain/types';
+import type { TurnFacts } from './turnFacts';
 import type { Turn } from './actions';
-import { legacyEntry } from './entry';
+import { factsOf } from './turnFacts';
 import { capacity, dockRoom, fleetCount, type Stacks } from '../domain/replay/transport';
 import { appliedToPlanet } from '../domain/effects/points/payment';
 import { isPlanetCard, PLANET_CARDS, type PaymentKind } from '../domain/payment';
@@ -243,12 +244,12 @@ const reinforcementCount = (board: Board, player: PlayerId, unit: UnitId): numbe
 export const tokensOnMapOf = (board: Board, player: PlayerId): Slot[] => Object.keys(board.systems).filter(slot => board.systems[slot].tokens.includes(player));
 
 /** The command tokens a player gains in the status phase, after what they hold and the entry plays changed them (81.5). */
-export const statusTokensFree = (table: Table, board: Board, pack: DataPack, player: PlayerId, entry: Entry): number =>
+export const statusTokensFree = (table: Table, board: Board, pack: DataPack, player: PlayerId, entry: TurnFacts): number =>
   statusTokensFreeOf(holderIn(table, board, player), entry, pack);
 
 /** The same for a turn of the status phase: what it names in «Used» and the component it plays are the entry's. */
 export const statusTokensFreeOfTurn = (table: Table, board: Board, pack: DataPack, turn: Turn): number =>
-  statusTokensFree(table, board, pack, turn.player, legacyEntry(table, turn));
+  statusTokensFree(table, board, pack, turn.player, factsOf(table, turn));
 
 /** No more tokens than the sixteen of a faction: the pools, and with `onBoard` those on the board (20.3.1). */
 export function reinforcementWarnings(board: Board, player: PlayerId, onBoard: boolean, step?: RuleStep): Warning[] {

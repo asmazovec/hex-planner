@@ -1,7 +1,8 @@
 /** Research as the replay checks it: prerequisites, specialties, technologies that cannot be researched, and the points of the count. */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../strategy';
-import type { AnyWarningCode, Entry } from '../types';
+import type { AnyWarningCode } from '../types';
+import type { Entry } from '../../testing/old/domain/types';
 import { bench, endOf, expectNone, expectStanding, NO_PAYMENT, primary, secondary, warningsOf, type BenchOptions } from '../effects/components/kit';
 import { effectsOf } from '../effects/registry';
 import type { Ability } from '../effects/types';

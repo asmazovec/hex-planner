@@ -1,5 +1,6 @@
 import { checkStationLandings } from '../../../../domain/thundersEdge';
-import type { DataPack, Game, Warning, UnitCounts } from '../../../../domain/types';
+import type { DataPack, Warning, UnitCounts } from '../../../../domain/types';
+import type { Game } from '../types';
 import type { GameState } from '../types';
 import { type ProductionPlace } from '../../../../domain/replay/production';
 import { type TacticalEntry, unitIds, take } from '../../../../domain/replay/state';

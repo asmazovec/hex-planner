@@ -1,6 +1,6 @@
 import { bench, describe } from 'vitest';
 import { loadPack } from '../data/loadPack';
-import type { Game } from '../domain/types';
+import type { Game } from '../testing/old/domain/types';
 import { forgetTimelines, projectionOf, timelineOf } from '../testing/projection';
 import { savedOf } from '../testing/legacySave';
 import { forgetTimelines as forgetKernel, timelineOf as kernelTimeline } from './projection';

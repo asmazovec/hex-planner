@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { expectShownStanding, expectShownWaived, land, showFlight, showTactical, take, uiBench } from '../../../../ui/testing/effects';
 import structureAboard from '../../../rules/codes/structureAboard';
-import type { Game } from '../../../types';
+import type { Game } from '../../../../testing/old/domain/types';
 import { bench, HOME, NEAR, quote, TARGET, tactical } from '../kit';
 import { id } from './miniaturization';
 

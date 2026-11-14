@@ -16,7 +16,7 @@ const files = Object.entries(raw);
 
 /** The types of the old model, which only `src/domain/types.ts` still holds. */
 const OLD_TYPES = ['Game', 'Entry', 'EntryBody', 'GameState', 'Holdings', 'Opponent', 'Plan', 'Round'];
-const OLD_CONVERTERS = ['legacyEntry', 'legacyPlayer', 'playerOfLegacy', 'nestedEntries'];
+const OLD_CONVERTERS = ['factsOf', 'legacyPlayer', 'playerOfLegacy', 'nestedEntries'];
 
 interface Import { names: string[]; path: string }
 
