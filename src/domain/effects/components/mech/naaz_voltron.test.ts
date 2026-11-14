@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import type { UnitCounts } from '../../../types';
 import { bench, effect, expectStanding, expectWaived, HOME, NEAR, quote, tactical, warningsOf } from '../kit';
+import { timelineOf, systemWarningsAt } from '../../../../state/projection';
 import { id } from './naaz_voltron';
 
 /** Everything of `units` flies from the home system to the next one; Absolute Synergy is held when `flipped`. */
@@ -61,5 +62,21 @@ describe('mech:naaz_voltron Eidolon Maximum', () => {
     const { pack } = flight({ mech: 1 });
     expect(effect(pack, id).tier).toBe('passive');
     expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['capacityGroup', 'capacitySystem']);
+  });
+});
+
+// The big hex checks the board itself, with no entry (16.3): a passive permit lifts what it covers there too.
+describe('mech:naaz_voltron on the board checked without an entry', () => {
+  const lone = (flipped: boolean) => {
+    const table = bench({ faction: 'naaz', expansions: ['pok', 'te'], units: { [HOME]: { mech: 1 } }, start: flipped ? { breakthrough: 'held' } : {}, entries: [] });
+    return systemWarningsAt(timelineOf(table.game, table.game.plans[0], 'forecast', table.pack), 1, HOME);
+  };
+
+  test('with Absolute Synergy the lone mech is over the capacity, listed and waived by Eidolon Maximum', () => {
+    expectWaived(lone(true), 'capacitySystem', id);
+  });
+
+  test('without it the warning stands', () => {
+    expectStanding(lone(false), 'capacitySystem');
   });
 });

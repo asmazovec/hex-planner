@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { PlacedStack, TokenKind } from '../../../domain/hexLayout';
 import { mergedCounts } from '../../../domain/losses';
 import { gameAs, opponentsBySeat } from '../../../domain/players';
-import { boardSystemWarnings, dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionDue, productionPlaces, readyResources, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
-import { projectionAtRound, seenBefore, timelineOf } from '../../../state/projection';
+import { dockFighterRoom, fleetExcess, fleetLimit, standing, planetStructureWarnings, productionCost, productionDue, productionPlaces, readyResources, structureOwner, systemMeters, systemPlanets } from '../../../domain/project';
+import { projectionAtRound, seenBefore, systemWarningsAt, timelineOf } from '../../../state/projection';
 import { holdingsOf, upgradesOf } from '../../../domain/holdings';
 import { startingPds } from '../../../domain/strategy';
 import { unitStats } from '../../../domain/unitStats';
@@ -368,7 +368,7 @@ export function useStage({ slot, roundNo, pack, initialMode = 'setup', only, onP
   // Capacity and fleet pool as placed by hand; an entry's own check already says it for what the entry does (16.3, 37.1).
   const boardWarnings = [
     ...planetStructureWarnings(state, planets.map(planet => planet.id)),
-    ...(onPurchase ? [] : boardSystemWarnings(game, state, slot, pack).filter(w => !repeats(w))),
+    ...(onPurchase ? [] : systemWarningsAt(line, roundNo, slot).filter(w => !repeats(w))),
   ];
 
   return {

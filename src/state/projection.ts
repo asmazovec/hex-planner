@@ -9,6 +9,10 @@ import { legacyState, boardOf, tableOf } from '../game/fromLegacy';
 import { statusOf, turnNumbers } from '../game/numbering';
 import { planOf, timeline as kernelTimeline, type Filter, type Frame as KernelFrame, type Timeline as Kernel } from '../game/timeline';
 import type { Board, Table } from '../game/types';
+import { playerOfKey } from '../game/keys';
+import { waiveBoard } from '../game/resolve/waive';
+import { gameAs } from '../domain/players';
+import { checkSystem } from '../domain/replay/transport';
 import type { Turn } from '../game/actions';
 import type { DataPack, Game, GameState, Plan, Projection, Round, Warning } from '../domain/types';
 
@@ -209,5 +213,23 @@ export function tacticalEntries(game: Game, round: Round, pack: DataPack): Extra
     if (entry.type !== 'tactical') return [];
     const status = statusOf(turns, entry.id);
     return [status && status !== entry.status ? { ...entry, status } : entry];
+  });
+}
+
+/**
+ * What the board itself breaks in a system at the end of a round, apart from any entry: each player's capacity and fleet
+ * pool there (16.3, 37.1), as units placed by hand leave them; the passive permits in force for the player lift what they cover.
+ */
+export function systemWarningsAt(line: Timeline, roundNo: number, slot: string): Warning[] {
+  const { game, pack } = line;
+  const { table } = setupOf(game, pack);
+  const next = line.starts.findIndex(s => s.number > roundNo);
+  const board = next < 0 ? line.kernel.end : line.kernel.marks[next].start;
+  const state = projectionAtRound(line, roundNo).state;
+  const seats: [string, Game, GameState][] = [['me', game, state], ...Object.entries(state.rivals ?? {}).map(([key, held]): [string, Game, GameState] => [key, gameAs(game, key), held])];
+  return seats.flatMap(([key, view, held]) => {
+    const player = playerOfKey(table, key);
+    const found = checkSystem(view, held, slot, pack);
+    return player === undefined ? found : waiveBoard(table, board, pack, player, found);
   });
 }

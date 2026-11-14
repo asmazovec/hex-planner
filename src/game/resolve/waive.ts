@@ -16,7 +16,8 @@ import { MECATOL_TILE, MECATOL_TILE_TE } from '../../domain/mecatol';
 import { hasAnomaly, systemSlots, tileIdOf, type MapSource } from '../../domain/replay/board';
 import { costOf } from '../../domain/replay/production';
 import { unitIds, type Move } from '../../domain/replay/state';
-import type { DataPack, UnitCounts, UnitId, Warning } from '../../domain/types';
+import type { DataPack, Entry, UnitCounts, UnitId, Warning } from '../../domain/types';
+import type { Turn } from '../actions';
 import { unitStats } from '../../domain/unitStats';
 import { readerOf } from '../abilities/facade';
 import { appliedOn, holderIn, inForce } from '../abilities/registry';
@@ -24,8 +25,9 @@ import type { PermitContext, RouteBlockKind } from '../abilities/types';
 import { playerOfKey } from '../keys';
 import { viewFor } from '../legacyViews';
 import { adjacentSlots, blockersOf, mapSource, pathOf, planetsIn, shipBlockers } from '../space';
-import type { Board, PlayerId } from '../types';
-import type { Ctx } from './context';
+import type { Board, PlayerId, Table } from '../types';
+import { NO_TACTICAL, type Ctx } from './context';
+import { newTrack } from './track';
 import { contextOf } from './hooks';
 
 interface Asked {
@@ -166,4 +168,17 @@ export function waive(ctx: Ctx, warnings: Warning[], before: Board, earlier: rea
     if (by.length > 0) warning.waivedBy = by;
   }
   return warnings;
+}
+
+/**
+ * The waiver pass for what the board breaks by itself, with no turn: the passive permits in force for `player` lift
+ * what they cover (the big hex checks the capacity and the fleet pool of a system as placed by hand).
+ */
+export function waiveBoard(table: Table, board: Board, pack: DataPack, player: PlayerId, warnings: Warning[]): Warning[] {
+  const entry = { id: '', phase: 'tactical', status: 'planned', type: 'pass', label: '' } as unknown as Entry;
+  const ctx: Ctx = {
+    table, pack, turn: { id: '', player, action: { kind: 'pass' } } as unknown as Turn, tactical: NO_TACTICAL, track: newTrack(), player, entry, board,
+    blockers: new Set(), steps: [], cur: { step: 'activation', events: [], violations: [], hints: [] }, warnings, memo: new Map(),
+  };
+  return waive(ctx, warnings, board, []);
 }
