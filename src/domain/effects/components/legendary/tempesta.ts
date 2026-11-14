@@ -7,8 +7,7 @@
  * warning of the entry. Not a `modify` of `speed`: a modify is passive and changes every ship of the faction, the card
  * one ship once. The `play` checks LRR 53.3 with 53.2: the card lies in the play area of whoever controls Tempesta.
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
+import { requireControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 import type { Hooked } from '../../../../game/abilities/types';
 
@@ -17,13 +16,11 @@ export const id = 'legendary:tempesta';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: turn => {
-    if (turn.state.control.tempesta !== 'me') turn.warnings.push(violation('componentNotHeld', { id, name: componentById(turn.pack, id)?.name ?? id }));
-  },
 };
 
 export const ability: Hooked = {
   holder: 'self',
+  play: ctx => { requireControlBy(ctx, 'tempesta'); },
   permit: [{
     code: 'speedShort',
     rule: 'apply +1 to the move value of 1 of your ships during this tactical action',

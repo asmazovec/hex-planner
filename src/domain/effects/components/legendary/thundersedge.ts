@@ -9,8 +9,7 @@
  * turn, so nothing is waived. The `play` checks only LRR 53.3 with 53.2: the card lies in the play area of whoever
  * controls the planet, and `holds` does not know that for a legendary card.
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
+import { requireControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 import type { Hooked } from '../../../../game/abilities/types';
 import { card } from '../../../../game/abilities/emit';
@@ -22,14 +21,12 @@ const planet = 'thundersedge';
 export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
-  play: turn => {
-    if (turn.state.control[planet] !== 'me') turn.warnings.push(violation('componentNotHeld', { id, name: componentById(turn.pack, id)?.name ?? id }));
-  },
 };
 
 /** The hooks written for the kernel: they read the board and return events. */
 export const ability: Hooked = {
   holder: 'anyone',
+  play: ctx => { requireControlBy(ctx, planet); },
   on: {
     onGainControl: (ctx, got) => {
       const breakthrough = breakthroughOf(ctx.pack, ctx.my.faction);

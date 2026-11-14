@@ -5,16 +5,11 @@
  * To be a `play` effect: the pass entry names the card in `uses` with `choices.faunusPlanet`, and I control that
  * planet after the entry.
  */
-import { componentById } from '../../../components';
+import { planet } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { planetsOf, systemSlots } from '../../../replay/board';
-import { violation } from '../../../rules/registry';
-import type { ComponentEffect, EffectTurn } from '../../types';
-
-/** The card lies in the play area of whoever controls its planet (53.2, 53.3); used without it, it is warned of. */
-const requireControl = (turn: EffectTurn, planet: string): void => {
-  if (turn.state.control[planet] !== 'me') turn.warnings.push(violation('componentNotHeld', { id: turn.id, name: componentById(turn.pack, turn.id)?.name ?? turn.id }));
-};
-
+import { requireControlBy } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:faunus';
 
@@ -27,9 +22,13 @@ export const effect: ComponentEffect = {
     options: ctx => [...new Set(systemSlots(ctx.game).flatMap(slot => planetsOf(ctx.game, slot, ctx.pack)))]
       .filter(planet => ctx.pack.planets[planet]?.legendary === undefined && ctx.state.control[planet] !== 'me'),
   }],
-  play: turn => {
-    requireControl(turn, 'faunus');
-    const planet = turn.choices.faunusPlanet;
-    if (typeof planet === 'string') turn.state.control[planet] = 'me';
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    requireControlBy(ctx, 'faunus');
+    const target = ctx.choices.faunusPlanet;
+    return typeof target === 'string' ? [planet.gain(ctx.holder, target)] : [];
   },
 };

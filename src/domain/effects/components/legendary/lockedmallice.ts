@@ -6,8 +6,9 @@
  * entry of my turn names the card in `uses` with `choices.exterrix` = 'tradeGoods' or 'convert'. Pass 1: the hint it
  * is today.
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
+import { commodities, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { requireControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:lockedmallice';
@@ -19,13 +20,18 @@ export const effect: ComponentEffect = {
     key: 'exterrix', kind: 'option', label: { ru: 'Что сделать', en: 'Which' }, options: () => ['tradeGoods', 'convert'],
     names: { tradeGoods: { ru: 'Получить 2 товара', en: 'Gain 2 trade goods' }, convert: { ru: 'Обменять всю продукцию на товары', en: 'Convert all commodities' } },
   }],
-  play: ({ state, pack, choices, warnings }) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     // The card lies in the play area of whoever controls the planet (53.2, 53.3); used without it, it is warned of.
-    if (state.control[id.slice('legendary:'.length)] !== 'me') warnings.push(violation('componentNotHeld', { id, name: componentById(pack, id)?.name ?? id }));
-    if (choices.exterrix === 'tradeGoods') state.tradeGoods += 2;
-    else if (choices.exterrix === 'convert') {
-      state.tradeGoods += state.commodities;
-      state.commodities = 0;
+    requireControlBy(ctx, id.slice('legendary:'.length));
+    if (ctx.choices.exterrix === 'tradeGoods') return [tradeGoods(ctx.holder, 2)];
+    if (ctx.choices.exterrix === 'convert') {
+      const all = ctx.my.commodities;
+      return all > 0 ? [tradeGoods(ctx.holder, all), commodities(ctx.holder, -all)] : [];
     }
+    return [];
   },
 };

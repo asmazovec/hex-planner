@@ -82,6 +82,6 @@ describe('legendary:industrex Aeurex Mechanica', () => {
   test('legendary:industrex is a play effect', () => {
     const { pack } = table(pass());
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

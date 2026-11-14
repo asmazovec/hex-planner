@@ -20,6 +20,7 @@ export const card = {
   lose: (player: PlayerId, id: ComponentId, count = 1): GameEvent => ({ type: 'CardLost', player, card: id, ...(count !== 1 ? { count } : {}) }),
   purge: (player: PlayerId, id: ComponentId): GameEvent => ({ type: 'CardPurged', player, card: id }),
   exhaust: (player: PlayerId, id: ComponentId): GameEvent => ({ type: 'CardExhausted', player, card: id }),
+  ready: (player: PlayerId, id: ComponentId): GameEvent => ({ type: 'CardReadied', player, card: id }),
 };
 
 export const gain = { tradeGoods, points, tokens };

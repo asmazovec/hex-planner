@@ -9,8 +9,10 @@
  *
  * Not modelled: a component in another player's play area (Acropolis note 1); the plan readies the owner's holdings only.
  */
+import { card } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import { componentById, componentsOf } from '../../../components';
-import { violation } from '../../../rules/registry';
+import { requireControlBy } from '../../helpers/cardPlay';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:emelpar';
@@ -31,17 +33,16 @@ export const effect: ComponentEffect = {
       return [...exhausted, ...breakthrough, ...holdings.exhausted].filter(component => component !== id && componentById(pack, component) !== undefined);
     },
   }],
-  play: turn => {
-    const { state, choices, pack } = turn;
-    if (state.control.emelpar !== 'me') turn.warnings.push(violation('componentNotHeld', { id, name: componentById(pack, id)?.name ?? id }));
-    const ready = typeof choices.ready === 'string' ? choices.ready : undefined;
-    const def = ready === undefined ? undefined : componentById(pack, ready);
-    if (ready === undefined || def === undefined || ready === id) return;
-    const { holdings } = state;
-    if (def.kind === 'leader') {
-      if (holdings.leaders[ready] === 'exhausted') holdings.leaders[ready] = 'unlocked';
-    } else if (def.kind === 'breakthrough') {
-      if (holdings.breakthrough === 'exhausted') holdings.breakthrough = 'held';
-    } else holdings.exhausted = holdings.exhausted.filter(component => component !== ready);
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    requireControlBy(ctx, 'emelpar');
+    const ready = typeof ctx.choices.ready === 'string' ? ctx.choices.ready : undefined;
+    const def = ready === undefined ? undefined : componentById(ctx.pack, ready);
+    if (ready === undefined || def === undefined || ready === id) return [];
+    // Only an exhausted component is readied (the board does the same); a card not held does nothing.
+    return ctx.my.card(ready) === 'exhausted' ? [card.ready(ctx.holder, ready)] : [];
   },
 };

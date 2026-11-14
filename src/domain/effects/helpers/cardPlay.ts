@@ -150,3 +150,8 @@ export function placeIn(ctx: AbilityContext, events: GameEvent[], slot: string, 
   if (unitIds(units).length > 0) events.push({ type: 'UnitsPlaced', player: ctx.holder, at: { slot }, units });
   ctx.after(events).systemWarnings(slot).forEach(ctx.warn);
 }
+
+/** The card of a legendary planet lies in the play area of whoever controls the planet (53.2, 53.3); used by anyone else, it is warned of. */
+export function requireControlBy(ctx: AbilityContext, planet: string): void {
+  if (ctx.board.planets[planet]?.owner !== ctx.holder) ctx.warn(violation('componentNotHeld', { id: ctx.id, name: componentById(ctx.pack, ctx.id)?.name ?? ctx.id }));
+}

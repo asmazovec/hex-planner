@@ -6,14 +6,11 @@
  * 'strategy'), and that pool has one more token. The action card is unknown and entered with `gains`.
  *
  */
-import { componentById } from '../../../components';
-import { violation } from '../../../rules/registry';
-import type { ComponentEffect, EffectTurn } from '../../types';
+import { tokens } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import { requireControlBy } from '../../helpers/cardPlay';
+import type { ComponentEffect } from '../../types';
 
-/** The card lies in the play area of whoever controls its planet (53.2, 53.3); used without it, it is warned of. */
-const requireControl = (turn: EffectTurn, planet: string): void => {
-  if (turn.state.control[planet] !== 'me') turn.warnings.push(violation('componentNotHeld', { id: turn.id, name: componentById(turn.pack, turn.id)?.name ?? turn.id }));
-};
 
 
 export const id = 'legendary:ordinian';
@@ -27,10 +24,14 @@ export const effect: ComponentEffect = {
       tactic: { ru: 'Тактический резерв', en: 'Tactic pool' }, fleet: { ru: 'Резерв флота', en: 'Fleet pool' }, strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
     },
   }],
-  play: turn => {
-    requireControl(turn, 'ordinian');
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    requireControlBy(ctx, 'ordinian');
     // The action card drawn is unknown, entered with the gains of the entry.
-    const pool = turn.choices.ordinianPool;
-    if (pool === 'tactic' || pool === 'fleet' || pool === 'strategy') turn.state[pool] += 1;
+    const pool = ctx.choices.ordinianPool;
+    return pool === 'tactic' || pool === 'fleet' || pool === 'strategy' ? [tokens(ctx.holder, { [pool]: 1 })] : [];
   },
 };
