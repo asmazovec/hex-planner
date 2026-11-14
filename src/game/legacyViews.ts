@@ -26,17 +26,20 @@ const EMPTY_FRACTURE = { active: false, ingress: [] as string[], seat: null as n
 const fractures = new WeakMap<object, Game['fracture']>();
 
 /** The viewer's game as the old code reads it: the map and who sits where, the planets by owner, nothing placed by hand. */
-export function legacyGame(table: Table, board: Board): Game {
+export function legacyGame(table: Table, board: Board, memo = false): Game {
   const source = SOURCES.get(table);
   const viewer = table.players.find(p => p.id === table.viewer)!;
-  const control: Game['planetControl'] = {};
-  const owners: Game['planetOwner'] = {};
-  for (const [id, planet] of Object.entries(board.planets)) {
-    if (planet.owner === undefined) continue;
-    const key = legacyKey(table, planet.owner);
-    control[id] = key === 'me' ? 'me' : 'enemy';
-    if (key !== 'me') owners[id] = key;
-  }
+  const { control, owners } = part(CONTROLS, board.planets, table.viewer, () => {
+    const control: Game['planetControl'] = {};
+    const owners: Game['planetOwner'] = {};
+    for (const [id, planet] of Object.entries(board.planets)) {
+      if (planet.owner === undefined) continue;
+      const key = legacyKey(table, planet.owner);
+      control[id] = key === 'me' ? 'me' : 'enemy';
+      if (key !== 'me') owners[id] = key;
+    }
+    return { control, owners };
+  }, memo);
   let fracture = fractures.get(board.common.fracture);
   if (!fracture) {
     fracture = { ...(source?.fracture ?? EMPTY_FRACTURE), ...(board.common.fracture.open ? { tiles: board.common.fracture.tiles } : {}) };
@@ -132,7 +135,7 @@ const shared = new WeakMap<Board, { table: Table; pack: DataPack; views: LegacyV
 export function legacyViews(table: Table, board: Board, pack: DataPack): LegacyViews {
   const known = shared.get(board);
   if (known && known.table === table && known.pack === pack) return known.views;
-  const built = legacyViewsFresh(table, board, pack);
+  const built = legacyViewsFresh(table, board, pack, true);
   // In a build nothing watches; in development and in the tests a change of shared views fails where it is made.
   const views = import.meta.env.PROD ? built : deepFreeze(built);
   shared.set(board, { table, pack, views });
@@ -148,21 +151,27 @@ function deepFreeze<T>(value: T): T {
 }
 
 /** The views of a board that the caller may change: a copy of its own, for what the legacy effects work on. */
-export function legacyViewsFresh(table: Table, board: Board, pack: DataPack): LegacyViews {
-  const game = legacyGame(table, board);
+export function legacyViewsFresh(table: Table, board: Board, pack: DataPack, memo = false): LegacyViews {
+  const game = legacyGame(table, board, memo);
   const states: Record<string, GameState> = {};
-  for (const p of table.players) states[legacyKey(table, p.id)] = ownState(table, board, p.id);
+  for (const p of table.players) states[legacyKey(table, p.id)] = ownState(table, board, p.id, memo);
   const me = states.me;
   me.rivals = Object.fromEntries(Object.entries(states).filter(([key]) => key !== 'me'));
   // Who holds each planet another player has (LRR 25.1): the screens colour a planet by it (`holderIn`), so a planet taken in the plan names its taker.
-  me.rivalHolds = Object.fromEntries(Object.entries(board.planets).flatMap(([id, planet]) => (planet.owner !== undefined && planet.owner !== table.viewer ? [[id, legacyKey(table, planet.owner)]] : [])));
   me.opponentVp = Object.fromEntries(table.players.filter(p => p.id !== table.viewer).map(p => [legacyKey(table, p.id), board.players[p.id]?.vp ?? 0]));
   me.laws = board.common.laws.map(l => l.id);
   me.revealed = [...board.common.revealed];
   const elected = board.common.laws.filter(l => l.elected !== undefined);
   if (elected.length > 0) me.lawOwners = Object.fromEntries(elected.map(l => [l.id, table.players.find(p => p.id === l.elected)?.faction ?? '']));
-  const attached = Object.entries(board.planets).filter(([, planet]) => planet.attached.length > 0);
-  if (attached.length > 0) me.attachments = Object.fromEntries(attached.map(([id, planet]) => [id, [...planet.attached]]));
+  const { holds, attached } = part(ON_BOARD, board.planets, table.viewer, () => {
+    const attached = Object.entries(board.planets).filter(([, planet]) => planet.attached.length > 0);
+    return {
+      holds: Object.fromEntries(Object.entries(board.planets).flatMap(([id, planet]) => (planet.owner !== undefined && planet.owner !== table.viewer ? [[id, legacyKey(table, planet.owner)]] : []))),
+      ...(attached.length > 0 ? { attached: Object.fromEntries(attached.map(([id, planet]) => [id, [...planet.attached]])) } : {}),
+    };
+  }, memo);
+  me.rivalHolds = holds;
+  if (attached) me.attachments = attached;
   const tokens: Record<string, string> = {};
   for (const [slot, types] of Object.entries(board.common.wormholeTokens)) for (const type of types) tokens[type] = slot;
   if (Object.keys(tokens).length > 0) (me as GameState & { wormholeTokens?: Record<string, string> }).wormholeTokens = tokens;
@@ -170,34 +179,65 @@ export function legacyViewsFresh(table: Table, board: Board, pack: DataPack): Le
   return { game, states };
 }
 
-function ownState(table: Table, board: Board, player: PlayerId): GameState {
+/** A part of a player's state that comes from one part of the board, kept while that part is the same object: the views shared by readers do not change, so they share these too. */
+function part<T>(kept: WeakMap<object, Map<string, T>>, from: object, key: string, make: () => T, memo: boolean): T {
+  if (!memo) return make();
+  let by = kept.get(from);
+  if (!by) kept.set(from, by = new Map());
+  let found = by.get(key);
+  if (found === undefined) by.set(key, found = make());
+  return found;
+}
+interface InSpace { systems: Record<string, UnitCounts>; afloat: Record<string, StructureCounts>; tokensOnMap: string[] }
+interface OnPlanets { ground: Record<string, UnitCounts>; exhausted: string[]; control: GameState['control']; docks: string[]; pds: Record<string, number> }
+const IN_SPACE = new WeakMap<object, Map<string, InSpace>>();
+const ON_PLANETS = new WeakMap<object, Map<string, OnPlanets>>();
+const HELD = new WeakMap<object, { holdings: Holdings; onCard?: GameState['onCard'] }>();
+const CONTROLS = new WeakMap<object, Map<string, { control: Game['planetControl']; owners: Game['planetOwner'] }>>();
+const ON_BOARD = new WeakMap<object, Map<string, { holds: Record<string, string>; attached?: Record<string, string[]> }>>();
+
+/** One player's state of the board; `memo` shares the parts of it with the other views of the same boards (the views that may not be changed). */
+function ownState(table: Table, board: Board, player: PlayerId, memo = false): GameState {
   const p = board.players[player];
   const key = legacyKey(table, player);
   const factionOf = table.players.find(x => x.id === player)?.faction;
-  const systems: Record<string, UnitCounts> = {};
-  const afloat: Record<string, StructureCounts> = {};
-  const tokensOnMap: string[] = [];
-  for (const [slot, system] of Object.entries(board.systems)) {
-    const ships = countsOf(system.ships[player]);
-    if (nonEmpty(ships)) systems[slot] = ships;
-    const floating = countsOf(system.afloat[player]);
-    if (nonEmpty(floating)) afloat[slot] = floating;
-    if (system.tokens.includes(player)) tokensOnMap.push(slot);
-  }
-  const ground: Record<string, UnitCounts> = {};
-  const exhausted: string[] = [];
-  const control: GameState['control'] = {};
-  const docks: string[] = [];
-  const pds: Record<string, number> = {};
-  for (const [id, planet] of Object.entries(board.planets)) {
-    const standing = countsOf(planet.ground[player]);
-    if (nonEmpty(standing)) ground[id] = standing;
-    if (planet.owner !== undefined) control[id] = planet.owner === player ? 'me' : 'enemy';
-    if (planet.exhausted && (planet.owner === player || (planet.owner === undefined && key === 'me'))) exhausted.push(id);
-    if (planet.owner === player) {
-      if ((planet.structures.spacedock ?? 0) > 0) docks.push(id);
-      if ((planet.structures.pds ?? 0) > 0) pds[id] = planet.structures.pds ?? 0;
+  const { systems, afloat, tokensOnMap } = part(IN_SPACE, board.systems, player, (): InSpace => {
+    const systems: Record<string, UnitCounts> = {};
+    const afloat: Record<string, StructureCounts> = {};
+    const tokensOnMap: string[] = [];
+    for (const [slot, system] of Object.entries(board.systems)) {
+      const ships = countsOf(system.ships[player]);
+      if (nonEmpty(ships)) systems[slot] = ships;
+      const floating = countsOf(system.afloat[player]);
+      if (nonEmpty(floating)) afloat[slot] = floating;
+      if (system.tokens.includes(player)) tokensOnMap.push(slot);
     }
+    return { systems, afloat, tokensOnMap };
+  }, memo);
+  const { ground, exhausted, control, docks, pds } = part(ON_PLANETS, board.planets, `${player}|${key}`, (): OnPlanets => {
+    const ground: Record<string, UnitCounts> = {};
+    const exhausted: string[] = [];
+    const control: GameState['control'] = {};
+    const docks: string[] = [];
+    const pds: Record<string, number> = {};
+    for (const [id, planet] of Object.entries(board.planets)) {
+      const standing = countsOf(planet.ground[player]);
+      if (nonEmpty(standing)) ground[id] = standing;
+      if (planet.owner !== undefined) control[id] = planet.owner === player ? 'me' : 'enemy';
+      if (planet.exhausted && (planet.owner === player || (planet.owner === undefined && key === 'me'))) exhausted.push(id);
+      if (planet.owner === player) {
+        if ((planet.structures.spacedock ?? 0) > 0) docks.push(id);
+        if ((planet.structures.pds ?? 0) > 0) pds[id] = planet.structures.pds ?? 0;
+      }
+    }
+    return { ground, exhausted, control, docks, pds };
+  }, memo);
+  const cards = p?.cards ?? {};
+  let held = memo ? HELD.get(cards) : undefined;
+  if (!held) {
+    const onCard = onCardOfCards(cards);
+    held = { holdings: holdingsOfCards(cards), ...(nonEmpty(onCard) ? { onCard } : {}) };
+    if (memo) HELD.set(cards, held);
   }
   const others = table.players.filter(x => x.id !== player);
   return {
@@ -206,8 +246,8 @@ function ownState(table: Table, board: Board, player: PlayerId): GameState {
     tradeGoods: p?.tradeGoods ?? 0, commodities: p?.commodities ?? 0,
     tactic: p?.pools.tactic ?? 0, fleet: p?.pools.fleet ?? 0, strategy: p?.pools.strategy ?? 0, vp: p?.vp ?? 0,
     opponentVp: Object.fromEntries(others.map(o => [legacyKey(table, o.id) === 'me' ? 'me' : legacyKey(table, o.id), board.players[o.id]?.vp ?? 0])),
-    holdings: holdingsOfCards(p?.cards ?? {}),
-    ...(nonEmpty(onCardOfCards(p?.cards ?? {})) ? { onCard: onCardOfCards(p?.cards ?? {}) } : {}),
+    holdings: held.holdings,
+    ...(held.onCard ? { onCard: held.onCard } : {}),
     docks, pds,
     ...(nonEmpty(afloat) ? { afloat } : {}),
     ...(board.common.custodians ? {} : { custodiansRemoved: true }),

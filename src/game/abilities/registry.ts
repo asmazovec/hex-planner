@@ -17,6 +17,9 @@ import type { Board, DataPack, PlayerId, Table } from '../types';
 /** The holder a player is, read from the board: their cards and faction, the planets they control, the laws that bind them. */
 export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   const cards = board.players[player]?.cards;
+  // The same planets and laws as when it was last asked: nothing about it can have changed.
+  const quick = cards && HOLDERS.get(cards)?.find(k => k.table === table && k.player === player && k.planets === board.planets && k.laws === board.common.laws && k.lent.every((h, i) => h === holdingsOf(board, table.players[i].id)));
+  if (quick) return quick.holder;
   const faction = table.players.find(p => p.id === player)?.faction;
   const control: Record<string, 'me'> = {};
   let owned = '';
@@ -26,20 +29,20 @@ export function holderIn(table: Table, board: Board, player: PlayerId): Holder {
   // An Alliance note lends its owner's commander: every player's holdings, under their id and under the key notes are addressed by.
   const lent = table.players.map(p => holdingsOf(board, p.id));
   const kept = cards && HOLDERS.get(cards)?.find(k => k.table === table && k.player === player && k.owned === owned && k.lawKey === lawKey && k.lent.every((h, i) => h === lent[i]));
-  if (kept) return kept.holder;
+  if (kept) { kept.planets = board.planets; kept.laws = board.common.laws; return kept.holder; }
   const others: Record<string, Holdings> = {};
   table.players.forEach((p, i) => { others[legacyKey(table, p.id)] = others[p.id] = lent[i]; });
   const holder: Holder = { holdings: holdingsOf(board, player), ...(faction === undefined ? {} : { faction }), control, laws, others };
   if (cards) {
     const list = HOLDERS.get(cards) ?? [];
     if (list.length >= 8) list.shift();
-    list.push({ table, player, owned, lawKey, lent, holder });
+    list.push({ table, player, owned, lawKey, lent, holder, planets: board.planets, laws: board.common.laws });
     HOLDERS.set(cards, list);
   }
   return holder;
 }
 /** A holder is a function of the player's cards, the planets they control, the laws that bind them and the holdings others lend: the same holder is kept while those are the same. */
-const HOLDERS = new WeakMap<object, { table: Table; player: PlayerId; owned: string; lawKey: string; lent: Holdings[]; holder: Holder }[]>();
+const HOLDERS = new WeakMap<object, { table: Table; player: PlayerId; owned: string; lawKey: string; lent: Holdings[]; holder: Holder; planets: Board['planets']; laws: Board['common']['laws'] }[]>();
 const PASSIVES = new WeakMap<Holder, { pack: DataPack; list: ReturnType<typeof passivesOf> }>();
 const FORCED = new WeakMap<Holder, { pack: DataPack; found: string[] }>();
 
@@ -88,6 +91,14 @@ function sheetOf(pack: DataPack, holder: Holder): string[] {
 /** The reminders a player holds: what they have ready, their secrets and the public objectives not yet scored by them, what their sheet brings. */
 function remindersOf(table: Table, board: Board, pack: DataPack, player: PlayerId): string[] {
   const holder = holderIn(table, board, player);
+  const kept = REMINDERS.get(holder);
+  if (kept && kept.pack === pack && kept.revealed === board.common.revealed && kept.table === table) return kept.ids;
+  const ids = remindersBuilt(table, board, pack, player, holder);
+  REMINDERS.set(holder, { pack, table, revealed: board.common.revealed, ids });
+  return ids;
+}
+const REMINDERS = new WeakMap<Holder, { pack: DataPack; table: Table; revealed: unknown; ids: string[] }>();
+function remindersBuilt(table: Table, board: Board, pack: DataPack, player: PlayerId, holder: Holder): string[] {
   const { holdings } = holder;
   const objectives = [...holdings.secrets, ...board.common.revealed.filter(id => !holdings.scored.includes(id))];
   const sheet = sheetOf(pack, holder);
