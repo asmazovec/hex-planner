@@ -10,11 +10,12 @@ import { CARD } from '../../strategy';
 import { adjust, codesOf, forecast, mutable, planned, rulesGame, rulesPack, secondary, statusTokens } from '../../rules/kit';
 import type { Entry, EntryBody, ExpansionId, Opponent } from '../../types';
 import { hintsAt, holderOf, inForceOf } from '../registry';
-import { gain } from '../../../game/abilities/emit';
+import { gain, tokens } from '../../../game/abilities/emit';
 import type { ComponentEffect } from '../types';
-import { gainTokens, spendStrategyTokens } from '../../replay/status';
+import { spendStrategyBy } from '../helpers/cardPlay';
+import type { Play } from '../../../game/abilities/types';
 import { appliedFor } from '../entryApply';
-import { objectiveNotMet, spentOnObjectives } from './status';
+import { objectiveNotMet } from './status';
 import { withEffect } from './status.kit';
 
 const R1: Opponent = { id: 'r1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
@@ -197,7 +198,7 @@ describe('gained and lost: hooks of a component an entry gains or spends', () =>
     let seen = '';
     withEffect(pack, 'agenda:crisis', {
       tier: 'play', rule: 'agenda:crisis',
-      play: turn => { seen = `${turn.choices.card} ${turn.cards ? Object.keys(turn.cards.states).join(',') : 'no cards'}`; },
+      nativePlay: ctx => { seen = `${ctx.choices.card} ${ctx.key(ctx.holder)}`; },
     });
     const resolved: Entry = planned({ type: 'adjustment', label: '', delta: {}, choices: { card: 5 } } as EntryBody, 'agenda', { gains: ['agenda:crisis'] });
     forecast(rulesGame({ entries: [resolved], expansions: ['pok'] }), pack);
@@ -270,7 +271,7 @@ describe('spentOnObjectives: the cost of an objective scored by spending (61.10)
     const own = rulesPack();
     withEffect(own, PUBLIC, {
       tier: 'play', rule: PUBLIC,
-      play: turn => { const spent = spentOnObjectives(turn); if (spent.tokens < 6) turn.warnings.push(objectiveNotMet(PUBLIC, spent.tokens, 6)); },
+      nativePlay: ctx => { const { spent, events } = ctx.spendOnObjectives(); if (spent.tokens < 6) ctx.warn(objectiveNotMet(PUBLIC, spent.tokens, 6)); return events; },
     });
     return own;
   };
@@ -295,7 +296,7 @@ describe('spentOnObjectives: the cost of an objective scored by spending (61.10)
   test('61.10: trade goods and the planets paying resources and influence are taken once, however many objectives are scored', () => {
     const own = rulesPack();
     let paid = { resources: 0, influence: 0, tradeGoods: 0 };
-    for (const id of [PUBLIC, 'secretObjective:dtgs']) withEffect(own, id, { tier: 'play', rule: id, play: turn => { paid = spentOnObjectives(turn); } });
+    for (const id of [PUBLIC, 'secretObjective:dtgs']) withEffect(own, id, { tier: 'play', rule: id, nativePlay: ctx => { const result = ctx.spendOnObjectives(); paid = result.spent; return result.events; } });
     const status = { ...statusTokens(0, 0, 0), scored: [PUBLIC, 'secretObjective:dtgs'], spend: { tradeGoods: 3, resources: { planets: ['h1'], tradeGoods: 0 }, influence: { planets: ['h1', 'h2'], tradeGoods: 0 } } } as Entry;
     const game = rulesGame({ entries: [adjust({ tradeGoods: 5 }), status], game: { planetControl: {} } });
     const { state, warnings } = forecast(game, own);
@@ -306,16 +307,16 @@ describe('spentOnObjectives: the cost of an objective scored by spending (61.10)
   });
 });
 
-describe('gainTokens and spendStrategyTokens: the tokens a played component gives or costs', () => {
-  const play = (id: string, effect: (turn: Parameters<NonNullable<ComponentEffect['play']>>[0]) => void) => {
+describe('the tokens a played component gives or costs (tokens, spendStrategyBy)', () => {
+  const play = (id: string, effect: Play) => {
     const own = rulesPack();
-    withEffect(own, id, { tier: 'play', rule: id, play: effect });
+    withEffect(own, id, { tier: 'play', rule: id, nativePlay: effect });
     return own;
   };
   const named = (id: string): Entry => ({ ...adjust({}), uses: [id] } as Entry);
 
   test('20.5: a strategy token spent by a component is taken from the pool; with none the shortage is warned of, and a waiver sees it', () => {
-    const own = play(TECH, turn => spendStrategyTokens(turn));
+    const own = play(TECH, ctx => spendStrategyBy(ctx));
     const use = named(TECH);
     const game = rulesGame({ entries: [use], game: start({ technologies: [TECH] }) });
     expect(forecast(game, own).state.strategy).toBe(1);
@@ -325,16 +326,16 @@ describe('gainTokens and spendStrategyTokens: the tokens a played component give
   });
 
   test('20.3.1: tokens gained by a component are added to the pools and warned of past the sixteen of a faction', () => {
-    const own = play(TECH, turn => gainTokens(turn, { tactic: 1 }));
+    const own = play(TECH, ctx => [tokens(ctx.holder, { tactic: 1 }, 'component')]);
     const use = named(TECH);
     const game = rulesGame({ entries: [use], game: start({ technologies: [TECH] }) });
     expect(forecast(game, own).state.tactic).toBe(4);
-    const full = play(TECH, turn => gainTokens(turn, { tactic: 9 }));
+    const full = play(TECH, ctx => [tokens(ctx.holder, { tactic: 9 }, 'component')]);
     expect(forecast(game, full).warnings[use.id].find(w => w.code === 'noReinforcements')).toMatchObject({ params: { total: 17, limit: 16 } });
   });
 
   test('20.4: tokens taken below zero are warned of, at the step the component names', () => {
-    const own = play(TECH, turn => gainTokens(turn, { fleet: -4 }, 'status'));
+    const own = play(TECH, ctx => [tokens(ctx.holder, { fleet: -4 }, 'status')]);
     const use = named(TECH);
     const found = forecast(rulesGame({ entries: [use], game: start({ technologies: [TECH] }) }), own).warnings[use.id].find(w => w.code === 'poolNegative');
     expect(found).toMatchObject({ params: { pool: 'fleet', have: -1 }, step: 'status' });

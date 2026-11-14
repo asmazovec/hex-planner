@@ -214,8 +214,6 @@ export interface ComponentEffect {
   rule: string;
   /** passive: the changes to the points of the count, while the component is held. play: the same points, for the entry that names the component only (`appliedFor`, src/domain/effects/entryApply.ts). */
   modify?: Partial<Modifiers>;
-  /** What happens when an entry plays the component with its choices. Any tier may have it (a passive ability with an action part). */
-  play?: (turn: EffectTurn) => void;
   /** What the player chooses when the component is played; the editor of the entry asks it (`ChoicesBlock`). */
   choose?: ChoiceSpec[];
   /** The component action produces units (`entry.effects.production`, paid with `entry.effects.payment`): its editor shows the system, the shop and the payment. */
@@ -226,7 +224,7 @@ export interface ComponentEffect {
   waive?: Waiver[];
   /** The hooks written for the kernel (`game/abilities/types.ts`): they read the board and return events; the others of this interface run on the old state. */
   on?: Hooks;
-  /** The play written for the kernel (`Hooked.play`): when it is there the old `play` is not. */
+  /** The play of the component (`Hooked.play`): what an entry that plays the component does. Any tier may have it (a passive ability with an action part). */
   nativePlay?: Play;
   /** The checks the component lifts, written for the kernel (`game/abilities/types.ts`): the native form of `waive`, run by `game/resolve/waive.ts`. */
   permit?: Permit[];

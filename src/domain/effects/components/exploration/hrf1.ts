@@ -10,8 +10,10 @@
  * Pass 2: the fragments are held in `Holdings.found`; the play checks three of the type (the unknown fragment counts as
  * any type) and the purge is the entry's `spends`.
  */
-import { fragmentEffect } from './batch33/fragments';
+import { fragmentAbility, fragmentEffect } from './batch33/fragments';
 
 export const id = 'exploration:hrf1';
 
 export const effect = fragmentEffect(id);
+
+export const ability = fragmentAbility;

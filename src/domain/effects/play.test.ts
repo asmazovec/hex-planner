@@ -20,13 +20,16 @@ const CARD = 'actionCard:assassin';
 const SEVEN = ['actionCard:abs', 'actionCard:assassin', 'actionCard:bribery', 'actionCard:bunker', 'actionCard:confusing', 'actionCard:courageous', 'actionCard:cripple'];
 
 /** Puts fields on the real effect of a component for one test; `restore` takes them away. */
-const lent: [ComponentEffect, string][] = [];
+const lent: [ComponentEffect, string, unknown, boolean][] = [];
 function lend(effect: ComponentEffect, fields: Partial<ComponentEffect>): void {
-  for (const key of Object.keys(fields)) lent.push([effect, key]);
+  for (const key of Object.keys(fields)) lent.push([effect, key, (effect as unknown as Record<string, unknown>)[key], key in effect]);
   Object.assign(effect, fields);
 }
 afterEach(() => {
-  for (const [effect, key] of lent.splice(0)) delete (effect as unknown as Record<string, unknown>)[key];
+  // Put back what the effect had before (a native play of the real component), or take away what it had not.
+  for (const [effect, key, value, had] of lent.splice(0).reverse()) {
+    if (had) (effect as unknown as Record<string, unknown>)[key] = value; else delete (effect as unknown as Record<string, unknown>)[key];
+  }
 });
 
 describe('choices of an entry', () => {
@@ -74,21 +77,23 @@ describe('what `play` is given', () => {
       game: { opponents: [{ id: 'o1', faction: 'xxcha', vp: 0, seat: 2, color: 2 }] },
     });
     const play = vi.fn();
-    lend(effectOf(table.pack, CARD)!, { play });
+    lend(effectOf(table.pack, CARD)!, { nativePlay: play });
     forecast(table.game, table.pack);
-    const turn = play.mock.calls[0][0];
-    expect(turn).toMatchObject({ id: CARD, player: 'me', choices: { planet: 'h1' }, held: true });
-    expect(Object.keys(turn.states).sort()).toEqual(['me', 'o1']);
-    expect(turn.states.me).toBe(turn.state);
+    const ctx = play.mock.calls[0][0];
+    expect(ctx).toMatchObject({ id: CARD, choices: { planet: 'h1' }, held: true });
+    expect(ctx.key(ctx.holder)).toBe('me');
+    expect(ctx.table.players.map((p: { id: string }) => ctx.key(p.id)).sort()).toEqual(['me', 'o1']);
   });
 
   test('a rival\'s entry is played for the rival, and a component not held says so', () => {
     const entry = componentAction(CARD, { owner: 'o1' });
     const table = bench({ faction: 'sol', entries: [entry], game: { opponents: [{ id: 'o1', faction: 'xxcha', vp: 0, seat: 2, color: 2 }] } });
     const play = vi.fn();
-    lend(effectOf(table.pack, CARD)!, { play });
+    lend(effectOf(table.pack, CARD)!, { nativePlay: play });
     forecast(table.game, table.pack);
-    expect(play.mock.calls[0][0]).toMatchObject({ player: 'o1', held: false });
+    const ctx = play.mock.calls[0][0];
+    expect(ctx.key(ctx.holder)).toBe('o1');
+    expect(ctx.held).toBe(false);
   });
 
   test('a component used on a tactical action is played with its `useChoices`, apart from the others used with it', () => {
@@ -96,7 +101,7 @@ describe('what `play` is given', () => {
     const move = using(tactical(NEAR, {}, { useChoices: { [CARD]: { planet: 't1' }, [other]: { planet: 't2' } } }), CARD, other);
     const table = bench({ faction: 'sol', start: { hand: [CARD, other] }, entries: [move] });
     const play = vi.fn();
-    lend(effectOf(table.pack, CARD)!, { play });
+    lend(effectOf(table.pack, CARD)!, { nativePlay: play });
     forecast(table.game, table.pack);
     expect(play.mock.calls[0][0].choices).toEqual({ planet: 't1' });
   });
@@ -104,7 +109,7 @@ describe('what `play` is given', () => {
   test('a play may make a warning of its own, which the entry then lists', () => {
     const entry = componentAction(CARD);
     const table = bench({ faction: 'sol', start: { hand: [CARD] }, entries: [entry] });
-    lend(effectOf(table.pack, CARD)!, { play: turn => turn.warnings.push(violation(componentUnresolved.code, { id: CARD, name: 'Assassinate', reason: 'nothing to take' })) });
+    lend(effectOf(table.pack, CARD)!, { nativePlay: ctx => { ctx.warn(violation(componentUnresolved.code, { id: CARD, name: 'Assassinate', reason: 'nothing to take' })); } });
     expect(warningsOf(table, entry).map(w => w.code)).toEqual(['componentUnresolved']);
     expect(warningsOf(table, entry)[0]).toMatchObject({ step: 'component', rule: '2.6.1' });
   });
@@ -166,9 +171,9 @@ describe('what a faction sheet, a secret or an Alliance note brings', () => {
     const entry = componentAction('ability:orbital_drop');
     const table = bench({ faction: 'letnev', entries: [entry] });
     const play = vi.fn();
-    lend(effectOf(table.pack, 'ability:orbital_drop')!, { play });
+    lend(effectOf(table.pack, 'ability:orbital_drop')!, { nativePlay: play });
     expect(warningsOf(table, entry).map(w => w.code)).not.toContain('componentNotHeld');
-    expect(play.mock.calls[0][0].game.faction).toBe('letnev');
+    expect(play.mock.calls[0][0].my.faction).toBe('letnev');
   });
 
   test('an Alliance note held brings its owner\'s commander while it is unlocked', () => {

@@ -37,6 +37,6 @@ describe('agenda:economic_equality Economic Equality', () => {
   test('agenda:economic_equality is a play effect', () => {
     const { pack } = bench({ faction: 'sol' });
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).play).toBeTypeOf('function');
+    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
   });
 });

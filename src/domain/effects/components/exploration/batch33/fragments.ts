@@ -4,7 +4,8 @@
  */
 import relicFragmentsShort from '../../../../rules/codes/relicFragmentsShort';
 import { violation } from '../../../../rules/registry';
-import type { ComponentEffect, EffectTurn } from '../../../types';
+import type { AbilityContext, Hooked } from '../../../../../game/abilities/types';
+import type { ComponentEffect } from '../../../types';
 
 /** The Unknown Relic Fragment "counts as a relic fragment of any type". */
 const UNKNOWN = 'exploration:urf1';
@@ -14,12 +15,20 @@ const UNKNOWN = 'exploration:urf1';
  * action begins, the unknown ones standing for any type, must be three. The purge itself is the entry's `spends` and
  * the relic drawn its `gains`, as only the player knows which.
  */
-export function fragmentsPlay(turn: EffectTurn): void {
+const fragmentsPlay = (ctx: AbilityContext): [] => {
   // Purged by another component (Fabrication: 2 of a type for a relic, 1 for a command token) it is no action of its own: the three are its own action's.
-  if (turn.entry.type !== 'component' || turn.entry.componentId !== turn.id) return;
-  const held = turn.state.holdings.found.filter(card => card === turn.id || card === UNKNOWN).length;
-  if (held < 3) turn.warnings.push(violation(relicFragmentsShort.code, { have: held }));
-}
+  if (ctx.entry?.type !== 'component' || ctx.entry.componentId !== ctx.id) return [];
+  const count = (card: string): number => {
+    const hold = ctx.board.players[ctx.holder]?.cards[card];
+    return hold && hold.state !== 'purged' ? hold.count : 0;
+  };
+  const held = count(ctx.id) + (ctx.id === UNKNOWN ? 0 : count(UNKNOWN));
+  if (held < 3) ctx.warn(violation(relicFragmentsShort.code, { have: held }));
+  return [];
+};
 
 /** The effect of a relic fragment: a played one that checks the three fragments of its type. */
-export const fragmentEffect = (id: string): ComponentEffect => ({ tier: 'play', rule: id, play: fragmentsPlay });
+export const fragmentEffect = (id: string): ComponentEffect => ({ tier: 'play', rule: id });
+
+/** Its play, written for the kernel. */
+export const fragmentAbility: Hooked = { holder: 'self', play: fragmentsPlay };

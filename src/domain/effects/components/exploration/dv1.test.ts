@@ -17,7 +17,7 @@ describe('exploration:dv1 Derelict Vessel', () => {
     expect(found.tier).toBe('hint');
     expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
-    expect(found.play).toBeUndefined();
+    expect(found.nativePlay).toBeUndefined();
   });
 
   // "Draw 1 secret objective."

@@ -61,7 +61,7 @@ describe('effects registry', () => {
         // A play effect may modify a point too: it counts for the entry that names it (src/domain/effects/points/status.ts).
         if (effect.tier === 'hint') {
           expect(effect.modify, id).toBeUndefined();
-          expect(effect.play, id).toBeUndefined();
+          expect(effect.nativePlay, id).toBeUndefined();
           expect(effect.choose, id).toBeUndefined();
         }
         if (effect.tier !== 'hint') expect(effect.hintAt, id).toBeUndefined();
@@ -127,7 +127,7 @@ describe('effect files', () => {
 
   test('every component that waives, changes a number or is played has a test of the interface beside it', () => {
     const missing = files
-      .filter(([, file]) => effectOfFile(file).waive || effectOfFile(file).modify || effectOfFile(file).play || effectOfFile(file).requirement || effectOfFile(file).on?.gained || effectOfFile(file).on?.lost || effectOfFile(file).on?.restrict || effectOfFile(file).suppresses)
+      .filter(([, file]) => effectOfFile(file).waive || effectOfFile(file).modify || effectOfFile(file).nativePlay || effectOfFile(file).requirement || effectOfFile(file).on?.gained || effectOfFile(file).on?.lost || effectOfFile(file).on?.restrict || effectOfFile(file).suppresses)
       .map(([path]) => path.replace(/\.ts$/, '.ui.test.tsx'))
       .filter(path => uiTests[path] === undefined);
     expect(missing).toEqual([]);

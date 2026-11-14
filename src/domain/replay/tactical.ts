@@ -9,7 +9,7 @@ import productionShipsAway from '../rules/codes/productionShipsAway';
 import { violation } from '../rules/registry';
 import { checkStationLandings, claimStations } from '../thundersEdge';
 import type { DataPack, Game, GameState, UnitCounts, Warning } from '../types';
-import { activate, checkActivation, playNamedAt, reactToActivation } from './activation';
+import { activate, checkActivation, reactToActivation } from './activation';
 import { canFight, checkAfterCombat, checkArrival, removeGroundLosses, removeLosses } from './combat';
 import { gainControl, landUnits } from './invasion';
 import { checkEntryRoutes, moveUnits } from './movement';
@@ -35,13 +35,10 @@ function movement(game: Game, state: GameState, target: string, entry: TacticalE
  * control of the planets still held. What the surviving ships cannot carry is checked between the two (16.3.3).
  */
 function fightAndLand(
-  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false, afterLosses?: () => void,
+  game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
   shared: GameState = state,
 ): void {
-  if (!lossesTaken) {
-    removeLosses(state, target, entry, warnings);
-    afterLosses?.();
-  }
+  if (!lossesTaken) removeLosses(state, target, entry, warnings);
   warnings.push(...checkAfterCombat(game, state, target, entry, pack));
   warnings.push(...checkStationLandings(entry, pack));
   const landedOn = landUnits(game, state, target, entry, pack, warnings, shared);
@@ -55,9 +52,9 @@ function fightAndLand(
  */
 function landAndBuild(
   game: Game, state: GameState, target: string, entry: TacticalEntry, pack: DataPack, warnings: Warning[], lossesTaken = false,
-  removeLater: UnitCounts = {}, afterLosses?: () => void, shared: GameState = state,
+  removeLater: UnitCounts = {}, shared: GameState = state,
 ): boolean {
-  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken, afterLosses, shared);
+  fightAndLand(game, state, target, entry, pack, warnings, lossesTaken, shared);
   warnings.push(...checkProduction(game, state, target, entry.production, pack, entry.productionGround, 'system', undefined, entry));
   // Whether a unit used PRODUCTION (Sarween Tools asks): the producers stand before the built units do.
   const producing = producerList(game, state, target, pack).length > 0;
@@ -93,16 +90,11 @@ export function applyTactical(
   warnings.push(...checkGroups(game, state, groups, pack));
   // Ships lost where nothing could fight them were lost on the way, before the fleet pool counts the arrival.
   const onTheWay = !canFight(game, state, target, pack);
-  // What a component named by the entry plays once the losses are taken (Salvage) runs once, here or inside the battle.
-  const afterLosses = () => playNamedAt('combat', game, state, shared, entry, pack, warnings);
-  if (onTheWay) {
-    removeLosses(state, target, entry, warnings);
-    afterLosses();
-  }
+  if (onTheWay) removeLosses(state, target, entry, warnings);
   // The excess beyond the fleet pool goes at once (37.3), so the arrival counts what is left.
   const removeLater = removeFleetExcess(state, target, entry.fleetRemovals ?? {});
   if (entry.moves.length > 0) warnings.push(...checkArrival(game, state, target, entry, pack));
-  const producing = landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, afterLosses, shared);
+  const producing = landAndBuild(game, state, target, entry, pack, warnings, onTheWay, removeLater, shared);
   payProduction(game, state, entry, pack, warnings, producing);
   // The structures a flight brought are put on planets when the action ends, after its production.
   placeCarried(game, state, target, entry.landings, pack, warnings);

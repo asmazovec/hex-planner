@@ -21,7 +21,7 @@ describe('publicObjective:ancient_monuments Reclaim Ancient Monuments', () => {
     expect(found.hintAt).toEqual(['status']);
     expect(found.waive ?? []).toEqual([]);
     expect(found.modify).toBeUndefined();
-    expect(found.play).toBeUndefined();
+    expect(found.nativePlay).toBeUndefined();
   });
 
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective

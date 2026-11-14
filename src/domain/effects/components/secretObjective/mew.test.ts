@@ -19,7 +19,7 @@ describe('secretObjective:mew Make an Example of Their World', () => {
     expect(found.hintAt).toEqual(['invasion']);
     expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
-    expect(found.play).toBeUndefined();
+    expect(found.nativePlay).toBeUndefined();
   });
 
   // LRR 61.17: "A secret objective is an objective that is controlled by one player and is hidden from all other players

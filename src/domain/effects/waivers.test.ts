@@ -71,15 +71,16 @@ describe('waivers', () => {
     const table = bench({ faction: 'letnev', expansions: ['pok'], start: { leaders: { [hero]: 'unlocked' } }, entries: [action, move] });
     const effect = effectOf(table.pack, hero)!;
     const play = vi.fn();
-    effect.play = play;
+    const real = effect.nativePlay;
+    effect.nativePlay = play;
     try {
       forecast(table.game, table.pack);
     } finally {
-      delete effect.play;
+      effect.nativePlay = real;
     }
     expect(play).toHaveBeenCalledTimes(2);
     expect(play.mock.calls[0][0]).toMatchObject({ entry: { id: action.id }, choices: { planet: 'h1' }, pack: table.pack });
-    expect(play.mock.calls[0][0].state.holdings.leaders[hero]).toBe('purged');
+    expect(play.mock.calls[0][0].my.holds(hero)).toBe(false);
     expect(play.mock.calls[1][0]).toMatchObject({ entry: { id: move.id }, choices: {} });
   });
 

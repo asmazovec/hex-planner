@@ -20,7 +20,7 @@ describe('secretObjective:dtd Drive the Debate', () => {
     expect(found.hintAt).toEqual(undefined);
     expect(found.waive).toBeUndefined();
     expect(found.modify).toBeUndefined();
-    expect(found.play).toBeUndefined();
+    expect(found.nativePlay).toBeUndefined();
   });
 
   // "You or a planet you control are elected by an agenda."

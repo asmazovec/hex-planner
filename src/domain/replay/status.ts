@@ -2,7 +2,6 @@
 import { componentById } from '../components';
 import { applied } from '../effects/apply';
 import { appliedFor } from '../effects/entryApply';
-import { fire } from '../effects/points/moments';
 import fleetPoolTokens from '../rules/codes/fleetPoolTokens';
 import { effectOf, holderOf } from '../effects/registry';
 import objectiveRepeated from '../rules/codes/objectiveRepeated';
@@ -10,7 +9,6 @@ import objectivesPerPhase from '../rules/codes/objectivesPerPhase';
 import scoreWithoutHome from '../rules/codes/scoreWithoutHome';
 import { violation } from '../rules/registry';
 import { homePlanets, STATUS_TOKENS } from '../strategy';
-import type { EffectTurn } from '../effects/types';
 import type { DataPack, Entry, Game, GameState, RuleStep, Warning } from '../types';
 import { objectiveNotMet } from '../effects/points/status';
 import { dockFighterRoom, fleetCount, fleetLimit } from './transport';
@@ -121,28 +119,4 @@ export function checkObjectives(
     const need = effectOf(pack, id)?.requirement?.({ pack, game, state, shared, entry, objective: id });
     if (need && need.have < need.need) warnings.push(objectiveNotMet(id, need.have, need.need));
   });
-}
-
-/**
- * For the `play` of a component that gives or takes command tokens: changes the pools of the player by `change` (signed)
- * and warns as a card does (`checkPoolChange`: more than the sixteen tokens of a faction, a fleet pool below the ships
- * standing) and, for a pool taken below zero, `poolNegative`. The warnings carry `step`, the block the component's tokens are set in.
- */
-export function gainTokens(turn: Pick<EffectTurn, 'game' | 'state' | 'shared' | 'pack' | 'warnings'>, change: Pools, step: RuleStep = 'component'): void {
-  const { game, state, pack, warnings } = turn;
-  for (const pool of ['tactic', 'fleet', 'strategy'] as const) {
-    const count = change[pool] ?? 0;
-    state[pool] += count;
-    if (count < 0 && state[pool] < 0) warnings.push(violation('poolNegative', { pool, have: state[pool] }, step));
-  }
-  warnings.push(...checkPoolChange(game, state, pack, change, step, turn.shared));
-}
-
-/** For the `play` of a component that costs strategy tokens (Quash, Imperial Talent): takes `count` from the pool, warns `shortStrategy` when it holds fewer (20.5). */
-export function spendStrategyTokens(turn: EffectTurn, count = 1): void {
-  if (turn.state.strategy < count) turn.warnings.push(violation('shortStrategy', { have: turn.state.strategy }));
-  turn.state.strategy -= count;
-  // The kernel collects what a played component spent and tells the components in force once the play is done (`spent`).
-  if (turn.spent) turn.spent.push({ count, secondary: false });
-  else fire('onTokenSpent', turn, { count, secondary: false });
 }

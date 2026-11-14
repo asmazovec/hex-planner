@@ -5,7 +5,8 @@
  */
 import { describe, expect, test } from 'vitest';
 import { bench, componentAction, endOf, HOME, NEAR, TARGET, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
-import { gain } from '../../game/abilities/emit';
+import { gain, tokens } from '../../game/abilities/emit';
+import type { Play } from '../../game/abilities/types';
 import { effectsOf } from '../effects/registry';
 import type { ComponentEffect } from '../effects/types';
 import type { Entry } from '../types';
@@ -57,27 +58,26 @@ describe('onActivate', () => {
 });
 
 describe('playAt', () => {
-  const table = (at: 'activation' | 'combat' | undefined, play: ComponentEffect['play'], extra: { losses?: Record<string, number> } = {}) => {
+  const table = (at: 'activation' | 'combat' | undefined, play: Play, extra: { losses?: Record<string, number> } = {}) => {
     const base = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }], ...extra });
     const move = using(base, CARD);
     const t = bench({ faction: 'sol', units: { [HOME]: { cruiser: 1 } }, start: { hand: [CARD] }, entries: [move], game: { map: MAP } });
-    give(t, CARD, { tier: 'play', play, ...(at ? { playAt: at } : {}) });
+    give(t, CARD, { tier: 'play', nativePlay: play, ...(at ? { playAt: at } : {}) });
     return { t, move };
   };
 
   test('a play named by a tactical action runs after the action by default', () => {
     const order: string[] = [];
-    const { t, move } = table(undefined, ({ state }) => { order.push(`play:${state.systems[TARGET]?.cruiser ?? 0}`); });
+    const { t, move } = table(undefined, ctx => { order.push(`play:${ctx.my.unitsIn(TARGET).cruiser ?? 0}`); });
     warningsOf(t, move);
     expect(order).toEqual(['play:1']);
   });
 
   test('playAt activation runs once, after the token and before the move, so what it places can move', () => {
     const calls: string[] = [];
-    const { t, move } = table('activation', ({ state, pack }) => {
-      void pack;
-      calls.push(`${state.tokensOnMap.includes(TARGET)}:${state.systems[HOME]?.cruiser ?? 0}`);
-      state.fleet += 2;
+    const { t, move } = table('activation', ctx => {
+      calls.push(`${ctx.board.systems[TARGET]?.tokens.includes(ctx.holder)}:${ctx.my.unitsIn(HOME).cruiser ?? 0}`);
+      return [tokens(ctx.holder, { fleet: 2 })];
     });
     warningsOf(t, move);
     expect(calls).toEqual(['true:1']);
@@ -86,7 +86,7 @@ describe('playAt', () => {
 
   test('playAt combat runs once, after the losses and before the landing', () => {
     const calls: number[] = [];
-    const { t, move } = table('combat', ({ state }) => { calls.push(state.systems[TARGET]?.cruiser ?? 0); }, { losses: { cruiser: 1 } });
+    const { t, move } = table('combat', ctx => { calls.push(ctx.my.unitsIn(TARGET).cruiser ?? 0); }, { losses: { cruiser: 1 } });
     warningsOf(t, move);
     expect(calls).toEqual([0]);
   });
@@ -95,7 +95,7 @@ describe('playAt', () => {
     const calls: number[] = [];
     const entry = componentAction(CARD);
     const t = bench({ faction: 'sol', start: { hand: [CARD] }, entries: [entry], game: { map: MAP } });
-    give(t, CARD, { tier: 'play', play: () => { calls.push(1); }, playAt: 'activation' });
+    give(t, CARD, { tier: 'play', nativePlay: () => { calls.push(1); }, playAt: 'activation' });
     warningsOf(t, entry);
     expect(calls).toEqual([1]);
   });

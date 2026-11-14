@@ -35,11 +35,13 @@ describe('the native play of a component', () => {
     for (const file of files.filter(f => (f.effect as { playAt?: unknown } | undefined)?.playAt !== undefined)) expect(effectOf(pack, file.id)?.nativePlay, file.id).toBeTypeOf('function');
   });
 
-  test('no file of the leaders, the legendary planets and the technologies keeps a play written for the old state', () => {
-    for (const folder of ['leader:', 'legendary:', 'technology:']) {
-      const files = Object.values(COMPONENT_FILES).filter(f => f.id.startsWith(folder));
-      expect(files.length, folder).toBeGreaterThan(10);
-      for (const file of files) expect((file.effect as { play?: unknown } | undefined)?.play, file.id).toBeUndefined();
+  test('no component file of any folder keeps a play written for the old state', () => {
+    const files = Object.values(COMPONENT_FILES);
+    expect(files.length).toBeGreaterThan(600);
+    for (const file of files) expect((file.effect as { play?: unknown } | undefined)?.play, file.id).toBeUndefined();
+    // Every folder whose components do something when played has native plays.
+    for (const folder of ['actionCard', 'leader', 'legendary', 'technology', 'mech', 'breakthrough', 'ability', 'relic', 'publicObjective', 'exploration', 'promissory', 'agenda']) {
+      expect(files.filter(f => f.id.startsWith(folder + ':') && (f.ability as { play?: unknown } | undefined)?.play !== undefined).length, folder).toBeGreaterThan(0);
     }
   });
 

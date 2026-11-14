@@ -4,6 +4,7 @@
  * The components of these tests are throwaway effects of the registry (`withEffect`), never a component's own file.
  */
 import { describe, expect, test } from 'vitest';
+import { gain } from '../../../game/abilities/emit';
 import { withEffect } from '../../effects/points/status.kit';
 import type { Entry } from '../../types';
 import { adjust, codesOf, forecast, rulesGame, rulesPack, statusTokens } from '../kit';
@@ -48,7 +49,7 @@ describe('LRR 61 Objective Cards: the status phase checks what it scores', () =>
 
   test('61.5: the play of a scored objective runs with the status entry', () => {
     const own = rulesPack();
-    withEffect(own, PUBLIC, { tier: 'play', rule: PUBLIC, play: turn => { turn.state.tradeGoods += 1; } });
+    withEffect(own, PUBLIC, { tier: 'play', rule: PUBLIC, nativePlay: ctx => [gain.tradeGoods(ctx.holder, 1)] });
     expect(forecast(rulesGame({ entries: [scoring(PUBLIC)] }), own).state.tradeGoods).toBe(1);
   });
 
@@ -110,7 +111,7 @@ describe('LRR 61 Objective Cards: the status phase checks what it scores', () =>
 
   test('61.10: an objective scored by spending reads the cost of the status entry (`spend`) in its own play', () => {
     const own = rulesPack();
-    withEffect(own, PUBLIC, { tier: 'play', rule: PUBLIC, play: turn => { turn.state.tradeGoods -= (turn.entry as { spend?: { tradeGoods?: number } }).spend?.tradeGoods ?? 0; } });
+    withEffect(own, PUBLIC, { tier: 'play', rule: PUBLIC, nativePlay: ctx => { const goods = (ctx.entry as { spend?: { tradeGoods?: number } }).spend?.tradeGoods ?? 0; return goods > 0 ? [gain.tradeGoods(ctx.holder, -goods)] : []; } });
     const status = { ...scoring(PUBLIC), spend: { tradeGoods: 3 } } as Entry;
     expect(forecast(rulesGame({ entries: [adjust({ tradeGoods: 5 }), status] }), own).state.tradeGoods).toBe(2);
   });

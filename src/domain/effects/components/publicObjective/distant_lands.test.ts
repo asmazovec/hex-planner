@@ -21,7 +21,7 @@ describe('publicObjective:distant_lands Rule Distant Lands', () => {
     expect(found.hintAt).toEqual(['status']);
     expect(found.waive ?? []).toEqual([]);
     expect(found.modify).toBeUndefined();
-    expect(found.play).toBeUndefined();
+    expect(found.nativePlay).toBeUndefined();
   });
 
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective

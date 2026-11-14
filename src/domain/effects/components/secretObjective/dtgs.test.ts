@@ -21,7 +21,7 @@ describe('secretObjective:dtgs Destroy Their Greatest Ship', () => {
     expect(found.hintAt).toEqual(['combat']);
     expect(found.waive ?? []).toEqual([]);
     expect(found.modify).toBeUndefined();
-    expect(found.play).toBeUndefined();
+    expect(found.nativePlay).toBeUndefined();
   });
 
   // LRR 61.5: "If a player fulfills the requirement described on an objective card, they can score that objective

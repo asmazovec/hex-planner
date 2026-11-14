@@ -12,12 +12,11 @@ import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:economic_equality';
 
-const equalize = ({ state }: { state: { tradeGoods: number } }): void => { state.tradeGoods = 5; };
-
-export const effect: ComponentEffect = { tier: 'play', rule: id, play: equalize };
+export const effect: ComponentEffect = { tier: 'play', rule: id };
 
 /** Every player has 5 trade goods when the law is resolved: the owner of the entry is brought to 5. */
 export const ability: Hooked = {
   holder: 'anyone',
+  play: ctx => (ctx.my.tradeGoods === 5 ? [] : [gain.tradeGoods(ctx.holder, 5 - ctx.my.tradeGoods)]),
   on: { gained: ctx => (ctx.my.tradeGoods === 5 ? undefined : [gain.tradeGoods(ctx.holder, 5 - ctx.my.tradeGoods)]) },
 };

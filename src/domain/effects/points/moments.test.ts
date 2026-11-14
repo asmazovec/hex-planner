@@ -5,10 +5,10 @@
  */
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
-import { adjust, forecast, mutable, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, HOME, NEAR, TARGET } from '../../rules/kit';
+import { adjust, forecast, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, HOME, NEAR, TARGET } from '../../rules/kit';
 import type { Entry } from '../../types';
 import type { ComponentEffect } from '../types';
-import { spendStrategyTokens } from '../../replay/status';
+import { spendStrategyBy } from '../helpers/cardPlay';
 import { gain } from '../../../game/abilities/emit';
 import type { Hooks } from '../../../game/abilities/types';
 import { withEffect } from './status.kit';
@@ -75,15 +75,12 @@ describe('onTokenSpent', () => {
     expect(state.strategy).toBe(1);
   });
 
-  test('spendStrategyTokens, the helper of a component that costs tokens, asks it too', () => {
+  test('a play that spends strategy tokens (spendStrategyBy) asks it too', () => {
     const pack = rulesPack();
     const seen: number[] = [];
     withEffect(pack, TECH, hooked({ on: { onTokenSpent: (_, { count }) => { seen.push(count); } } }));
-    // A play collects the tokens it spends for the kernel to announce; without a collector the old moment is asked.
-    const spent: { count: number; secondary: boolean }[] = [];
-    const turn = { game: rulesGame({ ...held }), state: mutable(forecast(rulesGame({ ...held }), pack).state), pack, warnings: [], id: 'x', spent };
-    spendStrategyTokens({ ...turn, shared: turn.state } as never, 1);
-    seen.push(...spent.map(each => each.count));
+    withEffect(pack, 'actionCard:bribery', { tier: 'play', rule: 'x', nativePlay: ctx => spendStrategyBy(ctx) });
+    forecast(rulesGame({ entries: [{ ...adjust({}), uses: ['actionCard:bribery'] } as Entry], ...held }), pack);
     expect(seen).toEqual([1]);
   });
 });
