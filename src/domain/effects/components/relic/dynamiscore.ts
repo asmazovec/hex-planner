@@ -7,7 +7,9 @@
  * the relic). The contract lets only a play effect have `play`, so pass 2 must either let a passive effect answer its
  * own component action or count the action's trade goods elsewhere. Pass 1 keeps it the hint it is today.
  */
-import { commodityValueOf } from '../../../replay/cards/trade';
+import { commodities, tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:dynamiscore';
@@ -16,15 +18,22 @@ export const effect: ComponentEffect = {
   tier: 'passive',
   rule: id,
   modify: { commodityValue: value => value + 2 },
-  play: ({ game, state, shared, pack, held }) => {
-    if (!held) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    if (!ctx.held) return [];
     // The value with the relic itself in play, whether or not the replay has taken it out of the holdings yet.
-    const now = commodityValueOf(game, state, pack, shared);
-    const inPlay = state.holdings.relics.includes(id);
+    const now = ctx.commodityValue(ctx.holder);
+    const inPlay = ctx.my.holds(id);
     const withRelic = inPlay ? now : now + 2;
     const without = inPlay ? now - 2 : now;
-    state.tradeGoods += withRelic;
+    const events: GameEvent[] = [];
+    if (withRelic > 0) events.push(tradeGoods(ctx.holder, withRelic));
     // Purged, the relic no longer raises the value: commodities beyond it are returned (Dynamis Core note 1).
-    state.commodities = Math.min(state.commodities, without);
+    const kept = Math.min(ctx.my.commodities, without);
+    if (kept < ctx.my.commodities) events.push(commodities(ctx.holder, kept - ctx.my.commodities));
+    return events;
   },
 };

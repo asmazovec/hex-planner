@@ -8,7 +8,9 @@
  * adjacent) is warned of. The replay already purges the relic. Pass 1 keeps it the hint it is today.
  */
 import converterTarget from '../../../rules/codes/converterTarget';
-import { inHomeSystem } from '../../../stacks';
+import { removeUnits } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
+import type { GameEvent } from '../../../../game/events';
 import { violation } from '../../../rules/registry';
 import type { ComponentEffect } from '../../types';
 
@@ -18,23 +20,24 @@ export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planetId', kind: 'planet' }],
-  play: ({ game, state, shared, states, pack, choices, warnings, held }) => {
-    const planetId = String(choices.planetId ?? '');
-    if (!held || !planetId) return;
-    const planet = pack.planets[planetId];
-    const reason = state.control[planetId] === 'me' ? 'mine'
-      : inHomeSystem(game, planetId, pack) ? 'home'
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planetId = String(ctx.choices.planetId ?? '');
+    if (!ctx.held || !planetId) return [];
+    const planet = ctx.pack.planets[planetId];
+    const reason = ctx.board.planets[planetId]?.owner === ctx.holder ? 'mine'
+      : ctx.tileKind(ctx.systemOf(planetId) ?? '') === 'home' ? 'home'
         : planet?.legendary !== undefined ? 'legendary'
           : planet?.name === 'Mecatol Rex' ? 'mecatol' : undefined;
-    if (reason) warnings.push(violation(converterTarget.code, { planetId, reason }));
-    // Every unit and structure on the planet is destroyed, nobody controls it, its attachments are purged.
-    for (const each of new Set([...Object.values(states), shared])) {
-      delete each.ground[planetId];
-      delete each.control[planetId];
-      delete each.pds[planetId];
-      each.docks = each.docks.filter(dock => dock !== planetId);
-    }
-    if (shared.attachments) delete shared.attachments[planetId];
-    if (shared.rivalHolds) delete shared.rivalHolds[planetId];
+    if (reason) ctx.warn(violation(converterTarget.code, { planetId, reason }));
+    // Every unit and structure on the planet is destroyed, nobody controls it (the board keeps no event that takes an attachment off, so its attachments stay listed).
+    const events: GameEvent[] = [];
+    const here = ctx.board.planets[planetId];
+    for (const [player, units] of Object.entries(here?.ground ?? {})) if (Object.values(units).some(n => (n ?? 0) > 0)) events.push(removeUnits(player, { planet: planetId }, units));
+    if (here?.owner !== undefined) events.push({ type: 'PlanetLost', planet: planetId });
+    return events;
   },
 };

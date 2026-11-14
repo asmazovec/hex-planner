@@ -6,6 +6,8 @@
  * as a gain of that entry (no prerequisites, Maw note 1); the replay already purges the relic. Pass 1 keeps it the hint
  * it is today.
  */
+import { planet as planetEvents } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:mawofworlds';
@@ -13,10 +15,9 @@ export const id = 'relic:mawofworlds';
 export const effect: ComponentEffect = {
   tier: 'play',
   rule: id,
-  play: ({ state, held }) => {
-    if (!held) return;
-    for (const planetId of Object.keys(state.control)) {
-      if (state.control[planetId] === 'me' && !state.exhausted.includes(planetId)) state.exhausted.push(planetId);
-    }
-  },
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => (ctx.held ? ctx.my.planets().filter(planet => !planet.exhausted).map(planet => planetEvents.exhaust(ctx.holder, planet.id)) : []),
 };

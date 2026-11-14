@@ -6,9 +6,9 @@
  * `planetResources` and `planetInfluence` (+2) of the planet it is attached to; a target that is not mine, a home planet
  * or a legendary one is warned of, and so is a second play. Pass 1 keeps it the hint it is today.
  */
-import { attachCard } from '../../../replay/invasion';
 import { violation } from '../../../rules/registry';
 import attachTarget from '../../../rules/codes/attachTarget';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:nanoforge';
@@ -21,14 +21,22 @@ export const effect: ComponentEffect = {
     planetResources: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value),
     planetInfluence: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value),
   },
-  play: ({ game, state, shared, pack, choices, warnings, held }) => {
-    const planetId = String(choices.planetId ?? '');
-    if (!held || !planetId) return;
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
+    const planetId = String(ctx.choices.planetId ?? '');
+    if (!ctx.held || !planetId) return [];
     // "This action cannot be performed once attached."
-    if (Object.values(shared.attachments ?? {}).some(list => list.includes(id))) {
-      warnings.push(violation(attachTarget.code, { planetId }));
-      return;
+    if (Object.values(ctx.board.planets).some(planet => planet.attached.includes(id))) {
+      ctx.warn(violation(attachTarget.code, { planetId }));
+      return [];
     }
-    attachCard(game, { ...state, attachments: (shared.attachments ??= {}) }, planetId, id, pack, warnings, { notHome: true, notLegendary: true });
+    const reason = ctx.board.planets[planetId]?.owner !== ctx.holder ? 'notControlled'
+      : ctx.tileKind(ctx.systemOf(planetId) ?? '') === 'home' ? 'home'
+        : ctx.pack.planets[planetId]?.legendary !== undefined ? 'legendary' : undefined;
+    if (reason) ctx.warn(violation(attachTarget.code, { planetId, reason }));
+    return [{ type: 'CardAttached', planet: planetId, card: id }];
   },
 };

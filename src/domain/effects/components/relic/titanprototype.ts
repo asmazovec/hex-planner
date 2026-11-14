@@ -6,7 +6,8 @@
  * on a planet I do not control), otherwise 1 trade good. The relic is exhausted by its play as an agent is; the replay
  * exhausts a relic only when its text says "exhaust this card". Pass 1 keeps it the hint it is today.
  */
-import { buildStructures } from '../../../replay/structures';
+import { tradeGoods } from '../../../../game/abilities/emit';
+import type { Hooked } from '../../../../game/abilities/types';
 import type { StructureKind } from '../../../types';
 import type { ComponentEffect } from '../../types';
 
@@ -23,12 +24,15 @@ export const effect: ComponentEffect = {
     },
     { key: 'planetId', kind: 'planet', when: chosen => chosen.structure !== undefined },
   ],
-  play: ({ game, state, pack, choices, warnings, held }) => {
+};
+
+export const ability: Hooked = {
+  holder: 'self',
+  play: ctx => {
     // Another player's structure or trade good belongs to their own state, which a rival's plan does not replay here.
-    if (!held || choices.player !== 'me') return;
-    const kind = choices.structure as StructureKind | undefined;
-    const planetId = String(choices.planetId ?? '');
-    if (kind && planetId) buildStructures(game, state, [{ kind, planetId }], true, undefined, pack, warnings);
-    else state.tradeGoods += 1;
+    if (!ctx.held || ctx.playerOf(String(ctx.choices.player)) !== ctx.holder) return [];
+    const kind = ctx.choices.structure as StructureKind | undefined;
+    const planetId = String(ctx.choices.planetId ?? '');
+    return kind && planetId ? ctx.buildStructures([{ kind, planetId }]) : [tradeGoods(ctx.holder, 1)];
   },
 };
