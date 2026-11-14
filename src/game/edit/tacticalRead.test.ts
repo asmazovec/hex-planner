@@ -3,7 +3,6 @@ import { loadPack } from '../../data/loadPack';
 import { createGame } from '../../domain/newGame';
 import { stateBeforeEntry } from '../../domain/project';
 import * as old from '../../domain/tactical';
-import { commitSources } from '../../domain/commitSources';
 import { blockersOf } from '../../domain/movement';
 import { systemPlanets } from '../../domain/replay/board';
 import { pickupAllowed } from '../../domain/replay/transport';
@@ -82,8 +81,8 @@ describe.each(['sol', 'naalu', 'arborec'])('the readers of a tactical action, %s
   test('ships and cargo, the commit sources, the planets of a system', () => {
     const units = { carrier: 1, fighter: 2, infantry: 1, mech: 1 } as UnitCounts;
     expect(now.splitFlightOn(t.table, t.board, pack, t.player, units)).toEqual(old.splitFlight(t.g, pack, t.before.holdings, units));
-    expect(now.commitSourcesOn(t.table, t.board, pack, t.player, 'B')).toEqual(commitSources(t.g, pack, t.before, 'B'));
-    expect(now.commitSourcesOn(t.table, t.board, pack, t.player, 'A')).toEqual(commitSources(t.g, pack, t.before, 'A'));
+    expect(now.commitSourcesOn(t.table, t.board, pack, t.player, 'B')).toEqual([{ planetId: 'vefutii', units: { infantry: 3, mech: 1 } }]);
+    expect(now.commitSourcesOn(t.table, t.board, pack, t.player, 'A')).toEqual([]);
     for (const slot of ['A', 'B', 'C', 'M']) {
       expect(planetsIn(t.table, t.board, pack, slot)).toEqual(systemPlanets(t.g, slot, pack).map(p => p.id));
       expect(now.isValidSource(t.table, t.board, pack, t.player, slot)).toBe(old.isValidSource(t.g, pack, t.before, slot));
