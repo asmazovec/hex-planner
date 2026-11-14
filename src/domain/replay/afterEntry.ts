@@ -4,7 +4,7 @@
  * The hooks of the components it gained or lost and the checks the components in force add run on the kernel (`game/resolve/entryHooks.ts`).
  */
 import { appliedFor } from '../effects/entryApply';
-import { holderOf } from '../effects/registry';
+import { holderOf, type Holder } from '../effects/registry';
 import handOverLimit from '../rules/codes/handOverLimit';
 import secretsOverLimit from '../rules/codes/secretsOverLimit';
 import { violation } from '../rules/registry';
@@ -37,18 +37,22 @@ export interface AfterEntry {
 
 /** The limits of the hand and of the secret objectives, asked once the entry has gained what it gains. */
 export function entryLimits(a: AfterEntry): Warning[] {
-  const { game, state, shared, entry, pack } = a;
+  return entryLimitsOf(holderOf(a.game, a.state, a.shared), a.game.faction, a.entry, a.pack, a.before);
+}
+
+/** The same for a holder: what they hold after the entry, the faction they play. */
+export function entryLimitsOf(holder: Holder, faction: string, entry: Entry, pack: DataPack, before?: GameState): Warning[] {
+  const { holdings } = holder;
   const warnings: Warning[] = [];
-  const holder = holderOf(game, state, shared);
   // The hand grew: no more action cards than the limit (2.4, 2.4.1).
   if ((entry.gains ?? []).some(id => id.startsWith('actionCard:'))) {
-    const limit = appliedFor(pack, holder, entry, 'handLimit', HAND_LIMIT, { faction: game.faction }, a.before).value;
-    if (state.holdings.hand.length > limit) warnings.push(violation(handOverLimit.code, { cards: state.holdings.hand.length, limit }));
+    const limit = appliedFor(pack, holder, entry, 'handLimit', HAND_LIMIT, { faction }, before).value;
+    if (holdings.hand.length > limit) warnings.push(violation(handOverLimit.code, { cards: holdings.hand.length, limit }));
   }
   // A secret objective was drawn: no more than the limit, scored and unscored together (61.21).
   if ((entry.gains ?? []).some(id => id.startsWith('secretObjective:'))) {
-    const limit = appliedFor(pack, holder, entry, 'secretLimit', SECRET_LIMIT, { faction: game.faction }, a.before).value;
-    const secrets = state.holdings.secrets.length + state.holdings.scored.filter(id => id.startsWith('secretObjective:')).length;
+    const limit = appliedFor(pack, holder, entry, 'secretLimit', SECRET_LIMIT, { faction }, before).value;
+    const secrets = holdings.secrets.length + holdings.scored.filter(id => id.startsWith('secretObjective:')).length;
     if (secrets > limit) warnings.push(violation(secretsOverLimit.code, { secrets, limit }));
   }
   return warnings;

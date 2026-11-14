@@ -6,19 +6,18 @@
  * The pure counting of symbols is `domain/replay/research.ts`, imported.
  */
 import { componentById, ownedBy } from '../../domain/components';
-import { applied } from '../../domain/effects/apply';
 import '../../domain/effects/points/research';
-import { holderOf } from '../../domain/effects/registry';
 import {
-  countSymbols, researchTokensOf, symbolsLacking, techOf, unresearchable, type Symbols,
+  countSymbols, symbolsLacking, techOf, unresearchable, type Symbols,
 } from '../../domain/replay/research';
 import prerequisitesMissing from '../../domain/rules/codes/prerequisitesMissing';
 import researchForeign from '../../domain/rules/codes/researchForeign';
 import researchUnavailable from '../../domain/rules/codes/researchUnavailable';
 import { violation } from '../../domain/rules/registry';
 import type { TechType } from '../../domain/types';
+import { appliedOn } from '../abilities/registry';
 import { cardsOf, ownerOf } from '../queries';
-import { checkView, emit, warn, type Ctx } from './context';
+import { emit, warn, type Ctx } from './context';
 
 const describe = (symbols: Symbols): string => Object.entries(symbols).filter(([, n]) => n).map(([colour, n]) => `${colour} ×${n}`).join(', ');
 
@@ -43,10 +42,10 @@ export function researchTechnologies(ctx: Ctx, ids: readonly string[] | undefine
       continue;
     }
     if (unresearchable(ctx.pack, id)) warn(ctx, violation(researchUnavailable.code, { id, name }));
-    const v = checkView(ctx);
-    if (def.faction !== undefined && !ownedBy(def, v.game.faction)) warn(ctx, violation(researchForeign.code, { id, name }));
+    const faction = ctx.table.players.find(p => p.id === ctx.player)?.faction ?? '';
+    if (def.faction !== undefined && !ownedBy(def, faction)) warn(ctx, violation(researchForeign.code, { id, name }));
     // Propagation: the research is not made and the tokens come instead; nothing else of it is asked.
-    const given = researchTokensOf(ctx.pack, v.game, v.state, v.shared, id);
+    const given = appliedOn(ctx.table, ctx.board, ctx.pack, ctx.player, 'researchTokens', 0, { technology: id }).value;
     if (given > 0) { tokens += given; continue; }
     const lacking = symbolsLacking(ctx.pack, id, held());
     for (const colour of Object.keys(lacking) as TechType[]) {
@@ -56,7 +55,7 @@ export function researchTechnologies(ctx: Ctx, ids: readonly string[] | undefine
       }
     }
     const upgrade = techOf(ctx.pack, id)?.upgrade !== undefined;
-    const missing = applied(ctx.pack, holderOf(v.game, v.state, v.shared), 'prerequisites', countSymbols(lacking), { technology: id, upgrade, missing: { ...lacking } }).value;
+    const missing = appliedOn(ctx.table, ctx.board, ctx.pack, ctx.player, 'prerequisites', countSymbols(lacking), { technology: id, upgrade, missing: { ...lacking } }).value;
     if (missing > 0) warn(ctx, violation(prerequisitesMissing.code, { id, name, missing, symbols: describe(lacking) }));
     emit(ctx, [{ type: 'TechnologyResearched', player: ctx.player, technology: id }], { quiet: true });
   }

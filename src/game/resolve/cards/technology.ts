@@ -6,7 +6,8 @@
 import { researchLimit } from '../../../domain/replay/cards/technology';
 import { violation } from '../../../domain/rules/registry';
 import { cardsOf } from '../../queries';
-import { checkView, warn } from '../context';
+import { holderIn } from '../../abilities/registry';
+import { warn } from '../context';
 import { researchTechnologies } from '../research';
 import type { CardRule } from './rule';
 
@@ -15,8 +16,8 @@ export const technology: CardRule = {
     // Runs before this entry's research is added: what is held is what stood before.
     const held = cardsOf(ctx.board, ctx.player, 'technology').map(c => c.id);
     const count = (effects.researched ?? []).filter(id => !held.includes(id)).length;
-    const v = checkView(ctx);
-    const limit = researchLimit(entry, v.state.holdings, { pack: ctx.pack, faction: v.game.faction });
+    const faction = ctx.table.players.find(p => p.id === ctx.player)?.faction ?? '';
+    const limit = researchLimit(entry, holderIn(ctx.table, ctx.board, ctx.player).holdings, { pack: ctx.pack, faction });
     researchTechnologies(ctx, effects.researched, effects.specialties);
     if (count > limit) warn(ctx, violation('researchOverLimit', { limit, count }));
   },

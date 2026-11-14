@@ -3,10 +3,11 @@
  * paid, the components it names run their effects (hooks), what it gains and spends is held, the limits of the hand and
  * of the secret objectives are asked. The rules are events on the board; the components' own effects are the hooks.
  */
-import { entryLimits } from '../../domain/replay/afterEntry';
+import { entryLimitsOf } from '../../domain/replay/afterEntry';
 import { effectOf } from '../../domain/effects/registry';
 import { playedCost } from '../../domain/effects/playedCost';
-import { checkView, warn, type Ctx } from './context';
+import { holderIn } from '../abilities/registry';
+import { warn, type Ctx } from './context';
 import { applyGains, playUses } from './holdings';
 import { gainHooks } from './entryHooks';
 import { playHooks } from './play';
@@ -26,6 +27,6 @@ export function turnTail(ctx: Ctx): void {
   playHooks(ctx);
   applyGains(ctx);
   gainHooks(ctx);
-  const v = checkView(ctx);
-  warn(ctx, entryLimits({ game: v.game, state: v.state, shared: v.shared, entry: ctx.entry, pack: ctx.pack, warnings: [] }));
+  const faction = ctx.table.players.find(p => p.id === ctx.player)?.faction ?? '';
+  warn(ctx, entryLimitsOf(holderIn(ctx.table, ctx.board, ctx.player), faction, ctx.entry, ctx.pack));
 }

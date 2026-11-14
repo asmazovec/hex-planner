@@ -1,9 +1,9 @@
 /** The actions that are not tactical or a card: a component's action, a pass, the status phase, the agenda and a correction. */
-import { checkProduction, costOf, producerList } from '../../domain/replay/production';
+import { checkProductionOn, costOn, producersOn } from '../../domain/replay/production';
 import { checkSystemOf } from '../../domain/replay/transport';
-import { stacksOn } from '../queries';
+import { groundIn, stacksOn } from '../queries';
 import type { Entry } from '../../domain/types';
-import { begin, checkView, emit, warn, type Ctx } from './context';
+import { begin, emit, warn, type Ctx } from './context';
 import { correction } from './correction';
 import { playComponent } from './holdings';
 import { checkedPay, shortOf } from './payment';
@@ -16,12 +16,11 @@ type Of<T extends Entry['type']> = Extract<Entry, { type: T }>;
 function componentProduction(ctx: Ctx, entry: Of<'component'>): void {
   const made = entry.effects?.production;
   if (!made || Object.values(made.units).every(n => !n)) return;
-  let v = checkView(ctx);
-  warn(ctx, checkProduction(v.game, v.state, made.systemId, made.units, ctx.pack, made.ground, 'system', undefined, entry));
-  const producing = producerList(v.game, v.state, made.systemId, ctx.pack).length > 0;
+  const ground = groundIn(ctx.table, ctx.board, ctx.pack, ctx.player);
+  warn(ctx, checkProductionOn(ground, made.systemId, made.units, ctx.pack, made.ground, 'system', undefined, entry));
+  const producing = producersOn(ground, made.systemId, ctx.pack).length > 0;
   place(ctx, made.systemId, made.units, made.ground);
-  v = checkView(ctx);
-  const cost = costOf(v.game, v.state, made.units, ctx.pack, producing, entry);
+  const cost = costOn(groundIn(ctx.table, ctx.board, ctx.pack, ctx.player), made.units, ctx.pack, producing, entry);
   shortOf(ctx, 'resources', cost, checkedPay(ctx, entry.effects?.payment ?? { planets: [], tradeGoods: 0 }, 'resources'));
   warn(ctx, checkSystemOf(stacksOn(ctx.table, ctx.board, ctx.pack, ctx.player), made.systemId));
 }

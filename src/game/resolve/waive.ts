@@ -14,7 +14,7 @@ import type { Ability } from '../../domain/effects/types';
 import { playedBy } from '../../domain/effects/waivers';
 import { MECATOL_TILE, MECATOL_TILE_TE } from '../../domain/mecatol';
 import { hasAnomaly, systemSlots, tileIdOf, type MapSource } from '../../domain/replay/board';
-import { costOf } from '../../domain/replay/production';
+import { costOn } from '../../domain/replay/production';
 import { unitIds, type Move } from '../../domain/replay/state';
 import type { DataPack, Entry, UnitCounts, UnitId, Warning } from '../../domain/types';
 import type { Turn } from '../actions';
@@ -23,7 +23,7 @@ import { readerOf } from '../abilities/facade';
 import { appliedOn, holderIn, inForce } from '../abilities/registry';
 import type { PermitContext, RouteBlockKind } from '../abilities/types';
 import { playerOfKey } from '../keys';
-import { viewFor } from '../legacyViews';
+import { groundIn } from '../queries';
 import { adjacentSlots, blockersOf, mapSource, pathOf, planetsIn, shipBlockers } from '../space';
 import type { Board, PlayerId, Table } from '../types';
 import { NO_TACTICAL, type Ctx } from './context';
@@ -139,8 +139,7 @@ function permitContext(ctx: Ctx, before: Board, earlier: readonly string[], aske
     },
     fastestOnBoard: (): number => Math.max(0, ...table.players.flatMap(p => Object.values(before.systems).flatMap(system => unitIds(system.ships[p.id] ?? {}).map(unit => speedOf(p.id, unit))))),
     productionCostOf: (units: UnitCounts): number => {
-      const v = viewFor(table, before, pack, mover);
-      return costOf(v.game, v.state, units, pack, false, entry);
+      return costOn(groundIn(table, before, pack, mover), units, pack, false, entry);
     },
     mecatolSlot: (): string | undefined => systemSlots(source()).find(slot => [MECATOL_TILE, MECATOL_TILE_TE].includes(tileIdOf(source(), slot))),
   });
