@@ -14,8 +14,8 @@ const SHIPS = ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'flagship', 'wa
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state }) => ({
-    have: Math.max(0, ...Object.values(state.systems).map(units => SHIPS.reduce((sum, ship) => sum + Math.max(0, units[ship] ?? 0), 0))),
+requirement: ({ fleets }) => ({
+    have: Math.max(0, ...fleets().map(({ units }) => SHIPS.reduce((sum, ship) => sum + Math.max(0, units[ship] ?? 0), 0))),
     need: 5,
   }),
   holder: 'self',

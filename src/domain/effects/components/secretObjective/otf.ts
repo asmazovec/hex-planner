@@ -14,11 +14,13 @@ export const id = 'secretObjective:otf';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state, pack }) => ({
-    have: Math.max(0, ...Object.entries(state.ground)
-      .filter(([planetId]) => !state.docks.includes(planetId))
-      .map(([, units]) => Object.entries(units).reduce((sum, [unit, count]) => sum + (pack.units[unit as keyof typeof pack.units]?.ground ? count ?? 0 : 0), 0))),
-    need: 9,
-  }),
+requirement: ({ pack, my, grounds }) => {
+    const docks = new Set(my.structures().filter(s => (s.structures.spacedock ?? 0) > 0).map(s => s.planet));
+    return {
+      have: Math.max(0, ...grounds().filter(({ planet }) => !docks.has(planet))
+        .map(({ units }) => Object.entries(units).reduce((sum, [unit, count]) => sum + (pack.units[unit as keyof typeof pack.units]?.ground ? count ?? 0 : 0), 0))),
+      need: 9,
+    };
+  },
   holder: 'self',
 };

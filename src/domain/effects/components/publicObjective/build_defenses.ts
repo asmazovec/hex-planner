@@ -13,10 +13,9 @@ export const id = 'publicObjective:build_defenses';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state }) => {
-    const mine = (planet: string) => state.control[planet] === 'me';
-    const docks = state.docks.filter(mine).length;
-    const pds = Object.entries(state.pds).filter(([planet]) => mine(planet)).reduce((sum, [, count]) => sum + Math.max(0, count), 0);
+requirement: ({ my }) => {
+    const docks = my.structures().filter(s => (s.structures.spacedock ?? 0) > 0).length;
+    const pds = my.structures().reduce((sum, s) => sum + Math.max(0, s.structures.pds ?? 0), 0);
     return { have: docks + pds, need: 4 };
   },
   holder: 'self',

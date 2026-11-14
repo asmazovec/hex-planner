@@ -12,8 +12,8 @@ export const id = 'publicObjective:engineer_marvel';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state }) => ({
-    have: Object.values(state.systems).reduce((sum, units) => sum + Math.max(0, units.flagship ?? 0) + Math.max(0, units.warsun ?? 0), 0),
+requirement: ({ fleets }) => ({
+    have: fleets().reduce((sum, { units }) => sum + Math.max(0, units.flagship ?? 0) + Math.max(0, units.warsun ?? 0), 0),
     need: 1,
   }),
   holder: 'self',

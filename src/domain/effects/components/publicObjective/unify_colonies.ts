@@ -12,12 +12,9 @@ export const id = 'publicObjective:unify_colonies';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, state }) => {
+requirement: ({ pack, my }) => {
     const traits: Record<string, number> = {};
-    for (const planet of Object.keys(state.control)) {
-      if (state.control[planet] !== 'me') continue;
-      for (const trait of pack.planets[planet]?.traits ?? []) traits[trait] = (traits[trait] ?? 0) + 1;
-    }
+    for (const planet of my.planets()) for (const trait of pack.planets[planet.id]?.traits ?? []) traits[trait] = (traits[trait] ?? 0) + 1;
     return { have: Math.max(0, ...Object.values(traits)), need: 6 };
   },
   holder: 'self',

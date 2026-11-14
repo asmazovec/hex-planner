@@ -7,9 +7,6 @@
  * board are counted (a rival's state also holds the planets of a home system that is not on the map). Unmet is the
  * warning objectiveUnmet (61.5.1).
  */
-import { areNeighbors } from '../../../neighbors';
-import { boardSlots } from '../../../movement';
-import { planetsOf } from '../../../replay/board';
 import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:push_boundaries';
@@ -17,15 +14,10 @@ export const id = 'publicObjective:push_boundaries';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state, shared }) => {
-    const onBoard = new Set(boardSlots(game, pack).flatMap(slot => planetsOf(game, slot, pack)));
-    const count = (board: typeof state) => Object.keys(board.control).filter(planet => board.control[planet] === 'me' && onBoard.has(planet)).length;
-    const mine = count(state);
+requirement: ({ holder, others, neighbours, controlledOnBoard }) => {
+    const mine = controlledOnBoard(holder);
     let have = 0;
-    for (const opponent of game.opponents) {
-      const rival = shared.rivals?.[opponent.id];
-      if (rival && areNeighbors(game, state, rival, pack) && count(rival) < mine) have += 1;
-    }
+    for (const other of others()) if (neighbours(holder, other) && controlledOnBoard(other) < mine) have += 1;
     return { have, need: 2 };
   },
   holder: 'self',

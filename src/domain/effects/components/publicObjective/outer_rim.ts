@@ -16,20 +16,20 @@ export const id = 'publicObjective:outer_rim';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state }) => {
-    const any = (units: Record<string, number | undefined> | undefined) => Object.values(units ?? {}).some(count => (count ?? 0) > 0);
-    const home = pack.factions[game.faction]?.homeTile;
+requirement: ({ pack, map, my, fleets, grounds }) => {
+    const here = new Set(fleets().map(f => f.slot));
+    const ground = new Set(grounds().map(g => g.planet));
+    const built = new Set(my.structures().filter(s => (s.structures.spacedock ?? 0) > 0 || (s.structures.pds ?? 0) > 0).map(s => s.planet));
+    const standsIn = (slot: string, planets: string[]) => here.has(slot) || planets.some(planet => ground.has(planet) || built.has(planet));
+    const home = pack.factions[my.faction]?.homeTile;
     let have = 0;
-    for (const slot of Object.keys(game.map)) {
-      if (tileIdOf(game, slot) === home) continue;
+    for (const slot of Object.keys(map.map)) {
+      if (tileIdOf(map, slot) === home) continue;
       const edge = [0, 1, 2, 3, 4, 5].some(side => {
         const next = slotAcross(slot, side);
-        return next !== null && !isOnMap(game, next);
+        return next !== null && !isOnMap(map, next);
       });
-      if (!edge) continue;
-      const present = any(state.systems[slot])
-        || planetsOf(game, slot, pack).some(planet => any(state.ground[planet]) || state.docks.includes(planet) || (state.pds[planet] ?? 0) > 0);
-      if (present) have += 1;
+      if (edge && standsIn(slot, planetsOf(map, slot, pack))) have += 1;
     }
     return { have, need: 3 };
   },

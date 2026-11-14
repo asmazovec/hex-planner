@@ -13,8 +13,8 @@ export const id = 'publicObjective:brain_trust';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, state }) => ({
-    have: Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (pack.planets[planet]?.tech?.length ?? 0) > 0).length,
+requirement: ({ pack, my }) => ({
+    have: my.planets().filter(planet => (pack.planets[planet.id]?.tech?.length ?? 0) > 0).length,
     need: 5,
   }),
   holder: 'self',

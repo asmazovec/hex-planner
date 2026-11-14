@@ -12,8 +12,8 @@ export const id = 'publicObjective:revolutionize';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, state }) => ({
-    have: state.holdings.technologies.filter(tech => pack.technologies[tech.replace(/^technology:/, '')]?.upgrade).length,
+requirement: ({ pack, my }) => ({
+    have: my.cards('technology').filter(held => pack.technologies[held.id.replace(/^technology:/, '')]?.upgrade).length,
     need: 3,
   }),
   holder: 'self',

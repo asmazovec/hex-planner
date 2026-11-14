@@ -40,7 +40,7 @@ describe('LRR 61 Objective Cards: the status phase checks what it scores', () =>
     let seen = '';
     withEffect(own, PUBLIC, {
       tier: 'play', rule: PUBLIC,
-      requirement: ctx => { seen = `${ctx.entry.id} ${ctx.state.holdings.scored.length} ${ctx.objective}`; return { have: 1, need: 1 }; },
+      requirement: ctx => { seen = `${ctx.entry.id} ${ctx.my.cards().filter(card => card.state === 'inPlay').length} ${ctx.objective}`; return { have: 1, need: 1 }; },
     });
     const status = scoring(PUBLIC);
     forecast(rulesGame({ entries: [status] }), own);

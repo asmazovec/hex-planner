@@ -12,10 +12,10 @@ export const id = 'publicObjective:master_science';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, state }) => {
+requirement: ({ pack, my }) => {
     const colours: Record<string, number> = {};
-    for (const tech of state.holdings.technologies) {
-      const def = pack.technologies[tech.replace(/^technology:/, '')];
+    for (const held of my.cards('technology')) {
+      const def = pack.technologies[held.id.replace(/^technology:/, '')];
       if (def?.type) colours[def.type] = (colours[def.type] ?? 0) + 1;
     }
     return { have: Object.values(colours).filter(count => count >= 2).length, need: 4 };

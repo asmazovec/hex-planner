@@ -12,8 +12,8 @@ export const id = 'publicObjective:lost_outposts';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state, shared }) => ({
-    have: Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (shared.attachments?.[planet]?.length ?? 0) > 0).length,
+requirement: ({ my }) => ({
+    have: my.planets().filter(planet => planet.attached.length > 0).length,
     need: 2,
   }),
   holder: 'self',

@@ -13,10 +13,9 @@ export const id = 'publicObjective:expand_borders';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, state }) => {
+requirement: ({ pack, my }) => {
     const inHome = new Set(Object.values(pack.tiles).filter(tile => tile.kind === 'home').flatMap(tile => tile.planetIds));
-    const outside = Object.keys(state.control).filter(planet => state.control[planet] === 'me' && !inHome.has(planet));
-    return { have: outside.length, need: 6 };
+    return { have: my.planets().filter(planet => !inHome.has(planet.id)).length, need: 6 };
   },
   holder: 'self',
 };

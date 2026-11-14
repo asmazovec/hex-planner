@@ -15,13 +15,10 @@ export const id = 'secretObjective:syc';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ game, state, pack }) => ({
-    // A planet is another player's when it is controlled and not mine: by an opponent, or by me when the owner is a rival.
-    have: systemSlots(game).some(slot => {
-      const planets = planetsOf(game, slot, pack);
-      const mine = planets.some(planetId => state.control[planetId] === 'me');
-      const theirs = planets.some(planetId => state.control[planetId] === 'enemy');
-      return mine && theirs;
+requirement: ({ map, pack, holder, controller }) => ({
+    have: systemSlots(map).some(slot => {
+      const owners = planetsOf(map, slot, pack).map(planet => controller(planet));
+      return owners.includes(holder) && owners.some(owner => owner !== undefined && owner !== holder);
     }) ? 1 : 0,
     need: 1,
   }),

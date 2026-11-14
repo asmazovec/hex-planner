@@ -6,7 +6,6 @@
  * ships in 2 systems adjacent to the Mecatol Rex system. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
  * tests mark what it must do.
  */
-import { adjacentTo } from '../../../movement';
 import { systemSlots, tileIdOf } from '../../../replay/board';
 import '../../points/status';
 import type { Ability } from '../../../../game/abilities/types';
@@ -17,11 +16,11 @@ export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Ships in the Mecatol Rex system itself are irrelevant (rulings).
-  requirement: ({ pack, game, state }) => {
-    const rex = systemSlots(game).find(slot => pack.tiles[tileIdOf(game, slot)]?.number === '18');
-    const next = rex === undefined ? [] : adjacentTo(game, rex, pack);
-    const held = next.filter(slot => Object.values(state.systems[slot] ?? {}).some(count => (count ?? 0) > 0));
-    return { have: held.length, need: 2 };
+requirement: ({ pack, map, adjacent, fleets }) => {
+    const rex = systemSlots(map).find(slot => pack.tiles[tileIdOf(map, slot)]?.number === '18');
+    const next = rex === undefined ? [] : adjacent(rex);
+    const where = new Set(fleets().map(f => f.slot));
+    return { have: next.filter(slot => where.has(slot)).length, need: 2 };
   },
   holder: 'self',
 };

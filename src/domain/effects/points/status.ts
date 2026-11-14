@@ -11,25 +11,40 @@
 import type { CardRound } from '../../replay/cards/index';
 import objectiveUnmet from '../../rules/codes/objectiveUnmet';
 import { violation } from '../../rules/registry';
-import type { DataPack, Entry, Game, GameState, Warning } from '../../types';
+import type { DataPack, Entry, GameState, UnitCounts, Warning } from '../../types';
+import type { MapSource } from '../../replay/board';
+import type { AbilityContext } from '../../../game/abilities/types';
+import type { PlayerId } from '../../../game/types';
 import { componentById } from '../../components';
 import { applyPayment, checkPayment } from '../../replay/payment';
 import { playedBy } from '../waivers';
 import type { Ability, EffectTurn } from '../types';
 
-/** What a requirement of an objective is asked with: the owner's board before the status entry that scores it. */
-export interface RequirementContext {
-  pack: DataPack;
-  /** The game as the owner of the entry sees it. */
-  game: Game;
-  /** The owner's state just before the entry. */
-  state: GameState;
-  /** My state: laws, revealed objectives, attachments. */
-  shared: GameState;
+/**
+ * What a requirement of an objective is asked with: the board just before the status entry that scores it, read for
+ * the player who scores (`my`, `holder`) through the readers of any ability, and what an objective counts besides.
+ */
+export interface RequirementContext extends AbilityContext {
   /** The status entry that scores the objective. */
-  entry: Extract<Entry, { type: 'statusTokens' }>;
+  readonly entry: Extract<Entry, { type: 'statusTokens' }>;
   /** The component id of the objective. */
-  objective: string;
+  readonly objective: string;
+  /** The map as the movement code reads it (the table's map and the open Fracture). */
+  readonly map: MapSource;
+  /** The scorer's units in the space area of each system where they have any. */
+  fleets(): { slot: string; units: UnitCounts }[];
+  /** The scorer's ground forces on each planet where they have any, controlled or not. */
+  grounds(): { planet: string; units: UnitCounts }[];
+  /** Who controls a planet. */
+  controller(planet: string): PlayerId | undefined;
+  /** The other players. */
+  others(): PlayerId[];
+  /** The planets of the scorer that are not exhausted. */
+  readyPlanets(): string[];
+  /** The Production value of the scorer's units in a system. */
+  productionIn(slot: string): number;
+  /** How many planets in the systems of the board a player controls. */
+  controlledOnBoard(player: PlayerId): number;
 }
 
 declare module '../types' {

@@ -3,13 +3,22 @@
  * (81.1), then the tokens gained and redistributed (81.5), the points, and the objectives scored. The board is already
  * clear (81.4), so only the pools count against the sixteen tokens. The checks are the domain's pure ones.
  */
-import { checkObjectives, checkTokensGiven } from '../../domain/replay/status';
+import { componentById } from '../../domain/components';
+import { objectiveNotMet, type RequirementContext } from '../../domain/effects/points/status';
+import { effectOf } from '../../domain/effects/registry';
+import { productionLimit } from '../queries';
+import { checkTokensGiven } from '../../domain/replay/status';
+import objectiveRepeated from '../../domain/rules/codes/objectiveRepeated';
+import objectivesPerPhase from '../../domain/rules/codes/objectivesPerPhase';
+import scoreWithoutHome from '../../domain/rules/codes/scoreWithoutHome';
 import { violation } from '../../domain/rules/registry';
 import type { Entry, Warning } from '../../domain/types';
 import type { GameEvent } from '../events';
 import { playerOfKey } from '../keys';
-import { fleetPoolMaxWarnings, fleetPoolWarnings, reinforcementWarnings, statusTokensFree } from '../queries';
-import { checkView, emit, warn, type Ctx } from './context';
+import { fleetPoolMaxWarnings, fleetPoolWarnings, planetsOf, readyPlanets, reinforcementWarnings, shipsIn, groundOn, statusTokensFree } from '../queries';
+import { slotsOf, mapSource } from '../space';
+import { contextOf } from './hooks';
+import { emit, warn, type Ctx } from './context';
 import { applyScored } from './holdings';
 
 type StatusEntry = Extract<Entry, { type: 'statusTokens' }>;
@@ -35,13 +44,59 @@ function statusTokens(ctx: Ctx, entry: StatusEntry): void {
   emit(ctx, points, { quiet: true });
 }
 
+const isPublic = (id: string): boolean => id.startsWith('publicObjective:');
+const isSecret = (id: string): boolean => id.startsWith('secretObjective:');
+const standing = (units: Record<string, number | undefined>): boolean => Object.values(units).some(count => (count ?? 0) > 0);
+
+/** What an objective's requirement is asked with: the board before the entry, read for the player who scores. */
+function requirementContext(ctx: Ctx, entry: StatusEntry, objective: string): RequirementContext {
+  const { table, board, pack, player } = ctx;
+  const base = contextOf(table, board, pack, player, objective, { actor: player, entry, step: 'status' }, () => undefined);
+  const map = mapSource(table, board);
+  const planets = (): string[] => Object.keys(board.planets);
+  return Object.assign(base, {
+    entry, objective, map,
+    fleets: () => Object.keys(board.systems).flatMap(slot => (standing(shipsIn(board, slot, player)) ? [{ slot, units: shipsIn(board, slot, player) }] : [])),
+    grounds: () => planets().flatMap(planet => (standing(groundOn(board, planet, player)) ? [{ planet, units: groundOn(board, planet, player) }] : [])),
+    controller: (planet: string) => board.planets[planet]?.owner,
+    others: () => table.players.map(p => p.id).filter(id => id !== player),
+    readyPlanets: () => readyPlanets(board, player),
+    productionIn: (slot: string) => productionLimit(table, board, pack, player, slot),
+    controlledOnBoard: (other: string) => {
+      const onBoard = new Set(slotsOf(table, board, pack).flatMap(slot => base.planetsIn(slot)));
+      return planetsOf(board, other).filter(planet => onBoard.has(planet)).length;
+    },
+  });
+}
+
+/**
+ * Step 81.1, before the entry changes anything: what the objectives it scores must meet. At most one public and one
+ * secret one (61.6), none twice by the same player (61.8), a public one only while every planet of the home system is
+ * controlled (61.16), and the requirement of each objective's effect (61.5.1, `requirement`).
+ */
+function checkObjectives(ctx: Ctx, entry: StatusEntry): Warning[] {
+  const found: Warning[] = [];
+  const scored = (entry.scored ?? []).filter(id => componentById(ctx.pack, id) !== undefined);
+  for (const [kind, test] of [['public', isPublic], ['secret', isSecret]] as const) {
+    const count = scored.filter(test).length;
+    if (count > 1) found.push(violation(objectivesPerPhase.code, { kind, count }, 'status'));
+  }
+  const mine = ctx.board.players[ctx.player];
+  const homeHeld = contextOf(ctx.table, ctx.board, ctx.pack, ctx.player, '', { actor: ctx.player }, () => undefined).home(ctx.player).every(planet => ctx.board.planets[planet]?.owner === ctx.player);
+  scored.forEach((id, index) => {
+    if (mine?.cards[id]?.state === 'inPlay' || scored.indexOf(id) !== index) found.push(violation(objectiveRepeated.code, { objective: id }, 'status'));
+    if (isPublic(id) && !homeHeld) found.push(violation(scoreWithoutHome.code, { objective: id }, 'status'));
+    const asks = effectOf(ctx.pack, id)?.requirement;
+    const need = asks?.(requirementContext(ctx, entry, id));
+    if (need && need.have < need.need) found.push(objectiveNotMet(id, need.have, need.need));
+  });
+  return found;
+}
+
 /** The whole entry of the phase: what the objectives it scores must meet, the tokens and points, the scoring. */
 export function statusAction(ctx: Ctx): void {
   const entry = ctx.entry as StatusEntry;
-  const v = checkView(ctx);
-  const found: Warning[] = [];
-  checkObjectives(v.game, v.state, v.shared, entry, ctx.pack, found);
-  warn(ctx, found);
+  warn(ctx, checkObjectives(ctx, entry));
   statusTokens(ctx, entry);
   applyScored(ctx, entry.scored);
 }

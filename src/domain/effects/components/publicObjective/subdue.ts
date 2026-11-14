@@ -12,9 +12,9 @@ export const id = 'publicObjective:subdue';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state }) => {
-    const homes = new Set([game.faction, ...game.opponents.map(o => o.faction)].flatMap(f => pack.tiles[pack.factions[f]?.homeTile ?? '']?.planetIds ?? []));
-    return { have: Object.keys(state.control).filter(planet => state.control[planet] === 'me' && !homes.has(planet)).length, need: 11 };
+requirement: ({ pack, my, others, of }) => {
+    const homes = new Set([my.faction, ...others().map(other => of(other).faction)].flatMap(f => pack.tiles[pack.factions[f]?.homeTile ?? '']?.planetIds ?? []));
+    return { have: my.planets().filter(planet => !homes.has(planet.id)).length, need: 11 };
   },
   holder: 'self',
 };

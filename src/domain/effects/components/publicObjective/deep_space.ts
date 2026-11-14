@@ -13,9 +13,8 @@ export const id = 'publicObjective:deep_space';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state }) => ({
-    have: Object.entries(state.systems).filter(([slot, units]) =>
-      Object.values(units).some(count => (count ?? 0) > 0) && planetsOf(game, slot, pack).length === 0).length,
+requirement: ({ pack, map, fleets }) => ({
+    have: fleets().filter(({ slot }) => planetsOf(map, slot, pack).length === 0).length,
     need: 3,
   }),
   holder: 'self',

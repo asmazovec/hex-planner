@@ -5,7 +5,6 @@
  * control 4 planets that share a trait. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
  * tests mark what it must do.
  */
-import type { PlanetTrait } from '../../../types';
 import '../../points/status';
 import type { Ability } from '../../../../game/abilities/types';
 
@@ -14,13 +13,10 @@ export const id = 'publicObjective:corner';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, state }) => {
-    const counts: Partial<Record<PlanetTrait, number>> = {};
-    for (const planetId of Object.keys(state.control)) {
-      if (state.control[planetId] !== 'me') continue;
-      for (const trait of pack.planets[planetId]?.traits ?? []) counts[trait] = (counts[trait] ?? 0) + 1;
-    }
-    return { have: Math.max(0, ...Object.values(counts)), need: 4 };
+requirement: ({ pack, my }) => {
+    const traits: Record<string, number> = {};
+    for (const planet of my.planets()) for (const trait of pack.planets[planet.id]?.traits ?? []) traits[trait] = (traits[trait] ?? 0) + 1;
+    return { have: Math.max(0, ...Object.values(traits)), need: 4 };
   },
   holder: 'self',
 };

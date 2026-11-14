@@ -8,7 +8,6 @@
  * the common code `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Pass 2: the requirement is written.
  */
 import { systemSlots } from '../../../replay/board';
-import { systemProduction } from '../../../replay/production';
 import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:pem';
@@ -16,8 +15,8 @@ export const id = 'secretObjective:pem';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ game, state, pack }) => ({
-    have: Math.max(0, ...systemSlots(game).map(slot => systemProduction(game, state, slot, pack))),
+requirement: ({ map, productionIn }) => ({
+    have: Math.max(0, ...systemSlots(map).map(slot => productionIn(slot))),
     need: 8,
   }),
   holder: 'self',

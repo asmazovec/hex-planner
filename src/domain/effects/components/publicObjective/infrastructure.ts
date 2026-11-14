@@ -13,9 +13,9 @@ export const id = 'publicObjective:infrastructure';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state }) => {
-    const home = new Set(pack.tiles[pack.factions[game.faction]?.homeTile ?? '']?.planetIds ?? []);
-    const planets = new Set([...state.docks, ...Object.keys(state.pds).filter(planet => (state.pds[planet] ?? 0) > 0)]);
+requirement: ({ pack, my }) => {
+    const home = new Set(pack.tiles[pack.factions[my.faction]?.homeTile ?? '']?.planetIds ?? []);
+    const planets = new Set(my.structures().filter(s => (s.structures.spacedock ?? 0) > 0 || (s.structures.pds ?? 0) > 0).map(s => s.planet));
     return { have: [...planets].filter(planet => !home.has(planet)).length, need: 3 };
   },
   holder: 'self',

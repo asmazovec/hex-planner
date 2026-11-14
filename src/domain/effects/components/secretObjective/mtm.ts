@@ -13,8 +13,8 @@ export const id = 'secretObjective:mtm';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state }) => ({
-    have: Object.entries(state.ground).filter(([planetId, units]) => state.control[planetId] === 'me' && (units.mech ?? 0) > 0).length,
+requirement: ({ holder, grounds, controller }) => ({
+    have: grounds().filter(({ planet, units }) => controller(planet) === holder && (units.mech ?? 0) > 0).length,
     need: 4,
   }),
   holder: 'self',

@@ -13,10 +13,9 @@ export const id = 'publicObjective:conquer';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state }) => {
-    const theirs = new Set(game.opponents.flatMap(o => pack.tiles[pack.factions[o.faction]?.homeTile ?? '']?.planetIds ?? []));
-    const have = Object.keys(state.control).filter(planet => state.control[planet] === 'me' && theirs.has(planet)).length;
-    return { have, need: 1 };
+requirement: ({ pack, my, others, of }) => {
+    const theirs = new Set(others().flatMap(other => pack.tiles[pack.factions[of(other).faction]?.homeTile ?? '']?.planetIds ?? []));
+    return { have: my.planets().filter(planet => theirs.has(planet.id)).length, need: 1 };
   },
   holder: 'self',
 };

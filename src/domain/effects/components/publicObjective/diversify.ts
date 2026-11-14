@@ -15,10 +15,10 @@ export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Unit upgrades are of no colour (LRR 90.7.2): only coloured technologies count; "2 in each of 2 colors" is two colours with two each.
-  requirement: ({ pack, state }) => {
+requirement: ({ pack, my }) => {
     const counts: Partial<Record<TechType, number>> = {};
-    for (const held of state.holdings.technologies) {
-      const tech = pack.technologies[held.replace(/^technology:/, '')];
+    for (const held of my.cards('technology')) {
+      const tech = pack.technologies[held.id.replace(/^technology:/, '')];
       if (tech?.type && !tech.upgrade) counts[tech.type] = (counts[tech.type] ?? 0) + 1;
     }
     return { have: Object.values(counts).filter(count => count >= 2).length, need: 2 };

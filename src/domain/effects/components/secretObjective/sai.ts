@@ -13,8 +13,8 @@ export const id = 'secretObjective:sai';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ state, pack }) => ({
-    have: Object.keys(state.control).filter(planetId => state.control[planetId] === 'me' && pack.planets[planetId]?.legendary).length,
+requirement: ({ pack, my }) => ({
+    have: my.planets().filter(planet => pack.planets[planet.id]?.legendary).length,
     need: 1,
   }),
   holder: 'self',

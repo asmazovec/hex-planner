@@ -7,7 +7,6 @@
  * Raw Materials 1). Scoring it while the board does not meet it breaks LRR 61.5 and is warned of with the common code
  * `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Pass 2: the requirement is written.
  */
-import { planetValue } from '../../../payment';
 import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:hrm';
@@ -15,10 +14,8 @@ export const id = 'secretObjective:hrm';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ game, state, shared, pack }) => ({
-    have: Object.keys(state.control)
-      .filter(planetId => state.control[planetId] === 'me')
-      .reduce((sum, planetId) => sum + planetValue(pack, state, planetId, 'resources', { faction: game.faction, shared }), 0),
+requirement: ({ my, planetValue }) => ({
+    have: my.planets().reduce((sum, planet) => sum + planetValue(planet.id, 'resources'), 0),
     need: 12,
   }),
   holder: 'self',

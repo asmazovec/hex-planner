@@ -1,16 +1,11 @@
 /** The status phase (LRR 81): tokens gained and redistributed, points scored, then the board cleared and every card readied. */
-import { componentById } from '../components';
 import { applied } from '../effects/apply';
 import { appliedFor } from '../effects/entryApply';
 import fleetPoolTokens from '../rules/codes/fleetPoolTokens';
-import { effectOf, holderOf, type Holder } from '../effects/registry';
-import objectiveRepeated from '../rules/codes/objectiveRepeated';
-import objectivesPerPhase from '../rules/codes/objectivesPerPhase';
-import scoreWithoutHome from '../rules/codes/scoreWithoutHome';
+import { holderOf, type Holder } from '../effects/registry';
 import { violation } from '../rules/registry';
-import { homePlanets, STATUS_TOKENS } from '../strategy';
+import { STATUS_TOKENS } from '../strategy';
 import type { DataPack, Entry, Game, GameState, RuleStep, Warning } from '../types';
-import { objectiveNotMet } from '../effects/points/status';
 import { dockFighterRoom, fleetCount, fleetLimit } from './transport';
 
 /** The command tokens of a faction (LRR 20.3, 23.2): those not in the pools or on the board are in reinforcements. */
@@ -101,31 +96,4 @@ export function clearBoard(states: GameState[]): void {
     state.exhausted = [];
     state.tokensOnMap = [];
   }
-}
-
-const isPublic = (id: string): boolean => id.startsWith('publicObjective:');
-const isSecret = (id: string): boolean => id.startsWith('secretObjective:');
-
-/**
- * Step 81.1, before the entry changes anything: what the objectives it scores must meet. At most one public and one
- * secret one (61.6), none twice by the same player (61.8), a public one only while every planet of the home system is
- * controlled (61.16), and the requirement of each objective's effect (61.5.1, `requirement`). The score of the objective's
- * own `play` (a cost, a count the replay keeps) comes with the entry's other plays. `state` is the owner's board before
- * the entry, `shared` mine.
- */
-export function checkObjectives(
-  game: Game, state: GameState, shared: GameState, entry: Extract<Entry, { type: 'statusTokens' }>, pack: DataPack, warnings: Warning[],
-): void {
-  const scored = (entry.scored ?? []).filter(id => componentById(pack, id) !== undefined);
-  for (const [kind, test] of [['public', isPublic], ['secret', isSecret]] as const) {
-    const count = scored.filter(test).length;
-    if (count > 1) warnings.push(violation(objectivesPerPhase.code, { kind, count }, 'status'));
-  }
-  const homeHeld = homePlanets(game, pack).every(planetId => state.control[planetId] === 'me');
-  scored.forEach((id, index) => {
-    if (state.holdings.scored.includes(id) || scored.indexOf(id) !== index) warnings.push(violation(objectiveRepeated.code, { objective: id }, 'status'));
-    if (isPublic(id) && !homeHeld) warnings.push(violation(scoreWithoutHome.code, { objective: id }, 'status'));
-    const need = effectOf(pack, id)?.requirement?.({ pack, game, state, shared, entry, objective: id });
-    if (need && need.have < need.need) warnings.push(objectiveNotMet(id, need.have, need.need));
-  });
 }

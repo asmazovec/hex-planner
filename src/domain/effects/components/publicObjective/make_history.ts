@@ -6,7 +6,7 @@
  * planet or an anomaly, in which the owner has a unit (ships, ground forces or structures; the planet need not be
  * controlled, ruling 2.2); unmet is the warning objectiveUnmet (61.5.1).
  */
-import { planetsOf, tileAt } from '../../../replay/board';
+import { planetsOf, systemSlots, tileAt } from '../../../replay/board';
 import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:make_history';
@@ -14,19 +14,18 @@ export const id = 'publicObjective:make_history';
 export const ability: Ability = {
   tier: 'play',
   rule: id,
-  requirement: ({ pack, game, state }) => {
-    const any = (units: Record<string, number | undefined> | undefined) => Object.values(units ?? {}).some(count => (count ?? 0) > 0);
-    const slots = new Set(Object.keys(game.map).concat(Object.keys(game.fracture.tiles ?? {})));
+requirement: ({ pack, map, my, fleets, grounds }) => {
+    const here = new Set(fleets().map(f => f.slot));
+    const ground = new Set(grounds().map(g => g.planet));
+    const built = new Set(my.structures().filter(s => (s.structures.spacedock ?? 0) > 0 || (s.structures.pds ?? 0) > 0).map(s => s.planet));
+    const standsIn = (slot: string, planets: string[]) => here.has(slot) || planets.some(planet => ground.has(planet) || built.has(planet));
     let have = 0;
-    for (const slot of slots) {
-      const tile = tileAt(game, slot, pack);
-      const planets = planetsOf(game, slot, pack);
+    for (const slot of systemSlots(map)) {
+      const tile = tileAt(map, slot, pack);
+      const planets = planetsOf(map, slot, pack);
       const special = tile?.id === '18' || tile?.id === '112' || tile?.anomaly !== undefined || tile?.secondAnomaly !== undefined
         || planets.some(planet => pack.planets[planet]?.legendary !== undefined);
-      if (!special) continue;
-      const present = any(state.systems[slot])
-        || planets.some(planet => any(state.ground[planet]) || state.docks.includes(planet) || (state.pds[planet] ?? 0) > 0);
-      if (present) have += 1;
+      if (special && standsIn(slot, planets)) have += 1;
     }
     return { have, need: 2 };
   },
