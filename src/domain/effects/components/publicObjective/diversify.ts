@@ -6,12 +6,12 @@
  * tests mark what it must do.
  */
 import type { TechType } from '../../../types';
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:diversify';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Unit upgrades are of no colour (LRR 90.7.2): only coloured technologies count; "2 in each of 2 colors" is two colours with two each.
@@ -23,4 +23,5 @@ export const effect: ComponentEffect = {
     }
     return { have: Object.values(counts).filter(count => count >= 2).length, need: 2 };
   },
+  holder: 'self',
 };

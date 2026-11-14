@@ -8,13 +8,13 @@ import type { AnyWarningCode, Entry, UnitCounts } from '../../types';
 import { standing } from '../../rules/registry';
 import { adjust, bench, endOf, expectNone, expectStanding, HOME, NEAR, primary, tactical, TARGET, using, warningsOf, type Bench } from '../components/kit';
 import { effectsOf } from '../registry';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 import { appliedFor } from '../entryApply';
 import { unitLimitWarnings, systemProduction } from '../../replay/production';
 
 /** A throwaway effect for a component of the bench's pack. */
-const give = (table: Bench, id: string, effect: Partial<ComponentEffect>): void => {
-  (effectsOf(table.pack) as Map<string, ComponentEffect>).set(id, { tier: 'passive', rule: 'test', ...effect });
+const give = (table: Bench, id: string, effect: Partial<Ability>): void => {
+  (effectsOf(table.pack) as Map<string, Ability>).set(id, { tier: 'passive', rule: 'test', ...effect });
 };
 const TECH = 'technology:aida';
 const CARD = 'actionCard:war_machine1';

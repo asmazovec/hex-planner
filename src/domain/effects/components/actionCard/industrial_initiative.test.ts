@@ -49,6 +49,6 @@ describe('actionCard:industrial_initiative Industrial Initiative', () => {
   test('actionCard:industrial_initiative is a play effect that waives nothing', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

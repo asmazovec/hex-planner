@@ -6,8 +6,10 @@
  * Generated from the unit table (`unitUpgrades.ts`, LRR 97.4); the cost stays one for two. The return of destroyed
  * infantry hangs on a roll, which the plan does not make: a returned infantry is entered by hand.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:inf2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

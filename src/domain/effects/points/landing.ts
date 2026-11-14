@@ -16,7 +16,7 @@ export interface LandingOffer {
 }
 
 declare module '../types' {
-  interface ComponentEffect {
+  interface Ability {
     /** A passive effect in force widens what the landing block offers. */
     landingOffer?: LandingOffer;
   }

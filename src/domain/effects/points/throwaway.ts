@@ -4,15 +4,15 @@
  * names in `inForce` are answered from `throwaway`.
  */
 import { noteBase } from '../../components';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 
-export const throwaway: Record<string, ComponentEffect> = {};
+export const throwaway: Record<string, Ability> = {};
 export const alwaysInForce: string[] = [];
 
 type Registry = typeof import('../registry');
 
 export function mockRegistry(real: Registry): Registry {
-  const extra = (who: { technologies?: string[]; relics?: string[]; promissory?: string[] }, asked: (e: ComponentEffect) => boolean): string[] => {
+  const extra = (who: { technologies?: string[]; relics?: string[]; promissory?: string[] }, asked: (e: Ability) => boolean): string[] => {
     const held = [...(who.technologies ?? []), ...(who.relics ?? []), ...(who.promissory ?? []), ...alwaysInForce];
     return [...new Set(held)].filter(id => throwaway[noteBase(id)] && asked(throwaway[noteBase(id)]));
   };
@@ -24,7 +24,7 @@ export function mockRegistry(real: Registry): Registry {
     inForceOf: (pack, holder, only) => [...real.inForceOf(pack, holder, only), ...extra(holdingsOf(holder), e => !only || only(e))],
     passivesOf: (pack, who) => [
       ...real.passivesOf(pack, who),
-      ...extra(holdingsOf(who), e => e.tier === 'passive').map(id => [id, throwaway[noteBase(id)]] as [string, ComponentEffect]),
+      ...extra(holdingsOf(who), e => e.tier === 'passive').map(id => [id, throwaway[noteBase(id)]] as [string, Ability]),
     ],
   };
 }

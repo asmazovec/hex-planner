@@ -6,15 +6,16 @@
  * board before the entry; a planet counts once however many specialties it has (ruling 1); unmet is the warning
  * objectiveUnmet (61.5.1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:brain_trust';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, state }) => ({
     have: Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (pack.planets[planet]?.tech?.length ?? 0) > 0).length,
     need: 5,
   }),
+  holder: 'self',
 };

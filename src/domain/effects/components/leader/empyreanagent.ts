@@ -10,13 +10,12 @@
  * itself, not held or exhausted, are the replay's). The token goes to the player whose entry names the agent: the
  * agent's owner, or the mover when the entry is another player's.
  */
-import type { ComponentEffect } from '../../types';
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:empyreanagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -30,9 +29,6 @@ export const effect: ComponentEffect = {
       strategy: { ru: 'Стратегический', en: 'Strategy' },
     },
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

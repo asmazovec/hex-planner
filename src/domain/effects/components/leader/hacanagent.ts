@@ -6,19 +6,14 @@
  * 2 commodities, never beyond the faction's commodity value (Hacan note 2). Replenishing another player's commodities
  * needs a choice of that player, which `uses` does not carry. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
 import { commodities } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:hacanagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  // The two commodities for the Hacan; replenishing another player's commodities instead needs a chosen player, which `uses` does not carry.
-};
-
-export const ability: Hooked = {
   holder: 'self',
   // The two commodities for the Hacan; replenishing another player's commodities instead needs a chosen player, which `uses` does not carry.
   play: ctx => {

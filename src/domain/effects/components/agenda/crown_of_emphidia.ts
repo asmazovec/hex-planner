@@ -8,19 +8,15 @@
  * of the agenda entry with `choices.elect`). Its passing when a player takes a planet of the owner's home system is
  * not modelled: the plan does not track who holds the card after it is resolved. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:crown_of_emphidia';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // "The elected player gains this card and 1 victory point": once, when the law is resolved. Its passing after a

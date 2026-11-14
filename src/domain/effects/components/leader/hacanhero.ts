@@ -7,14 +7,15 @@
  * (Hacan note 1). It changes a number for one entry, which a `play` effect cannot do yet (`modify` is passive only).
  * Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
 import '../../points/production';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:hacanhero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // For the entry that names the hero: every unit of its production costs 0 (a hero is purged by the play, as every hero).
   modify: { unitCost: () => 0 },
+  holder: 'self',
 };

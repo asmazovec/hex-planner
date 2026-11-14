@@ -14,14 +14,14 @@ import type { Entry, ExtensionCode } from '../types';
 import { bench, componentAction, endOf, NEAR, tactical, using, warningsOf } from './components/kit';
 import { choicesFor, shownChoices, withChoices } from './choices';
 import { effectOf, hintsAt, inForce } from './registry';
-import type { ComponentEffect } from './types';
+import type { Ability } from './types';
 
 const CARD = 'actionCard:assassin';
 const SEVEN = ['actionCard:abs', 'actionCard:assassin', 'actionCard:bribery', 'actionCard:bunker', 'actionCard:confusing', 'actionCard:courageous', 'actionCard:cripple'];
 
 /** Puts fields on the real effect of a component for one test; `restore` takes them away. */
-const lent: [ComponentEffect, string, unknown, boolean][] = [];
-function lend(effect: ComponentEffect, fields: Partial<ComponentEffect>): void {
+const lent: [Ability, string, unknown, boolean][] = [];
+function lend(effect: Ability, fields: Partial<Ability>): void {
   for (const key of Object.keys(fields)) lent.push([effect, key, (effect as unknown as Record<string, unknown>)[key], key in effect]);
   Object.assign(effect, fields);
 }
@@ -69,7 +69,7 @@ describe('what `play` is given', () => {
       game: { opponents: [{ id: 'o1', faction: 'xxcha', vp: 0, seat: 2, color: 2 }] },
     });
     const play = vi.fn();
-    lend(effectOf(table.pack, CARD)!, { nativePlay: play });
+    lend(effectOf(table.pack, CARD)!, { play: play });
     forecast(table.game, table.pack);
     const ctx = play.mock.calls[0][0];
     expect(ctx).toMatchObject({ id: CARD, choices: { planet: 'h1' }, held: true });
@@ -81,7 +81,7 @@ describe('what `play` is given', () => {
     const entry = componentAction(CARD, { owner: 'o1' });
     const table = bench({ faction: 'sol', entries: [entry], game: { opponents: [{ id: 'o1', faction: 'xxcha', vp: 0, seat: 2, color: 2 }] } });
     const play = vi.fn();
-    lend(effectOf(table.pack, CARD)!, { nativePlay: play });
+    lend(effectOf(table.pack, CARD)!, { play: play });
     forecast(table.game, table.pack);
     const ctx = play.mock.calls[0][0];
     expect(ctx.key(ctx.holder)).toBe('o1');
@@ -93,7 +93,7 @@ describe('what `play` is given', () => {
     const move = using(tactical(NEAR, {}, { useChoices: { [CARD]: { planet: 't1' }, [other]: { planet: 't2' } } }), CARD, other);
     const table = bench({ faction: 'sol', start: { hand: [CARD, other] }, entries: [move] });
     const play = vi.fn();
-    lend(effectOf(table.pack, CARD)!, { nativePlay: play });
+    lend(effectOf(table.pack, CARD)!, { play: play });
     forecast(table.game, table.pack);
     expect(play.mock.calls[0][0].choices).toEqual({ planet: 't1' });
   });
@@ -101,7 +101,7 @@ describe('what `play` is given', () => {
   test('a play may make a warning of its own, which the entry then lists', () => {
     const entry = componentAction(CARD);
     const table = bench({ faction: 'sol', start: { hand: [CARD] }, entries: [entry] });
-    lend(effectOf(table.pack, CARD)!, { nativePlay: ctx => { ctx.warn(violation(componentUnresolved.code, { id: CARD, name: 'Assassinate', reason: 'nothing to take' })); } });
+    lend(effectOf(table.pack, CARD)!, { play: ctx => { ctx.warn(violation(componentUnresolved.code, { id: CARD, name: 'Assassinate', reason: 'nothing to take' })); } });
     expect(warningsOf(table, entry).map(w => w.code)).toEqual(['componentUnresolved']);
     expect(warningsOf(table, entry)[0]).toMatchObject({ step: 'component', rule: '2.6.1' });
   });
@@ -163,7 +163,7 @@ describe('what a faction sheet, a secret or an Alliance note brings', () => {
     const entry = componentAction('ability:orbital_drop');
     const table = bench({ faction: 'letnev', entries: [entry] });
     const play = vi.fn();
-    lend(effectOf(table.pack, 'ability:orbital_drop')!, { nativePlay: play });
+    lend(effectOf(table.pack, 'ability:orbital_drop')!, { play: play });
     expect(warningsOf(table, entry).map(w => w.code)).not.toContain('componentNotHeld');
     expect(play.mock.calls[0][0].my.faction).toBe('letnev');
   });

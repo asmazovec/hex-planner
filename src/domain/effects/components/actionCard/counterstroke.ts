@@ -6,19 +6,15 @@
  * my command token leaves that system for my tactic pool. A system without my token is warned of.
  */
 import { commandToken, tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { unmetBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:counterstroke';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'systemId', kind: 'system' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.choices.systemId === undefined) return [];

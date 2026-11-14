@@ -12,19 +12,15 @@
  */
 import { componentById } from '../../../components';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:is';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // 2 resources for the research, however many technologies it names (faction note 1: paid apart from the rest).
   modify: { researchCost: (value, ctx) => (ctx.index === 0 ? value + 2 : value) },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: prerequisitesMissing.code,

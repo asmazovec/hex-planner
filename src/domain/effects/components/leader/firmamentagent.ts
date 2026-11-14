@@ -8,18 +8,14 @@
  * CANNON part is a reminder of the combat: the plan rolls no dice.
  */
 import { componentById } from '../../../components';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:firmamentagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'hint',
   rule: id,
   hintAt: ['combat'],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'routeBlocked',

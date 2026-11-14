@@ -8,12 +8,11 @@
  */
 import { violation } from '../../../rules/registry';
 import attachTarget from '../../../rules/codes/attachTarget';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:nanoforge';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   choose: [{ key: 'planetId', kind: 'planet' }],
@@ -21,9 +20,6 @@ export const effect: ComponentEffect = {
     planetResources: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value),
     planetInfluence: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value),
   },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planetId = String(ctx.choices.planetId ?? '');

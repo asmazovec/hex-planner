@@ -61,6 +61,6 @@ describe('leader:titanshero Ul the Progenitor', () => {
   test('leader:titanshero is played', () => {
     const { pack } = titans([]);
     expect(effect(pack, id).tier).toBe('passive'); // the base stacks the value of an attached card from passive effects only
-    expect(effect(pack, id).nativePlay).toBeDefined();
+    expect(effect(pack, id).play).toBeDefined();
   });
 });

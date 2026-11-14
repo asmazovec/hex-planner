@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest';
 import { effectsOf } from '../effects/registry';
 import { place } from '../../game/abilities/emit';
 import type { HookPayloads } from '../../game/abilities/types';
-import type { ComponentEffect } from '../effects/types';
+import type { Ability } from '../effects/types';
 import { bench, endOf, expectStanding, NEAR, TARGET, adjust, tactical, using, warningsOf, type Bench } from '../effects/components/kit';
 import type { AnyWarningCode, Entry, Opponent } from '../types';
 import { attachCard, controlGained, exploreCondition, placeOnPlanet } from './invasion';
@@ -15,8 +15,8 @@ const RIVAL: Opponent = { id: 'o1', faction: 'sol', vp: 0, seat: 2, color: 2 };
 const code = (name: string) => name as AnyWarningCode;
 
 /** Gives the pack of a bench a throwaway effect for a component. */
-const give = (table: Bench, id: string, effect: ComponentEffect): void => {
-  (effectsOf(table.pack) as Map<string, ComponentEffect>).set(id, effect);
+const give = (table: Bench, id: string, effect: Ability): void => {
+  (effectsOf(table.pack) as Map<string, Ability>).set(id, effect);
 };
 
 /** A carrier with two infantry from NEAR lands `planets` one infantry each. */
@@ -49,7 +49,7 @@ describe('onGainControl', () => {
   test('the hook of a play effect runs when the entry names it in uses, and not otherwise', () => {
     const ran: string[] = [];
     const id = 'exploration:mo1';
-    const play: ComponentEffect = { tier: 'play', rule: 'x', holder: 'anyone', on: { onGainControl: (ctx, got) => { ran.push(got.planetId); return [place.units(ctx.holder, { planet: got.planetId }, { infantry: 1 })]; } } };
+    const play: Ability = { tier: 'play', rule: 'x', holder: 'anyone', on: { onGainControl: (ctx, got) => { ran.push(got.planetId); return [place.units(ctx.holder, { planet: got.planetId }, { infantry: 1 })]; } } };
     const used = bench({ faction: 'sol', expansions: ['pok'], units: { [NEAR]: { carrier: 1, infantry: 2 } }, entries: [using(invade(['t1']), id)] });
     give(used, id, play);
     expect(endOf(used).ground.t1).toEqual({ infantry: 2 });

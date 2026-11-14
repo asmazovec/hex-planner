@@ -6,17 +6,13 @@
  * the active system for the rest of the game, and from then on movement takes it as adjacent to every other system with
  * a gamma wormhole (101, "Systems that contain identical wormholes are adjacent"). Pass 2: written.
  */
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:gw';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

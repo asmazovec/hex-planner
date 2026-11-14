@@ -8,18 +8,13 @@
  * tokens, which the plan counts; a `play` of the agenda entry with `choices.elect`. Pass 1: still a hint.
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:standardization';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  // A directive (7.8): the elected player's command sheet becomes 3 tactic, 3 fleet and 2 strategy tokens, once.
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const elected = ctx.playerOf(String(ctx.choices.elect ?? ctx.entry?.owner ?? 'me'));

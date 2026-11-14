@@ -4,8 +4,7 @@
  */
 import relicFragmentsShort from '../../../../rules/codes/relicFragmentsShort';
 import { violation } from '../../../../rules/registry';
-import type { AbilityContext, Hooked } from '../../../../../game/abilities/types';
-import type { ComponentEffect } from '../../../types';
+import type { Ability, AbilityContext } from '../../../../../game/abilities/types';
 
 /** The Unknown Relic Fragment "counts as a relic fragment of any type". */
 const UNKNOWN = 'exploration:urf1';
@@ -28,7 +27,7 @@ const fragmentsPlay = (ctx: AbilityContext): [] => {
 };
 
 /** The effect of a relic fragment: a played one that checks the three fragments of its type. */
-export const fragmentEffect = (id: string): ComponentEffect => ({ tier: 'play', rule: id });
+
 
 /** Its play, written for the kernel. */
-export const fragmentAbility: Hooked = { holder: 'self', play: fragmentsPlay };
+export const fragmentAbility = (id: string): Ability => ({ holder: 'self', tier: 'play', rule: id, play: fragmentsPlay });

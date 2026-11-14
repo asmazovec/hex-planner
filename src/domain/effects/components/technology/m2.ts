@@ -8,9 +8,11 @@
  * mechs as the card allows. Only the Memoria is adjacent this way (Nomad, Memoria note 1); the plan cannot tell who
  * else jumps there, as it warns of no jump at all.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:m2';
 
 /** LRR 97.4, as every generated unit upgrade: the file adds nothing to the numbers, only this account of the adjacency. */
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

@@ -7,22 +7,18 @@
  * contains or is adjacent to one of my ships) is warned of when it is not met.
  */
 import { commandToken } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { shipsOf, unmetBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:jamming';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'systemId', kind: 'system' },
     { key: 'player', kind: 'player' },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const slot = ctx.choices.systemId === undefined ? undefined : String(ctx.choices.systemId);

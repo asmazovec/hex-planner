@@ -7,9 +7,11 @@
  * Combat, Anti-Fighter Barrage and Space Cannon are rolls the plan does not simulate. The file only declares itself, so
  * the generated level stays as it is.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:linkship2';
 
 /** The rule of every unit upgrade (97.4), as the generated effect has it. */
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

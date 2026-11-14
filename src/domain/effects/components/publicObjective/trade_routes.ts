@@ -7,18 +7,13 @@
  */
 import { objectiveNotMet } from '../../points/status';
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:trade_routes';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  // Scoring pays 5 trade goods (61.10); they do not come back with the planets readied at the end of the status phase.
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const have = ctx.my.tradeGoods;

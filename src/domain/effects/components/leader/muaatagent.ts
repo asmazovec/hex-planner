@@ -7,13 +7,14 @@
  * (the units are paid for, Muaat note 1), the limit of two units of cost 4 or less, and the system with a war sun or
  * the flagship. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:muaatagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // The player chosen; the production it grants has no block of its own in a component action yet.
   choose: [{ key: 'player', kind: 'player', self: true }],
+  holder: 'self',
 };

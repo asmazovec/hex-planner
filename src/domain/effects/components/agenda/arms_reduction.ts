@@ -8,20 +8,17 @@
  * they stand in more than one system, and that choice has no field yet. "Against" exhausts planets at a later phase
  * and is not modelled.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/abilities/types';
 
 export const id = 'agenda:arms_reduction';
 
 /** Keeps the first `keep` units of a type over the systems in order and destroys the rest. */
-export const effect: ComponentEffect = {
-  tier: 'play',
-  rule: id,
-};
 
 /** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
+export const ability: Ability = {
+  tier: 'play',
+  rule: id,
   holder: 'anyone',
   on: {
     gained: ctx => {

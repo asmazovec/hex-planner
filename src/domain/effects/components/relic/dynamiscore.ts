@@ -8,19 +8,15 @@
  * own component action or count the action's trade goods elsewhere. Pass 1 keeps it the hint it is today.
  */
 import { commodities, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/events';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:dynamiscore';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   modify: { commodityValue: value => value + 2 },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

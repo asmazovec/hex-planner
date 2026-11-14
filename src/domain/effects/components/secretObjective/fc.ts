@@ -7,11 +7,11 @@
  * card is the hint it was.
  */
 import { areNeighbors } from '../../../neighbors';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:fc';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ game, state, shared, pack }) => {
@@ -19,4 +19,5 @@ export const effect: ComponentEffect = {
     const others = [...Object.values(state.rivals ?? {}), ...(state.faction !== shared.faction ? [shared] : [])];
     return { have: others.filter(other => areNeighbors(game, state, other, pack)).length, need: others.length };
   },
+  holder: 'self',
 };

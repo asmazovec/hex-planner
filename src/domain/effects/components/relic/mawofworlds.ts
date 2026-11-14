@@ -7,17 +7,13 @@
  * it is today.
  */
 import { planet as planetEvents } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:mawofworlds';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => (ctx.held ? ctx.my.planets().filter(planet => !planet.exhausted).map(planet => planetEvents.exhaust(ctx.holder, planet.id)) : []),
 };

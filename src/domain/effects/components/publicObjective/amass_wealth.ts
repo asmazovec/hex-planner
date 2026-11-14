@@ -7,17 +7,13 @@
  */
 import { violation } from '../../../rules/registry';
 import { objectiveNotMet } from '../../points/status';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:amass_wealth';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const { spent, events } = ctx.spendOnObjectives();

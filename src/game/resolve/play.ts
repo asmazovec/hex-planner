@@ -1,6 +1,6 @@
 /**
  * Playing a component on the kernel: a component action, or a component the entry names in `uses`. The play of a
- * component written for the kernel (`Hooked.play`) reads the board through the context (`held`, `choices`) and returns
+ * component written for the kernel (`Ability.play`) reads the board through the context (`held`, `choices`) and returns
  * events, which are applied with the component as their cause, like those of a hook; its violations go through
  * `ctx.warn`. The plays still written for the old state run in `legacyEffects.ts`.
  */
@@ -18,7 +18,7 @@ import { contextOf, poolWarnings, type HookOptions, type HookResult } from './ho
 
 /** Plays the component `id` for `player`: what it does is applied one event at a time, its warnings are listed. */
 export function runPlay(table: Table, start: Board, pack: DataPack, id: string, player: PlayerId, options: HookOptions): HookResult {
-  const play = effectOf(pack, id)?.nativePlay;
+  const play = effectOf(pack, id)?.play;
   if (!play) return { board: start, events: [], violations: [] };
   const violations: Warning[] = [];
   const returned = play(contextOf(table, start, pack, player, id, options, warning => { violations.push(warning); })) ?? [];
@@ -37,7 +37,7 @@ export function runPlay(table: Table, start: Board, pack: DataPack, id: string, 
 }
 
 /** Whether the component's play is written for the kernel. */
-export const playsNatively = (pack: DataPack, id: string): boolean => effectOf(pack, id)?.nativePlay !== undefined;
+export const playsNatively = (pack: DataPack, id: string): boolean => effectOf(pack, id)?.play !== undefined;
 
 /** A warning of the turn taken back, or worded again where it stands. */
 function revise(ctx: Ctx, found: Warning, to?: Warning): void {
@@ -64,6 +64,6 @@ export function playOne(ctx: Ctx, id: string): GameEvent[] {
 export function playNativeAt(ctx: Ctx, at: 'activation' | 'combat'): void {
   for (const id of playedBy(ctx.entry)) {
     const effect = effectOf(ctx.pack, id);
-    if (effect?.nativePlay && effect.playAt === at) playOne(ctx, id);
+    if (effect?.play && effect.playAt === at) playOne(ctx, id);
   }
 }

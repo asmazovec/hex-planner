@@ -7,18 +7,14 @@
  * the warnings the commodities cover while the agent is ready.
  */
 import { coverOf } from '../../shortfall';
-import type { ComponentEffect } from '../../types';
 import { commodities } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:keleresagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'shortTradeGoods',

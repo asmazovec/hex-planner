@@ -6,18 +6,13 @@
  * when a pool lacks them); only tactic and strategy tokens count toward the 3 (61.10), fewer is objectiveUnmet.
  */
 import { objectiveNotMet } from '../../points/status';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:lead';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  // Tokens of the fleet pool do not count (61.10).
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const { events } = ctx.spendOnObjectives();

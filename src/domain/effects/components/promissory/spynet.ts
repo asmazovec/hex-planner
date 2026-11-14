@@ -10,13 +10,12 @@ import { componentById, noteAddress } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import { handOf } from '../../helpers/choices';
 
 export const id = 'promissory:spynet';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -27,9 +26,6 @@ export const effect: ComponentEffect = {
       return owner === undefined ? [] : handOf(ctx, owner);
     },
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const chosen = ctx.choices.card;

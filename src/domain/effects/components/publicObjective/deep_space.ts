@@ -6,11 +6,11 @@
  * has a unit; the number of units is irrelevant (ruling 1); unmet is the warning objectiveUnmet (61.5.1).
  */
 import { planetsOf } from '../../../replay/board';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:deep_space';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, game, state }) => ({
@@ -18,4 +18,5 @@ export const effect: ComponentEffect = {
       Object.values(units).some(count => (count ?? 0) > 0) && planetsOf(game, slot, pack).length === 0).length,
     need: 3,
   }),
+  holder: 'self',
 };

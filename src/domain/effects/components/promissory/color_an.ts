@@ -8,19 +8,15 @@
  * unlocked, is in force for me as if it were mine, so whatever it modifies or waives holds for my entries; activating
  * a system with any unit of the owner returns the card (promissory notes, Alliance 2, 4).
  */
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { returnOnActivation } from '../../helpers/returnNote';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:<color>_an';
 
-export const effect: ComponentEffect = {
+/** The owner's unlocked commander is in force for the holder (`holderOf`, `Holder.others`); the card goes back on activation. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The owner's unlocked commander is in force for the holder (`holderOf`, `Holder.others`); the card goes back on activation. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: { restrict: ctx => returnOnActivation(ctx, id) },
 };

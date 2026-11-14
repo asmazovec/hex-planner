@@ -11,17 +11,16 @@
  * The choices are `counts` slots: one button per non-fighter ship type in each system that holds mine, under the name of the system.
  */
 import { removeUnits, tradeGoods } from '../../../../game/abilities/emit';
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import choiceOverLimit from '../../../rules/codes/choiceOverLimit';
 import { violation } from '../../../rules/registry';
 import { missingUnits } from '../../../replay/state';
 import type { UnitId } from '../../../types';
 import { UNIT_ORDER } from '../../../hexLayout';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:scuttle';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -30,9 +29,6 @@ export const effect: ComponentEffect = {
       .filter(unit => ctx.pack.units[unit] && !ctx.pack.units[unit].ground && !ctx.pack.units[unit].fighter && (ctx.my.unitsIn(slot)[unit] ?? 0) > 0)
       .map(unit => ({ key: unit + '@' + slot, unit, group: slot, max: ctx.my.unitsIn(slot)[unit] }))),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     let total = 0;

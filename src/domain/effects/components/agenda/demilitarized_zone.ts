@@ -10,20 +10,16 @@
  */
 import planetClosed from '../../../rules/codes/planetClosed';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/abilities/types';
 import { planetsNamed } from '../../helpers/planetsNamed';
 
 export const id = 'agenda:demilitarized_zone';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // "Then, destroy all units on that planet": once, when the law is resolved, for every player.

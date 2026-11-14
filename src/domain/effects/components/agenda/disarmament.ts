@@ -7,19 +7,15 @@
  *
  */
 import { removeUnits, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/events';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:disarmament';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planet = String(ctx.choices.planet ?? '');

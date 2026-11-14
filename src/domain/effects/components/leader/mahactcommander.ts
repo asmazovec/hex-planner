@@ -10,18 +10,14 @@
  * when the activation was of a system that held one (the one that was there and the one just placed are the same
  * entry of the board). "End your turn" is not modelled: no code says an action after it is out of turn.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { commandToken } from '../../../../game/abilities/emit';
 
 export const id = 'leader:mahactcommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

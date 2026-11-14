@@ -5,8 +5,10 @@
  * move 2 are those of Destroyer I, and a destroyer has no capacity at either level. Combat and ANTI-FIGHTER BARRAGE
  * are rolls, which the plan does not make.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:dd2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

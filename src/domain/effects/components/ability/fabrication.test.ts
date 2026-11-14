@@ -61,6 +61,6 @@ describe('ability:fabrication Fabrication', () => {
   test('ability:fabrication is a play effect', () => {
     const { pack } = naaz([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

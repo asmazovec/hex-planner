@@ -84,6 +84,6 @@ describe('promissory:terraform Terraform', () => {
   test('promissory:terraform is played', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('passive'); // the base stacks the value of an attached card from passive effects only
-    expect(effect(pack, id).nativePlay).toBeDefined();
+    expect(effect(pack, id).play).toBeDefined();
   });
 });

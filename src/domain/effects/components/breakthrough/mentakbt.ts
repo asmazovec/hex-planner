@@ -14,19 +14,14 @@
  * cruisers alone while Cruiser II is owned and the active system holds another player's non-fighter ships.
  */
 import { componentById } from '../../../components';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
-
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:mentakbt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   modify: { capacity: (value, ctx) => (ctx.unit === 'cruiser' && value >= 1 ? 2 : value) },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'routeBlocked',

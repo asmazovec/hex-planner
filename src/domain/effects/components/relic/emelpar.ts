@@ -6,13 +6,14 @@
  * reinforcements, so the strategy pool keeps it and `shortStrategy` does not stand; the replay already exhausts the
  * relic. Pass 1 keeps it the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:emelpar';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // The token comes from the reinforcements, so the strategy pool owes nothing for the entry that names the relic.
   modify: { strategyCost: () => 0 },
+  holder: 'self',
 };

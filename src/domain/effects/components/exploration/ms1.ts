@@ -8,21 +8,17 @@
  * nothing changes ("may").
  */
 import { commodities, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:ms1';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
     key: 'merchantStation', kind: 'option', label: { ru: 'Что сделать', en: 'Which' }, options: () => ['replenish', 'convert'],
     names: { replenish: { ru: 'Пополнить продукцию', en: 'Replenish commodities' }, convert: { ru: 'Обменять продукцию на товары', en: 'Convert commodities to trade goods' } },
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const have = ctx.my.commodities;

@@ -8,14 +8,13 @@
  * same. It also checks LRR 53.3 with 53.2: the card lies in the play area of whoever controls Industrex.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { upgradeTech } from '../../../holdings';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
 import type { UnitCounts, UnitId } from '../../../types';
 import { requireControlBy, shipsOf } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 import { systemsWithUnits } from '../../helpers/choices';
 
 export const id = 'legendary:industrex';
@@ -23,7 +22,7 @@ export const id = 'legendary:industrex';
 /** Ships: units that are not ground forces, and that a unit upgrade technology exists for. */
 const SHIPS: UnitId[] = ['carrier', 'cruiser', 'destroyer', 'dreadnought', 'fighter', 'warsun'];
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -39,9 +38,6 @@ export const effect: ComponentEffect = {
       options: ctx => systemsWithUnits(ctx, unit => ctx.pack.units[unit as UnitId]?.ground === false),
     },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const name = componentById(ctx.pack, id)?.name ?? id;

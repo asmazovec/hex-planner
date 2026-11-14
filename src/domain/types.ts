@@ -359,7 +359,7 @@ export type EntryBody = (
   uses?: string[];
   /**
    * What the player chose for the component the entry plays (its component action), by the names its effect asks for
-   * (`ComponentEffect.choose`): a planet id, a system slot, a player (`me` or an opponent id), a unit type, a number.
+   * (`Ability.choose`): a planet id, a system slot, a player (`me` or an opponent id), a unit type, a number.
    * On an entry with no component action it goes to the components it uses.
    */
   choices?: Record<string, string | number>;

@@ -6,11 +6,11 @@
  * structure belongs to whoever controls its planet, src/domain/replay/structures.ts); unmet is the warning
  * objectiveUnmet (61.5.1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:build_defenses';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ state }) => {
@@ -19,4 +19,5 @@ export const effect: ComponentEffect = {
     const pds = Object.entries(state.pds).filter(([planet]) => mine(planet)).reduce((sum, [, count]) => sum + Math.max(0, count), 0);
     return { have: docks + pds, need: 4 };
   },
+  holder: 'self',
 };

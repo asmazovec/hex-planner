@@ -13,7 +13,7 @@ import { isWaived } from '../../rules/registry';
 import { forecast, planned, rulesGame, rulesPack } from '../../rules/kit';
 import type { AnyWarningCode, DataPack, Entry, EntryBody, ExpansionId, Game, GameState, StartHoldings, UnitCounts, Warning } from '../../types';
 import { effectOf } from '../registry';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 
 export { FAR, FARTHER, HOME, NEAR, NO_PAYMENT, TARGET, adjust, before, planned, primary, secondary, statusTokens, tactical } from '../../rules/kit';
 
@@ -99,7 +99,7 @@ export function quote(pack: DataPack, id: string, fragment: string): string {
 }
 
 /** The effect of a component, which the test then reads: its tier, its steps, its waivers. */
-export function effect(pack: DataPack, id: string): ComponentEffect {
+export function effect(pack: DataPack, id: string): Ability {
   const found = effectOf(pack, id);
   expect(found, `${id} has an effect`).toBeDefined();
   return found!;

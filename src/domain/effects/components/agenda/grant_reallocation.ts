@@ -7,17 +7,13 @@
  * (37.3).
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:grant_reallocation';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const gained = (ctx.entry?.gains ?? []).find(item => item.startsWith('technology:'));

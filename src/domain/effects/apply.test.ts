@@ -5,7 +5,7 @@ import { forecast, rulesGame, rulesPack, tech } from '../rules/kit';
 import type { Entry, Opponent } from '../types';
 import { applied, stacked } from './apply';
 import { effectOf, hintsAt, stepsOfWindow } from './registry';
-import type { ComponentEffect } from './types';
+import type { Ability } from './types';
 
 const pack = rulesPack();
 const pok = loadPack(['pok']);
@@ -43,8 +43,8 @@ describe('applied: a point of the count asks the ready components of the player'
   });
 
   test('two modifiers stack in registry order, and `by` lists both', () => {
-    const plus: ComponentEffect = { tier: 'passive', rule: 'test', modify: { speed: value => value + 1 } };
-    const double: ComponentEffect = { tier: 'passive', rule: 'test', modify: { speed: value => value * 2 } };
+    const plus: Ability = { tier: 'passive', rule: 'test', modify: { speed: value => value + 1 } };
+    const double: Ability = { tier: 'passive', rule: 'test', modify: { speed: value => value * 2 } };
     expect(stacked([['a', plus], ['b', double]], 'speed', 1, carrier)).toEqual({ value: 4, by: ['a', 'b'] });
     expect(stacked([['b', double], ['a', plus]], 'speed', 1, carrier)).toEqual({ value: 3, by: ['b', 'a'] });
   });

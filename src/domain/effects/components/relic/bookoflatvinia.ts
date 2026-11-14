@@ -8,17 +8,13 @@
  * entry. The replay already purges the relic. Pass 1 keeps it the hint it is today.
  */
 import { points } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'relic:bookoflatvinia';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

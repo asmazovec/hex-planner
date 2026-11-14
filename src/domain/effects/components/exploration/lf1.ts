@@ -13,8 +13,7 @@
  */
 
 import { exploredPlanet } from './batch33/attach';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { code, gainCommodities, spendOne } from './batch33/attach';
 import { place } from '../../../../game/abilities/emit';
 import { violation } from '../../../rules/registry';
@@ -22,7 +21,9 @@ import { violation } from '../../../rules/registry';
 export const id = 'exploration:lf1';
 
 /** What is spent to draw or to place: a trade good, or a commodity the card allows (21.7). Short of it, the payment is warned of as any is. */
-export const effect: ComponentEffect = {
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play', rule: id,
   choose: [{
     key: id, kind: 'option', options: () => ['gain', 'place-tradeGood', 'place-commodity'], label: { ru: 'Что сделать', en: 'What to do' },
@@ -32,10 +33,6 @@ export const effect: ComponentEffect = {
       'place-commodity': { ru: 'Потратить продукцию и поставить меха', en: 'Spend a commodity to place a mech' },
     },
   }],
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     gained: ctx => {

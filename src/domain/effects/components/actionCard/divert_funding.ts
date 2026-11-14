@@ -13,12 +13,11 @@
  * Pass 1: the hint it is today; the tests say what it must do.
  */
 import { card } from '../../../../game/abilities/emit';
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import { componentById, componentsOf } from '../../../components';
 import returnedTechInvalid from '../../../rules/codes/returnedTechInvalid';
 import { violation } from '../../../rules/registry';
 import type { DataPack } from '../../../types';
-import type { ComponentEffect } from '../../types';
 import { technologiesOf } from '../../helpers/choices';
 
 export const id = 'actionCard:divert_funding';
@@ -29,16 +28,13 @@ const returnable = (pack: DataPack, tech: string): boolean => {
   return def?.kind === 'technology' && !def.faction && pack.technologies[tech.slice('technology:'.length)]?.upgrade === undefined;
 };
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'returned', kind: 'component', options: ctx => technologiesOf(ctx, ctx.key(ctx.holder)).filter(tech => returnable(ctx.pack, tech)) },
     { key: 'researched', kind: 'component', options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology' && !ctx.my.holds(def.id)).map(def => def.id) },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const returned = String(ctx.choices.returned ?? '');

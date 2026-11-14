@@ -7,8 +7,7 @@
  * whoever controls it). The planet's values are then two resources and one influence higher wherever the count asks
  * them (`planetResources`, `planetInfluence`): a payment, a dock's Production, Hoard Raw Materials. Pass 2: written.
  */
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:ds';
 
@@ -17,13 +16,11 @@ export const id = 'exploration:ds';
  * `play`, which runs for any tier when the entry names the card. "This planet" is the planet of the entry's landing
  * that is now mine and has no Dyson Sphere yet (`onGainControl` is not asked of a passive effect that is only named).
  */
-export const effect: ComponentEffect = {
+
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   modify: { planetResources: value => value + 2, planetInfluence: value => value + 1 },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

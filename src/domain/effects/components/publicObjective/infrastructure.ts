@@ -6,11 +6,11 @@
  * space dock or a PDS of the owner; the number of structures on a planet is irrelevant (ruling 1); unmet is the warning
  * objectiveUnmet (61.5.1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:infrastructure';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, game, state }) => {
@@ -18,4 +18,5 @@ export const effect: ComponentEffect = {
     const planets = new Set([...state.docks, ...Object.keys(state.pds).filter(planet => (state.pds[planet] ?? 0) > 0)]);
     return { have: [...planets].filter(planet => !home.has(planet)).length, need: 3 };
   },
+  holder: 'self',
 };

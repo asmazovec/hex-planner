@@ -8,11 +8,11 @@
  * forbids nothing. Pass 2: the requirement is written.
  */
 import { planetsOf, systemSlots } from '../../../replay/board';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:syc';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ game, state, pack }) => ({
@@ -25,4 +25,5 @@ export const effect: ComponentEffect = {
     }) ? 1 : 0,
     need: 1,
   }),
+  holder: 'self',
 };

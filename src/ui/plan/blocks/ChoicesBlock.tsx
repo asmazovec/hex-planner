@@ -28,7 +28,7 @@ export interface ChoicesBlockProps {
 }
 
 /**
- * What a played component asks the player to choose (`ComponentEffect.choose`): a group named after the component,
+ * What a played component asks the player to choose (`Ability.choose`): a group named after the component,
  * and in it one row for each thing asked, its candidates as buttons (a stepper for a number). A press on the chosen one
  * takes it back. Nothing is forbidden: the effect warns of a value it cannot use. Draws nothing for a component that asks nothing.
  */

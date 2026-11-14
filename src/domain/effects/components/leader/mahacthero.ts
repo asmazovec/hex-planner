@@ -13,23 +13,19 @@
 import { componentById } from '../../../components';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { othersHaveShips } from '../../helpers/cardPlay';
 
 export const id = 'leader:mahacthero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'from', kind: 'system', label: { ru: 'Откуда', en: 'From' } },
     { key: 'to', kind: 'system', label: { ru: 'Куда', en: 'To' } },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const from = ctx.choices.from === undefined ? undefined : String(ctx.choices.from);

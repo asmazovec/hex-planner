@@ -9,18 +9,14 @@
  * entry that resolves it, with the outcome chosen there (`choices.outcome`). Pass 1: still the hint it is today.
  */
 import { placeUnits, removeUnits, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/events';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'agenda:plowshares';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   // Each player is every player of the table.
   play: ctx => {

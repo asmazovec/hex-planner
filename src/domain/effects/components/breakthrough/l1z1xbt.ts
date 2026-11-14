@@ -8,19 +8,15 @@
  *
  * Pass 2: `onGainControl`: infantry equal to the printed influence of the planet are placed on it (`placeOnPlanet`).
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { place } from '../../../../game/abilities/emit';
 
 export const id = 'breakthrough:l1z1xbt';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     onGainControl: (ctx, got) => {

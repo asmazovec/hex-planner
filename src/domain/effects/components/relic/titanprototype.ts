@@ -7,13 +7,12 @@
  * exhausts a relic only when its text says "exhaust this card". Pass 1 keeps it the hint it is today.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { StructureKind } from '../../../types';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'relic:titanprototype';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -24,9 +23,6 @@ export const effect: ComponentEffect = {
     },
     { key: 'planetId', kind: 'planet', when: chosen => chosen.structure !== undefined },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     // Another player's structure or trade good belongs to their own state, which a rival's plan does not replay here.

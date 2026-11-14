@@ -10,14 +10,13 @@
  * Not modelled: a component in another player's play area (Acropolis note 1); the plan readies the owner's holdings only.
  */
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:emelpar';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -27,9 +26,6 @@ export const effect: ComponentEffect = {
     options: ctx => ctx.my.cards().filter(held => held.state === 'exhausted' && held.id !== id && componentById(ctx.pack, held.id) !== undefined).map(held => held.id),
     
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     requireControlBy(ctx, 'emelpar');

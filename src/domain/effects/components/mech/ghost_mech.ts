@@ -8,9 +8,8 @@
  * notes, Icarus Drive 2). A mech on a planet is taken from the planet. No token is moved when none is chosen.
  */
 import { removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/events';
-import type { ComponentEffect } from '../../types';
 import { systemsWithUnits } from '../../helpers/choices';
 
 export const id = 'mech:ghost_mech';
@@ -18,16 +17,13 @@ export const id = 'mech:ghost_mech';
 const TOKENS = ['alpha', 'beta'];
 const NAMES = { alpha: { ru: 'Альфа', en: 'Alpha' }, beta: { ru: 'Бета', en: 'Beta' } };
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'token', kind: 'option', options: () => TOKENS, names: NAMES, label: { ru: 'Жетон', en: 'Token' } },
     { key: 'systemId', kind: 'system', label: { ru: 'Система меха', en: 'System of the mech' }, options: ctx => systemsWithUnits(ctx, unit => unit === 'mech') },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held || ctx.my.faction !== 'ghost') return [];

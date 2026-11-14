@@ -8,11 +8,11 @@
  * gravity rift for the Cabal's moves (+1 out of or through it, Vuil'raith, Dimensional Tear note 2).
  */
 import { ownDockIn } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:dt2';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: '97.4',
   modify: {
@@ -23,4 +23,5 @@ export const effect: ComponentEffect = {
     // The system of one of its docks is a gravity rift (41.1).
     gravityRift: (value, ctx) => (ctx.state && ownDockIn(ctx.game, ctx.state, ctx.systemId, ctx.pack) ? 1 : value),
   },
+  holder: 'self',
 };

@@ -13,20 +13,16 @@
  *
  */
 import structureAboard from '../../../rules/codes/structureAboard';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:nanolink';
 
 const RULE = 'You may move your structures from adjacent systems that do not contain your command tokens onto planets you control in the active system.';
 
-export const effect: ComponentEffect = {
+/** Playing the note changes nothing on the board: what it lifts is the waiver above. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** Playing the note changes nothing on the board: what it lifts is the waiver above. */
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: structureAboard.code,

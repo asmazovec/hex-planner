@@ -9,12 +9,13 @@
  *
  * Pass 1: the hint it is today; its tests say what it must do.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:ce';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   modify: { tokensGained: (value, ctx) => (ctx.step === 'status' ? value + 1 : value) },
+  holder: 'self',
 };

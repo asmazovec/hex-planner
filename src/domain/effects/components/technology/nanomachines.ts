@@ -11,18 +11,14 @@
  * player enters in «Taken and discarded».
 
  */
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:nanomachines';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'pds', kind: 'planet', label: { ru: 'Планета для PDS', en: 'Planet for the PDS' } }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planetId = ctx.choices.pds;

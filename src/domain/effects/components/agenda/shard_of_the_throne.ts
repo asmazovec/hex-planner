@@ -7,19 +7,15 @@
  * of the agenda entry with `choices.elect`). Who wins a combat is not counted, so the passing of the card is a hint at
  * the combat. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:shard_of_the_throne';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // "The elected player gains this card and 1 victory point": once, when the law is resolved. The passing of the card

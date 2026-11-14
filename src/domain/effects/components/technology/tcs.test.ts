@@ -93,7 +93,7 @@ describe('technology:tcs Temporal Command Suite', () => {
   test('technology:tcs is a play effect that waives the transaction checks', () => {
     const { pack } = nomad([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
     expect(effect(pack, id).permit?.map(w => w.code).sort()).toEqual(['notNeighbor', 'transactionRepeated']);
   });
 });

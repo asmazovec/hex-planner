@@ -6,17 +6,13 @@
  * only tactic and strategy tokens count toward the 6, fewer is objectiveUnmet.
  */
 import { objectiveNotMet } from '../../points/status';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:galvanize';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const { events } = ctx.spendOnObjectives();

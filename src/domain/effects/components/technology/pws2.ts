@@ -6,8 +6,10 @@
  * cost); this file adds nothing to them. The last sentence speaks of Bombardment and Planetary Shield, which the plan
  * does not count; a unit upgrade is `passive`, so it cannot carry a step of its own as a hint does.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:pws2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

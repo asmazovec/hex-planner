@@ -10,14 +10,13 @@
  */
 import attachTarget from '../../../rules/codes/attachTarget';
 import { violation } from '../../../rules/registry';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:terraform';
 
 const attached = (ctx: { attached?: readonly string[] }): boolean => ctx.attached?.some(card => card.startsWith(id)) ?? false;
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   choose: [{ key: 'planetId', kind: 'planet' }],
@@ -26,9 +25,6 @@ export const effect: ComponentEffect = {
     planetResources: (value, ctx) => (attached(ctx) ? value + 1 : value),
     planetInfluence: (value, ctx) => (attached(ctx) ? value + 1 : value),
   },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planetId = String(ctx.choices.planetId ?? '');

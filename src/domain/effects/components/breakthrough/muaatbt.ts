@@ -8,19 +8,15 @@
  * map and its moving with a war sun are not modelled: the replay does not put planets into systems. Pass 1: still the
  * hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:muaatbt';
 
-export const effect: ComponentEffect = {
+/** Avernus is taken and readied. The hooks of a planet gained do not run for it: a hook that takes a planet does not start the others. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** Avernus is taken and readied. The hooks of a planet gained do not run for it: a hook that takes a planet does not start the others. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // The token's place on the map and its moving with a war sun are not replayed; the planet card is.

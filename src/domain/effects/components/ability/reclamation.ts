@@ -9,19 +9,15 @@
  * placed after the Production step, so a dock placed does not produce in that action.
  */
 import { isMecatol } from '../../../mecatol';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:reclamation';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // The landing block offers the structures straight from the reinforcements: no flight has to bring them.
   landingOffer: { structures: ['pds', 'spacedock'] },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'unitsMissing',

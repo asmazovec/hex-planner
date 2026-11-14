@@ -6,15 +6,14 @@
  * pool). More than two asked of the card is warned of, and still counted as entered.
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { numberChosen, unmetBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:summit';
 
 const pool = (en: string, ru: string) => ({ ru, en });
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -22,9 +21,6 @@ export const effect: ComponentEffect = {
     { key: 'fleet', kind: 'number', range: [0, 2], label: pool('Fleet pool', 'Резерв флота') },
     { key: 'strategy', kind: 'number', range: [0, 2], label: pool('Strategy pool', 'Стратегический резерв') },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const tactic = numberChosen(ctx, 'tactic');

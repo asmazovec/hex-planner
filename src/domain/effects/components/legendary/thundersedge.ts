@@ -10,21 +10,17 @@
  * controls the planet, and `holds` does not know that for a legendary card.
  */
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { card } from '../../../../game/abilities/emit';
 import { breakthroughOf } from '../../breakthrough';
 
 export const id = 'legendary:thundersedge';
 const planet = 'thundersedge';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   play: ctx => { requireControlBy(ctx, planet); },
   on: {

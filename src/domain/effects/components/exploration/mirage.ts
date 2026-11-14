@@ -8,17 +8,13 @@
  * board take their planets from their tiles.
  */
 import { planet } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:mirage';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   // The planet card comes with the exploration, readied; the legendary card follows with control (53.2).
   play: ctx => [planet.gain(ctx.holder, 'mirage'), planet.ready(ctx.holder, 'mirage')],

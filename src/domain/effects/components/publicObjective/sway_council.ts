@@ -6,12 +6,12 @@
  * tests mark what it must do.
  */
 import { planetValue, readyPlanetIds } from '../../../payment';
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:sway_council';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // What can be spent: the ready planets' influence and the trade goods (rulings). Which ones pay is not entered: nothing is taken.
@@ -19,4 +19,5 @@ export const effect: ComponentEffect = {
     have: readyPlanetIds(state).reduce((sum, planet) => sum + planetValue(pack, state, planet, 'influence', { faction: game.faction, shared }), 0) + state.tradeGoods,
     need: 8,
   }),
+  holder: 'self',
 };

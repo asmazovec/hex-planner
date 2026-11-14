@@ -10,22 +10,18 @@
 import { componentById } from '../../../components';
 import { isMecatol } from '../../../mecatol';
 import { CARD } from '../../../replay/cards/ids';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import componentCondition from '../../../rules/codes/componentCondition';
 import planetNotGainable from '../../../rules/codes/planetNotGainable';
 import { violation } from '../../../rules/registry';
 import { takeControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:peace_accords';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held || ctx.my.faction !== 'xxcha') return [];

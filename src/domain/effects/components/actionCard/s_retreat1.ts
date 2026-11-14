@@ -9,22 +9,18 @@
  * when it is not met; the fleet pool and capacity of the system I retreat into are checked as for any arrival.
  */
 import { commandToken } from '../../../../game/abilities/emit';
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import { othersHaveShips, placeIn, unmetBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:s_retreat1';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'from', kind: 'system' },
     { key: 'to', kind: 'system' },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.choices.from === undefined || ctx.choices.to === undefined) return [];

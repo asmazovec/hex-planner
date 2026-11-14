@@ -12,11 +12,11 @@
 import { planetsOf, systemSlots } from '../../../replay/board';
 import '../../points/production';
 import '../../points/rivals';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:ah';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // A planet with one of my structures produces as a unit of PRODUCTION 1.
@@ -24,4 +24,5 @@ export const effect: ComponentEffect = {
   // The systems where a planet of mine has a space dock or a PDS.
   stopsPassage: ({ game, pack, state }) => systemSlots(game).filter(slot =>
     planetsOf(game, slot, pack).some(planet => state.docks.includes(planet) || (state.pds[planet] ?? 0) > 0)),
+  holder: 'self',
 };

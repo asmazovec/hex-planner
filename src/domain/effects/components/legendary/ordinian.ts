@@ -7,15 +7,12 @@
  *
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
-
-
 
 export const id = 'legendary:ordinian';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -24,9 +21,6 @@ export const effect: ComponentEffect = {
       tactic: { ru: 'Тактический резерв', en: 'Tactic pool' }, fleet: { ru: 'Резерв флота', en: 'Fleet pool' }, strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
     },
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     requireControlBy(ctx, 'ordinian');

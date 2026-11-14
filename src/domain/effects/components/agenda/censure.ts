@@ -10,19 +10,15 @@ import actionCardBarred from '../../../rules/codes/actionCardBarred';
 import { violation } from '../../../rules/registry';
 import { componentById } from '../../../components';
 import { actionCardsPlayed } from '../../points/status';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:censure';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     gained: ctx => [gain.points(ctx.holder, 1)],

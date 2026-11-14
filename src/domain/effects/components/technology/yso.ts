@@ -13,16 +13,15 @@ import { componentById } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
 import { unitIds } from '../../../replay/state';
 import type { UnitId } from '../../../types';
-import type { ComponentEffect } from '../../types';
 import { controlledPlanets, systemsWithUnits } from '../../helpers/choices';
 
 export const id = 'technology:yso';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -33,9 +32,6 @@ export const effect: ComponentEffect = {
     },
     { key: 'count', kind: 'number', range: [1, 2], label: { ru: 'Сколько пехоты', en: 'How many infantry' } },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

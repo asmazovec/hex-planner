@@ -8,11 +8,11 @@
  * `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Pass 2: the requirement is written.
  */
 import { planetValue } from '../../../payment';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:hrm';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ game, state, shared, pack }) => ({
@@ -21,4 +21,5 @@ export const effect: ComponentEffect = {
       .reduce((sum, planetId) => sum + planetValue(pack, state, planetId, 'resources', { faction: game.faction, shared }), 0),
     need: 12,
   }),
+  holder: 'self',
 };

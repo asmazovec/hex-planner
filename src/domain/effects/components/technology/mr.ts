@@ -7,19 +7,15 @@
  * holding my units produces with PRODUCTION 5, so `noProduction` is not made there and `productionOver` counts against
  * 5. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
 import '../../points/production';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:mr';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   modify: { spaceProduction: (value, ctx) => (ctx.anomalies.includes('supernova') ? Math.max(value, 5) : value) },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [
     {

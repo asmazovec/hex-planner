@@ -60,6 +60,6 @@ describe('technology:sr Sling Relay', () => {
   test('technology:sr is a play effect', () => {
     const { pack } = held([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeDefined();
+    expect(effect(pack, id).play).toBeDefined();
   });
 });

@@ -7,24 +7,19 @@
  * The card is played only by the player who controls Primor (53.3).
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 import { controlledPlanets } from '../../helpers/choices';
-
 
 export const id = 'legendary:primor';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'primorPlanet', kind: 'planet', options: controlledPlanets },
     { key: 'primorInfantry', kind: 'number', range: [0, 2], label: { ru: 'Пехота', en: 'Infantry' } },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     requireControlBy(ctx, 'primor');

@@ -8,19 +8,15 @@
  * Pass 2: written as decided.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:bribery';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  choose: [{ key: 'tradeGoods', kind: 'number', range: [0, 20], label: { ru: 'Товаров потрачено', en: 'Trade goods spent' } }]
-};
-
-export const ability: Hooked = {
+  choose: [{ key: 'tradeGoods', kind: 'number', range: [0, 20], label: { ru: 'Товаров потрачено', en: 'Trade goods spent' } }],
   holder: 'self',
   play: ctx => {
     const spent = Math.max(0, Number(ctx.choices.tradeGoods) || 0);

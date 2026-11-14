@@ -19,7 +19,7 @@ describe('secretObjective:mp Monopolize Production', () => {
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(['status']);
     expect(found.modify).toBeUndefined();
-    expect(found.nativePlay).toBeUndefined();
+    expect(found.play).toBeUndefined();
   });
 
   // LRR 61.17: "A secret objective is an objective that is controlled by one player and is hidden from all other players

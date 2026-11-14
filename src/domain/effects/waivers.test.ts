@@ -17,12 +17,12 @@ describe('waivers', () => {
     const table = bench({ faction: 'letnev', expansions: ['pok'], start: { leaders: { [hero]: 'unlocked' } }, entries: [action, move] });
     const effect = effectOf(table.pack, hero)!;
     const play = vi.fn();
-    const real = effect.nativePlay;
-    effect.nativePlay = play;
+    const real = effect.play;
+    effect.play = play;
     try {
       forecast(table.game, table.pack);
     } finally {
-      effect.nativePlay = real;
+      effect.play = real;
     }
     expect(play).toHaveBeenCalledTimes(2);
     expect(play.mock.calls[0][0]).toMatchObject({ entry: { id: action.id }, choices: { planet: 'h1' }, pack: table.pack });

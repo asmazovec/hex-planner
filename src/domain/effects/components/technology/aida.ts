@@ -11,21 +11,17 @@
  */
 import { techOf } from '../../../replay/research';
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:aida';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // The production half: the combined cost falls by the unit upgrades the owner holds (asked when a unit used PRODUCTION).
   modify: {
     productionCost: (value, { holdings, pack }) => Math.max(0, value - holdings.technologies.filter(tech => techOf(pack, tech)?.upgrade !== undefined).length),
   },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: prerequisitesMissing.code,

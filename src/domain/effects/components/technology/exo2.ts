@@ -8,9 +8,11 @@
  * (Direct Hit, destroying ships after a round of space combat), which the plan does not simulate; a unit upgrade
  * cannot also be a hint, so that part has no reminder.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:exo2';
 
 /** The rule of the generated unit upgrades (97.4), kept: the file changes nothing of them. */
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

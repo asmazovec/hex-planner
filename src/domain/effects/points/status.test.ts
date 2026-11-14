@@ -11,7 +11,7 @@ import { adjust, codesOf, forecast, mutable, planned, rulesGame, rulesPack, seco
 import type { Entry, EntryBody, ExpansionId, Opponent } from '../../types';
 import { hintsAt, holderOf, inForceOf } from '../registry';
 import { gain, tokens } from '../../../game/abilities/emit';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 import { spendStrategyBy } from '../helpers/cardPlay';
 import type { Play } from '../../../game/abilities/types';
 import { appliedFor } from '../entryApply';
@@ -21,7 +21,7 @@ import { withEffect } from './status.kit';
 const R1: Opponent = { id: 'r1', faction: 'hacan', vp: 0, seat: 2, color: 2 };
 const TECH = 'technology:hm';
 const start = (me: Record<string, string[]>) => ({ start: { me, opponents: {} } });
-const passive = (id: string, modify: ComponentEffect['modify']): ComponentEffect => ({ tier: 'passive', rule: id, modify });
+const passive = (id: string, modify: Ability['modify']): Ability => ({ tier: 'passive', rule: id, modify });
 
 describe('tokensGained: the tokens of the status phase', () => {
   const entry = (tokens: [number, number, number], uses?: string[]): Entry => ({ ...statusTokens(...tokens), ...(uses ? { uses } : {}) } as Entry);
@@ -198,7 +198,7 @@ describe('gained and lost: hooks of a component an entry gains or spends', () =>
     let seen = '';
     withEffect(pack, 'agenda:crisis', {
       tier: 'play', rule: 'agenda:crisis',
-      nativePlay: ctx => { seen = `${ctx.choices.card} ${ctx.key(ctx.holder)}`; },
+      play: ctx => { seen = `${ctx.choices.card} ${ctx.key(ctx.holder)}`; },
     });
     const resolved: Entry = planned({ type: 'adjustment', label: '', delta: {}, choices: { card: 5 } } as EntryBody, 'agenda', { gains: ['agenda:crisis'] });
     forecast(rulesGame({ entries: [resolved], expansions: ['pok'] }), pack);
@@ -242,7 +242,7 @@ describe('the round: a card played in a window is no turn', () => {
 describe('hintsAt: the objectives', () => {
   const SECRET = 'secretObjective:dtgs';
   const PUBLIC = 'publicObjective:develop';
-  const hint: ComponentEffect = { tier: 'hint', rule: 'x', hintAt: ['status'] };
+  const hint: Ability = { tier: 'hint', rule: 'x', hintAt: ['status'] };
 
   test('a secret objective in hand is reminded of at the status step, and not once scored', () => {
     const own = rulesPack();
@@ -271,7 +271,7 @@ describe('spentOnObjectives: the cost of an objective scored by spending (61.10)
     const own = rulesPack();
     withEffect(own, PUBLIC, {
       tier: 'play', rule: PUBLIC,
-      nativePlay: ctx => { const { spent, events } = ctx.spendOnObjectives(); if (spent.tokens < 6) ctx.warn(objectiveNotMet(PUBLIC, spent.tokens, 6)); return events; },
+      play: ctx => { const { spent, events } = ctx.spendOnObjectives(); if (spent.tokens < 6) ctx.warn(objectiveNotMet(PUBLIC, spent.tokens, 6)); return events; },
     });
     return own;
   };
@@ -296,7 +296,7 @@ describe('spentOnObjectives: the cost of an objective scored by spending (61.10)
   test('61.10: trade goods and the planets paying resources and influence are taken once, however many objectives are scored', () => {
     const own = rulesPack();
     let paid = { resources: 0, influence: 0, tradeGoods: 0 };
-    for (const id of [PUBLIC, 'secretObjective:dtgs']) withEffect(own, id, { tier: 'play', rule: id, nativePlay: ctx => { const result = ctx.spendOnObjectives(); paid = result.spent; return result.events; } });
+    for (const id of [PUBLIC, 'secretObjective:dtgs']) withEffect(own, id, { tier: 'play', rule: id, play: ctx => { const result = ctx.spendOnObjectives(); paid = result.spent; return result.events; } });
     const status = { ...statusTokens(0, 0, 0), scored: [PUBLIC, 'secretObjective:dtgs'], spend: { tradeGoods: 3, resources: { planets: ['h1'], tradeGoods: 0 }, influence: { planets: ['h1', 'h2'], tradeGoods: 0 } } } as Entry;
     const game = rulesGame({ entries: [adjust({ tradeGoods: 5 }), status], game: { planetControl: {} } });
     const { state, warnings } = forecast(game, own);
@@ -310,7 +310,7 @@ describe('spentOnObjectives: the cost of an objective scored by spending (61.10)
 describe('the tokens a played component gives or costs (tokens, spendStrategyBy)', () => {
   const play = (id: string, effect: Play) => {
     const own = rulesPack();
-    withEffect(own, id, { tier: 'play', rule: id, nativePlay: effect });
+    withEffect(own, id, { tier: 'play', rule: id, play: effect });
     return own;
   };
   const named = (id: string): Entry => ({ ...adjust({}), uses: [id] } as Entry);

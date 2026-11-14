@@ -8,18 +8,14 @@
  * combat, bombardment) is combat, which the plan does not simulate; the battle's `losses` should be left empty.
 
  */
-import type { ComponentEffect } from '../../types';
 import { removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:sardakkhero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

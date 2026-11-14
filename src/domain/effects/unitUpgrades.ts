@@ -8,7 +8,7 @@
  */
 import type { DataPack, ShipStats, StructureKind, TechDef, UnitId } from '../types';
 import { unitStats } from '../unitStats';
-import type { ComponentEffect, Modifiers } from './types';
+import type { Ability, Modifiers } from './types';
 
 const RULE = '97.4';
 
@@ -43,14 +43,14 @@ function structureModifiers(pack: DataPack, structure: StructureKind): Partial<M
 const isStructure = (upgrade: UnitId | StructureKind): upgrade is StructureKind => upgrade === 'pds' || upgrade === 'spacedock';
 
 /** The effect of one unit upgrade technology. */
-export function unitUpgradeEffect(pack: DataPack, tech: TechDef): ComponentEffect | undefined {
+export function unitUpgradeEffect(pack: DataPack, tech: TechDef): Ability | undefined {
   if (!tech.upgrade) return undefined;
   return { tier: 'passive', rule: RULE, modify: isStructure(tech.upgrade) ? structureModifiers(pack, tech.upgrade) : unitModifiers(pack, tech.upgrade) };
 }
 
 /** Every unit upgrade technology of the pack with its effect, by component id. */
-export function unitUpgradeEffects(pack: DataPack): [string, ComponentEffect][] {
-  return Object.values(pack.technologies).flatMap((tech): [string, ComponentEffect][] => {
+export function unitUpgradeEffects(pack: DataPack): [string, Ability][] {
+  return Object.values(pack.technologies).flatMap((tech): [string, Ability][] => {
     const effect = unitUpgradeEffect(pack, tech);
     return effect ? [[`technology:${tech.id}`, effect]] : [];
   });

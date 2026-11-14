@@ -9,18 +9,13 @@
  * entered in the entry's `gains` (90.9); the "Against" outcome depends on votes and is not counted. Pass 1: still a hint.
  */
 import { removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:wormhole_research';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  // "Then, destroy all ships in systems that contain an alpha or beta wormhole": the "For" outcome only.
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.choices.outcome !== 'for') return [];

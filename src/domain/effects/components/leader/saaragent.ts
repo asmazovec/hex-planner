@@ -9,17 +9,13 @@
  * replay as any agent named in «Used». Played on another player's ship it would be that player's entry naming a
  * component it does not hold: a known limit of the foundation.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:saaragent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'speedShort',

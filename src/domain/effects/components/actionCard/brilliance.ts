@@ -8,16 +8,15 @@
  * branch, gaining that player's breakthrough, which is not modelled (a holder has only its own faction's breakthrough).
  */
 import { planet as planets } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import playTargetInvalid from '../../../rules/codes/playTargetInvalid';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { controlledPlanets } from '../../helpers/choices';
 
 export const id = 'actionCard:brilliance';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -25,9 +24,6 @@ export const effect: ComponentEffect = {
     kind: 'planet',
     options: ctx => controlledPlanets(ctx).filter(planet => (ctx.pack.planets[planet]?.tech ?? []).length > 0),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planet = ctx.choices.planet === undefined ? '' : String(ctx.choices.planet);

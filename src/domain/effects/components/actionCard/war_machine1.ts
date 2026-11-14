@@ -10,12 +10,13 @@
  *
  * Pass 1: the hint it is today; the tests say what it must do.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:war_machine1';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   modify: { productionTotal: value => value + 4, productionCost: value => Math.max(0, value - 1) },
+  holder: 'self',
 };

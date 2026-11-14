@@ -5,12 +5,12 @@
  * control 3 planets with a technology specialty. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
  * tests mark what it must do.
  */
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:research_outposts';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // One specialty or two on a planet count the same (rulings).
@@ -18,4 +18,5 @@ export const effect: ComponentEffect = {
     have: Object.keys(state.control).filter(planet => state.control[planet] === 'me' && (pack.planets[planet]?.tech?.length ?? 0) > 0).length,
     need: 3,
   }),
+  holder: 'self',
 };

@@ -6,20 +6,16 @@
  * lifts the rule that an effect readies only the player's own planets (`readyNotControlled`, 71 note 3). The infantry
  * removed belongs to another player and is not modelled.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { planet } from '../../../../game/abilities/emit';
 import { violation } from '../../../rules/registry';
 
 export const id = 'leader:xxchaagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planetId = ctx.choices.planet;

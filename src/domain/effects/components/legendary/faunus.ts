@@ -6,14 +6,13 @@
  * planet after the entry.
  */
 import { planet } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 import { controlledPlanets } from '../../helpers/choices';
 
 export const id = 'legendary:faunus';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -22,9 +21,6 @@ export const effect: ComponentEffect = {
     options: ctx => [...new Set(Object.keys(ctx.table.map).flatMap(slot => ctx.planetsIn(slot)))]
       .filter(planet => ctx.pack.planets[planet]?.legendary === undefined && !controlledPlanets(ctx).includes(planet)),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     requireControlBy(ctx, 'faunus');

@@ -7,13 +7,14 @@
  * short is warned of against the raised number. Not a waiver: the warning would name a different number. A second
  * Flank Speed in the same action does not add a second +1 (ruling): the base holds it once per component.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:fs1';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'hint',
   rule: id,
   // A value of 0 is a unit that does not move by itself (infantry, structures): it stays 0.
   modifyWhenNamed: { speed: value => (value > 0 ? value + 1 : value) },
+  holder: 'self',
 };

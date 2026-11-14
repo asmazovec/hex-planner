@@ -55,6 +55,6 @@ describe('leader:l1z1xagent I48S', () => {
   test('leader:l1z1xagent is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeDefined();
+    expect(effect(pack, id).play).toBeDefined();
   });
 });

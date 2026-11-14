@@ -8,18 +8,14 @@
  *
  * Pass 1: still the hint it is today; the resolution in the entry that gains the planet comes in pass 2.
  */
-import type { ComponentEffect } from '../../types';
 import { exploredCondition, exploredPlanet } from './batch33/attach';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:exp1';
 
-export const effect: ComponentEffect = {
-  tier: 'play', rule: id,
-};
-
 /** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
+export const ability: Ability = {
+  tier: 'play', rule: id,
   holder: 'anyone',
   on: {
     gained: ctx => {

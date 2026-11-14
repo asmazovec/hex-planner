@@ -6,8 +6,7 @@
  * (`noReinforcements`, 20.3). Pass 2: written.
  */
 import { tokens, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:minent';
 
@@ -20,13 +19,10 @@ const NAMES = {
   strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
 };
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'pool', kind: 'option', label: { ru: 'В какой резерв', en: 'Into which pool' }, options: () => [...POOLS], names: NAMES }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => [tokens(ctx.holder, { [pool(ctx.choices.pool)]: 1 }, 'component'), tradeGoods(ctx.holder, 1)],
 };

@@ -6,15 +6,16 @@
  * warned of with the common code `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Until then the card is
  * the hint it was.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:mtm';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ state }) => ({
     have: Object.entries(state.ground).filter(([planetId, units]) => state.control[planetId] === 'me' && (units.mech ?? 0) > 0).length,
     need: 4,
   }),
+  holder: 'self',
 };

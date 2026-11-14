@@ -12,17 +12,16 @@
  * Pass 1: the hint it is today; the tests say what it must do. The component action has no payment yet.
  */
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import factionTechCopied from '../../../rules/codes/factionTechCopied';
 import techNotFromNeighbor from '../../../rules/codes/techNotFromNeighbor';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { othersOf, technologiesOf } from '../../helpers/choices';
 
 export const id = 'actionCard:plagiarize';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   cost: { kind: 'influence', amount: 5 },
@@ -35,9 +34,6 @@ export const effect: ComponentEffect = {
         .filter(tech => !componentById(ctx.pack, tech)?.faction && !ctx.my.holds(tech)),
     },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const technology = String(ctx.choices.technology ?? '');

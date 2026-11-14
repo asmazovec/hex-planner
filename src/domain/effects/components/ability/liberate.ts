@@ -11,19 +11,15 @@
  * An `onGainControl` hook of a passive ability: it runs for each planet newly gained, after the planet is exhausted.
  * The resource value is the printed one; only infantry are counted.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { place } from '../../../../game/abilities/emit';
 
 export const id = 'ability:liberate';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     onGainControl: (ctx, got) => {

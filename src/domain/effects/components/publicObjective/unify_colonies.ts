@@ -5,11 +5,11 @@
  * scored (LRR 61.4, 61.5.1, 81.1). Decided: a requirement: the most controlled planets that share one trait; planets
  * without a trait add to none; unmet is the warning objectiveUnmet (61.5.1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:unify_colonies';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, state }) => {
@@ -20,4 +20,5 @@ export const effect: ComponentEffect = {
     }
     return { have: Math.max(0, ...Object.values(traits)), need: 6 };
   },
+  holder: 'self',
 };

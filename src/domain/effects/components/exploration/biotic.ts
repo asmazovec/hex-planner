@@ -8,7 +8,7 @@
  * planet that has a specialty it raises `planetResources` and `planetInfluence` by 1 instead. Nothing is waived.
  *
  */
-import { facilityAbility, facilityEffect } from './batch33/facility';
+import { facilityAbility } from './batch33/facility';
 
 export const id = 'exploration:biotic';
 
@@ -17,5 +17,4 @@ export const id = 'exploration:biotic';
  * spent (`specialtiesOf`), and on a planet that has one the card raises resources and influence by 1 instead (`modify`,
  * asked with the pack in its context).
  */
-export const effect = facilityEffect(id);
-export const ability = facilityAbility;
+export const ability = facilityAbility(id);

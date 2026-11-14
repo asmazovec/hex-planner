@@ -7,20 +7,16 @@
  * point `planetResources` for that planet, and when it is resolved one infantry on the planet is destroyed. Pass 1:
  * still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:core_mining';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // A law is asked for every planet: it adds 2 only where it is attached (`ctx.attached`).
   modify: { planetResources: (value, ctx) => (ctx.attached?.includes(id) ? value + 2 : value) },
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // "Then, destroy 1 infantry on the planet": once, when the law is resolved on the elected planet.

@@ -6,15 +6,14 @@
  * more resources and 3 more influence wherever a payment counts it. The replay already purges a hero when it is
  * played. The Space Cannon is combat, which the plan does not roll.
  */
-import type { ComponentEffect } from '../../types';
 import { planet } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:titanshero';
 
 const attached = (ctx: { attached?: readonly string[] }): boolean => ctx.attached?.includes(id) ?? false;
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // Asked for the planet the hero is attached to only (`ctx.attached` names it).
@@ -22,9 +21,6 @@ export const effect: ComponentEffect = {
     planetResources: (value, ctx) => (attached(ctx) ? value + 3 : value),
     planetInfluence: (value, ctx) => (attached(ctx) ? value + 3 : value),
   },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => [
     ...(ctx.my.planets().some(each => each.id === 'elysium' && each.exhausted) ? [planet.ready(ctx.holder, 'elysium')] : []),

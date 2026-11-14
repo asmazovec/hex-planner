@@ -7,19 +7,15 @@
  * structures of the player's own reinforcements there. Pass 1 keeps it the hint it is today; its tests say what it
  * must do.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { keepStructures } from '../../helpers/structures';
 
 export const id = 'actionCard:infiltrate';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     onGainControl: (ctx, got) => keepStructures(ctx, got.planetId, got.lost),

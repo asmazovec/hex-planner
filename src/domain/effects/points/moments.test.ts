@@ -7,7 +7,7 @@ import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import { adjust, forecast, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, HOME, NEAR, TARGET } from '../../rules/kit';
 import type { Entry } from '../../types';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 import { spendStrategyBy } from '../helpers/cardPlay';
 import { gain } from '../../../game/abilities/emit';
 import type { Hooks } from '../../../game/abilities/types';
@@ -16,10 +16,10 @@ import './moments';
 
 const TECH = 'technology:hm';
 const held = { game: { start: { me: { technologies: [TECH] }, opponents: {} } } };
-const hooked = (effect: Partial<ComponentEffect>): ComponentEffect => ({ tier: 'passive', rule: TECH, holder: 'anyone', ...effect });
+const hooked = (effect: Partial<Ability>): Ability => ({ tier: 'passive', rule: TECH, holder: 'anyone', ...effect });
 /** A throwaway component whose hooks are written for the kernel (`on`); the old-shape point of the count (`modify`) goes in as it is. */
-const native = (on: Hooks): Partial<ComponentEffect> => ({ on });
-const run = (effect: Partial<ComponentEffect>, rounds: Entry[][], extra: object = held) => {
+const native = (on: Hooks): Partial<Ability> => ({ on });
+const run = (effect: Partial<Ability>, rounds: Entry[][], extra: object = held) => {
   const pack = rulesPack();
   withEffect(pack, TECH, hooked(effect));
   return forecast(rulesGame({ rounds, ...extra }), pack);
@@ -79,7 +79,7 @@ describe('onTokenSpent', () => {
     const pack = rulesPack();
     const seen: number[] = [];
     withEffect(pack, TECH, hooked({ on: { onTokenSpent: (_, { count }) => { seen.push(count); } } }));
-    withEffect(pack, 'actionCard:bribery', { tier: 'play', rule: 'x', nativePlay: ctx => spendStrategyBy(ctx) });
+    withEffect(pack, 'actionCard:bribery', { tier: 'play', rule: 'x', play: ctx => spendStrategyBy(ctx) });
     forecast(rulesGame({ entries: [{ ...adjust({}), uses: ['actionCard:bribery'] } as Entry], ...held }), pack);
     expect(seen).toEqual([1]);
   });
@@ -102,7 +102,7 @@ describe('onProduced and onDestroyed: the tactical action', () => {
 });
 
 describe('fleetPoolMax: the most tokens a fleet pool holds', () => {
-  const law = (limit: number): Partial<ComponentEffect> => ({ modify: { fleetPoolMax: value => Math.min(value, limit) } });
+  const law = (limit: number): Partial<Ability> => ({ modify: { fleetPoolMax: value => Math.min(value, limit) } });
   test('a status entry that brings the fleet pool over the point is warned of with fleetPoolTokens; within it, nothing', () => {
     const over = statusTokens(0, 2, 0);
     expect(run(law(4), [[over]]).warnings[over.id].find(w => w.code === 'fleetPoolTokens')?.params).toEqual({ fleet: 5, limit: 4 });

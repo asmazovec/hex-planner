@@ -10,7 +10,7 @@
 import { noteBase } from '../../domain/components';
 import { notesInPlay } from '../../domain/effects/points/rivals';
 import { effectOf, effectsOf } from '../../domain/effects/registry';
-import type { ComponentEffect } from '../../domain/effects/types';
+import type { Ability } from '../../domain/effects/types';
 import { playedBy } from '../../domain/effects/waivers';
 import { MECATOL_TILE, MECATOL_TILE_TE } from '../../domain/mecatol';
 import { hasAnomaly, systemSlots, tileIdOf, type MapSource } from '../../domain/replay/board';
@@ -32,7 +32,7 @@ import { contextOf } from './hooks';
 
 interface Asked {
   id: string;
-  effect: ComponentEffect;
+  effect: Ability;
   by: 'force' | 'entry' | 'round';
   /** The player who holds it. */
   holder: PlayerId;

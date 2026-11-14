@@ -37,6 +37,6 @@ describe('actionCard:bribery Bribery', () => {
   test('actionCard:bribery is a play effect', () => {
     const { pack } = bribe(0, 0);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

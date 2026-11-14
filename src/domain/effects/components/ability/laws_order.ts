@@ -8,18 +8,14 @@
  * has an effect file, so there is nothing to blank (the test is a todo).
  */
 import { commodities, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:laws_order';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.my.faction.startsWith('keleres')) return [];

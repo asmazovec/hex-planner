@@ -6,8 +6,10 @@
  * A unit upgrade: the rule stays 97.4 as generated; its numbers are generated (`unitUpgrades.ts`); this file adds nothing. The return of a destroyed infantry
  * on a 5 or more is a die roll the plan does not make; nothing more is counted.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:so2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

@@ -51,6 +51,6 @@ describe('leader:sardakkhero Sh\'val, Harbinger', () => {
   test('leader:sardakkhero is a play effect', () => {
     const { pack } = sardakk([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

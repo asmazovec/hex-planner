@@ -6,27 +6,23 @@
  * `choices.mirageFighters` (1 or 2); the fighters stand in that space area after the entry.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ChoiceContext, ComponentEffect } from '../../types';
+import type { ChoiceContext } from '../../types';
 import { systemsWithUnits } from '../../helpers/choices';
 
 /** The systems of the map where the player has a ship. */
 const withShips = (ctx: ChoiceContext): string[] => systemsWithUnits(ctx);
 
-
 export const id = 'legendary:mirage';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'mirageSystem', kind: 'system', options: withShips },
     { key: 'mirageFighters', kind: 'number', range: [0, 2], label: { ru: 'Истребитель', en: 'Fighter' } },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     requireControlBy(ctx, 'mirage');

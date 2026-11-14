@@ -6,19 +6,15 @@
  * Written in pass 2.
  */
 import { lawDiscarded } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { unresolvedBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:repeal';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'law', kind: 'component', options: ctx => ctx.board.common.laws.map(law => law.id) }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.choices.law === undefined) return [];

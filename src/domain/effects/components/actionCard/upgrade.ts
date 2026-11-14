@@ -7,19 +7,15 @@
  * cruiser is reported as any missing unit (`unitsMissing`). The dreadnought is placed, not produced.
  */
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { missingUnits } from '../../../replay/state';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:upgrade';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   playAt: 'activation',
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.entry?.type !== 'tactical' || ctx.entry.systemId === null) return [];

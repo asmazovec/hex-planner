@@ -6,15 +6,16 @@
  * LRR 61.5 and is warned of with the common code `objectiveUnmet` that pass 2 adds; the warning forbids nothing. Pass 2: the
  * requirement is written.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:sai';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ state, pack }) => ({
     have: Object.keys(state.control).filter(planetId => state.control[planetId] === 'me' && pack.planets[planetId]?.legendary).length,
     need: 1,
   }),
+  holder: 'self',
 };

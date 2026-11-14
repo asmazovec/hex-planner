@@ -11,13 +11,12 @@ import replacementCost from '../../../rules/codes/replacementCost';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
 import type { UnitId } from '../../../types';
-import type { ComponentEffect } from '../../types';
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:arborecagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -30,9 +29,6 @@ export const effect: ComponentEffect = {
     },
     { key: 'replacement', kind: 'unit', label: { ru: 'Новый корабль', en: 'Ship placed' }, options: ctx => Object.values(ctx.pack.units).filter(u => u.move != null && !u.ground && !u.fighter).map(u => u.id) },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

@@ -5,11 +5,11 @@
  * scored (LRR 61.4, 61.5.1, 81.1). Decided: a requirement: counts the colours of which the owner holds at least two
  * technologies; a unit upgrade has no colour (90.7.2) and is in none. Unmet is the warning objectiveUnmet (61.5.1).
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:master_science';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, state }) => {
@@ -20,4 +20,5 @@ export const effect: ComponentEffect = {
     }
     return { have: Object.values(colours).filter(count => count >= 2).length, need: 4 };
   },
+  holder: 'self',
 };

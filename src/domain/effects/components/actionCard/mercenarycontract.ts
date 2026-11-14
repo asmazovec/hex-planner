@@ -9,16 +9,15 @@
  * Neutral units are not modelled (no neutral player on the board), so the two infantry themselves are not placed.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { unitIds } from '../../../replay/state';
 import { violation } from '../../../rules/registry';
 import playTargetInvalid from '../../../rules/codes/playTargetInvalid';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:mercenarycontract';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -26,9 +25,6 @@ export const effect: ComponentEffect = {
     kind: 'planet',
     options: ctx => [...new Set(Object.keys(ctx.table.map).flatMap(slot => (ctx.tileKind(slot) === 'home' ? [] : ctx.planetsIn(slot))))],
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const have = ctx.my.tradeGoods;

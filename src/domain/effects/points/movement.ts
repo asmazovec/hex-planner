@@ -27,7 +27,7 @@ declare module '../types' {
     /** The flying fighters beyond the capacity that count against the fleet pool (the base is that number). */
     excessFighters: { faction: string };
   }
-  interface ComponentEffect {
+  interface Ability {
     /** `play`/`hint`: changes of the points of the count for the entry that names the component, once per component. */
     modifyWhenNamed?: Partial<Modifiers>;
     /** Pairs of systems the component makes adjacent (in force, or named by the entry). */

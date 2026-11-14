@@ -19,26 +19,23 @@ const [p1, p2] = table.players.map(p => p.id);
 const planet = Object.keys(start.planets).find(id => start.planets[id].owner === undefined) ?? Object.keys(start.planets)[0];
 
 describe('the native play of a component', () => {
-  test('the files that moved to it keep no old-state play', () => {
+  test('the plays of Bribery and Cripple Defenses are native functions', () => {
     for (const id of ['actionCard:bribery', 'actionCard:cripple']) {
-      const file = Object.values(COMPONENT_FILES).find(f => f.id === id)!;
-      expect((file.effect as { play?: unknown } | undefined)?.play).toBeUndefined();
-      expect(effectOf(pack, id)?.nativePlay).toBeTypeOf('function');
+      expect(effectOf(pack, id)?.play).toBeTypeOf('function');
     }
   });
 
-  test('no file of the action cards keeps a play or a playAt written for the old state', () => {
+  test('every action card that plays at a step of an action has a native play', () => {
     const files = Object.values(COMPONENT_FILES).filter(f => f.id.startsWith('actionCard:'));
     expect(files.length).toBeGreaterThan(30);
-    for (const file of files) expect((file.effect as { play?: unknown; playAt?: unknown } | undefined)?.play, file.id).toBeUndefined();
-    // What is left of `playAt` is the step a native play runs at, read by the runner.
-    for (const file of files.filter(f => (f.effect as { playAt?: unknown } | undefined)?.playAt !== undefined)) expect(effectOf(pack, file.id)?.nativePlay, file.id).toBeTypeOf('function');
+    // `playAt` is the step a play runs at, read by the runner.
+    for (const file of files.filter(f => f.ability.playAt !== undefined)) expect(effectOf(pack, file.id)?.play, file.id).toBeTypeOf('function');
   });
 
-  test('no component file of any folder keeps a play written for the old state', () => {
+  test('no component file keeps an old-shape effect, and every folder whose components do something when played has plays', () => {
     const files = Object.values(COMPONENT_FILES);
     expect(files.length).toBeGreaterThan(600);
-    for (const file of files) expect((file.effect as { play?: unknown } | undefined)?.play, file.id).toBeUndefined();
+    for (const file of files) expect('effect' in file, file.id).toBe(false);
     // Every folder whose components do something when played has native plays.
     for (const folder of ['actionCard', 'leader', 'legendary', 'technology', 'mech', 'breakthrough', 'ability', 'relic', 'publicObjective', 'exploration', 'promissory', 'agenda']) {
       expect(files.filter(f => f.id.startsWith(folder + ':') && (f.ability as { play?: unknown } | undefined)?.play !== undefined).length, folder).toBeGreaterThan(0);

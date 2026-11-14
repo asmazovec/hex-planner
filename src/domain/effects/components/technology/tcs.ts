@@ -9,20 +9,16 @@
  * notes 1 and 3). Another player's agent exhausted in their own turn is not modelled: the plan asks the owner of an
  * entry only.
  */
-import type { ComponentEffect } from '../../types';
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:tcs';
 
 const isAgent = (component: string): boolean => component.startsWith('leader:') && component.includes('agent');
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

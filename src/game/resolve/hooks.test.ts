@@ -29,10 +29,7 @@ const EXAMPLES: Record<(typeof NATIVE_KINDS)[number], string> = {
 
 describe('the native hook runner', () => {
   test('no component file keeps a hook of a native kind on the old state', () => {
-    const old = Object.entries(COMPONENT_FILES).flatMap(([path, file]) =>
-      NATIVE_KINDS.filter(kind => (file.effect as Record<string, unknown> | undefined)?.[kind] !== undefined).map(kind => `${path}: ${kind}`));
-    // Neuroglaive keeps its old-state hook for the flight screen's meters (`tacticalMeters` replays the action on the old state); the kernel runs its native one.
-    expect(old.filter(line => !line.endsWith('technology/ng.ts: onActivate'))).toEqual([]);
+    expect(Object.entries(COMPONENT_FILES).filter(([, file]) => 'effect' in file).map(([path]) => path)).toEqual([]);
   });
 
   test.each(NATIVE_KINDS)('%s is served by the runner for a real component', kind => {

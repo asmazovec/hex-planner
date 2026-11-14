@@ -7,18 +7,14 @@
  * does not name the activation it answers.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:fsb';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'player', kind: 'player' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const other = ctx.playerOf(String(ctx.choices.player));

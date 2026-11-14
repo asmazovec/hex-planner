@@ -102,7 +102,7 @@ export function readyPlanets(state: GameState, planets: string[], warnings: Warn
 }
 
 /**
- * The cost a component declares (`ComponentEffect.cost`), paid with the payment of its component entry: the planets
+ * The cost a component declares (`Ability.cost`), paid with the payment of its component entry: the planets
  * are exhausted, the trade goods spent, and a shortfall warns as shortResources or shortInfluence at the step
  * `component`. Returns what was paid.
  */

@@ -7,19 +7,15 @@
  * Its PRODUCTION and SUSTAIN DAMAGE are those of a unit, not of this card.
  */
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'mech:arborec_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.my.faction !== 'arborec') return [];

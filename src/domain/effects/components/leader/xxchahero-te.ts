@@ -10,10 +10,9 @@
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import placementOverLimit from '../../../rules/codes/placementOverLimit';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { placeUnits, planet, structures } from '../../../../game/abilities/emit';
 import type { GameEvent } from '../../../../game/events';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:xxchahero-te';
 
@@ -22,12 +21,9 @@ const LIMIT = 4;
 /** Most PDS a planet holds (85.5). */
 const PDS_PER_PLANET = 2;
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held || ctx.my.faction !== 'xxcha') return [];

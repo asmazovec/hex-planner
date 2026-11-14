@@ -14,9 +14,8 @@
  */
 import systemOccupied from '../../../rules/codes/systemOccupied';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { UnitCounts } from '../../../types';
 import { missingBy, othersHaveShips } from '../../helpers/cardPlay';
 
@@ -24,13 +23,10 @@ const SHIPS = ['flagship', 'dreadnought'] as const;
 
 export const id = 'leader:l1z1xhero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'system', kind: 'system' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.my.faction !== 'l1z1x') return [];

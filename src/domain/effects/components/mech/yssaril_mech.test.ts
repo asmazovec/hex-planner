@@ -36,6 +36,6 @@ describe('mech:yssaril_mech Blackshade Infiltrator', () => {
   test('mech:yssaril_mech is a play effect', () => {
     const { pack } = table(stall('h1'));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

@@ -9,18 +9,14 @@
  *
  */
 import { noteAddress, noteBase } from '../../../components';
-import type { ComponentEffect } from '../../types';
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:acq';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   // The replay took the token the secondary costs (and warned when the pool was empty); the note gives it back.
   play: ctx => {

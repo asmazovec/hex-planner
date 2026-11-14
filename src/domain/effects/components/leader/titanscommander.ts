@@ -5,18 +5,14 @@
  * good is gained only if at least one unit is produced (Titans of Ul, Tungstantus note 1.2), and a commander is not
  * exhausted by its use.
  */
-import type { ComponentEffect } from '../../types';
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:titanscommander';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     // Note 1.2: no trade good unless at least one unit is produced.

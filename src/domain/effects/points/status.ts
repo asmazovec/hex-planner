@@ -15,7 +15,7 @@ import type { DataPack, Entry, Game, GameState, Warning } from '../../types';
 import { componentById } from '../../components';
 import { applyPayment, checkPayment } from '../../replay/payment';
 import { playedBy } from '../waivers';
-import type { ComponentEffect, EffectTurn } from '../types';
+import type { Ability, EffectTurn } from '../types';
 
 /** What a requirement of an objective is asked with: the owner's board before the status entry that scores it. */
 export interface RequirementContext {
@@ -45,7 +45,7 @@ declare module '../types' {
     cards?: CardRound;
   }
 
-  interface ComponentEffect {
+  interface Ability {
     /**
      * An objective: what its requirement counts when a status entry scores it. `have < need` is the warning
      * `objectiveUnmet`. Asked against the owner's board before the entry (LRR 81.1 note 1).
@@ -108,4 +108,4 @@ export function spentOnObjectives(turn: EffectTurn): Spent {
   return spent;
 }
 
-export type { ComponentEffect };
+export type { Ability };

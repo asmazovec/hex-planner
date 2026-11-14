@@ -64,6 +64,6 @@ describe('leader:l1z1xhero The Helmsman', () => {
   test('leader:l1z1xhero is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeDefined();
+    expect(effect(pack, id).play).toBeDefined();
   });
 });

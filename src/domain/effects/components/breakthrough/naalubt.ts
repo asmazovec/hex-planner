@@ -7,12 +7,13 @@
  * is waived). A primary played for a token is not a secondary and still costs its token; Leadership's secondary is free
  * anyway. The note given is not a transaction (Naalu, Mindsieve note 2) and is not counted yet.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'breakthrough:naalubt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   modify: { strategyCost: (value, ctx) => (ctx.secondary ? 0 : value) },
+  holder: 'self',
 };

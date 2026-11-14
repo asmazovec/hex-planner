@@ -1,6 +1,6 @@
 /**
  * The moments of a round the replay tells the components about (docs/phase4/infra/moments.md), added by declaration
- * merging so that no shared interface is edited: hooks on `ComponentEffect`, two points of the count, and `fire`, the
+ * merging so that no shared interface is edited: hooks on `Ability`, two points of the count, and `fire`, the
  * one place that asks them.
  *
  * A hook belongs to a `passive` effect (or a `play` one, for a component held and not yet played out) and runs for the player whose moment it is while the component is in force
@@ -9,7 +9,7 @@
  */
 import type { DataPack, Entry, Game, GameState, UnitCounts, Warning } from '../../types';
 import { effectOf, holderOf, inForceOf, orderOf } from '../registry';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 
 /** What every moment's hook is given. */
 export interface MomentTurn {
@@ -48,7 +48,7 @@ declare module '../types' {
     tradeGoodsOnReplenish: { faction: string; neighbours: number };
   }
 
-  interface ComponentEffect {
+  interface Ability {
     /** Passive: at the start of the strategy phase, once a round, before the first entry of the round that is replayed. */
     onRoundStart?: (turn: MomentTurn) => void;
     /** Passive: at the start of the status phase, once a round, before its first entry (or when the agenda begins). */
@@ -73,7 +73,7 @@ export type MomentHook = 'onRoundStart' | 'onStatusStart' | 'onStatusEnd' | 'onT
 /** Where a moment happens: the same fields as the turn, less the component. */
 export type Moment = Omit<MomentTurn, 'id' | 'player' | 'states'> & { player?: string; states?: Record<string, GameState> };
 
-type Extra<H extends MomentHook> = Omit<Parameters<NonNullable<ComponentEffect[H]>>[0], keyof MomentTurn>;
+type Extra<H extends MomentHook> = Omit<Parameters<NonNullable<Ability[H]>>[0], keyof MomentTurn>;
 
 /** The components in force for the player of `at` that have the hook, in registry order. */
 export function hooked(hook: MomentHook, at: Pick<Moment, 'game' | 'state' | 'shared' | 'pack'>): string[] {

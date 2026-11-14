@@ -11,13 +11,13 @@
  */
 import { componentById, noteAddress } from '../../../components';
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import { technologiesOf } from '../../helpers/choices';
 
 export const id = 'promissory:shareknowledge';
 
-export const effect: ComponentEffect = {
+/** The loan is made by the play and ends with the status phase, a hook of the kernel. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -33,10 +33,6 @@ export const effect: ComponentEffect = {
       });
     },
   }],
-};
-
-/** The loan is made by the play and ends with the status phase, a hook of the kernel. */
-export const ability: Hooked = {
   holder: 'anyone',
   play: ctx => {
     const technology = ctx.choices.technology;

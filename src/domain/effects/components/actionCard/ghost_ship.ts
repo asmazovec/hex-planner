@@ -7,21 +7,17 @@
  * (`ghostShipSystem`, a code of this card); the destroyer is placed all the same. A wormhole token counts as a wormhole.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import ghostShipSystem from '../../../rules/codes/ghostShipSystem';
 import { violation } from '../../../rules/registry';
 import { othersHaveShips } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:ghost_ship';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'system', kind: 'system' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const slot = String(ctx.choices.system ?? '');

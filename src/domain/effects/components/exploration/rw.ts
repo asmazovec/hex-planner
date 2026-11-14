@@ -8,19 +8,15 @@
  *
  * Pass 1: still the hint it is today; the attachment, the point asked by the payment and the modify come in pass 2.
  */
-import type { ComponentEffect } from '../../types';
 import { attachExplored } from './batch33/attach';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:rw';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive', rule: id,
   modify: { planetResources: value => value + 1 },
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     gained: attachExplored,

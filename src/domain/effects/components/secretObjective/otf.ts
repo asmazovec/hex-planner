@@ -7,11 +7,11 @@
  * it breaks LRR 61.5 and is warned of with the common code `objectiveUnmet` that pass 2 adds; the warning forbids
  * nothing. Pass 2: the requirement is written.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:otf';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ state, pack }) => ({
@@ -20,4 +20,5 @@ export const effect: ComponentEffect = {
       .map(([, units]) => Object.entries(units).reduce((sum, [unit, count]) => sum + (pack.units[unit as keyof typeof pack.units]?.ground ? count ?? 0 : 0), 0))),
     need: 9,
   }),
+  holder: 'self',
 };

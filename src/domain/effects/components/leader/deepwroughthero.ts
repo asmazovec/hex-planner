@@ -7,13 +7,12 @@
  * rivals' states are in `turn.states`). The technology each player researches instead is their choice and is entered
  * as a gain of the entry. The hero's own purge is the common rule of heroes (51.12).
  */
-import type { ComponentEffect } from '../../types';
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:deepwroughthero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -22,9 +21,6 @@ export const effect: ComponentEffect = {
     label: { ru: 'Технология', en: 'Technology' },
     options: ({ pack }) => Object.entries(pack.technologies).filter(([, def]) => !def.upgrade).map(([key]) => `technology:${key}`),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const chosen = ctx.choices.technology;

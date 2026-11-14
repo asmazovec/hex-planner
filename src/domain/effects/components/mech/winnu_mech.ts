@@ -6,18 +6,14 @@
  * warned of as missing from the space area (`unitsMissing`, invasion step); it is lifted for one structure on a planet
  * the action gained, where a Reclaimer stands at the end of the action (ruling 4), one per Reclaimer (ruling 3).
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:winnu_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   landingOffer: { structures: ['pds', 'spacedock'] },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'unitsMissing',

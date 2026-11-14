@@ -11,14 +11,15 @@
  * Pass 1: still the hint it is today; the resolution with its choice comes in pass 2.
  */
 
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gainCommodities, spendOne } from './batch33/attach';
 
 export const id = 'exploration:fb1';
 
 /** What is spent to draw or to place: a trade good, or a commodity the card allows (21.7). Short of it, the payment is warned of as any is. */
-export const effect: ComponentEffect = {
+
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play', rule: id,
   choose: [{
     key: id, kind: 'option', options: () => ['gain', 'draw-tradeGood', 'draw-commodity'], label: { ru: 'Что сделать', en: 'What to do' },
@@ -28,10 +29,6 @@ export const effect: ComponentEffect = {
       'draw-commodity': { ru: 'Потратить продукцию и взять карту действия', en: 'Spend a commodity to draw an action card' },
     },
   }],
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // The action card drawn is in the entry's gains: only the player knows which it is.

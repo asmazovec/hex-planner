@@ -6,12 +6,12 @@
  * tests mark what it must do.
  */
 import type { PlanetTrait } from '../../../types';
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:corner';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, state }) => {
@@ -22,4 +22,5 @@ export const effect: ComponentEffect = {
     }
     return { have: Math.max(0, ...Object.values(counts)), need: 4 };
   },
+  holder: 'self',
 };

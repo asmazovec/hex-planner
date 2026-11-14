@@ -11,20 +11,16 @@
  * there is `unitsMissing`. Reinforcements of mechs are not counted.
  */
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
 import type { GameEvent } from '../../../../game/events';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:l1z1xagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   playAt: 'activation',
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

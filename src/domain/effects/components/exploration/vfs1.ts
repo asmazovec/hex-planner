@@ -8,16 +8,16 @@
  *
  * Pass 1: still the hint it is today; the resolution in the entry that gains the planet comes in pass 2.
  */
-import type { ComponentEffect } from '../../types';
 import { exploredCondition } from './batch33/attach';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'exploration:vfs1';
 
 const POOLS = ['tactic', 'fleet', 'strategy'] as const;
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play', rule: id,
   choose: [{
     key: id, kind: 'option', options: () => [...POOLS], label: { ru: 'Жетон в', en: 'Token to' },
@@ -27,10 +27,6 @@ export const effect: ComponentEffect = {
       strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
     },
   }],
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     gained: ctx => {

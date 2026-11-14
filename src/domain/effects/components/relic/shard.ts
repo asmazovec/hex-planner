@@ -7,19 +7,15 @@
  * takes 1 away. Held when the plan begins, its point is already in the starting points. The transfer to a player who
  * takes such a planet is not replayed. Pass 1 keeps it the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'relic:shard';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     gained: ctx => [gain.points(ctx.holder, 1)],

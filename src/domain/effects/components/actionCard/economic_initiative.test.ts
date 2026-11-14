@@ -55,6 +55,6 @@ describe('actionCard:economic_initiative Economic Initiative', () => {
   test('actionCard:economic_initiative is a play effect', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

@@ -11,22 +11,18 @@
 import warSunAbsent from '../../../rules/codes/warSunAbsent';
 import { violation } from '../../../rules/registry';
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { spendStrategyBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:star_forge';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'systemId', kind: 'system', label: { ru: 'Система', en: 'System' } },
     { key: 'unit', kind: 'unit', options: () => ['fighter', 'destroyer'], label: { ru: 'Юниты', en: 'Units' } },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     // Printed on the Muaat sheet only: another faction's play of it does nothing.

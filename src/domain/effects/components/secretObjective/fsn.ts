@@ -8,11 +8,11 @@
  * is the hint every component is by default.
  */
 import { componentById } from '../../../components';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:fsn';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Only the cards the scoring entry itself discards count (ruling: discarded during the status phase).
@@ -20,4 +20,5 @@ export const effect: ComponentEffect = {
     have: (entry.spends ?? []).filter(card => componentById(pack, card)?.kind === 'actionCard').length,
     need: 5,
   }),
+  holder: 'self',
 };

@@ -7,8 +7,10 @@
  * the capacity of 1 is what sets it apart from the common Destroyer II. The barrage and the infantry it destroys are
  * dice the plan does not roll; nothing is added to the generated level.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:swa2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

@@ -8,19 +8,15 @@
  * check of the action warns of it). The up to 2 cruisers and/or destroyers wait for a way to carry choices of a
  * component used beside the action (the test is a todo).
  */
-import type { ComponentEffect } from '../../types';
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:keleresherokuuasi';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   playAt: 'combat',
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => (ctx.entry?.type !== 'tactical' || ctx.entry.systemId === null ? [] : [placeUnits(ctx.holder, { slot: ctx.entry.systemId }, { flagship: 1 })]),
 };

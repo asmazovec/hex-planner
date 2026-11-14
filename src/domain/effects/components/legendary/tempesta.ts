@@ -8,17 +8,13 @@
  * one ship once. The `play` checks LRR 53.3 with 53.2: the card lies in the play area of whoever controls Tempesta.
  */
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'legendary:tempesta';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => { requireControlBy(ctx, 'tempesta'); },
   permit: [{

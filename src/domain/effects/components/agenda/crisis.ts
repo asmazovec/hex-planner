@@ -8,17 +8,13 @@
  * round or from the card's own holder, so secondaryRepeated and ownSecondary are lifted for that card. Pass 1 keeps it
  * a hint; the tests mark what it must do.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:crisis';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const card = Number(ctx.choices.card);

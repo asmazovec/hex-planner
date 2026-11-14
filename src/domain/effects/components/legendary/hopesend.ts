@@ -7,15 +7,13 @@
  * entered with `gains`, and changes nothing else.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 import { controlledPlanets } from '../../helpers/choices';
-
 
 export const id = 'legendary:hopesend';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -25,9 +23,6 @@ export const effect: ComponentEffect = {
     },
     { key: 'hopesendPlanet', kind: 'planet', options: controlledPlanets },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     requireControlBy(ctx, 'hopesend');

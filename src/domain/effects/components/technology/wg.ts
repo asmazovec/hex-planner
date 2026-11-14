@@ -9,11 +9,10 @@
  * (`wormholeTokenPlace`); the replay already exhausts the card ("Exhaust this card").
  */
 import type { GameEvent } from '../../../../game/events';
-import type { AbilityContext, Hooked } from '../../../../game/abilities/types';
+import type { AbilityContext, Ability } from '../../../../game/abilities/types';
 import wormholeTokenPlace from '../../../rules/codes/wormholeTokenPlace';
 import { violation } from '../../../rules/registry';
 import { othersHaveShips } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:wg';
 
@@ -27,16 +26,13 @@ function takesToken(ctx: AbilityContext, slot: string): boolean {
   return !othersHaveShips(ctx, slot);
 }
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
     { key: 'token', kind: 'option', options: () => TOKENS, names: NAMES, label: { ru: 'Жетон', en: 'Token' } },
     { key: 'systemId', kind: 'system' },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const token = String(ctx.choices.token);

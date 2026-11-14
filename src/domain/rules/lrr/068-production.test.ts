@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from 'vitest';
 import { effectsOf } from '../../effects/registry';
-import type { ComponentEffect } from '../../effects/types';
+import type { Ability } from '../../effects/types';
 import '../../effects/points/production';
 import { emptyHoldings } from '../../holdings';
 import { productionCost } from '../../project';
@@ -16,8 +16,8 @@ const bothTargets = { docks: ['t1', 't2'], planetControl: { t1: 'me' as const, t
 
 /** A throwaway passive effect held through the component `HOLD`, in place of a component's file. */
 const HOLD = 'technology:aida';
-const held = (edited: ReturnType<typeof rulesPack>, modify: ComponentEffect['modify']): void => {
-  (effectsOf(edited) as Map<string, ComponentEffect>).set(HOLD, { tier: 'passive', rule: 'test', modify });
+const held = (edited: ReturnType<typeof rulesPack>, modify: Ability['modify']): void => {
+  (effectsOf(edited) as Map<string, Ability>).set(HOLD, { tier: 'passive', rule: 'test', modify });
 };
 const withTech = (target: ReturnType<typeof tactical>) =>
   rulesGame({ entries: [target], game: { ...atHome, start: { me: { technologies: [HOLD] }, opponents: {} } } });

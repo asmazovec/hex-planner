@@ -9,22 +9,18 @@
  *
  * Pass 1: still the hint it is today; the resolution with its choice comes in pass 2.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gainCommodities } from './batch33/attach';
 
 export const id = 'exploration:aw1';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play', rule: id,
   choose: [{
     key: id, kind: 'option', options: () => ['gain', 'convert'], label: { ru: 'Что сделать', en: 'What to do' },
     names: { gain: { ru: 'Взять 2 продукции', en: 'Gain 2 commodities' }, convert: { ru: 'Обменять до 2 продукции на товары', en: 'Convert up to 2 commodities' } },
   }],
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     gained: ctx => {

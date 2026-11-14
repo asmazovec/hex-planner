@@ -4,7 +4,7 @@ import { CARD } from '../strategy';
 import type { AnyWarningCode, Entry } from '../types';
 import { bench, endOf, expectNone, expectStanding, NO_PAYMENT, primary, secondary, warningsOf, type BenchOptions } from '../effects/components/kit';
 import { effectsOf } from '../effects/registry';
-import type { ComponentEffect } from '../effects/types';
+import type { Ability } from '../effects/types';
 
 const MISSING = 'prerequisitesMissing' as AnyWarningCode;
 const UNAVAILABLE = 'researchUnavailable' as AnyWarningCode;
@@ -85,24 +85,24 @@ describe('research: technologies that cannot be researched', () => {
 
 describe('research: the points of the count', () => {
   /** A technology of the pack stands for a component with the passive effect under test. */
-  const withEffect = (effect: ComponentEffect, entries: Entry[], options: Partial<BenchOptions> = {}) => {
+  const withEffect = (effect: Ability, entries: Entry[], options: Partial<BenchOptions> = {}) => {
     const made = table(entries, { ...options, start: { technologies: ['technology:gd'], ...options.start } });
-    (effectsOf(made.pack) as Map<string, ComponentEffect>).set('technology:gd', effect);
+    (effectsOf(made.pack) as Map<string, Ability>).set('technology:gd', effect);
     return made;
   };
 
   test('prerequisites: a passive effect lowers the count asked, and the check runs against the new number', () => {
     const entry = research('technology:hm');
-    const lower: ComponentEffect = { tier: 'passive', rule: 'test', modify: { prerequisites: value => Math.max(0, value - 1) } };
+    const lower: Ability = { tier: 'passive', rule: 'test', modify: { prerequisites: value => Math.max(0, value - 1) } };
     const made = withEffect(lower, [entry]);
     expect(missing(made, entry)).toMatchObject({ missing: 1 });
-    const enough: ComponentEffect = { tier: 'passive', rule: 'test', modify: { prerequisites: () => 0 } };
+    const enough: Ability = { tier: 'passive', rule: 'test', modify: { prerequisites: () => 0 } };
     expectNone(warningsOf(withEffect(enough, [entry]), entry), MISSING);
   });
 
   test('prerequisites: the context says whether it is a unit upgrade and which colours are missing', () => {
     const seen: unknown[] = [];
-    const spy: ComponentEffect = { tier: 'passive', rule: 'test', modify: { prerequisites: (value, ctx) => { seen.push(ctx); return value; } } };
+    const spy: Ability = { tier: 'passive', rule: 'test', modify: { prerequisites: (value, ctx) => { seen.push(ctx); return value; } } };
     const entry = primary(CARD.technology, { researched: ['technology:hm', 'technology:dd2'] });
     const made = withEffect(spy, [entry]);
     warningsOf(made, entry);
@@ -111,7 +111,7 @@ describe('research: the points of the count', () => {
   });
 
   test('researchTokens: a research that gives tokens instead is not made, and its tokens are not over', () => {
-    const instead: ComponentEffect = { tier: 'passive', rule: 'test', modify: { researchTokens: () => 3 } };
+    const instead: Ability = { tier: 'passive', rule: 'test', modify: { researchTokens: () => 3 } };
     const entry = primary(CARD.technology, { researched: ['technology:st'], tokens: { tactic: 3 } });
     const made = withEffect(instead, [entry]);
     expectNone(warningsOf(made, entry), 'tokensOver' as AnyWarningCode);
@@ -120,7 +120,7 @@ describe('research: the points of the count', () => {
   });
 
   test('researchAsPrimary: the secondary takes the primary\'s limit and cost', () => {
-    const asPrimary: ComponentEffect = { tier: 'passive', rule: 'test', modify: { researchAsPrimary: () => 1 } };
+    const asPrimary: Ability = { tier: 'passive', rule: 'test', modify: { researchAsPrimary: () => 1 } };
     const entry = secondary(CARD.technology, { researched: ['technology:st', 'technology:nm'], payment: { planets: ['h1', 'h2'], tradeGoods: 0 } });
     const made = withEffect(asPrimary, [entry], { edit: pack => { pack.planets.h1 = { ...pack.planets.h1, resources: 5 }; } });
     expectNone(warningsOf(made, entry), 'researchOverLimit' as AnyWarningCode);
@@ -128,7 +128,7 @@ describe('research: the points of the count', () => {
   });
 
   test('researchCost: a passive effect changes what one technology costs', () => {
-    const cheaper: ComponentEffect = { tier: 'passive', rule: 'test', modify: { researchCost: value => Math.max(0, value - 4) } };
+    const cheaper: Ability = { tier: 'passive', rule: 'test', modify: { researchCost: value => Math.max(0, value - 4) } };
     const entry = research('technology:st');
     expectNone(warningsOf(withEffect(cheaper, [entry]), entry), 'shortResources' as AnyWarningCode);
     expectStanding(warningsOf(table([entry]), entry), 'shortResources' as AnyWarningCode);

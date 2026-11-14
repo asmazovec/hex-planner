@@ -11,19 +11,15 @@ import { noteAddress } from '../../../components';
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { violation } from '../../../rules/registry';
 import { placeUnits, tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/events';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:ms';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

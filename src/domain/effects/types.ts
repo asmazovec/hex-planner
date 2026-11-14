@@ -165,9 +165,14 @@ export interface GainTurn {
   warnings: Warning[];
 }
 
-export interface ComponentEffect {
+/**
+ * What a component file exports as `ability`: its class (`tier`), the rule it stands on, whose action it speaks in
+ * (`holder`) and what it does, all written for the kernel: hooks, the play, the permits, the changes to the count and the
+ * choices the player makes when it is played.
+ */
+export interface Ability {
   tier: EffectTier;
-  /** On whose action it speaks (`holder.ts`); a file that says nothing is read from its printed trigger (`defaultHolder`). */
+  /** On whose action it speaks (`holder.ts`). Every component file declares it (the contract test); what is generated (a hint, a unit upgrade) is read from what the card prints (`defaultHolder`). */
   holder?: HolderRule;
   /** The LRR rule the effect stands on, numbered as in the rules tests; the id of the component itself when its printed text is the rule, as for every hint. */
   rule: string;
@@ -181,8 +186,8 @@ export interface ComponentEffect {
   hintAt?: RuleStep[];
   /** The hooks written for the kernel (`game/abilities/types.ts`): they read the board and return events; the others of this interface run on the old state. */
   on?: Hooks;
-  /** The play of the component (`Hooked.play`): what an entry that plays the component does. Any tier may have it (a passive ability with an action part). */
-  nativePlay?: Play;
+  /** The play of the component (`Ability.play`): what an entry that plays the component does. Any tier may have it (a passive ability with an action part). */
+  play?: Play;
   /** Any tier: the checks the component lifts (see `EffectTier` for when they hold), in the words of the kernel (`game/abilities/types.ts`); run by `game/resolve/waive.ts`. */
   permit?: Permit[];
 }

@@ -6,20 +6,16 @@
  * exhausted. The card's own condition (a unit of mine with BOMBARDMENT in the system) is warned of when it is not met.
  */
 import { planet } from '../../../../game/abilities/emit';
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import { unitIds } from '../../../replay/state';
 import { bombardsBy, unmetBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:tactical';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'systemId', kind: 'system' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (ctx.choices.systemId === undefined) return [];

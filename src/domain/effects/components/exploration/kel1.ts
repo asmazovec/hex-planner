@@ -6,8 +6,7 @@
  * 20.3). Pass 2: written.
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:kel1';
 
@@ -20,13 +19,10 @@ const NAMES = {
   strategy: { ru: 'Стратегический резерв', en: 'Strategy pool' },
 };
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'first', kind: 'option', label: { ru: 'Первый жетон в резерв', en: 'First token into' }, options: () => [...POOLS], names: NAMES }, { key: 'second', kind: 'option', label: { ru: 'Второй жетон в резерв', en: 'Second token into' }, options: () => [...POOLS], names: NAMES }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => [tokens(ctx.holder, { [pool(ctx.choices.first)]: 1 }, 'component'), tokens(ctx.holder, { [pool(ctx.choices.second)]: 1 }, 'component')],
 };

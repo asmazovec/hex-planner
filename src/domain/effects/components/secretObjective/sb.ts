@@ -9,14 +9,14 @@
  * card is the hint it was.
  */
 import { noteAddress, noteBase } from '../../../components';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:sb';
 
 /** A note that goes to the play area of whoever receives it, with no action to play it (the card's own text). */
 const PLACED = /you must place it faceup in your play area/i;
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ state, pack }) => ({
@@ -26,4 +26,5 @@ export const effect: ComponentEffect = {
     }).length,
     need: 1,
   }),
+  holder: 'self',
 };

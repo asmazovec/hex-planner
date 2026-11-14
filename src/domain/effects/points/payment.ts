@@ -5,7 +5,7 @@
 import type { DataPack, Entry, Game, GameState, Goods, Warning } from '../../types';
 import { stacked, type Applied } from '../apply';
 import { effectOf, orderOf, passivesOf, type Holder } from '../registry';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 
 /** What a transaction (LRR 94) tells a component of one of its two sides, after the goods and components have moved. */
 export interface DealTurn {
@@ -42,7 +42,7 @@ declare module '../types' {
     commodityValue: { faction: string };
   }
 
-  interface ComponentEffect {
+  interface Ability {
     /**
      * Any tier. Asked of every component in force for a side of a transaction, after it has been settled and for every
      * transaction of the turn: the place for a gain of either side (Dark Pact), for a note that acts on receipt (Black
@@ -74,7 +74,7 @@ export function appliedToPlanet(
 ): Applied {
   const own = passivesOf(pack, who);
   const have = new Set(own.map(([id]) => id));
-  const extra = attached.filter(id => !have.has(id)).flatMap((id): [string, ComponentEffect][] => {
+  const extra = attached.filter(id => !have.has(id)).flatMap((id): [string, Ability][] => {
     const effect = effectOf(pack, id);
     return effect ? [[id, effect]] : [];
   });

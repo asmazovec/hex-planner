@@ -8,12 +8,12 @@ import type { Entry } from '../../types';
 import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, warningsOf, type Bench } from '../components/kit';
 import { effectsOf } from '../registry';
 import type { PermitContext } from '../../../game/abilities/types';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 import { activeNextToAnomaly, fastestOfGroup, ownDockIn, playerHolds, plusSpeed, shipSlots, shortfall, startWormholes, startsAtHome, startsInFracture } from './movement';
 
 const TECH = 'technology:gd';
-const give = (table: Bench, effect: Partial<ComponentEffect>): void => {
-  (effectsOf(table.pack) as Map<string, ComponentEffect>).set(TECH, { tier: 'passive', rule: 'test', ...effect });
+const give = (table: Bench, effect: Partial<Ability>): void => {
+  (effectsOf(table.pack) as Map<string, Ability>).set(TECH, { tier: 'passive', rule: 'test', ...effect });
 };
 const MAP = { [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', [FAR]: 'r-empty', [FARTHER]: 'r-empty' };
 const sol = (extra: Partial<Parameters<typeof bench>[0]> = {}) =>
@@ -22,7 +22,7 @@ const O1 = { id: 'o1', faction: 'naalu', vp: 0, seat: 2, color: 2 };
 const flight = (units: Record<string, number>, via: string[], target: string, from = HOME): Entry =>
   tactical(target, { moves: [{ from, units, via }] });
 const waived = (table: Bench, entry: Entry, code: string): boolean[] => warningsOf(table, entry).filter(w => w.code === code).map(w => (w.waivedBy?.length ?? 0) > 0);
-const lifting = (code: string, when: (w: import('../../types').Warning, ctx: PermitContext) => boolean): Partial<ComponentEffect> =>
+const lifting = (code: string, when: (w: import('../../types').Warning, ctx: PermitContext) => boolean): Partial<Ability> =>
   ({ permit: [{ code: code as never, rule: 'test', when }] });
 
 describe('plusSpeed', () => {

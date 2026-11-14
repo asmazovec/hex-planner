@@ -7,20 +7,16 @@
  * already purges a hero when it is played. A system that is not adjacent to one of my docks (a dock's own system is
  * not adjacent to itself, Saar note on the hero) is a breach still to be checked.
  */
-import type { ComponentEffect } from '../../types';
 import { removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { othersBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:saarhero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'system', kind: 'system' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const slot = String(ctx.choices.system ?? '');

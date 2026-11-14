@@ -7,20 +7,16 @@
  * be played then); the research is made all the same.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:f_researched';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'technology', kind: 'component', options: ({ pack }) => Object.keys(pack.technologies).map(tech => `technology:${tech}`).filter(tech => componentById(pack, tech) !== undefined) }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const have = ctx.my.tradeGoods;

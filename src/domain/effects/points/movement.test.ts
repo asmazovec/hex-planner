@@ -9,13 +9,13 @@ import type { GameState } from '../../types';
 import { bench, endOf, FAR, FARTHER, HOME, NEAR, TARGET, tactical, using, warningsOf, type Bench } from '../components/kit';
 import { tech } from '../../rules/kit';
 import { effectsOf } from '../registry';
-import type { ComponentEffect } from '../types';
+import type { Ability } from '../types';
 import './movement';
 
 /** The technology of the effect: held from the start, its effect replaced in this bench's registry. */
 const TECH = 'technology:gd';
-const give = (table: Bench, effect: Partial<ComponentEffect>, id = TECH): void => {
-  (effectsOf(table.pack) as Map<string, ComponentEffect>).set(id, { tier: 'passive', rule: 'test', ...effect });
+const give = (table: Bench, effect: Partial<Ability>, id = TECH): void => {
+  (effectsOf(table.pack) as Map<string, Ability>).set(id, { tier: 'passive', rule: 'test', ...effect });
 };
 const MAP = { [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', [FAR]: 'r-empty', [FARTHER]: 'r-empty' };
 const sol = (extra: Partial<Parameters<typeof bench>[0]> = {}) =>

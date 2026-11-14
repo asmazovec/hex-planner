@@ -7,19 +7,15 @@
  * capacity, none where other players have ships. A fighter may be placed beyond the capacity (note 2): the capacity
  * warning of the system is made and stands, since the player must then remove one.
  */
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import { unitIds } from '../../../replay/state';
 import { carriesBy, othersHaveShips, placeIn } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:f_conscription';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const slots = new Set<string>();

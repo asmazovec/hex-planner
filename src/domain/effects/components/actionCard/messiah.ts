@@ -5,17 +5,13 @@
  * resolved. Written in pass 2.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:messiah';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => ctx.my.planets().map(planet => placeUnits(ctx.holder, { planet: planet.id }, { infantry: 1 })),
 };

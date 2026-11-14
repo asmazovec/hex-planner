@@ -10,19 +10,15 @@
  */
 import { violation } from '../../../rules/registry';
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 const GOODS = 6;
 
 export const id = 'publicObjective:vast_reserves';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play(ctx) {
     // What the entry's own `spend` already paid in trade goods counts; the rest comes from the pool.

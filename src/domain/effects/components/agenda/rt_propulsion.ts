@@ -9,18 +9,14 @@
  * Pass 1: still the hint it is today.
  */
 import prerequisitesMissing from '../../../rules/codes/prerequisitesMissing';
-import type { ComponentEffect } from '../../types';
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:rt_propulsion';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   // "Exhaust this card": the replay exhausts only what a kind of component has a rule for, so the card does it here;
   // a second use before the status phase readies it is then warned of as an exhausted component.

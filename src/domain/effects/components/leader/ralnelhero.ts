@@ -11,18 +11,14 @@
 
  * The tokens go to the tactic pool: the pass has no field for choosing a pool yet.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { tokens } from '../../../../game/abilities/emit';
 
 export const id = 'leader:ralnelhero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => [tokens(ctx.holder, { tactic: 2 }, 'component')],
   permit: [{

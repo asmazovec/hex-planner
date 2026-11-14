@@ -9,12 +9,11 @@
  * reinforcements).
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:fabrication';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -29,9 +28,6 @@ export const effect: ComponentEffect = {
       label: { ru: 'Куда положить', en: 'Pool' },
     },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     // A sheet ability is not checked by `holds`: another faction's play does nothing.

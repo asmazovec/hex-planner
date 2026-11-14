@@ -5,12 +5,12 @@
  * own 2 unit upgrade technologies. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
  * tests mark what it must do.
  */
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:develop';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Two upgrades of the same unit count once (rulings).
@@ -22,4 +22,5 @@ export const effect: ComponentEffect = {
     }
     return { have: units.size, need: 2 };
   },
+  holder: 'self',
 };

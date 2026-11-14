@@ -8,19 +8,15 @@
  * (37.3).
  */
 import { tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:cladenstine';
 
 const count = (value: string | number | undefined): number => Math.max(0, Math.floor(Number(value) || 0));
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const { outcome } = ctx.choices;

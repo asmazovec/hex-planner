@@ -11,11 +11,11 @@
  * change entered by hand, and the card is then discarded (7.6). Pass 1: still the hint it is today.
  */
 import { wormholeSlots } from '../../../movement';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'agenda:wormhole_recon';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // "All systems that contain either an alpha or beta wormhole are adjacent to each other."
@@ -23,4 +23,5 @@ export const effect: ComponentEffect = {
     const holes = [...new Set([...wormholeSlots(game, pack, 'alpha', shared?.wormholeTokens), ...wormholeSlots(game, pack, 'beta', shared?.wormholeTokens)])];
     return holes.flatMap((a, i) => holes.slice(i + 1).map((b): readonly [string, string] => [a, b]));
   },
+  holder: 'self',
 };

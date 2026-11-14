@@ -6,15 +6,14 @@
  * `pool` (`tactic`, `fleet`, `strategy`). The chosen player spends the token (a discarded card is entered in `spends`,
  * which the replay takes from my hand) and gains 2 trade goods. The agent is exhausted as every agent is.
  */
-import type { ComponentEffect } from '../../types';
 import { tokens, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:nekroagent';
 
 const POOLS = ['tactic', 'fleet', 'strategy'] as const;
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -28,9 +27,6 @@ export const effect: ComponentEffect = {
       names: { tactic: { ru: 'Тактический', en: 'Tactic' }, fleet: { ru: 'Флот', en: 'Fleet' }, strategy: { ru: 'Стратегический', en: 'Strategy' } },
     },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

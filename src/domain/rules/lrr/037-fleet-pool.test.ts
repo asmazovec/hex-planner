@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'vitest';
 import { CARD } from '../../strategy';
 import { effectsOf } from '../../effects/registry';
-import type { ComponentEffect } from '../../effects/types';
+import type { Ability } from '../../effects/types';
 import '../../effects/points/moments';
 import { adjust, codesOf, forecast, HOME, NEAR, primary, rulesGame, rulesPack, secondary, statusTokens, tactical, TARGET, tech } from '../kit';
 
@@ -121,7 +121,7 @@ describe('LRR 37 Fleet Pool', () => {
     const plain = forecast(rulesGame({ entries: [status] }), pack).warnings[status.id] ?? [];
     expect(plain.map(w => w.code)).not.toContain('fleetPoolTokens');
     const limited = rulesPack();
-    const effects = effectsOf(limited) as Map<string, ComponentEffect>;
+    const effects = effectsOf(limited) as Map<string, Ability>;
     effects.set('technology:hm', { tier: 'passive', rule: 'technology:hm', modify: { fleetPoolMax: value => Math.min(value, 4) } });
     const game = rulesGame({ entries: [status], game: { start: { me: { technologies: ['technology:hm'] }, opponents: {} } } });
     const found = (forecast(game, limited).warnings[status.id] ?? []).find(w => w.code === 'fleetPoolTokens');

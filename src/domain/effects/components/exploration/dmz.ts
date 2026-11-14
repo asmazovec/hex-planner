@@ -14,19 +14,15 @@
 import planetDemilitarized from '../../../rules/codes/planetDemilitarized';
 import { violation } from '../../../rules/registry';
 import { planetsNamed } from '../../helpers/planetsNamed';
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import type { GameEvent } from '../../../../game/abilities/types';
 
 export const id = 'exploration:dmz';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     onGainControl: (ctx, got) => {

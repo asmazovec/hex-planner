@@ -6,19 +6,15 @@
  * the player marks a correct prediction (`correct: 1`) and gains 5 trade goods.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { numberChosen } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:trade_rider';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'correct', kind: 'number', range: [0, 1], label: { ru: 'Прогноз верен (1 да, 0 нет)', en: 'Prediction correct (1 yes, 0 no)' } }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => (numberChosen(ctx, 'correct') > 0 ? [tradeGoods(ctx.holder, 5)] : []),
 };

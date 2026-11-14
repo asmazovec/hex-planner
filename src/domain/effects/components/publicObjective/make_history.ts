@@ -7,11 +7,11 @@
  * controlled, ruling 2.2); unmet is the warning objectiveUnmet (61.5.1).
  */
 import { planetsOf, tileAt } from '../../../replay/board';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:make_history';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, game, state }) => {
@@ -30,4 +30,5 @@ export const effect: ComponentEffect = {
     }
     return { have, need: 2 };
   },
+  holder: 'self',
 };

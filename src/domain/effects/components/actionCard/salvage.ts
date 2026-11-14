@@ -6,18 +6,14 @@
  * card's own condition is only that there was one, so an active system with no other player's ships is warned of.
  */
 import { commodities, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { othersBy, shipsOf, unmetBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:salvage';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const slot = ctx.entry?.type === 'tactical' ? ctx.entry.systemId : null;

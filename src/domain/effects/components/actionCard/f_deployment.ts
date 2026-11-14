@@ -6,20 +6,16 @@
  * 67.4.1); the infantry are placed all the same, as a warning forbids nothing.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:f_deployment';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const planet = String(ctx.choices.planet ?? '');

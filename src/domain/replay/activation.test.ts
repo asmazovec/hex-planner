@@ -8,14 +8,14 @@ import { bench, componentAction, endOf, HOME, NEAR, TARGET, tactical, using, war
 import { gain, tokens } from '../../game/abilities/emit';
 import type { Play } from '../../game/abilities/types';
 import { effectsOf } from '../effects/registry';
-import type { ComponentEffect } from '../effects/types';
+import type { Ability } from '../effects/types';
 import type { Entry } from '../types';
 import '../effects/points/movement';
 
 const TECH = 'technology:gd';
 const CARD = 'actionCard:rally';
-const give = (table: Bench, id: string, effect: Partial<ComponentEffect>): void => {
-  (effectsOf(table.pack) as Map<string, ComponentEffect>).set(id, { tier: 'passive', rule: 'test', holder: 'anyone', ...effect });
+const give = (table: Bench, id: string, effect: Partial<Ability>): void => {
+  (effectsOf(table.pack) as Map<string, Ability>).set(id, { tier: 'passive', rule: 'test', holder: 'anyone', ...effect });
 };
 const O1 = { id: 'o1', faction: 'naalu', vp: 0, seat: 2, color: 2 };
 const MAP = { [HOME]: 'r-home', [NEAR]: 'r-empty', [TARGET]: 'r-target', '3,0': 'r-empty', '4,0': 'r-empty' };
@@ -62,7 +62,7 @@ describe('playAt', () => {
     const base = tactical(TARGET, { moves: [{ from: HOME, units: { cruiser: 1 }, via: [NEAR] }], ...extra });
     const move = using(base, CARD);
     const t = bench({ faction: 'sol', units: { [HOME]: { cruiser: 1 } }, start: { hand: [CARD] }, entries: [move], game: { map: MAP } });
-    give(t, CARD, { tier: 'play', nativePlay: play, ...(at ? { playAt: at } : {}) });
+    give(t, CARD, { tier: 'play', play: play, ...(at ? { playAt: at } : {}) });
     return { t, move };
   };
 
@@ -95,7 +95,7 @@ describe('playAt', () => {
     const calls: number[] = [];
     const entry = componentAction(CARD);
     const t = bench({ faction: 'sol', start: { hand: [CARD] }, entries: [entry], game: { map: MAP } });
-    give(t, CARD, { tier: 'play', nativePlay: () => { calls.push(1); }, playAt: 'activation' });
+    give(t, CARD, { tier: 'play', play: () => { calls.push(1); }, playAt: 'activation' });
     warningsOf(t, entry);
     expect(calls).toEqual([1]);
   });

@@ -10,13 +10,12 @@
  * opponent's entry does not change my state.
 
  */
-import type { ComponentEffect } from '../../types';
 import { removeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:jolnaragent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // The infantry removed, by planet: one button for each planet that holds some, as many presses as units removed.
@@ -25,9 +24,6 @@ export const effect: ComponentEffect = {
     slots: ctx => ctx.my.planets().filter(planet => (planet.ground.infantry ?? 0) > 0)
       .map(planet => ({ key: planet.id, unit: 'infantry' as const, planet: planet.id, max: planet.ground.infantry })),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

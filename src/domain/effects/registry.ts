@@ -6,18 +6,15 @@
  */
 import { componentById, componentsOf, noteAddress, noteBase } from '../components';
 import type { ComponentDef, DataPack, Game, GameState, Holdings, RuleStep } from '../types';
-import type { Ability, Hooked } from '../../game/abilities/types';
 import { defaultHolder, speaksIn, type HolderRule } from './holder';
-import type { ComponentEffect, Modifiers } from './types';
+import type { Ability, Modifiers } from './types';
 import { unitUpgradeEffects } from './unitUpgrades';
 
-/** What the file of a component exports: its catalogue id and its effect, written for the old per-player state (`effect`) or for the kernel (`ability`, with its `holder`). */
-export interface ComponentFile { id: string; effect?: ComponentEffect; ability?: Ability | Hooked }
+/** What the file of a component exports: its catalogue id and its ability. */
+export interface ComponentFile { id: string; ability: Ability }
 
-/** The effect a file exports, in whichever shape. */
-/** A file with both is a component whose hooks are native and whose other parts are not: one effect, the hooks and the holder of the first. */
-export const effectOfFile = (file: ComponentFile): ComponentEffect =>
-  file.effect && file.ability ? { ...file.effect, holder: file.ability.holder, ...('on' in file.ability && file.ability.on ? { on: file.ability.on } : {}), ...('permit' in file.ability && file.ability.permit ? { permit: file.ability.permit } : {}), ...('play' in file.ability && file.ability.play ? { nativePlay: file.ability.play as ComponentEffect['nativePlay'] } : {}) } : (file.ability ?? file.effect) as ComponentEffect;
+/** The ability a component file exports. */
+export const effectOfFile = (file: ComponentFile): Ability => file.ability;
 
 const files = import.meta.glob<ComponentFile>(['./components/*/*.ts', '!./components/*/*.test.ts'], { eager: true });
 
@@ -50,18 +47,18 @@ export function stepsOfWindow(phase: string, window: string): RuleStep[] {
   return WINDOWS.filter(([, matches]) => matches(window)).map(([step]) => step);
 }
 
-const hintOf = (component: ComponentDef): ComponentEffect => {
+const hintOf = (component: ComponentDef): Ability => {
   const steps = component.kind === 'actionCard' ? stepsOfWindow(String(component.detail?.phase ?? ''), String(component.detail?.window ?? '')) : [];
   return { tier: 'hint', rule: component.id, ...(steps.length > 0 ? { hintAt: steps } : {}) };
 };
 
 /** The default of every component of the pack: a hint that shows its own text. */
-export function hintsFor(pack: DataPack): [string, ComponentEffect][] {
+export function hintsFor(pack: DataPack): [string, Ability][] {
   return componentsOf(pack).map(component => [component.id, hintOf(component)]);
 }
 
 /** A unit upgrade with a file of its own: the generated level first, then the file's change at each point, and everything else of the file. */
-function merged(generated: ComponentEffect, file: ComponentEffect): ComponentEffect {
+function merged(generated: Ability, file: Ability): Ability {
   type Change = (value: number, ctx: never) => number;
   const modify: Record<string, Change> = { ...(generated.modify as Record<string, Change>) };
   for (const [point, change] of Object.entries(file.modify ?? {}) as [string, Change][]) {
@@ -71,7 +68,7 @@ function merged(generated: ComponentEffect, file: ComponentEffect): ComponentEff
   return { ...generated, ...file, tier: 'passive', modify: modify as Partial<Modifiers> };
 }
 
-interface Registry { effects: Map<string, ComponentEffect>; order: Map<string, number> }
+interface Registry { effects: Map<string, Ability>; order: Map<string, number> }
 const REGISTRIES = new WeakMap<DataPack, Registry>();
 
 function registryOf(pack: DataPack): Registry {
@@ -90,7 +87,7 @@ function registryOf(pack: DataPack): Registry {
       // A file of a unit upgrade adds to its generated numbers; a hint written without steps keeps those of the data.
       written.set(id, generated ? merged(generated, effect) : effect.tier === 'hint' ? { ...defaults.get(id), ...effect } : effect);
     }
-    const effects = new Map<string, ComponentEffect>([...written, ...hints.filter(([id]) => !written.has(id))]);
+    const effects = new Map<string, Ability>([...written, ...hints.filter(([id]) => !written.has(id))]);
     registry = { effects, order: new Map([...effects.keys()].map((id, index) => [id, index])) };
     REGISTRIES.set(pack, registry);
   }
@@ -98,10 +95,10 @@ function registryOf(pack: DataPack): Registry {
 }
 
 /** Every component of the pack with its effect, in registry order. */
-export const effectsOf = (pack: DataPack): ReadonlyMap<string, ComponentEffect> => registryOf(pack).effects;
+export const effectsOf = (pack: DataPack): ReadonlyMap<string, Ability> => registryOf(pack).effects;
 
 /** The effect of a component; none for an id the pack does not have. */
-export const effectOf = (pack: DataPack, id: string): ComponentEffect | undefined => registryOf(pack).effects.get(noteBase(id));
+export const effectOf = (pack: DataPack, id: string): Ability | undefined => registryOf(pack).effects.get(noteBase(id));
 
 /** The place of a component in the registry, for the order effects are asked in. */
 export const orderOf = (pack: DataPack, id: string): number => registryOf(pack).order.get(noteBase(id)) ?? Number.MAX_SAFE_INTEGER;
@@ -211,7 +208,7 @@ function sheetOf(pack: DataPack, faction: string): Sheet {
  * breakthrough once held, the legendary planets they control and the laws in play. A flagship's printed ability is
  * not a component of the catalogue and is not here. `only` keeps the components whose effect it accepts.
  */
-export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: ComponentEffect) => boolean): string[] {
+export function inForceOf(pack: DataPack, holder: Holder, only?: (effect: Ability) => boolean): string[] {
   const { effects, order } = registryOf(pack);
   const { holdings } = holder;
   const found: string[] = [];
@@ -252,18 +249,18 @@ export const inForce = (pack: DataPack, game: Pick<Game, 'faction'>, state: Game
   inForceOf(pack, holderOf(game, state, shared));
 
 const isHolder = (who: Holdings | Holder): who is Holder => 'holdings' in who;
-const isPassive = (effect: ComponentEffect): boolean => effect.tier === 'passive';
+const isPassive = (effect: Ability): boolean => effect.tier === 'passive';
 
 /** The passive effects in force for a player, in registry order (`inForceOf`); holdings alone give only the cards held. */
-const PASSIVES = new WeakMap<object, { pack: DataPack; list: [string, ComponentEffect][] }>();
-export function passivesOf(pack: DataPack, who: Holdings | Holder): [string, ComponentEffect][] {
+const PASSIVES = new WeakMap<object, { pack: DataPack; list: [string, Ability][] }>();
+export function passivesOf(pack: DataPack, who: Holdings | Holder): [string, Ability][] {
   const kept = PASSIVES.get(who);
   if (kept && kept.pack === pack) return kept.list;
   const list = passivesBuilt(pack, who);
   PASSIVES.set(who, { pack, list });
   return list;
 }
-function passivesBuilt(pack: DataPack, who: Holdings | Holder): [string, ComponentEffect][] {
+function passivesBuilt(pack: DataPack, who: Holdings | Holder): [string, Ability][] {
   const { effects } = registryOf(pack);
   // Asked at every point of the count: only the passive ones are gathered and put in order.
   return inForceOf(pack, isHolder(who) ? who : { holdings: who }, isPassive).map(id => [id, effects.get(noteBase(id))!]);

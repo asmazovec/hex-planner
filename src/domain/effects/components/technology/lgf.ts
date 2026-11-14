@@ -9,7 +9,7 @@
  * a `play`: one infantry on Mecatol Rex when the player controls it (the replay exhausts the card).
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import { mecatolPlanetOf } from '../../../mecatol';
 import { wormholeSlots } from '../../../movement';
@@ -17,11 +17,10 @@ import { violation } from '../../../rules/registry';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { mecatolPlanetBy } from '../../helpers/cardPlay';
 import { mecatolSlot } from '../../helpers/movement';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'technology:lgf';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Mecatol Rex joins every alpha and beta wormhole in the Winnu's tactical actions while they do not control it (40, 101).
@@ -31,9 +30,6 @@ export const effect: ComponentEffect = {
     const tokens = shared?.wormholeTokens ?? state?.wormholeTokens;
     return ['alpha', 'beta'].flatMap(type => wormholeSlots(game, pack, type, tokens).filter(slot => slot !== mecatol).map((slot): [string, string] => [mecatol, slot]));
   },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held || ctx.my.faction !== 'winnu') return [];

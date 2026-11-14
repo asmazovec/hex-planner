@@ -11,8 +11,7 @@
  *
  */
 import { componentsOf } from '../../../components';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'exploration:ed1';
 
@@ -21,16 +20,14 @@ export const id = 'exploration:ed1';
  * `Holdings.found` once gained, purged by the action (`playComponent`), and one never found or already purged is warned
  * of as not held.
  */
-export const effect: ComponentEffect = {
+
+export const ability: Ability = {
   tier: 'play', rule: id,
   cost: { kind: 'resources', amount: 6 },
   choose: [{
     key: 'technology', kind: 'component', label: { ru: 'Технология', en: 'Technology' },
     options: ctx => componentsOf(ctx.pack).filter(def => def.kind === 'technology').map(def => def.id),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const technology = ctx.choices.technology;

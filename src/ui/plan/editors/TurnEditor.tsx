@@ -28,7 +28,7 @@ import { PaymentBlock } from '../blocks/PaymentBlock';
 /** What a component action can play. */
 const PLAYED_KINDS: ComponentKind[] = ['actionCard', 'leader', 'relic', 'technology', 'promissory', 'ability', 'breakthrough', 'legendary', 'exploration'];
 
-/** The production a component action makes (`ComponentEffect.produces`): the system on the map, the shop of the big hex, the payment. */
+/** The production a component action makes (`Ability.produces`): the system on the map, the shop of the big hex, the payment. */
 export interface TurnProduction {
   /** The next tap on the map chooses the system. */
   picking: boolean;
@@ -56,7 +56,7 @@ export interface TurnEditorProps {
   onNote: (note: string) => void;
   /** The component the action plays; none takes it off. */
   onComponent: (id: string | undefined) => void;
-  /** What the player chose for the component the action plays (`ComponentEffect.choose`); empty when none is left. */
+  /** What the player chose for the component the action plays (`Ability.choose`); empty when none is left. */
   onChoices?: (choices: Record<string, string | number>) => void;
   /** What a component with a declared cost is paid with (resources or influence, planets and trade goods). */
   onPayment?: (payment: Payment) => void;

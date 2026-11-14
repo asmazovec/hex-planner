@@ -5,12 +5,12 @@
  * control 6 planets outside home systems. Scoring it without the requirement is warned of (a new code, objectiveUnmet). Pass 1 keeps it a hint; the
  * tests mark what it must do.
  */
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:expand_borders';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ pack, state }) => {
@@ -18,4 +18,5 @@ export const effect: ComponentEffect = {
     const outside = Object.keys(state.control).filter(planet => state.control[planet] === 'me' && !inHome.has(planet));
     return { have: outside.length, need: 6 };
   },
+  holder: 'self',
 };

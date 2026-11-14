@@ -14,9 +14,9 @@
  * own rule (51.12).
  */
 import type { AbilityContext } from '../../../../game/abilities/types';
-import type { ChoiceSpec, ComponentEffect } from '../../types';
+import type { ChoiceSpec } from '../../types';
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { othersBy, takeControlBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:yinhero';
@@ -37,13 +37,10 @@ const slot = (key: string, n: number, after?: string): ChoiceSpec => ({
   when: after === undefined ? undefined : chosen => chosen[after] !== undefined,
 });
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [slot('planet', 1), slot('planet2', 2, 'planet'), slot('planet3', 3, 'planet2')],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

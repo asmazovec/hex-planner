@@ -1,14 +1,14 @@
 /** The one way a step of the count asks for a value: the base, then every component of the player in registry order. */
 import type { DataPack, Holdings } from '../types';
 import { passivesOf, type Holder } from './registry';
-import type { ComponentEffect, ModifierContext, Modifiers } from './types';
+import type { Ability, ModifierContext, Modifiers } from './types';
 
 /** A value after the effects, and the components that changed it: the interface names them beside the number. */
 export interface Applied { value: number; by: string[] }
 
 /** Runs a point through effects in the order given; only a `passive` effect with that point takes part. */
 export function stacked<K extends keyof Modifiers>(
-  effects: Iterable<readonly [string, ComponentEffect]>, point: K, base: number, ctx: ModifierContext[K],
+  effects: Iterable<readonly [string, Ability]>, point: K, base: number, ctx: ModifierContext[K],
 ): Applied {
   let value = base;
   const by: string[] = [];

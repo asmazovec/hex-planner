@@ -11,15 +11,14 @@
  * The choices are `counts` slots: one button per planet that holds my infantry (`ChoiceSpec.slots`).
  */
 import { placeUnits, removeUnits } from '../../../../game/abilities/emit';
-import type { GameEvent, Hooked } from '../../../../game/abilities/types';
+import type { GameEvent, Ability } from '../../../../game/abilities/types';
 import choiceOverLimit from '../../../rules/codes/choiceOverLimit';
 import { violation } from '../../../rules/registry';
 import { missingUnits } from '../../../replay/state';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'actionCard:refit';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
@@ -27,9 +26,6 @@ export const effect: ComponentEffect = {
     slots: ctx => ctx.my.planets().filter(planet => (planet.ground.infantry ?? 0) > 0)
       .map(planet => ({ key: planet.id, unit: 'infantry' as const, planet: planet.id, max: planet.ground.infantry })),
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const chosen = Object.entries(ctx.choices).filter(([, count]) => Number(count) > 0);

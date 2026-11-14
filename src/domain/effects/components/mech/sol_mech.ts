@@ -7,19 +7,15 @@
  * entry, which has no payment yet.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'mech:sol_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // The 3 resources are the cost of this use, paid with the payment of the Orbital Drop entry.
   useCost: entry => (entry.type === 'component' && entry.componentId === 'ability:orbital_drop' ? { kind: 'resources', amount: 3 } : undefined),
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     // The deploy follows the use of Orbital Drop: the entry is that component action, and the planet is its choice.

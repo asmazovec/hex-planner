@@ -11,18 +11,14 @@
  */
 import { noteAddress } from '../../../components';
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'promissory:convoys';
 
-export const effect: ComponentEffect = {
+/** Returning to the Hacan player is a hook of the kernel, and so is the play (the note lying in the play area). */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** Returning to the Hacan player is a hook of the kernel, and so is the play (the note lying in the play area). */
-export const ability: Hooked = {
   holder: 'self',
   // Played, the note stays held and lies in the play area: nothing else on the board changes.
   play: ctx => (ctx.my.card(ctx.id) === 'inPlay' ? [] : [{ type: 'CardLaidInPlay', player: ctx.holder, card: ctx.id }]),

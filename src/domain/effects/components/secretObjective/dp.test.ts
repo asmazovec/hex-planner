@@ -20,7 +20,7 @@ describe('secretObjective:dp Dictate Policy', () => {
     expect(found.tier).toBe('hint');
     expect(found.hintAt).toEqual(undefined);
     expect(found.modify).toBeUndefined();
-    expect(found.nativePlay).toBeUndefined();
+    expect(found.play).toBeUndefined();
   });
 
   // "There are 3 or more laws in play."

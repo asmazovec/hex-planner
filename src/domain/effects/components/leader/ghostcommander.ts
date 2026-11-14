@@ -8,9 +8,8 @@
  * wormhole type, tokens included), as far as the active system has unused capacity (Creuss notes, Sai Seravus 1). The
  * reinforcements of fighters are not limited (tokens stand in for them, 67.5.2).
  */
-import type { ComponentEffect } from '../../types';
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { AbilityContext, Hooked } from '../../../../game/abilities/types';
+import type { AbilityContext, Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:ghostcommander';
 
@@ -20,12 +19,9 @@ function throughWormhole(ctx: AbilityContext, a: string, b: string): boolean {
   return ctx.wormholes(a).some(type => there.includes(type));
 }
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

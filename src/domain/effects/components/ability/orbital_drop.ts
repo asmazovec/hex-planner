@@ -6,20 +6,16 @@
  * (the pool going below zero is warned of), 2 infantry from reinforcements on that planet, which must be one the player controls.
  */
 import { placeUnits, tokens } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:orbital_drop';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{ key: 'planet', kind: 'planet' }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     // The ability is printed on the Federation of Sol's sheet only: another faction naming it places nothing.

@@ -9,23 +9,19 @@
  */
 import placeNotControlled from '../../../rules/codes/placeNotControlled';
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { controlledPlanets } from '../../helpers/choices';
 
 export const id = 'mech:yssaril_mech';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [{
     key: 'planet', kind: 'planet',
     options: controlledPlanets,
   }],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const entry = ctx.entry;

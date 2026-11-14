@@ -61,6 +61,6 @@ describe('technology:yso Yin Spinner Omega', () => {
   test('technology:yso is a play effect', () => {
     const { pack } = table(produce(null));
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

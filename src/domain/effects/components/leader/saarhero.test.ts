@@ -46,6 +46,6 @@ describe('leader:saarhero Gurno Aggero', () => {
   test('leader:saarhero is a play effect', () => {
     const { pack } = relay([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

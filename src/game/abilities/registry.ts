@@ -8,7 +8,7 @@ import { componentById, noteAddress } from '../../domain/components';
 import { stacked, type Applied } from '../../domain/effects/apply';
 import { speaksIn } from '../../domain/effects/holder';
 import { effectOf, holderRuleOf, inForceOf, orderOf, passivesOf, readyComponents, type Holder } from '../../domain/effects/registry';
-import type { ComponentEffect, ModifierContext, Modifiers } from '../../domain/effects/types';
+import type { Ability, ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { ComponentDef, Holdings, RuleStep } from '../../domain/types';
 import { holdingsOfCards, legacyKey } from '../keys';
 import type { Board, DataPack, PlayerId, Table } from '../types';
@@ -142,7 +142,7 @@ const holdingsOf = (board: Board, player: PlayerId): Holdings => {
  * ones an entry plays) has. The one question a step asks before it asks the components anything: where nothing answers,
  * nothing is built to ask.
  */
-export function anyInForce(table: Table, board: Board, pack: DataPack, has: (effect: ComponentEffect) => boolean, named: readonly string[] = []): boolean {
+export function anyInForce(table: Table, board: Board, pack: DataPack, has: (effect: Ability) => boolean, named: readonly string[] = []): boolean {
   if (named.some(id => { const effect = effectOf(pack, id); return effect !== undefined && has(effect); })) return true;
   for (const player of table.players) {
     if (inForce(table, board, pack, player.id).some(id => { const effect = effectOf(pack, id); return effect !== undefined && has(effect); })) return true;

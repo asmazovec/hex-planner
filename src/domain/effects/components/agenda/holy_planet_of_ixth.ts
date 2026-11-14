@@ -10,21 +10,17 @@
  * `vp`). Losing control, which loses the point, is not modelled: a planet a rival takes is no longer mine, but nothing
  * hooks that.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { gain } from '../../../../game/abilities/emit';
 
 export const id = 'agenda:holy_planet_of_ixth';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // "Units on this planet cannot use PRODUCTION": the dock of the elected planet is worth nothing, so any unit built is over it.
   modify: { productionValue: (value, ctx) => (ctx.attached?.includes(id) ? 0 : value) },
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // "The planet's owner gains 1 victory point": once, when the law is resolved, if I control the elected planet.

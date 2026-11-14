@@ -11,18 +11,14 @@
  */
 import { noteAddress, noteBase } from '../../../components';
 import { gain } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { returnOnActivation } from '../../helpers/returnNote';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'promissory:<color>_sftt';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // Received in a transaction, from another player: faceup in my play area, and 1 victory point.

@@ -10,12 +10,13 @@
  * ready, so a second secondary pays its token again. The token removed from the active player is not modelled: the
  * secondary entry does not know who the active player is.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'leader:mahactagent';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   modify: { strategyCost: (value, ctx) => (ctx.secondary ? 0 : value) },
+  holder: 'self',
 };

@@ -9,11 +9,11 @@ import { applyPayment } from '../../replay/payment';
 import { adjust, bench, HOME, NEAR, tactical, TARGET, using, FAR, FARTHER, type Bench } from '../components/kit';
 import { appliedFor } from '../entryApply';
 import { effectsOf, holderOf } from '../registry';
-import type { ComponentEffect, ModifierContext } from '../types';
+import type { Ability, ModifierContext } from '../types';
 import { forecast } from '../../rules/kit';
 
-const give = (table: Bench, id: string, effect: Partial<ComponentEffect>): void => {
-  (effectsOf(table.pack) as Map<string, ComponentEffect>).set(id, { tier: 'passive', rule: 'test', ...effect });
+const give = (table: Bench, id: string, effect: Partial<Ability>): void => {
+  (effectsOf(table.pack) as Map<string, Ability>).set(id, { tier: 'passive', rule: 'test', ...effect });
 };
 const TECH = 'technology:aida';
 const MAP = { [HOME]: 'r-home', [NEAR]: 'r-alpha', [TARGET]: 'r-target', [FAR]: 'r-empty', [FARTHER]: 'r-empty' };

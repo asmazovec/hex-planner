@@ -7,8 +7,10 @@
  * line about "Direct Hit" speaks of an action card of combat, which the plan does not resolve; a unit upgrade is
  * passive and cannot carry the steps of a hint, so it is not shown as a reminder.
  */
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'technology:sdn2';
 
-export const effect: ComponentEffect = { tier: 'passive', rule: '97.4' };
+export const ability: Ability = { tier: 'passive', rule: '97.4',
+  holder: 'self',
+};

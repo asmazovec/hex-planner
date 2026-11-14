@@ -9,15 +9,16 @@
  */
 import { systemSlots } from '../../../replay/board';
 import { systemProduction } from '../../../replay/production';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'secretObjective:pem';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   requirement: ({ game, state, pack }) => ({
     have: Math.max(0, ...systemSlots(game).map(slot => systemProduction(game, state, slot, pack))),
     need: 8,
   }),
+  holder: 'self',
 };

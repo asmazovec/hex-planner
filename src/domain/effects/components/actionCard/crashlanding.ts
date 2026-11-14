@@ -8,18 +8,14 @@
  * plays the card (`uses` or `spends`) that warning is lifted when the excess is the one ground force the card lands.
  * Coexistence and Mecatol Rex are not modelled. Pass 1 keeps it the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:crashlanding';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'hint',
   rule: id,
   hintAt: ['combat'],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'capacitySystem',

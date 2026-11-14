@@ -9,21 +9,17 @@
  * produced by a dock (note 2).
  */
 import { place } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import '../../points/production';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'ability:mitosis';
 
-export const effect: ComponentEffect = {
+/** The infantry placed at the start of the status phase is a hook of the kernel; the dock's limit (`modify`) is still written for the old state. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   // A dock of the Arborec builds no infantry (68.1 note 4).
   modify: { dockInfantry: () => 0 },
-};
-
-/** The infantry placed at the start of the status phase is a hook of the kernel; the dock's limit (`modify`) is still written for the old state. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // Mandatory while the Arborec control a planet (Arborec note 3); which planet is theirs to choose: the home planets come first.

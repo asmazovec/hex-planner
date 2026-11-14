@@ -7,8 +7,7 @@
  * activations are untouched.
  */
 import { gain } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 import '../../points/movement';
 import type { UnitId } from '../../../types';
 
@@ -18,7 +17,8 @@ export const id = 'technology:ng';
  * The old-state shape of the same rule: the flight screen's meters (`tacticalMeters`) still replay an action on the old
  * state and need the fleet pool after Neuroglaive. The kernel does not read this one: it runs `ability`.
  */
-export const effect: ComponentEffect = {
+
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   onActivate: ({ owner, activator, state, activeState, systemId, pack }) => {
@@ -26,9 +26,6 @@ export const effect: ComponentEffect = {
     const ships = Object.entries(state.systems[systemId] ?? {}).some(([unit, count]) => (count ?? 0) > 0 && pack.units[unit as UnitId]?.ground === false);
     if (ships) activeState.fleet -= 1;
   },
-};
-
-export const ability: Hooked = {
   holder: 'others',
   on: {
     onActivate: (ctx, activation) => {

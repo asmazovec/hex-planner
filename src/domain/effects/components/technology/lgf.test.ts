@@ -78,6 +78,6 @@ describe('technology:lgf Lazax Gate Folding', () => {
   test('technology:lgf is a play effect for its ACTION', () => {
     const { pack } = table('winnu');
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

@@ -7,21 +7,15 @@
  * it does to the board, a tile replaced by a supernova and the other players' units destroyed, cannot be replayed:
  * the replay never changes the map. Pass 1: still the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
 import { removeUnits, structures } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { othersBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:muaathero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-  // Named with the move of the war sun: the other players' units in the active system are destroyed. The tile
-  // replaced by the supernova and the planet cards purged are not replayed (the replay never changes the map).
-};
-
-export const ability: Hooked = {
   holder: 'self',
   // Named with the move of the war sun: the other players' units in the active system are destroyed. The tile
   // replaced by the supernova and the planet cards purged are not replayed (the replay never changes the map).

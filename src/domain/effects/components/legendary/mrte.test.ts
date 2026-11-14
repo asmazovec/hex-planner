@@ -58,6 +58,6 @@ describe('legendary:mrte The Galactic Council', () => {
   test('legendary:mrte is a play effect that checks its condition', () => {
     const { pack } = table([]);
     expect(effect(pack, id).tier).toBe('play');
-    expect(effect(pack, id).nativePlay).toBeTypeOf('function');
+    expect(effect(pack, id).play).toBeTypeOf('function');
   });
 });

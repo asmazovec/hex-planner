@@ -4,8 +4,8 @@
  * are each increased by 1 instead." Not a component file: it sits one folder deeper, where the registry does not look.
  */
 import { specialtiesOf } from '../../../../specialties';
-import type { ComponentEffect, ModifierContext } from '../../../types';
-import type { Hooked } from '../../../../../game/abilities/types';
+import type { ModifierContext } from '../../../types';
+import type { Ability } from '../../../../../game/abilities/types';
 import { attachExplored } from './attach';
 
 /**
@@ -16,11 +16,12 @@ function alreadySpecialized(ctx: ModifierContext['planetResources'], id: string)
   return ctx.pack !== undefined && specialtiesOf(ctx.pack, ctx.planetId, (ctx.attached ?? []).filter(card => card !== id)).length > 0;
 }
 
-/** A research facility: attached where explored; +1 resource and +1 influence instead of its specialty on a planet that has one. */
-/** What a facility does when explored: it joins the planet's attachments. */
-export const facilityAbility: Hooked = { holder: 'anyone', on: { gained: attachExplored } };
-
-export const facilityEffect = (id: string): ComponentEffect => ({
+/**
+ * A research facility: attached where explored (it joins the planet's attachments when gained); +1 resource and +1
+ * influence instead of its specialty on a planet that has one.
+ */
+export const facilityAbility = (id: string): Ability => ({
+  holder: 'anyone', on: { gained: attachExplored },
   tier: 'passive', rule: id,
   modify: {
     planetResources: (value, ctx) => (alreadySpecialized(ctx, id) ? value + 1 : value),

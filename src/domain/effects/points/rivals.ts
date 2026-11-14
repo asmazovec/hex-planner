@@ -43,7 +43,7 @@ export interface LandingTurn {
 }
 
 declare module '../types' {
-  interface ComponentEffect {
+  interface Ability {
     /** Slots of systems where the mover's ships may not pass: they end a route like other players' ships (58.3.2). */
     stopsPassage?: (turn: PassageTurn) => string[];
     /** Asked of every player's components in force when someone lands on a planet. */

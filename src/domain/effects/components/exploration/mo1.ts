@@ -6,19 +6,15 @@
  * one infantry is placed on that planet. With no planet newly controlled by the entry there is no "this planet" and
  * nothing is placed. Pass 2: written.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { place } from '../../../../game/abilities/emit';
 
 export const id = 'exploration:mo1';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     // Asked only for a planet newly gained; a planet taken from another player is not explored (35.1).

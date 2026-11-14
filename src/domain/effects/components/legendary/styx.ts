@@ -10,19 +10,15 @@
  * The opponent's own point is not modelled: their scores move by their status entries.
  */
 import { gain } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import '../../points/moments';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:styx';
 
-export const effect: ComponentEffect = {
+/** Losing the planet is a hook of the kernel; gaining it (`onGainControl`) is still written for the old state. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** Losing the planet is a hook of the kernel; gaining it (`onGainControl`) is still written for the old state. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     onGainControl: (ctx, got) => (got.planetId === 'styx' ? [gain.points(ctx.holder, 1)] : undefined),

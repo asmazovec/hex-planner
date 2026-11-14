@@ -9,17 +9,13 @@
  * Pass 1: the hint it is today; the tests say what it must do.
  */
 import { commodities } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:harness';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const printed = ctx.pack.factions[ctx.my.faction]?.commodities;

@@ -8,12 +8,12 @@
  */
 import { adjacentTo } from '../../../movement';
 import { systemSlots, tileIdOf } from '../../../replay/board';
-import type { ComponentEffect } from '../../types';
 import '../../points/status';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'publicObjective:intimidate';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // Ships in the Mecatol Rex system itself are irrelevant (rulings).
@@ -23,4 +23,5 @@ export const effect: ComponentEffect = {
     const held = next.filter(slot => Object.values(state.systems[slot] ?? {}).some(count => (count ?? 0) > 0));
     return { have: held.length, need: 2 };
   },
+  holder: 'self',
 };

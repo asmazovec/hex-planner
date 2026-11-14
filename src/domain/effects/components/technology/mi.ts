@@ -7,16 +7,15 @@
  * neighbour, so no transaction is made. A card not in that hand is warned of (`componentUnresolved`) and not moved.
  */
 import { card } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import componentUnresolved from '../../../rules/codes/componentUnresolved';
 import { violation } from '../../../rules/registry';
-import type { ComponentEffect } from '../../types';
 import { handOf } from '../../helpers/choices';
 
 export const id = 'technology:mi';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -26,9 +25,6 @@ export const effect: ComponentEffect = {
       options: ctx => handOf(ctx, String(ctx.chosen.from)),
     },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const { from: whose, card: chosen } = ctx.choices;

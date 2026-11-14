@@ -10,19 +10,15 @@
  * Pass 2: `onGainControl`: each structure of another player that stood on the planet (`lost`) is put on it as mine.
  * Reinforcement limits are not counted by the replay.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { keepStructures } from '../../helpers/structures';
 
 export const id = 'ability:assimilate';
 
-export const effect: ComponentEffect = {
+/** The hooks written for the kernel: they read the board and return events. */
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
-};
-
-/** The hooks written for the kernel: they read the board and return events. */
-export const ability: Hooked = {
   holder: 'anyone',
   on: {
     onGainControl: (ctx, got) => keepStructures(ctx, got.planetId, got.lost),

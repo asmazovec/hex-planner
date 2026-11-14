@@ -8,14 +8,13 @@
  * technology is gained (not researched, so Propagation does not replace it). The hero is purged by the replay.
  */
 import { componentsOf } from '../../../components';
-import type { ComponentEffect } from '../../types';
 import { card, removeUnits, structures, tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { othersBy } from '../../helpers/cardPlay';
 
 export const id = 'leader:nekrohero';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -32,9 +31,6 @@ export const effect: ComponentEffect = {
       },
     },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     if (!ctx.held) return [];

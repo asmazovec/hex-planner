@@ -5,19 +5,15 @@
  * action card in `uses`: `foreignPrimary` (83.3) is lifted for that entry alone, and no strategy token is spent for it,
  * since the card, not a faction ability, lets the primary be performed. Pass 1 keeps it the hint it is today.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:overrule';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   // The card, not a token, lets the primary be performed.
   modify: { strategyCost: (value, ctx) => (ctx.secondary ? value : 0) },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{ code: 'foreignPrimary', rule: 'Perform the primary ability of a readied or unchosen strategy card.', when: (_warning, ctx) => ctx.had.holds(id) }],
 };

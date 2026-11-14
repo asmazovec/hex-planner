@@ -6,17 +6,13 @@
  * ruling 1). Written in pass 2.
  */
 import { tradeGoods } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
-import type { ComponentEffect } from '../../types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'actionCard:industrial_initiative';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const industrial = ctx.my.planets().filter(p => ctx.pack.planets[p.id]?.traits?.includes('industrial')).length;

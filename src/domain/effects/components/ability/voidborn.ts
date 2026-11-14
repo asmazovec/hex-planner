@@ -7,18 +7,14 @@
  * Decided: the waiver is narrowed to a nebula (ships of other players in it still block, 58.3.2), and the start in a
  * nebula keeps the move value through the point `nebulaStart`.
  */
-import type { ComponentEffect } from '../../types';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 
 export const id = 'ability:voidborn';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'passive',
   rule: id,
   modify: { nebulaStart: (_value, ctx) => ctx.speed },
-};
-
-export const ability: Hooked = {
   holder: 'self',
   permit: [{
     code: 'routeBlocked',

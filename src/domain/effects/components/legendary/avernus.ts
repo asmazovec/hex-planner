@@ -10,17 +10,16 @@
  * area of whoever controls Avernus.
  */
 import { placeUnits } from '../../../../game/abilities/emit';
-import type { Hooked } from '../../../../game/abilities/types';
+import type { Ability } from '../../../../game/abilities/types';
 import { componentById } from '../../../components';
 import componentCondition from '../../../rules/codes/componentCondition';
 import { violation } from '../../../rules/registry';
 import type { UnitCounts } from '../../../types';
 import { requireControlBy } from '../../helpers/cardPlay';
-import type { ComponentEffect } from '../../types';
 
 export const id = 'legendary:avernus';
 
-export const effect: ComponentEffect = {
+export const ability: Ability = {
   tier: 'play',
   rule: id,
   choose: [
@@ -30,9 +29,6 @@ export const effect: ComponentEffect = {
     },
     { key: 'system', kind: 'system', label: { ru: 'В системе', en: 'In the system' } },
   ],
-};
-
-export const ability: Hooked = {
   holder: 'self',
   play: ctx => {
     const name = componentById(ctx.pack, id)?.name ?? id;

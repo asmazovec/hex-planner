@@ -4,31 +4,14 @@
  * component) and `actor` (whose turn it is) are both in the context, so a file never has to find out whose it is.
  */
 import type { AnyWarningCode, ComponentDef, Entry, Goods, RuleStep, UnitCounts, Warning } from '../../domain/types';
-import type { ComponentEffect, ModifierContext, Modifiers } from '../../domain/effects/types';
+import type { ModifierContext, Modifiers } from '../../domain/effects/types';
 import type { HolderRule } from '../../domain/effects/holder';
 import type { Cause, GameEvent } from '../events';
 import type { Board, ComponentId, DataPack, PlayerId, Table } from '../types';
 import type { Reader } from './facade';
 
+export type { Ability } from '../../domain/effects/types';
 export type { HolderRule };
-
-/** A component's ability: its effect and the declaration of whose action it speaks in. */
-export interface Ability extends ComponentEffect {
-  /** Required of a file written for the kernel. */
-  holder: HolderRule;
-}
-
-/**
- * The hooks of a component written for the kernel, with the declaration of whose action they speak in. A file whose
- * other parts (play, waive, choose) are still written for the old state exports this as `ability` beside its `effect`.
- */
-export interface Hooked {
-  holder: HolderRule;
-  on?: Hooks;
-  permit?: Permit[];
-  /** What playing the component does (a component action, or named in `uses`): reads through the context (`held`, `choices`) and returns events; violations go through `ctx.warn`. */
-  play?: Play;
-}
 
 /** The play of a component on the kernel. */
 export type Play = (ctx: AbilityContext) => Effects | void;
